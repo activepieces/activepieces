@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, isObject } from '@activepieces/core-utils'
 import { PiecePropertyMap, StaticPropsValue } from '@activepieces/pieces-framework'
 import { EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import { engineRunApi } from '../api/engine-run-api'
@@ -100,7 +100,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     runResponse: {
                         status: webhookResponse.status ?? 200,
                         body: webhookResponse.body ?? {},
-                        headers: webhookResponse.headers ?? {},
+                        headers: isObject(webhookResponse.headers) ? webhookResponse.headers : {},
                     },
                 },
             })

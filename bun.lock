@@ -162,7 +162,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.154.0",
+      "version": "0.156.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -1885,6 +1885,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/clay": {
+      "name": "@activepieces/piece-clay",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/clearout": {
       "name": "@activepieces/piece-clearout",
       "version": "0.1.8",
@@ -2316,7 +2326,7 @@
     },
     "packages/pieces/community/cryptolens": {
       "name": "@activepieces/piece-cryptolens",
-      "version": "0.0.8",
+      "version": "0.1.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3474,15 +3484,17 @@
     },
     "packages/pieces/community/front": {
       "name": "@activepieces/piece-front",
-      "version": "0.1.6",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "form-data": "4.0.6",
       },
       "devDependencies": {
         "tslib": "^2.3.0",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/gameball": {
@@ -3678,7 +3690,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3697,6 +3709,7 @@
         "@types/mime-types": "2.1.1",
         "@types/nodemailer": "7.0.11",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/goodmem": {
@@ -4320,7 +4333,7 @@
     },
     "packages/pieces/community/hugging-face": {
       "name": "@activepieces/piece-hugging-face",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6120,7 +6133,7 @@
     },
     "packages/pieces/community/moxie-crm": {
       "name": "@activepieces/piece-moxie-crm",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6129,6 +6142,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/muna-ai": {
@@ -10224,7 +10238,7 @@
     },
     "packages/pieces/core/crypto": {
       "name": "@activepieces/piece-crypto",
-      "version": "0.0.27",
+      "version": "0.0.28",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -11333,6 +11347,8 @@
     "@activepieces/piece-clarifai": ["@activepieces/piece-clarifai@workspace:packages/pieces/community/clarifai"],
 
     "@activepieces/piece-claude": ["@activepieces/piece-claude@workspace:packages/pieces/community/claude"],
+
+    "@activepieces/piece-clay": ["@activepieces/piece-clay@workspace:packages/pieces/community/clay"],
 
     "@activepieces/piece-clearout": ["@activepieces/piece-clearout@workspace:packages/pieces/community/clearout"],
 

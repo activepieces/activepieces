@@ -11,6 +11,7 @@ const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
 const MAX_AGENT_SHARED_MEMBERS = 200
 const MAX_AGENT_PAGE_SIZE = 100
+const MAX_AGENT_SEARCH_LENGTH = 200
 const MAX_AGENT_NAME_LENGTH = 200
 const MAX_AGENT_DESCRIPTION_LENGTH = 2_000
 const MAX_AGENT_CONFIG_BYTES = 128_000
@@ -66,6 +67,15 @@ const Agent = z.object({
     published: Nullable(AgentConfig),
 })
 
+const AgentUsage = z.object({
+    total: z.number().int().nonnegative(),
+    names: z.array(z.string()),
+})
+
+const AgentWithUsage = Agent.extend({
+    publishedFlowsUsingAgent: AgentUsage.optional(),
+})
+
 const AgentSummary = Agent.omit({ draft: true, published: true }).extend({
     isPublished: z.boolean(),
     toolCount: z.number(),
@@ -109,8 +119,20 @@ const DraftAgentRequest = z.object({
     prompt: z.string().min(1, formErrors.required).max(MAX_DRAFT_PROMPT_LENGTH),
 })
 
+const GetAgentRequest = z.object({
+    includeUsage: z.coerce.boolean().optional(),
+})
+
+enum AgentListSort {
+    UPDATED = 'updated',
+    CREATED = 'created',
+    NAME = 'name',
+}
+
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
+    search: z.optional(z.string().max(MAX_AGENT_SEARCH_LENGTH)),
+    sort: z.optional(z.enum(AgentListSort)),
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
 })
@@ -120,7 +142,12 @@ const agentUtils = {
 }
 
 export {
+    AgentListSort,
+    MAX_AGENT_SEARCH_LENGTH,
     Agent,
+    AgentUsage,
+    AgentWithUsage,
+    GetAgentRequest,
     AgentSummary,
     agentUtils,
     AgentConfig,
@@ -148,6 +175,9 @@ export {
 
 export type Agent = z.infer<typeof Agent>
 export type AgentSummary = z.infer<typeof AgentSummary>
+export type AgentUsage = z.infer<typeof AgentUsage>
+export type AgentWithUsage = z.infer<typeof AgentWithUsage>
+export type GetAgentRequest = z.infer<typeof GetAgentRequest>
 export type AgentConfig = z.infer<typeof AgentConfig>
 export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
