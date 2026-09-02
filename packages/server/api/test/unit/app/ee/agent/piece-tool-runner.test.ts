@@ -166,3 +166,38 @@ describe('pieceToolRunner: a custom API call stays on the connection\'s own host
         expect(mockExecutePieceActionRun).toHaveBeenCalledTimes(1)
     })
 })
+
+describe('pieceToolRunner.resolveInput: which account fills the input and lists the options', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockGetOrThrow.mockResolvedValue(metadataWith({ text: { displayName: 'Text', required: true, type: PropertyType.SHORT_TEXT } }))
+        mockCompleter.mockResolvedValue({ text: 'hello' })
+        mockExecutePieceActionRun.mockResolvedValue({ content: [{ type: 'text', text: 'sent' }] })
+    })
+
+    async function resolve(overrides: Record<string, unknown>) {
+        const { pieceToolRunner } = await import('../../../../../src/app/ee/agent/tools/piece-tool-runner')
+        const { resolvedInput } = await pieceToolRunner.resolveInput({
+            piece: { pieceName: '@activepieces/piece-slack', actionName: 'send_message' },
+            instruction: 'say hello in general',
+            model: {} as never,
+            projectId: 'proj-1',
+            platformId: 'plat-1',
+            log: log as never,
+            ...overrides,
+        } as never)
+        return resolvedInput
+    }
+
+    it('runs as the pinned account when nothing overrides it', async () => {
+        expect(await resolve({ predefinedInput: { auth: 'conn-pinned', fields: {} } })).toMatchObject({ auth: 'conn-pinned' })
+    })
+
+    it('runs as the overriding account, and the pin does not win it back', async () => {
+        expect(await resolve({ predefinedInput: { auth: 'conn-pinned', fields: {} }, connectionExternalId: 'conn-override' })).toMatchObject({ auth: 'conn-override' })
+    })
+
+    it('runs as the overriding account when the author pinned none', async () => {
+        expect(await resolve({ connectionExternalId: 'conn-override' })).toMatchObject({ auth: 'conn-override' })
+    })
+})

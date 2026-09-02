@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, Permission, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, Permission, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PreparePieceToolRequest, PreparePieceToolResponse, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PreparePieceToolRequest, PreparePieceToolResponse, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { embed, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -483,6 +483,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const { projectId, platformId, attended } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
+        const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { resolvedInput, actionDisplayName } = await pieceToolRunner.resolveInput({
             model,
             piece,
@@ -491,6 +492,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             platformId,
             log,
             ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
+            ...spreadIfDefined('connectionExternalId', connection.externalId),
         })
         const needsApproval = attended && agentToolClassification.requiresActionPreview({
             actionName: input.piece.actionName,
@@ -498,7 +500,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             tainted: input.tainted,
         })
         await agentApprovalGate.storePreparedTool({ conversationId: input.conversationId, preparedId: input.preparedId, prepared: { input: resolvedInput, piece, needsApproval } })
-        return { input: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName, needsApproval }
+        return { input: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName, needsApproval, ...spreadIfDefined('connectionLabel', connection.label) }
     },
 
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
@@ -513,7 +515,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             throw runError
         }
         const { result, resolvedInput } = run
-        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: connectionTemplate.unwrapExternalId(prepared.input.auth) }, piece: { name: prepared.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
         return { result }
     },
 
@@ -800,6 +802,20 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
         : []
     const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
+}
+
+async function connectionForConfiguredTool({ piece, projectId, platformId, log }: {
+    piece: AgentPieceToolMetadata
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ externalId?: string, label?: string }> {
+    const pinned = connectionTemplate.unwrapExternalId(piece.predefinedInput?.auth) ?? undefined
+    if (isNil(pinned)) {
+        return {}
+    }
+    const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: pinned })
+    return { externalId: pinned, ...spreadIfDefined('label', connection?.displayName) }
 }
 
 async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string, attended: boolean }> {

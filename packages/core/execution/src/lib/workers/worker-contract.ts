@@ -226,6 +226,7 @@ export type PreparePieceToolResponse = {
     input: Record<string, unknown>
     actionDisplayName: string
     needsApproval: boolean
+    connectionLabel?: string
 }
 
 export type ExecutePieceToolRequest = {

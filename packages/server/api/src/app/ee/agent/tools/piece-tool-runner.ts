@@ -1,5 +1,5 @@
 import { PredefinedInputsStructure } from '@activepieces/core-piece-types'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { McpToolResult } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,10 +10,11 @@ import { pieceInputFiller, ResolveProperty } from './piece-input-filler'
 
 async function resolveInput({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: ResolveInputParams): Promise<ResolvedPieceInput> {
     const { properties, pieceVersion, actionDisplayName } = await resolveAction({ piece, platformId, log })
+    const account = connectionExternalId ?? connectionTemplate.unwrapExternalId(predefinedInput?.auth) ?? undefined
     const resolvedInput = await pieceInputFiller.fillInput({
-        action: { name: piece.actionName, properties, ...(isNil(connectionExternalId) ? {} : { connectionExternalId }) },
+        action: { name: piece.actionName, properties, ...spreadIfDefined('connectionExternalId', account) },
         instruction,
-        ...(isNil(predefinedInput) ? {} : { predefinedInput }),
+        ...(isNil(predefinedInput) && isNil(account) ? {} : { predefinedInput: { fields: predefinedInput?.fields ?? {}, ...spreadIfDefined('auth', account) } }),
         ports: {
             resolveProperty: propertyResolverFor({ piece, pieceVersion, projectId, platformId, log }),
             completeObject: pieceInputFiller.modelCompleter(model),

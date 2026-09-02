@@ -47,17 +47,33 @@ vi.mock('ai', async (importOriginal) => ({
     embed: () => mockEmbed(),
 }))
 
-const { mockTakePreparedTool, mockCheckDecision } = vi.hoisted(() => ({
+const { mockTakePreparedTool, mockCheckDecision, mockGetSelectedConnection, mockStorePreparedTool } = vi.hoisted(() => ({
     mockTakePreparedTool: vi.fn(),
     mockCheckDecision: vi.fn(),
+    mockGetSelectedConnection: vi.fn().mockResolvedValue(null),
+    mockStorePreparedTool: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
-    agentApprovalGate: { takePreparedTool: mockTakePreparedTool, checkDecision: mockCheckDecision },
+    agentApprovalGate: {
+        takePreparedTool: mockTakePreparedTool,
+        checkDecision: mockCheckDecision,
+        getSelectedConnection: mockGetSelectedConnection,
+        storePreparedTool: mockStorePreparedTool,
+    },
 }))
 
-const { mockRunResolved, mockUpdateStepProgress } = vi.hoisted(() => ({
+const { mockGetOneWithoutValue } = vi.hoisted(() => ({
+    mockGetOneWithoutValue: vi.fn().mockResolvedValue(null),
+}))
+
+vi.mock('../../../../../src/app/app-connection/app-connection-service/app-connection-service', () => ({
+    appConnectionService: () => ({ getOneWithoutValue: mockGetOneWithoutValue }),
+}))
+
+const { mockRunResolved, mockResolveInput, mockUpdateStepProgress } = vi.hoisted(() => ({
     mockRunResolved: vi.fn().mockResolvedValue({ result: { ok: true }, resolvedInput: {} }),
+    mockResolveInput: vi.fn().mockResolvedValue({ resolvedInput: { to: 'jane@customer.com' }, actionDisplayName: 'Send Email' }),
     mockUpdateStepProgress: vi.fn(),
 }))
 
@@ -66,7 +82,7 @@ vi.mock('../../../../../src/app/flows/flow-run/engine-run-callback-service', () 
 }))
 
 vi.mock('../../../../../src/app/ee/agent/tools/piece-tool-runner', () => ({
-    pieceToolRunner: { runResolved: mockRunResolved },
+    pieceToolRunner: { runResolved: mockRunResolved, resolveInput: mockResolveInput, withoutCredential: (input: Record<string, unknown>) => input },
 }))
 
 const { mockGetOnePopulated } = vi.hoisted(() => ({
@@ -651,5 +667,57 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding i
         })
 
         expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ queryEmbedding: expect.objectContaining({ length: 768 }) }))
+    })
+})
+
+describe('agentRpcHandlers.preparePieceTool — which account a configured action runs as', () => {
+    const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' }
+    const PINNED = 'conn-author-pinned'
+
+    async function prepare({ pinnedExists, pinnedAuth = PINNED }: { pinnedExists: boolean, pinnedAuth?: string }) {
+        mockResolveInput.mockClear()
+        mockFindOneBy.mockResolvedValue(AGENT_CHAT)
+        mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        const response = await agentRpcHandlers(noopLogger as never).preparePieceTool({
+            conversationId: 'conv-1',
+            toolName: 'gmail-send_email',
+            instruction: 'email the summary',
+            preparedId: 'call-1',
+            tainted: false,
+            piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email', predefinedInput: { auth: pinnedAuth, fields: {} } },
+        })
+        return { call: mockResolveInput.mock.calls[0][0], response, lookup: mockGetOneWithoutValue.mock.calls[0]?.[0] }
+    }
+
+    it('runs as the account the author pinned, and hands it to dynamic property resolution', async () => {
+        const { call } = await prepare({ pinnedExists: true })
+
+        expect(call.connectionExternalId).toBe(PINNED)
+    })
+
+    it('names the account on the approval card, so approving says whose it is', async () => {
+        const { response } = await prepare({ pinnedExists: true })
+
+        expect(response.connectionLabel).toBe('Sales Inbox')
+    })
+
+    it('looks the account up inside the conversation project only', async () => {
+        const { lookup } = await prepare({ pinnedExists: true })
+
+        expect(lookup).toMatchObject({ projectId: 'proj-1', platformId: 'plat-1', externalId: PINNED })
+    })
+
+    it('still runs as the pinned account when it cannot be named, rather than picking another one', async () => {
+        const { call, response } = await prepare({ pinnedExists: false })
+
+        expect(call.connectionExternalId).toBe(PINNED)
+        expect(response.connectionLabel).toBeUndefined()
+    })
+
+    it('asks for no account when the author pinned none', async () => {
+        const { call } = await prepare({ pinnedExists: false, pinnedAuth: '' })
+
+        expect(call.connectionExternalId).toBeUndefined()
     })
 })

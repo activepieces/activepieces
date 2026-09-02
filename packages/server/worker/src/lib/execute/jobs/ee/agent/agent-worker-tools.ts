@@ -1465,6 +1465,7 @@ function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, tai
                         pieceName: configured.pieceMetadata.pieceName,
                         actionName: configured.pieceMetadata.actionName,
                         actionDisplayName: prepared.actionDisplayName,
+                        ...spreadIfDefined('connectionLabel', prepared.connectionLabel),
                         input: prepared.input,
                         isBatch: false,
                     })
@@ -1499,6 +1500,7 @@ function createConfiguredPieceTools({ tools, runPieceTool, preparePieceTool, tai
                         toolCallId: preparedId,
                         actionDisplayName: prepared.actionDisplayName,
                         pieceName: configured.pieceMetadata.pieceName,
+                        ...spreadIfDefined('connectionLabel', prepared.connectionLabel),
                         status: succeeded ? 'success' : 'failed',
                         output: data.result,
                         timestamp: new Date().toISOString(),

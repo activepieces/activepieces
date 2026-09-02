@@ -277,13 +277,16 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const userId = request.principal.id
         const conversation = await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const pieceName = request.query.pieceName
-        const pinned = await pinnedAccounts({ conversation, pieceName, platformId, userId, log: request.log })
-        const cached = await agentApprovalGate.getAvailableConnections({ conversationId, pieceName })
-        if (cached.length > 0) {
+        const [pinned, allProjects] = await Promise.all([
+            pinnedAccounts({ conversation, pieceName, platformId, userId, log: request.log }),
+            agentHelpers.getUserProjects({ platformId, userId, log: request.log }),
+        ])
+        const projects = isNil(pinned) ? allProjects : allProjects.filter((project) => project.id === pinned.projectId)
+        const { data: result } = await tryCatch(() => findConnectionsForPiece({ pieceName, projects, platformId, log: request.log }))
+        if (isNil(result)) {
+            const cached = await agentApprovalGate.getAvailableConnections({ conversationId, pieceName })
             return reply.status(StatusCodes.OK).send(connectionOffer({ connections: cached, pinned }))
         }
-        const projects = await agentHelpers.getUserProjects({ platformId, userId, log: request.log })
-        const result = await findConnectionsForPiece({ pieceName, projects, platformId, log: request.log })
         if (!('pickConnection' in result)) {
             return reply.status(StatusCodes.OK).send(connectionOffer({ connections: [], pinned }))
         }
