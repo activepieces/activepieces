@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { formioAuth } from '../auth';
 import { formioCommon } from '../common/client';
 import { formioProps } from '../common/props';
+import { findSubmissionsOutputSchema } from '../common/output-schemas';
 
 function buildQueryParams({
   filters,
@@ -55,6 +56,7 @@ export const findSubmissions = createAction({
       'Searches the submissions of a Form.io form, filtering on submitted field values or on the created and modified timestamps, with paging and sorting. Field paths are prefixed with data, for example data.email. Choose it to look records up by their content; use Get Submission when the id is already known. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: findSubmissionsOutputSchema,
   props: {
     formPath: formioProps.formPath,
     filters: Property.Array({

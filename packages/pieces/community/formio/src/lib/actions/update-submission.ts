@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { formioAuth } from '../auth';
 import { formioCommon } from '../common/client';
 import { formioProps } from '../common/props';
+import { updateSubmissionOutputSchema } from '../common/output-schemas';
 
 export const updateSubmission = createAction({
   auth: formioAuth,
@@ -15,6 +16,7 @@ export const updateSubmission = createAction({
       'Updates an existing Form.io submission, identified by its id. By default the fields supplied are merged into the submission, leaving every other field as it was. Turn Merge off to replace the submission data outright, which is what the Form.io API does natively and which clears any field not supplied. Use it to correct or progress a record already in Form.io.',
     idempotent: true,
   },
+  outputSchema: updateSubmissionOutputSchema,
   props: {
     formPath: formioProps.formPath,
     submissionId: formioProps.submissionId,

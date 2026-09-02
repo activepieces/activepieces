@@ -14,6 +14,7 @@ import {
   FormioWebhookPayload,
   formioCommon,
 } from '../common/client';
+import { submissionTriggerOutputSchema } from '../common/output-schemas';
 import { formioProps } from '../common/props';
 
 type FormioAuthValue = AppConnectionValueForAuthProperty<typeof formioAuth>;
@@ -73,6 +74,7 @@ export function registerSubmissionTrigger({
     aiMetadata: { description: aiDescription },
     props: { formPath: formioProps.formPath },
     type: TriggerStrategy.WEBHOOK,
+    outputSchema: submissionTriggerOutputSchema,
     sampleData: SAMPLE_SUBMISSION,
 
     async onEnable(context) {

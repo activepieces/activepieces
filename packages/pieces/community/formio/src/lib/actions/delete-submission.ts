@@ -2,6 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { formioAuth } from '../auth';
 import { formioCommon } from '../common/client';
 import { formioProps } from '../common/props';
+import { deleteSubmissionOutputSchema } from '../common/output-schemas';
 
 export const deleteSubmission = createAction({
   auth: formioAuth,
@@ -15,6 +16,7 @@ export const deleteSubmission = createAction({
       'Deletes a Form.io submission by its id. Destructive and not recoverable through this piece, so confirm the id before calling it. Deleting an already-deleted submission has no further effect.',
     idempotent: true,
   },
+  outputSchema: deleteSubmissionOutputSchema,
   props: {
     formPath: formioProps.formPath,
     submissionId: formioProps.submissionId,

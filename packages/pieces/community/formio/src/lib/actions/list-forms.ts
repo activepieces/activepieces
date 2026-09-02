@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { formioAuth } from '../auth';
 import { formioCommon } from '../common/client';
+import { listFormsOutputSchema } from '../common/output-schemas';
 
 export const listForms = createAction({
   auth: formioAuth,
@@ -14,6 +15,7 @@ export const listForms = createAction({
       'Lists the forms in a Form.io project, each with its title, path and id. Use it to discover which forms exist, or to resolve a form title to the path the submission actions need. Set the type to resource to list resources instead of forms. Read-only and idempotent.',
     idempotent: true,
   },
+  outputSchema: listFormsOutputSchema,
   props: {
     type: Property.StaticDropdown({
       displayName: 'Type',
