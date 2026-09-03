@@ -301,12 +301,20 @@ export const scrape = createAction({
     const result = response.body;
     const savedScreenshot = await downloadAndSaveScreenshot(result.data, context);
     const savedPdfs = await downloadAndSavePdfs(result.data, context);
+    const savedActionScreenshots = await Promise.all(
+      (result.data.actions?.screenshots ?? []).map((url: string) =>
+        downloadAndSaveScreenshot({ screenshot: url }, context)
+      )
+    );
 
     // reorder the data object to put screenshot first, then user's selected format only
     result.data = {
       screenshot: savedScreenshot,
       ...(format !== 'pdf' && format !== 'screenshot' && { [format]: result.data[format] }),
-      pdfs: savedPdfs,
+      actions: {
+        pdfs: savedPdfs,
+        screenshots: savedActionScreenshots,
+      },
       metadata: result.data.metadata
     };
 
