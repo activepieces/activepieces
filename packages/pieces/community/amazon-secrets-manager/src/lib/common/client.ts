@@ -51,7 +51,7 @@ export async function getTemporaryCredentials({
     }
   }
 
-  const token = await mintOidcToken({ server });
+  const token = await resolveOidcToken({ server });
 
   const sts = new STSClient({
     region: auth.region,
@@ -82,7 +82,7 @@ export async function getTemporaryCredentials({
   return credentials;
 }
 
-async function mintOidcToken({ server }: { server: ServerContext | AuthValidationServerContext }): Promise<string> {
+async function resolveOidcToken({ server }: { server: ServerContext | AuthValidationServerContext }): Promise<string> {
   if ('mintOidcToken' in server) {
     return server.mintOidcToken({ audience: AWS_STS_AUDIENCE });
   }
