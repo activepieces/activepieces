@@ -37,6 +37,8 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -219,9 +221,9 @@ const AgentsPageContent = () => {
     );
   };
 
-  const blankAgentProjectId =
-    (allProjects ?? []).find((entry) => entry.type === ProjectType.PERSONAL)
-      ?.id ?? createInProjectId;
+  const personalProject = (allProjects ?? []).find(
+    (entry) => entry.type === ProjectType.PERSONAL,
+  );
 
   const createBlankAgent = (projectId: string) => {
     if (createAgent.isPending) {
@@ -580,16 +582,45 @@ const AgentsPageContent = () => {
                   />
                 </button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="px-3.5 text-neutral-700"
-                loading={createAgent.isPending}
-                onClick={() => createBlankAgent(blankAgentProjectId)}
-              >
-                <Plus size={15} />
-                {t('New agent')}
-              </Button>
+              {personalProject === undefined ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="px-3.5 text-neutral-700"
+                      loading={createAgent.isPending}
+                    >
+                      <Plus size={15} />
+                      {t('New agent')}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[220px]">
+                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                      {t('Create it in')}
+                    </DropdownMenuLabel>
+                    {projectOptions.map((option) => (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onSelect={() => createBlankAgent(option.value)}
+                      >
+                        {option.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-3.5 text-neutral-700"
+                  loading={createAgent.isPending}
+                  onClick={() => createBlankAgent(personalProject.id)}
+                >
+                  <Plus size={15} />
+                  {t('New agent')}
+                </Button>
+              )}
             </div>
           </div>
 
