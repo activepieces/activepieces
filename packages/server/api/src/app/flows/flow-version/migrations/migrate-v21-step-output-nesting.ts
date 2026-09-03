@@ -14,7 +14,7 @@ export const migrateV21StepOutputNesting: Migration = {
         const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => {
             const newStep = {
                 ...step,
-                settings: expressionRewriter.rewriteDeep(step.settings, stepNames),
+                settings: expressionRewriter.rewriteDeep(step.settings, stepNames, true),
             }
             if (newStep.type === FlowActionType.CODE) {
                 newStep.settings.sourceCode = step.settings.sourceCode
