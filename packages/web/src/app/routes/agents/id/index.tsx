@@ -1234,6 +1234,15 @@ const AgentEditorContent = () => {
         <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
           <button
             type="button"
+            aria-label={t('Back to agents')}
+            onClick={() => navigate('/agents')}
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
+          <button
+            type="button"
             aria-label={
               conversationsOpen
                 ? t('Collapse conversations')
