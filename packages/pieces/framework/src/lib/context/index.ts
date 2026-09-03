@@ -188,7 +188,7 @@ export class PieceServerContextError extends Error {
 }
 
 export function isPieceServerContextError(error: unknown): error is PieceServerContextError {
-  return error instanceof PieceServerContextError;
+  return error instanceof Error && error.name === 'PieceServerContextError';
 }
 
 export type CreateWaitpointParams = {
