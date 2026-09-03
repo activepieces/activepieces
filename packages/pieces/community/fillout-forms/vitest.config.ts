@@ -12,6 +12,8 @@ export default defineConfig({
     alias: {
       '@activepieces/pieces-framework': path.resolve(repoRoot, 'packages/pieces/framework/src/index.ts'),
       '@activepieces/pieces-common': path.resolve(repoRoot, 'packages/pieces/common/src/index.ts'),
+      '@activepieces/core-piece-types': path.resolve(repoRoot, 'packages/core/piece-types/src/index.ts'),
+      '@activepieces/core-utils': path.resolve(repoRoot, 'packages/core/utils/src/index.ts'),
     },
   },
 })
