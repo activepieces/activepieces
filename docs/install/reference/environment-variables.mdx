@@ -65,7 +65,7 @@ protect connections and tokens, and telemetry.
 | ❗ `AP_JWT_SECRET` | 32-character hexadecimal key used to sign JWT tokens. Generate one with `openssl rand -hex 32`. | `None` |
 | `AP_CONFIG_PATH` | Path where the PGLite database and local settings are stored. | `~/.activepieces` |
 | `AP_INTERNAL_URL` | (Beta) Internal URL used for SSO authentication, e.g. `https://demo.activepieces.com/api`. | `None` |
-| `AP_TELEMETRY_ENABLED` | Collect anonymous telemetry. | `true` |
+| `AP_TELEMETRY_ENABLED` | Starting value for product analytics. Each platform's setting is created from it on first read; after that, change it at Platform → Infrastructure → Configurations. | `true` |
 
 <Warning>
 `AP_FRONTEND_URL` is essential for webhooks and app triggers. It must be

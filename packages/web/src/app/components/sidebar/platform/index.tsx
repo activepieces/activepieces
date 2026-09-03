@@ -209,6 +209,15 @@ export function PlatformSidebar() {
           label: t('Triggers'),
           icon: MousePointerClickIcon,
         },
+        ...(edition === ApEdition.CLOUD
+          ? []
+          : [
+              {
+                to: '/platform/infrastructure/configurations',
+                label: t('Configurations'),
+                icon: Settings2Icon,
+              },
+            ]),
       ],
     },
   ];

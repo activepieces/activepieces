@@ -2765,5 +2765,10 @@
   "API style": "API style",
   "Chat completions": "Chat completions",
   "Responses": "Responses",
-  "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.": "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock."
+  "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.": "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.",
+  "Configurations": "Configurations",
+  "Telemetry": "Telemetry",
+  "Product analytics": "Product analytics",
+  "Shares usage events so we can see which features are used and fix what breaks.": "Shares usage events so we can see which features are used and fix what breaks.",
+  "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys.": "Help us improve Activepieces. We never receive what your flows do, the data they process, or anything inside your connections and API keys."
 }

@@ -24,6 +24,8 @@ Templates are a library of reusable flow (and table) blueprints users can browse
 - Flow version migration (`migrateFlowVersionTemplateList`) runs as a `preValidation` hook on create/update to handle schema evolution in stored flows.
 - `pieces` and `categories` are denormalized + indexed for fast filtering.
 
+- **`POST /v1/templates-telemetry/event` serves two callers, and only one of them is the relay — do not gate it on edition or skip the gate.** It is `securityAccess.public()`, and the local browser posts to it directly for VIEW, INSTALL and EXPLORE_VIEW (`packages/web/src/features/templates/api/templates-telemetry-api.ts`, four call sites); a self-hosted instance *also* posts to Cloud's copy of the same route via `sendToCloud`. Those three event types travel **only** this path, so treating the route as "the relay hop, already consented upstream" silently un-gates them for every opted-out self-hoster. The controller therefore resolves `platformUtils.getPlatformIdForRequest` and the service gates on that platform's row when one resolves; a null platform means the genuine relay case (a Cloud request with no principal, whose `projectId`/`templateId` belong to the sending deployment's database) and is forwarded. ACTIVATE/DEACTIVATE come from `trigger-source-service` with a real `projectId` and are gated through the project. Also note `sendToCloud`/`sendToInternal` use raw `fetch`, not `safeHttp`/`apAxios` — pre-existing, and only sound because both URLs are hardcoded.
+
 ### Editions
 CE/EE proxy official templates from cloud; custom needs `manageTemplatesEnabled`. Cloud stores official in DB directly; custom needs `manageTemplatesEnabled`.
 

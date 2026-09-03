@@ -64,9 +64,12 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
 
             if (templateId) {
                 templateTelemetryService(log).sendEvent({
-                    eventType: TemplateTelemetryEventType.ACTIVATE,
-                    templateId,
-                    flowId: flowVersion.flowId,
+                    event: {
+                        eventType: TemplateTelemetryEventType.ACTIVATE,
+                        templateId,
+                        flowId: flowVersion.flowId,
+                    },
+                    projectId,
                 })
             }
 
@@ -185,9 +188,12 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             log.info('[triggerSourceService#disable] Soft deleted trigger source')
             if (templateId) {
                 templateTelemetryService(log).sendEvent({
-                    eventType: TemplateTelemetryEventType.DEACTIVATE,
-                    templateId,
-                    flowId,
+                    event: {
+                        eventType: TemplateTelemetryEventType.DEACTIVATE,
+                        templateId,
+                        flowId,
+                    },
+                    projectId,
                 })
             }
         },

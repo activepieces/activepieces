@@ -1,4 +1,4 @@
-import { DefaultProjectRole } from '@activepieces/shared'
+import { ApFlagId, DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../src/app/helper/system/system'
@@ -91,6 +91,20 @@ describe('platform configuration', () => {
 
         expect(firstConfiguration!.json().isProductTelemetryEnabled).toBe(true)
         expect(secondConfiguration!.json().isProductTelemetryEnabled).toBe(false)
+    })
+
+    it('stops serving TELEMETRY_ENABLED as a flag, since the browser now reads the configuration', async () => {
+        const ctx = await createTestContext(app!)
+
+        const response = await app!.inject({
+            method: 'GET',
+            url: '/api/v1/flags',
+            headers: { authorization: `Bearer ${ctx.token}` },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).not.toHaveProperty('TELEMETRY_ENABLED')
+        expect(ApFlagId).not.toHaveProperty('TELEMETRY_ENABLED')
     })
 
     it('lets any platform member read the configuration, but only an admin write it', async () => {

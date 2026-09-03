@@ -47,7 +47,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.FLOW_RUN_TIME_SECONDS,
                 ApFlagId.SHOW_COMMUNITY,
                 ApFlagId.SUPPORTED_APP_WEBHOOKS,
-                ApFlagId.TELEMETRY_ENABLED,
                 ApFlagId.TEMPLATES_PROJECT_ID,
                 ApFlagId.TERMS_OF_SERVICE_URL,
                 ApFlagId.THEME,
@@ -186,12 +185,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.TERMS_OF_SERVICE_URL,
                 value: 'https://www.activepieces.com/terms',
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.TELEMETRY_ENABLED,
-                value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
                 created,
                 updated,
             },
@@ -352,7 +345,6 @@ function getSupportedAppWebhooks(): string[] {
 
 export type FlagType =
     | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
-    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
     | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, string[]>

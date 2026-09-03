@@ -3,6 +3,7 @@ import { cryptoUtils } from '@activepieces/server-utils'
 import { ApEdition, ApEnvironment, ApFlagId, AuthenticationResponse, OtpType, PlatformWithoutSensitiveData, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { platformService } from '../platform/platform.service'
@@ -72,7 +73,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         await authenticationUtils(log).saveNewsLetterSubscriber(userIdentity)
         await userInvitationsService(log).provisionUserInvitation({ email: params.email })
 
-        const preferredPlatformId = await getPreferredPlatformId(userIdentity.id, log)
+        const preferredPlatformId = await authenticationService(log).selectCloudSignInPlatformId({ identityId: userIdentity.id })
         if (!isNil(preferredPlatformId)) {
             const user = await userService(log).getOrCreateWithProject({
                 identity: userIdentity,
@@ -84,7 +85,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 platformId: preferredPlatformId,
                 projectId: null,
             })
-            await authenticationUtils(log).sendTelemetry({ identity: userIdentity, user, projectId: authResponse.projectId ?? '' })
+            rejectedPromiseHandler(authenticationUtils(log).sendTelemetry({ identity: userIdentity, user, projectId: authResponse.projectId ?? '' }), log)
             return authResponse
         }
         log.info({ email: params.email, provider: params.provider }, 'User signed up without a platform to join')
@@ -93,7 +94,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
     },
     async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
-        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformId(identity.id, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await authenticationService(log).selectCloudSignInPlatformId({ identityId: identity.id }) : params.predefinedPlatformId
 
         if (isNil(platformId)) { // always cloud
             log.info({ email: params.email }, 'User signed in without an active platform on cloud')
@@ -127,11 +128,18 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             projectId: null,
         })
     },
-    async resolvePreferredPlatformId({ identityId }: ResolvePreferredPlatformIdParams): Promise<string | null> {
-        return getPreferredPlatformId(identityId, log)
+    async selectCloudSignInPlatformId({ identityId }: SelectCloudSignInPlatformIdParams): Promise<string | null> {
+        if (system.getEdition() !== ApEdition.CLOUD) {
+            return null
+        }
+        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId })
+        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? platforms.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
+        const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
+        return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
     },
     async federatedAuthn(params: FederatedAuthnParams): Promise<AuthenticationResponse> {
-        const platformId = isNil(params.predefinedPlatformId) ? await getPreferredPlatformIdForFederatedAuthn(params.email, log) : params.predefinedPlatformId
+        const platformId = isNil(params.predefinedPlatformId) ? await selectCloudSignInPlatformIdByEmail({ email: params.email, log }) : params.predefinedPlatformId
         const userIdentity = await userIdentityService(log).getIdentityByEmail(params.email)
 
         if (isNil(platformId)) { // always cloud
@@ -249,30 +257,23 @@ async function sendVerificationOrAutoVerify(userIdentity: UserIdentity, log: Fas
     }
 }
 
-async function getPreferredPlatformIdForFederatedAuthn(email: string, log: FastifyBaseLogger): Promise<string | null> {
+async function selectCloudSignInPlatformIdByEmail({ email, log }: SelectCloudSignInPlatformIdByEmailParams): Promise<string | null> {
     const identity = await userIdentityService(log).getIdentityByEmail(email)
     if (isNil(identity)) {
         return null
     }
-    return getPreferredPlatformId(identity.id, log)
-}
-
-async function getPreferredPlatformId(identityId: string, log: FastifyBaseLogger): Promise<string | null> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.CLOUD) {
-        const platforms = await platformService(log).listPlatformsForIdentityWithAtleastProject({ identityId }) // this only gets platforms where user is active
-        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
-        const lastUsed = !isNil(identity.lastLoggedInPlatformId) ? platforms.find((p) => p.id === identity.lastLoggedInPlatformId) : undefined
-        const licensed = platforms.find((p) => !isNil(p.plan.licenseKey))
-        return lastUsed?.id ?? licensed?.id ?? platforms[0]?.id ?? null
-    }
-    return null
+    return authenticationService(log).selectCloudSignInPlatformId({ identityId: identity.id })
 }
 
 
 
-type ResolvePreferredPlatformIdParams = {
+type SelectCloudSignInPlatformIdParams = {
     identityId: string
+}
+
+type SelectCloudSignInPlatformIdByEmailParams = {
+    email: string
+    log: FastifyBaseLogger
 }
 
 type FederatedAuthnParams = {
