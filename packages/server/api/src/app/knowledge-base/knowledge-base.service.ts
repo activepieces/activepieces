@@ -270,7 +270,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                         ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
                         ...spreadIfDefined('metadata', chunk.metadata),
                     })
-                    .where('id = :id AND "projectId" = :projectId', { id: chunk.id, projectId })
+                    .where('id = :id AND "projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId', { id: chunk.id, projectId, knowledgeBaseFileId })
                     .returning('id')
                     .execute()
                 const matchedRows: unknown[] = updated.raw ?? []

@@ -236,7 +236,7 @@ describe('knowledgeBaseService', () => {
             expect(mockInsert).not.toHaveBeenCalled()
             expect(mockUpdate).toHaveBeenCalledTimes(1)
             expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ embedding: '[0.1,0.2,0.3]' }))
-            expect(mockUpdateWhere).toHaveBeenCalledWith({ id: 'chunk-1', projectId: 'proj-1' })
+            expect(mockUpdateWhere).toHaveBeenCalledWith({ id: 'chunk-1', projectId: 'proj-1', knowledgeBaseFileId: 'kb-file-1' })
         })
 
         it('should handle mixed insert and update chunks', async () => {

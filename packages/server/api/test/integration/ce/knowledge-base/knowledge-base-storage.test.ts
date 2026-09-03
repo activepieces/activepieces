@@ -101,4 +101,27 @@ describe('storing the chunks of a knowledge file', () => {
         const [after] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
         expect(after.content).toBe('restored')
     })
+
+    // The lock is taken on the file the request names, so an edit that reaches into another file
+    // is neither scoped nor serialised by it.
+    it('refuses an edit that names one file and a chunk from another', async () => {
+        const ctx = await createTestContext(app)
+        const mine = await aFileOf(ctx, 'mine')
+        const theirs = await aFileOf(ctx, 'theirs')
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId: theirs,
+            chunks: [{ content: 'their content', chunkIndex: 0, metadata: {} }],
+        })
+        const [theirChunk] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId: theirs })
+
+        await expect(knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId: mine,
+            chunks: [{ id: theirChunk.id, content: 'reaching into another file' }],
+        })).rejects.toThrow()
+
+        const [unchanged] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId: theirs })
+        expect(unchanged.content).toBe('their content')
+    })
 })
