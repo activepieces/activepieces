@@ -73,4 +73,23 @@ describe('storing the chunks of a knowledge file', () => {
         const count = await countOf(ctx, knowledgeBaseFileId)
         expect(outcome === 'stored' ? count : 0).toBe(outcome === 'stored' ? chunks.length : 0)
     })
+
+    // Two restores of the same file used to delete each other's snapshot and then insert
+    // independently, putting back exactly the duplicates this replace was meant to remove.
+    it('keeps one copy when two restores of the same file overlap', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'The office closes at six.')
+        const chunks = Array.from({ length: 3 }, (_, index) => ({
+            content: `chunk ${index}`,
+            chunkIndex: index,
+            metadata: {},
+        }))
+
+        await Promise.all([
+            knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks }),
+            knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks }),
+        ])
+
+        expect(await countOf(ctx, knowledgeBaseFileId)).toBe(chunks.length)
+    })
 })

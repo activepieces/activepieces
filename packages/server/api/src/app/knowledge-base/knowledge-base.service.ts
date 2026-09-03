@@ -6,6 +6,7 @@ import { IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
+import { distributedLock } from '../database/redis-connections'
 import { fileService } from '../file/file.service'
 import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
 import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
@@ -14,6 +15,7 @@ const kbFileRepo = repoFactory(KnowledgeBaseFileEntity)
 const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 
 const INSERT_BATCH_SIZE = 100
+const RESTORE_LOCK_TIMEOUT_SECONDS = 120
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
 
@@ -228,10 +230,11 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
         const newChunks = chunks.filter((chunk) => isNil(chunk.id))
         const existingChunks = chunks.filter((chunk) => !isNil(chunk.id))
+        const isFullRestore = existingChunks.length === 0
 
-        await transaction(async (entityManager) => {
+        const store = async (): Promise<void> => transaction(async (entityManager) => {
             const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
-            if (existingChunks.length === 0) {
+            if (isFullRestore) {
                 await repo.delete({ projectId, knowledgeBaseFileId })
             }
             const entities = newChunks.map((chunk) => ({
@@ -257,6 +260,16 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     },
                 )
             }
+        })
+
+        if (!isFullRestore) {
+            await store()
+            return
+        }
+        await distributedLock(log).runExclusive({
+            key: `knowledge-base-chunks-${knowledgeBaseFileId}`,
+            timeoutInSeconds: RESTORE_LOCK_TIMEOUT_SECONDS,
+            fn: store,
         })
     },
 
