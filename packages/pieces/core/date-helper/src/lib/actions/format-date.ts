@@ -7,10 +7,12 @@ import {
   timeZoneOptions,
   getCorrectedFormat,
 } from '../common';
+import { formatDateActionOutputSchema } from '../output-schemas';
 
 export const formatDateAction = createAction({
   audience: 'both',
   name: 'format_date',
+  classification: 'READ',
   displayName: 'Format Date',
   description: 'Converts a date from one format to another',
   aiMetadata: { description: 'Converts a date string from one pattern and time zone into another in a single step. Pick this for a pure representation change; use Extract Date Units to pull components as data, Add/Subtract Time to move the date, and Date Difference to compare two dates. Requires the input date plus source and target format and zone; the source pattern is only a parsing hint (parsing falls back to lenient then native parsing) and the action throws if the value cannot be parsed at all, but is otherwise deterministic and idempotent.', idempotent: true },
@@ -63,8 +65,9 @@ export const formatDateAction = createAction({
       defaultValue: 'UTC',
     }),
   },
+  outputSchema: formatDateActionOutputSchema,
   async run(context) {
-    
+
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const inputTimeZone = context.propsValue.inputTimeZone as string;

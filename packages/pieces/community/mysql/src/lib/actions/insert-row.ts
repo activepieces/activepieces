@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { mysqlCommon, mysqlConnect, sanitizeColumnName, warningMarkdown } from '../common';
 import { mysqlAuth } from '../..';
+import { insertRowOutputSchema } from '../output-schemas';
 import sqlstring from 'sqlstring';
 
 export default createAction({
@@ -9,6 +10,7 @@ export default createAction({
   displayName: 'Insert Row',
   description: 'Inserts a new row into a table',
   audience: 'both',
+  outputSchema: insertRowOutputSchema,
   aiMetadata: { description: 'Inserts a new row into a MySQL table from a map of column names to values. Use to add a record. Not idempotent: each call performs a fresh INSERT, so repeating it adds duplicate rows (or errors on a unique-key collision).', idempotent: false },
   props: {
     timezone: mysqlCommon.timezone,

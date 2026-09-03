@@ -1,6 +1,7 @@
 import { FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import {
+    AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
     AuthenticationEvent,
@@ -9,6 +10,8 @@ import {
     FlowCreatedEvent,
     FlowDeactivatedEvent,
     FlowDeletedEvent,
+    FlowPiecesRevertedEvent,
+    FlowPiecesUpgradedEvent,
     FlowPublishedEvent,
     FlowRunEvent,
     FlowUpdatedEvent,
@@ -78,6 +81,35 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                 ...baseEnvelope,
                 action: ApplicationEventName.FLOW_CREATED,
                 data: { flow, project },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+            const mock: FlowPiecesUpgradedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.FLOW_PIECES_UPGRADED,
+                data: {
+                    flowId: flow.id,
+                    flowVersionId: flowVersion.id,
+                    steps: [
+                        { stepName: 'step_1', actionOrTriggerName: 'send_email', decision: 'UPGRADED', prevVersion: '0.1.0', newVersion: '0.2.0' },
+                        { stepName: 'step_2', actionOrTriggerName: 'delete_row', decision: 'KEPT', prevVersion: '0.1.0', newVersion: null },
+                    ],
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_PIECES_REVERTED: {
+            const mock: FlowPiecesRevertedEvent = {
+                ...baseEnvelope,
+                action: ApplicationEventName.FLOW_PIECES_REVERTED,
+                data: {
+                    flowId: flow.id,
+                    flowVersionId: flowVersion.id,
+                    steps: [
+                        { stepName: 'step_1', actionOrTriggerName: 'send_email', prevVersion: '0.2.0', newVersion: '0.1.0' },
+                    ],
+                },
             }
             return mock
         }
@@ -164,6 +196,23 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         updated: isoNow,
                     },
                     project,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.AGENT_CREATED:
+        case ApplicationEventName.AGENT_UPDATED:
+        case ApplicationEventName.AGENT_DELETED:
+        case ApplicationEventName.AGENT_PUBLISHED:
+        case ApplicationEventName.AGENT_UNPUBLISHED: {
+            const mock: AgentAuditEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    agent: {
+                        id: apId(),
+                        displayName: 'Marketing agent',
+                    },
                 },
             }
             return mock

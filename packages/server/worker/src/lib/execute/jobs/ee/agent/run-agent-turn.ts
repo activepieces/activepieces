@@ -1,7 +1,7 @@
-import { AIProviderName, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { AgentPhase, agentToolClassification, agentToolPhases, aiProviderUtils, PersistedAgentPart } from '@activepieces/shared'
-import { generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
+import { AgentPhase, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
+import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
@@ -12,6 +12,11 @@ const MAX_IDENTICAL_TOOL_FAILURES = 2
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
 const STREAM_RETRY_BASE_DELAY_MS = 1_000
+const QUOTA_MARKER = /insufficient_quota/i
+const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i, QUOTA_MARKER]
+const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
+const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
+const USER_CONFIG_ENTITY_TYPES = new Set(['AIProvider', 'ChatAiProvider'])
 const CONTINUE_NUDGE = '[system note — not from the user] Your previous response was cut off by the output token limit before it finished. Continue exactly where you stopped. If a tool call was cut off, re-issue it in FULL. Do not repeat content you already produced.'
 const EMPTY_OUTPUT_NUDGE = '[system note — not from the user] Your previous step produced no visible reply to the user. Continue the task now: either call the next tool, or write your reply to the user. Do not stop silently.'
 
@@ -37,13 +42,13 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
     const loopStopCondition = [
         ...(Array.isArray(baseStopCondition) ? baseStopCondition : [baseStopCondition]),
-        isStepCount(MAX_AGENT_STEPS),
+        isStepCount(stepCeiling ?? MAX_AGENT_STEPS),
     ]
     const guardedTools = wrapToolsWithFailureGuard({ tools, log })
     const maxTurnTokens = runawayTokenCeiling(provider)
@@ -319,6 +324,31 @@ function fingerprintInput(input: unknown): string {
     return data ?? ''
 }
 
+export function classifyAgentRunError({ error, provider }: { error: unknown, provider?: string }): AgentRunErrorClass {
+    const cause = RetryError.isInstance(error) ? error.lastError : error
+    const apiError = APICallError.isInstance(cause) ? cause : undefined
+    const apError = apErrorOf(cause)
+    const message = cause instanceof Error ? cause.message : String(cause)
+    if (apError?.code === ErrorCode.QUOTA_EXCEEDED
+        || apiError?.statusCode === 402
+        || CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
+        || QUOTA_MARKER.test(apiError?.responseBody ?? '')) {
+        return 'credit'
+    }
+    if (isNil(apiError)) {
+        return apError?.code === ErrorCode.ENTITY_NOT_FOUND && USER_CONFIG_ENTITY_TYPES.has(apError.entityType ?? '')
+            ? 'user'
+            : 'internal'
+    }
+    if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
+        return 'user'
+    }
+    return USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0)
+        && (apiError.statusCode === 404 || provider !== AIProviderName.ACTIVEPIECES)
+        ? 'user'
+        : 'internal'
+}
+
 // Transient = worth retrying (rate limit, 5xx, timeout, dropped socket); these are exempt from the
 // repeat-breaker so the agent isn't blocked from re-trying a call that can legitimately recover.
 export function isTransientFailureText(text: string): boolean {
@@ -414,6 +444,7 @@ export type RunAgentTurnParams = {
     log: AgentTurnLogger
     sinks?: AgentTurnSinks
     stopWhen?: StopCondition<ToolSet> | Array<StopCondition<ToolSet>>
+    stepCeiling?: number
 }
 
 export type AgentTurnResult = {
@@ -429,3 +460,5 @@ export type AgentTurnResult = {
     totalOutputTokens: number
     toolCalls: AgentTurnToolCall[]
 }
+
+type AgentRunErrorClass = 'credit' | 'user' | 'internal'

@@ -1,3 +1,4 @@
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 dayjs.extend(duration);
@@ -44,6 +45,16 @@ export const formatUtils = {
       month: 'numeric',
       day: 'numeric',
       year: 'numeric',
+    }).format(date);
+  },
+  formatDateTime(date: Date) {
+    return Intl.DateTimeFormat(i18next.language, {
+      month: 'numeric',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
     }).format(date);
   },
   formatDateWithTime(date: Date, hideCurrentYear: boolean) {
@@ -200,19 +211,40 @@ export const formatUtils = {
     }
     return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
   },
-  urlIsNotLocalhostOrIp(url: string): boolean {
-    const parsed = new URL(url);
-    if (
-      parsed.hostname === 'localhost' ||
-      parsed.hostname === '127.0.0.1' ||
-      parsed.hostname === '::1'
-    ) {
+  urlIsPubliclyReachable(url: string): boolean {
+    const { data: parsed } = tryCatchSync(() => new URL(url));
+    if (isNil(parsed) || parsed.protocol !== 'https:') {
       return false;
     }
-    const ipv4Regex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
-    if (ipv4Regex.test(parsed.hostname)) {
+    const hostname = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '');
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
       return false;
     }
-    return parsed.protocol === 'https:';
+    if (hostname.includes(':')) {
+      return !/^(::1$|f[cd]|fe[89ab])/.test(hostname);
+    }
+    return !isPrivateIpv4(hostname);
   },
 };
+
+function isPrivateIpv4(hostname: string): boolean {
+  const octets = hostname.split('.').map(Number);
+  const isIpv4 =
+    octets.length === 4 &&
+    octets.every(
+      (octet) => Number.isInteger(octet) && octet >= 0 && octet <= 255,
+    );
+  if (!isIpv4) {
+    return false;
+  }
+  const [first, second] = octets;
+  return (
+    first === 0 ||
+    first === 10 ||
+    first === 127 ||
+    (first === 100 && second >= 64 && second <= 127) ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}

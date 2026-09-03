@@ -7,12 +7,14 @@ import {
 import { t } from 'i18next';
 import {
   CheckIcon,
+  CircleArrowUp,
   Eye,
   Folder,
   History,
   Key,
   Link2,
   Logs,
+  Undo2,
   Users,
   Wand,
   Workflow,
@@ -358,6 +360,16 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Workflow className="size-4" />,
         tooltip: t('Flow'),
       };
+    case ApplicationEventName.FLOW_PIECES_UPGRADED:
+      return {
+        icon: <CircleArrowUp className="size-4" />,
+        tooltip: t('Flow pieces upgraded'),
+      };
+    case ApplicationEventName.FLOW_PIECES_REVERTED:
+      return {
+        icon: <Undo2 className="size-4" />,
+        tooltip: t('Flow pieces reverted'),
+      };
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_DELETED:
     case ApplicationEventName.FOLDER_UPDATED:
@@ -468,6 +480,30 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FLOW_ACTIVATED:
     case ApplicationEventName.FLOW_DEACTIVATED:
       return [{ label: t('Flow'), value: event.data.flowVersion.displayName }];
+    case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+      const { flowId, steps } = event.data;
+      return [
+        { label: t('Flow'), value: flowId },
+        ...steps.map((step) => ({
+          label: step.stepName,
+          value: `${step.actionOrTriggerName}: ${
+            step.decision === 'UPGRADED'
+              ? `${step.prevVersion} → ${step.newVersion}`
+              : t('kept at {version}', { version: step.prevVersion })
+          }`,
+        })),
+      ];
+    }
+    case ApplicationEventName.FLOW_PIECES_REVERTED: {
+      const { flowId, steps } = event.data;
+      return [
+        { label: t('Flow'), value: flowId },
+        ...steps.map((step) => ({
+          label: step.stepName,
+          value: `${step.actionOrTriggerName}: ${step.prevVersion} → ${step.newVersion}`,
+        })),
+      ];
+    }
     case ApplicationEventName.CONNECTION_UPSERTED:
     case ApplicationEventName.CONNECTION_DELETED: {
       const { connection } = event.data;
@@ -489,6 +525,22 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.VARIABLE_VALUE_REVEALED: {
       const { variable } = event.data;
       return [{ label: t('Variable'), value: variable.name }];
+    }
+    case ApplicationEventName.AGENT_CREATED:
+    case ApplicationEventName.AGENT_UPDATED:
+    case ApplicationEventName.AGENT_DELETED:
+    case ApplicationEventName.AGENT_PUBLISHED:
+    case ApplicationEventName.AGENT_UNPUBLISHED: {
+      const { agent } = event.data;
+      return [
+        { label: t('Agent'), value: agent.displayName },
+        ...(agent.publishedDigest
+          ? [{ label: t('Published version'), value: agent.publishedDigest }]
+          : []),
+        ...(agent.publishedToolNames?.length
+          ? [{ label: t('Tools'), value: agent.publishedToolNames.join(', ') }]
+          : []),
+      ];
     }
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_UPDATED:

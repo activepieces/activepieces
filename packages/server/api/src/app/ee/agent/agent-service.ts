@@ -1,169 +1,629 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
-import { ModelMessage } from 'ai'
+import { createHash } from 'node:crypto'
+import { AgentToolType, McpAuthType } from '@activepieces/core-piece-types'
+import { ActivepiecesError, apId, ApId, connectionTemplate, Cursor, ErrorCode, isNil, omit, Permission, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, unique, UserId } from '@activepieces/core-utils'
+import { Agent, AgentConfig, AgentFlowTool, AgentKnowledgeBaseTool, AgentListSort, AgentMoveLoss, AgentMoveLossKind, AgentMovePreview, AgentRunSource, AgentSummary, agentUtils, AgentVisibility, CreateAgentRequest, DEFAULT_CHAT_TIER_ID, DefaultProjectRole, Project, ProjectType, UpdateAgentRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm'
+import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
+import { repoFactory } from '../../core/db/repo-factory'
+import { transaction } from '../../core/db/transaction'
+import { flowService } from '../../flows/flow/flow.service'
+import { PublishedFlowsUsingAgent, publishedFlowsUsingAgent, publishedFlowVersionsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { Order } from '../../helper/pagination/paginator'
-import { agentApprovalGate } from './agent-approval-gate'
+import { Order, OrderByConfig } from '../../helper/pagination/paginator'
+import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.service'
+import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
+import { projectService } from '../../project/project-service'
+import { userService } from '../../user/user-service'
+import { projectMemberService } from '../projects/project-members/project-member.service'
 import { AgentConversationEntity } from './agent-conversation-entity'
-import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
-import { agentHistory } from './history/agent-history'
+import { AgentEntity, AgentWithRelations } from './agent-entity'
+import { agentHelpers } from './agent-helpers'
+
+const DEFAULT_PAGE_SIZE = 20
+const MAX_NAMED_FLOWS_IN_USE = 3
+export const agentRepo = repoFactory(AgentEntity)
+
+export const agentAudit = { describePublished }
+
+export const agentRedaction = { withoutToolSecrets }
+
+const AGENT_MOVED_AWAY = 'That agent has just been moved somewhere else. Reload the page and try again.'
 
 export const agentService = (log: FastifyBaseLogger) => ({
-    async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
-        const conversation = await agentHelpers.conversationRepo().save({
-            id: id ?? apId(),
-            platformId,
-            projectId: null,
-            userId,
-            source: AgentRunSource.CHAT,
-            title: request.title ?? null,
-            modelName: request.modelName ?? null,
-            messages: [],
+    async create({ platformId, projectId, ownerId, request }: CreateParams): Promise<Agent> {
+        const visibility = request.visibility ?? AgentVisibility.PROJECT
+        const draft = await withDefaultModel({ draft: request.draft, platformId, projectId, log })
+        return agentRepo().save({
+            id: apId(),
+            projectId,
+            ownerId,
+            externalId: apId(),
+            displayName: request.displayName,
+            description: request.description ?? null,
+            icon: request.icon,
+            color: request.color,
+            visibility,
+            sharedWithUserIds: await resolveShare({ visibility, requested: request.sharedWithUserIds, stored: [], projectId, log }),
+            draft: sanitizeObjectForPostgresql(draft),
+            published: null,
         })
-        log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentService] Conversation created')
-        return conversation
     },
 
-    async listConversations({ platformId, userId, cursor, limit }: ListConversationsParams): Promise<SeekPage<AgentConversation>> {
-        const decodedCursor = paginationHelper.decodeCursor(cursor)
+    async list({ platformId, userId, projectId, search, sort, cursor, limit }: ListParams): Promise<SeekPage<AgentSummary>> {
+        const readableProjects = await resolveReadableProjects({ platformId, userId, projectId, log })
+        const readableProjectIds = readableProjects.map((project) => project.id)
+        if (readableProjectIds.length === 0) {
+            return paginationHelper.createPage([], null)
+        }
+        const projectById = new Map(readableProjects.map((project) => [project.id, project]))
+
+        const { nextCursor, previousCursor } = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
-            entity: AgentConversationEntity,
+            entity: AgentEntity,
             query: {
-                limit,
-                orderBy: [
-                    { field: 'created', order: Order.DESC },
-                    { field: 'id', order: Order.DESC },
-                ],
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
+                limit: limit ?? DEFAULT_PAGE_SIZE,
+                orderBy: orderByForSort(sort),
+                afterCursor: nextCursor,
+                beforeCursor: previousCursor,
             },
         })
 
-        const queryBuilder = agentHelpers.conversationRepo()
-            .createQueryBuilder('chat_conversation')
-            .select([
-                'chat_conversation.id',
-                'chat_conversation.created',
-                'chat_conversation.updated',
-                'chat_conversation.platformId',
-                'chat_conversation.projectId',
-                'chat_conversation.userId',
-                'chat_conversation.title',
-                'chat_conversation.modelName',
-                'chat_conversation.status',
-            ])
-            .where({ platformId, userId })
-            // Eval conversations are owned by the platform owner; keep them out of the regular list.
-            .andWhere('chat_conversation.id NOT LIKE :evalPrefix', { evalPrefix: `${EVAL_CONVERSATION_ID_PREFIX}%` })
-            .andWhere('chat_conversation.source = :chatSource', { chatSource: AgentRunSource.CHAT })
+        const query = visibleAgents({ userId, isProjectAdmin: false }).andWhere({ projectId: In(readableProjectIds) })
+        const needle = search?.trim().toLowerCase()
+        if (!isNil(needle) && needle.length > 0) {
+            query.andWhere(new Brackets((qb) => {
+                qb.where('LOWER(agent."displayName") LIKE :needle', { needle: `%${needle}%` })
+                    .orWhere('LOWER(COALESCE(agent."description", \'\')) LIKE :needle', { needle: `%${needle}%` })
+            }))
+        }
 
-        const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage(data, paginationCursor)
+        const { data, cursor: newCursor } = await paginator.paginate(query)
+        return paginationHelper.createPage(data.map((agent) => toSummary(agent, projectById.get(agent.projectId))), newCursor)
     },
 
-    async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<AgentConversation> {
-        // Eval conversations must never be opened or messaged through the regular (non-dry-run) chat
-        // path — that would run real tools against a conversation meant to be side-effect-free.
-        if (isEvalConversationId(id)) {
-            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
+    async getOneOrThrow({ id, projectId, userId }: GetParams): Promise<Agent> {
+        const isProjectAdmin = await isProjectAdministrator({ projectId, userId, log })
+        const agent = await visibleAgents({ userId, isProjectAdmin }).andWhere({ id, projectId }).getOne()
+        if (isNil(agent)) {
+            throw agentNotFound(id)
         }
-        const conversation = await agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
-        if (conversation.source !== AgentRunSource.CHAT) {
-            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
-        }
-        return conversation
+        return agent
     },
 
-    async updateConversation({ id, platformId, userId, request }: UpdateConversationParams): Promise<AgentConversation> {
-        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        const updates = {
-            ...spreadIfDefined('title', request.title),
-            ...spreadIfDefined('modelName', request.modelName),
+    async getOneOrThrowByPlatform({ id, platformId, userId }: GetByPlatformParams): Promise<Agent> {
+        const readableProjectIds = (await resolveReadableProjects({ platformId, userId, log })).map((project) => project.id)
+        if (readableProjectIds.length === 0) {
+            throw agentNotFound(id)
         }
-
-        if (Object.keys(updates).length > 0) {
-            await agentHelpers.conversationRepo().update(conversation.id, updates)
+        const agent = await visibleAgents({ userId, isProjectAdmin: false })
+            .andWhere({ id, projectId: In(readableProjectIds) })
+            .getOne()
+        if (isNil(agent)) {
+            throw agentNotFound(id)
         }
-        return { ...conversation, ...updates }
+        return this.getOneOrThrow({ id, projectId: agent.projectId, userId })
     },
 
-    async deleteConversation({ id, platformId, userId }: ConversationIdentifier): Promise<void> {
-        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        if (conversation.status === AgentConversationStatus.STREAMING) {
-            await agentApprovalGate.requestCancel({ conversationId: id })
-            await agentHelpers.conversationRepo().update(id, {
-                status: AgentConversationStatus.IDLE,
-            })
-        }
-        await agentHelpers.conversationRepo().delete(conversation.id)
-        log.info({ conversation: { id }, platform: { id: platformId }, user: { id: userId } }, '[agentService] Conversation deleted')
+    async update({ id, projectId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
+        const visibility = request.visibility ?? agent.visibility
+        const sharedWithUserIds = await resolveShare({
+            visibility,
+            requested: request.sharedWithUserIds,
+            stored: agent.sharedWithUserIds,
+            projectId,
+            log,
+        })
+        const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
+        const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
+        await transaction(async (entityManager) => {
+            await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            await entityManager.getRepository(AgentEntity).save({ id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds })
+        })
+        return this.getOneOrThrow({ id, projectId, userId })
     },
 
-    async getMessages({ id, platformId, userId }: ConversationIdentifier): Promise<{ data: PersistedAgentMessage[] | AgentHistoryMessage[] }> {
-        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        if (conversation.uiMessages) {
-            return { data: conversation.uiMessages }
-        }
-        const messages = agentHistory.reconstruct(conversation.messages as ModelMessage[])
-        return { data: messages }
-    },
-
-    async setMessageFeedback({ id, platformId, userId, messageIndex, request }: SetMessageFeedbackParams): Promise<void> {
-        const conversation = await this.getConversationOrThrow({ id, platformId, userId })
-        const target = conversation.uiMessages?.[messageIndex]
-        if (isNil(target) || target.role !== PersistedAgentRole.ASSISTANT) {
+    async publish({ id, projectId, userId }: GetParams): Promise<Agent> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        if (!agentUtils.isPublishable(agent.draft)) {
             throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'AgentMessage', entityId: `${id}#${messageIndex}` },
+                code: ErrorCode.VALIDATION,
+                params: { message: 'An agent needs instructions before it can be published' },
             })
         }
-        // Patch only this message's feedback via atomic jsonb_set, never a full-array rewrite — a
-        // concurrent worker append during a STREAMING turn must not be clobbered by a stale snapshot.
-        const repo = agentHelpers.conversationRepo()
-        const table = repo.metadata.tableName
-        const path = `{${messageIndex},feedback}`
-        if (isNil(request.rating)) {
-            await repo.query(`UPDATE "${table}" SET "uiMessages" = "uiMessages" #- $1::text[] WHERE id = $2`, [path, conversation.id])
+        const published = await agentRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ published: () => '"draft"' })
+            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .andWhere('"draft" = CAST(:reviewedDraft AS jsonb)', { reviewedDraft: JSON.stringify(agent.draft) })
+            .andWhere(visibleToUser({ userId, prefix: '', isProjectAdmin: await isProjectAdministrator({ projectId, userId, log }) }))
+            .returning('id')
+            .execute()
+
+        const publishedRows: unknown[] = published.raw ?? []
+        if (publishedRows.length === 0) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'The agent changed while it was being published, review it and publish again' },
+            })
         }
-        else {
-            const reasons = request.reasons?.length ? request.reasons : undefined
-            const comment = request.comment?.trim() || undefined
-            const feedback = { rating: request.rating, ...spreadIfDefined('reasons', reasons), ...spreadIfDefined('comment', comment) }
-            const value = JSON.stringify(sanitizeObjectForPostgresql(feedback))
-            await repo.query(`UPDATE "${table}" SET "uiMessages" = jsonb_set("uiMessages", $1::text[], $2::jsonb, true) WHERE id = $3`, [path, value, conversation.id])
-        }
-        log.info({ conversation: { id }, messageIndex, rating: request.rating }, '[agentService] Message feedback recorded')
+        return this.getOneOrThrow({ id, projectId, userId })
     },
 
+    async unpublish({ id, projectId, userId }: GetParams): Promise<Agent> {
+        await this.getOneOrThrow({ id, projectId, userId })
+        await agentRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ published: null })
+            .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+            .andWhere(visibleToUser({ userId, prefix: '', isProjectAdmin: await isProjectAdministrator({ projectId, userId, log }) }))
+            .execute()
+        return this.getOneOrThrow({ id, projectId, userId })
+    },
+
+    async editDraftTools({ id, projectId, userId, edit }: EditDraftToolsParams): Promise<Agent | null> {
+        return transaction(async (entityManager) => {
+            const repo = entityManager.getRepository(AgentEntity)
+            const agent = await repo.createQueryBuilder('agent')
+                .setLock('pessimistic_write')
+                .where('agent.id = :id AND agent."projectId" = :projectId', { id, projectId })
+                .getOne()
+            if (isNil(agent)) {
+                return null
+            }
+            const tools = edit(agent.draft.tools)
+            if (isNil(tools)) {
+                return null
+            }
+            await repo.save({ id, draft: sanitizeObjectForPostgresql({ ...agent.draft, tools }) })
+            return this.getOneOrThrow({ id, projectId, userId })
+        })
+    },
+
+    async publishedFlowsUsing({ agent, projectId, userId }: { agent: Agent, projectId: ProjectId, userId: UserId }): Promise<PublishedFlowsUsingAgent> {
+        const checker = await resolvePermissionChecker({ userId, projectId, log })
+        const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
+        const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
+        return { total: usage.total, names: usage.names }
+    },
+
+    async movePreview({ id, projectId, userId, targetProjectId, platformId }: MoveParams & { id: string }): Promise<AgentMovePreview> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        await assertMayDestroy({ agent, projectId, userId, log })
+        const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
+        const [flowsInUse, mayCreateAgentsThere] = await Promise.all([
+            this.publishedFlowsUsing({ agent, projectId, userId }),
+            mayWriteAgentsIn({ projectId: target.id, userId, log }),
+        ])
+        if (!mayCreateAgentsThere) {
+            return { blockedByPublishedFlows: flowsInUse, mayCreateAgentsThere, toolsThatStopWorking: [], membersLosingAccess: 0 }
+        }
+        const [toolsThatStopWorking, sharedWithUserIds] = await Promise.all([
+            toolsBrokenBy({ agent, targetProjectId: target.id, log }),
+            resolveShare({ visibility: agent.visibility, requested: undefined, stored: agent.sharedWithUserIds, projectId: target.id, log }),
+        ])
+        return {
+            blockedByPublishedFlows: flowsInUse,
+            mayCreateAgentsThere,
+            toolsThatStopWorking,
+            membersLosingAccess: agent.sharedWithUserIds.length - sharedWithUserIds.length,
+        }
+    },
+
+    async move({ id, projectId, userId, targetProjectId, platformId }: MoveParams & { id: string }): Promise<Agent> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        if (agent.projectId === targetProjectId) {
+            return agent
+        }
+        await assertMayRemoveFromProject({ agent, projectId, userId, log })
+        const target = await readableProjectOrThrow({ platformId, userId, targetProjectId, log })
+        await assertMayWriteAgentsIn({ projectId: target.id, userId, log })
+        await transaction(async (entityManager) => {
+            const repo = entityManager.getRepository(AgentEntity)
+            const locked = await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            const sharedWithUserIds = await resolveShare({ visibility: locked.visibility, requested: undefined, stored: locked.sharedWithUserIds, projectId: target.id, log })
+            const clash = await repo.findOneBy({ projectId: target.id, externalId: agent.externalId })
+            if (!isNil(clash)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: `"${target.displayName}" already holds an agent with the same external id, so this one cannot move there.` },
+                })
+            }
+            const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
+            const moved = await repo.createQueryBuilder()
+                .update()
+                .set({ projectId: target.id, sharedWithUserIds })
+                .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
+                .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+                .setParameters(blocking.getParameters())
+                .returning('id')
+                .execute()
+            const movedRows: unknown[] = moved.raw ?? []
+            if (movedRows.length === 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: describeFlowsInUse(await agentService(log).publishedFlowsUsing({ agent, projectId, userId })) },
+                })
+            }
+            await entityManager.getRepository(AgentConversationEntity).update(
+                { agentId: id, source: AgentRunSource.AGENT },
+                { projectId: target.id },
+            )
+        })
+        return this.getOneOrThrow({ id, projectId: target.id, userId })
+    },
+
+    async delete({ id, projectId, userId }: GetParams): Promise<Agent> {
+        const agent = await this.getOneOrThrow({ id, projectId, userId })
+        await assertMayRemoveFromProject({ agent, projectId, userId, log })
+        await agentRepo().delete({ id, projectId })
+        return agent
+    },
 })
 
-type CreateConversationParams = {
-    platformId: string
-    userId: string
-    request: CreateAgentConversationRequest
-    id?: string
+function describeFlowsInUse({ total, names }: PublishedFlowsUsingAgent): string {
+    const counted = total === 1 ? '1 published flow' : `${total} published flows`
+    if (names.length === 0) {
+        return `This agent is running in ${counted}. Remove it from them first.`
+    }
+    const listed = names.join(', ')
+    const tail = total > names.length ? `, and ${total - names.length} more` : ''
+    return `This agent is running in ${counted} (${listed}${tail}). Remove it from them first.`
 }
 
-type ListConversationsParams = {
-    platformId: string
-    userId: string
-    cursor?: string
-    limit: number
+function orderByForSort(sort?: AgentListSort): OrderByConfig[] {
+    switch (sort) {
+        case AgentListSort.NAME:
+            return [{ field: 'displayName', order: Order.ASC }]
+        case AgentListSort.CREATED:
+            return [{ field: 'created', order: Order.DESC }]
+        case AgentListSort.UPDATED:
+        default:
+            return [{ field: 'updated', order: Order.DESC }]
+    }
 }
 
-type ConversationIdentifier = {
+function visibleAgents({ userId, isProjectAdmin }: { userId: UserId, isProjectAdmin: boolean }): SelectQueryBuilder<AgentWithRelations> {
+    return agentRepo()
+        .createQueryBuilder('agent')
+        .where(visibleToUser({ userId, prefix: 'agent.', isProjectAdmin }))
+}
+
+function visibleToUser({ userId, prefix, isProjectAdmin }: VisibilityParams): Brackets {
+    return new Brackets((qb) => {
+        qb.where(`${prefix}"visibility" = :projectVisibility`, { projectVisibility: AgentVisibility.PROJECT })
+            .orWhere(`${prefix}"ownerId" = :userId`, { userId })
+            .orWhere(`:userId = ANY(${prefix}"sharedWithUserIds")`, { userId })
+        if (isProjectAdmin) {
+            qb.orWhere('1 = 1')
+        }
+    })
+}
+
+async function isProjectAdministrator({ projectId, userId, log }: { projectId: ProjectId, userId: UserId, log: FastifyBaseLogger }): Promise<boolean> {
+    const role = await projectMemberService(log).getRole({ projectId, userId })
+    return role?.name === DefaultProjectRole.ADMIN
+}
+
+async function withDefaultModel({ draft, platformId, projectId, log }: {
+    draft: AgentConfig
+    platformId: PlatformId
+    projectId: ProjectId
+    log: FastifyBaseLogger
+}): Promise<AgentConfig> {
+    if (!isNil(draft.modelName)) {
+        return draft
+    }
+    const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
+    if (isNil(provider)) {
+        return draft
+    }
+    return { ...draft, provider, modelName: agentHelpers.resolveModelIdForProvider({ provider, selectedModel: DEFAULT_CHAT_TIER_ID }) }
+}
+
+async function resolveShare({ visibility, requested, stored, projectId, log }: ResolveShareParams): Promise<UserId[]> {
+    if (visibility === AgentVisibility.PROJECT) {
+        return []
+    }
+    const uniqueUserIds = [...new Set(requested ?? stored)]
+    if (uniqueUserIds.length === 0) {
+        return []
+    }
+    const withAccess = await listUsersWithProjectAccess({ projectId, log })
+    if (isNil(requested)) {
+        return uniqueUserIds.filter((userId) => withAccess.includes(userId))
+    }
+    const strangers = uniqueUserIds.filter((userId) => !withAccess.includes(userId))
+    if (strangers.length > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'An agent can only be shared with people who already have access to its project' },
+        })
+    }
+    return uniqueUserIds
+}
+
+async function assertMayChangeWhoCanSee({ agent, request, projectId, userId, log }: AssertShareParams): Promise<void> {
+    const changesWhoCanSee = !isNil(request.visibility) || !isNil(request.sharedWithUserIds)
+    if (!changesWhoCanSee || agent.ownerId === userId) {
+        return
+    }
+    if (await isProjectAdministrator({ projectId, userId, log })) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'Only the person who created an agent, or a project admin, can change who sees it' },
+    })
+}
+
+export async function assertAgentsResolveInProject({ projectId, agentExternalIds, entityManager }: { projectId: ProjectId, agentExternalIds: string[], entityManager: EntityManager }): Promise<void> {
+    if (agentExternalIds.length === 0) {
+        return
+    }
+    const resolved = await entityManager.getRepository(AgentEntity)
+        .createQueryBuilder('agent')
+        .select(['agent.externalId'])
+        .setLock('pessimistic_read')
+        .where('agent."projectId" = :projectId', { projectId })
+        .andWhere('agent."externalId" IN (:...agentExternalIds)', { agentExternalIds })
+        .getMany()
+    const missing = agentExternalIds.filter((externalId) => !resolved.some((agent) => agent.externalId === externalId))
+    if (missing.length > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'This flow runs an agent that is not in this project any more. Point the step at an agent here, then publish.' },
+        })
+    }
+}
+
+async function readableProjectOrThrow({ platformId, userId, targetProjectId, log }: { platformId: PlatformId, userId: UserId, targetProjectId: ProjectId, log: FastifyBaseLogger }): Promise<Project> {
+    const [target] = await resolveReadableProjects({ platformId, userId, projectId: targetProjectId, log })
+    if (isNil(target)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: { message: 'That project is not one you can move an agent into' },
+        })
+    }
+    return target
+}
+
+async function assertMayWriteAgentsIn({ projectId, userId, log }: { projectId: ProjectId, userId: UserId, log: FastifyBaseLogger }): Promise<void> {
+    if (await mayWriteAgentsIn({ projectId, userId, log })) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'Your role in that project cannot create or change agents there' },
+    })
+}
+
+async function assertMayRemoveFromProject({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {
+    await assertMayDestroy({ agent, projectId, userId, log })
+    const flowsInUse = await agentService(log).publishedFlowsUsing({ agent, projectId, userId })
+    if (flowsInUse.total > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: describeFlowsInUse(flowsInUse) },
+        })
+    }
+}
+
+async function lockedAgentInProjectOrThrow({ entityManager, id, projectId }: { entityManager: EntityManager, id: string, projectId: ProjectId }): Promise<Agent> {
+    const locked = await entityManager.getRepository(AgentEntity)
+        .createQueryBuilder('agent')
+        .setLock('pessimistic_write')
+        .where('agent.id = :id', { id })
+        .getOne()
+    if (isNil(locked) || locked.projectId !== projectId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: AGENT_MOVED_AWAY },
+        })
+    }
+    return locked
+}
+
+async function mayWriteAgentsIn({ projectId, userId, log }: { projectId: ProjectId, userId: UserId, log: FastifyBaseLogger }): Promise<boolean> {
+    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    return isNil(checker.check(Permission.WRITE_AGENT, '__move_agent_into_project'))
+}
+
+async function toolsBrokenBy({ agent, targetProjectId, log }: { agent: Agent, targetProjectId: ProjectId, log: FastifyBaseLogger }): Promise<AgentMoveLoss[]> {
+    const pinned = agent.draft.tools.flatMap((tool) => {
+        if (tool.type !== AgentToolType.PIECE) {
+            return []
+        }
+        const externalId = connectionTemplate.unwrapExternalId(tool.pieceMetadata.predefinedInput?.auth)
+        return isNil(externalId) ? [] : [{ pieceName: tool.pieceMetadata.pieceName, externalId }]
+    })
+    const flowTools = agent.draft.tools.filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
+    const knowledgeTools = agent.draft.tools.filter((tool): tool is AgentKnowledgeBaseTool => tool.type === AgentToolType.KNOWLEDGE_BASE)
+
+    const [connectionsThere, flowsThere, knowledgeThere] = await Promise.all([
+        pinned.length === 0 ? Promise.resolve([]) : appConnectionService(log).getManyConnectionStates({ projectId: targetProjectId }),
+        flowTools.length === 0 ? Promise.resolve({ data: [] }) : flowService(log).list({
+            projectIds: [targetProjectId],
+            externalIds: unique(flowTools.map((tool) => tool.externalFlowId)),
+            cursorRequest: null,
+            includeTriggerSource: false,
+        }),
+        knowledgeTools.length === 0 ? Promise.resolve([]) : knowledgeBaseService(log).getFilesByIds({
+            projectId: targetProjectId,
+            ids: unique(knowledgeTools.map((tool) => tool.sourceId)),
+        }),
+    ])
+
+    const connectionIdsThere = new Set(connectionsThere.map((connection) => connection.externalId))
+    const flowIdsThere = new Set(flowsThere.data.map((flow) => flow.externalId))
+    const knowledgeIdsThere = new Set(knowledgeThere.map((file) => file.id))
+
+    return [
+        ...unique(pinned.filter((pin) => !connectionIdsThere.has(pin.externalId)).map((pin) => pin.pieceName))
+            .map((label) => ({ kind: AgentMoveLossKind.CONNECTION, label })),
+        ...unique(flowTools.filter((tool) => !flowIdsThere.has(tool.externalFlowId)).map((tool) => tool.flowDisplayName ?? tool.toolName))
+            .map((label) => ({ kind: AgentMoveLossKind.FLOW, label })),
+        ...unique(knowledgeTools.filter((tool) => !knowledgeIdsThere.has(tool.sourceId)).map((tool) => tool.sourceName))
+            .map((label) => ({ kind: AgentMoveLossKind.KNOWLEDGE, label })),
+    ]
+}
+
+async function assertMayDestroy({ agent, projectId, userId, log }: AssertDestroyParams): Promise<void> {
+    if (agent.ownerId === userId || await isProjectAdministrator({ projectId, userId, log })) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: { message: 'Only the person who created an agent, or a project admin, can delete it and the conversations held with it' },
+    })
+}
+
+async function listUsersWithProjectAccess({ projectId, log }: { projectId: ProjectId, log: FastifyBaseLogger }): Promise<UserId[]> {
+    const [members, project] = await Promise.all([
+        projectMemberService(log).listProjectMemberUserIds({ projectId }),
+        projectService(log).getOneOrThrow(projectId),
+    ])
+    return [...new Set([...members, project.ownerId])]
+}
+
+async function resolveReadableProjects({ platformId, userId, projectId, log }: ResolveProjectsParams): Promise<Project[]> {
+    const users = userService(log)
+    const user = await users.getOneOrFail({ id: userId })
+    const isPrivileged = users.isUserPrivileged(user)
+    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    const permittedProjectIds = isPrivileged
+        ? []
+        : await projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_AGENT })
+
+    return projects
+        .filter((project) => isPrivileged || project.ownerId === userId || permittedProjectIds.includes(project.id))
+        .filter((project) => isNil(projectId) || project.id === projectId)
+}
+
+function toSummary(agent: Agent, project?: Project): AgentSummary {
+    return {
+        ...omit(agent, ['draft', 'published']),
+        isPublished: !isNil(agent.published),
+        projectDisplayName: project?.displayName ?? '',
+        projectIsPrivate: project?.type === ProjectType.PERSONAL,
+        toolCount: agent.draft.tools.length,
+        toolPieceNames: agent.draft.tools.flatMap((tool) => tool.type === AgentToolType.PIECE ? [tool.pieceMetadata.pieceName] : []),
+    }
+}
+
+function withoutToolSecrets(agent: Agent): Agent {
+    return {
+        ...agent,
+        draft: redactConfig(agent.draft),
+        published: isNil(agent.published) ? agent.published : redactConfig(agent.published),
+    }
+}
+
+function redactConfig(config: AgentConfig): AgentConfig {
+    return {
+        ...config,
+        tools: config.tools.map((tool) => tool.type !== AgentToolType.MCP || tool.auth.type === McpAuthType.NONE
+            ? tool
+            : { ...tool, auth: { type: tool.auth.type } as typeof tool.auth }),
+    }
+}
+
+function describePublished({ published }: { published: AgentConfig }): { publishedDigest: string, publishedToolNames: string[] } {
+    return {
+        publishedDigest: createHash('sha256').update(JSON.stringify(published)).digest('hex').slice(0, 16),
+        publishedToolNames: published.tools.map((tool) => tool.toolName),
+    }
+}
+
+function agentNotFound(id: ApId): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.ENTITY_NOT_FOUND,
+        params: { entityId: id, entityType: 'agent' },
+    })
+}
+
+type CreateParams = {
+    platformId: PlatformId
+    projectId: ProjectId
+    ownerId: UserId
+    request: CreateAgentRequest
+}
+
+type ListParams = {
+    platformId: PlatformId
+    userId: UserId
+    projectId?: ProjectId
+    search?: string
+    sort?: AgentListSort
+    cursor?: Cursor
+    limit?: number
+}
+
+type MoveParams = {
+    projectId: ProjectId
+    userId: UserId
+    targetProjectId: ProjectId
+    platformId: PlatformId
+}
+
+type EditDraftToolsParams = GetParams & {
+    edit: (tools: AgentConfig['tools']) => AgentConfig['tools'] | null
+}
+
+type GetParams = {
+    id: ApId
+    projectId: ProjectId
+    userId: UserId
+}
+
+type GetByPlatformParams = {
     id: string
-    platformId: string
-    userId: string
+    platformId: PlatformId
+    userId: UserId
 }
 
-type UpdateConversationParams = ConversationIdentifier & {
-    request: UpdateAgentConversationRequest
+type UpdateParams = GetParams & {
+    request: UpdateAgentRequest
+    goLive?: boolean
 }
 
-type SetMessageFeedbackParams = ConversationIdentifier & {
-    messageIndex: number
-    request: SetAgentMessageFeedbackRequest
+type ResolveProjectsParams = {
+    platformId: PlatformId
+    userId: UserId
+    projectId?: ProjectId
+    log: FastifyBaseLogger
+}
+
+type ResolveShareParams = {
+    visibility: AgentVisibility
+    requested?: UserId[]
+    stored: UserId[]
+    projectId: ProjectId
+    log: FastifyBaseLogger
+}
+
+type VisibilityParams = {
+    userId: UserId
+    prefix: 'agent.' | ''
+    isProjectAdmin: boolean
+}
+
+type AssertDestroyParams = {
+    agent: Agent
+    projectId: ProjectId
+    userId: UserId
+    log: FastifyBaseLogger
+}
+
+type AssertShareParams = {
+    agent: Agent
+    request: UpdateAgentRequest
+    projectId: ProjectId
+    userId: UserId
+    log: FastifyBaseLogger
 }

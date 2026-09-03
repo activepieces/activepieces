@@ -2,10 +2,12 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { FileResponseInterface, HumanInputFormResult, HumanInputFormResultTypes } from '@activepieces/pieces-framework';
 import { StatusCodes } from 'http-status-codes';
 import mime from 'mime-types';
+import { returnResponseActionOutputSchema } from '../output-schemas';
 
 export const returnResponse = createAction({
   audience: 'both',
   name: 'return_response',
+  classification: 'WRITE',
   displayName: 'Respond on UI',
   description: 'Return a file or text (markdown) as a response.',
   aiMetadata: { description: 'Sends markdown text and/or one file attachment back to the person waiting on the Web Form or Chat UI trigger that started the flow. Pick it as the replying step when that trigger has "Wait for Response" enabled; it produces nothing visible in flows started any other way. Not idempotent: each call emits a response to the waiting caller and stores a new file for any attachment.', idempotent: false },
@@ -19,6 +21,7 @@ export const returnResponse = createAction({
       required: false,
     }),
   },
+  outputSchema: returnResponseActionOutputSchema,
   errorHandlingOptions: {
     retryOnFailure: {
       hide: true,

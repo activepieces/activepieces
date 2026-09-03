@@ -9,10 +9,12 @@ import {
 } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
+import { lastDayOfPreviousMonthActionOutputSchema } from '../output-schemas';
 
 export const lastDayOfPreviousMonthAction = createAction({
   audience: 'both',
   name: 'last_day_of_previous_month',
+  classification: 'READ',
   displayName: 'Last Day of Previous Month',
   description: 'Get the date and time of the last day of the previous month',
   aiMetadata: { description: 'Returns the last calendar day of the month before the current month, stamped with midnight, a supplied 24h time, or the current time - the time is overwritten rather than set to end of day, so 23:59 must be asked for explicitly. Use it as the closing bound of a last-month reporting window whose start comes from First Day of Previous Month. Time zone and output format are required and the time must be HH:mm; not idempotent - derived from the current clock, changing once the month rolls over.', idempotent: false },
@@ -57,6 +59,7 @@ export const lastDayOfPreviousMonthAction = createAction({
       defaultValue: 'UTC',
     }),
   },
+  outputSchema: lastDayOfPreviousMonthActionOutputSchema,
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
       time: z.string().check(z.regex(/^\d\d:\d\d$/)),

@@ -1,12 +1,13 @@
-import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { agentToolClassification, AppConnectionStatus, AppConnectionType, FileCompression, FileType, FlowRunStatus, FlowStatus, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentIcon, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { domainHelper } from '../../../helper/domain-helper'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
 import { runActionInput } from '../../../mcp/tools/ap-run-action'
@@ -17,9 +18,12 @@ import { tableService } from '../../../tables/table/table.service'
 import { agentApprovalGate } from '../agent-approval-gate'
 import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
+import { agentService } from '../agent-service'
 import { agentPrompt } from '../prompt/agent-prompt'
 
+const AGENT_LIST_LIMIT = 50
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
+const ACCOUNT_CHOICE_LIMIT = 10
 const OAUTH_TYPES: ReadonlySet<AppConnectionType> = new Set([
     AppConnectionType.OAUTH2,
     AppConnectionType.CLOUD_OAUTH2,
@@ -212,6 +216,243 @@ async function listResourceForProject({ resource, projectId, status, log }: {
     }
 }
 
+function nonEmpty(value: unknown): string | undefined {
+    return isString(value) && value.trim().length > 0 ? value.trim() : undefined
+}
+
+async function createAgentFromChat({ toolInput, platformId, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    platformId: string
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const displayName = nonEmpty(toolInput.displayName)
+    const instructions = nonEmpty(toolInput.instructions)
+    if (isNil(displayName) || isNil(instructions)) {
+        return { error: 'An agent needs a name and instructions.' }
+    }
+    const agent = await agentService(log).create({
+        platformId,
+        projectId,
+        ownerId: userId,
+        request: {
+            projectId,
+            displayName,
+            description: nonEmpty(toolInput.description) ?? null,
+            icon: AgentIcon.SPARKLES,
+            color: ColorName.PURPLE,
+            draft: { instructions, maxSteps: DEFAULT_AGENT_MAX_STEPS, tools: [], structuredOutput: [] },
+        },
+    })
+    return afterDraftChange({ agent, publish: false, projectId, userId, log })
+}
+
+async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    agent: Agent
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const displayName = nonEmpty(toolInput.displayName)
+    const description = nonEmpty(toolInput.description)
+    const instructions = nonEmpty(toolInput.instructions)
+    const publish = toolInput.publish === true
+    if (isNil(displayName) && isNil(description) && isNil(instructions) && !publish) {
+        return { error: 'Nothing to change. Pass a new displayName, description or instructions, and none of them may be blank.' }
+    }
+    const updated = await agentService(log).update({
+        id: agent.id,
+        projectId,
+        userId,
+        request: {
+            ...spreadIfDefined('displayName', displayName),
+            ...spreadIfDefined('description', description),
+            ...(isNil(instructions) ? {} : { draft: { ...agent.draft, instructions } }),
+        },
+    })
+    return afterDraftChange({ agent: updated, publish, projectId, userId, log })
+}
+
+async function resolveConnectionToPin({ piece, pieceName, projectId, platformId, log }: {
+    piece: { displayName: string }
+    pieceName: string
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ externalId: string } | { error: string, accounts?: { label: string, externalId: string }[] }> {
+    const { data } = await appConnectionService(log).list({
+        projectId,
+        platformId,
+        pieceName,
+        displayName: undefined,
+        status: undefined,
+        cursorRequest: null,
+        scope: undefined,
+        externalIds: undefined,
+        limit: ACCOUNT_CHOICE_LIMIT,
+    })
+    if (data.length === 0) {
+        return { error: `No ${piece.displayName} account is connected in this project. Call ap_show_connection_picker for ${piece.displayName} so they can connect one here, then call ap_add_agent_tool again with the connectionExternalId it gives you. Do not add the tool without an account: the agent would have to ask which account on every single run.` }
+    }
+    if (data.length === 1) {
+        return { externalId: data[0].externalId }
+    }
+    // The ids go in a field rather than the sentence, so the model does not read them out loud.
+    return {
+        error: `This project has ${data.length} ${piece.displayName} accounts. Call ap_show_connection_picker for ${piece.displayName} and let the person choose, then call ap_add_agent_tool again with connectionExternalId set to their pick. Do not choose for them.`,
+        accounts: data.map((connection) => ({ label: connection.displayName, externalId: connection.externalId })),
+    }
+}
+
+async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log }: {
+    toolInput: Record<string, unknown>
+    agent: Agent
+    projectId: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const pieceName = nonEmpty(toolInput.pieceName)
+    const actionNames = toolNamesFrom(toolInput)
+    if (isNil(pieceName) || actionNames.length === 0) {
+        return { error: 'Adding tools needs the piece name and at least one action name.' }
+    }
+    const normalizedPiece = mcpUtils.normalizePieceName(pieceName) ?? pieceName
+    const piece = await pieceMetadataService(log).get({ name: normalizedPiece, projectId, platformId })
+    const missing = actionNames.filter((actionName) => isNil(piece?.actions[actionName]))
+    if (isNil(piece) || missing.length > 0) {
+        return { error: `${normalizedPiece} has no action called ${missing.join(' or ')}. Look it up with ap_research_pieces before adding it.` }
+    }
+    const requested = nonEmpty(toolInput.connectionExternalId)
+    if (!isNil(requested)) {
+        const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: requested })
+        if (isNil(connection)) {
+            return { error: 'No connection with that externalId in this project. Call ap_list_connections and pass one of those.' }
+        }
+        if (mcpUtils.normalizePieceName(connection.pieceName) !== normalizedPiece) {
+            return { error: `That connection is for ${connection.pieceName}, not ${normalizedPiece}. Pass a connection for the same app.` }
+        }
+    }
+    // The caller already holds the piece, so whether it needs an account is known here without
+    // asking the database again.
+    const resolved = !isNil(requested) || isNil(piece.auth)
+        ? { externalId: requested }
+        : await resolveConnectionToPin({ piece, pieceName: normalizedPiece, projectId, platformId, log })
+    if ('error' in resolved) {
+        return resolved
+    }
+    const connectionExternalId = resolved.externalId
+    const added: AgentTool[] = actionNames.map((actionName) => ({
+        type: AgentToolType.PIECE,
+        toolName: mcpToolNameUtils.createPieceToolName(normalizedPiece, actionName),
+        pieceMetadata: {
+            pieceName: normalizedPiece,
+            pieceVersion: piece.version,
+            actionName,
+            ...(isNil(connectionExternalId) ? {} : { predefinedInput: { auth: connectionExternalId, fields: {} } }),
+        },
+    }))
+    const updated = await agentService(log).editDraftTools({
+        id: agent.id,
+        projectId,
+        userId,
+        edit: (tools) => tools.some((tool) => {
+            const action = pieceActionOf(tool)
+            return action?.pieceName === normalizedPiece && actionNames.includes(action.actionName)
+        }) ? null : [...tools, ...added],
+    })
+    if (isNil(updated)) {
+        return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
+    }
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+}
+
+async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, log }: {
+    toolInput: Record<string, unknown>
+    agent: Agent
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const actionNames = toolNamesFrom(toolInput)
+    if (actionNames.length === 0) {
+        return { error: 'Removing tools needs at least one action name.' }
+    }
+    const requestedPiece = nonEmpty(toolInput.pieceName)
+    const scopedPiece = isNil(requestedPiece) ? undefined : mcpUtils.normalizePieceName(requestedPiece) ?? requestedPiece
+    const targets = agent.draft.tools.flatMap((tool) => pieceActionOf(tool) ?? [])
+        .filter((action) => actionNames.includes(action.actionName))
+        .filter((action) => isNil(scopedPiece) || action.pieceName === scopedPiece)
+    const resolved = actionNames.map((actionName) => ({
+        actionName,
+        pieces: unique(targets.filter((target) => target.actionName === actionName).map((target) => target.pieceName)),
+    }))
+    const ambiguous = resolved.filter((entry) => entry.pieces.length > 1)
+    if (ambiguous.length > 0) {
+        return { error: `${ambiguous.map((entry) => entry.actionName).join(' and ')} is on more than one piece here: ${unique(ambiguous.flatMap((entry) => entry.pieces)).join(', ')}. Call this again with pieceName set to the one you mean.` }
+    }
+    const unmatched = resolved.filter((entry) => entry.pieces.length === 0).map((entry) => entry.actionName)
+    if (unmatched.length > 0) {
+        return { error: isNil(scopedPiece)
+            ? `${agent.displayName} has no tool for ${unmatched.join(' or ')}, so there is nothing to remove. List its tools with ap_list_agents.`
+            : `${unmatched.join(' and ')} is not on ${scopedPiece}, so there is nothing to remove. Take those away in their own call, without pieceName.` }
+    }
+    const removing = new Set(targets.map((target) => `${target.pieceName}:${target.actionName}`))
+    const updated = await agentService(log).editDraftTools({
+        id: agent.id,
+        projectId,
+        userId,
+        edit: (tools) => {
+            const kept = tools.filter((tool) => {
+                const action = pieceActionOf(tool)
+                return isNil(action) || !removing.has(`${action.pieceName}:${action.actionName}`)
+            })
+            return kept.length === tools.length ? null : kept
+        },
+    })
+    if (isNil(updated)) {
+        return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
+    }
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+}
+
+function pieceActionOf(tool: AgentTool): { pieceName: string, actionName: string } | undefined {
+    return tool.type === AgentToolType.PIECE
+        ? { pieceName: tool.pieceMetadata.pieceName, actionName: tool.pieceMetadata.actionName }
+        : undefined
+}
+
+function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
+    return Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
+}
+
+async function afterDraftChange({ agent, publish, projectId, userId, log }: {
+    agent: Agent
+    publish: boolean
+    projectId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<unknown> {
+    const { data: published } = publish
+        ? await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, userId }))
+        : { data: undefined }
+    return {
+        agentId: agent.id,
+        displayName: agent.displayName,
+        published: !isNil(published),
+        url: await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${agent.id}` }),
+        note: !isNil(published)
+            ? `"${agent.displayName}" is live: new runs use this version.`
+            : publish
+                ? 'Publishing failed, so nothing is live yet — the draft may still need instructions. Send the user to the url above.'
+                : isNil(agent.published)
+                    ? 'Saved to the draft. Nothing runs this agent until it is published.'
+                    : 'Saved to the draft, so do not tell the user the change is live. The published version keeps running until this is published.',
+    }
+}
+
 async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     userId: string
     projectId: string
@@ -313,6 +554,47 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                     ? 'This connection is valid — safe to build on.'
                     : 'This connection is NOT working (its credentials failed). Do not build on it — show the connection picker so the user can reconnect, then retry.',
             }
+        }
+        case 'ap_list_agents':
+        case 'ap_update_agent':
+        case 'ap_add_agent_tool':
+        case 'ap_remove_agent_tool':
+        case 'ap_create_agent': {
+            if (!await agentHelpers.agentsSurfaceAvailable({ platformId, log })) {
+                return { error: 'Agents are not available here, so there is nothing to list, create or change.' }
+            }
+            const conversation = isNil(conversationId) ? undefined : await agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
+            const projectId = projects.find((project) => project.id === conversation?.projectId)?.id
+            if (isNil(projectId)) {
+                return { error: 'No project is selected for this conversation. Ask the user which project the agent belongs to.' }
+            }
+            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const denial = checker.check(toolName === 'ap_list_agents' ? Permission.READ_AGENT : Permission.WRITE_AGENT, toolName)
+            if (!isNil(denial)) {
+                return denial
+            }
+            if (toolName === 'ap_list_agents') {
+                const { data } = await agentService(log).list({ platformId, userId, projectId, cursor: null, limit: AGENT_LIST_LIMIT })
+                return data.map(({ id, displayName, description, isPublished, toolCount }) => ({ agentId: id, displayName, description, published: isPublished, toolCount }))
+            }
+            if (toolName === 'ap_create_agent') {
+                return createAgentFromChat({ toolInput, platformId, projectId, userId, log })
+            }
+            const agentId = nonEmpty(toolInput.agentId)
+            if (isNil(agentId)) {
+                return { error: 'Which agent? Call ap_list_agents first and pass its agentId.' }
+            }
+            const { data: agent } = await tryCatch(() => agentService(log).getOneOrThrow({ id: agentId, projectId, userId }))
+            if (isNil(agent)) {
+                return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
+            }
+            if (toolName === 'ap_update_agent') {
+                return updateAgentFromChat({ toolInput, agent, projectId, userId, log })
+            }
+            if (toolName === 'ap_remove_agent_tool') {
+                return removeAgentToolFromChat({ toolInput, agent, projectId, userId, log })
+            }
+            return addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log })
         }
         case 'ap_execute_action': {
             return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
@@ -605,8 +887,10 @@ function resolveConnectionInfo({ status, type, value }: { status: AppConnectionS
     if (hasRefreshToken) {
         return { status, grantedScopes }
     }
-    const claimedAtS = typeof value['claimed_at'] === 'number' ? value['claimed_at'] : 0
-    const expiresInS = typeof value['expires_in'] === 'number' ? value['expires_in'] : 0
+    const parsedClaimedAt = Number(value['claimed_at'])
+    const parsedExpiresIn = Number(value['expires_in'])
+    const claimedAtS = Number.isFinite(parsedClaimedAt) && parsedClaimedAt > 0 ? parsedClaimedAt : 0
+    const expiresInS = Number.isFinite(parsedExpiresIn) && parsedExpiresIn > 0 ? parsedExpiresIn : 0
     if (claimedAtS > 0 && expiresInS > 0) {
         const expiryMs = (claimedAtS + expiresInS - CLOCK_SKEW_BUFFER_S) * 1000
         if (Date.now() > expiryMs) {

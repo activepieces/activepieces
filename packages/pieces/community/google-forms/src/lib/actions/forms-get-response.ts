@@ -10,6 +10,7 @@ import { formsGetResponseActionOutputSchema } from '../output-schemas';
 export const formsGetResponse = createAction({
   auth: googleFormsAuth,
   name: 'forms_get_response',
+  classification: 'READ',
   displayName: 'Get Form Response',
   description:
     'Fetch one submission by its responseId, including all answers keyed by questionId and submission timestamps.',

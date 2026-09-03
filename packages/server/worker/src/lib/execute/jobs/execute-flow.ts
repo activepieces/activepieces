@@ -1,5 +1,5 @@
 import { inspect } from 'node:util'
-import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { onCallService } from '@activepieces/server-utils'
 import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowRunStatus, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
@@ -175,6 +175,8 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         ...(isNil(internalError) ? {} : { logsFileId: data.logsFileId }),
         internalError,
         failedStep,
+        ...spreadIfDefined('workerHandlerId', data.workerHandlerId ?? undefined),
+        ...spreadIfDefined('httpRequestId', data.httpRequestId),
     })
 
     if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {

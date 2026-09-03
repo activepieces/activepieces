@@ -7,6 +7,7 @@ import { createFooterActionOutputSchema } from '../output-schemas';
 export const createFooter = createAction({
   auth: googleDocsAuth,
   name: 'create_footer',
+  classification: 'WRITE',
   displayName: 'Create Footer',
   description: 'Create a footer section in a Google Docs document',
   audience: 'ai',

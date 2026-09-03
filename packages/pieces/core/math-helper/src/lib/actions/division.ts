@@ -5,10 +5,13 @@ import {
 } from '@activepieces/pieces-framework';
 import { propsValidation } from '@activepieces/pieces-common';
 import * as z from 'zod/mini';
+import { divisionActionOutputSchema } from '../output-schemas';
 
 export const division = createAction({
   audience: 'both',
   name: 'division_math',
+  classification: 'READ',
+  outputSchema: divisionActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Division',
   description: 'Divide first number by the second number',

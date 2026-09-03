@@ -3,6 +3,10 @@ export { PlanSelector } from './components/plan-selector';
 export { FeatureUsageCards } from './components/feature-usage/feature-usage-cards';
 export { ProjectsUsageTable } from './components/feature-usage/projects-usage-table';
 export { CreditsCard } from './components/feature-usage/credits-card';
+export { CreditsUsageAlert } from './components/credits-usage-alert';
+export { ChatCreditsAlert } from './components/chat-credits-alert';
+export { CreditsActionButton } from './components/credits-action-button';
+export { SidebarUsageLimits } from './components/sidebar-usage-limits';
 export { CreditsInfoDialog } from './components/feature-usage/credits-info-dialog';
 export { AutoRechargeCard } from './components/feature-usage/auto-recharge-card';
 export { AutoRechargeConfigDialog } from './components/feature-usage/auto-recharge-config-dialog';
@@ -25,3 +29,4 @@ export {
   planSelectorUtils,
 } from './components/plan-selector-utils';
 export { useManagePlanDialogStore } from './stores/manage-plan-dialog-state';
+export { AutomaticTrialActivation } from './components/automatic-trial-activation';

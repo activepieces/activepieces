@@ -1,11 +1,57 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { describe, expect, it } from 'vitest'
+import { AIProviderModelType } from '@activepieces/shared'
+import { describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../../src/app/ee/agent/agent-helpers'
+
+const getChatProviderName = vi.fn()
+
+vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
+    aiProviderService: () => ({ getChatProviderName }),
+}))
 
 const resolve = ({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }) =>
     agentHelpers.resolveModelIdForProvider({ provider, selectedModel })
 
 describe('resolveModelIdForProvider', () => {
+    const vertexConfig = (models: { modelId: string, modelType: AIProviderModelType }[]) => ({
+        project: 'gcp-project',
+        region: 'europe-west4',
+        models: models.map((model) => ({ ...model, modelName: model.modelId })),
+    })
+
+    it('picks from the models an admin listed on the key, not the curated list', () => {
+        const config = vertexConfig([
+            { modelId: 'claude-3-5-sonnet@20241022', modelType: AIProviderModelType.TEXT },
+            { modelId: 'gemini-2.5-flash', modelType: AIProviderModelType.TEXT },
+        ])
+
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'smart', config })).toBe('claude-3-5-sonnet@20241022')
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'gemini-2.5-flash', config })).toBe('gemini-2.5-flash')
+    })
+
+    it('honours the key model allow-list over the curated default', () => {
+        const scoped = { modelScope: 'selected' as const, modelIds: ['gemini-2.5-flash'] }
+
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.GOOGLE, selectedModel: 'smart', ...scoped })).toBe('gemini-2.5-flash')
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.GOOGLE, selectedModel: 'gemini-2.5-pro', ...scoped })).toBe('gemini-2.5-flash')
+    })
+
+    it('refuses when the allow-list excludes every candidate', () => {
+        expect(() => agentHelpers.resolveModelIdForProvider({
+            provider: AIProviderName.GOOGLE,
+            selectedModel: 'smart',
+            modelScope: 'selected',
+            modelIds: ['a-model-this-provider-does-not-offer'],
+        })).toThrow()
+    })
+
+    it('refuses a key that lists no text model rather than falling back to one it never offered', () => {
+        const imageOnly = vertexConfig([{ modelId: 'imagen-4.0-generate-001', modelType: AIProviderModelType.IMAGE }])
+
+        expect(() => agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'smart', config: imageOnly })).toThrow()
+        expect(() => agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'smart', config: vertexConfig([]) })).toThrow()
+    })
+
     it('keeps the tier model id for the activepieces provider', () => {
         expect(resolve({ provider: AIProviderName.ACTIVEPIECES, selectedModel: 'smart' })).toBe('anthropic/claude-sonnet-4.6')
         expect(resolve({ provider: AIProviderName.ACTIVEPIECES, selectedModel: 'fast' })).toBe('anthropic/claude-haiku-4.5')
@@ -76,5 +122,48 @@ describe('resolveModelIdForAnalytics', () => {
     it('never forwards an unrecognised stored value to the analytics sink', () => {
         expect(forAnalytics({ provider: null, selectedModel: 'totally-made-up-model' })).toBeNull()
         expect(forAnalytics({ provider: null, selectedModel: '<script>alert(1)</script>' })).toBeNull()
+    })
+})
+
+describe('chatUsageTracker — a flow step is not billed as a chat message', () => {
+    it('returns before doing any work, since the flow run meters its own AI usage', async () => {
+        const { chatUsageTracker } = await import('../../../../../src/app/ee/agent/chat-usage-tracker')
+        const log = { info: () => undefined, warn: () => undefined, error: () => undefined }
+
+        await expect(chatUsageTracker(log as never).track({
+            conversation: { id: 'conv-1', source: 'FLOW_STEP', platformId: 'plat-1', modelName: 'anthropic/claude-opus-4.6' } as never,
+        })).resolves.toBeUndefined()
+    })
+})
+
+describe('runScopeOrThrow', () => {
+    it('scopes a run to its project', () => {
+        expect(agentHelpers.runScopeOrThrow({ projectId: 'proj-1' })).toEqual({ type: 'project', projectId: 'proj-1' })
+    })
+
+    it('refuses a run with no project instead of widening to every platform key', () => {
+        expect(() => agentHelpers.runScopeOrThrow({ projectId: null })).toThrow()
+    })
+})
+
+describe('resolveChatProviderName', () => {
+    const log = { info: () => undefined, warn: () => undefined, error: () => undefined, debug: () => undefined } as never
+
+    it('reports no provider for a conversation with no project, rather than guessing one platform-wide', async () => {
+        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: null, log })).resolves.toBeNull()
+    })
+
+    it('lets a lookup failure surface, so no caller reads a fault as a platform with no provider', async () => {
+        getChatProviderName.mockRejectedValueOnce(new Error('connection terminated'))
+
+        await expect(agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: 'proj-1', log })).rejects.toThrow('connection terminated')
+    })
+
+    it('asks only for keys the project may use, never platform-wide', async () => {
+        getChatProviderName.mockResolvedValueOnce(AIProviderName.OPENROUTER)
+
+        await agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: 'proj-1', log })
+
+        expect(getChatProviderName).toHaveBeenCalledWith({ platformId: 'plat-1', scope: { type: 'project', projectId: 'proj-1' } })
     })
 })

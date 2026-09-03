@@ -1,21 +1,15 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentPhase, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, ToolProgressEvent } from '@activepieces/shared'
-import { tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { largeResultUtils, MAX_TOOL_RESULT_BYTES, safeHttp } from '@activepieces/server-utils'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apErrorOf, apId, BatchItemResult, BuildPlanEvent, ExecutePieceToolResponse, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
 
 const MAX_BATCH_SIZE = 100
+const MAX_CONFIGURED_TOOL_CALLS = 50
 const MAX_IDENTICAL_ACTION_FAILURES = 2
 const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
-// Context-lean cap: large reads (e.g. a 1.4MB Attio query) are offloaded to a file at the chat
-// layer (runAgentAction) and only a preview + fileId reaches here, so this only needs to keep
-// the occasional un-offloaded result (web scrape, mcp__ tool, code output) from flooding context.
-const MAX_RESULT_SIZE_BYTES = 128 * 1024
-const MIN_PREVIEW_ARRAY_LENGTH = 3
-const PREVIEW_ITEM_COUNT = 5
-const HARD_TRUNCATE_ENVELOPE_SLACK_BYTES = 1024
-const MAX_CLAMP_ATTEMPTS = 8
 const CARD_ERROR_MAX_LENGTH = 300
 const FETCH_URL_TIMEOUT_MS = 30 * 1_000
 const MAX_FETCH_URL_BYTES = 5 * 1024 * 1024
@@ -63,45 +57,21 @@ async function withToolTimeout<T>({ fn, timeoutMs, toolName }: {
 }
 
 function truncateLargeResult(result: unknown): unknown {
-    const { data: serialized, error } = tryCatchSync(() => JSON.stringify(result))
-    if (error) {
-        return buildOversizeEnvelope({
-            result,
-            text: '[LARGE RESPONSE] The result could not be serialized (circular or invalid structure). Retry with a more specific filter or fetch only the fields you need.',
-        })
-    }
-    if (isNil(serialized)) return result
-    const byteSize = Buffer.byteLength(serialized, 'utf8')
-    if (byteSize <= MAX_RESULT_SIZE_BYTES) return result
+    const byteSize = largeResultUtils.byteSizeOf(result)
+    if (byteSize !== null && byteSize <= MAX_TOOL_RESULT_BYTES) return result
 
-    // Defense 1: preview a genuine multi-item array (never the MCP content wrapper).
-    const topLevelArray = findTopLevelArray(result)
-    if (topLevelArray) {
-        const { array, path, totalCount } = topLevelArray
-        const previewEnvelope = buildOversizeEnvelope({
+    const sizeNote = byteSize === null ? '' : ` The full response was ${Math.round(byteSize / 1024)}KB.`
+    const fitted = largeResultUtils.fitToBudget({
+        value: result,
+        maxBytes: MAX_TOOL_RESULT_BYTES,
+        wrap: (json) => buildOversizeEnvelope({
             result,
-            text: `[LARGE RESPONSE] ${totalCount} items (at ${path}), ${Math.round(byteSize / 1024)}KB total — showing the first ${PREVIEW_ITEM_COUNT} in full. To see the rest, narrow with a filter/limit or page through with an offset/cursor.\n\nPreview (${PREVIEW_ITEM_COUNT} of ${totalCount} items):\n${JSON.stringify(array.slice(0, PREVIEW_ITEM_COUNT), null, 2)}`,
-        })
-        // Defense 2: only keep the preview if it actually fits; otherwise fall through.
-        if (withinResultCap(previewEnvelope)) return previewEnvelope
-    }
-
-    // Defense 3a: structural shrink (long strings/arrays trimmed, shape preserved).
-    const shrunk = shrinkLargeValue(result, { maxStringLength: 2_000, maxArrayItems: 20 })
-    const shrunkSerialized = JSON.stringify(shrunk, null, 2)
-    if (Buffer.byteLength(shrunkSerialized, 'utf8') <= MAX_RESULT_SIZE_BYTES) {
-        return buildOversizeEnvelope({
-            result,
-            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved] The full response was ${Math.round(byteSize / 1024)}KB. Truncated values are marked with "…[truncated]".\n\n${shrunkSerialized}`,
-        })
-    }
-
-    // Defense 3b: unconditional hard-truncate backstop — guarantees the returned
-    // object always serializes to <= MAX_RESULT_SIZE_BYTES regardless of shape.
-    return clampEnvelopeToCap({
+            text: `[LARGE RESPONSE — long values were truncated to fit, structure preserved]${sizeNote} Truncated values are marked with "…[truncated]".\n\n${json}`,
+        }),
+    })
+    return fitted ?? buildOversizeEnvelope({
         result,
-        prefix: `[LARGE RESPONSE — hard-truncated to fit the context budget] The full response was ${Math.round(byteSize / 1024)}KB. Showing a truncated prefix only; retry with a more specific filter, request fewer items, or fetch only IDs/metadata.\n\n`,
-        body: shrunkSerialized,
+        text: `[LARGE RESPONSE] The response could not be included.${sizeNote} Retry with a more specific filter, request fewer items, or fetch only IDs/metadata.`,
     })
 }
 
@@ -111,75 +81,6 @@ function buildOversizeEnvelope({ result, text }: { result: unknown, text: string
         content: [{ type: 'text', text }],
         ...spreadIfDefined('_meta', meta),
     }
-}
-
-function withinResultCap(value: unknown): boolean {
-    const { data: serialized } = tryCatchSync(() => JSON.stringify(value))
-    return !isNil(serialized) && Buffer.byteLength(serialized, 'utf8') <= MAX_RESULT_SIZE_BYTES
-}
-
-function sliceToByteBudget({ value, maxBytes }: { value: string, maxBytes: number }): string {
-    if (maxBytes <= 0) return ''
-    if (Buffer.byteLength(value, 'utf8') <= maxBytes) return value
-    let end = Math.min(value.length, maxBytes)
-    while (end > 0 && Buffer.byteLength(value.slice(0, end), 'utf8') > maxBytes) {
-        end--
-    }
-    return value.slice(0, end)
-}
-
-function clampEnvelopeToCap({ result, prefix, body }: { result: unknown, prefix: string, body: string }): unknown {
-    let budget = MAX_RESULT_SIZE_BYTES - HARD_TRUNCATE_ENVELOPE_SLACK_BYTES
-    for (let attempt = 0; attempt < MAX_CLAMP_ATTEMPTS && budget > 0; attempt++) {
-        const sliced = sliceToByteBudget({ value: body, maxBytes: budget })
-        const envelope = buildOversizeEnvelope({ result, text: `${prefix}${sliced}…[hard-truncated]` })
-        const { data: serialized } = tryCatchSync(() => JSON.stringify(envelope))
-        const size = isNil(serialized) ? Number.MAX_SAFE_INTEGER : Buffer.byteLength(serialized, 'utf8')
-        if (size <= MAX_RESULT_SIZE_BYTES) return envelope
-        budget -= (size - MAX_RESULT_SIZE_BYTES) + HARD_TRUNCATE_ENVELOPE_SLACK_BYTES
-    }
-    return buildOversizeEnvelope({
-        result,
-        text: '[LARGE RESPONSE] The response was too large to include even after truncation. Retry with a more specific filter or fewer items.',
-    })
-}
-
-function shrinkLargeValue(value: unknown, limits: { maxStringLength: number, maxArrayItems: number }): unknown {
-    if (typeof value === 'string') {
-        if (value.length <= limits.maxStringLength) return value
-        return `${value.slice(0, limits.maxStringLength)}…[truncated ${value.length - limits.maxStringLength} chars]`
-    }
-    if (Array.isArray(value)) {
-        const kept = value.slice(0, limits.maxArrayItems).map((item) => shrinkLargeValue(item, limits))
-        return value.length > limits.maxArrayItems
-            ? [...kept, `…and ${value.length - limits.maxArrayItems} more items`]
-            : kept
-    }
-    if (isObject(value)) {
-        return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, shrinkLargeValue(val, limits)]))
-    }
-    return value
-}
-
-function findTopLevelArray(obj: unknown): { array: unknown[], path: string, totalCount: number } | null {
-    if (Array.isArray(obj) && obj.length > MIN_PREVIEW_ARRAY_LENGTH) {
-        return { array: obj, path: 'root', totalCount: obj.length }
-    }
-    if (!isObject(obj)) return null
-    for (const key of Object.keys(obj)) {
-        const val = obj[key]
-        if (!Array.isArray(val) || val.length <= MIN_PREVIEW_ARRAY_LENGTH) continue
-        // The MCP envelope `{ content: [{ type, text }] }` is not a data array — its
-        // single item holds the entire payload as a string, so a 3-item "preview"
-        // would emit the whole blob unchanged. Skip it; the shrink path handles it.
-        if (looksLikeMcpContentParts(val)) continue
-        return { array: val, path: key, totalCount: val.length }
-    }
-    return null
-}
-
-function looksLikeMcpContentParts(array: unknown[]): boolean {
-    return array.every((element) => isObject(element) && typeof element['type'] === 'string')
 }
 
 function normalizePieceName(piece: string): string {
@@ -254,21 +155,36 @@ function gateNoResponseMessage(step: string): string {
     return `⏳ The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    accountAlreadyChosenFor?: (pieceName: string) => boolean
 }): ToolSet {
-    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved }: {
+    function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
+        const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
+        if (isNil(accountAlreadyChosenFor) || !accountAlreadyChosenFor(normalizePieceName(piece))) {
+            return undefined
+        }
+        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+        return { content: [{ type: 'text', text: `This agent already runs on the ${displayName} account its author chose, so there is nothing to connect or reconnect here and this card was not shown. Use the ${displayName} tool. If it fails, say exactly what failed — do not describe it as a connection problem unless the failure says the credentials were rejected.` }] }
+    }
+
+    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
         dismissMessage: string | ((input: Record<string, unknown>) => string)
         successKey?: string
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
+        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
+            const refusal = refuseWhen?.(input)
+            if (!isNil(refusal)) {
+                return refusal
+            }
             if (onGateOpened) {
                 const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
@@ -302,6 +218,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_required',
+                refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
@@ -351,6 +268,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_picker',
+                refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
@@ -438,6 +356,23 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             execute: blockingExecute({ dismissMessage: 'The user skipped these questions. Proceed with reasonable defaults where possible, and let the user know what assumptions you made.', successKey: 'answered', toolName: 'ap_show_questions' }),
         }),
 
+        ap_show_showcase: tool({
+            description: 'Render a designed "showcase" card to introduce yourself or show what is possible — your way to answer "what can you do?", "what is this?", "who are you?" and similar, or to spotlight what the user can do with their connected apps. Use this card, NOT prose and NOT a bullet list. Make it personal and use-case-led: pull the user\'s role and company from the "Who you\'re talking to" note when it is there. CRITICAL — the tile `title` is BOTH what the user reads AND the exact message sent to chat verbatim when they tap it, so write each title as the plain first-person instruction the user themselves would type, and when it runs on specific app(s), NAME them in it so the sent message keeps its context ("Track my competitors in AI", "Enrich HubSpot leads with Apollo", "Summarize my Gmail every morning") — 3-6 words, no marketing words ("supercharge", "unlock", "seamless", "effortless", "10x", "boost", "streamline"), no agent-voice ("I\'ll…", "Wake up to…"), no Title-Case headlines. The `description` is a short sub-line explaining the value (shown under the title, NEVER sent). 3-4 tiles, not a long list. EVERY tile MUST carry a visual — either an `app` (shows its logo) or an `icon` (a kebab-case Lucide name); `app` wins if both are set, and a tile with NEITHER renders broken, so never omit both. The tiles are themselves the clickable options, so do NOT also call ap_show_quick_replies in the same turn. Never hardcode an integration count — say "hundreds".',
+            inputSchema: z.object({
+                layout: z.enum(['grid', 'list']).optional().describe('Presentation. Defaults to "list" = full-width rows stacked vertically, one use case per line with larger type (the right choice for onboarding and almost always). "grid" = compact 2-up tiles, only for a dense many-app spotlight. Leave unset for the default list.'),
+                headline: z.string().optional().describe('OMIT in the default "list" layout — your one warm chat sentence right above the card is the introduction, and a headline inside the card just repeats it. Only for the compact "grid" layout give a short personal headline.'),
+                subhead: z.string().optional().describe('Optional one-line subhead under the headline — grid layout only, omit for list'),
+                tiles: z.array(z.object({
+                    title: z.string().describe('The EXACT message sent to chat verbatim when this tile is tapped — write it as the plain first-person instruction the user would type, 3-6 words, e.g. "Track my competitors in AI". Not a marketing sentence, not agent-voice. When the use case runs on specific app(s), NAME them in the title so the sent message carries its own context.'),
+                    description: z.string().describe('ONE short sub-line explaining the value (shown under the title, NEVER sent to chat) — aim for under 110 characters so it fits on a single line; anything longer gets visually cut off'),
+                    app: z.string().optional().describe('An app/integration name to show its real logo, e.g. "gmail", "hubspot", "@activepieces/piece-slack". Use for tiles about one of their connected apps. Omit for a generic capability tile.'),
+                    icon: z.string().optional().describe('kebab-case Lucide icon name for a generic capability tile. Prefer modern, evocative glyphs: "radar", "target", "orbit", "telescope", "workflow", "waypoints", "brain-circuit", "gauge", "scan-search", "chart-spline", "wand-sparkles", "compass", "timer", "goal", "notebook-pen", "presentation", "wallet", "rocket", "zap", "sparkles", "bot". Ignored when `app` is set.'),
+                })).describe('2-4 use-case tiles, personalised to this user (the UI renders at most 4)'),
+            }),
+            execute: async () => {
+                return { displayed: true }
+            },
+        }),
         ap_show_quick_replies: tool({
             description: 'Offer 1-3 short, relevant follow-up suggestions above the chat input. Only use when concrete next steps genuinely exist; skip it otherwise.',
             inputSchema: z.object({
@@ -452,7 +387,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
 }
 
 function createLocalTools({ onSetProjectContext, projects }: {
-    onSetProjectContext: (projectId: string | null) => Promise<void>
+    onSetProjectContext: (projectId: string | null) => Promise<{ success: boolean, error?: string }>
     projects: Array<{ id: string, displayName: string, type: string }>
 }): ToolSet {
     const availableProjectIds = new Set(projects.map((p) => p.id))
@@ -468,7 +403,10 @@ function createLocalTools({ onSetProjectContext, projects }: {
                     return { success: false, error: `Project ${input.projectId} is not accessible.` }
                 }
                 const project = projects.find((p) => p.id === input.projectId)
-                await onSetProjectContext(input.projectId)
+                const outcome = await onSetProjectContext(input.projectId)
+                if (!outcome.success) {
+                    return { success: false, error: outcome.error }
+                }
                 return { success: true, message: `Now working in project ${project?.displayName ?? input.projectId}.` }
             },
         }),
@@ -477,7 +415,10 @@ function createLocalTools({ onSetProjectContext, projects }: {
             description: 'Clear project context. Useful when working across multiple projects.',
             inputSchema: z.object({}),
             execute: async () => {
-                await onSetProjectContext(null)
+                const outcome = await onSetProjectContext(null)
+                if (!outcome.success) {
+                    return { success: false, error: outcome.error }
+                }
                 return { success: true, message: 'Project context cleared.' }
             },
         }),
@@ -773,6 +714,73 @@ function createCrossProjectTools({ executeTool, eventEmitter, waitForApproval, o
             }),
             execute: async (toolInput) => {
                 return executeTool('ap_remember', toolInput)
+            },
+        }),
+    }
+}
+
+function createAgentSurfaceTools({ executeTool }: {
+    executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
+}): ToolSet {
+    return {
+        ap_list_agents: tool({
+            description: 'List the saved agents in the active project, with whether each one is published. Call it before offering to create an agent, so you build on what exists instead of adding a near-duplicate, and when the user asks what agents they have.',
+            inputSchema: z.object({}),
+            execute: async (toolInput) => {
+                return executeTool('ap_list_agents', toolInput)
+            },
+        }),
+
+        ap_add_agent_tool: tool({
+            description: 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent'),
+                pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
+                actionNames: z.array(z.string()).describe('Action names within that piece, e.g. ["gmail_search_mail"]'),
+                connectionExternalId: z.string().optional().describe('externalId from ap_list_connections, for a piece that needs an account'),
+                publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_add_agent_tool', toolInput)
+            },
+        }),
+
+        ap_remove_agent_tool: tool({
+            description: 'Take piece actions away from a saved agent, when the user no longer wants it doing that or a tool was added by mistake. Pass every action to remove in one call. If two of the agent\'s pieces share an action name, pass pieceName to say which one.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents'),
+                actionNames: z.array(z.string()).describe('Action names to remove, e.g. ["gmail_search_mail"]'),
+                pieceName: z.string().optional().describe('Full piece name, only needed when the same action name is on two of the agent\'s pieces'),
+                publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_remove_agent_tool', toolInput)
+            },
+        }),
+
+        ap_update_agent: tool({
+            description: 'Change a saved agent\'s name, description or instructions, and publish it. Send the full new instructions, not a diff — they replace what is there. Pass publish: true whenever the user wants the result live, including when they only ask you to publish and change nothing else.',
+            inputSchema: z.object({
+                agentId: z.string().describe('The id returned by ap_list_agents or ap_create_agent'),
+                displayName: z.string().optional(),
+                description: z.string().optional(),
+                instructions: z.string().optional().describe('The agent\'s full new standing brief, in second person'),
+                publish: z.boolean().optional().describe('Make the change live for flows and chats in the same step'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_update_agent', toolInput)
+            },
+        }),
+
+        ap_create_agent: tool({
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do.',
+            inputSchema: z.object({
+                displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
+                instructions: z.string().describe('The agent\'s standing brief, in second person'),
+                description: z.string().optional().describe('One line on what it is for'),
+            }),
+            execute: async (toolInput) => {
+                return executeTool('ap_create_agent', toolInput)
             },
         }),
     }
@@ -1437,15 +1445,164 @@ export type AgentEventEmitter = {
     emitBuildPlan(data: BuildPlanEvent): void
 }
 
+function createConfiguredPieceTools({ tools, runPieceTool, taintState, eventEmitter, log }: {
+    tools: AgentPieceTool[]
+    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata }) => Promise<ExecutePieceToolResponse>
+    taintState: TaintState
+    eventEmitter: AgentEventEmitter
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: `Run the "${configured.pieceMetadata.actionName}" action of ${configured.pieceMetadata.pieceName.replace('@activepieces/piece-', '')}. Describe what it should do, including any values it needs; the inputs are worked out from that. Fields the flow author pinned keep their value whatever you ask for. Returns the action's own output, or why it failed.`,
+            inputSchema: z.object({
+                instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
+            }),
+            execute: async ({ instruction }, options) => {
+                callsMade += 1
+                if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                    log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredPieceTool] Refused, this run has already run enough actions')
+                    return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
+                }
+                const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
+                if (error) {
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, reachedTheServer }, '[configuredPieceTool] Action did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That action failed, and this is not a connection problem: ${apErrorOf(error)?.message ?? String(error)}`
+                        : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
+                }
+                const succeeded = isSuccessResult(data.result)
+                taintState.tainted = true
+                if (!agentToolClassification.isReadOnlyActionCall({ actionName: configured.pieceMetadata.actionName, input: data.resolvedInput ?? {} })) {
+                    eventEmitter.emitActionReceipt({
+                        toolCallId: options.toolCallId,
+                        actionDisplayName: data.actionDisplayName ?? configured.pieceMetadata.actionName,
+                        pieceName: configured.pieceMetadata.pieceName,
+                        ...spreadIfDefined('connectionLabel', data.connectionLabel),
+                        status: succeeded ? 'success' : 'failed',
+                        output: data.result,
+                        timestamp: new Date().toISOString(),
+                    })
+                }
+                if (!succeeded) {
+                    log.warn({ tool: { name: configured.toolName } }, '[configuredPieceTool] Action reported a failure')
+                    return { content: [{ type: 'text', text: `That action failed: ${extractUserFacingError({ result: data.result })}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
+function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, log }: {
+    tools: AgentKnowledgeBaseTool[]
+    runKnowledgeBaseTool: (input: { toolName: string, knowledgeBaseFileId: string, query: string }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools
+        .filter((configured) => configured.sourceType === KnowledgeBaseSourceType.FILE)
+        .map((configured) => [
+            configured.toolName,
+            tool({
+                description: `Search the "${configured.sourceName}" knowledge base file for relevant information. Use this when you need facts, policies, or content from this document.`,
+                inputSchema: z.object({
+                    query: z.string().describe('The search query to find relevant information'),
+                }),
+                execute: async ({ query }) => {
+                    callsMade += 1
+                    if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                        log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredKnowledgeBaseTool] Refused, this run has already searched enough')
+                        return { content: [{ type: 'text', text: `This run has already searched knowledge bases ${MAX_CONFIGURED_TOOL_CALLS} times, which is the limit. Do not try again; say what is left undone.` }] }
+                    }
+                    const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
+                    if (error) {
+                        log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
+                        return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
+                    }
+                    return truncateLargeResult(data.result)
+                },
+            }),
+        ]))
+}
+
+const jsonSchema7Shape = z.custom<JSONSchema7>()
+
+function createConfiguredFlowTools({ tools, runFlowTool, log }: {
+    tools: ResolvedAgentFlowTool[]
+    runFlowTool: (input: { toolName: string, flowId: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
+    log: FastifyBaseLogger
+}): ToolSet {
+    let callsMade = 0
+    return Object.fromEntries(tools.map((configured) => [
+        configured.toolName,
+        tool({
+            description: configured.description,
+            inputSchema: jsonSchema(jsonSchema7Shape.parse(configured.inputSchema)),
+            execute: async (toolInput) => {
+                callsMade += 1
+                if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
+                    log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredFlowTool] Refused, this run has already run enough actions')
+                    return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
+                }
+                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, returnsResponse: configured.returnsResponse, toolInput }))
+                if (error) {
+                    const reachedTheServer = String(error).includes('handler threw')
+                    log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')
+                    return { content: [{ type: 'text', text: reachedTheServer
+                        ? `That flow failed: ${String(error)}`
+                        : `That flow was called but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
+                }
+                if (!isSuccessResult(data.result)) {
+                    log.warn({ tool: { name: configured.toolName }, flow: { id: configured.flowId } }, '[configuredFlowTool] Flow reported a failure')
+                    return { content: [{ type: 'text', text: `That flow failed: ${extractUserFacingError({ result: data.result })}` }] }
+                }
+                return truncateLargeResult(data.result)
+            },
+        }),
+    ]))
+}
+
 // Per-turn flag, set once the turn reads untrusted external content; forces the action-preview gate.
 export type TaintState = { tainted: boolean }
 
 export type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
 
+function createStructuredOutputTool({ fields, capture }: {
+    fields: AgentOutputField[]
+    capture: (output: Record<string, unknown>) => void
+}): ToolSet {
+    return {
+        [TASK_COMPLETION_TOOL_NAME]: tool({
+            description: 'Call this as your final action, once the task is done or you cannot continue, to report the result in the shape the flow expects. Nothing you write outside this tool reaches the rest of the flow.',
+            inputSchema: z.object({ output: z.object(Object.fromEntries(fields.map((field) => [field.displayName, schemaForOutputField(field)]))) }),
+            execute: async ({ output }) => {
+                capture(output)
+                return { content: [{ type: 'text', text: 'Result recorded.' }] }
+            },
+        }),
+    }
+}
+
+function schemaForOutputField(field: AgentOutputField): z.ZodType {
+    switch (field.type) {
+        case AgentOutputFieldType.NUMBER:
+            return z.number().describe(field.description ?? field.displayName)
+        case AgentOutputFieldType.BOOLEAN:
+            return z.boolean().describe(field.description ?? field.displayName)
+        default:
+            return z.string().describe(field.description ?? field.displayName)
+    }
+}
+
 export const agentWorkerTools = {
     createEventEmitter,
     createDisplayTools,
+    createAgentSurfaceTools,
     createLocalTools,
     createCrossProjectTools,
     createWebTools,
@@ -1457,11 +1614,14 @@ export const agentWorkerTools = {
     createThinkingTools,
     createPhaseTools,
     createBuildPlanTools,
+    createConfiguredPieceTools,
+    createConfiguredFlowTools,
+    createConfiguredKnowledgeBaseTools,
+    createStructuredOutputTool,
     isSuccessResult,
     extractResultText,
     extractUserFacingError,
     truncateLargeResult,
-    shrinkLargeValue,
     withToolTimeout,
     normalizePieceName,
     TOOL_EXECUTION_TIMEOUT_MS,

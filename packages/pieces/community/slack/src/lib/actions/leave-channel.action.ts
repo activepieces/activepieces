@@ -6,6 +6,7 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const leaveChannelAction = createAction({
   auth: slackAuth,
   name: 'slack_leave_channel',
+  classification: 'WRITE',
   displayName: 'Leave Channel',
   description: 'Leaves a channel.',
   audience: 'ai',

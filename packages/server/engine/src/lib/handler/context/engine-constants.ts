@@ -1,6 +1,7 @@
 import { ensureTrailingSlash, isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ContextVersion } from '@activepieces/pieces-framework'
 import { BaseEngineOperation, BeginExecuteFlowOperation, DEFAULT_MCP_DATA, EngineGenericError, ExecutePropsOptions, ExecuteTriggerOperation, ExecutionState, ExecutionType, flowStructureUtil, FlowTrigger, FlowVersionState, Project, ResumeExecuteFlowOperation, ResumePayload, RunEnvironment, StreamStepProgress, TriggerHookType } from '@activepieces/shared'
+import { retryFetch } from '../../api/retry-fetch'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -162,13 +163,14 @@ export class EngineConstants {
             flowRunId: DEFAULT_TRIGGER_EXECUTION,
         })
     }
-    public getPropsResolver(contextVersion: ContextVersion | undefined): PropsResolver {
+    public getPropsResolver({ contextVersion, pieceName }: GetPropsResolverParams): PropsResolver {
         return createPropsResolver({
             projectId: this.projectId,
             engineToken: this.engineToken,
             apiUrl: this.internalApiUrl,
             contextVersion,
             stepNames: this.stepNames,
+            pieceName,
         })
     }
     private async getProject(): Promise<Project> {
@@ -178,7 +180,7 @@ export class EngineConstants {
 
         const getWorkerProjectEndpoint = `${this.internalApiUrl}v1/worker/project`
 
-        const response = await fetch(getWorkerProjectEndpoint, {
+        const response = await retryFetch(getWorkerProjectEndpoint, {
             headers: {
                 Authorization: `Bearer ${this.engineToken}`,
             },
@@ -226,6 +228,11 @@ function flowFields(flowVersion: FlowFieldsSource | undefined) {
         triggerPieceName: flowVersion.trigger?.settings.pieceName,
         stepNames: isNil(flowVersion.trigger) ? [] : flowStructureUtil.getAllSteps(flowVersion.trigger).map((step) => step.name),
     }
+}
+
+type GetPropsResolverParams = {
+    contextVersion: ContextVersion | undefined
+    pieceName?: string
 }
 
 type SharedFieldsSource = {

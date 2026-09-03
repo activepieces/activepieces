@@ -5,6 +5,7 @@ import { chargekeepCommon } from '../common/common';
 export const newPayment = createTrigger({
   auth: chargekeepAuth,
   name: 'new_payment',
+  classification: 'READ',
   displayName: 'New Payment',
   description: 'Triggers when a new payment is created',
   aiMetadata: {

@@ -3,10 +3,13 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { dealIdProp, leadIdProp, organizationIdProp, personIdProp } from '../common/props';
 import { pipedriveApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createNoteActionOutputSchema } from '../output-schemas';
 
 export const createNoteAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-note',
+	outputSchema: createNoteActionOutputSchema,
+	classification: 'WRITE',
 	displayName: 'Create Note',
 	description: 'Creates a new note.',
 	audience: 'both',

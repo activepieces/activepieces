@@ -29,7 +29,7 @@ async function fillInput({ action, instruction, predefinedInput, ports }: FillIn
             schema,
             prompt: extractionPrompt({ instruction, propertyNames, resolvedInput, choices }),
         })
-        resolvedInput = { ...resolvedInput, ...filled }
+        resolvedInput = { ...resolvedInput, ...omit(withoutTemplatesOrNulls(filled), ['auth']), ...pinned }
     }
     return resolvedInput
 }
@@ -63,6 +63,15 @@ async function choicesFor({ action, propertyNames, resolvedInput, ports }: {
         return result?.status === 'options' ? ([propertyName, result.options] as const) : null
     }))
     return Object.fromEntries(resolved.filter((entry) => !isNil(entry)))
+}
+
+function withoutTemplatesOrNulls(filled: Record<string, unknown>): Record<string, unknown> {
+    return JSON.parse(JSON.stringify(filled, (_key, value) => {
+        if (value === null) {
+            return undefined
+        }
+        return typeof value === 'string' ? value.replace(/\{(?=\{)/g, '{ ') : value
+    }))
 }
 
 function resolveFor({ action, ports, propertyName, resolvedInput }: {
@@ -106,6 +115,7 @@ function modelCompleter(model: LanguageModel): CompleteObject {
         const { output } = await generateText({
             model,
             prompt,
+            temperature: 0,
             output: Output.object({ schema: zodSchema(schema) }),
         }).catch(recoverFencedJson)
 

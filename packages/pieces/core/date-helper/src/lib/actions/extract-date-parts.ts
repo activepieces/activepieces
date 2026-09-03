@@ -11,6 +11,7 @@ import {
 export const extractDateParts = createAction({
   audience: 'both',
   name: 'extract_date_parts',
+  classification: 'READ',
   displayName: 'Extract Date Units',
   description:
     'Extract date units ( year , month , day , hour , minute , second , day of week , month name ) from a date',
@@ -58,7 +59,7 @@ export const extractDateParts = createAction({
     }),
   },
   async run(context) {
-    
+
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const unitExtract = context.propsValue.unitExtract;

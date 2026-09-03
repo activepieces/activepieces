@@ -1,12 +1,12 @@
-import { apId } from '@activepieces/core-utils'
-import { PackageType, PieceSelectionMode, PieceType, PrincipalType, SuggestionType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
+import { apId, ProjectRole } from '@activepieces/core-utils'
+import { DefaultProjectRole, PackageType, PieceSelectionMode, PieceType, PlatformRole, PrincipalType, SuggestionType, TriggerStrategy, TriggerTestStrategy } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import { createMockPieceMetadata, mockAndSaveBasicSetup } from '../../../helpers/mocks'
+import { createMockPieceMetadata, createMockProject, createMockProjectMember, mockAndSaveBasicSetup, mockBasicUser } from '../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance | null = null
@@ -180,6 +180,104 @@ describe('Piece Component Filtering (EE)', () => {
             expect(response.statusCode).toBe(200)
             const pieces = response.json()
             expect(pieces.find((p: { name: string }) => p.name === 'fallback-piece')).toBeDefined()
+        })
+    })
+
+    describe('GET /v1/pieces/:name (direct fetch respects piece sets)', () => {
+        const emptyConfig = { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: [] }, selectedActions: {}, selectedTriggers: {} }
+
+        async function setupPieceSetScenario(hiddenPieces: string[]) {
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'Test Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: hiddenPieces }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
+
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            return { mockPlatform, mockProject, token }
+        }
+
+        it('direct fetch returns 404 for a hidden piece when projectId is passed', async () => {
+            const { mockProject, token } = await setupPieceSetScenario(['@activepieces/piece-ai'])
+
+            const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/${encodeURIComponent('@activepieces/piece-ai')}?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(404)
+        })
+
+        it('direct fetch returns 200 for a visible piece when projectId is passed', async () => {
+            const { mockProject, token } = await setupPieceSetScenario([])
+
+            const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/${encodeURIComponent('@activepieces/piece-ai')}?projectId=${mockProject.id}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(200)
+            expect(response.json().name).toBe('@activepieces/piece-ai')
+        })
+
+        it('direct fetch without projectId returns 200 even for a hidden piece (existing-step lookup path)', async () => {
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const pieceSet = {
+                id: apId(),
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                platformId: mockPlatform.id,
+                name: 'Test Set',
+                externalId: null,
+                isDefault: false,
+                generatedForProjectId: null,
+                config: { pieces: { mode: PieceSelectionMode.INCLUDE_ALL, exceptions: ['@activepieces/piece-ai'] }, selectedActions: {}, selectedTriggers: {} },
+            }
+            await databaseConnection().getRepository('piece_set').save(pieceSet)
+            await databaseConnection().getRepository('project').update({ id: mockProject.id }, { pieceSetId: pieceSet.id })
+
+            const piece = createMockPieceMetadata({ name: '@activepieces/piece-ai', pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, actions: {}, triggers: {} })
+            await db.save('piece_metadata', piece)
+            await pieceCache(mockLog).setup()
+
+            const token = await generateMockToken({ type: PrincipalType.USER, id: mockOwner.id, platform: { id: mockPlatform.id } })
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/pieces/${encodeURIComponent('@activepieces/piece-ai')}`,
+                headers: { authorization: `Bearer ${token}` },
+            })
+
+            expect(response.statusCode).toBe(200)
         })
     })
 
@@ -485,6 +583,68 @@ describe('Piece Component Filtering (EE)', () => {
             const result = await pieceMetadataService(mockLog).get({ name: 'mcp-hidden-piece', projectId: mockProject.id, platformId: mockPlatform.id })
 
             expect(result).toBeUndefined()
+        })
+    })
+
+    describe('project scoping', () => {
+        async function setupMemberOfOneProject() {
+            const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup({
+                plan: { managePiecesEnabled: true },
+            })
+
+            const otherProject = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
+            await db.save('project', otherProject)
+
+            const { mockUser } = await mockBasicUser({
+                user: { platformId: mockPlatform.id, platformRole: PlatformRole.MEMBER },
+            })
+            const projectRole = await db.findOneByOrFail<ProjectRole>('project_role', { name: DefaultProjectRole.ADMIN })
+            await db.save('project_member', createMockProjectMember({
+                userId: mockUser.id,
+                platformId: mockPlatform.id,
+                projectId: mockProject.id,
+                projectRoleId: projectRole.id,
+            }))
+
+            const token = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockUser.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            return { token, mockProject, otherProject }
+        }
+
+        it('a member of the project can list its pieces', async () => {
+            const { token, mockProject } = await setupMemberOfOneProject()
+
+            const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${mockProject.id}`, headers: { authorization: `Bearer ${token}` } })
+
+            expect(response.statusCode).toBe(200)
+        })
+
+        it('an empty projectId is no project at all', async () => {
+            const { token } = await setupMemberOfOneProject()
+
+            const response = await app!.inject({ method: 'GET', url: '/api/v1/pieces?projectId=', headers: { authorization: `Bearer ${token}` } })
+
+            expect(response.statusCode).toBe(200)
+        })
+
+        it('a non-member cannot list another project pieces', async () => {
+            const { token, otherProject } = await setupMemberOfOneProject()
+
+            const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces?projectId=${otherProject.id}`, headers: { authorization: `Bearer ${token}` } })
+
+            expect(response.statusCode).toBe(403)
+        })
+
+        it('a non-member cannot fetch a single piece scoped to another project', async () => {
+            const { token, otherProject } = await setupMemberOfOneProject()
+
+            const response = await app!.inject({ method: 'GET', url: `/api/v1/pieces/test-piece?projectId=${otherProject.id}`, headers: { authorization: `Bearer ${token}` } })
+
+            expect(response.statusCode).toBe(403)
         })
     })
 })

@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { Readable } from 'stream';
+import { streamUtils } from '@activepieces/pieces-common';
 import mime from 'mime-types';
 import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, createGoogleClient } from '../auth';
@@ -9,6 +9,7 @@ import { uploadGdriveFileActionOutputSchema } from '../output-schemas';
 export const googleDriveUploadFile = createAction({
   auth: googleDriveAuth,
   name: 'upload_gdrive_file',
+  classification: 'WRITE',
   description: 'Upload a file in your Google Drive',
   audience: 'human',
   aiMetadata: { description: 'Uploads a binary file (from a URL or base64 input) into Google Drive, optionally inside a parent folder. Use to store an existing file or attachment in Drive; the MIME type is inferred from the file extension. Not idempotent: each call creates a new file.', idempotent: false },
@@ -23,6 +24,7 @@ export const googleDriveUploadFile = createAction({
       displayName: 'File',
       description: 'The file URL or base64 to upload',
       required: true,
+      streaming: true,
     }),
     parentFolder: common.properties.parentFolder,
     include_team_drives: common.properties.include_team_drives,
@@ -30,6 +32,7 @@ export const googleDriveUploadFile = createAction({
   outputSchema: uploadGdriveFileActionOutputSchema,
   async run(context) {
     const fileData = context.propsValue.file;
+    const { body } = streamUtils.toStreamingBody(fileData);
     const mimeType = mime.lookup(fileData.extension ?? '') || 'application/octet-stream';
 
     const authClient = await createGoogleClient(context.auth);
@@ -44,7 +47,7 @@ export const googleDriveUploadFile = createAction({
       },
       media: {
         mimeType,
-        body: Readable.from(Buffer.from(fileData.base64, 'base64')),
+        body,
       },
       supportsAllDrives: context.propsValue.include_team_drives ?? false,
       fields: 'id, name, mimeType, kind',

@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowOperationRequest, FlowOperationType, FlowTriggerType, McpToolDefinition, PieceTrigger, ProjectScopedMcpServer } from '@activepieces/shared'
+import { FlowOperationRequest, FlowOperationType, FlowTriggerType, McpToolContext, McpToolDefinition, PieceTrigger } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -16,7 +16,7 @@ const updateTriggerInput = z.object({
     displayName: z.string().optional(),
 })
 
-export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apUpdateTriggerTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_update_trigger',
         permission: Permission.WRITE_FLOW,
@@ -29,7 +29,7 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
             auth: z.string().optional().describe('Connection `externalId` from `ap_list_connections`. The tool wraps it automatically as `{{connections[\'externalId\']}}`.'),
             displayName: z.string().optional().describe('Display name for the trigger step'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             const { flowId, pieceName, triggerName, input: rawInput, auth, displayName: rawDisplayName } = updateTriggerInput.parse(args)
 
@@ -107,7 +107,8 @@ export const apUpdateTriggerTool = (mcp: ProjectScopedMcpServer, log: FastifyBas
                 const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
-                    userId: null,
+                    userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

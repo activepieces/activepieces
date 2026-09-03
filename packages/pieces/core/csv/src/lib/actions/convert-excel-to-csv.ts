@@ -1,9 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import * as XLSX from 'xlsx';
+import { excelToCsvActionOutputSchema } from '../output-schemas';
 
 export const excelToCsvAction = createAction({
   audience: 'both',
   name: 'convert_excel_to_csv',
+  classification: 'READ',
   displayName: 'Convert Excel to CSV',
   description: 'Converts an Excel file (.xlsx or .xls) into CSV text.',
   aiMetadata: { description: 'Reads a binary Excel workbook (.xlsx or .xls) and converts a single sheet to delimited CSV text (comma, tab, or semicolon), selecting either a named sheet or the first sheet when no name is given. Pick this when the source is a spreadsheet file; use Convert CSV to JSON when you already have CSV text. Requires a real Excel file whose signature is validated, so HTML or PDF content is rejected, and any sheet name given must exist in the workbook; read-only and idempotent.', idempotent: true },
@@ -36,6 +38,7 @@ export const excelToCsvAction = createAction({
       },
     }),
   },
+  outputSchema: excelToCsvActionOutputSchema,
   async run(context) {
     const { file, sheet_name, delimiter_type } = context.propsValue;
 

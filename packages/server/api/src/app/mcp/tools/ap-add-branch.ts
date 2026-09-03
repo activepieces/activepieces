@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchCondition, FlowOperationRequest, FlowOperationType, McpToolDefinition, ProjectScopedMcpServer } from '@activepieces/shared'
+import { BranchCondition, FlowOperationRequest, FlowOperationType, McpToolContext, McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -13,7 +13,7 @@ const addBranchInput = z.object({
     conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional(),
 })
 
-export const apAddBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLogger): McpToolDefinition => {
+export const apAddBranchTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
     return {
         title: 'ap_add_branch',
         permission: Permission.WRITE_FLOW,
@@ -24,7 +24,7 @@ export const apAddBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
             branchName: z.string().describe('Display name for the new branch (e.g. "Branch 1")'),
             conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional().describe('Conditions array (outer array = OR groups, inner array = AND conditions). Required for condition-type branches; omit to use an empty condition group.'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, routerStepName, branchName, conditions } = addBranchInput.parse(args)
@@ -63,7 +63,8 @@ export const apAddBranchTool = (mcp: ProjectScopedMcpServer, log: FastifyBaseLog
                 const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
-                    userId: null,
+                    userId,
+                    previousFlow: flow,
                     platformId: project.platformId,
                     operation,
                 })

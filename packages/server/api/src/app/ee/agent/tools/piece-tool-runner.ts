@@ -1,5 +1,5 @@
 import { PredefinedInputsStructure } from '@activepieces/core-piece-types'
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { McpToolResult } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,18 +8,35 @@ import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { pieceInputFiller, ResolveProperty } from './piece-input-filler'
 
-async function runFromInstruction({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: RunFromInstructionParams): Promise<PieceToolRun> {
-    const { properties, pieceVersion } = await resolveAction({ piece, platformId, log })
+async function resolveInput({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: ResolveInputParams): Promise<ResolvedPieceInput> {
+    const { properties, pieceVersion, actionDisplayName } = await resolveAction({ piece, platformId, log })
+    const account = connectionExternalId ?? connectionTemplate.unwrapExternalId(predefinedInput?.auth) ?? undefined
     const resolvedInput = await pieceInputFiller.fillInput({
-        action: { name: piece.actionName, properties, ...(isNil(connectionExternalId) ? {} : { connectionExternalId }) },
+        action: { name: piece.actionName, properties, ...spreadIfDefined('connectionExternalId', account) },
         instruction,
-        ...(isNil(predefinedInput) ? {} : { predefinedInput }),
+        ...(isNil(predefinedInput) && isNil(account) ? {} : { predefinedInput: { fields: predefinedInput?.fields ?? {}, ...spreadIfDefined('auth', account) } }),
         ports: {
             resolveProperty: propertyResolverFor({ piece, pieceVersion, projectId, platformId, log }),
             completeObject: pieceInputFiller.modelCompleter(model),
         },
     })
 
+    assertUrlStaysOnThePieceHost({ actionName: piece.actionName, input: resolvedInput })
+
+    return { resolvedInput, actionDisplayName }
+}
+
+function withoutCredential(input: Record<string, unknown>): Record<string, unknown> {
+    return { ...input, ...(isNil(input.auth) ? {} : { auth: REDACTED_AUTH }) }
+}
+
+async function runResolved({ piece, resolvedInput, projectId, connectionExternalId, log }: {
+    piece: PieceActionRef
+    resolvedInput: Record<string, unknown>
+    projectId: string
+    connectionExternalId?: string
+    log: FastifyBaseLogger
+}): Promise<PieceToolRun> {
     const result = await executePieceActionRun({
         projectId,
         pieceName: piece.pieceName,
@@ -29,14 +46,14 @@ async function runFromInstruction({ piece, instruction, predefinedInput, model, 
         ...(isNil(connectionExternalId) ? {} : { connectionExternalId }),
     })
 
-    return { result, resolvedInput: { ...resolvedInput, ...(isNil(resolvedInput.auth) ? {} : { auth: REDACTED_AUTH }) } }
+    return { result, resolvedInput: withoutCredential(resolvedInput) }
 }
 
 async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef, platformId: string, log: FastifyBaseLogger }) {
     const metadata = await pieceMetadataService(log).getOrThrow({
         platformId,
         name: piece.pieceName,
-        version: undefined,
+        version: piece.pieceVersion,
     })
     const action = metadata.actions[piece.actionName]
     if (isNil(action)) {
@@ -45,7 +62,7 @@ async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef
             params: { entityType: 'PieceAction', entityId: `${piece.pieceName}:${piece.actionName}` },
         })
     }
-    return { properties: action.props, pieceVersion: metadata.version }
+    return { properties: action.props, pieceVersion: metadata.version, actionDisplayName: action.displayName }
 }
 
 function propertyResolverFor({ piece, pieceVersion, projectId, platformId, log }: {
@@ -70,18 +87,38 @@ function propertyResolverFor({ piece, pieceVersion, projectId, platformId, log }
     }
 }
 
+function assertUrlStaysOnThePieceHost({ actionName, input }: { actionName: string, input: Record<string, unknown> }): void {
+    if (actionName !== CUSTOM_API_CALL) {
+        return
+    }
+    const url = input.url
+    const value = typeof url === 'string' ? url : (typeof url === 'object' && !isNil(url) && 'url' in url && typeof url.url === 'string' ? url.url : undefined)
+    if (isNil(value) || !ABSOLUTE_URL.test(value)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `A custom API call from an agent step must be a path on the connection's own API, not the full address "${value}". Sending this project's credentials somewhere the connection does not belong is not something an unattended run may do.` },
+    })
+}
+
+const CUSTOM_API_CALL = 'custom_api_call'
+const ABSOLUTE_URL = /^https?:\/\//i
 const REDACTED_AUTH = 'Redacted'
 
 export const pieceToolRunner = {
-    runFromInstruction,
+    resolveInput,
+    runResolved,
+    withoutCredential,
 }
 
 export type PieceActionRef = {
     pieceName: string
     actionName: string
+    pieceVersion?: string
 }
 
-export type RunFromInstructionParams = {
+export type ResolveInputParams = {
     piece: PieceActionRef
     instruction: string
     predefinedInput?: PredefinedInputsStructure
@@ -90,6 +127,11 @@ export type RunFromInstructionParams = {
     platformId: string
     connectionExternalId?: string
     log: FastifyBaseLogger
+}
+
+export type ResolvedPieceInput = {
+    resolvedInput: Record<string, unknown>
+    actionDisplayName: string
 }
 
 export type PieceToolRun = {

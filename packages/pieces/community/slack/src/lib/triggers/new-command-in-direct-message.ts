@@ -12,6 +12,7 @@ import { newCommandInDirectMessageTriggerOutputSchema } from '../output-schemas'
 export const newCommandInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
   name: 'new-command-in-direct-message',
+  classification: 'READ',
   displayName: 'New Command in Direct Message',
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2) via Direct Message.',

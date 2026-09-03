@@ -1,13 +1,13 @@
 ---
 title: 'Migrate Pieces to Self-Contained Bundles'
-icon: 'package'
+icon: 'boxes-stacked'
 ---
 
 <Note>
-This applies to forks with custom pieces created before pieces moved to self-contained bundles. Pieces created with `npm run cli pieces create` already use the bundle model — nothing to do.
+This applies to forks with custom pieces created before pieces moved to self-contained bundles. Pieces created with `npm run cli pieces create` already use the bundle model, so there's nothing to do.
 </Note>
 
-Activepieces builds each piece into a single self-contained bundle — see [Bundling Pieces](./bundling-pieces) for how that works. If you maintain custom pieces from before this change, update them so they conform to the new model.
+Activepieces builds each piece into a single self-contained bundle (see [Bundling Pieces](./bundling-pieces) for how that works). If you maintain custom pieces from before this change, update them so they conform to the new model.
 
 ## What changed
 
@@ -33,7 +33,7 @@ npm run cli -- pieces migrate <piece-name>
 ```
 
 - Pass `--all` to migrate every piece under `packages/pieces`.
-- It is idempotent — re-running it on an already-migrated piece makes no changes.
+- It is idempotent: re-running it on an already-migrated piece makes no changes.
 
 Then build the piece to verify:
 
@@ -41,7 +41,7 @@ Then build the piece to verify:
 npm run build-piece <piece-name>
 ```
 
-To migrate by hand — or to see exactly what the command changes — follow the steps below.
+To migrate by hand, or to see exactly what the command changes, follow the steps below.
 
 ## What it changes (or migrate by hand)
 
@@ -61,7 +61,7 @@ If a symbol isn't re-exported by the framework, it was server-only and shouldn't
 </Step>
 
 <Step title="Update package.json dependencies and scripts">
-Remove `@activepieces/shared` and move `tslib` to `devDependencies`. Add `@activepieces/core-piece-types` and `@activepieces/core-utils` — these are build-time only (they let `tsc` emit portable type declarations; your source never imports them directly). Add the `bundle` script.
+Remove `@activepieces/shared` and move `tslib` to `devDependencies`. Add `@activepieces/core-piece-types` and `@activepieces/core-utils`, which are build-time only (they let `tsc` emit portable type declarations; your source never imports them directly). Add the `bundle` script.
 
 ```jsonc
 {

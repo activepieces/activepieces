@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-ai",
-  "version": "0.5.0",
+  "version": "0.10.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -11,6 +11,7 @@
     "@ai-sdk/anthropic": "3.0.72",
     "@ai-sdk/azure": "3.0.55",
     "@ai-sdk/google": "3.0.65",
+    "@ai-sdk/google-vertex": "4.0.113",
     "@ai-sdk/mcp": "1.0.11",
     "@ai-sdk/openai": "3.0.54",
     "@ai-sdk/openai-compatible": "2.0.42",

@@ -8,6 +8,7 @@ import { createWorksheetActionOutputSchema } from '../output-schemas';
 export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
   name: 'create-worksheet',
+  classification: 'WRITE',
   displayName: 'Create Worksheet',
   description:'Create a new blank worksheet with a title.',
   audience: 'human',

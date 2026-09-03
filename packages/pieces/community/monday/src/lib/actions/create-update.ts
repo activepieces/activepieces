@@ -5,6 +5,7 @@ import { makeClient } from '../common';
 export const createUpdateAction = createAction({
   auth: mondayAuth,
   name: 'monday_create_update',
+  classification: 'WRITE',
   displayName: 'Create Update',
   description: 'Creates a new update.',
   audience: 'both',

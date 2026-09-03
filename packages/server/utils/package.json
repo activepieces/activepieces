@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/server-utils",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "typings": "./dist/src/index.d.ts",
@@ -11,6 +11,7 @@
   "dependencies": {
     "@activepieces/ai-providers": "workspace:*",
     "@activepieces/shared": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.27.1",
     "evlog": "2.22.4",
     "@ai-sdk/amazon-bedrock": "5.0.38",
     "@ai-sdk/anthropic": "4.0.25",
@@ -30,6 +31,7 @@
     "request-filtering-agent": "3.2.0",
     "systeminformation": "5.31.7",
     "tslib": "2.6.2",
+    "zod": "4.3.6",
     "@activepieces/core-utils": "workspace:*",
     "@activepieces/core-formula": "workspace:*"
   },

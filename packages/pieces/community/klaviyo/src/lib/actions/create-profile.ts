@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createProfile = createAction({
   auth: klaviyoAuth,
   name: 'createProfile',
+  classification: 'WRITE',
   displayName: 'Create Profile',
   description: 'Add new user profile with email/SMS subscription options',
   audience: 'both',

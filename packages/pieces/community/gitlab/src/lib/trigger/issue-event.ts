@@ -96,6 +96,7 @@ const sampleData = {
 export const issuesEventTrigger = createTrigger({
   auth: gitlabAuth,
   name: 'project_issue_event',
+  classification: 'READ',
   displayName: 'New Project Issue Event',
   description:
     'Triggers on project issue events when an issue is created or when an existing issue is updated, closed, or reopened.',

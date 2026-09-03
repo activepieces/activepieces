@@ -32,9 +32,14 @@ function metadataWith(props: Record<string, unknown>) {
     return { version: '1.4.0', actions: { send_message: { props } } }
 }
 
-async function run(overrides: Record<string, unknown> = {}) {
+async function prepareAndRun(params: Record<string, unknown>) {
     const { pieceToolRunner } = await import('../../../../../src/app/ee/agent/tools/piece-tool-runner')
-    return pieceToolRunner.runFromInstruction({
+    const { resolvedInput } = await pieceToolRunner.resolveInput(params as never)
+    return pieceToolRunner.runResolved({ piece: params.piece as never, resolvedInput, projectId: params.projectId as string, log: log as never })
+}
+
+async function run(overrides: Record<string, unknown> = {}) {
+    return prepareAndRun({
         piece: { pieceName: '@activepieces/piece-slack', actionName: 'send_message' },
         instruction: 'say hello in general',
         model: {} as never,
@@ -45,7 +50,7 @@ async function run(overrides: Record<string, unknown> = {}) {
     } as never)
 }
 
-describe('pieceToolRunner.runFromInstruction', () => {
+describe('pieceToolRunner: preparing then running a configured action', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetOrThrow.mockResolvedValue(metadataWith({ text: { displayName: 'Text', required: true, type: PropertyType.SHORT_TEXT } }))
@@ -121,5 +126,78 @@ describe('pieceToolRunner.runFromInstruction', () => {
 
         await expect(run()).rejects.toThrow(/model unavailable/)
         expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
+    })
+})
+
+describe('pieceToolRunner: a custom API call stays on the connection\'s own host', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockGetOrThrow.mockResolvedValue({ version: '1.4.0', actions: { custom_api_call: { props: { url: { displayName: 'URL', required: true, type: PropertyType.SHORT_TEXT } } } } })
+        mockExecutePieceActionRun.mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] })
+    })
+
+    async function callWithUrl(url: unknown) {
+        mockCompleter.mockResolvedValue({ url })
+        return prepareAndRun({
+            piece: { pieceName: '@activepieces/piece-slack', actionName: 'custom_api_call' },
+            instruction: 'call the api',
+            model: {} as never,
+            projectId: 'proj-1',
+            platformId: 'plat-1',
+            log: log as never,
+        } as never)
+    }
+
+    it('refuses an absolute url, which would send the connection\'s credentials off its own host', async () => {
+        await expect(callWithUrl('https://attacker.example/collect')).rejects.toThrow()
+
+        expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
+    })
+
+    it('refuses an absolute url wrapped in the object shape the action expects', async () => {
+        await expect(callWithUrl({ url: 'http://169.254.169.254/latest/meta-data' })).rejects.toThrow()
+
+        expect(mockExecutePieceActionRun).not.toHaveBeenCalled()
+    })
+
+    it('allows a relative path, which the piece joins onto its own base url', async () => {
+        await callWithUrl('/v2/conversations.list')
+
+        expect(mockExecutePieceActionRun).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('pieceToolRunner.resolveInput: which account fills the input and lists the options', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockGetOrThrow.mockResolvedValue(metadataWith({ text: { displayName: 'Text', required: true, type: PropertyType.SHORT_TEXT } }))
+        mockCompleter.mockResolvedValue({ text: 'hello' })
+        mockExecutePieceActionRun.mockResolvedValue({ content: [{ type: 'text', text: 'sent' }] })
+    })
+
+    async function resolve(overrides: Record<string, unknown>) {
+        const { pieceToolRunner } = await import('../../../../../src/app/ee/agent/tools/piece-tool-runner')
+        const { resolvedInput } = await pieceToolRunner.resolveInput({
+            piece: { pieceName: '@activepieces/piece-slack', actionName: 'send_message' },
+            instruction: 'say hello in general',
+            model: {} as never,
+            projectId: 'proj-1',
+            platformId: 'plat-1',
+            log: log as never,
+            ...overrides,
+        } as never)
+        return resolvedInput
+    }
+
+    it('runs as the pinned account when nothing overrides it', async () => {
+        expect(await resolve({ predefinedInput: { auth: 'conn-pinned', fields: {} } })).toMatchObject({ auth: 'conn-pinned' })
+    })
+
+    it('runs as the overriding account, and the pin does not win it back', async () => {
+        expect(await resolve({ predefinedInput: { auth: 'conn-pinned', fields: {} }, connectionExternalId: 'conn-override' })).toMatchObject({ auth: 'conn-override' })
+    })
+
+    it('runs as the overriding account when the author pinned none', async () => {
+        expect(await resolve({ connectionExternalId: 'conn-override' })).toMatchObject({ auth: 'conn-override' })
     })
 })

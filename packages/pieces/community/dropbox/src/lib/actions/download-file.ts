@@ -5,14 +5,17 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { downloadFileOutputSchema } from '../output-schemas';
 
 export const dropboxDownloadFile = createAction({
   auth: dropboxAuth,
   name: 'downloadFile',
+  classification: 'READ',
   displayName: 'Download File',
   description: 'Download a File from Dropbox',
   audience: 'both',
   aiMetadata: { description: 'Downloads the file at the given Dropbox path and returns it as a file object for use by later steps. Use to retrieve file contents into a flow. Read-only on Dropbox; repeating the call with the same path is safe and yields the same file.', idempotent: true },
+  outputSchema: downloadFileOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: "Path",
@@ -38,13 +41,13 @@ export const dropboxDownloadFile = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.auth.access_token,
       },
-      responseType:'arraybuffer'
+      responseType:'stream'
     });
 
     return {
       file: await context.files.write({
         fileName: fileName,
-        data: Buffer.from(result.body)
+        data: result.body
       })
     }
   },

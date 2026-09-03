@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
+import { newPostTriggerOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import { simpleLanguageDropdown } from '../common/props';
 import dayjs from 'dayjs';
@@ -119,6 +120,7 @@ function extractMatchedTerms(text: string, query: string): string[] {
 export const newPost = createTrigger({
   auth: blueskyAuth,
   name: 'newPost',
+  classification: 'READ',
   displayName: 'New Post (with Search Options)',
   description: 'Triggers when posts match your search criteria',
   aiMetadata: {
@@ -204,6 +206,7 @@ export const newPost = createTrigger({
     }
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: newPostTriggerOutputSchema,
   
   async test(context) {
     return await pollingHelper.test(polling, context);

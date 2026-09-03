@@ -13,6 +13,7 @@ export enum WebsocketClientEvent {
     RESOURCE_UNLOCKED = 'RESOURCE_UNLOCKED',
     PRESENCE_UPDATED = 'PRESENCE_UPDATED',
     CHAT_MESSAGE_CHUNK = 'CHAT_MESSAGE_CHUNK',
+    CHAT_PERSONALIZATION_PROGRESS = 'CHAT_PERSONALIZATION_PROGRESS',
 }
 
 export enum WebsocketServerEvent {
@@ -74,7 +75,7 @@ export type LockResourceRequest = z.infer<typeof LockResourceRequest>
 export type LockResourceResponse = z.infer<typeof LockResourceResponse>
 export type ResourceLockedEvent = z.infer<typeof ResourceLockedEvent>
 export type ResourceUnlockedEvent = z.infer<typeof ResourceUnlockedEvent>
-export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
+export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string, sequence?: number }
 export type TestStepProgressEvent = UpdateStepProgressRequest | EmitTestStepProgressRequest
 export type PresenceRequest = z.infer<typeof PresenceRequest>
 export type PresenceUser = z.infer<typeof PresenceUser>

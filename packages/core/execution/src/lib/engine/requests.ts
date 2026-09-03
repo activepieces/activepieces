@@ -27,6 +27,8 @@ export const UploadRunLogsRequest = z.object({
     provisionMs: z.number().optional(),
     bootMs: z.number().optional(),
     runMs: z.number().optional(),
+    workerHandlerId: z.string().optional(),
+    httpRequestId: z.string().optional(),
 })
 
 export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>
@@ -36,6 +38,7 @@ export const UpdateStepProgressRequest = z.object({
     projectId: z.string(),
     runId: z.string(),
     output: z.unknown(),
+    sequence: z.number().optional(),
 })
 export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
 

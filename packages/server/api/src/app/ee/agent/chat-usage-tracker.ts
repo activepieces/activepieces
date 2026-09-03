@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AgentConversation, CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConversation, AgentRunSource, CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { BillingEvents } from '../../helper/telemetry.utils'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
@@ -11,12 +11,19 @@ import { agentHistory } from './history/agent-history'
 
 export const chatUsageTracker = (log: FastifyBaseLogger) => ({
     async track({ conversation, runId }: TrackParams): Promise<void> {
+        if (conversation.source === AgentRunSource.FLOW_STEP) {
+            return
+        }
         const messages = agentHistory.resolveMessages({ conversation, log })
         const billableToolCalls = chatToolBilling.countBillableToolCallsInLatestTurn({ messages })
         const turnIndex = messages.filter((message) => message.role === PersistedAgentRole.USER).length
         const idempotencyScope = runId ?? turnIndex
 
-        const provider = await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, log })
+        const provider = await agentHelpers.resolveChatProviderName({
+            platformId: conversation.platformId,
+            projectId: conversation.projectId ?? null,
+            log,
+        })
         const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
 
         const isManagedProvider = provider === AIProviderName.ACTIVEPIECES

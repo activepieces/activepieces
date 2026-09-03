@@ -67,7 +67,7 @@ afterAll(async () => {
     await app.close()
 }, 15_000)
 
-async function setupSubflowFixtures() {
+async function setupSubflowFixtures({ childAlwaysFails = false, retryOnFailure = false }: { childAlwaysFails?: boolean, retryOnFailure?: boolean } = {}) {
     const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
     const webhookPiece = createMockPieceMetadata({
@@ -117,7 +117,9 @@ async function setupSubflowFixtures() {
         valid: true,
         settings: {
             sourceCode: {
-                code: `export const code = async (inputs) => {
+                code: childAlwaysFails
+                    ? 'export const code = async () => { throw new Error(\'deliberate subflow failure\') }'
+                    : `export const code = async (inputs) => {
                     return {
                         greeting: 'Hello ' + inputs.name,
                         processed: true,
@@ -199,7 +201,9 @@ async function setupSubflowFixtures() {
                 waitForResponse: true,
             },
             propertySettings: {},
-            errorHandlingOptions: {},
+            errorHandlingOptions: retryOnFailure
+                ? { retryOnFailure: { value: true }, continueOnFailure: { value: false } }
+                : {},
         },
     }
 
@@ -229,7 +233,7 @@ async function setupSubflowFixtures() {
     })
     await db.save('flow_version', parentFlowVersion)
 
-    return { parentFlow, parentFlowVersion, mockPlatform, mockProject }
+    return { parentFlow, parentFlowVersion, childFlow, mockPlatform, mockProject }
 }
 
 async function setupSubflowWithWebhookResponseFixtures() {
@@ -421,6 +425,107 @@ async function pollFlowRunToCompletion(flowRunId: string, projectId: string) {
     }
 
     return result
+}
+
+async function setupSyncWebhookFlow({ code, withReturnResponse }: { code: string, withReturnResponse: boolean }) {
+    const { mockProject } = await mockAndSaveBasicSetup()
+
+    const webhookPiece = createMockPieceMetadata({
+        name: '@activepieces/piece-webhook',
+        version: '0.1.29',
+        platformId: undefined,
+        packageType: PackageType.REGISTRY,
+        pieceType: PieceType.OFFICIAL,
+    })
+    await databaseConnection().getRepository('piece_metadata').save([webhookPiece])
+
+    const returnResponseAction = {
+        type: FlowActionType.PIECE as const,
+        name: 'step_2',
+        displayName: 'Return Response',
+        valid: true,
+        settings: {
+            pieceName: '@activepieces/piece-webhook',
+            pieceVersion: '0.1.29',
+            actionName: 'return_response',
+            input: {
+                responseType: 'json',
+                respond: 'stop',
+                fields: {
+                    status: 200,
+                    headers: {},
+                    body: { echo: '{{step_1[\'output\'].echo}}' },
+                },
+            },
+            propertySettings: {},
+            errorHandlingOptions: {},
+        },
+    }
+
+    const codeAction = {
+        type: FlowActionType.CODE as const,
+        name: 'step_1',
+        displayName: 'Work',
+        valid: true,
+        settings: {
+            sourceCode: { code, packageJson: '{}' },
+            input: { message: '{{trigger[\'output\'].body.message}}' },
+            errorHandlingOptions: {},
+        },
+        ...(withReturnResponse ? { nextAction: returnResponseAction } : {}),
+    }
+
+    const flow = createMockFlow({ projectId: mockProject.id, status: FlowStatus.ENABLED })
+    await db.save('flow', flow)
+
+    const flowVersion = createMockFlowVersion({
+        flowId: flow.id,
+        state: FlowVersionState.LOCKED,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'Catch Webhook',
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: '@activepieces/piece-webhook',
+                pieceVersion: '0.1.29',
+                triggerName: 'catch_webhook',
+                input: { authType: 'none' },
+                propertySettings: {},
+            },
+            nextAction: codeAction,
+        },
+    })
+    await db.save('flow_version', flowVersion)
+    await db.update('flow', flow.id, { publishedVersionId: flowVersion.id })
+
+    return flow
+}
+
+const WEBHOOK_TIMEOUT_MS = Number(process.env.AP_WEBHOOK_TIMEOUT_SECONDS ?? 30) * 1000
+const FAILING_CODE = 'export const code = async () => { throw new Error(\'deliberate step failure\') }'
+const WORKING_CODE = 'export const code = async (inputs) => ({ echo: inputs.message })'
+
+const waitForRunStatus = async (flowId: string, expected: FlowRunStatus) => {
+    for (let attempt = 0; attempt < 60; attempt++) {
+        const run = await databaseConnection().getRepository('flow_run').findOneBy({ flowId })
+        if (run?.status === expected) {
+            return run.status
+        }
+        await new Promise((resolve) => setTimeout(resolve, 250))
+    }
+    return (await databaseConnection().getRepository('flow_run').findOneBy({ flowId }))?.status
+}
+
+const postSync = async (flowId: string) => {
+    const startedAt = Date.now()
+    const response = await app.inject({
+        method: 'POST',
+        url: `/api/v1/webhooks/${flowId}/sync`,
+        payload: { message: 'hello world' },
+    })
+    return { response, elapsedMs: Date.now() - startedAt }
 }
 
 describe('Execute Flow E2E', () => {
@@ -811,6 +916,36 @@ describe('Execute Flow E2E', () => {
         )
     }, 180_000)
 
+    it('retry-on-failure of a wait-for-response Call Flow retries the parent step and fails after maxAttempts without re-invoking the child subflow', async () => {
+        const { parentFlow, parentFlowVersion, childFlow, mockPlatform, mockProject } = await setupSubflowFixtures({
+            childAlwaysFails: true,
+            retryOnFailure: true,
+        })
+
+        const flowRun = await flowRunService(app.log).start({
+            flowId: parentFlow.id,
+            payload: { body: { name: 'Alice' } },
+            platformId: mockPlatform.id,
+            executionType: ExecutionType.BEGIN,
+            environment: RunEnvironment.TESTING,
+            streamStepProgress: StreamStepProgress.NONE,
+            executeTrigger: false,
+            flowVersionId: parentFlowVersion.id,
+            projectId: mockProject.id,
+            workerHandlerId: undefined,
+            httpRequestId: undefined,
+            failParentOnFailure: undefined,
+        })
+
+        const result = await pollFlowRunToCompletion(flowRun.id, mockProject.id)
+        const childRunCount = await databaseConnection()
+            .getRepository('flow_run')
+            .count({ where: { flowId: childFlow.id } })
+
+        expect(result.status).toBe(FlowRunStatus.FAILED)
+        expect(childRunCount).toBe(1)
+    }, 180_000)
+
     it('executes a webhook → delay_for → code flow without infinite loop', async () => {
         const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
@@ -1090,5 +1225,49 @@ describe('Execute Flow E2E', () => {
 
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual(expect.objectContaining({ echo: 'hello world' }))
+    }, 180_000)
+    it('answers a failed run with 500 instead of waiting out the webhook timeout', async () => {
+        const flow = await setupSyncWebhookFlow({ code: FAILING_CODE, withReturnResponse: false })
+
+        const { response, elapsedMs } = await postSync(flow.id)
+
+        expect(response.statusCode).toBe(StatusCodes.INTERNAL_SERVER_ERROR)
+        expect(response.json()).toEqual({ message: 'The flow has failed and there is no response returned' })
+        expect(elapsedMs).toBeLessThan(WEBHOOK_TIMEOUT_MS)
+
+        expect(await waitForRunStatus(flow.id, FlowRunStatus.FAILED)).toBe(FlowRunStatus.FAILED)
+    }, 180_000)
+
+    it('answers a successful run through its Return Response step with 200', async () => {
+        const flow = await setupSyncWebhookFlow({ code: WORKING_CODE, withReturnResponse: true })
+
+        const { response, elapsedMs } = await postSync(flow.id)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json()).toEqual({ echo: 'hello world' })
+        expect(elapsedMs).toBeLessThan(WEBHOOK_TIMEOUT_MS)
+    }, 180_000)
+
+    it('still waits out the timeout and answers 408 when a successful run sends no response', async () => {
+        const flow = await setupSyncWebhookFlow({ code: WORKING_CODE, withReturnResponse: false })
+
+        const { response } = await postSync(flow.id)
+
+        expect(response.statusCode).toBe(StatusCodes.REQUEST_TIMEOUT)
+
+        expect(await waitForRunStatus(flow.id, FlowRunStatus.SUCCEEDED)).toBe(FlowRunStatus.SUCCEEDED)
+    }, 180_000)
+
+    it('answers an async webhook with 200 as soon as it is queued', async () => {
+        const flow = await setupSyncWebhookFlow({ code: FAILING_CODE, withReturnResponse: false })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/webhooks/${flow.id}`,
+            payload: { message: 'hello world' },
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.headers['x-webhook-id']).toBeDefined()
     }, 180_000)
 })

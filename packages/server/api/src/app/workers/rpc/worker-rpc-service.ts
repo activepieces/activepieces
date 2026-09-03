@@ -3,11 +3,13 @@ import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/ser
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
+import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
 import { fileService, getLocationForFile } from '../../file/file.service'
 import { s3Helper } from '../../file/s3-helper'
 import { signedFileTransport } from '../../file/signed-file-transport'
+import { flowSideEffects } from '../../flows/flow/flow-service-side-effects'
 import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
@@ -26,6 +28,10 @@ import { triggerSourceService } from '../../trigger/trigger-source/trigger-sourc
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+
+const FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS = 60
+
+const getFlowBundlePublishClaimKey = (flowVersionId: string): string => `flow_bundle_publish_claim:${flowVersionId}`
 
 const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
     if (isNil(assignment)) {
@@ -235,6 +241,16 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             if (getLocationForFile(FileType.FLOW_BUNDLE) !== FileLocation.S3) {
                 return { kind: 'skip' }
             }
+            // The bundle for a flowVersionId is immutable, and a burst of workers can
+            // finish provisioning the same version at once. Only the first claimer
+            // publishes; losing the claim is a normal outcome, not an error. Without
+            // this, concurrent callers race the deterministic file PK (duplicate key
+            // on the file table) and hammer the same S3 key (503 Slow Down). The
+            // claim expires so a publish that died mid-upload gets retried.
+            const claimed = await distributedStore.putIfAbsent(getFlowBundlePublishClaimKey(input.flowVersionId), 1, FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS)
+            if (!claimed) {
+                return { kind: 'skip' }
+            }
             // S3 without signed URLs: the worker streams the bytes back via uploadFlowBundle.
             if (!signedFileTransport.shouldRedirectForType(FileType.FLOW_BUNDLE)) {
                 return { kind: 'inline' }
@@ -277,16 +293,18 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
                 return
             }
             const platformId = await projectService(log).getPlatformId(projectId)
-            await flowService(log).update({
+            const disabledFlow = await flowService(log).update({
                 id: flowId,
                 userId: null,
                 projectId,
                 platformId,
+                emitEvents: false,
                 operation: {
                     type: FlowOperationType.CHANGE_STATUS,
                     request: { status: FlowStatus.DISABLED },
                 },
             })
+            flowSideEffects(log).onDisabledByWorker({ flow: disabledFlow, projectId, platformId })
             log.info({ flow: { id: flowId }, project: { id: projectId } }, '[workerRpc#disableFlow] Flow disabled by worker request')
         },
 
@@ -329,12 +347,48 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             return agentRpcHandlers(agentRpcLog(log, { conversationId, runId, platformId: input.platformId, userId: input.userId })).executeAgentTool(input)
         },
 
+        async executePieceTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executePieceTool(input)
+        },
+
+        async executeKnowledgeBaseTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executeKnowledgeBaseTool(input)
+        },
+
+        async executeFlowTool(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).executeFlowTool(input)
+        },
+
+        async updateFlowStepProgress(input) {
+            return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).updateFlowStepProgress(input)
+        },
+
         async resumeFlowStep(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId })).resumeFlowStep(input)
         },
 
         async sendAgentEmail(input) {
             return agentRpcHandlers(agentRpcLog(log, { conversationId: input.conversationId, platformId: input.platformId, userId: input.userId })).sendAgentEmail(input)
+        },
+
+        async getPersonalizationConfig(input) {
+            return chatPersonalizationService(log).getConfigForWorker(input)
+        },
+
+        async getPersonalizationPrefillConfig(input) {
+            return chatPersonalizationService(log).getPrefillConfigForWorker(input)
+        },
+
+        async savePersonalizationResult(input) {
+            return chatPersonalizationService(log).saveResult(input)
+        },
+
+        async savePersonalizationPrefill(input) {
+            return chatPersonalizationService(log).savePrefill(input)
+        },
+
+        async sendPersonalizationProgress(input) {
+            return chatPersonalizationService(log).sendProgress(input)
         },
     }
 }

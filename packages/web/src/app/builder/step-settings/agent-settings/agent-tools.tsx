@@ -7,7 +7,6 @@ import type {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
-import { ControllerRenderProps } from 'react-hook-form';
 
 import { Accordion } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
@@ -20,6 +19,8 @@ import {
   AgentMcpDialog,
   KnowledgeBaseSection,
 } from '@/features/agents';
+import { AddRow } from '@/features/agents/agent-tools/components/add-row';
+import { cn } from '@/lib/utils';
 
 import { AgentPieceDialog } from './piece-tool-dialog';
 
@@ -31,15 +32,22 @@ const icons = [
 ];
 
 interface AgentToolsProps {
-  toolsField: ControllerRenderProps;
+  toolsField: AgentFormField;
   disabled?: boolean;
   selectedProvider?: AIProviderName;
+  layout?: 'card' | 'rows';
 }
+
+type AgentFormField = {
+  value: unknown;
+  onChange: (value: AgentTool[]) => void;
+};
 
 export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
   selectedProvider,
+  layout = 'card',
 }: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
@@ -68,11 +76,13 @@ export const AgentTools = ({
       return acc;
     }, {});
 
+  const asRows = layout === 'rows';
+
   return (
     <div>
-      <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>
+      {!asRows && <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>}
 
-      <div className="mt-2">
+      <div className={cn(!asRows && 'mt-2')}>
         {flowTools.length +
           mcpTools.length +
           Object.keys(pieceToToolMap).length >
@@ -107,12 +117,22 @@ export const AgentTools = ({
               )}
             </Accordion>
             <AddToolDropdown disabled={disabled} align="start">
-              <Button variant="outline" className="mt-2">
-                <Plus className="size-4 mr-2" />
-                {t('Add')}
-              </Button>
+              {asRows ? (
+                <div className="mt-[7px]">
+                  <AddRow label={t('Add tool')} disabled={disabled} />
+                </div>
+              ) : (
+                <Button variant="outline" className="mt-2">
+                  <Plus className="size-4 mr-2" />
+                  {t('Add')}
+                </Button>
+              )}
             </AddToolDropdown>
           </>
+        ) : asRows ? (
+          <AddToolDropdown disabled={disabled} align="start">
+            <AddRow label={t('Add tool')} disabled={disabled} />
+          </AddToolDropdown>
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
             <div className="flex items-center">
@@ -151,14 +171,16 @@ export const AgentTools = ({
         )}
       </div>
 
-      <KnowledgeBaseSection
-        disabled={disabled}
-        tools={kbTools}
-        allTools={tools}
-        removeTool={removeTool}
-        onToolsUpdate={onToolsUpdate}
-        selectedProvider={selectedProvider}
-      />
+      {!asRows && (
+        <KnowledgeBaseSection
+          disabled={disabled}
+          tools={kbTools}
+          allTools={tools}
+          removeTool={removeTool}
+          onToolsUpdate={onToolsUpdate}
+          selectedProvider={selectedProvider}
+        />
+      )}
 
       <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />

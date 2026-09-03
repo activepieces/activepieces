@@ -1,9 +1,11 @@
 import { createTrigger, PieceAuth, TriggerStrategy } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
 import { PopulatedRecord, TableWebhookEventType } from '@activepieces/pieces-framework';
+import { newRecordTriggerOutputSchema } from '../output-schemas';
 
 export const newRecordTrigger = createTrigger({
     name: 'newRecord',
+    classification: 'READ',
     displayName: 'New Record Created',
     description: 'Triggers when a new record is added to the selected table.',
     aiMetadata: {
@@ -14,6 +16,7 @@ export const newRecordTrigger = createTrigger({
         table_id: tablesCommon.table_id,
     },
     sampleData: {},
+    outputSchema: newRecordTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context){
         const tableExternalId = context.propsValue.table_id;

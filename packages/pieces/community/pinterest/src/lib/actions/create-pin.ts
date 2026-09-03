@@ -12,10 +12,13 @@ import {
   boardSectionIdDropdown,
   pinIdMultiSelectDropdown,
 } from '../common/props';
+import { createPinActionOutputSchema } from '../output-schemas';
 
 export const createPin = createAction({
   auth: pinterestAuth,
   name: 'createPin',
+  classification: 'WRITE',
+  outputSchema: createPinActionOutputSchema,
   displayName: 'Create Pin',
   description: 'Upload an image or video to create a new Pin on a board.',
   audience: 'both',

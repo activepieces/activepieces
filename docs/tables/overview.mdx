@@ -1,0 +1,35 @@
+---
+title: "Tables"
+sidebarTitle: "Overview"
+description: "Store data inside Activepieces and use it from flows and agents"
+icon: "table"
+---
+
+Tables hold structured data inside Activepieces, so a flow has somewhere to put results and an agent has something to look things up in. No external database to run.
+
+## Why they exist
+
+Automations usually need somewhere to remember things: which leads you already contacted, which invoices are unpaid, what the agent decided last week. Without that, every flow starts from nothing.
+
+<CardGroup cols={2}>
+  <Card title="Fields and records" icon="table-columns" href="/tables/fields">
+    Five field types, and how data gets in.
+  </Card>
+  <Card title="Use in flows" icon="sitemap" href="/tables/in-flows">
+    Read, write, and start flows when data changes.
+  </Card>
+  <Card title="Use with agents" icon="robot" href="/tables/with-agents">
+    Turn a table into an agent's knowledge base.
+  </Card>
+  <Card title="Import and export" icon="file-csv" href="/tables/import-export">
+    Bring a CSV in, take your data out.
+  </Card>
+</CardGroup>
+
+## A shape that comes up often
+
+1. A flow collects something, such as inbound leads, and **writes a record**
+2. A **new record** trigger starts a second flow to enrich or route it
+3. An **agent** uses the same table as a knowledge base when answering questions about it
+
+The table is what lets those three share state.

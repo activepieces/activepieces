@@ -20,7 +20,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
             flowId: z.string().describe('The id of the flow to duplicate. Use ap_list_flows to find it.'),
             name: z.string().optional().describe('Name for the duplicated flow. Defaults to "Copy of {original name}".'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, name } = duplicateFlowInput.parse(args)
@@ -49,7 +49,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
                     const updatedFlow = await flowService(log).update({
                         id: newFlow.id,
                         projectId: mcp.projectId,
-                        userId: null,
+                        userId: userId ?? null,
                         platformId: project.platformId,
                         operation: {
                             type: FlowOperationType.IMPORT_FLOW,
@@ -71,7 +71,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
                 }
                 catch (importErr) {
                     try {
-                        await flowService(log).delete({ id: newFlow.id, projectId: mcp.projectId })
+                        await flowService(log).delete({ id: newFlow.id, projectId: mcp.projectId, previousFlow: newFlow, userId })
                     }
                     catch { /* best-effort cleanup */ }
                     return mcpUtils.mcpToolError('Flow duplication failed', importErr)

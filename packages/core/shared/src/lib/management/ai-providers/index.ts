@@ -1,5 +1,6 @@
-import { AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
+import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { formErrors } from '../../form-errors'
 
 export enum AIProviderModelType {
     IMAGE = 'image',
@@ -10,6 +11,11 @@ export const BaseAIProviderAuthConfig = z.object({
     apiKey: z.string(),
 })
 export type BaseAIProviderAuthConfig = z.infer<typeof BaseAIProviderAuthConfig>
+
+export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().min(1),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 
 export const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
 export type AnthropicProviderAuthConfig = z.infer<typeof AnthropicProviderAuthConfig>
@@ -64,6 +70,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.record(z.string(), z.string()).optional(),
+    apiStyle: z.enum(['chat', 'responses']).optional(),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -100,8 +107,18 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/, formErrors.invalidGcpResourceId),
+    region: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/, formErrors.invalidGcpResourceId),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
+
+export const OpenAiCompatibleVendorConfig = z.object({})
+export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
 export const AIProviderAuthConfig = z.union([
     AnthropicProviderAuthConfig,
@@ -113,6 +130,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -121,6 +139,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    VertexProviderConfig,
     BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
@@ -128,6 +147,7 @@ export const AIProviderConfig = z.union([
     OpenRouterProviderConfig,
     ActivePiecesProviderConfig,
     MistralProviderConfig,
+    OpenAiCompatibleVendorConfig,
 ])
 export type AIProviderConfig = z.infer<typeof AIProviderConfig>
 
@@ -188,9 +208,51 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
     }),
     z.object({
         displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.VERTEX),
+        config: VertexProviderConfig,
+        auth: VertexProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
         provider: z.literal(AIProviderName.MISTRAL),
         config: MistralProviderConfig,
         auth: MistralProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.XAI),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.DEEPSEEK),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.ZAI),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.QWEN),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MINIMAX),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.MOONSHOT),
+        config: OpenAiCompatibleVendorConfig,
+        auth: BaseAIProviderAuthConfig,
     }),
 ])
 
@@ -202,19 +264,59 @@ export const AIProvider = z.object({
 
 export type AIProvider = z.infer<typeof AIProvider>
 
+export const AiProviderModelScope = z.enum(['all', 'selected'])
+export type AiProviderModelScope = z.infer<typeof AiProviderModelScope>
+
+export const AiProviderProjectScope = z.enum(['all', 'selected', 'except'])
+export type AiProviderProjectScope = z.infer<typeof AiProviderProjectScope>
+
 export const AIProviderWithoutSensitiveData = z.object({
     id: z.string(),
     name: z.string(),
     provider: z.nativeEnum(AIProviderName),
     config: AIProviderConfig,
     enabledForChat: z.boolean(),
+    modelScope: AiProviderModelScope,
+    modelIds: z.array(z.string()),
+    projectScope: AiProviderProjectScope,
+    projectIds: z.array(z.string()),
+    status: AiProviderKeyStatus,
+    statusReason: z.string().nullable(),
+    statusUpdated: z.string().nullable(),
 })
 export type AIProviderWithoutSensitiveData = z.infer<typeof AIProviderWithoutSensitiveData>
+
+export const ProjectAIProviderKey = z.object({
+    id: z.string(),
+    name: z.string(),
+})
+export type ProjectAIProviderKey = z.infer<typeof ProjectAIProviderKey>
+
+export const ProjectAIProvider = z.object({
+    provider: z.nativeEnum(AIProviderName),
+    name: z.string(),
+    enabledForChat: z.boolean(),
+    keys: z.array(ProjectAIProviderKey),
+})
+export type ProjectAIProvider = z.infer<typeof ProjectAIProvider>
+
+export const AIProviderModelMetadata = z.object({
+    contextTokens: z.number().optional(),
+    maxOutputTokens: z.number().optional(),
+    releaseDate: z.string().optional(),
+    inputCostPerMillionTokens: z.number().optional(),
+    outputCostPerMillionTokens: z.number().optional(),
+    supportsToolCalling: z.boolean().optional(),
+    supportsReasoning: z.boolean().optional(),
+    supportsVision: z.boolean().optional(),
+})
+export type AIProviderModelMetadata = z.infer<typeof AIProviderModelMetadata>
 
 export const AIProviderModel = z.object({
     id: z.string(),
     name: z.string(),
     type: z.nativeEnum(AIProviderModelType),
+    metadata: AIProviderModelMetadata.optional(),
 })
 export type AIProviderModel = z.infer<typeof AIProviderModel>
 
@@ -227,15 +329,22 @@ export const UpdateAIProviderRequest = z.object({
     config: AIProviderConfig.optional(),
     auth: AIProviderAuthConfig.optional(),
     enabledForChat: z.boolean().optional(),
+    modelScope: AiProviderModelScope.optional(),
+    modelIds: z.array(z.string()).optional(),
+    projectScope: AiProviderProjectScope.optional(),
+    projectIds: z.array(z.string()).optional(),
 })
 export type UpdateAIProviderRequest = z.infer<typeof UpdateAIProviderRequest>
 
 
 export const GetProviderConfigResponse = z.object({
     provider: z.nativeEnum(AIProviderName),
+    configId: z.string(),
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,
     platformId: z.string(),
+    modelScope: AiProviderModelScope,
+    modelIds: z.array(z.string()),
 })
 export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
 
@@ -343,10 +452,12 @@ export function splitCloudflareGatewayModelId(modelId: string): {
 }
 
 export {
+    AI_PROVIDER_ENTITY_TYPES,
     ALLOWED_CHAT_MODELS_BY_PROVIDER,
     ACTIVEPIECES_CHAT_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
+    OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
-export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode } from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'

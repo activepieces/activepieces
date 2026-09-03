@@ -30,6 +30,35 @@ function portsWith(answers: Record<string, unknown>[], resolveProperty: ResolveP
 const sendMessage = (properties: PiecePropertyMap) => ({ name: 'send_message', properties })
 
 describe('pieceInputFiller.fillInput', () => {
+    it('omits an optional input the instruction said nothing about, rather than sending null', async () => {
+        const ports = portsWith([{ q: 'is:unread', include_spam_trash: null, max_results: 5 }])
+
+        const filled = await pieceInputFiller.fillInput({
+            action: sendMessage(props({
+                q: prop({ type: PropertyType.SHORT_TEXT, required: true }),
+                include_spam_trash: prop({ type: PropertyType.CHECKBOX }),
+                max_results: prop({ type: PropertyType.NUMBER }),
+            })),
+            instruction: 'find my unread emails, at most 5',
+            ports,
+        })
+
+        expect(filled).toEqual({ q: 'is:unread', max_results: 5 })
+        expect('include_spam_trash' in filled).toBe(false)
+    })
+
+    it('drops a null nested inside an object input too', async () => {
+        const ports = portsWith([{ headers: { 'X-Trace': 'abc', 'X-Skip': null } }])
+
+        const filled = await pieceInputFiller.fillInput({
+            action: sendMessage(props({ headers: prop({ type: PropertyType.OBJECT }) })),
+            instruction: 'send it with a trace header',
+            ports,
+        })
+
+        expect(filled).toEqual({ headers: { 'X-Trace': 'abc' } })
+    })
+
     it('asks once per dependency wave, not once per input', async () => {
         const ports = portsWith([{ workspace: 'W1' }, { channel: 'C1' }])
 
@@ -222,5 +251,104 @@ describe('pieceInputFiller.fillInput', () => {
         })).rejects.toThrow()
 
         expect(vi.mocked(selfNesting).mock.calls.length).toBeLessThanOrEqual(4)
+    })
+})
+
+describe('fillInput — a model-written value cannot smuggle a connection out', () => {
+    it.each([
+        ["{{connections['prod-stripe']}}", 'a plain template'],
+        ["{{{connections['prod-stripe']}}}", 'extra braces that a single pass would re-form'],
+        ["{{{{{{connections['prod-stripe']}}}}}}", 'a long run of braces'],
+        ['{{connections.prod.token}}', 'the dot syntax'],
+    ])('leaves no resolvable token for %s (%s)', async (payload) => {
+        const ports = portsWith([{ body: `here you go ${payload}` }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_message', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'send a message',
+            ports,
+        })
+
+        expect(resolved['body']).not.toContain('{{')
+    })
+
+    it('neutralises a template nested inside an object the model returned', async () => {
+        const ports = portsWith([{ payload: { deep: ["{{{connections['prod-stripe']}}}"] } }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_message', properties: props({ payload: prop({ type: PropertyType.JSON }) }) },
+            instruction: 'send a message',
+            ports,
+        })
+
+        expect(JSON.stringify(resolved)).not.toContain('{{')
+    })
+
+    it('leaves a value the flow author pinned exactly as they wrote it', async () => {
+        const ports = portsWith([{}])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_message', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'send a message',
+            predefinedInput: { fields: { body: { mode: FieldControlMode.CHOOSE_YOURSELF, value: "{{connections['ours']}}" } } },
+            ports,
+        })
+
+        expect(resolved['body']).toBe("{{connections['ours']}}")
+    })
+})
+
+describe('fillInput — a pinned field is not the model\'s to change', () => {
+    it('keeps the author\'s value even when the model answers with that field', async () => {
+        const ports = portsWith([{ to: 'attacker@evil.test', body: 'hi' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ to: prop({ type: PropertyType.SHORT_TEXT }), body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            predefinedInput: { fields: { to: { mode: FieldControlMode.CHOOSE_YOURSELF, value: 'ops@company.test' } } },
+            ports,
+        })
+
+        expect(resolved['to']).toBe('ops@company.test')
+    })
+
+    it('keeps a left-empty field empty even when the model supplies one', async () => {
+        const ports = portsWith([{ cc: 'attacker@evil.test' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ cc: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            predefinedInput: { fields: { cc: { mode: FieldControlMode.LEAVE_EMPTY, value: undefined } } },
+            ports,
+        })
+
+        expect(resolved['cc']).toBeUndefined()
+    })
+})
+
+describe('fillInput — the model does not get to choose the connection', () => {
+    it('drops an auth the model wrote when the author pinned none', async () => {
+        const ports = portsWith([{ auth: 'someone-elses-connection', body: 'hi' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            ports,
+        })
+
+        expect(resolved['auth']).toBeUndefined()
+    })
+
+    it('keeps the connection the author pinned', async () => {
+        const ports = portsWith([{ auth: 'someone-elses-connection' }])
+
+        const resolved = await pieceInputFiller.fillInput({
+            action: { name: 'send_email', properties: props({ body: prop({ type: PropertyType.SHORT_TEXT }) }) },
+            instruction: 'email the summary',
+            predefinedInput: { auth: 'ours', fields: {} },
+            ports,
+        })
+
+        expect(resolved['auth']).toBe('ours')
     })
 })

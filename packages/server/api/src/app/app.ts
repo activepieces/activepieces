@@ -1,7 +1,7 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { apVersionUtil, onCallService, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
-import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
+import { AddAllowedEmbedOriginsRequestBody, ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, ApplicationEventName, ConnectionDeletedEvent, ConnectionUpsertedEvent, Flow, FlowActivatedEvent, FlowCreatedEvent, FlowDeactivatedEvent, FlowDeletedEvent, FlowPiecesRevertedEvent, FlowPiecesUpgradedEvent, FlowPublishedEvent, FlowRun, FlowRunFinishedEvent, FlowRunRetriedEvent, FlowRunStartedEvent, FlowUpdatedEvent, Folder, FolderCreatedEvent, FolderDeletedEvent, FolderUpdatedEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectRelease, ProjectReleaseEvent, ProjectRoleEvent, ProjectWithLimits, SigningKeyEvent, SignUpEvent, Template, UserEmailVerifiedEvent, UserInvitation, UserPasswordResetEvent, UserSignedInEvent, UserWithMetaInformation } from '@activepieces/shared'
 import replyFrom from '@fastify/reply-from'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -18,6 +18,8 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
+import { otpModule } from './authentication/otp/otp-module'
+import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -27,6 +29,7 @@ import { authorizationMiddleware } from './core/security/v2/authz/authorization-
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { agentEvalModule } from './ee/agent/agent-eval-controller'
 import { agentHelpers } from './ee/agent/agent-helpers'
+import { assertAgentsResolveInProject } from './ee/agent/agent-service'
 import { agentModule } from './ee/agent/agent.module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -36,7 +39,6 @@ import { appSumoModule } from './ee/appsumo/appsumo.module'
 import { auditEventModule } from './ee/audit-logs/audit-event-module'
 import { enterpriseLocalAuthnModule } from './ee/authentication/enterprise-local-authn/enterprise-local-authn-module'
 import { federatedAuthModule } from './ee/authentication/federated-authn/federated-authn-module'
-import { otpModule } from './ee/authentication/otp/otp-module'
 import { rbacMiddleware } from './ee/authentication/project-role/rbac-middleware'
 import { authnSsoSamlModule } from './ee/authentication/saml-authn/authn-sso-saml-module'
 import { billingUsageReportModule } from './ee/billing-usage-report/billing-usage-report-module'
@@ -70,10 +72,11 @@ import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
+import { flowPublishHooks } from './flows/flow/flow-publish-hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
-import { resumePageHooks } from './flows/flow-run/waitpoint/resume-page-hooks'
+import { pieceUpgradeModule } from './flows/flow-version/piece-upgrade.module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
 import { domainHelper } from './helper/domain-helper'
@@ -92,17 +95,18 @@ import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
+import { mcpOAuthGrantsController } from './mcp/oauth/token/mcp-oauth-grants.controller'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { billingProvider } from './platform/billing-provider'
+import { piecesReportModule } from './platform/pieces-report/pieces-report.module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
-import { teamsBotModule } from './teams-bot/teams-bot.module'
 import { templateModule } from './template/template.module'
 import { toolSearchReindexJob } from './tool-search/tool-search-reindex.job'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
@@ -110,6 +114,7 @@ import { triggerModule } from './trigger/trigger.module'
 import { platformUserModule } from './user/platform/platform-user-module'
 import { invitationModule } from './user-invitations/user-invitation.module'
 import { variableModule } from './variable/variable.module'
+import { resumePageHooks } from './waitpoints/resume-page-hooks'
 import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 
@@ -216,7 +221,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(fileModule)
     await app.register(flagModule)
     await app.register(storeEntryModule)
-    await app.register(teamsBotModule)
     await app.register(folderModule)
     await pieceSyncService(app.log).setup()
     toolSearchReindexJob(app.log).register()
@@ -224,6 +228,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     // embedded (a populated deployment fires no sync delta, and a build that failed midway leaves rows
     // unembedded). Fire-and-forget — a no-op once fully built, and must never block or fail boot.
     rejectedPromiseHandler(toolSearchReindexJob(app.log).backfillIfNeeded(), app.log)
+    await toolSearchReindexJob(app.log).scheduleRecurringReconcile()
     await pieceMetadataService(app.log).setup()
     await app.register(pieceModule)
     await app.register(collaborativeModule)
@@ -238,9 +243,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(authenticationModule)
     await app.register(triggerModule)
     await app.register(platformModule)
+    await app.register(piecesReportModule)
     await app.register(humanInputModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
+    await app.register(mcpOAuthGrantsController)
     await app.register(agentsModule)
     await app.register(platformUserModule)
     await app.register(alertsModule)
@@ -309,6 +316,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(adminPlatformModule)
+            await app.register(pieceUpgradeModule)
             await app.register(adminPlatformTemplatesCloudModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
@@ -324,6 +332,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(passwordlessAuthModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
@@ -344,10 +353,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
         case ApEdition.ENTERPRISE:
+            await app.register(pieceUpgradeModule)
             await app.register(platformPlanModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)
@@ -379,10 +390,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
             await app.register(communityPiecesModule)
+            await app.register(otpModule)
             break
     }
 
@@ -480,6 +493,8 @@ function extractProjectId(principal: { projectId?: string } | null | undefined):
 function registerOpenApiSchemas() {
     globalRegistry.add(FlowCreatedEvent, { id: ApplicationEventName.FLOW_CREATED })
     globalRegistry.add(FlowUpdatedEvent, { id: ApplicationEventName.FLOW_UPDATED })
+    globalRegistry.add(FlowPiecesUpgradedEvent, { id: ApplicationEventName.FLOW_PIECES_UPGRADED })
+    globalRegistry.add(FlowPiecesRevertedEvent, { id: ApplicationEventName.FLOW_PIECES_REVERTED })
     globalRegistry.add(FlowDeletedEvent, { id: ApplicationEventName.FLOW_DELETED })
     globalRegistry.add(FlowPublishedEvent, { id: ApplicationEventName.FLOW_PUBLISHED })
     globalRegistry.add(FlowActivatedEvent, { id: ApplicationEventName.FLOW_ACTIVATED })

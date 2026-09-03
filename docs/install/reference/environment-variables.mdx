@@ -46,6 +46,9 @@ Variables marked ❗ are required for a self-hosted production deployment.
   <Card title="Pieces & flows" icon="puzzle-piece" href="#pieces-&-flows">
     Piece syncing, polling, publish behavior.
   </Card>
+  <Card title="Tool search" icon="magnifying-glass" href="#tool-search">
+    Semantic action discovery for AI agents.
+  </Card>
 </CardGroup>
 
 ---
@@ -142,14 +145,16 @@ run timeouts, and the network egress posture for user code. Read
 | `AP_EXECUTION_MODE` | Sandbox strategy: `UNSANDBOXED`, `SANDBOX_PROCESS`, `SANDBOX_CODE_ONLY`, or `SANDBOX_CODE_AND_PROCESS`. | `UNSANDBOXED` |
 | `AP_CONTAINER_TYPE` | Which services run in the container: `APP` (API only), `WORKER` (worker only), or `WORKER_AND_APP` (both). | `WORKER_AND_APP` |
 | `AP_WORKER_CONCURRENCY` | Concurrent jobs a worker processes at once. Each job uses one sandbox instance. | `5` |
+| `AP_PREWARM_CACHE_ON_STARTUP` | Pre-fill the worker's local piece and code cache on startup by resolving every enabled flow on the platform, instead of filling it lazily on each flow's first run. Enabling it removes the one-time cold-start latency of the first run after a worker (re)starts, but the warm-up itself costs memory and CPU proportional to the number of enabled flows — on instances with many flows it can pin the worker at its CPU limit for the duration of the warm-up and spike memory enough to OOM-kill small workers, especially when all workers restart at once during an upgrade. Keep it disabled unless your instance has a modest number of enabled flows, your workers have memory headroom, and first-run latency after deploys matters to you. | `false` |
 | `AP_SANDBOX_MEMORY_LIMIT` | Maximum memory (KB) a single sandboxed engine process can use. Each process runs at most one execution at a time. | `1048576` |
 | `AP_SANDBOX_PROPAGATED_ENV_VARS` | Comma-separated environment variables propagated into sandboxed code. For pieces, keep everything in the authentication object so it works across instances. | `None` |
-| `AP_FLOW_TIMEOUT_SECONDS` | Maximum runtime for a single flow run, in seconds. | `600` |
+| `AP_FLOW_TIMEOUT_SECONDS` | Maximum runtime for a single flow run, in seconds. Also bounds a single action run — an agent's piece tool, a chat action, or MCP `ap_run_action` — so raising it lets those hold a worker slot for the same length of time. | `600` |
 | `AP_TRIGGER_TIMEOUT_SECONDS` | Maximum runtime for a trigger's polling, in seconds. | `60` |
 | `AP_DEFAULT_CONCURRENT_JOBS_LIMIT` | Default maximum concurrent runs per project. Can be overridden per project in settings. | `5` |
 | `AP_PROJECT_RATE_LIMITER_ENABLED` | Enforce per-project rate limits to prevent excessive usage. | `false` |
 | `AP_NETWORK_MODE` | Egress posture for user code. `STRICT` installs the engine's in-process SSRF guard, blocking outbound connections to private, loopback, link-local, and cloud-metadata IPs across every Node egress path (`axios`, `fetch`, `undici`, raw `http`/`net`). This is best-effort, in-process protection — enforce the real boundary in infrastructure (see [Network Security](/install/architecture/network-security)). `UNRESTRICTED` disables the guard. | `UNRESTRICTED` |
 | `AP_SSRF_ALLOW_LIST` | Comma-separated IPs or CIDR ranges that bypass `AP_NETWORK_MODE=STRICT`, e.g. `10.0.0.5,10.10.0.0/24`. Only applies when `AP_NETWORK_MODE=STRICT`. | `None` |
+| `AP_MODEL_CATALOG_URL` | Source for AI model metadata (context window, pricing, capabilities), shown beside each model when picking one. Fetched once and cached for 24 hours. An install with no egress to the default CDN simply shows models without that metadata; point this at a self-hosted mirror of the same JSON to restore it. | `https://cdn.activepieces.com/ai/model-catalog.json` |
 
 ---
 
@@ -195,6 +200,40 @@ S3-compatible bucket.
 
 ---
 
+### Sign-up protection
+
+Controls on who may create an account. Both are off with no configuration, so a
+self-hosted instance needs neither a Cloudflare nor a ZeroBounce account.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_ZEROBOUNCE_API_KEY` | ZeroBounce API key. Set it to check each new address against ZeroBounce before an account is created. | `None` |
+| `AP_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Public; served to the sign-in page. | `None` |
+| `AP_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key, used to verify a solved challenge. | `None` |
+
+With `AP_ZEROBOUNCE_API_KEY` set, a sign-up is refused when ZeroBounce reports
+the address as disposable, toxic, a spam trap, an abuse address or globally
+suppressed. Role addresses such as `info@` and `sales@` are accepted, and so is
+an address whose mailbox ZeroBounce cannot confirm. A member who already holds an
+accepted invitation is never refused. One credit is spent per address, and only
+for an address that has no account yet. If ZeroBounce cannot be reached, or
+answers that the key is invalid or out of credits, the sign-up is allowed through
+and the reason is logged — a validation outage never blocks sign-up.
+
+Both refusals are silent: the emailed-code request answers exactly as a served
+one does and the sign-in page moves to the code step, while password sign-up
+returns the same response an unverified sign-up returns. Neither reveals that the
+address was refused; the server log is the only record.
+
+The challenge is only served when **both** Turnstile variables are set. With
+either missing, the sign-in page renders no widget and the server verifies
+nothing, so a self-hosted instance needs no Cloudflare account.
+
+Signing in with an emailed code depends on that pair. It is served on
+Activepieces Cloud only, and there only when both variables are set — without
+them the endpoints are not registered and the sign-in card opens on the
+password form.
+
 ### Email (SMTP)
 
 Outbound mail for invitations, notifications, and password resets.
@@ -238,4 +277,17 @@ flow-authoring defaults.
 | `AP_PIECES_SYNC_MODE` | `OFFICIAL_AUTO` syncs piece metadata automatically from the cloud; `NONE` disables syncing. | `OFFICIAL_AUTO` |
 | `AP_TRIGGER_DEFAULT_POLL_INTERVAL` | Minutes between checks for new data on pieces with scheduled triggers (e.g. new Google Contacts). | `5` |
 | `AP_ENABLE_FLOW_ON_PUBLISH` | Automatically enable a flow when a new version is published. | `true` |
+| `AP_ENFORCE_CONNECTION_PIECE_BINDING` | Reject a step's connection at runtime unless the connection was created for the same piece as the step. | `false` |
 | `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES` | Load translations for dev pieces (configured via `AP_DEV_PIECES`). Affects development mode only. | `false` |
+
+---
+
+### Tool search
+
+Semantic discovery of piece actions and triggers for AI agents connected
+through the MCP server. See [Tool Search](/mcp/tool-search) for how it works.
+
+| Variable | Description | Default |
+|---|---|---|
+| `AP_TOOL_SEARCH_ENABLED` | Registers the `ap_search_actions` and `ap_search_triggers` MCP tools. Read live, so flipping it takes effect without a restart. | `false` |
+| `AP_OPENAI_API_KEY` | OpenAI API key that funds tool-search embeddings (indexing and queries). When unset, the platform's OpenAI [AI provider](/admin-guide/guides/setup-ai-providers) is used instead; with neither, tool search serves keyword matches rather than semantic ones. | `None` |

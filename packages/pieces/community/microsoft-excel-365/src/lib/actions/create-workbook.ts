@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const createWorkbook = createAction({
   auth: excelAuth,
   name: 'createWorkbook',
+  classification: 'WRITE',
   displayName: 'Create Workbook',
   description: 'Create a new workbook at the specified location',
   audience: 'both',

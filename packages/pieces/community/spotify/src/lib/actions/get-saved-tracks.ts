@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'get_saved_tracks',
+  classification: 'SEARCH',
   displayName: 'Get Saved Tracks',
   description: 'Retrieves the list of saved tracks for the current user',
   audience: 'both',

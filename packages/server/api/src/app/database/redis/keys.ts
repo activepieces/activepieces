@@ -1,10 +1,11 @@
 import { PlatformId, ProjectId } from '@activepieces/core-utils'
 
+export const getAiProviderConfirmKey = (providerId: string): string => `ai_provider:confirm-downgrade:${providerId}`
 export const getPlatformPlanNameKey = (platformId: PlatformId): string => `platform_plan:plan:${platformId}`
 export const getCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:credits:${platformId}`
 export const getAppSumoAiCreditsBalanceKey = (platformId: PlatformId): string => `platform_plan:appsumo-ai-credits:${platformId}`
 export const getBillingEnforcedKey = (platformId: PlatformId): string => `platform_plan:billing-enforced:${platformId}`
-export const getBillingOverviewKey = (platformId: PlatformId): string => `platform_plan:billing-overview:v1:${platformId}`
+export const getBillingOverviewKey = (platformId: PlatformId): string => `platform_plan:billing-overview:v2:${platformId}`
 export const getEntitlementsForceRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-force-refresh:${platformId}`
 export const getEntitlementsRefreshKey = (platformId: PlatformId): string => `platform_plan:entitlements-refresh:${platformId}`
 export const getCustomerStateRefreshKey = (platformId: PlatformId): string => `platform_plan:customer-state-refresh:${platformId}`
@@ -17,6 +18,7 @@ export const getCustomerStateFetchLockKey = (platformId: PlatformId): string => 
 export const getProjectConcurrencyPoolKey = (projectId: ProjectId): string => `project:concurrency-pool:${projectId}` // gets pool id for the project
 export const getConcurrencyPoolLimitKey = (poolId: string): string => `concurrency-pool:limit:${poolId}` // gets limit value for the pool
 export const getConcurrencyPoolSetKey = (poolId: string): string => `active_jobs_set:pool:${poolId}`
+export const getConcurrencyPoolParkedKey = (poolId: string): string => `parked_jobs_set:pool:${poolId}`
 
 export const BILLING_ENFORCED_TTL_SECONDS = 24 * 60 * 60
 export const PLATFORM_PLAN_NAME_TTL_SECONDS = 24 * 60 * 60

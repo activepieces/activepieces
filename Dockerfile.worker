@@ -8,16 +8,14 @@
 ### STAGE 1: Build (toolchain lives here only, never in the final image) ###
 FROM node:24.14.0-bullseye-slim AS build
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends python3 g++ build-essential curl ca-certificates unzip git
 
 RUN export ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.4.0/bun-linux-x64-baseline.zip -o bun.zip; \
     elif [ "$ARCH" = "aarch64" ]; then \
-      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+      curl -fSL --retry 5 --retry-delay 2 https://github.com/oven-sh/bun/releases/download/bun-v1.4.0/bun-linux-aarch64.zip -o bun.zip; \
     fi && \
     unzip bun.zip && mv bun-*/bun /usr/local/bin/bun && chmod +x /usr/local/bin/bun && rm -rf bun.zip bun-*
 
@@ -37,7 +35,7 @@ RUN npx turbo run build --filter=@activepieces/engine && \
     esbuild packages/server/worker/src/bootstrap.ts \
         --bundle --platform=node --format=cjs --target=node20 \
         --tsconfig=tsconfig.base.json \
-        --external:isolated-vm --external:bufferutil --external:utf-8-validate \
+        --external:isolated-vm --external:bufferutil --external:utf-8-validate --external:esbuild \
         --outfile=/out/worker.js
 
 # Prebuilt isolated-vm (the engine child resolves it at runtime via NODE_PATH).
@@ -51,11 +49,12 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates procps && \
     rm -rf /var/lib/apt/lists/*
 
-# esbuild compiles CODE steps; the code-builder spawns it by name from PATH.
-RUN npm install -g --no-fund --no-audit esbuild@0.25.0 && npm cache clean --force
+# esbuild (JS API) compiles CODE steps; at /node_modules so --external:esbuild worker.js resolves it, like isolated-vm.
+RUN npm install --prefix / --no-fund --no-audit --no-save esbuild@0.25.0 && npm cache clean --force
 
 WORKDIR /app
 
+ENV NODE_ENV=production
 ENV AP_CONTAINER_TYPE=WORKER
 ENV AP_CACHE_BASE_PATH=/tmp/cache
 

@@ -35,7 +35,10 @@ function stringValidator(value: string) {
 
 function urlValidator(value: string) {
     try {
-        new URL(value)
+        const { protocol } = new URL(value)
+        if (protocol !== 'http:' && protocol !== 'https:') {
+            return 'Value must be an http or https URL'
+        }
         return true
     }
     catch {
@@ -73,6 +76,8 @@ const systemPropValidators: {
     [AppSystemProp.LOKI_USERNAME]: stringValidator,
 
     [AppSystemProp.BETTERSTACK_TOKEN]: stringValidator,
+    [AppSystemProp.TURNSTILE_SECRET_KEY]: stringValidator,
+    [AppSystemProp.TURNSTILE_SITE_KEY]: stringValidator,
     [AppSystemProp.BETTERSTACK_HOST]: stringValidator,
     [AppSystemProp.OTEL_ENABLED]: booleanValidator,
     [AppSystemProp.OTEL_QUEUE_METRICS_ENABLED]: booleanValidator,
@@ -90,6 +95,7 @@ const systemPropValidators: {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
+    [AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX]: numberValidator,
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: stringValidator,
     [AppSystemProp.CLOUD_AUTH_ENABLED]: booleanValidator,
     [AppSystemProp.CONFIG_PATH]: stringValidator,
@@ -143,12 +149,15 @@ const systemPropValidators: {
     [AppSystemProp.SMTP_SENDER_NAME]: stringValidator,
     [AppSystemProp.SMTP_TLS_REJECT_UNAUTHORIZED]: booleanValidator,
     [AppSystemProp.SMTP_USERNAME]: stringValidator,
+    [AppSystemProp.AGENTS_ENABLED]: booleanValidator,
     [AppSystemProp.TELEMETRY_ENABLED]: booleanValidator,
     [AppSystemProp.TOOL_SEARCH_ENABLED]: booleanValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.ZEROBOUNCE_API_KEY]: stringValidator,
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
+    [AppSystemProp.APOLLO_API_KEY]: stringValidator,
     [AppSystemProp.AUTUMN_CONSOLE_URL]: urlValidator,
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
     [AppSystemProp.FIREBASE_ADMIN_CREDENTIALS]: stringValidator,
@@ -177,6 +186,7 @@ const systemPropValidators: {
     [AppSystemProp.MAX_FIELDS_PER_TABLE]: numberValidator,
 
     [AppSystemProp.ENABLE_FLOW_ON_PUBLISH]: booleanValidator,
+    [AppSystemProp.ENFORCE_CONNECTION_PIECE_BINDING]: booleanValidator,
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: (value: string) => {
         const days = parseInt(value)
         if (isNaN(days) || days < 0) {

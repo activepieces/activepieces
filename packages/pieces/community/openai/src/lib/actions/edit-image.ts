@@ -4,11 +4,13 @@ import { randomBytes } from 'node:crypto';
 import { kebabCase } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
 import { openaiAuth } from '../auth';
+import { editImageActionOutputSchema } from '../output-schemas';
 
 export const editImage = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'edit_image',
+  classification: 'READ',
   displayName: 'Edit Image',
   description: 'Edit an existing image using a text prompt with gpt-image-2',
   aiMetadata: { description: 'Modifies an existing image supplied as a file, applying the changes described in a text prompt with the gpt-image-2 model, and writes the result out as a new PNG file. An optional mask image confines the edit to its transparent areas and must match the dimensions of the input image; size and quality can be left on auto. Pick generate_image instead when there is no source image to start from, and vision_prompt when the image only needs to be read rather than changed. Not idempotent: each call renders a fresh image.', idempotent: false },
@@ -58,6 +60,7 @@ export const editImage = createAction({
       },
     }),
   },
+  outputSchema: editImageActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { image, prompt, mask, size, quality } = context.propsValue;

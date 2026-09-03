@@ -11,6 +11,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordRemoveBanFromUser = createAction({
   auth: discordAuth,
   name: 'remove_ban_from_user',
+  classification: 'WRITE',
   displayName: 'Remove ban from user',
   description: 'Removes the guild ban from a user',
   audience: 'both',

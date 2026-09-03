@@ -17,10 +17,12 @@ import { googleDriveSearchFolder } from './lib/action/search-folder-or-file.acti
 import { googleDriveUploadFile } from './lib/action/upload-file';
 import { newFile } from './lib/triggers/new-file';
 import { newFolder } from './lib/triggers/new-folder';
+import { newOrUpdatedFile } from './lib/triggers/new-or-updated-file';
 import { setPublicAccess } from './lib/action/set-public-access';
 import { moveFileAction } from './lib/action/move-file';
 import { googleDriveDeleteFile } from './lib/action/delete-file';
 import { googleDriveTrashFile } from './lib/action/send-to-trash';
+import { driveExportFolderAsZip } from './lib/action/drive-export-folder-as-zip';
 import { googleDriveAuth, getAccessToken, GoogleDriveAuthValue } from './lib/auth';
 
 // Phase-3 audience:'ai' agent atomics (full Composio-parity agent surface)
@@ -83,7 +85,7 @@ export const googleDrive = createPiece({
     'abuaboud',
     'geekyme'
   ],
-  triggers: [newFile, newFolder],
+  triggers: [newFile, newFolder, newOrUpdatedFile],
   actions: [
     googleDriveCreateNewFolder,
     googleDriveCreateNewTextFile,
@@ -100,6 +102,7 @@ export const googleDrive = createPiece({
     moveFileAction,
     googleDriveDeleteFile,
     googleDriveTrashFile,
+    driveExportFolderAsZip,
     // Phase-3 audience:'ai' agent atomics (full Composio-parity agent surface)
     driveCreateFolder,
     driveCreateFileFromText,

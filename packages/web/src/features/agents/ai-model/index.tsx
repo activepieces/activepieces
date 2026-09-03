@@ -32,10 +32,18 @@ export const PROVIDER_EMBEDDING_MODELS: Partial<
 };
 
 type AIModelSelectorProps = {
+  hideLabel?: boolean;
+  showEmbeddingNote?: boolean;
   defaultProvider?: AIProviderName;
   defaultModel?: string;
+  defaultConfigId?: string;
   disabled?: boolean;
-  onChange: (value: { provider?: string; model?: string }) => void;
+  onChange: (value: {
+    provider?: string;
+    model?: string;
+    configId?: string;
+    picked?: 'user' | 'default';
+  }) => void;
 };
 
 const ACTIVEPIECES_PROVIDER_CONFIG = {
@@ -48,8 +56,11 @@ const ACTIVEPIECES_PROVIDER_CONFIG = {
 const ALL_PROVIDERS = [...SUPPORTED_AI_PROVIDERS, ACTIVEPIECES_PROVIDER_CONFIG];
 
 export function AIModelSelector({
+  hideLabel,
+  showEmbeddingNote = true,
   defaultProvider,
   defaultModel,
+  defaultConfigId,
   disabled = false,
   onChange,
 }: AIModelSelectorProps) {
@@ -61,47 +72,52 @@ export function AIModelSelector({
   const [selectedModel, setSelectedModel] = React.useState<string | undefined>(
     defaultModel,
   );
+  const [selectedConfigId, setSelectedConfigId] = React.useState<
+    string | undefined
+  >(defaultConfigId);
 
   const { data: providers = [], isLoading: providersLoading } =
     aiModelHooks.useListProviders();
   const { data: models = [], isLoading: modelsLoading } =
-    aiModelHooks.useGetModelsForProvider(selectedProvider);
+    aiModelHooks.useGetModelsForProvider(selectedProvider, selectedConfigId);
 
   const getProviderLogo = React.useCallback((providerName: string) => {
     return ALL_PROVIDERS.find((p) => p.provider === providerName)?.logoUrl;
   }, []);
 
-  const getProviderName = React.useCallback(
-    (providerName: string) => {
-      return (
-        providers.find((p) => p.provider === providerName)?.name ?? providerName
+  const providerKeyOptions = React.useMemo(() => {
+    return [...providers]
+      .sort((a, b) => {
+        if (a.provider === AIProviderName.ACTIVEPIECES) return -1;
+        if (b.provider === AIProviderName.ACTIVEPIECES) return 1;
+        return 0;
+      })
+      .flatMap((entry) =>
+        entry.keys.map((key) => ({
+          provider: entry.provider,
+          configId: key.id,
+          label:
+            entry.keys.length > 1 ? `${entry.name}: ${key.name}` : entry.name,
+        })),
       );
-    },
-    [providers],
-  );
-
-  const activepiecesProvider = React.useMemo(
-    () => providers.find((p) => p.provider === AIProviderName.ACTIVEPIECES),
-    [providers],
-  );
-
-  const sortedProviders = React.useMemo(() => {
-    return [...providers].sort((a, b) => {
-      if (a.provider === AIProviderName.ACTIVEPIECES) return -1;
-      if (b.provider === AIProviderName.ACTIVEPIECES) return 1;
-      return 0;
-    });
   }, [providers]);
 
+  const selectedOptionLabel = providerKeyOptions.find(
+    (option) =>
+      option.provider === selectedProvider &&
+      option.configId === selectedConfigId,
+  )?.label;
+
   React.useEffect(() => {
-    if (!selectedProvider && !providersLoading && providers.length > 0) {
+    if (!selectedProvider && !providersLoading && providerKeyOptions.length) {
       const preferred =
-        activepiecesProvider?.provider || providers[0]?.provider;
-      if (preferred) {
-        setSelectedProvider(preferred as AIProviderName);
-      }
+        providerKeyOptions.find(
+          (option) => option.provider === AIProviderName.ACTIVEPIECES,
+        ) ?? providerKeyOptions[0];
+      setSelectedProvider(preferred.provider);
+      setSelectedConfigId(preferred.configId);
     }
-  }, [providers, providersLoading, selectedProvider, activepiecesProvider]);
+  }, [providerKeyOptions, providersLoading, selectedProvider]);
 
   React.useEffect(() => {
     if (
@@ -112,9 +128,21 @@ export function AIModelSelector({
     ) {
       const firstModel = models[0].id;
       setSelectedModel(firstModel);
-      onChange({ provider: selectedProvider, model: firstModel });
+      onChange({
+        provider: selectedProvider,
+        model: firstModel,
+        configId: selectedConfigId,
+        picked: 'default',
+      });
     }
-  }, [models, modelsLoading, selectedProvider, selectedModel, onChange]);
+  }, [
+    models,
+    modelsLoading,
+    selectedProvider,
+    selectedModel,
+    selectedConfigId,
+    onChange,
+  ]);
 
   React.useEffect(() => {
     if (
@@ -125,26 +153,46 @@ export function AIModelSelector({
     ) {
       const fallback = models[0]?.id;
       setSelectedModel(fallback);
-      onChange({ provider: selectedProvider, model: fallback });
+      onChange({
+        provider: selectedProvider,
+        model: fallback,
+        configId: selectedConfigId,
+        picked: 'default',
+      });
     }
-  }, [models, selectedModel, selectedProvider, onChange, defaultModel]);
+  }, [
+    models,
+    selectedModel,
+    selectedProvider,
+    selectedConfigId,
+    onChange,
+    defaultModel,
+  ]);
 
-  const handleProviderChange = (provider: AIProviderName) => {
+  const handleProviderChange = (provider: AIProviderName, configId: string) => {
     setSelectedProvider(provider);
+    setSelectedConfigId(configId);
     setSelectedModel(undefined);
-    onChange({ provider, model: undefined });
+    onChange({ provider, model: undefined, configId, picked: 'user' });
     setProviderOpen(false);
   };
 
   const handleModelChange = (modelId: string) => {
     setSelectedModel(modelId);
-    onChange({ provider: selectedProvider, model: modelId });
+    onChange({
+      provider: selectedProvider,
+      model: modelId,
+      configId: selectedConfigId,
+      picked: 'user',
+    });
     setModelOpen(false);
   };
 
   return (
     <div className="space-y-2">
-      <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      {hideLabel !== true && (
+        <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
+      )}
 
       <div className="flex items-stretch border rounded-md bg-background overflow-hidden">
         <Popover open={providerOpen} onOpenChange={setProviderOpen}>
@@ -171,7 +219,7 @@ export function AIModelSelector({
                     />
                   )}
                   <span className="truncate">
-                    {getProviderName(selectedProvider)}
+                    {selectedOptionLabel ?? selectedProvider}
                   </span>
                 </div>
               ) : (
@@ -192,29 +240,29 @@ export function AIModelSelector({
               <CommandInput placeholder={t('Search providers...')} />
               <CommandEmpty>{t('No provider found.')}</CommandEmpty>
               <CommandGroup className="max-h-64 overflow-auto">
-                {sortedProviders.map((provider) => (
+                {providerKeyOptions.map((option) => (
                   <CommandItem
-                    key={provider.id}
-                    value={provider.provider}
+                    key={option.configId}
+                    value={option.label}
                     onSelect={() =>
-                      handleProviderChange(provider.provider as AIProviderName)
+                      handleProviderChange(option.provider, option.configId)
                     }
                     className="cursor-pointer"
                   >
                     <div className="flex items-center gap-2 flex-1">
-                      {getProviderLogo(provider.provider) && (
+                      {getProviderLogo(option.provider) && (
                         <img
-                          src={getProviderLogo(provider.provider)}
-                          alt={provider.provider}
+                          src={getProviderLogo(option.provider)}
+                          alt={option.provider}
                           className="h-4 w-4 object-contain"
                         />
                       )}
-                      <span>{provider.name}</span>
+                      <span>{option.label}</span>
                     </div>
                     <Check
                       className={cn(
                         'ml-auto h-4 w-4',
-                        selectedProvider === provider.provider
+                        selectedConfigId === option.configId
                           ? 'opacity-100'
                           : 'opacity-0',
                       )}
@@ -296,7 +344,7 @@ export function AIModelSelector({
         </Popover>
       </div>
 
-      {selectedProvider && (
+      {selectedProvider && showEmbeddingNote && (
         <p className="text-xs text-muted-foreground">
           {PROVIDER_EMBEDDING_MODELS[selectedProvider]
             ? t('Embedding model for knowledge base: {model}', {

@@ -3,31 +3,29 @@ import { endClient, getClient, getProtocolBackwardCompatibility } from '../commo
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
-import { Writable } from 'stream';
+import { PassThrough, Readable } from 'stream';
 import { getSftpError } from './common';
 
-async function readFTP(client: FTPClient, filePath: string) {
-  const chunks: Buffer[] = [];
-  const writeStream = new Writable({
-    write(chunk: Buffer, _encoding: string, callback: () => void) {
-      chunks.push(chunk);
-      callback();
-    }
-  });
-  await client.downloadTo(writeStream, filePath);
-  return Buffer.concat(chunks);
+// Return a Readable and let the transfer run in the background; files.write
+// consumes it, so the file is never fully buffered in the sandbox. The client
+// is closed in the caller's finally, once the stream has been drained.
+function readFTP(client: FTPClient, filePath: string): Readable {
+  const stream = new PassThrough();
+  client.downloadTo(stream, filePath).catch((err) => stream.destroy(err));
+  return stream;
 }
 
-async function readSFTP(client: Client, filePath: string) {
-  const fileContent = await client.get(filePath);
-  await client.end();
-  return fileContent as Buffer;
+function readSFTP(client: Client, filePath: string): Readable {
+  const stream = new PassThrough();
+  client.get(filePath, stream).catch((err) => stream.destroy(err));
+  return stream;
 }
 
 export const readFileContent = createAction({
   audience: 'both',
   auth: sftpAuth,
   name: 'read_file_content',
+  classification: 'READ',
   displayName: 'Read File Content',
   description: 'Read the content of a file.',
   aiMetadata: { description: 'Downloads one file from the connected FTP, FTPS or SFTP server by remote path and returns it as a file reference that later steps can consume. Use it to fetch the content of a file whose path you know; run List Folder Contents first when you still need to discover which paths exist. Requires an exact remote file path - it does not glob, search or recurse; read-only and idempotent.', idempotent: true },
@@ -43,25 +41,25 @@ export const readFileContent = createAction({
     const fileName = filePath.split('/').pop() ?? filePath;
     const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
-      let fileContent: Buffer;
+      let fileStream: Readable;
       switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
-          fileContent = await readFTP(client as FTPClient, filePath);
+          fileStream = readFTP(client as FTPClient, filePath);
           break;
         default:
         case 'sftp':
-          fileContent = await readSFTP(client as Client, filePath);
+          fileStream = readSFTP(client as Client, filePath);
           break;
       }
 
       return {
         file: await context.files.write({
           fileName: fileName,
-          data: fileContent,
+          data: fileStream,
         }),
       };
-    } 
+    }
     catch (err) {
       if (err instanceof FTPError) {
         console.error(getSftpError(err.code));

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { chatStoreSelectors } from '@/features/chat/lib/chat-store';
 import { useChatStoreContext } from '@/features/chat/lib/chat-store-context';
@@ -9,6 +9,7 @@ import {
   ChatUIMessage,
   chatPartUtils,
 } from '@/features/chat/lib/chat-types';
+import { cn } from '@/lib/utils';
 
 import {
   ConnectionPickerData,
@@ -31,11 +32,14 @@ export function ChatBottomBar({
   onInputChange,
   selectedModel,
   onModelChange,
+  hideModelSelector,
   lastAssistantMessage,
   lastMessageId,
   placeholder,
   banner,
+  recede,
 }: ChatBottomBarProps) {
+  const [composerEngaged, setComposerEngaged] = useState(false);
   const pendingActionPreview = useChatStoreContext((s) =>
     chatStoreSelectors.pendingActionPreview({
       state: s,
@@ -114,26 +118,39 @@ export function ChatBottomBar({
     dismissActiveCard?.();
   };
 
+  const minimal = recede === true && !activeCard && !composerEngaged;
+
   return (
     <div className="flex flex-col gap-2">
       {activeCard}
-      <div className="overflow-hidden rounded-2xl border border-foreground/20 transition-colors hover:border-foreground/40 focus-within:border-foreground/40">
+      <div
+        className={cn(
+          'overflow-hidden rounded-2xl border transition-colors',
+          minimal
+            ? 'border-transparent bg-transparent hover:bg-muted/30'
+            : 'border-foreground/20 hover:border-foreground/40 focus-within:border-foreground/40',
+        )}
+      >
         {banner}
         <ChatInput
           isStreaming={activeCard ? false : isStreaming}
           onSend={handleSend}
           onStop={onStop}
           onInputChange={onInputChange}
+          minimalUntilFocus={recede === true && !activeCard}
+          onFocusChange={setComposerEngaged}
           placeholder={
             activeCard
               ? t('Or reply in your own words')
               : placeholder ?? t('Reply...')
           }
           rightActions={
-            <ChatModelSelector
-              selectedModel={selectedModel}
-              onModelChange={onModelChange}
-            />
+            hideModelSelector === true ? null : (
+              <ChatModelSelector
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            )
           }
         />
       </div>
@@ -208,8 +225,10 @@ type ChatBottomBarProps = {
   onInputChange?: (hasInput: boolean) => void;
   selectedModel: string | null;
   onModelChange: (modelId: string) => void;
+  hideModelSelector?: boolean;
   lastAssistantMessage: ChatUIMessage | undefined;
   lastMessageId: string | undefined;
   placeholder?: string;
   banner?: ReactNode;
+  recede?: boolean;
 };

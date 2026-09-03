@@ -1,6 +1,7 @@
 import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth, BlueSkyAuthType } from '../common/auth';
+import { newPostsByAuthorTriggerOutputSchema } from '../output-schemas';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
@@ -111,6 +112,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, {
 export const newPostsByAuthor = createTrigger({
   auth: blueskyAuth,
   name: 'newPostsByAuthor',
+  classification: 'READ',
   displayName: 'New Posts by Author',
   description: 'Triggers when a selected author creates a new post',
   aiMetadata: {
@@ -231,6 +233,7 @@ export const newPostsByAuthor = createTrigger({
     }
   },
   type: TriggerStrategy.POLLING,
+  outputSchema: newPostsByAuthorTriggerOutputSchema,
   
   async test(context) {
     return await pollingHelper.test(polling, context);

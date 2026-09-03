@@ -1,16 +1,9 @@
-import { Readable } from 'node:stream'
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
-import fetchRetry from 'fetch-retry'
+import { EngineFileNotFoundError, EngineGenericError, ExecutionError, ExecutionErrorType, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import { retryFetch } from './retry-fetch'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
-
-const RETRY_CONFIG = {
-    retries: 3,
-    retryDelay: 3000,
-    retryOn: [408, 429, 500, 502, 503, 504],
-} as const
 
 const READ_URL_HEADER = 'x-ap-file-read-url'
 const FILE_TYPE_HEADER = 'x-ap-file-type'
@@ -20,28 +13,14 @@ export const engineFileApi = {
     async upload({ engineToken, apiUrl, fileId, type, fileName, compression, data }: UploadParams): Promise<UploadResult> {
         const putUrl = `${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`
 
-        if (data instanceof Readable) {
-            // No Content-Length → the server streams straight to storage instead of a
-            // presigned redirect (which needs a length). A stream can't be replayed, so no retry.
-            const response = await global.fetch(putUrl, {
-                method: 'PUT',
-                // @ts-expect-error -- undici streams a Node web ReadableStream body; the DOM fetch types omit it
-                body: Readable.toWeb(data),
-                headers: buildPutHeaders({ type, fileName, compression }),
-                duplex: 'half',
-            })
-            return resolveUploadReadUrl(fileId, response)
-        }
-
-        const fetchWithRetry = fetchRetry(global.fetch)
         const headers = buildPutHeaders({ type, fileName, compression, contentLength: data.length })
+        const body = toRequestBody(data)
 
-        const initial = await fetchWithRetry(putUrl, {
+        const initial = await retryFetch(putUrl, {
             method: 'PUT',
-            body: data,
+            body,
             headers,
             redirect: 'manual',
-            ...RETRY_CONFIG,
         })
 
         if (initial.status >= 300 && initial.status < 400) {
@@ -49,12 +28,11 @@ export const engineFileApi = {
             if (!location) {
                 throw new EngineGenericError('EngineFileUploadError', 'Server returned a redirect without a Location header')
             }
-            const s3Response = await fetchWithRetry(location, {
+            const s3Response = await retryFetch(location, {
                 method: 'PUT',
-                body: data,
+                body,
                 headers: stripApHeaders(headers),
                 redirect: 'follow',
-                ...RETRY_CONFIG,
             })
             if (!s3Response.ok) {
                 throw new EngineGenericError(
@@ -72,11 +50,9 @@ export const engineFileApi = {
         return resolveUploadReadUrl(fileId, initial)
     },
     async download({ engineToken, apiUrl, fileId }: DownloadFileParams): Promise<Uint8Array> {
-        const fetchWithRetry = fetchRetry(global.fetch)
-        const response = await fetchWithRetry(`${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`, {
+        const response = await retryFetch(`${apiUrl}v1/files/${fileId}?token=${encodeURIComponent(engineToken)}`, {
             method: 'GET',
             redirect: 'follow',
-            ...RETRY_CONFIG,
         })
         if (!response.ok) {
             // A gone file (deleted/expired trigger payload or run log) never recovers on retry and is a
@@ -107,6 +83,14 @@ export const engineFileApi = {
 
 async function resolveUploadReadUrl(fileId: string, response: Response): Promise<UploadResult> {
     if (!response.ok) {
+        if (response.status === 413) {
+            const serverMessage = await readErrorMessage(response)
+            throw new ExecutionError(
+                'EngineFileTooLarge',
+                JSON.stringify({ message: serverMessage ?? `File ${fileId} exceeds the server's size limit` }),
+                ExecutionErrorType.USER,
+            )
+        }
         throw new EngineGenericError(
             'EngineFileUploadError',
             `Failed to upload engine file ${fileId}: ${response.status} ${response.statusText}`,
@@ -121,6 +105,20 @@ async function resolveUploadReadUrl(fileId: string, response: Response): Promise
         throw new EngineGenericError('EngineFileUploadError', 'Upload response missing readUrl')
     }
     return { fileId, readUrl: body.readUrl }
+}
+
+function toRequestBody(data: Uint8Array): BodyInit {
+    return data.buffer instanceof ArrayBuffer ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength) : new Uint8Array(data)
+}
+
+async function readErrorMessage(response: Response): Promise<string | undefined> {
+    try {
+        const body = await response.json() as { params?: { message?: unknown } }
+        return typeof body?.params?.message === 'string' ? body.params.message : undefined
+    }
+    catch {
+        return undefined
+    }
 }
 
 function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHeadersParams): Record<string, string> {
@@ -157,7 +155,7 @@ type UploadParams = {
     type: FileType.FLOW_STEP_FILE | FileType.FLOW_RUN_LOG | FileType.FLOW_RUN_LOG_SLICE
     fileName?: string
     compression?: FileCompression
-    data: Uint8Array | Buffer | Readable
+    data: Uint8Array | Buffer
 }
 
 type UploadResult = {

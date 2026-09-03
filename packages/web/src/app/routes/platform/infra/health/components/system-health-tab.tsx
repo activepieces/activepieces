@@ -1,4 +1,4 @@
-import { ApFlagId, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Boxes,
@@ -18,7 +18,6 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { healthQueries } from '@/features/platform-admin';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { DailyHealthStrip } from './daily-health-strip';
@@ -38,18 +37,16 @@ type SystemHealthTabProps = {
 };
 
 export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
-  const { data: currentVersion } = flagsHooks.useFlag<string>(
-    ApFlagId.CURRENT_VERSION,
-  );
   const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
+  const release = systemHealth?.release;
+  const currentVersion = release?.current;
 
   const isVersionUpToDate = React.useMemo(() => {
     if (!currentVersion || !latestVersion) return false;
     return semver.gte(currentVersion, latestVersion);
   }, [currentVersion, latestVersion]);
 
-  const release = systemHealth?.release;
   const releaseIntegrityOk =
     !!release &&
     release.current !== UNREADABLE_RELEASE_VERSION &&

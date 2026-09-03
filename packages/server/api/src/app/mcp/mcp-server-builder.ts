@@ -1,9 +1,11 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowStatus, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpTrigger, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
@@ -12,7 +14,6 @@ import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLAT
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
 const PLATFORM_LEVEL_TOOL_SET = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
-const MCP_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
@@ -132,52 +133,71 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
 function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
-        const mcpTrigger = flow.version.trigger.settings as McpTrigger
-        const mcpInputs = mcpTrigger.input?.inputSchema ?? []
+        const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
         const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
 
-        const baseName = (mcpTrigger.input?.toolName ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
+        const baseName = (mcpToolNameInput ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
         const toolName = mcpToolNameUtils.createToolName(baseName)
-        const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
 
         const flowPermissionError = permissionChecker.check(Permission.WRITE_RUN, toolName)
-        server.registerTool(toolName, { title: toolName, description: toolDescription, inputSchema: zodFromInputSchema }, async (args: Record<string, unknown>) => {
+        server.registerTool(toolName, { title: toolName, description: toolDescription, inputSchema: zodFromInputSchema, annotations: FLOW_TOOL_ANNOTATIONS }, async (args: Record<string, unknown>) => {
             if (flowPermissionError) {
                 return flowPermissionError
             }
 
-            const returnsResponse = mcpTrigger.input?.returnsResponse
-            const response = await webhookService.handleWebhook({
-                data: () => Promise.resolve({
-                    body: {},
-                    method: 'POST',
-                    headers: {},
-                    queryParams: {},
-                }),
-                logger: log,
-                flowId: flow.id,
-                async: !returnsResponse,
-                flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-                saveSampleData: false,
-                payload: args,
-                execute: true,
-                failParentOnFailure: false,
-                timeoutMs: MCP_TIMEOUT_MS,
-            })
-            const isOkay = Math.floor(response.status / 100) === 2
+            const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: args, returnsResponse, log })
 
             rejectedPromiseHandler(telemetry(log).trackProject(projectId, {
                 name: TelemetryEventName.MCP_TOOL_CALLED,
                 payload: { mcpId: projectId, toolName },
             }), log)
 
-            const text = isOkay
-                ? `✅ Successfully executed flow ${flow.version.displayName}\n\nOutput:\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``
-                : `❌ Error executing flow ${flow.version.displayName}\n\nError details:\n\`\`\`json\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``
-
-            return { content: [{ type: 'text' as const, text }] }
+            return result
         })
     }
+}
+
+export function extractMcpTriggerInput(flow: PopulatedFlow): { toolName?: string, toolDescription: string, mcpInputs: McpProperty[], returnsResponse: boolean } {
+    const mcpTrigger = flow.version.trigger.settings as McpTrigger
+    return {
+        toolName: mcpTrigger.input?.toolName,
+        toolDescription: mcpTrigger.input?.toolDescription ?? '',
+        mcpInputs: mcpTrigger.input?.inputSchema ?? [],
+        returnsResponse: mcpTrigger.input?.returnsResponse ?? false,
+    }
+}
+
+export async function runFlowAsTool({ flowId, flowDisplayName, payload, returnsResponse, log }: {
+    flowId: string
+    flowDisplayName: string
+    payload: Record<string, unknown>
+    returnsResponse: boolean
+    log: FastifyBaseLogger
+}): Promise<McpToolResult> {
+    const response = await webhookService.handleWebhook({
+        data: () => Promise.resolve({
+            body: {},
+            method: 'POST',
+            headers: {},
+            queryParams: {},
+        }),
+        logger: log,
+        flowId,
+        async: !returnsResponse,
+        flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
+        saveSampleData: false,
+        payload,
+        execute: true,
+        failParentOnFailure: false,
+        timeoutMs: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000,
+    })
+    const isOkay = Math.floor(response.status / 100) === 2
+
+    const text = isOkay
+        ? `✅ Successfully executed flow ${flowDisplayName}\n\nOutput:\n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``
+        : `❌ Error executing flow ${flowDisplayName}\n\nError details:\n\`\`\`json\n${JSON.stringify(response, null, 2) || 'Unknown error occurred'}\n\`\`\``
+
+    return { content: [{ type: 'text', text }], ...(isOkay ? {} : { isError: true }) }
 }
 
 function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log }: RegisterToolsParams): void {
@@ -192,18 +212,20 @@ function registerStaticTools({ server, mcp, projectId, userId, permissionChecker
 }
 
 function registerPlaceholderTools(server: McpServer): void {
+    const lockedToolSet = new Set<string>(LOCKED_TOOL_NAMES)
     const allToolNames = [...LOCKED_TOOL_NAMES, ...ALL_CONTROLLABLE_TOOL_NAMES]
     allToolNames.forEach((toolName) => {
         server.registerTool(toolName, {
             title: toolName,
             description: `${toolName} — requires a project to be selected first.`,
+            annotations: lockedToolSet.has(toolName) ? LOCKED_PLACEHOLDER_ANNOTATIONS : CONTROLLABLE_PLACEHOLDER_ANNOTATIONS,
         }, async () => ({
             content: [{ type: 'text' as const, text: `No project selected. Please select a project from the dropdown in the chat input area before using ${toolName}.` }],
         }))
     })
 }
 
-function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
+export function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
     const base = (() => {
         switch (property.type) {
             case McpPropertyType.TEXT:
@@ -245,6 +267,10 @@ function buildToolConfig(tool: McpToolDefinition): Record<string, unknown> {
         annotations: tool.annotations,
     }
 }
+
+const FLOW_TOOL_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
+const LOCKED_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
+const CONTROLLABLE_PLACEHOLDER_ANNOTATIONS = { readOnlyHint: false, destructiveHint: true, openWorldHint: true }
 
 type RegisterToolsParams = {
     server: McpServer

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { MoxieCRMEventType } from '.';
 import { moxieCRMAuth } from '../auth';
+import { moxieCRMTriggerOutputSchemas } from '../output-schemas';
 export const moxieCRMRegisterTrigger = ({
   name,
   displayName,
@@ -24,6 +25,7 @@ export const moxieCRMRegisterTrigger = ({
   createTrigger({
     auth: moxieCRMAuth,
     name: `moxie_trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,
@@ -42,6 +44,7 @@ export const moxieCRMRegisterTrigger = ({
         `,
       }),
     },
+    outputSchema: moxieCRMTriggerOutputSchemas[name],
     type: TriggerStrategy.WEBHOOK,
     sampleData: sampleData,
     async onEnable(context) {

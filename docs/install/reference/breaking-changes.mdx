@@ -4,6 +4,265 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## Unreleased
+
+### What has changed?
+
+#### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
+
+Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
+
+The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and neither checkbox defaults to off any more, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
+
+The `Attributes` field used to come pre-filled with nine empty values (`FIRST_NAME`, `LAST_NAME`, `SMS`, `CIV`, `DOB`, `ADDRESS`, `ZIP_CODE`, `CITY`, `AREA`). Because they were sent on every call, running the step overwrote whatever those attributes held in Brevo with empty strings. The default is removed, and only the attributes you list are written.
+
+`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. A stored numeric id is still sent exactly as before, so existing steps keep working unchanged.
+
+The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses` list. Brevo expects a list of sender email addresses here, not a true or false, and rejects a boolean outright with *"Invalid smtpBlacklistSender format"* — so ticking that checkbox always failed the step, and leaving it clear did nothing at all. The field never worked. It is now a list of addresses, which Brevo accepts, and any value your step already had is ignored rather than sent.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
+
+#### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
+
+An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
+
+Both hardcoded limits are gone. All of them now follow `AP_FLOW_TIMEOUT_SECONDS`, the same setting that bounds a flow run, which defaults to 600 seconds. An action run therefore gets the same budget as a flow step.
+
+The limit going up is the change to be aware of: a slow or hung action now occupies a worker slot for up to `AP_FLOW_TIMEOUT_SECONDS` instead of 120 seconds, and action runs are not covered by the per-project concurrency limiter. On a small worker pool, several slow actions can hold execution capacity for longer than they used to.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable — a default installation gets the fix with no action. Two things to consider if they apply to you. If you raised `AP_FLOW_TIMEOUT_SECONDS` for long flows, note that agent tools, chat actions and MCP action runs now inherit that same ceiling; lower it if you do not want them held that long. If you put Activepieces behind a reverse proxy and use MCP `ap_run_action`, an action that runs past the proxy's read timeout (nginx defaults to 60 seconds, Cloudflare to 100) returns a gateway error to the MCP client while the action keeps running — raise `proxy_read_timeout` if you rely on long action runs over MCP.
+
+#### A Run Agent step whose turn dies now fails its flow run
+
+A Run Agent step whose turn died — no AI provider configured for the chosen vendor, a revoked API key, a model the provider no longer serves — used to report success. The step returned the failed agent result rather than raising it, so the step read SUCCEEDED, the run completed SUCCEEDED, and later steps acted on a payload that carried the failure inside it. Such a run is now FAILED, and the agent's error message is the step's error.
+
+Two cases are deliberately unaffected, because the agent did produce usable output:
+
+- A turn that finished but had a single tool call error. The agent may have recovered from it and reported on it, so those runs keep succeeding exactly as before.
+- A turn that was cut short by the output limit or the run's usage budget. It still returns the work it completed, and the flow still continues.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable. Two things to check if either applies to you. If a flow relied on continuing past a dead agent step, tick **Continue on failure** on that step — it now takes effect, where previously the step never failed for it to apply to. If a flow branches on the agent result (a Router reading the step's `status`), that branch no longer runs when the turn dies, because the step raises instead of returning; move that handling onto the step's failure path.
+
+If you alert on run status, expect agent flows that were silently completing on a misconfigured provider to start showing as failed. That is the misconfiguration surfacing, not new breakage.
+
+#### Workers no longer pre-warm the flow cache on startup by default
+
+Since v0.86.1 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before v0.86.1.
+
+#### What you need to do
+
+Nothing, unless you want to keep the pre-v0.88 warm-up behaviour. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
+
+#### A new workspace is named after the company in the sign-up email
+
+Completing sign-up used to always name the new platform after the person, as `"Ahmad's Platform"`. It now reads the email domain first: `ahmad@activepieces.com` creates a platform called `Activepieces`, and the project alongside it becomes `Activepieces's Project`.
+
+The person-based name is still what you get from a consumer address. `ahmad@gmail.com` continues to produce `"Ahmad's Platform"`, as do the other common providers (Outlook, Yahoo, iCloud, Proton, GMX, QQ and similar). Whether an address counts as a work address is decided by a denylist of consumer providers, so anything not on that list is treated as a company.
+
+This only affects platforms created from here on. Existing platforms keep their names, and renaming stays available in settings.
+
+#### What you need to do
+
+Nothing. No configuration, no new environment variable, and nothing to migrate. If you script or test first-run sign-up and assert on the generated platform or project name, update that assertion: a work-domain address no longer yields `"<FirstName>'s Platform"`.
+
+#### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
+
+The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.
+
+#### What you need to do
+
+Nothing for catalog pieces — oracle-database is the only piece that forks a sibling file, and this change fixes it (0.1.13). If you build custom pieces and one references `__dirname`, either declare the runtime-loaded file in `bundleForkedEntries` (see [Bundling Pieces](/build-pieces/misc/bundling-pieces)) or remove the `__dirname` usage. Already-published pieces keep working; the check runs at build time only.
+
+#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
+
+Two changes to the MCP OAuth endpoints:
+
+- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
+- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
+
+#### What you need to do
+
+Nothing for already-connected clients. A client's authentication method is read from the row it registered with, so existing registrations are untouched, including the ones created before this fix that hold a secret while recorded as public. Those keep working whether or not they send it.
+
+Claude, Cursor and anything else built on the MCP SDK are unaffected: the SDK stores and sends the `client_secret` it is given, and it never calls the revocation endpoint. A confidential client's secret is accepted from either the request body or the `Authorization: Basic` header, so a client is never rejected for choosing one over the other.
+
+If you maintain your own MCP OAuth client, check two things before upgrading: that it sends `client_id` when it revokes a token, and that it stores and presents the `client_secret` that `/register` returns. Note that disconnecting and re-adding an MCP server creates a fresh registration, so an existing user meets the new behaviour when they reconnect rather than at upgrade.
+
+#### Agent steps move from the flow engine to the server
+
+An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes. This upgrade rewrites every existing agent step to the new version.
+
+The step's inputs and its output shape are unchanged, so anything reading the step's result or its structured output keeps working. Sub-flow, MCP server, knowledge base and piece action tools all run on the new path.
+
+Two differences are worth knowing before you upgrade:
+
+- **Web search is no longer a step setting.** It follows what the platform has configured rather than a per-step toggle. A step that had it switched on keeps working; the stored value is ignored.
+- **Max steps is honoured up to a ceiling.** The value you set still applies, but the server caps a single run at 50 turns. A step configured above that runs 50.
+
+#### What you need to do
+
+Nothing on upgrade. Check any agent step that relied on the per-step web search toggle, or that set max steps above 50, since those now follow the platform and the server ceiling.
+
+#### The container no longer bundles PM2 — crashes exit the container
+
+The Docker image used to run the app and worker under PM2, which restarted a crashed process *inside* the container. PM2 is removed; the entrypoint now launches the processes with plain `node`. When a process crashes (or is OOM-killed), the container exits instead of silently recycling the process in place, and your orchestrator restarts it.
+
+#### What you need to do
+
+Nothing if you deploy with Docker Compose, Kubernetes/Helm, or any orchestrator that already restarts failed containers (all official deployments do). If you run the image with a bare `docker run` and relied on PM2 to keep the container alive across process crashes, add a restart policy: `docker run --restart unless-stopped ...`.
+
+#### The Microsoft Teams Bot piece no longer needs a server-side installation record
+
+`POST /v1/teams-bot/webhook` and `POST /v1/teams-bot/send` are removed, and the `teams_bot_installation` table is dropped. The webhook existed only to capture Microsoft's per-tenant `serviceUrl` at install time so the send endpoint could look it up.
+
+The piece now posts to Microsoft's documented global Teams service endpoint directly, so it holds no server-side state and its messaging endpoint moves to the shared app-webhooks route, `/api/v1/app-events/microsoft-teams-bot`. Because the installed-or-not check is no longer a cached row, it is answered by Microsoft at send time: posting to a team the bot is not a member of now fails with `403 The bot is not part of the conversation roster` instead of a stale local lookup.
+
+The piece is published as `0.1.0` with a minimum supported release of `0.88.4`, so releases below `0.88.4` keep being offered `0.0.2`, which still has the server route it depends on.
+
+#### What you need to do
+
+Nothing for existing connections; they keep working untouched, and sending no longer reads the dropped table.
+
+If you already have a flow using **Microsoft Teams Bot** piece version `0.0.2`, open the step and upgrade the piece to `0.1.0`. Flow steps pin an exact piece version, so an existing step stays on `0.0.2` after you upgrade, and `0.0.2` calls the `/v1/teams-bot/send` route this release removes. That step will fail with a 404 until it is upgraded.
+
+Optionally repoint the **Messaging endpoint** on your Azure Bot resource from `/api/v1/teams-bot/webhook` to `/api/v1/app-events/microsoft-teams-bot`; an endpoint left on the old path returns 404 and is otherwise harmless. If you call `/v1/teams-bot/send` directly from your own code, switch to the piece's **Send Channel Message as Bot** action.
+
+#### Table record filters compare date columns chronologically
+
+The `gt`, `gte`, `lt` and `lte` operators on `GET /v1/records` used to parse every cell value as a number. On a Date column that meant `2026-08-12T14:30:00Z` was read as `2026`, so two dates in the same year always compared equal and a range filter matched nothing. Those four operators now compare Date and Date & Time columns as instants.
+
+This affects the Tables piece's Find Records action and any direct API call that filters a Date column with a range operator. `eq`, `neq` and `co` are unchanged and still compare the stored text exactly, so two spellings of the same instant (`...T14:30:00Z` and `...T14:30:00.000Z`) do not match each other.
+
+#### What you need to do
+
+Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
+
+#### A failed run on a synchronous webhook answers with 500 instead of 408 after the full timeout
+
+A `/sync` webhook call whose flow run fails used to hold the connection open for the whole `AP_WEBHOOK_TIMEOUT_SECONDS` (30 seconds by default) and then answer `408 Request Timeout` with an empty body, no matter how quickly the run had actually failed. Nothing reported a terminal run status back to the waiting request, so the caller only ever saw the timeout fallback.
+
+A run that ends in `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED` or `LOG_SIZE_EXCEEDED` now answers immediately with `500` and a body of `{"message": "The flow has failed and there is no response returned"}`. For `FAILED`, `INTERNAL_ERROR` and `MEMORY_LIMIT_EXCEEDED` this restores the behaviour from before 0.80.0, where they answered `500` (`TIMEOUT` answered `504` then; it is `500` now, like the rest). `LOG_SIZE_EXCEEDED` never had a response of its own in any earlier release, so it gains one here.
+
+Between 0.80.0 and 0.85.x the same failures answered `204 No Content` rather than `408`, which many HTTP clients read as success. If you integrated against an Activepieces in that range and concluded a synchronous webhook "returns 204 when it fails", that is the behaviour being replaced.
+
+Two cases are deliberately unchanged. A run that succeeds without reaching a Return Response step still waits out the timeout and answers `408`, exactly as it did before 0.80.0. A run blocked on credits still answers `402` before it starts.
+
+#### What you need to do
+
+Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
+
+## 0.88.2
+
+### What has changed?
+
+#### Sign-in and sign-up are one screen, and an emailed code signs people in wherever SMTP is configured
+
+`/sign-in` and `/sign-up` now render the same card, and `/sign-up` redirects to `/sign-in` carrying its query string, so existing links — invitation URLs included — keep working.
+
+The card's primary path is a six-digit code emailed to the address typed into it. It is offered whenever the instance has SMTP configured and email auth is enabled, on every edition including Community, so a self-hosted instance that already sends transactional email gains a way to sign in that needs no password. An instance with no SMTP is unaffected: the card opens directly on the classic password form, with Google and SAML above it exactly as before.
+
+Two things change on an instance that does have SMTP. Password sign-in moves behind a **Use password** link on the card, and password sign-*up* is offered only where the card is in sign-up mode — the first account on a fresh instance, or an invitation link (`/sign-up?email=…`) — so someone who simply opens `/sign-in` on an instance that already has accounts is given the emailed code and no way to switch to a password sign-up form. Existing passwords are untouched: a verified identity keeps its password, and signing in with a code does not discard it.
+
+Who may get in does not change, and the existing guards all run before a code is sent. Joining still requires `AP_ALLOW_OPEN_SIGN_UP=true`, an accepted invitation, or existing membership, and that refusal is silent — the response is identical to an accepted one and no code is sent, so the endpoint reveals nothing about who has an account. A platform's allowed-domains list still applies too, but it answers with an explicit domain-not-allowed error rather than silently, and like the platform's Email-auth setting it is inert on Community and on any platform whose plan does not include SSO. On a fresh install, before the first platform exists, there is no platform for either check to run against and both are skipped.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable: emailed-code sign-in turns itself on once SMTP is configured and Email is enabled as an authentication method.
+
+If you do not want emailed-code sign-in, turn off **Email** as an authentication method for the platform (Enterprise and Cloud, under SSO settings, and only where your plan includes SSO); that disables password sign-in along with it, since both are the same method. On Community that toggle is inert, so the only lever there is leaving SMTP unconfigured.
+
+If you script or end-to-end test the sign-in screen, re-check it: the same URL now renders a different form depending on whether SMTP is configured and whether any account exists yet. Password reset moved inside the card wherever the emailed-code path is active; an instance without SMTP still sends people to `/forget-password`, and Community shows no reset control at all.
+
+#### Emailed sign-in codes allow ten wrong guesses per account per hour
+
+The six-digit login code already allowed five wrong guesses, but that budget lived on the code itself, and the fifth wrong guess threw the code away — so asking for a new code handed out five fresh guesses immediately, with no ceiling on how often that could repeat. A six-digit code is only a million possibilities, so unlimited retries reduce it to a matter of hours.
+
+Wrong guesses are now counted per account over a rolling hour, independently of how many codes get sent. Entering the right code clears the counter, so someone who fumbles a few digits and then succeeds is unaffected.
+
+Two consequences worth knowing. Someone who spends ten wrong guesses on an account within an hour cannot sign in **with an emailed code** until the hour is up; password and Google sign-in are unaffected. And because the counter is keyed on the account rather than the caller, anyone who knows an address can spend that budget on the owner's behalf — a temporary nuisance for the owner, and the trade the cap is worth making.
+
+#### What you need to do
+
+Nothing. The limit applies out of the box and needs no configuration. If your support team sees a report of "the code keeps saying it's wrong", have them check whether the account has burned its hourly budget, and point the user at password or Google sign-in in the meantime.
+
+#### One-time codes are no longer stored in a readable form
+
+The `otp` table used to hold the six-digit sign-in code as plain text, so anyone who could read the database — a replica, a backup, a support query — could sign in as any account for the ten minutes that code was alive, without a password. Codes are now stored as a digest keyed with a server-held secret, so reading the table no longer yields anything you can sign in with. The code itself is held only long enough to re-send it if the person asks for it again.
+
+A code found to be expired is thrown away when it is next presented, rather than sitting in the table until the same person happens to request another one.
+
+#### What you need to do
+
+Nothing, and no new configuration: the key is derived from a secret your instance already has. Codes written by an older build are recorded as such and keep working until they expire, so a sign-in already underway when you deploy still completes, an email verification link still opens, and a rolling deploy where both builds are serving at once behaves the same.
+
+Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
+
+#### Front's Attachments field takes files instead of URLs
+
+The Front piece's Send Message, Send Reply, Create Draft and Create Draft Reply actions described `Attachments` as a list of attachment URLs and sent those strings inside a JSON body. Front only accepts attachments on a `multipart/form-data` request, as the bytes of the file, so it took the message and dropped the attachments — HTTP 202, no error, no attachment. The field is now a list of files, the same shape the Gmail and Discord pieces use, and the request is sent as multipart when a message carries attachments.
+
+A URL is still all you need to supply: the engine downloads it and hands the piece the resolved file. A step that already holds a file — an earlier download, a trigger's attachment — can be wired straight in. An entry whose file cannot be resolved is skipped rather than failing the send.
+
+#### What you need to do
+
+Re-pick the attachment in any Front step that used the field. The stored value is a plain string and the field now holds a file, so it does not carry across. A flow that never set Attachments is unaffected and keeps its JSON request path. Nothing to configure on the server, and no new environment variable.
+
+#### A file URL that fails to download is no longer treated as a file
+
+Any piece property that takes a file also accepts a URL, and the engine buffered whatever came back from that URL without checking the response status. A 4xx or 5xx produced a file named after the URL whose contents were the server's error page, and a piece could not tell that apart from the real thing — an expired signed link became an email with the storage provider's XML error attached. A failed download now fails the step, which is what the streaming path already did.
+
+#### What you need to do
+
+Nothing to configure. A flow that was silently passing on error pages will start failing at that step instead, and the fix is the URL itself — usually a link that has expired or that the instance is not authorized to read.
+
+#### Signing in with an emailed code is now offered on Activepieces Cloud only
+
+`POST /v1/authentication/otp/request` and `POST /v1/authentication/otp/verify` are no longer served on a self-hosted
+instance. They return `404`, and the sign-in card no longer offers the "email me a code" step — it opens on the
+password form instead. Versions 0.88.2 through 0.88.4 did serve them on any edition with SMTP configured.
+`POST /v1/authentication/complete-sign-up` is unaffected and still served everywhere.
+
+A six-digit code is a million possibilities, so what keeps guessing it expensive is the captcha in front of the
+request endpoint. Cloudflare Turnstile is opt-in and unset out of the box, so a self-hosted instance served both
+endpoints with nothing in front of them. Rather than require a Cloudflare account to make a sign-in method safe,
+that method is no longer served where the captcha is not there.
+
+On Cloud the same rule now applies: the routes exist only when both `AP_TURNSTILE_SITE_KEY` and
+`AP_TURNSTILE_SECRET_KEY` are set. Without them the instance starts normally and simply does not offer emailed
+codes. Activepieces Cloud has both configured, so nothing changes for it — the code step stays on the sign-in card
+and accounts that use it keep signing in exactly as before.
+
+#### What you need to do
+
+Nothing, if your users sign in with a password or with Google — those paths are unchanged, and so are `/sign-up`,
+`/sign-in` and `/switch-platform`.
+
+**If you ran 0.88.2–0.88.4 with SMTP configured, assume some accounts were created through the code flow.** Those
+accounts hold a random password nobody was ever shown, so removing the code flow removes the only way they could
+sign in. There is no reliable marker for them in the database — a verified code deletes its `otp` row — so treat any
+`EMAIL`-provider account whose owner cannot recall setting a password as one of them.
+
+On **Enterprise**, send those users through **Forgot password** once to set a password; that flow needs the same SMTP
+you already have configured.
+
+On **Community** there is no way back in the product. Password reset lives in the enterprise module, which Community
+does not register, so `POST /v1/authn/local/reset-password` is not served — and nothing else writes a password on any
+edition, as there is no change-password endpoint. Do not be misled by the first half of that flow appearing to work:
+`POST /v1/otp` **is** served on Community and answers `204`, but Community sends no OTP email of any type except a
+login code, so no reset mail ever arrives. Set a password for each affected account directly —
+`UPDATE user_identity SET password = '<bcrypt hash>' WHERE email = '…'` — and hand it to its owner over a channel you
+trust, since they cannot change it themselves afterwards. Do this **before** you upgrade if you can, so nobody is
+locked out in between.
+
+If you script or test the sign-in page, note that the emailed-code step is gone and the two endpoints above
+answer `404`.
+
 
 ## 0.87.1
 
@@ -25,6 +284,10 @@ The region on these connections is also validated against the AWS region format 
 
 ### What has changed?
 
+#### Disposable email addresses can no longer sign up
+
+Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
+
 #### Plans and credits are now managed by our billing service
 
 Two license-key endpoints are removed: `GET /v1/license-keys/:licenseKey` and `POST /v1/license-keys/verify`. Applying a key is now `POST /v1/platform-billing/activate`.
@@ -41,6 +304,7 @@ When a platform has no credits left, new production runs are recorded with the `
 In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
 
 ### Do you need to take action?
+- Only if your members sign up with addresses from a disposable email provider. Set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
 - Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
 - Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
 - Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
@@ -234,6 +498,7 @@ When creating a project now, the platform owner email doesn't automatically get 
 
 ### Do you need to take action?
 - If you are currently using MCP, review the linked announcement for important migration details and upgrade guidance.
+- If you are below 0.73.0 and plan to switch `AP_EDITION` from `ce` to `ee`, upgrade to 0.73.0 on your current edition first, then switch. Edition-gated migrations are recorded as run without executing, so switching earlier leaves the schema incomplete.
 
 
 ## 0.71.0

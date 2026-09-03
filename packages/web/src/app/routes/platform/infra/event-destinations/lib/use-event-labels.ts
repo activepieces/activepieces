@@ -3,6 +3,19 @@ import { t } from 'i18next';
 
 export const useEventLabels = (): EventLabelsMap => {
   return {
+    [ApplicationEventName.AGENT_CREATED]: { label: t('Agent created') },
+    [ApplicationEventName.AGENT_UPDATED]: { label: t('Agent updated') },
+    [ApplicationEventName.AGENT_DELETED]: { label: t('Agent deleted') },
+    [ApplicationEventName.AGENT_PUBLISHED]: {
+      label: t('Agent published'),
+      description: t(
+        'Fires when someone publishes an agent. Flow steps read the published copy, not the draft.',
+      ),
+    },
+    [ApplicationEventName.AGENT_UNPUBLISHED]: {
+      label: t('Agent taken offline'),
+      description: t('Fires when someone takes an agent offline.'),
+    },
     [ApplicationEventName.FLOW_RUN_STARTED]: { label: t('Flow run started') },
     [ApplicationEventName.FLOW_RUN_FINISHED]: {
       label: t('Flow run finished'),
@@ -13,6 +26,12 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.FLOW_CREATED]: { label: t('Flow created') },
     [ApplicationEventName.FLOW_UPDATED]: { label: t('Flow updated') },
     [ApplicationEventName.FLOW_DELETED]: { label: t('Flow deleted') },
+    [ApplicationEventName.FLOW_PIECES_UPGRADED]: {
+      label: t('Flow pieces upgraded'),
+    },
+    [ApplicationEventName.FLOW_PIECES_REVERTED]: {
+      label: t('Flow pieces reverted'),
+    },
     [ApplicationEventName.FOLDER_CREATED]: { label: t('Folder created') },
     [ApplicationEventName.FOLDER_UPDATED]: { label: t('Folder updated') },
     [ApplicationEventName.FOLDER_DELETED]: { label: t('Folder deleted') },

@@ -1,5 +1,19 @@
-import { describe, expect, it } from 'vitest'
+import { AgentMcpTool, AgentToolType, McpAuthType, McpProtocol } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { agentMcpClient } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-mcp-client'
+
+const { mockCreateMCPClient } = vi.hoisted(() => ({
+    mockCreateMCPClient: vi.fn(),
+}))
+
+vi.mock('@ai-sdk/mcp', () => ({
+    createMCPClient: mockCreateMCPClient,
+}))
+
+afterEach(() => {
+    mockCreateMCPClient.mockReset()
+})
 
 const ATTIO_TOOL = 'mcp__b1eec075-afc3-40da-b630-ab0693d3027d__list-records'
 
@@ -166,5 +180,190 @@ describe('agentMcpClient.withToolTimeouts circuit breaker', () => {
         brokenConnectors.delete(CONNECTOR_UUID)
         await wrapped[ATTIO_TOOL].execute({})
         expect(listRecords.calls()).toBe(1)
+    })
+})
+
+function createTestLogger(): { log: FastifyBaseLogger, warnCalls: unknown[][] } {
+    const warnCalls: unknown[][] = []
+    const log: FastifyBaseLogger = {
+        level: 'info',
+        silent: () => undefined,
+        info: () => undefined,
+        warn: (...args: unknown[]) => {
+            warnCalls.push(args)
+        },
+        error: () => undefined,
+        fatal: () => undefined,
+        debug: () => undefined,
+        trace: () => undefined,
+        child: () => log,
+    }
+    return { log, warnCalls }
+}
+
+function agentMcpTool(overrides: Partial<AgentMcpTool> = {}): AgentMcpTool {
+    return {
+        type: AgentToolType.MCP,
+        toolName: 'crm_server',
+        serverUrl: 'https://example.com/mcp',
+        protocol: McpProtocol.STREAMABLE_HTTP,
+        auth: { type: McpAuthType.ACCESS_TOKEN, accessToken: 'shhh-secret-token' },
+        ...overrides,
+    }
+}
+
+function fakeMcpClient(toolSet: Record<string, unknown> = {}): { tools: () => Promise<Record<string, unknown>>, close: () => Promise<void> } {
+    return {
+        tools: async () => toolSet,
+        close: async () => undefined,
+    }
+}
+
+describe('agentMcpClient.withStepMcpTools — this IS the finally execute-agent-run.ts relies on', () => {
+    it('closes every client it opened when the run callback (the rest of the turn) throws', async () => {
+        const clientA = fakeMcpClient({ search: {} })
+        const clientB = fakeMcpClient({ lookup: {} })
+        const closeA = vi.spyOn(clientA, 'close')
+        const closeB = vi.spyOn(clientB, 'close')
+        mockCreateMCPClient.mockResolvedValueOnce(clientA).mockResolvedValueOnce(clientB)
+        const tools = [agentMcpTool({ toolName: 'crm' }), agentMcpTool({ toolName: 'support' })]
+        const { log } = createTestLogger()
+
+        await expect(agentMcpClient.withStepMcpTools({
+            tools,
+            skip: false,
+            log,
+            run: async () => {
+                throw new Error('the turn blew up mid-tool-call')
+            },
+        })).rejects.toThrow('the turn blew up mid-tool-call')
+
+        expect(closeA).toHaveBeenCalledTimes(1)
+        expect(closeB).toHaveBeenCalledTimes(1)
+    })
+
+    it('hands the merged tool set to the run callback and returns its result unchanged when the turn succeeds', async () => {
+        mockCreateMCPClient.mockResolvedValueOnce(fakeMcpClient({ search_records: {} }))
+        const { log } = createTestLogger()
+
+        const result = await agentMcpClient.withStepMcpTools({
+            tools: [agentMcpTool()],
+            skip: false,
+            log,
+            run: async (toolSet) => ({ toolNames: Object.keys(toolSet), turnResult: 'done' }),
+        })
+
+        expect(result.toolNames).toHaveLength(1)
+        expect(result.turnResult).toBe('done')
+    })
+
+    it('never opens a client and just runs the callback when skip is set (dry run / discovery only)', async () => {
+        const { log } = createTestLogger()
+
+        const result = await agentMcpClient.withStepMcpTools({
+            tools: [agentMcpTool()],
+            skip: true,
+            log,
+            run: async (toolSet) => Object.keys(toolSet).length,
+        })
+
+        expect(result).toBe(0)
+        expect(mockCreateMCPClient).not.toHaveBeenCalled()
+    })
+})
+
+describe('agentMcpClient.connectAgentMcpTools / closeAgentMcpTools — client lifecycle', () => {
+    it('still closes every other client when one client\'s close() rejects', async () => {
+        const clientA = fakeMcpClient()
+        const clientB = fakeMcpClient()
+        clientA.close = async () => {
+            throw new Error('socket already gone')
+        }
+        const closeB = vi.spyOn(clientB, 'close')
+        const { log, warnCalls } = createTestLogger()
+
+        await agentMcpClient.closeAgentMcpTools({ clients: [clientA, clientB], tools: [agentMcpTool()], log })
+
+        expect(closeB).toHaveBeenCalledTimes(1)
+        expect(warnCalls).toHaveLength(1)
+    })
+
+    it('merges the tool sets from every configured MCP server, renamed through mcpToolNameUtils', async () => {
+        mockCreateMCPClient
+            .mockResolvedValueOnce(fakeMcpClient({ search_records: {} }))
+            .mockResolvedValueOnce(fakeMcpClient({ list_deals: {} }))
+        const tools = [agentMcpTool({ toolName: 'crm' }), agentMcpTool({ toolName: 'billing' })]
+        const { log } = createTestLogger()
+
+        const { toolSet } = await agentMcpClient.connectAgentMcpTools({ tools, log })
+
+        expect(Object.keys(toolSet)).toHaveLength(2)
+        expect(Object.keys(toolSet).every((name) => name.endsWith('_mcp'))).toBe(true)
+    })
+
+    it('skips a server that fails to connect and still returns the others\' tools', async () => {
+        mockCreateMCPClient
+            .mockRejectedValueOnce(new Error('connection refused'))
+            .mockResolvedValueOnce(fakeMcpClient({ list_deals: {} }))
+        const tools = [agentMcpTool({ toolName: 'down_server' }), agentMcpTool({ toolName: 'billing' })]
+        const { log } = createTestLogger()
+
+        const { clients, toolSet } = await agentMcpClient.connectAgentMcpTools({ tools, log })
+
+        expect(clients).toHaveLength(1)
+        expect(Object.keys(toolSet)).toHaveLength(1)
+    })
+})
+
+describe('agentMcpClient — the auth config never reaches a log line', () => {
+    it('redacts an access token found inside an arbitrary error message', () => {
+        const secret = 'shhh-secret-token'
+        const redacted = agentMcpClient.redactMcpAuthSecrets({
+            text: `upstream rejected the call: Authorization: Bearer ${secret} was invalid`,
+            secrets: [secret],
+        })
+
+        expect(redacted).not.toContain(secret)
+        expect(redacted).toContain('[REDACTED]')
+    })
+
+    it('redacts every header value for a HEADERS auth config, not just the first', () => {
+        const redacted = agentMcpClient.redactMcpAuthSecrets({
+            text: 'failed with x-api-key=key-one and x-org-token=key-two',
+            secrets: ['key-one', 'key-two'],
+        })
+
+        expect(redacted).not.toContain('key-one')
+        expect(redacted).not.toContain('key-two')
+    })
+
+    it('never lets the access token reach the connect-failure log line', async () => {
+        const secret = 'shhh-secret-token'
+        mockCreateMCPClient.mockRejectedValueOnce(new Error(`401 from server, header was Bearer ${secret}`))
+        const { log, warnCalls } = createTestLogger()
+
+        await agentMcpClient.connectAgentMcpTools({ tools: [agentMcpTool({ auth: { type: McpAuthType.ACCESS_TOKEN, accessToken: secret } })], log })
+
+        expect(warnCalls).toHaveLength(1)
+        expect(JSON.stringify(warnCalls)).not.toContain(secret)
+        expect(JSON.stringify(warnCalls)).toContain('[REDACTED]')
+    })
+
+    it('never lets an API key reach the tool-listing-failure log line', async () => {
+        const secret = 'sk-do-not-leak-me'
+        const client = fakeMcpClient()
+        client.tools = async () => {
+            throw new Error(`request failed, tried key ${secret}`)
+        }
+        mockCreateMCPClient.mockResolvedValueOnce(client)
+        const { log, warnCalls } = createTestLogger()
+
+        await agentMcpClient.connectAgentMcpTools({
+            tools: [agentMcpTool({ auth: { type: McpAuthType.API_KEY, apiKey: secret, apiKeyHeader: 'x-api-key' } })],
+            log,
+        })
+
+        expect(warnCalls).toHaveLength(1)
+        expect(JSON.stringify(warnCalls)).not.toContain(secret)
     })
 })

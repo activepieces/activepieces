@@ -5,6 +5,7 @@ import { leadConnectorAuth } from '../..';
 export const addContactToCampaignAction = createAction({
   auth: leadConnectorAuth,
   name: 'add_contact_to_campaign',
+  classification: 'WRITE',
   displayName: 'Add Contact to Campaign',
   description: 'Add an existing contact to a campaign.',
   audience: 'both',

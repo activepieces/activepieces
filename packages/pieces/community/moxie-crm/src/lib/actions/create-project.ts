@@ -5,10 +5,12 @@ import {
 } from '@activepieces/pieces-framework';
 import { makeClient, reformatDate } from '../common';
 import { moxieCRMAuth } from '../auth';
+import { createProjectActionOutputSchema } from '../output-schemas';
 
 export const moxieCreateProjectAction = createAction({
   auth: moxieCRMAuth,
   name: 'moxie_create_project',
+  classification: 'WRITE',
   description: 'Creates a new project in moxie CRM.',
   displayName: 'Create a Project',
   audience: 'both',
@@ -16,6 +18,7 @@ export const moxieCreateProjectAction = createAction({
     description: 'Creates a new project in Moxie CRM under an existing client, including its fee schedule (hourly, fixed price, retainer, or per item), portal access level, and dates. Use when starting a new engagement for a known client. The Client must already exist and is matched by exact client name. Not idempotent: each call creates a separate project.',
     idempotent: false,
   },
+  outputSchema: createProjectActionOutputSchema,
   props: {
     name: Property.ShortText({
       displayName: 'Project Name',
