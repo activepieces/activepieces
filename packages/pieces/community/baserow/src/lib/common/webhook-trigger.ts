@@ -20,17 +20,19 @@ export function dynamicWebhookInstructions(eventLabel: string) {
       }
       return {
         info: Property.MarkDown({
-          value: `**Manual webhook setup required** (Database Token auth):
+          value: `**Manual webhook setup required** — a Database Token cannot create webhooks in Baserow, so this trigger stays silent until you add the webhook yourself:
 
 1. In Baserow, click the **···** menu beside your table and select **Webhooks**.
 2. Click **Create webhook +**.
-3. Set the HTTP method to **POST**.
-4. Paste this URL into the endpoint field:
+3. Leave **Method** on **POST**, and paste this into the **URL** field:
 \`\`\`
 {{webhookUrl}}
 \`\`\`
-5. Under **Events**, select **${eventLabel}**.
-6. Click **Save**.`,
+4. Tick **User field names** (“Use field name instead of id”), otherwise fields arrive as \`field_1234\`.
+5. Under **Which events should trigger this webhook?**, choose **Let me select individual events** and tick **${eventLabel}**.
+6. Click **Save**.
+
+Baserow keeps this webhook even after you disable the flow — delete it in Baserow when you no longer need it.`,
           variant: MarkdownVariant.INFO,
         }),
       };
