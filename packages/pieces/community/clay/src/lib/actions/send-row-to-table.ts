@@ -19,19 +19,19 @@ export const sendRowToTableAction = createAction({
         webhookUrl: Property.ShortText({
             displayName: 'Webhook URL',
             description:
-                'The webhook URL Clay generated for the table source. In Clay, open the table\'s webhook source and copy the value from the Webhook URL panel.\n\nOnly https addresses on clay.com are accepted. The row and the source token are both sent to this address, so anywhere else is refused rather than trusted.',
+                'From the table\'s webhook source in Clay, the value in its Webhook URL panel. Only https addresses on clay.com are accepted.',
             required: true,
         }),
         authToken: Property.ShortText({
             displayName: 'Authentication Token',
             description:
-                'The token Clay showed when the webhook source was created, sent as the x-clay-webhook-auth header. Leave empty only if the source has no token - if it has one, Clay rejects rows sent without it. Clay displays the token once, so use Refresh auth token on the source if it was not saved.',
+                'The token Clay showed when the source was created. Leave empty only if the source has none. Clay shows it once, so use Refresh auth token on the source if it was not saved.',
             required: false,
         }),
         row: Property.Object({
             displayName: 'Row',
             description:
-                'The fields to send, as key-value pairs. Keys should match what the Clay source expects, which its Setup mapping panel controls.',
+                'The fields to send, as key-value pairs. Keys should match the source\'s Setup mapping panel.',
             required: true,
         }),
     },

@@ -18,33 +18,25 @@ export const rowReceivedTrigger = createTrigger({
     props: {
         setupInstructions: Property.MarkDown({
             value: `
-Clay has no API for registering webhooks, so point Clay at this flow yourself. Copy this URL:
+Clay cannot register a webhook for you, so paste this URL into Clay yourself:
 
 \`\`\`text
 {{webhookUrl}}
 \`\`\`
 
-Then use whichever route suits you. They behave differently, so the choice matters.
+**Sending rows from a table** is the usual route. Add an **HTTP API** column, then:
 
-**To send rows from a table - add an HTTP API column.** This is the usual choice.
+1. Set the method to \`POST\` and paste the URL into **Endpoint**. Paste only the URL - typing \`/\` there opens Clay's column picker and corrupts it.
+2. Set the **Body** to the columns you want, for example \`{"Domain": "/Domain"}\`.
+3. Leave **Signing Secret** below empty. An HTTP API column cannot sign a request, so a secret there rejects every delivery.
 
-- Set the method to \`POST\` and paste the URL into **Endpoint**. Put nothing else in that field: typing \`/\` there opens Clay's column picker, and an inserted column silently corrupts the URL.
-- Set the **Body** to the columns you want, for example \`{"Domain": "/Domain"}\`. With an empty body nothing useful arrives.
-- Leave **Signing Secret** below **empty**. Clay's HTTP API column cannot sign a request, so a secret there rejects every delivery.
-
-**To receive workspace events - create a webhook in Clay's settings.**
-
-- Paste the URL into Clay's **Webhook URL** field.
-- Clay immediately sends a signed verification request carrying an empty row. This trigger ignores it, so it will not start a run.
-- Optionally paste that webhook's \`whsec_...\` secret into **Signing Secret** below, and every delivery's signature is then checked.
-
-The fields you receive are whatever Clay sends, so they follow your own table's columns rather than a fixed shape.
+**For workspace events**, create a webhook in Clay's settings and paste the URL into its **Webhook URL** field. Its first verification request carries an empty row and is ignored. Optionally put that webhook's \`whsec_...\` secret in **Signing Secret** below.
             `,
         }),
         signingSecret: Property.ShortText({
             displayName: 'Signing Secret',
             description:
-                'Only for a webhook created in Clay\'s settings, which signs each delivery with an x-clay-signature header. Paste that webhook\'s whsec_... secret to have every delivery verified and anything unsigned rejected.\n\nLeave this empty when Clay reaches this flow through a table\'s HTTP API column. That column is a general-purpose HTTP request builder and cannot compute a signature, so a secret here would reject every delivery it sends.',
+                'The whsec_... secret of a webhook created in Clay\'s settings, used to verify every delivery. Leave empty for an HTTP API column, which cannot sign requests.',
             required: false,
         }),
     },
