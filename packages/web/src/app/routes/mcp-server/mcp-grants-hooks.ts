@@ -29,7 +29,7 @@ export const mcpGrantsMutations = {
     return useMutation({
       mutationFn: (ids: string[]) => mcpGrantsApi.revoke({ ids }),
       onSuccess: () => {
-        toast.success(t('Access ends within 15 minutes.'));
+        toast.success(t('Access ended. The client will ask to sign in again.'));
         queryClient.invalidateQueries({ queryKey: GRANTS_QUERY_KEY });
       },
       onError: () => {

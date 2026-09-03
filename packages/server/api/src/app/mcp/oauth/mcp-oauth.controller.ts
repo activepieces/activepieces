@@ -12,6 +12,7 @@ import { domainHelper } from '../../helper/domain-helper'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { telemetry, telemetryDedupe } from '../../helper/telemetry.utils'
 import { mcpServerService } from '../mcp-service'
+import { mcpOAuthRevocationList } from './token/mcp-oauth-revocation-list'
 import { mcpOAuthTokenService } from './token/mcp-oauth-token.service'
 
 export const mcpOAuthHttpController: FastifyPluginAsyncZod = async (app) => {
@@ -56,11 +57,15 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
             return unauthorized({ req, reply, scope, message: 'Authorization: Bearer <token> required' })
         }
 
-        const identity = await resolveIdentity({ token, scope, log: req.log })
-        if (isNil(identity)) {
+        const result = await resolveIdentity({ token, scope, log: req.log })
+        if (result.status === 'unavailable') {
+            return revocationCheckUnavailable(reply)
+        }
+        if (result.status === 'invalid') {
             return unauthorized({ req, reply, scope, message: 'Invalid or expired access token', invalidToken: true })
         }
 
+        const { identity } = result
         const { mcp, userId } = await resolveMcpAndUser({ identity, log: req.log })
         if (isNil(mcp)) {
             return unauthorized({ req, reply, scope, message: 'Invalid project or token.', invalidToken: true })
@@ -110,21 +115,39 @@ function unauthorized({ req, reply, scope, message, invalidToken }: {
     })
 }
 
-async function resolveIdentity({ token, scope, log }: { token: string, scope: McpServerType, log: FastifyBaseLogger }): Promise<ResolvedIdentity | null> {
+function revocationCheckUnavailable(reply: FastifyReply): FastifyReply {
+    return reply.status(503).header('Retry-After', '1').send({
+        error: 'temporarily_unavailable',
+        message: 'Could not verify the access token right now, retry shortly.',
+    })
+}
+
+async function resolveIdentity({ token, scope, log }: { token: string, scope: McpServerType, log: FastifyBaseLogger }): Promise<IdentityResult> {
     const { data: payload, error } = await tryCatch(() => mcpOAuthTokenService.verifyAccessToken(token))
     if (error) {
         log.debug({ error }, 'OAuth token verification failed')
-        return null
+        return { status: 'invalid' }
+    }
+    const { grantId } = payload
+    if (!isNil(grantId)) {
+        const { data: revoked, error: revocationError } = await tryCatch(() => mcpOAuthRevocationList.isRevoked({ grantId }))
+        if (revocationError) {
+            log.error({ error: revocationError }, 'Could not read the MCP OAuth revocation list')
+            return { status: 'unavailable' }
+        }
+        if (revoked) {
+            return { status: 'invalid' }
+        }
     }
     const { projectId } = payload
     const isPlatformToken = isNil(projectId)
     if (isPlatformToken && scope === McpServerType.PLATFORM) {
-        return { type: McpServerType.PLATFORM, platformId: payload.platformId, userId: payload.sub }
+        return { status: 'ok', identity: { type: McpServerType.PLATFORM, platformId: payload.platformId, userId: payload.sub } }
     }
     if (!isPlatformToken && scope === McpServerType.PROJECT) {
-        return { type: McpServerType.PROJECT, projectId, userId: payload.sub }
+        return { status: 'ok', identity: { type: McpServerType.PROJECT, projectId, userId: payload.sub } }
     }
-    return null
+    return { status: 'invalid' }
 }
 
 async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity, log: FastifyBaseLogger }): Promise<{ mcp: PopulatedMcpServer | null, userId?: string }> {
@@ -163,6 +186,11 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
 type ResolvedIdentity =
     | { type: McpServerType.PROJECT, projectId: string, userId: string }
     | { type: McpServerType.PLATFORM, platformId: string, userId: string }
+
+type IdentityResult =
+    | { status: 'ok', identity: ResolvedIdentity }
+    | { status: 'invalid' }
+    | { status: 'unavailable' }
 
 const chatConversationRepo = repoFactory(AgentConversationEntity)
 
