@@ -91,9 +91,21 @@ You are working in the Activepieces web application (`packages/web`).
 - **Transforming data for rendering** — Calculate it inline during render instead.
 - **Passing data upward to a parent** — Lift state up or use a shared store.
 
+## Data Fetch Failures
+
+**Every component that fetches data the user came to see must render something when that fetch fails.** An empty table or a blank panel reads as deleted data — that is the failure mode this rule exists to prevent, and it has been reported by customers more than once. Never leave the error path to render nothing.
+
+- Render `DataFetchErrorState` (`@/components/custom/data-fetch-error-state`) where the content would have been. It takes `entity` (an already-translated lowercase noun, reading inside "Trouble loading {entity}") and an optional `onRetry`.
+- `DataTable` has `isError` and `errorStateEntity` as **required** props, so the compiler will not let you render a table without deciding. Pass `onRetry={refetch}` whenever the query exposes it. For a table whose rows are already-loaded props rather than its own query, `isError={false}` is the correct answer.
+- Any surface that is **not** a `DataTable` — a card grid, a config panel, a tab, a chart — has no such guard. Branch on `isError` **before** the empty state, otherwise a failure silently renders the "you have nothing yet" copy.
+- A hook that returns a shaped object instead of the raw query result must pass `isError` (and `refetch`) through, or its callers cannot comply.
+- The copy is deliberately calm and says the data is safe. Do not escalate it to a destructive/red treatment.
+- **Do not** add an error state to auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details) — those should fail silently.
+- There is **no** global error toast. `QueryCache.onError` in `app/query-client.ts` only reports to Sentry via `errorReporting`. Do not reintroduce a toast: on top of the placeholder it is two notifications for one failure, and on its own it leaves the empty surface unexplained.
+
 ## Query Feature Guards
 
-When a server endpoint is gated by `platformMustHaveFeatureEnabled` (returns HTTP 402 `FEATURE_DISABLED` when the plan lacks the feature), the corresponding `useQuery` hook **must** include `enabled: platform.plan.<flag>` so the request never fires when the feature is off. Without this, queries with `meta: { showErrorToast: true }` will trigger a misleading "Failed to load data" error toast via the global `QueryCache.onError` handler in `query-client.ts`.
+When a server endpoint is gated by `platformMustHaveFeatureEnabled` (returns HTTP 402 `FEATURE_DISABLED` when the plan lacks the feature), the corresponding `useQuery` hook **must** include `enabled: platform.plan.<flag>` so the request never fires when the feature is off. Without this, a list whose query is wired to `DataFetchErrorState` will show a misleading "Trouble loading …" placeholder on a page that is simply not entitled to the feature.
 
 **Pattern** (see `secret-managers-hooks.ts`):
 ```ts

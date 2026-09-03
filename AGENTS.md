@@ -59,9 +59,10 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Query Error Handling
 
-- **Global error toast via `meta`** — `query-client.ts` has a `QueryCache.onError` handler that shows a red error toast when `query.meta?.showErrorToast` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorToast: true, loadSubsetOptions: {} }` to the query options — `meta` is typed as `QueryCollectionMeta`, so TypeScript rejects the flag on its own.
-- **Do NOT add** `showErrorToast` to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
-- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, it should have `meta: { showErrorToast: true }`.
+- **A failed fetch is reported in place, never as a toast.** When adding a `useQuery` that fetches primary page data (table rows, list data), render `DataFetchErrorState` (`components/custom/data-fetch-error-state.tsx`) where the rows would go: pass `isError` / `errorStateEntity` / `onRetry` to `DataTable`, or branch on `isError` ahead of the empty state in a custom list. `errorStateEntity` is the already-translated, lowercase noun that reads inside "Trouble loading {entity}".
+- **There is no global error toast.** `QueryCache.onError` in `query-client.ts` only `console.error`s. A toast on top of the placeholder is two notifications for one failure, and a toast on its own leaves an empty table behind that reads as data loss.
+- **Do NOT add** an error state to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
+- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, that surface needs the placeholder.
 
 ## Key Utilities (`@activepieces/shared`)
 
