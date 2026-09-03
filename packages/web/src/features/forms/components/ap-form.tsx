@@ -97,6 +97,9 @@ function buildSchema(inputs: FormInputWithName[]) {
     ),
   };
 }
+const isTruthyQueryValue = (value: string) =>
+  ['true', '1', 'yes', 'on'].includes(value.toLowerCase());
+
 const handleDownloadFile = (fileBase: FileResponseInterface) => {
   const link = document.createElement('a');
   if ('url' in fileBase) {
@@ -140,7 +143,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
     if (queryValue !== undefined) {
       defaultValues[input.name] =
         input.type === FormInputType.TOGGLE
-          ? queryValue === 'true'
+          ? isTruthyQueryValue(queryValue)
           : queryValue;
     }
   });
