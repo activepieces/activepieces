@@ -1,21 +1,28 @@
-import { chunk, tryCatch } from '@activepieces/core-utils'
-import { FlowStatus, ProjectType, RunEnvironment, UserStatus } from '@activepieces/shared'
+import { chunk, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ApEdition, FlowStatus, ProjectType, RunEnvironment, UserStatus, WorkerGroupScope } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
+import { healthStatusService } from '../../health/health.service'
+import { appMachineCache } from '../../helper/app-machine-cache'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
-import { captureLicenseKeyEvent, flushLicenseKeyPostHogEvents, LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE, LicenseKeyPostHogEvents, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { system } from '../../helper/system/system'
+import { captureLicenseKeyEvent, flushLicenseKeyPostHogEvents, LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE, LicenseKeyPostHogEvents, SetupReportApp, SetupReportHealth, SetupReportProperties, SetupReportWorker, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { platformConfigurationService } from '../../platform/platform-configuration.service'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
+import { WorkerMachine, workerMachineCache } from '../../workers/machine/machine-cache'
+import { workerLiveness } from '../../workers/machine/worker-liveness'
 import { platformPlanRepo } from '../platform/platform-plan/platform-plan.service'
 
 dayjs.extend(utc)
 
 const EXECUTIONS_PROJECT_CHUNK_SIZE = 100
 const EXECUTIONS_CHUNK_DELAY_MS = 1000
+const SETUP_REPORT_WORKERS_LIMIT = 50
 
 export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
     /**
@@ -28,6 +35,8 @@ export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
      * current, in-progress day is excluded), so the count is final on first send. Re-running the same day
      * re-emits the same value. Note: with a single-day window there is no healing margin — if a day's run
      * is missed entirely, the next run won't backfill it, since it only ever looks at yesterday.
+     * The setup report that rides alongside the usage event is opt-out per platform, through
+     * platform_configuration.isInfraSetupTelemetryEnabled.
      */
     async reportAllPlatforms(): Promise<void> {
         try {
@@ -41,15 +50,21 @@ export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
             const previousDayStartInclusive = utcMidnight(1)
             const previousDayEndExclusive = utcMidnight(0)
 
-            const activeFlowsByPlatform = await queryActiveFlowsByPlatform(platformIds)
-            const usersByPlatform = await queryUsersByPlatform(platformIds)
-            const teamProjectsByPlatform = await queryTeamProjectsByPlatform(platformIds)
-            const dailyExecutionsByPlatform = await queryDailyExecutionsByPlatform({
+            const activeFlowsByPlatform = await countActiveFlowsByPlatform(platformIds)
+            const usersByPlatform = await countUsersByPlatform(platformIds)
+            const teamProjectsByPlatform = await countTeamProjectsByPlatform(platformIds)
+            const dailyExecutionsByPlatform = await countDailyProductionRunsByPlatform({
                 platformIds,
                 dayStartInclusive: previousDayStartInclusive,
                 dayEndExclusive: previousDayEndExclusive,
             })
             const reportedAt = new Date().toISOString()
+            const edition = system.getEdition()
+            const setupReportPlatformIds = await platformConfigurationService(log).filterPlatformsWithInfraSetupTelemetryEnabled({ platformIds })
+            const setupReportPlatforms = new Set(setupReportPlatformIds)
+            const setupInfo = setupReportPlatformIds.length === 0
+                ? {}
+                : await collectSetupInfo({ edition, platformIds: setupReportPlatformIds, log })
 
             for (const platformBatch of chunk([...licenseKeysByPlatform], LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE)) {
                 for (const [platformId, licenseKey] of platformBatch) {
@@ -68,6 +83,13 @@ export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
                             reportedAt,
                         }),
                     })
+                    if (setupReportPlatforms.has(platformId)) {
+                        captureLicenseKeyEvent({
+                            licenseKey,
+                            event: LicenseKeyPostHogEvents.PLATFORM_SETUP_REPORT,
+                            properties: buildSetupReportBody({ platformId, edition, reportedAt, setupInfo }),
+                        })
+                    }
                 }
 
                 const flushResult = await tryCatch(() => flushLicenseKeyPostHogEvents())
@@ -82,7 +104,7 @@ export const licenseKeyUsageReportService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
+async function countActiveFlowsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const enabledFlowCountPerPlatform = await flowRepo()
         .createQueryBuilder('flow')
         .innerJoin('flow.project', 'project')
@@ -97,7 +119,7 @@ async function queryActiveFlowsByPlatform(platformIds: string[]): Promise<Map<st
     return toCountByPlatformId(enabledFlowCountPerPlatform)
 }
 
-async function queryUsersByPlatform(platformIds: string[]): Promise<Map<string, number>> {
+async function countUsersByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const activeUserCountPerPlatform = await userRepo()
         .createQueryBuilder('user')
         .select('user.platformId', 'platformId')
@@ -110,7 +132,7 @@ async function queryUsersByPlatform(platformIds: string[]): Promise<Map<string, 
     return toCountByPlatformId(activeUserCountPerPlatform)
 }
 
-async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
+async function countTeamProjectsByPlatform(platformIds: string[]): Promise<Map<string, number>> {
     const teamProjectCountPerPlatform = await projectRepo()
         .createQueryBuilder('project')
         .select('project.platformId', 'platformId')
@@ -132,7 +154,7 @@ async function queryTeamProjectsByPlatform(platformIds: string[]): Promise<Map<s
  * cloud-wide; both trip the DB statement timeout. The projectIds are chunked so each aggregate stays
  * small and bounded. Projects are mapped back to platforms in app code.
  */
-async function queryDailyExecutionsByPlatform({ platformIds, dayStartInclusive, dayEndExclusive }: {
+async function countDailyProductionRunsByPlatform({ platformIds, dayStartInclusive, dayEndExclusive }: {
     platformIds: string[]
     dayStartInclusive: string
     dayEndExclusive: string
@@ -226,6 +248,105 @@ function buildSnapshotBody({
     }
 }
 
+async function collectSetupInfo({ edition, platformIds, log }: {
+    edition: ApEdition
+    platformIds: string[]
+    log: FastifyBaseLogger
+}): Promise<SetupInfo> {
+    const { data, error } = await tryCatch(async () => {
+        const onlineWorkers = await queryOnlineWorkers()
+        if (edition === ApEdition.CLOUD) {
+            return { workersByPlatform: await groupDedicatedWorkersByPlatform({ platformIds, onlineWorkers }) }
+        }
+        const [appInstances, database] = await Promise.all([
+            appMachineCache.list(),
+            healthStatusService(log).checkDatabaseHealth(),
+        ])
+        return {
+            apps: appInstances.map((appInstance): SetupReportApp => ({
+                cpuCores: appInstance.cpuCores,
+                ramTotalBytes: appInstance.ramTotalBytes,
+                diskTotalBytes: appInstance.diskTotalBytes,
+                diskPercentage: appInstance.diskPercentage,
+                version: appInstance.version,
+                eventLoopDelayMs: appInstance.eventLoopDelayMs,
+            })),
+            deploymentWorkers: toWorkerSetup(onlineWorkers),
+            health: {
+                database,
+                release: healthStatusService(log).getReleaseHealth(onlineWorkers.map((worker) => worker.information.workerProps.version)),
+            },
+        }
+    })
+    if (error !== null) {
+        log.warn({ error }, '[licenseKeyUsageReport#collectSetupInfo] Failed to collect the deployment setup, reporting edition only')
+        return {}
+    }
+    return data
+}
+
+async function queryOnlineWorkers(): Promise<WorkerMachine[]> {
+    const allWorkers = await workerMachineCache().find()
+    return workerLiveness.partitionByLiveness(allWorkers).online
+}
+
+async function groupDedicatedWorkersByPlatform({ platformIds, onlineWorkers }: {
+    platformIds: string[]
+    onlineWorkers: WorkerMachine[]
+}): Promise<Map<string, WorkerSetup>> {
+    const workerGroupIdByPlatformId = await queryWorkerGroupsByPlatform(platformIds)
+    if (workerGroupIdByPlatformId.size === 0) {
+        return new Map()
+    }
+    const dedicatedWorkers = onlineWorkers.filter((worker) => worker.workerGroupScope === WorkerGroupScope.PLATFORM)
+    return new Map([...workerGroupIdByPlatformId].map(([platformId, workerGroupId]): [string, WorkerSetup] => [
+        platformId,
+        toWorkerSetup(dedicatedWorkers.filter((worker) => worker.workerGroupId === workerGroupId)),
+    ]))
+}
+
+async function queryWorkerGroupsByPlatform(platformIds: string[]): Promise<Map<string, string>> {
+    const workerGroupPerPlatform = await platformPlanRepo()
+        .createQueryBuilder('platform_plan')
+        .select('platform_plan.platformId', 'platformId')
+        .addSelect('platform_plan.workerGroupId', 'workerGroupId')
+        .where('platform_plan.platformId IN (:...platformIds)', { platformIds })
+        .andWhere('platform_plan.workerGroupId IS NOT NULL')
+        .getRawMany<{ platformId: string, workerGroupId: string }>()
+
+    return new Map(workerGroupPerPlatform.map((row): [string, string] => [row.platformId, row.workerGroupId]))
+}
+
+function toWorkerSetup(workers: WorkerMachine[]): WorkerSetup {
+    return {
+        workers: workers.slice(0, SETUP_REPORT_WORKERS_LIMIT).map((worker): SetupReportWorker => ({
+            totalCpuCores: worker.information.totalCpuCores,
+            totalAvailableRamInBytes: worker.information.totalAvailableRamInBytes,
+            diskInfo: worker.information.diskInfo,
+            workerProps: worker.information.workerProps,
+        })),
+        workersTotal: workers.length,
+    }
+}
+
+function buildSetupReportBody({ platformId, edition, reportedAt, setupInfo }: {
+    platformId: string
+    edition: ApEdition
+    reportedAt: string
+    setupInfo: SetupInfo
+}): SetupReportProperties {
+    const workerSetup = setupInfo.workersByPlatform?.get(platformId) ?? setupInfo.deploymentWorkers
+    return {
+        platformId,
+        edition,
+        reportedAt,
+        ...spreadIfDefined('apps', setupInfo.apps),
+        ...spreadIfDefined('workers', workerSetup?.workers),
+        ...spreadIfDefined('workersTotal', workerSetup?.workersTotal),
+        ...spreadIfDefined('health', setupInfo.health),
+    }
+}
+
 function utcMidnight(daysAgo: number): string {
     return dayjs.utc().startOf('day').subtract(daysAgo, 'day').toISOString()
 }
@@ -238,4 +359,16 @@ type PlatformCountRow = {
 type DailyExecutionCount = {
     date: string
     count: number
+}
+
+type WorkerSetup = {
+    workers: SetupReportWorker[]
+    workersTotal: number
+}
+
+type SetupInfo = {
+    apps?: SetupReportApp[]
+    health?: SetupReportHealth
+    deploymentWorkers?: WorkerSetup
+    workersByPlatform?: Map<string, WorkerSetup>
 }
