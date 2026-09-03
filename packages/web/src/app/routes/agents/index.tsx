@@ -5,6 +5,7 @@ import {
   ColorName,
   MAX_DRAFT_PROMPT_LENGTH,
   PROJECT_COLOR_PALETTE,
+  ProjectType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -13,6 +14,7 @@ import {
   LayoutGrid,
   List,
   Pencil,
+  Plus,
   Search,
   SearchX,
   Settings2,
@@ -42,6 +44,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { AgentCard } from '@/features/agents/agent-card';
 import { AgentTrioMark } from '@/features/agents/agent-mark';
+import { AgentTable } from '@/features/agents/agent-table';
 import {
   agentsMutations,
   agentsQueries,
@@ -215,7 +218,11 @@ const AgentsPageContent = () => {
     );
   };
 
-  const createBlankAgent = () => {
+  const personalProjectId =
+    (allProjects ?? []).find((entry) => entry.type === ProjectType.PERSONAL)
+      ?.id ?? createInProjectId;
+
+  const createBlankAgent = (projectId: string) => {
     if (createAgent.isPending) {
       return;
     }
@@ -228,10 +235,20 @@ const AgentsPageContent = () => {
           color: ColorName.PURPLE,
           instructions: '',
         },
-        projectId: createInProjectId,
+        projectId,
       }),
     );
   };
+
+  const projectDotColorFor = (agent: AgentSummary) =>
+    PROJECT_COLOR_PALETTE[
+      projectById.get(agent.projectId)?.icon.color ?? project.icon.color
+    ]?.color;
+
+  const openAgent = (agent: AgentSummary) =>
+    navigate(`/projects/${agent.projectId}/agents/${agent.id}`);
+
+  const hasPrompt = prompt.trim().length > 0;
 
   const projectById = useMemo(
     () => new Map((allProjects ?? []).map((entry) => [entry.id, entry])),
@@ -329,7 +346,7 @@ const AgentsPageContent = () => {
             variant="outline"
             className="mt-4 gap-2"
             loading={createAgent.isPending}
-            onClick={createBlankAgent}
+            onClick={() => createBlankAgent(createInProjectId)}
           >
             <Pencil size={16} />
             {t('Write one by hand instead')}
@@ -383,7 +400,7 @@ const AgentsPageContent = () => {
             </Button>
           </div>
         </div>
-        {!needsProvider && (allProjects ?? []).length > 1 && (
+        {!needsProvider && hasPrompt && (allProjects ?? []).length > 1 && (
           <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
             <span>{t('New agents go to')}</span>
             <SearchableSelect
@@ -552,6 +569,16 @@ const AgentsPageContent = () => {
                   />
                 </button>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="px-3.5 font-semibold text-neutral-700"
+                loading={createAgent.isPending}
+                onClick={() => createBlankAgent(personalProjectId)}
+              >
+                <Plus size={15} />
+                {t('New agent')}
+              </Button>
             </div>
           </div>
 
@@ -571,28 +598,20 @@ const AgentsPageContent = () => {
                 narrowedByProject={search.trim().length === 0}
               />
             ) : null
+          ) : layout === 'list' ? (
+            <AgentTable
+              agents={agents}
+              projectDotColorFor={projectDotColorFor}
+              onOpen={openAgent}
+            />
           ) : (
-            <div
-              className={cn(
-                'grid gap-6',
-                layout === 'grid'
-                  ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
-                  : 'grid-cols-1',
-              )}
-            >
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {agents.map((agent: AgentSummary) => (
                 <AgentCard
                   key={agent.id}
                   agent={agent}
-                  projectDotColor={
-                    PROJECT_COLOR_PALETTE[
-                      projectById.get(agent.projectId)?.icon.color ??
-                        project.icon.color
-                    ]?.color
-                  }
-                  onClick={() =>
-                    navigate(`/projects/${agent.projectId}/agents/${agent.id}`)
-                  }
+                  projectDotColor={projectDotColorFor(agent)}
+                  onClick={() => openAgent(agent)}
                 />
               ))}
             </div>
