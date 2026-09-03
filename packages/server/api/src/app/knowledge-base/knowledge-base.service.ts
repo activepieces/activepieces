@@ -264,9 +264,11 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 writeByIndex.set(chunk.chunkIndex ?? edited.chunkIndex, { id: chunk.id, values })
             }
 
+            const claimedIds = new Set([...writeByIndex.values()].map((write) => write.id).filter((id) => !isNil(id)))
+            const adoptableIdByIndex = new Map([...idByIndex].filter(([, id]) => !claimedIds.has(id)))
             const writes = [...writeByIndex].map(([chunkIndex, write]) => ({
                 chunkIndex,
-                id: write.id ?? idByIndex.get(chunkIndex),
+                id: write.id ?? adoptableIdByIndex.get(chunkIndex),
                 values: write.values,
             }))
             const keptIds = new Set(writes.map((write) => write.id).filter((id) => !isNil(id)))

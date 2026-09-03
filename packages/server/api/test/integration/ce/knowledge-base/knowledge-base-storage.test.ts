@@ -208,6 +208,38 @@ describe('storing the chunks of a knowledge file', () => {
         expect(after[0].id).toBe(moving?.id)
     })
 
+    // A row a move has already claimed cannot also be the row an append lands on. Adopting it made
+    // both writes touch one row, so the move was overwritten and the file lost a chunk.
+    it('honours a move and an append onto the place it left', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'a move and an append')
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { content: 'the moving chunk', chunkIndex: 0, metadata: {} },
+                { content: 'the chunk it lands on', chunkIndex: 1, metadata: {} },
+            ],
+        })
+        const stored = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        const moving = stored.find((chunk) => chunk.content === 'the moving chunk')
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { id: moving?.id, chunkIndex: 1 },
+                { content: 'the append', chunkIndex: 0, metadata: {} },
+            ],
+        })
+
+        const after = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(after).toHaveLength(2)
+        expect(after.find((chunk) => chunk.chunkIndex === 1)?.content).toBe('the moving chunk')
+        expect(after.find((chunk) => chunk.chunkIndex === 1)?.id).toBe(moving?.id)
+        expect(after.find((chunk) => chunk.chunkIndex === 0)?.content).toBe('the append')
+    })
+
     // A file that comes back with nothing in it has nothing in it. Returning early left the
     // previous text in place, so the agent kept answering from a document that had been emptied.
     it('clears the file when a restore carries no chunks', async () => {
