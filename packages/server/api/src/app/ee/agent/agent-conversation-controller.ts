@@ -219,6 +219,14 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
 
     app.post('/tool-approvals/:gateId', ToolApprovalRoute, async (request, reply) => {
         request.log.info({ gate: { id: request.params.gateId }, approved: request.body.approved }, '[agentConversationController] Tool approval received')
+        const gateConversationId = await agentApprovalGate.conversationIdForGate({ gateId: request.params.gateId })
+        if (!isNil(gateConversationId)) {
+            await agentConversationService(request.log).getConversationOrThrow({
+                id: gateConversationId,
+                platformId: request.principal.platform.id,
+                userId: request.principal.id,
+            })
+        }
         await agentApprovalGate.resolveGate({
             gateId: request.params.gateId,
             approved: request.body.approved,
@@ -255,12 +263,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const platformId = request.principal.platform.id
         const userId = request.principal.id
         const conversation = await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
-        const gate = await agentApprovalGate.getPendingGate({ conversationId })
-        // A preempted run can leave (or race in) a pending gate keyed by conversation; only surface
-        // the gate when it belongs to the run that currently owns the conversation.
-        const gateRunId = gate?.runId
-        const staleGate = !isNil(gateRunId) && !isNil(conversation.activeRunId) && gateRunId !== conversation.activeRunId
-        return reply.status(StatusCodes.OK).send(staleGate ? null : gate)
+        const gates = await agentApprovalGate.getPendingGates({ conversationId })
+        // A preempted run can leave (or race in) a pending gate; only surface one that belongs to
+        // the run that currently owns the conversation. A turn can open several at once, so the
+        // client is handed one at a time and asks again once it has been answered.
+        const ownedByThisRun = gates.filter((gate) => isNil(gate.runId) || isNil(conversation.activeRunId) || gate.runId === conversation.activeRunId)
+        return reply.status(StatusCodes.OK).send(ownedByThisRun[0] ?? null)
     })
 
     app.get('/conversations/:id/connections', GetPickerConnectionsRoute, async (request, reply) => {
@@ -269,13 +277,16 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const userId = request.principal.id
         const conversation = await agentConversationService(request.log).getConversationOrThrow({ id: conversationId, platformId, userId })
         const pieceName = request.query.pieceName
-        const pinned = await pinnedAccounts({ conversation, pieceName, platformId, userId, log: request.log })
-        const cached = await agentApprovalGate.getAvailableConnections({ conversationId, pieceName })
-        if (cached.length > 0) {
+        const [pinned, allProjects] = await Promise.all([
+            pinnedAccounts({ conversation, pieceName, platformId, userId, log: request.log }),
+            agentHelpers.getUserProjects({ platformId, userId, log: request.log }),
+        ])
+        const projects = isNil(pinned) ? allProjects : allProjects.filter((project) => project.id === pinned.projectId)
+        const { data: result } = await tryCatch(() => findConnectionsForPiece({ pieceName, projects, platformId, log: request.log }))
+        if (isNil(result)) {
+            const cached = await agentApprovalGate.getAvailableConnections({ conversationId, pieceName })
             return reply.status(StatusCodes.OK).send(connectionOffer({ connections: cached, pinned }))
         }
-        const projects = await agentHelpers.getUserProjects({ platformId, userId, log: request.log })
-        const result = await findConnectionsForPiece({ pieceName, projects, platformId, log: request.log })
         if (!('pickConnection' in result)) {
             return reply.status(StatusCodes.OK).send(connectionOffer({ connections: [], pinned }))
         }

@@ -1,6 +1,6 @@
-import { ActivepiecesError, ErrorCode, isNil, Permission, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, Permission, sanitizeObjectForPostgresql, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FileCompression, FileType, FlowActionType, flowStructureUtil, GetAgentConfigRequest, GetEnabledAiToolsResponse, HeartbeatAgentConversationRequest, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, ResumeFlowStepRequest, SaveAgentFileRequest, SaveAgentFileResponse, SaveAgentMessagesRequest, SendAgentEmailRequest, SendAgentEmailResponse, UpdateAgentProgressRequest, UpdateFlowStepProgressRequest, UpdateProjectContextRequest } from '@activepieces/shared'
 import { embed, ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { aiToolConfigService } from '../../ai/ai-tool-config-service'
@@ -181,7 +181,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
         const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? modelName
-            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel })
+            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -299,7 +299,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             auth: providerConfig.auth as Record<string, unknown>,
             providerConfig: providerConfig.config as Record<string, unknown>,
             modelId: resolvedModelId,
-            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider }),
+            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds }),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -479,28 +479,30 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
-        if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
-            throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
-        }
-        const { projectId, platformId } = conversation
+        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
-        const { data: run, error: runError } = await tryCatch(() => pieceToolRunner.runFromInstruction({
-            model,
-            piece: { pieceName: input.piece.pieceName, actionName: input.piece.actionName, pieceVersion: input.piece.pieceVersion },
-            instruction: input.instruction,
-            projectId,
-            platformId,
-            log,
-            ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
-        }))
+        const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
+        const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
+        const { data: run, error: runError } = await tryCatch(async () => {
+            const { resolvedInput, actionDisplayName } = await pieceToolRunner.resolveInput({
+                model,
+                piece,
+                instruction: input.instruction,
+                projectId,
+                platformId,
+                log,
+                ...spreadIfDefined('predefinedInput', input.piece.predefinedInput),
+                ...spreadIfDefined('connectionExternalId', connection.externalId),
+            })
+            const { result } = await pieceToolRunner.runResolved({ piece, resolvedInput, projectId, log })
+            return { result, resolvedInput: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName }
+        })
         if (!isNil(runError) || isNil(run)) {
             log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
             throw runError
         }
-        const { result, resolvedInput } = run
-        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: input.piece.predefinedInput?.auth }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
-        return { result }
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: run.resolvedInput }, connection: { externalId: connection.externalId ?? null }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        return { result: run.result, resolvedInput: run.resolvedInput, actionDisplayName: run.actionDisplayName, ...spreadIfDefined('connectionLabel', connection.label) }
     },
 
     async executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse> {
@@ -509,7 +511,12 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to search a knowledge base' } })
         }
         const { projectId, platformId } = conversation
-        await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
+        const file = await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
+        const searchable = await knowledgeBaseService(log).isSearchable({ projectId, knowledgeBaseFileId: input.knowledgeBaseFileId })
+        if (!searchable) {
+            log.warn({ conversation: { id: input.conversationId }, project: { id: projectId }, knowledgeBaseFile: { id: input.knowledgeBaseFileId } }, '[agentRpc#executeKnowledgeBaseTool] The file has no searchable text, so the search was not run')
+            return { result: `"${file.displayName}" is attached but has never been indexed, so its text cannot be searched and you have not read any of it. Tell the user exactly that. Do not say the file does not contain what they asked for, and do not suggest re-uploading it: that will not index it either.` }
+        }
         const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
         const { embedding } = await embed({ model, value: input.query, providerOptions })
         const results = await knowledgeBaseService(log).search({
@@ -786,6 +793,28 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
         : []
     const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
     return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
+}
+
+async function connectionForConfiguredTool({ piece, projectId, platformId, log }: {
+    piece: AgentPieceToolMetadata
+    projectId: string
+    platformId: string
+    log: FastifyBaseLogger
+}): Promise<{ externalId?: string, label?: string }> {
+    const pinned = connectionTemplate.unwrapExternalId(piece.predefinedInput?.auth) ?? undefined
+    if (isNil(pinned)) {
+        return {}
+    }
+    const connection = await appConnectionService(log).getOneWithoutValue({ projectId, platformId, externalId: pinned })
+    return { externalId: pinned, ...spreadIfDefined('label', connection?.displayName) }
+}
+
+async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string }> {
+    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+    if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
+        throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
+    }
+    return { projectId: conversation.projectId, platformId: conversation.platformId }
 }
 
 async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {

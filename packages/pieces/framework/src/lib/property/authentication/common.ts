@@ -1,9 +1,9 @@
-import { ServerContext } from '../../context';
+import { AuthValidationServerContext, ServerContext } from '../../context';
 
 export type BasePieceAuthSchema<AuthValueSchema> = {
   displayName: string;
   description?: string;
-  validate?: (params: { auth: AuthValueSchema; server: Omit<ServerContext, 'token'> }) => Promise<
+  validate?: (params: { auth: AuthValueSchema; server: AuthValidationServerContext }) => Promise<
     | { valid: true }
     | {
     valid: false;

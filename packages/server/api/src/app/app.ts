@@ -101,6 +101,7 @@ import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { billingProvider } from './platform/billing-provider'
+import { piecesReportModule } from './platform/pieces-report/pieces-report.module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
@@ -241,6 +242,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(authenticationModule)
     await app.register(triggerModule)
     await app.register(platformModule)
+    await app.register(piecesReportModule)
     await app.register(humanInputModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
