@@ -138,6 +138,22 @@ describe('pieceInstaller layout', () => {
         expect(await pathExists(join(piecePath(pieceName), 'ready'))).toBe(true)
     }, 120_000)
 
+    it('reinstalls a piece whose nested node_modules went missing, so a broken workspace heals', async () => {
+        const pieceName = '@apfixture/piece-heal'
+        await packBundle(pieceName, 'pieceHeal')
+
+        await installPieces([pieceName])
+        expect(await pathExists(installedPackageDir(pieceName))).toBe(true)
+
+        await rm(join(piecePath(pieceName), 'node_modules'), { recursive: true, force: true })
+        expect(await pathExists(join(piecePath(pieceName), 'ready'))).toBe(true)
+
+        await installPieces([pieceName])
+
+        expect(await pathExists(installedPackageDir(pieceName))).toBe(true)
+        expect(await pathExists(join(piecePath(pieceName), 'ready'))).toBe(true)
+    }, 120_000)
+
     it('installs a new piece into a workspace whose lockfile pins the legacy layout', async () => {
         const first = '@apfixture/piece-first'
         const second = '@apfixture/piece-second'
