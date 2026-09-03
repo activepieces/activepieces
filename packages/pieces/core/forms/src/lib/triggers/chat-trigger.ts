@@ -10,19 +10,20 @@ import {
 } from '@activepieces/pieces-framework';
 import { chatSubmissionTriggerOutputSchema } from '../output-schemas';
 
-const responseMarkdown = `Add a **Respond on UI** step to your flow to reply to the chat. Without it, the sender sees an error once the request times out.`;
+const responseMarkdown = `Needs a **Respond on UI** step to reply to the sender.`;
 
 const markdown = `**Published Chat URL:**
 \`\`\`text
 {{chatUrl}}
 \`\`\`
-Use this for production, views the published version of the chat flow.
+Production link. Serves the published version of the chat.
 
 **Draft Chat URL:**
 \`\`\`text
 {{chatUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
 \`\`\`
-Opens the draft (the version you are editing now) so you can try the chat before publishing. You can also press **Open Chat** in the builder to chat with the draft in a side panel.
+Testing link. Serves the draft you are editing now.
+Or press **Open Chat** in the builder to try it in a side panel.
 `;
 
 export const onChatSubmission = createTrigger({
