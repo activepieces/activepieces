@@ -40,6 +40,12 @@ vi.mock('../../../../src/app/database/database-connection', () => ({
     })),
 }))
 
+const mockRunExclusive = vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) => fn())
+
+vi.mock('../../../../src/app/database/redis-connections', () => ({
+    distributedLock: vi.fn(() => ({ runExclusive: mockRunExclusive })),
+}))
+
 const mockFileServiceDelete = vi.fn().mockResolvedValue(undefined)
 const mockFileServiceGetDataOrThrow = vi.fn()
 
@@ -249,6 +255,19 @@ describe('knowledgeBaseService', () => {
 
             expect(mockInsert).not.toHaveBeenCalled()
             expect(mockUpdate).not.toHaveBeenCalled()
+        })
+
+        // A restore deletes and recreates every row, so an id-based call that runs beside one
+        // updates rows that are already gone. Every write to a file's chunks takes the same lock.
+        it('takes the per-file lock for an id-based call, not only for a full restore', async () => {
+            await knowledgeBaseService(mockLog).storeChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                chunks: [{ id: 'chunk-1', content: 'updated' }],
+            })
+
+            expect(mockRunExclusive).toHaveBeenCalledTimes(1)
+            expect(mockRunExclusive.mock.calls[0][0]).toMatchObject({ key: 'knowledge-base-chunks-kb-file-1' })
         })
     })
 })

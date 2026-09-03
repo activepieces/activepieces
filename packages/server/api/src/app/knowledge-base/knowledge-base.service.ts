@@ -15,7 +15,7 @@ const kbFileRepo = repoFactory(KnowledgeBaseFileEntity)
 const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 
 const INSERT_BATCH_SIZE = 100
-const RESTORE_LOCK_TIMEOUT_SECONDS = 120
+const WRITE_LOCK_TIMEOUT_SECONDS = 120
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
 
@@ -262,13 +262,9 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             }
         })
 
-        if (!isFullRestore) {
-            await store()
-            return
-        }
         await distributedLock(log).runExclusive({
             key: `knowledge-base-chunks-${knowledgeBaseFileId}`,
-            timeoutInSeconds: RESTORE_LOCK_TIMEOUT_SECONDS,
+            timeoutInSeconds: WRITE_LOCK_TIMEOUT_SECONDS,
             fn: store,
         })
     },
