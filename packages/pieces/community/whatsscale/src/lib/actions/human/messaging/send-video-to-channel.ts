@@ -25,15 +25,15 @@ export const sendVideoToChannelAction = createAction({
       description: 'A direct URL to the video, or a file from a previous step.',
       required: true,
     }),
-    caption: Property.ShortText({
+    caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption for the video (max 1024 characters).',
       required: false,
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'channel'] },
-    { key: 'content', display: 'section' as const, label: 'Video', props: ['videoUrl', 'caption'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'channel'] },
+    { key: 'content', display: 'section' as const, label: 'Video', icon: 'paperclip', props: ['videoUrl', 'caption'] },
   ],
   async run(context) {
     const { session, channel, videoUrl, caption } = context.propsValue;

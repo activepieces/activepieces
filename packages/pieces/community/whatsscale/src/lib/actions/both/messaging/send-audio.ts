@@ -56,15 +56,15 @@ export const sendAudioManualAction = createAction({
       description: 'Optional filename. Auto-detected from the file if not provided.',
       required: false,
     }),
-    caption: Property.ShortText({
+    caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption (max 1024 characters). Only applies when Send as Voice Note is off.',
       required: false,
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'chatType', 'recipient'] },
-    { key: 'content', display: 'section' as const, label: 'Audio', props: ['audioUrl', 'voice', 'filename', 'caption'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'chatType', 'recipient'] },
+    { key: 'content', display: 'section' as const, label: 'Audio', icon: 'paperclip', props: ['audioUrl', 'voice', 'filename', 'caption'] },
   ],
   async run(context) {
     const { session, chatType, recipient, audioUrl, voice, filename, caption } = context.propsValue;

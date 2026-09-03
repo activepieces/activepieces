@@ -26,8 +26,8 @@ export const sendTextToCrmContactAction = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'crmContact'] },
-    { key: 'content', display: 'section' as const, label: 'Message', props: ['text'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'crmContact'] },
+    { key: 'content', display: 'section' as const, label: 'Message', icon: 'text', props: ['text'] },
   ],
   async run(context) {
     const { session, crmContact, text } = context.propsValue;

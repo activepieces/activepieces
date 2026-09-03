@@ -21,6 +21,9 @@ export const listWhatsappContactsAction = createAction({
       description:
         'Maximum number of contacts to return. Leave empty for the whole address book, which can run to thousands of entries.',
       required: false,
+      display: 'stepper',
+      min: 1,
+      step: 1,
     }),
   },
   async run(context) {

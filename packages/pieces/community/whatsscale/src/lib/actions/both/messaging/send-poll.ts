@@ -56,8 +56,8 @@ export const sendPollManualAction = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'chatType', 'recipient'] },
-    { key: 'content', display: 'section' as const, label: 'Poll', props: ['question', 'options', 'multipleAnswers'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'chatType', 'recipient'] },
+    { key: 'content', display: 'section' as const, label: 'Poll', icon: 'users', props: ['question', 'options', 'multipleAnswers'] },
   ],
   async run(context) {
     const { session, chatType, recipient, question, options, multipleAnswers } = context.propsValue;

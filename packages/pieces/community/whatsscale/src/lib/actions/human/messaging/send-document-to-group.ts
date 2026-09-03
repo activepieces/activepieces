@@ -30,15 +30,15 @@ export const sendDocumentToGroupAction = createAction({
       description: 'Optional filename shown in WhatsApp (e.g. report.pdf). Auto-detected from the file if not provided.',
       required: false,
     }),
-    caption: Property.ShortText({
+    caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption for the document (max 1024 characters).',
       required: false,
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'group'] },
-    { key: 'content', display: 'section' as const, label: 'Document', props: ['documentUrl', 'filename', 'caption'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'group'] },
+    { key: 'content', display: 'section' as const, label: 'Document', icon: 'file', props: ['documentUrl', 'filename', 'caption'] },
   ],
   async run(context) {
     const { session, group, documentUrl, filename, caption } = context.propsValue;

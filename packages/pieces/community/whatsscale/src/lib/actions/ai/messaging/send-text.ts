@@ -47,8 +47,8 @@ export const sendTextManualAction = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'chatType', 'recipient'] },
-    { key: 'content', display: 'section' as const, label: 'Message', props: ['text'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'chatType', 'recipient'] },
+    { key: 'content', display: 'section' as const, label: 'Message', icon: 'text', props: ['text'] },
   ],
   async run(context) {
     const { session, chatType, recipient, text } = context.propsValue;

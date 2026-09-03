@@ -55,8 +55,8 @@ export const sendLocationManualAction = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'chatType', 'recipient'] },
-    { key: 'content', display: 'section' as const, label: 'Location', props: ['latitude', 'longitude', 'title'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'chatType', 'recipient'] },
+    { key: 'content', display: 'section' as const, label: 'Location', icon: 'location', props: ['latitude', 'longitude', 'title'] },
   ],
   async run(context) {
     const { session, chatType, recipient, latitude, longitude, title } = context.propsValue;

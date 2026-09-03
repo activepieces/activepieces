@@ -26,8 +26,8 @@ export const sendTextToChannelAction = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'channel'] },
-    { key: 'content', display: 'section' as const, label: 'Message', props: ['text'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'channel'] },
+    { key: 'content', display: 'section' as const, label: 'Message', icon: 'text', props: ['text'] },
   ],
   async run(context) {
     const { session, channel, text } = context.propsValue;

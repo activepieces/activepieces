@@ -24,7 +24,7 @@ export const postImageStatusAction = createAction({
       description: 'A direct URL to the image, or a file from a previous step.',
       required: true,
     }),
-    caption: Property.ShortText({
+    caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption for the status.',
       required: false,

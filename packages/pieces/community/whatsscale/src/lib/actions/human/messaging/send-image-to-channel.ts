@@ -24,15 +24,15 @@ export const sendImageToChannelAction = createAction({
       description: 'A direct URL to the image, or a file from a previous step.',
       required: true,
     }),
-    caption: Property.ShortText({
+    caption: Property.LongText({
       displayName: 'Caption',
       description: 'Optional caption for the image (max 1024 characters).',
       required: false,
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'channel'] },
-    { key: 'content', display: 'section' as const, label: 'Image', props: ['imageUrl', 'caption'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'channel'] },
+    { key: 'content', display: 'section' as const, label: 'Image', icon: 'paperclip', props: ['imageUrl', 'caption'] },
   ],
   async run(context) {
     const { session, channel, imageUrl, caption } = context.propsValue;

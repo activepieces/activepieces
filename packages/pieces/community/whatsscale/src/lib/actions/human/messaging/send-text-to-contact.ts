@@ -27,8 +27,8 @@ export const sendTextToContactAction = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'contact'] },
-    { key: 'content', display: 'section' as const, label: 'Message', props: ['text'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'contact'] },
+    { key: 'content', display: 'section' as const, label: 'Message', icon: 'text', props: ['text'] },
   ],
   async run(context) {
     const { session, contact, text } = context.propsValue;

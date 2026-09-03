@@ -27,8 +27,8 @@ export const sendTextToGroupAction = createAction({
     }),
   },
   propertyGroups: [
-    { key: 'destination', display: 'section' as const, label: 'Destination', props: ['session', 'group'] },
-    { key: 'content', display: 'section' as const, label: 'Message', props: ['text'] },
+    { key: 'destination', display: 'section' as const, label: 'Destination', icon: 'send', props: ['session', 'group'] },
+    { key: 'content', display: 'section' as const, label: 'Message', icon: 'text', props: ['text'] },
   ],
   async run(context) {
     const { session, group, text } = context.propsValue;
