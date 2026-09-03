@@ -120,6 +120,7 @@ describe('pieceInstaller', () => {
         await installer.install({ pieces: [piece1, piece2], includeFilters: true, ...bundleSource })
 
         expect(mockInstall).toHaveBeenCalledOnce()
+        expect(mockInstall).toHaveBeenCalledWith(expect.objectContaining({ isolatedLinker: true }))
         expect(await pathExists(readyFilePath(piece1))).toBe(true)
         expect(await pathExists(readyFilePath(piece2))).toBe(true)
     })
@@ -283,6 +284,8 @@ describe('pieceInstaller', () => {
         expect(mockInstall.mock.calls[2]?.[0]).toMatchObject({
             filtersPath: [expect.stringContaining(`${piece2.pieceName}-${piece2.pieceVersion}`)],
         })
+
+        expect(mockInstall.mock.calls.every(call => call[0].isolatedLinker === true)).toBe(true)
     })
 })
 
