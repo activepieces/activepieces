@@ -4,8 +4,8 @@ const {
     mockGetRawMany,
     mockQueryBuilder,
     mockExceptionHandle,
-    mockCaptureBillingEvent,
-    mockFlushBillingEvents,
+    mockCaptureLicenseKeyEvent,
+    mockFlushLicenseKeyPostHogEvents,
 } = vi.hoisted(() => {
     const mockGetRawMany = vi.fn()
     const mockQueryBuilder = {
@@ -22,8 +22,8 @@ const {
         mockGetRawMany,
         mockQueryBuilder,
         mockExceptionHandle: vi.fn(),
-        mockCaptureBillingEvent: vi.fn(),
-        mockFlushBillingEvents: vi.fn().mockResolvedValue(undefined),
+        mockCaptureLicenseKeyEvent: vi.fn(),
+        mockFlushLicenseKeyPostHogEvents: vi.fn().mockResolvedValue(undefined),
     }
 })
 
@@ -62,17 +62,17 @@ vi.mock('../../../../../src/app/helper/sleep', () => ({
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
-    captureBillingEvent: mockCaptureBillingEvent,
-    flushBillingEvents: mockFlushBillingEvents,
-    BILLING_EVENTS_FLUSH_BATCH_SIZE: 2,
-    BillingEvents: {
+    captureLicenseKeyEvent: mockCaptureLicenseKeyEvent,
+    flushLicenseKeyPostHogEvents: mockFlushLicenseKeyPostHogEvents,
+    LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE: 2,
+    LicenseKeyPostHogEvents: {
         AI_USAGE_PER_RUN: 'ai_usage_per_run',
         CHAT_MESSAGE: 'chat_message',
         TOTAL_RUNS_PER_DAY: 'total_runs_per_day',
     },
 }))
 
-import { billingUsageReportService } from '../../../../../src/app/ee/billing-usage-report/billing-usage-report-service'
+import { licenseKeyUsageReportService } from '../../../../../src/app/ee/license-key-usage-report/license-key-usage-report-service'
 
 const mockLog = {
     info: vi.fn(),
@@ -84,7 +84,7 @@ const mockLog = {
     trace: vi.fn(),
     silent: vi.fn(),
     level: 'info',
-} as unknown as Parameters<typeof billingUsageReportService>[0]
+} as unknown as Parameters<typeof licenseKeyUsageReportService>[0]
 
 // License keys are queried first (and gate the rest); the scoped count queries run afterwards in
 // declaration order: active flows, users, team projects, then per-day executions — which itself runs
@@ -106,20 +106,20 @@ const mockQueries = ({ licenseKeys = [], activeFlows = [], users = [], projects 
         .mockResolvedValueOnce(executionRuns)
 }
 
-describe('billingUsageReportService', () => {
+describe('licenseKeyUsageReportService', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetRawMany.mockReset().mockResolvedValue([])
     })
 
     describe('reportAllPlatforms', () => {
-        it('should emit a TOTAL_RUNS_PER_DAY billing event per licensed platform keyed by its license key', async () => {
+        it('should emit a TOTAL_RUNS_PER_DAY license-key event per licensed platform keyed by its license key', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
-            expect(mockCaptureBillingEvent).toHaveBeenCalledTimes(1)
-            expect(mockCaptureBillingEvent).toHaveBeenCalledWith(
+            expect(mockCaptureLicenseKeyEvent).toHaveBeenCalledTimes(1)
+            expect(mockCaptureLicenseKeyEvent).toHaveBeenCalledWith(
                 expect.objectContaining({
                     licenseKey: 'key-123',
                     event: 'total_runs_per_day',
@@ -130,10 +130,10 @@ describe('billingUsageReportService', () => {
         it('should skip the heavy aggregate queries and send nothing when no platform has a license key', async () => {
             mockQueries({ licenseKeys: [] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             expect(mockGetRawMany).toHaveBeenCalledTimes(1)
-            expect(mockCaptureBillingEvent).not.toHaveBeenCalled()
+            expect(mockCaptureLicenseKeyEvent).not.toHaveBeenCalled()
         })
 
         it('should build the event properties with per-day executions and no key_value field', async () => {
@@ -149,9 +149,9 @@ describe('billingUsageReportService', () => {
                 licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
-            const properties = mockCaptureBillingEvent.mock.calls[0][0].properties
+            const properties = mockCaptureLicenseKeyEvent.mock.calls[0][0].properties
             expect(properties).toEqual(expect.objectContaining({
                 platform_id: 'platform-1',
                 active_flows: 5,
@@ -185,11 +185,11 @@ describe('billingUsageReportService', () => {
                 ],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
             // Events are emitted in platform insertion order: platform-1 then platform-2.
-            const first = mockCaptureBillingEvent.mock.calls[0][0]
-            const second = mockCaptureBillingEvent.mock.calls[1][0]
+            const first = mockCaptureLicenseKeyEvent.mock.calls[0][0]
+            const second = mockCaptureLicenseKeyEvent.mock.calls[1][0]
 
             expect(first.licenseKey).toBe('key-1')
             expect(first.properties.platform_id).toBe('platform-1')
@@ -203,9 +203,9 @@ describe('billingUsageReportService', () => {
         it('should default gauges to zero and send empty daily executions when a platform has no usage', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
-            const properties = mockCaptureBillingEvent.mock.calls[0][0].properties
+            const properties = mockCaptureLicenseKeyEvent.mock.calls[0][0].properties
             expect(properties).toEqual(expect.objectContaining({
                 platform_id: 'platform-1',
                 active_flows: 0,
@@ -215,14 +215,14 @@ describe('billingUsageReportService', () => {
             }))
         })
 
-        it('should flush captured billing events after emitting so nothing is left buffered/dropped', async () => {
+        it('should flush captured license-key events after emitting so nothing is left buffered/dropped', async () => {
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
-            expect(mockFlushBillingEvents).toHaveBeenCalledTimes(1)
-            const lastCaptureOrder = Math.max(...mockCaptureBillingEvent.mock.invocationCallOrder)
-            const flushOrder = mockFlushBillingEvents.mock.invocationCallOrder[0]
+            expect(mockFlushLicenseKeyPostHogEvents).toHaveBeenCalledTimes(1)
+            const lastCaptureOrder = Math.max(...mockCaptureLicenseKeyEvent.mock.invocationCallOrder)
+            const flushOrder = mockFlushLicenseKeyPostHogEvents.mock.invocationCallOrder[0]
             expect(flushOrder).toBeGreaterThan(lastCaptureOrder)
         })
 
@@ -235,19 +235,19 @@ describe('billingUsageReportService', () => {
                 ],
             })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
-            expect(mockCaptureBillingEvent).toHaveBeenCalledTimes(3)
-            expect(mockFlushBillingEvents).toHaveBeenCalledTimes(2)
+            expect(mockCaptureLicenseKeyEvent).toHaveBeenCalledTimes(3)
+            expect(mockFlushLicenseKeyPostHogEvents).toHaveBeenCalledTimes(2)
         })
 
         it('should log and continue rather than abort when a batch flush fails', async () => {
-            mockFlushBillingEvents.mockRejectedValueOnce(new Error('posthog flush failed'))
+            mockFlushLicenseKeyPostHogEvents.mockRejectedValueOnce(new Error('posthog flush failed'))
             mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
 
-            await billingUsageReportService(mockLog).reportAllPlatforms()
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
 
-            expect(mockCaptureBillingEvent).toHaveBeenCalledTimes(1)
+            expect(mockCaptureLicenseKeyEvent).toHaveBeenCalledTimes(1)
             expect(mockExceptionHandle).not.toHaveBeenCalled()
         })
     })
