@@ -10,7 +10,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { chatSubmissionTriggerOutputSchema } from '../output-schemas';
 
-const responseMarkdown = `Needs a **Respond on UI** step to reply to the sender.`;
+const responseMarkdown = `The sender waits for a **Respond on UI** step in this flow.`;
 
 const markdown = `**Published Chat URL:**
 \`\`\`text
@@ -41,7 +41,7 @@ export const onChatSubmission = createTrigger({
     }),
     responseMarkdown: Property.MarkDown({
       value: responseMarkdown,
-      variant: MarkdownVariant.WARNING,
+      variant: MarkdownVariant.INFO,
     }),
     botName: Property.ShortText({
       displayName: 'Bot Name',

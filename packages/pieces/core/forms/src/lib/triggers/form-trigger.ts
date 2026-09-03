@@ -22,7 +22,7 @@ Production link. Serves the published version of the form.
 \`\`\`
 Testing link. Serves the draft you are editing now.
 `;
-const responseMarkdown = `Needs a **Respond on UI** step when **Wait for Response** is on.`;
+const responseMarkdown = `With **Wait for Response** on, the form waits for a **Respond on UI** step.`;
 
 type FormInput = {
   displayName: string;
@@ -65,7 +65,7 @@ export const onFormSubmission = createTrigger({
     }),
     response: Property.MarkDown({
       value: responseMarkdown,
-      variant: MarkdownVariant.WARNING,
+      variant: MarkdownVariant.INFO,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',

@@ -114,8 +114,8 @@ const ApMarkdown = React.memo(
               const codeContent = String(props.children).trim();
               const isCopying = codeContent === copiedText;
               return (
-                <div className="relative flex w-full items-center gap-1 rounded border border-solid bg-background p-1.5 text-sm">
-                  <code className="grow min-w-0 break-all select-all px-1 py-1.5 font-mono text-sm">
+                <div className="relative flex w-full max-w-full items-center gap-1 rounded border border-solid bg-background p-1.5 text-sm">
+                  <code className="grow min-w-0 whitespace-pre-wrap break-all select-all px-1 py-1.5 font-mono text-sm">
                     {codeContent}
                   </code>
                   <Button
