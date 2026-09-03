@@ -15,17 +15,14 @@ const markdown = `**Published Form URL:**
 {{formUrl}}
 \`\`\`
 Use this for production, views the published version of the form.
-<br>
-<br>
+
 **Draft Form URL:**
 \`\`\`text
 {{formUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
 \`\`\`
 Use this to generate sample data, views the draft version of the form (the one you are editing now).
 `;
-const responseMarkdown = `
-If **Wait for Response** is enabled, use **Respond on UI** in your flow to provide a response back to the form.
-`;
+const responseMarkdown = `Add a **Respond on UI** step to your flow to send a response back to the form. Without it, the submitter waits until the flow finishes and sees nothing.`;
 
 type FormInput = {
   displayName: string;
@@ -60,14 +57,15 @@ export const onFormSubmission = createTrigger({
       value: markdown,
       variant: MarkdownVariant.BORDERLESS,
     }),
+    waitForResponse: Property.Checkbox({
+      displayName: 'Wait for Response',
+      description: 'Hold the submitter on the form until the flow replies.',
+      defaultValue: false,
+      required: false,
+    }),
     response: Property.MarkDown({
       value: responseMarkdown,
       variant: MarkdownVariant.WARNING,
-    }),
-    waitForResponse: Property.Checkbox({
-      displayName: 'Wait for Response',
-      defaultValue: false,
-      required: true,
     }),
     inputs: Property.Array({
       displayName: 'Inputs',

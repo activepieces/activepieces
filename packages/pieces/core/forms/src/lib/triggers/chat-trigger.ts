@@ -10,17 +10,19 @@ import {
 } from '@activepieces/pieces-framework';
 import { chatSubmissionTriggerOutputSchema } from '../output-schemas';
 
-const responseMarkdown = `
-This trigger sets up a chat interface. Ensure that **Respond on UI** is used in your flow`;
+const responseMarkdown = `Add a **Respond on UI** step to your flow to reply to the chat. Without it, the sender gets no answer.`;
 
-const markdown = `
-**Published Chat URL:**
+const markdown = `**Published Chat URL:**
 \`\`\`text
 {{chatUrl}}
 \`\`\`
 Use this for production, views the published version of the chat flow.
-<br>
-<br>
+
+**Draft Chat URL:**
+\`\`\`text
+{{chatUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
+\`\`\`
+Use this to try the chat before publishing, views the draft version (the one you are editing now). You can also press **Test Flow** in the builder to chat with the draft in a side panel.
 `;
 
 export const onChatSubmission = createTrigger({
@@ -42,7 +44,7 @@ export const onChatSubmission = createTrigger({
     }),
     botName: Property.ShortText({
       displayName: 'Bot Name',
-      description: 'The name of the chatbot',
+      description: 'Shown in the greeting above the chat box.',
       required: true,
       defaultValue: 'AI Bot',
     }),
