@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,7 +52,11 @@ export function ProvidersTab() {
   >(undefined);
 
   const queryClient = useQueryClient();
-  const { data: providers, refetch } = aiProviderQueries.useAiProviderConfigs();
+  const {
+    data: providers,
+    isError: isProvidersError,
+    refetch,
+  } = aiProviderQueries.useAiProviderConfigs();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
@@ -197,7 +202,9 @@ export function ProvidersTab() {
           )}
         </div>
 
-        {configs.length === 0 ? (
+        {isProvidersError ? (
+          <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
+        ) : configs.length === 0 ? (
           <EmptyProviders onConnect={openConnect} allowWrite={allowWrite} />
         ) : (
           <>
