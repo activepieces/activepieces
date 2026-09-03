@@ -237,7 +237,7 @@
                         ]
                      }
                   ]
-               }
+              }
             ]
          },
          {
@@ -343,71 +343,91 @@
                   "pages": [
                      "admin-guide/overview"
                   ]
-               },
-               {
+              },
+              {
                   "group": "Guides",
                   "pages": [
-                     "admin-guide/guides/structure-projects",
-                     "admin-guide/guides/manage-pieces",
-                     "admin-guide/guides/sso",
-                     {
-                        "group": "SCIM",
-                        "icon": "users",
-                        "pages": [
-                           "admin-guide/guides/scim/overview",
-                           "admin-guide/guides/scim/providers/okta",
-                           "admin-guide/guides/scim/providers/microsoft-entra-id"
-                        ]
-                     },
-                     "admin-guide/guides/manage-oauth2",
-                     "admin-guide/guides/setup-ai-providers",
-                     {
-                        "group": "Secret Managers",
-                        "icon": "key",
-                        "pages": [
-                           "admin-guide/guides/secret-managers/overview",
-                           "admin-guide/guides/secret-managers/aws",
-                           "admin-guide/guides/secret-managers/hashicorp",
-                           "admin-guide/guides/secret-managers/cyberark-conjur",
-                           "admin-guide/guides/secret-managers/onepassword"
-                        ]
-                     },
-                     "admin-guide/guides/permissions",
-                     "admin-guide/guides/event-streaming",
-                     "admin-guide/guides/project-releases",
-                     "admin-guide/guides/project-replace-cli",
-                     "admin-guide/guides/manage-concurrency"
+                    {
+                      "group": "General",
+                      "pages": [
+                        "admin-guide/guides/structure-projects",
+                        "admin-guide/guides/project-releases",
+                        "admin-guide/guides/project-replace-cli",
+                        "admin-guide/guides/manage-concurrency",
+                        "admin-guide/guides/permissions",
+                        {
+                          "group": "SCIM",
+                          "icon": "users",
+                          "pages": [
+                            "admin-guide/guides/scim/overview",
+                            "admin-guide/guides/scim/providers/okta",
+                            "admin-guide/guides/scim/providers/microsoft-entra-id"
+                          ]
+                        },
+                        "admin-guide/guides/connections"
+                      ]
+                    },
+                    {
+                      "group": "Setup",
+                      "pages": [
+                        "admin-guide/guides/general",
+                        "admin-guide/guides/setup-ai-providers",
+                        "admin-guide/guides/ai-capabilities",
+                        "admin-guide/guides/global-connections",
+                        "admin-guide/guides/manage-pieces",
+                        "admin-guide/guides/templates"
+                      ]
+                    },
+                    {
+                      "group": "Observability",
+                      "pages": [
+                        {
+                          "group": "Audit Logs",
+                          "icon": "book",
+                          "pages": [
+                            "admin-guide/security/audit-logs/overview",
+                            "admin-guide/security/audit-logs/flow-created",
+                            "admin-guide/security/audit-logs/flow-updated",
+                            "admin-guide/security/audit-logs/flow-deleted",
+                            "admin-guide/security/audit-logs/flow-published",
+                            "admin-guide/security/audit-logs/flow-activated",
+                            "admin-guide/security/audit-logs/flow-deactivated",
+                            "admin-guide/security/audit-logs/connection-upserted",
+                            "admin-guide/security/audit-logs/connection-deleted",
+                            "admin-guide/security/audit-logs/flow-run-started",
+                            "admin-guide/security/audit-logs/flow-run-finished",
+                            "admin-guide/security/audit-logs/folder-created",
+                            "admin-guide/security/audit-logs/folder-updated",
+                            "admin-guide/security/audit-logs/folder-deleted",
+                            "admin-guide/security/audit-logs/user-signed-in",
+                            "admin-guide/security/audit-logs/user-signed-up",
+                            "admin-guide/security/audit-logs/user-email-verified",
+                            "admin-guide/security/audit-logs/user-password-reset",
+                            "admin-guide/security/audit-logs/signing-key-created"
+                          ]
+                        },
+                        "admin-guide/guides/event-streaming"
+                      ]
+                    }
                   ]
-               },
-               {
+              },
+              {
                   "group": "Security",
                   "pages": [
+                    "admin-guide/guides/sso",
+                    {
+                      "group": "Secret Managers",
+                      "icon": "key",
+                      "pages": [
+                        "admin-guide/guides/secret-managers/overview",
+                        "admin-guide/guides/secret-managers/aws",
+                        "admin-guide/guides/secret-managers/hashicorp",
+                        "admin-guide/guides/secret-managers/cyberark-conjur",
+                        "admin-guide/guides/secret-managers/onepassword"
+                      ]
+                    },
                      "admin-guide/security/practices",
-                     {
-                        "group": "Audit Logs",
-                        "icon": "book",
-                        "pages": [
-                           "admin-guide/security/audit-logs/overview",
-                           "admin-guide/security/audit-logs/flow-created",
-                           "admin-guide/security/audit-logs/flow-updated",
-                           "admin-guide/security/audit-logs/flow-deleted",
-                           "admin-guide/security/audit-logs/flow-published",
-                           "admin-guide/security/audit-logs/flow-activated",
-                           "admin-guide/security/audit-logs/flow-deactivated",
-                           "admin-guide/security/audit-logs/connection-upserted",
-                           "admin-guide/security/audit-logs/connection-deleted",
-                           "admin-guide/security/audit-logs/flow-run-started",
-                           "admin-guide/security/audit-logs/flow-run-finished",
-                           "admin-guide/security/audit-logs/folder-created",
-                           "admin-guide/security/audit-logs/folder-updated",
-                           "admin-guide/security/audit-logs/folder-deleted",
-                           "admin-guide/security/audit-logs/user-signed-in",
-                           "admin-guide/security/audit-logs/user-signed-up",
-                           "admin-guide/security/audit-logs/user-email-verified",
-                           "admin-guide/security/audit-logs/user-password-reset",
-                           "admin-guide/security/audit-logs/signing-key-created"
-                        ]
-                     }
+                    "admin-guide/guides/manage-oauth2"
                   ]
                }
             ]
