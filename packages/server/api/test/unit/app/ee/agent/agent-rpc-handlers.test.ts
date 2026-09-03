@@ -29,13 +29,14 @@ const { mockAssertProjectSwitchKeepsKey } = vi.hoisted(() => ({
     mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
 }))
 
-const { mockGetFileOrThrow, mockKbSearch } = vi.hoisted(() => ({
-    mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1' }),
+const { mockGetFileOrThrow, mockKbSearch, mockIsSearchable } = vi.hoisted(() => ({
+    mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1', displayName: 'Employee Handbook' }),
     mockKbSearch: vi.fn().mockResolvedValue([]),
+    mockIsSearchable: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
-    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch }),
+    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch, isSearchable: mockIsSearchable }),
 }))
 
 const { mockEmbed } = vi.hoisted(() => ({
