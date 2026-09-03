@@ -166,8 +166,18 @@ async function main(): Promise<void> {
     }
 }
 
-const ABSOLUTE_LIMIT_MB = Number(process.env['PIECE_HEAP_ABSOLUTE_MB']) || 5
-const DELTA_LIMIT_MB = Number(process.env['PIECE_HEAP_DELTA_MB']) || 2
+function parseLimitFromEnv(envKey: string, defaultMB: number): number {
+    const raw = process.env[envKey]
+    if (raw === undefined || raw === '') return defaultMB
+    const parsed = Number(raw)
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new Error(`invalid ${envKey}="${raw}": must be a positive number in MB`)
+    }
+    return parsed
+}
+
+const ABSOLUTE_LIMIT_MB = parseLimitFromEnv('PIECE_HEAP_ABSOLUTE_MB', 5)
+const DELTA_LIMIT_MB = parseLimitFromEnv('PIECE_HEAP_DELTA_MB', 2)
 const SKIP_LABEL = 'skip-heap-check'
 
 type PieceHeapResult = {
