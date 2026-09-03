@@ -24,6 +24,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import {
   Empty,
   EmptyDescription,
@@ -140,6 +141,8 @@ const AgentsPageContent = () => {
     data,
     isLoading,
     isSuccess,
+    isError,
+    refetch,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
@@ -593,6 +596,8 @@ const AgentsPageContent = () => {
                 <Skeleton key={index} className="h-[151px] rounded-[19px]" />
               ))}
             </div>
+          ) : isError ? (
+            <DataFetchErrorState entity={t('agents')} onRetry={refetch} />
           ) : agents.length === 0 ? (
             showsNoMatchNotice({
               matchCount: agents.length,

@@ -1,28 +1,47 @@
-import { ErrorCode, isNil } from '@activepieces/core-utils';
+import { ApErrorParams, ErrorCode, isNil } from '@activepieces/core-utils';
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
+import { StatusCodes } from 'http-status-codes';
 
-import { showQueryErrorToast } from '@/components/custom/query-error-toast';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useManagePlanDialogStore } from '@/features/billing';
 import { api } from '@/lib/api';
+import { errorReporting } from '@/lib/error-reporting';
 
-const toastedQueries = new WeakSet<object>();
+function isHandledSessionExpiry(error: unknown): boolean {
+  if (!api.isError(error)) {
+    return false;
+  }
+  if (error.response?.status !== StatusCodes.UNAUTHORIZED) {
+    return false;
+  }
+  const code = (error.response?.data as ApErrorParams | undefined)?.code;
+  return (
+    code === ErrorCode.SESSION_EXPIRED ||
+    code === ErrorCode.INVALID_BEARER_TOKEN
+  );
+}
+
+function reportQueryFailure(error: unknown, queryHash: string): void {
+  if (isHandledSessionExpiry(error)) {
+    return;
+  }
+  const status = api.isError(error) ? error.response?.status : undefined;
+  errorReporting.report({
+    error,
+    source: 'query',
+    dedupeKey: queryHash,
+    extra: {
+      query_hash: queryHash,
+      http_status: status,
+      request_url: api.isError(error) ? error.config?.url : undefined,
+    },
+  });
+}
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      if (!query.meta?.showErrorToast || !query.isActive()) {
-        return;
-      }
-      console.error('query failed', query.queryHash, error);
-      if (toastedQueries.has(query)) {
-        return;
-      }
-      toastedQueries.add(query);
-      showQueryErrorToast({ queryKey: query.queryKey, error });
-    },
-    onSuccess: (_data, query) => {
-      toastedQueries.delete(query);
+      reportQueryFailure(error, query.queryHash);
     },
   }),
   mutationCache: new MutationCache({

@@ -73,6 +73,7 @@ function VariablesPage() {
   const {
     data: variables,
     isLoading,
+    isError,
     refetch,
   } = variablesQueries.useVariables({
     request: {
@@ -88,7 +89,6 @@ function VariablesPage() {
       name ?? '',
       projectId,
     ],
-    showErrorToast: true,
   });
 
   const { mutateAsync: deleteVariable } =
@@ -281,6 +281,9 @@ function VariablesPage() {
         columns={columns}
         page={filteredData}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('variables')}
+        onRetry={refetch}
         filters={filters}
         toolbarButtons={toolbarButtons}
         selectColumn={true}

@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { recordAccess } from '@/app/components/global-search/access-history';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
@@ -84,6 +85,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     rootFlows,
     rootTables,
     isLoading,
+    isError,
     expandedFolders,
     toggleFolder,
     loadMoreInFolder,
@@ -267,9 +269,11 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
   const hasAnyItems =
     rootFlows.length > 0 || rootTables.length > 0 || folders.length > 0;
-  const isEmptyState = !hasAnyItems && !isLoading && !filtersActive;
+  const isErrorState = isError && !hasAnyItems && !isLoading;
+  const isEmptyState =
+    !hasAnyItems && !isLoading && !filtersActive && !isErrorState;
   const isNoResultsState =
-    treeItems.length === 0 && filtersActive && !isLoading;
+    treeItems.length === 0 && filtersActive && !isLoading && !isErrorState;
 
   if (isEmptyState) {
     return <AutomationsEmptyState onRefresh={() => invalidateAll()} />;
@@ -314,7 +318,13 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         isCreatingTable={mutations.isCreatingTable}
       />
 
-      {isNoResultsState ? (
+      {isErrorState ? (
+        <DataFetchErrorState
+          entity={t('automations')}
+          onRetry={invalidateAll}
+          className="py-16"
+        />
+      ) : isNoResultsState ? (
         <AutomationsNoResultsState onClearFilters={clearAllFilters} />
       ) : (
         <>

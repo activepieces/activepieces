@@ -14,7 +14,6 @@ export const triggerRunHooks = {
     return useQuery({
       queryKey: ['trigger-status-report'],
       queryFn: triggerRunApi.getStatusReport,
-      meta: { showErrorToast: true, loadSubsetOptions: {} },
     });
   },
 };

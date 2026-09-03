@@ -38,11 +38,14 @@ import AddEditSecretManagerConnectionDialog from './connect-secret-manager-dialo
 
 const SecretManagersPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: connections, isLoading: isLoadingConnections } =
-    secretManagersHooks.useListSecretManagerConnections({
-      listForPlatform: true,
-      showErrorToast: true,
-    });
+  const {
+    data: connections,
+    isLoading: isLoadingConnections,
+    isError: isConnectionsError,
+    refetch: refetchConnections,
+  } = secretManagersHooks.useListSecretManagerConnections({
+    listForPlatform: true,
+  });
   const { mutate: deleteConnection } =
     secretManagersHooks.useDeleteSecretManagerConnection();
 
@@ -214,6 +217,9 @@ const SecretManagersPage = () => {
           columns={columns}
           page={page}
           isLoading={isLoading}
+          isError={isConnectionsError}
+          errorStateEntity={t('secret managers')}
+          onRetry={refetchConnections}
           hidePagination={true}
         />
       </div>

@@ -37,10 +37,9 @@ const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const [searchParams] = useSearchParams();
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
-    meta: { showErrorToast: true, loadSubsetOptions: {} },
     queryFn: () => {
       return templatesApi.list({
         type: TemplateType.CUSTOM,
@@ -233,6 +232,9 @@ const PlatformTemplatesPage = () => {
           page={data}
           hidePagination={true}
           isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('templates')}
+          onRetry={refetch}
           bulkActions={bulkActions}
           toolbarButtons={toolbarButtons}
           actions={[

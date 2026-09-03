@@ -211,6 +211,7 @@ const GlobalConnectionsTable = () => {
   const {
     data: globalConnections,
     isLoading: isLoadingGlobalConnections,
+    isError: isGlobalConnectionsError,
     refetch: refetchGlobalConnections,
   } = globalConnectionsQueries.useGlobalConnections({
     request: {
@@ -227,7 +228,6 @@ const GlobalConnectionsTable = () => {
     extraKeys: [location.search],
     staleTime: 0,
     gcTime: 0,
-    showErrorToast: true,
   });
 
   const userHasPermissionToWriteAppConnection = checkAccess(
@@ -332,6 +332,9 @@ const GlobalConnectionsTable = () => {
           columns={columns}
           page={globalConnections}
           isLoading={isLoadingGlobalConnections}
+          isError={isGlobalConnectionsError}
+          errorStateEntity={t('connections')}
+          onRetry={refetchGlobalConnections}
           filters={filters}
           selectColumn={true}
           onSelectedRowsChange={setSelectedRows}

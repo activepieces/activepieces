@@ -24,7 +24,6 @@ export const embedSubdomainQueries = {
       queryKey: embedSubdomainKeys.current,
       queryFn: () => embedSubdomainApi.get(),
       enabled: platform.plan.embeddingEnabled && edition === ApEdition.CLOUD,
-      meta: { showErrorToast: true, loadSubsetOptions: {} },
       refetchInterval: (query) => {
         const data = query.state.data;
         if (data?.status === EmbedSubdomainStatus.PENDING_VERIFICATION) {
@@ -35,8 +34,9 @@ export const embedSubdomainQueries = {
     });
   },
   useCurrentEmbedSubdomain: () => {
-    const { data, isLoading } = embedSubdomainQueries.useEmbedSubdomain();
-    return { subdomain: data ?? undefined, isLoading };
+    const { data, isLoading, isError, refetch } =
+      embedSubdomainQueries.useEmbedSubdomain();
+    return { subdomain: data ?? undefined, isLoading, isError, refetch };
   },
 };
 

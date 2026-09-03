@@ -91,6 +91,7 @@ function AppConnectionsPage() {
   const {
     data: connections,
     isLoading: connectionsLoading,
+    isError: connectionsError,
     refetch,
   } = appConnectionsQueries.useAppConnections({
     request: {
@@ -102,7 +103,6 @@ function AppConnectionsPage() {
       displayName,
     },
     extraKeys: [location.search, projectId],
-    showErrorToast: true,
   });
 
   const { mutateAsync: deleteConnections } =
@@ -449,6 +449,9 @@ function AppConnectionsPage() {
         columns={columns}
         page={filteredData}
         isLoading={connectionsLoading}
+        isError={connectionsError}
+        errorStateEntity={t('connections')}
+        onRetry={refetch}
         filters={filters}
         selectColumn={true}
         onSelectedRowsChange={setSelectedRows}

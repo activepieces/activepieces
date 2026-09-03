@@ -17,7 +17,6 @@ export const healthMetricsQueries = {
       ],
       queryFn: () => healthMetricsApi.getRunMetrics(range),
       enabled,
-      meta: { showErrorToast: true, loadSubsetOptions: {} },
     });
   },
   useQueueMetrics: (
