@@ -4,11 +4,12 @@ const mockFindOneBy = vi.fn()
 const mockDelete = vi.fn()
 const mockCount = vi.fn()
 const mockSave = vi.fn()
-const mockFind = vi.fn()
+const mockFind = vi.fn().mockResolvedValue([])
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
 const mockUpdateExecute = vi.fn().mockResolvedValue({ raw: [{ id: 'chunk-1' }] })
 const mockUpdateWhere = vi.fn()
+const mockRepoUpdate = vi.fn()
 const updateBuilder = {
     setLock: () => updateBuilder,
     getOne: async () => ({ id: 'kb-file-1' }),
@@ -44,6 +45,7 @@ const chunkRepo = {
     save: mockSave,
     find: mockFind,
     insert: mockInsert,
+    update: mockRepoUpdate,
     createQueryBuilder: () => updateBuilder,
 }
 
@@ -83,6 +85,7 @@ describe('knowledgeBaseService', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockDbQuery.mockResolvedValue([])
+        mockFind.mockResolvedValue([])
     })
 
     describe('deleteFile', () => {
@@ -253,7 +256,7 @@ describe('knowledgeBaseService', () => {
             expect(mockUpdate).toHaveBeenCalledTimes(1)
         })
 
-        it('should not call insert or update for empty chunks array', async () => {
+        it('should clear the file rather than insert or update when no chunks are given', async () => {
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',

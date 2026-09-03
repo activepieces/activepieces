@@ -74,9 +74,9 @@ describe('storing the chunks of a knowledge file', () => {
         expect(outcome === 'stored' ? count : 0).toBe(outcome === 'stored' ? chunks.length : 0)
     })
 
-    // A restore replaces the file's chunks, so an id read before one names a row that is gone.
-    // Updating by it used to match nothing and still report success.
-    it('refuses an update whose chunk a restore has already replaced', async () => {
+    // A restore used to delete and recreate every row, so an id read before one was useless
+    // after it. Writing in place keeps the id, so an edit queued behind a restore still lands.
+    it('keeps a chunk id across a restore, so an edit behind one still lands', async () => {
         const ctx = await createTestContext(app)
         const knowledgeBaseFileId = await aFileOf(ctx, 'The office closes at six.')
         await knowledgeBaseService(app.log).storeChunks({
@@ -91,15 +91,56 @@ describe('storing the chunks of a knowledge file', () => {
             knowledgeBaseFileId,
             chunks: [{ content: 'restored', chunkIndex: 0, metadata: {} }],
         })
+        const [afterRestore] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(afterRestore.id).toBe(before.id)
+        expect(afterRestore.content).toBe('restored')
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ id: before.id, content: 'an edit queued behind the restore' }],
+        })
+
+        const [afterEdit] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(afterEdit.content).toBe('an edit queued behind the restore')
+    })
+
+    it('drops the tail when a document comes back shorter', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'long then short')
+        const three = Array.from({ length: 3 }, (_, index) => ({ content: `chunk ${index}`, chunkIndex: index, metadata: {} }))
+
+        await knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks: three })
+        await knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks: three.slice(0, 1) })
+
+        expect(await countOf(ctx, knowledgeBaseFileId)).toBe(1)
+    })
+
+    // A file that comes back with nothing in it has nothing in it. Returning early left the
+    // previous text in place, so the agent kept answering from a document that had been emptied.
+    it('clears the file when a restore carries no chunks', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'something then nothing')
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ content: 'the old text', chunkIndex: 0, metadata: {} }],
+        })
+
+        await knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks: [] })
+
+        expect(await countOf(ctx, knowledgeBaseFileId)).toBe(0)
+    })
+
+    it('refuses an update against an id that names no row', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'text')
 
         await expect(knowledgeBaseService(app.log).storeChunks({
             projectId: ctx.project.id,
             knowledgeBaseFileId,
-            chunks: [{ id: before.id, content: 'an edit against the old snapshot' }],
+            chunks: [{ id: 'chunk-that-never-existed', content: 'an edit' }],
         })).rejects.toThrow()
-
-        const [after] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
-        expect(after.content).toBe('restored')
     })
 
     // The lock is taken on the file the request names, so an edit that reaches into another file

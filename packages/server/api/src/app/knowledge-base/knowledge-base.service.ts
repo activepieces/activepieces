@@ -224,16 +224,12 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
     async storeChunks(params: StoreChunksParams): Promise<void> {
         const { projectId, knowledgeBaseFileId, chunks } = params
-        if (chunks.length === 0) return
 
         const newChunks = chunks.filter((chunk) => isNil(chunk.id))
-        const existingChunks = chunks.filter((chunk) => !isNil(chunk.id))
-        const isFullRestore = existingChunks.length === 0
+        const editedChunks = chunks.filter((chunk) => !isNil(chunk.id))
+        const isFullRestore = editedChunks.length === 0
 
         await transaction(async (entityManager) => {
-            // Serialise every write to this file at the row that owns it, so two restores cannot
-            // interleave into a snapshot made of both. A lock held elsewhere can be lost; this one
-            // is the transaction.
             const owner = await entityManager.getRepository(KnowledgeBaseFileEntity)
                 .createQueryBuilder('file')
                 .setLock('pessimistic_write')
@@ -246,22 +242,36 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 })
             }
             const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
+
             if (isFullRestore) {
-                await repo.delete({ projectId, knowledgeBaseFileId })
+                const stored = await repo.find({ where: { projectId, knowledgeBaseFileId }, select: ['id', 'chunkIndex'] })
+                const idByIndex = new Map(stored.map((row) => [row.chunkIndex, row.id]))
+                const missing: Record<string, unknown>[] = []
+                for (const [index, chunk] of newChunks.entries()) {
+                    const chunkIndex = chunk.chunkIndex ?? index
+                    const values = {
+                        content: chunk.content ?? '',
+                        ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
+                        metadata: chunk.metadata ?? {},
+                    }
+                    const storedId = idByIndex.get(chunkIndex)
+                    if (isNil(storedId)) {
+                        missing.push({ id: apId(), projectId, knowledgeBaseFileId, chunkIndex, ...values })
+                        continue
+                    }
+                    await repo.update({ id: storedId, projectId, knowledgeBaseFileId }, values)
+                }
+                for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
+                    await repo.insert(missing.slice(start, start + INSERT_BATCH_SIZE))
+                }
+                await repo.createQueryBuilder()
+                    .delete()
+                    .where('"projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId AND "chunkIndex" >= :length', { projectId, knowledgeBaseFileId, length: newChunks.length })
+                    .execute()
+                return
             }
-            const entities = newChunks.map((chunk) => ({
-                id: apId(),
-                projectId,
-                knowledgeBaseFileId,
-                content: chunk.content ?? '',
-                chunkIndex: chunk.chunkIndex ?? 0,
-                ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                metadata: chunk.metadata ?? {},
-            }))
-            for (let start = 0; start < entities.length; start += INSERT_BATCH_SIZE) {
-                await repo.insert(entities.slice(start, start + INSERT_BATCH_SIZE))
-            }
-            for (const chunk of existingChunks) {
+
+            for (const chunk of editedChunks) {
                 const updated = await repo.createQueryBuilder()
                     .update()
                     .set({
@@ -281,8 +291,18 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     })
                 }
             }
+            for (let start = 0; start < newChunks.length; start += INSERT_BATCH_SIZE) {
+                await repo.insert(newChunks.slice(start, start + INSERT_BATCH_SIZE).map((chunk, offset) => ({
+                    id: apId(),
+                    projectId,
+                    knowledgeBaseFileId,
+                    content: chunk.content ?? '',
+                    chunkIndex: chunk.chunkIndex ?? start + offset,
+                    ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
+                    metadata: chunk.metadata ?? {},
+                })))
+            }
         })
-
     },
 
     async listChunks(params: ListChunksParams): Promise<ChunkListItem[]> {
