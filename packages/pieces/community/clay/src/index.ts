@@ -1,6 +1,5 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
 import { clayAuth } from './lib/auth';
 import { searchCompaniesAction } from './lib/actions/search-companies';
 import { searchPeopleAction } from './lib/actions/search-people';
@@ -14,7 +13,7 @@ export const clay = createPiece({
     logoUrl: 'https://cdn.activepieces.com/pieces/clay.png',
     categories: [PieceCategory.SALES_AND_CRM],
     auth: clayAuth,
-    authors: ['kishanprmr', 'odaithalji'],
+    authors: ['kishanprmr', 'OdaiAhmed99'],
     actions: [
         searchCompaniesAction,
         searchPeopleAction,

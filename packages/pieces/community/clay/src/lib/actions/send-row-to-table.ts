@@ -1,10 +1,8 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { clayAuth } from '../auth';
 import { clayWebhook } from '../common/webhook';
 import { sendRowOutputSchema } from '../common/output-schemas';
 
 export const sendRowToTableAction = createAction({
-    auth: clayAuth,
     name: 'send_row_to_table',
     displayName: 'Send Row to Clay Table',
     description: 'Sends a row to a Clay table through its webhook source.',
@@ -16,6 +14,7 @@ export const sendRowToTableAction = createAction({
         idempotent: false,
     },
     outputSchema: sendRowOutputSchema,
+    requireAuth: false,
     props: {
         webhookUrl: Property.ShortText({
             displayName: 'Webhook URL',

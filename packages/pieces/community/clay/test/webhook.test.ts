@@ -1,14 +1,11 @@
 /// <reference types="vitest/globals" />
 
-const sendRequest = vi.fn();
-
-vi.mock('@activepieces/pieces-common', () => ({
-    HttpMethod: { GET: 'GET', POST: 'POST', PUT: 'PUT', DELETE: 'DELETE' },
-    httpClient: {
-        sendRequest: (...args: unknown[]) => sendRequest(...args),
-    },
-}));
-
+import {
+    HttpMethod,
+    HttpRequest,
+    HttpResponse,
+    httpClient,
+} from '@activepieces/pieces-common';
 import { clayWebhook } from '../src/lib/common/webhook';
 
 const FIXTURE_SECRET =
@@ -18,7 +15,24 @@ const FIXTURE_BODY =
 const FIXTURE_SIGNATURE =
     'sha256=f787d8f6ca1d5ea61ac6ae74dceb201cafc5b41ccd1593522c1344837d102c19';
 
-const lastRequest = () => sendRequest.mock.calls.at(-1)?.[0];
+let sendRequest: ReturnType<typeof vi.spyOn>;
+let lastRequest: HttpRequest | undefined;
+
+beforeEach(() => {
+    lastRequest = undefined;
+    sendRequest = vi.spyOn(httpClient, 'sendRequest');
+});
+
+afterEach(() => {
+    vi.restoreAllMocks();
+});
+
+function acknowledgeWith(body: unknown) {
+    sendRequest.mockImplementation(async (request: HttpRequest): Promise<HttpResponse> => {
+        lastRequest = request;
+        return { status: 200, headers: {}, body };
+    });
+}
 
 function httpError(status: number) {
     return Object.assign(new Error(`Request failed with status ${status}`), {
@@ -154,6 +168,25 @@ describe('the verification ping Clay sends when a webhook is created', () => {
     });
 });
 
+describe('a secret pasted into a field, whitespace and all', () => {
+    test('surrounding whitespace is trimmed, so a pasted secret still verifies', () => {
+        expect(
+            clayWebhook.verifySignature({
+                signingSecret:
+                    clayWebhook.trimmedSecretOf(` ${FIXTURE_SECRET}\n`) ?? '',
+                rawBody: FIXTURE_BODY,
+                signatureHeader: FIXTURE_SIGNATURE,
+            }),
+        ).toBe(true);
+    });
+
+    test('whitespace alone counts as empty, so it never enables verification', () => {
+        expect(clayWebhook.trimmedSecretOf('   ')).toBeUndefined();
+        expect(clayWebhook.trimmedSecretOf('')).toBeUndefined();
+        expect(clayWebhook.trimmedSecretOf(undefined)).toBeUndefined();
+    });
+});
+
 describe('webhook URL handling', () => {
     test('surrounding whitespace is trimmed', () => {
         expect(
@@ -216,8 +249,6 @@ describe('the destination is constrained to Clay, because the token travels with
     });
 
     test('no request is attempted when the destination is refused', async () => {
-        sendRequest.mockReset();
-
         await expect(
             clayWebhook.sendRow({
                 webhookUrl: 'https://evil.example.com/collect',
@@ -231,45 +262,43 @@ describe('the destination is constrained to Clay, because the token travels with
 });
 
 describe('sending a row', () => {
-    beforeEach(() => sendRequest.mockReset());
-
     test('the token travels in the x-clay-webhook-auth header', async () => {
-        sendRequest.mockResolvedValueOnce({ body: { success: true } });
+        acknowledgeWith({ success: true });
         await clayWebhook.sendRow({
             webhookUrl: 'https://api.clay.com/v3/sources/webhook/x',
             authToken: 'a-token',
             row: { Domain: 'activepieces.com' },
         });
 
-        expect(lastRequest().headers).toEqual({ 'x-clay-webhook-auth': 'a-token' });
+        expect(lastRequest?.headers).toEqual({ 'x-clay-webhook-auth': 'a-token' });
     });
 
     test('no header is sent when the source has no token', async () => {
-        sendRequest.mockResolvedValueOnce({ body: { success: true } });
+        acknowledgeWith({ success: true });
         await clayWebhook.sendRow({
             webhookUrl: 'https://api.clay.com/v3/sources/webhook/x',
             row: { Domain: 'activepieces.com' },
         });
 
-        expect(lastRequest().headers).toBeUndefined();
+        expect(lastRequest?.headers).toBeUndefined();
     });
 
     test('the row is sent as the request body, flat', async () => {
-        sendRequest.mockResolvedValueOnce({ body: { success: true } });
+        acknowledgeWith({ success: true });
         await clayWebhook.sendRow({
             webhookUrl: 'https://api.clay.com/v3/sources/webhook/x',
             row: { Domain: 'activepieces.com', Company: 'Activepieces' },
         });
 
-        expect(lastRequest().method).toBe('POST');
-        expect(lastRequest().body).toEqual({
+        expect(lastRequest?.method).toBe(HttpMethod.POST);
+        expect(lastRequest?.body).toEqual({
             Domain: 'activepieces.com',
             Company: 'Activepieces',
         });
     });
 
     test('a JSON acknowledgement is reported alongside a stable success flag', async () => {
-        sendRequest.mockResolvedValueOnce({ body: { success: true } });
+        acknowledgeWith({ success: true });
 
         await expect(
             clayWebhook.sendRow({
@@ -280,7 +309,7 @@ describe('sending a row', () => {
     });
 
     test('a plaintext acknowledgement keeps the same success flag', async () => {
-        sendRequest.mockResolvedValueOnce({ body: 'OK' });
+        acknowledgeWith('OK');
 
         await expect(
             clayWebhook.sendRow({
@@ -333,5 +362,30 @@ describe('sending a row', () => {
                 row: {},
             }),
         ).rejects.toThrow(/500/);
+    });
+});
+
+describe('a token pasted into a field, whitespace and all', () => {
+    test('surrounding whitespace is trimmed before the token reaches Clay', async () => {
+        acknowledgeWith({ success: true });
+        await clayWebhook.sendRow({
+            webhookUrl: 'https://api.clay.com/v3/sources/webhook/x',
+            authToken: '  a-token\n',
+            row: { Domain: 'activepieces.com' },
+        });
+
+        expect(lastRequest?.headers).toEqual({ 'x-clay-webhook-auth': 'a-token' });
+    });
+
+    test('a whitespace-only token is treated as absent, so the 401 names the field to fill in', async () => {
+        sendRequest.mockRejectedValueOnce(httpError(401));
+
+        await expect(
+            clayWebhook.sendRow({
+                webhookUrl: 'https://api.clay.com/v3/sources/webhook/x',
+                authToken: '   ',
+                row: {},
+            }),
+        ).rejects.toThrow(/Authentication Token/);
     });
 });

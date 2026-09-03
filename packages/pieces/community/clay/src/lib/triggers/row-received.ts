@@ -3,11 +3,9 @@ import {
     Property,
     TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { clayAuth } from '../auth';
 import { clayWebhook } from '../common/webhook';
 
 export const rowReceivedTrigger = createTrigger({
-    auth: clayAuth,
     name: 'row_received',
     displayName: 'Row Received from Clay',
     description: 'Triggers when Clay sends a row to this flow.',
@@ -16,6 +14,7 @@ export const rowReceivedTrigger = createTrigger({
             'Fires when Clay posts a row to this flow, carrying whatever fields the Clay side was configured to send. Clay has no API for registering webhooks, so somebody has to point a Clay webhook or an HTTP API enrichment column at this trigger\'s URL by hand before it receives anything.',
     },
     type: TriggerStrategy.WEBHOOK,
+    requireAuth: false,
     props: {
         setupInstructions: Property.MarkDown({
             value: `
@@ -63,7 +62,9 @@ The fields you receive are whatever Clay sends, so they follow your own table's 
     },
 
     async run(context) {
-        const { signingSecret } = context.propsValue;
+        const signingSecret = clayWebhook.trimmedSecretOf(
+            context.propsValue.signingSecret,
+        );
 
         if (signingSecret) {
             const verified = clayWebhook.verifySignature({

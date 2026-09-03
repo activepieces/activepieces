@@ -12,19 +12,20 @@ async function sendRow({
     row: Record<string, unknown>;
 }): Promise<ClayWebhookResult> {
     const url = normalizeSourceUrl(webhookUrl);
+    const token = trimmedSecretOf(authToken);
     const result = await tryCatch(() =>
         httpClient.sendRequest<unknown>({
             method: HttpMethod.POST,
             url,
-            headers: isNil(authToken)
+            headers: isNil(token)
                 ? undefined
-                : { [WEBHOOK_AUTH_HEADER]: authToken },
+                : { [WEBHOOK_AUTH_HEADER]: token },
             body: row,
         }),
     );
 
     if (result.error !== null) {
-        throw new Error(sendFailureMessage({ error: result.error, authToken }));
+        throw new Error(sendFailureMessage({ error: result.error, authToken: token }));
     }
 
     return { success: true, response: result.data.body };
@@ -121,6 +122,11 @@ function normalizeSourceUrl(webhookUrl: string): string {
     return trimmed;
 }
 
+function trimmedSecretOf(secret: string | undefined): string | undefined {
+    const trimmed = secret?.trim();
+    return isNil(trimmed) || trimmed.length === 0 ? undefined : trimmed;
+}
+
 function parsedUrlOf(value: string): URL | undefined {
     try {
         return new URL(value);
@@ -174,6 +180,7 @@ export const clayWebhook = {
     signatureHeaderOf,
     isVerificationPing,
     normalizeSourceUrl,
+    trimmedSecretOf,
 };
 
 export const WEBHOOK_AUTH_HEADER = 'x-clay-webhook-auth';
