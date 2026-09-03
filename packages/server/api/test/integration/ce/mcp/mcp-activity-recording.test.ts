@@ -1,6 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { McpActivity, McpOAuthClientKey } from '@activepieces/shared'
+import { createMockConnection } from '../../../helpers/mocks'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -102,6 +103,44 @@ describe('MCP activity recording', () => {
         expect(await findActivityRows()).toHaveLength(0)
     })
 
+    it('serves the recorded payload back', async () => {
+        await callRunAction({ connectionExternalId: 'conn-external-1' })
+        const [activity] = await findActivityRows()
+
+        const response = await ctx.get(`/v1/mcp-activity/${activity.id}/payload`)
+
+        expect(response.statusCode).toBe(200)
+        const payload = response.json()
+        expect(payload.input).toMatchObject({ pieceName: 'doesnotexist', connectionExternalId: 'conn-external-1' })
+        expect(payload.truncated).toBe(false)
+    })
+
+    it('names the connection on the listed entry', async () => {
+        const connection = createMockConnection({
+            platformId: ctx.platform.id,
+            projectIds: [ctx.project.id],
+            displayName: 'Production Slack',
+            externalId: 'conn-external-1',
+        }, ctx.user.id)
+        await databaseConnection().getRepository('app_connection').save(connection)
+
+        await callRunAction({ connectionExternalId: 'conn-external-1' })
+
+        const { data } = (await ctx.get('/v1/mcp-activity')).json()
+        expect(data).toHaveLength(1)
+        expect(data[0].connectionExternalId).toBe('conn-external-1')
+        expect(data[0].connectionDisplayName).toBe('Production Slack')
+        expect(data[0].hasPayload).toBe(true)
+    })
+
+    it('leaves the connection name null when nothing resolves', async () => {
+        await callRunAction({ connectionExternalId: 'hallucinated-connection' })
+
+        const { data } = (await ctx.get('/v1/mcp-activity')).json()
+        expect(data[0].connectionExternalId).toBe('hallucinated-connection')
+        expect(data[0].connectionDisplayName).toBeNull()
+    })
+
     it('records no connection when the call carried none', async () => {
         await callRunAction({})
 
@@ -181,14 +220,29 @@ describe('MCP activity recording', () => {
     })
 
     // The default retention pass filters on created with no projectId to narrow it,
-    // so without this index the hourly sweep scans the whole table.
-    it('indexes the retention sweep', async () => {
+    // and an unprivileged member's listing filters on userId under platformId.
+    // Neither has a usable index without these two.
+    it('indexes the retention sweep and the per-member listing', async () => {
         const indexes = await databaseConnection().query(
             'SELECT indexname FROM pg_indexes WHERE tablename = \'mcp_activity\'',
         )
         const indexNames = indexes.map((index: { indexname: string }) => index.indexname)
 
         expect(indexNames).toContain('idx_mcp_activity_created_id')
+        expect(indexNames).toContain('idx_mcp_activity_platform_id_user_id_created_id')
+    })
+
+    // The feed's two headline filters. Under the platform-and-created index alone
+    // both are post-filters, so narrowing to the few failed calls on a busy platform
+    // walks the whole platform's history to fill one page.
+    it('indexes the status and client filters', async () => {
+        const indexes = await databaseConnection().query(
+            'SELECT indexname FROM pg_indexes WHERE tablename = \'mcp_activity\'',
+        )
+        const indexNames = indexes.map((index: { indexname: string }) => index.indexname)
+
+        expect(indexNames).toContain('idx_mcp_activity_platform_id_status_created_id')
+        expect(indexNames).toContain('idx_mcp_activity_platform_id_client_key_created_id')
     })
 
     // Postgres runs the ON DELETE SET NULL action per deleted file row, so without
