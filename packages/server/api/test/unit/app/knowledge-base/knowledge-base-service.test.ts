@@ -7,6 +7,15 @@ const mockSave = vi.fn()
 const mockFind = vi.fn()
 const mockInsert = vi.fn()
 const mockUpdate = vi.fn()
+const mockUpdateExecute = vi.fn().mockResolvedValue({ raw: [{ id: 'chunk-1' }] })
+const mockUpdateWhere = vi.fn()
+const updateBuilder = {
+    update: () => updateBuilder,
+    set: (values: unknown) => { mockUpdate(values); return updateBuilder },
+    where: (_sql: string, params: unknown) => { mockUpdateWhere(params); return updateBuilder },
+    returning: () => updateBuilder,
+    execute: mockUpdateExecute,
+}
 
 vi.mock('../../../../src/app/core/db/repo-factory', () => ({
     repoFactory: vi.fn(() => () => ({
@@ -16,7 +25,7 @@ vi.mock('../../../../src/app/core/db/repo-factory', () => ({
         save: mockSave,
         find: mockFind,
         insert: mockInsert,
-        update: mockUpdate,
+        createQueryBuilder: () => updateBuilder,
     })),
 }))
 
@@ -29,7 +38,7 @@ const chunkRepo = {
     save: mockSave,
     find: mockFind,
     insert: mockInsert,
-    update: mockUpdate,
+    createQueryBuilder: () => updateBuilder,
 }
 
 vi.mock('../../../../src/app/database/database-connection', () => ({
@@ -226,10 +235,8 @@ describe('knowledgeBaseService', () => {
 
             expect(mockInsert).not.toHaveBeenCalled()
             expect(mockUpdate).toHaveBeenCalledTimes(1)
-            expect(mockUpdate).toHaveBeenCalledWith(
-                { id: 'chunk-1', projectId: 'proj-1' },
-                expect.objectContaining({ embedding: '[0.1,0.2,0.3]' }),
-            )
+            expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ embedding: '[0.1,0.2,0.3]' }))
+            expect(mockUpdateWhere).toHaveBeenCalledWith({ id: 'chunk-1', projectId: 'proj-1' })
         })
 
         it('should handle mixed insert and update chunks', async () => {

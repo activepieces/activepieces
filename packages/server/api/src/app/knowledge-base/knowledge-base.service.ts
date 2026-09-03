@@ -250,15 +250,24 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 await repo.insert(entities.slice(start, start + INSERT_BATCH_SIZE))
             }
             for (const chunk of existingChunks) {
-                await repo.update(
-                    { id: chunk.id, projectId },
-                    {
+                const updated = await repo.createQueryBuilder()
+                    .update()
+                    .set({
                         ...spreadIfDefined('content', chunk.content),
                         ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
                         ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
                         ...spreadIfDefined('metadata', chunk.metadata),
-                    },
-                )
+                    })
+                    .where('id = :id AND "projectId" = :projectId', { id: chunk.id, projectId })
+                    .returning('id')
+                    .execute()
+                const matchedRows: unknown[] = updated.raw ?? []
+                if (matchedRows.length === 0) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.ENTITY_NOT_FOUND,
+                        params: { entityType: 'KnowledgeBaseChunk', entityId: chunk.id ?? '' },
+                    })
+                }
             }
         })
 

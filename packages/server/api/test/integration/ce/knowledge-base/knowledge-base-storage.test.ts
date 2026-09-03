@@ -92,4 +92,32 @@ describe('storing the chunks of a knowledge file', () => {
 
         expect(await countOf(ctx, knowledgeBaseFileId)).toBe(chunks.length)
     })
+
+    // A restore gives every chunk a fresh id, so ids read before one are stale afterwards. Updating
+    // by a stale id used to match no rows and still report success.
+    it('refuses an update whose chunk a restore has already replaced', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'The office closes at six.')
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ content: 'first', chunkIndex: 0, metadata: {} }],
+        })
+        const [before] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ content: 'restored', chunkIndex: 0, metadata: {} }],
+        })
+
+        await expect(knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ id: before.id, content: 'an edit against the old snapshot' }],
+        })).rejects.toThrow()
+
+        const [after] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(after.content).toBe('restored')
+    })
 })
