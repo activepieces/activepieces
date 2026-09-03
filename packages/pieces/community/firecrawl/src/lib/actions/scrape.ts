@@ -299,13 +299,13 @@ export const scrape = createAction({
     });
 
     const result = response.body;
-    await downloadAndSaveScreenshot(result.data, context);
+    const savedScreenshot = await downloadAndSaveScreenshot(result.data, context);
     const savedPdfs = await downloadAndSavePdfs(result.data, context);
 
     // reorder the data object to put screenshot first, then user's selected format only
     result.data = {
-      screenshot: result.data.screenshot,
-      [format]: result.data[format],
+      screenshot: savedScreenshot,
+      ...(format !== 'screenshot' && { [format]: result.data[format] }),
       pdfs: savedPdfs,
       metadata: result.data.metadata
     };

@@ -86,7 +86,7 @@ export const scrapeUrl = createAction({
 
       const result = response.body;
       if (format === 'screenshot' && result?.data?.screenshot) {
-        await downloadAndSaveScreenshot(result.data, context);
+        result.data.screenshot = await downloadAndSaveScreenshot(result.data, context);
       }
       return result;
     } catch (error: any) {
