@@ -5,6 +5,7 @@ import {
   ColorName,
   MAX_DRAFT_PROMPT_LENGTH,
   PROJECT_COLOR_PALETTE,
+  ProjectType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -13,10 +14,12 @@ import {
   LayoutGrid,
   List,
   Pencil,
+  Plus,
   Search,
   SearchX,
   Settings2,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -34,6 +37,8 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -42,6 +47,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { AgentCard } from '@/features/agents/agent-card';
 import { AgentTrioMark } from '@/features/agents/agent-mark';
+import { AgentTable } from '@/features/agents/agent-table';
 import {
   agentsMutations,
   agentsQueries,
@@ -215,7 +221,11 @@ const AgentsPageContent = () => {
     );
   };
 
-  const createBlankAgent = () => {
+  const personalProject = (allProjects ?? []).find(
+    (entry) => entry.type === ProjectType.PERSONAL,
+  );
+
+  const createBlankAgent = (projectId: string) => {
     if (createAgent.isPending) {
       return;
     }
@@ -228,10 +238,20 @@ const AgentsPageContent = () => {
           color: ColorName.PURPLE,
           instructions: '',
         },
-        projectId: createInProjectId,
+        projectId,
       }),
     );
   };
+
+  const projectDotColorFor = (agent: AgentSummary) =>
+    PROJECT_COLOR_PALETTE[
+      projectById.get(agent.projectId)?.icon.color ?? project.icon.color
+    ]?.color;
+
+  const openAgent = (agent: AgentSummary) =>
+    navigate(`/projects/${agent.projectId}/agents/${agent.id}`);
+
+  const hasPrompt = prompt.trim().length > 0;
 
   const projectById = useMemo(
     () => new Map((allProjects ?? []).map((entry) => [entry.id, entry])),
@@ -329,7 +349,7 @@ const AgentsPageContent = () => {
             variant="outline"
             className="mt-4 gap-2"
             loading={createAgent.isPending}
-            onClick={createBlankAgent}
+            onClick={() => createBlankAgent(createInProjectId)}
           >
             <Pencil size={16} />
             {t('Write one by hand instead')}
@@ -383,20 +403,30 @@ const AgentsPageContent = () => {
             </Button>
           </div>
         </div>
-        {!needsProvider && (allProjects ?? []).length > 1 && (
-          <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
-            <span>{t('New agents go to')}</span>
-            <SearchableSelect
-              value={shownDestinationId}
-              onChange={(value) => setPickedProjectId(value)}
-              options={projectOptions}
-              disabled={isBuilding}
-              placeholder={t('Search projects')}
-              contentWidth="260px"
-              triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"
-            />
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {!needsProvider && hasPrompt && (allProjects ?? []).length > 1 && (
+            <motion.div
+              className="overflow-hidden"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
+                <span>{t('New agents go to')}</span>
+                <SearchableSelect
+                  value={shownDestinationId}
+                  onChange={(value) => setPickedProjectId(value)}
+                  options={projectOptions}
+                  disabled={isBuilding}
+                  placeholder={t('Search projects')}
+                  contentWidth="260px"
+                  triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {buildError !== null && (
           <p className="max-w-[680px] text-center text-[13px] leading-4 text-destructive">
             {api.extractServerErrorMessage(
@@ -552,6 +582,45 @@ const AgentsPageContent = () => {
                   />
                 </button>
               </div>
+              {personalProject === undefined ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="px-3.5 text-neutral-700"
+                      loading={createAgent.isPending}
+                    >
+                      <Plus size={15} />
+                      {t('New agent')}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[220px]">
+                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                      {t('Create it in')}
+                    </DropdownMenuLabel>
+                    {projectOptions.map((option) => (
+                      <DropdownMenuItem
+                        key={option.value}
+                        onSelect={() => createBlankAgent(option.value)}
+                      >
+                        {option.label}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="px-3.5 text-neutral-700"
+                  loading={createAgent.isPending}
+                  onClick={() => createBlankAgent(personalProject.id)}
+                >
+                  <Plus size={15} />
+                  {t('New agent')}
+                </Button>
+              )}
             </div>
           </div>
 
@@ -571,28 +640,20 @@ const AgentsPageContent = () => {
                 narrowedByProject={search.trim().length === 0}
               />
             ) : null
+          ) : layout === 'list' ? (
+            <AgentTable
+              agents={agents}
+              projectDotColorFor={projectDotColorFor}
+              onOpen={openAgent}
+            />
           ) : (
-            <div
-              className={cn(
-                'grid gap-6',
-                layout === 'grid'
-                  ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
-                  : 'grid-cols-1',
-              )}
-            >
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {agents.map((agent: AgentSummary) => (
                 <AgentCard
                   key={agent.id}
                   agent={agent}
-                  projectDotColor={
-                    PROJECT_COLOR_PALETTE[
-                      projectById.get(agent.projectId)?.icon.color ??
-                        project.icon.color
-                    ]?.color
-                  }
-                  onClick={() =>
-                    navigate(`/projects/${agent.projectId}/agents/${agent.id}`)
-                  }
+                  projectDotColor={projectDotColorFor(agent)}
+                  onClick={() => openAgent(agent)}
                 />
               ))}
             </div>

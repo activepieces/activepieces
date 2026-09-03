@@ -1,4 +1,4 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   AgentConversation,
   AgentMessageSource,
@@ -227,6 +227,7 @@ function ChatBoxContent({
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
     personalization.status !== null &&
