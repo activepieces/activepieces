@@ -5,7 +5,6 @@ import {
   ColorName,
   MAX_DRAFT_PROMPT_LENGTH,
   PROJECT_COLOR_PALETTE,
-  ProjectType,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
@@ -37,8 +36,6 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
@@ -54,6 +51,7 @@ import {
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
 import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
+import { NewBlankAgentButton } from '@/features/agents/new-blank-agent-button';
 import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
@@ -221,10 +219,6 @@ const AgentsPageContent = () => {
     );
   };
 
-  const personalProject = (allProjects ?? []).find(
-    (entry) => entry.type === ProjectType.PERSONAL,
-  );
-
   const createBlankAgent = (projectId: string) => {
     if (createAgent.isPending) {
       return;
@@ -345,15 +339,14 @@ const AgentsPageContent = () => {
             </p>
           ))}
         {chatIsOffOnEveryProvider && (
-          <Button
-            variant="outline"
+          <NewBlankAgentButton
+            projects={allProjects ?? []}
+            pending={createAgent.isPending}
+            onCreate={createBlankAgent}
             className="mt-4 gap-2"
-            loading={createAgent.isPending}
-            onClick={() => createBlankAgent(createInProjectId)}
-          >
-            <Pencil size={16} />
-            {t('Write one by hand instead')}
-          </Button>
+            icon={<Pencil size={16} />}
+            label={t('Write one by hand instead')}
+          />
         )}
         <div
           className={cn(
@@ -582,45 +575,15 @@ const AgentsPageContent = () => {
                   />
                 </button>
               </div>
-              {personalProject === undefined ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="px-3.5 text-neutral-700"
-                      loading={createAgent.isPending}
-                    >
-                      <Plus size={15} />
-                      {t('New agent')}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-[220px]">
-                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                      {t('Create it in')}
-                    </DropdownMenuLabel>
-                    {projectOptions.map((option) => (
-                      <DropdownMenuItem
-                        key={option.value}
-                        onSelect={() => createBlankAgent(option.value)}
-                      >
-                        {option.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="px-3.5 text-neutral-700"
-                  loading={createAgent.isPending}
-                  onClick={() => createBlankAgent(personalProject.id)}
-                >
-                  <Plus size={15} />
-                  {t('New agent')}
-                </Button>
-              )}
+              <NewBlankAgentButton
+                projects={allProjects ?? []}
+                pending={createAgent.isPending}
+                onCreate={createBlankAgent}
+                size="sm"
+                className="px-3.5 text-neutral-700"
+                icon={<Plus size={15} />}
+                label={t('New agent')}
+              />
             </div>
           </div>
 
