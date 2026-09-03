@@ -22,7 +22,7 @@ Use this for production, views the published version of the chat flow.
 \`\`\`text
 {{chatUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
 \`\`\`
-Opens the draft (the version you are editing now) so you can try the chat before publishing. Same link with \`?${USE_DRAFT_QUERY_PARAM_NAME}=true\` on the end. You can also press **Open Chat** in the builder to chat with the draft in a side panel.
+Opens the draft (the version you are editing now) so you can try the chat before publishing. You can also press **Open Chat** in the builder to chat with the draft in a side panel.
 `;
 
 export const onChatSubmission = createTrigger({
