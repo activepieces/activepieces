@@ -20,6 +20,7 @@ const updateBuilder = {
     orUpdate: () => updateBuilder,
     set: (values: unknown) => { mockUpdate(values); return updateBuilder },
     where: (_sql: string, params: unknown) => { mockUpdateWhere(params); return updateBuilder },
+    andWhere: () => updateBuilder,
     returning: () => updateBuilder,
     execute: mockUpdateExecute,
 }

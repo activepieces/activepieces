@@ -116,6 +116,25 @@ describe('storing the chunks of a knowledge file', () => {
         expect(await countOf(ctx, knowledgeBaseFileId)).toBe(1)
     })
 
+    // A caller is free to number the chunks it sends. Treating the count as an upper bound on the
+    // index deleted the very rows the request had just written.
+    it('keeps every submitted chunk when the indexes are not contiguous', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'sparse indexes')
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { content: 'first', chunkIndex: 0, metadata: {} },
+                { content: 'third', chunkIndex: 2, metadata: {} },
+            ],
+        })
+
+        const stored = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(stored.map((chunk) => chunk.content).sort()).toEqual(['first', 'third'])
+    })
+
     // A file that comes back with nothing in it has nothing in it. Returning early left the
     // previous text in place, so the agent kept answering from a document that had been emptied.
     it('clears the file when a restore carries no chunks', async () => {

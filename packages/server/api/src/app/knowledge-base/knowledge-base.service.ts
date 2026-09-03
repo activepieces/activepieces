@@ -247,8 +247,10 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 const stored = await repo.find({ where: { projectId, knowledgeBaseFileId }, select: ['id', 'chunkIndex'] })
                 const idByIndex = new Map(stored.map((row) => [row.chunkIndex, row.id]))
                 const missing: Record<string, unknown>[] = []
+                const submittedIndexes: number[] = []
                 for (const [index, chunk] of newChunks.entries()) {
                     const chunkIndex = chunk.chunkIndex ?? index
+                    submittedIndexes.push(chunkIndex)
                     const values = {
                         content: chunk.content ?? '',
                         ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
@@ -264,10 +266,13 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
                     await repo.insert(missing.slice(start, start + INSERT_BATCH_SIZE))
                 }
-                await repo.createQueryBuilder()
+                const cleanup = repo.createQueryBuilder()
                     .delete()
-                    .where('"projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId AND "chunkIndex" >= :length', { projectId, knowledgeBaseFileId, length: newChunks.length })
-                    .execute()
+                    .where('"projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId', { projectId, knowledgeBaseFileId })
+                if (submittedIndexes.length > 0) {
+                    cleanup.andWhere('"chunkIndex" NOT IN (:...submittedIndexes)', { submittedIndexes })
+                }
+                await cleanup.execute()
                 return
             }
 
