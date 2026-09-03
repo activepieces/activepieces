@@ -31,6 +31,12 @@ const DISCOUNT_DURATION: EnumLabels = {
   3: 'Repeating',
 };
 
+const SUPPORT_CASE_STATUS: EnumLabels = {
+  1: 'Open',
+  2: 'Closed',
+  3: 'Spam',
+};
+
 const SUPPORT_CASE_SOURCE: EnumLabels = {
   1: 'Website',
   2: 'Email',
@@ -79,6 +85,7 @@ export const outsetaEnums = {
   billingRenewalTerm: describe(BILLING_RENEWAL_TERM),
   billingAddOnType: describe(BILLING_ADD_ON_TYPE),
   discountDuration: describe(DISCOUNT_DURATION),
+  supportCaseStatus: describe(SUPPORT_CASE_STATUS),
   supportCaseSource: describe(SUPPORT_CASE_SOURCE),
   billingTransactionType: describe(BILLING_TRANSACTION_TYPE),
   billingInvoiceStatus: describe(BILLING_INVOICE_STATUS),

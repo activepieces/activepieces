@@ -297,6 +297,7 @@ function supportCase(raw: OutsetaCase) {
     subject: raw.Subject ?? null,
     body: raw.Body ?? null,
     status: raw.Status ?? null,
+    status_label: outsetaEnums.supportCaseStatus.label(raw.Status),
     source: raw.Source ?? null,
     source_label: outsetaEnums.supportCaseSource.label(raw.Source),
     submitted_date: raw.SubmittedDateTime ?? null,

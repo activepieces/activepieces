@@ -25,7 +25,7 @@ export const listCasesAction = createAction({
       display: 'builder',
       label: 'Ticket',
       icon: 'inbox',
-      props: ['search', 'subject', 'source'],
+      props: ['search', 'subject', 'status', 'source'],
     },
     {
       key: 'submitter',
@@ -62,6 +62,12 @@ export const listCasesAction = createAction({
       required: false,
       icon: 'text',
       placeholder: 'invoice',
+    }),
+    status: Property.StaticDropdown({
+      displayName: 'Status is',
+      required: false,
+      icon: 'filter',
+      options: { disabled: false, options: outsetaEnums.supportCaseStatus.options },
     }),
     source: Property.StaticDropdown({
       displayName: 'Source is',
@@ -117,6 +123,7 @@ export const listCasesAction = createAction({
       filters: [
         { field: 'q', value: context.propsValue.search },
         { field: 'Subject', operator: 'contains', value: context.propsValue.subject },
+        { field: 'Status', value: context.propsValue.status },
         { field: 'Source', value: context.propsValue.source },
         { field: 'FromPerson.Uid', value: context.propsValue.fromPersonUid },
         { field: 'FromPerson.Email', value: context.propsValue.fromPersonEmail },
