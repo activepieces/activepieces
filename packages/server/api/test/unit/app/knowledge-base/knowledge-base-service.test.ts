@@ -228,6 +228,8 @@ describe('knowledgeBaseService', () => {
         })
 
         it('should update existing chunks when id is provided', async () => {
+            mockFind.mockResolvedValue([{ id: 'chunk-1', chunkIndex: 3 }])
+
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
@@ -238,12 +240,29 @@ describe('knowledgeBaseService', () => {
             })
 
             expect(mockInsert).not.toHaveBeenCalled()
-            expect(mockUpdate).toHaveBeenCalledTimes(1)
-            expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({ embedding: '[0.1,0.2,0.3]' }))
-            expect(mockUpdateWhere).toHaveBeenCalledWith({ id: 'chunk-1', projectId: 'proj-1', knowledgeBaseFileId: 'kb-file-1' })
+            expect(mockRepoUpdate).toHaveBeenCalledTimes(1)
+            expect(mockRepoUpdate).toHaveBeenCalledWith(
+                { id: 'chunk-1', projectId: 'proj-1', knowledgeBaseFileId: 'kb-file-1' },
+                expect.objectContaining({ embedding: '[0.1,0.2,0.3]', chunkIndex: 3 }),
+            )
+        })
+
+        it('should refuse an id that names no chunk of the file', async () => {
+            mockFind.mockResolvedValue([])
+
+            await expect(knowledgeBaseService(mockLog).storeChunks({
+                projectId: 'proj-1',
+                knowledgeBaseFileId: 'kb-file-1',
+                chunks: [{ id: 'chunk-1', content: 'an edit' }],
+            })).rejects.toThrow()
+
+            expect(mockRepoUpdate).not.toHaveBeenCalled()
+            expect(mockInsert).not.toHaveBeenCalled()
         })
 
         it('should handle mixed insert and update chunks', async () => {
+            mockFind.mockResolvedValue([{ id: 'existing-1', chunkIndex: 5 }])
+
             await knowledgeBaseService(mockLog).storeChunks({
                 projectId: 'proj-1',
                 knowledgeBaseFileId: 'kb-file-1',
@@ -254,7 +273,7 @@ describe('knowledgeBaseService', () => {
             })
 
             expect(mockInsert).toHaveBeenCalledTimes(1)
-            expect(mockUpdate).toHaveBeenCalledTimes(1)
+            expect(mockRepoUpdate).toHaveBeenCalledTimes(1)
         })
 
         it('should clear the file rather than insert or update when no chunks are given', async () => {

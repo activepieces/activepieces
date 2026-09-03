@@ -181,6 +181,33 @@ describe('storing the chunks of a knowledge file', () => {
         expect(stored[0].content).toBe('an append onto the same place')
     })
 
+    // Moving a chunk onto a position another chunk already holds is a move, not a second copy.
+    it('leaves one chunk behind when an edit moves onto an occupied index', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'a move onto an occupied place')
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { content: 'the first place', chunkIndex: 0, metadata: {} },
+                { content: 'the second place', chunkIndex: 1, metadata: {} },
+            ],
+        })
+        const stored = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        const moving = stored.find((chunk) => chunk.content === 'the first place')
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ id: moving?.id, chunkIndex: 1 }],
+        })
+
+        const after = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(after).toHaveLength(1)
+        expect(after[0].content).toBe('the first place')
+        expect(after[0].id).toBe(moving?.id)
+    })
+
     // A file that comes back with nothing in it has nothing in it. Returning early left the
     // previous text in place, so the agent kept answering from a document that had been emptied.
     it('clears the file when a restore carries no chunks', async () => {
