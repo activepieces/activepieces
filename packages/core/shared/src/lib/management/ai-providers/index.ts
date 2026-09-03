@@ -1,5 +1,6 @@
 import { AiProviderKeyStatus, AIProviderName, BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { formErrors } from '../../form-errors'
 
 export enum AIProviderModelType {
     IMAGE = 'image',
@@ -10,6 +11,11 @@ export const BaseAIProviderAuthConfig = z.object({
     apiKey: z.string(),
 })
 export type BaseAIProviderAuthConfig = z.infer<typeof BaseAIProviderAuthConfig>
+
+export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().min(1),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 
 export const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
 export type AnthropicProviderAuthConfig = z.infer<typeof AnthropicProviderAuthConfig>
@@ -64,6 +70,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.record(z.string(), z.string()).optional(),
+    apiStyle: z.enum(['chat', 'responses']).optional(),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -100,6 +107,13 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/, formErrors.invalidGcpResourceId),
+    region: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/, formErrors.invalidGcpResourceId),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const MistralProviderConfig = z.object({})
 export type MistralProviderConfig = z.infer<typeof MistralProviderConfig>
 
@@ -116,6 +130,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -124,6 +139,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    VertexProviderConfig,
     BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
@@ -189,6 +205,12 @@ const ProviderConfigUnion = z.discriminatedUnion('provider', [
         provider: z.literal(AIProviderName.BEDROCK),
         config: BedrockProviderConfig,
         auth: BedrockProviderAuthConfig,
+    }),
+    z.object({
+        displayName: z.string().min(1),
+        provider: z.literal(AIProviderName.VERTEX),
+        config: VertexProviderConfig,
+        auth: VertexProviderAuthConfig,
     }),
     z.object({
         displayName: z.string().min(1),
@@ -321,6 +343,8 @@ export const GetProviderConfigResponse = z.object({
     config: AIProviderConfig,
     auth: AIProviderAuthConfig,
     platformId: z.string(),
+    modelScope: AiProviderModelScope,
+    modelIds: z.array(z.string()),
 })
 export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
 

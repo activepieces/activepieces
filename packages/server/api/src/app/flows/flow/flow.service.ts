@@ -21,6 +21,7 @@ import { flowVersionMigrationService } from '../flow-version/flow-version-migrat
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
+import { flowPublishHooks } from './flow-publish-hooks'
 import { flowPublishUtils } from './flow-publish-utils'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
@@ -30,6 +31,7 @@ import { flowRepo } from './flow.repo'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
+        await assertExternalIdIsUnique({ projectId, externalId })
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -488,6 +490,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         const publishedFlow = await transaction(async (entityManager) => {
+            await flowPublishHooks.get(log).assertReferencesResolve({
+                projectId,
+                agentExternalIds: flowVersionToPublish.agentIds ?? [],
+                entityManager,
+            })
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
                 userId,
@@ -798,6 +805,19 @@ const assertFlowIsNotNull: <T extends Flow>(
         throw new ActivepiecesError({
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: {},
+        })
+    }
+}
+
+async function assertExternalIdIsUnique({ projectId, externalId }: { projectId: ProjectId, externalId: string | undefined }): Promise<void> {
+    if (isNil(externalId)) {
+        return
+    }
+    const exists = await flowRepo().existsBy({ projectId, externalId })
+    if (exists) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS,
+            params: { externalId },
         })
     }
 }

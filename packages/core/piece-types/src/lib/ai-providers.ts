@@ -24,6 +24,11 @@ const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 const MistralProviderAuthConfig = BaseAIProviderAuthConfig
 
+export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().check(z.minLength(1)),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
+
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
     secretAccessKey: z.string().check(z.minLength(1)),
@@ -49,6 +54,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.optional(z.record(z.string(), z.string())),
+    apiStyle: z.optional(z.enum(['chat', 'responses'])),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -75,6 +81,13 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    region: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const OpenAiCompatibleVendorConfig = z.object({})
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -88,6 +101,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -97,6 +111,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    VertexProviderConfig,
     BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
@@ -227,6 +242,7 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.VERTEX]: GOOGLE_CHAT_MODELS,
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
@@ -273,6 +289,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.ANTHROPIC]: 200_000,
     [AIProviderName.GOOGLE]: 1_048_576,
     [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.VERTEX]: 1_048_576,
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
@@ -349,6 +366,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.CLOUDFLARE_GATEWAY]: buildProviderCapabilities(AIProviderName.CLOUDFLARE_GATEWAY),
     [AIProviderName.CUSTOM]: buildProviderCapabilities(AIProviderName.CUSTOM),
     [AIProviderName.BEDROCK]: buildProviderCapabilities(AIProviderName.BEDROCK),
+    [AIProviderName.VERTEX]: buildProviderCapabilities(AIProviderName.VERTEX),
     [AIProviderName.MISTRAL]: buildProviderCapabilities(AIProviderName.MISTRAL),
     [AIProviderName.ACTIVEPIECES]: buildProviderCapabilities(AIProviderName.ACTIVEPIECES),
     [AIProviderName.XAI]: buildProviderCapabilities(AIProviderName.XAI),

@@ -109,6 +109,7 @@
                   "pages": [
                      "agents/overview",
                      "agents/create",
+                     "agents/manage",
                      "agents/tools",
                      "agents/knowledge",
                      "agents/in-flows"

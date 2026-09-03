@@ -6,6 +6,13 @@ icon: 🔌
 
 Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, Cursor, Windsurf) can read and manipulate flows, connections, tables, and runs through a typed tool interface. One `McpServer` record per project (UNIQUE `projectId`), authenticated by a bearer token. Available in CE, EE, and Cloud.
 
+### Vocabulary
+
+**Grant** — one row of `mcp_oauth_token`: this user's live authorisation for one registered client. The unit the connect page lists and revokes, named `McpOAuthGrant` and served from `/v1/mcp-oauth/grants`.
+**Client** — one `mcp_oauth_client` registration row. Not a stable identity: Claude Code and Codex re-run DCR per sign-in, so one client-as-a-product yields many rows, and one user re-authenticating yields many grants. _Avoid_: using "client" for the thing being revoked.
+**Connection** — belongs to piece auth (`AppConnection`), never to MCP. _Avoid_: "MCP connection" in code; the tab label "Connections" and the `/mcp-server/connections` URL are deliberate copy, not the domain term — the code under `app/routes/mcp-server/grants/` says grant.
+**Pieces (tab)** — the piece actions a connected client can call in one project: the `/mcp-server/pieces` tab. Scoped to piece actions only, never the flow, table or run tools. "Reach" stays the *verb* the tab's own copy and the Connect and Connections copy use ("what it can reach", "the project it can reach") — it is not the label, because a one-word tab reads as a noun first and "Reach" names no object. The tab does link out to the piece-set admin page, so the label sits next to that page's vocabulary; that adjacency was judged the smaller cost. _Avoid_ as the label for this: "Reach" (retired), "Tools" (means the locked/controllable list in project settings), "Capabilities" (over-promises — implies the non-piece tools too), "Actions" (means flow steps), "Permissions" (RBAC, and nothing here is editable — the page is a mirror).
+
 ### Entities & services
 
 - **McpServer** — per-project record: `id`, `projectId` (unique), `token` (72-char), `disabledTools[]` (JSONB, nullable; `null`/`[]` means all controllable tools enabled).
@@ -58,6 +65,8 @@ Exposes an Activepieces project as an MCP server so AI clients (Claude Desktop, 
 - **`openWorldHint` means the tool can change state in a third-party system**, not that it makes an outbound call. Anything that executes real connector steps needs it: `ap_test_flow`, `ap_test_step`, `ap_retry_run`, `ap_run_action`, and every dynamic flow tool. A read that only calls a connected account to populate dropdowns (`ap_get_piece_props`, `ap_resolve_property_options`, `ap_resolve_property_chain`) does not. `ap_retry_run` originally declared `false` here and was wrong — a retry re-runs the published flow and can resend the same Slack message or repeat an outbound write.
 - The hints are **advisory metadata for the client, never enforcement**. Authorization stays with `permissionChecker.wrapExecute` and each tool's `permission`; changing an annotation changes what a client is told, not what a caller is allowed to do.
 
+- **The Pieces tab's search is server-side, and it only works because `pieceDisplayName` is a Fuse key.** `/v1/pieces?searchQuery=` replaces each piece's `actions` with the matched subset (`searchForSuggestion`), which sounds fatal for a page that shows a per-piece action count and a destructive badge — but `searchForSuggestion` searches `['pieceDisplayName', 'displayName', 'description']`, so querying a *piece* name matches every action inside it and the row still lists the lot. Two more things make it safe: `toPieceMetadataModelSummary` computes `summary.actions` from the pre-search `audiencePieces`, so the total count is never narrowed by a query, and the tab force-expands every row while searching, so the count it renders is visibly the list beneath it. Keep the popular-first sort for the unsearched view only — applying it to search results throws away Fuse's relevance ranking. Rows are still grouped and counted client-side in `piecesUtils.toReachablePieces`, which is a pure function with its own unit test.
+
 ### Key files
 
 Entry point: `mcpServerModule`, the Fastify plugin in `mcp/mcp-module.ts` registered from `packages/server/api/src/app/app.ts`.
@@ -67,6 +76,7 @@ Entry point: `mcpServerModule`, the Fastify plugin in `mcp/mcp-module.ts` regist
 - `packages/server/api/src/app/mcp/oauth/` — OAuth 2.0 PKCE flow: metadata, authorize, token, revoke
 - `packages/core/shared/src/lib/automation/mcp/` — McpServer schema, McpToolDefinition, MCP OAuth types
 - `packages/web/src/app/components/project-settings/mcp-server/` — settings panel: credentials, flows-as-tools, tool toggles
+- `packages/web/src/app/routes/mcp-server/` — the Connect, Pieces and Grants tabs
 - `packages/web/src/app/routes/mcp-authorize/` — standalone OAuth consent page and its permission item
 - `packages/web/src/app/routes/embed/` — the `embedded-mcp-*` dialogs for managed-auth consent and settings
 - `packages/ee/embed-sdk/src/index.ts` — embed SDK public methods `authorizeMcp()`, `mcpSettings()`, `generateMcpToken()`
@@ -74,3 +84,11 @@ Entry point: `mcpServerModule`, the Fastify plugin in `mcp/mcp-module.ts` regist
 - `packages/web/src/app/builder/test-step/custom-test-step/mcp-tool-testing-dialog.tsx` — test one MCP tool from the builder
 
 Paths verified 2026-07-17.
+- **Disabling `ap_run_action` leaves the catalogue fully browsable, and there is no way to hide it.** Piece
+  discovery (`ap_research_pieces`, `ap_search_actions`, `ap_search_triggers`, `ap_get_piece_props`) is in
+  `LOCKED_TOOL_NAMES`, which `disabledTools` cannot switch off — only the executor `ap_run_action` is
+  controllable. So a project that turns off running actions still lets a connected client enumerate every
+  piece and action it could theoretically call. That asymmetry is why the Pieces tab warns at the top of the
+  list rather than hiding the rows. Note the failure shape: a disabled tool is never `registerTool`d, so the
+  client gets an unknown-tool error from the protocol, not a permission denial from inside the tool — the
+  copy "every call fails" is directionally right but one layer off.

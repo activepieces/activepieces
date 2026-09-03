@@ -3,7 +3,7 @@ import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/ser
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
-import { redisConnections } from '../../database/redis-connections'
+import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
 import { chatPersonalizationService } from '../../ee/agent/personalization/chat-personalization-service'
 import { fileService, getLocationForFile } from '../../file/file.service'
@@ -28,6 +28,10 @@ import { triggerSourceService } from '../../trigger/trigger-source/trigger-sourc
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName, WorkerGroupAssignment } from '../job'
 import { jobBroker } from '../job-queue/job-broker'
 import { machineService } from '../machine/machine-service'
+
+const FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS = 60
+
+const getFlowBundlePublishClaimKey = (flowVersionId: string): string => `flow_bundle_publish_claim:${flowVersionId}`
 
 const getPollQueueName = (assignment: WorkerGroupAssignment | null): string => {
     if (isNil(assignment)) {
@@ -235,6 +239,16 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             // bundle would just bloat the database (and a null-data pre-save would throw),
             // so tell the worker to skip publishing and always build inline.
             if (getLocationForFile(FileType.FLOW_BUNDLE) !== FileLocation.S3) {
+                return { kind: 'skip' }
+            }
+            // The bundle for a flowVersionId is immutable, and a burst of workers can
+            // finish provisioning the same version at once. Only the first claimer
+            // publishes; losing the claim is a normal outcome, not an error. Without
+            // this, concurrent callers race the deterministic file PK (duplicate key
+            // on the file table) and hammer the same S3 key (503 Slow Down). The
+            // claim expires so a publish that died mid-upload gets retried.
+            const claimed = await distributedStore.putIfAbsent(getFlowBundlePublishClaimKey(input.flowVersionId), 1, FLOW_BUNDLE_PUBLISH_CLAIM_TTL_SECONDS)
+            if (!claimed) {
                 return { kind: 'skip' }
             }
             // S3 without signed URLs: the worker streams the bytes back via uploadFlowBundle.

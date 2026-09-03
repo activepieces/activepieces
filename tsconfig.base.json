@@ -277,6 +277,9 @@
       "@activepieces/piece-claude": [
         "packages/pieces/community/claude/src/index.ts"
       ],
+      "@activepieces/piece-clay": [
+        "packages/pieces/community/clay/src/index.ts"
+      ],
       "@activepieces/piece-clearout": [
         "packages/pieces/community/clearout/src/index.ts"
       ],
@@ -505,6 +508,9 @@
       ],
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
+      ],
+      "@activepieces/piece-formio": [
+        "packages/pieces/community/formio/src/index.ts"
       ],
       "@activepieces/piece-forms": ["packages/pieces/core/forms/src/index.ts"],
       "@activepieces/piece-formstack": [

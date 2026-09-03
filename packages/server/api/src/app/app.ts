@@ -19,6 +19,7 @@ import { appConnectionModule } from './app-connection/app-connection.module'
 import { platformAppConnectionModule } from './app-connection/platform-app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { otpModule } from './authentication/otp/otp-module'
+import { passwordlessAuthModule } from './authentication/passwordless-auth.module'
 import { canaryRoutingMiddleware } from './core/canary/canary-routing.middleware'
 import { collaborativeModule } from './core/collaborative/collaborative.module'
 import { oidcModule } from './core/security/oidc/oidc.module'
@@ -28,6 +29,7 @@ import { authorizationMiddleware } from './core/security/v2/authz/authorization-
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { agentEvalModule } from './ee/agent/agent-eval-controller'
 import { agentHelpers } from './ee/agent/agent-helpers'
+import { assertAgentsResolveInProject } from './ee/agent/agent-service'
 import { agentModule } from './ee/agent/agent.module'
 import { alertsModule } from './ee/alerts/alerts-module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
@@ -70,6 +72,7 @@ import { userModule } from './ee/users/user.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 import { flagHooks } from './flags/flags.hooks'
+import { flowPublishHooks } from './flows/flow/flow-publish-hooks'
 import { flowBackgroundJobs } from './flows/flow/flow.jobs'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
@@ -92,12 +95,14 @@ import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
+import { mcpOAuthGrantsController } from './mcp/oauth/token/mcp-oauth-grants.controller'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { startDevPieceWatcher } from './pieces/dev-piece-watcher'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
 import { pieceSyncService } from './pieces/piece-sync-service'
 import { billingProvider } from './platform/billing-provider'
+import { piecesReportModule } from './platform/pieces-report/pieces-report.module'
 import { platformModule } from './platform/platform.module'
 import { projectHooks } from './project/project-hooks'
 import { storeEntryModule } from './store-entry/store-entry.module'
@@ -238,9 +243,11 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(authenticationModule)
     await app.register(triggerModule)
     await app.register(platformModule)
+    await app.register(piecesReportModule)
     await app.register(humanInputModule)
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
+    await app.register(mcpOAuthGrantsController)
     await app.register(agentsModule)
     await app.register(platformUserModule)
     await app.register(alertsModule)
@@ -325,6 +332,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(pieceSetModule)
             await app.register(otpModule)
             await app.register(enterpriseLocalAuthnModule)
+            await app.register(passwordlessAuthModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
@@ -345,6 +353,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -381,6 +390,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             flagHooks.set(enterpriseFlagsHooks)
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
+            flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)
