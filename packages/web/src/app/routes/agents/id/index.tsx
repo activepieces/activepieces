@@ -20,18 +20,14 @@ import { t } from 'i18next';
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   FlaskConical,
   Loader2,
   Pencil,
-  Rocket,
   SearchX,
   Settings2,
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -54,6 +50,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/custom/empty';
+import { HistoryIcon } from '@/components/icons/history';
+import { PanelLeftCloseIcon } from '@/components/icons/panel-left-close';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -898,12 +896,12 @@ const AgentEditScreen = ({
         onSubmit={submitIfIdle}
         className="flex h-full w-full min-h-0 flex-col"
       >
-        <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
           <button
             type="button"
             aria-label={t('Back to the agent')}
             onClick={() => (unsavedTyping ? setExitRequested(true) : onExit())}
-            className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <ChevronLeft size={16} />
           </button>
@@ -914,25 +912,26 @@ const AgentEditScreen = ({
               className="group relative shrink-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <AgentMark
+                size="sm"
                 icon={form.watch('icon')}
                 color={form.watch('color')}
               />
-              <span className="absolute -bottom-[3px] -end-[3px] flex size-[19px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors group-hover:border-foreground/30 group-hover:bg-accent group-hover:text-foreground">
-                <Pencil size={11} strokeWidth={2.2} />
+              <span className="absolute -bottom-[3px] -end-[3px] flex size-[16px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors group-hover:border-foreground/30 group-hover:bg-accent group-hover:text-foreground">
+                <Pencil size={9} strokeWidth={2.2} />
               </span>
             </button>
           </AgentIdentityPopover>
-          <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
+          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
             <AgentIdentityPopover form={form}>
               <button
                 type="button"
                 aria-label={t('Edit name and appearance')}
-                className="min-w-0 truncate rounded-md text-start text-[17px] font-semibold leading-[22px] tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
+                className="min-w-0 truncate rounded-md text-start text-base font-semibold leading-5 tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {form.watch('displayName')}
               </button>
             </AgentIdentityPopover>
-            <span className="flex min-w-0 items-center gap-2 text-[13px] leading-4 text-muted-foreground">
+            <span className="flex min-w-0 items-center gap-2 text-xs leading-4 text-muted-foreground">
               <span className="truncate">
                 {HEADER_STATUS_COPY[
                   agentEditState.headerStatus({
@@ -961,24 +960,9 @@ const AgentEditScreen = ({
             type="submit"
             loading={updateAgent.isPending}
             disabled={!hasChanges || stageDraft.isPending}
-            className="h-[38px] shrink-0 gap-2 overflow-hidden rounded-lg px-[18px]"
+            className="h-[38px] shrink-0 rounded-lg px-4"
           >
-            <motion.span
-              className="flex items-center"
-              animate={
-                justLaunched
-                  ? { x: 26, y: -26, rotate: 12, opacity: 0 }
-                  : { x: 0, y: 0, rotate: 0, opacity: 1 }
-              }
-              transition={
-                justLaunched
-                  ? { duration: 0.5, ease: 'easeOut' }
-                  : { duration: 0.2, delay: 0.35 }
-              }
-            >
-              <Rocket size={15} />
-            </motion.span>
-            {justLaunched ? t('Live') : t('Save and go live')}
+            {justLaunched ? t('Live') : t('Publish')}
           </Button>
         </div>
 
@@ -1247,7 +1231,16 @@ const AgentEditorContent = () => {
         </div>
       </aside>
       <div className="flex min-w-0 grow flex-col">
-        <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+          <button
+            type="button"
+            aria-label={t('Back to agents')}
+            onClick={() => navigate('/agents')}
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
           <button
             type="button"
             aria-label={
@@ -1256,35 +1249,24 @@ const AgentEditorContent = () => {
                 : t('Expand conversations')
             }
             onClick={() => setConversationsOpen(!conversationsOpen)}
-            className="flex size-[34px] shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             {conversationsOpen ? (
-              <ChevronsLeft size={16} />
+              <PanelLeftCloseIcon size={16} />
             ) : (
-              <ChevronsRight size={16} />
+              <HistoryIcon size={16} />
             )}
           </button>
-          <AgentMark icon={agent.icon} color={agent.color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-[2px]">
-            <span className="truncate text-[17px] leading-[22px] font-semibold tracking-[-0.01em]">
+          <AgentMark size="sm" icon={agent.icon} color={agent.color} />
+          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
+            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
               {agent.displayName}
             </span>
-            <span className="truncate text-[13px] leading-4 text-muted-foreground">
+            <span className="truncate text-xs leading-4 text-muted-foreground">
               {agent.description ?? t('No description yet')}
             </span>
           </div>
           <div className="flex min-w-0 shrink items-center gap-2">
-            {agent.draft.modelName && (
-              <span className="flex h-[34px] max-w-[220px] items-center gap-[7px] overflow-hidden rounded-lg border border-border bg-background px-[11px] text-[13px] leading-4">
-                <span
-                  className="size-[11px] shrink-0 rounded-[3px]"
-                  style={{
-                    backgroundColor: PROJECT_COLOR_PALETTE[agent.color].color,
-                  }}
-                />
-                <span className="truncate">{agent.draft.modelName}</span>
-              </span>
-            )}
             <Button
               type="button"
               variant="outline"
