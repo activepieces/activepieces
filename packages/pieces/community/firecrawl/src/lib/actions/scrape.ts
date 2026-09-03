@@ -79,6 +79,10 @@ export const scrape = createAction({
               {
                 type: 'screenshot',
               },
+              {
+                type: 'pdf',
+                format: 'A4',
+              },
             ],
           }),
         };
@@ -102,7 +106,6 @@ export const scrape = createAction({
             { label: 'Images', value: 'images' },
             { label: 'Screenshot', value: 'screenshot' },
             { label: 'JSON', value: 'json' },
-            { label: 'PDF', value: 'pdf' }
           ]
         };
       },
@@ -255,9 +258,9 @@ export const scrape = createAction({
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
-    
+
     const format = propsValue.formats as string;
-    const formatsArray: any[] = []; 
+    const formatsArray: any[] = [];
 
     // user selection
     if (format === 'screenshot') {
@@ -275,8 +278,6 @@ export const scrape = createAction({
         prompt: jsonFormat.prompt,
         schema: jsonFormat.schema
       });
-    } else if (format === 'pdf') {
-      body['actions'] = [...(body['actions'] || []), { type: 'pdf', format: 'A4' }];
     } else {
       const simpleFormat = forSimpleOutputFormat(format);
       formatsArray.push(simpleFormat);
@@ -307,10 +308,9 @@ export const scrape = createAction({
       )
     );
 
-    // reorder the data object to put screenshot first, then user's selected format only
     result.data = {
       screenshot: savedScreenshot,
-      ...(format !== 'pdf' && format !== 'screenshot' && { [format]: result.data[format] }),
+      ...(format !== 'screenshot' && { [format]: result.data[format] }),
       actions: {
         pdfs: savedPdfs,
         screenshots: savedActionScreenshots,
