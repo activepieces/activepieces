@@ -15,7 +15,7 @@ const scrapeResultFields: OutputSchema['fields'] = [
     ],
   },
   {
-    key: 'pdf',
+    key: 'pdfs',
     label: 'PDF',
     listItems: [
       { key: 'fileName', label: 'File Name' },

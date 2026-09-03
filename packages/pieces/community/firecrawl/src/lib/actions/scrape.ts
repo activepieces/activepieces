@@ -305,7 +305,7 @@ export const scrape = createAction({
     // reorder the data object to put screenshot first, then user's selected format only
     result.data = {
       screenshot: savedScreenshot,
-      ...(format !== 'screenshot' && { [format]: result.data[format] }),
+      ...(format !== 'pdf' && format !== 'screenshot' && { [format]: result.data[format] }),
       pdfs: savedPdfs,
       metadata: result.data.metadata
     };
