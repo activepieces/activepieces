@@ -3,12 +3,12 @@ import { t } from 'i18next';
 
 const CDN_ICONS_URL = 'https://cdn.activepieces.com/icons';
 
-function icon(key: McpOAuthClientKey): string {
-  return MCP_CLIENT_BRANDING[key].icon;
+function icon(key: McpOAuthClientKey | null): string {
+  return MCP_CLIENT_BRANDING[key ?? 'unknown'].icon;
 }
 
 function label({ key, clientName }: LabelParams): string {
-  return key === 'unknown'
+  return key === null || key === 'unknown'
     ? clientName ?? t('MCP client')
     : MCP_CLIENT_BRANDING[key].name;
 }
@@ -38,6 +38,6 @@ export const MCP_CLIENT_BRANDING: Record<
 };
 
 type LabelParams = {
-  key: McpOAuthClientKey;
+  key: McpOAuthClientKey | null;
   clientName: string | null;
 };
