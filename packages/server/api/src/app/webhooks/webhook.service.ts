@@ -297,6 +297,15 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
         }
     }
 
+    // Register before making the job runnable. A fast worker can otherwise publish
+    // the response before the in-memory listener exists, losing it and producing
+    // a false timeout for an execution that already completed successfully.
+    const listenerResult = engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
+        status: StatusCodes.REQUEST_TIMEOUT,
+        body: {},
+        headers: {},
+    })
+
     const createdRun = await flowRunService(logger).start({
         platformId,
         environment: runEnvironment,
@@ -316,11 +325,6 @@ async function handleSync(params: SyncWebhookParams): Promise<EngineHttpResponse
     wideEvent.set({ flowRun: { id: createdRun.id } })
     params.onRunCreated?.(createdRun)
 
-    const listenerResult = await engineResponseWatcher(logger).oneTimeListener<EngineHttpResponse>(webhookRequestId, true, timeoutMs ?? WEBHOOK_TIMEOUT_MS, {
-        status: StatusCodes.REQUEST_TIMEOUT,
-        body: {},
-        headers: {},
-    })
     return listenerResult
 }
 

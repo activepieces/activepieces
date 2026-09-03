@@ -148,6 +148,9 @@ describe('sync webhook credit gate', () => {
 
         expect(mockStart).toHaveBeenCalledTimes(1)
         expect(mockCreateQuotaExceededRun).not.toHaveBeenCalled()
+        expect(mockOneTimeListener.mock.invocationCallOrder[0]).toBeLessThan(
+            mockStart.mock.invocationCallOrder[0],
+        )
         expect(response.status).toBe(StatusCodes.OK)
         expect(response.body).toEqual({ ok: true })
     })
