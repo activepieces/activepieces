@@ -19,6 +19,7 @@ import {
   SearchX,
   Settings2,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -400,20 +401,30 @@ const AgentsPageContent = () => {
             </Button>
           </div>
         </div>
-        {!needsProvider && hasPrompt && (allProjects ?? []).length > 1 && (
-          <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
-            <span>{t('New agents go to')}</span>
-            <SearchableSelect
-              value={shownDestinationId}
-              onChange={(value) => setPickedProjectId(value)}
-              options={projectOptions}
-              disabled={isBuilding}
-              placeholder={t('Search projects')}
-              contentWidth="260px"
-              triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"
-            />
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {!needsProvider && hasPrompt && (allProjects ?? []).length > 1 && (
+            <motion.div
+              className="overflow-hidden"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
+              <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
+                <span>{t('New agents go to')}</span>
+                <SearchableSelect
+                  value={shownDestinationId}
+                  onChange={(value) => setPickedProjectId(value)}
+                  options={projectOptions}
+                  disabled={isBuilding}
+                  placeholder={t('Search projects')}
+                  contentWidth="260px"
+                  triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {buildError !== null && (
           <p className="max-w-[680px] text-center text-[13px] leading-4 text-destructive">
             {api.extractServerErrorMessage(
@@ -572,7 +583,7 @@ const AgentsPageContent = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="px-3.5 font-semibold text-neutral-700"
+                className="px-3.5 text-neutral-700"
                 loading={createAgent.isPending}
                 onClick={() => createBlankAgent(personalProjectId)}
               >
