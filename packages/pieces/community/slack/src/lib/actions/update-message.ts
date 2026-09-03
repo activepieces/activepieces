@@ -31,8 +31,9 @@ export const updateMessage = createAction({
     }),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The updated text of your message',
-      required: true,
+      description:
+        'The updated text of the message. Optional — leave it empty to send a blocks-only update. When provided alongside Block Kit blocks it renders as a section above them (consistent with Send/Post Message), and is also used as the notification fallback text.',
+      required: false,
     }),
     mentionOriginFlow,
     blocks,
@@ -45,10 +46,24 @@ export const updateMessage = createAction({
     }
     const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
+    const blockList: (KnownBlock | Block)[] = [];
+
+    // Build a section from `text` only when it's provided, so a blocks-only update is
+    // possible (previously `text` was required and always rendered). `text` is also
+    // passed as the notification fallback below. Consistent with the Send/Post Message
+    // action, which likewise render `text` as a section when present.
+    if (propsValue.text) {
+      blockList.push(...textToSectionBlocks(propsValue.text));
+    }
 
     if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
       blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
+    }
+
+    // Require actual user content (text or blocks) — checked BEFORE the optional
+    // origin-flow footer so that footer alone can't satisfy the requirement.
+    if (blockList.length === 0) {
+      throw new Error('Provide a Message and/or Block Kit blocks to update.');
     }
 
     if (propsValue.mentionOriginFlow) {
@@ -58,7 +73,7 @@ export const updateMessage = createAction({
     return await client.chat.update({
       channel: propsValue.channel,
       ts: messageTimestamp,
-      text: propsValue.text,
+      text: propsValue.text || undefined,
       blocks: blockList,
     });
   },

@@ -28,8 +28,9 @@ export const slackSendDirectMessageAiAction = createAction({
     }),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The text of the direct message.',
-      required: true,
+      description:
+        'The text of the direct message. Optional — leave it empty to send a blocks-only DM. When provided alongside blocks it renders as a section above them (consistent with Post Message), and is also used as the notification fallback text.',
+      required: false,
     }),
     unfurlLinks: Property.Checkbox({
       displayName: 'Unfurl Links',
@@ -49,17 +50,24 @@ export const slackSendDirectMessageAiAction = createAction({
     const { text, userId, blocks, unfurlLinks } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(text)];
+    const blockList: (KnownBlock | Block)[] = [];
+    // Build a section from `text` only when provided, so a blocks-only DM is possible.
+    // `text` is also passed as the notification fallback. Consistent with Post Message.
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
+    }
     if (blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]));
     }
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       conversationId: userId,
       blocks: blockList,
       unfurlLinks,
