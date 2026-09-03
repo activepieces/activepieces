@@ -1,8 +1,9 @@
+import { isNil } from '@activepieces/pieces-framework';
 import {
-  HttpMessageBody,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
+import { OutsetaPage } from './outseta-types';
 
 export class OutsetaClient {
   private readonly baseUrl: string;
@@ -29,31 +30,46 @@ export class OutsetaClient {
     return this.request<T>(HttpMethod.DELETE, path);
   }
 
-  async getAllPages<T>(basePath: string, pageSize = 100): Promise<T[]> {
-    const allItems: T[] = [];
-    // Outseta's `offset` is PAGE-BASED, not item-based.
-    // Verified against the live API on /crm/people (total=182):
-    //   limit=100 offset=0 → 100 items (items 0-99)
-    //   limit=100 offset=1 → 82 items  (items 100-181)
-    //   limit=100 offset=2 → 0 items   (past end)
-    //   limit=50  offset=3 → 32 items  (items 150-181)
-    //   limit=25  offset=7 → 7 items   (items 175-181)
-    // Increment by 1 per iteration, not by pageSize.
+  async getPage<T>(path: string): Promise<PagedResult<T>> {
+    const response = await this.get<OutsetaPage<T>>(path);
+    return {
+      items: response?.items ?? response?.Items ?? [],
+      total: response?.metadata?.total ?? null,
+      limit: response?.metadata?.limit ?? null,
+      offset: response?.metadata?.offset ?? null,
+    };
+  }
+
+  async getAllPages<T>(basePath: string, requestedPageSize = 100): Promise<T[]> {
+    const collected: T[] = [];
     let page = 0;
+    let appliedPageSize = requestedPageSize;
 
-    while (true) {
+    for (;;) {
       const separator = basePath.includes('?') ? '&' : '?';
-      const res = await this.get<PaginatedResponse<T>>(
-        `${basePath}${separator}limit=${pageSize}&offset=${page}`
+      const result = await this.getPage<T>(
+        `${basePath}${separator}limit=${requestedPageSize}&offset=${page}`
       );
-      const items: T[] = res?.items ?? res?.Items ?? [];
-      allItems.push(...items);
+      collected.push(...result.items);
 
-      if (items.length < pageSize) break;
+      if (!isNil(result.limit) && result.limit > 0) {
+        appliedPageSize = result.limit;
+      }
+
+      const reachedTotal =
+        !isNil(result.total) && collected.length >= result.total;
+
+      if (
+        result.items.length === 0 ||
+        result.items.length < appliedPageSize ||
+        reachedTotal
+      ) {
+        break;
+      }
       page += 1;
     }
 
-    return allItems;
+    return collected;
   }
 
   private async request<T>(
@@ -68,7 +84,7 @@ export class OutsetaClient {
         Authorization: this.authHeader,
         'Content-Type': 'application/json',
       },
-      body: body as HttpMessageBody,
+      body,
     });
 
     if (response.status < 200 || response.status >= 300) {
@@ -77,7 +93,7 @@ export class OutsetaClient {
       );
     }
 
-    return response.body as T;
+    return response.body;
   }
 }
 
@@ -87,7 +103,9 @@ type OutsetaAuth = {
   apiSecret: string;
 };
 
-type PaginatedResponse<T> = {
-  items?: T[];
-  Items?: T[];
+type PagedResult<T> = {
+  items: T[];
+  total: number | null;
+  limit: number | null;
+  offset: number | null;
 };

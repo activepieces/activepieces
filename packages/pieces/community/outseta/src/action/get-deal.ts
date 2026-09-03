@@ -1,48 +1,79 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  InputPropertyMap,
+  isNil,
+  Property,
+  tryCatch,
+} from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { pipelineDropdown } from '../common/dropdowns';
+import { outsetaErrors } from '../common/errors';
+import { outsetaMappers } from '../common/mappers';
+import { OutsetaDeal } from '../common/outseta-types';
 
 export const getDealAction = createAction({
   name: 'get_deal',
   auth: outsetaAuth,
   displayName: 'Retrieve Deal',
   description:
-    'Retrieve a deal by its UID, or by the email of the contact associated with the deal plus the pipeline.',
+    'Retrieve a deal by its UID, or by the email of an associated contact within a pipeline. Returns found=false when nothing matches.',
   audience: 'both',
+  classification: 'READ',
   aiMetadata: {
     description:
-      'Fetches a single Outseta CRM deal by its UID, or by the contact email plus pipeline, returning amount, due date, pipeline stage, and the associated account. Use to read a deal by either identifier. Read-only and idempotent.',
+      'Fetches a single Outseta CRM deal by its UID, or by a contact email within a chosen pipeline, returning amount, due date, pipeline and stage, the associated account, contact emails and custom properties. Pick the lookup mode first, then fill the fields it reveals. Returns found=false instead of failing. Read-only and idempotent.',
     idempotent: true,
   },
   props: {
     lookupBy: Property.StaticDropdown({
-      displayName: 'Lookup by',
-      description: 'How to find the deal to retrieve.',
+      displayName: 'Find deal by',
       required: true,
       defaultValue: 'uid',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
-          { label: 'Deal UID', value: 'uid' },
-          { label: 'Contact email + pipeline', value: 'email' },
+          {
+            label: 'Deal UID',
+            value: 'uid',
+            description: 'You already have the identifier',
+            icon: 'tag',
+          },
+          {
+            label: 'Contact + pipeline',
+            value: 'contact',
+            description: 'Search a pipeline by contact email',
+            icon: 'users',
+          },
         ],
       },
     }),
-    dealUid: Property.ShortText({
-      displayName: 'Deal UID',
-      description: 'Used when "Lookup by" is set to Deal UID.',
-      required: false,
-    }),
-    contactEmail: Property.ShortText({
-      displayName: 'Contact Email',
-      description: 'Used when "Lookup by" is set to Contact email + pipeline.',
-      required: false,
-    }),
-    pipelineUid: pipelineDropdown({
-      required: false,
-      description:
-        'Used when "Lookup by" is set to Contact email + pipeline. Required in that mode.',
+    lookup: Property.DynamicProperties({
+      displayName: 'Deal',
+      required: true,
+      auth: outsetaAuth,
+      refreshers: ['lookupBy'],
+      props: async (propsValue): Promise<InputPropertyMap> => {
+        if (asText(propsValue['lookupBy']) === 'contact') {
+          return {
+            contactEmail: Property.ShortText({
+              displayName: 'Contact email',
+              description: 'An email attached to the deal.',
+              required: true,
+              placeholder: 'jane@example.com',
+            }),
+            pipelineUid: pipelineDropdown({ required: true }),
+          };
+        }
+        return {
+          dealUid: Property.ShortText({
+            displayName: 'Deal UID',
+            required: true,
+            placeholder: 'dQGeJZDW',
+          }),
+        };
+      },
     }),
   },
   async run(context) {
@@ -52,59 +83,100 @@ export const getDealAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    let match: any;
+    const lookup = context.propsValue.lookup ?? {};
 
-    if (context.propsValue.lookupBy === 'uid') {
-      const uid = context.propsValue.dealUid;
-      if (!uid) {
-        throw new Error('Deal UID is required when looking up by UID.');
-      }
-      match = await client.get<any>(
-        `/api/v1/crm/deals/${uid}?fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
-      );
-    } else {
-      const contactEmail = context.propsValue.contactEmail?.toLowerCase();
-      const pipelineUid = context.propsValue.pipelineUid;
-      if (!contactEmail || !pipelineUid) {
-        throw new Error(
-          'Contact email and pipeline are both required when looking up by email + pipeline.'
-        );
-      }
-      // Outseta supports server-side nested filters on /crm/deals — confirmed
-      // by Outseta support. A non-existent pipeline UID returns 400 "Invalid
-      // filter specification"; a real but unmatched UID returns an empty list.
-      const items = await client.getAllPages<any>(
-        `/api/v1/crm/deals?DealPipelineStage.DealPipeline.Uid=${encodeURIComponent(pipelineUid)}&fields=Uid,Name,Amount,DueDate,Created,Updated,AssignedToPersonClientIdentifier,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name`
-      );
-      match = items.find((deal: any) => {
-        const dealPeople: any[] =
-          deal.DealPeople?.items ?? deal.DealPeople?.Items ?? deal.DealPeople ?? [];
-        const hasContact = dealPeople.some(
-          (dp: any) => dp.Person?.Email?.toLowerCase() === contactEmail
-        );
-        const inPipeline =
-          deal.DealPipelineStage?.DealPipeline?.Uid === pipelineUid;
-        return hasContact && inPipeline;
-      });
-      if (!match) {
-        throw new Error(
-          `No deal found for contact "${context.propsValue.contactEmail}" in the selected pipeline.`
-        );
-      }
+    const deal =
+      context.propsValue.lookupBy === 'contact'
+        ? await dealByContact({
+            client,
+            contactEmail: requireText({
+              value: asText(lookup['contactEmail']),
+              label: 'Contact email',
+            }),
+            pipelineUid: requireText({
+              value: asText(lookup['pipelineUid']),
+              label: 'Pipeline',
+            }),
+          })
+        : await dealByUid({
+            client,
+            uid: requireText({
+              value: asText(lookup['dealUid']),
+              label: 'Deal UID',
+            }),
+          });
+
+    if (isNil(deal)) {
+      return { found: false, ...outsetaMappers.deal({}) };
     }
 
-    return {
-      uid: match.Uid ?? null,
-      name: match.Name ?? null,
-      amount: match.Amount ?? null,
-      due_date: match.DueDate ?? null,
-      pipeline_stage_uid: match.DealPipelineStage?.Uid ?? null,
-      pipeline_stage_name: match.DealPipelineStage?.Name ?? null,
-      account_uid: match.Account?.Uid ?? null,
-      account_name: match.Account?.Name ?? null,
-      assigned_to_client_identifier: match.AssignedToPersonClientIdentifier ?? null,
-      created: match.Created ?? null,
-      updated: match.Updated ?? null,
-    };
+    return { found: true, ...outsetaMappers.deal(deal) };
   },
 });
+
+function asText(value: unknown): string | undefined {
+  return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+function requireText({
+  value,
+  label,
+}: {
+  value: string | undefined;
+  label: string;
+}): string {
+  if (isNil(value)) {
+    throw new Error(`${label} is required for the selected lookup mode.`);
+  }
+  return value;
+}
+
+async function dealByUid({
+  client,
+  uid,
+}: {
+  client: OutsetaClient;
+  uid: string;
+}): Promise<OutsetaDeal | null> {
+  const { data, error } = await tryCatch(() =>
+    client.get<OutsetaDeal>(`/api/v1/crm/deals/${uid}?${DEAL_FIELDS}`)
+  );
+
+  if (error) {
+    if (outsetaErrors.isNotFound(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  return data;
+}
+
+async function dealByContact({
+  client,
+  contactEmail,
+  pipelineUid,
+}: {
+  client: OutsetaClient;
+  contactEmail: string;
+  pipelineUid: string;
+}): Promise<OutsetaDeal | null> {
+  const deals = await client.getAllPages<OutsetaDeal>(
+    `/api/v1/crm/deals?DealPipelineStage.DealPipeline.Uid=${encodeURIComponent(
+      pipelineUid
+    )}&${DEAL_FIELDS}`
+  );
+
+  const wanted = contactEmail.toLowerCase();
+
+  return (
+    deals.find((deal) =>
+      outsetaMappers
+        .toArray(deal.DealPeople)
+        .some((link) => link.Person?.Email?.toLowerCase() === wanted)
+    ) ?? null
+  );
+}
+
+const DEAL_FIELDS =
+  'fields=*,DealPipelineStage.Uid,DealPipelineStage.Name,DealPipelineStage.DealPipeline.Uid,DealPipelineStage.DealPipeline.Name,DealPeople.Person.Uid,DealPeople.Person.Email,Account.Uid,Account.Name';

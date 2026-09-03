@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
 import { customPropertiesProp, mergeCustomProperties } from '../common/custom-properties';
+import { outsetaEnums } from '../common/enums';
 import { planUidDropdown } from '../common/dropdowns';
 
 export const createAccountAction = createAction({
@@ -25,15 +26,8 @@ export const createAccountAction = createAction({
       displayName: 'Account Stage',
       required: false,
       options: {
-        options: [
-          { label: 'Lead', value: 1 },
-          { label: 'Trialing', value: 2 },
-          { label: 'Subscribing', value: 3 },
-          { label: 'Delinquent', value: 4 },
-          { label: 'Cancelling', value: 5 },
-          { label: 'Expired', value: 6 },
-          { label: 'Demo', value: 7 },
-        ],
+        disabled: false,
+        options: outsetaEnums.accountStage.options,
       },
     }),
     clientIdentifier: Property.ShortText({
