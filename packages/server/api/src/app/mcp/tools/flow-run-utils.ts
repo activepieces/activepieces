@@ -1,4 +1,4 @@
-import { FlowId, formatPieceError, isNil, isObject, ProjectId, tryCatch, tryCatchSync, tryParseFriendlyPieceError, UserId } from '@activepieces/core-utils'
+import { FlowId, formatPieceError, isNil, isObject, omit, ProjectId, tryCatch, tryCatchSync, tryParseFriendlyPieceError, UserId } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { CodeAction, createKeyForFormInput, FlowActionType, FlowOperationType, FlowRun, FlowRunStatus, flowStructureUtil, FlowTriggerType, isFlowRunStateTerminal, McpToolResult, PieceAction, RunEnvironment, SampleDataFileType, Step, StepOutputStatus, UpdateActionRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -141,8 +141,8 @@ export async function executePieceActionRun({
     offload?: ActionRunOffload
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
-    const { auth: inlineAuth, ...inputWithoutAuth } = input ?? {}
-    const effectiveExternalId = connectionExternalId ?? (typeof inlineAuth === 'string' ? inlineAuth : undefined)
+    const inputWithoutAuth = omit(input ?? {}, ['auth'])
+    const effectiveExternalId = mcpUtils.resolveConnectionExternalId({ connectionExternalId, input })
 
     const authError = mcpUtils.validateAuth(effectiveExternalId)
     if (authError) {
