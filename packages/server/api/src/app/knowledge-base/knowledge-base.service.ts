@@ -243,39 +243,6 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             }
             const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
 
-            if (isFullRestore) {
-                const stored = await repo.find({ where: { projectId, knowledgeBaseFileId }, select: ['id', 'chunkIndex'] })
-                const idByIndex = new Map(stored.map((row) => [row.chunkIndex, row.id]))
-                const missing: Record<string, unknown>[] = []
-                const submittedIndexes: number[] = []
-                for (const [index, chunk] of newChunks.entries()) {
-                    const chunkIndex = chunk.chunkIndex ?? index
-                    submittedIndexes.push(chunkIndex)
-                    const values = {
-                        content: chunk.content ?? '',
-                        ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                        metadata: chunk.metadata ?? {},
-                    }
-                    const storedId = idByIndex.get(chunkIndex)
-                    if (isNil(storedId)) {
-                        missing.push({ id: apId(), projectId, knowledgeBaseFileId, chunkIndex, ...values })
-                        continue
-                    }
-                    await repo.update({ id: storedId, projectId, knowledgeBaseFileId }, values)
-                }
-                for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
-                    await repo.insert(missing.slice(start, start + INSERT_BATCH_SIZE))
-                }
-                const cleanup = repo.createQueryBuilder()
-                    .delete()
-                    .where('"projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId', { projectId, knowledgeBaseFileId })
-                if (submittedIndexes.length > 0) {
-                    cleanup.andWhere('"chunkIndex" NOT IN (:...submittedIndexes)', { submittedIndexes })
-                }
-                await cleanup.execute()
-                return
-            }
-
             for (const chunk of editedChunks) {
                 const updated = await repo.createQueryBuilder()
                     .update()
@@ -296,17 +263,38 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     })
                 }
             }
-            for (let start = 0; start < newChunks.length; start += INSERT_BATCH_SIZE) {
-                await repo.insert(newChunks.slice(start, start + INSERT_BATCH_SIZE).map((chunk, offset) => ({
-                    id: apId(),
-                    projectId,
-                    knowledgeBaseFileId,
-                    content: chunk.content ?? '',
-                    chunkIndex: chunk.chunkIndex ?? start + offset,
-                    ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                    metadata: chunk.metadata ?? {},
-                })))
+
+            const valuesByIndex = new Map(newChunks.map((chunk, index) => [chunk.chunkIndex ?? index, {
+                content: chunk.content ?? '',
+                ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
+                metadata: chunk.metadata ?? {},
+            }]))
+            const stored = await repo.find({ where: { projectId, knowledgeBaseFileId }, select: ['id', 'chunkIndex'] })
+            const idByIndex = new Map(stored.map((row) => [row.chunkIndex, row.id]))
+            const missing: Record<string, unknown>[] = []
+            for (const [chunkIndex, values] of valuesByIndex) {
+                const storedId = idByIndex.get(chunkIndex)
+                if (isNil(storedId)) {
+                    missing.push({ id: apId(), projectId, knowledgeBaseFileId, chunkIndex, ...values })
+                    continue
+                }
+                await repo.update({ id: storedId, projectId, knowledgeBaseFileId }, values)
             }
+            for (let start = 0; start < missing.length; start += INSERT_BATCH_SIZE) {
+                await repo.insert(missing.slice(start, start + INSERT_BATCH_SIZE))
+            }
+
+            if (!isFullRestore) {
+                return
+            }
+            const submittedIndexes = [...valuesByIndex.keys()]
+            const cleanup = repo.createQueryBuilder()
+                .delete()
+                .where('"projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId', { projectId, knowledgeBaseFileId })
+            if (submittedIndexes.length > 0) {
+                cleanup.andWhere('"chunkIndex" NOT IN (:...submittedIndexes)', { submittedIndexes })
+            }
+            await cleanup.execute()
         })
     },
 

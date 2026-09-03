@@ -135,6 +135,52 @@ describe('storing the chunks of a knowledge file', () => {
         expect(stored.map((chunk) => chunk.content).sort()).toEqual(['first', 'third'])
     })
 
+    // Two chunks numbered the same are one place in the file, not two rows in it. Deciding that
+    // against the snapshot alone missed a repeat the payload carried itself.
+    it('stores one chunk when a restore repeats an index', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'a repeated index')
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { content: 'the first copy', chunkIndex: 4, metadata: {} },
+                { content: 'the second copy', chunkIndex: 4, metadata: {} },
+            ],
+        })
+
+        const stored = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(stored).toHaveLength(1)
+        expect(stored[0].content).toBe('the second copy')
+    })
+
+    // An append alongside an edit went in blind, so the same collision the restore path had just
+    // learned to avoid was still reachable one field away.
+    it('stores one chunk when an append beside an edit repeats an index', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'an append beside an edit')
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ content: 'first', chunkIndex: 0, metadata: {} }],
+        })
+        const [existing] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { id: existing.id, content: 'an edit' },
+                { content: 'an append onto the same place', chunkIndex: 0, metadata: {} },
+            ],
+        })
+
+        const stored = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(stored).toHaveLength(1)
+        expect(stored[0].content).toBe('an append onto the same place')
+    })
+
     // A file that comes back with nothing in it has nothing in it. Returning early left the
     // previous text in place, so the agent kept answering from a document that had been emptied.
     it('clears the file when a restore carries no chunks', async () => {
