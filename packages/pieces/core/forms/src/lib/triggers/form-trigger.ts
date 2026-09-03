@@ -20,9 +20,9 @@ Use this for production, views the published version of the form.
 \`\`\`text
 {{formUrl}}?${USE_DRAFT_QUERY_PARAM_NAME}=true
 \`\`\`
-Use this to generate sample data, views the draft version of the form (the one you are editing now).
+Use this to generate sample data, views the draft version of the form (the one you are editing now). Same link with \`?${USE_DRAFT_QUERY_PARAM_NAME}=true\` on the end.
 `;
-const responseMarkdown = `Add a **Respond on UI** step to your flow to send a response back to the form. Without it, the submitter waits until the flow finishes and sees nothing.`;
+const responseMarkdown = `When **Wait for Response** is on, add a **Respond on UI** step to reply to the submitter. Without one they wait until the flow ends and see nothing.`;
 
 type FormInput = {
   displayName: string;
@@ -59,7 +59,7 @@ export const onFormSubmission = createTrigger({
     }),
     waitForResponse: Property.Checkbox({
       displayName: 'Wait for Response',
-      description: 'Hold the submitter on the form until the flow replies.',
+      description: 'Keeps the submitter on the form until the flow replies.',
       defaultValue: false,
       required: false,
     }),
@@ -69,10 +69,12 @@ export const onFormSubmission = createTrigger({
     }),
     inputs: Property.Array({
       displayName: 'Inputs',
+      description: 'One row per field shown on the form.',
       required: true,
       properties: {
         displayName: Property.ShortText({
           displayName: 'Field Name',
+          placeholder: 'e.g. Email address',
           required: true,
         }),
         type: Property.StaticDropdown({
@@ -89,11 +91,13 @@ export const onFormSubmission = createTrigger({
         }),
         description: Property.ShortText({
           displayName: 'Field Description',
+          placeholder: 'Shown under the field',
           required: false,
         }),
         required: Property.Checkbox({
           displayName: 'Required',
-          required: true,
+          defaultValue: false,
+          required: false,
         }),
       },
     }),

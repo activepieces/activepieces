@@ -31,7 +31,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -227,17 +226,15 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                     <Checkbox
                                       id={input.name}
                                       onCheckedChange={(e) => field.onChange(e)}
-                                      checked={field.value as boolean}
+                                      checked={field.value === true}
                                     ></Checkbox>
                                   </FormControl>
                                   <FormLabel
                                     htmlFor={input.name}
                                     className="flex items-center gap-1"
+                                    showRequiredIndicator={input.required}
                                   >
                                     {input.displayName}
-                                    {input.required && (
-                                      <RequiredFieldAsterisk />
-                                    )}
                                   </FormLabel>
                                 </div>
                                 {input.description && (
@@ -253,50 +250,48 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                 <FormLabel
                                   htmlFor={input.name}
                                   className="flex items-center gap-1"
+                                  showRequiredIndicator={input.required}
                                 >
                                   {input.displayName}
-                                  {input.required && <RequiredFieldAsterisk />}
                                 </FormLabel>
-                                <FormControl className="flex flex-col gap-1">
-                                  <>
-                                    {input.type === FormInputType.TEXT_AREA && (
-                                      <Textarea
-                                        {...field}
-                                        name={input.name}
-                                        id={input.name}
-                                        onChange={field.onChange}
-                                        value={
-                                          field.value as string | undefined
+                                {input.type === FormInputType.TEXT_AREA && (
+                                  <FormControl>
+                                    <Textarea
+                                      {...field}
+                                      name={input.name}
+                                      id={input.name}
+                                      onChange={field.onChange}
+                                      value={String(field.value ?? '')}
+                                    />
+                                  </FormControl>
+                                )}
+                                {input.type === FormInputType.TEXT && (
+                                  <FormControl>
+                                    <Input
+                                      {...field}
+                                      onChange={field.onChange}
+                                      id={input.name}
+                                      name={input.name}
+                                      value={String(field.value ?? '')}
+                                    />
+                                  </FormControl>
+                                )}
+                                {input.type === FormInputType.FILE && (
+                                  <FormControl>
+                                    <Input
+                                      name={input.name}
+                                      id={input.name}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          field.onChange(file);
                                         }
-                                      />
-                                    )}
-                                    {input.type === FormInputType.TEXT && (
-                                      <Input
-                                        {...field}
-                                        onChange={field.onChange}
-                                        id={input.name}
-                                        name={input.name}
-                                        value={
-                                          field.value as string | undefined
-                                        }
-                                      />
-                                    )}
-                                    {input.type === FormInputType.FILE && (
-                                      <Input
-                                        name={input.name}
-                                        id={input.name}
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) {
-                                            field.onChange(file);
-                                          }
-                                        }}
-                                        placeholder={input.displayName}
-                                        type="file"
-                                      />
-                                    )}
-                                  </>
-                                </FormControl>
+                                      }}
+                                      placeholder={input.displayName}
+                                      type="file"
+                                    />
+                                  </FormControl>
+                                )}
                                 {input.description && (
                                   <ReadMoreDescription
                                     text={input.description}
