@@ -234,9 +234,6 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
         const store = async (): Promise<void> => transaction(async (entityManager) => {
             const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
-            if (isFullRestore) {
-                await repo.delete({ projectId, knowledgeBaseFileId })
-            }
             const entities = newChunks.map((chunk) => ({
                 id: apId(),
                 projectId,
@@ -247,7 +244,22 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 metadata: chunk.metadata ?? {},
             }))
             for (let start = 0; start < entities.length; start += INSERT_BATCH_SIZE) {
-                await repo.insert(entities.slice(start, start + INSERT_BATCH_SIZE))
+                const batch = entities.slice(start, start + INSERT_BATCH_SIZE)
+                if (isFullRestore) {
+                    await repo.createQueryBuilder()
+                        .insert()
+                        .values(batch)
+                        .orUpdate(['content', 'embedding', 'metadata'], ['knowledgeBaseFileId', 'chunkIndex'])
+                        .execute()
+                    continue
+                }
+                await repo.insert(batch)
+            }
+            if (isFullRestore) {
+                await repo.createQueryBuilder()
+                    .delete()
+                    .where('"knowledgeBaseFileId" = :knowledgeBaseFileId AND "chunkIndex" >= :length', { knowledgeBaseFileId, length: entities.length })
+                    .execute()
             }
             for (const chunk of existingChunks) {
                 const updated = await repo.createQueryBuilder()

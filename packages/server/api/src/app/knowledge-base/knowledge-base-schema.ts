@@ -54,6 +54,16 @@ export const knowledgeBaseSchema = {
                 )
             `)
             await entityManager.query('CREATE INDEX IF NOT EXISTS "idx_kb_chunk_project_file" ON "knowledge_base_chunk" ("projectId", "knowledgeBaseFileId")')
+            // An install that stored a file twice before the restore was atomic still holds the
+            // duplicates, and the unique index below refuses to build over them. Oldest row wins.
+            await entityManager.query(`
+                DELETE FROM "knowledge_base_chunk" AS newer
+                USING "knowledge_base_chunk" AS older
+                WHERE newer."knowledgeBaseFileId" = older."knowledgeBaseFileId"
+                  AND newer."chunkIndex" = older."chunkIndex"
+                  AND newer.id > older.id
+            `)
+            await entityManager.query('CREATE UNIQUE INDEX IF NOT EXISTS "uq_kb_chunk_file_index" ON "knowledge_base_chunk" ("knowledgeBaseFileId", "chunkIndex")')
             if (!isPGlite) {
                 await entityManager.query('CREATE INDEX IF NOT EXISTS "idx_kb_chunk_embedding" ON "knowledge_base_chunk" USING hnsw ("embedding" vector_cosine_ops)')
             }

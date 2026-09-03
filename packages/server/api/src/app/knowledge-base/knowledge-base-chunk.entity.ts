@@ -50,6 +50,11 @@ export const KnowledgeBaseChunkEntity = new EntitySchema<KnowledgeBaseChunkSchem
             name: 'idx_kb_chunk_project_file',
             columns: ['projectId', 'knowledgeBaseFileId'],
         },
+        {
+            name: 'uq_kb_chunk_file_index',
+            columns: ['knowledgeBaseFileId', 'chunkIndex'],
+            unique: true,
+        },
     ],
     relations: {
         knowledgeBaseFile: {

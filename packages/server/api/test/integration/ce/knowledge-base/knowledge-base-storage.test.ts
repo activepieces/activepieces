@@ -93,9 +93,9 @@ describe('storing the chunks of a knowledge file', () => {
         expect(await countOf(ctx, knowledgeBaseFileId)).toBe(chunks.length)
     })
 
-    // A restore gives every chunk a fresh id, so ids read before one are stale afterwards. Updating
-    // by a stale id used to match no rows and still report success.
-    it('refuses an update whose chunk a restore has already replaced', async () => {
+    // A restore used to give every chunk a new id, so an id read before one was useless after it.
+    // Keeping the id lets an edit that was queued behind a restore still land on its own row.
+    it('keeps a chunk id across a restore, so an edit behind one still lands', async () => {
         const ctx = await createTestContext(app)
         const knowledgeBaseFileId = await aFileOf(ctx, 'The office closes at six.')
         await knowledgeBaseService(app.log).storeChunks({
@@ -110,14 +110,39 @@ describe('storing the chunks of a knowledge file', () => {
             knowledgeBaseFileId,
             chunks: [{ content: 'restored', chunkIndex: 0, metadata: {} }],
         })
+        const [afterRestore] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(afterRestore.id).toBe(before.id)
+        expect(afterRestore.content).toBe('restored')
+
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [{ id: before.id, content: 'an edit queued behind the restore' }],
+        })
+
+        const [afterEdit] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(afterEdit.content).toBe('an edit queued behind the restore')
+    })
+
+    it('drops the tail when a document comes back shorter', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'long then short')
+        const three = Array.from({ length: 3 }, (_, index) => ({ content: `chunk ${index}`, chunkIndex: index, metadata: {} }))
+
+        await knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks: three })
+        await knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks: three.slice(0, 1) })
+
+        expect(await countOf(ctx, knowledgeBaseFileId)).toBe(1)
+    })
+
+    it('still refuses an update against a chunk that does not exist at all', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'text')
 
         await expect(knowledgeBaseService(app.log).storeChunks({
             projectId: ctx.project.id,
             knowledgeBaseFileId,
-            chunks: [{ id: before.id, content: 'an edit against the old snapshot' }],
+            chunks: [{ id: 'chunk-that-never-existed', content: 'an edit' }],
         })).rejects.toThrow()
-
-        const [after] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
-        expect(after.content).toBe('restored')
     })
 })
