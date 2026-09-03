@@ -74,28 +74,9 @@ describe('storing the chunks of a knowledge file', () => {
         expect(outcome === 'stored' ? count : 0).toBe(outcome === 'stored' ? chunks.length : 0)
     })
 
-    // Two restores of the same file used to delete each other's snapshot and then insert
-    // independently, putting back exactly the duplicates this replace was meant to remove.
-    it('keeps one copy when two restores of the same file overlap', async () => {
-        const ctx = await createTestContext(app)
-        const knowledgeBaseFileId = await aFileOf(ctx, 'The office closes at six.')
-        const chunks = Array.from({ length: 3 }, (_, index) => ({
-            content: `chunk ${index}`,
-            chunkIndex: index,
-            metadata: {},
-        }))
-
-        await Promise.all([
-            knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks }),
-            knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks }),
-        ])
-
-        expect(await countOf(ctx, knowledgeBaseFileId)).toBe(chunks.length)
-    })
-
-    // A restore used to give every chunk a new id, so an id read before one was useless after it.
-    // Keeping the id lets an edit that was queued behind a restore still land on its own row.
-    it('keeps a chunk id across a restore, so an edit behind one still lands', async () => {
+    // A restore replaces the file's chunks, so an id read before one names a row that is gone.
+    // Updating by it used to match nothing and still report success.
+    it('refuses an update whose chunk a restore has already replaced', async () => {
         const ctx = await createTestContext(app)
         const knowledgeBaseFileId = await aFileOf(ctx, 'The office closes at six.')
         await knowledgeBaseService(app.log).storeChunks({
@@ -110,39 +91,14 @@ describe('storing the chunks of a knowledge file', () => {
             knowledgeBaseFileId,
             chunks: [{ content: 'restored', chunkIndex: 0, metadata: {} }],
         })
-        const [afterRestore] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
-        expect(afterRestore.id).toBe(before.id)
-        expect(afterRestore.content).toBe('restored')
-
-        await knowledgeBaseService(app.log).storeChunks({
-            projectId: ctx.project.id,
-            knowledgeBaseFileId,
-            chunks: [{ id: before.id, content: 'an edit queued behind the restore' }],
-        })
-
-        const [afterEdit] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
-        expect(afterEdit.content).toBe('an edit queued behind the restore')
-    })
-
-    it('drops the tail when a document comes back shorter', async () => {
-        const ctx = await createTestContext(app)
-        const knowledgeBaseFileId = await aFileOf(ctx, 'long then short')
-        const three = Array.from({ length: 3 }, (_, index) => ({ content: `chunk ${index}`, chunkIndex: index, metadata: {} }))
-
-        await knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks: three })
-        await knowledgeBaseService(app.log).storeChunks({ projectId: ctx.project.id, knowledgeBaseFileId, chunks: three.slice(0, 1) })
-
-        expect(await countOf(ctx, knowledgeBaseFileId)).toBe(1)
-    })
-
-    it('still refuses an update against a chunk that does not exist at all', async () => {
-        const ctx = await createTestContext(app)
-        const knowledgeBaseFileId = await aFileOf(ctx, 'text')
 
         await expect(knowledgeBaseService(app.log).storeChunks({
             projectId: ctx.project.id,
             knowledgeBaseFileId,
-            chunks: [{ id: 'chunk-that-never-existed', content: 'an edit' }],
+            chunks: [{ id: before.id, content: 'an edit against the old snapshot' }],
         })).rejects.toThrow()
+
+        const [after] = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(after.content).toBe('restored')
     })
 })

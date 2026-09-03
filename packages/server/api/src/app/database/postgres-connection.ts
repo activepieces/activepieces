@@ -349,7 +349,6 @@ import { AddEnabledToolsToMcpServer1772027509096 } from './migration/postgres/17
 import { AddFlowProjectIdStatusIndex1772027509097 } from './migration/postgres/1772027509097-AddFlowProjectIdStatusIndex'
 import { AddPgVectorExtension1773627989514 } from './migration/postgres/1773627989514-AddPgVectorExtension'
 import { AddKnowledgeBaseChunkTable1773627989515 } from './migration/postgres/1773627989515-AddKnowledgeBaseChunkTable'
-import { AddKnowledgeBaseChunkUniqueIndex1840000000000 } from './migration/postgres/1840000000000-AddKnowledgeBaseChunkUniqueIndex'
 import { AddProjectPlatformIdIndex1773930744000 } from './migration/postgres/1773930744000-AddProjectPlatformIdIndex'
 import { ReAddAgentsEnabledToPlatformPlan1774000000000 } from './migration/postgres/1774000000000-ReAddAgentsEnabledToPlatformPlan'
 import { AddMissingCascadeDeleteIndices1774100000000 } from './migration/postgres/1774100000000-AddMissingCascadeDeleteIndices'
@@ -880,7 +879,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProviderStatus1837000000000,
         AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
         AddFlowProjectIdExternalIdUniqueIndex1839000000000,
-        AddKnowledgeBaseChunkUniqueIndex1840000000000,
     ]
     return migrations
 }
