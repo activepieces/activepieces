@@ -107,17 +107,22 @@ async function checkOne(piecePath: string): Promise<PieceHeapResult> {
 function verdict(r: PieceHeapResult): { failed: boolean; reasons: string[] } {
     const reasons: string[] = []
     if (!r.ok) {
-        reasons.push(r.error ?? 'unknown-error')
-        return { failed: false, reasons }
+        reasons.push(`could not measure current build: ${r.error ?? 'unknown error'}`)
+        return { failed: true, reasons }
     }
-    if (r.previousHeapMB !== undefined) {
-        const delta = r.heapMB! - r.previousHeapMB
-        if (delta > DELTA_LIMIT_MB) {
-            reasons.push(`heap grew +${delta.toFixed(2)} MB vs ${r.previousVersion} (${r.previousHeapMB.toFixed(2)} → ${r.heapMB!.toFixed(2)} MB); allowed +${DELTA_LIMIT_MB} MB`)
+    if (r.previousError !== undefined) {
+        reasons.push(`could not measure previously-published version to verify delta: ${r.previousError}`)
+        return { failed: true, reasons }
+    }
+    if (r.previousMissing === true) {
+        if (r.heapMB! > ABSOLUTE_LIMIT_MB) {
+            reasons.push(`heap ${r.heapMB!.toFixed(2)} MB > absolute limit ${ABSOLUTE_LIMIT_MB} MB (new piece)`)
         }
-    } else if (r.heapMB! > ABSOLUTE_LIMIT_MB) {
-        const scope = r.previousMissing ? 'new piece' : 'no previous measurement available'
-        reasons.push(`heap ${r.heapMB!.toFixed(2)} MB > absolute limit ${ABSOLUTE_LIMIT_MB} MB (${scope})`)
+        return { failed: reasons.length > 0, reasons }
+    }
+    const delta = r.heapMB! - r.previousHeapMB!
+    if (delta > DELTA_LIMIT_MB) {
+        reasons.push(`heap grew +${delta.toFixed(2)} MB vs ${r.previousVersion} (${r.previousHeapMB!.toFixed(2)} → ${r.heapMB!.toFixed(2)} MB); allowed +${DELTA_LIMIT_MB} MB`)
     }
     return { failed: reasons.length > 0, reasons }
 }
@@ -136,31 +141,24 @@ async function main(): Promise<void> {
     }
 
     let failed = 0
-    let errored = 0
     for (const r of results) {
         const v = verdict(r)
-        if (!r.ok) errored++
-        else if (v.failed) failed++
-        const tag = !r.ok ? 'ERR ' : v.failed ? 'FAIL' : 'ok  '
+        if (v.failed) failed++
+        const tag = v.failed ? 'FAIL' : 'ok  '
         const heap = r.ok ? `${r.heapMB!.toFixed(2)} MB` : '—'
         const prev = r.previousHeapMB !== undefined
             ? `  (prev ${r.previousVersion}: ${r.previousHeapMB.toFixed(2)} MB)`
             : r.previousMissing
                 ? '  (new piece, never published)'
-                : r.previousError
-                    ? `  (prev unavailable: ${r.previousError})`
-                    : ''
+                : ''
         console.info(`  [${tag}] ${r.name.padEnd(46)} ${heap.padStart(10)}${prev}`)
-        if (!r.ok) {
-            console.info(`         └─ ${r.error}`)
-        }
         for (const reason of v.reasons) {
-            if (r.ok) console.info(`         └─ ${reason}`)
+            console.info(`         └─ ${reason}`)
         }
     }
 
     console.info('')
-    console.info(`[checkPiecesHeap] measured=${results.length - errored}  failed=${failed}  errors=${errored}`)
+    console.info(`[checkPiecesHeap] checked=${results.length}  failed=${failed}`)
 
     if (failed > 0) {
         console.info(`\nTo bypass this check on a PR, apply the "${SKIP_LABEL}" label. Only use it when you understand the cost.`)
