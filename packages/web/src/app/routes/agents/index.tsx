@@ -219,7 +219,7 @@ const AgentsPageContent = () => {
     );
   };
 
-  const personalProjectId =
+  const blankAgentProjectId =
     (allProjects ?? []).find((entry) => entry.type === ProjectType.PERSONAL)
       ?.id ?? createInProjectId;
 
@@ -585,7 +585,7 @@ const AgentsPageContent = () => {
                 size="sm"
                 className="px-3.5 text-neutral-700"
                 loading={createAgent.isPending}
-                onClick={() => createBlankAgent(personalProjectId)}
+                onClick={() => createBlankAgent(blankAgentProjectId)}
               >
                 <Plus size={15} />
                 {t('New agent')}
