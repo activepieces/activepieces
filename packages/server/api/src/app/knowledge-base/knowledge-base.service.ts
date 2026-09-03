@@ -183,6 +183,17 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         return kbChunkRepo().count({ where: { projectId: params.projectId, knowledgeBaseFileId: params.knowledgeBaseFileId } })
     },
 
+    async isSearchable(params: { projectId: string, knowledgeBaseFileId: string }): Promise<boolean> {
+        const searchable = await kbChunkRepo().count({
+            where: {
+                projectId: params.projectId,
+                knowledgeBaseFileId: params.knowledgeBaseFileId,
+                embedding: Not(IsNull()),
+            },
+        })
+        return searchable > 0
+    },
+
     async extractChunks(params: { projectId: string, knowledgeBaseFileId: string }): Promise<string[]> {
         const kbFile = await kbFileRepo().findOneBy({
             id: params.knowledgeBaseFileId,
