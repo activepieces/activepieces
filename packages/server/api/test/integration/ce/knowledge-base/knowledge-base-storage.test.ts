@@ -240,6 +240,35 @@ describe('storing the chunks of a knowledge file', () => {
         expect(after.find((chunk) => chunk.chunkIndex === 0)?.content).toBe('the append')
     })
 
+    // One chunk cannot be in two places. Resolving it left the file short of whichever place lost.
+    it('refuses a request that puts one chunk in two places', async () => {
+        const ctx = await createTestContext(app)
+        const knowledgeBaseFileId = await aFileOf(ctx, 'one chunk, two places')
+        await knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { content: 'the contested chunk', chunkIndex: 0, metadata: {} },
+                { content: 'the bystander', chunkIndex: 1, metadata: {} },
+            ],
+        })
+        const stored = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        const contested = stored.find((chunk) => chunk.content === 'the contested chunk')
+
+        await expect(knowledgeBaseService(app.log).storeChunks({
+            projectId: ctx.project.id,
+            knowledgeBaseFileId,
+            chunks: [
+                { id: contested?.id, chunkIndex: 1 },
+                { id: contested?.id, chunkIndex: 2 },
+            ],
+        })).rejects.toThrow()
+
+        const after = await knowledgeBaseService(app.log).listChunks({ projectId: ctx.project.id, knowledgeBaseFileId })
+        expect(after).toHaveLength(2)
+        expect(after.map((chunk) => chunk.content).sort()).toEqual(['the bystander', 'the contested chunk'])
+    })
+
     // A file that comes back with nothing in it has nothing in it. Returning early left the
     // previous text in place, so the agent kept answering from a document that had been emptied.
     it('clears the file when a restore carries no chunks', async () => {

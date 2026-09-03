@@ -244,6 +244,7 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             const idByIndex = new Map(stored.map((row) => [row.chunkIndex, row.id]))
 
             const writeByIndex = new Map<number, { id?: string, values: Record<string, unknown> }>()
+            const submittedIds = new Set<string>()
             for (const [position, chunk] of chunks.entries()) {
                 const values = {
                     ...spreadIfDefined('content', chunk.content),
@@ -254,6 +255,13 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                     writeByIndex.set(chunk.chunkIndex ?? position, { values: { content: '', metadata: {}, ...values } })
                     continue
                 }
+                if (submittedIds.has(chunk.id)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: `Chunk ${chunk.id} is listed more than once in the same request` },
+                    })
+                }
+                submittedIds.add(chunk.id)
                 const edited = storedById.get(chunk.id)
                 if (isNil(edited)) {
                     throw new ActivepiecesError({
