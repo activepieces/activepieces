@@ -1,4 +1,5 @@
 export * from './platform.model'
 export * from './platform.request'
+export * from './platform-configuration'
 export * from './concurrency-pool'
 export * from './sso-domain-verification'
