@@ -69,18 +69,18 @@ describe('an agent asked about a file it cannot search says so', () => {
 
         const { result } = await search(target)
 
-        expect(String(result)).toContain('has not been indexed')
+        expect(String(result)).toContain('never been indexed')
         expect(String(result)).toContain('Employee Handbook')
         expect(String(result)).not.toContain('No relevant information found')
     })
 
-    it('names the file so the person knows which one to re-add', async () => {
+    it('does not send the person off to re-upload, which would not index it either', async () => {
         const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
         const target = await conversationWithFile(ctx)
 
         const { result } = await search(target)
 
-        expect(String(result)).toContain('not searchable yet')
+        expect(String(result)).toContain('will not index it either')
     })
 
     it('does not read a file belonging to another project', async () => {
