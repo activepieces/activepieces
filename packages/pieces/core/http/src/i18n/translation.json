@@ -26,7 +26,7 @@
   "How to encode the request body. Leave as None for GET requests.": "How to encode the request body. Leave as None for GET requests.",
   "Return the response as base64, for files like PDFs.": "Return the response as base64, for files like PDFs.",
   "Route this request through an HTTP proxy.": "Route this request through an HTTP proxy.",
-  "Seconds to wait before giving up. Empty means no timeout.": "Seconds to wait before giving up. Empty means no timeout.",
+  "Seconds to wait for a response. Empty: up to the flow limit (10 min).": "Seconds to wait for a response. Empty: up to the flow limit (10 min).",
   "Follow 3xx redirects instead of returning the response.": "Follow 3xx redirects instead of returning the response.",
   "The full URL you want to parse (e.g., https://example.com/page?utm_source=twitter)": "The full URL you want to parse (e.g., https://example.com/page?utm_source=twitter)",
   "If checked (recommended), all query parameters are returned as JSON arrays to safely group duplicate keys (e.g., {\"tags\": [\"shoes\", \"hats\"]}). If unchecked, standard web behavior applies, returning only the first value as text.": "If checked (recommended), all query parameters are returned as JSON arrays to safely group duplicate keys (e.g., {\"tags\": [\"shoes\", \"hats\"]}). If unchecked, standard web behavior applies, returning only the first value as text.",

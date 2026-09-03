@@ -215,7 +215,7 @@ export const httpSendRequestAction = createAction({
     }),
     timeout: Property.Number({
       displayName: 'Timeout',
-      description: 'Seconds to wait before giving up. Empty means no timeout.',
+      description: 'Seconds to wait for a response. Empty: up to the flow limit (10 min).',
       required: false,
       min: 1,
       advanced: true,
