@@ -166,8 +166,8 @@ async function main(): Promise<void> {
     }
 }
 
-const ABSOLUTE_LIMIT_MB = Number(process.env['PIECE_HEAP_ABSOLUTE_MB'] ?? '10')
-const DELTA_LIMIT_MB = Number(process.env['PIECE_HEAP_DELTA_MB'] ?? '2')
+const ABSOLUTE_LIMIT_MB = Number(process.env['PIECE_HEAP_ABSOLUTE_MB']) || 5
+const DELTA_LIMIT_MB = Number(process.env['PIECE_HEAP_DELTA_MB']) || 2
 const SKIP_LABEL = 'skip-heap-check'
 
 type PieceHeapResult = {
