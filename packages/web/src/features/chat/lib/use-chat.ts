@@ -97,15 +97,21 @@ function buildToolCallMetaFromGate(
     return {};
   }
   const gateInput = gate.toolInput ?? {};
+  const pieceName =
+    typeof gateInput.pieceName === 'string' ? gateInput.pieceName : '';
+  const actionName =
+    typeof gateInput.actionName === 'string' ? gateInput.actionName : '';
   let actionPreview: ActionPreviewEvent | null = null;
-  if (gate.toolName === 'ap_execute_action') {
+  if (pieceName && actionName) {
     actionPreview = {
       toolCallId: gate.gateId,
-      pieceName:
-        typeof gateInput.pieceName === 'string' ? gateInput.pieceName : '',
-      actionName:
-        typeof gateInput.actionName === 'string' ? gateInput.actionName : '',
+      pieceName,
+      actionName,
       actionDisplayName: gate.displayName,
+      connectionLabel:
+        typeof gateInput.connectionLabel === 'string'
+          ? gateInput.connectionLabel
+          : undefined,
       input:
         typeof gateInput.input === 'object' && gateInput.input !== null
           ? (gateInput.input as Record<string, unknown>)

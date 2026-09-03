@@ -107,6 +107,11 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         }
     },
 
+    async removeField(key: string, field: string): Promise<void> {
+        const redisClient = await getRedisClient()
+        await redisClient.hdel(key, field)
+    },
+
     async deleteKeyIfFieldValueMatches(key: string, field: string, expectedValue: unknown): Promise<void> {
         const redisClient = await getRedisClient()
         const lua = `
