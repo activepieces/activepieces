@@ -22,9 +22,21 @@ vi.mock('../../../../src/app/core/db/repo-factory', () => ({
 
 const mockDbQuery = vi.fn().mockResolvedValue([])
 
+const chunkRepo = {
+    findOneBy: mockFindOneBy,
+    delete: mockDelete,
+    count: mockCount,
+    save: mockSave,
+    find: mockFind,
+    insert: mockInsert,
+    update: mockUpdate,
+}
+
 vi.mock('../../../../src/app/database/database-connection', () => ({
     databaseConnection: vi.fn(() => ({
         query: mockDbQuery,
+        transaction: (run: (entityManager: { getRepository: () => typeof chunkRepo }) => Promise<unknown>) =>
+            run({ getRepository: () => chunkRepo }),
     })),
 }))
 

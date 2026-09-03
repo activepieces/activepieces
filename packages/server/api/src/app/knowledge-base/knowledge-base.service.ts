@@ -4,6 +4,7 @@ import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
 import { fileService } from '../file/file.service'
 import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
@@ -12,6 +13,7 @@ import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
 const kbFileRepo = repoFactory(KnowledgeBaseFileEntity)
 const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 
+const INSERT_BATCH_SIZE = 100
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
 
@@ -224,10 +226,14 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         const { projectId, knowledgeBaseFileId, chunks } = params
         if (chunks.length === 0) return
 
-        const newChunks = chunks.filter((c) => isNil(c.id))
-        const existingChunks = chunks.filter((c) => !isNil(c.id))
+        const newChunks = chunks.filter((chunk) => isNil(chunk.id))
+        const existingChunks = chunks.filter((chunk) => !isNil(chunk.id))
 
-        if (newChunks.length > 0) {
+        await transaction(async (entityManager) => {
+            const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
+            if (existingChunks.length === 0) {
+                await repo.delete({ projectId, knowledgeBaseFileId })
+            }
             const entities = newChunks.map((chunk) => ({
                 id: apId(),
                 projectId,
@@ -237,24 +243,21 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
                 ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
                 metadata: chunk.metadata ?? {},
             }))
-
-            const BATCH_SIZE = 100
-            for (let i = 0; i < entities.length; i += BATCH_SIZE) {
-                await kbChunkRepo().insert(entities.slice(i, i + BATCH_SIZE))
+            for (let start = 0; start < entities.length; start += INSERT_BATCH_SIZE) {
+                await repo.insert(entities.slice(start, start + INSERT_BATCH_SIZE))
             }
-        }
-
-        for (const chunk of existingChunks) {
-            await kbChunkRepo().update(
-                { id: chunk.id, projectId },
-                {
-                    ...spreadIfDefined('content', chunk.content),
-                    ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                    ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
-                    ...spreadIfDefined('metadata', chunk.metadata),
-                },
-            )
-        }
+            for (const chunk of existingChunks) {
+                await repo.update(
+                    { id: chunk.id, projectId },
+                    {
+                        ...spreadIfDefined('content', chunk.content),
+                        ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
+                        ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
+                        ...spreadIfDefined('metadata', chunk.metadata),
+                    },
+                )
+            }
+        })
     },
 
     async listChunks(params: ListChunksParams): Promise<ChunkListItem[]> {
