@@ -169,8 +169,10 @@ export function createCustomApiCallAction<
     headers?: Partial<ReturnType<typeof Property.Object>>;
     queryParams?: Partial<ReturnType<typeof Property.Object>>;
     body?: Partial<ReturnType<typeof Property.Json>>;
+    response_is_binary?: Partial<ReturnType<typeof Property.Checkbox>>;
     failsafe?: Partial<ReturnType<typeof Property.Checkbox>>;
     timeout?: Partial<ReturnType<typeof Property.Number>>;
+    followRedirects?: Partial<ReturnType<typeof Property.Checkbox>>;
   };
   extraProps?: InputPropertyMap;
   authLocation?: 'headers' | 'queryParams';
@@ -328,6 +330,7 @@ export function createCustomApiCallAction<
         required: false,
         defaultValue: false,
         advanced: true,
+        ...(props?.response_is_binary ?? {}),
       }),
       failsafe: Property.Checkbox({
         displayName: 'Return Error as Output',
@@ -351,6 +354,7 @@ export function createCustomApiCallAction<
         required: false,
         defaultValue: false,
         advanced: true,
+        ...(props?.followRedirects ?? {}),
       }),
       ...extraProps,
     },
