@@ -22,7 +22,7 @@ Use this for production, views the published version of the form.
 \`\`\`
 Use this to generate sample data, views the draft version of the form (the one you are editing now). Same link with \`?${USE_DRAFT_QUERY_PARAM_NAME}=true\` on the end.
 `;
-const responseMarkdown = `When **Wait for Response** is on, add a **Respond on UI** step to reply to the submitter. Without one they wait until the flow ends and see nothing.`;
+const responseMarkdown = `When **Wait for Response** is on, add a **Respond on UI** step to reply to the submitter. Without one, the form waits until the request times out and then shows an error.`;
 
 type FormInput = {
   displayName: string;

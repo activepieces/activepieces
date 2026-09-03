@@ -138,7 +138,10 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
   inputs.current.forEach((input) => {
     const queryValue = queryParamsLowerCase[input.name.toLowerCase()];
     if (queryValue !== undefined) {
-      defaultValues[input.name] = queryValue;
+      defaultValues[input.name] =
+        input.type === FormInputType.TOGGLE
+          ? queryValue === 'true'
+          : queryValue;
     }
   });
 
