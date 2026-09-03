@@ -40,6 +40,32 @@ export async function downloadAndSaveScreenshot(screenshotTarget: any, context: 
   };
 }
 
+export async function downloadAndSavePdfs(
+  dataTarget: any,
+  context: any,
+): Promise<Array<{ fileName: string; fileUrl: string }>> {
+  const pdfUrls: string[] = dataTarget.actions?.pdfs || [];
+  const savedPdfs: { fileName: string; fileUrl: string }[] = [];
+
+  for (const pdfUrl of pdfUrls) {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: pdfUrl,
+      responseType: 'arraybuffer'
+    });
+
+    const fileName = `pdf-${randomUUID()}.pdf`;
+    const fileUrl = await context.files.write({
+      fileName: fileName,
+      data: Buffer.from(response.body),
+    });
+
+    savedPdfs.push({ fileName, fileUrl });
+  }
+
+  return savedPdfs;
+}
+
 export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<void> {
 
   if (!crawlResult.data || !Array.isArray(crawlResult.data)) {

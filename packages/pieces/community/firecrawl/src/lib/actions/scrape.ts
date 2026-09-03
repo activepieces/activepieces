@@ -1,7 +1,7 @@
 import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, downloadAndSavePdfs,forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
 import { scrapeUrlActionOutputSchema } from '../output-schemas';
 
 function forDefaultScreenshot(): any {
@@ -101,7 +101,8 @@ export const scrape = createAction({
             { label: 'Links', value: 'links' },
             { label: 'Images', value: 'images' },
             { label: 'Screenshot', value: 'screenshot' },
-            { label: 'JSON', value: 'json' }
+            { label: 'JSON', value: 'json' },
+            { label: 'PDF', value: 'pdf' }
           ]
         };
       },
@@ -274,6 +275,8 @@ export const scrape = createAction({
         prompt: jsonFormat.prompt,
         schema: jsonFormat.schema
       });
+    } else if (format === 'pdf') {
+      body['actions'] = [...(body['actions'] || []), { type: 'pdf', format: 'A4' }];
     } else {
       const simpleFormat = forSimpleOutputFormat(format);
       formatsArray.push(simpleFormat);
@@ -297,11 +300,13 @@ export const scrape = createAction({
 
     const result = response.body;
     await downloadAndSaveScreenshot(result.data, context);
+    const savedPdfs = await downloadAndSavePdfs(result.data, context);
 
     // reorder the data object to put screenshot first, then user's selected format only
     result.data = {
       screenshot: result.data.screenshot,
       [format]: result.data[format],
+      pdfs: savedPdfs,
       metadata: result.data.metadata
     };
 
