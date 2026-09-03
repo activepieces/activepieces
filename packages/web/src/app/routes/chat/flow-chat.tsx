@@ -5,6 +5,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
+import { t } from 'i18next';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 
@@ -227,8 +228,7 @@ export function FlowChat({
   return (
     <main
       className={cn(
-        'flex w-full flex-col items-center justify-center pb-6',
-        messages.length > 0 ? 'h-screen' : 'h-screen',
+        'flex h-screen w-full flex-col items-center justify-center pb-6',
         className,
       )}
     >
@@ -249,7 +249,7 @@ export function FlowChat({
               ref={chatInputRef}
               onSendMessage={handleSendMessage}
               disabled={isSending}
-              placeholder="Type your message here..."
+              placeholder={t('Type your message here...')}
             />
           </div>
         </>
@@ -263,7 +263,7 @@ export function FlowChat({
               ref={chatInputRef}
               onSendMessage={handleSendMessage}
               disabled={isSending}
-              placeholder="Type your message here..."
+              placeholder={t('Type your message here...')}
             />
           </div>
         </>

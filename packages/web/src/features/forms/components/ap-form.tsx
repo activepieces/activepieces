@@ -28,8 +28,10 @@ import {
   FormField,
   FormLabel,
   FormItem,
+  FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { RequiredFieldAsterisk } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -68,7 +70,14 @@ const createPropertySchema = (input: FormInputWithName): ZodType => {
         ? z.string().min(1, t('This field is required'))
         : z.string();
     case FormInputType.FILE:
-      return z.unknown();
+      return input.required
+        ? z
+            .unknown()
+            .refine(
+              (value) => value instanceof File,
+              t('This field is required'),
+            )
+        : z.unknown();
   }
 };
 
@@ -197,7 +206,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
       <div className="container py-20">
         <Form {...reactForm}>
           <form onSubmit={(e) => reactForm.handleSubmit(() => mutate())(e)}>
-            <Card className="w-[500px] mx-auto">
+            <Card className="w-full max-w-[500px] mx-auto">
               <CardHeader>
                 <CardTitle className="text-center">{form?.title}</CardTitle>
               </CardHeader>
@@ -212,33 +221,41 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                         render={({ field }) => (
                           <>
                             {input.type === FormInputType.TOGGLE && (
-                              <>
-                                <FormItem className="flex items-center gap-2 h-full">
+                              <FormItem className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
                                   <FormControl>
                                     <Checkbox
+                                      id={input.name}
                                       onCheckedChange={(e) => field.onChange(e)}
                                       checked={field.value as boolean}
                                     ></Checkbox>
                                   </FormControl>
                                   <FormLabel
                                     htmlFor={input.name}
-                                    className="flex items-center"
+                                    className="flex items-center gap-1"
                                   >
                                     {input.displayName}
+                                    {input.required && (
+                                      <RequiredFieldAsterisk />
+                                    )}
                                   </FormLabel>
-                                </FormItem>
-                                <ReadMoreDescription
-                                  text={input.description ?? ''}
-                                />
-                              </>
+                                </div>
+                                {input.description && (
+                                  <ReadMoreDescription
+                                    text={input.description}
+                                  />
+                                )}
+                                <FormMessage />
+                              </FormItem>
                             )}
                             {input.type !== FormInputType.TOGGLE && (
                               <FormItem className="flex flex-col gap-1">
                                 <FormLabel
                                   htmlFor={input.name}
-                                  className="flex items-center justify-between"
+                                  className="flex items-center gap-1"
                                 >
-                                  {input.displayName} {input.required && '*'}
+                                  {input.displayName}
+                                  {input.required && <RequiredFieldAsterisk />}
                                 </FormLabel>
                                 <FormControl className="flex flex-col gap-1">
                                   <>
@@ -278,11 +295,14 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                         type="file"
                                       />
                                     )}
-                                    <ReadMoreDescription
-                                      text={input.description ?? ''}
-                                    />
                                   </>
                                 </FormControl>
+                                {input.description && (
+                                  <ReadMoreDescription
+                                    text={input.description}
+                                  />
+                                )}
+                                <FormMessage />
                               </FormItem>
                             )}
                           </>
