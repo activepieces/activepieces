@@ -39,3 +39,32 @@ jobs:
 
       - name: validate publishable packages
         run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/validate-publishable-packages.ts
+
+      - name: find changed pieces
+        id: changed
+        run: |
+          OUTPUT=$(npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/find-changed-pieces.ts)
+          TURBO_FILTER=$(echo "$OUTPUT" | grep '^TURBO_FILTER:' | sed 's/^TURBO_FILTER://')
+          CHANGED_DIRS=$(echo "$OUTPUT" | sed -n '/^CHANGED_DIRS:$/,/^TURBO_FILTER:/{ /^CHANGED_DIRS:$/d; /^TURBO_FILTER:/d; p; }')
+          if [ -z "$TURBO_FILTER" ]; then
+            echo "No changed pieces found"
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "turbo_filter=$TURBO_FILTER" >> "$GITHUB_OUTPUT"
+            {
+              echo "changed_dirs<<PIECES_EOF"
+              echo "$CHANGED_DIRS"
+              echo "PIECES_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: build changed pieces
+        if: steps.changed.outputs.has_changes == 'true'
+        run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }}
+
+      - name: check piece heap usage
+        if: steps.changed.outputs.has_changes == 'true' && !contains(github.event.pull_request.labels.*.name, 'skip-heap-check')
+        env:
+          CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
+        run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/check-pieces-heap.ts

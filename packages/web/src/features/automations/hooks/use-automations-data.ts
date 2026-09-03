@@ -60,7 +60,6 @@ export function useAutomationsData({
     queryFn: () => foldersApi.list(),
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
@@ -103,7 +102,6 @@ export function useAutomationsData({
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const skipFlows =
@@ -134,7 +132,6 @@ export function useAutomationsData({
     enabled: !skipFlows,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const rootTablesQuery = useQuery({
@@ -152,7 +149,6 @@ export function useAutomationsData({
     enabled: !skipTables && !hideTables,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const toggleFolder = useCallback((folderId: string) => {
@@ -285,11 +281,19 @@ export function useAutomationsData({
     (rootTablesQuery.isLoading && !skipTables && !hideTables) ||
     folderContentsQuery.isLoading;
 
+  const isError =
+    foldersQuery.isError ||
+    (rootFlowsQuery.isError && !skipFlows) ||
+    (rootTablesQuery.isError && !skipTables && !hideTables) ||
+    folderContentsQuery.isError;
+
   const invalidateAll = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['folders'] });
-    queryClient.invalidateQueries({ queryKey: ['root-flows'] });
-    queryClient.invalidateQueries({ queryKey: ['root-tables'] });
-    queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] });
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['folders'] }),
+      queryClient.invalidateQueries({ queryKey: ['root-flows'] }),
+      queryClient.invalidateQueries({ queryKey: ['root-tables'] }),
+      queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] }),
+    ]);
   }, [queryClient]);
 
   const invalidateRoot = useCallback(() => {
@@ -311,6 +315,7 @@ export function useAutomationsData({
     rootFlows: rootFlowsQuery.data?.data ?? [],
     rootTables: rootTablesQuery.data?.data ?? [],
     isLoading,
+    isError,
     isFiltered,
     expandedFolders: effectiveExpandedFolders,
     toggleFolder,

@@ -227,6 +227,9 @@ export type ExecutePieceToolRequest = {
 
 export type ExecutePieceToolResponse = {
     result: unknown
+    resolvedInput: Record<string, unknown>
+    actionDisplayName: string
+    connectionLabel?: string
 }
 
 export type ExecuteKnowledgeBaseToolRequest = {

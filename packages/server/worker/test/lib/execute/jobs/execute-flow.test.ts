@@ -205,4 +205,88 @@ describe('executeFlowJob', () => {
             expect(ctx.runtime.execute).not.toHaveBeenCalled()
         })
     })
+    describe('correlation ids on a terminal status report', () => {
+        const syncJobData = (overrides?: Partial<ExecuteFlowJobData>) => makeResumeJobData({
+            executionType: ExecutionType.BEGIN,
+            workerHandlerId: 'server-1',
+            httpRequestId: 'req-1',
+            ...overrides,
+        })
+
+        const sandboxError = (code: ErrorCode) => new ActivepiecesError({
+            code,
+            params: { standardOutput: '', standardError: '' },
+        })
+
+        it.each([
+            [ErrorCode.SANDBOX_EXECUTION_TIMEOUT, FlowRunStatus.TIMEOUT],
+            [ErrorCode.SANDBOX_MEMORY_ISSUE, FlowRunStatus.MEMORY_LIMIT_EXCEEDED],
+            [ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED, FlowRunStatus.LOG_SIZE_EXCEEDED],
+        ])('reports %s as %s with both ids so the waiting sync caller can be answered', async (code, status) => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(sandboxError(code))
+
+            await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({ status, workerHandlerId: 'server-1', httpRequestId: 'req-1' }),
+            )
+        })
+
+        it('reports an engine INTERNAL_ERROR with both ids', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockResolvedValue({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'boom', timings: {} })
+
+            await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.INTERNAL_ERROR,
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('reports a sandbox crash as INTERNAL_ERROR with both ids before rethrowing', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(new Error('SANDBOX_INTERNAL_ERROR'))
+
+            await expect(executeFlowJob.execute(ctx, syncJobData())).rejects.toThrow('SANDBOX_INTERNAL_ERROR')
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.INTERNAL_ERROR,
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('reports a vanished flow version as FAILED with both ids', async () => {
+            const ctx = makeMockContext({ resolveResult: { kind: 'flow-not-found' } })
+
+            await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.FAILED,
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('omits both ids for an async run so nothing is published for it', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(sandboxError(ErrorCode.SANDBOX_EXECUTION_TIMEOUT))
+
+            await executeFlowJob.execute(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            const reported = ctx.apiClient.uploadRunLog.mock.calls.at(-1)[0]
+            expect(reported.status).toBe(FlowRunStatus.TIMEOUT)
+            expect(reported).not.toHaveProperty('workerHandlerId')
+            expect(reported).not.toHaveProperty('httpRequestId')
+        })
+    })
 })
