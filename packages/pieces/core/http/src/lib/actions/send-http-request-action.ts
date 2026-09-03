@@ -36,46 +36,30 @@ export const httpSendRequestAction = createAction({
     method: httpMethodDropdown,
     url: Property.ShortText({
       displayName: 'URL',
-      description: 'The absolute URL to call, including the scheme. Example: https://api.example.com/v1/users',
+      description: 'The full URL to call, including https:// or http://',
       required: true,
       placeholder: 'https://api.example.com/v1/users',
     }),
     headers: Property.Object({
       displayName: 'Headers',
-      description: 'Headers sent with the request, as key-value pairs. Example: key "Content-Type" with value "application/json".',
+      description: 'Sent with the request as key-value pairs.',
       required: false,
     }),
     queryParams: Property.Object({
       displayName: 'Query params',
-      description: 'Parameters appended to the URL as a query string. Example: key "page" with value "2".',
+      description: 'Appended to the URL as a query string.',
       required: false,
     }),
     authType: Property.StaticDropdown<AuthType>({
       displayName: 'Authentication',
       required: false,
       defaultValue: AuthType.NONE,
-      display: 'cards',
       options: {
         disabled: false,
         options: [
-          {
-            label: 'None',
-            value: AuthType.NONE,
-            description: 'No credentials',
-            icon: 'blank',
-          },
-          {
-            label: 'Basic Auth',
-            value: AuthType.BASIC,
-            description: 'Username and password',
-            icon: 'user',
-          },
-          {
-            label: 'Bearer Token',
-            value: AuthType.BEARER_TOKEN,
-            description: 'Token in the header',
-            icon: 'tag',
-          },
+          { label: 'None', value: AuthType.NONE },
+          { label: 'Basic Auth', value: AuthType.BASIC },
+          { label: 'Bearer Token', value: AuthType.BEARER_TOKEN },
         ],
       },
     }),
@@ -89,12 +73,12 @@ export const httpSendRequestAction = createAction({
           return {
             username: Property.ShortText({
               displayName: 'Username',
-              description: 'The username to use for authentication.',
+              description: 'The username for authentication.',
               required: true,
             }),
             password: Property.ShortText({
               displayName: 'Password',
-              description: 'The password to use for authentication. Stored in the flow definition and visible in exports, so prefer HTTP (OAuth2) or a dedicated piece for long-lived credentials.',
+              description: 'Stored in the flow and visible in exports. Prefer HTTP (OAuth2).',
               required: true,
             }),
           };
@@ -103,7 +87,7 @@ export const httpSendRequestAction = createAction({
           return {
             token: Property.ShortText({
               displayName: 'Token',
-              description: 'The Bearer token to use for authentication. Stored in the flow definition and visible in exports, so prefer HTTP (OAuth2) or a dedicated piece for long-lived credentials.',
+              description: 'Stored in the flow and visible in exports. Prefer HTTP (OAuth2).',
               required: true,
             }),
           };
@@ -116,34 +100,13 @@ export const httpSendRequestAction = createAction({
       description: 'How to encode the request body. Leave as None for GET requests.',
       required: false,
       defaultValue: 'none',
-      display: 'cards',
       options: {
         disabled: false,
         options: [
-          {
-            label: 'None',
-            value: 'none',
-            description: 'No body',
-            icon: 'blank',
-          },
-          {
-            label: 'JSON',
-            value: 'json',
-            description: 'Structured payload',
-            icon: 'code',
-          },
-          {
-            label: 'Form Data',
-            value: 'form_data',
-            description: 'Fields and files',
-            icon: 'paperclip',
-          },
-          {
-            label: 'Raw',
-            value: 'raw',
-            description: 'Plain text body',
-            icon: 'text',
-          },
+          { label: 'None', value: 'none' },
+          { label: 'JSON', value: 'json' },
+          { label: 'Form Data', value: 'form_data' },
+          { label: 'Raw', value: 'raw' },
         ],
       },
     }),
@@ -207,7 +170,7 @@ export const httpSendRequestAction = createAction({
     }),
     response_is_binary: Property.Checkbox({
       displayName: 'Response is Binary',
-      description: 'Return the response body as base64. Enable for files like PDFs or images.',
+      description: 'Return the response as base64, for files like PDFs.',
       required: false,
       defaultValue: false,
       advanced: true,
@@ -244,7 +207,7 @@ export const httpSendRequestAction = createAction({
           }),
           proxy_password: Property.ShortText({
             displayName: 'Proxy Password',
-            description: 'Stored in the flow definition and visible in exports.',
+            description: 'Stored in the flow and visible in exports.',
             required: false,
           }),
         };
@@ -252,17 +215,14 @@ export const httpSendRequestAction = createAction({
     }),
     timeout: Property.Number({
       displayName: 'Timeout',
-      description: 'Seconds to wait before giving up on the request. Leave empty for no timeout.',
+      description: 'Seconds to wait before giving up. Empty means no timeout.',
       required: false,
-      display: 'stepper',
       min: 1,
-      max: 300,
-      step: 1,
       advanced: true,
     }),
     followRedirects: Property.Checkbox({
       displayName: 'Follow redirects',
-      description: 'Follow 3xx redirects to the new location instead of returning the redirect response.',
+      description: 'Follow 3xx redirects instead of returning the response.',
       required: false,
       defaultValue: false,
       advanced: true,
@@ -292,20 +252,6 @@ export const httpSendRequestAction = createAction({
       label: 'Request',
       icon: 'send',
       props: ['method', 'url', 'headers', 'queryParams'],
-    },
-    {
-      key: 'auth',
-      display: 'section',
-      label: 'Authentication',
-      icon: 'user',
-      props: ['authType', 'authFields'],
-    },
-    {
-      key: 'body',
-      display: 'section',
-      label: 'Body',
-      icon: 'code',
-      props: ['body_type', 'body'],
     },
   ],
   errorHandlingOptions: {
