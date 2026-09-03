@@ -293,7 +293,6 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
                                           field.onChange(file);
                                         }
                                       }}
-                                      placeholder={input.displayName}
                                       type="file"
                                     />
                                   </FormControl>

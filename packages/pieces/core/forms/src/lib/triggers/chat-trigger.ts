@@ -10,7 +10,8 @@ import {
 } from '@activepieces/pieces-framework';
 import { chatSubmissionTriggerOutputSchema } from '../output-schemas';
 
-const responseMarkdown = `The sender waits for a **Respond on UI** step in this flow.`;
+const responseMarkdown = `The sender waits for a **Respond on UI** step in this flow.
+Without one, they see an error after {{webhookTimeoutSeconds}} seconds.`;
 
 const markdown = `**Published Chat URL:**
 \`\`\`text

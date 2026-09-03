@@ -22,7 +22,8 @@ Production link. Serves the published version of the form.
 \`\`\`
 Testing link. Serves the draft you are editing now.
 `;
-const responseMarkdown = `With **Wait for Response** on, the form waits for a **Respond on UI** step.`;
+const responseMarkdown = `With **Wait for Response** on, the form waits for a **Respond on UI** step.
+Without one, it errors after {{webhookTimeoutSeconds}} seconds.`;
 
 type FormInput = {
   displayName: string;
