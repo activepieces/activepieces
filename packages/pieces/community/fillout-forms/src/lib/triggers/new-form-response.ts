@@ -68,7 +68,8 @@ export const newFormResponse = createTrigger({
     return submissions.responses;
   },
   async run(context) {
-    const payload = JSON.parse(context.payload.body as string) as {
+    const body = context.payload.body;
+    const payload = (typeof body === 'string' ? JSON.parse(body) : body) as {
       submission: Record<string, any>;
     };
     return [payload.submission];
