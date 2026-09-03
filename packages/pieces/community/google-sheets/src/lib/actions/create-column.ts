@@ -34,7 +34,7 @@ export const createColumnAction = createAction({
 		columnIndex: Property.Number({
 			displayName: 'Column Index',
 			description:
-				'Where to place the column, counting from 1. Enter 3 to make it the third column. Leave empty, or enter less than 1, to add it after the last column.',
+				'Position of the new column, counting from 1. Empty adds it last.',
 			required: false,
 		}),
 	},

@@ -129,8 +129,8 @@ export const getRowsAction = createAction({
       defaultValue: 1,
     }),
     useHeaderNames: Property.Checkbox({
-      displayName: 'Use Header Names',
-      description: 'Map A/B/C… to the actual column headers.',
+      displayName: 'Use Column Names',
+      description: 'Key each row by column name instead of A, B, C.',
       required: false,
       defaultValue: false,
       advanced: true,

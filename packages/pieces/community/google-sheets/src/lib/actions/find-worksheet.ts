@@ -28,7 +28,7 @@ export const findWorksheetAction = createAction({
 		exact_match: Property.Checkbox({
 			displayName: 'Exact Match',
 			description:
-				'If true, only return worksheets that exactly match the name. If false, return worksheets that contain the name.',
+				'Only return worksheets whose title matches exactly.',
 			required: false,
 			defaultValue: false,
 		}),

@@ -19,13 +19,13 @@ const createEmptyOptionList = (message: string) => {
 	};
 };
 
-export const includeTeamDrivesProp = () =>
+export const includeTeamDrivesProp = ({ advanced = true }: { advanced?: boolean } = {}) =>
 	Property.Checkbox({
 		displayName: 'Include Shared Drives',
-		description: 'Also list spreadsheets stored in shared drives.',
+		description: 'Also include spreadsheets stored in shared drives.',
 		defaultValue: false,
 		required: false,
-		advanced: true,
+		advanced,
 	});
 
 export const spreadsheetIdProp = (displayName: string, description: string, required = true) =>
@@ -271,7 +271,7 @@ export const isFirstRowHeaderProp = () =>
 	Property.Checkbox({
 		displayName: 'First Row Contains Headers',
 		description:
-			"Map values to your sheet's column names. Turn off to enter values positionally, left to right.",
+			'Enter values by column name instead of left to right.',
 		required: false,
 		defaultValue: false,
 	});

@@ -26,13 +26,13 @@ export const findRowByNumAction = createAction({
 		}),
 		headerRow: Property.Number({
 			displayName: 'Header Row',
-			description: 'Enter the row number where your column headers are located (usually row 1).',
+			description: 'The row that contains the column names.',
 			required: true,
 			defaultValue: 1,
 		}),
 		useHeaderNames: Property.Checkbox({
 			displayName: 'Use Column Names',
-			description: 'Use column names as keys instead of A, B, C.',
+			description: 'Key each row by column name instead of A, B, C.',
 			required: false,
 			defaultValue: true,
 			advanced: true,

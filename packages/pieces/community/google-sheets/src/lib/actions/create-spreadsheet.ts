@@ -39,7 +39,7 @@ export const createSpreadsheetAction = createAction({
 			auth: googleSheetsAuth,
 			displayName: 'Parent Folder',
 			description:
-				'The Drive folder to create the spreadsheet in. Defaults to the root of your Drive.',
+				'Where to create the spreadsheet. Defaults to My Drive.',
 			required: false,
 			refreshers: ['auth', 'includeTeamDrives'],
 			options: async ({ auth, includeTeamDrives }) => {

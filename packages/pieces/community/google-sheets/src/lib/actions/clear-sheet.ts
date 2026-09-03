@@ -21,7 +21,7 @@ export const clearSheetAction = createAction({
 		is_first_row_headers: isFirstRowHeaderProp(),
 		headerRow: Property.Number({
 			displayName: 'Header Row',
-			description: 'Enter the row number where your column headers are located (usually row 1).',
+			description: 'The row that contains the column names.',
 			required: true,
 			defaultValue: 1,
 		}),

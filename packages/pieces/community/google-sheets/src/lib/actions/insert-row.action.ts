@@ -38,7 +38,7 @@ export const insertRowAction = createAction({
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered as strings and have no effect.',
+				'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
 			advanced: true,
 		}),

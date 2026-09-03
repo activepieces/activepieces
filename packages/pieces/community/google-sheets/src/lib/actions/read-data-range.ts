@@ -28,8 +28,9 @@ export const readDataRangeAction = createAction({
 		range: Property.ShortText({
 			displayName: 'Range (A1 Notation)',
 			description:
-				'The cell range to read, e.g. A1:D10. Leave empty to read the entire worksheet.',
+				'The cells to read. Leave empty to read the whole worksheet.',
 			required: false,
+			placeholder: 'A1:D10',
 		}),
 		majorDimension: Property.StaticDropdown({
 			displayName: 'Return Data As',
@@ -46,7 +47,7 @@ export const readDataRangeAction = createAction({
 		}),
 		valueRenderOption: Property.StaticDropdown({
 			displayName: 'Cell Values',
-			description: 'Return cells the way the sheet displays them, the underlying raw values, or the formulas behind them.',
+			description: 'Return values as displayed, as raw values, or as formulas.',
 			required: true,
 			defaultValue: 'FORMATTED_VALUE',
 			options: {

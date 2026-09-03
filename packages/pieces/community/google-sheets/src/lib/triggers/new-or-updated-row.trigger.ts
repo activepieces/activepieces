@@ -47,7 +47,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		trigger_column: Property.Dropdown({
 			auth: googleSheetsAuth,
 			displayName: 'Trigger Column',
-			description: `Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.`,
+			description: 'Fire only when this column changes. Any Column fires on any cell.',
 			required: false,
 			refreshers: ['spreadsheetId', 'sheetId'],
 			defaultValue: ALL_COLUMNS,

@@ -158,14 +158,14 @@ export const insertMultipleRowsAction = createAction({
 		overwrite: Property.Checkbox({
 			displayName: 'Overwrite Existing Data',
 			description:
-				'Enable this option to replace all existing data in the sheet with new data from your input. This will clear any extra rows beyond the updated range.',
+				'Replace every existing row with the new data. Extra rows are cleared.',
 			required: false,
 			defaultValue: false,
 		}),
 		check_for_duplicate: Property.Checkbox({
 			displayName: 'Skip Duplicate Rows',
 			description:
-				'Enable this option to check for duplicate values before inserting data into the sheet. Only unique rows will be added based on the selected column.',
+				'Skip rows whose value in the chosen column already exists.',
 			required: false,
 			defaultValue: false,
 		}),
@@ -218,7 +218,7 @@ export const insertMultipleRowsAction = createAction({
 						fields['column_name'] = Property.StaticDropdown({
 							displayName: 'Column to Check for Duplicates',
 							description:
-								'Select the column to use for detecting duplicate values. Only rows with unique values in this column will be added to the sheet.',
+								'Rows with a repeated value in this column are skipped.',
 							required: true,
 							options: {
 								disabled: false,
@@ -234,13 +234,13 @@ export const insertMultipleRowsAction = createAction({
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered as strings and have no effect',
+				'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
 			advanced: true,
 		}),
 		headerRow: Property.Number({
 			displayName: 'Header Row',
-			description: 'Enter the row number where your column headers are located (usually row 1).',
+			description: 'The row that contains the column names.',
 			required: true,
 			defaultValue: 1,
 		}),

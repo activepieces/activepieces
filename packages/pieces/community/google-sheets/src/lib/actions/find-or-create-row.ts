@@ -51,7 +51,7 @@ export const findOrCreateRowAction = createAction({
 		}),
 		useHeaderNames: Property.Checkbox({
 			displayName: 'Use Column Names',
-			description: 'Return found rows with header names as keys instead of A, B, C.',
+			description: 'Key each row by column name instead of A, B, C.',
 			required: false,
 			defaultValue: false,
 			advanced: true,
@@ -59,7 +59,7 @@ export const findOrCreateRowAction = createAction({
 		first_row_headers: isFirstRowHeaderProp(),
 		as_string: Property.Checkbox({
 			displayName: 'As String',
-			description: 'Inserted values that are dates and formulas will be entered as strings and have no effect.',
+			description: 'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
 			advanced: true,
 		}),

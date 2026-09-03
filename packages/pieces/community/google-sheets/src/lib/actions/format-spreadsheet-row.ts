@@ -28,7 +28,7 @@ export const formatRowAction = createAction({
 		endingRow: Property.Number({
 			displayName: 'Ending Row',
 			description:
-				'The last row number where formatting should stop (leave empty to format only the starting row).',
+				'Last row to format. Leave empty to format only the starting row.',
 			required: false,
 		}),
 		bgColor: Property.ShortText({
