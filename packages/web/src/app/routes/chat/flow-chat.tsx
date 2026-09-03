@@ -54,20 +54,16 @@ export function FlowChat({
   const messagesRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
+  const useDraft =
+    mode === ChatDrawerSource.TEST_FLOW || mode === ChatDrawerSource.TEST_STEP;
+
   const {
     data: chatUI,
     isLoading,
     isError: isLoadingError,
   } = useQuery<ChatUIResponse | null, Error>({
-    queryKey: ['chat', flowId],
-    queryFn: () =>
-      humanInputApi.getChatUI(
-        flowId,
-        mode === ChatDrawerSource.TEST_FLOW ||
-          mode === ChatDrawerSource.TEST_STEP
-          ? true
-          : false,
-      ),
+    queryKey: ['chat', flowId, useDraft],
+    queryFn: () => humanInputApi.getChatUI(flowId, useDraft),
     enabled: !isNil(flowId),
     staleTime: Infinity,
     retry: false,
