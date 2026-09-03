@@ -6,7 +6,6 @@ import { IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
-import { distributedLock } from '../database/redis-connections'
 import { fileService } from '../file/file.service'
 import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
 import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
@@ -15,7 +14,6 @@ const kbFileRepo = repoFactory(KnowledgeBaseFileEntity)
 const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 
 const INSERT_BATCH_SIZE = 100
-const WRITE_LOCK_TIMEOUT_SECONDS = 120
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
 
@@ -232,7 +230,21 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
         const existingChunks = chunks.filter((chunk) => !isNil(chunk.id))
         const isFullRestore = existingChunks.length === 0
 
-        const store = async (): Promise<void> => transaction(async (entityManager) => {
+        await transaction(async (entityManager) => {
+            // Serialise every write to this file at the row that owns it, so two restores cannot
+            // interleave into a snapshot made of both. A lock held elsewhere can be lost; this one
+            // is the transaction.
+            const owner = await entityManager.getRepository(KnowledgeBaseFileEntity)
+                .createQueryBuilder('file')
+                .setLock('pessimistic_write')
+                .where('file.id = :knowledgeBaseFileId AND file."projectId" = :projectId', { knowledgeBaseFileId, projectId })
+                .getOne()
+            if (isNil(owner)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: { entityType: 'KnowledgeBaseFile', entityId: knowledgeBaseFileId },
+                })
+            }
             const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
             const entities = newChunks.map((chunk) => ({
                 id: apId(),
@@ -283,11 +295,6 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
             }
         })
 
-        await distributedLock(log).runExclusive({
-            key: `knowledge-base-chunks-${knowledgeBaseFileId}`,
-            timeoutInSeconds: WRITE_LOCK_TIMEOUT_SECONDS,
-            fn: store,
-        })
     },
 
     async listChunks(params: ListChunksParams): Promise<ChunkListItem[]> {
