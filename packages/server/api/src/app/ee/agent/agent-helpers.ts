@@ -176,7 +176,7 @@ function pickAllowedModel({ provider, selectedModel, candidates, modelScope, mod
     return selectedModel && allowed.includes(selectedModel) ? selectedModel : allowed[0]
 }
 
-function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds, fallbackModelId }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[], fallbackModelId?: string }): string {
     const catalog = manualTextModelCatalog({ config })
     if (!isNil(catalog)) {
         return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
@@ -185,6 +185,9 @@ function resolveModelIdForProvider({ provider, selectedModel, config, modelScope
     const tierModelId = resolveTier({ tierId: selectedModel }).modelId
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
         return tierModelId
+    }
+    if (isNil(curatedModels) && !isNil(fallbackModelId) && fallbackModelId.length > 0 && isNil(findTier({ tierId: fallbackModelId }))) {
+        return pickAllowedModel({ provider, selectedModel: fallbackModelId, candidates: [fallbackModelId], modelScope, modelIds })
     }
     const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
     const candidates = isNil(curatedModels) ? [nativeModelId] : curatedModels.map((model) => model.id)
@@ -218,9 +221,9 @@ function reportKeyOutcome({ platformId, providerId, log }: { platformId: string,
     }
 }
 
-async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
+async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log, fallbackModelId }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger, fallbackModelId?: string }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
+    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, ...spreadIfDefined('fallbackModelId', fallbackModelId) })
     return {
         model: agentAiUtils.createChatModel({
             provider: providerConfig.provider,
@@ -234,12 +237,12 @@ async function resolveTierModel({ platformId, tierId, provider, providerConfigId
     }
 }
 
-async function resolveFastModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
+async function resolveFastModel({ platformId, provider, providerConfigId, scope, log, fallbackModelId }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger, fallbackModelId?: string }): Promise<LanguageModel> {
+    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId), ...spreadIfDefined('fallbackModelId', fallbackModelId) })).model
 }
 
-function resolveFastModelId({ provider, config, modelScope, modelIds }: { provider: AIProviderName, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
-    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
+function resolveFastModelId({ provider, config, modelScope, modelIds, fallbackModelId }: { provider: AIProviderName, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[], fallbackModelId: string }): string {
+    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds, fallbackModelId })
 }
 
 async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {

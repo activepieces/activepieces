@@ -12,13 +12,13 @@ vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
 const resolve = ({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }) =>
     agentHelpers.resolveModelIdForProvider({ provider, selectedModel })
 
-describe('resolveModelIdForProvider', () => {
-    const vertexConfig = (models: { modelId: string, modelType: AIProviderModelType }[]) => ({
-        project: 'gcp-project',
-        region: 'europe-west4',
-        models: models.map((model) => ({ ...model, modelName: model.modelId })),
-    })
+const vertexConfig = (models: { modelId: string, modelType: AIProviderModelType }[]) => ({
+    project: 'gcp-project',
+    region: 'europe-west4',
+    models: models.map((model) => ({ ...model, modelName: model.modelId })),
+})
 
+describe('resolveModelIdForProvider', () => {
     it('picks from the models an admin listed on the key, not the curated list', () => {
         const config = vertexConfig([
             { modelId: 'claude-3-5-sonnet@20241022', modelType: AIProviderModelType.TEXT },
@@ -92,12 +92,6 @@ describe('resolveModelIdForProvider', () => {
     it('strips the tier vendor prefix for providers that declare no curated models', () => {
         expect(resolve({ provider: AIProviderName.BEDROCK, selectedModel: 'smart' })).toBe('claude-sonnet-4-6')
     })
-
-    it('resolves the fast round to a model the provider offers', () => {
-        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.ANTHROPIC })).toBe('claude-haiku-4-5')
-        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.OPENAI })).toBe('gpt-5.5')
-        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.ACTIVEPIECES })).toBe('anthropic/claude-haiku-4.5')
-    })
 })
 
 describe('resolveModelIdForAnalytics', () => {
@@ -165,5 +159,38 @@ describe('resolveChatProviderName', () => {
         await agentHelpers.resolveChatProviderName({ platformId: 'plat-1', projectId: 'proj-1', log })
 
         expect(getChatProviderName).toHaveBeenCalledWith({ platformId: 'plat-1', scope: { type: 'project', projectId: 'proj-1' } })
+    })
+})
+
+describe('resolveFastModelId', () => {
+    it('falls back to the configured model when the provider has no curated list and no catalog', () => {
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.BEDROCK, config: { region: 'us-east-1' }, fallbackModelId: 'us.anthropic.claude-sonnet-5' })).toBe('us.anthropic.claude-sonnet-5')
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.AZURE, fallbackModelId: 'my-azure-deployment' })).toBe('my-azure-deployment')
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.MISTRAL, fallbackModelId: 'mistral-large-latest' })).toBe('mistral-large-latest')
+    })
+
+    it('keeps the fast tier where the provider ships a real fast model', () => {
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.ANTHROPIC, fallbackModelId: 'claude-sonnet-4-6' })).toBe('claude-haiku-4-5')
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.ACTIVEPIECES, fallbackModelId: 'unused' })).toBe('anthropic/claude-haiku-4.5')
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.OPENROUTER, fallbackModelId: 'unused' })).toBe('anthropic/claude-haiku-4.5')
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.OPENAI, fallbackModelId: 'unused' })).toBe('gpt-5.5')
+    })
+
+    it('picks the fast model from an admin-listed catalog instead of the fallback', () => {
+        const config = vertexConfig([{ modelId: 'gemini-2.5-flash', modelType: AIProviderModelType.TEXT }])
+
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.VERTEX, config, fallbackModelId: 'unused' })).toBe('gemini-2.5-flash')
+    })
+
+    it('holds the fallback against the key model allow-list', () => {
+        const scoped = { provider: AIProviderName.BEDROCK, config: { region: 'us-east-1' }, modelScope: 'selected' as const }
+
+        expect(agentHelpers.resolveFastModelId({ ...scoped, modelIds: ['us.anthropic.claude-sonnet-5'], fallbackModelId: 'us.anthropic.claude-sonnet-5' })).toBe('us.anthropic.claude-sonnet-5')
+        expect(() => agentHelpers.resolveFastModelId({ ...scoped, modelIds: ['us.anthropic.claude-haiku-4-5'], fallbackModelId: 'us.anthropic.claude-opus-4-8' })).toThrow()
+    })
+
+    it('never ships a tier id or an empty string as the fallback model', () => {
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.BEDROCK, fallbackModelId: 'smart' })).toBe('claude-haiku-4-5')
+        expect(agentHelpers.resolveFastModelId({ provider: AIProviderName.BEDROCK, fallbackModelId: '' })).toBe('claude-haiku-4-5')
     })
 })

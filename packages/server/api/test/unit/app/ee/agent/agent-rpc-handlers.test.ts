@@ -402,6 +402,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
         mockRunResolved.mockClear()
         mockResolveInput.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
+        mockFindOne.mockResolvedValue(conversation)
         mockGetOneWithoutValue.mockResolvedValue({ id: 'ac-1', externalId: 'conn-1', displayName: 'Sales Inbox' })
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executePieceTool({
@@ -628,6 +629,7 @@ describe('agentRpcHandlers.executePieceTool — which account a configured actio
         mockResolveInput.mockClear()
         mockGetOneWithoutValue.mockClear()
         mockFindOneBy.mockResolvedValue(AGENT_CHAT)
+        mockFindOne.mockResolvedValue(AGENT_CHAT)
         mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         const response = await agentRpcHandlers(noopLogger as never).executePieceTool({
