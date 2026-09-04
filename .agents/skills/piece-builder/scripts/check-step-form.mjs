@@ -44,15 +44,16 @@ function parseArgs(argv) {
   };
 }
 
-function loadPiece({ file, url, pieceDirName }) {
+function loadPiece({ file, url, pieceDirName, includeAi }) {
   if (file) {
     return JSON.parse(readFileSync(file, 'utf8'));
   }
-  return fetchPiece({ url, pieceDirName });
+  return fetchPiece({ url, pieceDirName, includeAi });
 }
 
-async function fetchPiece({ url, pieceDirName }) {
-  const endpoint = `${url}/api/v1/pieces/${encodeURIComponent(`@activepieces/piece-${pieceDirName}`)}`;
+async function fetchPiece({ url, pieceDirName, includeAi }) {
+  const audience = includeAi ? '?audience=all' : '';
+  const endpoint = `${url}/api/v1/pieces/${encodeURIComponent(`@activepieces/piece-${pieceDirName}`)}${audience}`;
   const response = await fetch(endpoint).catch(() => {
     throw new Error(`No dev server answering at ${url}. Start it with "npm start" and make sure "${pieceDirName}" is in AP_DEV_PIECES.`);
   });
@@ -124,10 +125,10 @@ function propFindings({ step, propName, prop }) {
     add('warn', 'required-object', 'Empty {} passes the OBJECT schema; required is never enforced, only shown.');
   }
   if (/\?\s*$/.test(label)) {
-    add('warn', 'label-question', 'Toggle and field labels are nouns, not questions; drop the "?".');
+    add('warn', 'label-question', `"${label}": labels are nouns, not questions; drop the "?".`);
   }
   if (/\(.*\)/.test(label)) {
-    add('warn', 'label-parenthetical', 'Units and formats belong in the description, not the label ("Timeout (in seconds)").');
+    add('warn', 'label-parenthetical', `"${label}": the parenthetical belongs in the description, not the label.`);
   }
   if (label && !isTitleCase(label)) {
     add('warn', 'label-casing', 'Piece prop labels are Title Case (197:25 across Google pieces); match sibling forms first.');
@@ -190,7 +191,7 @@ function siblingFindings({ steps }) {
       findings.push({ level: 'warn', rule: 'sibling-label', step: entries.map((entry) => entry.step).join(', '), prop: propName, message: `Same prop, ${labels.size} labels: ${[...labels].map((label) => `"${label}"`).join(' / ')}.` });
     }
     if (descriptions.size > 1) {
-      findings.push({ level: 'warn', rule: 'sibling-description', step: entries.map((entry) => entry.step).join(', '), prop: propName, message: `Same prop, ${descriptions.size} descriptions; pick one and use it everywhere.` });
+      findings.push({ level: 'info', rule: 'sibling-description', step: entries.map((entry) => entry.step).join(', '), prop: propName, message: `Same prop, ${descriptions.size} descriptions; fine when the context differs, a defect when it does not.` });
     }
   });
   return findings;
@@ -208,7 +209,12 @@ function pieceFindings({ piece, steps }) {
 
 function render({ piece, steps, skippedAi, findings }) {
   const lines = [];
-  lines.push(`${piece.displayName} ${piece.version} — ${steps.filter((step) => step.kind === 'action').length} human actions, ${steps.filter((step) => step.kind === 'trigger').length} triggers (${skippedAi} AI-only actions skipped)`);
+  const aiCount = Object.values(piece.actions ?? {}).filter((action) => action.audience === 'ai').length;
+  const aiNote = aiCount === 0
+    ? ' (the server already filtered AI-only actions out)'
+    : skippedAi > 0 ? ` (${skippedAi} AI-only actions skipped)` : ` (${aiCount} AI-only actions included)`;
+  const actionWord = skippedAi === 0 && aiCount > 0 ? 'actions' : 'human actions';
+  lines.push(`${piece.displayName} ${piece.version} — ${steps.filter((step) => step.kind === 'action').length} ${actionWord}, ${steps.filter((step) => step.kind === 'trigger').length} triggers${aiNote}`);
   lines.push('');
   const byStep = new Map();
   findings.forEach((finding) => {
@@ -223,9 +229,8 @@ function render({ piece, steps, skippedAi, findings }) {
     });
     lines.push('');
   });
-  const errors = findings.filter((finding) => finding.level === 'error').length;
-  const warnings = findings.length - errors;
-  lines.push(`${errors} error(s), ${warnings} warning(s)`);
+  const count = (level) => findings.filter((finding) => finding.level === level).length;
+  lines.push(`${count('error')} error(s), ${count('warn')} warning(s), ${count('info')} info`);
   return lines.join('\n');
 }
 
