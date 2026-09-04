@@ -310,18 +310,24 @@ export const scrape = createAction({
     const javascriptReturns = result.data.actions?.javascriptReturns ?? [];
     const scrapes = result.data.actions?.scrapes ?? [];
 
-    result.data = {
-      screenshot: savedScreenshot,
-      ...(format !== 'screenshot' && { [format]: result.data[format] }),
-      actions: {
-        pdfs: savedPdfs,
-        screenshots: savedActionScreenshots,
-        javascriptReturns,
-        scrapes,
+    const output: { success: boolean; data: Record<string, unknown> } = {
+      success: result.success,
+      data: {
+        screenshot: savedScreenshot,
+        actions: {
+          pdfs: savedPdfs,
+          screenshots: savedActionScreenshots,
+          javascriptReturns,
+          scrapes,
+        },
+        metadata: result.data.metadata,
       },
-      metadata: result.data.metadata
     };
 
-    return result;
+    if (format !== 'screenshot') {
+      output.data[format] = result.data[format];
+    }
+
+    return output;
   },
 }); 
