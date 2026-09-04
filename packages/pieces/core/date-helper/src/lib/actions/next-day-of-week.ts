@@ -49,6 +49,7 @@ export const nextDayofWeek = createAction({
         ],
       },
       required: true,
+      defaultValue: 1,
     }),
     timeFormat: Property.StaticDropdown({
       displayName: 'Output Format',

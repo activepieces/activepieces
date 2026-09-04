@@ -55,7 +55,7 @@ export const extractDateParts = createAction({
         ],
       },
       required: true,
-      defaultValue: [timeParts.year],
+      defaultValue: [timeParts.year, timeParts.month, timeParts.day],
     }),
   },
   async run(context) {

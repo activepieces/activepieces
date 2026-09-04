@@ -68,7 +68,7 @@ export const dateDifferenceAction = createAction({
         ],
       },
       required: true,
-      defaultValue: [timeParts.year],
+      defaultValue: [timeParts.day],
     }),
   },
   async run(context) {

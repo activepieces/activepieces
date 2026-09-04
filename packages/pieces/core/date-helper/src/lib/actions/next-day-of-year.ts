@@ -60,6 +60,10 @@ export const nextDayofYear = createAction({
         'Rolls into the next month if the month is shorter.',
       required: true,
       defaultValue: 1,
+      display: 'stepper',
+      min: 1,
+      max: 31,
+      step: 1,
     }),
     timeFormat: Property.StaticDropdown({
       displayName: 'Output Format',
