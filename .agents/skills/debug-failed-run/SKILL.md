@@ -153,6 +153,16 @@ to keep it to the one member — siblings' store entries come back byte-identica
 `node_modules/.bun/<entry>` directory first. Prefer the tar restore below when the fault is a single folder: it needs
 no lockfile write and cannot contend with the other containers installing against the same volume.
 
+**A filtered `--force` is safe to run against a live shared workspace — the usual worries were measured and do not
+apply.** On bun 1.4.0 in the prod layout: it does **not** rewrite the shared `bun.lock` (identical hash before and
+after, same as a plain install), it does **not** re-resolve version ranges — reinstallation comes from the lock, so
+a `minimumReleaseAge` strict enough to block every version still lets the repair through and no version drifts — it
+leaves shared registry deps untouched (same inode and mtime), and it is concurrency-safe: eight containers repairing
+different members, and six repairing the *same* member, all exited 0 with every member healthy. Cost is a non-issue
+(~0.01 s over 200 members, faster than the plain install it replaces, because local tarballs hardlink from bun's
+global cache). The one thing to guard is **scope**: `--force` without `--filter` re-extracts every member of the
+workspace (~1,088 in `common`), so never issue one without the other.
+
 The tarball's `package/` prefix maps onto the store layout exactly, and the store entry usually already holds the
 piece's dependency links, so this restores the one missing directory and nothing else. It needs no cache
 invalidation, no lockfile write, no restart, and no `bun install` — so it cannot contend with the installs the other
