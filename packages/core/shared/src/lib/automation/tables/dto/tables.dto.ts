@@ -50,6 +50,8 @@ export const ListTablesRequest = z.object({
     externalIds: OptionalArrayFromQuery(z.string()),
     folderId: z.string().optional(),
     folderIds: OptionalArrayFromQuery(z.string()),
+    sortBy: z.enum(['NAME']).optional(),
+    order: z.enum(['ASC', 'DESC']).optional(),
 })
 
 export type ListTablesRequest = z.infer<typeof ListTablesRequest>

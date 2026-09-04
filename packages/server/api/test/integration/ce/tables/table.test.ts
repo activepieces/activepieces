@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FieldType } from '@activepieces/shared'
+import { FieldType, Table } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../helpers/db'
@@ -228,6 +228,46 @@ describe('Table API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body.data.length).toBe(2)
+        })
+
+        it('should sort by name ignoring case', async () => {
+            const ctx = await setup()
+            for (const name of ['Zeta', 'alpha', 'mid']) {
+                await db.save('table', { ...createMockTable({ projectId: ctx.project.id }), name })
+            }
+
+            const ascending = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'ASC',
+            })
+            const descending = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                order: 'DESC',
+            })
+
+            expect(ascending?.json().data.map((table: Table) => table.name)).toEqual(['alpha', 'mid', 'Zeta'])
+            expect(descending?.json().data.map((table: Table) => table.name)).toEqual(['Zeta', 'mid', 'alpha'])
+            expect(ascending?.json().next).toBeNull()
+        })
+
+        it('should reject a name sort combined with a cursor', async () => {
+            const ctx = await setup()
+            await createAndSaveTable(ctx)
+            await createAndSaveTable(ctx)
+
+            const firstPage = await ctx.get('/v1/tables', { projectId: ctx.project.id, limit: '1' })
+            const cursor = firstPage?.json()?.next
+            expect(cursor).not.toBeNull()
+
+            const response = await ctx.get('/v1/tables', {
+                projectId: ctx.project.id,
+                sortBy: 'NAME',
+                cursor,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
     })
 
