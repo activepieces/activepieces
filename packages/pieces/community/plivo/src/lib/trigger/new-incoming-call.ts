@@ -1,139 +1,150 @@
 import {
   createTrigger,
+  Property,
   TriggerStrategy,
-  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  DedupeStrategy,
-  httpClient,
-  HttpMethod,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
 import { plivoAuth } from '../..';
+import {
+  PlivoManagedApp,
+  plivoCommon,
+  provisionWebhook,
+  releaseWebhook,
+} from '../common';
+import {
+  isFromPlivo,
+  paramsForSigning,
+  webhookUrlCandidates,
+} from '../common/signature';
 
-const PAGE_SIZE = 20;
-const MAX_PAGES = 25;
+const markdown = `## Plivo Incoming Call
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof plivoAuth>, Record<string, never>> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  async items({ auth, lastFetchEpochMS }) {
-    const isTest = lastFetchEpochMS === 0;
-    const authId = auth.username;
-    const limit = isTest ? 1 : PAGE_SIZE;
+Fires the moment a call reaches the selected number, before it is answered, so the flow
+decides what happens next. While the flow is enabled that number is pointed at this flow
+automatically and it is returned to the application it used before on disable.
 
-    const items: { epochMilliSeconds: number; data: PlivoCall }[] = [];
-    let offset = 0;
+Add a **Return Response** step as the last step and set the response type to **Raw** with
+Plivo XML as the body, for example \`<Response><Speak>Hello</Speak></Response>\`. Plivo waits
+for that XML and plays it to the caller. Without it the caller hears nothing and the call
+ends.
 
-    for (let page = 0; page < MAX_PAGES; page++) {
-      const response = await httpClient.sendRequest<PlivoCallListResponse>({
-        method: HttpMethod.GET,
-        url: `https://api.plivo.com/v1/Account/${authId}/Call/`,
-        queryParams: {
-          call_direction: 'inbound',
-          limit: String(limit),
-          offset: String(offset),
-        },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authId,
-          password: auth.password,
-        },
-      });
+Loading sample data captures the call details but cannot answer the caller, because the
+test webhook has no synchronous form.
 
-      const calls = response.body.objects ?? [];
-      for (const call of calls) {
-        const timestamp = call.end_time || call.initiation_time || '';
-        items.push({
-          epochMilliSeconds: timestamp ? new Date(timestamp).getTime() : 0,
-          data: call,
-        });
-      }
+To wire it up by hand instead, leave the number empty and set the Answer URL on the Plivo
+application to the address below with method POST.
+\`\`\`text
+{{webhookUrl}}/sync
+\`\`\`
+`;
 
-      if (isTest || calls.length < limit || !response.body.meta?.next) {
-        break;
-      }
+const MANAGED_APP_STORE_KEY = '_plivo_new_incoming_call_app';
+const ANSWER_URL_STORE_KEY = '_plivo_new_incoming_call_url';
 
-      // Plivo returns inbound calls newest first, so once a page ends at or before the
-      // last poll there is nothing newer left on the pages behind it.
-      // A record with neither timestamp lands on 0, which must not be read as
-      // older than the last poll or paging would stop while newer calls remain.
-      const oldestOnPage = items[items.length - 1]?.epochMilliSeconds ?? 0;
-      if (oldestOnPage > 0 && oldestOnPage <= lastFetchEpochMS) {
-        break;
-      }
-
-      offset += limit;
-    }
-
-    return items.filter(
-      (item) => isTest || item.epochMilliSeconds > lastFetchEpochMS
-    );
-  },
+// Plivo waits for XML on the synchronous webhook, which is the plain path plus /sync.
+// The test webhook has no synchronous form, so a simulation registers the path as given
+// and captures the call details without answering.
+const answerUrlFor = (webhookUrl: string): string => {
+  const trimmed = webhookUrl.replace(/\/+$/, '');
+  return trimmed.endsWith('/test') ? trimmed : `${trimmed}/sync`;
 };
 
 export const plivoNewIncomingCall = createTrigger({
   auth: plivoAuth,
   name: 'new_incoming_call',
   displayName: 'New Incoming Call',
-  description: 'Triggers when an inbound call completes.',
+  description: 'Triggers when a call comes in, before it is answered',
   aiMetadata: {
     description:
-      'Fires when an inbound voice call to a Plivo number has completed. Each event is one finished inbound call with its from/to numbers, state, and duration. Polls the call record, so it fires after the call ends, not while it is ringing.',
+      'Fires when an inbound voice call reaches a Plivo number whose application Answer URL points at this webhook. The call is still ringing, so the flow can answer it by returning Plivo XML from a Return Response step. Each event carries the caller, the dialled number, the call UUID, and the call direction.',
   },
-  type: TriggerStrategy.POLLING,
-  props: {},
+  type: TriggerStrategy.WEBHOOK,
+  props: {
+    phone_number: plivoCommon.trigger_voice_phone_number,
+    markdown: Property.MarkDown({
+      value: markdown,
+    }),
+  },
   sampleData: {
-    call_uuid: '5607532d-5037-4066-befc-a8b40218dd4f',
-    from_number: '+14151234567',
-    to_number: '+14157654321',
-    call_direction: 'inbound',
-    call_state: 'ANSWER',
-    call_duration: 12,
-    initiation_time: '2026-07-08 12:00:00+00:00',
-    end_time: '2026-07-08 12:00:12+00:00',
+    From: '+14151234567',
+    To: '+14157654321',
+    CallUUID: '5607532d-5037-4066-befc-a8b40218dd4f',
+    Direction: 'inbound',
+    CallStatus: 'ringing',
+    Event: 'StartApp',
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
+    const answerUrl = answerUrlFor(context.webhookUrl);
+    // Activepieces passes no webhook URL to the run hook on its synchronous route, which
+    // is the route a voice answer URL has to use, so the URL Plivo will sign is recorded
+    // here while it is still known. Recorded for the manual setup too, because signature
+    // verification needs the exact URL either way.
+    await context.store.put<string>(ANSWER_URL_STORE_KEY, answerUrl);
+
+    const number = context.propsValue.phone_number;
+    if (!number) {
+      return;
+    }
+    const managed = await provisionWebhook({
       auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
+      number,
+      webhookUrl: answerUrl,
+      kind: 'answer',
     });
+    await context.store.put<PlivoManagedApp>(MANAGED_APP_STORE_KEY, managed);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
-  },
-  async test(context) {
-    return await pollingHelper.test(polling, context);
+    const managed = await context.store.get<PlivoManagedApp>(
+      MANAGED_APP_STORE_KEY
+    );
+    if (!managed) {
+      return;
+    }
+    try {
+      await releaseWebhook({ auth: context.auth, managed });
+    } finally {
+      await context.store.delete(MANAGED_APP_STORE_KEY);
+      await context.store.delete(ANSWER_URL_STORE_KEY);
+    }
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    const params = context.payload.body;
+    const registeredUrl = await context.store.get<string>(ANSWER_URL_STORE_KEY);
+    const urlCandidates = registeredUrl
+      ? [registeredUrl]
+      : webhookUrlCandidates(context.webhookUrl);
+
+    // The synchronous route runs the flow from this hook's return value without checking
+    // whether it produced an event, so returning nothing would let an unsigned request
+    // reach the rest of the flow. Refusing loudly is what keeps the check meaningful.
+    if (
+      !isRecord(params) ||
+      !isFromPlivo({
+        urlCandidates,
+        signedParams: paramsForSigning(
+          context.payload.rawBody,
+          context.payload.headers,
+          params
+        ),
+        headers: context.payload.headers,
+        authToken: context.auth.password,
+        channel: 'voice',
+      })
+    ) {
+      throw new Error(
+        'Refused a request to this flow because it does not carry a valid Plivo signature.'
+      );
+    }
+
+    if (typeof params['CallUUID'] !== 'string') {
+      throw new Error(
+        'Refused a request to this flow because it does not describe a Plivo call.'
+      );
+    }
+
+    return [params];
   },
 });
 
-interface PlivoCall {
-  call_uuid: string;
-  from_number: string;
-  to_number: string;
-  call_direction: string;
-  call_state?: string;
-  call_duration?: number;
-  initiation_time?: string;
-  end_time?: string;
-}
-
-interface PlivoCallListResponse {
-  api_id: string;
-  meta: {
-    limit: number;
-    offset: number;
-    next: string | null;
-    previous: string | null;
-  };
-  objects: PlivoCall[];
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

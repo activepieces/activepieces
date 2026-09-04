@@ -13,12 +13,12 @@ export const plivoLookupNumber = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Looks up a single phone number via the Plivo Lookup API and returns carrier name, country, line type (mobile, landline, VoIP, or toll-free), and formatted number variants. Use to validate or enrich a number before messaging or calling it. Read-only and idempotent.',
+      'Looks up a single phone number via the Plivo Lookup API and returns carrier name, country, line type as Plivo reports it, and formatted number variants. Use to validate or enrich a number before messaging or calling it. Read-only and idempotent.',
     idempotent: true,
   },
   displayName: 'Lookup Number',
   props: {
-    number: Property.ShortText({
+    phone_number: Property.ShortText({
       displayName: 'Phone Number',
       description:
         'The phone number to look up, in E.164 format (e.g., +15558675310).',
@@ -26,10 +26,10 @@ export const plivoLookupNumber = createAction({
     }),
   },
   async run(context) {
-    const { number } = context.propsValue;
+    const { phone_number } = context.propsValue;
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://lookup.plivo.com/v1/Number/${encodeURIComponent(number)}`,
+      url: `https://lookup.plivo.com/v1/Number/${encodeURIComponent(phone_number.trim())}`,
       queryParams: { type: 'carrier' },
       authentication: {
         type: AuthenticationType.BASIC,

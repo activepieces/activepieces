@@ -38,8 +38,10 @@ const loadPhoneNumbers = async (
     for (;;) {
       const response = await callPlivoApi<NumberListResponse>(
         HttpMethod.GET,
-        `Number/?limit=${limit}&offset=${offset}`,
-        { auth_id: auth.username, auth_token: auth.password }
+        'Number/',
+        { auth_id: auth.username, auth_token: auth.password },
+        undefined,
+        { limit: String(limit), offset: String(offset) }
       );
       const page = response.body.objects ?? [];
       numbers.push(...page);
@@ -71,39 +73,59 @@ const loadPhoneNumbers = async (
       })),
     };
   } catch (e) {
+    const status = (e as { response?: { status?: number } })?.response?.status;
+    const unauthorised = status === 401 || status === 403;
     return {
       disabled: true,
-      placeholder: 'could not load numbers, check your credentials',
+      placeholder: unauthorised
+        ? 'could not load numbers, check your Auth ID and Auth Token'
+        : `could not load numbers from Plivo${status ? ` (HTTP ${status})` : ''}, try again`,
       options: [],
     };
   }
 };
 
+const phoneNumberDropdown = (options: {
+  displayName: string;
+  description: string;
+  required: boolean;
+  capability: PlivoCapability;
+}) =>
+  Property.Dropdown({
+    auth: plivoAuth,
+    displayName: options.displayName,
+    description: options.description,
+    required: options.required,
+    refreshers: [],
+    options: async ({ auth }) => await loadPhoneNumbers(auth, options.capability),
+  });
+
 export const plivoCommon = {
-  sms_phone_number: Property.Dropdown({
-    auth: plivoAuth,
+  sms_phone_number: phoneNumberDropdown({
+    displayName: 'From',
     description: 'The Plivo number to send the message from',
-    displayName: 'From',
     required: true,
-    refreshers: [],
-    options: async ({ auth }) => await loadPhoneNumbers(auth, 'sms'),
+    capability: 'sms',
   }),
-  voice_phone_number: Property.Dropdown({
-    auth: plivoAuth,
+  voice_phone_number: phoneNumberDropdown({
+    displayName: 'From',
     description: 'The Plivo number to place the call from',
-    displayName: 'From',
     required: true,
-    refreshers: [],
-    options: async ({ auth }) => await loadPhoneNumbers(auth, 'voice'),
+    capability: 'voice',
   }),
-  trigger_phone_number: Property.Dropdown({
-    auth: plivoAuth,
+  trigger_phone_number: phoneNumberDropdown({
+    displayName: 'Phone Number',
     description:
       'The Plivo number that receives the incoming messages. Leave empty to set the Message URL by hand instead.',
-    displayName: 'Phone Number',
     required: false,
-    refreshers: [],
-    options: async ({ auth }) => await loadPhoneNumbers(auth, 'sms'),
+    capability: 'sms',
+  }),
+  trigger_voice_phone_number: phoneNumberDropdown({
+    displayName: 'Phone Number',
+    description:
+      'The Plivo number that receives the incoming calls. Leave empty to set the Answer URL by hand instead.',
+    required: false,
+    capability: 'voice',
   }),
 };
 
@@ -111,11 +133,13 @@ export const callPlivoApi = async <T extends HttpMessageBody>(
   method: HttpMethod,
   path: string,
   auth: { auth_id: string; auth_token: string },
-  body?: unknown
+  body?: unknown,
+  queryParams?: Record<string, string>
 ) => {
   return await httpClient.sendRequest<T>({
     method,
     url: `https://api.plivo.com/v1/Account/${auth.auth_id}/${path}`,
+    queryParams,
     authentication: {
       type: AuthenticationType.BASIC,
       username: auth.auth_id,
@@ -129,38 +153,93 @@ export const callPlivoApi = async <T extends HttpMessageBody>(
 };
 
 const TRIGGER_APP_PREFIX = 'activepieces-plivo-trigger';
+// The application is shared, so the address to restore the number to is recorded on the
+// application itself rather than in one trigger's private storage. A trigger that reuses
+// an application it did not create can then still hand the number back correctly, and a
+// lifecycle that never saw the original assignment cannot lose it.
+const PREVIOUS_APP_MARKER = '--prev-';
+const NO_PREVIOUS_APP = 'none';
+
+// A Plivo number belongs to exactly one application, so the SMS and the voice trigger
+// have to share one application per number. Each trigger owns a single URL field on it.
+export type PlivoWebhookKind = 'message' | 'answer';
+
+const URL_FIELD: Record<PlivoWebhookKind, { url: string; method: string }> = {
+  message: { url: 'message_url', method: 'message_method' },
+  answer: { url: 'answer_url', method: 'answer_method' },
+};
 
 export interface PlivoManagedApp {
   appId: string;
   createdApp: boolean;
-  previousAppId: string;
   digits: string;
-  previousMessageUrl?: string;
-  previousMessageMethod?: string;
+  kind: PlivoWebhookKind;
+  registeredUrl: string;
+  previousUrl?: string;
+  previousMethod?: string;
 }
 
 const appIdFromResourceUri = (value?: string): string =>
   value ? String(value).split('/').filter(Boolean).pop() ?? '' : '';
 
-// Activepieces serves a flow's production webhook at /webhooks/<flowId> and its
-// test webhook at /webhooks/<flowId>/test. Comparing the flow id rather than the
-// whole URL keeps both forms recognisable as the same owner.
+// Activepieces serves a flow's production webhook at /webhooks/<flowId>, its synchronous
+// variant at /webhooks/<flowId>/sync and its test webhook at /webhooks/<flowId>/test.
+// Comparing the flow id rather than the whole URL keeps every form recognisable as the
+// same owner.
 const webhookFlowIdentity = (url?: string): string => {
   const match = /\/webhooks\/([^/?#]+)/.exec(url ?? '');
   return match ? match[1] : '';
 };
 
-export const provisionMessageWebhook = async (params: {
+const managedAppName = (digits: string, previousAppId: string): string =>
+  `${TRIGGER_APP_PREFIX}-${digits}${PREVIOUS_APP_MARKER}${
+    previousAppId.length > 0 ? previousAppId : NO_PREVIOUS_APP
+  }`;
+
+const isManagedAppName = (appName: string | undefined, digits: string): boolean =>
+  (appName ?? '').startsWith(`${TRIGGER_APP_PREFIX}-${digits}`);
+
+// undefined means the application predates this marker, so the original assignment is
+// unknown and the application must be left in place rather than guessed at.
+const previousAppIdFromName = (appName?: string): string | undefined => {
+  const index = (appName ?? '').indexOf(PREVIOUS_APP_MARKER);
+  if (index < 0) {
+    return undefined;
+  }
+  const recorded = (appName as string).slice(index + PREVIOUS_APP_MARKER.length);
+  return recorded === NO_PREVIOUS_APP ? '' : recorded;
+};
+
+const urlFieldsOf = (app?: PlivoApplicationDetail) => ({
+  message_url: app?.message_url ?? '',
+  answer_url: app?.answer_url ?? '',
+});
+
+const readApplication = async (
+  credentials: { auth_id: string; auth_token: string },
+  appId: string
+): Promise<PlivoApplicationDetail> => {
+  const response = await callPlivoApi<PlivoApplicationDetail>(
+    HttpMethod.GET,
+    `Application/${appId}/`,
+    credentials
+  );
+  return response.body;
+};
+
+export const provisionWebhook = async (params: {
   auth: PlivoCredentials;
   number: string;
   webhookUrl: string;
+  kind: PlivoWebhookKind;
 }): Promise<PlivoManagedApp> => {
   const credentials = {
     auth_id: params.auth.username,
     auth_token: params.auth.password,
   };
   const digits = params.number.replace(/\D/g, '');
-  const appName = `${TRIGGER_APP_PREFIX}-${digits}`;
+  const field = URL_FIELD[params.kind];
+  const ourIdentity = webhookFlowIdentity(params.webhookUrl);
 
   const numberDetail = await callPlivoApi<PlivoNumberDetail>(
     HttpMethod.GET,
@@ -172,28 +251,41 @@ export const provisionMessageWebhook = async (params: {
   let appId = '';
   let createdApp = false;
   let previousAppId = '';
-  let previousMessageUrl = '';
-  let previousMessageMethod = '';
+  let previousUrl = '';
+  let previousMethod = '';
 
   if (currentAppId) {
-    const currentApp = await callPlivoApi<PlivoApplicationDetail>(
-      HttpMethod.GET,
-      `Application/${currentAppId}/`,
-      credentials
-    ).catch(() => undefined);
+    // Reading the current application decides both whether the number can be taken and
+    // where it has to be returned, so a failed read has to stop the enable. Treating it
+    // as "no application" would take a number from another flow and lose the address to
+    // give it back to.
+    let currentApp: PlivoApplicationDetail;
+    try {
+      currentApp = await readApplication(credentials, currentAppId);
+    } catch (error) {
+      throw new Error(
+        `Could not read the Plivo application currently assigned to ${params.number}, so the number was left untouched. ${(error as Error).message}`
+      );
+    }
 
-    if (currentApp?.body.app_name === appName) {
-      const existingMessageUrl = currentApp.body.message_url ?? '';
-      const existingIdentity = webhookFlowIdentity(existingMessageUrl);
-      if (existingIdentity && existingIdentity !== webhookFlowIdentity(params.webhookUrl)) {
+    if (isManagedAppName(currentApp.app_name, digits)) {
+      const fields = urlFieldsOf(currentApp);
+      const existingUrl = fields[field.url as keyof typeof fields];
+      const existingIdentity = webhookFlowIdentity(existingUrl);
+      if (existingIdentity && existingIdentity !== ourIdentity) {
         throw new Error(
-          `The number ${params.number} already routes incoming SMS to another active flow. A Plivo number can route incoming SMS to one flow at a time, so disable the other flow first.`
+          `The number ${params.number} already routes this traffic to another active flow. A Plivo number can route it to one flow at a time, so disable the other flow first.`
         );
       }
       appId = currentAppId;
-      previousMessageUrl = existingMessageUrl;
-      previousMessageMethod = currentApp.body.message_method ?? 'POST';
-    } else if (currentApp) {
+      // A URL belonging to this same flow is this flow's own leftover, and restoring it
+      // later would point the number back at a disabled flow.
+      if (!existingIdentity) {
+        previousUrl = existingUrl;
+        previousMethod =
+          (currentApp as Record<string, string | undefined>)[field.method] ?? 'POST';
+      }
+    } else {
       previousAppId = currentAppId;
     }
   }
@@ -204,7 +296,7 @@ export const provisionMessageWebhook = async (params: {
         HttpMethod.POST,
         'Application/',
         credentials,
-        { app_name: appName }
+        { app_name: managedAppName(digits, previousAppId) }
       );
       appId = createdApplication.body.app_id;
       createdApp = true;
@@ -214,28 +306,27 @@ export const provisionMessageWebhook = async (params: {
     }
 
     await callPlivoApi(HttpMethod.POST, `Application/${appId}/`, credentials, {
-      message_url: params.webhookUrl,
-      message_method: 'POST',
+      [field.url]: params.webhookUrl,
+      [field.method]: 'POST',
     });
   } catch (error) {
-    if (appId) {
-      try {
-        await releaseMessageWebhook({
-          auth: params.auth,
-          managed: {
-            appId,
-            createdApp,
-            previousAppId,
-            digits,
-            previousMessageUrl,
-            previousMessageMethod,
-          },
-        });
-      } catch (cleanupError) {
-        throw new Error(
-          `Could not point ${params.number} at this flow, and undoing the change did not fully succeed. Application ${appId} may still hold the number, so inbound SMS can stay undelivered until it is corrected in the Plivo console. Original failure was ${(error as Error).message}. Cleanup failure was ${(cleanupError as Error).message}`
-        );
-      }
+    try {
+      await releaseWebhook({
+        auth: params.auth,
+        managed: {
+          appId,
+          createdApp,
+          digits,
+          kind: params.kind,
+          registeredUrl: params.webhookUrl,
+          previousUrl,
+          previousMethod,
+        },
+      });
+    } catch (cleanupError) {
+      throw new Error(
+        `Could not point ${params.number} at this flow, and undoing the change did not fully succeed. Application ${appId} may still hold the number, so inbound traffic can stay undelivered until it is corrected in the Plivo console. Original failure was ${(error as Error).message}. Cleanup failure was ${(cleanupError as Error).message}`
+      );
     }
     throw error;
   }
@@ -243,14 +334,15 @@ export const provisionMessageWebhook = async (params: {
   return {
     appId,
     createdApp,
-    previousAppId,
     digits,
-    previousMessageUrl,
-    previousMessageMethod,
+    kind: params.kind,
+    registeredUrl: params.webhookUrl,
+    previousUrl,
+    previousMethod,
   };
 };
 
-export const releaseMessageWebhook = async (params: {
+export const releaseWebhook = async (params: {
   auth: PlivoCredentials;
   managed: PlivoManagedApp;
 }): Promise<void> => {
@@ -258,50 +350,78 @@ export const releaseMessageWebhook = async (params: {
     auth_id: params.auth.username,
     auth_token: params.auth.password,
   };
-  const {
-    appId,
-    createdApp,
-    previousAppId,
-    digits,
-    previousMessageUrl,
-    previousMessageMethod,
-  } = params.managed;
+  const { appId, digits, kind, registeredUrl, previousUrl, previousMethod } =
+    params.managed;
   if (!appId) {
     return;
   }
+  const field = URL_FIELD[kind];
 
   const failures: string[] = [];
   const attempt = async (step: string, run: () => Promise<unknown>) => {
     try {
       await run();
+      return true;
     } catch (error) {
       failures.push(`${step} (${(error as Error).message})`);
+      return false;
     }
   };
 
-  if (createdApp) {
-    await attempt('detaching the webhook', () =>
-      callPlivoApi(HttpMethod.POST, `Application/${appId}/`, credentials, {
-        message_url: '',
-      })
+  let current: PlivoApplicationDetail | undefined;
+  try {
+    current = await readApplication(credentials, appId);
+  } catch (error) {
+    // Without knowing the application's present state, neither clearing nor deleting is
+    // safe, because another trigger may have taken this field over in the meantime.
+    throw new Error(
+      `Released this flow but could not read Plivo application ${appId}, so nothing was changed there. Check the number ${digits} and its application in the Plivo console. ${(error as Error).message}`
     );
-    if (previousAppId) {
-      await attempt(`returning the number to application ${previousAppId}`, () =>
-        callPlivoApi(HttpMethod.POST, `Number/${digits}/`, credentials, {
-          app_id: previousAppId,
-        })
+  }
+
+  const fields = urlFieldsOf(current);
+  const liveUrl = fields[field.url as keyof typeof fields];
+  // Another lifecycle of this flow, a test run for instance, may have replaced this URL
+  // since it was registered. Only the lifecycle whose URL is still in place may undo it.
+  if (registeredUrl && liveUrl && liveUrl !== registeredUrl) {
+    return;
+  }
+
+  const restoreTo = previousUrl ?? '';
+  const cleared = await attempt(`clearing the ${field.url}`, () =>
+    callPlivoApi(HttpMethod.POST, `Application/${appId}/`, credentials, {
+      [field.url]: restoreTo,
+      [field.method]: previousMethod || 'POST',
+    })
+  );
+
+  const otherField = URL_FIELD[kind === 'message' ? 'answer' : 'message'];
+  const otherUrl = fields[otherField.url as keyof typeof fields];
+  const nothingLeft = cleared && restoreTo.length === 0 && otherUrl.length === 0;
+  const previousAppId = previousAppIdFromName(current.app_name);
+
+  if (
+    nothingLeft &&
+    isManagedAppName(current.app_name, digits) &&
+    previousAppId !== undefined
+  ) {
+    let handedBack = true;
+    if (previousAppId.length > 0) {
+      handedBack = await attempt(
+        `returning the number to application ${previousAppId}`,
+        () =>
+          callPlivoApi(HttpMethod.POST, `Number/${digits}/`, credentials, {
+            app_id: previousAppId,
+          })
       );
     }
-    await attempt(`deleting application ${appId}`, () =>
-      callPlivoApi(HttpMethod.DELETE, `Application/${appId}/`, credentials)
-    );
-  } else {
-    await attempt(`restoring the webhook on application ${appId}`, () =>
-      callPlivoApi(HttpMethod.POST, `Application/${appId}/`, credentials, {
-        message_url: previousMessageUrl ?? '',
-        message_method: previousMessageMethod || 'POST',
-      })
-    );
+    // Deleting while the number still points at this application would leave the number
+    // on an application that no longer exists.
+    if (handedBack) {
+      await attempt(`deleting application ${appId}`, () =>
+        callPlivoApi(HttpMethod.DELETE, `Application/${appId}/`, credentials)
+      );
+    }
   }
 
   if (failures.length > 0) {
@@ -331,6 +451,8 @@ interface PlivoApplicationDetail {
   app_name?: string;
   message_url?: string;
   message_method?: string;
+  answer_url?: string;
+  answer_method?: string;
 }
 
 interface PlivoCreatedApplication {

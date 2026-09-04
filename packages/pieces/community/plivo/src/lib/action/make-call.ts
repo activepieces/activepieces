@@ -6,9 +6,9 @@ import { plivoAuth } from '../..';
 export const plivoMakeCall = createAction({
   auth: plivoAuth,
   name: 'make_call',
-  description: 'Place an outbound call that fetches call flow from an Answer URL.',
+  description: 'Place an outbound call that fetches call flow from an Answer URL',
   audience: 'both',
-  aiMetadata: { description: 'Places an outbound voice call from a Plivo number and fetches the call flow from an Answer URL that returns Plivo XML. Use to trigger a phone call whose behaviour is defined by XML you host. Requires both numbers in E.164 format and an answer URL; each call places a real, billable phone call, so it is not idempotent.', idempotent: false },
+  aiMetadata: { description: 'Places an outbound voice call from a Plivo number and fetches the call flow from an Answer URL that returns Plivo XML. Use to trigger a phone call whose behaviour is defined by XML you host. Requires a Plivo-owned sender number chosen from the account and a destination in E.164 format and an answer URL; each call places a real, billable phone call, so it is not idempotent.', idempotent: false },
   displayName: 'Make Call',
   props: {
     from: plivoCommon.voice_phone_number,
