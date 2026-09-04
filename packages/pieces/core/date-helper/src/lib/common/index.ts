@@ -102,19 +102,16 @@ export function parseDate(date: string, format: string): dayjs.Dayjs {
   }
   return djs;
 }
-export const timeFormatDescription = `Here's what each part of the format (e.g., YYYY) represents:
-\nYYYY : Year (4 digits) - Example: 2023
-\nYY : Year (2 digits) - Example: 23
-\nMMMM : Month (full name) - Example: September
-\nMMM : Month (short name) - Example: Sep
-\nMM : Month (2 digits) - Example: 09
-\nDDDD : Day (full name) - Example: Sunday
-\nDDD : Day (short name) - Example: Sun
-\nDD : Day (2 digits) - Example: 17
-\nHH : Hour (2 digits) - Example: 11
-\nmm : Minute (2 digits) - Example: 23
-\nss : Second (2 digits) - Example: 58
-\nX : Time in Unix format - Example: 1694949838`;
+export const inputFormatDescription =
+  'Pick how your date is written.';
+export const outputFormatDescription =
+  'Pick how the result should look.';
+export const dateInputDescription =
+  'Usually a value from a previous step, in the format below.';
+export const timeInputDescription = '24-hour clock, HH:mm.';
+export const timeInputPlaceholder = '14:30';
+export const useCurrentTimeDescription =
+  'Ignore the Time field and use the current time of day.';
 
 export const optionalTimeFormats = [
   {

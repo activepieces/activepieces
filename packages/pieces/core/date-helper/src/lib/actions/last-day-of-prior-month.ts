@@ -2,7 +2,10 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   optionalTimeFormats,
   timeFormat,
-  timeFormatDescription,
+  outputFormatDescription,
+  timeInputDescription,
+  timeInputPlaceholder,
+  useCurrentTimeDescription,
   timeZoneOptions,
   getCorrectedFormat,
   apDayjs,
@@ -27,23 +30,9 @@ export const lastDayOfPreviousMonthAction = createAction({
     },
   },
   props: {
-    time: Property.ShortText({
-      displayName: '24h Time',
-      description:
-        'The time that you would like to get the date and time of. This must be in 24h format.',
-      required: false,
-      defaultValue: '00:00',
-    }),
-    currentTime: Property.Checkbox({
-      displayName: 'Use Current Time',
-      description:
-        'If checked, the current time will be used instead of the time specified above.',
-      required: false,
-      defaultValue: false,
-    }),
     timeFormat: Property.StaticDropdown({
-      displayName: 'To Time Format',
-      description: timeFormatDescription,
+      displayName: 'Output Format',
+      description: outputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -52,11 +41,26 @@ export const lastDayOfPreviousMonthAction = createAction({
     }),
     timeZone: Property.StaticDropdown<string>({
       displayName: 'Time Zone',
+      description:
+        'Time zone used to work out the date and to report the result.',
       options: {
         options: timeZoneOptions,
       },
       required: true,
       defaultValue: 'UTC',
+    }),
+    time: Property.ShortText({
+      displayName: 'Time',
+      description: timeInputDescription,
+      placeholder: timeInputPlaceholder,
+      required: false,
+      defaultValue: '00:00',
+    }),
+    currentTime: Property.Checkbox({
+      displayName: 'Use Current Time',
+      description: useCurrentTimeDescription,
+      required: false,
+      defaultValue: false,
     }),
   },
   outputSchema: lastDayOfPreviousMonthActionOutputSchema,

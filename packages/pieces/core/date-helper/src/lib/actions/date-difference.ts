@@ -3,7 +3,8 @@ import {
   optionalTimeFormats,
   timeFormat,
   timeParts,
-  timeFormatDescription,
+  inputFormatDescription,
+  dateInputDescription,
   parseDate,
   getCorrectedFormat,
   apDayjs,
@@ -26,13 +27,13 @@ export const dateDifferenceAction = createAction({
   },
   props: {
     startDate: Property.ShortText({
-      displayName: 'Starting Date',
-      description: 'Enter the starting date',
+      displayName: 'Date',
+      description: dateInputDescription,
       required: true,
     }),
     startDateFormat: Property.StaticDropdown({
-      displayName: 'Starting date format',
-      description: timeFormatDescription,
+      displayName: 'Format',
+      description: inputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -40,13 +41,13 @@ export const dateDifferenceAction = createAction({
       defaultValue: timeFormat.format00,
     }),
     endDate: Property.ShortText({
-      displayName: 'Ending Date',
-      description: 'Enter the ending date',
+      displayName: 'Date',
+      description: dateInputDescription,
       required: true,
     }),
     endDateFormat: Property.StaticDropdown({
-      displayName: 'Ending date format',
-      description: timeFormatDescription,
+      displayName: 'Format',
+      description: inputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -54,8 +55,8 @@ export const dateDifferenceAction = createAction({
       defaultValue: timeFormat.format00,
     }),
     unitDifference: Property.StaticMultiSelectDropdown({
-      displayName: 'Unit',
-      description: 'Select the unit of difference between the two dates',
+      displayName: 'Units',
+      description: 'Each unit becomes its own output field, as remainders not totals.',
       options: {
         options: [
           { label: 'Year', value: timeParts.year },

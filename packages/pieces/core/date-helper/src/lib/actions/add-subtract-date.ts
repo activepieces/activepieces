@@ -6,7 +6,10 @@ import {
   optionalTimeFormats,
   parseDate,
   timeFormat,
-  timeFormatDescription,
+  inputFormatDescription,
+  outputFormatDescription,
+  dateInputDescription,
+  timeInputPlaceholder,
   timeParts,
   timeZoneOptions,
 } from '../common';
@@ -31,22 +34,13 @@ export const addSubtractDateAction = createAction({
   },
   props: {
     inputDate: Property.ShortText({
-      displayName: 'Input Date',
-      description: 'Enter the input date',
+      displayName: 'Date',
+      description: dateInputDescription,
       required: true,
     }),
     inputDateFormat: Property.StaticDropdown({
-      displayName: 'From Time Format',
-      description: timeFormatDescription,
-      options: {
-        options: optionalTimeFormats,
-      },
-      required: true,
-      defaultValue: timeFormat.format00,
-    }),
-    outputFormat: Property.StaticDropdown({
-      displayName: 'To Time Format',
-      description: timeFormatDescription,
+      displayName: 'Format',
+      description: inputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -55,26 +49,36 @@ export const addSubtractDateAction = createAction({
     }),
     expression: Property.LongText({
       displayName: 'Expression',
-      description: `Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).
-             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute`,
+      placeholder: '+ 1 day - 2 hour',
+      description: 'Use year, month, day, hour, minute, second with + or -.',
       required: true,
+    }),
+    outputFormat: Property.StaticDropdown({
+      displayName: 'Format',
+      description: outputFormatDescription,
+      options: {
+        options: optionalTimeFormats,
+      },
+      required: true,
+      defaultValue: timeFormat.format00,
     }),
     timeZone: Property.StaticDropdown<string>({
       displayName: 'Time Zone',
-      description: 'Optional: Set a timezone for the calculation to handle DST correctly',
+      description: 'Needed for the two options below and for daylight-saving.',
       options: {
         options: timeZoneOptions,
       },
       required: false,
     }),
     setTime: Property.ShortText({
-      displayName: 'Set Time To (24h format)',
-      description: 'Optional: Set the result to a specific time (e.g., "10:00" or "14:30"). This allows scheduling at a specific time after adding/subtracting dates. Leave empty to keep the calculated time.',
+      displayName: 'Set Time',
+      description: 'Pin the result to this time of day, HH:mm. Needs a Time Zone.',
+      placeholder: timeInputPlaceholder,
       required: false,
     }),
     useCurrentTime: Property.Checkbox({
       displayName: 'Use Current Time',
-      description: 'If checked, the current time will be used instead of the time from "Set Time To" field.',
+      description: 'Pin the result to the current time instead. Needs a Time Zone.',
       required: false,
       defaultValue: false,
     }),
