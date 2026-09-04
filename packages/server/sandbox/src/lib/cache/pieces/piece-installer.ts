@@ -76,7 +76,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[pieceInstaller] acquired lock and starting to install pieces')
 
-            await createRootPackageJson({
+            await createRootWorkspaceFiles({
                 path: rootWorkspace,
             })
 
@@ -207,7 +207,9 @@ function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getS
     })
 }
 
-async function createRootPackageJson({ path }: { path: string }): Promise<void> {
+const WORKSPACE_BUNFIG = '[install]\nlinker = "isolated"\nminimumReleaseAge = 259200\n'
+
+async function createRootWorkspaceFiles({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFileAtomic(packageJsonPath, JSON.stringify({
@@ -217,6 +219,7 @@ async function createRootPackageJson({ path }: { path: string }): Promise<void> 
             'pieces/**',
         ],
     }, null, 2), 'utf8')
+    await writeFileAtomic(join(path, 'bunfig.toml'), WORKSPACE_BUNFIG, 'utf8')
 }
 
 async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
