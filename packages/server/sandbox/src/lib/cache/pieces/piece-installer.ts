@@ -1,4 +1,4 @@
-import { readFile, rm, writeFile } from 'node:fs/promises'
+import { readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { ensureTrailingSlash, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
@@ -304,7 +304,7 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
 
 async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileExistsParams): Promise<boolean> {
     const packageDir = join(pieceFolder, 'node_modules', pieceName)
-    if (await fileSystemUtils.fileExists(join(packageDir, 'src', 'index.js'))) {
+    if (await isLoadableFile(join(packageDir, 'src', 'index.js'))) {
         return true
     }
     const { data: declaredMain } = await tryCatch(async () => {
@@ -318,7 +318,16 @@ async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileEx
     if (isNil(declaredMain)) {
         return false
     }
-    return fileSystemUtils.fileExists(join(packageDir, declaredMain))
+    const mainPath = join(packageDir, declaredMain)
+    if (await isLoadableFile(mainPath)) {
+        return true
+    }
+    return isLoadableFile(join(mainPath, 'index.js'))
+}
+
+async function isLoadableFile(entryPath: string): Promise<boolean> {
+    const { data: stats } = await tryCatch(async () => stat(entryPath))
+    return stats?.isFile() ?? false
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {

@@ -227,6 +227,52 @@ describe('pieceInstaller', () => {
         expect(mockInstall).toHaveBeenCalledOnce()
     })
 
+    it('nested package whose main is a directory holding an index file is accepted', async () => {
+        const piece = makePiece('@activepieces/piece-dir-main')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(join(packageDir, 'dist'), { recursive: true })
+        await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: piece.pieceName, main: './dist' }))
+        await writeFile(join(packageDir, 'dist', 'index.js'), 'module.exports = {}')
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).not.toHaveBeenCalled()
+    })
+
+    it('nested package whose main is a directory with nothing loadable in it is reinstalled', async () => {
+        const piece = makePiece('@activepieces/piece-dir-empty')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(join(packageDir, 'dist'), { recursive: true })
+        await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: piece.pieceName, main: './dist' }))
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).toHaveBeenCalledOnce()
+    })
+
+    it('nested package whose entry path is a directory rather than a file is reinstalled', async () => {
+        const piece = makePiece('@activepieces/piece-entry-is-dir')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(join(packageDir, 'src', 'index.js'), { recursive: true })
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).toHaveBeenCalledOnce()
+    })
+
     it('nested package whose entry is a non-conventional main is accepted', async () => {
         const piece = makePiece('@activepieces/piece-custom-main')
         const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
