@@ -304,6 +304,9 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
 
 async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileExistsParams): Promise<boolean> {
     const packageDir = join(pieceFolder, 'node_modules', pieceName)
+    if (await fileSystemUtils.fileExists(join(packageDir, 'src', 'index.js'))) {
+        return true
+    }
     const { data: declaredMain } = await tryCatch(async () => {
         const manifest: unknown = JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8'))
         if (isNil(manifest) || typeof manifest !== 'object' || !('main' in manifest)) {
@@ -312,11 +315,10 @@ async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileEx
         const { main } = manifest
         return typeof main === 'string' ? main : null
     })
-    const candidates = isNil(declaredMain)
-        ? [join(packageDir, 'src', 'index.js')]
-        : [join(packageDir, declaredMain), join(packageDir, 'src', 'index.js')]
-    const found = await Promise.all(candidates.map((candidate) => fileSystemUtils.fileExists(candidate)))
-    return found.some((exists) => exists)
+    if (isNil(declaredMain)) {
+        return false
+    }
+    return fileSystemUtils.fileExists(join(packageDir, declaredMain))
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {

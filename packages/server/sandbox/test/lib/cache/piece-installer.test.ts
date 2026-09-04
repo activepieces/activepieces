@@ -227,6 +227,21 @@ describe('pieceInstaller', () => {
         expect(mockInstall).toHaveBeenCalledOnce()
     })
 
+    it('nested package whose entry is a non-conventional main is accepted', async () => {
+        const piece = makePiece('@activepieces/piece-custom-main')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(join(packageDir, 'dist'), { recursive: true })
+        await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: piece.pieceName, main: './dist/index.js' }))
+        await writeFile(join(packageDir, 'dist', 'index.js'), 'module.exports = {}')
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).not.toHaveBeenCalled()
+    })
+
     it('nested package with no manifest but a conventional entry file is accepted', async () => {
         const piece = makePiece('@activepieces/piece-manifestless')
         const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
