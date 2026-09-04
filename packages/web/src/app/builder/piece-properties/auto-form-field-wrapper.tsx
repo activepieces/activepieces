@@ -29,7 +29,7 @@ import { cn } from '@/lib/utils';
 
 import { ArrayPiecePropertyInInlineItemMode } from './array-property-in-inline-item-mode';
 import { DynamicValueToggleButton } from './dynamic-value-toggle-button';
-import { TextInputWithMentions } from './text-input-with-mentions';
+import { FormFieldMentionInput } from './text-input-with-mentions';
 
 function AutoFormFieldWrapper({
   placeBeforeLabelText = false,
@@ -84,7 +84,7 @@ function AutoFormFieldWrapper({
           </FormLabel>
         )}
         {dynamicInputModeToggled && !isArrayProperty && (
-          <TextInputWithMentions
+          <FormFieldMentionInput
             disabled={disabled}
             onChange={field.onChange}
             initialValue={field.value ?? null}
