@@ -25,7 +25,8 @@ Triggers carry no `audience` and are always visible. So:
 - A piece whose human surface is one action plus the connection modal is usually a small task with
   the real defects in the auth description, not the form.
 
-`node .agents/skills/piece-builder/scripts/check-step-form.mjs <piece-dir>` prints the human
+`node .agents/skills/piece-builder/scripts/check-step-form.mjs <piece-dir>` (or `--file <saved.json>`
+from a `curl` of `/api/v1/pieces/@activepieces/piece-<dir>`, no server needed) prints the human
 surface and every finding below in one pass. Run it before and after.
 
 ---
@@ -124,7 +125,9 @@ Advanced candidate when it is optional and has a default.
 2. Serve it: put the **directory** name in `AP_DEV_PIECES` (Human Input is `forms`), rebuild, restart
    the API (metadata is cached until restart), then read what is actually served:
    `curl -s "http://localhost:4200/api/v1/pieces/%40activepieces%2Fpiece-<name>"`.
-3. `node .agents/skills/piece-builder/scripts/check-step-form.mjs <name>` — zero errors.
+3. `node .agents/skills/piece-builder/scripts/check-step-form.mjs <name>` — zero errors. Save the
+   before/after JSON with `curl … > before.json` and run `--file` on each to show the reviewer the
+   finding count dropped.
 4. Click through every changed form at the **default panel width** with a fresh step. Selecting a
    connection, a parent item and a child item so dependent fields render; flip each toggle that
    drives `DynamicProperties`.

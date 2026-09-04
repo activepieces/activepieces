@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
+import { readFileSync } from 'node:fs';
+
 const DESCRIPTION_FOLD_LIMIT = 70;
 const ADVANCED_MIN_RELEASE = '0.88.2';
 const TITLE_CASE_SMALL_WORDS = new Set([
-  'a', 'an', 'the', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'by', 'with', 'as', 'at', 'from', 'per', 'vs',
+  'a', 'an', 'the', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'by', 'with', 'as', 'at', 'from', 'per', 'vs', 'is',
 ]);
 const PLACEHOLDER_RENDERING_TYPES = new Set(['SHORT_TEXT', 'LONG_TEXT']);
 const GROUP_DISPLAYS_THAT_DISABLE_ADVANCED = new Set(['builder', 'footer']);
@@ -12,8 +14,10 @@ const GROUP_DISPLAYS_THAT_FORCE_ESSENTIAL = new Set(['tabs', 'section']);
 function usage() {
   return [
     'Usage: node check-step-form.mjs <piece-dir-name> [--url http://localhost:4200] [--include-ai] [--json]',
+    '       node check-step-form.mjs --file <piece.json> [--include-ai] [--json]',
     '',
-    'Fetches the piece the local dev server serves (AP_DEV_PIECES must include it) and reports',
+    'Fetches the piece the local dev server serves (AP_DEV_PIECES must include it), or reads a saved',
+    'GET /api/v1/pieces/<name> response from --file, and reports',
     'every step-form problem a reviewer would flag: descriptions past the read-more fold,',
     'required props hidden in Advanced, labels with units or question marks, markdown in plain-text',
     'descriptions, placeholders on inputs that never render them, the same prop labelled differently',
@@ -23,18 +27,28 @@ function usage() {
   ].join('\n');
 }
 
+const FLAGS_WITH_VALUES = new Set(['--url', '--file']);
+
 function parseArgs(argv) {
-  const positional = argv.filter((arg) => !arg.startsWith('--'));
+  const positional = argv.filter((arg, index) => !arg.startsWith('--') && !FLAGS_WITH_VALUES.has(argv[index - 1]));
   const flagValue = (name) => {
     const index = argv.indexOf(name);
     return index === -1 ? undefined : argv[index + 1];
   };
   return {
     pieceDirName: positional[0],
+    file: flagValue('--file'),
     url: flagValue('--url') ?? 'http://localhost:4200',
     includeAi: argv.includes('--include-ai'),
     json: argv.includes('--json'),
   };
+}
+
+function loadPiece({ file, url, pieceDirName }) {
+  if (file) {
+    return JSON.parse(readFileSync(file, 'utf8'));
+  }
+  return fetchPiece({ url, pieceDirName });
 }
 
 async function fetchPiece({ url, pieceDirName }) {
@@ -60,7 +74,7 @@ function compareSemver({ left, right }) {
 }
 
 function isTitleCase(label) {
-  const words = label.split(/\s+/).filter((word) => /^[A-Za-z]/.test(word));
+  const words = label.replace(/\(.*?\)/g, '').split(/\s+/).filter((word) => /^[A-Za-z]/.test(word));
   return words.every((word, index) => {
     const lower = word.toLowerCase();
     if (index > 0 && TITLE_CASE_SMALL_WORDS.has(lower)) {
@@ -217,11 +231,11 @@ function render({ piece, steps, skippedAi, findings }) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (!args.pieceDirName) {
+  if (!args.pieceDirName && !args.file) {
     console.log(usage());
     process.exit(2);
   }
-  const piece = await fetchPiece(args);
+  const piece = await loadPiece(args);
   const steps = humanSteps({ piece, includeAi: args.includeAi });
   const skippedAi = Object.values(piece.actions ?? {}).length - steps.filter((step) => step.kind === 'action').length;
   const findings = [
