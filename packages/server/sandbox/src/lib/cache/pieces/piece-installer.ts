@@ -1,4 +1,4 @@
-import { rm, writeFile } from 'node:fs/promises'
+import { readFile, rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { ensureTrailingSlash, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
@@ -294,12 +294,29 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
     if (!readyExists) {
         return false
     }
-    const engineCanResolve = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules', piece.pieceName))
+    const engineCanResolve = await pieceEntryFileExists({ pieceFolder, pieceName: piece.pieceName })
     if (!engineCanResolve) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }
     return true
+}
+
+async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileExistsParams): Promise<boolean> {
+    const packageDir = join(pieceFolder, 'node_modules', pieceName)
+    const { data: declaredMain } = await tryCatch(async () => {
+        const manifest: unknown = JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8'))
+        if (isNil(manifest) || typeof manifest !== 'object' || !('main' in manifest)) {
+            return null
+        }
+        const { main } = manifest
+        return typeof main === 'string' ? main : null
+    })
+    const candidates = isNil(declaredMain)
+        ? [join(packageDir, 'src', 'index.js')]
+        : [join(packageDir, declaredMain), join(packageDir, 'src', 'index.js')]
+    const found = await Promise.all(candidates.map((candidate) => fileSystemUtils.fileExists(candidate)))
+    return found.some((exists) => exists)
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
@@ -312,6 +329,11 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
         )
     })
     await Promise.all(writeToDiskJobs)
+}
+
+type PieceEntryFileExistsParams = {
+    pieceFolder: string
+    pieceName: string
 }
 
 type InstallParams = {

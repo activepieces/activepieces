@@ -56,6 +56,14 @@ function readyFilePath(piece: OfficialPiecePackage | PrivatePiecePackage): strin
     return join(pieceDirPath(piece), 'ready')
 }
 
+async function writeInstalledPackage(piece: OfficialPiecePackage | PrivatePiecePackage): Promise<string> {
+    const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+    await mkdir(join(packageDir, 'src'), { recursive: true })
+    await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: piece.pieceName, version: piece.pieceVersion, main: './src/index.js' }))
+    await writeFile(join(packageDir, 'src', 'index.js'), 'module.exports = {}')
+    return packageDir
+}
+
 async function pathExists(p: string): Promise<boolean> {
     return access(p).then(() => true, () => false)
 }
@@ -179,10 +187,53 @@ describe('pieceInstaller', () => {
 
     it('piece already installed — bun install never called', async () => {
         const piece = makePiece('@activepieces/piece-cached')
-        const pieceDir = pieceDirPath(piece)
 
-        await mkdir(join(pieceDir, 'node_modules', piece.pieceName), { recursive: true })
-        await writeFile(join(pieceDir, 'ready'), 'true')
+        await writeInstalledPackage(piece)
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).not.toHaveBeenCalled()
+    })
+
+    it('nested package directory that is empty is reinstalled — the engine has no entry file to load', async () => {
+        const piece = makePiece('@activepieces/piece-hollow')
+
+        await mkdir(join(pieceDirPath(piece), 'node_modules', piece.pieceName), { recursive: true })
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).toHaveBeenCalledOnce()
+    })
+
+    it('nested package whose declared main is missing is reinstalled', async () => {
+        const piece = makePiece('@activepieces/piece-no-entry')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(packageDir, { recursive: true })
+        await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: piece.pieceName, main: './src/index.js' }))
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).toHaveBeenCalledOnce()
+    })
+
+    it('nested package with no manifest but a conventional entry file is accepted', async () => {
+        const piece = makePiece('@activepieces/piece-manifestless')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(join(packageDir, 'src'), { recursive: true })
+        await writeFile(join(packageDir, 'src', 'index.js'), 'module.exports = {}')
+        await writeFile(readyFilePath(piece), 'true')
 
         const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
         await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
@@ -243,12 +294,12 @@ describe('pieceInstaller', () => {
         const pieceDir = pieceDirPath(piece)
         const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
 
-        await mkdir(join(pieceDir, 'node_modules', piece.pieceName), { recursive: true })
+        const packageDir = await writeInstalledPackage(piece)
         await writeFile(join(pieceDir, 'ready'), 'true')
         await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
         expect(mockInstall).not.toHaveBeenCalled()
 
-        await rm(join(pieceDir, 'node_modules', piece.pieceName), { recursive: true, force: true })
+        await rm(packageDir, { recursive: true, force: true })
         mockInstall.mockResolvedValueOnce({ output: '' })
 
         await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })

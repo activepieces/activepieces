@@ -116,12 +116,14 @@ Test the *exact* path the consuming code resolves. For pieces that is
 
 Once the sweep names the host, you can clear the outage without a release — the fault is data, not the running image.
 
-**Do not delete the `ready` marker.** It is the obvious instinct and it is a **no-op**: `usedPiecesMemoryCache`
-short-circuits *above* the disk check, so any worker process that already cached this folder as installed skips the
-reinstall no matter what the disk says. Deleting the whole piece folder is worse — the cached processes still skip,
-and now nothing is there at all.
+**Deleting the `ready` marker is not a reliable repair, and on older builds it does nothing at all.** Builds before
+the `usedPiecesMemoryCache` removal short-circuit *above* the disk check, so a worker process that already cached the
+folder as installed skips the reinstall no matter what the disk says — check whether the running image has that cache
+before you rely on this. Deleting the whole piece folder is worse on those builds: the cached processes still skip, and
+now nothing is there at all. Even on a build that honours it, clearing `ready` only queues the repair behind the next
+job that wants the piece.
 
-Repair the thing the engine actually resolves instead. Read the dangling link, derive the store path, and re-populate
+Repairing what the engine actually resolves is the version-independent fix, and it takes effect immediately. Read the dangling link, derive the store path, and re-populate
 it from the `bundle.tgz` that is already in the piece folder:
 
 ```bash
