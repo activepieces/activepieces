@@ -1,4 +1,4 @@
-import { rm, writeFile } from 'node:fs/promises'
+import { readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
 import { ensureTrailingSlash, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
@@ -8,7 +8,6 @@ import { SandboxSettings } from '../../types'
 import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
-const usedPiecesMemoryCache: Record<string, boolean> = {}
 const VALID_SCOPED_NAME_REGEX = /^@[^/]+\/[^/]+$/
 const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -291,20 +290,47 @@ async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePack
 
 async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PiecePackage): Promise<boolean> {
     const pieceFolder = piecePath(rootWorkspace, piece)
-    if (usedPiecesMemoryCache[pieceFolder]) {
-        return true
-    }
     const readyExists = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
     if (!readyExists) {
         return false
     }
-    const nodeModulesExist = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules'))
-    if (!nodeModulesExist) {
+    const engineCanResolve = await pieceEntryFileExists({ pieceFolder, pieceName: piece.pieceName })
+    if (!engineCanResolve) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }
-    usedPiecesMemoryCache[pieceFolder] = true
     return true
+}
+
+async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileExistsParams): Promise<boolean> {
+    const packageDir = join(pieceFolder, 'node_modules', pieceName)
+    const { data: declaredMain } = await tryCatch(async () => {
+        const manifest: unknown = JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8'))
+        if (typeof manifest !== 'object' || isNil(manifest) || !('main' in manifest)) {
+            return null
+        }
+        const { main } = manifest
+        return typeof main === 'string' ? main : null
+    })
+    if (!isNil(declaredMain)) {
+        const mainPath = join(packageDir, declaredMain)
+        if (await fileSystemUtils.fileExists(mainPath)) {
+            return isLoadableEntry(mainPath)
+        }
+    }
+    return isLoadableEntry(join(packageDir, 'src', 'index.js'))
+}
+
+async function isLoadableEntry(entryPath: string): Promise<boolean> {
+    if (await isLoadableFile(entryPath)) {
+        return true
+    }
+    return isLoadableFile(join(entryPath, 'index.js'))
+}
+
+async function isLoadableFile(entryPath: string): Promise<boolean> {
+    const { data: stats } = await tryCatch(async () => stat(entryPath))
+    return stats?.isFile() ?? false
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
@@ -317,6 +343,11 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
         )
     })
     await Promise.all(writeToDiskJobs)
+}
+
+type PieceEntryFileExistsParams = {
+    pieceFolder: string
+    pieceName: string
 }
 
 type InstallParams = {
