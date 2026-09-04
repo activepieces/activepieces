@@ -160,7 +160,7 @@ async function installDependencies({ path, packageJson }: InstallDependenciesPar
     await fs.writeFile(`${path}/package.json`, packageJson, 'utf8')
     const deps = Object.entries(JSON.parse(packageJson).dependencies ?? {})
     if (deps.length > 0) {
-        await bunRunner(log).install({ path, filtersPath: [] })
+        await bunRunner(log).install({ path, filtersPath: [], isolatedLinker: false })
     }
 }
 

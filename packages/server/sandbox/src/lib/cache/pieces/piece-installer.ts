@@ -93,6 +93,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                     const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
                         path: rootWorkspace,
                         filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
+                        isolatedLinker: true,
                     }))
 
                     if (isNil(batchError)) {
@@ -172,6 +173,7 @@ async function tryInstallPiecesIndividually(
             bunRunner(log).install({
                 path: rootWorkspace,
                 filtersPath: [relativePiecePath(piece)],
+                isolatedLinker: true,
             }),
         )
         if (error) {
