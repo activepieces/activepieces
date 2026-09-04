@@ -308,6 +308,7 @@ export const scrape = createAction({
       )
     );
     const javascriptReturns = result.data.actions?.javascriptReturns ?? [];
+    const scrapes = result.data.actions?.scrapes ?? [];
 
     result.data = {
       screenshot: savedScreenshot,
@@ -316,6 +317,7 @@ export const scrape = createAction({
         pdfs: savedPdfs,
         screenshots: savedActionScreenshots,
         javascriptReturns,
+        scrapes,
       },
       metadata: result.data.metadata
     };

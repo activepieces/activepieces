@@ -42,6 +42,15 @@ const scrapeResultFields: OutputSchema['fields'] = [
           { key: 'value', label: 'Value' },
         ],
       },
+      {
+        key: 'scrapes',
+        label: 'Scrapes',
+        labelKey: 'url',
+        listItems: [
+          { key: 'url', label: 'URL', format: 'url' },
+          { key: 'html', label: 'HTML', format: 'html' },
+        ],
+      },
     ],
   },
   {
