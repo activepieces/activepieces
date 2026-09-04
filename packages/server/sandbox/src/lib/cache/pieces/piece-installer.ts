@@ -8,7 +8,6 @@ import { SandboxSettings } from '../../types'
 import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
-const usedPiecesMemoryCache: Record<string, boolean> = {}
 const VALID_SCOPED_NAME_REGEX = /^@[^/]+\/[^/]+$/
 const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -291,19 +290,15 @@ async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePack
 
 async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PiecePackage): Promise<boolean> {
     const pieceFolder = piecePath(rootWorkspace, piece)
-    if (usedPiecesMemoryCache[pieceFolder]) {
-        return true
-    }
     const readyExists = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
     if (!readyExists) {
         return false
     }
-    const nodeModulesExist = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules'))
-    if (!nodeModulesExist) {
+    const engineCanResolve = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules', piece.pieceName))
+    if (!engineCanResolve) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }
-    usedPiecesMemoryCache[pieceFolder] = true
     return true
 }
 
