@@ -1,0 +1,120 @@
+- generic [ref=f1e1]:
+  - generic [ref=f1e3]:
+    - generic [aria-hidden] [ref=f1e489]:
+      - generic [ref=f1e490]:
+        - generic [ref=f1e491]:
+          - link [ref=f1e913] [cursor=pointer]:
+            - /url: /
+          - heading [level=1] [ref=f1e915]: Activepieces
+          - generic [ref=f1e495]:
+            - button [ref=f1e916] [cursor=pointer]
+            - button [ref=f1e917] [cursor=pointer]
+        - generic [ref=f1e498]:
+          - generic [ref=f1e499]:
+            - link [ref=f1e918] [cursor=pointer]:
+              - /url: /templates
+              - generic [ref=f1e504]: Explore
+            - link [ref=f1e919] [cursor=pointer]:
+              - /url: /impact
+              - generic [ref=f1e509]: Impact
+            - link [ref=f1e920] [cursor=pointer]:
+              - /url: /mcp-server
+              - generic [ref=f1e518]: MCP
+          - generic [ref=f1e519]:
+            - generic [ref=f1e521]:
+              - generic [ref=f1e522]: Projects
+              - button [ref=f1e921] [cursor=pointer]
+            - button [ref=f1e922] [cursor=pointer]:
+              - generic [ref=f1e532]: Personal Project
+        - generic [ref=f1e534]:
+          - generic [ref=f1e535]:
+            - generic [ref=f1e536]:
+              - generic [ref=f1e537]: "100"
+              - generic [ref=f1e538]: credits
+            - generic [ref=f1e539]: 0% used
+          - generic [ref=f1e540]:
+            - generic [ref=f1e541]: Resets in 23 hours
+            - link [ref=f1e923] [cursor=pointer]:
+              - /url: /platform/setup/billing
+              - button [ref=f1e924]: Billing
+        - link [ref=f1e925] [cursor=pointer]:
+          - /url: /platform/projects
+          - generic [ref=f1e549]: Platform Admin
+        - generic [ref=f1e550]:
+          - button [ref=f1e926] [cursor=pointer]:
+            - generic [ref=f1e561]: Ahmad Douqa
+          - button [ref=f1e927] [cursor=pointer]
+      - main [ref=f1e564]:
+        - generic [ref=f1e566]:
+          - generic [ref=f1e567]:
+            - generic [ref=f1e568]:
+              - generic [ref=f1e569]: Personal Project
+              - generic [ref=f1e577]:
+                - button [ref=f1e928] [cursor=pointer]:
+                  - generic [ref=f1e580]: Add Members
+                - button [ref=f1e581] [cursor=pointer]
+            - tablist [ref=f1e584]:
+              - tab [ref=f1e929] [cursor=pointer]: Automations
+              - tab [ref=f1e930] [cursor=pointer]: Runs
+              - tab [ref=f1e931] [cursor=pointer]: Connections
+              - tab [ref=f1e932] [cursor=pointer]: Variables
+          - generic [ref=f1e773]:
+            - generic [ref=f1e775]:
+              - generic [ref=f1e776]:
+                - textbox [ref=f1e933]:
+                  - /placeholder: Search flows and tables...
+                - button [ref=f1e934] [cursor=pointer]:
+                  - generic [ref=f1e783]: Type
+                - button [ref=f1e935] [cursor=pointer]:
+                  - generic [ref=f1e785]: Status
+                - button [ref=f1e936] [cursor=pointer]:
+                  - generic [ref=f1e787]: Connections
+                - button [ref=f1e937] [cursor=pointer]:
+                  - generic [ref=f1e789]: Owner
+              - generic [ref=f1e790]:
+                - button [ref=f1e938] [cursor=pointer]: Import
+                - button [ref=f1e939] [cursor=pointer]: Create New
+            - generic [ref=f1e796]:
+              - generic [ref=f1e797]:
+                - checkbox [ref=f1e799] [cursor=pointer]
+                - button [ref=f1e940] [cursor=pointer]: Name
+                - generic [ref=f1e807]: Details
+                - generic [ref=f1e810]: Last modified
+                - generic [ref=f1e814]: Owner
+                - generic [ref=f1e818]: Status
+              - generic [ref=f1e872] [cursor=pointer]:
+                - checkbox [ref=f1e874]
+                - button [ref=f1e876]
+                - generic [ref=f1e879]: Untitled
+                - generic [ref=f1e892]: Just now
+                - generic [ref=f1e894]: Ahmad Douqa
+                - switch [disabled] [ref=f1e910]
+                - button [expanded] [ref=f1e912]
+            - generic [ref=f1e864]:
+              - generic [ref=f1e865]:
+                - generic [ref=f1e866]: Rows per page
+                - combobox [ref=f1e867] [cursor=pointer]:
+                  - generic: "10"
+              - button [disabled]: Previous
+              - button [disabled]: Next
+    - generic [aria-hidden] [ref=f1e770]:
+      - heading [level=2] [ref=f1e942]: Command Palette
+      - paragraph [ref=f1e772]: Search for a command to run...
+    - region "Notifications alt+T"
+  - generic [aria-hidden] [ref=f1e943]:
+    - menu:
+      - menuitem: Rename
+      - menuitem: Duplicate
+      - menuitem: Move To
+      - menuitem: Export
+      - menuitem: Share
+      - separator
+      - menuitem [expanded]: Delete
+  - dialog [ref=f1e953]:
+    - generic [ref=f1e954]:
+      - heading "Delete flow" [level=2] [ref=f1e955]
+      - paragraph [ref=f1e956]: Deleting "Untitled" cannot be undone.
+    - generic [ref=f1e957]:
+      - button "Cancel" [active] [ref=f1e958] [cursor=pointer]
+      - button "Delete" [ref=f1e959] [cursor=pointer]
+    - button "Close" [ref=f1e960] [cursor=pointer]

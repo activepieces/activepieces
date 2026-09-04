@@ -1,0 +1,179 @@
+- generic [ref=e3]:
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - link [ref=e33] [cursor=pointer]:
+          - /url: /
+          - img "Activepieces" [ref=e34]
+        - heading "Activepieces" [level=1] [ref=e35]
+        - generic [ref=e36]:
+          - button "Search" [ref=e37] [cursor=pointer]
+          - button "Close sidebar" [ref=e38] [cursor=pointer]
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - link "Explore" [ref=e41] [cursor=pointer]:
+            - /url: /templates
+          - link "Impact" [ref=e46] [cursor=pointer]:
+            - /url: /impact
+          - link "MCP" [ref=e51] [cursor=pointer]:
+            - /url: /mcp-server
+        - generic [ref=e60]:
+          - generic [ref=e62]:
+            - generic [ref=e63]: Projects
+            - button "Sort pinned projects" [ref=e65] [cursor=pointer]
+          - button "Personal Project" [ref=e68] [cursor=pointer]
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]: "100"
+            - generic [ref=e79]: credits
+          - generic [ref=e80]: 0% used
+        - generic [ref=e81]:
+          - generic [ref=e82]: Resets in 12 hours
+          - link [ref=e83] [cursor=pointer]:
+            - /url: /platform/setup/billing
+            - button "Billing" [ref=e84]
+      - link "Platform Admin" [ref=e87] [cursor=pointer]:
+        - /url: /platform/projects
+      - generic [ref=e91]:
+        - button "Account" [ref=e92] [cursor=pointer]:
+          - generic [ref=e102]: Dev User
+        - button "Settings" [ref=e103] [cursor=pointer]
+    - main [ref=e105]:
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - generic [ref=e109]:
+            - generic [ref=e110]: Personal Project
+            - generic [ref=e118]:
+              - button "Add Members" [ref=e119] [cursor=pointer]
+              - button [ref=e122] [cursor=pointer]
+          - tablist [ref=e125]:
+            - tab [ref=e126] [cursor=pointer]
+            - tab [ref=e132] [cursor=pointer]
+            - tab [ref=e139] [cursor=pointer]
+            - tab [ref=e148] [cursor=pointer]
+        - generic [ref=e156]:
+          - generic [ref=e158]:
+            - generic [ref=e159]:
+              - textbox "Search flows and tables..." [ref=e164]
+              - button "Type" [ref=e165] [cursor=pointer]
+              - button "Status" [ref=e167] [cursor=pointer]
+              - button "Connections" [ref=e169] [cursor=pointer]
+              - button "Owner" [ref=e171] [cursor=pointer]
+            - generic [ref=e173]:
+              - button [ref=e174] [cursor=pointer]
+              - button [ref=e176] [cursor=pointer]
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - checkbox [ref=e182] [cursor=pointer]
+              - button "Sort by name Z to A" [active] [ref=e581] [cursor=pointer]: Name
+              - generic [ref=e190]: Details
+              - generic [ref=e193]: Last modified
+              - generic [ref=e197]: Owner
+              - generic [ref=e201]: Status
+            - generic [ref=e584]:
+              - generic [ref=e585] [cursor=pointer]:
+                - checkbox [ref=e587]
+                - button [ref=e589]
+                - generic [ref=e592]: Abackup 0104
+                - img "Empty Trigger" [ref=e604]
+                - generic [ref=e605]: Sep 2
+                - generic [ref=e607]: Dev User
+                - switch [disabled] [ref=e623]
+                - button [ref=e625]
+              - generic [ref=e626] [cursor=pointer]:
+                - checkbox [ref=e628]
+                - button [ref=e630]
+                - generic [ref=e633]: Abackup 0286
+                - img "Empty Trigger" [ref=e645]
+                - generic [ref=e646]: Sep 2
+                - generic [ref=e648]: Dev User
+                - switch [disabled] [ref=e664]
+                - button [ref=e666]
+              - generic [ref=e667] [cursor=pointer]:
+                - checkbox [ref=e669]
+                - button [ref=e671]
+                - generic [ref=e674]: Abackup 0468
+                - generic [ref=e683]:
+                  - img "Empty Trigger" [ref=e686]
+                  - img "Slack" [ref=e689]
+                - generic [ref=e690]: Sep 2
+                - generic [ref=e692]: Dev User
+                - switch [disabled] [ref=e708]
+                - button [ref=e710]
+              - generic [ref=e711] [cursor=pointer]:
+                - checkbox [ref=e713]
+                - button [ref=e715]
+                - generic [ref=e718]: Abackup 0650
+                - img "Empty Trigger" [ref=e730]
+                - generic [ref=e731]: Sep 2
+                - generic [ref=e733]: Dev User
+                - switch [disabled] [ref=e749]
+                - button [ref=e751]
+              - generic [ref=e752] [cursor=pointer]:
+                - checkbox [ref=e754]
+                - button [ref=e756]
+                - generic [ref=e759]: Abackup 0832
+                - img "Empty Trigger" [ref=e771]
+                - generic [ref=e772]: Sep 2
+                - generic [ref=e774]: Dev User
+                - switch [disabled] [ref=e790]
+                - button [ref=e792]
+              - generic [ref=e793] [cursor=pointer]:
+                - checkbox [ref=e795]
+                - button [ref=e797]
+                - generic [ref=e800]: Abackup 1014
+                - img "Empty Trigger" [ref=e812]
+                - generic [ref=e813]: Sep 2
+                - generic [ref=e815]: Dev User
+                - switch [disabled] [ref=e831]
+                - button [ref=e833]
+              - generic [ref=e834] [cursor=pointer]:
+                - checkbox [ref=e836]
+                - button [ref=e838]
+                - generic [ref=e841]: Abackup 1196
+                - img "Empty Trigger" [ref=e853]
+                - generic [ref=e854]: Sep 2
+                - generic [ref=e856]: Dev User
+                - switch [disabled] [ref=e872]
+                - button [ref=e874]
+              - generic [ref=e875] [cursor=pointer]:
+                - checkbox [ref=e877]
+                - button [ref=e879]
+                - generic [ref=e882]: Adigest 0130
+                - img "Empty Trigger" [ref=e894]
+                - generic [ref=e895]: Sep 2
+                - generic [ref=e897]: Dev User
+                - switch [disabled] [ref=e913]
+                - button [ref=e915]
+              - generic [ref=e916] [cursor=pointer]:
+                - checkbox [ref=e918]
+                - button [ref=e920]
+                - generic [ref=e923]: Adigest 0312
+                - img "Empty Trigger" [ref=e935]
+                - generic [ref=e936]: Sep 2
+                - generic [ref=e938]: Dev User
+                - switch [disabled] [ref=e954]
+                - button [ref=e956]
+              - generic [ref=e957] [cursor=pointer]:
+                - checkbox [ref=e959]
+                - button [ref=e961]
+                - generic [ref=e964]: Adigest 0494
+                - img "Empty Trigger" [ref=e976]
+                - generic [ref=e977]: Sep 2
+                - generic [ref=e979]: Dev User
+                - switch [disabled] [ref=e995]
+                - button [ref=e997]
+          - generic [ref=e315]:
+            - generic [ref=e998]: Showing the first 1041
+            - generic [ref=e316]:
+              - generic [ref=e317]:
+                - generic [ref=e318]: Rows per page
+                - combobox [ref=e319] [cursor=pointer]:
+                  - generic: "10"
+              - button "Previous" [disabled]
+              - button "Next" [ref=e580] [cursor=pointer]
+  - generic [ref=e320]:
+    - heading "Command Palette" [level=2] [ref=e321]
+    - paragraph [ref=e322]: Search for a command to run...
+  - region "Notifications alt+T"

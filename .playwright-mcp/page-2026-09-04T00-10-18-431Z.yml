@@ -1,0 +1,126 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e1804]:
+    - generic [ref=f1e1805]:
+      - generic [ref=f1e1806]:
+        - link [ref=f1e1807] [cursor=pointer]:
+          - /url: /
+          - img "Activepieces" [ref=f1e1808]
+        - heading "Activepieces" [level=1] [ref=f1e1809]
+        - generic [ref=f1e1810]:
+          - button "Search" [ref=f1e1811] [cursor=pointer]
+          - button "Close sidebar" [ref=f1e1812] [cursor=pointer]
+      - generic [ref=f1e1813]:
+        - generic [ref=f1e1814]:
+          - link "Explore" [ref=f1e1815] [cursor=pointer]:
+            - /url: /templates
+          - link "Impact" [ref=f1e1820] [cursor=pointer]:
+            - /url: /impact
+          - link "MCP" [ref=f1e1825] [cursor=pointer]:
+            - /url: /mcp-server
+        - generic [ref=f1e1834]:
+          - generic [ref=f1e1836]:
+            - generic [ref=f1e1837]: Projects
+            - button "Sort pinned projects" [ref=f1e1839] [cursor=pointer]
+          - button "Personal Project" [ref=f1e1842] [cursor=pointer]
+      - generic [ref=f1e1849]:
+        - generic [ref=f1e1850]:
+          - generic [ref=f1e1851]:
+            - generic [ref=f1e1852]: "100"
+            - generic [ref=f1e1853]: credits
+          - generic [ref=f1e1854]: 0% used
+        - generic [ref=f1e1855]:
+          - generic [ref=f1e1856]: Resets in 23 hours
+          - link [ref=f1e1857] [cursor=pointer]:
+            - /url: /platform/setup/billing
+            - button "Billing" [ref=f1e1858]
+      - link "Platform Admin" [ref=f1e1861] [cursor=pointer]:
+        - /url: /platform/projects
+      - generic [ref=f1e1865]:
+        - button "Account" [ref=f1e1866] [cursor=pointer]:
+          - generic [ref=f1e1876]: Ahmad Douqa
+        - button "Settings" [ref=f1e1877] [cursor=pointer]
+    - main [ref=f1e1879]:
+      - generic [ref=f1e1882]:
+        - generic [ref=f1e1885]:
+          - navigation "breadcrumb" [ref=f1e1889]:
+            - list [ref=f1e1890]:
+              - listitem [ref=f1e1891]:
+                - generic [ref=f1e1892] [cursor=pointer]: Personal Project
+              - listitem [aria-hidden] [ref=f1e1893]
+              - listitem [ref=f1e1896]:
+                - link "Untitled" [disabled] [ref=f1e1897]:
+                  - generic [ref=f1e1898]:
+                    - generic [active] [ref=f1e1899]: Untitled
+                    - button [disabled] [ref=f1e1900] [cursor=pointer]
+          - generic [ref=f1e1901]:
+            - button "Support" [ref=f1e1902] [cursor=pointer]
+            - button "Runs" [ref=f1e1903] [cursor=pointer]
+        - generic [ref=f1e1907]:
+          - generic [ref=f1e1910]:
+            - generic [ref=f1e1911]:
+              - generic [ref=f1e1914]:
+                - generic:
+                  - generic:
+                    - img:
+                      - img "Edge from trigger to trigger-subgraph-end" [ref=f1e1915] [cursor=pointer]
+                  - generic:
+                    - button "Trigger Empty Trigger 1. Select Trigger Empty Trigger" [disabled] [ref=f1e1921] [cursor=pointer]:
+                      - generic [ref=f1e1922]: Trigger
+                      - generic [ref=f1e1928]:
+                        - img "Empty Trigger" [ref=f1e1931]
+                        - generic [ref=f1e1932]:
+                          - generic [ref=f1e1933]: 1. Select Trigger
+                          - generic [ref=f1e1935]: Empty Trigger
+                        - button [disabled] [ref=f1e1937]
+                    - generic: End
+                  - button "Complete 1 step" [ref=f1e1944] [cursor=pointer]
+              - status [ref=f1e1946]
+            - generic [ref=f1e1948]:
+              - generic [ref=f1e1949]: You have unpublished changes
+              - generic [ref=f1e1953]:
+                - button "Publish" [disabled]
+            - generic:
+              - button [ref=f1e1955] [cursor=pointer]
+              - generic [ref=f1e1956]:
+                - button [ref=f1e1957] [cursor=pointer]
+                - button [ref=f1e1958] [cursor=pointer]
+                - button [ref=f1e1959] [cursor=pointer]
+                - button [ref=f1e1960] [cursor=pointer]
+                - button [ref=f1e1961] [cursor=pointer]
+                - button [ref=f1e1963] [cursor=pointer]
+                - button [ref=f1e1964] [cursor=pointer]
+                - button [ref=f1e1965] [cursor=pointer]
+            - generic:
+              - generic:
+                - generic: Built with
+                - generic: activepieces
+            - generic:
+              - generic:
+                - text: Data Selector
+                - button
+                - button
+                - button
+              - generic:
+                - generic:
+                  - tablist:
+                    - tab "Data" [selected]
+                    - tab "Variables"
+                  - tabpanel "Data":
+                    - generic:
+                      - generic:
+                        - textbox "Search"
+                      - generic:
+                        - tablist:
+                          - tab "Friendly View" [selected]
+                          - tab "Advanced"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic: No matching data
+                            - generic: Try adjusting your search
+          - separator [disabled] [ref=f1e1966]
+  - generic [ref=f1e1967]:
+    - heading "Command Palette" [level=2] [ref=f1e1968]
+    - paragraph [ref=f1e1969]: Search for a command to run...
+  - region "Notifications alt+T"

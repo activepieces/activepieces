@@ -1,0 +1,83 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e30]:
+    - generic [ref=f1e31]:
+      - generic [ref=f1e32]:
+        - link [ref=f1e33] [cursor=pointer]:
+          - /url: /
+          - img "Activepieces" [ref=f1e34]
+        - heading "Activepieces" [level=1] [ref=f1e35]
+        - generic [ref=f1e36]:
+          - button "Search" [ref=f1e37] [cursor=pointer]
+          - button "Close sidebar" [ref=f1e38] [cursor=pointer]
+      - generic [ref=f1e39]:
+        - generic [ref=f1e40]:
+          - link "Explore" [ref=f1e41] [cursor=pointer]:
+            - /url: /templates
+          - link "Impact" [ref=f1e46] [cursor=pointer]:
+            - /url: /impact
+          - link "MCP" [ref=f1e51] [cursor=pointer]:
+            - /url: /mcp-server
+        - generic [ref=f1e60]:
+          - generic [ref=f1e62]:
+            - generic [ref=f1e63]: Projects
+            - button "Sort pinned projects" [ref=f1e65] [cursor=pointer]
+          - button "Personal Project" [ref=f1e68] [cursor=pointer]
+      - generic [ref=f1e75]:
+        - generic [ref=f1e76]:
+          - generic [ref=f1e77]:
+            - generic [ref=f1e78]: "100"
+            - generic [ref=f1e79]: credits
+          - generic [ref=f1e80]: 0% used
+        - generic [ref=f1e81]:
+          - generic [ref=f1e82]: Resets in 23 hours
+          - link [ref=f1e83] [cursor=pointer]:
+            - /url: /platform/setup/billing
+            - button "Billing" [ref=f1e84]
+      - link "Platform Admin" [ref=f1e87] [cursor=pointer]:
+        - /url: /platform/projects
+      - generic [ref=f1e91]:
+        - button "Account" [ref=f1e92] [cursor=pointer]:
+          - generic [ref=f1e102]: Ahmad Douqa
+        - button "Settings" [ref=f1e103] [cursor=pointer]
+    - main [ref=f1e105]:
+      - generic [ref=f1e107]:
+        - generic [ref=f1e108]:
+          - generic [ref=f1e109]:
+            - generic [ref=f1e110]: Personal Project
+            - generic [ref=f1e118]:
+              - button "Add Members" [ref=f1e119] [cursor=pointer]
+              - button [ref=f1e122] [cursor=pointer]
+          - tablist [ref=f1e125]:
+            - tab [ref=f1e126] [cursor=pointer]
+            - tab [ref=f1e132] [cursor=pointer]
+            - tab [ref=f1e139] [cursor=pointer]
+            - tab [ref=f1e148] [cursor=pointer]
+        - generic [ref=f1e156]:
+          - generic [ref=f1e158]:
+            - generic [ref=f1e159]:
+              - textbox "Search flows and tables..." [ref=f1e164]
+              - button "Type" [ref=f1e165] [cursor=pointer]
+              - button "Status" [ref=f1e167] [cursor=pointer]
+              - button "Connections" [ref=f1e169] [cursor=pointer]
+              - button "Owner" [ref=f1e171] [cursor=pointer]
+            - generic [ref=f1e173]:
+              - button [ref=f1e174] [cursor=pointer]
+              - button [ref=f1e176] [cursor=pointer]
+          - generic [ref=f1e180]:
+            - checkbox [ref=f1e182] [cursor=pointer]
+            - button "Sort by name A to Z" [ref=f1e184] [cursor=pointer]: Name
+            - generic [ref=f1e190]: Details
+            - generic [ref=f1e193]: Last modified
+            - generic [ref=f1e197]: Owner
+            - generic [ref=f1e201]: Status
+          - generic [ref=f1e316]:
+            - generic [ref=f1e317]:
+              - generic [ref=f1e318]: Rows per page
+              - combobox [ref=f1e319] [cursor=pointer]:
+                - generic: "10"
+            - button "Previous" [disabled]
+            - button "Next" [disabled]
+  - generic [ref=f1e320]:
+    - heading "Command Palette" [level=2] [ref=f1e321]
+    - paragraph [ref=f1e322]: Search for a command to run...
+  - region "Notifications alt+T"

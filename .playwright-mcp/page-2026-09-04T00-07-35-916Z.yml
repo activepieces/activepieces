@@ -1,0 +1,115 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e489]:
+    - generic [ref=f1e490]:
+      - generic [ref=f1e491]:
+        - link [ref=f1e492] [cursor=pointer]:
+          - /url: /
+          - img "Activepieces" [ref=f1e493]
+        - heading "Activepieces" [level=1] [ref=f1e494]
+        - generic [ref=f1e495]:
+          - button "Search" [ref=f1e496] [cursor=pointer]
+          - button "Close sidebar" [ref=f1e497] [cursor=pointer]
+      - generic [ref=f1e498]:
+        - generic [ref=f1e499]:
+          - link "Explore" [ref=f1e500] [cursor=pointer]:
+            - /url: /templates
+          - link "Impact" [ref=f1e505] [cursor=pointer]:
+            - /url: /impact
+          - link "MCP" [ref=f1e510] [cursor=pointer]:
+            - /url: /mcp-server
+        - generic [ref=f1e519]:
+          - generic [ref=f1e521]:
+            - generic [ref=f1e522]: Projects
+            - button "Sort pinned projects" [ref=f1e524] [cursor=pointer]
+          - button "Personal Project" [ref=f1e527] [cursor=pointer]
+      - generic [ref=f1e534]:
+        - generic [ref=f1e535]:
+          - generic [ref=f1e536]:
+            - generic [ref=f1e537]: "100"
+            - generic [ref=f1e538]: credits
+          - generic [ref=f1e539]: 0% used
+        - generic [ref=f1e540]:
+          - generic [ref=f1e541]: Resets in 23 hours
+          - link [ref=f1e542] [cursor=pointer]:
+            - /url: /platform/setup/billing
+            - button "Billing" [ref=f1e543]
+      - link "Platform Admin" [ref=f1e546] [cursor=pointer]:
+        - /url: /platform/projects
+      - generic [ref=f1e550]:
+        - button "Account" [ref=f1e551] [cursor=pointer]:
+          - generic [ref=f1e561]: Ahmad Douqa
+        - button "Settings" [ref=f1e562] [cursor=pointer]
+    - main [ref=f1e564]:
+      - generic [ref=f1e566]:
+        - generic [ref=f1e567]:
+          - generic [ref=f1e568]:
+            - generic [ref=f1e569]: Personal Project
+            - generic [ref=f1e577]:
+              - button "Add Members" [ref=f1e578] [cursor=pointer]
+              - button [ref=f1e581] [cursor=pointer]
+          - tablist [ref=f1e584]:
+            - tab [ref=f1e585] [cursor=pointer]
+            - tab [ref=f1e591] [cursor=pointer]
+            - tab [ref=f1e598] [cursor=pointer]
+            - tab [ref=f1e607] [cursor=pointer]
+        - generic [ref=f1e615]:
+          - generic [ref=f1e616]:
+            - heading "Get started with Activepieces" [level=2] [ref=f1e617]
+            - generic [ref=f1e618]:
+              - generic [ref=f1e620]:
+                - generic [ref=f1e627]:
+                  - heading "Build a Flow" [level=3] [ref=f1e628]
+                  - paragraph [ref=f1e629]: Create automated workflows
+                - generic [ref=f1e630]:
+                  - button "Start from scratch" [ref=f1e631] [cursor=pointer]
+                  - button "Import" [ref=f1e639] [cursor=pointer]
+                  - button "Use Templates" [ref=f1e648] [cursor=pointer]
+              - generic [ref=f1e658]:
+                - generic [ref=f1e663]:
+                  - heading "Create a Table" [level=3] [ref=f1e664]
+                  - paragraph [ref=f1e665]: Organize and manage data
+                - generic [ref=f1e666]:
+                  - button "Start from scratch" [ref=f1e667] [cursor=pointer]
+                  - button "Import" [ref=f1e674] [cursor=pointer]
+          - generic [ref=f1e683]:
+            - generic [ref=f1e684]:
+              - heading "Templates For You" [level=2] [ref=f1e685]
+              - button "All templates" [ref=f1e689] [cursor=pointer]
+            - generic [ref=f1e692]:
+              - generic [ref=f1e693] [cursor=pointer]:
+                - generic [ref=f1e694]:
+                  - heading "Create GitLab Issues From Linear" [level=3] [ref=f1e696]
+                  - paragraph [ref=f1e697]: When a new Linear issue is created, this flow automatically creates a matching GitLab issue in a selected GitLab project.
+                  - generic [ref=f1e699]:
+                    - generic [ref=f1e701]: Save
+                    - generic [ref=f1e702]: $2,800/year
+                - generic [ref=f1e704]:
+                  - img "Linear" [ref=f1e709]
+                  - img "GitLab" [ref=f1e714]
+              - generic [ref=f1e715] [cursor=pointer]:
+                - generic [ref=f1e716]:
+                  - heading "List invoices in Excel" [level=3] [ref=f1e718]
+                  - paragraph [ref=f1e719]: Creates a monthly Excel report that includes all Stripe invoices and their line items from the last 30 days.
+                  - generic [ref=f1e721]:
+                    - generic [ref=f1e723]: Save
+                    - generic [ref=f1e724]: $1,608/year
+                - generic [ref=f1e726]:
+                  - img "Stripe" [ref=f1e731]
+                  - img "Microsoft Excel 365" [ref=f1e736]
+              - generic [ref=f1e737] [cursor=pointer]:
+                - generic [ref=f1e738]:
+                  - heading "Send Resumes to Google Sheets & Slack" [level=3] [ref=f1e740]
+                  - paragraph [ref=f1e741]: This automation extracts structured candidate data from resumes using Magical and saves it directly into Google Sheets. It also posts each new candidate summary to Slack so your hiring team never misses strong applicants buried in the inbox.
+                  - generic [ref=f1e743]:
+                    - generic [ref=f1e745]: Save
+                    - generic [ref=f1e746]: $14,000/year
+                - generic [ref=f1e748]:
+                  - img "Gmail" [ref=f1e753]
+                  - img "Magical API" [ref=f1e758]
+                  - img "AI" [ref=f1e763]
+                  - img "Google Sheets" [ref=f1e768]
+                  - generic [ref=f1e769]: "+1"
+  - generic [ref=f1e770]:
+    - heading "Command Palette" [level=2] [ref=f1e771]
+    - paragraph [ref=f1e772]: Search for a command to run...
+  - region "Notifications alt+T"

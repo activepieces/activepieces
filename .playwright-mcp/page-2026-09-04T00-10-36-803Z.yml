@@ -1,0 +1,103 @@
+- generic [ref=f1e3]:
+  - generic [ref=f1e1970]:
+    - generic [ref=f1e1971]:
+      - generic [ref=f1e1972]:
+        - link [ref=f1e1973] [cursor=pointer]:
+          - /url: /
+          - img "Activepieces" [ref=f1e1974]
+        - heading "Activepieces" [level=1] [ref=f1e1975]
+        - generic [ref=f1e1976]:
+          - button "Search" [ref=f1e1977] [cursor=pointer]
+          - button "Close sidebar" [ref=f1e1978] [cursor=pointer]
+      - generic [ref=f1e1979]:
+        - generic [ref=f1e1980]:
+          - link "Explore" [ref=f1e1981] [cursor=pointer]:
+            - /url: /templates
+          - link "Impact" [ref=f1e1986] [cursor=pointer]:
+            - /url: /impact
+          - link "MCP" [ref=f1e1991] [cursor=pointer]:
+            - /url: /mcp-server
+        - generic [ref=f1e2000]:
+          - generic [ref=f1e2002]:
+            - generic [ref=f1e2003]: Projects
+            - button "Sort pinned projects" [ref=f1e2005] [cursor=pointer]
+          - button "Personal Project" [ref=f1e2008] [cursor=pointer]
+      - generic [ref=f1e2015]:
+        - generic [ref=f1e2016]:
+          - generic [ref=f1e2017]:
+            - generic [ref=f1e2018]: "100"
+            - generic [ref=f1e2019]: credits
+          - generic [ref=f1e2020]: 0% used
+        - generic [ref=f1e2021]:
+          - generic [ref=f1e2022]: Resets in 23 hours
+          - link [ref=f1e2023] [cursor=pointer]:
+            - /url: /platform/setup/billing
+            - button "Billing" [ref=f1e2024]
+      - link "Platform Admin" [ref=f1e2027] [cursor=pointer]:
+        - /url: /platform/projects
+      - generic [ref=f1e2031]:
+        - button "Account" [ref=f1e2032] [cursor=pointer]:
+          - generic [ref=f1e2042]: Ahmad Douqa
+        - button "Settings" [ref=f1e2043] [cursor=pointer]
+    - main [ref=f1e2045]:
+      - generic [ref=f1e2047]:
+        - generic [ref=f1e2048]:
+          - generic [ref=f1e2049]:
+            - generic [ref=f1e2050]: Personal Project
+            - generic [ref=f1e2058]:
+              - button "Add Members" [ref=f1e2059] [cursor=pointer]
+              - button [ref=f1e2062] [cursor=pointer]
+          - tablist [ref=f1e2065]:
+            - tab [ref=f1e2066] [cursor=pointer]
+            - tab [ref=f1e2072] [cursor=pointer]
+            - tab [ref=f1e2079] [cursor=pointer]
+            - tab [ref=f1e2088] [cursor=pointer]
+        - generic [ref=f1e2096]:
+          - generic [ref=f1e2098]:
+            - generic [ref=f1e2099]:
+              - textbox "Search flows and tables..." [ref=f1e2104]
+              - button "Type" [ref=f1e2105] [cursor=pointer]
+              - button "Status" [ref=f1e2107] [cursor=pointer]
+              - button "Connections" [ref=f1e2109] [cursor=pointer]
+              - button "Owner" [ref=f1e2111] [cursor=pointer]
+            - generic [ref=f1e2113]:
+              - button [ref=f1e2114] [cursor=pointer]
+              - button [ref=f1e2116] [cursor=pointer]
+          - generic [ref=f1e2119]:
+            - generic [ref=f1e2120]:
+              - checkbox [ref=f1e2122] [cursor=pointer]
+              - button "Sort by name Z to A" [active] [ref=f1e2235] [cursor=pointer]: Name
+              - generic [ref=f1e2130]: Details
+              - generic [ref=f1e2133]: Last modified
+              - generic [ref=f1e2137]: Owner
+              - generic [ref=f1e2141]: Status
+            - generic [ref=f1e2144]:
+              - generic [ref=f1e2238] [cursor=pointer]:
+                - checkbox [ref=f1e2240]
+                - button [ref=f1e2242]
+                - generic [ref=f1e2245]: Untitled
+                - img "Empty Trigger" [ref=f1e2257]
+                - generic [ref=f1e2258]: Just now
+                - generic [ref=f1e2260]: Ahmad Douqa
+                - switch [disabled] [ref=f1e2276]
+                - button [ref=f1e2278]
+              - generic [ref=f1e2186] [cursor=pointer]:
+                - checkbox [ref=f1e2188]
+                - button [ref=f1e2190]
+                - generic [ref=f1e2193]: Untitled
+                - img "Empty Trigger" [ref=f1e2205]
+                - generic [ref=f1e2206]: 2 mins ago
+                - generic [ref=f1e2208]: Ahmad Douqa
+                - switch [disabled] [ref=f1e2224]
+                - button [ref=f1e2226]
+          - generic [ref=f1e2228]:
+            - generic [ref=f1e2229]:
+              - generic [ref=f1e2230]: Rows per page
+              - combobox [ref=f1e2231] [cursor=pointer]:
+                - generic: "10"
+            - button "Previous" [disabled]
+            - button "Next" [disabled]
+  - generic [ref=f1e2232]:
+    - heading "Command Palette" [level=2] [ref=f1e2233]
+    - paragraph [ref=f1e2234]: Search for a command to run...
+  - region "Notifications alt+T"

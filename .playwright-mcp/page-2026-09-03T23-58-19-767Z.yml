@@ -1,0 +1,182 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [aria-hidden] [ref=e1217]:
+      - generic [ref=e1218]:
+        - generic [ref=e1219]:
+          - link [ref=e1836] [cursor=pointer]:
+            - /url: /
+          - heading [level=1] [ref=e1838]: Activepieces
+          - generic [ref=e1223]:
+            - button [ref=e1839] [cursor=pointer]
+            - button [ref=e1840] [cursor=pointer]
+        - generic [ref=e1226]:
+          - generic [ref=e1227]:
+            - link [ref=e1841] [cursor=pointer]:
+              - /url: /templates
+              - generic [ref=e1232]: Explore
+            - link [ref=e1842] [cursor=pointer]:
+              - /url: /impact
+              - generic [ref=e1237]: Impact
+            - link [ref=e1843] [cursor=pointer]:
+              - /url: /mcp-server
+              - generic [ref=e1246]: MCP
+          - generic [ref=e1247]:
+            - generic [ref=e1249]:
+              - generic [ref=e1250]: Projects
+              - button [ref=e1844] [cursor=pointer]
+            - button [ref=e1845] [cursor=pointer]:
+              - generic [ref=e1260]: Personal Project
+        - generic [ref=e1262]:
+          - generic [ref=e1263]:
+            - generic [ref=e1264]:
+              - generic [ref=e1265]: "100"
+              - generic [ref=e1266]: credits
+            - generic [ref=e1267]: 0% used
+          - generic [ref=e1268]:
+            - generic [ref=e1269]: Resets in 12 hours
+            - link [ref=e1846] [cursor=pointer]:
+              - /url: /platform/setup/billing
+              - button [ref=e1847]: Billing
+        - link [ref=e1848] [cursor=pointer]:
+          - /url: /platform/projects
+          - generic [ref=e1277]: Platform Admin
+        - generic [ref=e1278]:
+          - button [ref=e1849] [cursor=pointer]:
+            - generic [ref=e1289]: Dev User
+          - button [ref=e1850] [cursor=pointer]
+      - main [ref=e1292]:
+        - generic [ref=e1294]:
+          - generic [ref=e1295]:
+            - generic [ref=e1296]:
+              - generic [ref=e1297]: Personal Project
+              - generic [ref=e1305]:
+                - button [ref=e1851] [cursor=pointer]:
+                  - generic [ref=e1308]: Add Members
+                - button [ref=e1309] [cursor=pointer]
+            - tablist [ref=e1312]:
+              - tab [ref=e1852] [cursor=pointer]: Automations
+              - tab [ref=e1853] [cursor=pointer]: Runs
+              - tab [ref=e1854] [cursor=pointer]: Connections
+              - tab [ref=e1855] [cursor=pointer]: Variables
+          - generic [ref=e1343]:
+            - generic [ref=e1345]:
+              - generic [ref=e1346]:
+                - textbox [ref=e1856]:
+                  - /placeholder: Search flows and tables...
+                - button [ref=e1857] [cursor=pointer]:
+                  - generic [ref=e1353]: Type
+                - button [ref=e1858] [cursor=pointer]:
+                  - generic [ref=e1355]: Status
+                - button [ref=e1859] [cursor=pointer]:
+                  - generic [ref=e1357]: Connections
+                - button [ref=e1860] [cursor=pointer]:
+                  - generic [ref=e1359]: Owner
+              - generic [ref=e1360]:
+                - button [ref=e1861] [cursor=pointer]: Import
+                - button [ref=e1862] [cursor=pointer]: Create New
+            - generic [ref=e1366]:
+              - generic [ref=e1367]:
+                - checkbox [ref=e1369] [cursor=pointer]
+                - button [ref=e1863] [cursor=pointer]: Name
+                - generic [ref=e1376]: Details
+                - generic [ref=e1379]: Last modified
+                - generic [ref=e1383]: Owner
+                - generic [ref=e1387]: Status
+              - generic [ref=e1390]:
+                - generic [ref=e1391] [cursor=pointer]:
+                  - checkbox [ref=e1393]
+                  - button [ref=e1395]
+                  - generic [ref=e1398]: Abackup 0104
+                  - generic [ref=e1413]: Sep 2
+                  - generic [ref=e1415]: Dev User
+                  - switch [disabled] [ref=e1431]
+                  - button [ref=e1433]
+                - generic [ref=e1434] [cursor=pointer]:
+                  - checkbox [ref=e1436]
+                  - button [ref=e1438]
+                  - generic [ref=e1441]: Abackup 0286
+                  - generic [ref=e1456]: Sep 2
+                  - generic [ref=e1458]: Dev User
+                  - switch [disabled] [ref=e1474]
+                  - button [ref=e1476]
+                - generic [ref=e1477] [cursor=pointer]:
+                  - checkbox [ref=e1479]
+                  - button [ref=e1481]
+                  - generic [ref=e1484]: Abackup 0468
+                  - generic [ref=e1504]: Sep 2
+                  - generic [ref=e1506]: Dev User
+                  - switch [disabled] [ref=e1522]
+                  - button [ref=e1524]
+                - generic [ref=e1525] [cursor=pointer]:
+                  - checkbox [ref=e1527]
+                  - button [ref=e1529]
+                  - generic [ref=e1532]: Abackup 0650
+                  - generic [ref=e1547]: Sep 2
+                  - generic [ref=e1549]: Dev User
+                  - switch [disabled] [ref=e1565]
+                  - button [ref=e1567]
+                - generic [ref=e1568] [cursor=pointer]:
+                  - checkbox [ref=e1570]
+                  - button [ref=e1572]
+                  - generic [ref=e1575]: Abackup 0832
+                  - generic [ref=e1590]: Sep 2
+                  - generic [ref=e1592]: Dev User
+                  - switch [disabled] [ref=e1608]
+                  - button [ref=e1610]
+                - generic [ref=e1611] [cursor=pointer]:
+                  - checkbox [ref=e1613]
+                  - button [ref=e1615]
+                  - generic [ref=e1618]: Abackup 1014
+                  - generic [ref=e1633]: Sep 2
+                  - generic [ref=e1635]: Dev User
+                  - switch [disabled] [ref=e1651]
+                  - button [ref=e1653]
+                - generic [ref=e1654] [cursor=pointer]:
+                  - checkbox [ref=e1656]
+                  - button [ref=e1658]
+                  - generic [ref=e1661]: Abackup 1196
+                  - generic [ref=e1676]: Sep 2
+                  - generic [ref=e1678]: Dev User
+                  - switch [disabled] [ref=e1694]
+                  - button [ref=e1696]
+                - generic [ref=e1697] [cursor=pointer]:
+                  - checkbox [ref=e1699]
+                  - button [ref=e1701]
+                  - generic [ref=e1704]: Adigest 0130
+                  - generic [ref=e1719]: Sep 2
+                  - generic [ref=e1721]: Dev User
+                  - switch [disabled] [ref=e1737]
+                  - button [ref=e1739]
+                - generic [ref=e1740] [cursor=pointer]:
+                  - checkbox [ref=e1742]
+                  - button [ref=e1744]
+                  - generic [ref=e1747]: Adigest 0312
+                  - generic [ref=e1762]: Sep 2
+                  - generic [ref=e1764]: Dev User
+                  - switch [disabled] [ref=e1780]
+                  - button [ref=e1782]
+                - generic [ref=e1783] [cursor=pointer]:
+                  - checkbox [ref=e1785]
+                  - button [ref=e1787]
+                  - generic [ref=e1790]: Adigest 0494
+                  - generic [ref=e1805]: Sep 2
+                  - generic [ref=e1807]: Dev User
+                  - switch [disabled] [ref=e1823]
+                  - button [ref=e1825]
+            - generic [ref=e1826]:
+              - generic [ref=e1827]: Showing the first 1041
+              - generic [ref=e1828]:
+                - generic [ref=e1829]:
+                  - generic [ref=e1830]: Rows per page
+                  - combobox [expanded] [ref=e1831] [cursor=pointer]:
+                    - generic: "10"
+                - button [disabled]: Previous
+                - button [ref=e1875] [cursor=pointer]: Next
+    - generic [aria-hidden] [ref=e1833]:
+      - heading [level=2] [ref=e1876]: Command Palette
+      - paragraph [ref=e1835]: Search for a command to run...
+    - region "Notifications alt+T"
+  - listbox [ref=e1878]:
+    - option "10" [active] [selected] [ref=e1879]
+    - option "20" [ref=e1883]
+    - option "50" [ref=e1886]

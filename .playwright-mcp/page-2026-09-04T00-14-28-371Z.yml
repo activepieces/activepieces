@@ -1,0 +1,142 @@
+- generic [ref=f3e1]:
+  - generic [ref=f3e3]:
+    - generic [aria-hidden] [ref=f3e4]:
+      - generic [ref=f3e5]:
+        - generic [ref=f3e6]:
+          - link [ref=f3e7] [cursor=pointer]:
+            - /url: /
+          - heading [level=1] [ref=f3e9]: Activepieces
+          - generic [ref=f3e10]:
+            - button [ref=f3e11] [cursor=pointer]
+            - button [ref=f3e12] [cursor=pointer]
+        - generic [ref=f3e13]:
+          - generic [ref=f3e14]:
+            - link [ref=f3e15] [cursor=pointer]:
+              - /url: /templates
+              - generic [ref=f3e19]: Explore
+            - link [ref=f3e20] [cursor=pointer]:
+              - /url: /impact
+              - generic [ref=f3e24]: Impact
+            - link [ref=f3e25] [cursor=pointer]:
+              - /url: /mcp-server
+              - generic [ref=f3e33]: MCP
+          - generic [ref=f3e34]:
+            - generic [ref=f3e36]:
+              - generic [ref=f3e37]: Projects
+              - button [ref=f3e39] [cursor=pointer]
+            - button [ref=f3e42] [cursor=pointer]:
+              - generic [ref=f3e47]: Personal Project
+        - generic [ref=f3e49]:
+          - generic [ref=f3e50]:
+            - generic [ref=f3e51]:
+              - generic [ref=f3e52]: "100"
+              - generic [ref=f3e53]: credits
+            - generic [ref=f3e54]: 0% used
+          - generic [ref=f3e55]:
+            - generic [ref=f3e56]: Resets in 23 hours
+            - link [ref=f3e57] [cursor=pointer]:
+              - /url: /platform/setup/billing
+              - button [ref=f3e58]: Billing
+        - link [ref=f3e61] [cursor=pointer]:
+          - /url: /platform/projects
+          - generic [ref=f3e64]: Platform Admin
+        - generic [ref=f3e65]:
+          - button [ref=f3e66] [cursor=pointer]:
+            - generic [ref=f3e76]: Ahmad Douqa
+          - button [ref=f3e77] [cursor=pointer]
+      - main [ref=f3e79]:
+        - generic [ref=f3e81]:
+          - generic [ref=f3e82]:
+            - generic [ref=f3e83]:
+              - generic [ref=f3e84]: Personal Project
+              - generic [ref=f3e92]:
+                - button [ref=f3e93] [cursor=pointer]:
+                  - generic [ref=f3e95]: Add Members
+                - button [ref=f3e96] [cursor=pointer]
+            - tablist [ref=f3e99]:
+              - tab [ref=f3e100] [cursor=pointer]: Automations
+              - tab [ref=f3e106] [cursor=pointer]: Runs
+              - tab [ref=f3e113] [cursor=pointer]: Connections
+              - tab [ref=f3e122] [cursor=pointer]: Variables
+          - generic [ref=f3e130]:
+            - generic [ref=f3e132]:
+              - generic [ref=f3e133]:
+                - textbox [ref=f3e138]:
+                  - /placeholder: Search flows and tables...
+                - button [ref=f3e139] [cursor=pointer]:
+                  - generic [ref=f3e140]: Type
+                - button [ref=f3e141] [cursor=pointer]:
+                  - generic [ref=f3e142]: Status
+                - button [ref=f3e143] [cursor=pointer]:
+                  - generic [ref=f3e144]: Connections
+                - button [ref=f3e145] [cursor=pointer]:
+                  - generic [ref=f3e146]: Owner
+              - generic [ref=f3e147]:
+                - button [ref=f3e148] [cursor=pointer]: Import
+                - button [expanded] [ref=f3e150] [cursor=pointer]: Create New
+            - generic [ref=f3e153]:
+              - generic [ref=f3e154]:
+                - checkbox [ref=f3e156] [cursor=pointer]
+                - button [ref=f3e158] [cursor=pointer]: Name
+                - generic [ref=f3e164]: Details
+                - generic [ref=f3e167]: Last modified
+                - generic [ref=f3e171]: Owner
+                - generic [ref=f3e175]: Status
+              - generic [ref=f3e178]:
+                - generic [ref=f3e179] [cursor=pointer]:
+                  - checkbox [ref=f3e181]
+                  - button [ref=f3e183]
+                  - generic [ref=f3e186]: table
+                  - generic [ref=f3e199]: Just now
+                  - generic [ref=f3e201]: Ahmad Douqa
+                  - switch [disabled] [ref=f3e217]
+                  - button [ref=f3e219]
+                - generic [ref=f3e220] [cursor=pointer]:
+                  - checkbox [ref=f3e222]
+                  - button [ref=f3e224]
+                  - generic [ref=f3e227]: ahmad
+                  - generic [ref=f3e240]: Just now
+                  - generic [ref=f3e242]: Ahmad Douqa
+                  - switch [disabled] [ref=f3e258]
+                  - button [ref=f3e260]
+                - generic [ref=f3e261] [cursor=pointer]:
+                  - checkbox [ref=f3e263]
+                  - button [ref=f3e265]
+                  - generic [ref=f3e268]: Zaid
+                  - generic [ref=f3e281]: 2 mins ago
+                  - generic [ref=f3e283]: Ahmad Douqa
+                  - switch [disabled] [ref=f3e299]
+                  - button [ref=f3e301]
+                - generic [ref=f3e302] [cursor=pointer]:
+                  - checkbox [ref=f3e304]
+                  - button [ref=f3e306]
+                  - generic [ref=f3e309]: Untitled
+                  - generic [ref=f3e322]: 3 mins ago
+                  - generic [ref=f3e324]: Ahmad Douqa
+                  - switch [disabled] [ref=f3e340]
+                  - button [ref=f3e342]
+                - generic [ref=f3e343] [cursor=pointer]:
+                  - checkbox [ref=f3e345]
+                  - button [ref=f3e347]
+                  - generic [ref=f3e350]: Untitled
+                  - generic [ref=f3e363]: 5 mins ago
+                  - generic [ref=f3e365]: Ahmad Douqa
+                  - switch [disabled] [ref=f3e381]
+                  - button [ref=f3e383]
+            - generic [ref=f3e385]:
+              - generic [ref=f3e386]:
+                - generic [ref=f3e387]: Rows per page
+                - combobox [ref=f3e388] [cursor=pointer]:
+                  - generic: "10"
+              - button [disabled]: Previous
+              - button [disabled]: Next
+    - generic [aria-hidden] [ref=f3e389]:
+      - heading [level=2] [ref=f3e390]: Command Palette
+      - paragraph [ref=f3e391]: Search for a command to run...
+    - region "Notifications alt+T"
+  - menu "Create New" [active] [ref=f3e393]:
+    - menuitem "New Flow" [ref=f3e395] [cursor=pointer]
+    - menuitem "Start from Template" [ref=f3e397] [cursor=pointer]
+    - menuitem "New Table" [ref=f3e399] [cursor=pointer]
+    - separator [ref=f3e400]
+    - menuitem "New Folder" [ref=f3e402] [cursor=pointer]
