@@ -92,6 +92,7 @@ export const nextDayofYear = createAction({
       description: useCurrentTimeDescription,
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: nextDayOfYearActionOutputSchema,

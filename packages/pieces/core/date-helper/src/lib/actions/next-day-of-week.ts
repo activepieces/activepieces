@@ -81,6 +81,7 @@ export const nextDayofWeek = createAction({
       description: useCurrentTimeDescription,
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: nextDayOfWeekActionOutputSchema,

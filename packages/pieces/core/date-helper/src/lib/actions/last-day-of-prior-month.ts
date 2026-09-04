@@ -61,6 +61,7 @@ export const lastDayOfPreviousMonthAction = createAction({
       description: useCurrentTimeDescription,
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: lastDayOfPreviousMonthActionOutputSchema,
