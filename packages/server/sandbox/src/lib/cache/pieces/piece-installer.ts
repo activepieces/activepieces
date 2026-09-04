@@ -304,25 +304,28 @@ async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PieceP
 
 async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileExistsParams): Promise<boolean> {
     const packageDir = join(pieceFolder, 'node_modules', pieceName)
-    if (await isLoadableFile(join(packageDir, 'src', 'index.js'))) {
-        return true
-    }
     const { data: declaredMain } = await tryCatch(async () => {
         const manifest: unknown = JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8'))
-        if (isNil(manifest) || typeof manifest !== 'object' || !('main' in manifest)) {
+        if (typeof manifest !== 'object' || isNil(manifest) || !('main' in manifest)) {
             return null
         }
         const { main } = manifest
         return typeof main === 'string' ? main : null
     })
-    if (isNil(declaredMain)) {
-        return false
+    if (!isNil(declaredMain)) {
+        const mainPath = join(packageDir, declaredMain)
+        if (await fileSystemUtils.fileExists(mainPath)) {
+            return isLoadableEntry(mainPath)
+        }
     }
-    const mainPath = join(packageDir, declaredMain)
-    if (await isLoadableFile(mainPath)) {
+    return isLoadableEntry(join(packageDir, 'src', 'index.js'))
+}
+
+async function isLoadableEntry(entryPath: string): Promise<boolean> {
+    if (await isLoadableFile(entryPath)) {
         return true
     }
-    return isLoadableFile(join(mainPath, 'index.js'))
+    return isLoadableFile(join(entryPath, 'index.js'))
 }
 
 async function isLoadableFile(entryPath: string): Promise<boolean> {

@@ -227,6 +227,39 @@ describe('pieceInstaller', () => {
         expect(mockInstall).toHaveBeenCalledOnce()
     })
 
+    it('a broken declared main wins over a healthy conventional entry — the engine never falls back, so reinstall', async () => {
+        const piece = makePiece('@activepieces/piece-shadowed-main')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(join(packageDir, 'src'), { recursive: true })
+        await writeFile(join(packageDir, 'src', 'index.js'), 'module.exports = {}')
+        await mkdir(join(packageDir, 'dist'), { recursive: true })
+        await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: piece.pieceName, main: './dist' }))
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).toHaveBeenCalledOnce()
+    })
+
+    it('a declared main pointing nowhere is accepted when the conventional entry is healthy — the engine does fall back', async () => {
+        const piece = makePiece('@activepieces/piece-absent-main')
+        const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
+
+        await mkdir(join(packageDir, 'src'), { recursive: true })
+        await writeFile(join(packageDir, 'src', 'index.js'), 'module.exports = {}')
+        await writeFile(join(packageDir, 'package.json'), JSON.stringify({ name: piece.pieceName, main: './nowhere.js' }))
+        await writeFile(readyFilePath(piece), 'true')
+
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        expect(mockInstall).not.toHaveBeenCalled()
+    })
+
     it('nested package whose main is a directory holding an index file is accepted', async () => {
         const piece = makePiece('@activepieces/piece-dir-main')
         const packageDir = join(pieceDirPath(piece), 'node_modules', piece.pieceName)
