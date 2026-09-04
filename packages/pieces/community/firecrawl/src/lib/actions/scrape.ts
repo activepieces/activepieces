@@ -307,6 +307,7 @@ export const scrape = createAction({
         downloadAndSaveScreenshot({ screenshot: url }, context)
       )
     );
+    const javascriptReturns = result.data.actions?.javascriptReturns ?? [];
 
     result.data = {
       screenshot: savedScreenshot,
@@ -314,6 +315,7 @@ export const scrape = createAction({
       actions: {
         pdfs: savedPdfs,
         screenshots: savedActionScreenshots,
+        javascriptReturns,
       },
       metadata: result.data.metadata
     };
