@@ -110,7 +110,18 @@ done
 
 Test the *exact* path the consuming code resolves. For pieces that is
 `pieces/<scope>/<name>-<version>/node_modules/<scope>/<name>` with `-e`, never `[ -d … /node_modules ]` and never
-`-L` — the real fault was a **dangling symlink**, which `find` lists and `-L` passes.
+`-L` — one fault was a **dangling symlink**, which `find` lists and `-L` passes.
+
+`-e` on the package directory is no longer sufficient on its own. A second shape resolves that directory fine and is
+missing only the files inside it, so assert the **entry file the engine would load** — the declared `main` if the
+manifest has one, else `src/index.js` — and as a real file, since a directory satisfies `-e`:
+
+```bash
+P=<piece-folder>/node_modules/<scope>/<pkg>
+M=$(sed -n 's/.*"main"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$P/package.json" 2>/dev/null | head -1)
+E=${M:+$P/$M}; E=${E:-$P/src/index.js}
+{ [ -f "$E" ] || [ -f "$E/index.js" ]; } && echo ok || echo BROKEN
+```
 
 ### Repairing a poisoned piece folder in place
 
@@ -133,6 +144,14 @@ mkdir -p "<workspace>/node_modules/.bun/<entry>/node_modules/<scope>/<pkg>"
 tar -xzf "<piece-folder>/bundle.tgz" --strip-components=1 -C "<that path>"
 [ -e "$L" ] && echo RESOLVES        # the engine's own predicate
 ```
+
+`bun install` on its own cannot substitute for this. Measured on real bun 1.4.0 in the prod layout, a plain
+reinstall answers `Checked N packages (no changes)` and heals nothing, because bun trusts a store entry that is
+already present even when it is half-extracted; deleting the piece folder's `node_modules` only makes bun relink it
+from that same entry. The reinstall route needs `bun install --force` (add `--filter ./pieces/<scope>/<name>-<version>`
+to keep it to the one member — siblings' store entries come back byte-identical), or delete the
+`node_modules/.bun/<entry>` directory first. Prefer the tar restore below when the fault is a single folder: it needs
+no lockfile write and cannot contend with the other containers installing against the same volume.
 
 The tarball's `package/` prefix maps onto the store layout exactly, and the store entry usually already holds the
 piece's dependency links, so this restores the one missing directory and nothing else. It needs no cache
