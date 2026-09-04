@@ -42,7 +42,7 @@ export const addSubtractDateAction = createAction({
         options: optionalTimeFormats,
       },
       required: true,
-      defaultValue: getCorrectedFormat(timeFormat.format00),
+      defaultValue: timeFormat.format00,
     }),
     outputFormat: Property.StaticDropdown({
       displayName: 'To Time Format',
@@ -51,7 +51,7 @@ export const addSubtractDateAction = createAction({
         options: optionalTimeFormats,
       },
       required: true,
-      defaultValue: getCorrectedFormat(timeFormat.format00),
+      defaultValue: timeFormat.format00,
     }),
     expression: Property.LongText({
       displayName: 'Expression',
