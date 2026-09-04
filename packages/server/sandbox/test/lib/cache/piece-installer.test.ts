@@ -210,6 +210,19 @@ describe('pieceInstaller', () => {
         expect(manifest.dependencies['@acme/piece-sample']).toContain('bundle.tgz')
     })
 
+    it('pins bun to the isolated linker in the generated workspace', async () => {
+        const piece = makePiece('@activepieces/piece-linked')
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        await installer.install({ pieces: [piece], includeFilters: true, ...bundleSource })
+
+        const bunfig = await readFile(join(testWorkspace, 'bunfig.toml'), 'utf8')
+        expect(bunfig).toContain('linker = "isolated"')
+        expect(bunfig).toContain('minimumReleaseAge = 259200')
+    })
+
     it('skips pieces whose name is a relative path — they never reach the shared bun workspace', async () => {
         const good = makePiece('@activepieces/piece-good')
         // Stale `usedPieces` data from a since-reverted build can carry a relative path as the
