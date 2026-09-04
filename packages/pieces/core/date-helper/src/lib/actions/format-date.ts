@@ -26,6 +26,22 @@ export const formatDateAction = createAction({
       hide: true,
     },
   },
+  propertyGroups: [
+    {
+      key: 'input',
+      display: 'section',
+      label: 'Input',
+      icon: 'calendar',
+      props: ['inputDate', 'inputFormat', 'inputTimeZone'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'type',
+      props: ['outputFormat', 'outputTimeZone'],
+    },
+  ],
   props: {
     inputDate: Property.ShortText({
       displayName: 'Date',

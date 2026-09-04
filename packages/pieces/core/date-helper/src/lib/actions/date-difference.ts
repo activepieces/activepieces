@@ -25,6 +25,22 @@ export const dateDifferenceAction = createAction({
       hide: true,
     },
   },
+  propertyGroups: [
+    {
+      key: 'start',
+      display: 'section',
+      label: 'Start',
+      icon: 'calendar',
+      props: ['startDate', 'startDateFormat'],
+    },
+    {
+      key: 'end',
+      display: 'section',
+      label: 'End',
+      icon: 'calendar',
+      props: ['endDate', 'endDateFormat'],
+    },
+  ],
   props: {
     startDate: Property.ShortText({
       displayName: 'Date',

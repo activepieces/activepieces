@@ -32,6 +32,29 @@ export const addSubtractDateAction = createAction({
       hide: true,
     },
   },
+  propertyGroups: [
+    {
+      key: 'input',
+      display: 'section',
+      label: 'Input',
+      icon: 'calendar',
+      props: ['inputDate', 'inputDateFormat'],
+    },
+    {
+      key: 'shift',
+      display: 'section',
+      label: 'Shift',
+      icon: 'sliders',
+      props: ['expression'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'type',
+      props: ['outputFormat'],
+    },
+  ],
   props: {
     inputDate: Property.ShortText({
       displayName: 'Date',
