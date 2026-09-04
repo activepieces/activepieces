@@ -299,7 +299,7 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
             auth: providerConfig.auth as Record<string, unknown>,
             providerConfig: providerConfig.config as Record<string, unknown>,
             modelId: resolvedModelId,
-            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds }),
+            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, fallbackModelId: resolvedModelId }),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
@@ -479,8 +479,8 @@ export const agentRpcHandlers = (log: FastifyBaseLogger) => ({
     },
 
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
-        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const { projectId, platformId, modelName } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), ...spreadIfDefined('fallbackModelId', modelName) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: run, error: runError } = await tryCatch(async () => {
@@ -809,12 +809,12 @@ async function connectionForConfiguredTool({ piece, projectId, platformId, log }
     return { externalId: pinned, ...spreadIfDefined('label', connection?.displayName) }
 }
 
-async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string }> {
-    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string, modelName: string | null }> {
+    const conversation = await agentHelpers.conversationRepo().findOne({ where: { id: conversationId }, select: ['source', 'projectId', 'platformId', 'modelName'] })
     if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
     }
-    return { projectId: conversation.projectId, platformId: conversation.platformId }
+    return { projectId: conversation.projectId, platformId: conversation.platformId, modelName: conversation.modelName ?? null }
 }
 
 async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {
