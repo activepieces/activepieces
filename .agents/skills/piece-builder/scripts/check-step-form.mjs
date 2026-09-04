@@ -3,6 +3,9 @@
 import { readFileSync } from 'node:fs';
 
 const DESCRIPTION_FOLD_LIMIT = 70;
+const DROPDOWN_TRIGGER_WIDTH = 40;
+const HALF_WIDTH_CHARS = 20;
+const CARD_OPTION_LIMIT = 4;
 const ADVANCED_MIN_RELEASE = '0.88.2';
 const TITLE_CASE_SMALL_WORDS = new Set([
   'a', 'an', 'the', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'by', 'with', 'as', 'at', 'from', 'per', 'vs', 'is',
@@ -20,8 +23,9 @@ function usage() {
     'GET /api/v1/pieces/<name> response from --file, and reports',
     'every step-form problem a reviewer would flag: descriptions past the read-more fold,',
     'required props hidden in Advanced, labels with units or question marks, markdown in plain-text',
-    'descriptions, placeholders on inputs that never render them, the same prop labelled differently',
-    'across sibling actions, and a release floor too low for the advanced flag.',
+    'descriptions, placeholders on inputs that never render them, dropdown option labels wider than',
+    'the closed trigger, the same prop labelled differently across sibling actions, and a release',
+    'floor too low for the advanced flag.',
     '',
     'Exit code 1 when any finding is an error, 0 otherwise.',
   ].join('\n');
@@ -135,6 +139,33 @@ function propFindings({ step, propName, prop }) {
   }
   if (prop.placeholder && !PLACEHOLDER_RENDERING_TYPES.has(type)) {
     add('warn', 'placeholder-not-rendered', `${type} never renders a placeholder; move the example into the description or drop it.`);
+  }
+  findings.push(...optionFindings({ step, propName, prop }));
+  return findings;
+}
+
+function optionFindings({ step, propName, prop }) {
+  const options = prop.options?.options;
+  if (!Array.isArray(options) || options.length === 0) {
+    return [];
+  }
+  const findings = [];
+  const add = (level, rule, message) => findings.push({ level, rule, step: step.displayName, prop: propName, message });
+  const labels = options.map((option) => option.label ?? '');
+  const longest = labels.reduce((left, right) => (right.length > left.length ? right : left), '');
+  const pastFold = labels.filter((label) => label.length > DESCRIPTION_FOLD_LIMIT).length;
+  const pastTrigger = labels.filter((label) => label.length > DROPDOWN_TRIGGER_WIDTH).length;
+  const worst = `longest is "${longest}" at ${longest.length}`;
+  if (pastFold > 0) {
+    add('error', 'option-label-fold', `${pastFold} option label(s) over ${DESCRIPTION_FOLD_LIMIT} chars, ${worst}; the list clips them.`);
+  } else if (pastTrigger > 0) {
+    add('warn', 'option-label-width', `${pastTrigger} option label(s) over ${DROPDOWN_TRIGGER_WIDTH} chars, ${worst}; the closed dropdown is about ${DROPDOWN_TRIGGER_WIDTH} wide and shows the label only. Move the code or pattern into the option description.`);
+  }
+  if (prop.width === 'half' && longest.length > HALF_WIDTH_CHARS) {
+    add('warn', 'half-width-option', `A half-width field is about ${HALF_WIDTH_CHARS} chars wide, ${worst}; stack the field full width or shorten the labels.`);
+  }
+  if (prop.display === 'cards' && options.length > CARD_OPTION_LIMIT) {
+    add('warn', 'cards-option-count', `${options.length} options as cards; cards hold ${CARD_OPTION_LIMIT} short modes, more belongs in a plain dropdown.`);
   }
   return findings;
 }
