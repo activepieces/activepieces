@@ -1,9 +1,5 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
 import { ModelMessage, generateText, stepCountIs } from 'ai';
-import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AIProviderName, createAction, getEffectiveProviderAndModel, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { aiProps, aiProviderSelection } from '../../common/props';
 import { createAIModel } from '../../common/ai-sdk';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
@@ -29,7 +25,6 @@ export const askAI = createAction({
     creativity: Property.Number({
       displayName: 'Creativity',
       required: false,
-      defaultValue: 100,
       description:
         'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
     }),
@@ -109,7 +104,7 @@ export const askAI = createAction({
         },
       ],
       maxOutputTokens: context.propsValue.maxOutputTokens,
-      temperature: (context.propsValue.creativity ?? 100) / 100,
+      ...spreadIfDefined('temperature', isNil(context.propsValue.creativity) ? undefined : context.propsValue.creativity / 100),
       tools: webSearchTools,
       stopWhen,
       providerOptions,

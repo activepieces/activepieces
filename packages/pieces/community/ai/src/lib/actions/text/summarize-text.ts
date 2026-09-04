@@ -10,7 +10,7 @@ export const summarizeText = createAction({
   classification: 'READ',
   displayName: 'Summarize Text',
   description: 'Summarize long emails, articles, or documents into what matters.',
-  aiMetadata: { description: 'Condenses one block of supplied text into a shorter summary using a chosen text model. Pick it when the goal is a shorter version of text you already have; use extractStructuredData for specific typed fields, classifyText for a label, or askAi for open-ended questions. Requires a provider/model, the text inline (it fetches no URLs and reads no files) and the Prompt prop, which carries a default guide instruction but is still required; not idempotent, as generation runs at temperature 1, so identical text returns differently worded summaries.', idempotent: false },
+  aiMetadata: { description: 'Condenses one block of supplied text into a shorter summary using a chosen text model. Pick it when the goal is a shorter version of text you already have; use extractStructuredData for specific typed fields, classifyText for a label, or askAi for open-ended questions. Requires a provider/model, the text inline (it fetches no URLs and reads no files) and the Prompt prop, which carries a default guide instruction but is still required; not idempotent, as generation is non-deterministic, so identical text returns differently worded summaries.', idempotent: false },
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,
@@ -54,7 +54,6 @@ export const summarizeText = createAction({
         },
       ],
       maxOutputTokens: context.propsValue.maxOutputTokens,
-      temperature: 1,
       providerOptions: {
         [provider]: {
           ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
