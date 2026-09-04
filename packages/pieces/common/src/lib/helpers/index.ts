@@ -169,8 +169,10 @@ export function createCustomApiCallAction<
     headers?: Partial<ReturnType<typeof Property.Object>>;
     queryParams?: Partial<ReturnType<typeof Property.Object>>;
     body?: Partial<ReturnType<typeof Property.Json>>;
+    response_is_binary?: Partial<ReturnType<typeof Property.Checkbox>>;
     failsafe?: Partial<ReturnType<typeof Property.Checkbox>>;
     timeout?: Partial<ReturnType<typeof Property.Number>>;
+    followRedirects?: Partial<ReturnType<typeof Property.Checkbox>>;
   };
   extraProps?: InputPropertyMap;
   authLocation?: 'headers' | 'queryParams';
@@ -197,9 +199,9 @@ export function createCustomApiCallAction<
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: `You can either use the full URL or the relative path to the base URL
-i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
+              description: `Full URL, or a path relative to ${getBaseUrlForDescription(baseUrl, auth)}`,
               required: true,
+              placeholder: '/resource',
               defaultValue: auth ? baseUrl(auth) : '',
               ...(props?.url ?? {}),
             }),
@@ -209,6 +211,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       method: Property.StaticDropdown({
         displayName: 'Method',
         required: true,
+        defaultValue: HttpMethod.GET,
         options: {
           options: Object.values(HttpMethod).map((v) => {
             return {
@@ -223,12 +226,13 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         displayName: 'Headers',
         description:
           'Authorization headers are injected automatically from your connection.',
-        required: true,
+        required: false,
         ...(props?.headers ?? {}),
       }),
       queryParams: Property.Object({
         displayName: 'Query Parameters',
-        required: true,
+        description: 'Appended to the URL as ?key=value.',
+        required: false,
         ...(props?.queryParams ?? {}),
       }),
       body_type: Property.StaticDropdown({
@@ -321,25 +325,36 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         },
       }),
       response_is_binary: Property.Checkbox({
-        displayName: 'Response is Binary ?',
+        displayName: 'Binary Response',
         description: 'Enable for files like PDFs, images, etc.',
         required: false,
         defaultValue: false,
+        advanced: true,
+        ...(props?.response_is_binary ?? {}),
       }),
       failsafe: Property.Checkbox({
-        displayName: 'No Error on Failure',
+        displayName: 'Return Error as Output',
+        description:
+          'On a failed request, output the error instead of failing the step.',
         required: false,
+        advanced: true,
         ...(props?.failsafe ?? {}),
       }),
       timeout: Property.Number({
-        displayName: 'Timeout (in seconds)',
+        displayName: 'Timeout',
+        description: 'Seconds to wait before giving up. Leave empty for no limit.',
         required: false,
+        advanced: true,
         ...(props?.timeout ?? {}),
       }),
       followRedirects: Property.Checkbox({
-        displayName: 'Follow redirects',
+        displayName: 'Follow Redirects',
+        description:
+          'Follow 3xx redirects instead of returning them as the response.',
         required: false,
         defaultValue: false,
+        advanced: true,
+        ...(props?.followRedirects ?? {}),
       }),
       ...extraProps,
     },
