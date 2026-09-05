@@ -8,6 +8,8 @@ import {
 import {
   AddPieceRequestBody,
   ApEdition,
+  BulkUpgradePieceVersionRequestBody,
+  BulkUpgradePieceVersionResponse,
   GetPieceRequestParams,
   GetPieceRequestQuery,
   ListPiecesRequestQuery,
@@ -95,5 +97,13 @@ export const piecesApi = {
   },
   delete(id: string) {
     return api.delete(`/v1/pieces/${id}`);
+  },
+  bulkUpgradeVersion(
+    request: BulkUpgradePieceVersionRequestBody,
+  ): Promise<BulkUpgradePieceVersionResponse> {
+    return api.post<BulkUpgradePieceVersionResponse>(
+      '/v1/pieces/bulk-upgrade-version',
+      request,
+    );
   },
 };
