@@ -1,43 +1,49 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  isNil,
+  Property,
+  tryCatch,
+} from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaErrors } from '../common/errors';
+import { outsetaLookup } from '../common/lookup';
+import { outsetaMappers } from '../common/mappers';
+import { OutsetaAccount, OutsetaPerson } from '../common/outseta-types';
 
 export const getAccountAction = createAction({
   name: 'get_account',
   auth: outsetaAuth,
   displayName: 'Retrieve Account',
   description:
-    'Retrieve an account by its UID, or by the email of its primary contact. Returns plan, subscription, billing address, primary contact and add-on details.',
+    'Retrieve an account by its UID, or by the email of its primary contact. Returns the account, its addresses, its primary contact and which plan it is on. Returns found=false when nothing matches.',
   audience: 'both',
+  classification: 'READ',
   aiMetadata: {
     description:
-      'Fetches a single Outseta CRM account by its UID or by its primary contact email, returning core fields plus billing address, primary contact, and current subscription/plan/add-on details. Use to read an account by either identifier. Read-only and idempotent.',
+      'Fetches a single Outseta CRM account by its UID or by a contact email, returning account fields, billing and mailing address, primary contact, custom properties, and the current subscription UID plus plan UID and name. For subscription dates, rate, quantity or add-ons use Retrieve Subscription, which also accepts an account UID. Fill exactly one lookup field. Returns found=false instead of failing. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'lookup',
+      display: 'tabs',
+      label: 'Find account by',
+      description: 'Fill one of the two — whichever tab you leave filled is the one used.',
+      props: ['accountUid', 'primaryContactEmail'],
+    },
+  ],
   props: {
-    lookupBy: Property.StaticDropdown({
-      displayName: 'Lookup by',
-      description: 'How to find the account to retrieve.',
-      required: true,
-      defaultValue: 'uid',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Account UID', value: 'uid' },
-          { label: 'Primary contact email', value: 'email' },
-        ],
-      },
-    }),
     accountUid: Property.ShortText({
       displayName: 'Account UID',
-      description: 'Used when "Lookup by" is set to Account UID.',
       required: false,
+      placeholder: '1QpnM0nW',
     }),
     primaryContactEmail: Property.ShortText({
-      displayName: 'Primary contact email',
-      description:
-        'Used when "Lookup by" is set to Primary contact email. The action will resolve the email to the linked account.',
+      displayName: 'Contact email',
+      description: 'Resolved to the account this person belongs to.',
       required: false,
+      placeholder: 'jane@example.com',
     }),
   },
   async run(context) {
@@ -47,87 +53,72 @@ export const getAccountAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    let accountUid = context.propsValue.accountUid;
+    const lookup = outsetaLookup.single([
+      { key: 'accountUid', label: 'Account UID', value: context.propsValue.accountUid },
+      {
+        key: 'primaryContactEmail',
+        label: 'Contact email',
+        value: context.propsValue.primaryContactEmail,
+      },
+    ]);
 
-    if (context.propsValue.lookupBy === 'email') {
-      const email = context.propsValue.primaryContactEmail;
-      if (!email) {
-        throw new Error('Primary contact email is required when looking up by email.');
-      }
-      const people = await client.getAllPages<any>(
-        `/api/v1/crm/people?Email=${encodeURIComponent(email)}&fields=*,PersonAccount.Account.Uid`
-      );
-      const person = people.find(
-        (p: any) => p.Email?.toLowerCase() === email.toLowerCase()
-      );
-      if (!person) {
-        throw new Error(`No person found with email "${email}".`);
-      }
-      const memberships: any[] = Array.isArray(person.PersonAccount)
-        ? person.PersonAccount
-        : (person.PersonAccount?.items ?? person.PersonAccount?.Items ?? []);
-      accountUid = memberships[0]?.Account?.Uid ?? null;
-      if (!accountUid) {
-        throw new Error(`Person "${email}" is not linked to any account.`);
-      }
+    const accountUid =
+      lookup.key === 'accountUid'
+        ? lookup.value
+        : await accountUidByEmail({ client, email: lookup.value });
+
+    const account = isNil(accountUid)
+      ? null
+      : await accountByUid({ client, uid: accountUid });
+
+    if (isNil(account)) {
+      return { found: false, ...outsetaMappers.account({}) };
     }
 
-    if (!accountUid) {
-      throw new Error('Account UID is required.');
-    }
-
-    // The leading `*` is required: when ?fields= is provided, Outseta returns
-    // ONLY the listed fields. Without `*`, top-level scalar fields like Name,
-    // AccountStage, BillingAddress, etc. would all come back null.
-    const account = await client.get<any>(
-      `/api/v1/crm/accounts/${accountUid}?fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.*,CurrentSubscription.*,CurrentSubscription.Plan.*,CurrentSubscription.Plan.PlanFamily.*,CurrentSubscription.SubscriptionAddOns.*,CurrentSubscription.SubscriptionAddOns.AddOn.*`
-    );
-
-    const sub = account.CurrentSubscription;
-    const rawAddOns = sub?.SubscriptionAddOns;
-    const addOns: any[] = Array.isArray(rawAddOns)
-      ? rawAddOns
-      : (rawAddOns?.items ?? rawAddOns?.Items ?? []);
-
-    return {
-      uid: account.Uid ?? null,
-      name: account.Name ?? null,
-      account_stage: account.AccountStage ?? null,
-      account_stage_label: account.AccountStageLabel ?? null,
-      client_identifier: account.ClientIdentifier ?? null,
-      invoice_notes: account.InvoiceNotes ?? null,
-      has_logged_in: account.HasLoggedIn ?? null,
-      is_demo: account.IsDemo ?? null,
-      lifetime_revenue: account.LifetimeRevenue ?? null,
-      created: account.Created ?? null,
-      updated: account.Updated ?? null,
-      billing_address_line1: account.BillingAddress?.AddressLine1 ?? null,
-      billing_address_line2: account.BillingAddress?.AddressLine2 ?? null,
-      billing_address_city: account.BillingAddress?.City ?? null,
-      billing_address_state: account.BillingAddress?.State ?? null,
-      billing_address_postal_code: account.BillingAddress?.PostalCode ?? null,
-      billing_address_country: account.BillingAddress?.Country ?? null,
-      primary_contact_uid: account.PrimaryContact?.Uid ?? null,
-      primary_contact_email: account.PrimaryContact?.Email ?? null,
-      primary_contact_first_name: account.PrimaryContact?.FirstName ?? null,
-      primary_contact_last_name: account.PrimaryContact?.LastName ?? null,
-      current_subscription_uid: sub?.Uid ?? null,
-      subscription_status: sub?.SubscriptionStatus ?? null,
-      plan_uid: sub?.Plan?.Uid ?? null,
-      plan_name: sub?.Plan?.Name ?? null,
-      plan_family_name: sub?.Plan?.PlanFamily?.Name ?? null,
-      billing_renewal_term: sub?.BillingRenewalTerm ?? null,
-      renewal_date: sub?.RenewalDate ?? null,
-      start_date: sub?.StartDate ?? null,
-      end_date: sub?.EndDate ?? null,
-      // Unified validity date: renewal_date for recurring plans,
-      // end_date for one-time plans (which have no renewal).
-      validity_date: sub?.RenewalDate ?? sub?.EndDate ?? null,
-      add_ons: addOns.map((a: any) => ({
-        uid: a.AddOn?.Uid ?? a.Uid ?? null,
-        name: a.AddOn?.Name ?? null,
-        quantity: a.Quantity ?? null,
-      })),
-    };
+    return { found: true, ...outsetaMappers.account(account) };
   },
 });
+
+async function accountByUid({
+  client,
+  uid,
+}: {
+  client: OutsetaClient;
+  uid: string;
+}): Promise<OutsetaAccount | null> {
+  const { data, error } = await tryCatch(() =>
+    client.get<OutsetaAccount>(`/api/v1/crm/accounts/${uid}?${ACCOUNT_FIELDS}`)
+  );
+
+  if (error) {
+    if (outsetaErrors.isNotFound(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  return data;
+}
+
+async function accountUidByEmail({
+  client,
+  email,
+}: {
+  client: OutsetaClient;
+  email: string;
+}): Promise<string | null> {
+  const people = await client.getAllPages<OutsetaPerson>(
+    `/api/v1/crm/people?Email=${encodeURIComponent(
+      email
+    )}&fields=Uid,Email,PersonAccount.Account.Uid`
+  );
+
+  const person = people.find(
+    (candidate) => candidate.Email?.toLowerCase() === email.toLowerCase()
+  );
+
+  return outsetaMappers.toArray(person?.PersonAccount)[0]?.Account?.Uid ?? null;
+}
+
+const ACCOUNT_FIELDS =
+  'fields=*,BillingAddress.*,MailingAddress.*,PrimaryContact.Uid,PrimaryContact.Email,PrimaryContact.FirstName,PrimaryContact.LastName,CurrentSubscription.Uid,CurrentSubscription.Plan.Uid,CurrentSubscription.Plan.Name';

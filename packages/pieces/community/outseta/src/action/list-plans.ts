@@ -1,33 +1,97 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaListProps } from '../common/list-props';
+import { outsetaMappers } from '../common/mappers';
+import { outsetaQuery } from '../common/list-query';
+import { OutsetaPlan } from '../common/outseta-types';
 
 export const listPlansAction = createAction({
   name: 'list_plans',
   auth: outsetaAuth,
   displayName: 'List Plans',
-  description:
-    'Retrieve a paginated list of subscription plans from your Outseta billing catalog.',
+  description: 'List billing plans, optionally filtered and sorted.',
   audience: 'both',
+  classification: 'SEARCH',
   aiMetadata: {
     description:
-      'Returns a paginated list of subscription plans from the billing catalog. Use to discover available plan UIDs, e.g. before Change Account Plan or Create Account. Read-only and idempotent.',
+      'Lists Outseta billing plans with optional filters (name, active or inactive, per-user, created date range) and sorting, returning rates for every billing term, trial length and quantity rules. Read-only and idempotent.',
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'plan',
+      display: 'builder',
+      label: 'Plan',
+      icon: 'tag',
+      props: ['name', 'isActive', 'isPerUser'],
+    },
+    {
+      key: 'dates',
+      display: 'builder',
+      label: 'Dates',
+      icon: 'calendar',
+      props: ['createdRange'],
+    },
+    {
+      key: 'sort',
+      display: 'builder',
+      label: 'Sort',
+      icon: 'sliders',
+      props: ['sortBy', 'direction'],
+    },
+    { key: 'paging', display: 'footer', props: ['limit', 'page'] },
+  ],
   props: {
-    limit: Property.Number({
-      displayName: 'Limit',
+    name: Property.ShortText({
+      displayName: 'Name contains',
       required: false,
-      defaultValue: 100,
-      description: 'Maximum number of plans to return (default 100).',
+      icon: 'text',
+      placeholder: 'Pro',
     }),
-    offset: Property.Number({
-      displayName: 'Page',
+    isActive: Property.StaticDropdown({
+      displayName: 'Active',
       required: false,
-      defaultValue: 0,
-      description:
-        'Page number to fetch (0 = first page, 1 = second page, ...). Outseta uses page-based pagination, not record-based.',
+      icon: 'filter',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Active only', value: 'true' },
+          { label: 'Inactive only', value: 'false' },
+        ],
+      },
     }),
+    isPerUser: Property.StaticDropdown({
+      displayName: 'Per-user pricing',
+      required: false,
+      icon: 'users',
+      options: {
+        disabled: false,
+        options: [
+          { label: 'Per-user only', value: 'true' },
+          { label: 'Flat-rate only', value: 'false' },
+        ],
+      },
+    }),
+    createdRange: Property.DateRange({
+      displayName: 'Created',
+      required: false,
+      display: 'dropdown',
+      icon: 'calendar',
+    }),
+    sortBy: outsetaListProps.sortBy({
+      options: [
+        { label: 'Created', value: 'Created' },
+        { label: 'Updated', value: 'Updated' },
+        { label: 'Name', value: 'Name' },
+        { label: 'Monthly rate', value: 'MonthlyRate' },
+        { label: 'Annual rate', value: 'AnnualRate' },
+      ],
+      defaultValue: 'Name',
+    }),
+    direction: outsetaListProps.direction(),
+    limit: outsetaListProps.limit(),
+    page: outsetaListProps.page(),
   },
   async run(context) {
     const client = new OutsetaClient({
@@ -36,11 +100,29 @@ export const listPlansAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    const limit = context.propsValue.limit ?? 100;
-    const offset = context.propsValue.offset ?? 0;
+    const query = outsetaQuery.build({
+      filters: [
+        { field: 'Name', operator: 'contains', value: context.propsValue.name },
+        { field: 'IsActive', value: context.propsValue.isActive },
+        { field: 'IsPerUser', value: context.propsValue.isPerUser },
+        ...outsetaQuery.dateRangeFilters({
+          field: 'Created',
+          range: context.propsValue.createdRange,
+        }),
+      ],
+      orderBy: context.propsValue.sortBy,
+      orderDirection: context.propsValue.direction,
+      limit: context.propsValue.limit,
+      page: context.propsValue.page,
+    });
 
-    return client.get<unknown>(
-      `/api/v1/billing/plans?limit=${limit}&offset=${offset}`
+    const result = await client.getPage<OutsetaPlan>(
+      `/api/v1/billing/plans?${query}&fields=*,PlanFamily.Uid,PlanFamily.Name`
     );
+
+    return {
+      items: result.items.map(outsetaMappers.plan),
+      ...outsetaQuery.pageInfo(result),
+    };
   },
 });

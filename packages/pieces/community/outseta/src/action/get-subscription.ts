@@ -1,42 +1,49 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import {
+  createAction,
+  isNil,
+  Property,
+  tryCatch,
+} from '@activepieces/pieces-framework';
 import { outsetaAuth } from '../auth';
 import { OutsetaClient } from '../common/client';
+import { outsetaErrors } from '../common/errors';
+import { outsetaLookup } from '../common/lookup';
+import { outsetaMappers } from '../common/mappers';
+import { OutsetaAccount, OutsetaSubscription } from '../common/outseta-types';
 
 export const getSubscriptionAction = createAction({
   name: 'get_subscription',
   auth: outsetaAuth,
   displayName: 'Retrieve Subscription',
   description:
-    "Retrieve a subscription by its UID, or fetch the current subscription of an account by Account UID. Returns plan, billing terms, renewal dates, discount, and add-on details.",
+    "Retrieve a subscription by its UID, or an account's current subscription by account UID. Returns plan, billing term, quantity, rate, all four dates, discount and add-ons. Returns found=false when nothing matches.",
   audience: 'both',
+  classification: 'READ',
   aiMetadata: {
     description:
-      'Fetches a subscription by its UID, or an account\'s current subscription by account UID, returning plan, billing term, renewal dates, discount, and add-ons. Use to read subscription/billing state; for account-level fields use Retrieve Account. Read-only and idempotent.',
+      "Fetches a subscription by its UID, or an account's current subscription by account UID, returning plan, billing term, quantity, rate, discount, add-ons and the four distinct dates: start, end, expiration and renewal. Outseta has no subscription status field — use the dates to decide whether it is active. Fill exactly one lookup field. Returns found=false instead of failing. Read-only and idempotent.",
     idempotent: true,
   },
+  propertyGroups: [
+    {
+      key: 'lookup',
+      display: 'tabs',
+      label: 'Find subscription by',
+      description: 'Fill one of the two — whichever tab you leave filled is the one used.',
+      props: ['subscriptionUid', 'accountUid'],
+    },
+  ],
   props: {
-    lookupBy: Property.StaticDropdown({
-      displayName: 'Lookup by',
-      description: 'How to find the subscription to retrieve.',
-      required: true,
-      defaultValue: 'subscriptionUid',
-      options: {
-        disabled: false,
-        options: [
-          { label: 'Subscription UID', value: 'subscriptionUid' },
-          { label: "Account UID (current subscription)", value: 'accountUid' },
-        ],
-      },
-    }),
     subscriptionUid: Property.ShortText({
       displayName: 'Subscription UID',
       required: false,
-      description: 'Used when "Lookup by" is set to Subscription UID.',
+      placeholder: 'dQG7vBzQ',
     }),
     accountUid: Property.ShortText({
       displayName: 'Account UID',
+      description: "Resolved to that account's current subscription.",
       required: false,
-      description: 'Used when "Lookup by" is set to Account UID. Resolves to the account\'s current subscription.',
+      placeholder: '1QpnM0nW',
     }),
   },
   async run(context) {
@@ -46,57 +53,77 @@ export const getSubscriptionAction = createAction({
       apiSecret: context.auth.props.apiSecret,
     });
 
-    let subscriptionUid = context.propsValue.subscriptionUid;
+    const lookup = outsetaLookup.single([
+      {
+        key: 'subscriptionUid',
+        label: 'Subscription UID',
+        value: context.propsValue.subscriptionUid,
+      },
+      { key: 'accountUid', label: 'Account UID', value: context.propsValue.accountUid },
+    ]);
 
-    if (context.propsValue.lookupBy === 'accountUid') {
-      const accountUid = context.propsValue.accountUid;
-      if (!accountUid) {
-        throw new Error('Account UID is required when looking up by Account UID.');
-      }
-      const account = await client.get<any>(
-        `/api/v1/crm/accounts/${accountUid}?fields=Uid,CurrentSubscription.Uid`
-      );
-      subscriptionUid = account?.CurrentSubscription?.Uid ?? null;
-      if (!subscriptionUid) {
-        throw new Error(`Account ${accountUid} does not have an active subscription.`);
-      }
+    const subscriptionUid =
+      lookup.key === 'subscriptionUid'
+        ? lookup.value
+        : await currentSubscriptionUid({ client, accountUid: lookup.value });
+
+    const subscription = isNil(subscriptionUid)
+      ? null
+      : await subscriptionByUid({ client, uid: subscriptionUid });
+
+    if (isNil(subscription)) {
+      return { found: false, ...outsetaMappers.subscription({}) };
     }
 
-    if (!subscriptionUid) {
-      throw new Error('Subscription UID is required.');
-    }
-
-    const sub = await client.get<any>(
-      `/api/v1/billing/subscriptions/${subscriptionUid}?fields=*,Plan.*,Plan.PlanFamily.*,Account.*,SubscriptionAddOns.*,SubscriptionAddOns.AddOn.*`
-    );
-
-    const rawAddOns = sub?.SubscriptionAddOns;
-    const addOns: any[] = Array.isArray(rawAddOns)
-      ? rawAddOns
-      : (rawAddOns?.items ?? rawAddOns?.Items ?? []);
-
-    return {
-      uid: sub.Uid ?? null,
-      account_uid: sub.Account?.Uid ?? null,
-      account_name: sub.Account?.Name ?? null,
-      subscription_status: sub.SubscriptionStatus ?? null,
-      plan_uid: sub.Plan?.Uid ?? null,
-      plan_name: sub.Plan?.Name ?? null,
-      plan_family_name: sub.Plan?.PlanFamily?.Name ?? null,
-      billing_renewal_term: sub.BillingRenewalTerm ?? null,
-      rate: sub.Rate ?? null,
-      discount_code: sub.DiscountCode ?? null,
-      start_date: sub.StartDate ?? null,
-      end_date: sub.EndDate ?? null,
-      renewal_date: sub.RenewalDate ?? null,
-      validity_date: sub.RenewalDate ?? sub.EndDate ?? null,
-      created: sub.Created ?? null,
-      updated: sub.Updated ?? null,
-      add_ons: addOns.map((a: any) => ({
-        uid: a.AddOn?.Uid ?? a.Uid ?? null,
-        name: a.AddOn?.Name ?? null,
-        quantity: a.Quantity ?? null,
-      })),
-    };
+    return { found: true, ...outsetaMappers.subscription(subscription) };
   },
 });
+
+async function subscriptionByUid({
+  client,
+  uid,
+}: {
+  client: OutsetaClient;
+  uid: string;
+}): Promise<OutsetaSubscription | null> {
+  const { data, error } = await tryCatch(() =>
+    client.get<OutsetaSubscription>(
+      `/api/v1/billing/subscriptions/${uid}?${SUBSCRIPTION_FIELDS}`
+    )
+  );
+
+  if (error) {
+    if (outsetaErrors.isNotFound(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  return data;
+}
+
+async function currentSubscriptionUid({
+  client,
+  accountUid,
+}: {
+  client: OutsetaClient;
+  accountUid: string;
+}): Promise<string | null> {
+  const { data, error } = await tryCatch(() =>
+    client.get<OutsetaAccount>(
+      `/api/v1/crm/accounts/${accountUid}?fields=Uid,CurrentSubscription.Uid`
+    )
+  );
+
+  if (error) {
+    if (outsetaErrors.isNotFound(error)) {
+      return null;
+    }
+    throw error;
+  }
+
+  return data.CurrentSubscription?.Uid ?? null;
+}
+
+const SUBSCRIPTION_FIELDS =
+  'fields=*,Plan.Uid,Plan.Name,Plan.PlanFamily.Name,Account.Uid,Account.Name,LatestInvoice.Uid,LatestInvoice.Number,SubscriptionAddOns.Quantity,SubscriptionAddOns.Rate,SubscriptionAddOns.AddOn.Uid,SubscriptionAddOns.AddOn.Name';
