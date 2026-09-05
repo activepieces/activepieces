@@ -2793,5 +2793,16 @@
   "API style": "API style",
   "Chat completions": "Chat completions",
   "Responses": "Responses",
-  "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.": "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock."
+  "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.": "Chat completions suits most gateways. Pick Responses for endpoints that only serve the newer OpenAI Responses API, such as Amazon Bedrock.",
+  "Activity": "Activity",
+  "When": "When",
+  "Ran": "Ran",
+  "Unknown action": "Unknown action",
+  "Nothing has run yet": "Nothing has run yet",
+  "A client can be connected and still never run anything. Check Connections to confirm it signed in.": "A client can be connected and still never run anything. Check Connections to confirm it signed in.",
+  "See who is connected": "See who is connected",
+  "No runs match these filters": "No runs match these filters",
+  "The input and output were not kept for this call.": "The input and output were not kept for this call.",
+  "The input and output are no longer available.": "The input and output are no longer available.",
+  "Too large to keep in full — some of it was dropped.": "Too large to keep in full — some of it was dropped."
 }
