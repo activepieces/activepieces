@@ -5,7 +5,10 @@ import {
 import {
   optionalTimeFormats,
   timeFormat,
-  timeFormatDescription,
+  outputFormatDescription,
+  timeInputDescription,
+  timeInputPlaceholder,
+  useCurrentTimeDescription,
   timeZoneOptions,
   getCorrectedFormat,
   apDayjs,
@@ -32,7 +35,7 @@ export const nextDayofYear = createAction({
   props: {
     month: Property.StaticDropdown({
       displayName: 'Month',
-      description: 'The month that you would like to get the date and time of.',
+      description: 'Month of the date to find.',
       options: {
         options: [
           { label: 'January', value: 1 },
@@ -54,27 +57,17 @@ export const nextDayofYear = createAction({
     day: Property.Number({
       displayName: 'Day of Month',
       description:
-        'The day of the month that you would like to get the date and time of.',
+        'Rolls into the next month if the month is shorter.',
       required: true,
       defaultValue: 1,
-    }),
-    time: Property.ShortText({
-      displayName: '24h Time',
-      description:
-        'The time that you would like to get the date and time of. This must be in 24h format.',
-      required: false,
-      defaultValue: '00:00',
-    }),
-    currentTime: Property.Checkbox({
-      displayName: 'Use Current Time',
-      description:
-        'If checked, the current time will be used instead of the time specified above.',
-      required: false,
-      defaultValue: false,
+      display: 'stepper',
+      min: 1,
+      max: 31,
+      step: 1,
     }),
     timeFormat: Property.StaticDropdown({
-      displayName: 'To Time Format',
-      description: timeFormatDescription,
+      displayName: 'Output Format',
+      description: outputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -83,11 +76,27 @@ export const nextDayofYear = createAction({
     }),
     timeZone: Property.StaticDropdown<string>({
       displayName: 'Time Zone',
+      description:
+        'Time zone used to work out the date and to report the result.',
       options: {
         options: timeZoneOptions,
       },
       required: true,
       defaultValue: 'UTC',
+    }),
+    time: Property.ShortText({
+      displayName: 'Time',
+      description: timeInputDescription,
+      placeholder: timeInputPlaceholder,
+      required: false,
+      defaultValue: '00:00',
+    }),
+    currentTime: Property.Checkbox({
+      displayName: 'Use Current Time',
+      description: useCurrentTimeDescription,
+      required: false,
+      defaultValue: false,
+      advanced: true,
     }),
   },
   outputSchema: nextDayOfYearActionOutputSchema,
