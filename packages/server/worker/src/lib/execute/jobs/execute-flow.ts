@@ -179,6 +179,26 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         ...spreadIfDefined('httpRequestId', data.httpRequestId),
     })
 
+    // Every call to reportFlowStatus reports a terminal FAILURE (FAILED / INTERNAL_ERROR / TIMEOUT /
+    // MEMORY_LIMIT_EXCEEDED / LOG_SIZE_EXCEEDED). Emit one structured error log so failed runs are
+    // observable in log-based monitoring: the per-job wide event otherwise records FIRE_AND_FORGET
+    // business failures as outcome:'success' (worker.ts), leaving them invisible at anything but debug.
+    // The status/environment/step sit under the canonical flowRun.*/step.* paths (not `outcome`, which
+    // worker.ts overwrites back to 'success' after this handler returns).
+    ctx.log.error({
+        flowRun: {
+            id: data.runId,
+            status,
+            environment: data.environment,
+        },
+        flow: { id: data.flowId },
+        flowVersion: { id: data.flowVersionId },
+        project: { id: data.projectId },
+        platform: { id: data.platformId },
+        step: { name: failedStep?.name },
+        errorMessage: internalError?.message,
+    }, 'Flow run terminal failure')
+
     if (status === FlowRunStatus.INTERNAL_ERROR && isDedicatedWorker()) {
         onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
