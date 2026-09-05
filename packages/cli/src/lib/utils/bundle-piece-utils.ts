@@ -47,6 +47,7 @@ async function bundlePiece({ piecePath, distPath, repoRoot }: BundlePieceParams)
     }
 
     assertDirnameUsageDeclared({ piecePath, metafile: pass.result.metafile, manifest })
+    assertZodDeclared({ piecePath, metafile: pass.result.metafile, manifest })
     const forked = await bundleForkedEntries({ piecePath, distPath, repoRoot, manifest, inlineAll, inlineList, excludeList })
     for (const dep of forked.externalized) {
         pass.externalized.add(dep)
@@ -89,6 +90,7 @@ async function bundleForkedEntries({ piecePath, distPath, repoRoot, manifest, in
         if (issues.length > 0) {
             throw new Error(`[bundlePiece] ${piecePath} forked entry "${entry}" failed the safety gate:\n  - ${issues.join('\n  - ')}`)
         }
+        assertZodDeclared({ piecePath: `${piecePath} (${entry})`, metafile: pass.result.metafile, manifest })
         enforceSizeGate({ piecePath: `${piecePath} (${entry})`, bundleBytes: statSync(outfile).size })
         files.push(outRel)
         for (const dep of pass.externalized) {
@@ -96,6 +98,36 @@ async function bundleForkedEntries({ piecePath, distPath, repoRoot, manifest, in
         }
     }
     return { files, externalized }
+}
+
+function assertZodDeclared({ piecePath, metafile, manifest }: ZodGateParams): void {
+    if (manifest.dependencies?.['zod'] !== undefined) {
+        return
+    }
+    const importers = firstPartyZodImporters(metafile)
+    if (importers.length === 0) {
+        return
+    }
+    throw new Error(
+        `[bundlePiece] ${piecePath} bundles zod through first-party code that does not declare it:\n  - ${importers.join('\n  - ')}\n`
+        + 'zod builds its schemas at module load, so a bundled copy costs every piece process heap and start-up time even when '
+        + 'nothing validates. Drop the import (it is usually a barrel re-exporting a module that calls z.object at the top level), '
+        + 'or declare zod in the piece package.json if the piece really validates with it.',
+    )
+}
+
+function firstPartyZodImporters(metafile: esbuild.Metafile): string[] {
+    const bundled = Object.values(metafile.outputs).find((output) => output.entryPoint !== undefined)
+    if (bundled === undefined) {
+        return []
+    }
+    const emitted = Object.keys(bundled.inputs)
+    if (!emitted.some((input) => pkgOfInput(input) === 'zod')) {
+        return []
+    }
+    return emitted
+        .filter((input) => !input.includes('node_modules/'))
+        .filter((input) => (metafile.inputs[input]?.imports ?? []).some((imported) => pkgOfInput(imported.path) === 'zod'))
 }
 
 function assertDirnameUsageDeclared({ piecePath, metafile, manifest }: DirnameGateParams): void {
@@ -452,6 +484,12 @@ type ForkedEntriesParams = {
 type ForkedEntriesResult = {
     files: string[]
     externalized: Set<string>
+}
+
+type ZodGateParams = {
+    piecePath: string
+    metafile: esbuild.Metafile
+    manifest: PieceManifest
 }
 
 type DirnameGateParams = {

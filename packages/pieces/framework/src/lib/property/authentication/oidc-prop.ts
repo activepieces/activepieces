@@ -1,4 +1,3 @@
-import * as z from "zod/mini";
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { LongTextProperty, ShortTextProperty } from '../input/text-property';
@@ -9,17 +8,6 @@ import { StaticPropsValue } from '..';
 import { SecretTextProperty } from './secret-text-property';
 import { BasePieceAuthSchema } from './common';
 import { MarkDownProperty } from '../input/markdown-property';
-
-const OIDCAuthProps = z.record(z.string(), z.union([
-  ShortTextProperty,
-  LongTextProperty,
-  SecretTextProperty,
-  NumberProperty,
-  CheckboxProperty,
-  StaticDropdownProperty,
-  StaticMultiSelectDropdownProperty,
-  MarkDownProperty,
-]));
 
 export type OIDCAuthProps = Record<
   string,
@@ -32,12 +20,6 @@ export type OIDCAuthProps = Record<
   | MarkDownProperty
   | StaticMultiSelectDropdownProperty<unknown, boolean>
 >;
-
-export const OIDCProperty = z.object({
-  ...BasePieceAuthSchema.shape,
-  props: OIDCAuthProps,
-  ...TPropertyValue(z.unknown(), PropertyType.OIDC).shape,
-})
 
 export type OIDCProperty<
   T extends OIDCAuthProps

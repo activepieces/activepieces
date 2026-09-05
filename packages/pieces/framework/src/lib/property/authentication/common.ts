@@ -1,11 +1,4 @@
-import * as z from "zod/mini";
 import { AuthValidationServerContext, ServerContext } from '../../context';
-
-export const BasePieceAuthSchema = z.object({
-  displayName: z.string(),
-  description: z.optional(z.string()),
-  hasConnectionIdentifier: z.optional(z.boolean()),
-});
 
 export type BasePieceAuthSchema<AuthValueSchema> = {
   displayName: string;

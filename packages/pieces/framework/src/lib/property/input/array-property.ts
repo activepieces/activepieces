@@ -1,4 +1,3 @@
-import * as z from "zod/mini";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
 import { LongTextProperty, ShortTextProperty } from "./text-property";
@@ -10,24 +9,6 @@ import { FileProperty } from "./file-property";
 import { JsonProperty } from './json-property';
 import { ColorProperty } from "./color-property";
 import { DateTimeProperty } from './date-time-property';
-
-export const ArraySubProps = z.record(z.string(), z.union([
-    ShortTextProperty,
-    LongTextProperty,
-    StaticDropdownProperty,
-    MultiSelectDropdownProperty,
-    StaticMultiSelectDropdownProperty,
-    CheckboxProperty,
-    NumberProperty,
-    FileProperty,
-    DateTimeProperty,
-]))
-
-export const ArrayProperty = z.object({
-    ...BasePropertySchema.shape,
-    properties: ArraySubProps,
-    ...TPropertyValue(z.array(z.unknown()), PropertyType.ARRAY).shape,
-})
 
 export type ArraySubProps<R extends boolean> = Record<
     string,

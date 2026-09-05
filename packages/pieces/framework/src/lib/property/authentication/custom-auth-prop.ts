@@ -1,4 +1,3 @@
-import * as z from "zod/mini";
 import { TPropertyValue } from '../input/common';
 import { PropertyType } from '../input/property-type';
 import { LongTextProperty, ShortTextProperty } from '../input/text-property';
@@ -11,14 +10,6 @@ import { BasePieceAuthSchema } from './common';
 import { MarkDownProperty } from '../input/markdown-property';
 import { ServerContext } from '../../context';
 
-const CustomAuthProps = z.record(z.string(), z.union([
-  ShortTextProperty,
-  LongTextProperty,
-  NumberProperty,
-  CheckboxProperty,
-  StaticDropdownProperty,
-]));
-
 export type CustomAuthProps = Record<
   string,
   | ShortTextProperty<boolean>
@@ -30,12 +21,6 @@ export type CustomAuthProps = Record<
   | MarkDownProperty
   | StaticMultiSelectDropdownProperty<unknown, boolean>
 >;
-
-export const CustomAuthProperty = z.object({
-  ...BasePieceAuthSchema.shape,
-  props: CustomAuthProps,
-  ...TPropertyValue(z.unknown(), PropertyType.CUSTOM_AUTH).shape,
-})
 
 export type CustomAuthRefresh<T extends CustomAuthProps> = {
   generate: (params: { auth: StaticPropsValue<T>; server: Omit<ServerContext, 'token'> }) => Promise<{
