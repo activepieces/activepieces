@@ -1,6 +1,7 @@
 import {
   DynamicPropsValue,
   DropdownState,
+  MarkdownVariant,
   Property,
 } from '@activepieces/pieces-framework';
 import { tryCatch, unique } from '@activepieces/pieces-framework';
@@ -51,11 +52,9 @@ export function formatFieldValues(
 
     switch (fieldType) {
       case BaserowFieldType.LINK_TO_TABLE:
-        if (Array.isArray(value) && value.length > 0) {
-          result[key] = value.map((id: string) => parseInt(id, 10));
-        } else {
-          result[key] = [];
-        }
+        result[key] = Array.isArray(value)
+          ? value.map(toLinkedRowReference)
+          : [];
         break;
       case BaserowFieldType.MULTIPLE_COLLABORATORS:
         if (Array.isArray(value) && value.length > 0) {
@@ -142,6 +141,30 @@ export async function ensureSelectOptionsExist({
   }
 }
 
+function toLinkedRowReference(value: unknown): unknown {
+  if (typeof value === 'number') return value;
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return value;
+  const asNumber = Number(trimmed);
+  return Number.isInteger(asNumber) ? asNumber : trimmed;
+}
+
+function buildRowLabel({
+  row,
+  primaryFieldName,
+}: {
+  row: { id: number } & Record<string, unknown>;
+  primaryFieldName: string | undefined;
+}): string {
+  const primaryValue = primaryFieldName ? row[primaryFieldName] : undefined;
+  if (typeof primaryValue === 'number') return `#${row.id} ${primaryValue}`;
+  if (typeof primaryValue === 'string' && primaryValue.trim().length > 0) {
+    return `#${row.id} ${primaryValue.trim()}`;
+  }
+  return `Row #${row.id}`;
+}
+
 function collectRequestedSelectValues(value: unknown): string[] {
   if (Array.isArray(value)) {
     return value.filter((v): v is string => typeof v === 'string' && v.length > 0);
@@ -190,17 +213,17 @@ export const baserowCommon = {
           };
         }
         const client = await makeClient(auth);
-        const response = await client.listRows(table_id, undefined, 200);
+        const [tableFields, response] = await Promise.all([
+          client.listTableFields(table_id),
+          client.listRows(table_id, undefined, 200),
+        ]);
+        const primaryFieldName = tableFields.find((field) => field.primary)?.name;
         return {
           disabled: false,
-          options: response.results.map((row) => {
-            const primaryValue = Object.entries(row)
-              .filter(([k]) => k !== 'id' && k !== 'order')
-              .map(([, v]) => (typeof v === 'string' && v ? v : null))
-              .find(Boolean);
-            const label = primaryValue ? `#${row.id} ${primaryValue}` : `Row #${row.id}`;
-            return { label, value: row.id };
-          }),
+          options: response.results.map((row) => ({
+            label: buildRowLabel({ row, primaryFieldName }),
+            value: row.id,
+          })),
         };
       },
     }),
@@ -213,127 +236,136 @@ export const baserowCommon = {
       props: async ({ auth, table_id }) => {
         if (!auth || typeof table_id !== 'number') return {};
 
-        const fields: DynamicPropsValue = {};
-        try {
+        const schema = await tryCatch(async () => {
           const client = await makeClient(auth);
-          const tableFields = await client.listTableFields(table_id);
-          for (const field of tableFields) {
-            if (
-              !field.read_only &&
-              ![BaserowFieldType.FILE].includes(field.type)
-            ) {
-              switch (field.type) {
-                case BaserowFieldType.BOOLEAN:
-                  fields[field.name] = Property.Checkbox({
-                    displayName: field.name,
-                    required: false,
-                  });
-                  break;
-                case BaserowFieldType.RATING:
-                  fields[field.name] = Property.Number({
-                    displayName: field.name,
-                    required: false,
-                    description: `Enter valid value between 1 and ${field.max_value}.`,
-                  });
-                  break;
-                case BaserowFieldType.DATE:
-                  fields[field.name] = Property.DateTime({
-                    displayName: field.name,
-                    required: false,
-                    description: `Enter date in ${field.date_format} format ${
-                      field.date_include_time
-                        ? 'and time in ' + field.date_time_format + ' hour format'
-                        : ''
-                    }.`,
-                  });
-                  break;
-                case BaserowFieldType.DURATION:
-                  fields[field.name] = Property.Number({
-                    displayName: field.name,
-                    required: false,
-                  });
-                  break;
-                case BaserowFieldType.LINK_TO_TABLE:
-                  fields[field.name] = Property.Array({
-                    displayName: field.name,
-                    required: false,
-                    description: `Enter row ids from table(ID: ${field.link_row_table_id}) that you want to link to.`,
-                  });
-                  break;
-                case BaserowFieldType.LONG_TEXT:
-                  fields[field.name] = Property.LongText({
-                    displayName: field.name,
-                    required: false,
-                  });
-                  break;
-                case BaserowFieldType.MULTIPLE_COLLABORATORS:
-                  fields[field.name] = Property.Array({
-                    displayName: field.name,
-                    required: false,
-                    description: 'Enter user ids that you want to link to.',
-                  });
-                  break;
-                case BaserowFieldType.SINGLE_SELECT:
-                  fields[field.name] = Property.StaticDropdown({
-                    displayName: field.name,
-                    required: false,
-                    options: {
-                      disabled: false,
-                      options: field.select_options.map((option) => {
-                        return {
-                          label: option.value,
-                          value: option.value,
-                        };
-                      }),
-                    },
-                  });
-                  break;
-                case BaserowFieldType.MULTI_SELECT:
-                  fields[field.name] = Property.StaticMultiSelectDropdown({
-                    displayName: field.name,
-                    required: false,
-                    options: {
-                      disabled: false,
-                      options: field.select_options.map((option) => {
-                        return {
-                          label: option.value,
-                          value: option.value,
-                        };
-                      }),
-                    },
-                  });
-                  break;
-                case BaserowFieldType.NUMBER:
-                  fields[field.name] = Property.Number({
-                    displayName: field.name,
-                    required: false,
-                  });
-                  break;
-                case BaserowFieldType.EMAIL:
-                case BaserowFieldType.PHONE_NUMBER:
-                  fields[field.name] = Property.ShortText({
-                    displayName: field.name,
-                    required: false,
-                  });
-                  break;
-                case BaserowFieldType.TEXT:
-                  fields[field.name] = Property.ShortText({
-                    displayName: field.name,
-                    required: false,
-                    defaultValue: field.text_default,
-                  });
-                  break;
-                case BaserowFieldType.URL:
-                  fields[field.name] = Property.ShortText({
-                    displayName: field.name,
-                    required: false,
-                  });
-                  break;
-              }
+          return await client.listTableFields(table_id);
+        });
+        if (schema.error) {
+          return {
+            table_fields_error: Property.MarkDown({
+              value: `**Could not load this table's fields** — ${schema.error.message}
+
+Check that your Baserow connection still has access to this table, then reselect it above.`,
+              variant: MarkdownVariant.WARNING,
+            }),
+          };
+        }
+
+        const fields: DynamicPropsValue = {};
+        for (const field of schema.data) {
+          if (
+            !field.read_only &&
+            ![BaserowFieldType.FILE].includes(field.type)
+          ) {
+            switch (field.type) {
+              case BaserowFieldType.BOOLEAN:
+                fields[field.name] = Property.Checkbox({
+                  displayName: field.name,
+                  required: false,
+                });
+                break;
+              case BaserowFieldType.RATING:
+                fields[field.name] = Property.Number({
+                  displayName: field.name,
+                  required: false,
+                  description: `Enter valid value between 1 and ${field.max_value}.`,
+                });
+                break;
+              case BaserowFieldType.DATE:
+                fields[field.name] = Property.DateTime({
+                  displayName: field.name,
+                  required: false,
+                  description: `Enter date in ${field.date_format} format ${
+                    field.date_include_time
+                      ? 'and time in ' + field.date_time_format + ' hour format'
+                      : ''
+                  }.`,
+                });
+                break;
+              case BaserowFieldType.DURATION:
+                fields[field.name] = Property.Number({
+                  displayName: field.name,
+                  required: false,
+                });
+                break;
+              case BaserowFieldType.LINK_TO_TABLE:
+                fields[field.name] = Property.Array({
+                  displayName: field.name,
+                  required: false,
+                  description: `Enter row ids from table(ID: ${field.link_row_table_id}) that you want to link to.`,
+                });
+                break;
+              case BaserowFieldType.LONG_TEXT:
+                fields[field.name] = Property.LongText({
+                  displayName: field.name,
+                  required: false,
+                });
+                break;
+              case BaserowFieldType.MULTIPLE_COLLABORATORS:
+                fields[field.name] = Property.Array({
+                  displayName: field.name,
+                  required: false,
+                  description: 'Enter user ids that you want to link to.',
+                });
+                break;
+              case BaserowFieldType.SINGLE_SELECT:
+                fields[field.name] = Property.StaticDropdown({
+                  displayName: field.name,
+                  required: false,
+                  options: {
+                    disabled: false,
+                    options: field.select_options.map((option) => {
+                      return {
+                        label: option.value,
+                        value: option.value,
+                      };
+                    }),
+                  },
+                });
+                break;
+              case BaserowFieldType.MULTI_SELECT:
+                fields[field.name] = Property.StaticMultiSelectDropdown({
+                  displayName: field.name,
+                  required: false,
+                  options: {
+                    disabled: false,
+                    options: field.select_options.map((option) => {
+                      return {
+                        label: option.value,
+                        value: option.value,
+                      };
+                    }),
+                  },
+                });
+                break;
+              case BaserowFieldType.NUMBER:
+                fields[field.name] = Property.Number({
+                  displayName: field.name,
+                  required: false,
+                });
+                break;
+              case BaserowFieldType.EMAIL:
+              case BaserowFieldType.PHONE_NUMBER:
+                fields[field.name] = Property.ShortText({
+                  displayName: field.name,
+                  required: false,
+                });
+                break;
+              case BaserowFieldType.TEXT:
+                fields[field.name] = Property.ShortText({
+                  displayName: field.name,
+                  required: false,
+                  defaultValue: field.text_default,
+                });
+                break;
+              case BaserowFieldType.URL:
+                fields[field.name] = Property.ShortText({
+                  displayName: field.name,
+                  required: false,
+                });
+                break;
             }
           }
-        } catch (error) {
-          console.log('Invalid Baserow Table ID.');
         }
         return fields;
       },

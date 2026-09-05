@@ -379,6 +379,7 @@ export const selectGenericFormComponentForProperty = ({
           refreshers={property.refreshers}
           propertyName={propertyName}
           disabled={disabled}
+          markdownVariables={markdownVariables}
           pieceName={dynamicPropsInfo.pieceName}
           pieceVersion={dynamicPropsInfo.pieceVersion}
           actionOrTriggerName={dynamicPropsInfo.actionOrTriggerName}
