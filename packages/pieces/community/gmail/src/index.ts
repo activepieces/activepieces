@@ -31,6 +31,14 @@ import { gmailGetLabelAction } from './lib/actions/get-label-action';
 import { gmailGetProfileAction } from './lib/actions/get-profile-action';
 import { gmailListHistoryAction } from './lib/actions/list-history-action';
 import { gmailStopWatchAction } from './lib/actions/stop-watch-action';
+import { gmailAddLabelToEmailAction } from './lib/actions/add-label-to-email-action';
+import { gmailRemoveLabelFromEmailAction } from './lib/actions/remove-label-from-email-action';
+import { gmailRemoveLabelFromThreadAction } from './lib/actions/remove-label-from-thread-action';
+import { gmailCreateLabelAction } from './lib/actions/create-label-action';
+import { gmailArchiveEmailAction } from './lib/actions/archive-email-action';
+import { gmailDeleteEmailAction } from './lib/actions/delete-email-action';
+import { gmailNewConversationTrigger } from './lib/triggers/new-conversation';
+import { gmailNewStarredEmailTrigger } from './lib/triggers/new-starred-email';
 
 export {
   gmailAuth,
@@ -72,6 +80,12 @@ export const gmail = createPiece({
     gmailGetProfileAction,
     gmailListHistoryAction,
     gmailStopWatchAction,
+    gmailAddLabelToEmailAction,
+    gmailRemoveLabelFromEmailAction,
+    gmailRemoveLabelFromThreadAction,
+    gmailCreateLabelAction,
+    gmailArchiveEmailAction,
+    gmailDeleteEmailAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -102,6 +116,8 @@ export const gmail = createPiece({
     gmailNewLabeledEmailTrigger,
     gmailNewAttachmentTrigger,
     gmailNewLabelTrigger,
+    gmailNewConversationTrigger,
+    gmailNewStarredEmailTrigger,
   ],
   auth: gmailAuth,
 });

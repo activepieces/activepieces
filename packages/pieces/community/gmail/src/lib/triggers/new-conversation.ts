@@ -138,6 +138,10 @@ export const gmailNewConversationTrigger = createTrigger({
   classification: 'READ',
   displayName: 'New Conversation',
   description: 'Triggers when a new email conversation (thread) begins',
+  aiMetadata: {
+    description:
+      'Fires once when a brand-new email thread starts (an incoming message that is not a reply to an existing conversation). Each payload carries the thread summary and the parsed first message; replies within existing threads never fire it.',
+  },
   props: {
     from: {
       ...GmailProps.from,

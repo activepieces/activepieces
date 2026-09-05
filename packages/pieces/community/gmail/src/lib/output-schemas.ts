@@ -1059,3 +1059,59 @@ export const gmailListHistoryActionOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const gmailAddLabelToEmailActionOutputSchema: OutputSchema = {
+  fields: historyRecordMessageFields,
+};
+
+export const gmailRemoveLabelFromEmailActionOutputSchema: OutputSchema = {
+  fields: historyRecordMessageFields,
+};
+
+export const gmailArchiveEmailActionOutputSchema: OutputSchema = {
+  fields: historyRecordMessageFields,
+};
+
+export const gmailDeleteEmailActionOutputSchema: OutputSchema = {
+  fields: historyRecordMessageFields,
+};
+
+export const gmailRemoveLabelFromThreadActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Thread ID' },
+    { key: 'historyId', label: 'History ID' },
+    {
+      key: 'messages',
+      label: 'Messages',
+      labelKey: 'id',
+      listItems: historyRecordMessageFields,
+    },
+  ],
+};
+
+export const gmailCreateLabelActionOutputSchema: OutputSchema = {
+  fields: gmailLabelBaseFields,
+};
+
+export const newStarredEmailTriggerOutputSchema: OutputSchema = {
+  fields: newLabeledEmailTriggerOutputSchema.fields.map(
+    (field): OutputSchema['fields'][number] => {
+      if (field.key === 'addedAt') {
+        return {
+          key: 'starredAt',
+          label: 'Starred At',
+          value: 'data.starInfo.starredAt',
+          format: 'datetime',
+        };
+      }
+      if (field.key === 'id') {
+        return {
+          key: 'id',
+          label: 'Message ID',
+          value: 'data.starInfo.messageId',
+        };
+      }
+      return field;
+    }
+  ),
+};
