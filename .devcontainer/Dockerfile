@@ -35,4 +35,4 @@ RUN npm i -g bun@1.4.0 cross-env@7.0.3 esbuild@0.25.0 @anthropic-ai/claude-code
 
 
 # install isolated-vm in a parent directory to avoid linking the package in every sandbox
-RUN cd /usr/src && bun i isolated-vm@6.0.2
+RUN cd /usr/src && bun i isolated-vm@6.2.0

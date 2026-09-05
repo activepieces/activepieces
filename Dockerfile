@@ -53,7 +53,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    cd /usr/src && bun install isolated-vm@6.0.2
+    cd /usr/src && bun install isolated-vm@6.2.0
 
 ### STAGE 1: Build ###
 FROM base AS build
