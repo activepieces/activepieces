@@ -420,6 +420,9 @@
       "@activepieces/piece-docsbot": [
         "packages/pieces/community/docsbot/src/index.ts"
       ],
+      "@activepieces/piece-docuseal": [
+        "packages/pieces/community/docuseal/src/index.ts"
+      ],
       "@activepieces/piece-docusign": [
         "packages/pieces/community/docusign/src/index.ts"
       ],
