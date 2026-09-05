@@ -2,8 +2,9 @@ import { ActivepiecesError, apId, ErrorCode, isNil, spreadIfDefined } from '@act
 import { KnowledgeBaseFile } from '@activepieces/shared'
 import { parse as parseCsv } from 'csv-parse/sync'
 import { FastifyBaseLogger } from 'fastify'
-import { IsNull, Not } from 'typeorm'
+import { In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { transaction } from '../core/db/transaction'
 import { databaseConnection } from '../database/database-connection'
 import { fileService } from '../file/file.service'
 import { KnowledgeBaseChunkEntity } from './knowledge-base-chunk.entity'
@@ -12,6 +13,7 @@ import { KnowledgeBaseFileEntity } from './knowledge-base-file.entity'
 const kbFileRepo = repoFactory(KnowledgeBaseFileEntity)
 const kbChunkRepo = repoFactory(KnowledgeBaseChunkEntity)
 
+const INSERT_BATCH_SIZE = 100
 const CHUNK_SIZE_CHARS = 2000
 const CHUNK_OVERLAP_CHARS = 200
 
@@ -222,39 +224,94 @@ export const knowledgeBaseService = (log: FastifyBaseLogger) => ({
 
     async storeChunks(params: StoreChunksParams): Promise<void> {
         const { projectId, knowledgeBaseFileId, chunks } = params
-        if (chunks.length === 0) return
+        const isFullRestore = chunks.every((chunk) => isNil(chunk.id))
 
-        const newChunks = chunks.filter((c) => isNil(c.id))
-        const existingChunks = chunks.filter((c) => !isNil(c.id))
-
-        if (newChunks.length > 0) {
-            const entities = newChunks.map((chunk) => ({
-                id: apId(),
-                projectId,
-                knowledgeBaseFileId,
-                content: chunk.content ?? '',
-                chunkIndex: chunk.chunkIndex ?? 0,
-                ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                metadata: chunk.metadata ?? {},
-            }))
-
-            const BATCH_SIZE = 100
-            for (let i = 0; i < entities.length; i += BATCH_SIZE) {
-                await kbChunkRepo().insert(entities.slice(i, i + BATCH_SIZE))
+        await transaction(async (entityManager) => {
+            const owner = await entityManager.getRepository(KnowledgeBaseFileEntity)
+                .createQueryBuilder('file')
+                .setLock('pessimistic_write')
+                .where('file.id = :knowledgeBaseFileId AND file."projectId" = :projectId', { knowledgeBaseFileId, projectId })
+                .getOne()
+            if (isNil(owner)) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: { entityType: 'KnowledgeBaseFile', entityId: knowledgeBaseFileId },
+                })
             }
-        }
+            const repo = entityManager.getRepository(KnowledgeBaseChunkEntity)
+            const stored = await repo.find({ where: { projectId, knowledgeBaseFileId }, select: ['id', 'chunkIndex'] })
+            const storedById = new Map(stored.map((row) => [row.id, row]))
+            const idByIndex = new Map(stored.map((row) => [row.chunkIndex, row.id]))
 
-        for (const chunk of existingChunks) {
-            await kbChunkRepo().update(
-                { id: chunk.id, projectId },
-                {
+            const writeByIndex = new Map<number, { id?: string, values: Record<string, unknown> }>()
+            const submittedIds = new Set<string>()
+            for (const [position, chunk] of chunks.entries()) {
+                const values = {
                     ...spreadIfDefined('content', chunk.content),
                     ...spreadIfDefined('embedding', chunk.embedding ? `[${chunk.embedding.join(',')}]` : undefined),
-                    ...spreadIfDefined('chunkIndex', chunk.chunkIndex),
                     ...spreadIfDefined('metadata', chunk.metadata),
-                },
-            )
-        }
+                }
+                if (isNil(chunk.id)) {
+                    writeByIndex.set(chunk.chunkIndex ?? position, { values: { content: '', metadata: {}, ...values } })
+                    continue
+                }
+                if (submittedIds.has(chunk.id)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: { message: `Chunk ${chunk.id} is listed more than once in the same request` },
+                    })
+                }
+                submittedIds.add(chunk.id)
+                const edited = storedById.get(chunk.id)
+                if (isNil(edited)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.ENTITY_NOT_FOUND,
+                        params: { entityType: 'KnowledgeBaseChunk', entityId: chunk.id },
+                    })
+                }
+                writeByIndex.set(chunk.chunkIndex ?? edited.chunkIndex, { id: chunk.id, values })
+            }
+
+            const claimedIds = new Set([...writeByIndex.values()].map((write) => write.id).filter((id) => !isNil(id)))
+            const adoptableIdByIndex = new Map([...idByIndex].filter(([, id]) => !claimedIds.has(id)))
+            const writes = [...writeByIndex].map(([chunkIndex, write]) => ({
+                chunkIndex,
+                id: write.id ?? adoptableIdByIndex.get(chunkIndex),
+                values: write.values,
+            }))
+            const keptIds = new Set(writes.map((write) => write.id).filter((id) => !isNil(id)))
+            const displacedIds = stored
+                .filter((row) => !keptIds.has(row.id) && writeByIndex.has(row.chunkIndex))
+                .map((row) => row.id)
+            for (let start = 0; start < displacedIds.length; start += INSERT_BATCH_SIZE) {
+                await repo.delete({ id: In(displacedIds.slice(start, start + INSERT_BATCH_SIZE)), projectId, knowledgeBaseFileId })
+            }
+
+            const inserts = writes
+                .filter((write) => isNil(write.id))
+                .map((write) => ({ id: apId(), projectId, knowledgeBaseFileId, chunkIndex: write.chunkIndex, ...write.values }))
+            for (const write of writes) {
+                if (isNil(write.id)) {
+                    continue
+                }
+                await repo.update({ id: write.id, projectId, knowledgeBaseFileId }, { ...write.values, chunkIndex: write.chunkIndex })
+            }
+            for (let start = 0; start < inserts.length; start += INSERT_BATCH_SIZE) {
+                await repo.insert(inserts.slice(start, start + INSERT_BATCH_SIZE))
+            }
+
+            if (!isFullRestore) {
+                return
+            }
+            const submittedIndexes = [...writeByIndex.keys()]
+            const cleanup = repo.createQueryBuilder()
+                .delete()
+                .where('"projectId" = :projectId AND "knowledgeBaseFileId" = :knowledgeBaseFileId', { projectId, knowledgeBaseFileId })
+            if (submittedIndexes.length > 0) {
+                cleanup.andWhere('"chunkIndex" NOT IN (:...submittedIndexes)', { submittedIndexes })
+            }
+            await cleanup.execute()
+        })
     },
 
     async listChunks(params: ListChunksParams): Promise<ChunkListItem[]> {
