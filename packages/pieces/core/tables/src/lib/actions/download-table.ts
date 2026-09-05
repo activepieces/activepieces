@@ -23,9 +23,8 @@ export const downloadTable = createAction({
     table_id: tablesCommon.table_id,
     include_headers: Property.Checkbox({
       displayName: 'Include Headers',
-      description:
-        'Whether to include column headers as the first row of the CSV.',
-      required: true,
+      description: 'Adds the column names as the first row of the CSV.',
+      required: false,
       defaultValue: true,
     }),
   },
