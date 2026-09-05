@@ -315,7 +315,7 @@ export const crawl = createAction({
     const result = await polling(jobId, auth.secret_text, timeoutSeconds, 'crawl');
 
     if (propsValue.formats === 'screenshot') {
-      await downloadAndSaveCrawlScreenshots(result, context);
+      result.data = await downloadAndSaveCrawlScreenshots(result, context);
     }
 
     return result;

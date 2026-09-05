@@ -20,7 +20,10 @@ export const forSimpleOutputFormat = (format: string): string => {
 }
 
 // Download and save screenshot(s) - works for both single scrape and crawl results
-export async function downloadAndSaveScreenshot(screenshotTarget: any, context: any): Promise<void> {
+export async function downloadAndSaveScreenshot(
+  screenshotTarget: any,
+  context: any,
+): Promise<{ fileName: string; fileUrl: string }> {
   const screenshotUrl = screenshotTarget.screenshot;
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
@@ -34,27 +37,56 @@ export async function downloadAndSaveScreenshot(screenshotTarget: any, context: 
     data: Buffer.from(response.body),
   });
 
-  screenshotTarget.screenshot = {
-    fileName: fileName,
-    fileUrl: fileUrl,
-  };
+  return { fileName, fileUrl };
 }
 
-export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<void> {
+export async function downloadAndSavePdfs(
+  dataTarget: any,
+  context: any,
+): Promise<Array<{ fileName: string; fileUrl: string }>> {
+  const pdfUrls: string[] = dataTarget.actions?.pdfs || [];
+  const savedPdfs: { fileName: string; fileUrl: string }[] = [];
+
+  for (const pdfUrl of pdfUrls) {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: pdfUrl,
+      responseType: 'arraybuffer'
+    });
+
+    const fileName = `pdf-${randomUUID()}.pdf`;
+    const fileUrl = await context.files.write({
+      fileName: fileName,
+      data: Buffer.from(response.body),
+    });
+
+    savedPdfs.push({ fileName, fileUrl });
+  }
+
+  return savedPdfs;
+}
+
+export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<any[]> {
 
   if (!crawlResult.data || !Array.isArray(crawlResult.data)) {
-    return;
+    return crawlResult.data;
   }
 
-  for (const data of crawlResult.data) {
-    if (data.screenshot) {
+  return Promise.all(
+    crawlResult.data.map(async (data: any) => {
+      if (!data.screenshot) {
+        return data;
+      }
+
       try {
-        await downloadAndSaveScreenshot(data, context);
+        const savedScreenshot = await downloadAndSaveScreenshot(data, context);
+        return { ...data, screenshot: savedScreenshot };
       } catch (error) {
         console.error(`Failed to download screenshot for page: ${error}`);
+        return data;
       }
-    }
-  }
+    }),
+  );
 }
 
 // scrape, extract and crawl uses this function
