@@ -175,6 +175,31 @@ describe('Waitpoint service', () => {
             expect(upsertJobSpy.mock.calls[1][0].job.data.waitpointId).toBe(first.waitpoint.id)
         })
 
+        it('should reject a resumeDateTime past flowRun.created + AP_PAUSED_FLOW_TIMEOUT_DAYS (cumulative check)', async () => {
+            const pauseTimeoutDays = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS ?? '30')
+            const { flow, flowVersion } = await createFlowRun()
+            const oldFlowRun = createMockFlowRun({
+                projectId: ctx.project.id,
+                flowId: flow.id,
+                flowVersionId: flowVersion.id,
+                status: FlowRunStatus.PAUSED,
+                environment: RunEnvironment.PRODUCTION,
+                created: new Date(Date.now() - (pauseTimeoutDays - 1) * 24 * 60 * 60 * 1000).toISOString(),
+            })
+            await db.save('flow_run', oldFlowRun)
+            const resumeBeyondWindow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+
+            await expect(
+                waitpointService(app.log).createForPause({
+                    flowRunId: oldFlowRun.id,
+                    projectId: ctx.project.id,
+                    stepName: 'stacked_delay',
+                    type: PauseType.DELAY,
+                    resumeDateTime: resumeBeyondWindow,
+                }),
+            ).rejects.toMatchObject({ error: { code: 'PAUSED_FLOW_TIMEOUT_EXCEEDED' } })
+        })
+
         it('should correctly map WEBHOOK pause fields', async () => {
             const { flowRun } = await createFlowRun()
 
