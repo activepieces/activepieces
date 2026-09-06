@@ -101,6 +101,26 @@ describe('duplicate step names', () => {
         expect(nodeCount(after) - nodeCount(corrupted)).toBe(1)
     })
 
+    it('still round-trips an IMPORT_FLOW that re-adds every existing name', () => {
+        const base = flowOf(['step_1', 'step_2', 'step_3'])
+
+        const imported = flowOperations.apply(base, {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: {
+                displayName: base.displayName,
+                trigger: base.trigger,
+                notes: [],
+            },
+        } as never)
+
+        expect(flowStructureUtil.getAllSteps(imported.trigger).map((step) => step.name)).toEqual([
+            'trigger',
+            'step_1',
+            'step_2',
+            'step_3',
+        ])
+    })
+
     it('refuses to add a step under a name that already exists', () => {
         const base = flowOf(['step_1', 'step_2'])
 
