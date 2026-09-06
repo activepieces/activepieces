@@ -135,11 +135,26 @@ function handleContinueOnFailureBranches(parentStep: Step, request: AddActionReq
     return parentStep
 }
 
+function assertNameIsUnused(flowVersion: FlowVersion, request: AddActionRequest): void {
+    const taken = flowStructureUtil.getAllSteps(flowVersion.trigger).some((step) => step.name === request.action.name)
+    if (taken) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_OPERATION_INVALID,
+            params: {
+                message: `Step name ${request.action.name} is already used by another step in this flow`,
+            },
+        })
+    }
+}
+
 function _addAction(flowVersion: FlowVersion, request: AddActionRequest): FlowVersion {
+    assertNameIsUnused(flowVersion, request)
+    let inserted = false
     return flowStructureUtil.transferFlow(flowVersion, (parentStep: Step) => {
-        if (parentStep.name !== request.parentStep) {
+        if (parentStep.name !== request.parentStep || inserted) {
             return parentStep
         }
+        inserted = true
         if (
             request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_ON_SUCCESS_BRANCH ||
             request.stepLocationRelativeToParent === StepLocationRelativeToParent.INSIDE_ON_FAILURE_BRANCH
