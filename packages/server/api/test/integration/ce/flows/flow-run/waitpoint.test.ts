@@ -2,6 +2,7 @@ import { apId } from '@activepieces/core-utils'
 import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import * as systemJobModule from '../../../../../src/app/helper/system-jobs/system-job'
+import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
@@ -198,6 +199,30 @@ describe('Waitpoint service', () => {
                     resumeDateTime: resumeBeyondWindow,
                 }),
             ).rejects.toMatchObject({ error: { code: 'PAUSED_FLOW_TIMEOUT_EXCEEDED' } })
+        })
+
+        it('should skip a stale RESUME_DELAY_WAITPOINT timer when the waitpoint is already COMPLETED', async () => {
+            const { flowRun } = await createFlowRun()
+            const pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { approved: true } },
+            })
+
+            await handleResumeDelayWaitpoint({
+                data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: pause.waitpoint.id },
+                log: app.log,
+            })
+
+            const stillPaused = await db.findOneBy('flow_run', { id: flowRun.id })
+            expect(stillPaused!.status).toBe(FlowRunStatus.PAUSED)
         })
 
         it('should correctly map WEBHOOK pause fields', async () => {
