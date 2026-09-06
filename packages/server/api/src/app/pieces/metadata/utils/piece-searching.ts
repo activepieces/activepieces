@@ -121,6 +121,7 @@ function searchForSuggestion<T extends ActionBase | TriggerBase>({
             shouldSort: true,
             keys: ['pieceDisplayName', 'displayName', 'description'],
             threshold: 0.2,
+            ignoreLocation: true,
         },
     )
 
