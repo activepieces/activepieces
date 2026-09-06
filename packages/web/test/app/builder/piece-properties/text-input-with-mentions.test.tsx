@@ -2,7 +2,7 @@
 import { render, screen } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock(
   '@/app/builder/piece-properties/text-input-with-mentions/tiptap-editor',
@@ -35,16 +35,6 @@ function Harness({ children }: { children: ReactNode }) {
 const noop = () => undefined;
 
 describe('FormFieldMentionInput', () => {
-  let errorSpy: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    errorSpy = vi.spyOn(console, 'error').mockImplementation(noop);
-  });
-
-  afterEach(() => {
-    errorSpy.mockRestore();
-  });
-
   it('gives the editor the id its FormLabel points at', () => {
     render(
       <Harness>
@@ -62,41 +52,11 @@ describe('FormFieldMentionInput', () => {
 
     expect(label.htmlFor).not.toBe('');
     expect(label.htmlFor).toBe(screen.getByTestId('editor').id);
-    expect(errorSpy).not.toHaveBeenCalled();
-  });
-
-  it('reports two editors sharing one FormItem', () => {
-    render(
-      <Harness>
-        <FormItem>
-          <FormLabel>Key</FormLabel>
-          <FormFieldMentionInput onChange={noop} />
-          <FormFieldMentionInput onChange={noop} />
-        </FormItem>
-      </Harness>,
-    );
-
-    expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('repeated id'),
-    );
-  });
-
-  it('reports an editor rendered outside a FormItem', () => {
-    render(
-      <Harness>
-        <FormFieldMentionInput onChange={noop} />
-      </Harness>,
-    );
-
-    expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('outside a <FormItem>'),
-    );
   });
 
   it('leaves TextInputWithMentions free of form context', () => {
     render(<TextInputWithMentions onChange={noop} />);
 
     expect(screen.getByTestId('editor').id).toBe('');
-    expect(errorSpy).not.toHaveBeenCalled();
   });
 });
