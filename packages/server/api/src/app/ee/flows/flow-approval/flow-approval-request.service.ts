@@ -95,15 +95,18 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
 
         await transaction(async (entityManager) => {
-            const updateResult = await flowApprovalRequestRepo(entityManager).update(
-                { id: approval.id, state: FlowApprovalRequestState.PENDING },
-                {
+            const updateResult = await flowApprovalRequestRepo(entityManager)
+                .createQueryBuilder()
+                .update()
+                .set({
                     state: FlowApprovalRequestState.APPROVED,
                     approverId,
                     decidedAt,
-                },
-            )
-            assertRowsAffected(updateResult.affected)
+                })
+                .where({ id: approval.id, state: FlowApprovalRequestState.PENDING })
+                .returning(['id'])
+                .execute()
+            assertRowsAffected(updateResult.raw?.length)
             await flowService(log).setPublishedVersion({ flow, lockedVersion, entityManager })
         })
 
@@ -154,16 +157,19 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         const rejectionReason = reason ?? null
         const approverId = approverPrincipal.type === PrincipalType.SERVICE ? null : approverPrincipal.id
 
-        const rejectResult = await flowApprovalRequestRepo().update(
-            { id: approval.id, state: FlowApprovalRequestState.PENDING },
-            {
+        const rejectResult = await flowApprovalRequestRepo()
+            .createQueryBuilder()
+            .update()
+            .set({
                 state: FlowApprovalRequestState.REJECTED,
                 approverId,
                 decidedAt,
                 rejectionReason,
-            },
-        )
-        assertRowsAffected(rejectResult.affected)
+            })
+            .where({ id: approval.id, state: FlowApprovalRequestState.PENDING })
+            .returning(['id'])
+            .execute()
+        assertRowsAffected(rejectResult.raw?.length)
 
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_REJECTED,
@@ -194,11 +200,13 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
         })
 
         await transaction(async (entityManager) => {
-            const deleteResult = await flowApprovalRequestRepo(entityManager).delete({
-                id: approval.id,
-                state: FlowApprovalRequestState.PENDING,
-            })
-            assertRowsAffected(deleteResult.affected)
+            const deleteResult = await flowApprovalRequestRepo(entityManager)
+                .createQueryBuilder()
+                .delete()
+                .where({ id: approval.id, state: FlowApprovalRequestState.PENDING })
+                .returning(['id'])
+                .execute()
+            assertRowsAffected(deleteResult.raw?.length)
             await flowVersionRepo(entityManager).update({ id: lockedVersion.id }, { state: FlowVersionState.DRAFT })
         })
 
