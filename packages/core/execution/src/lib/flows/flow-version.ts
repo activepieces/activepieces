@@ -41,11 +41,11 @@ export const FlowVersionMetadata = z.object({
 
 export type FlowVersionMetadata = z.infer<typeof FlowVersionMetadata>
 
-function tokenOf({ id, updated }: Pick<FlowVersion, 'id' | 'updated'>): string {
-    return `${id}:${new Date(updated).getTime()}`
-}
-
 export const flowVersionToken = { of: tokenOf }
 
 export const FLOW_VERSION_TOKEN_HEADER = 'if-match'
+
+function tokenOf({ id, updated }: Pick<FlowVersion, 'id' | 'updated'>): string {
+    return `${id}:${new Date(updated).getTime()}`
+}
 

@@ -66,7 +66,7 @@ const addAction = (parentStep: string, name: string) => ({
 })
 
 describe('flow lifecycle smoke', () => {
-    it('drives create -> add -> update -> duplicate -> move -> delete -> import -> publish', async () => {
+    it('drives create -> add -> update -> duplicate -> move -> delete -> import', async () => {
         const ctx = await createTestContext(app!)
         const flow = await createFlow(ctx, 'smoke')
 
