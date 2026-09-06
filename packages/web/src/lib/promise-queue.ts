@@ -16,6 +16,9 @@ export class PromiseQueue {
 
   discardPending() {
     this.queue = [];
+  }
+
+  resume() {
     this.halted = false;
   }
   size() {

@@ -165,6 +165,29 @@ describe('flow lifecycle smoke', () => {
         expect(names(final.version)).toEqual(['trigger', 'step_1', 'step_2', 'step_3', 'step_4'])
     })
 
+    // The in-process harness serializes injected requests, so this pins the
+    // outcome rather than the distributed lock that enforces it across processes.
+    it('applies only one of two operations sharing a token', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await createFlow(ctx, 'smoke-simultaneous')
+        await operate(ctx, flow.id, addAction('trigger', 'step_1'))
+
+        const loaded: PopulatedFlow = (await ctx.get(`/v1/flows/${flow.id}`))?.json()
+        const token = flowVersionToken.of(loaded.version)
+
+        const [first, second] = await Promise.all([
+            operate(ctx, flow.id, addAction('step_1', 'step_2'), token),
+            operate(ctx, flow.id, addAction('step_1', 'step_2'), token),
+        ])
+
+        const statuses = [first?.statusCode, second?.statusCode].sort()
+        expect(statuses).toEqual([StatusCodes.OK, StatusCodes.PRECONDITION_FAILED])
+
+        const final: PopulatedFlow = (await ctx.get(`/v1/flows/${flow.id}`))?.json()
+        expect(duplicates(final.version)).toEqual([])
+        expect(names(final.version)).toEqual(['trigger', 'step_1', 'step_2'])
+    })
+
     it('lets a session continue once it reloads after a conflict', async () => {
         const ctx = await createTestContext(app!)
         const flow = await createFlow(ctx, 'smoke-recover')
