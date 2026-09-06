@@ -1,9 +1,13 @@
 import { isNil } from '@activepieces/core-utils'
-import { FlowRunStatus } from '@activepieces/shared'
+import { FlowRunStatus, PauseType } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { flowRunService } from '../flows/flow-run/flow-run-service'
+import { flowRunRepo, flowRunService } from '../flows/flow-run/flow-run-service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobData, SystemJobName } from '../helper/system-jobs/common'
 import { resumeService } from './resume-service'
+import { waitpointService } from './waitpoint-service'
 
 export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDelayWaitpointParams): Promise<void> {
     const flowRun = await flowRunService(log).getOne({ id: data.flowRunId, projectId: data.projectId })
@@ -15,6 +19,22 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
     if (flowRun.status !== FlowRunStatus.PAUSED) {
         log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId }, status: flowRun.status },
             '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
+        return
+    }
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: data.waitpointId, flowRunId: data.flowRunId })
+    const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+    const pastPauseTimeout = dayjs().isAfter(dayjs(flowRun.created).add(pauseTimeoutDays, 'day'))
+    const isWebhookExpiry = waitpoint?.type === PauseType.WEBHOOK
+    if (isWebhookExpiry || pastPauseTimeout) {
+        const message = isWebhookExpiry
+            ? 'Waitpoint expired: no webhook was received within the pause-timeout window'
+            : `Resume dispatched past pause-timeout window (${pauseTimeoutDays} days from run start)`
+        log.warn({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId }, pauseTimeoutDays, isWebhookExpiry, pastPauseTimeout },
+            '[RESUME_DELAY_WAITPOINT] Marking run FAILED instead of resuming')
+        await flowRunRepo().update(
+            { id: flowRun.id, projectId: flowRun.projectId },
+            { status: FlowRunStatus.FAILED, finishTime: dayjs().toISOString(), failedStep: { name: 'trigger', displayName: 'Trigger', message } },
+        )
         return
     }
     log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },

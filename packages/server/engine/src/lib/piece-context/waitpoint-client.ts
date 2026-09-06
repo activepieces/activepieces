@@ -1,4 +1,5 @@
-import { CreateWaitpointRequest, CreateWaitpointResponse, EngineGenericError } from '@activepieces/shared'
+import { ErrorCode } from '@activepieces/core-utils'
+import { CreateWaitpointRequest, CreateWaitpointResponse, EngineGenericError, PausedFlowTimeoutError } from '@activepieces/shared'
 import { retryFetch } from '../api/retry-fetch'
 
 export const waitpointClient = {
@@ -12,10 +13,39 @@ export const waitpointClient = {
             body: JSON.stringify(body),
         })
         if (!response.ok) {
+            const parsed = await parseErrorBody(response)
+            if (parsed?.code === ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED) {
+                throw new PausedFlowTimeoutError(undefined, parsed.params?.pauseTimeoutDays)
+            }
             throw new EngineGenericError('WaitpointCreationError', `Failed to create waitpoint: ${response.status} ${response.statusText}`)
         }
         return response.json() as Promise<CreateWaitpointResponse>
     },
+}
+
+async function parseErrorBody(response: Response): Promise<ApiErrorBody | null> {
+    try {
+        const body: unknown = await response.json()
+        if (isApiErrorBody(body)) {
+            return body
+        }
+        return null
+    }
+    catch {
+        return null
+    }
+}
+
+function isApiErrorBody(value: unknown): value is ApiErrorBody {
+    if (typeof value !== 'object' || value === null || !('code' in value)) {
+        return false
+    }
+    return typeof value.code === 'string'
+}
+
+type ApiErrorBody = {
+    code: string
+    params?: { pauseTimeoutDays?: number }
 }
 
 type CreateWaitpointClientRequest = CreateWaitpointRequest & {
