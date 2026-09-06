@@ -325,7 +325,7 @@ export function createCustomApiCallAction<
         },
       }),
       response_is_binary: Property.Checkbox({
-        displayName: 'Binary Response',
+        displayName: 'Response is Binary',
         description: 'Enable for files like PDFs, images, etc.',
         required: false,
         defaultValue: false,
@@ -342,13 +342,13 @@ export function createCustomApiCallAction<
       }),
       timeout: Property.Number({
         displayName: 'Timeout',
-        description: 'Seconds to wait before giving up. Leave empty for no limit.',
+        description: 'Seconds to wait for a response. Empty: up to the flow limit (10 min).',
         required: false,
         advanced: true,
         ...(props?.timeout ?? {}),
       }),
       followRedirects: Property.Checkbox({
-        displayName: 'Follow Redirects',
+        displayName: 'Follow redirects',
         description:
           'Follow 3xx redirects instead of returning them as the response.',
         required: false,
