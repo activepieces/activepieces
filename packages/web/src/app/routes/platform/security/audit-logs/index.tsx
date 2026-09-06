@@ -101,7 +101,12 @@ export default function AuditLogsPage() {
     },
   ];
 
-  const { data: auditLogsData, isLoading } = auditLogQueries.useAuditLogs();
+  const {
+    data: auditLogsData,
+    isLoading,
+    isError,
+    refetch,
+  } = auditLogQueries.useAuditLogs();
 
   const isEnabled = platform.plan.auditLogEnabled;
   return (
@@ -247,6 +252,9 @@ export default function AuditLogsPage() {
           ]}
           page={auditLogsData}
           isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('audit logs')}
+          onRetry={refetch}
         />
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">

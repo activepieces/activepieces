@@ -56,6 +56,7 @@ export enum AIProviderName {
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
+    VERTEX = 'vertex',
     MISTRAL = 'mistral',
     XAI = 'xai',
     DEEPSEEK = 'deepseek',

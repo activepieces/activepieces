@@ -37,6 +37,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EMAIL_CODE_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
@@ -149,6 +150,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.EMAIL_AUTH_ENABLED,
                 value: true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+                value: system.getEdition() === ApEdition.CLOUD && turnstile.isConfigured(),
                 created,
                 updated,
             },

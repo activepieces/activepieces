@@ -585,9 +585,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         }))
     }
 
+    const piecesTheAuthorGaveAnAccount = new Set(source !== AgentRunSource.AGENT ? [] : configuredPieceTools
+        .filter((tool) => !isNil(tool.pieceMetadata.predefinedInput?.auth))
+        .map((tool) => tool.pieceMetadata.pieceName))
     const displayTools = agentWorkerTools.createDisplayTools({
         waitForApproval,
         displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
+        accountAlreadyChosenFor: (pieceName) => piecesTheAuthorGaveAnAccount.has(pieceName),
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
             await tryCatch(() => ctx.apiClient.executeAgentTool({
@@ -648,6 +652,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
         runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider, providerConfigId }),
+        taintState,
+        eventEmitter,
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({

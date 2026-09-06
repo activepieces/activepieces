@@ -8,6 +8,7 @@ import {
   OpenAICompatibleProviderConfig,
   Project,
   UpdateAIProviderRequest,
+  VertexProviderConfig,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -426,6 +427,7 @@ function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {
 }
 
 const ManualProviderConfig = z.union([
+  VertexProviderConfig,
   OpenAICompatibleProviderConfig,
   CloudflareGatewayProviderConfig,
 ]);

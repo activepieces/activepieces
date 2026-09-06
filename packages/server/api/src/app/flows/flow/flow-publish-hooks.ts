@@ -1,4 +1,5 @@
 import { Flow, FlowStatus, PlatformId, ProjectId, UserId } from '@activepieces/shared'
+import { EntityManager } from 'typeorm'
 import { hooksFactory } from '../../helper/hooks-factory'
 
 export type PublishRoute = 'PUBLISH_NOW' | 'NEEDS_APPROVAL'
@@ -17,6 +18,12 @@ export const publishHooksFactory = hooksFactory.create<PublishHooks>(_log => ({
     },
 }))
 
+export const flowPublishHooks = hooksFactory.create<FlowPublishHooks>(() => ({
+    async assertReferencesResolve(): Promise<void> {
+        return
+    },
+}))
+
 export type RoutePublishParams = {
     flow: Flow
     projectId: ProjectId
@@ -30,4 +37,8 @@ export type SubmitForApprovalParams = {
     projectId: ProjectId
     platformId: PlatformId
     requestedStatus: FlowStatus
+}
+
+export type FlowPublishHooks = {
+    assertReferencesResolve(params: { projectId: ProjectId, agentExternalIds: string[], entityManager: EntityManager }): Promise<void>
 }

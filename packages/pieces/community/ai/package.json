@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-ai",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -11,6 +11,7 @@
     "@ai-sdk/anthropic": "3.0.72",
     "@ai-sdk/azure": "3.0.55",
     "@ai-sdk/google": "3.0.65",
+    "@ai-sdk/google-vertex": "4.0.113",
     "@ai-sdk/mcp": "1.0.11",
     "@ai-sdk/openai": "3.0.54",
     "@ai-sdk/openai-compatible": "2.0.42",
@@ -28,10 +29,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@types/mime-types": "2.1.1",
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "vitest": "3.2.6"
   }
 }

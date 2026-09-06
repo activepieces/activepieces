@@ -42,7 +42,7 @@ export function ActionPreviewCard({
           : preview.actionDisplayName
       }
     >
-      {preview.pieceName && preview.connectionLabel && (
+      {preview.pieceName && (
         <div className="flex items-center gap-2 pb-3">
           <PieceIconWithPieceName
             pieceName={pieceName}
@@ -50,11 +50,13 @@ export function ActionPreviewCard({
             border={false}
             showTooltip={false}
           />
-          <span className="text-xs text-muted-foreground">
-            {t('Using: {connectionLabel}', {
-              connectionLabel: preview.connectionLabel,
-            })}
-          </span>
+          {preview.connectionLabel && (
+            <span className="text-xs text-muted-foreground">
+              {t('Using: {connectionLabel}', {
+                connectionLabel: preview.connectionLabel,
+              })}
+            </span>
+          )}
         </div>
       )}
 

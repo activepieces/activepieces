@@ -438,6 +438,8 @@ export default function ProjectsPage() {
             previous: null,
           }}
           isLoading={false}
+          isError={false}
+          errorStateEntity={t('projects')}
           clientPagination={true}
           bulkActions={bulkActions}
           toolbarButtons={toolbarButtons}

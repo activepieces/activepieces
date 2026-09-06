@@ -4,6 +4,7 @@ import { filloutFormsAuth } from '../auth';
 import { makeRequest } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
+import { newFormResponseTriggerOutputSchema } from '../output-schemas';
 
 const TRIGGER_KEY = 'new-form-response-trigger';
 
@@ -17,6 +18,7 @@ export const newFormResponse = createTrigger({
   aiMetadata: {
     description: 'Fires when a new submission is received for the selected Fillout form, delivering the submitted answers, calculations, and metadata. Use to start a workflow whenever someone completes the form.',
   },
+  outputSchema: newFormResponseTriggerOutputSchema,
   props: {
     formId: formIdDropdown,
   },
@@ -68,7 +70,8 @@ export const newFormResponse = createTrigger({
     return submissions.responses;
   },
   async run(context) {
-    const payload = JSON.parse(context.payload.body as string) as {
+    const body = context.payload.body;
+    const payload = (typeof body === 'string' ? JSON.parse(body) : body) as {
       submission: Record<string, any>;
     };
     return [payload.submission];
