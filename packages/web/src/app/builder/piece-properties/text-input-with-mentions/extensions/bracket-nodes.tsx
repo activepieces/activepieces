@@ -12,7 +12,7 @@ const BADGE_CLASS =
 const ZWS = '​';
 
 const fnNamePattern = AP_FUNCTIONS.map((f) => f.name).join('|');
-const inputRuleRegex = new RegExp(`(${fnNamePattern})\\($`);
+const inputRuleRegex = new RegExp(`(?<![a-z0-9_])(${fnNamePattern})\\($`);
 
 function buildInputRuleContent(fn: ApFunction, id: string): JSONContent[] {
   const content: JSONContent[] = [

@@ -91,3 +91,47 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
     });
   });
 });
+
+const CUSTOMER_SQL = `SELECT
+  regexp_extract(link, 'projects/([^/]+)/flows/([^/]+)', 1) AS project_id,
+  list_filter(
+    list_transform(string_split(pieces_used, ','), x -> trim(x)),
+    x -> x != ''
+  ) AS pieces_used
+FROM glad`;
+
+const roundTrip = (text: string) =>
+  textMentionUtils.convertTiptapJsonToText({
+    type: 'doc',
+    content: convert(text),
+  });
+
+describe('plain text is never turned into function nodes', () => {
+  it('leaves SQL built from function-like names untouched across saves', () => {
+    const firstSave = roundTrip(CUSTOMER_SQL);
+    expect(firstSave).toBe(CUSTOMER_SQL);
+    expect(roundTrip(firstSave)).toBe(CUSTOMER_SQL);
+  });
+
+  it.each([
+    "string_split(pieces_used, ',')",
+    'SELECT trim(x) FROM t',
+    'plain ) ; text with upper( unbalanced',
+  ])('renders %j as text only', (input) => {
+    expect(convert(input)[0].content.map((node) => node.type)).toEqual(['text']);
+  });
+
+  it('keeps function nodes for wrapped formulas', () => {
+    const types = convert(
+      'ap-formula-v1::{upper(a)}::ap-formula-v1',
+    )[0].content.map((node) => node.type);
+    expect(types).toContain('function_start');
+  });
+
+  it('round-trips text and a formula living in the same value', () => {
+    const input =
+      'hello foo(x) ap-formula-v1::{upper(y)}::ap-formula-v1 tail lower(z)';
+    expect(roundTrip(input)).toBe(input);
+    expect(roundTrip(roundTrip(input))).toBe(input);
+  });
+});
