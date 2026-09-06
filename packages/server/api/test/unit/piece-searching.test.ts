@@ -172,7 +172,7 @@ describe('pieceSearching.search', () => {
         expect(suggestedTriggerNames(results[0])).toEqual(['New Submission'])
     })
 
-    it('keeps a trigger search off the action names', () => {
+    it('keeps a trigger search off the action names, and off tokens spread across two descriptions', () => {
         const results = searchTriggers('create submission')
 
         expect(results.map((piece) => piece.displayName)).toEqual([])
@@ -199,6 +199,22 @@ describe('pieceSearching.search', () => {
         const googleSheetsResult = search('google vertex image').find((piece) => piece.displayName === 'Google Sheets')
 
         expect(Object.keys(googleSheetsResult?.actions ?? {})).toEqual([])
+    })
+
+    it('suggests only the action whose description carries the keyword', () => {
+        const results = search('append')
+
+        expect(results.map((piece) => piece.displayName)).toEqual(['Google Sheets'])
+        expect(suggestedActionNames(results[0])).toEqual(['Insert Row'])
+    })
+
+    it('tolerates a typo once the query is long enough to be matched fuzzily', () => {
+        expect(search('formstck').map((piece) => piece.displayName)).toEqual(['Formstack'])
+    })
+
+    it('matches a short query exactly, so it cannot fuzzily drag in unrelated pieces', () => {
+        expect(search('slak')).toEqual([])
+        expect(search('slack').map((piece) => piece.displayName)).toEqual(['Slack'])
     })
 
     it('returns nothing when the query matches no piece', () => {

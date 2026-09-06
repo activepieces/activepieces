@@ -15,14 +15,14 @@ export const pieceSearching = {
 
 const PIECE_SEARCH_KEYS = [
     { name: 'displayName', weight: 3 },
-    { name: 'description', weight: 1 },
     'actions.displayName',
-    'actions.description',
     'triggers.displayName',
-    'triggers.description',
 ]
 
 const MINIMUM_PIECE_NAME_TOKEN_LENGTH = 3
+const MINIMUM_FUZZY_QUERY_LENGTH = 6
+const FUZZY_THRESHOLD = 0.2
+const EXACT_THRESHOLD = 0
 
 const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: SearchParams): PieceMetadataSchema[] => {
     if (!searchQuery) {
@@ -40,20 +40,26 @@ const filterBasedOnSearchQuery = ({ searchQuery, pieces, suggestionType }: Searc
         isCaseSensitive: false,
         shouldSort: true,
         keys: PIECE_SEARCH_KEYS,
-        threshold: 0.2,
+        threshold: thresholdFor(searchQuery),
         distance: 250,
         ignoreLocation: true,
     })
 
-    const fuseMatches = fuse.search(searchQuery).map(({ item }) => item)
-    const fuseMatchedNames = new Set(fuseMatches.map((piece) => piece.name))
     const tokens = tokenizeSearchQuery(searchQuery)
+    const nameMatches = fuse.search(searchQuery).map(({ item }) => item)
+    const namedPieces = new Set(nameMatches.map((piece) => piece.name))
+    const descriptionMatches = searchablePieces.filter((piece) =>
+        !namedPieces.has(piece.name) &&
+        pieceDescriptions(piece).some((haystack) => containsEveryToken({ tokens, haystack })),
+    )
+
+    const matchedPieces = new Set([...namedPieces, ...descriptionMatches.map((piece) => piece.name)])
     const substringMatches = searchablePieces.filter((piece) =>
-        !fuseMatchedNames.has(piece.name) &&
+        !matchedPieces.has(piece.name) &&
         tokens.some((token) => pieceNameHaystack(piece).includes(token)),
     )
 
-    return [...fuseMatches, ...substringMatches].map((piece) => ({
+    return [...nameMatches, ...descriptionMatches, ...substringMatches].map((piece) => ({
         ...piece,
         actions: searchForSuggestion({ actionsOrTriggers: piece.actions, searchQuery, pieceDisplayName: piece.displayName }),
         triggers: searchForSuggestion({ actionsOrTriggers: piece.triggers, searchQuery, pieceDisplayName: piece.displayName }),
@@ -70,12 +76,28 @@ const filterBasedOnCategories = (categories: PieceCategory[] | undefined, pieces
     })
 }
 
+const thresholdFor = (searchQuery: string): number => {
+    return searchQuery.trim().length >= MINIMUM_FUZZY_QUERY_LENGTH ? FUZZY_THRESHOLD : EXACT_THRESHOLD
+}
+
 const tokenizeSearchQuery = (searchQuery: string): string[] => {
     return searchQuery.toLowerCase().split(/\s+/).filter((token) => token.length > 0)
 }
 
+const containsEveryToken = ({ tokens, haystack }: TokenMatchParams): boolean => {
+    return tokens.length > 0 && tokens.every((token) => haystack.includes(token))
+}
+
 const pieceNameHaystack = ({ displayName, name }: PieceIdentity): string => {
     return `${displayName} ${name}`.toLowerCase()
+}
+
+const pieceDescriptions = ({ description, actions, triggers }: DescribedPiece): string[] => {
+    return [
+        description,
+        ...actions.map((action) => action.description),
+        ...triggers.map((trigger) => trigger.description),
+    ].map((text) => text.toLowerCase())
 }
 
 const isPrefixOfEitherWay = (token: string, word: string): boolean => {
@@ -119,17 +141,25 @@ function searchForSuggestion<T extends ActionBase | TriggerBase>({
         {
             isCaseSensitive: false,
             shouldSort: true,
-            keys: ['pieceDisplayName', 'displayName', 'description'],
-            threshold: 0.2,
+            keys: ['pieceDisplayName', 'displayName'],
+            threshold: FUZZY_THRESHOLD,
             ignoreLocation: true,
         },
     )
 
-    const suggestions = nestedFuse.search(remainingQuery)
+    const rankByName = new Map(nestedFuse.search(remainingQuery).map(({ item }, rank) => [item.name, rank]))
+    const remainingTokens = tokenizeSearchQuery(remainingQuery)
+    const suggestions = actionsOrTriggers
+        .filter((actionOrTrigger) =>
+            rankByName.has(actionOrTrigger.name) ||
+            containsEveryToken({ tokens: remainingTokens, haystack: actionOrTrigger.description.toLowerCase() }),
+        )
+        .sort((a, b) => (rankByName.get(a.name) ?? Number.MAX_SAFE_INTEGER) - (rankByName.get(b.name) ?? Number.MAX_SAFE_INTEGER))
+
     if (suggestions.length === 0) {
         return pieceWasNamed && wholeNameTyped ? toSuggestionRecord(actionsOrTriggers) : {}
     }
-    return toSuggestionRecord(suggestions.map(({ item }) => ({ ...item, pieceDisplayName: undefined })))
+    return toSuggestionRecord(suggestions)
 }
 
 type SearchParams = {
@@ -142,6 +172,17 @@ type SearchParams = {
 type PieceIdentity = {
     displayName: string
     name: string
+}
+
+type DescribedPiece = {
+    description: string
+    actions: { description: string }[]
+    triggers: { description: string }[]
+}
+
+type TokenMatchParams = {
+    tokens: string[]
+    haystack: string
 }
 
 type PieceNameMatchParams = {
