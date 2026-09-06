@@ -18,7 +18,6 @@ export function RecentlyConnected() {
   const nav = useMcpNav();
   const { data, isLoading, isError } = mcpGrantsQueries.useGrants({
     request: { limit: MAX_SHOWN },
-    showErrorDialog: false,
   });
   const recent = data?.data ?? [];
 

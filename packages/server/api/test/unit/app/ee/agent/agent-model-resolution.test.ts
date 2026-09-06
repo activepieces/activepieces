@@ -1,4 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderModelType } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../../src/app/ee/agent/agent-helpers'
 
@@ -12,6 +13,45 @@ const resolve = ({ provider, selectedModel }: { provider: AIProviderName, select
     agentHelpers.resolveModelIdForProvider({ provider, selectedModel })
 
 describe('resolveModelIdForProvider', () => {
+    const vertexConfig = (models: { modelId: string, modelType: AIProviderModelType }[]) => ({
+        project: 'gcp-project',
+        region: 'europe-west4',
+        models: models.map((model) => ({ ...model, modelName: model.modelId })),
+    })
+
+    it('picks from the models an admin listed on the key, not the curated list', () => {
+        const config = vertexConfig([
+            { modelId: 'claude-3-5-sonnet@20241022', modelType: AIProviderModelType.TEXT },
+            { modelId: 'gemini-2.5-flash', modelType: AIProviderModelType.TEXT },
+        ])
+
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'smart', config })).toBe('claude-3-5-sonnet@20241022')
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'gemini-2.5-flash', config })).toBe('gemini-2.5-flash')
+    })
+
+    it('honours the key model allow-list over the curated default', () => {
+        const scoped = { modelScope: 'selected' as const, modelIds: ['gemini-2.5-flash'] }
+
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.GOOGLE, selectedModel: 'smart', ...scoped })).toBe('gemini-2.5-flash')
+        expect(agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.GOOGLE, selectedModel: 'gemini-2.5-pro', ...scoped })).toBe('gemini-2.5-flash')
+    })
+
+    it('refuses when the allow-list excludes every candidate', () => {
+        expect(() => agentHelpers.resolveModelIdForProvider({
+            provider: AIProviderName.GOOGLE,
+            selectedModel: 'smart',
+            modelScope: 'selected',
+            modelIds: ['a-model-this-provider-does-not-offer'],
+        })).toThrow()
+    })
+
+    it('refuses a key that lists no text model rather than falling back to one it never offered', () => {
+        const imageOnly = vertexConfig([{ modelId: 'imagen-4.0-generate-001', modelType: AIProviderModelType.IMAGE }])
+
+        expect(() => agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'smart', config: imageOnly })).toThrow()
+        expect(() => agentHelpers.resolveModelIdForProvider({ provider: AIProviderName.VERTEX, selectedModel: 'smart', config: vertexConfig([]) })).toThrow()
+    })
+
     it('keeps the tier model id for the activepieces provider', () => {
         expect(resolve({ provider: AIProviderName.ACTIVEPIECES, selectedModel: 'smart' })).toBe('anthropic/claude-sonnet-4.6')
         expect(resolve({ provider: AIProviderName.ACTIVEPIECES, selectedModel: 'fast' })).toBe('anthropic/claude-haiku-4.5')

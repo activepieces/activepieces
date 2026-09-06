@@ -97,8 +97,14 @@ export function apErrorOf(error: unknown): RpcApError | undefined {
     if (!isObject(source) || typeof source['code'] !== 'string') {
         return undefined
     }
-    const entityType = (isObject(source['params']) ? source['params'] : source)['entityType']
-    return { code: source['code'], ...spreadIfNotUndefined('entityType', typeof entityType === 'string' ? entityType : undefined) }
+    const params = isObject(source['params']) ? source['params'] : source
+    const entityType = params['entityType']
+    const message = params['message']
+    return {
+        code: source['code'],
+        ...spreadIfNotUndefined('entityType', typeof entityType === 'string' ? entityType : undefined),
+        ...spreadIfNotUndefined('message', typeof message === 'string' ? message : undefined),
+    }
 }
 
 function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string, __rpcApError?: unknown } {
@@ -110,6 +116,7 @@ export type RpcTimeout = number | ((method: string) => number)
 export type RpcApError = {
     code: string
     entityType?: string
+    message?: string
 }
 
 type RpcLog = {

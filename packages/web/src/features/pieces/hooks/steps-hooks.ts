@@ -53,7 +53,7 @@ export const stepsHooks = {
   },
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
     const { i18n } = useTranslation();
-    const projectId = authenticationSession.getProjectId()!;
+    const projectId = authenticationSession.getProjectId() ?? undefined;
     const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: [
         'pieces-metadata',

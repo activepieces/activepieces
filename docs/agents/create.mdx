@@ -24,9 +24,15 @@ Drafting needs an [AI provider connected](/admin-guide/guides/setup-ai-providers
 Ask for what you want done, not for the tools. The draft only picks an action that reads your data unless the sentence asks for something to be sent, posted or filed, so *"tell me when something changes"* gets an agent that reports, not one that emails.
 </Tip>
 
+## Start from a blank one
+
+**New agent**, beside the view toggles on the list, skips the drafting and opens an empty agent for you to write yourself. It goes to your personal project, since an agent you have not deliberately placed belongs to you; where a platform does not create personal projects, the button asks which project to use. Either way you can [move it later](/agents/manage).
+
+A blank agent has no model yet, so it opens straight into its editor with that still to pick.
+
 ## Choose where it lives
 
-Under the prompt box, **New agents go to** names the project the agent will belong to, and lets you change it before you create it. That matters because the project is the boundary: an agent reaches only its own project's connections, flows, tables and knowledge.
+Start typing in the prompt box and **New agents go to** appears beneath it, naming the project the agent will belong to and letting you change it before you create it. That matters because the project is the boundary: an agent reaches only its own project's connections, flows, tables and knowledge.
 
 If you have one project, there is nothing to choose and the control stays out of the way. See [managing an agent](/agents/manage) for moving one later.
 
@@ -68,7 +74,7 @@ The editor has two tabs beside the Configure panel.
   </Card>
 </CardGroup>
 
-Edits are a draft until you press **Save and go live**. The header says which state you are in: *Changes not live yet* while you are editing, *Live* once saved, and *Needs a model to run* if no model is picked. Going live updates every flow already using the agent on its next run, with nothing to republish.
+Edits are a draft until you press **Publish**. The header says which state you are in: *Changes not live yet* while you are editing, *Live* once published, and *Needs a model to run* if no model is picked. Publishing updates every flow already using the agent on its next run, with nothing to republish.
 
 <Tip>
 Brief it like a capable new colleague. Say the goal and the edges, not every keystroke. The two people forget most: what "done" looks like, and which calls it should hand back to a human.

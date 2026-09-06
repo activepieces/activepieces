@@ -19,7 +19,7 @@ export const newWorksheetTrigger = createTrigger({
 	type: TriggerStrategy.POLLING,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
-		spreadsheetId: spreadsheetIdProp('Spreadsheet', '',true),
+		spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to watch for new worksheets.', true),
 	},
 	outputSchema: newWorksheetTriggerOutputSchema,
 	async onEnable(context) {

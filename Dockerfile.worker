@@ -39,7 +39,7 @@ RUN npx turbo run build --filter=@activepieces/engine && \
         --outfile=/out/worker.js
 
 # Prebuilt isolated-vm (the engine child resolves it at runtime via NODE_PATH).
-RUN --mount=type=cache,target=/root/.bun/install/cache cd /usr/src && bun install isolated-vm@6.0.2
+RUN --mount=type=cache,target=/root/.bun/install/cache cd /usr/src && bun install isolated-vm@6.2.0
 
 ### STAGE 2: Run (minimal) ###
 FROM node:24.14.0-bullseye-slim AS run

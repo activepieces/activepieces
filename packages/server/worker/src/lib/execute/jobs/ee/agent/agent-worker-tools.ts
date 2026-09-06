@@ -1,6 +1,6 @@
 import { chunk, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES, safeHttp } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apId, BatchItemResult, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentEventType, AgentKnowledgeBaseTool, AgentOutputField, AgentOutputFieldType, AgentPhase, AgentPieceTool, AgentPieceToolMetadata, agentToolClassification, apErrorOf, apId, BatchItemResult, BuildPlanEvent, ExecutePieceToolResponse, FileProducedEvent, ImageGeneratedEvent, KnowledgeBaseSourceType, ResolvedAgentFlowTool, SaveAgentFileResponse, SendAgentEmailResponse, SendAgentEventRequest, TASK_COMPLETION_TOOL_NAME, ToolProgressEvent } from '@activepieces/shared'
 import { jsonSchema, JSONSchema7, tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { stripHtml } from 'string-strip-html'
@@ -155,21 +155,36 @@ function gateNoResponseMessage(step: string): string {
     return `⏳ The user hasn't responded to the ${step} yet (it timed out) — they did NOT decline, they're just away. Decide based on how essential this step is: if the task can continue without it, skip only this step, keep going, and briefly tell the user what you skipped and why. If it is required to proceed, stop here and tell the user this step needs their approval — ask them to approve it to continue. Never assume approval or perform the gated action on your own.`
 }
 
-function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened }: {
+function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
+    accountAlreadyChosenFor?: (pieceName: string) => boolean
 }): ToolSet {
-    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved }: {
+    function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
+        const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
+        if (isNil(accountAlreadyChosenFor) || !accountAlreadyChosenFor(normalizePieceName(piece))) {
+            return undefined
+        }
+        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+        return { content: [{ type: 'text', text: `This agent already runs on the ${displayName} account its author chose, so there is nothing to connect or reconnect here and this card was not shown. Use the ${displayName} tool. If it fails, say exactly what failed — do not describe it as a connection problem unless the failure says the credentials were rejected.` }] }
+    }
+
+    function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
         dismissMessage: string | ((input: Record<string, unknown>) => string)
         successKey?: string
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
+        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
+            const refusal = refuseWhen?.(input)
+            if (!isNil(refusal)) {
+                return refusal
+            }
             if (onGateOpened) {
                 const fallbackName = typeof input['displayName'] === 'string' ? input['displayName'] : toolName
                 await tryCatch(() => onGateOpened({
@@ -203,6 +218,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_required',
+                refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
@@ -252,6 +268,7 @@ function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectio
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_picker',
+                refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
@@ -1428,9 +1445,11 @@ export type AgentEventEmitter = {
     emitBuildPlan(data: BuildPlanEvent): void
 }
 
-function createConfiguredPieceTools({ tools, runPieceTool, log }: {
+function createConfiguredPieceTools({ tools, runPieceTool, taintState, eventEmitter, log }: {
     tools: AgentPieceTool[]
-    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata }) => Promise<{ result: unknown }>
+    runPieceTool: (input: { toolName: string, instruction: string, piece: AgentPieceToolMetadata }) => Promise<ExecutePieceToolResponse>
+    taintState: TaintState
+    eventEmitter: AgentEventEmitter
     log: FastifyBaseLogger
 }): ToolSet {
     let callsMade = 0
@@ -1441,7 +1460,7 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
             inputSchema: z.object({
                 instruction: z.string().describe('What this action should do, including any values it needs, in plain language'),
             }),
-            execute: async ({ instruction }) => {
+            execute: async ({ instruction }, options) => {
                 callsMade += 1
                 if (callsMade > MAX_CONFIGURED_TOOL_CALLS) {
                     log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredPieceTool] Refused, this run has already run enough actions')
@@ -1452,10 +1471,23 @@ function createConfiguredPieceTools({ tools, runPieceTool, log }: {
                     const reachedTheServer = String(error).includes('handler threw')
                     log.warn({ error, tool: { name: configured.toolName }, reachedTheServer }, '[configuredPieceTool] Action did not return a result')
                     return { content: [{ type: 'text', text: reachedTheServer
-                        ? `That action failed: ${String(error)}`
+                        ? `That action failed, and this is not a connection problem: ${apErrorOf(error)?.message ?? String(error)}`
                         : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
                 }
-                if (!isSuccessResult(data.result)) {
+                const succeeded = isSuccessResult(data.result)
+                taintState.tainted = true
+                if (!agentToolClassification.isReadOnlyActionCall({ actionName: configured.pieceMetadata.actionName, input: data.resolvedInput ?? {} })) {
+                    eventEmitter.emitActionReceipt({
+                        toolCallId: options.toolCallId,
+                        actionDisplayName: data.actionDisplayName ?? configured.pieceMetadata.actionName,
+                        pieceName: configured.pieceMetadata.pieceName,
+                        ...spreadIfDefined('connectionLabel', data.connectionLabel),
+                        status: succeeded ? 'success' : 'failed',
+                        output: data.result,
+                        timestamp: new Date().toISOString(),
+                    })
+                }
+                if (!succeeded) {
                     log.warn({ tool: { name: configured.toolName } }, '[configuredPieceTool] Action reported a failure')
                     return { content: [{ type: 'text', text: `That action failed: ${extractUserFacingError({ result: data.result })}` }] }
                 }

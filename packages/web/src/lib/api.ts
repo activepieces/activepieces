@@ -170,8 +170,8 @@ export const api = {
     if (!isAxiosError(error)) {
       return false;
     }
-    const responseData = error.response?.data as ApErrorParams;
-    return responseData.code === errorCode;
+    const responseData = error.response?.data as ApErrorParams | undefined;
+    return responseData?.code === errorCode;
   },
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);

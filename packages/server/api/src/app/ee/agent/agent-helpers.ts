@@ -1,6 +1,6 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -154,20 +154,42 @@ function resolveTier({ tierId }: { tierId: string | null }) {
     return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
 }
 
-function resolveModelIdForProvider({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }): string {
-    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
-    if (selectedModel && curatedModels?.some((model) => model.id === selectedModel)) {
-        return selectedModel
+// An admin-listed catalog is the whole truth about what a key exposes, so an empty one means the key
+// serves no text model - not that we may fall back to a curated id it was never configured for.
+function manualTextModelCatalog({ config }: { config?: AIProviderConfig }): string[] | undefined {
+    if (isNil(config) || !('models' in config)) {
+        return undefined
     }
+    return config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
+}
+
+function pickAllowedModel({ provider, selectedModel, candidates, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, candidates: string[], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+    const allowed = modelScope === 'selected' && !isNil(modelIds)
+        ? candidates.filter((candidate) => modelIds.includes(candidate))
+        : candidates
+    if (allowed.length === 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
+        }, 'this AI provider key allows no text model a chat turn can run on')
+    }
+    return selectedModel && allowed.includes(selectedModel) ? selectedModel : allowed[0]
+}
+
+function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+    const catalog = manualTextModelCatalog({ config })
+    if (!isNil(catalog)) {
+        return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
+    }
+    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
     const tierModelId = resolveTier({ tierId: selectedModel }).modelId
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
         return tierModelId
     }
     const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
-    if (isNil(curatedModels)) {
-        return nativeModelId
-    }
-    return curatedModels.some((model) => model.id === nativeModelId) ? nativeModelId : curatedModels[0].id
+    const candidates = isNil(curatedModels) ? [nativeModelId] : curatedModels.map((model) => model.id)
+    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelId
+    return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }
 
 // Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
@@ -198,7 +220,7 @@ function reportKeyOutcome({ platformId, providerId, log }: { platformId: string,
 
 async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId })
+    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
     return {
         model: agentAiUtils.createChatModel({
             provider: providerConfig.provider,
@@ -216,8 +238,8 @@ async function resolveFastModel({ platformId, provider, providerConfigId, scope,
     return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
 }
 
-function resolveFastModelId({ provider }: { provider: AIProviderName }): string {
-    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID })
+function resolveFastModelId({ provider, config, modelScope, modelIds }: { provider: AIProviderName, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
 }
 
 async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
