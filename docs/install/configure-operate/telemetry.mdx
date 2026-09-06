@@ -34,4 +34,6 @@ Go to **Platform → Infrastructure → Configurations** and switch **Product an
 
 `AP_TELEMETRY_ENABLED=false` still works as a starting value: each platform's setting is created the first time it is read and takes the variable's value, so a self-hosted instance with the variable set to `false` is opted out from the start and stays opted out through the upgrade. Once the setting exists, the toggle governs it and changing the variable has no further effect.
 
-Two events happen before any platform can be resolved — requesting and verifying an email sign-in code. On a self-hosted instance these are attributed to your platform whenever one exists, so the toggle governs them like everything else. Only on Activepieces Cloud, and only for an identity that belongs to no platform yet, is an event sent without a platform to consult.
+The list in the app shows only the events a self-hosted instance can actually send. Account and sign-in events — creating an account, signing in, the emailed sign-in codes, captcha and federated login — are sent only from Activepieces Cloud, so they are not listed and never leave a self-hosted instance.
+
+A self-hosted instance still records *that* an account exists — the edition, version and the date it was first seen — so we can tell how many self-hosted deployments are in use. That carries no name or email address: those are attached on Cloud only.

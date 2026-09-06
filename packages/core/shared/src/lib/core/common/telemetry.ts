@@ -150,3 +150,21 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>
     | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
     | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
+
+export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
+    TelemetryEventName.SIGNED_UP,
+    TelemetryEventName.SIGNED_IN,
+    TelemetryEventName.SIGN_UP_SUBMITTED,
+    TelemetryEventName.SIGN_UP_FAILED,
+    TelemetryEventName.SIGN_IN_SUBMITTED,
+    TelemetryEventName.SIGN_IN_FAILED,
+    TelemetryEventName.FEDERATED_LOGIN_STARTED,
+    TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
+    TelemetryEventName.CAPTCHA_UNAVAILABLE,
+    TelemetryEventName.EMAIL_CODE_REQUESTED,
+    TelemetryEventName.EMAIL_CODE_VERIFIED,
+    TelemetryEventName.EMAIL_CODE_REJECTED,
+    TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
+])
+
+export const isCloudOnlyTelemetryEvent = (name: TelemetryEventName): boolean => CLOUD_ONLY_TELEMETRY_EVENTS.has(name)

@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
+  isCloudOnlyTelemetryEvent,
   pickTelemetryPii,
   TelemetryEvent,
 } from '@activepieces/shared';
@@ -172,9 +173,13 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   };
 
   const capture = (event: TelemetryEvent) => {
-    if (telemetryEnabled) {
-      posthog.capture(event.name, event.payload);
+    if (
+      !telemetryEnabled ||
+      (!isCloud && isCloudOnlyTelemetryEvent(event.name))
+    ) {
+      return;
     }
+    posthog.capture(event.name, event.payload);
   };
 
   return (

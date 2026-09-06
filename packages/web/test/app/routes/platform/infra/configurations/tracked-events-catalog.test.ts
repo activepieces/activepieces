@@ -1,4 +1,7 @@
-import { TelemetryEventName } from '@activepieces/shared';
+import {
+  isCloudOnlyTelemetryEvent,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({
@@ -15,12 +18,34 @@ describe('trackedEventsCatalog', () => {
     expect(described.sort()).toEqual(tracked.sort());
   });
 
-  it('lists every described event under exactly one group', () => {
-    const events = Object.values(trackedEventsCatalog.buildEventLabels());
+  it('lists every self-hosted event under exactly one group', () => {
+    const selfHosted = Object.entries(trackedEventsCatalog.buildEventLabels())
+      .filter(([name]) => !isCloudOnlyTelemetryEvent(name as TelemetryEventName))
+      .map(([, event]) => event.label);
     const listed = trackedEventsCatalog
       .buildGroups()
       .flatMap((group) => group.labels);
 
-    expect(listed.sort()).toEqual(events.map((event) => event.label).sort());
+    expect(listed.sort()).toEqual(selfHosted.sort());
+  });
+
+  it('hides the events the server refuses to send off cloud', () => {
+    const cloudOnly = Object.entries(trackedEventsCatalog.buildEventLabels())
+      .filter(([name]) => isCloudOnlyTelemetryEvent(name as TelemetryEventName))
+      .map(([, event]) => event.label);
+    const listed = trackedEventsCatalog
+      .buildGroups()
+      .flatMap((group) => group.labels);
+
+    expect(cloudOnly.length).toBeGreaterThan(0);
+    expect(listed).toEqual(expect.not.arrayContaining(cloudOnly));
+  });
+
+  it('drops the account groups once every event in them is cloud-only', () => {
+    const groupIds = trackedEventsCatalog.buildGroups().map((group) => group.id);
+
+    expect(groupIds).not.toContain('emailCodes');
+    expect(groupIds).not.toContain('accounts');
+    expect(groupIds).toEqual(['flows', 'mcp']);
   });
 });

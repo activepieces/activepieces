@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { ExternalLinkIcon, Info, List } from 'lucide-react';
+import { ExternalLinkIcon, List } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -42,14 +42,6 @@ export const TrackedEventsDialog = () => {
         </DialogHeader>
         <ScrollArea viewPortClassName="max-h-[60vh] p-px">
           <div className="flex flex-col gap-6">
-            <div className="flex gap-3 rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground">
-              <Info className="mt-0.5 size-4 shrink-0" />
-              <p>
-                {t(
-                  'Each event records that the action happened, the account it might have come from, and your version and environment. Some also carry the id of the project or flow involved, and the step-picker search carries what you typed. We also count page views. Never flow contents, step data, credentials, or anything from your connections.',
-                )}
-              </p>
-            </div>
             {groups.map((group) => (
               <TrackedEventGroupSection key={group.id} group={group} />
             ))}

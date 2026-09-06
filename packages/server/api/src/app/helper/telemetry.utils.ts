@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, AppInstance, DeploymentConfig, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, MachineInformation, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, AppInstance, DeploymentConfig, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
@@ -111,6 +111,9 @@ function onceToday(key: string): boolean {
 export const telemetryDedupe = { onceToday }
 
 async function captureUserEvent({ userId, platformId, event, log }: CaptureUserEventParams): Promise<void> {
+    if (isCloudOnlyTelemetryEvent(event.name) && system.getEdition() !== ApEdition.CLOUD) {
+        return
+    }
     const payloadEvent = {
         distinctId: userId,
         event: event.name,

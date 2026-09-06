@@ -1,4 +1,7 @@
-import { TelemetryEventName } from '@activepieces/shared';
+import {
+  isCloudOnlyTelemetryEvent,
+  TelemetryEventName,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Layers, LucideIcon, Mail, User, Workflow } from 'lucide-react';
 
@@ -93,12 +96,18 @@ const buildGroups = (): TrackedEventGroup[] => {
     { id: 'flows', title: t('Flows and the builder'), icon: Workflow },
     { id: 'mcp', title: t('MCP'), icon: Layers },
   ];
-  return definitions.map((definition) => ({
-    ...definition,
-    labels: Object.values(events)
-      .filter((event) => event.group === definition.id)
-      .map((event) => event.label),
-  }));
+  return definitions
+    .map((definition) => ({
+      ...definition,
+      labels: Object.entries(events)
+        .filter(
+          ([name, event]) =>
+            event.group === definition.id &&
+            !isCloudOnlyTelemetryEvent(name as TelemetryEventName),
+        )
+        .map(([, event]) => event.label),
+    }))
+    .filter((group) => group.labels.length > 0);
 };
 
 export const trackedEventsCatalog = { buildEventLabels, buildGroups };
