@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType } from '@activepieces/shared'
+import { FlowRunStatus, flowStructureUtil, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunService } from '../flows/flow-run/flow-run-service'
 import { runsMetadataQueue } from '../flows/flow-run/flow-runs-queue'
+import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobData, SystemJobName } from '../helper/system-jobs/common'
@@ -38,12 +39,13 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
             : `Resume dispatched past pause-timeout window (${pauseTimeoutDays} days from run start)`
         log.warn({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId }, pauseTimeoutDays, isWebhookExpiry, pastPauseTimeout },
             '[RESUME_DELAY_WAITPOINT] Marking run FAILED instead of resuming')
+        const displayName = await resolveStepDisplayName({ flowVersionId: flowRun.flowVersionId, stepName: waitpoint.stepName, log })
         await runsMetadataQueue(log).add({
             id: flowRun.id,
             projectId: flowRun.projectId,
             status: FlowRunStatus.FAILED,
             finishTime: dayjs().toISOString(),
-            failedStep: { name: waitpoint.stepName, displayName: waitpoint.stepName, message },
+            failedStep: { name: waitpoint.stepName, displayName, message },
             failParentOnFailure: flowRun.failParentOnFailure,
         })
         return
@@ -57,7 +59,22 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
     })
 }
 
+async function resolveStepDisplayName({ flowVersionId, stepName, log }: ResolveStepDisplayNameParams): Promise<string> {
+    const flowVersion = await flowVersionService(log).getOne(flowVersionId)
+    if (isNil(flowVersion)) {
+        return stepName
+    }
+    const step = flowStructureUtil.getStep(stepName, flowVersion.trigger)
+    return step?.displayName ?? stepName
+}
+
 type HandleResumeDelayWaitpointParams = {
     data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>
+    log: FastifyBaseLogger
+}
+
+type ResolveStepDisplayNameParams = {
+    flowVersionId: string
+    stepName: string
     log: FastifyBaseLogger
 }
