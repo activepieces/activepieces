@@ -1,16 +1,15 @@
 import { chunk, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, FlowStatus, ProjectType, RunEnvironment, UserStatus, WorkerGroupScope } from '@activepieces/shared'
+import { ApEdition, AppInstance, DeploymentConfig, FlowStatus, ProjectType, RunEnvironment, UserStatus, WorkerGroupScope } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { healthStatusService } from '../../health/health.service'
-import { appMachineCache } from '../../helper/app-machine-cache'
 import { exceptionHandler } from '../../helper/exception-handler'
 import { sleep } from '../../helper/sleep'
 import { system } from '../../helper/system/system'
-import { captureLicenseKeyEvent, flushLicenseKeyPostHogEvents, LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE, LicenseKeyPostHogEvents, SetupReportApp, SetupReportHealth, SetupReportProperties, SetupReportWorker, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
+import { captureLicenseKeyEvent, flushLicenseKeyPostHogEvents, LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE, LicenseKeyPostHogEvents, SetupReportApp, SetupReportConfig, SetupReportHealth, SetupReportInfra, SetupReportProperties, SetupReportWorker, TotalRunsPerDayProperties } from '../../helper/telemetry.utils'
 import { platformConfigurationService } from '../../platform/platform-configuration.service'
 import { projectRepo } from '../../project/project-repo'
 import { userRepo } from '../../user/user-service'
@@ -258,22 +257,18 @@ async function collectSetupInfo({ edition, platformIds, log }: {
         if (edition === ApEdition.CLOUD) {
             return { workersByPlatform: await groupDedicatedWorkersByPlatform({ platformIds, onlineWorkers }) }
         }
-        const [appInstances, database] = await Promise.all([
-            appMachineCache.list(),
-            healthStatusService(log).checkDatabaseHealth(),
-        ])
+        const deployment = await healthStatusService(log).collectDeploymentDiagnostics()
         return {
-            apps: appInstances.map((appInstance): SetupReportApp => ({
-                cpuCores: appInstance.cpuCores,
-                ramTotalBytes: appInstance.ramTotalBytes,
-                diskTotalBytes: appInstance.diskTotalBytes,
-                diskPercentage: appInstance.diskPercentage,
-                version: appInstance.version,
-                eventLoopDelayMs: appInstance.eventLoopDelayMs,
-            })),
+            apps: deployment.apps.map(toSetupReportApp),
             deploymentWorkers: toWorkerSetup(onlineWorkers),
+            infra: {
+                database: deployment.database,
+                redis: deployment.redis,
+                storage: deployment.storage,
+            },
+            config: toSetupReportConfig(deployment.config),
             health: {
-                database,
+                database: deployment.database.ok,
                 release: healthStatusService(log).getReleaseHealth(onlineWorkers.map((worker) => worker.information.workerProps.version)),
             },
         }
@@ -283,6 +278,29 @@ async function collectSetupInfo({ edition, platformIds, log }: {
         return {}
     }
     return data
+}
+
+function toSetupReportApp(appInstance: AppInstance): SetupReportApp {
+    return {
+        cpuCores: appInstance.cpuCores,
+        ramTotalBytes: appInstance.ramTotalBytes,
+        diskTotalBytes: appInstance.diskTotalBytes,
+        diskPercentage: appInstance.diskPercentage,
+        version: appInstance.version,
+        eventLoopDelayMs: appInstance.eventLoopDelayMs,
+    }
+}
+
+function toSetupReportConfig(config: DeploymentConfig): SetupReportConfig {
+    return {
+        executionMode: config.executionMode,
+        fileStorageLocation: config.fileStorageLocation,
+        sandboxMemoryLimitKb: config.sandboxMemoryLimitKb,
+        s3SignedUrls: config.s3SignedUrls,
+        s3Region: config.s3Region,
+        projectRateLimiterEnabled: config.projectRateLimiterEnabled,
+        defaultConcurrentJobsLimit: config.defaultConcurrentJobsLimit,
+    }
 }
 
 async function queryOnlineWorkers(): Promise<WorkerMachine[]> {
@@ -343,6 +361,8 @@ function buildSetupReportBody({ platformId, edition, reportedAt, setupInfo }: {
         ...spreadIfDefined('apps', setupInfo.apps),
         ...spreadIfDefined('workers', workerSetup?.workers),
         ...spreadIfDefined('workersTotal', workerSetup?.workersTotal),
+        ...spreadIfDefined('infra', setupInfo.infra),
+        ...spreadIfDefined('config', setupInfo.config),
         ...spreadIfDefined('health', setupInfo.health),
     }
 }
@@ -368,6 +388,8 @@ type WorkerSetup = {
 
 type SetupInfo = {
     apps?: SetupReportApp[]
+    infra?: SetupReportInfra
+    config?: SetupReportConfig
     health?: SetupReportHealth
     deploymentWorkers?: WorkerSetup
     workersByPlatform?: Map<string, WorkerSetup>

@@ -22,7 +22,7 @@ We value transparency in data collection and assure you that we do not collect a
 
 # Deployment setup
 
-Licensed instances also send a daily snapshot of the *shape* of the deployment: how many app replicas and workers are running, their CPU / memory / disk sizes, their versions, worker configuration, and the database and release health checks. It carries no hostnames, no IP addresses, and nothing from your flows, your data or your connections.
+Licensed instances also send a daily snapshot of the *shape* of the deployment: how many app replicas and workers are running, their CPU / memory / disk sizes, their versions, worker configuration, the database / Redis / storage round-trips, the deployment settings shown on your diagnostics page (execution mode, storage location, sandbox memory limit, concurrency), and the release health check. It is the same information as **Platform → Infrastructure → Health**, and it carries no hostnames, no IP addresses, no storage endpoint, and nothing from your flows, your data or your connections.
 
 We use it to answer support questions without asking you to gather diagnostics, and to see which deployment shapes a release is about to affect before we ship it.
 

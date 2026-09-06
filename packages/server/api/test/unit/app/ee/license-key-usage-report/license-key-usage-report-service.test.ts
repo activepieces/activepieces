@@ -9,11 +9,14 @@ const {
     mockAppMachineList,
     mockWorkerMachineFind,
     mockCheckDatabaseHealth,
+    mockCollectDeploymentDiagnostics,
     mockGetReleaseHealth,
     mockGetEdition,
     mockFilterPlatformsWithInfraSetupTelemetryEnabled,
 } = vi.hoisted(() => {
     const mockGetRawMany = vi.fn()
+    const mockAppMachineList = vi.fn().mockResolvedValue([])
+    const mockCheckDatabaseHealth = vi.fn().mockResolvedValue(true)
     const mockQueryBuilder = {
         innerJoin: vi.fn().mockReturnThis(),
         select: vi.fn().mockReturnThis(),
@@ -30,9 +33,25 @@ const {
         mockExceptionHandle: vi.fn(),
         mockCaptureLicenseKeyEvent: vi.fn(),
         mockFlushLicenseKeyPostHogEvents: vi.fn().mockResolvedValue(undefined),
-        mockAppMachineList: vi.fn().mockResolvedValue([]),
+        mockAppMachineList,
         mockWorkerMachineFind: vi.fn().mockResolvedValue([]),
-        mockCheckDatabaseHealth: vi.fn().mockResolvedValue(true),
+        mockCheckDatabaseHealth,
+        mockCollectDeploymentDiagnostics: vi.fn(async () => ({
+            database: { ok: await mockCheckDatabaseHealth(), latencyMs: 4 },
+            redis: { ok: true, latencyMs: 1 },
+            storage: { ok: true, latencyMs: 12 },
+            config: {
+                executionMode: 'SANDBOX_CODE_ONLY',
+                fileStorageLocation: 's3',
+                sandboxMemoryLimitKb: 1_048_576,
+                s3SignedUrls: true,
+                s3Endpoint: 'https://minio.internal:9000',
+                s3Region: 'us-east-1',
+                projectRateLimiterEnabled: true,
+                defaultConcurrentJobsLimit: 10,
+            },
+            apps: await mockAppMachineList(),
+        })),
         mockGetReleaseHealth: vi.fn(() => ({
             current: '0.90.0',
             workers: { total: 0, versionMismatched: 0, mismatchedVersions: [] },
@@ -152,7 +171,7 @@ vi.mock('../../../../../src/app/workers/machine/machine-cache', () => ({
 
 vi.mock('../../../../../src/app/health/health.service', () => ({
     healthStatusService: vi.fn(() => ({
-        checkDatabaseHealth: mockCheckDatabaseHealth,
+        collectDeploymentDiagnostics: mockCollectDeploymentDiagnostics,
         getReleaseHealth: mockGetReleaseHealth,
     })),
 }))
@@ -422,6 +441,51 @@ describe('licenseKeyUsageReportService', () => {
             }])
             expect(workers[0].ip).toBeUndefined()
             expect(workers[0].workerId).toBeUndefined()
+        })
+
+        it('should report the deployment config without the s3 endpoint', async () => {
+            mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
+
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
+
+            const { config } = capturesOf('platform_setup_report')[0].properties
+            expect(config).toEqual({
+                executionMode: 'SANDBOX_CODE_ONLY',
+                fileStorageLocation: 's3',
+                sandboxMemoryLimitKb: 1_048_576,
+                s3SignedUrls: true,
+                s3Region: 'us-east-1',
+                projectRateLimiterEnabled: true,
+                defaultConcurrentJobsLimit: 10,
+            })
+            expect(config.s3Endpoint).toBeUndefined()
+        })
+
+        it('should report the infra round-trips alongside the health checks', async () => {
+            mockQueries({ licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }] })
+
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
+
+            expect(capturesOf('platform_setup_report')[0].properties.infra).toEqual({
+                database: { ok: true, latencyMs: 4 },
+                redis: { ok: true, latencyMs: 1 },
+                storage: { ok: true, latencyMs: 12 },
+            })
+        })
+
+        it('should omit the config and infra on cloud, where the fleet is not the customer\'s', async () => {
+            mockGetEdition.mockReturnValue('cloud')
+            mockQueries({
+                licenseKeys: [{ platformId: 'platform-1', licenseKey: 'key-123' }],
+                workerGroups: [{ platformId: 'platform-1', workerGroupId: 'group-1' }],
+            })
+
+            await licenseKeyUsageReportService(mockLog).reportAllPlatforms()
+
+            const { config, infra, apps } = capturesOf('platform_setup_report')[0].properties
+            expect(config).toBeUndefined()
+            expect(infra).toBeUndefined()
+            expect(apps).toBeUndefined()
         })
 
         it('should exclude offline workers from the report', async () => {

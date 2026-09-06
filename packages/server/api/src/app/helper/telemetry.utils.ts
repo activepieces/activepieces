@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, AppInstance, FlowRunStatus, GetSystemHealthChecksResponse, MachineInformation, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, AppInstance, DeploymentConfig, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, MachineInformation, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
@@ -187,6 +187,10 @@ export type SetupReportWorker = Pick<MachineInformation, 'totalCpuCores' | 'tota
 
 export type SetupReportHealth = Pick<GetSystemHealthChecksResponse, 'database' | 'release'>
 
+export type SetupReportInfra = Pick<GetDiagnosticsResponse, 'database' | 'redis' | 'storage'>
+
+export type SetupReportConfig = Omit<DeploymentConfig, 's3Endpoint'>
+
 export type SetupReportProperties = {
     platformId: string
     edition: ApEdition
@@ -194,6 +198,8 @@ export type SetupReportProperties = {
     apps?: SetupReportApp[]
     workers?: SetupReportWorker[]
     workersTotal?: number
+    infra?: SetupReportInfra
+    config?: SetupReportConfig
     health?: SetupReportHealth
 }
 
