@@ -43,7 +43,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
             projectId: flowRun.projectId,
             status: FlowRunStatus.FAILED,
             finishTime: dayjs().toISOString(),
-            failedStep: { name: 'trigger', displayName: 'Trigger', message },
+            failedStep: { name: waitpoint.stepName, displayName: waitpoint.stepName, message },
             failParentOnFailure: flowRun.failParentOnFailure,
         })
         return
