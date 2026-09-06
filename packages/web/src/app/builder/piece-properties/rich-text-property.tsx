@@ -85,6 +85,7 @@ function RichTextProperty({
       <FormFieldMentionInput
         key={mode}
         disabled={disabled}
+        ariaLabel={property.displayName}
         initialValue={value ?? ''}
         onChange={onChange}
         outputFormat={mode === 'html' ? 'html' : 'text'}

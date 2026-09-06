@@ -300,6 +300,7 @@ export const selectGenericFormComponentForProperty = ({
               initialValue={field.value}
               onChange={field.onChange}
               enableMarkdown={enableMarkdownForInputWithMention}
+              ariaLabel={property.displayName}
             ></FormFieldMentionInput>
           ) : (
             <SecretInput
@@ -359,6 +360,7 @@ export const selectGenericFormComponentForProperty = ({
                 'placeholder' in property ? property.placeholder : undefined
               }
               enableMarkdown={enableMarkdownForInputWithMention}
+              ariaLabel={property.displayName}
             ></FormFieldMentionInput>
           ) : (
             <SecretInput

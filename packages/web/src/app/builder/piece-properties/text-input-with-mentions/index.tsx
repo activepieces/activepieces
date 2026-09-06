@@ -13,6 +13,7 @@ export const FormFieldMentionInput = (props: TextInputWithMentionsProps) => {
 
 type TextInputWithMentionsProps = {
   id?: string;
+  ariaLabel?: string;
   className?: string;
   wrapperClassName?: string;
   initialValue?: unknown;

@@ -88,6 +88,7 @@ function AutoFormFieldWrapper({
             disabled={disabled}
             onChange={field.onChange}
             initialValue={field.value ?? null}
+            ariaLabel={isAuthProperty ? t('Connection') : property.displayName}
           />
         )}
 

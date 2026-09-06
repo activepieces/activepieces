@@ -3,7 +3,7 @@ import {
   formulaEvaluator,
   typeCheckTiptapDoc,
 } from '@activepieces/core-formula';
-import { isNil } from '@activepieces/core-utils';
+import { isNil, spreadIfDefined } from '@activepieces/core-utils';
 import { flowStructureUtil } from '@activepieces/shared';
 import { Extensions } from '@tiptap/core';
 import { Document } from '@tiptap/extension-document';
@@ -66,6 +66,7 @@ import { textMentionUtils } from './text-input-utils';
 
 type TiptapEditorProps = {
   id?: string;
+  ariaLabel?: string;
   className?: string;
   wrapperClassName?: string;
   initialValue?: unknown;
@@ -226,6 +227,7 @@ function RichTextToolbar({
 
 export const TiptapEditor = ({
   id,
+  ariaLabel,
   className,
   wrapperClassName,
   initialValue,
@@ -457,7 +459,8 @@ export const TiptapEditor = ({
         return true;
       },
       attributes: {
-        ...(id ? { id } : {}),
+        ...spreadIfDefined('id', id),
+        ...spreadIfDefined('aria-label', ariaLabel),
         role: 'textbox',
         'aria-multiline': 'true',
         class: cn(
