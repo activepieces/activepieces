@@ -336,6 +336,7 @@ export const createMockPieceMetadata = (
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
         contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
+        i18n: pieceMetadata?.i18n,
     }
 }
 
