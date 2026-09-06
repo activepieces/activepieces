@@ -1,5 +1,5 @@
-import { ApId, Permission, SeekPage, UserId } from '@activepieces/core-utils'
-import { CountFlowsRequest, CreateFlowRequest, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
+import { ActivepiecesError, ApId, ErrorCode, isNil, Permission, SeekPage, UserId } from '@activepieces/core-utils'
+import { CountFlowsRequest, CreateFlowRequest, FLOW_VERSION_TOKEN_HEADER, FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil, FlowTrigger, flowVersionToken, GetFlowQueryParamsRequest, GetFlowTemplateRequestQuery, GitPushOperationType, ListFlowsRequest, PopulatedFlow, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SharedTemplate } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -77,6 +77,11 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.projectId,
+        })
+
+        assertOperationIsNotStale({
+            expected: request.headers[FLOW_VERSION_TOKEN_HEADER],
+            actual: flowVersionToken.of(flow.version),
         })
 
         const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED && flow.status === FlowStatus.DISABLED
@@ -167,6 +172,16 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
 
 function actorUserId(request: FastifyRequest): UserId | undefined {
     return request.principal.type === PrincipalType.USER ? request.principal.id : undefined
+}
+
+function assertOperationIsNotStale({ expected, actual }: { expected: string | string[] | undefined, actual: string }): void {
+    if (isNil(expected) || Array.isArray(expected) || expected === actual) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.FLOW_VERSION_CONFLICT,
+        params: { expected, actual },
+    })
 }
 
 function cleanOperation(operation: FlowOperationRequest): FlowOperationRequest {
