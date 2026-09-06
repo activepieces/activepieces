@@ -52,11 +52,16 @@ export const deno = {
                     return
                 }
 
-                if (message.success) {
-                    resolve(message.result)
+                if (!message.success) {
+                    reject(buildError({ message: message.error, stdout: userOutput, stderr: capturedStderr }))
+                }
+                else if (code !== 0) {
+                    // e.g. an unhandled rejection fired after the result was printed — deno exits
+                    // non-zero, so the run must fail even though a success marker exists.
+                    reject(buildError({ message: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else {
-                    reject(buildError({ message: message.error, stdout: userOutput, stderr: capturedStderr }))
+                    resolve(message.result)
                 }
             })
 

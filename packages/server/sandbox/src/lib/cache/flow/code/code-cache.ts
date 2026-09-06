@@ -2,6 +2,7 @@ import path from 'node:path'
 import { assertSafeCodeNamespace, assertSafePathSegment } from '../../../utils/path-safety'
 
 const STEP_ENTRY_FILENAME = 'index.ts'
+const COMPILED_CODE_FILENAME = 'index.js'
 
 export const codeCache = (codesFolderPath: string) => ({
     flowVersionDir(flowVersionId: string): string {
@@ -17,6 +18,10 @@ export const codeCache = (codesFolderPath: string) => ({
 
     stepEntryPath(ref: StepRef): string {
         return path.join(this.stepDir(ref), STEP_ENTRY_FILENAME)
+    },
+
+    compiledStepPath(ref: StepRef): string {
+        return path.join(this.stepDir(ref), COMPILED_CODE_FILENAME)
     },
 })
 
