@@ -4,6 +4,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { docs as googleDocs } from '@googleapis/docs';
 import { editTemplateActionOutputSchema } from '../output-schemas';
 import { documentIdProp } from '../common/props';
+import { toImageReplacements } from '../common/image-replacements';
 
 const PLACEHOLDER_FORMATS: Record<string, string> = {
   'curly_braces': '{{KEY}}',
@@ -119,23 +120,3 @@ export const createDocumentBasedOnTemplate = createAction({
     return res;
   },
 });
-
-function toImageReplacements(images: unknown): ImageReplacement[] {
-  if (Array.isArray(images)) {
-    return images.flatMap((row) => {
-      if (typeof row !== 'object' || row === null || !('imageObjectId' in row) || !('url' in row)) {
-        return [];
-      }
-      return [{ imageObjectId: String(row.imageObjectId), url: String(row.url) }];
-    });
-  }
-  if (typeof images === 'object' && images !== null) {
-    return Object.entries(images).map(([imageObjectId, url]) => ({ imageObjectId, url: String(url) }));
-  }
-  return [];
-}
-
-type ImageReplacement = {
-  imageObjectId: string;
-  url: string;
-};
