@@ -42,12 +42,14 @@ export default function UsersPage() {
   const {
     data: usersData,
     isLoading: usersLoading,
+    isError: usersError,
     refetch: refetchUsers,
   } = platformUserHooks.useUsers();
 
   const {
     data: invitationsData,
     isLoading: invitationsLoading,
+    isError: invitationsError,
     refetch: refetchInvitations,
   } = platformUserHooks.usePlatformInvitations();
 
@@ -75,6 +77,7 @@ export default function UsersPage() {
   }, [usersData, invitationsData]);
 
   const isLoading = usersLoading || invitationsLoading;
+  const isError = usersError || invitationsError;
 
   const { mutate: deleteUser } = platformUserMutations.useDeleteUser({
     onSuccess: refetch,
@@ -139,6 +142,9 @@ export default function UsersPage() {
           }}
           hidePagination={true}
           isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('users')}
+          onRetry={refetch}
           toolbarButtons={[
             <Button
               key="invite"

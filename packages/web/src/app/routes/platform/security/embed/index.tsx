@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -36,8 +37,12 @@ const EmbedPage = () => {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCloud = edition === ApEdition.CLOUD;
 
-  const { subdomain, isLoading: isSubdomainLoading } =
-    embedSubdomainQueries.useCurrentEmbedSubdomain();
+  const {
+    subdomain,
+    isLoading: isSubdomainLoading,
+    isError: isSubdomainError,
+    refetch: refetchSubdomain,
+  } = embedSubdomainQueries.useCurrentEmbedSubdomain();
   const {
     data,
     isLoading: isKeysLoading,
@@ -116,6 +121,9 @@ const EmbedPage = () => {
       );
 
   const displayedStep = steps[displayedIndex];
+  const subdomainStepFailed =
+    isSubdomainError &&
+    (displayedStep?.kind === 'hostname' || displayedStep?.kind === 'dns');
 
   return (
     <LockedFeatureGuard
@@ -162,6 +170,11 @@ const EmbedPage = () => {
           <div className="min-w-0">
             {isLoading ? (
               <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+            ) : subdomainStepFailed ? (
+              <DataFetchErrorState
+                entity={t('the embed subdomain')}
+                onRetry={refetchSubdomain}
+              />
             ) : displayedStep?.kind === 'hostname' ? (
               <HostnameStep subdomain={subdomain} />
             ) : displayedStep?.kind === 'dns' ? (

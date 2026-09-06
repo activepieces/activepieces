@@ -75,7 +75,6 @@ export const agentsQueries = {
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       enabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
   useMovePreview: ({
     id,
@@ -104,7 +103,6 @@ export const agentsQueries = {
       queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
-      meta: { showErrorDialog: !includeUsage, loadSubsetOptions: {} },
     }),
 };
 
