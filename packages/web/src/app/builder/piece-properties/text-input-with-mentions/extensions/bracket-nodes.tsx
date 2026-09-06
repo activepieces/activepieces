@@ -12,7 +12,8 @@ const BADGE_CLASS =
 const ZWS = '​';
 
 const fnNamePattern = AP_FUNCTIONS.map((f) => f.name).join('|');
-const inputRuleRegex = new RegExp(`(?<![a-z0-9_])(${fnNamePattern})\\($`);
+const inputRuleRegex = new RegExp(`(${fnNamePattern})\\($`);
+const WORD_CHAR_REGEX = /[a-z0-9_]/i;
 
 function buildInputRuleContent(fn: ApFunction, id: string): JSONContent[] {
   const content: JSONContent[] = [
@@ -74,10 +75,15 @@ export const FunctionStartNode = Node.create({
     return [
       new InputRule({
         find: inputRuleRegex,
-        handler: ({ range, match, chain }) => {
+        handler: ({ state, range, match, chain }) => {
           const fnName = match[1];
           const fn = AP_FUNCTIONS.find((f) => f.name === fnName);
           if (!fn) return;
+          const charBefore =
+            range.from > 0
+              ? state.doc.textBetween(range.from - 1, range.from)
+              : '';
+          if (WORD_CHAR_REGEX.test(charBefore)) return;
           const id = crypto.randomUUID();
           const content = buildInputRuleContent(fn, id);
           chain()
