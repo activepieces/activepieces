@@ -950,3 +950,5 @@ function flattenSampleData(
 
   return result;
 }
+
+export type { TiptapEditorProps };
