@@ -125,6 +125,19 @@ function serializeBody(
   }
   const contentType = headers['Content-Type'] ?? headers['content-type'] ?? '';
   if (contentType.includes('application/x-www-form-urlencoded')) {
+    if (typeof body === 'object' && body !== null) {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(body)) {
+        if (Array.isArray(value)) {
+          for (const item of value) {
+            params.append(`${key}[]`, String(item));
+          }
+        } else if (!isNil(value)) {
+          params.append(key, String(value));
+        }
+      }
+      return { body: params.toString(), extraHeaders: {}, isStream: false };
+    }
     return { body: new URLSearchParams(body as Record<string, string>).toString(), extraHeaders: {}, isStream: false };
   }
   return { body: JSON.stringify(body), extraHeaders: {}, isStream: false };
