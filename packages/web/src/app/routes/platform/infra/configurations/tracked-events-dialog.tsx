@@ -34,11 +34,6 @@ export const TrackedEventsDialog = () => {
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('Events we track')}</DialogTitle>
-          <DialogDescription>
-            {t(
-              'Product analytics sends these events, grouped by where they happen in the product.',
-            )}
-          </DialogDescription>
         </DialogHeader>
         <ScrollArea viewPortClassName="max-h-[60vh] p-px">
           <div className="flex flex-col gap-6">
