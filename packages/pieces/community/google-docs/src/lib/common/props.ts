@@ -76,44 +76,41 @@ export const documentIdProp = ({ description }: { description?: string } = {}) =
 
 			const drive = googleDrive({ version: 'v3', auth: authClient });
 
+			const trimmedSearchValue = searchValue?.trim() ?? '';
 			const q = ["mimeType='application/vnd.google-apps.document'", 'trashed = false'];
 
-			if (searchValue) {
-				q.push(`name contains '${searchValue}'`);
+			if (trimmedSearchValue.length > 0) {
+				q.push(`name contains '${escapeDriveQueryLiteral(trimmedSearchValue)}'`);
 			}
 
-			const options: DropdownOption<string>[] = [];
-			let nextPageToken: string | undefined = undefined;
+			const response = await drive.files.list({
+				q: q.join(' and '),
+				pageSize: DOCUMENT_DROPDOWN_PAGE_SIZE,
+				orderBy: 'createdTime desc',
+				fields: 'nextPageToken, files(id, name)',
+				supportsAllDrives: true,
+				includeItemsFromAllDrives: true,
+				corpora: 'allDrives',
+			});
 
-			do {
-				const response = await drive.files.list({
-					q: q.join(' and '),
-					pageToken: nextPageToken,
-					orderBy: 'createdTime desc',
-					fields: 'nextPageToken, files(id, name)',
-					supportsAllDrives: true,
-					includeItemsFromAllDrives: true,
-					corpora: 'allDrives',
-				});
+			const fileList: drive_v3.Schema$FileList = response.data;
 
-				const fileList: drive_v3.Schema$FileList = response.data;
-
-				for (const file of fileList.files ?? []) {
-					if (isNil(file.id) || isNil(file.name)) {
-						continue;
-					}
-					options.push({
-						label: file.name,
-						value: file.id,
-					});
-				}
-
-				nextPageToken = fileList.nextPageToken ?? undefined;
-			} while (nextPageToken);
+			const options: DropdownOption<string>[] = (fileList.files ?? []).flatMap((file) =>
+				isNil(file.id) || isNil(file.name) ? [] : [{ label: file.name, value: file.id }],
+			);
 
 			return {
 				disabled: false,
+				placeholder: isNil(fileList.nextPageToken)
+					? undefined
+					: `Showing the first ${options.length} documents. Type to narrow the list.`,
 				options,
 			};
 		},
 	});
+
+function escapeDriveQueryLiteral(value: string): string {
+	return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+const DOCUMENT_DROPDOWN_PAGE_SIZE = 1000;
