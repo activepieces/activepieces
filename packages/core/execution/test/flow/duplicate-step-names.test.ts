@@ -121,6 +121,21 @@ describe('duplicate step names', () => {
         ])
     })
 
+    it('rejects an imported flow that repeats a step name', () => {
+        const authored = flowOf(['step_1', 'step_2', 'step_2', 'step_3'])
+
+        expect(() =>
+            flowOperations.apply(flowOf([]), {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: {
+                    displayName: authored.displayName,
+                    trigger: authored.trigger,
+                    notes: [],
+                },
+            } as never),
+        ).toThrow(ErrorCode.FLOW_OPERATION_INVALID)
+    })
+
     it('refuses to add a step under a name that already exists', () => {
         const base = flowOf(['step_1', 'step_2'])
 
