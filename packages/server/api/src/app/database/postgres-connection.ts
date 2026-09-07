@@ -433,8 +433,8 @@ import { AddAiProviderStatus1837000000000 } from './migration/postgres/183700000
 import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
 import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
 import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
-import { AddAgentIdsGinIndexToFlowVersion1842000000000 } from './migration/postgres/1842000000000-AddAgentIdsGinIndexToFlowVersion'
 import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841000000000-AddPlatformConfiguration'
+import { AddAgentIdsGinIndexToFlowVersion1842000000000 } from './migration/postgres/1842000000000-AddAgentIdsGinIndexToFlowVersion'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
