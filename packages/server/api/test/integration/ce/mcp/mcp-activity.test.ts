@@ -157,6 +157,28 @@ describe('MCP activity', () => {
             expect(data.map((row: { id: string }) => row.id)).not.toContain(old)
         })
 
+        it('rejects a malformed created window instead of letting it reach the database', async () => {
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+
+            const after = await ctx.get('/v1/mcp-activity?createdAfter=invalid')
+            expect(after.statusCode).toBe(400)
+
+            const before = await ctx.get('/v1/mcp-activity?createdBefore=2026-13-45T99:99:99Z')
+            expect(before.statusCode).toBe(400)
+        })
+
+        it('accepts an offset-bearing created window, not only UTC', async () => {
+            const recent = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
+            const old = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(10) })
+
+            const response = await ctx.get(`/v1/mcp-activity?createdAfter=${encodeURIComponent(daysAgo(7).replace('Z', '+00:00'))}`)
+
+            expect(response.statusCode).toBe(200)
+            const { data } = response.json()
+            expect(data.map((row: { id: string }) => row.id)).toEqual([recent])
+            expect(data.map((row: { id: string }) => row.id)).not.toContain(old)
+        })
+
         it('matches platform-server activity on the platform-wide project filter', async () => {
             const scoped = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
             const platformWide = await insertActivityRow({ userId: ctx.user.id, projectId: null })

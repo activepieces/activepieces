@@ -53,8 +53,8 @@ export const ListMcpActivityRequestQuery = z.object({
     memberIds: OptionalArrayFromQuery(ApId),
     clientKeys: OptionalArrayFromQuery(McpOAuthClientKey),
     statuses: OptionalArrayFromQuery(McpActivityStatus),
-    createdAfter: z.string().optional(),
-    createdBefore: z.string().optional(),
+    createdAfter: z.iso.datetime({ offset: true }).optional(),
+    createdBefore: z.iso.datetime({ offset: true }).optional(),
 })
 
 export type ListMcpActivityRequestQuery = z.infer<typeof ListMcpActivityRequestQuery>
