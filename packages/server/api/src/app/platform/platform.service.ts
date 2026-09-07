@@ -425,7 +425,10 @@ async function assertSignInMethodRemains({ params, platform, federatedAuthProvid
         return
     }
     const emailRemains = params.emailAuthEnabled ?? platform.emailAuthEnabled
-    const googleConfigured = !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
+    const googleClientId = system.get(AppSystemProp.GOOGLE_CLIENT_ID)
+    const googleClientSecret = system.get(AppSystemProp.GOOGLE_CLIENT_SECRET)
+    const googleConfigured = !isNil(googleClientId) && googleClientId.trim().length > 0
+        && !isNil(googleClientSecret) && googleClientSecret.trim().length > 0
     const googleRemains = googleConfigured && (params.googleAuthEnabled ?? platform.googleAuthEnabled)
     const samlRemains = isNil(federatedAuthProviders)
         ? await hasSamlConfigured()
