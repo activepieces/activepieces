@@ -17,6 +17,7 @@ import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -90,22 +91,10 @@ const SamlWizard = ({
     connected || !domainVerified ? 'domain' : 'saml',
   );
 
-  const { mutate: disableSaml, isPending: isDisabling } = useMutation({
-    mutationFn: async () => {
-      await platformApi.update(
-        { federatedAuthProviders: { saml: null } },
-        platform.id,
-      );
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
-  });
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
 
   const disableAction = connected
-    ? { onDisable: () => disableSaml(), isDisabling }
+    ? { onDisable: () => setShowDisableConfirm(true) }
     : null;
 
   return (
@@ -133,6 +122,41 @@ const SamlWizard = ({
           disableAction={disableAction}
         />
       </div>
+      <ConfirmationDeleteDialog
+        open={showDisableConfirm}
+        onOpenChange={setShowDisableConfirm}
+        title={t('Disable SAML SSO?')}
+        message={
+          platform.ssoDomain
+            ? t(
+                "Your IdP metadata and certificate will be deleted — you'll need to get them from your identity provider again to turn SSO back on. {ssoDomain} stays verified.",
+                { ssoDomain: platform.ssoDomain },
+              )
+            : t(
+                "Your IdP metadata and certificate will be deleted — you'll need to get them from your identity provider again to turn SSO back on.",
+              )
+        }
+        buttonText={t('Disable SSO')}
+        entityName={t('SAML 2.0')}
+        mutationFn={async () => {
+          await platformApi.update(
+            { federatedAuthProviders: { saml: null } },
+            platform.id,
+          );
+          await refetch();
+        }}
+        onSuccess={() => {
+          toast.success(t('Single sign-on settings updated'), {
+            duration: 3000,
+          });
+          onClose();
+        }}
+        onError={(error) =>
+          toast.error(
+            api.extractServerErrorMessage(error, t("Couldn't disable SSO")),
+          )
+        }
+      />
     </>
   );
 };
@@ -307,7 +331,6 @@ const DomainStep = ({
               type="button"
               variant="basic"
               className="text-destructive"
-              loading={disableAction.isDisabling}
               onClick={disableAction.onDisable}
             >
               {t('Disable')}
@@ -478,7 +501,6 @@ Activepieces
                 type="button"
                 variant="basic"
                 className="text-destructive mr-auto"
-                loading={disableAction.isDisabling}
                 onClick={disableAction.onDisable}
               >
                 {t('Disable')}
@@ -602,7 +624,6 @@ type WizardStep = 'domain' | 'saml';
 
 type DisableAction = {
   onDisable: () => void;
-  isDisabling: boolean;
 } | null;
 
 type ConfigureSamlDialogProps = {
