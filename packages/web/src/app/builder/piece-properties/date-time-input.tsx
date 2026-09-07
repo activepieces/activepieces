@@ -20,19 +20,6 @@ import {
 
 import { FormFieldMentionInput } from './text-input-with-mentions';
 
-const LOCAL_ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ssXXX";
-
-function parseSelectedDate(value: unknown): Date | undefined {
-  if (typeof value !== 'string') {
-    return undefined;
-  }
-  if (value.trim().length === 0 || value.includes('{{')) {
-    return undefined;
-  }
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
-}
-
 export function DateTimeInput({
   value,
   onChange,
@@ -64,7 +51,7 @@ export function DateTimeInput({
   };
 
   return (
-    <div className="relative">
+    <div className="relative [&_[role=textbox]]:pr-9">
       <FormFieldMentionInput
         key={editorKey}
         initialValue={value}
@@ -111,6 +98,19 @@ export function DateTimeInput({
     </div>
   );
 }
+
+function parseSelectedDate(value: unknown): Date | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  if (value.trim().length === 0 || value.includes('{{')) {
+    return undefined;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+const LOCAL_ISO_FORMAT = "yyyy-MM-dd'T'HH:mm:ssXXX";
 
 type DateTimeInputProps = {
   value: unknown;
