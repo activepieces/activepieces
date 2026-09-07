@@ -40,8 +40,11 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
   const [searchParams] = useSearchParams();
   const [selected, setSelected] = useState<PopulatedMcpActivity | null>(null);
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: projects = [] } = projectCollectionUtils.useAll();
   const isPrivileged = useIsPlatformPrivileged();
+  const { data: memberProjects = [] } = projectCollectionUtils.useAll();
+  const { data: platformProjects = [] } =
+    projectCollectionUtils.useAllPlatformProjects();
+  const projects = isPrivileged ? platformProjects : memberProjects;
   const { data: users } = platformUserHooks.useUsers();
 
   const request = useMemo(
