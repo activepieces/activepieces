@@ -7,6 +7,7 @@ import { insertTableRowActionOutputSchema } from '../output-schemas';
 export const insertTableRow = createAction({
   auth: googleDocsAuth,
   name: 'insert_table_row',
+  classification: 'WRITE',
   displayName: 'Insert Table Row',
   description: 'Insert a row into an existing table in a Google Docs document',
   audience: 'ai',

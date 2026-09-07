@@ -8,6 +8,7 @@ import { authenticatedUserBodyOutputSchema } from '../../output-schemas';
 export const githubGetAuthenticatedUserAction = createAction({
   auth: githubAuth,
   name: 'get_authenticated_user',
+  classification: 'READ',
   displayName: 'Get Authenticated User (Agent)',
   description: 'Returns the profile of the connected account.',
   audience: 'ai',

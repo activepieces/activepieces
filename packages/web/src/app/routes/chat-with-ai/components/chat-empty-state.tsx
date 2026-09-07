@@ -1,11 +1,6 @@
+import { PersonalizationUseCase } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  ArrowUpRight,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Settings,
-} from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   CSSProperties,
@@ -20,6 +15,12 @@ import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePersonalization } from '@/features/chat/lib/use-personalization';
+import { DEFAULT_USE_CASES } from '@/features/chat/use-cases/default-use-cases';
+import {
+  ResolvedUseCase,
+  UseCaseCard,
+} from '@/features/chat/use-cases/use-case-card';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,11 @@ export function EmptyState({
 }) {
   const { data: currentUser } = userHooks.useCurrentUser();
   const firstName = currentUser?.firstName ?? '';
+  const personalization = usePersonalization({ enabled: !incognito });
+  const cards = useMemo(
+    () => resolveCards({ researched: personalization.useCases }),
+    [personalization.useCases],
+  );
 
   if (incognito) {
     return (
@@ -59,7 +65,7 @@ export function EmptyState({
           </div>
         </div>
         <CollapseOnInput collapsed={hasInput}>
-          <ExampleCards onSuggestionClick={onSuggestionClick} />
+          <ExampleCards cards={cards} onSuggestionClick={onSuggestionClick} />
         </CollapseOnInput>
       </div>
     </div>
@@ -80,7 +86,7 @@ function CollapseOnInput({
         collapsed ? 'grid-rows-[0fr] opacity-0' : 'grid-rows-[1fr] opacity-100',
       )}
     >
-      <div className="overflow-hidden">{children}</div>
+      <div className="min-h-0 overflow-y-clip">{children}</div>
     </div>
   );
 }
@@ -281,8 +287,10 @@ const MarqueeColumn = memo(function MarqueeColumn({
 });
 
 function ExampleCards({
+  cards,
   onSuggestionClick,
 }: {
+  cards: ResolvedUseCase[];
   onSuggestionClick: (text: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -291,35 +299,32 @@ function ExampleCards({
   const handleToggle = () => setExpanded((value) => !value);
 
   return (
-    <div className="mt-16">
+    <div className={cn('mt-16', expanded && 'pb-16')}>
       {expanded ? (
         <motion.div
-          className="grid grid-cols-1 gap-4 sm:grid-cols-6"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
           initial={reducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.18, ease: 'easeOut' }}
         >
-          {ALL_EXAMPLE_CARDS.map((card, i) => (
-            <ExampleCard
-              key={card.title}
+          {cards.map((card) => (
+            <UseCaseCard
+              key={card.key}
               card={card}
               delay={0}
-              animateIn={false}
-              onSuggestionClick={onSuggestionClick}
-              largeText={i < 2}
-              className={i < 2 ? 'sm:col-span-3' : 'sm:col-span-2'}
+              onSelect={onSuggestionClick}
+              className="h-full w-full"
             />
           ))}
         </motion.div>
       ) : (
         <CardCarousel>
-          {EXAMPLE_CARDS.map((card, i) => (
-            <ExampleCard
-              key={card.title}
+          {cards.slice(0, COLLAPSED_CARD_COUNT).map((card, i) => (
+            <UseCaseCard
+              key={card.key}
               card={card}
               delay={0.15 + i * 0.08}
-              onSuggestionClick={onSuggestionClick}
-              large
+              onSelect={onSuggestionClick}
             />
           ))}
         </CardCarousel>
@@ -428,7 +433,7 @@ function CardCarousel({ children }: { children: ReactNode }) {
       <div
         ref={scrollerRef}
         onScroll={updateEdges}
-        className="flex snap-x gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-0.5 flex snap-x gap-4 overflow-x-auto scroll-smooth px-0.5 pt-0.5 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
       </div>
@@ -476,77 +481,6 @@ function CarouselArrow({
   );
 }
 
-function ExampleCard({
-  card,
-  delay,
-  onSuggestionClick,
-  large = false,
-  largeText = false,
-  animateIn = true,
-  className,
-}: {
-  card: ExampleCardData;
-  delay: number;
-  onSuggestionClick: (text: string) => void;
-  large?: boolean;
-  largeText?: boolean;
-  animateIn?: boolean;
-  className?: string;
-}) {
-  const emphasized = large || largeText;
-  const [imgError, setImgError] = useState(false);
-  const src = `/chat-suggestions/cards/${card.id}.webp`;
-
-  return (
-    <motion.button
-      type="button"
-      className={cn(
-        'group relative flex aspect-video cursor-pointer overflow-hidden rounded-xl text-left ring-1 ring-border/60',
-        large
-          ? 'w-[78vw] max-w-[360px] shrink-0 snap-start sm:w-[360px]'
-          : 'w-full',
-        imgError && 'bg-neutral-900',
-        className,
-      )}
-      onClick={() => onSuggestionClick(card.prompt)}
-      initial={animateIn ? { opacity: 0, y: 8 } : false}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay }}
-    >
-      {!imgError && (
-        <img
-          src={src}
-          alt=""
-          aria-hidden
-          loading="lazy"
-          onError={() => setImgError(true)}
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-        />
-      )}
-      <div
-        aria-hidden
-        className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"
-      />
-      <div
-        className={cn(
-          'relative z-10 flex h-full w-full items-end justify-start',
-          emphasized ? 'p-5' : 'p-4',
-        )}
-      >
-        <h3
-          className={cn(
-            'font-bold leading-tight text-white [text-shadow:_0_1px_12px_rgb(0_0_0_/_60%)]',
-            emphasized ? 'text-2xl sm:text-3xl' : 'text-lg',
-          )}
-        >
-          {t(card.title)}
-        </h3>
-      </div>
-      <ArrowUpRight className="absolute right-3 top-3 z-10 size-4 text-white/0 transition-colors duration-300 group-hover:text-white/90" />
-    </motion.button>
-  );
-}
-
 const GREETING_HEADLINES: GreetingHeadline[] = [
   { withName: 'Dream big, {name}.', plain: 'Dream big.' },
   { withName: 'Think bigger, {name}.', plain: 'Think bigger.' },
@@ -579,83 +513,37 @@ const FEATURED_APP_NAMES = [
   '@activepieces/piece-openai',
 ];
 
-const EXAMPLE_CARDS: ExampleCardData[] = [
-  {
-    id: 'fill-pipeline',
-    title: 'Fill my pipeline',
-    prompt: 'Fill my pipeline',
-  },
-  { id: 'close-deals', title: 'Close my deals', prompt: 'Close my deals' },
-  {
-    id: 'take-from-rivals',
-    title: 'Take customers from my rivals',
-    prompt: 'Take customers from my rivals',
-  },
-  { id: 'clone-me', title: 'Clone me', prompt: 'Clone me' },
-];
-
-const MORE_EXAMPLE_CARDS: ExampleCardData[] = [
-  { id: 'chase-leads', title: 'Chase my leads', prompt: 'Chase my leads' },
-  {
-    id: 'get-invoices-paid',
-    title: 'Get my invoices paid',
-    prompt: 'Get my invoices paid',
-  },
-  {
-    id: 'chase-late-payers',
-    title: 'Chase down my late payers',
-    prompt: 'Chase down my late payers',
-  },
-  {
-    id: 'grow-following',
-    title: 'Grow my following',
-    prompt: 'Grow my following',
-  },
-  { id: 'run-socials', title: 'Run my socials', prompt: 'Run my socials' },
-  { id: 'write-posts', title: 'Write my posts', prompt: 'Write my posts' },
-  {
-    id: 'win-back-customers',
-    title: 'Win back my customers',
-    prompt: 'Win back my customers',
-  },
-  {
-    id: 'answer-customers',
-    title: 'Answer my customers',
-    prompt: 'Answer my customers',
-  },
-  {
-    id: 'onboard-signups',
-    title: 'Onboard my new signups',
-    prompt: 'Onboard my new signups',
-  },
-  {
-    id: 'prep-meetings',
-    title: 'Prep me for meetings',
-    prompt: 'Prep me for meetings',
-  },
-  { id: 'run-my-day', title: 'Run my day', prompt: 'Run my day' },
-  { id: 'do-my-hiring', title: 'Do my hiring', prompt: 'Do my hiring' },
-  { id: 'squash-bugs', title: 'Squash my bugs', prompt: 'Squash my bugs' },
-];
-
-const ALL_EXAMPLE_CARDS: ExampleCardData[] = [
-  ...EXAMPLE_CARDS,
-  ...MORE_EXAMPLE_CARDS,
-];
-
 type ResolvedApp = {
   name: string;
   displayName: string;
   logoUrl: string;
 };
 
-type ExampleCardData = {
-  id: string;
-  title: string;
-  prompt: string;
-};
-
 type GreetingHeadline = {
   withName: string;
   plain: string;
 };
+
+function resolveCards({
+  researched,
+}: {
+  researched: PersonalizationUseCase[] | null;
+}): ResolvedUseCase[] {
+  if (researched && researched.length > 0) {
+    return researched.map((card) => ({
+      key: card.id,
+      imageId: card.imageId,
+      title: card.title,
+      prompt: card.prompt,
+      ...(card.kind ? { kind: card.kind } : {}),
+    }));
+  }
+  return DEFAULT_USE_CASES.map((card) => ({
+    key: card.id,
+    imageId: card.id,
+    title: card.title,
+    prompt: card.prompt,
+  }));
+}
+
+const COLLAPSED_CARD_COUNT = 4;

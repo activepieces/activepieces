@@ -30,6 +30,7 @@ const uploadMedia = async (media: ApFile, baseUrl: string, token: string) => {
 export const postStatus = createAction({
   auth: mastodonAuth,
   name: 'post_status',
+  classification: 'WRITE',
   displayName: 'Post Status',
   description: 'Post a status to Mastodon',
   audience: 'both',

@@ -5,6 +5,7 @@ import { leadConnectorAuth } from '../..';
 export const addContactToWorkflowAction = createAction({
   auth: leadConnectorAuth,
   name: 'add_contact_to_workflow',
+  classification: 'WRITE',
   displayName: 'Add Contact to Workflow',
   description: 'Add an existing contact to a workflow.',
   audience: 'both',

@@ -14,6 +14,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: 'true',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: '50',
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: '1 minute',
+    [AppSystemProp.API_RATE_LIMIT_EMAIL_CODE_MAX]: '5',
     [AppSystemProp.WORKERS]: '1',
     [AppSystemProp.CLIENT_REAL_IP_HEADER]: 'x-real-ip',
     [AppSystemProp.CLOUD_AUTH_ENABLED]: 'true',

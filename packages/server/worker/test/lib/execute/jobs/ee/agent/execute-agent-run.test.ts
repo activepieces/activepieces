@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/execute-agent-run'
+import { UNATTENDED_WEB_TOOLS } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
 import { stepResultFrom } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-step-result'
 import { decideLoopAction, shouldRetryStream } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
@@ -78,6 +78,17 @@ describe('stepResultFrom', () => {
 
         expect(result.steps.length).toBeLessThan(many.length)
         expect(JSON.stringify(result.steps.at(-1))).toContain('not shown here')
+    })
+})
+
+describe('stepResultFrom — a turn that produced output must not fail the flow step', () => {
+    const at = '2026-08-05T00:00:00.000Z'
+
+    it('leaves the fatal signal unset even when it reports an incomplete reason', () => {
+        const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [], timestamp: at, failure: 'The response reached the output limit before the agent finished' })
+
+        expect(result.status).toBe('FAILED')
+        expect(result.failure).toBeUndefined()
     })
 })
 

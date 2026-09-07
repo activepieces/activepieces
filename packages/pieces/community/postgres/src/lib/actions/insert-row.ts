@@ -6,6 +6,7 @@ import { insertRowOutputSchema } from '../output-schemas';
 export const insertRow = createAction({
   auth: postgresAuth,
   name: 'insert-row',
+  classification: 'WRITE',
   displayName: 'Insert Row',
   description: 'Inserts a new row into a table',
   audience: 'both',

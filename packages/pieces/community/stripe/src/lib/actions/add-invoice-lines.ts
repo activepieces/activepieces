@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { invoiceOutputSchema } from '../output-schemas';
 export const stripeAddInvoiceLines = createAction({
   name: 'add_invoice_lines',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Add Invoice Lines (Agent)',
   description: 'Bulk-add line items to a draft invoice.',

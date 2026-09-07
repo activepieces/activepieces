@@ -8,6 +8,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const setChannelTopicAction = createAction({
 	auth: slackAuth,
 	name: 'set-channel-topic',
+	classification: 'WRITE',
 	displayName: 'Set Channel Topic',
 	description: 'Sets the topic on a selected channel.',
 	audience: 'human',

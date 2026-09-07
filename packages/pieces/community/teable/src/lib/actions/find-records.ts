@@ -9,6 +9,7 @@ import { prepareQuery } from '../common/client';
 export const findRecordsAction = createAction({
   auth: TeableAuth,
   name: 'teable_list_records',
+  classification: 'SEARCH',
   displayName: 'List Records',
   description: 'Retrieves a list of records from a table with optional filtering, sorting, and pagination.',
   audience: 'both',

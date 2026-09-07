@@ -4,6 +4,7 @@ import { timezoneOptions } from '../common';
 
 export const cronExpressionTrigger = createTrigger({
   name: 'cron_expression',
+  classification: 'READ',
   displayName: 'Cron Expression',
   description: 'Trigger based on cron expression',
   aiMetadata: {

@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const getWorksheetsAction = createAction({
   auth: excelAuth,
   name: 'get_worksheets',
+  classification: 'SEARCH',
   description: 'Retrieve worksheets from a workbook',
   audience: 'both',
   aiMetadata: { description: 'List the worksheets (tabs) in a workbook, returning metadata such as id, name, and position for each sheet. Use to discover available sheets before reading or writing; to look up a sheet by name use Find Worksheet. Read-only and idempotent; returns up to the given limit unless Return All is enabled.', idempotent: true },

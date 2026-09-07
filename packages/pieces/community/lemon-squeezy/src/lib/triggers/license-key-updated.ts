@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const licenseKeyUpdatedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'license_key_updated',
+  classification: 'READ',
   displayName: 'License Key Updated',
   description: 'Triggers when a license key is updated',
   aiMetadata: {

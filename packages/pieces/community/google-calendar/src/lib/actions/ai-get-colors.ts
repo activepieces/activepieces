@@ -6,6 +6,7 @@ import { colorsActionOutputSchema } from '../output-schemas';
 export const aiGetColors = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_get_colors',
+  classification: 'READ',
   displayName: 'Get Colors',
   description:
     'Fetch the Google Calendar color palette mapping colorId values to their hex background/foreground colors.',

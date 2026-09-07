@@ -5,6 +5,7 @@ import { runwareAuth, runwareCommon } from '../common';
 export const generateVideoFromText = createAction({
   auth: runwareAuth,
   name: 'generateVideoFromText',
+  classification: 'READ',
   displayName: 'Generate Video from Text',
   description: 'Generate video from text prompt.',
   audience: 'both',

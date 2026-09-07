@@ -4,6 +4,7 @@ import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'create_company', // Must be a unique across the piece, this shouldn't be changed.
+    classification: 'WRITE',
     auth: odooAuth,
     displayName: 'Create company',
     description: 'Create/Update company on Odoo',

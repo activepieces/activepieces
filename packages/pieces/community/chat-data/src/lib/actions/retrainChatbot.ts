@@ -5,6 +5,7 @@ import { chatDataAuth, RetrainOptions } from '../common/types';
 export const retrainChatbot = createAction({
   auth: chatDataAuth,
   name: 'retrain_chatbot',
+  classification: 'DESTRUCTIVE',
   displayName: 'Retrain Chatbot',
   description:
     'Retrain an existing chatbot with new data or remove existing data (custom-data-upload model only)',

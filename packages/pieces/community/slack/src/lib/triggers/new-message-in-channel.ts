@@ -9,6 +9,7 @@ import { newMessageInChannelTriggerOutputSchema } from '../output-schemas';
 export const newMessageInChannelTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-message-in-channel',
+	classification: 'READ',
 	displayName: 'New Message Posted to Channel',
 	description: 'Triggers when a new message is posted to a specific #channel you choose.',
 	aiMetadata: {

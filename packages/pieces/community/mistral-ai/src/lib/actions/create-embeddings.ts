@@ -8,6 +8,7 @@ export const createEmbeddings = createAction({
   audience: 'both',
 	auth: mistralAuth,
 	name: 'create_embeddings',
+	classification: 'READ',
 	displayName: 'Create Embeddings',
 	description: 'Creates new embedding in Mistral AI.',
 	aiMetadata: { description: 'Converts an array of text strings into numeric embedding vectors using Mistral\'s fixed mistral-embed model; the model is not selectable here, unlike the sibling Ask Mistral action, and a whole batch of strings is embedded in one call. Use it for semantic search, similarity, or clustering pipelines, and pick Ask Mistral when you need generated prose rather than numbers. Requires a non-empty array of input strings; idempotent: nothing is created server-side and the same input yields the same vectors.', idempotent: true },

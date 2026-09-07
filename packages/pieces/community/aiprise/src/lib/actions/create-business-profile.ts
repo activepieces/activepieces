@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const createBusinessProfileAction = createAction({
   auth: aipriseAuth,
   name: 'create_business_profile',
+  classification: 'WRITE',
   displayName: 'Create Business Profile',
   description:
     'Creates a new business profile in AiPrise. The returned profile can then be used to run document checks or other business verifications.',

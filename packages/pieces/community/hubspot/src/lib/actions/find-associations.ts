@@ -1,16 +1,19 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { fromObjectTypeAssociationDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
+import { findAssociationsOutputSchema } from '../output-schemas';
 
 export const findAssociationsAction = createAction({
 	auth: hubspotAuth,
 	name: 'find-associations',
+	classification: 'SEARCH',
 	displayName: 'Find Associations',
 	description: 'Finds associations between objects',
 	audience: 'both',
 	aiMetadata: { description: 'Lists all associations from one CRM object to objects of another type (e.g. a company to its contacts or deals), paging through every result. Use to discover what records are linked to a known object given its ID and the from/to object types. Read-only and idempotent.', idempotent: true },
+	outputSchema: findAssociationsOutputSchema,
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',
@@ -33,7 +36,7 @@ export const findAssociationsAction = createAction({
 	async run(context) {
 		const { fromObjectId, fromObjectType, toObjectType } = context.propsValue;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const results = [];
 		const limit = 100;

@@ -79,6 +79,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 externalId: params.externalId,
                 metadata: params.metadata,
                 maxConcurrentJobs: params.maxConcurrentJobs,
+                sensitive: params.sensitive,
                 type: ProjectType.TEAM,
                 callPostCreateHooks: false,
                 entityManager,
@@ -222,8 +223,14 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 
     async markForDeletion({ id, platformId }: DeleteProjectParams): Promise<void> {
-        const result = await projectRepo().softDelete({ id, platformId })
-        if (result.affected === 0) {
+        const result = await projectRepo()
+            .createQueryBuilder()
+            .softDelete()
+            .where('"id" = :id AND "platformId" = :platformId', { id, platformId })
+            .returning('id')
+            .execute()
+        const deletedRows: unknown[] = result.raw ?? []
+        if (deletedRows.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
@@ -269,11 +276,12 @@ async function enrichProjects(
     
     const projectIds = projects.map(p => p.id)
     
-    const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, plansMap] = await Promise.all([
+    const [totalUsersMap, activeUsersMap, totalFlowsMap, activeFlowsMap, lastFlowUpdatedMap, plansMap] = await Promise.all([
         projectMemberService(log).countTotalUsersByProjects(projectIds),
         projectMemberService(log).countActiveUsersByProjects(projectIds),
         flowService(log).countFlowsByProjects(projectIds),
         flowService(log).countActiveFlowsByProjects(projectIds),
+        flowService(log).getLastFlowUpdatedByProjects(projectIds),
         projectLimitsService(log).getOrCreateDefaultPlansForProjects(projectIds),
     ])
 
@@ -286,6 +294,7 @@ async function enrichProjects(
                 totalFlows: totalFlowsMap.get(project.id) ?? 0,
                 totalUsers: totalUsersMap.get(project.id) ?? 0,
                 activeUsers: activeUsersMap.get(project.id) ?? 0,
+                lastFlowUpdated: lastFlowUpdatedMap.get(project.id) ?? null,
             },
         }
     })
@@ -376,6 +385,7 @@ type CreateProjectParams = {
     maxConcurrentJobs?: number
     globalConnectionExternalIds?: string[]
     alertReceiverEmail?: string | null
+    sensitive?: boolean
 }
 
 type DeleteProjectParams = {

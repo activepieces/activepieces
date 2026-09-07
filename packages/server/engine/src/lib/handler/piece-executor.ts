@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, isObject } from '@activepieces/core-utils'
 import { ActionContext, backwardCompatabilityContextUtils, CreateWaitpointHook, CreateWaitpointParams, CreateWaitpointResult, InputPropertyMap, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager, WaitForWaitpointHook } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, PausedFlowTimeoutError, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -159,7 +159,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                     runResponse: {
                         status: webhookResponse.status ?? 200,
                         body: webhookResponse.body ?? {},
-                        headers: webhookResponse.headers ?? {},
+                        headers: isObject(webhookResponse.headers) ? webhookResponse.headers : {},
                     },
                 },
             })

@@ -29,7 +29,6 @@ export const pieceSetQueries = {
       queryKey: pieceSetKeys.page(cursor, limit),
       queryFn: () => pieceSetsApi.list({ cursor, limit }),
       enabled: platform.plan.managePiecesEnabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     });
   },
   usePieceSet: (id: string) => {
@@ -38,7 +37,6 @@ export const pieceSetQueries = {
       queryKey: pieceSetKeys.one(id),
       queryFn: () => pieceSetsApi.get(id),
       enabled: platform.plan.managePiecesEnabled && !!id,
-      // meta: { showErrorDialog: true },
     });
   },
 };

@@ -7,6 +7,7 @@ import { insertTextActionOutputSchema } from '../output-schemas';
 export const insertText = createAction({
   auth: googleDocsAuth,
   name: 'insert_text',
+  classification: 'WRITE',
   displayName: 'Insert Text',
   description: 'Insert text into a Google Docs document at a position or at the end',
   audience: 'ai',

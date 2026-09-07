@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { CheckCircle2, ListChecks } from 'lucide-react';
 import { ReactNode } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
@@ -31,10 +32,18 @@ function renderDelta(current: number, previous: number): ReactNode {
 type RunsTabProps = {
   report: PlatformMetricsReport | undefined;
   isLoading: boolean;
+  isError: boolean;
+  onRetry: () => void;
 };
 
-export function RunsTab({ report, isLoading }: RunsTabProps) {
+export function RunsTab({ report, isLoading, isError, onRetry }: RunsTabProps) {
   const summary = report?.summary;
+
+  if (isError) {
+    return (
+      <DataFetchErrorState entity={t('health metrics')} onRetry={onRetry} />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

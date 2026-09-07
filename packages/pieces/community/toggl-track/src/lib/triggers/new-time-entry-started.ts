@@ -46,6 +46,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof togglTrackAuth>,
 export const newTimeEntryStarted = createTrigger({
   auth: togglTrackAuth,
   name: 'new_time_entry_started',
+  classification: 'READ',
   displayName: 'New Time Entry Started',
   description: 'Fires when a new time entry is started and is currently running.',
   aiMetadata: {

@@ -7,6 +7,7 @@ import { formatDateTime, getSafeLabel, handleDropdownError } from '../common/hel
 export const createCall = createAction({
   auth: biginAuth,
   name: 'createCall',
+  classification: 'WRITE',
   displayName: 'Create Call',
   description: 'Creates a Call Log Entry Record',
   audience: 'both',

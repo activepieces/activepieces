@@ -6,6 +6,7 @@ import { TodoTask } from '@microsoft/microsoft-graph-types';
 export const completeTaskAction = createAction({
     auth: microsoftToDoAuth,
     name: 'complete_task',
+    classification: 'WRITE',
     displayName: 'Complete Task',
     description: 'Marks a task as completed.',
     audience: 'both',

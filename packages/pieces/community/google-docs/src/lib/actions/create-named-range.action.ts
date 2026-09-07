@@ -7,6 +7,7 @@ import { createNamedRangeActionOutputSchema } from '../output-schemas';
 export const createNamedRange = createAction({
   auth: googleDocsAuth,
   name: 'create_named_range',
+  classification: 'WRITE',
   displayName: 'Create Named Range',
   description: 'Create a named range over a character range in a Google Docs document',
   audience: 'ai',

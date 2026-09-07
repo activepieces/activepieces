@@ -24,6 +24,7 @@ export const sendPrompt = createAction({
   audience: 'human',
   auth: awsBedrockCombinedAuth,
   name: 'send_prompt',
+  classification: 'READ',
   displayName: 'Ask Bedrock',
   description: 'Send a text prompt to an Amazon Bedrock model.',
   props: {

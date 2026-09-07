@@ -7,6 +7,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const updateRowAction = createAction({
 	auth: codaAuth,
 	name: 'update-row',
+	classification: 'WRITE',
 	displayName: 'Update Row',
 	description: 'Updates an existing row in the selected table.',
 	audience: 'both',

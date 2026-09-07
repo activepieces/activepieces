@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -9,14 +9,17 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const updateProductAction = createAction({
     auth: hubspotAuth,
     name: 'update-product',
+    classification: 'WRITE',
     displayName: 'Update Product',
     description: 'Updates a product in Hubspot.',
     audience: 'both',
     aiMetadata: { description: 'Updates properties on an existing product identified by its product ID, such as name, price, description, or tax, then returns the refreshed product. Use to modify a known product in the product library. Idempotent: applying the same property values converges to the same product state.', idempotent: true },
+    outputSchema: crmObjectOutputSchema,
     props: {
         productId:Property.ShortText({
             displayName:'Product ID',
@@ -54,7 +57,7 @@ export const updateProductAction = createAction({
             productProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         const updatedProduct = await client.crm.products.basicApi.update(productId, {
             properties: productProperties,

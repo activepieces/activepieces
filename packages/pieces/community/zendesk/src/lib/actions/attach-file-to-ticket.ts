@@ -10,6 +10,7 @@ import { ticketIdDropdown } from '../common/props';
 export const attachFileToTicketAction = createAction({
   auth: zendeskAuth,
   name: 'attach-file-to-ticket',
+  classification: 'WRITE',
   displayName: 'Attach File to Ticket',
   description: 'Attach a file to a ticket.',
   audience: 'both',

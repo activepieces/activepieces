@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const createProduct = createAction({
   name: 'createProduct',
+  classification: 'WRITE',
   displayName: 'Create Product',
   description: 'Creates a new product in the CRM',
   audience: 'both',

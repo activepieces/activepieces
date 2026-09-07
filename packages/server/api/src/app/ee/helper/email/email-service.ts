@@ -166,7 +166,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
     },
 
     async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
-        if (EDITION_IS_NOT_PAID) {
+        if (EDITION_IS_NOT_PAID && type !== OtpType.EMAIL_LOGIN) {
             return
         }
 
@@ -176,39 +176,14 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         log.info({
             email: userIdentity.email,
-            otp,
             identityId: userIdentity.id,
             type,
         }, 'Sending OTP email')
 
-        const frontendPath = {
-            [OtpType.EMAIL_VERIFICATION]: 'verify-email',
-            [OtpType.PASSWORD_RESET]: 'reset-password',
-        }
-
-        const setupLink = await domainHelper.getInternalUrl({
-            path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
-        })
-
-        const otpToTemplate: Record<string, EmailTemplateData> = {
-            [OtpType.EMAIL_VERIFICATION]: {
-                name: 'verify-email',
-                vars: {
-                    setupLink,
-                },
-            },
-            [OtpType.PASSWORD_RESET]: {
-                name: 'reset-password',
-                vars: {
-                    setupLink,
-                },
-            },
-        }
-
         await emailSender(log).send({
             emails: [userIdentity.email],
             platformId: platformId ?? undefined,
-            templateData: otpToTemplate[type],
+            templateData: await otpTemplateData({ type, otp, identityId: userIdentity.id }),
         })
     },
 
@@ -235,6 +210,29 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+async function otpTemplateData({ type, otp, identityId }: OtpTemplateDataParams): Promise<EmailTemplateData> {
+    switch (type) {
+        case OtpType.EMAIL_LOGIN:
+            return { name: 'login-code', vars: { code: otp } }
+        case OtpType.EMAIL_VERIFICATION:
+            return {
+                name: 'verify-email',
+                vars: { setupLink: await otpSetupLink({ path: 'verify-email', otp, identityId }) },
+            }
+        case OtpType.PASSWORD_RESET:
+            return {
+                name: 'reset-password',
+                vars: { setupLink: await otpSetupLink({ path: 'reset-password', otp, identityId }) },
+            }
+    }
+}
+
+async function otpSetupLink({ path, otp, identityId }: OtpSetupLinkParams): Promise<string> {
+    return domainHelper.getInternalUrl({
+        path: `${path}?otpcode=${otp}&identityId=${identityId}`,
+    })
+}
 
 async function getEntityNameForInvitation(userInvitation: UserInvitation, log: FastifyBaseLogger): Promise<{ name: string, role: string }> {
     switch (userInvitation.type) {
@@ -272,6 +270,18 @@ type SendInvitationArgs = {
 
 type SendProjectMemberAddedArgs = {
     userInvitation: UserInvitation
+}
+
+type OtpTemplateDataParams = {
+    type: OtpType
+    otp: string
+    identityId: string
+}
+
+type OtpSetupLinkParams = {
+    path: string
+    otp: string
+    identityId: string
 }
 
 type SendOtpArgs = {

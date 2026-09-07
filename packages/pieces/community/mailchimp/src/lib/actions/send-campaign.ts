@@ -8,6 +8,7 @@ import { MailchimpClient } from '../common/types';
 export const sendCampaign = createAction({
   auth: mailchimpAuth,
   name: 'send_campaign',
+  classification: 'WRITE',
   displayName: 'Send Campaign',
   description: 'Send a draft campaign to the subscribers in its audience, segment, or tag',
   audience: 'both',

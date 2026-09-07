@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { listDomainsOutputSchema } from '../output-schemas';
 
 interface DomainRecord {
   id: string;
@@ -13,8 +14,10 @@ interface DomainRecord {
 
 export const listDomains = createAction({
   name: 'list_domains',
+  classification: 'SEARCH',
   auth: resendAuth,
   displayName: 'List Domains',
+  outputSchema: listDomainsOutputSchema,
   description: 'Retrieve all domains added to your Resend account',
   audience: 'both',
   aiMetadata: { description: 'Retrieves all sending domains configured on the connected Resend account, including each domain\'s ID, name, verification status, and region. Use this to find a domain ID (e.g. for Verify Domain or Delete Domain) or to check which domains are verified before sending. Read-only and idempotent.', idempotent: true },

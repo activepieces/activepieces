@@ -17,6 +17,7 @@ import { zendeskAuth } from '../..';
 export const newTicketInView = createTrigger({
   auth: zendeskAuth,
   name: 'new_ticket_in_view',
+  classification: 'READ',
   displayName: 'New ticket in view',
   description: 'Triggers when a new ticket is created in a view',
   aiMetadata: {

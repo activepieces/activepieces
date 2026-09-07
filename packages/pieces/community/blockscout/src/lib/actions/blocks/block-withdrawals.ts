@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getBlockWithdrawals = createAction({
   name: 'get_block_withdrawals',
+  classification: 'SEARCH',
   displayName: 'Get Block Withdrawals',
   description: 'Get list of withdrawals for a specific block',
   audience: 'both',

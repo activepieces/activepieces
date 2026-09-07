@@ -11,6 +11,7 @@ export const replace = createAction({
   },
   displayName: 'Replace',
   name: 'replace',
+  classification: 'READ',
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

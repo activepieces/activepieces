@@ -11,6 +11,7 @@ import { pollJob } from '../../common/poll-job';
 export const sendVideoManualAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_video_manual',
+  classification: 'WRITE',
   displayName: 'Send a Video (Manual Entry)',
   description: 'Send a video by entering a phone number or group ID manually.',
   audience: 'both',

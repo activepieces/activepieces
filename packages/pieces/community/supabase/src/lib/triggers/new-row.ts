@@ -5,6 +5,7 @@ import { newRowTriggerOutputSchema } from '../output-schemas';
 
 export const newRow = createTrigger({
     name: 'new_row',
+    classification: 'READ',
     displayName: 'New Row',
     description: 'Fires when a new row is created in a table',
     aiMetadata: {

@@ -13,6 +13,7 @@ import { listRecordsActionOutputSchema } from '../output-schemas';
 export const airtableListRecordsAction = createAction({
   auth: airtableAuth,
   name: 'list_records',
+  classification: 'SEARCH',
   displayName: 'List Records (Agent)',
   description: 'List or query records in an Airtable table.',
   audience: 'ai',

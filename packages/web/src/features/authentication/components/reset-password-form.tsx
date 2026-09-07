@@ -24,7 +24,7 @@ import { HttpError } from '@/lib/api';
 
 const FormSchema = z.object({
   email: z.string().min(1, t('Please enter your email')),
-  type: z.nativeEnum(OtpType),
+  type: CreateOtpRequestBody.shape.type,
 });
 
 type FormSchema = z.infer<typeof FormSchema>;

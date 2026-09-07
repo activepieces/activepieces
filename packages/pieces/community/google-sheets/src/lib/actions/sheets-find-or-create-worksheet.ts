@@ -6,6 +6,7 @@ import { sheetsFindOrCreateWorksheetActionOutputSchema } from '../output-schemas
 export const sheetsFindOrCreateWorksheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_find_or_create_worksheet',
+	classification: 'WRITE',
 	displayName: 'Find or Create Worksheet',
 	description:
 		'Look up a worksheet by title in a spreadsheet; if not found, create it with optional headers.',

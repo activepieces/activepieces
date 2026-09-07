@@ -383,43 +383,55 @@ describe('agentWorkerTools', () => {
         })
     })
 
-    describe('shrinkLargeValue', () => {
-        it('truncates long strings with a marker and keeps short ones', () => {
-            const long = 'a'.repeat(5000)
-            const result = agentWorkerTools.shrinkLargeValue({ short: 'hi', long }, { maxStringLength: 2000, maxArrayItems: 20 }) as Record<string, string>
-            expect(result.short).toBe('hi')
-            expect(result.long.startsWith('a'.repeat(2000))).toBe(true)
-            expect(result.long).toContain('…[truncated 3000 chars]')
-        })
-
-        it('caps arrays and appends an overflow marker', () => {
-            const arr = Array.from({ length: 50 }, (_, i) => i)
-            const result = agentWorkerTools.shrinkLargeValue(arr, { maxStringLength: 2000, maxArrayItems: 20 }) as unknown[]
-            expect(result.length).toBe(21)
-            expect(result[20]).toBe('…and 30 more items')
-        })
-
-        it('preserves nested object structure', () => {
-            const input = { a: { b: { c: 'value' } }, list: [1, 2] }
-            const result = agentWorkerTools.shrinkLargeValue(input, { maxStringLength: 2000, maxArrayItems: 20 })
-            expect(result).toEqual(input)
-        })
-    })
-
     describe('truncateLargeResult', () => {
         it('returns small results unchanged', () => {
             const small = { ok: true, items: [1, 2, 3] }
             expect(agentWorkerTools.truncateLargeResult(small)).toBe(small)
         })
 
-        it('previews the first 5 items of a large top-level array', () => {
+        it('keeps every record readable rather than five whole ones', () => {
             const result = agentWorkerTools.truncateLargeResult({
-                items: Array.from({ length: 5000 }, (_, i) => ({ id: i, text: 'x'.repeat(300) })),
+                items: Array.from({ length: 40 }, (_, i) => ({ id: i, from: `sender-${i}@example.com`, text: 'x'.repeat(20_000) })),
             }) as { content: Array<{ text: string }> }
             const text = result.content[0].text
-            expect(text).toContain('[LARGE RESPONSE]')
-            expect(text).toContain('5000 items')
-            expect(text).toContain('Preview (5 of 5000 items)')
+
+            expect(text).not.toContain('hard-truncated')
+            for (let index = 0; index < 40; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
+            }
+        })
+
+        it('keeps the siblings of a short array', () => {
+            const result = agentWorkerTools.truncateLargeResult({
+                items: Array.from({ length: 4 }, (_, i) => ({ id: i, text: `row ${i}` })),
+                report: 'x'.repeat(400_000),
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+
+            expect(text).toContain('structure preserved')
+            expect(text).toContain('row 3')
+            expect(text).toContain('report')
+        })
+
+        it('clips harder rather than dropping records when the first rung will not fit', () => {
+            const result = agentWorkerTools.truncateLargeResult({
+                body: {
+                    result: {
+                        messages: Array.from({ length: 200 }, (_, i) => ({
+                            id: `msg-${i}`,
+                            from: `sender-${i}@example.com`,
+                            headers: Array.from({ length: 30 }, (_, h) => ({ name: `h-${h}`, value: 'v'.repeat(500) })),
+                        })),
+                    },
+                },
+            }) as { content: Array<{ text: string }> }
+            const text = result.content[0].text
+
+            expect(text).toContain('structure preserved')
+            for (let index = 0; index < 25; index++) {
+                expect(text).toContain(`sender-${index}@example.com`)
+            }
+            expect(text).toContain('more items')
         })
 
         it('structurally shrinks a large non-array object instead of discarding it', () => {
@@ -606,5 +618,43 @@ describe('agentWorkerTools', () => {
             expect(sendEmail).toHaveBeenCalledOnce()
             expect(receipts[0].status).toBe('failed')
         })
+    })
+})
+
+describe('an agent does not offer to connect an account its author already chose', () => {
+    function pickerTools({ accountAlreadyChosenFor }: { accountAlreadyChosenFor?: (pieceName: string) => boolean }) {
+        const gatesOpened: string[] = []
+        const tools = agentWorkerTools.createDisplayTools({
+            waitForApproval: async () => ({ outcome: 'approved' as const, payload: { connectionExternalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } }),
+            displayToolTimeoutMs: 1000,
+            onGateOpened: async ({ toolName }) => { gatesOpened.push(toolName) },
+            ...(accountAlreadyChosenFor ? { accountAlreadyChosenFor } : {}),
+        })
+        return { tools, gatesOpened }
+    }
+
+    async function showPicker({ toolName, accountAlreadyChosenFor }: { toolName: string, accountAlreadyChosenFor?: (pieceName: string) => boolean }) {
+        const { tools, gatesOpened } = pickerTools({ accountAlreadyChosenFor })
+        const result = await tools[toolName].execute({ piece: 'google-sheets', displayName: 'Google Sheets' }, { toolCallId: 'call-1' })
+        return { result, gatesOpened }
+    }
+
+    it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('refuses %s for a piece the author gave an account, without blocking the turn', async (toolName) => {
+        const { result, gatesOpened } = await showPicker({ toolName, accountAlreadyChosenFor: (pieceName) => pieceName === '@activepieces/piece-google-sheets' })
+
+        expect(JSON.stringify(result)).toContain('nothing to connect or reconnect')
+        expect(gatesOpened).toEqual([])
+    })
+
+    it('still shows the card for a piece with no account chosen for it', async () => {
+        const { gatesOpened } = await showPicker({ toolName: 'ap_show_connection_picker', accountAlreadyChosenFor: () => false })
+
+        expect(gatesOpened).toEqual(['ap_show_connection_picker'])
+    })
+
+    it('still shows the card where no agent chose accounts at all, which is ordinary chat', async () => {
+        const { gatesOpened } = await showPicker({ toolName: 'ap_show_connection_picker' })
+
+        expect(gatesOpened).toEqual(['ap_show_connection_picker'])
     })
 })

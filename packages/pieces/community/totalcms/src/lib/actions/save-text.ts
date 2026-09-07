@@ -4,6 +4,7 @@ import { cmsAuth } from '../auth';
 
 export const saveTextAction = createAction({
   name: 'save_text',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Text Content',
   description: 'Save text content to Total CMS',

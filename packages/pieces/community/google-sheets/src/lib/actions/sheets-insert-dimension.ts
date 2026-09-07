@@ -6,6 +6,7 @@ import { sheetsInsertDimensionActionOutputSchema } from '../output-schemas';
 export const sheetsInsertDimension = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_insert_dimension',
+	classification: 'WRITE',
 	displayName: 'Insert Rows/Columns',
 	description: 'Insert blank rows or columns at a position, shifting existing data.',
 	audience: 'ai',

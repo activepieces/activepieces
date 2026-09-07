@@ -4,6 +4,7 @@ import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'get_contacts', // Must be a unique across the piece, this shouldn't be changed.
+    classification: 'SEARCH',
     auth: odooAuth,
     displayName: 'Get contacts',
     description: 'Get contacts on Odoo',

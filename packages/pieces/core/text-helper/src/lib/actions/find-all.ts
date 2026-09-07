@@ -10,6 +10,7 @@ export const findAll = createAction({
   },
   displayName: 'Find All',
   name: 'find_all',
+  classification: 'READ',
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

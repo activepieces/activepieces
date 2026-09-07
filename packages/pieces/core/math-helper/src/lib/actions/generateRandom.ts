@@ -8,6 +8,7 @@ import { generateRandomActionOutputSchema } from '../output-schemas';
 export const generateRandom = createAction({
   audience: 'both',
   name: 'generateRandom_math',
+  classification: 'READ',
   outputSchema: generateRandomActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Generate Random Number',

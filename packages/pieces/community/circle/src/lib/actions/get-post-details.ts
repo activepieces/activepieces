@@ -7,6 +7,7 @@ import { PostDetails } from '../common/types';
 export const getPostDetailsAction = createAction({
 	auth: circleAuth,
 	name: 'get_post_details',
+	classification: 'READ',
 	displayName: 'Get Post Details',
 	description: 'Retrieves the complete details of a specific post.',
 	audience: 'both',

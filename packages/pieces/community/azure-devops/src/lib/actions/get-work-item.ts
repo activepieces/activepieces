@@ -9,6 +9,7 @@ import {
 export const getWorkItemAction = createAction({
   auth: azureDevOpsAuth,
   name: 'get_work_item',
+  classification: 'READ',
   displayName: 'Get Work Item',
   description: 'Retrieves a work item by ID from Azure DevOps',
   audience: 'both',

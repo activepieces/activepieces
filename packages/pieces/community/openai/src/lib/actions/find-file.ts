@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { findFileActionOutputSchema } from '../output-schemas';
 
 export const findFile = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'find_file',
+  classification: 'SEARCH',
   displayName: 'Find File',
   description:
     'Check whether a file with the given name already exists in the connected OpenAI account.',
@@ -30,6 +32,7 @@ export const findFile = createAction({
       },
     }),
   },
+  outputSchema: findFileActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { fileName, purpose } = context.propsValue;

@@ -6,6 +6,7 @@ import { microsoftToDoAuth } from '../auth';
 export const addAttachmentAction = createAction({
     auth: microsoftToDoAuth,
     name: 'add_attachment',
+    classification: 'WRITE',
     displayName: 'Add an Attachment',
     description: 'Adds an attachment to a task.',
     audience: 'both',

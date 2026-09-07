@@ -7,6 +7,7 @@ import { ownerProp, repoProp, githubError } from './common';
 export const githubUnstarRepositoryAction = createAction({
   auth: githubAuth,
   name: 'unstar_repository',
+  classification: 'WRITE',
   displayName: 'Unstar Repository (Agent)',
   description: 'Removes a star from a repository for the connected user.',
   audience: 'ai',

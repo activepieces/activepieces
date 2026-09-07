@@ -35,28 +35,7 @@ const FREE_LEGACY_COMP_ATTEMPT_TTL_SECONDS = 5 * 60
 const PROJECT_ID_PROPERTY = 'projectId'
 const CREDIT_USAGE_MAX_GROUPS = 250
 const AI_CREDIT_USAGE_SOURCES = [CreditUsageSource.AI, CreditUsageSource.CHAT]
-const PLATFORM_PLAN_FLAG_FEATURE_IDS = [
-    'tablesEnabled',
-    'eventStreamingEnabled',
-    'environmentsEnabled',
-    'analyticsEnabled',
-    'showPoweredBy',
-    'auditLogEnabled',
-    'embeddingEnabled',
-    'aiProvidersEnabled',
-    'chatEnabled',
-    'workerGroupsEnabled',
-    'managePiecesEnabled',
-    'manageTemplatesEnabled',
-    'customAppearanceEnabled',
-    'projectRolesEnabled',
-    'globalConnectionsEnabled',
-    'customRolesEnabled',
-    'apiKeysEnabled',
-    'ssoEnabled',
-    'secretManagersEnabled',
-    'scimEnabled',
-] as const satisfies readonly (keyof PlatformPlanLimits & `${FeatureFlagId}`)[]
+const BASELINE_PLAN_IDS: readonly string[] = [PlanName.FREE, PlanName.FREE_LEGACY, PlanName.APPSUMO]
 
 export const autumnUtils = {
     client({ secretKey, customerId }: AutumnClientParams) {
@@ -181,10 +160,10 @@ export const autumnUtils = {
         if (isNil(client)) {
             return
         }
-        const customer = await client.getCustomer({ expand: ['subscriptions.plan'] })
+        const customer = await client.getCustomer({ expand: ['subscriptions.plan', 'purchases.plan'] })
         const entitlements = toAutumnEntitlements(customer)
         await platformPlanService(log).update({ platformId, ...autumnUtils.mapAutumnFeaturesToPlatformPlan(entitlements) })
-        await autumnUtils.writeCustomerStateCaches(platformId, customer)
+        await autumnUtils.writeCustomerStateCaches({ platformId, customer, grantedFeatureIds: entitlements.grantedFeatureIds })
         await autumnUtils.invalidateBillingOverview(platformId)
         await autumnUtils.provisionLicenseKeyIfPaid(log, platformId, entitlements.planId)
     },
@@ -212,22 +191,18 @@ export const autumnUtils = {
     async invalidateBillingOverview(platformId: string): Promise<void> {
         await distributedStore.delete(getBillingOverviewKey(platformId))
     },
-    mapAutumnFeaturesToPlatformPlan(entitlements: AutumnEntitlements): Partial<PlatformPlanLimits> {
-        const flags: Partial<PlatformPlanLimits> = {}
-        for (const feature of PLATFORM_PLAN_FLAG_FEATURE_IDS) {
-            flags[feature] = entitlements.flags[feature] ?? false
-        }
+    mapAutumnFeaturesToPlatformPlan(entitlements: AutumnEntitlements): PlatformPlanProjection {
         const teamProjects = entitlements.balances[UnconsumableFeatureId.TEAM_PROJECTS_LIMIT]
         const users = entitlements.balances[UnconsumableFeatureId.USERS_LIMIT]
         const activeFlows = entitlements.balances[UnconsumableFeatureId.ACTIVE_FLOWS_LIMIT]
         const credits = entitlements.balances[ConsumableFeatureId.AP_CREDITS]
         return {
-            ...flags,
+            ...toPlatformPlanFlags(entitlements.grantedFeatureIds),
             plan: entitlements.planId,
-            billedTeamProjectsLimit: toProjectedLimit(teamProjects, 1),
-            usersLimit: toProjectedLimit(users, null),
+            billedTeamProjectsLimit: toPlatformPlanLimit(teamProjects, 1),
+            usersLimit: toPlatformPlanLimit(users, null),
             scheduledUsersLimit: entitlements.scheduledUsersLimit,
-            activeFlowsLimit: toProjectedLimit(activeFlows, null),
+            activeFlowsLimit: toPlatformPlanLimit(activeFlows, null),
             includedCredits: credits?.granted ?? 0,
         }
     },
@@ -237,14 +212,21 @@ export const autumnUtils = {
     async writeBalance({ platformId, featureId, balance }: WriteBalanceParams): Promise<void> {
         await distributedStore.put(balanceCacheKey({ platformId, featureId }), autumnUtils.toBalanceCache(balance), CREDITS_CACHE_TTL_SECONDS)
     },
-    billingEnforcedFromCustomer(customer: GetCustomerResponse): boolean {
-        return !isNil(customer.flags[FeatureFlagId.BILLING_ENFORCED])
+    toGrantedFeatureIds(attachments: AutumnPlanAttachments): ReadonlySet<string> {
+        const plans = toEntitlementPlans(attachments)
+        if (plans.length > 0 && plans.every((plan) => !plan.expanded)) {
+            system.globalLogger().warn('Autumn customer was read without expanded plans, so no entitlement resolves')
+        }
+        return new Set(plans.flatMap((plan) => plan.featureIds))
     },
-    async writeCustomerStateCaches(platformId: string, customer: GetCustomerResponse): Promise<BalanceCacheSnapshot> {
+    billingEnforcedFromGrantedFeatureIds(grantedFeatureIds: ReadonlySet<string>): boolean {
+        return grantedFeatureIds.has(FeatureFlagId.BILLING_ENFORCED)
+    },
+    async writeCustomerStateCaches({ platformId, customer, grantedFeatureIds }: WriteCustomerStateCachesParams): Promise<BalanceCacheSnapshot> {
         const creditsBalance = customer.balances[ConsumableFeatureId.AP_CREDITS]
         const appSumoBalance = customer.balances[ConsumableFeatureId.APP_SUMO_AI_CREDITS]
         await Promise.all([
-            distributedStore.put(getBillingEnforcedKey(platformId), autumnUtils.billingEnforcedFromCustomer(customer), BILLING_ENFORCED_TTL_SECONDS),
+            distributedStore.put(getBillingEnforcedKey(platformId), autumnUtils.billingEnforcedFromGrantedFeatureIds(grantedFeatureIds), BILLING_ENFORCED_TTL_SECONDS),
             isNil(creditsBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.AP_CREDITS, balance: creditsBalance }),
             isNil(appSumoBalance) ? Promise.resolve() : autumnUtils.writeBalance({ platformId, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS, balance: appSumoBalance }),
         ])
@@ -459,10 +441,6 @@ function toCreditUsage({ total, aiResults }: { total: AggregateEventsResponse, a
 }
 
 function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements {
-    const flags: Record<string, boolean> = {}
-    for (const [featureId, flag] of Object.entries(customer.flags)) {
-        flags[featureId] = featureId === FeatureFlagId.SHOW_POWERED_BY ? !isNil(flag.planId) : true
-    }
     const balances: Record<string, AutumnFeatureBalance> = {}
     for (const [featureId, balance] of Object.entries(customer.balances)) {
         balances[featureId] = {
@@ -486,9 +464,54 @@ function toAutumnEntitlements(customer: GetCustomerResponse): AutumnEntitlements
         : purchasedPlanId ?? baseSubscriptionPlanId
     return {
         planId,
-        flags,
+        grantedFeatureIds: autumnUtils.toGrantedFeatureIds(customer),
         balances,
         scheduledUsersLimit: toScheduledUsersLimit(baseSubscriptions),
+    }
+}
+
+function toEntitlementPlans(attachments: AutumnPlanAttachments): EntitlementPlan[] {
+    const now = Date.now()
+    const attached = [
+        ...attachments.subscriptions.filter((subscription) => subscription.status === 'active'),
+        ...attachments.purchases.filter((purchase) => isNil(purchase.expiresAt) || purchase.expiresAt > now),
+    ].map(toEntitlementPlan)
+    const hasNonBaselinePlan = attached.some((plan) => !plan.addOn && !BASELINE_PLAN_IDS.includes(plan.planId))
+    return attached.filter((plan) => !hasNonBaselinePlan || !BASELINE_PLAN_IDS.includes(plan.planId))
+}
+
+function toEntitlementPlan(attachment: AutumnPlanAttachment): EntitlementPlan {
+    return {
+        planId: attachment.planId,
+        addOn: attachment.plan?.addOn ?? false,
+        expanded: !isNil(attachment.plan),
+        featureIds: (attachment.plan?.items ?? []).map((item) => item.featureId),
+    }
+}
+
+function toPlatformPlanFlags(grantedFeatureIds: ReadonlySet<string>): PlatformPlanFlags {
+    return {
+        tablesEnabled: grantedFeatureIds.has(FeatureFlagId.TABLES_ENABLED),
+        eventStreamingEnabled: grantedFeatureIds.has(FeatureFlagId.EVENT_STREAMING_ENABLED),
+        environmentsEnabled: grantedFeatureIds.has(FeatureFlagId.ENVIRONMENTS_ENABLED),
+        analyticsEnabled: grantedFeatureIds.has(FeatureFlagId.ANALYTICS_ENABLED),
+        showPoweredBy: grantedFeatureIds.has(FeatureFlagId.SHOW_POWERED_BY),
+        auditLogEnabled: grantedFeatureIds.has(FeatureFlagId.AUDIT_LOG_ENABLED),
+        embeddingEnabled: grantedFeatureIds.has(FeatureFlagId.EMBEDDING_ENABLED),
+        aiProvidersEnabled: grantedFeatureIds.has(FeatureFlagId.AI_PROVIDERS_ENABLED),
+        chatEnabled: grantedFeatureIds.has(FeatureFlagId.CHAT_ENABLED),
+        agentsEnabled: grantedFeatureIds.has(FeatureFlagId.AGENTS_ENABLED),
+        workerGroupsEnabled: grantedFeatureIds.has(FeatureFlagId.WORKER_GROUPS_ENABLED),
+        managePiecesEnabled: grantedFeatureIds.has(FeatureFlagId.MANAGE_PIECES_ENABLED),
+        manageTemplatesEnabled: grantedFeatureIds.has(FeatureFlagId.MANAGE_TEMPLATES_ENABLED),
+        customAppearanceEnabled: grantedFeatureIds.has(FeatureFlagId.CUSTOM_APPEARANCE_ENABLED),
+        projectRolesEnabled: grantedFeatureIds.has(FeatureFlagId.PROJECT_ROLES_ENABLED),
+        globalConnectionsEnabled: grantedFeatureIds.has(FeatureFlagId.GLOBAL_CONNECTIONS_ENABLED),
+        customRolesEnabled: grantedFeatureIds.has(FeatureFlagId.CUSTOM_ROLES_ENABLED),
+        apiKeysEnabled: grantedFeatureIds.has(FeatureFlagId.API_KEYS_ENABLED),
+        ssoEnabled: grantedFeatureIds.has(FeatureFlagId.SSO_ENABLED),
+        secretManagersEnabled: grantedFeatureIds.has(FeatureFlagId.SECRET_MANAGERS_ENABLED),
+        scimEnabled: grantedFeatureIds.has(FeatureFlagId.SCIM_ENABLED),
     }
 }
 
@@ -502,7 +525,7 @@ function toScheduledUsersLimit(baseSubscriptions: GetCustomerResponse['subscript
     return usersLimitItem.included ?? null
 }
 
-function toProjectedLimit(balance: AutumnFeatureBalance | undefined, whenAbsent: number | null): number | null {
+function toPlatformPlanLimit(balance: AutumnFeatureBalance | undefined, whenAbsent: number | null): number | null {
     if (isNil(balance)) {
         return whenAbsent
     }
@@ -533,10 +556,51 @@ type AutumnFeatureBalance = {
 
 type AutumnEntitlements = {
     planId: string | null
-    flags: Record<string, boolean>
+    grantedFeatureIds: ReadonlySet<string>
     balances: Record<string, AutumnFeatureBalance>
     scheduledUsersLimit: number | null
 }
+
+type AutumnPlanAttachment = {
+    planId: string
+    plan?: {
+        addOn: boolean
+        items: { featureId: string }[]
+    }
+}
+
+type AutumnPlanAttachments = {
+    subscriptions: (AutumnPlanAttachment & { status: string })[]
+    purchases: (AutumnPlanAttachment & { expiresAt: number | null })[]
+}
+
+type EntitlementPlan = {
+    planId: string
+    addOn: boolean
+    expanded: boolean
+    featureIds: string[]
+}
+
+type WriteCustomerStateCachesParams = {
+    platformId: string
+    customer: GetCustomerResponse
+    grantedFeatureIds: ReadonlySet<string>
+}
+
+type PlatformPlanFlagId = Extract<`${FeatureFlagId}`, keyof PlatformPlanLimits>
+
+type PlatformPlanFlags = Required<Pick<PlatformPlanLimits, PlatformPlanFlagId>>
+
+type NotProjectedFromAutumn =
+    | 'licenseKey'
+    | 'licenseExpiresAt'
+    | 'projectsLimit'
+    | 'dedicatedWorkers'
+    | 'canary'
+    | 'customDomainsEnabled'
+    | 'workerGroupId'
+
+type PlatformPlanProjection = Required<Pick<PlatformPlanLimits, Exclude<keyof PlatformPlanLimits, NotProjectedFromAutumn>>>
 
 type AutumnEnrollmentCredentials = {
     autumnCustomerId: string

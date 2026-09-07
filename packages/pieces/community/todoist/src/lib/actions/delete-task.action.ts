@@ -6,6 +6,7 @@ import { todoistRestClient } from '../common/client/rest-client';
 export const todoistDeleteTaskAction = createAction({
   auth: todoistAuth,
   name: 'todoist_delete_task',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Task',
   description: 'Permanently delete a task.',
   audience: 'ai',

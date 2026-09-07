@@ -7,6 +7,7 @@ import { beehiivApiCall } from '../common/client';
 export const updateSubscriptionAction = createAction({
 	auth: beehiivAuth,
 	name: 'update_subscription',
+	classification: 'WRITE',
 	displayName: 'Update Subscription',
 	description: 'Update an existing subscription.',
 	audience: 'both',

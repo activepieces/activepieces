@@ -12,6 +12,7 @@ interface WebhookInformation {
 export const newMilestoneTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_milestone',
+  classification: 'READ',
   displayName: 'New Milestone',
   description: 'Triggers when a new milestone is created.',
   aiMetadata: {

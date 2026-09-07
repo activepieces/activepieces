@@ -23,6 +23,7 @@ const statusOptions = [
 import { subscriptionSearchOutputSchema } from '../output-schemas';
 export const stripeSearchSubscriptions = createAction({
   name: 'search_subscriptions',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Subscriptions',
   description: 'Search for subscriptions by price ID, status, customer ID and other filters, including customer details',

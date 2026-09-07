@@ -11,6 +11,7 @@ import {
 export const detectDocumentText = createAction({
   auth: amazonTextractAuth,
   name: 'detect-document-text',
+  classification: 'READ',
   displayName: 'Detect Document Text',
   description:
     'Extract plain text from a document. Faster and cheaper than Analyze Document — use this when you only need the text content without forms or tables. Supports JPEG and PNG via direct upload; PDF and TIFF via S3 only.',

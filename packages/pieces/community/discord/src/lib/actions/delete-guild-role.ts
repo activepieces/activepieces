@@ -11,6 +11,7 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordDeleteGuildRole = createAction({
   auth: discordAuth,
   name: 'deleteGuildRole',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete guild role',
   description: 'Deletes the specified role from the specified guild',
   audience: 'human',

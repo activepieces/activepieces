@@ -5,6 +5,7 @@ import { createTodoClient } from '../common';
 export const createTaskListAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'create_task_list',
+	classification: 'WRITE',
 	displayName: 'Create Task List',
 	description: 'Create a new task list.',
 	audience: 'both',

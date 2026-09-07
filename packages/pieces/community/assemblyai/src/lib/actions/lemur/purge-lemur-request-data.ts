@@ -5,6 +5,7 @@ import { lemurRequestIdProp } from './shared-props';
 
 export const purgeLemurRequestData = createAction({
   name: 'purgeLemurRequestData',
+  classification: 'DESTRUCTIVE',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Purge LeMUR request data',

@@ -5,6 +5,7 @@ import { capsuleCrmClient } from '../common/client';
 export const findContactAction = createAction({
   auth: capsuleCrmAuth,
   name: 'find_contact',
+  classification: 'SEARCH',
   displayName: 'Find Contact',
   description: 'Find a Person by search criteria.',
   audience: 'both',

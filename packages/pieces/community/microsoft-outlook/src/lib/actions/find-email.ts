@@ -5,14 +5,17 @@ import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
+import { findEmailActionOutputSchema } from '../output-schemas';
 
 export const findEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'findEmail',
+	classification: 'SEARCH',
 	displayName: 'Find Email',
 	description: 'Searches for emails using full-text search.',
 	audience: 'both',
 	aiMetadata: { description: 'Searches the Outlook mailbox for messages matching a full-text query (supports field syntax like from:, subject:, hasAttachments:), optionally scoped to one folder and capped by a max-results count. Use this to locate emails and obtain their message IDs for follow-up actions. Idempotent read-only lookup.', idempotent: true },
+	outputSchema: findEmailActionOutputSchema,
 	props: {
 		searchQuery: Property.ShortText({
 			displayName: 'Search Query',
@@ -40,9 +43,8 @@ export const findEmailAction = createAction({
 		const baseUrl = folderId ? `${outlookCommon.mailboxPrefix(context.auth)}/mailFolders/${folderId}/messages` : `${outlookCommon.mailboxPrefix(context.auth)}/messages`;
 		const searchParam = `$search="${searchQuery}"`;
 		const topParam = top ? `$top=${Math.min(Math.max(top, 1), 1000)}` : '$top=25';
-		const selectParam = ['id', 'subject', 'from', 'toRecipients', 'receivedDateTime'].join(',');
 
-		const queryParams = [searchParam, topParam, selectParam].filter(Boolean).join('&');
+		const queryParams = [searchParam, topParam].filter(Boolean).join('&');
 		const url = `${baseUrl}?${queryParams}`;
 
 		const headers: Record<string, string> = {

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { refundOutputSchema } from '../output-schemas';
 export const stripeGetRefund = createAction({
   name: 'get_refund',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Refund (Agent)',
   description: 'Retrieve a Stripe refund by its ID.',

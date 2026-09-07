@@ -17,6 +17,7 @@ import { gmailNewEmailReceivedTriggerOutputSchema } from '../output-schemas';
 export const gmailNewEmailTrigger = createTrigger({
   auth: gmailAuth,
   name: 'gmail_new_email_received',
+  classification: 'READ',
   displayName: 'New Email',
   description: 'Triggers when new mail is found in your Gmail inbox',
   aiMetadata: {

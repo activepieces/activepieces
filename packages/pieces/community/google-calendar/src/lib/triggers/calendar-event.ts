@@ -37,6 +37,7 @@ export const calendarEventChanged = createTrigger({
 	// docs: https://developers.google.com/calendar/api/guides/push
 	auth: googleCalendarAuth,
 	name: 'new_or_updated_event',
+	classification: 'READ',
 	displayName: 'New or Updated Event',
 	description: 'Triggers when an event is added or updated',
 	aiMetadata: {

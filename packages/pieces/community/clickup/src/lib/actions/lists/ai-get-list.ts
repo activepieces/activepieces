@@ -7,6 +7,7 @@ import { listOutputSchema } from '../../output-schemas';
 export const clickupGetList = createAction({
   auth: clickupAuth,
   name: 'clickup_get_list',
+  classification: 'READ',
   description: 'Get a single ClickUp list by its ID',
   audience: 'ai',
   aiMetadata: {

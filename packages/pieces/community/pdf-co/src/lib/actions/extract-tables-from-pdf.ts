@@ -49,6 +49,7 @@ interface PdfDocumentParserSuccessResponse {
 
 export const extractTablesFromPdf = createAction({
     name: 'extract_tables_from_pdf',
+    classification: 'READ',
     displayName: 'Extract Tables from PDF (using Template)',
     description: 'Extracts table data from a PDF using a predefined PDF.co Document Parser template.',
     audience: 'both',

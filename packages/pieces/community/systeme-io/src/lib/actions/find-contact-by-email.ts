@@ -5,6 +5,7 @@ import { systemeIoCommon } from '../common/client';
 export const findContactByEmail = createAction({
   auth: systemeIoAuth,
   name: 'findContactByEmail',
+  classification: 'READ',
   displayName: 'Find Contact by Email',
   description: 'Locate an existing contact by email address',
   audience: 'both',

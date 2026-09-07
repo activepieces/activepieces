@@ -11,6 +11,7 @@ import {
 import { customerSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCustomers = createAction({
   name: 'search_customers',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Customers (Agent)',
   description: 'Search for Stripe customers by email or a raw search query.',

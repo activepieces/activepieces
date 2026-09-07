@@ -5,6 +5,7 @@ import { chatDataAuth } from '../common/types';
 export const uploadFile = createAction({
   auth: chatDataAuth,
   name: 'upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description:
     'Upload a file to be used with a chatbot for training or knowledge base',

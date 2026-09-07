@@ -7,6 +7,7 @@ import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 export const findTaskListByNameAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'find_task_list_by_name',
+	classification: 'SEARCH',
 	displayName: 'Find Task List',
 	description: 'Finds a task list by its name.',
 	audience: 'both',

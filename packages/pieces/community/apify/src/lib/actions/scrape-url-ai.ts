@@ -7,6 +7,7 @@ const WEBSITE_CONTENT_CRAWLER_ACTOR_ID = 'apify/website-content-crawler';
 
 export const apifyScrapeUrl = createAction({
   name: 'apify_scrape_url',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Scrape URL',
   description: 'Scrapes a single web page via the Apify Website Content Crawler and returns its markdown and HTML.',

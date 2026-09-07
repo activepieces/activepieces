@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const createTimeTrackingAction = createAction({
   auth: bexioAuth,
   name: 'create_time_tracking',
+  classification: 'WRITE',
   displayName: 'Create Time Tracking',
   description: 'Create a new timesheet entry',
   audience: 'both',

@@ -6,6 +6,7 @@ import { commonProps } from '../common';
 export const submitSitemap = createAction({
   auth: googleSearchConsoleAuth,
   name: 'submit_sitemap',
+  classification: 'WRITE',
   displayName: 'Submit a Sitemap',
   description: 'Submits a sitemap for a site.',
   audience: 'both',

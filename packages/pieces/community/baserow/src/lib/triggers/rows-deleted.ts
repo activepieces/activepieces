@@ -10,6 +10,7 @@ const triggerHooks = createWebhookTriggerHooks({
 
 export const rowsDeletedTrigger = createTrigger({
   name: 'baserow_rows_deleted',
+  classification: 'READ',
   auth: baserowAuth,
   displayName: 'Deleted Rows (Batch)',
   description:

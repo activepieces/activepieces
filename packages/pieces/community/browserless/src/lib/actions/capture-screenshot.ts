@@ -5,6 +5,7 @@ import { browserlessCommon, convertBinaryToBase64, isBinaryResponse } from '../c
 
 export const captureScreenshot = createAction({
     name: 'capture_screenshot',
+    classification: 'READ',
     displayName: 'Capture Screenshot',
     description: 'Take a screenshot of a web page',
     audience: 'both',

@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'search',
+  classification: 'SEARCH',
   displayName: 'Search',
   description: 'Searches for tracks, artists, albums, etc.',
   audience: 'both',

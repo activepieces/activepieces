@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 
 export const createNewBrowserWindowAction = createAction({
 	name: 'create-browser-window',
+	classification: 'WRITE',
 	auth: airtopAuth,
 	displayName: 'Create New Browser Window',
 	description: 'Opens a new window within a session, optionally navigating to a URL.',

@@ -7,6 +7,7 @@ import { getProjectActionOutputSchema } from '../output-schemas';
 export const todoistGetProjectAction = createAction({
   auth: todoistAuth,
   name: 'todoist_get_project',
+  classification: 'READ',
   displayName: 'Get Project',
   description: 'Get a single Todoist project by its ID.',
   audience: 'ai',

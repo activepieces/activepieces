@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 
 import {
 	Property,
@@ -16,14 +16,17 @@ import {
 } from '../common/props';
 
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const updateDealAction = createAction({
 	auth: hubspotAuth,
 	name: 'update-deal',
+	classification: 'WRITE',
 	displayName: 'Update Deal',
 	description: 'Updates a deal in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Updates properties on an existing deal identified by its deal ID, such as name, pipeline, stage, or custom fields, then returns the refreshed deal. Use to modify a known deal; use Create Deal to make a new one. Idempotent: applying the same property values converges to the same deal state.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		dealId: Property.ShortText({
 			displayName: 'Deal ID',
@@ -89,7 +92,7 @@ export const updateDealAction = createAction({
 			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const updatedDeal = await client.crm.deals.basicApi.update(dealId, {
 			properties: dealProperties,

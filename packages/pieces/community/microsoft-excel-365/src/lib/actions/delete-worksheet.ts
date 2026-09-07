@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const deleteWorksheetAction = createAction({
   auth: excelAuth,
   name: 'delete_worksheet',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a worksheet in a workbook',
   audience: 'both',
   aiMetadata: { description: 'Delete a single worksheet (tab) from a workbook, leaving the rest of the file intact. Pick this to remove one sheet rather than the whole file (use Delete Workbook for the entire file). Destructive; idempotent by stable worksheet id, so re-running after deletion has no further effect.', idempotent: true },

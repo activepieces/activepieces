@@ -11,6 +11,7 @@ import { taskFailedSample } from './sample-payloads';
 export const taskFailedTrigger = createTrigger({
   auth: iloveapiAuth,
   name: 'task_failed',
+  classification: 'READ',
   displayName: 'Task Failed',
   description:
     'Fires when a processing task fails. Optionally filter by tool.',

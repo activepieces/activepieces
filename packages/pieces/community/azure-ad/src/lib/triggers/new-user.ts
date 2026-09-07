@@ -15,6 +15,7 @@ const USER_SELECT =
 export const newUserTrigger = createTrigger({
     auth: azureAdAuth,
     name: 'new_user',
+    classification: 'READ',
     displayName: 'New User',
     description: 'Triggers when a new user is created in Microsoft Entra ID.',
     aiMetadata: {

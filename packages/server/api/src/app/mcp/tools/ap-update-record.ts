@@ -18,7 +18,7 @@ export const apUpdateRecordTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         permission: Permission.WRITE_TABLE,
         description: 'Update specific cells in a record. Only specified fields are changed.',
         inputSchema: updateRecordInput.shape,
-        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId, recordId, fields: fieldValues } = updateRecordInput.parse(args)

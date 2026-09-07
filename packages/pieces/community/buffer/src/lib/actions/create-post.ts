@@ -42,6 +42,7 @@ const CREATE_POST_MUTATION = `
 export const createPost = createAction({
   auth: bufferAuth,
   name: 'create_post',
+  classification: 'WRITE',
   displayName: 'Create Post',
   description:
     'Create a post in Buffer and add it to the queue, share it next, share it now, or schedule it for a custom time.',

@@ -28,6 +28,7 @@ type ProjectDetailResponse = {
 export const descriptGetProjectAction = createAction({
   auth: descriptAuth,
   name: 'get_project',
+  classification: 'READ',
   displayName: 'Get Project',
   description:
     'Retrieves details for a Descript project including its compositions and media files.',

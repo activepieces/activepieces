@@ -16,6 +16,7 @@ import {
   XaiResponse,
   ExtractionResult
 } from '../common/utils';
+import { extractDataFromTextActionOutputSchema } from '../output-schemas';
 import * as z from 'zod/mini'
 
 interface ExtractDataField {
@@ -121,6 +122,7 @@ export const extractDataFromText = createAction({
       description: 'Include confidence scores for extracted fields.',
     }),
   },
+  outputSchema: extractDataFromTextActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),

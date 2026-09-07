@@ -5,6 +5,7 @@ import { gmail as googleGmail } from '@googleapis/gmail';
 export const gmailStopWatchAction = createAction({
   auth: gmailAuth,
   name: 'gmail_stop_watch',
+  classification: 'DESTRUCTIVE',
   displayName: 'Stop Watch',
   description: 'Stop push notifications on the mailbox.',
   audience: 'ai',

@@ -54,6 +54,7 @@ const CREATE_IDEA_MUTATION = `
 export const createIdea = createAction({
   auth: bufferAuth,
   name: 'create_idea',
+  classification: 'WRITE',
   displayName: 'Create Idea',
   description: "Save a new idea to your Buffer Idea Bank.",
   audience: 'both',

@@ -13,6 +13,7 @@ import { uploadFileToColumnActionOutputSchema } from '../output-schemas';
 export const airtableUploadFileToColumnAction = createAction({
   auth: airtableAuth,
   name: 'airtable_upload_file_to_column',
+  classification: 'WRITE',
   displayName: 'Upload File to Column',
   description: 'Uploads a file to attachment type column.',
   audience: 'human',

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { creditNoteOutputSchema } from '../output-schemas';
 export const stripeVoidCreditNote = createAction({
   name: 'void_credit_note',
+  classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Void Credit Note (Agent)',
   description: 'Void a credit note.',

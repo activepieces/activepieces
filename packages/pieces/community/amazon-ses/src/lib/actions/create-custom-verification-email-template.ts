@@ -20,6 +20,7 @@ import {
 export const createCustomVerificationEmailTemplate = createAction({
   auth: amazonSesAuth,
   name: 'create_custom_verification_email_template',
+  classification: 'WRITE',
   displayName: 'Create Custom Verification Email Template',
   description: 'Create custom email template for identity verification',
   audience: 'both',

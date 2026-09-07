@@ -6,6 +6,7 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const archiveChannelAction = createAction({
   auth: slackAuth,
   name: 'slack_archive_channel',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Channel',
   description: 'Archives a channel.',
   audience: 'ai',

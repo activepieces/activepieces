@@ -11,6 +11,7 @@ import { updateDatabaseItemActionOutputSchema } from '../output-schemas';
 export const updateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'update_database_item',
+  classification: 'WRITE',
   displayName: 'Update Database Item',
   description:
     'Update specific fields in a Notion database item. Perfect for maintaining data, tracking changes, or syncing information across systems.',

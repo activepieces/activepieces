@@ -9,6 +9,7 @@ import { ticketFormDropdown } from '../common/props';
 export const ticketPriorityChanged = createTrigger({
   auth: aidbaseAuth,
   name: 'ticket_priority_changed',
+  classification: 'READ',
   displayName: 'Ticket Priority Changed',
   description: 'Fires when the priority of an existing ticket changes.',
   aiMetadata: {

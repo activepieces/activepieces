@@ -136,6 +136,7 @@ const polling: Polling<
 export const newEventMatchingSearch = createTrigger({
   auth: googleCalendarAuth,
   name: 'new_event_matching_search',
+  classification: 'READ',
   displayName: 'New Event Matching Search',
   description:
     'Fires when a new event is created that matches a specified search term.',

@@ -5,6 +5,7 @@ import { ticketFormDropdown } from '../common/props';
 export const ticketCreated = createTrigger({
   auth: aidbaseAuth,
   name: 'ticket_created',
+  classification: 'READ',
   displayName: 'Ticket Created',
   description: 'Fires when a new ticket is created in Aidbase.',
   aiMetadata: {

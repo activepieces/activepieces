@@ -1,0 +1,55 @@
+---
+title: "Agent Knowledge"
+sidebarTitle: "Agent Knowledge"
+description: "Give an agent something to look things up in"
+icon: "book"
+---
+
+Attach a document or a table and the agent looks the answer up instead of guessing at it.
+
+## Two sources
+
+<CardGroup cols={2}>
+  <Card title="Files" icon="file" color="#8143E3">
+    Upload a document. PDF, DOCX, TXT, or CSV.
+  </Card>
+  <Card title="Tables" icon="table" color="#0EA5E9" href="/tables/with-agents">
+    Point at a table already in your project.
+  </Card>
+</CardGroup>
+
+Both live in the **Knowledge Base** section of the agent editor, below Agent Tools. Add one with **Add File Source** or **Add Table Source**.
+
+<Note>
+Two things have to be in place or the section does not appear at all. Your Postgres needs the `pgvector` extension, which Activepieces installs on startup when the database offers it — Cloud and the standard self-hosted images are covered, but a managed Postgres without `pgvector` hides knowledge entirely. And the agent's model provider has to support embeddings: OpenAI, Google, Azure, and OpenRouter do.
+</Note>
+
+## Which one
+
+|  | File | Table |
+|---|---|---|
+| **Holds** | Documents, policies, guides | Rows of data |
+| **Changes** | Rarely | Constantly |
+| **Updated by** | Re-uploading | Your flows, live |
+
+<Tip>
+If a flow already writes the data, use a table. The agent then reads what's true right now, with nothing to re-upload.
+</Tip>
+
+## Why not just paste it in
+
+Two reasons, and the first is size.
+
+Everything in an agent's instructions has to fit the model's context window, and all of it is read on **every single run**. That caps you at a few pages, and makes every run slower and more expensive whether the content was relevant or not.
+
+Knowledge works the other way round. A file is split into chunks and indexed, and the agent searches it only when it needs something, pulling back the passages that match. A three-hundred-page policy manual costs nothing until a question actually touches it.
+
+The second reason is freshness. A product list pasted into instructions works until the list changes, and then you have two versions of the truth and one of them is wrong.
+
+Instructions are for **how to behave**. Knowledge is for **what's true**.
+
+## Say when to use it
+
+Knowledge tells the agent what it can look up, not when to bother. Put that in the [instructions](/agents/create):
+
+> Before answering pricing questions, check the pricing table. Never quote a figure that isn't in it.

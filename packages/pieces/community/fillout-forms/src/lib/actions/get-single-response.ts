@@ -3,14 +3,17 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { makeRequest } from '../common';
 import { formIdDropdown, submissionIdDropdown } from '../common/props';
 import { filloutFormsAuth } from '../auth';
+import { getSingleResponseActionOutputSchema } from '../output-schemas';
 
 export const getSingleResponse = createAction({
 	auth: filloutFormsAuth,
 	name: 'getSingleResponse',
+	classification: 'READ',
 	displayName: 'Get Single Response',
 	description: 'Retrieves a specific submission from a form.',
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves one specific submission from a Fillout form, keyed by form ID and submission ID. Use when you already know the submission ID and need its full details, rather than listing all responses. Read-only and idempotent.', idempotent: true },
+	outputSchema: getSingleResponseActionOutputSchema,
 	props: {
 		formId: formIdDropdown,
 		submissionId: submissionIdDropdown,

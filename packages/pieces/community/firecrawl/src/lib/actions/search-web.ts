@@ -7,6 +7,7 @@ import { searchWebActionOutputSchema } from '../output-schemas';
 export const searchWeb = createAction({
   auth: firecrawlAuth,
   name: 'search_web',
+  classification: 'SEARCH',
   displayName: 'Search Web',
   description: 'Search the web for a keyword query and return matching result URLs.',
   audience: 'ai',

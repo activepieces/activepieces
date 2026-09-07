@@ -8,6 +8,7 @@ import { prepareFile } from '../../common/prepare-file';
 export const sendImageToGroupAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_image_to_group',
+  classification: 'WRITE',
   displayName: 'Send an Image to a Group',
   description: 'Send an image to a WhatsApp group selected from the dropdown.',
   audience: 'both',

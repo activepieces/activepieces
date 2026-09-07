@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const listObjects = createAction({
   auth: ApitemplateAuth,
   name: 'listObjects',
+  classification: 'SEARCH',
   displayName: 'List Objects',
   description:
     'Retrieves a list of generated PDFs and images with optional filtering',

@@ -6,6 +6,7 @@ import { gmailGetProfileActionOutputSchema } from '../output-schemas';
 export const gmailGetProfileAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_profile',
+  classification: 'READ',
   displayName: 'Get Profile',
   description: 'Get the connected mailbox profile.',
   audience: 'ai',

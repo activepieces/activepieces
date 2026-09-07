@@ -5,6 +5,7 @@ import { websocketCommon } from '../common/common';
 export const websocketSubscriptionTrigger = createTrigger({
   auth: websocketCommon.auth,
   name: 'websocket_subscription_trigger',
+  classification: 'READ',
   displayName: 'New Websocket Subscription Event',
   description: 'Triggers on a new Websocket subscription event',
   aiMetadata: {

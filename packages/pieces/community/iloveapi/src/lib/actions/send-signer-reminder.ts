@@ -5,6 +5,7 @@ import { iLoveApi } from '../common/client';
 export const sendSignerReminderAction = createAction({
   auth: iloveapiAuth,
   name: 'send_signer_reminder',
+  classification: 'WRITE',
   displayName: 'Send Signer Reminder',
   description:
     'Email a reminder to signers who have not yet completed the signature. Limited to 2 calls per day.',

@@ -25,6 +25,7 @@ Use this for production, views the published version of the chat flow.
 
 export const onChatSubmission = createTrigger({
   name: 'chat_submission',
+  classification: 'READ',
   displayName: 'Chat UI',
   description: 'Trigger the flow by sending a message',
   aiMetadata: {

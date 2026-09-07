@@ -7,6 +7,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const addWorksheetAction = createAction({
   auth: excelAuth,
   name: 'add_worksheet',
+  classification: 'WRITE',
   description: 'Add a worksheet to a workbook',
   audience: 'both',
   aiMetadata: { description: 'Add a new worksheet (tab) to an existing workbook, optionally with a chosen name. Pick this to create a sheet before writing rows or tables into it. Not idempotent: each run adds another worksheet, and re-running can create duplicate or auto-named sheets.', idempotent: false },

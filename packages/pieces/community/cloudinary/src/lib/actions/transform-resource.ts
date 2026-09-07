@@ -6,6 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const transformResource = createAction({
   auth: cloudinaryAuth,
   name: 'transformResource',
+  classification: 'READ',
   displayName: 'Transform Resource',
   description: 'Apply transformations (resize, crop, watermark, etc.) to an asset and generate a new URL.',
   audience: 'both',

@@ -13,6 +13,7 @@ export const generateContentAction = createAction({
 	aiMetadata: { description: 'Runs a single stateless prompt through a Gemini text model and returns the generated text, optionally grounded by one built-in tool: Google Search for live web results, URL Context to fetch pages named in the prompt, Google Maps scoped to a latitude/longitude, or File Search over an uploaded file. Use this as the default Gemini text-generation call; prefer chat_gemini when the exchange needs conversation memory, generate_content_from_image when the input includes an image, and create_video or text-to-speech for non-text output. Not idempotent: each call produces a fresh completion, and the File Search mode additionally creates a new file search store.', idempotent: false },
 	displayName: 'Generate Content',
 	name: 'generate_content',
+	classification: 'WRITE',
 	auth: googleGeminiAuth,
 	props: {
 		prompt: Property.LongText({

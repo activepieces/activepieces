@@ -9,6 +9,7 @@ import { chatUpdateOutputSchema } from '../output-schemas';
 export const updateMessage = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateMessage',
+  classification: 'WRITE',
   displayName: 'Update message',
   description: 'Update an existing message',
   audience: 'human',

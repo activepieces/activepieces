@@ -9,6 +9,7 @@ const getCurrentDateInISOFormat = () => {
 
 export const createInvoice = createAction({
   name: 'createInvoice',
+  classification: 'WRITE',
   displayName: 'Create Invoice',
   description: 'Creates a new invoice in the CRM.',
   audience: 'both',

@@ -7,6 +7,7 @@ import { AttioRecordResponse } from '../common/types';
 
 export const getRecordAction = createAction({
 	name: 'get_record',
+	classification: 'READ',
 	displayName: 'Get Record',
 	description: 'Retrieve a single record by ID and return its normalized attribute values.',
 	audience: 'both',

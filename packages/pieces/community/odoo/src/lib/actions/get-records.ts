@@ -6,6 +6,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 
 export default createAction({
     name: 'get_records',
+    classification: 'SEARCH',
     auth: odooAuth,
     displayName: 'Custom Search and read records',
     description: 'Records can be listed and filtered',

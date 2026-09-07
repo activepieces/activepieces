@@ -8,6 +8,7 @@ const TRIGGER_KEY = 'trigger_call-ended';
 export const callEnded = createTrigger({
   auth: aircallAuth,
   name: 'callEnded',
+  classification: 'READ',
   displayName: 'Call Ended',
   description: 'Triggers when a call ends.',
   aiMetadata: {

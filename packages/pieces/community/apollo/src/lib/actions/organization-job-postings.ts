@@ -9,6 +9,7 @@ import {
 export const organizationJobPostings = createAction({
   auth: apolloAuth,
   name: 'organizationJobPostings',
+  classification: 'SEARCH',
   displayName: 'Organization Job Postings',
   description: 'Retrieve current job postings for a company to identify growing headcount areas',
   audience: 'both',

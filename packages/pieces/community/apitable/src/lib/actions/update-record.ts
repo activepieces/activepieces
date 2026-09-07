@@ -10,6 +10,7 @@ import { APITableAuth } from '../auth';
 export const updateRecordAction = createAction({
 	auth: APITableAuth,
 	name: 'apitable_update_record',
+	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Updates an existing record in datasheet.',
 	audience: 'both',

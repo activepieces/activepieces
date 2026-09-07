@@ -8,6 +8,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createSummaryAction = createAction({
   auth: deepgramAuth,
   name: 'create_summary',
+  classification: 'READ',
   displayName: 'Create Summary',
   description: 'Produces a summary of the content from an audio file.',
   audience: 'both',

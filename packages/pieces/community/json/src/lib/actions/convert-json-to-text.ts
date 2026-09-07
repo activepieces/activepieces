@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const convertJsonToText = createAction({
   name: 'convert_json_to_text',
+  classification: 'READ',
   displayName: 'Convert Json to Text',
   description: 'Stringifies JSON.',
   audience: 'both',

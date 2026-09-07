@@ -9,6 +9,7 @@ import { canvaCommon, FolderResponse, fetchUserFolders } from '../common';
 export const getFolder = createAction({
   auth: canvaAuth,
   name: 'get_folder',
+  classification: 'READ',
   displayName: 'Get Folder',
   description: 'Retrieve metadata for a specific folder, including name, creation date, and thumbnail.',
   audience: 'both',

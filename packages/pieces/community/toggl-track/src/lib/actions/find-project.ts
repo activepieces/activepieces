@@ -6,6 +6,7 @@ import { togglCommon } from '../common';
 export const findProject = createAction({
   auth: togglTrackAuth,
   name: 'find_project',
+  classification: 'SEARCH',
   displayName: 'Find Project',
   description: 'Find a project in a workspace by its name.',
   audience: 'both',

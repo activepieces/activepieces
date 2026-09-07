@@ -6,6 +6,7 @@ import { listActorsActionOutputSchema } from '../output-schemas';
 
 export const apifyListActors = createAction({
   name: 'apify_list_actors',
+  classification: 'SEARCH',
   auth: apifyAuth,
   displayName: 'List Actors',
   description: 'Lists the Actors owned by the authenticated account.',

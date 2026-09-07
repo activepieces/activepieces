@@ -6,6 +6,7 @@ import { scheduleIdProperty, sendItRequest } from '../common';
 export const cancelScheduledPost = createAction({
   auth: sendItAuth,
   name: 'cancel_scheduled_post',
+  classification: 'DESTRUCTIVE',
   displayName: 'Cancel Scheduled Post',
   description: 'Cancel a scheduled post before it is published',
   audience: 'both',

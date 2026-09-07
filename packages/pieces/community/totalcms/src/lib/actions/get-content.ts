@@ -4,6 +4,7 @@ import { cmsAuth } from '../auth';
 
 export const getContentAction = createAction({
   name: 'get_content',
+  classification: 'READ',
   auth: cmsAuth,
   displayName: 'Get Content',
   description: 'Get content from your Total CMS website',

@@ -7,6 +7,7 @@ import { forwardMessageActionOutputSchema } from '../output-schemas';
 export const telegramForwardMessageAction = createAction({
   auth: telegramBotAuth,
   name: 'forward_message',
+  classification: 'WRITE',
   displayName: 'Forward Message',
   description: 'Forward a message from one chat to another',
   audience: 'human',

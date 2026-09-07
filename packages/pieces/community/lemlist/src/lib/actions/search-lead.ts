@@ -6,6 +6,7 @@ import { lemlistApiService } from '../common/requests';
 export const searchLead = createAction({
   auth: lemlistAuth,
   name: 'searchLead',
+  classification: 'READ',
   displayName: 'Search Lead',
   description: 'Look up a lead by email and campaign.',
   audience: 'both',

@@ -13,6 +13,7 @@ import { filterWorkspaceTasksOutputSchema } from '../../output-schemas';
 export const filterClickupWorkspaceTasks = createAction({
   auth: clickupAuth,
   name: 'list_workspace_tasks',
+  classification: 'SEARCH',
   displayName: 'List Team Tasks',
   description:
     'Retrieves the tasks that meet specific criteria from a Workspace.',

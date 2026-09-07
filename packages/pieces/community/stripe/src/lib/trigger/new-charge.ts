@@ -15,6 +15,7 @@ import { chargeOutputSchema } from '../output-schemas';
 export const stripeNewCharge = createTrigger({
   auth: stripeAuth,
   name: 'new_charge',
+  classification: 'READ',
   displayName: 'New Charge',
   description: 'Fires when a charge is successfully completed.',
   aiMetadata: {

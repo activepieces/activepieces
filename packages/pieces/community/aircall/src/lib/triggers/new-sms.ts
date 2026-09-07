@@ -8,6 +8,7 @@ const TRIGGER_KEY = 'trigger_new-sms'
 export const newSms = createTrigger({
   auth: aircallAuth,
   name: 'newSms',
+  classification: 'READ',
   displayName: 'New SMS',
   description: 'Triggers when a new SMS message is received.',
   aiMetadata: {

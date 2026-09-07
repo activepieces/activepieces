@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowDeleteCollectionItem = createAction({
 	auth: webflowAuth,
 	name: 'delete_collection_item',
+	classification: 'DESTRUCTIVE',
 	description: 'Delete collection item',
 	displayName: 'Delete an item in a collection',
 	audience: 'both',

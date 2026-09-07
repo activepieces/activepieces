@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { chargeOutputSchema } from '../output-schemas';
 export const stripeRetrieveCharge = createAction({
   name: 'retrieve_charge',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Retrieve Charge (Agent)',
   description: 'Retrieve a Stripe charge by its ID.',

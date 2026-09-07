@@ -10,10 +10,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { searchFieldProp, searchFieldValueProp } from '../common/props';
 import { PERSON_OPTIONAL_FIELDS } from '../common/constants';
+import { findPersonActionOutputSchema } from '../output-schemas';
 
 export const findPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-person',
+	outputSchema: findPersonActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find Person',
 	description: 'Finds a person.',
 	audience: 'both',

@@ -33,7 +33,7 @@ export const actionRunCache = {
         return true
     },
 
-    async sweep({ basePath, log }: SweepParams): Promise<void> {
+    async sweep({ basePath, log, activeWindowMs = ACTION_RUN_CACHE_ACTIVE_WINDOW_MS }: SweepParams): Promise<void> {
         const startedAt = Date.now()
         const actionRunsPath = cacheUtils(basePath).getActionRunCodeCachePath()
         const { data: entries, error } = await tryCatch(() => readdir(actionRunsPath, { withFileTypes: true }))
@@ -52,7 +52,7 @@ export const actionRunCache = {
 
         const expired = await removeExpired({ dirPaths: managed, expiredAt: Date.now() - ACTION_RUN_CACHE_TTL_MS })
 
-        const activeAt = Date.now() - ACTION_RUN_CACHE_ACTIVE_WINDOW_MS
+        const activeAt = Date.now() - activeWindowMs
         const evictable = expired.survivors.filter((entry) => entry.mtimeMs < activeAt)
         const overBy = expired.survivors.length - ACTION_RUN_CACHE_MAX_DIRS
         const evicted = await removeOldest(overBy > 0
@@ -155,6 +155,7 @@ type NamespaceParams = {
 type SweepParams = {
     basePath: string
     log: ApLogger
+    activeWindowMs?: number
 }
 
 type DirEntry = {

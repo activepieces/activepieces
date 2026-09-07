@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const unsubscribeProfile = createAction({
   auth: klaviyoAuth,
   name: 'unsubscribeProfile',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Profile',
   description: 'Unsubscribe profiles from email or SMS marketing on a list.',
   audience: 'both',

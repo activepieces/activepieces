@@ -19,6 +19,7 @@ interface ChannelFull {
 export const discordListChannels = createAction({
   auth: discordAuth,
   name: 'discord_list_channels',
+  classification: 'SEARCH',
   displayName: 'List Channels',
   description: 'Enumerate all channels in a guild.',
   audience: 'ai',

@@ -9,6 +9,7 @@ const CACHE_KEY = 'bigin_created_contact_trigger';
 export const newContactCreated = createTrigger({
   auth: biginAuth,
   name: 'newContactCreated',
+  classification: 'READ',
   displayName: 'New Contact Created',
   description: 'Triggers when a new contact is created',
   aiMetadata: {

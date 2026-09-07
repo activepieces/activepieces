@@ -6,6 +6,7 @@ import { sheetsRenameWorksheetActionOutputSchema } from '../output-schemas';
 export const sheetsRenameWorksheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_rename_worksheet',
+	classification: 'WRITE',
 	displayName: 'Rename Worksheet',
 	description: 'Rename a specific worksheet.',
 	audience: 'ai',

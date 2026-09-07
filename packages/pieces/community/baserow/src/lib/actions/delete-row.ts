@@ -4,6 +4,7 @@ import { baserowCommon, makeClient } from '../common';
 
 export const deleteRowAction = createAction({
   name: 'baserow_delete_row',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Row',
   description: 'Deletes an existing row.',
   audience: 'both',

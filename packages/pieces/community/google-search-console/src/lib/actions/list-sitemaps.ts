@@ -6,6 +6,7 @@ import { commonProps } from '../common';
 export const listSitemaps = createAction({
   auth: googleSearchConsoleAuth,
   name: 'list_sitemaps',
+  classification: 'SEARCH',
   displayName: 'List Sitemaps',
   description: 'List all your sitemaps for a given site',
   audience: 'both',

@@ -7,6 +7,7 @@ import { sheetsUpdateDimensionPropertiesActionOutputSchema } from '../output-sch
 export const sheetsUpdateDimensionProperties = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_update_dimension_properties',
+	classification: 'WRITE',
 	displayName: 'Resize / Hide Rows or Columns',
 	description: 'Set a fixed pixel size for rows/columns, or hide/unhide them.',
 	audience: 'ai',

@@ -5,6 +5,7 @@ import { deletedRecordTriggerOutputSchema } from '../output-schemas';
 
 export const deletedRecordTrigger = createTrigger({
     name: 'deletedRecord',
+    classification: 'READ',
     displayName: 'Record Deleted',
     description: 'Triggers when a record is deleted from the selected table.',
     aiMetadata: {

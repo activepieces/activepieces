@@ -7,6 +7,7 @@ import { membersOutputSchema } from '../../output-schemas';
 export const clickupGetListMembers = createAction({
   auth: clickupAuth,
   name: 'clickup_get_list_members',
+  classification: 'SEARCH',
   description: 'List the members who have access to a ClickUp list',
   audience: 'ai',
   aiMetadata: {

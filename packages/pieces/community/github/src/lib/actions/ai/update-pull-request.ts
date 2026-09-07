@@ -8,6 +8,7 @@ import { pullRequestBodyOutputSchema } from '../../output-schemas';
 export const githubUpdatePullRequestAction = createAction({
   auth: githubAuth,
   name: 'update_pull_request',
+  classification: 'WRITE',
   displayName: 'Update Pull Request (Agent)',
   description: 'Edits a pull request, including closing or reopening it.',
   audience: 'ai',

@@ -30,12 +30,14 @@ export function ConversationList({
   selectedId,
   className,
   mobile = false,
+  agentId,
 }: {
   onSelect?: (id: string) => void;
   onNewChat?: () => void;
   selectedId?: string | null;
   className?: string;
   mobile?: boolean;
+  agentId?: string;
 }) {
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -47,8 +49,12 @@ export function ConversationList({
 
   const { data: conversationsPage, isLoading: isLoadingConversations } =
     useQuery({
-      queryKey: ['chat-conversations'],
-      queryFn: () => chatApi.listConversations({ limit: 100 }),
+      queryKey: ['chat-conversations', agentId ?? 'chat'],
+      queryFn: () =>
+        chatApi.listConversations({
+          limit: 100,
+          ...(agentId === undefined ? {} : { agentId }),
+        }),
     });
 
   const selectedIdRef = useRef(selectedId);
@@ -58,7 +64,7 @@ export function ConversationList({
     mutationFn: (id: string) => chatApi.deleteConversation(id),
     onSuccess: (_data, deletedId) => {
       void queryClient.invalidateQueries({
-        queryKey: ['chat-conversations'],
+        queryKey: ['chat-conversations', agentId ?? 'chat'],
       });
       if (selectedIdRef.current === deletedId) {
         onNewChat?.();
@@ -279,19 +285,21 @@ export function ConversationList({
           <div className="absolute bottom-0 left-0 right-0 h-[70px] pointer-events-none z-[1] bg-gradient-to-t from-background to-transparent" />
         )}
       </div>
-      <div className="shrink-0 border-t px-2 py-2">
-        <button
-          type="button"
-          className={cn(
-            'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
-            mobile && 'px-3 py-2.5 text-sm',
-          )}
-          onClick={() => setSettingsOpen(true)}
-        >
-          <Settings size={mobile ? 16 : 14} />
-          {t('Settings')}
-        </button>
-      </div>
+      {agentId === undefined && (
+        <div className="shrink-0 border-t px-2 py-2">
+          <button
+            type="button"
+            className={cn(
+              'flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md bg-transparent cursor-pointer text-xs text-foreground transition-colors hover:bg-accent',
+              mobile && 'px-3 py-2.5 text-sm',
+            )}
+            onClick={() => setSettingsOpen(true)}
+          >
+            <Settings size={mobile ? 16 : 14} />
+            {t('Settings')}
+          </button>
+        </div>
+      )}
       {mobile && (
         <div className="shrink-0 border-t px-4 py-3">
           <p className="flex items-start gap-1.5 text-xs leading-snug text-muted-foreground">

@@ -5,6 +5,7 @@ import { getAccountActionOutputSchema } from '../output-schemas';
 
 export const apifyGetAccount = createAction({
   name: 'apify_get_account',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Account',
   description: 'Retrieves the authenticated Apify account profile.',

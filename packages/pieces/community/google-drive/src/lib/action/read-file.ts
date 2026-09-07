@@ -6,6 +6,7 @@ import { readFileActionOutputSchema } from '../output-schemas';
 export const readFile = createAction({
   auth: googleDriveAuth,
   name: 'read-file',
+  classification: 'READ',
   displayName: 'Read File Content',
   description: 'Read a selected file from google drive file',
   audience: 'human',

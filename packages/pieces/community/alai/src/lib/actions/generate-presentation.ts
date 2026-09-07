@@ -7,6 +7,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const generatePresentation = createAction({
   auth: alaiAuth,
   name: 'generatePresentation',
+  classification: 'WRITE',
   displayName: 'Generate Presentation',
   description: 'Create a new AI-generated presentation from text.',
   audience: 'both',

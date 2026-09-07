@@ -7,6 +7,7 @@ import { spaceOutputSchema } from '../../output-schemas';
 export const clickupUpdateSpace = createAction({
   auth: clickupAuth,
   name: 'clickup_update_space',
+  classification: 'WRITE',
   description: 'Update an existing ClickUp space',
   audience: 'ai',
   aiMetadata: {

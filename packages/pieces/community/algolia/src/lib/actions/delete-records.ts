@@ -8,6 +8,7 @@ import { parseRequiredString, parseStringArray } from '../common/utils';
 export const deleteRecordsAction = createAction({
   auth: algoliaAuth,
   name: 'delete-records',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Records',
   description: 'Deletes records from an Algolia index by objectID.',
   audience: 'both',

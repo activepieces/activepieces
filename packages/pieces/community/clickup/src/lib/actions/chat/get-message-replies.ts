@@ -8,6 +8,7 @@ import { messageRepliesOutputSchema } from '../../output-schemas';
 export const getClickupMessageReplies = createAction({
   auth: clickupAuth,
   name: 'get_message_replies',
+  classification: 'SEARCH',
   description: 'Gets the replies of a message in a ClickUp channel',
   audience: 'both',
   aiMetadata: { description: 'Read-only: retrieve the threaded replies to a specific Chat message in a ClickUp workspace, given the workspace and message IDs. Use to read a reply thread; does not post anything. Safe to call repeatedly.', idempotent: true },

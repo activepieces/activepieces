@@ -204,17 +204,30 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         
         return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
-    async hasPermissionOnAnyProject({ userId, platformId, permission }: HasPermissionOnAnyProjectParams): Promise<boolean> {
-        const count = await repo()
+    async hasPermissionOnAnyProject(params: HasPermissionOnAnyProjectParams): Promise<boolean> {
+        const projectIds = await this.listProjectIdsWithPermission(params)
+        return projectIds.length > 0
+    },
+    async listProjectIdsWithPermission({ userId, platformId, permission }: HasPermissionOnAnyProjectParams): Promise<ProjectId[]> {
+        const rows = await repo()
             .createQueryBuilder('project_member')
+            .select('project_member.projectId', 'projectId')
             .innerJoin('project_member.projectRole', 'project_role')
             .innerJoin('project_member.project', 'project')
             .where('project_member.userId = :userId', { userId })
             .andWhere('project_member.platformId = :platformId', { platformId })
             .andWhere(':permission = ANY(project_role.permissions)', { permission })
             .andWhere('project.deleted IS NULL')
-            .getCount()
-        return count > 0
+            .getRawMany<{ projectId: ProjectId }>()
+        return rows.map((row) => row.projectId)
+    },
+    async listProjectMemberUserIds({ projectId }: { projectId: ProjectId }): Promise<UserId[]> {
+        const rows = await repo()
+            .createQueryBuilder('project_member')
+            .select('project_member.userId', 'userId')
+            .where('project_member.projectId = :projectId', { projectId })
+            .getRawMany<{ userId: UserId }>()
+        return rows.map((row) => row.userId)
     },
     async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
         if (projectIds.length === 0) return new Map()

@@ -5,6 +5,7 @@ import { isNil } from '@activepieces/pieces-framework';
 
 export const validateEmail = createAction({
   name: 'validateEmail',
+  classification: 'READ',
   displayName: 'Validate Email',
   description: '',
   audience: 'both',

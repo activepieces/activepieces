@@ -8,6 +8,7 @@ import { repositoryBodyOutputSchema } from '../../output-schemas';
 export const githubGetRepositoryAction = createAction({
   auth: githubAuth,
   name: 'get_repository',
+  classification: 'READ',
   displayName: 'Get Repository (Agent)',
   description: 'Fetches metadata for a single repository.',
   audience: 'ai',

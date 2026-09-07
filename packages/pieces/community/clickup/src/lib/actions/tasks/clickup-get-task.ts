@@ -7,6 +7,7 @@ import { taskOutputSchema } from '../../output-schemas';
 export const clickupGetTaskAi = createAction({
   auth: clickupAuth,
   name: 'clickup_get_task',
+  classification: 'READ',
   description: 'Gets a task in a ClickUp list',
   audience: 'ai',
   aiMetadata: {

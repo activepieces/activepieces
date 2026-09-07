@@ -1,3 +1,4 @@
+import { toError } from '@activepieces/core-utils'
 import { AsyncLocalStorage } from 'node:async_hooks'
 import { audit as standaloneAudit, AuditInput, RequestLogger, withAuditMethods } from 'evlog'
 
@@ -14,8 +15,7 @@ function set(fields: Record<string, unknown>): void {
 function error(err: unknown): void {
     const store = als.getStore()
     if (!store) return
-    const wrapped = err instanceof Error ? err : new Error(String(err))
-    store.error(wrapped)
+    store.error(toError(err))
 }
 
 async function timed<T>({ name, fn }: { name: string, fn: () => Promise<T> }): Promise<T> {

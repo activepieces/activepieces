@@ -9,6 +9,7 @@ import { cmsAuth } from '../auth';
 
 export const saveBlogImageAction = createAction({
   name: 'save_blog_image',
+  classification: 'WRITE',
   auth: cmsAuth,
   displayName: 'Save Blog Post Image',
   description: 'Save image to Total CMS blog post',

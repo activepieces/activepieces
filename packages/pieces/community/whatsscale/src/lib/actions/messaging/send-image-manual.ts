@@ -10,6 +10,7 @@ import { prepareFile } from '../../common/prepare-file';
 export const sendImageManualAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_image_manual',
+  classification: 'WRITE',
   displayName: 'Send an Image (Manual Entry)',
   description: 'Send an image by entering a phone number or group ID manually.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { BASE_URL, getBookedinHeaders, extractApiKey } from '../common/props';
 
 export const getLeads = createAction({
   name: 'getLeads',
+  classification: 'SEARCH',
   displayName: 'Get Leads',
   description: 'Get all leads for the current business with pagination metadata.',
   audience: 'both',

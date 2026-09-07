@@ -7,6 +7,7 @@ import { documentIdDropdown, inboxIdDropdown } from '../common/props';
 export const extractDataFromDocumentAction = createAction({
 	auth: airparserAuth,
 	name: 'extract_data_from_document',
+	classification: 'READ',
 	displayName: 'Get Data from Document',
 	description: 'Retrieves parsed JSON data from a specific document.',
 	audience: 'both',

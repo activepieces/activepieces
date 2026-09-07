@@ -14,6 +14,7 @@ import { oneDriveCommon } from '../common/common';
 export const copyFile = createAction({
   auth: oneDriveAuth,
   name: 'copy_file',
+  classification: 'WRITE',
   displayName: 'Copy File',
   description: 'Create a copy of a file in your OneDrive, optionally in a different folder or with a new name.',
   audience: 'both',

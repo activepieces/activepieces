@@ -7,6 +7,7 @@ import { notionListUsersActionOutputSchema } from '../output-schemas';
 export const notionListUsers = createAction({
   auth: notionAuth,
   name: 'notion_list_users',
+  classification: 'SEARCH',
   displayName: 'List Users',
   description:
     "Lists the people and bots in the workspace, returning each user's id, name, and type.",

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeGetSubscription = createAction({
   name: 'get_subscription',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Subscription (Agent)',
   description: 'Retrieve a Stripe subscription by its ID.',

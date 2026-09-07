@@ -7,6 +7,7 @@ import { listFoldersDropdown } from '../common';
 export const createTextToSpeech = createAction({
     auth: cambaiAuth,
     name: 'create_text_to_speech',
+    classification: 'READ',
     displayName: 'Create Text-to-Speech',
     description: 'Convert text into speech using a specified voice, language, gender, and age group.',
     audience: 'both',

@@ -5,6 +5,7 @@ import { aiAnswerConfig } from '../common/models';
 
 export const getCallTranscript = createAction({
   name: 'getCallTranscript',
+  classification: 'READ',
   auth: aiAnswerAuth,  // Auth configured here
   displayName: 'Get Call Transcript',
   description: 'Fetch the transcript of a call by Call ID',

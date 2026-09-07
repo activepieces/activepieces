@@ -9,6 +9,7 @@ import {
 
 export const updateRowAction = createAction({
   name: 'baserow_update_row',
+  classification: 'WRITE',
   displayName: 'Update Row',
   description:
     'Updates fields in an existing row. Empty values are skipped. To clear a field, use Clean Row.',

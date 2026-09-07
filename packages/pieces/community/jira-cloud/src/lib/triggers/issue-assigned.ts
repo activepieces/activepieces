@@ -2,32 +2,12 @@ import {
   Property,
   TriggerStrategy,
   createTrigger,
+  isNil,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
+import { jiraCloudAuth } from '../../auth';
+import { JiraPollingItem, JiraPollingProps, createJiraPolling } from '../common/polling';
 import { getUsersDropdown } from '../common/props';
-
-type ChangelogItem = {
-  field: string;
-  fieldId?: string;
-  from: string | null;
-  fromString: string | null;
-  to: string | null;
-  toString: string | null;
-};
-
-type ChangelogHistory = {
-  id: string;
-  author?: { accountId: string; displayName: string; emailAddress?: string };
-  created: string;
-  items: ChangelogItem[];
-};
+import { ChangelogHistory } from '../common/types';
 
 type IssueWithChangelog = {
   id: string;
@@ -36,57 +16,46 @@ type IssueWithChangelog = {
   changelog?: { histories: ChangelogHistory[] };
 };
 
-const polling: Polling<
-  JiraAuth,
-  {
-    assignee?: string;
-    assignedToMe?: boolean;
-    jql?: string;
-    sanitizeJql?: boolean;
-  }
-> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { assignee, assignedToMe, jql, sanitizeJql } = propsValue;
+type IssueAssignedProps = JiraPollingProps & {
+  assignee?: string;
+  assignedToMe?: boolean;
+};
 
-    const targetClause = assignedToMe
+const polling = createJiraPolling<IssueAssignedProps>({
+  expand: ['changelog'],
+  extraScope: ({ propsValue, since }) => {
+    const target = propsValue.assignedToMe
       ? 'TO currentUser()'
-      : assignee
-      ? `TO "${assignee}"`
+      : propsValue.assignee
+      ? `TO "${propsValue.assignee}"`
       : '';
+    return ['assignee CHANGED', target, isNil(since) ? '' : `AFTER '${since}'`]
+      .filter((part) => part.length > 0)
+      .join(' ');
+  },
+  extractItems: ({
+    issue,
+    propsValue,
+  }: {
+    issue: IssueWithChangelog;
+    propsValue: IssueAssignedProps;
+  }): JiraPollingItem[] => {
+    const targetAccountId = propsValue.assignedToMe ? undefined : propsValue.assignee;
+    return (issue.changelog?.histories ?? []).flatMap((history) => {
+      const assigneeChange = history.items.find(
+        (item) => item.field === 'assignee' || item.fieldId === 'assignee'
+      );
+      if (isNil(assigneeChange)) {
+        return [];
+      }
+      if (targetAccountId && assigneeChange.to !== targetAccountId) {
+        return [];
+      }
 
-    const since = dayjs(lastFetchEpochMS).format('YYYY-MM-DD HH:mm');
-    const userScope = jql ? `(${jql}) AND ` : '';
-    const searchQuery =
-      `${userScope}assignee CHANGED ${targetClause} AFTER '${since}'`.trim();
-
-    const response = await searchIssuesByJql({
-      auth,
-      jql: searchQuery,
-      maxResults: 50,
-      sanitizeJql: sanitizeJql ?? false,
-      expand: ['changelog'],
-    });
-
-    const issues = response.issues as IssueWithChangelog[];
-    const targetAccountId = assignedToMe ? undefined : assignee;
-    const results: Array<{ epochMilliSeconds: number; data: unknown }> = [];
-
-    for (const issue of issues) {
-      const histories = issue.changelog?.histories ?? [];
-      for (const history of histories) {
-        const changedMS = Date.parse(history.created);
-        if (Number.isNaN(changedMS) || changedMS <= lastFetchEpochMS) continue;
-
-        const assigneeChange = history.items.find(
-          (item) => item.field === 'assignee' || item.fieldId === 'assignee'
-        );
-        if (!assigneeChange) continue;
-
-        if (targetAccountId && assigneeChange.to !== targetAccountId) continue;
-
-        results.push({
-          epochMilliSeconds: changedMS,
+      return [
+        {
+          id: history.id,
+          epochMilliSeconds: Date.parse(history.created),
           data: {
             issue: {
               id: issue.id,
@@ -106,13 +75,11 @@ const polling: Polling<
               at: history.created,
             },
           },
-        });
-      }
-    }
-
-    return results;
+        },
+      ];
+    });
   },
-};
+});
 
 export const issueAssigned = createTrigger({
   name: 'issue_assigned',
@@ -342,15 +309,15 @@ Not sure what to write? Open Jira → Filters → Advanced search, build a filte
     },
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await polling.onEnable({ context });
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await polling.poll({ context });
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return await polling.test({ context });
   },
 });

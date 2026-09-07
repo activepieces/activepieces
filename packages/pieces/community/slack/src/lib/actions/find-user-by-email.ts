@@ -7,6 +7,7 @@ import { findUserByEmailActionOutputSchema } from '../output-schemas';
 export const findUserByEmailAction = createAction({
   auth: slackAuth,
   name: 'slack-find-user-by-email',
+  classification: 'READ',
   displayName: 'Find User by Email',
   description: 'Finds a user by matching against their email address.',
   audience: 'human',

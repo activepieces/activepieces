@@ -14,6 +14,7 @@ import { PlacidCreatePdfRequest } from '../common';
 export const createPdf = createAction({
 	auth: placidAuth,
 	name: 'create_pdf',
+	classification: 'WRITE',
 	displayName: 'Create PDF',
 	description: 'Generates a PDF document from a specified template.',
 	audience: 'both',

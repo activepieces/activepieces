@@ -57,6 +57,7 @@ async function enrichGmailMessage({
 export const gmailNewLabeledEmailTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_labeled_email',
+  classification: 'READ',
   displayName: 'New Labeled Email',
   description: 'Triggers when a label is added to an email',
   aiMetadata: {

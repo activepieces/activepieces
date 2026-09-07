@@ -10,6 +10,7 @@ import { uploadFileActionOutputSchema } from '../output-schemas';
 export const uploadFile = createAction({
   auth: slackAuth,
   name: 'uploadFile',
+  classification: 'WRITE',
   displayName: 'Upload file',
   description: 'Upload file without sharing it to a channel or user',
   audience: 'both',

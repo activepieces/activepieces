@@ -8,6 +8,7 @@ import { listUsersOutputSchema } from '../../output-schemas';
 export const githubListOrganizationMembersAction = createAction({
   auth: githubAuth,
   name: 'list_organization_members',
+  classification: 'SEARCH',
   displayName: 'List Organization Members (Agent)',
   description: 'Lists the members of an organization.',
   audience: 'ai',

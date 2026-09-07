@@ -9,6 +9,7 @@ import { newDirectMessageTriggerOutputSchema } from '../output-schemas';
 export const newDirectMessageTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-direct-message',
+	classification: 'READ',
 	displayName: 'New Direct Message',
 	description: 'Triggers when a message was posted in a direct message channel.',
 	aiMetadata: {

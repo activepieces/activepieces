@@ -6,6 +6,7 @@ import { whatsscaleClient } from '../../common/client';
 export const createCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_create_crm_contact',
+  classification: 'WRITE',
   displayName: 'Create a CRM Contact',
   description: 'Add a new contact to your WhatsScale CRM',
   audience: 'both',

@@ -6,6 +6,7 @@ import { gmailAiGetMessageActionOutputSchema } from '../output-schemas';
 export const gmailAiGetMessageAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_message',
+  classification: 'READ',
   displayName: 'Get Message',
   description: 'Get a single email message by its ID.',
   audience: 'ai',

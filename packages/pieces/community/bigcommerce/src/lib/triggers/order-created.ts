@@ -9,6 +9,7 @@ const TRIGGER_SCOPE = 'store/order/created';
 export const orderCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'orderCreated',
+  classification: 'READ',
   displayName: 'Order Created',
   description: 'Triggers when a new order is created',
   aiMetadata: {

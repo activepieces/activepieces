@@ -6,6 +6,7 @@ import { clicksendAuth } from '../..';
 export const clicksendDeleteContactAction = createAction({
   auth: clicksendAuth,
   name: 'delete_contact',
+  classification: 'DESTRUCTIVE',
   description: 'Deletes a contact from a contact list.',
   audience: 'both',
   aiMetadata: {

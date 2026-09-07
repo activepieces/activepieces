@@ -36,6 +36,7 @@ interface PdfConvertToTextSimpleRequestBody {
 
 export const extractTextFromPdf = createAction({
     name: 'extract_text_from_pdf',
+    classification: 'READ',
     displayName: 'Extract Plain Text from PDF',
     description: 'Extracts plain text content from a PDF document.',
     audience: 'both',

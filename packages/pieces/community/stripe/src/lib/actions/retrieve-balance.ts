@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { balanceOutputSchema } from '../output-schemas';
 export const stripeRetrieveBalance = createAction({
   name: 'retrieve_balance',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Retrieve Balance (Agent)',
   description: 'Get the current Stripe account balance.',

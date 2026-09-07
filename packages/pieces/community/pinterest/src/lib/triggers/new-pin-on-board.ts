@@ -131,6 +131,7 @@ async function readCheckpoint(store: Store): Promise<number> {
 export const newPinOnBoard = createTrigger({
   auth: pinterestAuth,
   name: 'newPinOnBoard',
+  classification: 'READ',
   outputSchema: newPinOnBoardTriggerOutputSchema,
   displayName: 'New Pin on Board',
   description: 'Fires when a new Pin is added to a specific board.',

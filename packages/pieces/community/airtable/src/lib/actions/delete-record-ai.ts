@@ -6,6 +6,7 @@ import { deleteRecordAiActionOutputSchema } from '../output-schemas';
 export const airtableDeleteRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'delete_record_ai',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Record (Agent)',
   description: 'Delete a single Airtable record by its ID.',
   audience: 'ai',

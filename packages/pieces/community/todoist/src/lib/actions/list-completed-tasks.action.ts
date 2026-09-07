@@ -7,6 +7,7 @@ import { listCompletedTasksActionOutputSchema } from '../output-schemas';
 export const todoistListCompletedTasksAction = createAction({
   auth: todoistAuth,
   name: 'todoist_list_completed_tasks',
+  classification: 'SEARCH',
   displayName: 'List Completed Tasks (by Completion Date)',
   description: 'List tasks completed within a date window.',
   audience: 'ai',

@@ -5,6 +5,7 @@ import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, fetchOrderOptions } fro
 
 export const getOrder = createAction({
   name: 'get_order',
+  classification: 'READ',
   displayName: 'Get Order',
   description: 'Retrieve the details of a specific order by its ID.',
   audience: 'both',

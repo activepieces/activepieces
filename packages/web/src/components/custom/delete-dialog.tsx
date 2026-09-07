@@ -29,6 +29,7 @@ interface ConfirmationDeleteDialogProps {
   showToast?: boolean;
   onError?: (error: Error) => void;
   warning?: React.ReactNode | string;
+  confirmDisabled?: boolean;
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -44,6 +45,7 @@ export const ConfirmationDeleteDialog = ({
   onError,
   onOpenChange,
   warning,
+  confirmDisabled,
 }: ConfirmationDeleteDialogProps) => {
   const [isControlled] = useState(
     open !== undefined && onOpenChange !== undefined,
@@ -102,6 +104,7 @@ export const ConfirmationDeleteDialog = ({
           <Button
             variant="destructive"
             loading={isPending}
+            disabled={confirmDisabled}
             onClick={() => mutate()}
           >
             {isDanger && <TriangleAlert className="size-4 mr-2" />}

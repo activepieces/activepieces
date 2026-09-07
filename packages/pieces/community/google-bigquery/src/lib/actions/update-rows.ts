@@ -12,6 +12,7 @@ import {
 export const updateRowsAction = createAction({
   auth: bigQueryAuth,
   name: 'update_rows',
+  classification: 'WRITE',
   displayName: 'Update Row(s)',
   description:
     'Updates one or more existing rows in a BigQuery table using SQL SET and WHERE expressions.',

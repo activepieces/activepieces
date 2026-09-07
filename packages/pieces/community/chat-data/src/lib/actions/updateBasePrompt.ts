@@ -5,6 +5,7 @@ import { chatDataAuth, UpdateChatbotSettingsDto } from '../common/types';
 export const updateBasePrompt = createAction({
   auth: chatDataAuth,
   name: 'update_chatbot_settings',
+  classification: 'WRITE',
   displayName: 'Update Chatbot Settings',
   description: 'Update comprehensive settings for a chatbot including name, prompts, behavior, and appearance',
   audience: 'both',

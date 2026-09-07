@@ -13,6 +13,7 @@ import { organizationIdDropdown, brandIdDropdown, problemTicketIdDropdown, group
 export const createTicketAction = createAction({
   auth: zendeskAuth,
   name: 'create-ticket',
+  classification: 'WRITE',
   displayName: 'Create Ticket',
   description: 'Create a new ticket in Zendesk.',
   audience: 'both',

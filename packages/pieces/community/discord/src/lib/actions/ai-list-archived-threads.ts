@@ -18,6 +18,7 @@ interface ThreadChannel {
 export const discordListArchivedThreads = createAction({
   auth: discordAuth,
   name: 'discord_list_archived_threads',
+  classification: 'SEARCH',
   displayName: 'List Archived Threads',
   description: 'List public archived threads in a channel.',
   audience: 'ai',

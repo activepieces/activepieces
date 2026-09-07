@@ -7,6 +7,7 @@ import { createParagraphBulletsActionOutputSchema } from '../output-schemas';
 export const createParagraphBullets = createAction({
   auth: googleDocsAuth,
   name: 'create_paragraph_bullets',
+  classification: 'WRITE',
   displayName: 'Create Paragraph Bullets',
   description: 'Apply a bullet list preset to paragraphs in a character range in a Google Docs document',
   audience: 'ai',

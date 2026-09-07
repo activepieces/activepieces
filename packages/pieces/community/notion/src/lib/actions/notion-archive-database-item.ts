@@ -7,6 +7,7 @@ import { notionArchiveDatabaseItemActionOutputSchema } from '../output-schemas';
 export const notionArchiveDatabaseItem = createAction({
   auth: notionAuth,
   name: 'notion_archive_database_item',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Database Item',
   description:
     'Archives (soft-deletes) a Notion database item by its page id, keeping it recoverable.',

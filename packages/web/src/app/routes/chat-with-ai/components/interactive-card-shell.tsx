@@ -4,16 +4,21 @@ import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export function InteractiveCardShell({
   onDismiss,
   title,
   headerExtra,
+  active = true,
   children,
 }: InteractiveCardShellProps) {
   return (
     <motion.div
-      className="chat-question-gradient-border rounded-2xl bg-background p-4 sm:p-5 shadow-[0_12px_40px_-12px_rgba(129,66,227,0.22)] dark:bg-neutral-900 dark:shadow-[0_12px_40px_-12px_rgba(129,66,227,0.35)] backdrop-blur-sm transition-colors"
+      className={cn(
+        'chat-question-gradient-border rounded-2xl bg-background p-4 sm:p-5 shadow-[0_12px_40px_-12px_rgba(129,66,227,0.22)] dark:bg-neutral-900 dark:shadow-[0_12px_40px_-12px_rgba(129,66,227,0.35)] backdrop-blur-sm transition-[color,background-color,border-color,opacity]',
+        !active && 'opacity-60',
+      )}
       initial={{ opacity: 0, y: 16, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 8, scale: 0.98 }}
@@ -52,5 +57,6 @@ type InteractiveCardShellProps = {
   onDismiss: () => void;
   title?: ReactNode;
   headerExtra?: ReactNode;
+  active?: boolean;
   children: ReactNode;
 };

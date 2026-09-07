@@ -5,6 +5,7 @@ import { microsoftToDoAuth } from '../auth';
 export const deleteTaskAction = createAction({
     auth: microsoftToDoAuth,
     name: 'delete_task',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Task',
     description: 'Deletes an existing task.',
     audience: 'both',

@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'user-unsubscribes-trigger';
 export const userUnsubscribesTrigger = createTrigger({
 	auth: beehiivAuth,
 	name: 'beehiiv_user_unsubscribes',
+	classification: 'READ',
 	displayName: 'User Unsubscribes',
 	description: 'Triggers when a user unsubscribes.',
 	aiMetadata: {

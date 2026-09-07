@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTransactionInternalTransactions = createAction({
   name: 'get_transaction_internal_transactions',
+  classification: 'SEARCH',
   displayName: 'Get Transaction Internal Transactions',
   description: 'Get list of internal transactions in a transaction',
   audience: 'both',

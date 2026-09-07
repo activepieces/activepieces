@@ -5,6 +5,7 @@ import { LEMON_SQUEEZY_API_BASE, getLemonSqueezyHeaders, buildQueryString, fetch
 
 export const listOrders = createAction({
   name: 'list_orders',
+  classification: 'SEARCH',
   displayName: 'List Orders',
   description: 'Retrieve a paginated list of orders from your Lemon Squeezy store, with optional filters.',
   audience: 'both',

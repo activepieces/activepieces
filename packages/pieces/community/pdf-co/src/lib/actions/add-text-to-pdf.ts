@@ -42,6 +42,7 @@ interface PdfCoAddAnnotationsRequestBody {
 
 export const addTextToPdf = createAction({
 	name: 'add_text_to_pdf',
+	classification: 'WRITE',
 	displayName: 'Add Text to PDF',
 	description: 'Adds text to PDF.',
 	audience: 'both',

@@ -7,6 +7,7 @@ import { delayUntilActionOutputSchema } from '../output-schemas';
 export const delayUntilAction = createAction({
   audience: 'both',
   name: 'delay_until',
+  classification: 'READ',
   displayName: 'Delay Until',
   description:
     'Delays the execution of the next action until a given timestamp',

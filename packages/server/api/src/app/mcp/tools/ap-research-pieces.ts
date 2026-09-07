@@ -1,4 +1,5 @@
 import { isNil, LocalesEnum } from '@activepieces/core-utils'
+import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { McpToolDefinition, PieceAudienceFilter, PieceCategory, ProjectScopedMcpServer, SuggestionType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -200,14 +201,56 @@ async function searchPieces({ params, projectId, platformId, log }: {
     const overflowHint = totalCount > ENRICHED_CAP
         ? ` (showing top ${ENRICHED_CAP} of ${totalCount} results — use a more specific searchQuery to narrow results)`
         : ''
-    return {
-        content: [{ type: 'text', text: `✅ Found pieces${overflowHint}:\n${JSON.stringify(enrichedPieces)}` }],
-        structuredContent: {
-            pieces: enrichedPieces,
-            count: enrichedPieces.length,
-            totalCount,
-        },
+    return fitEnrichedResponse({ pieces: enrichedPieces, overflowHint, totalCount })
+}
+
+const DETAIL_LADDER: Array<(component: ComponentSummary) => Partial<ComponentSummary>> = [
+    (component) => component,
+    ({ aiDescription: _aiDescription, ...rest }) => rest,
+    ({ name, displayName }) => ({ name, displayName }),
+]
+
+export function fitEnrichedResponse({ pieces, overflowHint, totalCount }: {
+    pieces: EnrichedPiece[]
+    overflowHint: string
+    totalCount: number
+}): PieceSearchResult {
+    for (const [rung, trim] of DETAIL_LADDER.entries()) {
+        const result = pieceSearchResult({ pieces: pieces.map((piece) => trimComponents(piece, trim)), overflowHint, totalCount, trimmed: rung > 0 })
+        if (fitsBudget(result)) {
+            return result
+        }
     }
+    const withoutComponents = pieces.map(({ actions: _actions, triggers: _triggers, ...piece }) => piece)
+    const result = pieceSearchResult({ pieces: withoutComponents, overflowHint, totalCount, trimmed: true })
+    return fitsBudget(result)
+        ? result
+        : pieceSearchResult({ pieces: [], overflowHint: ` (${totalCount} pieces matched, too many to name here — narrow the searchQuery)`, totalCount, trimmed: true })
+}
+
+function trimComponents(piece: EnrichedPiece, trim: (component: ComponentSummary) => Partial<ComponentSummary>): TrimmedPiece {
+    return {
+        ...piece,
+        ...(isNil(piece.actions) ? {} : { actions: piece.actions.map(trim) }),
+        ...(isNil(piece.triggers) ? {} : { triggers: piece.triggers.map(trim) }),
+    }
+}
+
+function pieceSearchResult({ pieces, overflowHint, totalCount, trimmed }: {
+    pieces: TrimmedPiece[]
+    overflowHint: string
+    totalCount: number
+    trimmed: boolean
+}): PieceSearchResult {
+    const trimHint = trimmed ? ' Look a piece up by name with pieceNames for its full action list.' : ''
+    return {
+        content: [{ type: 'text', text: `✅ Found pieces${overflowHint}:\n${JSON.stringify(pieces)}${trimHint}` }],
+        structuredContent: { pieces, count: pieces.length, totalCount, trimmed },
+    }
+}
+
+function fitsBudget(result: PieceSearchResult): boolean {
+    return (largeResultUtils.byteSizeOf(result) ?? 0) <= MAX_TOOL_RESULT_BYTES
 }
 
 function emptySearchResult(searchQuery: string | undefined): { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> } {
@@ -228,6 +271,13 @@ type ComponentSummary = {
     requiresAuth: boolean
     cardinality: ActionCardinality
     aiDescription?: string
+}
+
+type PieceSearchResult = { content: [{ type: 'text', text: string }], structuredContent: Record<string, unknown> }
+
+type TrimmedPiece = Omit<EnrichedPiece, 'actions' | 'triggers'> & {
+    actions?: Partial<ComponentSummary>[]
+    triggers?: Partial<ComponentSummary>[]
 }
 
 type EnrichedPiece = {

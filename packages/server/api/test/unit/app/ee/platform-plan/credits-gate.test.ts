@@ -15,6 +15,7 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/billing-providers/autu
         readBalance: async ({ featureId }: { featureId: string }) =>
             featureId === 'apCredits' ? storedCredits : null,
         resolveClientForPlatform: (...args: unknown[]) => mockResolveClientForPlatform(...args),
+        toGrantedFeatureIds: () => new Set<string>(),
         writeCustomerStateCaches: async () => {
             storedCredits = autumnCredits
             return { credits: autumnCredits, appSumo: null }

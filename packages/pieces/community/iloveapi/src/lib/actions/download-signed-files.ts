@@ -5,6 +5,7 @@ import { iLoveApi } from '../common/client';
 export const downloadSignedFilesAction = createAction({
   auth: iloveapiAuth,
   name: 'download_signed_files',
+  classification: 'READ',
   displayName: 'Download Signed Files',
   description:
     'Download the signed PDF (or ZIP if multiple files). The signature must be in "completed" status.',

@@ -12,6 +12,7 @@ interface WebhookInformation {
 export const newBranchTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_branch',
+  classification: 'READ',
   displayName: 'New Branch',
   description: 'Triggers when a new branch is created.',
   aiMetadata: {

@@ -123,6 +123,7 @@ const polling: Polling<
 export const eventEnds = createTrigger({
   auth: googleCalendarAuth,
   name: 'event_ends',
+  classification: 'READ',
   displayName: 'Event Ends',
   description: 'Fires when an event ends.',
   aiMetadata: {

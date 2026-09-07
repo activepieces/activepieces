@@ -11,6 +11,7 @@ import { outlookCalendarCommon } from '../common/common';
 export const listEventsAction = createAction({
   auth: outlookCalendarAuth,
   name: 'list_events',
+  classification: 'SEARCH',
   description: 'List events in a calendar',
   audience: 'both',
   aiMetadata: { description: 'Retrieves events from a specified Microsoft Outlook calendar. Leave the filter empty to fetch all events, or supply an OData $filter expression to narrow results to matching events. Use to look up or browse existing events. Read-only and idempotent.', idempotent: true },

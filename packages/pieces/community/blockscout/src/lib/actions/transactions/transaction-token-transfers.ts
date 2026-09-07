@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTransactionTokenTransfers = createAction({
   name: 'get_transaction_token_transfers',
+  classification: 'SEARCH',
   displayName: 'Get Transaction Token Transfers',
   description: 'Get list of token transfers in a transaction',
   audience: 'both',

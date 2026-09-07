@@ -7,6 +7,7 @@ import { templateIdDropdown } from '../common/props';
 export const createImage = createAction({
   auth: ApitemplateAuth,
   name: 'createImage',
+  classification: 'WRITE',
   displayName: 'Create Image',
   description: 'Creates an image from a template with provided data.',
   audience: 'both',

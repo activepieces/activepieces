@@ -45,6 +45,7 @@ const polling: Polling<
 export const newBackBlazeFileTrigger = createTrigger({
   auth: backBlazeS3Auth,
   name: 'new_backblaze_file',
+  classification: 'READ',
   displayName: 'New File',
   description: 'Trigger when a new file is uploaded.',
   aiMetadata: {

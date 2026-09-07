@@ -9,6 +9,7 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { accessTokenManager } from './lib/access-token-manager'
+import { signupNames } from './lib/signup-names'
 import { userIdentityService } from './user-identity/user-identity-service'
 
 export const authenticationUtils = (log: FastifyBaseLogger) => ({
@@ -41,14 +42,6 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         const project = isNil(params.projectId)
             ? findPersonalProject(projects, params.userId) ?? projects?.[0]
             : projects.find((project) => project.id === params.projectId)
-        if (isNil(project)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVITATION_ONLY_SIGN_UP,
-                params: {
-                    message: 'No project found for user',
-                },
-            })
-        }
         const identity = await userIdentityService(log).getOneOrFail({ id: user.identityId })
         if (!identity.verified) {
             throw new ActivepiecesError({
@@ -83,7 +76,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             newsLetter: identity.newsLetter,
             verified: identity.verified,
             token,
-            projectId: project.id,
+            projectId: project?.id ?? null,
         }
     },
 
@@ -118,6 +111,21 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             token,
             projectId: null,
         }
+    },
+
+    async provisionOrOnboard({ identityId }: ProvisionOrOnboardParams): Promise<AuthenticationResponse> {
+        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        if (!identity.verified || signupNames.isPlaceholderName(identity)) {
+            return this.getOnboardingResponse({ identityId })
+        }
+        const { response } = await platformService(log).createPlatformWithProject({
+            identityId,
+            name: signupNames.platformNameFromSignup({ firstName: identity.firstName, email: identity.email }),
+            invalidatePreviousTokens: false,
+            isFirstPlatform: true,
+            callerTokenVersion: undefined,
+        })
+        return response
     },
 
     async assertDomainIsAllowed({
@@ -284,6 +292,10 @@ type AssertEmailMatchesSsoDomainParams = {
 type AssertUserIsInvitedToPlatformOrProjectParams = {
     email: string
     platformId: string
+}
+
+type ProvisionOrOnboardParams = {
+    identityId: string
 }
 
 type GetOnboardingResponseParams = {

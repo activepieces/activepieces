@@ -8,6 +8,7 @@ import { buildRecipientBody, RecipientType } from '../../common/recipients';
 export const sendTextToGroupAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_text_to_group',
+  classification: 'WRITE',
   displayName: 'Send a Message to a Group',
   description:
     'Send a text message to a WhatsApp group selected from your group list',

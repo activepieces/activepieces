@@ -6,6 +6,7 @@ import { formatInputFields, objectFields, objectTypeIdDropdown } from '../common
 
 export const updateRecordAction = createAction({
 	name: 'update_record',
+	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Update an existing record with new attribute values.',
 	audience: 'both',

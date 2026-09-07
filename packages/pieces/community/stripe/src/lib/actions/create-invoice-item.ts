@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { invoiceItemOutputSchema } from '../output-schemas';
 export const stripeCreateInvoiceItem = createAction({
   name: 'create_invoice_item',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Invoice Item (Agent)',
   description: 'Add a one-off pending line item to a customer.',

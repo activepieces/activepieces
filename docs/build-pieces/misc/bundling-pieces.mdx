@@ -5,15 +5,15 @@ icon: 'cube'
 
 Activepieces builds every piece into a **self-contained bundle**. Instead of shipping a piece that depends on `@activepieces/shared`, `@activepieces/pieces-framework`, `@activepieces/pieces-common`, and the `@activepieces/core-*` packages at install time, the build inlines all of that code into a single artifact.
 
-This is what lets the engine provision a piece by downloading **one artifact** — no `bun install` / `npm install` of a dependency tree at runtime.
+This is what lets the engine provision a piece by downloading **one artifact**, with no `bun install` / `npm install` of a dependency tree at runtime.
 
 ### What gets bundled
 
 When a piece is built for publishing, the bundler:
 
-- **Inlines all `@activepieces/*` workspace libraries** (`shared`, `pieces-framework`, `pieces-common`, `core-utils`, `core-piece-types`, …) directly into the bundle. These libraries are **never published to npm** — they only exist as part of each piece's bundle.
+- **Inlines all `@activepieces/*` workspace libraries** (`shared`, `pieces-framework`, `pieces-common`, `core-utils`, `core-piece-types`, …) directly into the bundle. These libraries are **never published to npm**; they only exist as part of each piece's bundle.
 - **Inlines third-party dependencies** (e.g. an SDK the piece imports) into the same bundle.
-- **Keeps a small allow-list of deps external** only when they genuinely cannot be inlined — native addons or packages that use dynamic `require`. These remain in the published `dependencies` so the runtime installer resolves them.
+- **Keeps a small allow-list of deps external** only when they genuinely cannot be inlined: native addons or packages that use dynamic `require`. These remain in the published `dependencies` so the runtime installer resolves them.
 
 The result is typically **~2–3× smaller** than the raw inputs, and the published `package.json` lists only the few unavoidable external deps (e.g. `tslib`).
 
@@ -33,7 +33,7 @@ After bundling, the piece's `dist/package.json` is rewritten:
 }
 ```
 
-No `@activepieces/*` dependency appears — installing the piece never requires those packages to exist on the registry.
+No `@activepieces/*` dependency appears, so installing the piece never requires those packages to exist on the registry.
 
 ### Forcing a dependency to stay external
 
@@ -46,11 +46,26 @@ If a dependency must not be inlined (for example a native module), add it to a `
 }
 ```
 
+### Files loaded at runtime (forked processes)
+
+A file your piece loads by path at runtime (for example `child_process.fork(path.join(__dirname, 'runner.js'))`) is invisible to the bundler's import graph, so by default it would not exist in the published package. Declare it in `bundleForkedEntries`:
+
+```jsonc
+{
+  "name": "@activepieces/piece-oracle-database",
+  "bundleForkedEntries": ["src/lib/common/oracle-runner.ts"]
+}
+```
+
+Each declared entry is bundled on its own and emitted **next to the main bundle** at `src/<name>.js`, which is where `path.join(__dirname, '<name>.js')` resolves at runtime, since the bundled parent code lives at `src/index.js`. Dependencies that only the forked file imports (e.g. `oracledb`) are still captured into the published `dependencies`.
+
+The bundler **fails the build** if piece code uses `__dirname` without declaring any `bundleForkedEntries`, because such code breaks silently after publishing.
+
 ### Building and publishing
 
 Bundling happens automatically when you build or publish a piece:
 
-- `npm run build-piece <name>` — builds and packs the bundle into a `.tgz` (see [Build Custom Pieces](./build-piece)).
-- `npm run publish-piece-to-api` — bundles and uploads the piece to a platform (see [Publish Custom Pieces](./publish-piece)).
+- `npm run build-piece <name>`: builds and packs the bundle into a `.tgz` (see [Build Custom Pieces](./build-piece)).
+- `npm run publish-piece-to-api`: bundles and uploads the piece to a platform (see [Publish Custom Pieces](./publish-piece)).
 
-You don't need to configure anything for bundling — it is the default behavior.
+You don't need to configure anything for bundling; it is the default behavior.

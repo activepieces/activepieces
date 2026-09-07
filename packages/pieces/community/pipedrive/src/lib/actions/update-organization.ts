@@ -10,10 +10,13 @@ import {
 import { GetField, GetOrganizationResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isEmpty } from '@activepieces/pieces-framework';
+import { updateOrganizationActionOutputSchema } from '../output-schemas';
 
 export const updateOrganizationAction = createAction({
 	auth: pipedriveAuth,
 	name: 'update-organization',
+	outputSchema: updateOrganizationActionOutputSchema,
+	classification: 'WRITE',
 	displayName: 'Update Organization',
 	description: 'Updates an existing organization.',
 	audience: 'both',

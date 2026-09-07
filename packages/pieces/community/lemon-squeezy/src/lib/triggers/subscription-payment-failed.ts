@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionPaymentFailedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_payment_failed',
+  classification: 'READ',
   displayName: 'Subscription Payment Failed',
   description: 'Triggers when a subscription renewal payment fails',
   aiMetadata: {

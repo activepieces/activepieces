@@ -105,6 +105,7 @@ const polling: Polling<
 export const newBoard = createTrigger({
   auth: pinterestAuth,
   name: 'newBoard',
+  classification: 'READ',
   outputSchema: newBoardTriggerOutputSchema,
   displayName: 'New Board',
   description: 'Fires when a new board is created in the account.',

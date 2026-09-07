@@ -8,6 +8,7 @@ import { threadRepliesActionOutputSchema } from '../output-schemas';
 export const slackGetThreadRepliesAiAction = createAction({
   auth: slackAuth,
   name: 'slack_get_thread_replies',
+  classification: 'SEARCH',
   displayName: 'Get Thread Replies',
   description: 'Retrieve all replies in a Slack thread.',
   audience: 'ai',

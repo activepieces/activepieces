@@ -10,6 +10,7 @@ import {
   getMimeType,
   EntryGetDataOptions,
 } from '@zip.js/zip.js';
+import { unzipFileActionOutputSchema } from '../output-schemas';
 
 interface Result {
   file: string;
@@ -25,9 +26,11 @@ Throw an error if zip file has more than expected entries.
 export const unzipFile = createAction({
   audience: 'both',
   name: 'unzipFile',
+  classification: 'READ',
   displayName: 'Unzip File',
   description: 'Unzip compressed zip file',
   aiMetadata: { description: 'Extracts every file entry from a zip archive, writing each one out as its own file; supports password-protected archives. Use it to reach the contents of a zip attachment before processing them; use Zip Files for the reverse direction. Set Max Results to throw when an untrusted archive exceeds that entry count; directory entries are skipped, a wrong or missing password makes extraction fail, and the source archive is unchanged, so it is idempotent.', idempotent: true },
+  outputSchema: unzipFileActionOutputSchema,
   props: {
     file: Property.File({
       displayName: 'Zip File',

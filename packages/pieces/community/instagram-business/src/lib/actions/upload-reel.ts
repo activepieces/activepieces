@@ -5,6 +5,7 @@ import { instagramCommon, FacebookPageDropdown } from '../common';
 export const uploadReel = createAction({
   auth: instagramCommon.authentication,
   name: 'upload_reel',
+  classification: 'WRITE',
   displayName: 'Upload Reel',
   description: 'Upload a reel to an Instagram Professional Account',
   audience: 'both',

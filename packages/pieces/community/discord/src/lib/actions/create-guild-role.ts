@@ -11,6 +11,7 @@ import { discordRoleActionOutputSchema } from '../output-schemas';
 export const discordCreateGuildRole = createAction({
   auth: discordAuth,
   name: 'createGuildRole',
+  classification: 'WRITE',
   displayName: 'Create guild role',
   description: 'Creates a new role on the specified guild',
   audience: 'human',

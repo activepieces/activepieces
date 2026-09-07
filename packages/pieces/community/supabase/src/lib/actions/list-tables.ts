@@ -5,6 +5,7 @@ import { listTablesActionOutputSchema } from '../output-schemas';
 
 export const listTables = createAction({
     name: 'list_tables',
+    classification: 'SEARCH',
     displayName: 'List Tables',
     description: 'Returns a list of all public tables and views in the database',
     audience: 'both',

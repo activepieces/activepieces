@@ -7,6 +7,7 @@ import { updateTableRowStyleActionOutputSchema } from '../output-schemas';
 export const updateTableRowStyle = createAction({
   auth: googleDocsAuth,
   name: 'update_table_row_style',
+  classification: 'WRITE',
   displayName: 'Update Table Row Style',
   description: 'Update style properties of one or more rows in a Google Docs table',
   audience: 'ai',

@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 
 export const newNote = createTrigger({
   name: 'new_note',
+  classification: 'READ',
   displayName: 'New Note',
   description:
     'Triggers when notes are successfully generated for meetings or calls',

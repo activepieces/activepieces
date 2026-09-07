@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const generateCreatorDescription = createAction({
   auth: BumpupsAuth,
   name: 'generateCreatorDescription',
+  classification: 'READ',
   displayName: 'Generate Creator Description',
   description: 'Generates a compelling description for a YouTube video based on its content.',
   audience: 'both',

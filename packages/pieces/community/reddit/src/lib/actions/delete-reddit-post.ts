@@ -5,6 +5,7 @@ import { redditAuth } from '../auth';
 export const deleteRedditPost = createAction({
   auth: redditAuth,
   name: 'deleteRedditPost',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Post',
   description: 'Delete a specific Reddit post by ID.',
   audience: 'both',

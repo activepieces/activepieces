@@ -7,6 +7,7 @@ import { parseAlgoliaRecordArray, parseRequiredString } from '../common/utils';
 export const saveRecordsAction = createAction({
   auth: algoliaAuth,
   name: 'save-records',
+  classification: 'WRITE',
   displayName: 'Save Records',
   description: 'Adds or updates records in an Algolia index.',
   audience: 'both',

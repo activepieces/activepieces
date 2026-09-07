@@ -7,6 +7,7 @@ import { unmergeTableCellsActionOutputSchema } from '../output-schemas';
 export const unmergeTableCells = createAction({
   auth: googleDocsAuth,
   name: 'unmerge_table_cells',
+  classification: 'WRITE',
   displayName: 'Unmerge Table Cells',
   description: 'Unmerge previously merged table cells in a Google Docs document',
   audience: 'ai',

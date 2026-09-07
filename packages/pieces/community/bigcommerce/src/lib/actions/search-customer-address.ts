@@ -6,6 +6,7 @@ import { multiCustomerDropdown } from '../common/props';
 export const searchCustomerAddress = createAction({
   auth: bigcommerceAuth,
   name: 'searchCustomerAddress',
+  classification: 'SEARCH',
   displayName: 'Search Customer Address',
   description: 'Searches for a customer’s address',
   audience: 'both',

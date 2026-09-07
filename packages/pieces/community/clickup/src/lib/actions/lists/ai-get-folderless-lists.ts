@@ -7,6 +7,7 @@ import { getListsOutputSchema } from '../../output-schemas';
 export const clickupGetFolderlessLists = createAction({
   auth: clickupAuth,
   name: 'clickup_get_folderless_lists',
+  classification: 'SEARCH',
   description: 'List the folderless lists directly under a ClickUp space',
   audience: 'ai',
   aiMetadata: {

@@ -5,6 +5,7 @@ import { browserlessCommon, convertBinaryToBase64 } from '../common/client';
 
 export const generatePdf = createAction({
     name: 'generate_pdf',
+    classification: 'READ',
     displayName: 'Generate PDF',
     description: 'Convert a web page to PDF',
     audience: 'both',

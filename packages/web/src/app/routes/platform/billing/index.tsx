@@ -8,7 +8,7 @@ import {
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { ArrowUpRight, ExternalLink, RefreshCw } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 import { BillingPageShell } from '@/app/components/billing-page-shell';
@@ -60,19 +60,6 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
     billingMutations.useRefreshSubscription();
 
   const isCloud = edition === ApEdition.CLOUD;
-  const [licenseKeyRevealed, setLicenseKeyRevealed] = useState(false);
-  useEffect(() => {
-    if (!isCloud) {
-      return;
-    }
-    const revealOnAltA = (event: KeyboardEvent) => {
-      if (event.altKey && event.code === 'KeyA') {
-        setLicenseKeyRevealed(true);
-      }
-    };
-    window.addEventListener('keydown', revealOnAltA);
-    return () => window.removeEventListener('keydown', revealOnAltA);
-  }, [isCloud]);
 
   const isPaid = billingUtils.isPaidPlan(info.plan.plan);
   const { creditsFeature, appSumoCreditsFeature, seatsFeature } = info;
@@ -94,7 +81,8 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
     info.plan.plan === PlanName.APPSUMO ||
     info.plan.plan === PlanName.FREE_LEGACY;
   const hasLicenseKey = !isNil(platform.plan.licenseKey);
-  const showLicenseKeySection = !isCloud || licenseKeyRevealed;
+  const isTrialKeySection = isCloud && !hasLicenseKey;
+  const licenseKeyCopy = licenseKeySectionCopy({ hasLicenseKey, isCloud });
 
   return (
     <div className="flex w-full flex-col gap-4 p-6">
@@ -247,30 +235,17 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
           </>
         )}
 
-        {showLicenseKeySection && (
-          <>
-            <Separator />
-            <BillingSection
-              title={
-                hasLicenseKey ? t('License key') : t('Have a custom plan?')
-              }
-              description={
-                hasLicenseKey
-                  ? t(
-                      'Your custom plan is active. Enter a new license key here if we sent you an updated one.',
-                    )
-                  : t(
-                      'For custom enterprise plans, activate it with the license key we sent you. If you subscribed here, you can ignore this.',
-                    )
-              }
-            >
-              <LicenseKey
-                platform={platform}
-                isSelfHosted={edition === ApEdition.ENTERPRISE}
-              />
-            </BillingSection>
-          </>
-        )}
+        <Separator />
+        <BillingSection
+          title={licenseKeyCopy.title}
+          description={licenseKeyCopy.description}
+        >
+          <LicenseKey
+            platform={platform}
+            isSelfHosted={edition === ApEdition.ENTERPRISE}
+            isTrialKey={isTrialKeySection}
+          />
+        </BillingSection>
       </div>
       {deactivateUsersDialog}
       <CancelSubscriptionDialog
@@ -288,6 +263,35 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
       />
     </div>
   );
+}
+
+function licenseKeySectionCopy({
+  hasLicenseKey,
+  isCloud,
+}: {
+  hasLicenseKey: boolean;
+  isCloud: boolean;
+}): { title: string; description: string } {
+  if (hasLicenseKey) {
+    return {
+      title: t('License key'),
+      description: t(
+        'Your custom plan is active. Enter a new license key here if we sent you an updated one.',
+      ),
+    };
+  }
+  if (isCloud) {
+    return {
+      title: t('Trial Keys'),
+      description: t('Got a trial key from our team? Activate it here.'),
+    };
+  }
+  return {
+    title: t('Have a custom plan?'),
+    description: t(
+      'For custom enterprise plans, activate it with the license key we sent you. If you subscribed here, you can ignore this.',
+    ),
+  };
 }
 
 const BillingSection = ({

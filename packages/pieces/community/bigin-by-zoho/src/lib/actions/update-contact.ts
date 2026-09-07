@@ -12,6 +12,7 @@ import { handleDropdownError } from '../common/helpers';
 export const updateContact = createAction({
   auth: biginAuth,
   name: 'updateContact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Select and update an existing Contact record.',
   audience: 'both',

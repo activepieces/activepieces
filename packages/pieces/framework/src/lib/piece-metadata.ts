@@ -58,8 +58,13 @@ export const AiMetadata = z.object({
 })
 export type AiMetadata = z.infer<typeof AiMetadata>
 
-export const ActionClassification = z.enum(['READ', 'WRITE'])
+export const ActionClassification = z.enum(['READ', 'SEARCH', 'WRITE', 'DESTRUCTIVE'])
 export type ActionClassification = z.infer<typeof ActionClassification>
+
+export const READ_ONLY_CLASSIFICATIONS: readonly ActionClassification[] = ['READ', 'SEARCH']
+
+export const isReadOnlyClassification = (classification: ActionClassification | undefined): boolean =>
+  classification !== undefined && READ_ONLY_CLASSIFICATIONS.includes(classification)
 
 export const PropertyGroupDisplay = z.enum(['tabs', 'section', 'summary', 'builder', 'footer'])
 export type PropertyGroupDisplay = z.infer<typeof PropertyGroupDisplay>

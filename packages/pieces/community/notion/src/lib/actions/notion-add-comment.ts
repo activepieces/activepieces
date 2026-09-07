@@ -7,6 +7,7 @@ import { notionAddCommentActionOutputSchema } from '../output-schemas';
 export const notionAddComment = createAction({
   auth: notionAuth,
   name: 'notion_add_comment',
+  classification: 'WRITE',
   displayName: 'Add Comment',
   description: 'Posts a new comment thread on a Notion page.',
   audience: 'ai',

@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { streamUtils } from '@activepieces/pieces-common';
 import { createCsvParser, CsvRow } from '../csv';
 import { dispatchToSubflow, findEnabledSubflowOrThrow, subflowDropdown } from '../common';
 import { fanOutBatches } from '../fan-out';
@@ -9,6 +10,7 @@ const MAX_BATCH_SIZE = 10_000;
 export const streamCsvToSubflows = createAction({
   audience: 'both',
   name: 'streamCsvToSubflows',
+  classification: 'WRITE',
   displayName: 'Stream CSV to Subflows',
   description:
     'Stream a CSV and call a subflow once per batch of rows, without loading the whole file into memory.',
@@ -52,12 +54,13 @@ export const streamCsvToSubflows = createAction({
   },
   async run(context) {
     const { file, batchSize, delimiter, extraData } = context.propsValue;
+    const { body } = streamUtils.toStreamingBody(file);
     if (
       !Number.isInteger(batchSize) ||
       batchSize < 1 ||
       batchSize > MAX_BATCH_SIZE
     ) {
-      file.body.destroy();
+      body.destroy();
       throw new Error(
         JSON.stringify({
           message: `Rows per batch must be an integer between 1 and ${MAX_BATCH_SIZE}.`,
@@ -69,14 +72,14 @@ export const streamCsvToSubflows = createAction({
       flowsContext: context.flows,
       externalId: context.propsValue.subflow,
     }).catch((error) => {
-      file.body.destroy();
+      body.destroy();
       throw error;
     });
 
     let firstRow: CsvRow | undefined;
     const { parser, getHeaders } = createCsvParser({ delimiter });
-    file.body.pipe(parser);
-    file.body.on('error', (err) => {
+    body.pipe(parser);
+    body.on('error', (err) => {
       if (!parser.destroyed) {
         parser.destroy(err);
       }
@@ -112,7 +115,7 @@ export const streamCsvToSubflows = createAction({
       return { headers: getHeaders(), firstRow, ...result };
     } finally {
       parser.destroy();
-      file.body.destroy();
+      body.destroy();
     }
   },
   errorHandlingOptions: {

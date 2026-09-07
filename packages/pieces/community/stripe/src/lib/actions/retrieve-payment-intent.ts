@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeRetrievePaymentIntent = createAction({
   name: 'retrieve_payment_intent',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Find Payment (by Payment Intent ID)',
   description:

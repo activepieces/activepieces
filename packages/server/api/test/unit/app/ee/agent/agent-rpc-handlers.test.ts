@@ -9,7 +9,7 @@ vi.mock('../../../../../src/app/flows/flow-run/flow-run-service', () => ({
     flowRunService: () => ({ getOneOrThrow: mockGetFlowRun }),
 }))
 
-vi.mock('../../../../../src/app/flows/flow-run/waitpoint/resume-service', () => ({
+vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
     resumeService: () => ({ resumeFromWaitpoint: mockResumeFromWaitpoint }),
 }))
 
@@ -18,20 +18,25 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSet: vi.fn(),
     mockWhere: vi.fn(),
     mockAndWhere: vi.fn(),
-    mockExecute: vi.fn().mockResolvedValue({ affected: 1 }),
+    mockExecute: vi.fn().mockResolvedValue({ raw: [{ id: 'conv-1' }] }),
     mockFindOneBy: vi.fn().mockResolvedValue(null),
     mockFindOne: vi.fn().mockResolvedValue(null),
     mockTrack: vi.fn().mockResolvedValue(undefined),
     mockSendConversationUpdate: vi.fn(),
 }))
 
-const { mockGetFileOrThrow, mockKbSearch } = vi.hoisted(() => ({
-    mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1' }),
+const { mockAssertProjectSwitchKeepsKey } = vi.hoisted(() => ({
+    mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
+}))
+
+const { mockGetFileOrThrow, mockKbSearch, mockIsSearchable } = vi.hoisted(() => ({
+    mockGetFileOrThrow: vi.fn().mockResolvedValue({ id: 'kb-1', displayName: 'Employee Handbook' }),
     mockKbSearch: vi.fn().mockResolvedValue([]),
+    mockIsSearchable: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('../../../../../src/app/knowledge-base/knowledge-base.service', () => ({
-    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch }),
+    knowledgeBaseService: () => ({ getFileOrThrow: mockGetFileOrThrow, search: mockKbSearch, isSearchable: mockIsSearchable }),
 }))
 
 const { mockEmbed } = vi.hoisted(() => ({
@@ -47,8 +52,17 @@ vi.mock('../../../../../src/app/ee/agent/agent-approval-gate', () => ({
     agentApprovalGate: {},
 }))
 
-const { mockRunFromInstruction, mockUpdateStepProgress } = vi.hoisted(() => ({
-    mockRunFromInstruction: vi.fn().mockResolvedValue({ result: { ok: true }, resolvedInput: {} }),
+const { mockGetOneWithoutValue } = vi.hoisted(() => ({
+    mockGetOneWithoutValue: vi.fn().mockResolvedValue(null),
+}))
+
+vi.mock('../../../../../src/app/app-connection/app-connection-service/app-connection-service', () => ({
+    appConnectionService: () => ({ getOneWithoutValue: mockGetOneWithoutValue }),
+}))
+
+const { mockRunResolved, mockResolveInput, mockUpdateStepProgress } = vi.hoisted(() => ({
+    mockRunResolved: vi.fn().mockResolvedValue({ result: { ok: true }, resolvedInput: {} }),
+    mockResolveInput: vi.fn().mockResolvedValue({ resolvedInput: { to: 'jane@customer.com' }, actionDisplayName: 'Send Email' }),
     mockUpdateStepProgress: vi.fn(),
 }))
 
@@ -57,7 +71,7 @@ vi.mock('../../../../../src/app/flows/flow-run/engine-run-callback-service', () 
 }))
 
 vi.mock('../../../../../src/app/ee/agent/tools/piece-tool-runner', () => ({
-    pieceToolRunner: { runFromInstruction: mockRunFromInstruction },
+    pieceToolRunner: { runResolved: mockRunResolved, resolveInput: mockResolveInput, withoutCredential: (input: Record<string, unknown>) => input },
 }))
 
 const { mockGetOnePopulated } = vi.hoisted(() => ({
@@ -86,11 +100,13 @@ type QueryBuilderMock = {
     set: (values: unknown) => QueryBuilderMock
     where: (sql: string, params: unknown) => QueryBuilderMock
     andWhere: (sql: string, params: unknown) => QueryBuilderMock
-    execute: () => Promise<{ affected: number }>
+    returning: (columns: string) => QueryBuilderMock
+    execute: () => Promise<{ raw?: unknown[] }>
 }
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
+        assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         resolveFastModel: () => ({}),
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
@@ -103,6 +119,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
                     set: (values) => { mockSet(values); return builder },
                     where: (_sql, params) => { mockWhere(params); return builder },
                     andWhere: (_sql, params) => { mockAndWhere(params); return builder },
+                    returning: () => builder,
                     execute: mockExecute,
                 }
                 return builder
@@ -220,7 +237,7 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
     })
 
     it('does not bill when the fenced save was rejected (preempted by a newer run)', async () => {
-        mockExecute.mockResolvedValue({ affected: 0 })
+        mockExecute.mockResolvedValue({ raw: [] })
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
@@ -230,7 +247,7 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
     })
 
     it('bills under the owning run id when the save landed', async () => {
-        mockExecute.mockResolvedValue({ affected: 1 })
+        mockExecute.mockResolvedValue({ raw: [{ id: 'conv-1' }] })
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
@@ -239,13 +256,13 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
         expect(mockTrack.mock.calls[0][0]).toMatchObject({ runId: 'run-1' })
     })
 
-    it('still bills when affected is undefined (driver reports no row count)', async () => {
+    it('does not bill when the write returned nothing, on any driver', async () => {
         mockExecute.mockResolvedValue({})
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', messages: [{ role: 'user' }] })
 
         await callSaveChatMessages({ conversationId: 'conv-1', runId: 'run-1', messages: [{ role: 'user' }, { role: 'assistant' }], uiMessages: [{ role: 'assistant' }] })
 
-        expect(mockTrack).toHaveBeenCalledTimes(1)
+        expect(mockTrack).not.toHaveBeenCalled()
     })
 })
 
@@ -285,6 +302,8 @@ async function callUpdateProjectContext(input: { conversationId: string, runId?:
 describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its own project', () => {
     beforeEach(() => {
         mockSet.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockClear()
+        mockAssertProjectSwitchKeepsKey.mockResolvedValue(undefined)
     })
 
     it('refuses to move a flow-step run to another project', async () => {
@@ -308,6 +327,14 @@ describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its
         await callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })
 
         expect(mockSet).toHaveBeenCalled()
+    })
+
+    it('keeps a chat run out of a project its running key excludes', async () => {
+        mockFindOneBy.mockResolvedValue({ source: 'CHAT', projectId: 'proj-own', platformId: 'plat-1' })
+        mockAssertProjectSwitchKeepsKey.mockRejectedValue(new Error('key not available there'))
+
+        await expect(callUpdateProjectContext({ conversationId: 'conv-1', projectId: 'proj-other' })).rejects.toThrow()
+        expect(mockSet).not.toHaveBeenCalled()
     })
 })
 
@@ -368,38 +395,46 @@ describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a
     })
 })
 
-describe('agentRpcHandlers.executePieceTool — only a flow-step run may run a configured action', () => {
+describe('agentRpcHandlers.executePieceTool — a configured action runs in its own project', () => {
+    const GMAIL_SEND = { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', pieceVersion: '0.1.0' }
+
     async function runPieceTool(conversation: unknown) {
-        mockRunFromInstruction.mockClear()
+        mockRunResolved.mockClear()
+        mockResolveInput.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
+        mockGetOneWithoutValue.mockResolvedValue({ id: 'ac-1', externalId: 'conn-1', displayName: 'Sales Inbox' })
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executePieceTool({
             conversationId: 'conv-1',
             toolName: 'send_email',
             instruction: 'email the summary',
-            piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email' },
+            piece: { ...GMAIL_SEND, predefinedInput: { auth: 'conn-1', fields: {} } },
         })
     }
 
     it('runs the action in the conversation\'s own project', async () => {
         await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1' })
 
-        expect(mockRunFromInstruction).toHaveBeenCalledTimes(1)
-        const call = mockRunFromInstruction.mock.calls[0][0]
-        expect(call.projectId).toBe('proj-1')
-        expect(call.piece).toEqual({ pieceName: '@activepieces/piece-gmail', actionName: 'send_email', pieceVersion: '0.1.0' })
+        expect(mockRunResolved).toHaveBeenCalledTimes(1)
+        expect(mockRunResolved.mock.calls[0][0].projectId).toBe('proj-1')
+    })
+
+    it('names the account it ran as, so the receipt can say whose it was', async () => {
+        const response = await runPieceTool({ id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' })
+
+        expect(response.connectionLabel).toBe('Sales Inbox')
     })
 
     it('refuses when the conversation is a chat', async () => {
         await expect(runPieceTool({ id: 'conv-1', source: 'CHAT', projectId: 'proj-1' })).rejects.toThrow()
 
-        expect(mockRunFromInstruction).not.toHaveBeenCalled()
+        expect(mockRunResolved).not.toHaveBeenCalled()
     })
 
     it('refuses a flow-step run with no project, so the action is never run unscoped', async () => {
         await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
 
-        expect(mockRunFromInstruction).not.toHaveBeenCalled()
+        expect(mockRunResolved).not.toHaveBeenCalled()
     })
 })
 
@@ -582,5 +617,50 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding i
         })
 
         expect(mockKbSearch).toHaveBeenCalledWith(expect.objectContaining({ queryEmbedding: expect.objectContaining({ length: 768 }) }))
+    })
+})
+
+describe('agentRpcHandlers.executePieceTool — which account a configured action runs as', () => {
+    const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' }
+    const PINNED = 'conn-author-pinned'
+
+    async function run({ pinnedExists, pinnedAuth = PINNED }: { pinnedExists: boolean, pinnedAuth?: string }) {
+        mockResolveInput.mockClear()
+        mockGetOneWithoutValue.mockClear()
+        mockFindOneBy.mockResolvedValue(AGENT_CHAT)
+        mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        const response = await agentRpcHandlers(noopLogger as never).executePieceTool({
+            conversationId: 'conv-1',
+            toolName: 'gmail-send_email',
+            instruction: 'email the summary',
+            piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.1.0', actionName: 'send_email', predefinedInput: { auth: pinnedAuth, fields: {} } },
+        })
+        return { call: mockResolveInput.mock.calls[0][0], response, lookup: mockGetOneWithoutValue.mock.calls[0]?.[0] }
+    }
+
+    it('hands the pinned account to dynamic property resolution, so a dropdown has one to list options with', async () => {
+        const { call } = await run({ pinnedExists: true })
+
+        expect(call.connectionExternalId).toBe(PINNED)
+    })
+
+    it('looks the account up inside the conversation project only', async () => {
+        const { lookup } = await run({ pinnedExists: true })
+
+        expect(lookup).toMatchObject({ projectId: 'proj-1', platformId: 'plat-1', externalId: PINNED })
+    })
+
+    it('still runs as the pinned account when it cannot be named, rather than picking another one', async () => {
+        const { call, response } = await run({ pinnedExists: false })
+
+        expect(call.connectionExternalId).toBe(PINNED)
+        expect(response.connectionLabel).toBeUndefined()
+    })
+
+    it('asks for no account when the author pinned none', async () => {
+        const { call } = await run({ pinnedExists: false, pinnedAuth: '' })
+
+        expect(call.connectionExternalId).toBeUndefined()
     })
 })

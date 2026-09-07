@@ -42,6 +42,12 @@ describe('agentToolPhases.activeToolsForPhase', () => {
         }
     })
 
+    it('leaves the agent tools reachable in discovery, since nothing else flips the phase for them', () => {
+        const names = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+        const active = agentToolPhases.activeToolsForPhase({ phase: 'discovery', allToolNames: names })
+        expect(active).toEqual(names)
+    })
+
     it('leaves unknown tools visible during discovery (denylist, not allowlist)', () => {
         const active = agentToolPhases.activeToolsForPhase({ phase: 'discovery', allToolNames: ['ap_some_new_tool'] })
         expect(active).toContain('ap_some_new_tool')

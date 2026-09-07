@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const searchBusinessesAction = createAction({
   auth: aipriseAuth,
   name: 'search_businesses',
+  classification: 'SEARCH',
   displayName: 'Search Businesses',
   description:
     'Searches public business registries by name and country, returning a list of matching companies with their entity IDs, types, and addresses. Useful for looking up a business before creating a profile or running a verification.',

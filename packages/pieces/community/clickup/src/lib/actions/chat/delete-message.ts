@@ -7,6 +7,7 @@ import { clickupAuth } from '../../auth';
 export const deleteClickupMessage = createAction({
   auth: clickupAuth,
   name: 'delete_message',
+  classification: 'DESTRUCTIVE',
   description: 'Deletes a message in a ClickUp channel',
   audience: 'both',
   aiMetadata: { description: 'Permanently delete a Chat message in a ClickUp workspace by its workspace and message IDs. This is a destructive write; once deleted the message cannot be recovered. Repeating the call on an already-deleted message has no further effect.', idempotent: false },

@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getBlockByHash = createAction({
   name: 'get_block_by_hash',
+  classification: 'READ',
   displayName: 'Get Block by Hash or Number',
   description: 'Get block info by its hash or block number',
   audience: 'both',

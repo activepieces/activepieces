@@ -5,6 +5,7 @@ import { freshdeskAuth } from '../..';
 export const getContacts = createAction({
   auth: freshdeskAuth,
   name: 'get_contacts',
+  classification: 'SEARCH',
   displayName: 'Get Freshdesk Contacts',
   description:
     'Get contact details from Freshdesk for all (optional filtered) contacts.',

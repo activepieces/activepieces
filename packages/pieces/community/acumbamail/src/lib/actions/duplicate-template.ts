@@ -11,6 +11,7 @@ import FormData from 'form-data';
 export const duplicateTemplateAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_duplicate_template',
+  classification: 'WRITE',
   displayName: 'Duplicate Template',
   description:
     'Duplicates an existing template to use it on a email marketing campaign shipping.',

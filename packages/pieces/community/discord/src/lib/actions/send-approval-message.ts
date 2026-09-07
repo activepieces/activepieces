@@ -12,6 +12,7 @@ import { discordSendApprovalMessageActionOutputSchema } from '../output-schemas'
 export const discordSendApprovalMessage = createAction({
   auth: discordAuth,
   name: 'request_approval_message',
+  classification: 'WRITE',
   description:
     'send a message to a channel asking for approval and wait for a response',
   audience: 'both',

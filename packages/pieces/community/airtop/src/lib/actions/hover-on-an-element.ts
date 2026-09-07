@@ -9,6 +9,7 @@ import * as z from 'zod/mini'
 export const hoverElementAction = createAction({
 	auth: airtopAuth,
 	name: 'hover-element',
+	classification: 'WRITE',
 	displayName: 'Hover on an Element',
 	description: 'Moves mouse pointer over an element in the browser window.',
 	audience: 'both',

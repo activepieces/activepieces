@@ -54,6 +54,7 @@ export type ToolCallMeta = {
 export type BuildState = BuildPlanEvent;
 
 export type ChatStoreState = {
+  conversationId: string | null;
   quickReplies: string[];
   offerRecurringAutomation: boolean;
   toolCallMeta: Record<string, ToolCallMeta>;
@@ -61,6 +62,7 @@ export type ChatStoreState = {
   dismissedGateIds: Record<string, true>;
   lastDismissedFormId: string | null;
 
+  setConversationId: (conversationId: string | null) => void;
   approveGate: (gateId: string, payload?: Record<string, unknown>) => void;
   rejectGate: (gateId: string) => void;
   dismissGate: (gateId: string) => void;
@@ -83,6 +85,7 @@ function dismissAndCleanup(
 
 export const createChatStore = () =>
   create<ChatStoreState>((set) => ({
+    conversationId: null,
     quickReplies: [],
     offerRecurringAutomation: false,
     toolCallMeta: {},
@@ -103,6 +106,9 @@ export const createChatStore = () =>
     },
     dismissForm: (messageId: string) => {
       set({ lastDismissedFormId: messageId });
+    },
+    setConversationId: (conversationId: string | null) => {
+      set({ conversationId });
     },
     resetInteractions: () => {
       set({

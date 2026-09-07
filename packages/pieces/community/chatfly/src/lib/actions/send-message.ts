@@ -5,6 +5,7 @@ import { chatflyAuth } from '../auth';
 export const sendMessageAction = createAction({
   auth: chatflyAuth,
   name: "send_message",
+  classification: 'READ',
   displayName: "Send Message",
   description: "Send a message to ChatFly bot",
   audience: 'both',

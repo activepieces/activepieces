@@ -6,6 +6,7 @@ import { filetopdfApiCall } from '../common/client';
 export const getAccount = createAction({
   auth: filetopdfAuth,
   name: 'get_account',
+  classification: 'READ',
   displayName: 'Get Account Status',
   description:
     'Read the workspace plan, remaining credits, and subscription status. Free — never consumes credits.',

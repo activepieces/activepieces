@@ -14,6 +14,7 @@ import { bannerbearAuth } from '../auth';
 export const bannerbearCreateImageAction = createAction({
   auth: bannerbearAuth,
   name: 'bannerbear_create_image', // Must be a unique across the piece, this shouldn't be changed.
+  classification: 'WRITE',
   displayName: 'Create Image',
   description: 'Create image from Bannerbear template',
   audience: 'both',

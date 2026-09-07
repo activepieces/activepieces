@@ -79,6 +79,7 @@ function normalizeKeywordResponse(provider: string, response: any) {
 export const extractKeywordsAction = createAction({
   auth: edenAiAuth,
   name: 'extract_keywords',
+  classification: 'READ',
   displayName: 'Extract Keywords in Text',
   description: 'Identify important terms in a text using Eden AI. Supports multiple providers, languages, and models.',
   audience: 'both',

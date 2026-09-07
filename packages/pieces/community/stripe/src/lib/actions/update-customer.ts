@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { customerOutputSchema } from '../output-schemas';
 export const stripeUpdateCustomer = createAction({
   name: 'update_customer',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Update Customer',
   description: 'Modify an existing customer’s details.',

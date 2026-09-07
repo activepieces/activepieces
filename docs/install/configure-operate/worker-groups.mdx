@@ -33,10 +33,9 @@ AP_WORKER_GROUP_ID=canary
 AP_PROJECT_WORKER=false
 ```
 
-Grouped workers run in a process-isolated execution mode, so set:
+Grouped workers must set:
 
 ```bash
-AP_EXECUTION_MODE=SANDBOX_PROCESS   # or SANDBOX_CODE_AND_PROCESS
 AP_REUSE_SANDBOX=true               # or false, must be set explicitly
 ```
 

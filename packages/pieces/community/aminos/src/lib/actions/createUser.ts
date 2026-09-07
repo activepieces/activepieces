@@ -5,6 +5,7 @@ export const createUser = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   auth: aminosAuth,
   name: 'createUser',
+  classification: 'WRITE',
   displayName: 'Create User on Aminos One',
   description: 'Create a user and plan in Aminos One Panel',
   audience: 'both',

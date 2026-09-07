@@ -15,6 +15,7 @@ interface FileObject {
 export const discordSendMessage = createAction({
   auth: discordAuth,
   name: 'discord_send_message',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Post a message to a Discord channel or thread.',
   audience: 'ai',

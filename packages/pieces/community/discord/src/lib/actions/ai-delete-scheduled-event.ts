@@ -10,6 +10,7 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordDeleteScheduledEvent = createAction({
   auth: discordAuth,
   name: 'discord_delete_scheduled_event',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Scheduled Event',
   description: 'Delete a scheduled event.',
   audience: 'ai',

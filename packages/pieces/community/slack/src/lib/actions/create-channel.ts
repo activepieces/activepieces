@@ -7,6 +7,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const createChannelAction = createAction({
   auth: slackAuth,
   name: 'slack-create-channel',
+  classification: 'WRITE',
   displayName: 'Create Channel',
   description: 'Creates a new channel.',
   audience: 'human',

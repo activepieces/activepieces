@@ -23,6 +23,7 @@ interface InsertResponse {
 export const createRowsAction = createAction({
   auth: bigQueryAuth,
   name: 'create_rows',
+  classification: 'WRITE',
   displayName: 'Create Rows',
   description:
     'Creates new rows of data in a BigQuery table (accepts an array of row objects). Rows are available to query within seconds.',

@@ -11,6 +11,7 @@ export const slugifyAction = createAction({
   },
   displayName: 'Slugify',
   name: 'slugify',
+  classification: 'READ',
   props: {
     text: Property.ShortText({
       displayName: 'Text',

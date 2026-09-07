@@ -7,6 +7,7 @@ import { createNewGdriveFolderActionOutputSchema } from '../output-schemas';
 export const googleDriveCreateNewFolder = createAction({
   auth: googleDriveAuth,
   name: 'create_new_gdrive_folder',
+  classification: 'WRITE',
   description: 'Create a new empty folder in your Google Drive',
   audience: 'human',
   aiMetadata: { description: 'Creates a new empty folder in Google Drive, optionally nested under a parent folder. Use to set up a destination before uploading or moving files. Not idempotent: each call creates a distinct folder even with the same name (Drive permits duplicate folder names).', idempotent: false },

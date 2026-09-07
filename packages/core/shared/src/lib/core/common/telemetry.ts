@@ -35,6 +35,24 @@ type SignedUp = {
     projectId: ProjectId
 }
 
+type EmailCodeRequested = {
+    isNewIdentity: boolean
+}
+
+type EmailCodeVerified = {
+    needsNameStep: boolean
+}
+
+type EmailCodeRejected = {
+    errorCode: string
+}
+
+type EmailCodeResendRequested = Record<string, never>
+
+type CaptchaUnavailable = {
+    surface: string
+}
+
 type QuotaAlert = {
     percentageUsed: number
 }
@@ -188,6 +206,11 @@ type SignedIn = {
 }
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
+    EMAIL_CODE_REQUESTED = 'email.code.requested',
+    EMAIL_CODE_VERIFIED = 'email.code.verified',
+    EMAIL_CODE_REJECTED = 'email.code.rejected',
+    EMAIL_CODE_RESEND_REQUESTED = 'email.code.resend.requested',
+    CAPTCHA_UNAVAILABLE = 'captcha.unavailable',
     QUOTA_ALERT = 'quota.alert',
     REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
     REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
@@ -239,6 +262,26 @@ type BaseTelemetryEvent<T, P> = {
 
 export type TelemetryEvent =
   | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_REQUESTED,
+  EmailCodeRequested
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_VERIFIED,
+  EmailCodeVerified
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_REJECTED,
+  EmailCodeRejected
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
+  EmailCodeResendRequested
+  >
+  | BaseTelemetryEvent<
+  TelemetryEventName.CAPTCHA_UNAVAILABLE,
+  CaptchaUnavailable
+  >
   | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
   | BaseTelemetryEvent<
   TelemetryEventName.REQUEST_TRIAL_CLICKED,

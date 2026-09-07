@@ -5,6 +5,7 @@ import { pushoverAuth } from '../..';
 export const sendNotification = createAction({
   auth: pushoverAuth,
   name: 'send_notification',
+  classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to Pushover',
   audience: 'both',

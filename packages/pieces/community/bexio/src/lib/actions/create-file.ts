@@ -7,6 +7,7 @@ import FormData from 'form-data';
 export const createFileAction = createAction({
   auth: bexioAuth,
   name: 'create_file',
+  classification: 'WRITE',
   displayName: 'Create File',
   description: 'Upload a new file to Bexio',
   audience: 'both',

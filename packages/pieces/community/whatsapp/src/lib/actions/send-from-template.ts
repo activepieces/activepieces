@@ -6,6 +6,7 @@ import { commonProps } from '../common/utils';
 export const sendTemplateMessageAction = createAction({
 	auth: whatsappAuth,
 	name: 'send-template-message',
+	classification: 'WRITE',
 	displayName: 'Send Template Message',
 	description: 'Sends a template message.',
 	audience: 'both',

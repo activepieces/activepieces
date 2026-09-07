@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const findWorkbookAction = createAction({
   auth: excelAuth,
   name: 'find-workbook',
+  classification: 'SEARCH',
   displayName: 'Find Workbook',
   description: 'Finds an existing workbook by name.',
   audience: 'both',

@@ -25,6 +25,7 @@ type PollingProps = {
 
 export const rssNewItemListTrigger = createTrigger({
   name: 'new-item-list',
+  classification: 'READ',
   displayName: 'New Items in Multiple Feeds',
   description: 'Runs when a new item is added in one of the RSS feed',
   aiMetadata: {

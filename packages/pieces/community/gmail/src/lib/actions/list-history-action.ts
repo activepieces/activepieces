@@ -6,6 +6,7 @@ import { gmailListHistoryActionOutputSchema } from '../output-schemas';
 export const gmailListHistoryAction = createAction({
   auth: gmailAuth,
   name: 'gmail_list_history',
+  classification: 'SEARCH',
   displayName: 'List History',
   description: 'List mailbox changes since a given history ID.',
   audience: 'ai',

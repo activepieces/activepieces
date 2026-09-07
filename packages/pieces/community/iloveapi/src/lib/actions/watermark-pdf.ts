@@ -7,6 +7,7 @@ import { UploadInput } from '../common/client';
 export const watermarkPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'watermark_pdf',
+  classification: 'READ',
   displayName: 'Watermark PDF',
   description: 'Stamp a text or image watermark across pages of a PDF.',
   audience: 'both',

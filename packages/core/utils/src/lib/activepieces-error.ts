@@ -49,8 +49,10 @@ export type ApErrorParams =
     | TriggerUpdateStatusErrorParams
     | TriggerFailedErrorParams
     | ValidationErrorParams
+    | FileTooLargeErrorParams
     | InvitationOnlySignUpParams
     | UserIsInActiveErrorParams
+    | UserNotFoundOnPlatformErrorParams
     | DomainIsNotAllowedErrorParams
     | EmailAuthIsDisabledParams
     | ExistingAlertChannelErrorParams
@@ -68,6 +70,7 @@ export type ApErrorParams =
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
     | ProjectExternalIdAlreadyExistsParams
+    | FlowExternalIdAlreadyExistsParams
     | SandboxMemoryIssueParams
     | SandboxExecutionTimeoutParams
     | SandboxInternalErrorParams
@@ -214,6 +217,13 @@ ErrorCode.USER_IS_INACTIVE,
 }
 >
 
+export type UserNotFoundOnPlatformErrorParams = BaseErrorParams<
+ErrorCode.USER_NOT_FOUND_ON_PLATFORM,
+{
+    email: string
+}
+>
+
 export type ExistingUserErrorParams = BaseErrorParams<
 ErrorCode.EXISTING_USER,
 {
@@ -304,6 +314,14 @@ export type ValidationErrorParams = BaseErrorParams<
 ErrorCode.VALIDATION,
 {
     message: string
+}
+>
+
+export type FileTooLargeErrorParams = BaseErrorParams<
+ErrorCode.FILE_TOO_LARGE,
+{
+    message: string
+    maxBytes: number
 }
 >
 
@@ -426,6 +444,10 @@ export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PRO
     externalId: string
 }>
 
+export type FlowExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS, {
+    externalId: string
+}>
+
 export type McpPieceRequiresConnectionParams = BaseErrorParams<ErrorCode.MCP_PIECE_REQUIRES_CONNECTION, {
     pieceName: string
 }>
@@ -523,6 +545,7 @@ export enum ErrorCode {
     EXISTING_USER = 'EXISTING_USER',
     EXISTING_ALERT_CHANNEL = 'EXISTING_ALERT_CHANNEL',
     PROJECT_EXTERNAL_ID_ALREADY_EXISTS = 'PROJECT_EXTERNAL_ID_ALREADY_EXISTS',
+    FLOW_EXTERNAL_ID_ALREADY_EXISTS = 'FLOW_EXTERNAL_ID_ALREADY_EXISTS',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
     FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_RUN_RETRY_OUTSIDE_RETENTION = 'FLOW_RUN_RETRY_OUTSIDE_RETENTION',
@@ -551,7 +574,9 @@ export enum ErrorCode {
     TRIGGER_UPDATE_STATUS = 'TRIGGER_UPDATE_STATUS',
     TRIGGER_FAILED = 'TRIGGER_FAILED',
     USER_IS_INACTIVE = 'USER_IS_INACTIVE',
+    USER_NOT_FOUND_ON_PLATFORM = 'USER_NOT_FOUND_ON_PLATFORM',
     VALIDATION = 'VALIDATION',
+    FILE_TOO_LARGE = 'FILE_TOO_LARGE',
     INVALID_LICENSE_KEY = 'INVALID_LICENSE_KEY',
     EMAIL_ALREADY_HAS_ACTIVATION_KEY = 'EMAIL_ALREADY_HAS_ACTIVATION_KEY',
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',

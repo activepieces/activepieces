@@ -4,6 +4,7 @@ import { tavilyAuth } from '../auth';
 
 export const searchAction = createAction({
   name: 'search',
+  classification: 'SEARCH',
   displayName: 'Search',
   description: 'Search for data based on a query.',
   audience: 'both',

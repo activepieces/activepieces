@@ -11,6 +11,7 @@ import { zoomAuth } from '../..';
 export const zoomFindMeeting = createAction({
   auth: zoomAuth,
   name: 'zoom_find_meeting',
+  classification: 'READ',
   displayName: 'Find Zoom Meeting',
   description: 'Retrieve the details of an existing meeting.',
   audience: 'both',

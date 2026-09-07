@@ -13,6 +13,7 @@ import { listCardCommentsActionOutputSchema } from '../../output-schemas';
 export const listCardComments = createAction({
   auth: trelloAuth,
   name: 'list_card_comments',
+  classification: 'SEARCH',
   displayName: 'List Card Comments (Agent)',
   description: "Read a card's comment history.",
   audience: 'ai',

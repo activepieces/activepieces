@@ -131,6 +131,7 @@ const polling: Polling<
 export const eventStartTimeBefore = createTrigger({
   auth: googleCalendarAuth,
   name: 'event_starts_in',
+  classification: 'READ',
   displayName: 'Event Start (Time Before)',
   description:
     'Fires at a specified amount of time before an event starts (e.g., a reminder).',

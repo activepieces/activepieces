@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 export const newTagAddedToContact = createTrigger({
     auth: systemeIoAuth,
     name: 'newTagAddedToContact',
+    classification: 'READ',
     displayName: 'New Tag Added to Contact',
     description: 'Fires when a specific tag is assigned to a contact',
     aiMetadata: {
