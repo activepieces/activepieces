@@ -149,6 +149,17 @@ describe('an unmatched formula marker stays literal text', () => {
     expect(roundTrip(roundTrip(input))).toBe(input);
   });
 
+  it.each([
+    'literal ap-formula-v1::{ then ap-formula-v1::{upper(y)}::ap-formula-v1 tail',
+    'ap-formula-v1::{ ap-formula-v1::{trim(a)}::ap-formula-v1',
+  ])(
+    'keeps an unmatched marker that precedes a complete formula: %j',
+    (input) => {
+      expect(roundTrip(input)).toBe(input);
+      expect(roundTrip(roundTrip(input))).toBe(input);
+    },
+  );
+
   it('still builds a function node once the suffix is present', () => {
     const types = convert(
       'ap-formula-v1::{uppercase(a)}::ap-formula-v1',

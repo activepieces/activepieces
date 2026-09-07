@@ -101,7 +101,12 @@ function formulaStartsAt({
     return false;
   }
   const afterPrefix = index + formulaEvaluator.PREFIX.length;
-  return expr.indexOf(formulaEvaluator.SUFFIX, afterPrefix) !== -1;
+  const suffixIndex = expr.indexOf(formulaEvaluator.SUFFIX, afterPrefix);
+  if (suffixIndex === -1) {
+    return false;
+  }
+  const nextPrefixIndex = expr.indexOf(formulaEvaluator.PREFIX, afterPrefix);
+  return nextPrefixIndex === -1 || nextPrefixIndex > suffixIndex;
 }
 
 function matchFunctionNameAt({
