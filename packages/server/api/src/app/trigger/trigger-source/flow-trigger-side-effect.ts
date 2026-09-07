@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, FlowId, FlowVersionId, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, FlowId, FlowVersionId, formatPieceError, isNil, tryCatch, tryParseFriendlyPieceError } from '@activepieces/core-utils'
 import {
     TriggerBase,
     TriggerStrategy,
@@ -14,8 +14,6 @@ import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { appEventRoutingService } from '../app-event-routing/app-event-routing.service'
 
 const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-
-const IGNORED_DISABLE_ERROR = '[flowTriggerSideEffect#disable] Ignored error during trigger disable'
 
 export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
     return {
@@ -100,7 +98,7 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 assertEngineResponseIsOk(engineHelperResponse!, flowId, flowVersionId)
             }
             else if (engineHelperResponse?.status !== EngineResponseStatus.OK) {
-                log.warn({ flow: { id: flowId }, error: engineHelperResponse?.error }, IGNORED_DISABLE_ERROR)
+                log.warn({ flow: { id: flowId }, error: sanitizeIgnoredError(engineHelperResponse?.error) }, IGNORED_DISABLE_ERROR)
             }
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK:
@@ -129,6 +127,10 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
         },
 
     }
+}
+
+function sanitizeIgnoredError(error: string | undefined): string {
+    return tryParseFriendlyPieceError(error)?.message ?? formatPieceError(error).message
 }
 
 async function handleAppWebhookTrigger({ engineHelperResponse, flowId, projectId, pieceName }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
@@ -204,6 +206,8 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
         scheduleOptions,
     }
 }
+
+const IGNORED_DISABLE_ERROR = '[flowTriggerSideEffect#disable] Ignored error during trigger disable'
 
 function assertEngineResponseIsOk(engineHelperResponse: EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowId: FlowId, flowVersionId: FlowVersionId) {
     if (isNil(engineHelperResponse) || engineHelperResponse.status !== EngineResponseStatus.OK) {
