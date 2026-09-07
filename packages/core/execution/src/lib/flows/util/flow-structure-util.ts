@@ -1,5 +1,5 @@
 import { AgentPieceProps } from '@activepieces/core-piece-types'
-import { isNil } from '@activepieces/core-utils'
+import { isNil, unique } from '@activepieces/core-utils'
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
@@ -244,7 +244,10 @@ function extractAgentIds(flowVersion: FlowVersion): string[] {
         return null
     }
 
-    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+    const agentIds = flowStructureUtil.getAllSteps(flowVersion.trigger)
+        .map(step => getExternalAgentId(step))
+        .filter((agentId): agentId is string => !isNil(agentId) && agentId !== '')
+    return unique(agentIds)
 }
 
 function isAgentPiece(action: Step) {

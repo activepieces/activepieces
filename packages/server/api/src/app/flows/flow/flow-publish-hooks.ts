@@ -25,7 +25,7 @@ export const flowPublishHooks = hooksFactory.create<FlowPublishHooks>(() => ({
 }))
 
 export type RoutePublishParams = {
-    flow: Flow
+    flow?: Flow
     projectId: ProjectId
     platformId: PlatformId
     userId: UserId | null

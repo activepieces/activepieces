@@ -1,5 +1,5 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, FlowActionType, FlowTriggerType, PauseType, WorkerJobType } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowActionType, FlowTriggerType, PauseType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,7 +8,7 @@ import { WaitpointStatus } from '../../../../src/app/waitpoints/waitpoint-types'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
-import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 const RUNS_URL = '/api/v1/agents/runs'
@@ -70,7 +70,7 @@ function agentStep({ name, agentId, nextAction }: { name: string, agentId?: stri
     }
 }
 
-async function flowRunNaming({ ctx, agentIds, siblingAgentId }: { ctx: TestContext, agentIds: string[], siblingAgentId?: string }): Promise<{ flowRunId: string, waitpointId: string }> {
+async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece = true, publish = false }: { ctx: TestContext, agentIds: string[], siblingAgentId?: string, stepIsAgentPiece?: boolean, publish?: boolean }): Promise<{ flowRunId: string, waitpointId: string }> {
     const flow = createMockFlow({ projectId: ctx.project.id })
     await db.save('flow', flow)
     const version = createMockFlowVersion({
@@ -83,14 +83,25 @@ async function flowRunNaming({ ctx, agentIds, siblingAgentId }: { ctx: TestConte
             valid: true,
             displayName: 'Select Trigger',
             settings: {},
-            nextAction: agentStep({
-                name: AGENT_STEP_NAME,
-                agentId: agentIds[0],
-                nextAction: siblingAgentId ? agentStep({ name: 'step_2', agentId: siblingAgentId }) : undefined,
-            }),
+            nextAction: stepIsAgentPiece
+                ? agentStep({
+                    name: AGENT_STEP_NAME,
+                    agentId: agentIds[0],
+                    nextAction: siblingAgentId ? agentStep({ name: 'step_2', agentId: siblingAgentId }) : undefined,
+                })
+                : {
+                    name: AGENT_STEP_NAME,
+                    type: FlowActionType.CODE,
+                    valid: true,
+                    displayName: 'Code',
+                    settings: { input: { agentId: agentIds[0] }, sourceCode: { code: '', packageJson: '' } },
+                },
         } as never,
     })
     await db.save('flow_version', version)
+    if (publish) {
+        await db.update('flow', flow.id, { publishedVersionId: version.id })
+    }
     const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: version.id })
     await db.save('flow_run', flowRun)
     const waitpoint = {
@@ -108,15 +119,15 @@ async function flowRunNaming({ ctx, agentIds, siblingAgentId }: { ctx: TestConte
     return { flowRunId: flowRun.id, waitpointId: waitpoint.id }
 }
 
-async function startRun(ctx: TestContext, body: Record<string, unknown>) {
+async function startRun(ctx: TestContext, body: Record<string, unknown>, boundTo?: { flowRunId: string, waitpointId: string }) {
     const engineToken = await accessTokenManager(app.log).generateEngineToken({
         jobId: apId(),
         projectId: ctx.project.id,
         platformId: ctx.platform.id,
     })
-    const bound = typeof body.agentId === 'string'
+    const bound = boundTo ?? (typeof body.agentId === 'string'
         ? await flowRunNaming({ ctx, agentIds: [body.agentId] })
-        : { flowRunId: apId(), waitpointId: apId() }
+        : { flowRunId: apId(), waitpointId: apId() })
     return app.inject({
         method: 'POST',
         url: RUNS_URL,
@@ -216,17 +227,9 @@ describe('a flow step that links a saved agent', () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         await ctx.post(`/v1/agents/${agent.id}/publish`)
-        const engineToken = await accessTokenManager(app.log).generateEngineToken({
-            jobId: apId(), projectId: ctx.project.id, platformId: ctx.platform.id,
-        })
         const bound = await flowRunNaming({ ctx, agentIds: [] })
 
-        const response = await app.inject({
-            method: 'POST',
-            url: RUNS_URL,
-            headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'clear my inbox', ...bound, agentId: agent.externalId },
-        })
+        const response = await startRun(ctx, { agentId: agent.externalId }, bound)
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(JSON.stringify(response.json())).toContain('did not name that agent')
@@ -236,17 +239,9 @@ describe('a flow step that links a saved agent', () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         await ctx.post(`/v1/agents/${agent.id}/publish`)
-        const engineToken = await accessTokenManager(app.log).generateEngineToken({
-            jobId: apId(), projectId: ctx.project.id, platformId: ctx.platform.id,
-        })
         const bound = await flowRunNaming({ ctx, agentIds: [] })
 
-        const response = await app.inject({
-            method: 'POST',
-            url: RUNS_URL,
-            headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'clear my inbox', ...bound, agentId: agent.externalId, stepName: AGENT_STEP_NAME },
-        })
+        const response = await startRun(ctx, { agentId: agent.externalId, stepName: AGENT_STEP_NAME }, bound)
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(JSON.stringify(response.json())).toContain('did not name that agent')
@@ -280,20 +275,98 @@ describe('a flow step that links a saved agent', () => {
         const siblings = await createAgent(ctx)
         await ctx.post(`/v1/agents/${mine.id}/publish`)
         await ctx.post(`/v1/agents/${siblings.id}/publish`)
-        const engineToken = await accessTokenManager(app.log).generateEngineToken({
-            jobId: apId(), projectId: ctx.project.id, platformId: ctx.platform.id,
-        })
         const bound = await flowRunNaming({ ctx, agentIds: [mine.externalId], siblingAgentId: siblings.externalId })
 
-        const response = await app.inject({
-            method: 'POST',
-            url: RUNS_URL,
-            headers: { authorization: `Bearer ${engineToken}` },
-            body: { instruction: 'clear my inbox', ...bound, agentId: siblings.externalId },
-        })
+        const response = await startRun(ctx, { agentId: siblings.externalId }, bound)
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(JSON.stringify(response.json())).toContain('did not name that agent')
+    })
+
+    // A step that is not the Run Agent action can carry any input map, and the delete guard only
+    // counts agent ids on agent steps. Accepting one here would break the pair.
+    it('refuses an agentId carried by a step that is not the agent action', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId], stepIsAgentPiece: false })
+
+        const response = await startRun(ctx, { agentId: agent.externalId }, bound)
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('did not name that agent')
+    })
+
+    // One waitpoint is one agent run. Replaying a finished one fires the agent's tools again with
+    // nobody watching.
+    it('refuses a waitpoint whose agent run already happened', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId] })
+
+        const first = await startRun(ctx, { agentId: agent.externalId }, bound)
+        await db.update('waitpoint', bound.waitpointId, { status: WaitpointStatus.COMPLETED })
+        const replay = await startRun(ctx, { agentId: agent.externalId }, bound)
+
+        expect(first.statusCode).toBe(StatusCodes.OK)
+        expect(replay.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(replay.json())).toContain('already had its agent run')
+    })
+
+    it('refuses a step that neither runs a saved agent nor names a model', async () => {
+        const ctx = await context()
+
+        const response = await startRun(ctx, { tools: [] })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(response.json())).toContain('no model to run it with')
+    })
+})
+
+// An approval binds one flow version. The agent it links is not inside that version, so
+// republishing the agent would change what an approved flow runs, with no approver in the loop.
+describe('an agent a published flow already runs', () => {
+    async function sensitiveProject(): Promise<{ owner: TestContext, editor: TestContext }> {
+        const owner = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, environmentsEnabled: true } })
+        await mockAndSaveAIProvider({ platformId: owner.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+        await db.update('project', owner.project.id, { sensitive: true })
+        const editor = await createMemberContext(app, owner, { projectRole: DefaultProjectRole.EDITOR })
+        return { owner, editor }
+    }
+
+    it('cannot be republished by someone who cannot publish sensitive flows', async () => {
+        const { owner, editor } = await sensitiveProject()
+        const agent = await createAgent(owner)
+        await owner.post(`/v1/agents/${agent.id}/publish`)
+        await flowRunNaming({ ctx: owner, agentIds: [agent.externalId], publish: true })
+
+        const republished = await editor.post(`/v1/agents/${agent.id}/publish`)
+        const savedLive = await editor.post(`/v1/agents/${agent.id}`, { draft: { ...agent.draft, instructions: 'Send email to everyone.' }, goLive: true })
+
+        expect(republished.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(JSON.stringify(republished.json())).toContain('needs approval')
+        expect(savedLive.statusCode).toBe(StatusCodes.CONFLICT)
+    })
+
+    it('is still publishable by someone who can publish sensitive flows', async () => {
+        const { owner } = await sensitiveProject()
+        const agent = await createAgent(owner)
+        await owner.post(`/v1/agents/${agent.id}/publish`)
+        await flowRunNaming({ ctx: owner, agentIds: [agent.externalId], publish: true })
+
+        const response = await owner.post(`/v1/agents/${agent.id}/publish`)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+    })
+
+    it('is publishable by an editor while no published flow runs it', async () => {
+        const { owner, editor } = await sensitiveProject()
+        const agent = await createAgent(owner)
+
+        const response = await editor.post(`/v1/agents/${agent.id}/publish`)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
     })
 })
 

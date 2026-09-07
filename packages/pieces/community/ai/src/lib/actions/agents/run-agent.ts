@@ -82,7 +82,8 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.AI_PROVIDER_MODEL]: Property.Object({
       displayName: 'AI Model',
-      required: true,
+      description: 'Leave empty when the step runs a saved agent: the model comes from the agent.',
+      required: false,
     }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',
@@ -91,8 +92,8 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
       displayName: 'Max steps',
-      description: 'The number of iterations the agent can do',
-      required: true,
+      description: 'The number of iterations the agent can do. Comes from the agent when the step runs a saved one.',
+      required: false,
       defaultValue: 20,
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({

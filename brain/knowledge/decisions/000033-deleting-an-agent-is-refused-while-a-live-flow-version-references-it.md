@@ -46,8 +46,12 @@ guard never saw.
   superseded versions never block, or an agent would be undeletable forever.
 - `unpublish` carries the same guard as `delete`, because it produces the same outcome for a linked
   flow: the next run is refused. Guarding only the destructive path would have been a speed bump.
-- Until publish-side validation lands, publishing a draft whose agent was deleted succeeds, and the
-  failure surfaces on the next run rather than at publish time.
+- Publishing a flow takes a read lock on the agents its steps name and refuses a version whose agent
+  is missing, is not visible to the whole project, or has never been published, so the run-time
+  refusals are a second line rather than the only one. A version approved earlier still publishes
+  through the approval path, so that one can fail at run time.
+- An agent a published flow already runs cannot itself be republished by someone who could not
+  publish that flow: an approval binds a flow version, and the agent's tools are not inside it.
 - The guard reads `flow_version.agentIds`, and that is only trustworthy because a run refuses any
   agent the running step's own stored input does not name. The two rules hold each other up.
 - The run check is per step, and the step comes from the waitpoint being resumed rather than from the

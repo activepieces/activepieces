@@ -7,7 +7,7 @@ import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
-import { classifyAgentRunError, delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
+import { classifyAgentRunError, delayWithJitter, firstStepUsesFastModel, isTransientFailureText, runAgentTurn } from './run-agent-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -414,10 +414,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         await releaseFlowStep({ ctx, conversationId, flowRunId, waitpointId, output: answer, source, log })
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
     },
-}
-
-export function firstStepUsesFastModel({ source, dryRun }: { source: AgentRunSource, dryRun?: boolean }): boolean {
-    return dryRun !== true && source !== AgentRunSource.FLOW_STEP
 }
 
 function incompleteReason({ truncatedAfterRetries, budgetExceeded }: { truncatedAfterRetries: boolean, budgetExceeded: boolean }): string | undefined {

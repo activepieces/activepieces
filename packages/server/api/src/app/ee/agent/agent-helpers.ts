@@ -1,3 +1,4 @@
+import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
@@ -401,12 +402,4 @@ export const agentHelpers = {
     saveUserMemory,
 }
 
-type AgentJobConfigFields = {
-    tools: AgentConfig['tools']
-    structuredOutput: AgentConfig['structuredOutput']
-    maxSteps: number
-    modelName: string | null
-    provider?: AIProviderName
-    providerConfigId?: string
-    promptOverride: { system: string }
-}
+type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>

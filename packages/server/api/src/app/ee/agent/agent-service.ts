@@ -7,6 +7,7 @@ import { Brackets, EntityManager, In, SelectQueryBuilder } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
+import { publishHooksFactory } from '../../flows/flow/flow-publish-hooks'
 import { flowService } from '../../flows/flow/flow.service'
 import { PublishedFlowsUsingAgent, publishedFlowsUsingAgent, publishedFlowVersionsUsingAgent } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -106,7 +107,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId: agent.projectId, userId })
     },
 
-    async update({ id, projectId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
+    async update({ id, projectId, platformId, userId, request, goLive = false }: UpdateParams): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         await assertMayChangeWhoCanSee({ agent, request, projectId, userId, log })
         const visibility = request.visibility ?? agent.visibility
@@ -118,7 +119,12 @@ export const agentService = (log: FastifyBaseLogger) => ({
             log,
         })
         const draft = isNil(request.draft) ? agent.draft : sanitizeObjectForPostgresql(request.draft)
-        const published = goLive && agentUtils.isPublishable(draft) ? draft : agent.published
+        const goingLive = goLive && agentUtils.isPublishable(draft)
+        const published = goingLive ? draft : agent.published
+        if (goingLive) {
+            assertDraftIsCoherent(draft)
+            await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
+        }
         await transaction(async (entityManager) => {
             await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
             await entityManager.getRepository(AgentEntity).save({ id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds })
@@ -126,7 +132,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
-    async publish({ id, projectId, userId }: GetParams): Promise<Agent> {
+    async publish({ id, projectId, platformId, userId }: GetParams & { platformId: PlatformId }): Promise<Agent> {
         const agent = await this.getOneOrThrow({ id, projectId, userId })
         if (!agentUtils.isPublishable(agent.draft)) {
             throw new ActivepiecesError({
@@ -134,12 +140,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
                 params: { message: 'An agent needs instructions before it can be published' },
             })
         }
-        if (!isNil(agent.draft.providerConfigId) && isNil(agent.draft.provider)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: 'This agent pins an AI provider key without naming its provider, so a run would resolve a different one. Pick the provider that key belongs to.' },
-            })
-        }
+        assertDraftIsCoherent(agent.draft)
+        await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
         const published = await agentRepo()
             .createQueryBuilder()
             .update()
@@ -181,8 +183,8 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return this.getOneOrThrow({ id, projectId, userId })
     },
 
-    async getOneByExternalId({ projectId, externalId, visibility }: { projectId: ProjectId, externalId: string, visibility: AgentVisibility }): Promise<Agent | null> {
-        return agentRepo().findOneBy({ projectId, externalId, visibility })
+    async getProjectVisibleByExternalId({ projectId, externalId }: { projectId: ProjectId, externalId: string }): Promise<Agent | null> {
+        return agentRepo().findOneBy({ projectId, externalId, visibility: AgentVisibility.PROJECT })
     },
 
     async editDraftTools({ id, projectId, userId, edit }: EditDraftToolsParams): Promise<Agent | null> {
@@ -199,7 +201,14 @@ export const agentService = (log: FastifyBaseLogger) => ({
             if (isNil(tools)) {
                 return null
             }
-            await repo.save({ id, draft: sanitizeObjectForPostgresql({ ...agent.draft, tools }) })
+            const draft = AgentConfig.safeParse({ ...agent.draft, tools })
+            if (!draft.success) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: `That tool change leaves the agent outside what an agent may hold: ${draft.error.issues.map((issue) => issue.message).join(', ')}` },
+                })
+            }
+            await repo.save({ id, draft: sanitizeObjectForPostgresql(draft.data) })
             return this.getOneOrThrow({ id, projectId, userId })
         })
     },
@@ -264,10 +273,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
                 .execute()
             const movedRows: unknown[] = moved.raw ?? []
             if (movedRows.length === 0) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.VALIDATION,
-                    params: { message: describeFlowsInUse(await agentService(log).publishedFlowsUsing({ agent, projectId, userId })) },
-                })
+                throw refuseBecauseFlowsUseIt({ agent, flowsInUse: await agentService(log).publishedFlowsUsing({ agent, projectId, userId }) })
             }
             await entityManager.getRepository(AgentConversationEntity).update(
                 { agentId: id, source: AgentRunSource.AGENT },
@@ -297,6 +303,36 @@ export const agentService = (log: FastifyBaseLogger) => ({
         return agent
     },
 })
+
+function assertDraftIsCoherent(draft: AgentConfig): void {
+    if (!isNil(draft.providerConfigId) && isNil(draft.provider)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'This agent pins an AI provider key without naming its provider, so a run would resolve a different one. Pick the provider that key belongs to.' },
+        })
+    }
+}
+
+async function assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log }: {
+    agent: Agent
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId
+    log: FastifyBaseLogger
+}): Promise<void> {
+    const route = await publishHooksFactory.get(log).routePublish({ projectId, platformId, userId })
+    if (route === 'PUBLISH_NOW') {
+        return
+    }
+    const flowsInUse = await agentService(log).publishedFlowsUsing({ agent, projectId, userId })
+    if (flowsInUse.total === 0) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `A published flow in this project runs "${agent.displayName}", and publishing a flow here needs approval, so its tools and instructions cannot be changed under an approved flow. Ask someone who can publish sensitive flows to publish this agent.` },
+    })
+}
 
 function refuseBecauseFlowsUseIt({ agent, flowsInUse }: {
     agent: Agent
@@ -413,7 +449,7 @@ export async function assertAgentsResolveInProject({ projectId, agentExternalIds
     }
     const resolved = await entityManager.getRepository(AgentEntity)
         .createQueryBuilder('agent')
-        .select(['agent.externalId'])
+        .select(['agent.externalId', 'agent.displayName', 'agent.visibility', 'agent.published'])
         .setLock('pessimistic_read')
         .where('agent."projectId" = :projectId', { projectId })
         .andWhere('agent."externalId" IN (:...agentExternalIds)', { agentExternalIds })
@@ -423,6 +459,16 @@ export async function assertAgentsResolveInProject({ projectId, agentExternalIds
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: 'This flow runs an agent that is not in this project any more. Point the step at an agent here, then publish.' },
+        })
+    }
+    const unrunnable = resolved.find((agent) => agent.visibility !== AgentVisibility.PROJECT || isNil(agent.published))
+    if (!isNil(unrunnable)) {
+        const reason = unrunnable.visibility === AgentVisibility.PROJECT
+            ? `"${unrunnable.displayName}" has never been published, and a flow runs the published version`
+            : `"${unrunnable.displayName}" is only visible to some people, and a flow runs unattended, so it can only run an agent the whole project can see`
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `${reason}. Fix that on the agent, then publish this flow.` },
         })
     }
 }
@@ -633,6 +679,7 @@ type GetByPlatformParams = {
 }
 
 type UpdateParams = GetParams & {
+    platformId: PlatformId
     request: UpdateAgentRequest
     goLive?: boolean
 }

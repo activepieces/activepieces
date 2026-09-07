@@ -1,6 +1,6 @@
 import { flowStructureUtil } from '@activepieces/core-execution'
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AgentVisibility, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -13,6 +13,7 @@ import { extractMcpTriggerInput, mcpPropertyToZod } from '../../mcp/mcp-server-b
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
+import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
 import { agentHelpers } from './agent-helpers'
 import { agentService } from './agent-service'
@@ -29,6 +30,9 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const { projectId, platform } = request.principal
+        if (!await agentHelpers.agentsSurfaceAvailable({ platformId: platform.id, log: request.log })) {
+            throw new ActivepiecesError({ code: ErrorCode.FEATURE_DISABLED, params: { message: 'Agents are not available on this platform' } })
+        }
         const { allowed, count } = await agentHelpers.incrementAndCheckLimit({ key: `flow-agent-runs:${projectId}`, limit: RUNS_PER_MINUTE, ttlSeconds: 60 })
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
@@ -37,9 +41,24 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step both links an agent and carries its own tools, so which one to run is ambiguous' } })
         }
         const linked = isNil(agentId) ? null : await resolvePublishedAgent({ projectId, externalId: agentId, flowRunId, waitpointId, log: request.log })
-        const { tools, structuredOutput, maxSteps, modelName, provider } = linked ?? request.body
+        const runFields = isNil(linked)
+            ? {
+                tools: request.body.tools,
+                structuredOutput: request.body.structuredOutput,
+                maxSteps: request.body.maxSteps,
+                modelName: request.body.modelName ?? null,
+                ...spreadIfDefined('provider', request.body.provider),
+                ...spreadIfDefined('providerConfigId', providerConfigId),
+            }
+            : agentHelpers.jobFieldsFromConfig({ config: linked })
+        const { tools, structuredOutput, provider } = runFields
+        if (isNil(linked) && (isNil(provider) || isNil(runFields.modelName))) {
+            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step neither runs a saved agent nor names an AI model, so there is no model to run it with' } })
+        }
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
-        const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
+        const runnableToolTypes = [AgentToolType.PIECE, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
+        const supportedTools = (tools ?? []).filter((tool) => runnableToolTypes.includes(tool.type))
+        const droppedMcpTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.MCP).map((tool) => tool.toolName)
         const flowToolRequests = (tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
         const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => !supportedToolTypes.includes(type))
         if (unsupported.length > 0) {
@@ -58,13 +77,16 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const flowTools = await resolveFlowTools({ projectId, flowToolRequests, log: request.log })
-        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: linked?.providerConfigId ?? providerConfigId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
+        await agentHelpers.assertRunProviderConfigured({ platformId: platform.id, provider, providerConfigId: runFields.providerConfigId, scope: agentHelpers.runScopeOrThrow({ projectId }), log: request.log })
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
         const { ownerId } = await projectService(request.log).getOneOrThrow(projectId)
 
         const conversationId = apId()
         const runId = apId()
         const log = request.log.child({ conversation: { id: conversationId }, run: { id: runId } })
+        if (droppedMcpTools.length > 0) {
+            log.warn({ project: { id: projectId } }, `[agentRunController] An agent step cannot run MCP tools yet, so ${droppedMcpTools.length} were left out of this run`)
+        }
 
         await jobQueue(log).add({
             id: apId(),
@@ -82,9 +104,8 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 flowRunId,
                 waitpointId,
                 flowTools,
-                ...(isNil(linked)
-                    ? { tools: supportedTools, structuredOutput, maxSteps, modelName: modelName ?? null, provider: provider ?? undefined, ...spreadIfDefined('providerConfigId', providerConfigId) }
-                    : { ...agentHelpers.jobFieldsFromConfig({ config: linked }), tools: supportedTools }),
+                ...runFields,
+                tools: supportedTools,
             },
         })
 
@@ -105,12 +126,15 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     if (isNil(waitpoint)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That waitpoint does not belong to this run, so there is no step to run an agent for' } })
     }
+    if (waitpoint.status !== WaitpointStatus.PENDING) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That step has already had its agent run. A finished waitpoint cannot start another one.' } })
+    }
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowRun.flowVersionId)
     const step = flowStructureUtil.getStep(waitpoint.stepName, flowVersion.trigger)
-    if (isNil(step) || step.settings.input?.[AgentPieceProps.AGENT_ID] !== externalId) {
+    if (isNil(step) || !flowStructureUtil.isAgentPiece(step) || step.settings.input?.[AgentPieceProps.AGENT_ID] !== externalId) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step did not name that agent when the flow was saved. An agent has to be picked on the step, not supplied while the flow runs.' } })
     }
-    const agent = await agentService(log).getOneByExternalId({ projectId, externalId, visibility: AgentVisibility.PROJECT })
+    const agent = await agentService(log).getProjectVisibleByExternalId({ projectId, externalId })
     if (isNil(agent)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'The agent this step runs is not available to this project. A flow runs unattended, so a step can only run an agent the whole project can see.' } })
     }

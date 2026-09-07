@@ -245,13 +245,14 @@ async function createAgentFromChat({ toolInput, platformId, projectId, userId, l
             draft: { instructions, maxSteps: DEFAULT_AGENT_MAX_STEPS, tools: [], structuredOutput: [] },
         },
     })
-    return afterDraftChange({ agent, publish: false, projectId, userId, log })
+    return afterDraftChange({ agent, publish: false, projectId, platformId, userId, log })
 }
 
-async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }: {
+async function updateAgentFromChat({ toolInput, agent, projectId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
     projectId: string
+    platformId: string
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
@@ -265,6 +266,7 @@ async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }:
     const updated = await agentService(log).update({
         id: agent.id,
         projectId,
+        platformId,
         userId,
         request: {
             ...spreadIfDefined('displayName', displayName),
@@ -272,7 +274,7 @@ async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }:
             ...(isNil(instructions) ? {} : { draft: { ...agent.draft, instructions } }),
         },
     })
-    return afterDraftChange({ agent: updated, publish, projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish, projectId, platformId, userId, log })
 }
 
 async function resolveConnectionToPin({ piece, pieceName, projectId, platformId, log }: {
@@ -366,13 +368,14 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
     if (isNil(updated)) {
         return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, platformId, userId, log })
 }
 
-async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, log }: {
+async function removeAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
     projectId: string
+    platformId: string
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
@@ -415,7 +418,7 @@ async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, lo
     if (isNil(updated)) {
         return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, platformId, userId, log })
 }
 
 function pieceActionOf(tool: AgentTool): { pieceName: string, actionName: string } | undefined {
@@ -428,15 +431,16 @@ function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
     return Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
 }
 
-async function afterDraftChange({ agent, publish, projectId, userId, log }: {
+async function afterDraftChange({ agent, publish, projectId, platformId, userId, log }: {
     agent: Agent
     publish: boolean
     projectId: string
+    platformId: string
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const { data: published } = publish
-        ? await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, userId }))
+        ? await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, platformId, userId }))
         : { data: undefined }
     return {
         agentId: agent.id,
@@ -589,10 +593,10 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
             }
             if (toolName === 'ap_update_agent') {
-                return updateAgentFromChat({ toolInput, agent, projectId, userId, log })
+                return updateAgentFromChat({ toolInput, agent, projectId, platformId, userId, log })
             }
             if (toolName === 'ap_remove_agent_tool') {
-                return removeAgentToolFromChat({ toolInput, agent, projectId, userId, log })
+                return removeAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log })
             }
             return addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log })
         }

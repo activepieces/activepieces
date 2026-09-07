@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, isNil } from '@activepieces/core-utils'
 import { FlowOperationType, FlowState, FlowStatus, flowStructureUtil, FlowSyncError, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../../../../flows/flow/flow.service'
@@ -91,9 +91,14 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             return null
         }
         catch (e) {
+            const reason = e instanceof ActivepiecesError && typeof e.error.params === 'object' && !isNil(e.error.params) && 'message' in e.error.params
+                ? String(e.error.params.message)
+                : undefined
             return {
                 flowId: flow.id,
-                message: `Failed to publish flow ${flow.version.displayName} #${flow.id}`,
+                message: isNil(reason)
+                    ? `Failed to publish flow ${flow.version.displayName} #${flow.id}`
+                    : `Failed to publish flow ${flow.version.displayName} #${flow.id}: ${reason}`,
             }
         }
     },
