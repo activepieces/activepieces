@@ -3,6 +3,7 @@ import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-t
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
+import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { SourceCode } from '../flows/actions/action'
 import { FlowVersion, FlowVersionState } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
@@ -69,6 +70,15 @@ export type RecordTriggerRunRequest = {
     status: TriggerRunStatus
 }
 
+export type ReportTriggerFailureRequest = {
+    flowId: string
+    flowVersionId: string
+    projectId: string
+    environment: RunEnvironment
+    status: FlowRunStatus
+    errorMessage: string
+}
+
 export type WorkerToApiContract = {
     poll(input: WorkerMachineHealthcheckRequest): Promise<ConsumeJobRequest | null>
     completeJob(input: ConsumeJobResponse & { jobId: string, token: string, queueName: string }): Promise<void>
@@ -83,6 +93,7 @@ export type WorkerToApiContract = {
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
     uploadFlowBundle(input: UploadFlowBundleRequest): Promise<void>
     recordTriggerRun(input: RecordTriggerRunRequest): Promise<void>
+    reportTriggerFailure(input: ReportTriggerFailureRequest): Promise<void>
     extendLock(input: { jobId: string, token: string, queueName: string }): Promise<void>
     disableFlow(input: DisableFlowRequest): Promise<void>
     sendAgentEvent(input: SendAgentEventRequest): Promise<void>

@@ -193,6 +193,20 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
             await triggerRunStats(log, redisConnection).save(input)
         },
 
+        async reportTriggerFailure(input) {
+            const flowVersion = await flowVersionService(log).getOne(input.flowVersionId)
+            if (isNil(flowVersion)) {
+                return
+            }
+            await flowRunService(log).createTriggerFailedRun({
+                flowVersion,
+                projectId: input.projectId,
+                environment: input.environment,
+                status: input.status,
+                errorMessage: input.errorMessage,
+            })
+        },
+
         async getPrewarmData(input) {
             return preWarmWorkersService(log).getPrewarmData(input)
         },

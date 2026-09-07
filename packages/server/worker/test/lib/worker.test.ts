@@ -193,6 +193,7 @@ describe('worker integration', () => {
                 getPieceArchive: vi.fn(),
                 extendLock: vi.fn(),
                 recordTriggerRun: vi.fn(),
+                reportTriggerFailure: vi.fn(),
                 disableFlow: vi.fn(),
                 ...overrides,
             })

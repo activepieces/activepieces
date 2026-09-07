@@ -1,10 +1,24 @@
-import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils'
+import { isNil, parseToJsonIfPossible, toError, tryCatch } from '@activepieces/core-utils'
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { isSandboxTimeout, sandboxErrorToFlowRunStatus } from '../utils/sandbox-helpers'
 import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
+
+async function reportTriggerFailureAsFlowRun({ ctx, data, flowVersion, error }: { ctx: JobContext, data: WebhookJobData, flowVersion: FlowVersion, error: unknown }): Promise<void> {
+    const { error: reportError } = await tryCatch(() => ctx.apiClient.reportTriggerFailure({
+        flowId: data.flowId,
+        flowVersionId: flowVersion.id,
+        projectId: data.projectId,
+        environment: data.runEnvironment,
+        status: sandboxErrorToFlowRunStatus(error),
+        errorMessage: toError(error).message,
+    }))
+    if (reportError) {
+        ctx.log.warn({ error: String(reportError), flowVersion: { id: flowVersion.id } }, 'Failed to report trigger failure as flow run')
+    }
+}
 
 function getAppWebhookDetails(flowVersion: FlowVersion, publicApiUrl: string, appWebhookSecretsJson: string): { appWebhookUrl?: string, webhookSecret?: string | Record<string, string> } {
     const trigger = flowVersion.trigger as PieceTrigger
@@ -119,6 +133,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         if (error) {
             if (realExecutionStarted) {
                 await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
+                await reportTriggerFailureAsFlowRun({ ctx, data, flowVersion, error })
             }
             if (isSandboxTimeout(error)) {
                 ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
