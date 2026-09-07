@@ -1,6 +1,5 @@
 import { Permission, isNil } from '@activepieces/core-utils';
 import {
-  ApFlagId,
   PROJECT_COLOR_PALETTE,
   PlatformRole,
   ProjectType,
@@ -49,7 +48,6 @@ import {
   useAuthorization,
   useIsPlatformAdmin,
 } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
@@ -66,9 +64,6 @@ import { SidebarUser } from '../sidebar-user';
 export function ProjectDashboardSidebar({
   className,
 }: { className?: string } = {}) {
-  const { data: agentsEnabledFlag } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_ENABLED,
-  );
   const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
@@ -173,7 +168,7 @@ export function ProjectDashboardSidebar({
     type: 'link',
     to: '/agents',
     label: t('Agents'),
-    show: platform.plan.agentsEnabled && agentsEnabledFlag === true,
+    show: platform.plan.agentsEnabled,
     icon: BotIcon,
     hasPermission: checkAccess(Permission.READ_AGENT),
     isSubItem: false,

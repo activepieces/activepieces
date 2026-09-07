@@ -2,11 +2,11 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { billingUsageReportService } from './billing-usage-report-service'
+import { licenseKeyUsageReportService } from './license-key-usage-report-service'
 
-export const billingUsageReportModule: FastifyPluginAsyncZod = async (app) => {
+export const licenseKeyUsageReportModule: FastifyPluginAsyncZod = async (app) => {
     systemJobHandlers.registerJobHandler(SystemJobName.BILLING_USAGE_REPORT, async () => {
-        await billingUsageReportService(app.log).reportAllPlatforms()
+        await licenseKeyUsageReportService(app.log).reportAllPlatforms()
     })
 
     await systemJobsSchedule(app.log).upsertJob({
