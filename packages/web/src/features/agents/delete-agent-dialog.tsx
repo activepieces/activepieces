@@ -56,7 +56,10 @@ export const DeleteAgentDialog = ({
   );
 };
 
-function describeUsage(usage?: { total: number; names: string[] }): string {
+export function describeUsage(usage?: {
+  total: number;
+  names: string[];
+}): string {
   if (usage === undefined) {
     return '';
   }

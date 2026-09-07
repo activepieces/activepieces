@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { makeMultipartRequest, makeRequest } from '../common/client';
+import { frontAttachments } from '../common/attachments';
 import { HttpMethod } from '@activepieces/pieces-common';
 import {
   channelIdDropdown,
@@ -48,11 +49,7 @@ export const sendReply = createAction({
       required: false,
     }),
     channel_id: channelIdDropdown,
-    attachments: Property.Array({
-      displayName: 'Attachments',
-      description: 'List of attachment URLs.',
-      required: false,
-    }),
+    attachments: frontAttachments.property,
   },
   async run({ auth, propsValue }) {
     const {
@@ -75,7 +72,16 @@ export const sendReply = createAction({
     if (cc) requestBody['cc'] = cc;
     if (bcc) requestBody['bcc'] = bcc;
     if (channel_id) requestBody['channel_id'] = channel_id;
-    if (attachments) requestBody['attachments'] = attachments;
+
+    const files = frontAttachments.resolve(attachments);
+    if (files.length > 0) {
+      return await makeMultipartRequest({
+        auth,
+        method: HttpMethod.POST,
+        path: path,
+        form: frontAttachments.buildBody({ fields: requestBody, files }),
+      });
+    }
 
     return await makeRequest(auth, HttpMethod.POST, path, requestBody);
   },

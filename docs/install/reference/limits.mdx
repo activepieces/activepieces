@@ -115,10 +115,13 @@ incoming payload can be.
 | Webhook payload inline threshold | 1024 KB | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | `512` |
 
 <Tip>
-For synchronous webhook requests (URLs ending in `/sync`), Activepieces will
-wait up to the response timeout before returning HTTP 408. Payloads above the
-inline threshold are offloaded from Redis to file storage to protect Redis
-memory; smaller payloads stay inline for the fastest path.
+For synchronous webhook requests (URLs ending in `/sync`), a run that fails
+answers straight away with HTTP 500. HTTP 408 is returned only when the run
+never produced a response at all within the timeout, which is the case for a
+flow that is still running or one that finishes without a Return Response
+step. Payloads above the inline threshold are offloaded from Redis to file
+storage to protect Redis memory; smaller payloads stay inline for the fastest
+path.
 </Tip>
 
 ---

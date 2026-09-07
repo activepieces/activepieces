@@ -7,6 +7,7 @@ import { CatalogClient, POPULAR_CLIENT_KEYS } from '../mcp-client-catalog';
 import { useMcpNav } from '../mcp-nav';
 import { PageBand } from '../page-band';
 import { PiecesShowcase } from '../pieces-showcase';
+import { RecentlyConnected } from '../recently-connected';
 
 import { ClientCard } from './client-card';
 
@@ -76,6 +77,7 @@ export function ConnectLanding({
       </PageBand>
 
       <PiecesShowcase />
+      <RecentlyConnected />
     </div>
   );
 }

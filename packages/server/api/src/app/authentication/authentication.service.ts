@@ -112,7 +112,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             identityId: identity.id,
             platformId,
         })
-        assertNotNullOrUndefined(user, 'User not found')
+        if (isNil(user)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.USER_NOT_FOUND_ON_PLATFORM,
+                params: {
+                    email: identity.email,
+                },
+            })
+        }
         log.info({ email: params.email, platform: { id: platformId } }, 'User signed in with password')
         return authenticationUtils(log).getProjectAndToken({
             userId: user.id,

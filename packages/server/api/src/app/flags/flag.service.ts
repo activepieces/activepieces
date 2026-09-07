@@ -37,6 +37,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EMAIL_CODE_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
@@ -153,6 +154,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+                value: system.getEdition() === ApEdition.CLOUD && turnstile.isConfigured(),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.THEME,
                 value: defaultTheme,
                 created,
@@ -185,12 +192,6 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.TELEMETRY_ENABLED,
                 value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
-                created,
-                updated,
-            },
-            {
-                id: ApFlagId.AGENTS_ENABLED,
-                value: system.getBoolean(AppSystemProp.AGENTS_ENABLED) ?? false,
                 created,
                 updated,
             },

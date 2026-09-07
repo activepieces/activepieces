@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../auth';
 import { makeClient, mondayCommon } from '../common';
 import { COLUMN_TYPE_OPTIONS } from '../common/constants';
+import { createColumnActionOutputSchema } from '../output-schemas';
 
 export const createColumnAction = createAction({
   auth: mondayAuth,
@@ -11,6 +12,7 @@ export const createColumnAction = createAction({
   description: 'Creates a new column in board.',
   audience: 'both',
   aiMetadata: { description: 'Adds a new column of a chosen type (text, status, date, number, etc.) to a monday.com board. Use to extend a board\'s structure before writing data into it. Not idempotent: each call creates a separate column even with the same title.', idempotent: false },
+  outputSchema: createColumnActionOutputSchema,
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

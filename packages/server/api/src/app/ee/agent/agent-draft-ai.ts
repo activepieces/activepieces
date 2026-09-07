@@ -62,6 +62,8 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             })
         }
 
+        await debitDraft({ platformId, projectId, log })
+
         const parsed = parseDraft(raw)
         if (isNil(parsed)) {
             log.error({ platform: { id: platformId }, reply: raw.slice(0, REPLY_LOG_LIMIT) }, '[agentDraftAi] The model replied with something that is not a draft')
@@ -70,7 +72,6 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
                 params: { message: 'Could not draft an agent from that description, try rewording it' },
             })
         }
-        await debitDraft({ platformId, projectId, log })
         return {
             ...parsed,
             tools: resolveToolPicks({ picks: parsed.tools, candidates }),

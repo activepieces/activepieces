@@ -17,7 +17,6 @@ const TOOL_PIECE_VERSION = '0.4.2'
 const RIVAL_PIECE = '@activepieces/piece-test-memos'
 
 beforeAll(async () => {
-    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
     await db.save('piece_metadata', createMockPieceMetadata({
         name: TOOL_PIECE,

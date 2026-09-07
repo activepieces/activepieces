@@ -11,6 +11,7 @@ const MAX_AGENT_OUTPUT_FIELDS = 50
 const MAX_AGENT_STEP_BUDGET = 1_000
 const MAX_AGENT_SHARED_MEMBERS = 200
 const MAX_AGENT_PAGE_SIZE = 100
+const MAX_AGENT_SEARCH_LENGTH = 200
 const MAX_AGENT_NAME_LENGTH = 200
 const MAX_AGENT_DESCRIPTION_LENGTH = 2_000
 const MAX_AGENT_CONFIG_BYTES = 128_000
@@ -122,8 +123,38 @@ const GetAgentRequest = z.object({
     includeUsage: z.coerce.boolean().optional(),
 })
 
+enum AgentListSort {
+    UPDATED = 'updated',
+    CREATED = 'created',
+    NAME = 'name',
+}
+
+const MoveAgentRequest = z.object({
+    projectId: ApId,
+})
+
+enum AgentMoveLossKind {
+    CONNECTION = 'connection',
+    FLOW = 'flow',
+    KNOWLEDGE = 'knowledge',
+}
+
+const AgentMoveLoss = z.object({
+    kind: z.enum(AgentMoveLossKind),
+    label: z.string(),
+})
+
+const AgentMovePreview = z.object({
+    blockedByPublishedFlows: AgentUsage,
+    mayCreateAgentsThere: z.boolean(),
+    toolsThatStopWorking: z.array(AgentMoveLoss),
+    membersLosingAccess: z.number().int().nonnegative(),
+})
+
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
+    search: z.optional(z.string().max(MAX_AGENT_SEARCH_LENGTH)),
+    sort: z.optional(z.enum(AgentListSort)),
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
 })
@@ -133,6 +164,12 @@ const agentUtils = {
 }
 
 export {
+    AgentListSort,
+    AgentMoveLoss,
+    AgentMoveLossKind,
+    AgentMovePreview,
+    MoveAgentRequest,
+    MAX_AGENT_SEARCH_LENGTH,
     Agent,
     AgentUsage,
     AgentWithUsage,
@@ -172,5 +209,8 @@ export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
 export type AgentDraftFields = z.infer<typeof AgentDraftFields>
 export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
+export type AgentMoveLoss = z.infer<typeof AgentMoveLoss>
+export type AgentMovePreview = z.infer<typeof AgentMovePreview>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
+export type MoveAgentRequest = z.infer<typeof MoveAgentRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>

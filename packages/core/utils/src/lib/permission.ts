@@ -29,6 +29,7 @@ export enum Permission {
     WRITE_VARIABLE = 'WRITE_VARIABLE',
     READ_AGENT = 'READ_AGENT',
     WRITE_AGENT = 'WRITE_AGENT',
+    PUBLISH_SENSITIVE_FLOW_ACCESS = 'PUBLISH_SENSITIVE_FLOW_ACCESS',
 }
 
 export enum RoleType {
@@ -55,6 +56,7 @@ export enum AIProviderName {
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
     CUSTOM = 'custom',
     BEDROCK = 'bedrock',
+    VERTEX = 'vertex',
     MISTRAL = 'mistral',
     XAI = 'xai',
     DEEPSEEK = 'deepseek',

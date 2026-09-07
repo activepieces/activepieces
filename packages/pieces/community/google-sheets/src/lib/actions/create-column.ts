@@ -16,8 +16,8 @@ export const createColumnAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'create-column',
 	classification: 'WRITE',
-	displayName: 'Create Spreadsheet Column',
-	description: 'Creates a new column in a specific spreadsheet.',
+	displayName: 'Create Column',
+	description: 'Add a new column to a worksheet.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -28,12 +28,13 @@ export const createColumnAction = createAction({
 		...commonProps,
 		columnName: Property.ShortText({
 			displayName: 'Column Name',
+			description: 'The header text for the new column.',
 			required: true,
 		}),
 		columnIndex: Property.Number({
 			displayName: 'Column Index',
 			description:
-				'The column index starts from 1.For example, if you want to add a column to the third column, enter 3.Ff the input is less than 1 the column will be added after the last current column.',
+				'Position of the new column, counting from 1. Empty adds it last.',
 			required: false,
 		}),
 	},

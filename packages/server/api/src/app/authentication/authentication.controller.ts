@@ -1,10 +1,9 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, RequestEmailCodeRequest, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider, VerifyEmailCodeRequest } from '@activepieces/shared'
+import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
-import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { authnRateLimit, emailCodeRateLimit } from '../core/security/rate-limit'
+import { authnRateLimit } from '../core/security/rate-limit'
 import { applicationEvents } from '../helper/application-events'
 import { networkUtils } from '../helper/network-utils'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -58,47 +57,6 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             email: request.body.email,
             password: request.body.password,
             predefinedPlatformId,
-        })
-
-        if (!isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
-                platformId: response.platformId,
-                userId: response.id,
-                projectId: response.projectId ?? undefined,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_IN,
-                data: {},
-            })
-            rejectedPromiseHandler(telemetry(request.log).trackUser(response.id, {
-                name: TelemetryEventName.SIGNED_IN,
-                payload: {
-                    userId: response.id,
-                    platformId: response.platformId,
-                },
-            }, { platform: response.platformId }), request.log)
-        }
-
-        return response
-    })
-
-    app.post('/otp/request', RequestEmailCodeRequestOptions, async (request, reply) => {
-        const platformId = await platformUtils.getPlatformIdForRequest(request)
-        await passwordlessAuthService(request.log).requestCode({
-            email: request.body.email,
-            platformId: platformId ?? null,
-            captchaToken: request.body.captchaToken,
-            remoteIp: clientIp(request),
-        })
-        return reply.code(StatusCodes.NO_CONTENT).send()
-    })
-
-    app.post('/otp/verify', VerifyEmailCodeRequestOptions, async (request) => {
-        const platformId = await platformUtils.getPlatformIdForRequest(request)
-        const response = await passwordlessAuthService(request.log).verifyCode({
-            email: request.body.email,
-            code: request.body.code,
-            platformId: platformId ?? null,
         })
 
         if (!isNil(response.platformId)) {
@@ -186,28 +144,8 @@ const CompleteSignUpRequestOptions = {
     },
 }
 
-const RequestEmailCodeRequestOptions = {
-    config: {
-        security: securityAccess.public(),
-        rateLimit: emailCodeRateLimit,
-    },
-    schema: {
-        body: RequestEmailCodeRequest,
-    },
-}
-
 function clientIp(request: FastifyRequest): string {
     return networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER))
-}
-
-const VerifyEmailCodeRequestOptions = {
-    config: {
-        security: securityAccess.public(),
-        rateLimit: authnRateLimit,
-    },
-    schema: {
-        body: VerifyEmailCodeRequest,
-    },
 }
 
 const SignInRequestOptions = {

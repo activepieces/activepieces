@@ -84,16 +84,6 @@ export class PausedFlowTimeoutError extends ExecutionError {
     }
 }
 
-export class PieceMemoryLimitError extends ExecutionError {
-    constructor(heapLimitMb: string | undefined, standardError?: string, cause?: unknown) {
-        super('PieceMemoryLimitError', JSON.stringify({
-            message: 'The piece ran out of memory',
-            heapLimitMb,
-            standardError,
-        }), ExecutionErrorType.USER, cause)
-    }
-}
-
 export class FileSizeError extends ExecutionError {
     constructor(currentFileSize: number, maximumSupportSize: number, cause?: unknown) {
         super('FileSizeError', JSON.stringify({

@@ -36,3 +36,5 @@ export type RootPage = {
   flows: SeekPage<PopulatedFlow>;
   tables: SeekPage<Table>;
 };
+
+export type AutomationsSort = 'default' | 'name-asc' | 'name-desc';

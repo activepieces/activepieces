@@ -30,6 +30,7 @@ export const projectMembersHooks = {
     return {
       projectMembers: query.data,
       isLoading: query.isLoading,
+      isError: query.isError,
       refetch: query.refetch,
     };
   },
