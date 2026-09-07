@@ -54,11 +54,12 @@ export function ApprovalsPage() {
     });
   }, [queryClient]);
 
-  const { data, isLoading } = flowApprovalsHooks.useListApprovals({
-    cursor,
-    limit,
-    state: FlowApprovalRequestState.PENDING,
-  });
+  const { data, isLoading, isError, refetch } =
+    flowApprovalsHooks.useListApprovals({
+      cursor,
+      limit,
+      state: FlowApprovalRequestState.PENDING,
+    });
 
   const onReview = (row: PopulatedFlowApprovalRequest) =>
     navigate(
@@ -134,6 +135,9 @@ export function ApprovalsPage() {
         columns={columns}
         page={data}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('approval requests')}
+        onRetry={refetch}
         onRowClick={(row) => onReview(row)}
         emptyStateTextTitle={t('No pending approvals')}
         emptyStateTextDescription={t(
