@@ -27,7 +27,7 @@ export const ninety = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/ninety.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: ['odaithalji'],
+  authors: ['OdaiAhmed99'],
   actions: [
     createTodo,
     updateTodo,
