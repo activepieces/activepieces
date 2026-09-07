@@ -28,7 +28,6 @@ export const sendNotificationActionOutputSchema: OutputSchema = {
       key: 'time',
       label: 'Delivery Time',
       value: 'body.time',
-      format: 'datetime',
       description:
         'Unix timestamp in seconds for when ntfy delivers the message. Equal to the send time unless Delay was set, in which case it is the scheduled delivery time.',
     },
@@ -36,7 +35,6 @@ export const sendNotificationActionOutputSchema: OutputSchema = {
       key: 'expires',
       label: 'Expires',
       value: 'body.expires',
-      format: 'datetime',
       description:
         'Unix timestamp in seconds for when ntfy stops caching the message, always 12 hours after Delivery Time.',
     },

@@ -46,14 +46,14 @@ const directoryEntryFields: OutputSchema['fields'] = [
   {
     key: 'modifyTime',
     label: 'Modified Time',
-    format: 'datetime',
-    description: 'Populated on SFTP only; FTP and FTPS servers leave this empty.',
+    description:
+      'Unix timestamp in milliseconds. Populated on SFTP only; FTP and FTPS servers leave this empty.',
   },
   {
     key: 'accessTime',
     label: 'Accessed Time',
-    format: 'datetime',
-    description: 'Populated on SFTP only; FTP and FTPS servers leave this empty.',
+    description:
+      'Unix timestamp in milliseconds. Populated on SFTP only; FTP and FTPS servers leave this empty.',
   },
   {
     key: 'rights',
@@ -99,14 +99,13 @@ const watchedFileFields: OutputSchema['fields'] = [
   {
     key: 'modifyTime',
     label: 'Modified Time',
-    format: 'datetime',
-    description: 'SFTP only. On FTP and FTPS use Raw Modified Time instead.',
+    description:
+      'Unix timestamp in milliseconds, SFTP only. On FTP and FTPS use Raw Modified Time instead.',
   },
   {
     key: 'accessTime',
     label: 'Accessed Time',
-    format: 'datetime',
-    description: 'SFTP only.',
+    description: 'Unix timestamp in milliseconds, SFTP only.',
   },
   {
     key: 'rawModifiedAt',
