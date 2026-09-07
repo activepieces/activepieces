@@ -409,7 +409,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
     }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId: resolvedPlatformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }], isError: true } }
     }
     const componentMap = componentType === 'action' ? piece.actions : piece.triggers
     const label = componentType === 'action' ? 'Action' : 'Trigger'
@@ -418,7 +418,7 @@ async function lookupPieceComponent({ pieceName, componentName, componentType, p
         const available = Object.keys(componentMap)
         const suggestion = available.find((name) => name.includes(componentName))
         const hint = suggestion ? ` Did you mean "${suggestion}"?` : ''
-        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ ${label} "${componentName}" not found in "${normalized}".${hint} Available: ${available.join(', ')}` }], isError: true } }
     }
     return { piece, component, pieceName: normalized }
 }
@@ -496,9 +496,17 @@ function publishedFlowWarning(publishedVersionId: string | null | undefined): st
     return '\n⚠️ This flow is published. Changes apply to the draft only — use ap_lock_and_publish to push them live.'
 }
 
-function validateAuth(auth: string | undefined): { content: [{ type: 'text', text: string }] } | null {
+function resolveConnectionExternalId({ connectionExternalId, input }: { connectionExternalId: unknown, input: unknown }): string | undefined {
+    if (typeof connectionExternalId === 'string') {
+        return connectionExternalId
+    }
+    const inlineAuth = isObject(input) ? input.auth : undefined
+    return typeof inlineAuth === 'string' ? inlineAuth : undefined
+}
+
+function validateAuth(auth: string | undefined): McpToolResult | null {
     if (auth !== undefined && /['{}\[\]]/.test(auth)) {
-        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }] }
+        return { content: [{ type: 'text', text: '❌ auth must be a plain externalId with no special characters. Use the exact value from ap_list_connections.' }], isError: true }
     }
     return null
 }
@@ -561,7 +569,7 @@ async function resolveLatestPieceVersion({ pieceName, projectId, platformId, log
     }
     const piece = await pieceMetadataService(log).get({ name: normalized, projectId, platformId })
     if (isNil(piece)) {
-        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }] } }
+        return { error: { content: [{ type: 'text', text: `❌ Piece "${normalized}" not found. Use ap_research_pieces to get valid piece names.` }], isError: true } }
     }
     return { pieceVersion: `~${piece.version}`, normalizedPieceName: normalized }
 }
@@ -790,6 +798,7 @@ export const mcpUtils = {
     normalizePieceName,
     lookupPieceComponent,
     findResolvableProps,
+    resolveConnectionExternalId,
     validateAuth,
     fillDefaultsForMissingOptionalProps,
     buildErrorHandlingOptions,

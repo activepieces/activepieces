@@ -72,6 +72,11 @@ export enum FileType {
      */
     WEBHOOK_PAYLOAD = 'WEBHOOK_PAYLOAD',
     /**
+     * Input and output of a single recorded MCP tool call, backing the Activity
+     * tab's detail sheet. Expires on the file-cleanup schedule.
+     */
+    MCP_CALL_PAYLOAD = 'MCP_CALL_PAYLOAD',
+    /**
      * Files uploaded for knowledge base ingestion.
      */
     KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
