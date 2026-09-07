@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const searchAds = createAction({
+export const findAdvertisements = createAction({
   auth: pubrioAuth,
-  name: 'search_ads',
-  displayName: 'Search Advertisements',
-  description: 'Search company advertisements and ad campaigns',
-  audience: 'human',
+  name: 'find_advertisements',
+  displayName: 'Find Advertisements',
+  description: 'Search company advertisement campaigns',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Search the advertisement database for company ad campaigns, filtering by keywords, headlines, target/company locations, date ranges, domains, LinkedIn URLs, or company IDs, with paging (per_page max 25). Read-only and repeatable. Use to discover which companies are running ads or to find ad creatives; pass an advertisement_search_id from the results to the Lookup Advertisement action for full detail.',
+      'Search company advertisement campaigns by keyword, headline, target/company location, date range, or company domain; paged (max 25/page). Read-only and repeatable. Use to discover which companies run ads or to find creatives.',
     idempotent: true,
   },
   props: {

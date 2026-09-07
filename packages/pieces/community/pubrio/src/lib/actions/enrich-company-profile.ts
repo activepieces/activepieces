@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const lookupTechnology = createAction({
+export const enrichCompanyProfile = createAction({
   auth: pubrioAuth,
-  name: 'lookup_technology',
-  displayName: 'Lookup Technology',
-  description: 'Look up technologies used by a company',
-  audience: 'human',
+  name: 'enrich_company_profile',
+  displayName: 'Enrich Company Profile',
+  description: 'Enrich one known company into a full firmographic profile (uses credits)',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Return the technology stack (technographics) detected for a single company, identified via lookup_type: domain, LinkedIn URL, domain_search_id, or domain_id (integer). Read-only and repeatable. Use to learn what tools/software a known company uses; for general firmographic detail use Lookup Company instead.',
+      'Enrich one known company (by domain, LinkedIn URL, `domain_search_id`, or numeric `domain_id`) into a full firmographic profile. **Consumes account credits** but is read-only and safe to repeat. Pick this when you have one company identifier and want its full detail; use Find Companies to discover companies by criteria, or Lookup Company Technologies for just the tech stack.',
     idempotent: true,
   },
   props: {
@@ -37,20 +37,23 @@ export const lookupTechnology = createAction({
   async run(context) {
     const lookupType = context.propsValue.lookup_type;
     const rawValue = context.propsValue.value;
-    const body: Record<string, unknown> = {};
+    let lookupValue: string | number = rawValue;
     if (lookupType === 'domain_id') {
       const parsed = parseInt(rawValue, 10);
       if (isNaN(parsed)) {
-        throw new Error(`domain_id must be a valid integer, got: "${rawValue}"`);
+        throw new Error(
+          `domain_id must be a valid integer, got: "${rawValue}"`
+        );
       }
-      body[lookupType] = parsed;
-    } else {
-      body[lookupType] = rawValue;
+      lookupValue = parsed;
     }
+    const body: Record<string, unknown> = {
+      [lookupType]: lookupValue,
+    };
     return await pubrioRequest(
       context.auth.secret_text,
       HttpMethod.POST,
-      '/technologies/lookup',
+      '/companies/lookup/enrich',
       body
     );
   },

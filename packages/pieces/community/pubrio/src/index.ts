@@ -26,6 +26,20 @@ import { deleteMonitor } from './lib/actions/delete-monitor';
 import { duplicateMonitor } from './lib/actions/duplicate-monitor';
 import { testRunMonitor } from './lib/actions/test-run-monitor';
 import { revealMonitorSignature } from './lib/actions/reveal-monitor-signature';
+import { findCompanies } from './lib/actions/find-companies';
+import { enrichCompanyProfile } from './lib/actions/enrich-company-profile';
+import { lookupCompanyTechnologies } from './lib/actions/lookup-company-technologies';
+import { findPeople } from './lib/actions/find-people';
+import { enrichPerson } from './lib/actions/enrich-person';
+import { revealContactAi } from './lib/actions/reveal-contact-ai';
+import { findJobs } from './lib/actions/find-jobs';
+import { findNews } from './lib/actions/find-news';
+import { findAdvertisements } from './lib/actions/find-advertisements';
+import { findSimilarCompaniesAi } from './lib/actions/find-similar-companies-ai';
+import { listMonitorsAi } from './lib/actions/list-monitors-ai';
+import { getMonitorAi } from './lib/actions/get-monitor-ai';
+import { createMonitorAi } from './lib/actions/create-monitor-ai';
+import { updateMonitorAi } from './lib/actions/update-monitor-ai';
 import { pubrioWebhookTrigger } from './lib/triggers/webhook';
 import {
   createCustomApiCallAction,
@@ -86,6 +100,20 @@ export const pubrio = createPiece({
     duplicateMonitor,
     testRunMonitor,
     revealMonitorSignature,
+    findCompanies,
+    enrichCompanyProfile,
+    lookupCompanyTechnologies,
+    findPeople,
+    enrichPerson,
+    revealContactAi,
+    findJobs,
+    findNews,
+    findAdvertisements,
+    findSimilarCompaniesAi,
+    listMonitorsAi,
+    getMonitorAi,
+    createMonitorAi,
+    updateMonitorAi,
     createCustomApiCallAction({
       baseUrl: () => 'https://api.pubrio.com',
       auth: pubrioAuth,

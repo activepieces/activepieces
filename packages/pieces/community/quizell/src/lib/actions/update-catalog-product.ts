@@ -3,17 +3,22 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { quizellAuth } from '../../';
 import { quizellApiCall } from '../common/client';
 
-export const createProduct = createAction({
+export const updateCatalogProduct = createAction({
   auth: quizellAuth,
-  name: 'create_product',
-  displayName: 'Create Product',
-  description: 'Adds a new product to your Quizell product catalog.',
-  audience: 'human',
-  aiMetadata: { description: 'Adds a new product to the Quizell catalog so it can appear in quiz recommendations. Use when introducing a product not yet in Quizell; requires title, price, and active/inactive status. Not idempotent — each call creates another product, so guard against duplicates if syncing from an external store.', idempotent: false },
+  name: 'update_catalog_product',
+  displayName: 'Update Catalog Product',
+  description: 'Updates an existing product in your Quizell product catalog.',
+  audience: 'ai',
+  aiMetadata: { description: 'Updates an existing Quizell catalog product by product_id (price, stock, status, title, etc.); requires product_id, title, price, and status. Pick this over Create when the product already exists. Idempotent — re-sending the same fields converges; needs a pre-existing product_id (resolve via Find Products).', idempotent: true },
   props: {
+    product_id: Property.ShortText({
+      displayName: 'Product ID',
+      description: 'The ID of the product to update. Use the "Search Products" action to find product IDs.',
+      required: true,
+    }),
     title: Property.ShortText({
       displayName: 'Product Title',
-      description: 'The name of the product as it will appear in quiz recommendations.',
+      description: 'The name of the product.',
       required: true,
     }),
     price: Property.Number({
@@ -45,7 +50,7 @@ export const createProduct = createAction({
     }),
     image: Property.ShortText({
       displayName: 'Image URL',
-      description: 'A publicly accessible URL to the product image (e.g. https://example.com/product.jpg).',
+      description: 'A publicly accessible URL to the product image.',
       required: false,
     }),
     vendor: Property.ShortText({
@@ -60,12 +65,12 @@ export const createProduct = createAction({
     }),
     compare_at_price: Property.Number({
       displayName: 'Compare-At Price',
-      description: 'The original price to show a discount (e.g. 49.99). Leave empty if there is no sale.',
+      description: 'The original price to show a discount. Leave empty if there is no sale.',
       required: false,
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'Comma-separated tags to categorize this product (e.g. "skincare, moisturizer, sensitive-skin").',
+      description: 'Comma-separated tags to categorize this product (e.g. "skincare, moisturizer").',
       required: false,
     }),
     detail_link: Property.ShortText({
@@ -75,12 +80,12 @@ export const createProduct = createAction({
     }),
     external_id: Property.ShortText({
       displayName: 'External ID',
-      description: 'The product ID from your external system (e.g. Shopify product ID) for syncing.',
+      description: 'The product ID from your external system for syncing.',
       required: false,
     }),
   },
   async run(context) {
-    const { title, price, status, sku, description, image, vendor, quantity, compare_at_price, tags, detail_link, external_id } = context.propsValue;
+    const { product_id, title, price, status, sku, description, image, vendor, quantity, compare_at_price, tags, detail_link, external_id } = context.propsValue;
 
     const body: Record<string, unknown> = {
       title,
@@ -103,8 +108,8 @@ export const createProduct = createAction({
       data: Record<string, unknown>;
     }>({
       token: context.auth.secret_text,
-      method: HttpMethod.POST,
-      path: '/products/store',
+      method: HttpMethod.PUT,
+      path: `/products/update/${product_id}`,
       body,
     });
 
@@ -125,7 +130,7 @@ export const createProduct = createAction({
       tags: Array.isArray(product['tags']) ? (product['tags'] as string[]).join(', ') : (product['tags'] ?? null),
       detail_link: product['detail_link'] ?? null,
       external_id: product['external_id'] ?? null,
-      created_at: product['created_at'] ?? null,
+      updated_at: product['updated_at'] ?? null,
     };
   },
 });

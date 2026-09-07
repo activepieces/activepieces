@@ -3,16 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const lookupPerson = createAction({
+export const enrichPerson = createAction({
   auth: pubrioAuth,
-  name: 'lookup_person',
-  displayName: 'Lookup Person',
-  description:
-    "Look up a person's professional profile by LinkedIn URL or Pubrio ID",
-  audience: 'human',
+  name: 'enrich_person',
+  displayName: 'Enrich Person',
+  description: 'Enrich one known person into their professional profile',
+  audience: 'ai',
   aiMetadata: {
     description:
-      "Enrich a single known person and return their professional profile, identified via lookup_type: LinkedIn URL or people_search_id. Read-only and repeatable; the profile does not include revealed contact details. Use when you already have one person and want their details (use Reveal Contact for email/phone, which costs credits); to discover people from criteria use Search People.",
+      'Enrich one known person into their professional profile, identified by LinkedIn URL or `people_search_id` (from Find People). Read-only and repeatable; the profile does NOT include revealed email/phone — use Reveal Contact for those (credits). Pick this when you have one person; use Find People to discover people by criteria.',
     idempotent: true,
   },
   props: {

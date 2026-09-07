@@ -3,15 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const lookupTechnology = createAction({
+export const lookupCompanyTechnologies = createAction({
   auth: pubrioAuth,
-  name: 'lookup_technology',
-  displayName: 'Lookup Technology',
-  description: 'Look up technologies used by a company',
-  audience: 'human',
+  name: 'lookup_company_technologies',
+  displayName: 'Lookup Company Technologies',
+  description: 'Return the technology stack detected for one company',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Return the technology stack (technographics) detected for a single company, identified via lookup_type: domain, LinkedIn URL, domain_search_id, or domain_id (integer). Read-only and repeatable. Use to learn what tools/software a known company uses; for general firmographic detail use Lookup Company instead.',
+      'Return the technology stack (technographics) detected for one company, by domain, LinkedIn URL, `domain_search_id`, or numeric `domain_id`. Read-only and repeatable. Pick this for the tech stack only; use Enrich Company Profile for general firmographics.',
     idempotent: true,
   },
   props: {

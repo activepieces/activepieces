@@ -3,16 +3,15 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { pubrioAuth } from '../../index';
 import { pubrioRequest } from '../common';
 
-export const searchCompanies = createAction({
+export const findCompanies = createAction({
   auth: pubrioAuth,
-  name: 'search_companies',
-  displayName: 'Search Companies',
-  description:
-    'Search B2B companies by name, domain, location, industry, technology, or headcount',
-  audience: 'human',
+  name: 'find_companies',
+  displayName: 'Find Companies',
+  description: 'Discover B2B companies by criteria',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Discover B2B companies matching many optional filters: name, domain, location, industry vertical, technology stack, headcount, revenue, founding year, hiring/job signals, news, and ad activity, with pagination (max 25 per page) and optional similarity search. Read-only and repeatable. Pick this for criteria-based prospecting; use Enrich Company when you already have one company identifier or Lookup Lookalike to find peers of a single seed company.',
+      'Discover B2B companies by criteria (name, domain, location, industry, technology, headcount, revenue, founded year, or hiring/news/ad signals); returns a paged list (max 25/page) with the `domain_search_id` you pass to Enrich Company or other lookups. Read-only and repeatable. Pick this to find companies from filters; use Enrich Company when you already have one identifier, or Find Similar Companies for lookalikes of a known seed.',
     idempotent: true,
   },
   props: {
