@@ -7,7 +7,7 @@ export function createSharedScriptSession(buildParams: () => Promise<CreateScrip
     return {
         get: () => {
             if (isNil(sessionPromise)) {
-                sessionPromise = initCodeSandbox().then(async (codeSandbox) => codeSandbox.createScriptSession(await buildParams()))
+                sessionPromise = initCodeSandbox({ useDeno: true }).then(async (codeSandbox) => codeSandbox.createScriptSession(await buildParams()))
             }
             return sessionPromise
         },

@@ -195,6 +195,22 @@ describe('createSandboxForJob', () => {
             expect(env.AP_DEV_PIECES).toBe('a,b,c')
         })
 
+        it('forwards AP_DENO_PATH from process.env without needing SANDBOX_PROPAGATED_ENV_VARS', () => {
+            const originalProcessEnv = { ...process.env }
+            try {
+                process.env.AP_DENO_PATH = '/usr/local/bin/deno'
+                createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => buildSettings({}) })
+                expect(createSandboxMock.mock.calls[0][2].env.AP_DENO_PATH).toBe('/usr/local/bin/deno')
+
+                delete process.env.AP_DENO_PATH
+                createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => buildSettings({}) })
+                expect('AP_DENO_PATH' in createSandboxMock.mock.calls[1][2].env).toBe(false)
+            }
+            finally {
+                process.env = originalProcessEnv
+            }
+        })
+
         it('only propagates env vars that exist in process.env (no undefined leak)', () => {
             const originalProcessEnv = { ...process.env }
             try {

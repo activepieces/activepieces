@@ -117,7 +117,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.18.1",
+      "version": "0.19.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -162,7 +162,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.159.0",
+      "version": "0.160.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -10847,6 +10847,7 @@
       },
       "devDependencies": {
         "@types/node": "24.11.0",
+        "deno": "2.9.3",
         "esbuild": "0.28.1",
         "form-data": "4.0.6",
         "vitest": "3.2.6",
@@ -11101,8 +11102,9 @@
   },
   "trustedDependencies": [
     "redis-memory-server",
-    "sqlite3",
+    "deno",
     "isolated-vm",
+    "sqlite3",
   ],
   "overrides": {
     "axios": "1.18.0",
@@ -13074,6 +13076,18 @@
 
     "@date-fns/tz": ["@date-fns/tz@1.4.1", "", {}, "sha512-P5LUNhtbj6YfI3iJjw5EL9eUAG6OitD0W3fWQcpQjDRc/QIsL0tRNuO1PcDvPccWL1fSTXXdE1ds+l95DV/OFA=="],
 
+    "@deno/darwin-arm64": ["@deno/darwin-arm64@2.9.3", "", { "os": "darwin", "cpu": "arm64" }, "sha512-G9BiE99ufFiZPQVN8oGIib1oIGdi3uIAuwfet7PkjPX7OFgC484nFJiRV/BsZDpCtFaeUi9zz8WYikXyLxtN/w=="],
+
+    "@deno/darwin-x64": ["@deno/darwin-x64@2.9.3", "", { "os": "darwin", "cpu": "x64" }, "sha512-JEPCaAkqHODcqjyY5a5ScOlPEAn/6Iyx44ldRpk9+gq0XjLR0rsvI6Xe2mt9cuQF1Yp8cvpvi1meSi1TYoE0nQ=="],
+
+    "@deno/linux-arm64-glibc": ["@deno/linux-arm64-glibc@2.9.3", "", { "os": "linux", "cpu": "arm64" }, "sha512-N9OnMg9Ah1k2hvbqo942/lD6IA6ELs4NYYOYtTVuekKgupyhKtVMpNqwgDzfqxL/P4eebk4+l9/oKTw4NzpKdg=="],
+
+    "@deno/linux-x64-glibc": ["@deno/linux-x64-glibc@2.9.3", "", { "os": "linux", "cpu": "x64" }, "sha512-HSChBN7EkeErbDYVVu16dhLVHVIe/U+8eOAedrsuOsSThE+4Ln+IOfI+UnNU09pqnWc/ZMDI+fVRuAmKX/PRaw=="],
+
+    "@deno/win32-arm64": ["@deno/win32-arm64@2.9.3", "", { "os": "win32", "cpu": "arm64" }, "sha512-b0/yzyB4BrTzDy37fHOVoKChP5XgKxoShWkDVXcBNEh8ezxKwTgoHA8HO2BGkynrFoQ5HqxyQ6WXqSwFDSI21w=="],
+
+    "@deno/win32-x64": ["@deno/win32-x64@2.9.3", "", { "os": "win32", "cpu": "x64" }, "sha512-d+z3ySG+sP8a7NYFf739z1QwEcWxjKYAnc6YvDErwmc/1JdjarPbKJNXhug2rb2XViM29t4t9jmQKU/+qHYMJg=="],
+
     "@devhigley/parse-proxy": ["@devhigley/parse-proxy@1.0.3", "", {}, "sha512-ozRQ9CgWF4JXNNae1zUEpb2fbqH61oxtZz2sdR7a0ci5mi9pSP3EvoU7g4idZYi+CXP32gsvH7kTYZJCGW3DKQ=="],
 
     "@discoveryjs/json-ext": ["@discoveryjs/json-ext@0.5.7", "", {}, "sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw=="],
@@ -14608,7 +14622,7 @@
 
     "@xyflow/system": ["@xyflow/system@0.0.46", "", { "dependencies": { "@types/d3-drag": "^3.0.7", "@types/d3-selection": "^3.0.10", "@types/d3-transition": "^3.0.8", "@types/d3-zoom": "^3.0.8", "d3-drag": "^3.0.0", "d3-selection": "^3.0.0", "d3-zoom": "^3.0.0" } }, "sha512-bmFXvboVdiydIFZmDCjrbBCYgB0d5pYdkcZPWbAxGmhMRUZ+kW3CksYgYxWabrw51rwpWitLEadvLrivG0mVfA=="],
 
-    "@zip.js/zip.js": ["@zip.js/zip.js@2.8.26", "", {}, "sha512-RQ4h9F6DOiHxpdocUDrOl6xBM+yOtz+LkUol47AVWcfebGBDpZ7w7Xvz9PS24JgXvLGiXXzSAfdCdVy1tPlaFA=="],
+    "@zip.js/zip.js": ["@zip.js/zip.js@2.8.29", "", {}, "sha512-0PBg2pUXrDrODlWjyTDoO7QlfPHaoxlpE9Lg4RTJk5nsWWFGOnhWo9BYxMaLfBAqeP/3TKj7P2zLWDvysTYbJA=="],
 
     "@zone-eu/mailsplit": ["@zone-eu/mailsplit@5.4.8", "", { "dependencies": { "libbase64": "1.3.0", "libmime": "5.3.7", "libqp": "2.1.1" } }, "sha512-eEyACj4JZ7sjzRvy26QhLgKEMWwQbsw1+QZnlLX+/gihcNH07lVPOcnwf5U6UAL7gkc//J3jVd76o/WS+taUiA=="],
 
@@ -15261,6 +15275,8 @@
     "delayed-stream": ["delayed-stream@1.0.0", "", {}, "sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ=="],
 
     "delegates": ["delegates@1.0.0", "", {}, "sha512-bd2L678uiWATM6m5Z1VzNCErI3jiGzt6HGY8OVICs40JQq/HALfbyNJmp0UDakEY4pMMaN0Ly5om/B1VI/+xfQ=="],
+
+    "deno": ["deno@2.9.3", "", { "optionalDependencies": { "@deno/darwin-arm64": "2.9.3", "@deno/darwin-x64": "2.9.3", "@deno/linux-arm64-glibc": "2.9.3", "@deno/linux-x64-glibc": "2.9.3", "@deno/win32-arm64": "2.9.3", "@deno/win32-x64": "2.9.3" }, "bin": { "deno": "bin.cjs" } }, "sha512-OuR2ZfUqnsXFcKHQIfyG2GDkZdsjFxMIlkWOiozbo3IpMUv1Meja45PmOiMtgzRedc627C54I1arWxn/FarEHg=="],
 
     "denque": ["denque@2.1.0", "", {}, "sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw=="],
 
@@ -18239,8 +18255,6 @@
     "@activepieces/piece-google-contacts/google-auth-library": ["google-auth-library@10.5.0", "", { "dependencies": { "base64-js": "^1.3.0", "ecdsa-sig-formatter": "^1.0.11", "gaxios": "^7.0.0", "gcp-metadata": "^8.0.0", "google-logging-utils": "^1.0.0", "gtoken": "^8.0.0", "jws": "^4.0.0" } }, "sha512-7ABviyMOlX5hIVD60YOfHw4/CxOfBhyduaYB+wbFWCWoni4N7SLcV46hrVRktuBbZjFC9ONyqamZITN7q3n32w=="],
 
     "@activepieces/piece-google-docs/google-auth-library": ["google-auth-library@10.5.0", "", { "dependencies": { "base64-js": "^1.3.0", "ecdsa-sig-formatter": "^1.0.11", "gaxios": "^7.0.0", "gcp-metadata": "^8.0.0", "google-logging-utils": "^1.0.0", "gtoken": "^8.0.0", "jws": "^4.0.0" } }, "sha512-7ABviyMOlX5hIVD60YOfHw4/CxOfBhyduaYB+wbFWCWoni4N7SLcV46hrVRktuBbZjFC9ONyqamZITN7q3n32w=="],
-
-    "@activepieces/piece-google-drive/@zip.js/zip.js": ["@zip.js/zip.js@2.8.29", "", {}, "sha512-0PBg2pUXrDrODlWjyTDoO7QlfPHaoxlpE9Lg4RTJk5nsWWFGOnhWo9BYxMaLfBAqeP/3TKj7P2zLWDvysTYbJA=="],
 
     "@activepieces/piece-google-drive/google-auth-library": ["google-auth-library@10.5.0", "", { "dependencies": { "base64-js": "^1.3.0", "ecdsa-sig-formatter": "^1.0.11", "gaxios": "^7.0.0", "gcp-metadata": "^8.0.0", "google-logging-utils": "^1.0.0", "gtoken": "^8.0.0", "jws": "^4.0.0" } }, "sha512-7ABviyMOlX5hIVD60YOfHw4/CxOfBhyduaYB+wbFWCWoni4N7SLcV46hrVRktuBbZjFC9ONyqamZITN7q3n32w=="],
 

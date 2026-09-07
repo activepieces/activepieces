@@ -17,7 +17,7 @@ export const scriptEvaluator = {
                 const session = await scriptSession.get()
                 return await session.run(script) ?? ''
             }
-            const codeSandbox = await initCodeSandbox()
+            const codeSandbox = await initCodeSandbox({ useDeno: true })
             const scriptResult = await codeSandbox.runScript({
                 script,
                 scriptContext: scriptContext ?? {},

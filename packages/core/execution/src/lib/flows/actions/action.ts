@@ -64,6 +64,7 @@ export const CodeActionSettings = z.object({
     sourceCode: SourceCode,
     input: z.record(z.string(), z.any()),
     errorHandlingOptions: ActionErrorHandlingOptions,
+    useDeno: z.boolean().optional(),
 })
 
 export type CodeActionSettings = z.infer<typeof CodeActionSettings>
