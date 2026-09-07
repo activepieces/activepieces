@@ -57,9 +57,9 @@ export const newRowAddedTrigger = createTrigger({
 		const spreadsheetId = inputSpreadsheetId as string;
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
+		const firstColumn = await getWorkSheetValues(context.auth, spreadsheetId, `${sheetName}!A:A`);
 
-		await context.store.put(`${sheetId}`, currentSheetValues.length);
+		await context.store.put(`${sheetId}`, firstColumn.length);
 
 		const fileNotificationRes = await createFileNotification(
 			context.auth,
@@ -105,10 +105,13 @@ export const newRowAddedTrigger = createTrigger({
 		const oldRowCount = (await context.store.get(`${sheetId}`)) as number;
 
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
-		const currentRowValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
-		const currentRowCount = currentRowValues.length;
+		const [firstColumn, headerRow] = await Promise.all([
+			getWorkSheetValues(context.auth, spreadsheetId, `${sheetName}!A:A`),
+			getWorkSheetValues(context.auth, spreadsheetId, `${sheetName}!1:1`),
+		]);
+		const currentRowCount = firstColumn.length;
 
-		const headers =  currentRowValues[0] ?? [];
+		const headers =  headerRow[0] ?? [];
 		const headerCount = headers.length;
 
 		if (oldRowCount >= currentRowCount) {
