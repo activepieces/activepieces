@@ -15,12 +15,6 @@ export enum AiToolProvider {
     FAL = 'fal',
 }
 
-export const PROVIDERS_BY_CAPABILITY: Record<AiToolCapability, AiToolProvider[]> = {
-    [AiToolCapability.WEB_SEARCH]: [AiToolProvider.TAVILY],
-    [AiToolCapability.WEB_SCRAPING]: [AiToolProvider.FIRECRAWL, AiToolProvider.APIFY],
-    [AiToolCapability.IMAGE_GENERATION]: [AiToolProvider.FAL],
-}
-
 export const AiToolAuthConfig = z.object({
     apiKey: z.string().min(1, formErrors.required),
 })

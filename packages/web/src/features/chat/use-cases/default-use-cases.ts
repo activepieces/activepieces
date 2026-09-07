@@ -67,9 +67,6 @@ export const GREETING_HEADLINES: GreetingHeadline[] = [
   },
 ];
 
-export const CHAT_INTRO_LINE =
-  "I don't just answer questions — I do the work, end to end, across every app you use. Whatever you're picturing, I can probably go further.";
-
 export type GreetingHeadline = {
   withName: string;
   plain: string;
