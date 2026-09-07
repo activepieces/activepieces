@@ -15,9 +15,9 @@ We have implemented a minimal tracking plan and provide a detailed list of the m
 
 # What Does Activepieces Collect?
 
-We value transparency in data collection and assure you that we do not collect any personal information. The following events are currently being collected:
+We value transparency in data collection and assure you that we do not collect any personal information. The full list of events is in the app itself: go to **Platform → Infrastructure → Configurations** and open **See the events we track** under Product analytics. Alongside them we count page views inside the app.
 
-[Exact Code](https://github.com/activepieces/activepieces/blob/main/packages/core/shared/src/lib/common/telemetry.ts)
+[Exact Code](https://github.com/activepieces/activepieces/blob/main/packages/core/shared/src/lib/core/common/telemetry.ts)
 
 
 # Deployment setup
@@ -33,5 +33,3 @@ Go to **Platform → Infrastructure → Configurations** and switch **Product an
 **Deployment setup** is a separate switch in the same place, and is on by default. Unlike product analytics it does not read `AP_TELEMETRY_ENABLED` — switch it off in the UI to stop the daily snapshot.
 
 `AP_TELEMETRY_ENABLED=false` still works as a starting value: each platform's setting is created the first time it is read and takes the variable's value, so a self-hosted instance with the variable set to `false` is opted out from the start and stays opted out through the upgrade. Once the setting exists, the toggle governs it and changing the variable has no further effect.
-
-Two events happen before any platform can be resolved — requesting and verifying an email sign-in code. On a self-hosted instance these are attributed to your platform whenever one exists, so the toggle governs them like everything else. Only on Activepieces Cloud, and only for an identity that belongs to no platform yet, is an event sent without a platform to consult.

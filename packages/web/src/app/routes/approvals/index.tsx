@@ -54,11 +54,12 @@ export function ApprovalsPage() {
     });
   }, [queryClient]);
 
-  const { data, isLoading } = flowApprovalsHooks.useListApprovals({
-    cursor,
-    limit,
-    state: FlowApprovalRequestState.PENDING,
-  });
+  const { data, isLoading, isError, refetch } =
+    flowApprovalsHooks.useListApprovals({
+      cursor,
+      limit,
+      state: FlowApprovalRequestState.PENDING,
+    });
 
   const onReview = (row: PopulatedFlowApprovalRequest) =>
     navigate(
@@ -131,6 +132,9 @@ export function ApprovalsPage() {
         </p>
       </div>
       <DataTable
+        errorStateEntity={t('pending approvals')}
+        isError={isError}
+        onRetry={refetch}
         columns={columns}
         page={data}
         isLoading={isLoading}
