@@ -107,17 +107,27 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             }
             const startedAt = Date.now()
             const { error } = await tryCatch(async () => {
-                const { flows, platformId, engineToken } = await apiClient.getPrewarmData({
+                const prewarmData = await apiClient.getPrewarmData({
                     workerGroupId: getSettings().WORKER_GROUP_ID,
                     projectWorker: getSettings().PROJECT_WORKER,
                     flow,
                 })
-                const resolver = createResolver({ apiClient, basePath, getSettings, log })
-                const provisions = await resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log })
-                const pieces = provisions.flatMap((provision) => provision.pieces)
-                const codeSteps = provisions.flatMap((provision) => provision.codes)
+                const { platformId, engineToken } = prewarmData
+                // Platform-wide prewarm uses the distinct piece/code set the app computed in one pass.
+                // The targeted (flowPublished) prewarm still resolves worker-side, which also publishes
+                // the flow bundle.
+                const { pieces, codeSteps } = isNil(flow)
+                    ? { pieces: prewarmData.pieces, codeSteps: prewarmData.codes }
+                    : await resolveFlowsForPrewarm({
+                        resolver: createResolver({ apiClient, basePath, getSettings, log }),
+                        flows: prewarmData.flows,
+                        platformId,
+                        publicApiUrl,
+                        engineToken,
+                        log,
+                    })
                 await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken })
-                log.info({ flowCount: flows.length, pieceCount: pieces.length, durationMs: Date.now() - startedAt }, 'Prewarmed sandbox cache')
+                log.info({ flowCount: prewarmData.flows.length, pieceCount: pieces.length, durationMs: Date.now() - startedAt }, 'Prewarmed sandbox cache')
             })
             if (error) {
                 log.warn({ error: String(error) }, 'Cache prewarm failed')
@@ -129,7 +139,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
     }
 }
 
-async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ProvisionInput[]> {
+async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ResolvedPrewarmInputs> {
     const provisions: ProvisionInput[] = []
     for (const batch of chunk(flows, PREWARM_RESOLVE_CONCURRENCY)) {
         const resolvedBatch = await Promise.all(batch.map(async (flow) => {
@@ -142,7 +152,10 @@ async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUr
         }))
         provisions.push(...resolvedBatch.filter((provision) => !isNil(provision)))
     }
-    return provisions
+    return {
+        pieces: provisions.flatMap((provision) => provision.pieces),
+        codeSteps: provisions.flatMap((provision) => provision.codes),
+    }
 }
 
 type ResolveFlowsForPrewarmParams = {
@@ -152,6 +165,11 @@ type ResolveFlowsForPrewarmParams = {
     publicApiUrl: string
     engineToken: string
     log: ApLogger
+}
+
+type ResolvedPrewarmInputs = {
+    pieces: ProvisionInput['pieces']
+    codeSteps: ProvisionInput['codes']
 }
 
 type CreateSandboxRuntimeParams = {
