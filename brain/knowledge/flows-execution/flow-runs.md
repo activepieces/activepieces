@@ -47,11 +47,11 @@ Entry point: `flowRunService`, defined in `flow-run-service.ts` and wired throug
 - `packages/server/api/src/app/waitpoints/` — the waitpoint module: entity, service, resume routes, the `/confirm` page, its theme hooks, and the `RESUME_DELAY_WAITPOINT` handler
 - `packages/core/execution/src/lib/flow-run/` — `FlowRun` type, request dtos, execution types (`StepOutput`, `FlowExecution`), zstd log serializer
 - `packages/server/engine/src/lib/helper/logging-utils.ts` — produces the truncated-input placeholder the web run-details tab detects
-- `packages/server/api/src/app/ee/billing-usage-report/` — daily EE job emitting per-platform run counts to PostHog (`TOTAL_RUNS_PER_DAY`, captured and flushed in platform batches)
+- `packages/server/api/src/app/ee/license-key-usage-report/` — daily EE job emitting per-platform run counts to PostHog (`TOTAL_RUNS_PER_DAY`, captured and flushed in platform batches)
 - `packages/web/src/features/flow-runs/` — `flowRunsApi`, run query/mutation hooks, runs table and its dialogs
 - `packages/web/src/app/routes/runs/` — runs list and run detail pages
 - `packages/web/src/app/builder/run-details/` — step input/output inspector inside the builder
 - `packages/web/src/app/builder/run-list/` — recent runs sidebar in the builder
 - `packages/web/src/app/builder/state/` — run state and canvas state, including live-follow control
 
-Paths verified 2026-07-26. An earlier version pointed at `packages/core/shared/src/lib/automation/flow-run/` (moved to `packages/core/execution/src/lib/flow-run/`) and `packages/server/api/src/app/ee/flow-run-tracking/` (renamed to `packages/server/api/src/app/ee/billing-usage-report/`).
+Paths verified 2026-07-26. An earlier version pointed at `packages/core/shared/src/lib/automation/flow-run/` (moved to `packages/core/execution/src/lib/flow-run/`) and `packages/server/api/src/app/ee/flow-run-tracking/` (renamed to `packages/server/api/src/app/ee/billing-usage-report/`, then to `packages/server/api/src/app/ee/license-key-usage-report/`).
