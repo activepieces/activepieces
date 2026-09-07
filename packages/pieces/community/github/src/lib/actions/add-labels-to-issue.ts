@@ -7,6 +7,7 @@ import { addLabelsToIssueActionOutputSchema } from '../output-schemas';
 export const githubAddLabelsToIssueAction = createAction({
   auth: githubAuth,
   name: 'add_labels_to_issue',
+  classification: 'WRITE',
   displayName: 'Add Labels to Issue',
   description: 'Adds labels to an existing issue.',
   audience: 'human',

@@ -8,6 +8,7 @@ import { listRepositoriesOutputSchema } from '../../output-schemas';
 export const githubListStarredRepositoriesAction = createAction({
   auth: githubAuth,
   name: 'list_starred_repositories',
+  classification: 'SEARCH',
   displayName: 'List Starred Repositories (Agent)',
   description: 'Lists the repositories the connected user has starred.',
   audience: 'ai',

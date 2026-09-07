@@ -8,6 +8,7 @@ import { timeEntryOutputSchema } from '../../output-schemas';
 export const clickupUpdateTimeEntry = createAction({
   auth: clickupAuth,
   name: 'clickup_update_time_entry',
+  classification: 'WRITE',
   displayName: 'Update Time Entry',
   description: 'Update an existing time entry by its ID.',
   audience: 'ai',

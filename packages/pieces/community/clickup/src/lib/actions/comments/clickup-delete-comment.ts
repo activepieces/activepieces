@@ -6,6 +6,7 @@ import { clickupAuth } from '../../auth';
 export const clickupDeleteComment = createAction({
   auth: clickupAuth,
   name: 'clickup_delete_comment',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a comment in ClickUp',
   audience: 'ai',
   aiMetadata: {

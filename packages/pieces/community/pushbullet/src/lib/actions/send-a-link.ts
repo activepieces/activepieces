@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const sendALink = createAction({
   auth: bushbulletAuth,
   name: 'sendALink',
+  classification: 'WRITE',
   displayName: 'Send a Link',
   description: 'Send a link notification',
   audience: 'both',

@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { invoiceSearchOutputSchema } from '../output-schemas';
 export const stripeSearchInvoices = createAction({
   name: 'search_invoices',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Invoices (Agent)',
   description: 'Search invoices with a Stripe search query.',

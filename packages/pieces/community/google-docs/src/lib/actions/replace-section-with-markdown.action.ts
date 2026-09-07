@@ -7,6 +7,7 @@ import { replaceSectionWithMarkdownActionOutputSchema } from '../output-schemas'
 export const replaceSectionWithMarkdown = createAction({
   auth: googleDocsAuth,
   name: 'replace_section_with_markdown',
+  classification: 'DESTRUCTIVE',
   displayName: 'Replace Section with Markdown',
   description: 'Replace a character range of a Google Docs document with Markdown content',
   audience: 'ai',

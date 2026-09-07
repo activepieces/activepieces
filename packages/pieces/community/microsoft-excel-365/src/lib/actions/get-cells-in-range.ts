@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const getRangeAction = createAction({
   auth: excelAuth,
   name: 'get_range',
+  classification: 'READ',
   displayName: 'Get Cells in Range',
   description: 'Retrieve the values in a given cell range (e.g., “A1:C10”).',
   audience: 'both',

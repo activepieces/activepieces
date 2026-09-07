@@ -19,6 +19,7 @@ const GROUP_SELECT =
 export const newGroupTrigger = createTrigger({
   auth: azureAdAuth,
   name: 'new_group',
+  classification: 'READ',
   displayName: 'New Group',
   description: 'Triggers when a new group is created in Microsoft Entra ID.',
   aiMetadata: {

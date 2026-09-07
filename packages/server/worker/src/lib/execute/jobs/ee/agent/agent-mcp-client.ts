@@ -336,7 +336,7 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
     return result
 }
 
-type McpConnection = {
+export type McpConnection = {
     mcpClient: Awaited<ReturnType<typeof createMCPClient>> | null
     mcpToolSet: Record<string, unknown>
 }

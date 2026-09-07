@@ -8,6 +8,7 @@ import { formatDateOnly, formatDateTime, getSafeLabel, handleDropdownError } fro
 export const createEvent = createAction({
   auth: biginAuth,
   name: 'createEvent',
+  classification: 'WRITE',
   displayName: 'Create Event',
   description: 'Creates a new event in Bigin',
   audience: 'both',

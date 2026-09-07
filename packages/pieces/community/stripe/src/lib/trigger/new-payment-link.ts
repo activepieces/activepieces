@@ -15,6 +15,7 @@ import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeNewPaymentLink = createTrigger({
   auth: stripeAuth,
   name: 'new_payment_link',
+  classification: 'READ',
   displayName: 'New Payment Link',
   description: 'Fires when a new Payment Link is created.',
   aiMetadata: {

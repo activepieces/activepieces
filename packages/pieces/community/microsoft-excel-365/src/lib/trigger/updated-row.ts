@@ -106,6 +106,7 @@ const polling: Polling<
 export const updatedRowTrigger = createTrigger({
     auth: excelAuth,
     name: triggerName,
+    classification: 'READ',
     displayName: 'Updated Row',
     description: 'Fires when a row (in a worksheet) is added or updated.',
     aiMetadata: {

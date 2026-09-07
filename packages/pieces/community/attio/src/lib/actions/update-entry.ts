@@ -6,6 +6,7 @@ import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 
 export const updateEntryAction = createAction({
 	name: 'update_entry',
+	classification: 'WRITE',
 	displayName: 'Update List Entry',
 	description: 'Update the attributes of an existing entry in a list.',
 	audience: 'both',

@@ -36,6 +36,7 @@ function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
 export const crawl = createAction({
   auth: firecrawlAuth,
   name: 'crawl',
+  classification: 'SEARCH',
   displayName: 'Crawl',
   description: 'Crawl multiple pages from a website based on specified rules and patterns.',
   audience: 'human',

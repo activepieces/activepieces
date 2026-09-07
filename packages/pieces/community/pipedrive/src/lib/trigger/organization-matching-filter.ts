@@ -11,6 +11,7 @@ import {
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
+import { organizationMatchingFilterTriggerOutputSchema } from '../output-schemas';
 
 interface PipedriveOrganizationV2 {
 	id: number;
@@ -75,6 +76,8 @@ interface OrganizationListResponseV2 {
 export const organizationMatchingFilterTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'organization-matching-filter',
+	outputSchema: organizationMatchingFilterTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'Organization Matching Filter',
 	description: 'Triggers when an organization newly matches a Pipedrive filter for the first time.',
 	aiMetadata: {

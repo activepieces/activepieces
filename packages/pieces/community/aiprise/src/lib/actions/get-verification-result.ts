@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getVerificationResultAction = createAction({
   auth: aipriseAuth,
   name: 'get_verification_result',
+  classification: 'READ',
   displayName: 'Get Identity Verification Result',
   description:
     'Fetches the current status and outcome of a person\'s identity check — whether it is still in progress, approved, or declined.',

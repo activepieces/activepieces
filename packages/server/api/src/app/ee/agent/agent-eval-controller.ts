@@ -1,5 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
-import { AgentConversationStatus, AgentPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversationStatus, AgentPromptOverride, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_TEXT_LENGTH, PersistedAgentRole, SimulateAgentRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -9,8 +9,8 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { platformService } from '../../platform/platform.service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
+import { agentConversationService } from './agent-conversation-service'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
-import { agentService } from './agent-service'
 import { agentPrompt } from './prompt/agent-prompt'
 
 const API_KEY_HEADER = 'api-key'
@@ -59,7 +59,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
         const platform = await platformService(log).getOneOrThrow(platformId)
         const evalUserId = platform.ownerId
 
-        const conversation = await agentService(log).createConversation({
+        const conversation = await agentConversationService(log).createConversation({
             platformId,
             userId: evalUserId,
             request: {},
@@ -142,7 +142,7 @@ const agentEvalController: FastifyPluginAsyncZod = async (app) => {
             const platform = await platformService(log).getOneOrThrow(platformId)
             evalPlatformId = platformId
             evalUserId = platform.ownerId
-            const conversation = await agentService(log).createConversation({ platformId, userId: evalUserId, request: {}, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
+            const conversation = await agentConversationService(log).createConversation({ platformId, userId: evalUserId, request: {}, id: (EVAL_CONVERSATION_ID_PREFIX + apId()).slice(0, 21) })
             convId = conversation.id
             priorAssistantTurns = 0
         }
@@ -257,7 +257,7 @@ const SimulateRoute = {
 const EvalTurnStartRequest = z.object({
     conversationId: z.string().optional(),
     platformId: z.string().optional(),
-    userMessage: z.string().min(1).max(51200),
+    userMessage: z.string().min(1).max(MAX_AGENT_TEXT_LENGTH),
     promptOverride: AgentPromptOverride.optional(),
     // Opt-in (default off): run the turn with tools actually executing against the platform
     // owner's real connections, instead of the dry-run playground stub. The failure-mode eval

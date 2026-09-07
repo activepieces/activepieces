@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const updateCdrAction = createAction({
     auth: connectucAuth,
     name: 'update-cdr',
+    classification: 'WRITE',
     displayName: 'Update CDR',
     description: 'Update a Call Detail Record (CDR) in ConnectUC',
     audience: 'both',

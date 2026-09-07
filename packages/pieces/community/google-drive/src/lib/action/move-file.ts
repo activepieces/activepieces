@@ -7,6 +7,7 @@ import { googleDriveMoveFileActionOutputSchema } from '../output-schemas';
 export const moveFileAction = createAction({
   auth: googleDriveAuth,
   name: 'google-drive-move-file',
+  classification: 'WRITE',
   displayName: 'Move File',
   description: 'Moves a file from one folder to another.',
   audience: 'human',

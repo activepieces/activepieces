@@ -9,6 +9,7 @@ import { BASE_URL } from '../common/constants';
 
 export const askChatbotAction = createAction({
   name: 'ask-chatbot',
+  classification: 'WRITE',
   auth: chatnodeAuth,
   displayName: 'Ask Chatbot',
   description: 'Sends a message to your bot and get back an answer.',

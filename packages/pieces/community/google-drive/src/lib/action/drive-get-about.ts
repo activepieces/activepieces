@@ -6,6 +6,7 @@ import { driveGetAboutOutputSchema } from '../output-schemas';
 export const driveGetAbout = createAction({
   auth: googleDriveAuth,
   name: 'drive_get_about',
+  classification: 'READ',
   displayName: 'Get Account & Storage Info',
   description: 'Get the authenticated Drive account, storage quota, and supported formats.',
   audience: 'ai',

@@ -9,6 +9,7 @@ import { McpProperty, McpPropertyType } from '@activepieces/pieces-framework';
 
 export const mcpTool = createTrigger({
   name: 'mcp_tool',
+  classification: 'READ',
   displayName: 'MCP Tool',
   description: 'Creates a tool that MCP clients can call to execute this flow',
   aiMetadata: {

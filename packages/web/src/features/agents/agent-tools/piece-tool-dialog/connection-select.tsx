@@ -1,3 +1,4 @@
+import { connectionTemplate } from '@activepieces/core-utils';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import React, { useState } from 'react';
@@ -17,14 +18,6 @@ type ConnectionDropdownProps = {
   showError?: boolean;
 };
 
-// Older steps stored the connection as a template. It is stored by id now, so both are read.
-function unwrapConnection(input?: unknown): string | undefined {
-  if (typeof input !== 'string') return undefined;
-
-  const match = input.match(/^\{\{connections\['([^']+)'\]\}\}$/);
-  return match?.[1] ?? input;
-}
-
 export const ConnectionDropdown = React.memo(
   ({
     piece,
@@ -39,7 +32,6 @@ export const ConnectionDropdown = React.memo(
     const {
       data: connections,
       isLoading: connectionsLoading,
-      refetch: refetchConnections,
       isRefetching: isRefetchingConnections,
     } = appConnectionsQueries.useAppConnections({
       request: {
@@ -83,7 +75,6 @@ export const ConnectionDropdown = React.memo(
             setConnectionDialogOpen(open);
             if (connection) {
               onChange(connection.externalId);
-              refetchConnections();
             }
           }}
           reconnectConnection={null}
@@ -92,7 +83,7 @@ export const ConnectionDropdown = React.memo(
 
         <div className="space-y-2">
           <SearchableSelect
-            value={unwrapConnection(value)}
+            value={connectionTemplate.unwrapExternalId(value) ?? undefined}
             onChange={handleChange}
             options={connectionOptionsWithNewConnectionOption}
             placeholder={placeholder}

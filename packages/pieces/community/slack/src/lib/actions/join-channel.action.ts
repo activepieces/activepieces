@@ -7,6 +7,7 @@ import { joinChannelActionOutputSchema } from '../output-schemas';
 export const joinChannelAction = createAction({
   auth: slackAuth,
   name: 'slack_join_channel',
+  classification: 'WRITE',
   displayName: 'Join Channel',
   description: 'Joins an existing public channel.',
   audience: 'ai',

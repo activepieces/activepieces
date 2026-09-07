@@ -49,6 +49,7 @@ const props = {
 export const aiUpdateEvent = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_update_event',
+  classification: 'WRITE',
   displayName: 'Update Event',
   description:
     'Update fields of an existing Google Calendar event by ID using a safe get-then-merge; fields you leave unset keep their current values.',

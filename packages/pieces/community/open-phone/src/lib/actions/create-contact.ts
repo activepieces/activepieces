@@ -13,6 +13,7 @@ import {
 export const createContact = createAction({
   auth: openPhoneAuth,
   name: 'create_contact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Create a new contact in your OpenPhone workspace',
   audience: 'both',

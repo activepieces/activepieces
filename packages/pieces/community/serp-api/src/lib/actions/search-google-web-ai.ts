@@ -7,12 +7,13 @@ import { searchGoogleWebAiOutputSchema } from '../output-schemas';
 export const searchGoogleWebAi = createAction({
   auth: serpApiAuth,
   name: 'search_google_web_ai',
+  classification: 'SEARCH',
   displayName: 'Google Search (Agent)',
   description: 'Run a Google web search and return organic results for a query.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Runs a Google web search via SerpApi and returns organic web results (in `organic_results`) for a query. Use this for general web lookups, current information, rankings, or topic research. For news pick Search Google News, for videos Search YouTube, for products Search Google Shopping. Read-only and idempotent; requires the query and a SerpApi API key.',
+      'Search the web with Google and get ranked organic results for a query. Use for general web lookups, current information, rankings, or topic research. For news pick Search Google News, for videos Search YouTube, for products Search Google Shopping.',
     idempotent: true,
   },
   outputSchema: searchGoogleWebAiOutputSchema,

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { priceOutputSchema } from '../output-schemas';
 export const stripeUpdatePrice = createAction({
   name: 'update_price',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Update Price (Agent)',
   description: 'Update or archive a Stripe price.',

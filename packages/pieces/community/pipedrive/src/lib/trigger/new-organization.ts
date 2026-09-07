@@ -10,6 +10,7 @@ import {
 import { GetField } from '../common/types';
 import { isNil } from '@activepieces/pieces-framework';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
+import { newOrganizationTriggerOutputSchema } from '../output-schemas';
 
 interface PipedriveOrganizationV2 {
 	id: number;
@@ -78,6 +79,8 @@ interface GetOrganizationResponseV2 {
 export const newOrganizationTrigger = createTrigger({
 	auth: pipedriveAuth,
 	name: 'new-organization',
+	outputSchema: newOrganizationTriggerOutputSchema,
+	classification: 'READ',
 	displayName: 'New Organization',
 	description: 'Triggers when a new organization is created.',
 	aiMetadata: {

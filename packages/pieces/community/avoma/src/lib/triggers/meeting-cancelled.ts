@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 
 export const meetingCancelled = createTrigger({
   name: 'meeting_cancelled',
+  classification: 'READ',
   displayName: 'Meeting Cancelled',
   description: 'Triggers when a meeting booked via the scheduling page is cancelled',
   aiMetadata: {

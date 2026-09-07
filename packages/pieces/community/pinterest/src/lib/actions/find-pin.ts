@@ -12,6 +12,7 @@ import { findPinActionOutputSchema } from '../output-schemas';
 export const findPin = createAction({
   auth: pinterestAuth,
   name: 'findPin',
+  classification: 'SEARCH',
   outputSchema: findPinActionOutputSchema,
   displayName: 'Find Pin by Title/Keyword',
   description: 'Search for Pins using title, description, or keywords.',

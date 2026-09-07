@@ -19,6 +19,7 @@ import axios from 'axios';
 export const query = createAction({
   audience: 'both',
   name: 'send_request',
+  classification: 'WRITE',
   displayName: 'Send Request',
   description: 'Makes a GraphQL request.',
   aiMetadata: {

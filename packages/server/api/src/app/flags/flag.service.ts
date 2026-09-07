@@ -4,6 +4,7 @@ import { ApEdition, ApFlagId, ExecutionMode, Flag } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { turnstile } from '../authentication/lib/turnstile'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
@@ -36,6 +37,7 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 ApFlagId.CURRENT_VERSION,
                 ApFlagId.EDITION,
                 ApFlagId.EMAIL_AUTH_ENABLED,
+                ApFlagId.EMAIL_CODE_AUTH_ENABLED,
                 ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
                 ApFlagId.ENVIRONMENT,
                 ApFlagId.PUBLIC_URL,
@@ -152,6 +154,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+                value: system.getEdition() === ApEdition.CLOUD && turnstile.isConfigured(),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.THEME,
                 value: defaultTheme,
                 created,
@@ -184,6 +192,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.TELEMETRY_ENABLED,
                 value: system.getBoolean(AppSystemProp.TELEMETRY_ENABLED) ?? true,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.AGENTS_ENABLED,
+                value: system.getBoolean(AppSystemProp.AGENTS_ENABLED) ?? false,
                 created,
                 updated,
             },
@@ -282,6 +296,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
             {
                 id: ApFlagId.SMTP_CONFIGURED,
                 value: smtpEmailSender(log).isSmtpConfigured(),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.TURNSTILE_SITE_KEY,
+                value: turnstile.siteKey() ?? null,
                 created,
                 updated,
             },

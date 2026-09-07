@@ -21,6 +21,7 @@ interface ZendeskGroupsResponse {
 export const findGroupAction = createAction({
   auth: zendeskAuth,
   name: 'find-group',
+  classification: 'READ',
   displayName: 'Find a Group',
   description: 'Find a group by name.',
   audience: 'both',

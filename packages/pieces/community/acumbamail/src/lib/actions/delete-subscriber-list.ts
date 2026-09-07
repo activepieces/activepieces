@@ -11,6 +11,7 @@ import { acumbamailCommon } from '../common';
 export const deleteSubscriberListAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_delete_subscriber_list',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Subscriber List',
   description: 'Deletes an existing subscriber list.',
   audience: 'both',

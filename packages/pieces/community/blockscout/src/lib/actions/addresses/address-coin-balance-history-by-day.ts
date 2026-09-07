@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getAddressCoinBalanceHistoryByDay = createAction({
   name: 'get_address_coin_balance_history_by_day',
+  classification: 'SEARCH',
   displayName: 'Get Address Coin Balance History By Day',
   description: 'Get list of coin balance changes for an address grouped by day',
   audience: 'both',

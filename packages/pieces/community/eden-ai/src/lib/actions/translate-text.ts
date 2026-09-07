@@ -187,6 +187,7 @@ function normalizeTranslationResponse(provider: string, response: any) {
 
 export const translateTextAction = createAction({
   name: 'translate_text',
+  classification: 'READ',
   auth: edenAiAuth,
   displayName: 'Translate Text',
   description: 'Translate text into different languages using Eden AI. Supports multiple providers, languages, and models.',

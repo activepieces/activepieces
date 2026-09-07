@@ -10,6 +10,7 @@ import { appendToPageActionOutputSchema } from '../output-schemas';
 export const appendToPage = createAction({
   auth: notionAuth,
   name: 'append_to_page',
+  classification: 'WRITE',
   displayName: 'Append to Page',
   description: 'Appends content to the end of a page.',
   audience: 'human',

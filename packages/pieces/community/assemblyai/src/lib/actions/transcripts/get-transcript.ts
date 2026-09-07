@@ -5,6 +5,7 @@ import { transcriptIdProp } from './shared-props';
 
 export const getTranscript = createAction({
   name: 'getTranscript',
+  classification: 'READ',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Get Transcript',

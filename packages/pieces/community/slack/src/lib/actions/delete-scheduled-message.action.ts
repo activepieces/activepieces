@@ -6,6 +6,7 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const slackDeleteScheduledMessageAction = createAction({
   auth: slackAuth,
   name: 'slack_delete_scheduled_message',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Scheduled Message',
   description: 'Cancel a pending scheduled message before it is sent.',
   audience: 'ai',

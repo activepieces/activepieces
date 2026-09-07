@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const deleteJobLineItem = createAction({
   auth: housecallProAuth,
   name: "delete_job_line_item",
+  classification: 'DESTRUCTIVE',
   displayName: "Delete a single line item for a job",
   description: "Delete a specific line item from a job",
   audience: 'both',

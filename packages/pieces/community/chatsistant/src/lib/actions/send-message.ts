@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const sendMessage = createAction({
   auth: chatsistantAuth,
   name: 'sendMessage',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message to a chatbot session',
   audience: 'both',

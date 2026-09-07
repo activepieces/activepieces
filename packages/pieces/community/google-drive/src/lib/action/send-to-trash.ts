@@ -7,6 +7,7 @@ import { trashGdriveFileActionOutputSchema } from '../output-schemas';
 export const googleDriveTrashFile = createAction({
   auth: googleDriveAuth,
   name: 'trash_gdrive_file',
+  classification: 'DESTRUCTIVE',
   description: 'Move a file to the trash in your Google Drive',
   audience: 'human',
   aiMetadata: { description: 'Moves a Drive file to the trash by its ID, a reversible deletion that can be restored from Drive. Use for safe removal instead of permanent deletion. Requires the file ID. Idempotent: re-trashing an already-trashed file leaves it in the same state.', idempotent: true },

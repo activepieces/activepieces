@@ -8,6 +8,7 @@ import { multiplicationActionOutputSchema } from '../output-schemas';
 export const multiplication = createAction({
   audience: 'both',
   name: 'multiplication_math',
+  classification: 'READ',
   outputSchema: multiplicationActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Multiplication',

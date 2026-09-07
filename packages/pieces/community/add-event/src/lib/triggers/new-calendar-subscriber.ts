@@ -44,6 +44,7 @@ const polling: Polling<
 export const addEventNewCalendarSubscriberTrigger = createTrigger({
   auth: addEventAuth,
   name: 'new_calendar_subscriber',
+  classification: 'READ',
   displayName: 'New Calendar Subscriber',
   description:
     'Triggers when a new subscriber is added to your AddEvent calendar. Leave the calendar blank to watch all of them.',

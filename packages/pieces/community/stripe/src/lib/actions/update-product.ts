@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { productOutputSchema } from '../output-schemas';
 export const stripeUpdateProduct = createAction({
   name: 'update_product',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Update Product (Agent)',
   description: 'Update or archive a Stripe product.',

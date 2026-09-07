@@ -7,6 +7,7 @@ import { updateLabelActionOutputSchema } from '../output-schemas';
 export const todoistUpdateLabelAction = createAction({
   auth: todoistAuth,
   name: 'todoist_update_label',
+  classification: 'WRITE',
   displayName: 'Update Label',
   description: 'Updates an existing personal label in Todoist.',
   audience: 'ai',

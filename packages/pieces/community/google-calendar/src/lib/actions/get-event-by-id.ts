@@ -123,6 +123,7 @@ export async function runGetEventById(
 export const getEventById = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_get_event_by_id',
+  classification: 'READ',
   displayName: 'Get Event by ID',
   description: 'Fetch event details by its unique ID from Google Calendar.',
   audience: 'human',

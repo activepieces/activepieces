@@ -1,4 +1,5 @@
 import {
+  ActionClassification,
   OAuth2PropertyValue,
   PieceAuthProperty,
   Property,
@@ -148,6 +149,7 @@ export function createCustomApiCallAction<
   props,
   extraProps,
   authLocation = 'headers',
+  classification = 'WRITE',
 }: {
   auth?: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
@@ -172,10 +174,13 @@ export function createCustomApiCallAction<
   };
   extraProps?: InputPropertyMap;
   authLocation?: 'headers' | 'queryParams';
+  // The method is caller-supplied at runtime, so a single tag has to assume mutation.
+  classification?: ActionClassification;
 }) {
   return createAction({
     audience: 'human',
     name: name ? name : 'custom_api_call',
+    classification,
     displayName: displayName ? displayName : 'Custom API Call',
     description: description
       ? description

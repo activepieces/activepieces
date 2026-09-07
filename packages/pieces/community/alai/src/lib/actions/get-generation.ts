@@ -5,6 +5,7 @@ import { alaiAuth } from '../common/auth';
 export const getGeneration = createAction({
   auth: alaiAuth,
   name: 'getGeneration',
+  classification: 'READ',
   displayName: 'Get Generation',
   description: 'Fetch the status and result of a generation job.',
   audience: 'both',

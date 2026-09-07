@@ -77,6 +77,7 @@ const polling: Polling<
 export const newQuoteTrigger = createTrigger({
   auth: bexioAuth,
   name: 'new_quote',
+  classification: 'READ',
   displayName: 'New Quotes',
   description: 'Triggers when a quote is created or updated with the chosen status',
   aiMetadata: {

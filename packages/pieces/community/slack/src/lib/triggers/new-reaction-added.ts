@@ -12,6 +12,7 @@ import { newReactionAddedTriggerOutputSchema } from '../output-schemas';
 export const newReactionAdded = createTrigger({
   auth: slackAuth,
   name: 'new_reaction_added',
+  classification: 'READ',
   displayName: 'New Reaction',
   description: 'Triggers when a new reaction is added to a message',
   aiMetadata: {

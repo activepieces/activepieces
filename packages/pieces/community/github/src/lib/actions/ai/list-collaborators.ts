@@ -8,6 +8,7 @@ import { listCollaboratorsOutputSchema } from '../../output-schemas';
 export const githubListCollaboratorsAction = createAction({
   auth: githubAuth,
   name: 'list_collaborators',
+  classification: 'SEARCH',
   displayName: 'List Collaborators (Agent)',
   description: 'Lists the collaborators on a repository.',
   audience: 'ai',

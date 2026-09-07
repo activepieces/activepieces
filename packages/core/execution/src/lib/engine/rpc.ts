@@ -1,5 +1,8 @@
+import { ActivepiecesError, isObject, spreadIfNotUndefined, toError } from '@activepieces/core-utils'
+
 const RPC_EVENT = 'rpc'
 const NOTIFY_EVENT = 'rpc-notify'
+const AP_ERROR_PROP = 'apError'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Contract = Record<string, (input: any) => any>
 
@@ -14,15 +17,19 @@ type NotifySocket = Pick<RpcSocket, 'emit'>
 
 export function createRpcClient<T extends Contract>(
     socket: RpcSocket,
-    timeoutMs: number,
+    timeout: RpcTimeout,
 ): T {
     return new Proxy({} as T, {
         get(_target, method: string) {
             return async (payload: unknown) => {
+                const timeoutMs = typeof timeout === 'function' ? timeout(method) : timeout
                 try {
                     const result = await socket.timeout(timeoutMs).emitWithAck(RPC_EVENT, { method, payload })
                     if (isRpcErrorEnvelope(result)) {
-                        throw new Error(`RPC [${method}] handler threw: ${result.__rpcError}`)
+                        throw Object.assign(
+                            new Error(`RPC [${method}] handler threw: ${result.__rpcError}`),
+                            spreadIfNotUndefined(AP_ERROR_PROP, result.__rpcApError),
+                        )
                     }
                     return result
                 }
@@ -30,8 +37,7 @@ export function createRpcClient<T extends Contract>(
                     if (error instanceof Error && error.message.startsWith('RPC [')) {
                         throw error
                     }
-                    const message = error instanceof Error ? error.message : String(error)
-                    throw new Error(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${message}`)
+                    throw new Error(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${toError(error).message}`)
                 }
             }
         },
@@ -41,6 +47,7 @@ export function createRpcClient<T extends Contract>(
 export function createRpcServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
     socket.on(RPC_EVENT, async (msg: { method: string, payload: unknown }, ack: (result: unknown) => void) => {
         const handler = handlers[msg.method as keyof T]
@@ -49,7 +56,11 @@ export function createRpcServer<T extends Contract>(
             ack(result)
         }
         catch (error) {
-            ack({ __rpcError: error instanceof Error ? error.message : String(error) })
+            log?.error({ error, rpc: { method: msg.method } }, 'RPC handler threw')
+            ack({
+                __rpcError: toError(error).message,
+                ...spreadIfNotUndefined('__rpcApError', apErrorOf(error)),
+            })
         }
     })
 }
@@ -69,13 +80,45 @@ export function createNotifyClient<T extends Contract>(
 export function createNotifyServer<T extends Contract>(
     socket: RpcSocket,
     handlers: T,
+    log?: RpcLog,
 ): void {
-    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown }) => {
-        const handler = handlers[msg.method as keyof T]
-        handler(msg.payload)
+    socket.on(NOTIFY_EVENT, (msg: { method: string, payload: unknown } | null | undefined) => {
+        const handler = handlers[msg?.method as keyof T]
+        if (typeof handler !== 'function') {
+            log?.error({ rpc: { method: String(msg?.method) } }, 'Notify received for unknown method, ignoring')
+            return
+        }
+        handler(msg?.payload)
     })
 }
 
-function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string } {
-    return typeof value === 'object' && value !== null && '__rpcError' in value
+export function apErrorOf(error: unknown): RpcApError | undefined {
+    const source = error instanceof ActivepiecesError ? error.error : isObject(error) ? error[AP_ERROR_PROP] : undefined
+    if (!isObject(source) || typeof source['code'] !== 'string') {
+        return undefined
+    }
+    const params = isObject(source['params']) ? source['params'] : source
+    const entityType = params['entityType']
+    const message = params['message']
+    return {
+        code: source['code'],
+        ...spreadIfNotUndefined('entityType', typeof entityType === 'string' ? entityType : undefined),
+        ...spreadIfNotUndefined('message', typeof message === 'string' ? message : undefined),
+    }
+}
+
+function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string, __rpcApError?: unknown } {
+    return isObject(value) && '__rpcError' in value
+}
+
+export type RpcTimeout = number | ((method: string) => number)
+
+export type RpcApError = {
+    code: string
+    entityType?: string
+    message?: string
+}
+
+type RpcLog = {
+    error(obj: unknown, msg: string): void
 }

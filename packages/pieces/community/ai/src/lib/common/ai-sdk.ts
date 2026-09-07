@@ -2,24 +2,32 @@ import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
 import { createAmazonBedrock } from '@ai-sdk/amazon-bedrock'
 import { createOpenAI, openai } from '@ai-sdk/openai'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
+import { createVertex } from '@ai-sdk/google-vertex'
+import { createVertexAnthropic } from '@ai-sdk/google-vertex/anthropic'
+import { createVertexMaas } from '@ai-sdk/google-vertex/maas'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel } from 'ai'
 import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/pieces-framework'
+import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId, spreadIfDefined, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 
-async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string }) {
+const AUTHORIZATION_HEADER = 'authorization'
+const VERTEX_MAAS_SUFFIX = '-maas'
+const VERTEX_ANTHROPIC_PREFIX = 'claude'
+
+async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${params.apiUrl}v1/ai-providers/${params.provider}/config`,
         headers: {
             Authorization: `Bearer ${params.engineToken}`,
         },
+        ...(params.configId === undefined ? {} : { queryParams: { configId: params.configId } }),
     })
     return body
 }
@@ -28,6 +36,7 @@ export function createAIModel(params: CreateAIModelParams<false>): Promise<Langu
 export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
 export async function createAIModel({
     provider,
+    configId,
     modelId,
     engineToken,
     projectId,
@@ -37,7 +46,7 @@ export async function createAIModel({
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
-    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl });
+    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl, configId });
 
     if (isImage && !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration) {
         throw new Error(`Provider ${provider} does not support image models`)
@@ -143,22 +152,47 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
             const { region } = config as BedrockProviderConfig
             return createAmazonBedrock({ region, accessKeyId, secretAccessKey })(modelId)
         }
+        case AIProviderName.VERTEX: {
+            return vertexClientFor({ modelId })(buildVertexSettings({ auth, config }))(modelId)
+        }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders, apiStyle } = config as OpenAICompatibleProviderConfig
+            const headers = {
+                ...metadataHeaders,
+                ...(defaultHeaders ?? {}),
+                [apiKeyHeader]: apiKey,
+            }
+            if (apiStyle === 'responses') {
+                return createOpenAI({
+                    baseURL: baseUrl,
+                    apiKey,
+                    headers,
+                    ...spreadIfDefined('fetch', stripDefaultAuthorization(headers)),
+                }).responses(modelId)
+            }
             return createOpenAICompatible({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
-                headers: {
-                    ...metadataHeaders,
-                    ...(defaultHeaders ?? {}),
-                    [apiKeyHeader]: apiKey,
-                },
+                headers,
             }).chatModel(modelId)
         }
         case AIProviderName.MISTRAL: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
             return createOpenAICompatible({ name: 'mistral', baseURL: 'https://api.mistral.ai/v1', apiKey }).chatModel(modelId)
+        }
+        case AIProviderName.XAI:
+        case AIProviderName.DEEPSEEK:
+        case AIProviderName.ZAI:
+        case AIProviderName.QWEN:
+        case AIProviderName.MINIMAX:
+        case AIProviderName.MOONSHOT: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAICompatible({
+                name: provider,
+                baseURL: OPENAI_COMPATIBLE_VENDOR_BASE_URLS[provider],
+                apiKey,
+            }).chatModel(modelId)
         }
         case AIProviderName.ACTIVEPIECES: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -170,6 +204,45 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         }
         default:
             throw new Error(`Provider ${provider} is not supported`)
+    }
+}
+
+function vertexClientFor({ modelId }: { modelId: string }): typeof createVertex | typeof createVertexAnthropic | typeof createVertexMaas {
+    if (modelId.includes('/') || modelId.endsWith(VERTEX_MAAS_SUFFIX)) {
+        return createVertexMaas
+    }
+    if (modelId.toLowerCase().startsWith(VERTEX_ANTHROPIC_PREFIX)) {
+        return createVertexAnthropic
+    }
+    return createVertex
+}
+
+function buildVertexSettings({ auth, config }: { auth: unknown, config: unknown }): { project: string, location: string, googleAuthOptions: { credentials: { client_email?: string, private_key?: string } } } {
+    const { serviceAccountJson } = auth as VertexProviderAuthConfig
+    const { project, region } = config as VertexProviderConfig
+    return { project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) } }
+}
+
+function parseServiceAccount(serviceAccountJson: string): { client_email?: string, private_key?: string } {
+    const parsed: unknown = JSON.parse(serviceAccountJson)
+    const fields: Record<string, unknown> = typeof parsed === 'object' && parsed !== null ? { ...parsed } : {}
+    const clientEmail = fields['client_email']
+    const privateKey = fields['private_key']
+    return {
+        client_email: typeof clientEmail === 'string' ? clientEmail : undefined,
+        private_key: typeof privateKey === 'string' ? privateKey.replace(/\\n/g, '\n') : undefined,
+    }
+}
+
+function stripDefaultAuthorization(headers: Record<string, string>): typeof globalThis.fetch | undefined {
+    const carriesAuthorization = Object.keys(headers).some((key) => key.trim().toLowerCase() === AUTHORIZATION_HEADER)
+    if (carriesAuthorization) {
+        return undefined
+    }
+    return (input, init) => {
+        const sent = new Headers(init?.headers)
+        sent.delete(AUTHORIZATION_HEADER)
+        return fetch(input, { ...init, headers: sent })
     }
 }
 
@@ -208,6 +281,9 @@ function buildNativeImageModel({ provider, auth, config, modelId, metadataHeader
             const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
             const { region } = config as BedrockProviderConfig
             return createAmazonBedrock({ region, accessKeyId, secretAccessKey }).imageModel(modelId)
+        }
+        case AIProviderName.VERTEX: {
+            return createVertex(buildVertexSettings({ auth, config })).imageModel(modelId)
         }
         case AIProviderName.CUSTOM: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -325,6 +401,7 @@ const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage,
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;
+    configId?: string;
     modelId: string;
     engineToken: string;
     projectId: string;

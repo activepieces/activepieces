@@ -5,6 +5,7 @@ import { redditAuth } from '../auth';
 export const editRedditPost = createAction({
   auth: redditAuth,
   name: 'editRedditPost',
+  classification: 'WRITE',
   displayName: 'Edit Post',
   description: 'Edits the content of an existing Reddit post.',
   audience: 'both',

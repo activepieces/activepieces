@@ -7,6 +7,7 @@ import { whatsscaleProps } from '../../common/props';
 export const checkWhatsappAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_check_whatsapp',
+  classification: 'READ',
   displayName: 'Check WhatsApp Number',
   description: 'Check if a phone number has WhatsApp',
   audience: 'both',

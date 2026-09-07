@@ -10,7 +10,7 @@ export async function trackBillingAndSendTelemetry({ log, licenseKey, credits, a
     const appSumoEvent: TrackFeatureParams | undefined = isNil(appSumo) ? undefined : { ...appSumo, featureId: ConsumableFeatureId.APP_SUMO_AI_CREDITS }
     const tracked = isNil(appSumoEvent) ? [creditsEvent] : [creditsEvent, appSumoEvent]
     await Promise.all(tracked.map((params) => provider.trackFeature(params)))
-    if (isNil(licenseKey) || licenseKey.length === 0) {
+    if (isNil(licenseKey) || licenseKey.length === 0 || isNil(telemetry)) {
         return
     }
     captureBillingEvent({ licenseKey, ...telemetry })
@@ -21,5 +21,5 @@ type TrackBillingAndSendTelemetryParams = {
     licenseKey: string | null | undefined
     credits: TrackCreditsParams
     appSumo?: TrackAppSumoAiUsageParams
-    telemetry: BillingEventPayload
+    telemetry?: BillingEventPayload
 }

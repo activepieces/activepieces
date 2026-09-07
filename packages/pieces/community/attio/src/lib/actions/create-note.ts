@@ -6,6 +6,7 @@ import { objectTypeIdDropdown } from '../common/props';
 
 export const createNoteAction = createAction({
 	name: 'create_note',
+	classification: 'WRITE',
 	displayName: 'Create Note',
 	description: 'Creates a new note on a record.',
 	audience: 'both',

@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const createCustomerAddress = createAction({
   auth: housecallProAuth,
   name: "create_customer_address",
+  classification: 'WRITE',
   displayName: "Create an Address on a Customer",
   description: "Creates an address on a customer.",
   audience: 'both',

@@ -8,6 +8,7 @@ import { prepareFile } from '../../common/prepare-file';
 export const sendImageToCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_image_to_crm_contact',
+  classification: 'WRITE',
   displayName: 'Send an Image to a CRM Contact',
   description: 'Send an image to a WhatsScale CRM contact selected from the dropdown.',
   audience: 'both',

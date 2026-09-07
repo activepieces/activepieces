@@ -11,6 +11,7 @@ import { newReactionRemovedTriggerOutputSchema } from '../output-schemas';
 export const newReactionRemoved = createTrigger({
   auth: slackAuth,
   name: 'new_reaction_removed',
+  classification: 'READ',
   displayName: 'Reaction Removed',
   description: 'Triggers when a reaction is removed from a message',
   aiMetadata: {

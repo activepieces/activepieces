@@ -12,6 +12,7 @@ interface ContactFieldUpdate {
 export const updateContact = createAction({
   auth: systemeIoAuth,
   name: 'updateContact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update fields (name, phone, custom fields) of an existing contact using fields from your Systeme.io account',
   audience: 'both',

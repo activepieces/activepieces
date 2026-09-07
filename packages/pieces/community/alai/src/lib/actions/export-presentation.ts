@@ -5,6 +5,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const exportPresentation = createAction({
   auth: alaiAuth,
   name: 'exportPresentation',
+  classification: 'WRITE',
   displayName: 'Export Presentation',
   description: 'Export a presentation in the specified formats.',
   audience: 'both',

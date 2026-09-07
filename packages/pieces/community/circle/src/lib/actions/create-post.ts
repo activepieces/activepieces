@@ -40,6 +40,7 @@ interface CreatePostPayload {
 export const createPost = createAction({
     auth: circleAuth,
     name: 'create_post',
+    classification: 'WRITE',
     displayName: 'Create Post',
     description: 'Creates a new post in a specific space.',
     audience: 'both',

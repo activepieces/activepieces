@@ -11,6 +11,7 @@ import {
 export const upsertRowAction = createAction({
 	auth: codaAuth,
 	name: 'upsert-row',
+	classification: 'WRITE',
 	displayName: 'Upsert Row',
 	description: 'Creates a new row or updates an existing one if it matches key columns.',
 	audience: 'both',

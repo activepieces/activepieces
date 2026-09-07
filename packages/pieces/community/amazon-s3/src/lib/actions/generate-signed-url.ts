@@ -7,6 +7,7 @@ import { createS3, createS3WithAssumeRole, isOidcAuth, MAX_STS_DURATION_SECONDS,
 export const generateSignedUrl = createAction({
   auth: amazonS3CombinedAuth,
   name: 'generate-signed-url',
+  classification: 'READ',
   displayName: 'Generate signed URL',
   description: 'Generate a signed URL for a file in a s3 bucket',
   audience: 'both',

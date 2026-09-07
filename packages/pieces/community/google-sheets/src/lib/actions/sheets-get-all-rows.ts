@@ -10,6 +10,7 @@ import { sheetsGetAllRowsActionOutputSchema } from '../output-schemas';
 export const sheetsGetAllRows = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_get_all_rows',
+	classification: 'SEARCH',
 	displayName: 'Get All Rows',
 	description: 'Read every row from a worksheet in a single call.',
 	audience: 'ai',

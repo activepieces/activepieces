@@ -8,6 +8,7 @@ import { gmailForwardMessageActionOutputSchema } from '../output-schemas';
 export const gmailForwardMessageAction = createAction({
   auth: gmailAuth,
   name: 'gmail_forward_message',
+  classification: 'WRITE',
   displayName: 'Forward Message',
   description: 'Forward an existing email to new recipients.',
   audience: 'ai',

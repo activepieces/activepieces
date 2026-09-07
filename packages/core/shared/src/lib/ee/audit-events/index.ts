@@ -22,6 +22,8 @@ export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
     FLOW_DELETED = 'flow.deleted',
     FLOW_UPDATED = 'flow.updated',
+    FLOW_PIECES_UPGRADED = 'flow.pieces.upgraded',
+    FLOW_PIECES_REVERTED = 'flow.pieces.reverted',
     FLOW_PUBLISHED = 'flow.published',
     FLOW_ACTIVATED = 'flow.activated',
     FLOW_DEACTIVATED = 'flow.deactivated',
@@ -34,6 +36,11 @@ export enum ApplicationEventName {
     FOLDER_DELETED = 'folder.deleted',
     CONNECTION_UPSERTED = 'connection.upserted',
     CONNECTION_DELETED = 'connection.deleted',
+    AGENT_CREATED = 'agent.created',
+    AGENT_UPDATED = 'agent.updated',
+    AGENT_DELETED = 'agent.deleted',
+    AGENT_PUBLISHED = 'agent.published',
+    AGENT_UNPUBLISHED = 'agent.unpublished',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -47,6 +54,10 @@ export enum ApplicationEventName {
     PROJECT_ROLE_UPDATED = 'project.role.updated',
     PROJECT_RELEASE_CREATED = 'project.release.created',
     PROJECT_REPLACED = 'project.replaced',
+    FLOW_APPROVAL_REQUESTED = 'flow.approval.requested',
+    FLOW_APPROVAL_GRANTED = 'flow.approval.granted',
+    FLOW_APPROVAL_REJECTED = 'flow.approval.rejected',
+    FLOW_APPROVAL_WITHDRAWN = 'flow.approval.withdrawn',
 }
 
 const BaseAuditEventProps = {
@@ -98,6 +109,28 @@ export const ConnectionDeletedEvent = z.object({
     data: ConnectionEventData,
 })
 export type ConnectionDeletedEvent = z.infer<typeof ConnectionDeletedEvent>
+
+const AgentEventData = z.object({
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string(),
+        publishedDigest: z.string().optional(),
+        publishedToolNames: z.array(z.string()).optional(),
+    }),
+})
+
+export const AgentAuditEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.AGENT_CREATED),
+        z.literal(ApplicationEventName.AGENT_UPDATED),
+        z.literal(ApplicationEventName.AGENT_DELETED),
+        z.literal(ApplicationEventName.AGENT_PUBLISHED),
+        z.literal(ApplicationEventName.AGENT_UNPUBLISHED),
+    ]),
+    data: AgentEventData,
+})
+export type AgentAuditEvent = z.infer<typeof AgentAuditEvent>
 
 const VariableEventData = z.object({
     variable: z.object({
@@ -292,6 +325,41 @@ export const FlowUpdatedEvent = z.object({
 
 export type FlowUpdatedEvent = z.infer<typeof FlowUpdatedEvent>
 
+export const FlowPiecesUpgradedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_UPGRADED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            decision: z.enum(['UPGRADED', 'KEPT']),
+            prevVersion: z.string(),
+            newVersion: Nullable(z.string()),
+        })),
+    }),
+})
+
+export type FlowPiecesUpgradedEvent = z.infer<typeof FlowPiecesUpgradedEvent>
+
+export const FlowPiecesRevertedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.FLOW_PIECES_REVERTED),
+    data: z.object({
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        steps: z.array(z.object({
+            stepName: z.string(),
+            actionOrTriggerName: z.string(),
+            prevVersion: z.string(),
+            newVersion: z.string(),
+        })),
+    }),
+})
+
+export type FlowPiecesRevertedEvent = z.infer<typeof FlowPiecesRevertedEvent>
+
 const FlowLifecycleEventData = z.object({
     flow: Flow.pick({ id: true, externalId: true, created: true, updated: true }),
     flowVersion: FlowVersion.pick({
@@ -477,12 +545,33 @@ export const ProjectReplacedEvent = z.object({
 
 export type ProjectReplacedEvent = z.infer<typeof ProjectReplacedEvent>
 
+export const FlowApprovalEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.union([
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REQUESTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_GRANTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_REJECTED),
+        z.literal(ApplicationEventName.FLOW_APPROVAL_WITHDRAWN),
+    ]),
+    data: z.object({
+        approvalRequestId: z.string(),
+        flowId: z.string(),
+        flowVersionId: z.string(),
+        flowDisplayName: z.optional(z.string()),
+        rejectionReason: z.optional(Nullable(z.string())),
+    }),
+})
+export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
+
 export const ApplicationEvent = z.union([
+    AgentAuditEvent,
     ConnectionEvent,
     VariableEvent,
     FlowCreatedEvent,
     FlowDeletedEvent,
     FlowUpdatedEvent,
+    FlowPiecesUpgradedEvent,
+    FlowPiecesRevertedEvent,
     FlowPublishedEvent,
     FlowActivatedEvent,
     FlowDeactivatedEvent,
@@ -494,6 +583,7 @@ export const ApplicationEvent = z.union([
     ProjectRoleEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
+    FlowApprovalEvent,
 ])
 
 export type ApplicationEvent = z.infer<typeof ApplicationEvent>
@@ -516,6 +606,13 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
         }
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`
+        case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+            const upgradedCount = event.data.steps.filter((step) => step.decision === 'UPGRADED').length
+            const keptCount = event.data.steps.length - upgradedCount
+            return `Flow ${event.data.flowId} piece versions upgraded (${upgradedCount} upgraded, ${keptCount} kept)`
+        }
+        case ApplicationEventName.FLOW_PIECES_REVERTED:
+            return `Flow ${event.data.flowId} piece versions reverted (${event.data.steps.length} steps)`
         case ApplicationEventName.FLOW_DELETED:
             return `Flow ${event.data.flow.id} (${event.data.flowVersion.displayName}) is deleted`
         case ApplicationEventName.FLOW_PUBLISHED:
@@ -534,6 +631,16 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is updated`
         case ApplicationEventName.CONNECTION_DELETED:
             return `${event.data.connection.displayName} (${event.data.connection.externalId}) is deleted`
+        case ApplicationEventName.AGENT_CREATED:
+            return `Agent ${event.data.agent.displayName} is created`
+        case ApplicationEventName.AGENT_UPDATED:
+            return `Agent ${event.data.agent.displayName} is updated`
+        case ApplicationEventName.AGENT_DELETED:
+            return `Agent ${event.data.agent.displayName} is deleted`
+        case ApplicationEventName.AGENT_PUBLISHED:
+            return `Agent ${event.data.agent.displayName} is published`
+        case ApplicationEventName.AGENT_UNPUBLISHED:
+            return `Agent ${event.data.agent.displayName} is taken offline`
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
@@ -565,6 +672,14 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
                 + applied.foldersCreated + applied.foldersUpdated + applied.foldersDeleted
             return `Project replace ${outcome.toLowerCase()} in ${durationMs}ms (${totals} changes, ${failedCount} failed)`
         }
+        case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+            return `Approval requested for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+            return `Approval granted for flow ${event.data.flowDisplayName ?? event.data.flowId}`
+        case ApplicationEventName.FLOW_APPROVAL_REJECTED:
+            return `Approval rejected for flow ${event.data.flowDisplayName ?? event.data.flowId}${event.data['rejectionReason'] ? ` (${event.data['rejectionReason']})` : ''}`
+        case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN:
+            return `Approval request withdrawn for flow ${event.data.flowDisplayName ?? event.data.flowId}`
     }
 }
 

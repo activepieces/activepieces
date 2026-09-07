@@ -8,6 +8,7 @@ import { newModalInteractionTriggerOutputSchema } from '../output-schemas';
 export const newModalInteractionTrigger = createTrigger({
     auth: slackAuth,
     name: 'new-modal-interaction',
+    classification: 'READ',
     displayName: 'New Modal Interaction',
     description: 'Triggers when a user interacts with a modal.',
     aiMetadata: {

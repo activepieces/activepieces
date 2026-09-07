@@ -6,6 +6,7 @@ import { callGraphApi, flattenObject, groupDropdown } from '../common';
 export const listGroupMembersAction = createAction({
     auth: azureAdAuth,
     name: 'list_group_members',
+    classification: 'SEARCH',
     displayName: 'List Group Members',
     description: 'Lists members of an Azure AD group.',
     audience: 'both',

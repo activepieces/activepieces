@@ -7,6 +7,7 @@ import { linkedRecordDropdown, objectTypeIdDropdown } from '../common/props';
 export const listTasksAction = createAction({
 	auth: attioAuth,
 	name: 'list_tasks',
+	classification: 'SEARCH',
 	displayName: 'List Tasks',
 	description: 'List tasks with optional filters by linked record, assignee, or completion status.',
 	audience: 'both',

@@ -1,6 +1,7 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, ExecutioOutputFile, FileCompression, FileType, isFlowRunStateTerminal, logSerializer, RunInternalError, RunInternalErrorSource, SendFlowResponseRequest, StreamStepProgress, truncateFailedStepMessage, UpdateStepProgressRequest, UploadRunLogsRequest, WebsocketClientEvent } from '@activepieces/shared'
+import { ApEdition, ExecutioOutputFile, FileCompression, FileType, FlowRunStatus, isFlowRunStateTerminal, logSerializer, RunInternalError, RunInternalErrorSource, SendFlowResponseRequest, StreamStepProgress, truncateFailedStepMessage, UpdateStepProgressRequest, UploadRunLogsRequest, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { StatusCodes } from 'http-status-codes'
 import { websocketService } from '../../core/websockets.service'
 import { fileCompressor } from '../../file/file-compressor'
 import { fileService } from '../../file/file.service'
@@ -55,6 +56,20 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
         }
         await runsMetadataQueue(log).add(logData)
 
+        if (!isNil(request.status) && FAILED_RUN_SYNC_STATUSES.includes(request.status) && !isNil(request.workerHandlerId) && !isNil(request.httpRequestId)) {
+            await engineRunCallbackService(log).sendFlowResponse({
+                request: {
+                    workerHandlerId: request.workerHandlerId,
+                    httpRequestId: request.httpRequestId,
+                    runResponse: {
+                        status: StatusCodes.INTERNAL_SERVER_ERROR,
+                        body: { message: FAILED_RUN_SYNC_MESSAGE },
+                        headers: {},
+                    },
+                },
+            })
+        }
+
         if (request.stepResponse && request.streamStepProgress === StreamStepProgress.WEBSOCKET) {
             const stepData = { ...request.stepResponse, projectId }
             if (!isTerminal) {
@@ -66,6 +81,15 @@ export const engineRunCallbackService = (log: FastifyBaseLogger) => ({
         }
     },
 })
+
+const FAILED_RUN_SYNC_STATUSES = [
+    FlowRunStatus.FAILED,
+    FlowRunStatus.INTERNAL_ERROR,
+    FlowRunStatus.TIMEOUT,
+    FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
+    FlowRunStatus.LOG_SIZE_EXCEEDED,
+]
+const FAILED_RUN_SYNC_MESSAGE = 'The flow has failed and there is no response returned'
 
 async function ensureLogsFileExists({ log, projectId, logsFileId, internalError }: EnsureLogsFileParams): Promise<void> {
     const { error } = await tryCatch(async () => {

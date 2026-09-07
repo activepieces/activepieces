@@ -5,6 +5,7 @@ import { makeClient } from '../common/client';
 export const linearNewProject = createTrigger({
   auth: linearAuth,
   name: 'new_project',
+  classification: 'READ',
   displayName: 'New Project',
   description: 'Triggers when a new project is created in Linear',
   aiMetadata: {

@@ -7,6 +7,7 @@ import { clientId, listId } from '../common/props';
 export const findSubscriberAction = createAction({
   auth: campaignMonitorAuth,
   name: 'find_subscriber',
+  classification: 'READ',
   displayName: 'Find Subscriber',
   description: 'Find a subscriber by email in a specific list.',
   audience: 'both',

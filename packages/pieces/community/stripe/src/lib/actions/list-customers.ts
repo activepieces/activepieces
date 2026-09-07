@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { customerListOutputSchema } from '../output-schemas';
 export const stripeListCustomers = createAction({
   name: 'list_customers',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Customers (Agent)',
   description: 'List Stripe customers, optionally filtered by email.',

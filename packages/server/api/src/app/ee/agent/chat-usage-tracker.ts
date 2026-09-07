@@ -19,7 +19,11 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         const turnIndex = messages.filter((message) => message.role === PersistedAgentRole.USER).length
         const idempotencyScope = runId ?? turnIndex
 
-        const provider = await agentHelpers.resolveChatProviderName({ platformId: conversation.platformId, log })
+        const provider = await agentHelpers.resolveChatProviderName({
+            platformId: conversation.platformId,
+            projectId: conversation.projectId ?? null,
+            log,
+        })
         const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
 
         const isManagedProvider = provider === AIProviderName.ACTIVEPIECES

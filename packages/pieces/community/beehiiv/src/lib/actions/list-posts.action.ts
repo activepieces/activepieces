@@ -8,6 +8,7 @@ import { beehiivApiCall, BeehiivPaginatedApiCall } from '../common/client';
 export const listPostsAction = createAction({
 	auth: beehiivAuth,
 	name: 'list_posts',
+	classification: 'SEARCH',
 	displayName: 'List Posts',
 	description: 'Retrieves all posts belonging to a specific publication.',
 	audience: 'both',

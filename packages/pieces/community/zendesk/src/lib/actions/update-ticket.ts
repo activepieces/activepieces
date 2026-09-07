@@ -16,6 +16,7 @@ import {
 export const updateTicketAction = createAction({
   auth: zendeskAuth,
   name: 'update-ticket',
+  classification: 'WRITE',
   displayName: 'Update Ticket',
   description: 'Modify ticket fields or status via API call.',
   audience: 'both',

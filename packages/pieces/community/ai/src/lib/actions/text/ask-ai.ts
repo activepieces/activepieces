@@ -1,16 +1,13 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
 import { ModelMessage, generateText, stepCountIs } from 'ai';
-import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
-import { aiProps } from '../../common/props';
+import { AIProviderName, createAction, getEffectiveProviderAndModel, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { aiProps, aiProviderSelection } from '../../common/props';
 import { createAIModel } from '../../common/ai-sdk';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 export const askAI = createAction({
   audience: 'both',
   name: 'askAi',
+  classification: 'READ',
   displayName: 'Ask AI',
   description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',
   aiMetadata: { description: 'Sends a free-form prompt to a text model and returns its answer, optionally continuing a multi-turn thread via a Conversation Key or grounding the reply with web search. Pick it for open-ended reasoning, drafting, or judgement over flow data; prefer summarizeText to condense text, classifyText for a fixed label set, extractStructuredData for typed fields, or run_agent when the task needs tools and multiple steps. Requires a provider/model plus a prompt; not idempotent, since each call generates a fresh answer and a Conversation Key appends the exchange to stored history.', idempotent: false },
@@ -28,7 +25,6 @@ export const askAI = createAction({
     creativity: Property.Number({
       displayName: 'Creativity',
       required: false,
-      defaultValue: 100,
       description:
         'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
     }),
@@ -46,14 +42,14 @@ export const askAI = createAction({
     }),
     webSearchOptions: buildWebSearchOptionsProperty(
       (propsValue) => ({
-        provider: propsValue['provider'] as string | undefined,
+        provider: aiProviderSelection.resolve(propsValue['provider'])?.provider,
         model: propsValue['model'] as string | undefined,
       }),
       ['webSearch', 'provider', 'model'],
     ),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
+    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
     const modelId = context.propsValue.model;
     const storage = context.store;
     const webSearchEnabled = !!context.propsValue.webSearch;
@@ -67,11 +63,12 @@ export const askAI = createAction({
     });
 
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({
-      provider: provider as AIProviderName,
+      provider,
       model: modelId,
     });
     const model = await createAIModel({
-      provider: provider as AIProviderName,
+      provider,
+      ...spreadIfDefined('configId', configId),
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
@@ -107,7 +104,7 @@ export const askAI = createAction({
         },
       ],
       maxOutputTokens: context.propsValue.maxOutputTokens,
-      temperature: (context.propsValue.creativity ?? 100) / 100,
+      ...spreadIfDefined('temperature', isNil(context.propsValue.creativity) ? undefined : context.propsValue.creativity / 100),
       tools: webSearchTools,
       stopWhen,
       providerOptions,

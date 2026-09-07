@@ -6,6 +6,7 @@ import { sheetsAppendDimensionActionOutputSchema } from '../output-schemas';
 export const sheetsAppendDimension = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_append_dimension',
+	classification: 'WRITE',
 	displayName: 'Append Rows/Columns',
 	description: 'Append blank rows or columns to the end of a worksheet\'s grid.',
 	audience: 'ai',

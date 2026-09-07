@@ -13,6 +13,7 @@ import { getPageOrBlockChildrenActionOutputSchema } from '../output-schemas';
 export const getPageOrBlockChildren = createAction({
   auth: notionAuth,
   name: 'getPageOrBlockChildren',
+  classification: 'READ',
   displayName: 'Get block content',
   description: 'Retrieve the actual content of a page (represented by blocks).',
   audience: 'human',

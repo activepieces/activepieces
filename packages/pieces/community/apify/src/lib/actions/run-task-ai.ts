@@ -9,6 +9,7 @@ import { runTaskActionOutputSchema } from '../output-schemas';
 
 export const apifyRunTask = createAction({
   name: 'apify_run_task',
+  classification: 'WRITE',
   auth: apifyAuth,
   displayName: 'Run Task',
   description: 'Runs a saved Apify Actor task by ID and optionally waits for it to finish.',

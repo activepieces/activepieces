@@ -6,6 +6,7 @@ import { randomBytes } from 'crypto';
 export const newSale = createTrigger({
     auth: systemeIoAuth,
     name: 'newSale',
+    classification: 'READ',
     displayName: 'New Sale',
     description: 'Fires when a new purchase is made within a funnel',
     aiMetadata: {

@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { pieceSetMutations } from '@/features/piece-sets';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 const formSchema = CreatePieceSetRequestBody;
 
@@ -100,11 +101,13 @@ const CreatePieceSetForm = ({
 export const CreatePieceSetDialog = ({
   onCreated,
 }: CreatePieceSetDialogProps) => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isEnabled = platform.plan.managePiecesEnabled;
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button disabled={!isEnabled}>
           <Plus className="size-4 mr-1" />
           {t('New Piece Set')}
         </Button>

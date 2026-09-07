@@ -1,11 +1,12 @@
-import { AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
+import { Agent, AgentConversation, AgentConversationStatus, AgentRunSource, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
-type AgentConversationWithRelations = AgentConversation & {
+export type AgentConversationWithRelations = AgentConversation & {
     platform: Platform
     project: Project
     user: User
+    agent: Agent
 }
 
 export const AgentConversationEntity = new EntitySchema<AgentConversationWithRelations>({
@@ -23,6 +24,10 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
         userId: {
             ...ApIdSchema,
             nullable: false,
+        },
+        agentId: {
+            ...ApIdSchema,
+            nullable: true,
         },
         source: {
             type: String,
@@ -75,6 +80,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             where: `source = '${AgentRunSource.FLOW_STEP}'`,
         },
         {
+            name: 'idx_agent_conversation_agent_user_created_id',
+            columns: ['agentId', 'userId', 'created', 'id'],
+            where: '"agentId" IS NOT NULL',
+        },
+        {
             name: 'idx_agent_conversation_streaming_updated',
             columns: ['updated'],
             where: `status = '${AgentConversationStatus.STREAMING}'`,
@@ -99,6 +109,15 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             joinColumn: {
                 name: 'projectId',
                 foreignKeyConstraintName: 'fk_agent_conversation_project_id',
+            },
+        },
+        agent: {
+            type: 'many-to-one',
+            target: 'agent',
+            onDelete: 'CASCADE',
+            joinColumn: {
+                name: 'agentId',
+                foreignKeyConstraintName: 'fk_agent_conversation_agent_id',
             },
         },
         user: {

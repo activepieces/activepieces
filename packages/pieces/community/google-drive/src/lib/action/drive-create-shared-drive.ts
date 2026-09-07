@@ -7,6 +7,7 @@ import { driveCreateSharedDriveOutputSchema } from '../output-schemas';
 export const driveCreateSharedDrive = createAction({
   auth: googleDriveAuth,
   name: 'drive_create_shared_drive',
+  classification: 'WRITE',
   displayName: 'Create Shared Drive',
   description: 'Create a new shared drive (Team Drive).',
   audience: 'ai',

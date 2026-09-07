@@ -6,6 +6,7 @@ import { ListTopicsCommand, PublishCommand } from "@aws-sdk/client-sns";
 export const sendMessageAction = createAction({
   auth: amazonSnsAuth,
   name: 'send-message',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Sends a message to an Amazon SNS topic.',
   audience: 'both',

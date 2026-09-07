@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const OOO = createAction({
   auth: assembledAuth,
   name: 'OOO',
+  classification: 'WRITE',
   displayName: 'Create OOO Request',
   description: 'Create an Out of Office request in Assembled.',
   audience: 'both',

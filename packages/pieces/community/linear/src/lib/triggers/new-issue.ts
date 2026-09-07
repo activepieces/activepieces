@@ -6,6 +6,7 @@ import { props } from '../common/props';
 export const linearNewIssue = createTrigger({
   auth: linearAuth,
   name: 'new_issue',
+  classification: 'READ',
   displayName: 'New Issue',
   description: 'Triggers when Linear receives a new issue',
   aiMetadata: {

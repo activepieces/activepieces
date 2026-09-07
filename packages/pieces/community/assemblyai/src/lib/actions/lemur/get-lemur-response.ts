@@ -5,6 +5,7 @@ import { lemurRequestIdProp } from './shared-props';
 
 export const getLemurResponse = createAction({
   name: 'getLemurResponse',
+  classification: 'READ',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Retrieve LeMUR response',

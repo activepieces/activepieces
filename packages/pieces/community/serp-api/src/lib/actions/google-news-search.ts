@@ -9,6 +9,7 @@ import { googleNewsSearchOutputSchema } from '../output-schemas';
 export const googleNewsSearch = createAction({
   auth: serpApiAuth,
   name: 'google_news_search',
+  classification: 'SEARCH',
   displayName: 'Google News Search',
   description: 'Track recent news articles for keywords or brands to monitor media mentions and trending topics.',
   audience: 'human',

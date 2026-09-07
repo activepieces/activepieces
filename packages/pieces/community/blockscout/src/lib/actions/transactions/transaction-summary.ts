@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTransactionSummary = createAction({
   name: 'get_transaction_summary',
+  classification: 'READ',
   displayName: 'Get Transaction Summary',
   description: 'Get a human-readable summary of a transaction',
   audience: 'both',

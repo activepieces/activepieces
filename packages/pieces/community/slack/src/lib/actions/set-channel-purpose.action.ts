@@ -7,6 +7,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const setChannelPurposeAction = createAction({
   auth: slackAuth,
   name: 'slack_set_channel_purpose',
+  classification: 'WRITE',
   displayName: 'Set Channel Purpose',
   description: 'Sets the purpose on a channel.',
   audience: 'ai',

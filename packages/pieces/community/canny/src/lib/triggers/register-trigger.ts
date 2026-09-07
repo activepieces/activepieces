@@ -27,6 +27,7 @@ export function createCannyTrigger({
   return createTrigger({
     auth: cannyAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

@@ -5,6 +5,7 @@ import { redditAuth } from '../auth';
 export const getRedditPostDetails = createAction({
   auth: redditAuth,
   name: 'getRedditPostDetails',
+  classification: 'READ',
   displayName: 'Get Post Details',
   description: 'Fetch detailed information about a specific Reddit post using its ID.',
   audience: 'both',

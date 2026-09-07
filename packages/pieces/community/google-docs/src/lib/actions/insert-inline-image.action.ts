@@ -7,6 +7,7 @@ import { insertInlineImageActionOutputSchema } from '../output-schemas';
 export const insertInlineImage = createAction({
 	auth: googleDocsAuth,
 	name: 'insert_inline_image',
+	classification: 'WRITE',
 	displayName: 'Insert Inline Image',
 	description: 'Insert an inline image into a Google Docs document at a position or at the end.',
 	audience: 'ai',

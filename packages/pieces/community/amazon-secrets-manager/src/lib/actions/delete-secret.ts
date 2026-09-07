@@ -9,6 +9,7 @@ import { secretIdDropdown } from '../common/props';
 export const deleteSecret = createAction({
   auth: awsSecretsManagerCombinedAuth,
   name: 'deleteSecret',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Secret',
   description: 'Deletes an existing secret.',
   audience: 'both',

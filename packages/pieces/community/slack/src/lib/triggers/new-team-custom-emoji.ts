@@ -13,6 +13,7 @@ const sampleData = {
 export const newTeamCustomEmojiTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-team-custom-emoji',
+	classification: 'READ',
 	displayName: 'New Team Custom Emoji',
 	description: 'Triggers when a custom emoji has been added to a team.',
 	aiMetadata: {

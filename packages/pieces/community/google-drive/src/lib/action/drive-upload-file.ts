@@ -12,6 +12,7 @@ import { driveUploadFileOutputSchema } from '../output-schemas';
 export const driveUploadFile = createAction({
   auth: googleDriveAuth,
   name: 'drive_upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description: 'Upload a file in your Google Drive',
   audience: 'ai',

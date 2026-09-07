@@ -10,10 +10,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { GetField } from '../common/types';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
+import { findDealsAssociatedWithPersonActionOutputSchema } from '../output-schemas';
 
 export const findDealsAssociatedWithPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-deals-associated-with-person',
+	outputSchema: findDealsAssociatedWithPersonActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find Deals Associated With Person',
 	description: 'Finds multiple deals related to a specific person.',
 	audience: 'both',

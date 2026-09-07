@@ -6,6 +6,7 @@ import { upsertRowActionOutputSchema } from '../output-schemas';
 
 export const upsertRow = createAction({
     name: 'upsert_row',
+    classification: 'WRITE',
     displayName: 'Upsert Row',
     description: 'Insert or update a row in a table',
     audience: 'both',

@@ -20,6 +20,7 @@ interface ListFilesResult {
 export const listFiles = createAction({
   auth: amazonS3CombinedAuth,
   name: 'list-files',
+  classification: 'SEARCH',
   displayName: 'List Files',
   description: 'List all files from an S3 bucket folder/prefix.',
   audience: 'both',

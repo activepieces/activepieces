@@ -7,6 +7,7 @@ import { listActiveCrawlsActionOutputSchema } from '../output-schemas';
 export const listActiveCrawls = createAction({
   auth: firecrawlAuth,
   name: 'list_active_crawls',
+  classification: 'SEARCH',
   displayName: 'List Active Crawls',
   description: 'List the account\'s in-flight crawl jobs.',
   audience: 'ai',

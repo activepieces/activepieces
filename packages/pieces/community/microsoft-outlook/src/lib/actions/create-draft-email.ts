@@ -2,14 +2,17 @@ import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
+import { draftMessageActionOutputSchema } from '../output-schemas';
 
 export const createDraftEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'createDraftEmail',
+	classification: 'WRITE',
 	displayName: 'Create Draft Email',
 	description: 'Creates a draft email message.',
 	audience: 'both',
 	aiMetadata: { description: 'Creates a new unsent draft email in the Outlook mailbox with recipients, subject, body, and optional attachments. Use this to stage a message for later review or sending (pair with Send Draft Email). Not idempotent: each call creates a separate draft.', idempotent: false },
+	outputSchema: draftMessageActionOutputSchema,
 	props: {
 		recipients: Property.Array({
 			displayName: 'To Email(s)',
@@ -63,9 +66,9 @@ export const createDraftEmailAction = createAction({
 	},
 	async run(context) {
 		const recipients = context.propsValue.recipients as string[];
-		const ccRecipients = context.propsValue.ccRecipients as string[];
-		const bccRecipients = context.propsValue.bccRecipients as string[];
-		const attachments = context.propsValue.attachments as Array<{ file: ApFile; fileName: string }>;
+		const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];
+		const bccRecipients = (context.propsValue.bccRecipients ?? []) as string[];
+		const attachments = (context.propsValue.attachments ?? []) as Array<{ file: ApFile; fileName: string }>;
 
 		const { subject, body, bodyFormat } = context.propsValue;
 

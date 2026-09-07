@@ -10,10 +10,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { searchFieldProp, searchFieldValueProp } from '../common/props';
 import { ORGANIZATION_OPTIONAL_FIELDS } from '../common/constants';
+import { findOrganizationActionOutputSchema } from '../output-schemas';
 
 export const findOrganizationAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-organization',
+	outputSchema: findOrganizationActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find Organization',
 	description: 'Finds an organization.',
 	audience: 'both',

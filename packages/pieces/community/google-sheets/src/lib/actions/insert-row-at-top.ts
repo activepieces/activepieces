@@ -17,6 +17,7 @@ import { insertRowAtTopActionOutputSchema } from '../output-schemas';
 export const insertRowAtTopAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'insert-row-at-top',
+	classification: 'WRITE',
 	displayName: 'Add Row at Top',
 	description: 'Inserts a new row at the top of a worksheet, just below the header row.',
 	audience: 'human',
@@ -31,13 +32,14 @@ export const insertRowAtTopAction = createAction({
 		as_string: Property.Checkbox({
 			displayName: 'As String',
 			description:
-				'Inserted values that are dates and formulas will be entered as strings and have no effect.',
+				'Store dates and formulas as plain text instead of evaluating them.',
 			required: false,
+			advanced: true,
 		}),
 		insertAfterRow: Property.Number({
 			displayName: 'Insert After Row',
 			description:
-				'The row above which the new row will be inserted. Defaults to 1 (insert right under row 1, which is the header in most sheets).',
+				'Insert the new row below this row. Defaults to 1, the header row.',
 			required: false,
 			defaultValue: 1,
 		}),

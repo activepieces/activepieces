@@ -51,6 +51,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAut
 
 export const newTaskCreatedTrigger = createTrigger({
 	name: 'new_task_created',
+	classification: 'READ',
 	displayName: 'New Task',
 	description: 'Triggers when a new task is created.',
 	aiMetadata: {

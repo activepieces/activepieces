@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { SummarizationArgs, InferenceClient } from '@huggingface/inference';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
+import { textSummarizationOutputSchema } from '../output-schemas';
 
 export const textSummarization = createAction({
   audience: 'both',
   name: 'text_summarization',
+  classification: 'READ',
   auth: huggingFaceAuth,
   displayName: 'Text Summarization',
   description:
@@ -15,6 +17,7 @@ export const textSummarization = createAction({
       'Condenses one long block of text into a shorter abstractive summary with a Hugging Face summarization model such as BART or Pegasus, targeting either a brief, medium, or detailed length preset or explicit min and max token counts. Choose it over chat_completion when the task is purely summarization, since it decodes greedily for stable output; use text_classification to label the text instead, or language_translation to change its language. Works best on inputs of roughly 512 to 1024 tokens and needs a truncation strategy for anything longer; read-only and idempotent, as it stores nothing.',
     idempotent: true,
   },
+  outputSchema: textSummarizationOutputSchema,
   props: {
     contentType: Property.StaticDropdown({
       displayName: 'Content Type',
@@ -377,12 +380,8 @@ export const textSummarization = createAction({
         | 'longest_first'
         | 'only_first'
         | 'only_second';
-      generate_parameters?: {
-        min_length?: number;
-        max_length?: number;
-        do_sample?: boolean;
-        temperature?: number;
-      };
+      min_length?: number;
+      max_length?: number;
     } = {};
 
     if (cleanUpSpaces !== undefined) {
@@ -399,13 +398,8 @@ export const textSummarization = createAction({
       parameters.truncation = truncationStrategy;
     }
 
-    // Add generation parameters
-    parameters.generate_parameters = {
-      min_length: minLength,
-      max_length: maxLength,
-      do_sample: false, // Use greedy decoding for consistent summaries
-      temperature: 0.7, // Slight randomness for more natural summaries
-    };
+    parameters.min_length = minLength;
+    parameters.max_length = maxLength;
 
     if (Object.keys(parameters).length > 0) {
       args.parameters = parameters;

@@ -23,6 +23,8 @@ const disallowedRoutes = [
   '/v1/managed-authn/external-token',
   '/v1/authentication/sign-in',
   '/v1/authentication/sign-up',
+  '/v1/authentication/otp/request',
+  '/v1/authentication/otp/verify',
   '/v1/authn/local/verify-email',
   '/v1/authn/federated/login',
   '/v1/authn/federated/claim',
@@ -168,8 +170,8 @@ export const api = {
     if (!isAxiosError(error)) {
       return false;
     }
-    const responseData = error.response?.data as ApErrorParams;
-    return responseData.code === errorCode;
+    const responseData = error.response?.data as ApErrorParams | undefined;
+    return responseData?.code === errorCode;
   },
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);

@@ -29,6 +29,7 @@ type ElementRow = {
 export const createSignatureRequestAction = createAction({
   auth: iloveapiAuth,
   name: 'create_signature_request',
+  classification: 'WRITE',
   displayName: 'Create Signature Request',
   description:
     'Send one or more PDF documents for electronic signature, with custom signers and signature placeholders.',

@@ -7,6 +7,7 @@ import { channelCreatedTriggerOutputSchema } from '../output-schemas';
 export const channelCreated = createTrigger({
   auth: slackAuth,
   name: 'channel_created',
+  classification: 'READ',
   displayName: 'Channel created',
   description: 'Triggers when a channel is created',
   aiMetadata: {

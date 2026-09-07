@@ -1,5 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import mime from 'mime-types';
+import { readFileActionOutputSchema } from '../output-schemas';
 
 export const filesOutput = {
   Text: 'text',
@@ -9,9 +10,11 @@ export const filesOutput = {
 export const readFileAction = createAction({
   audience: 'both',
   name: 'read_file',
+  classification: 'READ',
   displayName: 'Read File',
   description: 'Read a file from the file system',
   aiMetadata: { description: 'Decodes an input file and returns its contents as either UTF-8 text or a base64 string, selected by the output-format option. Use it to turn a file from a trigger or earlier step into a usable value - Text for text-based files such as .txt/.json, Base64 for binary files or API payloads; use Create File for the reverse direction, and Convert CSV to JSON in the CSV piece when you need parsed rows. Requires a file input and an output format (any other value errors); read-only and idempotent.', idempotent: true },
+  outputSchema: readFileActionOutputSchema,
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

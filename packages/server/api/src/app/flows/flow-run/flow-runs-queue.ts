@@ -8,14 +8,14 @@ import { exceptionHandler } from '../../helper/exception-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
+import { resumeService } from '../../waitpoints/resume-service'
+import { waitpointService } from '../../waitpoints/waitpoint-service'
+import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { QueueName, redisMetadataKey, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
 import { buildRunTimeline } from './run-timeline'
-import { resumeService } from './waitpoint/resume-service'
-import { waitpointService } from './waitpoint/waitpoint-service'
-import { WaitpointStatus } from './waitpoint/waitpoint-types'
 
 let runsMetadataWorker: Worker<RunsMetadataJobData> | undefined = undefined
 

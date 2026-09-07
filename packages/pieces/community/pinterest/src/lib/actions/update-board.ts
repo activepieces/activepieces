@@ -12,6 +12,7 @@ import { updateBoardActionOutputSchema } from '../output-schemas';
 export const updateBoard = createAction({
   auth: pinterestAuth,
   name: 'updateBoard',
+  classification: 'WRITE',
   outputSchema: updateBoardActionOutputSchema,
   displayName: 'Update Board',
   description: "Update a board's name, description, or privacy settings.",

@@ -7,9 +7,11 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { createCustomerOutputSchema } from '../output-schemas';
 
 export const wooCreateCustomer = createAction({
   name: 'Create Customer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Create a Customer',
   audience: 'both',
@@ -19,6 +21,7 @@ export const wooCreateCustomer = createAction({
     idempotent: false,
   },
   auth: wooAuth,
+  outputSchema: createCustomerOutputSchema,
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -98,7 +101,7 @@ export const wooCreateCustomer = createAction({
     };
 
     const request: HttpRequest = {
-      url: `${trimmedBaseUrl}//wp-json/wc/v3/customers`,
+      url: `${trimmedBaseUrl}/wp-json/wc/v3/customers`,
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BASIC,

@@ -91,6 +91,24 @@ const initialPermissions = [
     read: [Permission.READ_MCP],
     write: [Permission.READ_MCP, Permission.WRITE_MCP],
   },
+  {
+    name: 'Variables',
+    description: 'Read and write project variables',
+    read: [Permission.READ_VARIABLE],
+    write: [Permission.READ_VARIABLE, Permission.WRITE_VARIABLE],
+  },
+  {
+    name: 'Knowledge Base',
+    description: 'Read and write knowledge base',
+    read: [Permission.READ_KNOWLEDGE_BASE],
+    write: [Permission.READ_KNOWLEDGE_BASE, Permission.WRITE_KNOWLEDGE_BASE],
+  },
+  {
+    name: 'Agents',
+    description: 'Read and write agents',
+    read: [Permission.READ_AGENT],
+    write: [Permission.READ_AGENT, Permission.WRITE_AGENT],
+  },
 ];
 interface ProjectRoleDialogProps {
   mode: 'create' | 'edit';

@@ -11,6 +11,7 @@ import { handleDropdownError } from '../common/helpers';
 export const updateCompany = createAction({
   auth: biginAuth,
   name: 'updateCompany',
+  classification: 'WRITE',
   displayName: 'Update Company',
   description:
     'Updates an existing Company and prepopulates its fields for editing.',

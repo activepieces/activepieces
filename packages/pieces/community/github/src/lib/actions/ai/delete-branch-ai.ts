@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const githubDeleteBranchAiAction = createAction({
   auth: githubAuth,
   name: 'delete_branch_ai',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Branch (Agent)',
   description: 'Deletes a branch from a repository.',
   audience: 'ai',

@@ -5,6 +5,7 @@ import { redditAuth } from '../auth';
 export const fetchPostComments = createAction({
   auth: redditAuth,
   name: 'fetchPostComments',
+  classification: 'SEARCH',
   displayName: 'Fetch Post Comments',
   description: 'Fetch comments from a specific Reddit post.',
   audience: 'both',

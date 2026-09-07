@@ -8,6 +8,7 @@ import { labelsArrayOutputSchema } from '../../output-schemas';
 export const githubRemoveLabelFromIssueAction = createAction({
   auth: githubAuth,
   name: 'remove_label_from_issue',
+  classification: 'WRITE',
   displayName: 'Remove Label from Issue (Agent)',
   description: 'Detaches a single label from an issue or pull request.',
   audience: 'ai',

@@ -7,6 +7,7 @@ const socialkitApiUrl = 'https://api.socialkit.dev';
 export const getYoutubeSummary = createAction({
   auth: socialkitAuth,
   name: 'get_youtube_summary',
+  classification: 'READ',
   displayName: 'Get YouTube Summary',
   description: 'Generates an AI-powered summary of a YouTube video.',
   audience: 'both',

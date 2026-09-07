@@ -6,6 +6,7 @@ import { lemlistApiService } from '../common/requests';
 export const pauseLeadFromAllOrSpecificCampaigns = createAction({
   auth: lemlistAuth,
   name: 'pauseLeadFromAllOrSpecificCampaigns',
+  classification: 'DESTRUCTIVE',
   displayName: 'Pause Lead From All or Specific Campaigns',
   description: 'Pause a lead’s outreach across all or specific campaigns.',
   audience: 'both',

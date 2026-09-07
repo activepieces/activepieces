@@ -7,6 +7,7 @@ import { gmailGetThreadActionOutputSchema } from '../output-schemas';
 export const gmailGetThread = createAction({
   auth: gmailAuth,
   name: 'gmail_get_thread',
+  classification: 'READ',
   description: 'Get a thread from your Gmail account via Id',
   displayName: 'Get Thread',
   audience: 'ai',

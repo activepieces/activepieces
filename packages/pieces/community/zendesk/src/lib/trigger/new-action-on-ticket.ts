@@ -28,6 +28,7 @@ interface ZendeskTicket {
 
 export const newActionOnTicket = createTrigger({
   name: 'new_action_on_ticket',
+  classification: 'READ',
   displayName: 'New Action on Ticket',
   description: 'Fires when the specified ticket updates. Requires a Zendesk Trigger with Notify active webhook.',
   aiMetadata: {

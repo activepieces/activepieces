@@ -11,6 +11,7 @@ import { webflowProps } from '../common/props';
 export const webflowFindCollectionItem = createAction({
 	auth: webflowAuth,
 	name: 'find_collection_item',
+	classification: 'SEARCH',
 	description: 'Find collection item in a collection by field',
 	displayName: 'Find a Collection Item by Field',
 	audience: 'both',

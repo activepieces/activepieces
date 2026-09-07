@@ -14,6 +14,7 @@ const markdown = `
 
 export const newPost = createTrigger({
   name: 'new_post_on_beamer',
+  classification: 'READ',
   displayName: 'New Beamer Post',
   description: 'Triggers when new post is found in your beamer account',
   aiMetadata: {

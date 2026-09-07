@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'updated-list-entry-trigger';
 
 export const listEntryUpdatedTrigger = createTrigger({
 	name: 'list_entry_updated',
+	classification: 'READ',
 	displayName: 'List Entry Updated',
 	description: 'Triggers when an existing entry is updated.',
 	aiMetadata: {

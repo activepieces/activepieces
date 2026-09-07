@@ -3,6 +3,7 @@ import { createTrigger, Property } from '@activepieces/pieces-framework';
 
 export const everyHourTrigger = createTrigger({
   name: 'every_hour',
+  classification: 'READ',
   displayName: 'Every Hour',
   description: 'Triggers the current flow every hour',
   aiMetadata: {

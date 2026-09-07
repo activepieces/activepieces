@@ -166,7 +166,9 @@ describe('buildMessageBlocks — one accordion per segment', () => {
     expect(blocks[0].steps.filter((s) => s.kind === 'tool')).toHaveLength(2);
     if (blocks[1].kind !== 'card-group') throw new Error('expected card-group');
     expect(blocks[1].cards).toHaveLength(2);
-    expect(blocks[1].cards.every((c) => c.kind === 'action-receipt')).toBe(true);
+    expect(blocks[1].cards.every((c) => c.kind === 'action-receipt')).toBe(
+      true,
+    );
   });
 
   it('folds read-only executions into the accordion with no card', () => {
@@ -662,5 +664,51 @@ describe('getLastThinkingSegment — no cross-round thought leak', () => {
     const round2 = getLastThinkingSegment([toolStep('code', null)]);
     expect(round2.thought).toBeNull();
     expect(round2.toolSteps.map((s) => s.part.toolCallId)).toEqual(['code']);
+  });
+});
+
+describe('adjacent text parts', () => {
+  function build(parts: Part[]) {
+    return buildMessageBlocks({
+      parts,
+      isStreaming: false,
+      toolCallMeta: {},
+      claimedBuildIds: new Set(),
+    }).blocks;
+  }
+
+  it('joins text split by interleaved source parts back into one block', () => {
+    const blocks = build([
+      { type: 'text', text: 'what matters most \u2014 ' },
+      { type: 'source-url', sourceId: 's1', url: 'https://example.com/a' },
+      {
+        type: 'text',
+        text: 'nearly half of developers lose five hours a week',
+      },
+      { type: 'source-url', sourceId: 's2', url: 'https://example.com/b' },
+      { type: 'text', text: ', and context-switching kills flow.' },
+    ] as unknown as Part[]);
+
+    const texts = blocks.filter(
+      (b): b is Extract<MessageBlock, { kind: 'text' }> => b.kind === 'text',
+    );
+    expect(texts).toHaveLength(1);
+    expect(texts[0].text).toBe(
+      'what matters most \u2014 nearly half of developers lose five hours a week, and context-switching kills flow.',
+    );
+  });
+
+  it('keeps text blocks separate when a tool runs between them', () => {
+    const blocks = build([
+      { type: 'text', text: 'First.' },
+      tool({
+        name: 'ap_show_questions',
+        id: 't1',
+        output: { displayed: true },
+      }),
+      { type: 'text', text: 'Second.' },
+    ] as unknown as Part[]);
+
+    expect(blocks.filter((b) => b.kind === 'text')).toHaveLength(2);
   });
 });

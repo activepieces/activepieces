@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { classifyTextActionOutputSchema } from '../output-schemas';
 
 export const classifyText = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'classify_text',
+  classification: 'READ',
   displayName: 'Classify Text (Moderation)',
   description:
     'Classify whether the supplied text violates OpenAI safety policies (harassment, hate, self-harm, sexual, violence, etc.).',
@@ -30,6 +32,7 @@ export const classifyText = createAction({
       required: true,
     }),
   },
+  outputSchema: classifyTextActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { model, input } = context.propsValue;

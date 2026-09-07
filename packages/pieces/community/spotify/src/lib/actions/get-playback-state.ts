@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'get_playback_state',
+  classification: 'READ',
   displayName: 'Get Playback State',
   description: 'Retrieves the current playback state of the player',
   audience: 'both',

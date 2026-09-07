@@ -82,6 +82,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof zohoMailAuth>, P
 export const newEmailReceivedTrigger = createTrigger({
 	auth: zohoMailAuth,
 	name: 'new_email_received',
+	classification: 'READ',
 	displayName: 'New Email Received',
 	description: 'Triggers when a new email is received in a specified folder (or inbox).',
 	aiMetadata: {

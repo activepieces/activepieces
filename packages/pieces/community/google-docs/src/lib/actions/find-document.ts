@@ -12,6 +12,7 @@ import { findDocumentActionOutputSchema } from '../output-schemas';
 export const findDocumentAction = createAction({
 	auth: googleDocsAuth,
 	name: 'google-docs-find-document',
+	classification: 'SEARCH',
 	displayName: 'Find Document',
 	description: 'Search for document by name.',
 	audience: 'human',

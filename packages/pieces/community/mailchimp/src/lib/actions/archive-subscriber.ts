@@ -9,6 +9,7 @@ import crypto from 'crypto';
 export const archiveSubscriber = createAction({
   auth: mailchimpAuth,
   name: 'archive_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Subscriber',
   description: 'Archive an existing audience member',
   audience: 'both',

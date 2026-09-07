@@ -20,6 +20,9 @@ In-builder data transformation: users transform any text input using ~104 functi
 - No new HTTP endpoints, no DB tables, no worker job — function metadata is bundled in `@activepieces/shared` and read directly by the frontend; evaluation is synchronous inside the engine.
 - Evaluation failure throws `FormulaEvaluationError` (an `ExecutionError`), so the step fails with a structured message instead of crashing the engine.
 - Type checker skips expression-operator args (e.g. `3 == 9`) to avoid false-positive errors on runtime-evaluated values.
+- **`tokenizeExpression` tracks string literals, and that is what eats reference chips.** The serializer in `text-input-utils.ts` enters string mode on any `"`/`'` so a `)` or `;` inside a quoted function argument does not close the function node early. Added for formula args in 0.85.0 (#12444), it also swallowed `{{` — so `"{{step_4['result']}}"` re-parsed as raw text, and one unpaired quote earlier in a value killed every later chip in that field (GIT-1752). References are now emitted from inside the accumulation loop, and the string state is recomputed across the reference's interior. That recomputation is not optional: `concat("{{a"}}; lower(x))` puts the string-closing quote *inside* the reference, and skipping it leaves the following `;` inside the string and corrupts the value on re-save.
+- **The builder's tokenizer and the runtime's are different code with different rules.** The engine uses `extractMustacheTokens` (`core/utils/src/lib/mustache-utils.ts`), which is brace-depth aware and completely quote-blind; the editor scans to the first `}}` and does track quotes. They agree on everything the UI can produce today, but a change to either is not automatically a change to the other — display and resolution can drift.
+- **Three round-trip corruptions in that loop are known and unfixed**: a lone apostrophe in an unquoted formula argument, a newline inside function arguments, and an escaped backslash before a closing quote. They predate GIT-1752 and fail identically on older commits — don't treat them as a new regression when a round-trip test surfaces one.
 - Backward-compat hooks: `argCompatibility.defaultArgs` (fill missing trailing args from a default) and `deprecated: { replacement, removeAfter }` (strikethrough badge, still resolves at runtime). Never hard-remove a function; format bumps are handled by the `v\d+` wrapper (add `evaluateV2`, dispatch on captured version).
 
 ### Key files
@@ -31,6 +34,6 @@ Entry point: `formulaEvaluator`, exported from `packages/core/formula/src/lib/fo
 - `packages/web/src/app/builder/piece-properties/text-input-with-mentions/extensions/` — the three inline atom badge nodes plus the `/` slash extension.
 - `packages/web/src/app/builder/piece-properties/text-input-with-mentions/components/` — function search and hover popovers.
 - `packages/core/shared/test/formula/` — evaluator, type-checker, and serializer round-trip tests.
-- `packages/web/test/app/builder/piece-properties/text-input-with-mentions/` — serializer resilience tests (unclosed `{{`).
+- `packages/web/test/app/builder/piece-properties/text-input-with-mentions/` — serializer resilience and round-trip tests (unclosed `{{`, quoted references, quoted function args).
 
 Paths verified 2026-07-17. An earlier version pointed at `packages/core/shared/src/lib/formula/`; it moved to its own package at `packages/core/formula/src/lib/` (`@activepieces/core-formula`).

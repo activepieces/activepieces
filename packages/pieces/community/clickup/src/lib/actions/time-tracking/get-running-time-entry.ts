@@ -7,6 +7,7 @@ import { timeEntryOutputSchema } from '../../output-schemas';
 export const clickupGetRunningTimeEntry = createAction({
   auth: clickupAuth,
   name: 'clickup_get_running_time_entry',
+  classification: 'READ',
   displayName: 'Get Running Time Entry',
   description: 'Retrieve the time entry currently being tracked.',
   audience: 'ai',

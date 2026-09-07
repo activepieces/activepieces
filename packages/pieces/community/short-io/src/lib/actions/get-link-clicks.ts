@@ -7,6 +7,7 @@ import { domainIdDropdown } from '../common/props';
 export const getLinkClicksAction = createAction({
   auth: shortIoAuth,
   name: 'get-link-clicks',
+  classification: 'READ',
   displayName: 'Get Link Clicks',
   description: 'Retrieve click statistics for specific short links by their IDs.',
   audience: 'both',

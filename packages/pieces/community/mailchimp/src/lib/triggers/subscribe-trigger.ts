@@ -37,6 +37,7 @@ const getSubscribeEventSummary = (request: any): any => {
 export const mailChimpSubscribeTrigger = createTrigger({
   auth: mailchimpAuth,
   name: 'subscribe',
+  classification: 'READ',
   displayName: 'Member Subscribed to Audience',
   description: 'Fires when a new subscriber joins your Mailchimp audience. This trigger captures new subscriptions, opt-ins, and audience growth events with comprehensive subscriber information.',
   aiMetadata: {

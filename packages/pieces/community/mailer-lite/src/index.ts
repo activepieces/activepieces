@@ -1,4 +1,4 @@
-import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { createOrUpdateSubscriber } from './lib/actions/create-or-update-subscription';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
@@ -6,21 +6,15 @@ import { triggers } from './triggers/triggers';
 import { addSubscriberToGroupAction } from './lib/actions/add-subscriber-to-group';
 import { removeSubscriberFromGroupAction } from './lib/actions/remove-subscriber-from-group';
 import { findSubscriberAction } from './lib/actions/find-subscriber';
+import { createGroupAction } from './lib/actions/create-group';
+import { deleteSubscriberAction } from './lib/actions/delete-subscriber';
+import { listGroupSubscribersAction } from './lib/actions/list-group-subscribers';
+import { listGroupsAction } from './lib/actions/list-groups';
+import { listSubscribersAction } from './lib/actions/list-subscribers';
+import { unsubscribeSubscriberAction } from './lib/actions/unsubscribe-subscriber';
+import { mailerLiteAuth } from './lib/auth';
 
-const markdownDescription = `
-To obtain your API key, follow these steps:
-
-1. Log in to your MailerLite account.
-2. Visit the [API page](https://dashboard.mailerlite.com/integrations/api).
-3. Click the **Generate new token** button.
-4. Copy the generated API key.
-`;
-
-export const mailerLiteAuth = PieceAuth.SecretText({
-  displayName: 'API Key',
-  description: markdownDescription,
-  required: true,
-});
+export { mailerLiteAuth };
 
 export const mailerLite = createPiece({
   displayName: 'MailerLite',
@@ -36,6 +30,12 @@ export const mailerLite = createPiece({
     createOrUpdateSubscriber,
     findSubscriberAction,
     removeSubscriberFromGroupAction,
+    listSubscribersAction,
+    unsubscribeSubscriberAction,
+    deleteSubscriberAction,
+    listGroupsAction,
+    createGroupAction,
+    listGroupSubscribersAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://connect.mailerlite.com/',
       auth: mailerLiteAuth,

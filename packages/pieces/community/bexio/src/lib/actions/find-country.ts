@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const findCountryAction = createAction({
   auth: bexioAuth,
   name: 'find_country',
+  classification: 'SEARCH',
   displayName: 'Find Country',
   description: 'Search for countries using various criteria',
   audience: 'both',

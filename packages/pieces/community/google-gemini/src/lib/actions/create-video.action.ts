@@ -4,10 +4,12 @@ import { googleGeminiAuth } from '../auth';
 import { getGeminiVideoModelOptions } from '../common/common';
 import { GoogleGenAI } from '@google/genai';
 import mime from 'mime-types';
+import { createVideoActionOutputSchema } from '../output-schemas';
 
 export const createVideoAction = createAction({
   audience: 'both',
   name: 'create_video',
+  classification: 'READ',
   auth: googleGeminiAuth,
   displayName: 'Create Video',
   description: 'Generate a video from a text prompt using Google Veo models.',
@@ -119,6 +121,7 @@ export const createVideoAction = createAction({
       },
     }),
   },
+  outputSchema: createVideoActionOutputSchema,
   async run(context) {
     const {
       model,

@@ -7,6 +7,7 @@ import turndownPluginTableNormalizer from '../utilities/html-to-markdown/turndow
 export const htmlToMarkdown = createAction({
   audience: 'both',
   name: 'html_to_markdown',
+  classification: 'READ',
   displayName: 'HTML to Markdown',
   description: 'Convert HTML to Markdown',
   aiMetadata: {

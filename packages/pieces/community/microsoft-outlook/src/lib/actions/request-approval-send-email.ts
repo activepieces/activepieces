@@ -4,15 +4,18 @@ import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
+import { requestApprovalActionOutputSchema } from '../output-schemas';
 
 export const requestApprovalInMail = createAction({
   auth: microsoftOutlookAuth,
   name: 'request_approval_in_mail',
+  classification: 'WRITE',
   displayName: 'Request Approval in Email',
   description:
     'Send approval request email and then wait until the email is approved or disapproved',
   audience: 'both',
   aiMetadata: { description: 'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with the decision. Use this as a human-in-the-loop approval gate before proceeding. Not idempotent: each call sends a new email and creates a new pending waitpoint.', idempotent: false },
+  outputSchema: requestApprovalActionOutputSchema,
   props: {
     recipients: Property.ShortText({
       displayName: 'To Email Address',

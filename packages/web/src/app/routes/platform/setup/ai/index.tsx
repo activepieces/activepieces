@@ -1,52 +1,20 @@
-import { AIProviderName } from '@activepieces/core-utils';
-import {
-  AIProviderWithoutSensitiveData,
-  PlatformRole,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
-import { MessageSquare } from 'lucide-react';
+import { Bot, WandSparkles } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
-import { CenteredPage } from '@/app/components/centered-page';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SUPPORTED_AI_PROVIDERS, AiProviderInfo } from '@/features/agents';
-import {
-  aiProviderQueries,
-  aiProviderMutations,
-} from '@/features/platform-admin';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
-import { AIProviderCard } from './universal-pieces/ai-provider-card';
-
-const ACTIVEPIECES_LOGO_URL =
-  'https://cdn.activepieces.com/pieces/activepieces.png';
+import { CapabilitiesTab } from './capabilities-tab';
+import { ProvidersTab } from './providers-tab';
 
 export default function AIProvidersPage() {
-  const { data: providers, refetch } = aiProviderQueries.useAiProviders();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { platform } = platformHooks.useCurrentPlatform();
-  const allowWrite = platform.plan.aiProvidersEnabled;
-
-  const { mutateAsync: deleteProvider } =
-    aiProviderMutations.useDeleteAiProvider({
-      onSuccess: () => refetch(),
-    });
-
-  const { mutateAsync: toggleChatProvider } =
-    aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => refetch(),
-    });
-
-  const configuredProviders = providers ?? [];
-  const chatProvider = providers?.find((p) => p.enabledForChat);
 
   return (
     <LockedFeatureGuard
@@ -57,110 +25,104 @@ export default function AIProvidersPage() {
         'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
-      <CenteredPage
-        title={t('AI Providers')}
-        description={
-          allowWrite
-            ? t(
-                'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
-              )
-            : t(
-                'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
-              )
-        }
-      >
-        {allowWrite && configuredProviders.length > 0 && (
-          <ChatProviderSelector
-            providers={configuredProviders}
-            providerInfos={SUPPORTED_AI_PROVIDERS}
-            selectedProviderId={chatProvider?.id ?? null}
-            onSelect={(providerId, displayName) =>
-              toggleChatProvider({ providerId, displayName })
-            }
-          />
-        )}
-
-        <div className="flex flex-col gap-4">
-          {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
-            const config = providers?.find(
-              (p) => p.provider === providerDef.provider,
-            );
-
-            return (
-              <AIProviderCard
-                key={providerDef.provider}
-                providerInfo={providerDef}
-                providerConfig={config}
-                onDelete={(id) => deleteProvider(id)}
-                onSave={() => refetch()}
-                allowWrite={allowWrite}
-              />
-            );
-          })}
-        </div>
-      </CenteredPage>
+      <AICenter />
     </LockedFeatureGuard>
   );
 }
 
-function ChatProviderSelector({
-  providers,
-  providerInfos,
-  selectedProviderId,
-  onSelect,
-}: {
-  providers: AIProviderWithoutSensitiveData[];
-  providerInfos: AiProviderInfo[];
-  selectedProviderId: string | null;
-  onSelect: (providerId: string, displayName: string) => void;
-}) {
-  const getLogoUrl = (providerName: string) =>
-    providerInfos.find((p) => p.provider === providerName)?.logoUrl ??
-    (providerName === AIProviderName.ACTIVEPIECES
-      ? ACTIVEPIECES_LOGO_URL
-      : undefined);
+function AICenter() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const capabilitiesEnabled = edition !== ApEdition.COMMUNITY;
+
+  const rawTab = searchParams.get('tab');
+  const requestedTab = isTabValue(rawTab) ? rawTab : 'providers';
+  const activeTab =
+    requestedTab === 'capabilities' && !capabilitiesEnabled
+      ? 'providers'
+      : requestedTab;
+
+  const setTab = (tab: TabValue) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (tab === 'providers') {
+      newParams.delete('tab');
+    } else {
+      newParams.set('tab', tab);
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const navItems: { value: TabValue; label: string; icon: typeof Bot }[] = [
+    { value: 'providers', label: t('Providers'), icon: Bot },
+    ...(capabilitiesEnabled
+      ? [
+          {
+            value: 'capabilities' as const,
+            label: t('Capabilities'),
+            icon: WandSparkles,
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border bg-card p-4 mb-6">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted shrink-0">
-        <MessageSquare className="size-4 text-muted-foreground" />
+    <Tabs
+      value={activeTab}
+      orientation="vertical"
+      onValueChange={(value) => {
+        const next = TAB_VALUES.find((candidate) => candidate === value);
+        if (next) {
+          setTab(next);
+        }
+      }}
+      className="flex w-full flex-1 min-h-0"
+    >
+      <aside className="flex w-60 shrink-0 flex-col min-h-0 border-r">
+        <div className="flex flex-col gap-1 px-4 pt-6 pb-4">
+          <h1 className="text-lg font-semibold tracking-tight">
+            {t('AI Center')}
+          </h1>
+          <p className="text-xs text-muted-foreground">
+            {t('Providers and capabilities for your platform.')}
+          </p>
+        </div>
+        <TabsList className="flex-col items-stretch h-auto gap-1 bg-transparent p-2">
+          {navItems.map((item) => (
+            <TabsTrigger
+              key={item.value}
+              value={item.value}
+              className={cn(
+                'w-full justify-start gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground',
+                'hover:bg-sidebar-accent/60 hover:text-foreground',
+                'data-[state=active]:bg-sidebar-accent data-[state=active]:font-medium data-[state=active]:text-foreground',
+              )}
+            >
+              <item.icon className="size-4 shrink-0" />
+              {item.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </aside>
+      <div className="flex-1 min-w-0 overflow-auto">
+        <div className="w-full max-w-6xl px-8 py-6">
+          <TabsContent value="providers" className="mt-0">
+            <ProvidersTab />
+          </TabsContent>
+          {capabilitiesEnabled && (
+            <TabsContent value="capabilities" className="mt-0">
+              <CapabilitiesTab />
+            </TabsContent>
+          )}
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium leading-none">{t('Chat Provider')}</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {t('Select which AI provider powers the chat feature')}
-        </p>
-      </div>
-      <Select
-        value={selectedProviderId ?? undefined}
-        onValueChange={(value) => {
-          const provider = providers.find((p) => p.id === value);
-          if (provider) onSelect(provider.id, provider.name);
-        }}
-      >
-        <SelectTrigger className="w-52">
-          <SelectValue placeholder={t('Select provider')} />
-        </SelectTrigger>
-        <SelectContent>
-          {providers.map((provider) => {
-            const logoUrl = getLogoUrl(provider.provider);
-            return (
-              <SelectItem key={provider.id} value={provider.id}>
-                <div className="flex items-center gap-2">
-                  {logoUrl && (
-                    <img
-                      src={logoUrl}
-                      alt={provider.provider}
-                      className="size-4 object-contain"
-                    />
-                  )}
-                  <span>{provider.name}</span>
-                </div>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    </div>
+    </Tabs>
   );
 }
+
+function isTabValue(value: string | null): value is TabValue {
+  return TAB_VALUES.some((tab) => tab === value);
+}
+
+const TAB_VALUES = ['providers', 'capabilities'] as const;
+
+type TabValue = (typeof TAB_VALUES)[number];

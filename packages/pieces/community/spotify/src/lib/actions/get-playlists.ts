@@ -3,6 +3,7 @@ import { spotifyCommon, makeClient } from '../common';
 
 export default createAction({
   name: 'get_playlists',
+  classification: 'SEARCH',
   displayName: 'Get Playlists',
   description: 'Retrieves the list of playlists that you created or followed',
   audience: 'both',

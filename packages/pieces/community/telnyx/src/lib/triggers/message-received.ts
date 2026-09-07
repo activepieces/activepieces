@@ -8,6 +8,7 @@ import { telnyxAuth } from '../auth';
 export const messageReceivedTrigger = createTrigger({
   auth: telnyxAuth,
   name: 'message_received',
+  classification: 'READ',
   displayName: 'Message Received',
   description:
     'Triggers when Telnyx delivers a message.received webhook event.',

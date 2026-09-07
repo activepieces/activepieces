@@ -8,6 +8,7 @@ import { AddEventPage } from '../common/types';
 export const addEventFindEventAction = createAction({
   auth: addEventAuth,
   name: 'find_event',
+  classification: 'SEARCH',
   displayName: 'Find Event',
   description:
     'Finds events matching a search term. Returns up to 20 of the best matches.',

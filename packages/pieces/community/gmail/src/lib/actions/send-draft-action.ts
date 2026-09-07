@@ -6,6 +6,7 @@ import { gmailSendDraftActionOutputSchema } from '../output-schemas';
 export const gmailSendDraftAction = createAction({
   auth: gmailAuth,
   name: 'gmail_send_draft',
+  classification: 'WRITE',
   displayName: 'Send Draft',
   description: 'Send an existing draft email by its ID.',
   audience: 'ai',

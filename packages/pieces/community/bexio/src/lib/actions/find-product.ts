@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const findProductAction = createAction({
   auth: bexioAuth,
   name: 'find_product',
+  classification: 'SEARCH',
   displayName: 'Find Product',
   description: 'Search for products by name or code',
   audience: 'both',

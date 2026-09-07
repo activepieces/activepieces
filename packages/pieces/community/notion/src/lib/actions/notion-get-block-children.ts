@@ -9,6 +9,7 @@ import { notionGetBlockChildrenActionOutputSchema } from '../output-schemas';
 export const notionGetBlockChildren = createAction({
   auth: notionAuth,
   name: 'notion_get_block_children',
+  classification: 'READ',
   displayName: 'Get Page or Block Content',
   description:
     'Reads the body content of a page or block by recursively listing its child blocks, optionally rendered as markdown.',

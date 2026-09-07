@@ -50,6 +50,8 @@ import { markdownPreviewComponents } from './previews/markdown-preview-component
 import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { ShowcaseCard } from './showcase-card/showcase-card';
+import { ShowcaseTileData } from './showcase-card/showcase-tile';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
 const PROSE_CLASSES = 'max-w-none break-words';
@@ -387,6 +389,7 @@ function MessageBlocks({
                     part={block.part}
                     onResolve={approveGate}
                     isInteractive={false}
+                    onSendPrompt={onSendPrompt}
                   />
                 </div>
               );
@@ -557,10 +560,12 @@ function DisplayToolCard({
   part,
   onResolve,
   isInteractive,
+  onSendPrompt,
 }: {
   part: AnyToolPart;
   onResolve: (gateId: string, payload?: Record<string, unknown>) => void;
   isInteractive: boolean;
+  onSendPrompt?: (text: string) => void;
 }) {
   if (!chatPartUtils.isReady(part)) return null;
   const data = part.input as Record<string, unknown>;
@@ -610,6 +615,26 @@ function DisplayToolCard({
           isInteractive={isInteractive}
           onResolve={(payload) => onResolve(toolCallId, payload)}
           selectedProjectId={selectedProjectId}
+        />
+      );
+    }
+    case 'ap_show_showcase': {
+      return (
+        <ShowcaseCard
+          content={{
+            headline:
+              typeof data['headline'] === 'string' ? data['headline'] : '',
+            ...(typeof data['subhead'] === 'string'
+              ? { subhead: data['subhead'] }
+              : {}),
+            ...(data['layout'] === 'grid' || data['layout'] === 'list'
+              ? { layout: data['layout'] }
+              : {}),
+            tiles: Array.isArray(data['tiles'])
+              ? (data['tiles'] as ShowcaseTileData[])
+              : [],
+          }}
+          {...(onSendPrompt ? { onSendPrompt } : {})}
         />
       );
     }

@@ -5,6 +5,7 @@ import { BlobServiceClient } from '@azure/storage-blob';
 export const listContainers = createAction({
   auth: azureBlobStorageAuth,
   name: 'listContainers',
+  classification: 'SEARCH',
   displayName: 'List Containers',
   description: 'List Containers in the Azure Blob Storage account',
   audience: 'both',

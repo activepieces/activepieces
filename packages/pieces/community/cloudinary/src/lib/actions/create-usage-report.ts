@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createUsageReport = createAction({
   auth: cloudinaryAuth,
   name: 'createUsageReport',
+  classification: 'READ',
   displayName: 'Create Usage Report',
   description: 'Generate a comprehensive report of account usage and quotas including storage, bandwidth, transformations, requests, and add-on usage.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { Stripe } from 'stripe';
 import { paymentLinkOutputSchema } from '../output-schemas';
 export const stripeCreatePaymentLink = createAction({
   name: 'create_payment_link',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Payment Link',
   description:

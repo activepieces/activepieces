@@ -6,6 +6,7 @@ import { chatbotDropdown } from '../common/props';
 export const createChatbotReply = createAction({
   auth: aidbaseAuth,
   name: 'create_chatbot_reply',
+  classification: 'WRITE',
   displayName: 'Create Chatbot Reply',
   description:
     'Generates an AI chatbot reply given a message and optional session context.',

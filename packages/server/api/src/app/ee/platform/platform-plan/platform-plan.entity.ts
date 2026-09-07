@@ -30,7 +30,6 @@ type RetiredPlatformPlanColumns = {
     maxAutoTopUpCreditsMonthly: number | null
     lastFreeAiCreditsRenewalDate: Date | null
     includedAiCredits: number
-    agentsEnabled: boolean
     teamProjectsLimit: string
 }
 
@@ -68,6 +67,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         },
         chatEnabled: {
             type: Boolean,
+        },
+        agentsEnabled: {
+            type: Boolean,
+            default: true,
         },
         workerGroupsEnabled: {
             type: Boolean,
@@ -219,11 +222,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
             default: 0,
-        },
-        /** @deprecated see RetiredPlatformPlanColumns */
-        agentsEnabled: {
-            type: Boolean,
-            default: true,
         },
         /** @deprecated see RetiredPlatformPlanColumns */
         teamProjectsLimit: {

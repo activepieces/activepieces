@@ -150,7 +150,12 @@ export function buildMessageBlocks({
     if (p.type === 'text' && p.text.length > 0) {
       endSegment();
       hasText = true;
-      result.push({ kind: 'text', text: p.text });
+      const previous = result[result.length - 1];
+      if (previous?.kind === 'text') {
+        previous.text += p.text;
+      } else {
+        result.push({ kind: 'text', text: p.text });
+      }
     } else if (p.type === 'reasoning') {
       flushPendingDescription();
       const thinking = ensureThinking();

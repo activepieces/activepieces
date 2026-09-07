@@ -7,6 +7,7 @@ import { getSectionActionOutputSchema } from '../output-schemas';
 export const todoistGetSectionAction = createAction({
   auth: todoistAuth,
   name: 'todoist_get_section',
+  classification: 'READ',
   displayName: 'Get Section',
   description: 'Get a single Todoist section by its ID.',
   audience: 'ai',

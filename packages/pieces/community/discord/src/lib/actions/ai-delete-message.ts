@@ -10,6 +10,7 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordDeleteMessage = createAction({
   auth: discordAuth,
   name: 'discord_delete_message',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Message',
   description: 'Delete a single message from a channel.',
   audience: 'ai',

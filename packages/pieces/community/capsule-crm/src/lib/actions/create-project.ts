@@ -14,6 +14,7 @@ import {
 export const createProjectAction = createAction({
   auth: capsuleCrmAuth,
   name: 'create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new Project in Capsule CRM.',
   audience: 'both',

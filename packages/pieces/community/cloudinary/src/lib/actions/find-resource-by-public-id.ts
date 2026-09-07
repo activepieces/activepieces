@@ -7,6 +7,7 @@ import { cloudinaryAuth } from '../common/auth';
 export const findResourceByPublicId = createAction({
   auth: cloudinaryAuth,
   name: 'findResourceByPublicId',
+  classification: 'READ',
   displayName: 'Find Resource by Public ID',
   description: 'Retrieve details of an asset using its unique public ID.',
   audience: 'both',

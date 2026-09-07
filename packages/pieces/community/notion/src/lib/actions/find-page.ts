@@ -7,6 +7,7 @@ import { findPageActionOutputSchema } from '../output-schemas';
 export const findPage = createAction({
   auth: notionAuth,
   name: 'find_page',
+  classification: 'SEARCH',
   displayName: 'Find Page',
   description:
     'Search for Notion pages by title with flexible matching options. Perfect for finding specific pages, building page references, or creating automated workflows based on page discovery.',

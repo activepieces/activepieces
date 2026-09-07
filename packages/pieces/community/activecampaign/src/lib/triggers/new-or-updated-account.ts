@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newOrUpdatedAccountTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_or_updated_account',
+	classification: 'READ',
 	displayName: 'New or Updated Account',
 	description: 'Triggers when a new account is added or an existing account’s details are updated',
 	aiMetadata: {

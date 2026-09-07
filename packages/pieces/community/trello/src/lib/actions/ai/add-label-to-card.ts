@@ -12,6 +12,7 @@ import { addLabelToCardActionOutputSchema } from '../../output-schemas';
 export const addLabelToCard = createAction({
   auth: trelloAuth,
   name: 'add_label_to_card',
+  classification: 'WRITE',
   displayName: 'Add Label To Card (Agent)',
   description: 'Attach an existing label to a Trello card.',
   audience: 'ai',

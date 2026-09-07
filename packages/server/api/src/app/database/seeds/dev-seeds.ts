@@ -3,7 +3,6 @@ import { authenticationService } from '../../authentication/authentication.servi
 import { FlagEntity } from '../../flags/flag.entity'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { platformService } from '../../platform/platform.service'
 import { databaseConnection } from '../database-connection'
 import { DataSeed } from './data-seed'
 
@@ -35,7 +34,7 @@ const seedDevUser = async (): Promise<void> => {
     const DEV_PASSWORD = '12345678'
 
 
-    const response = await authenticationService(log).signUp({
+    await authenticationService(log).signUp({
         email: DEV_EMAIL,
         password: DEV_PASSWORD,
         firstName: 'Dev',
@@ -44,12 +43,6 @@ const seedDevUser = async (): Promise<void> => {
         platformId: null,
         newsLetter: false,
         provider: UserIdentityProvider.EMAIL,
-    })
-
-    await platformService(log).createPlatformWithProject({
-        identityId: response.id,
-        name: 'dev\'s Platform',
-        invalidatePreviousTokens: true,
     })
 
     log.info({ email: DEV_EMAIL, password: DEV_PASSWORD }, '[devSeeds#seedDevUser] Dev user and platform created')

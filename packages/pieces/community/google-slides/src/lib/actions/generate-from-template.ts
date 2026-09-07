@@ -28,6 +28,7 @@ function extractPlaceholders(content: string, fields: Record<string, any>, place
 
 export const generateFromTemplate = createAction({
     name: 'generate_from_template',
+    classification: 'WRITE',
     displayName: 'Generate from template',
     description: 'Generate a new slide from a template',
     audience: 'both',

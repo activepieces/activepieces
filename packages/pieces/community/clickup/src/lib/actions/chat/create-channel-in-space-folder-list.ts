@@ -8,6 +8,7 @@ import { channelOutputSchema } from '../../output-schemas';
 export const createClickupChannelInSpaceFolderOrList = createAction({
   auth: clickupAuth,
   name: 'create_channel_in_space_folder_list',
+  classification: 'WRITE',
   description:
     'Creates a channel in a ClickUp workspace in a space, folder or list',
   audience: 'both',

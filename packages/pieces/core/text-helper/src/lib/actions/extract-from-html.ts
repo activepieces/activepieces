@@ -4,6 +4,7 @@ import { JSDOM, VirtualConsole } from 'jsdom';
 export const extractFromHtml = createAction({
   audience: 'both',
   name: 'extract_from_html',
+  classification: 'READ',
   displayName: 'Extract from HTML',
   description: 'Extract specific elements or data from an HTML document.',
   aiMetadata: {

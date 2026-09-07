@@ -7,6 +7,7 @@ import { issueBodyOutputSchema } from '../../output-schemas';
 export const githubUpdateIssueAiAction = createAction({
   auth: githubAuth,
   name: 'update_issue_ai',
+  classification: 'WRITE',
   displayName: 'Update Issue (Agent)',
   description: 'Edits an existing issue, including closing or reopening it.',
   audience: 'ai',

@@ -6,6 +6,7 @@ import { codaClient } from '../common/types';
 export const getTableAction = createAction({
 	auth: codaAuth,
 	name: 'get-table',
+	classification: 'READ',
 	displayName: 'Get Table',
 	description: 'Get structure and details of a specific table (e.g., columns, schema).',
 	audience: 'both',

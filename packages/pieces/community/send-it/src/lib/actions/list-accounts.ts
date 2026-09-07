@@ -6,6 +6,7 @@ import { sendItRequest } from '../common';
 export const listAccounts = createAction({
   auth: sendItAuth,
   name: 'list_accounts',
+  classification: 'SEARCH',
   displayName: 'List Connected Accounts',
   description: 'Get a list of connected social media accounts',
   audience: 'both',

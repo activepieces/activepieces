@@ -7,6 +7,7 @@ import { whatsscaleProps } from '../../common/props';
 export const addCrmContactTagAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_add_crm_contact_tag',
+  classification: 'WRITE',
   displayName: 'Add a Tag to a CRM Contact',
   description: 'Add a single tag to an existing CRM contact',
   audience: 'both',

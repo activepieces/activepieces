@@ -7,6 +7,7 @@ import { sheetsFormatCellsActionOutputSchema } from '../output-schemas';
 export const sheetsFormatCells = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_format_cells',
+	classification: 'WRITE',
 	displayName: 'Format Cells',
 	description: 'Apply formatting to a range of rows in a worksheet.',
 	audience: 'ai',

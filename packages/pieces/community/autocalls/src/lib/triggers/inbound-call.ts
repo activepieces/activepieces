@@ -6,6 +6,7 @@ import { baseApiUrl } from '../..';
 export const inboundCall = createTrigger({
     auth:autocallsAuth,
     name: 'inboundCall',
+    classification: 'READ',
     displayName: 'Inbound Call',
     description: 'Triggers for variables before connecting an inbound call.',
     aiMetadata: {

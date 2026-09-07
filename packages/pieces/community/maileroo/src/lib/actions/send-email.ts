@@ -8,6 +8,7 @@ import { buildAttachmentList, toEmailObjects } from '../common';
 export const sendEmail = createAction({
   auth: mailerooAuth,
   name: 'sendEmail',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description: 'Sends an email using the Maileroo API.',
   audience: 'both',

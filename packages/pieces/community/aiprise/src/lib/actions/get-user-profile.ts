@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getUserProfileAction = createAction({
   auth: aipriseAuth,
   name: 'get_user_profile',
+  classification: 'READ',
   displayName: 'Get User Profile',
   description:
     "Fetches a user profile from AiPrise by its ID — including the person's stored details, tags, linked verification sessions, and metadata.",

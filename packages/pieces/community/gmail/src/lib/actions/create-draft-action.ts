@@ -7,6 +7,7 @@ import { gmailCreateDraftActionOutputSchema } from '../output-schemas';
 export const gmailCreateDraftAction = createAction({
   auth: gmailAuth,
   name: 'gmail_create_draft',
+  classification: 'WRITE',
   displayName: 'Create Draft',
   description:
     'Create a new draft email (optionally inside an existing thread).',

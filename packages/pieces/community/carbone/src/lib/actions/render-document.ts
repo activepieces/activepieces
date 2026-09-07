@@ -12,6 +12,7 @@ import { carboneProps } from '../common/props';
 export const renderDocumentAction = createAction({
   auth: carboneAuth,
   name: 'carbone_render_document',
+  classification: 'READ',
   displayName: 'Render Document',
   description: 'Render a Carbone template with JSON data and download the generated document.',
   audience: 'both',

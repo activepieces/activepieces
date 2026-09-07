@@ -8,6 +8,7 @@ import { prepareFile } from '../../common/prepare-file';
 export const sendImageToContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_image_to_contact',
+  classification: 'WRITE',
   displayName: 'Send an Image to a Contact',
   description: 'Send an image to a WhatsApp contact selected from the dropdown.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { faqDropdown } from '../common/props';
 export const addFaqItem = createAction({
   auth: aidbaseAuth,
   name: 'add_faq_item',
+  classification: 'WRITE',
   displayName: 'Add FAQ Item',
   description:
     'Adds a new question/answer item to an existing FAQ; supports categories.',

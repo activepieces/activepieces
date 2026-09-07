@@ -13,7 +13,7 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
@@ -37,7 +37,7 @@ const SignInSchema = z.object({
 
 type SignInSchema = z.infer<typeof SignInSchema>;
 
-const SignInForm: React.FC = () => {
+const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
   const [showCheckYourEmailNote, setShowCheckYourEmailNote] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const form = useForm<SignInSchema>({
@@ -51,7 +51,6 @@ const SignInForm: React.FC = () => {
 
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
-  const { data: userCreated } = flagsHooks.useFlag(ApFlagId.USER_CREATED);
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
   const { capture } = useTelemetry();
@@ -65,7 +64,7 @@ const SignInForm: React.FC = () => {
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
 
-      if (isNil(data.projectId)) {
+      if (isNil(data.platformId)) {
         navigate('/create-platform');
         return;
       }
@@ -115,6 +114,14 @@ const SignInForm: React.FC = () => {
             });
             break;
           }
+          case ErrorCode.USER_NOT_FOUND_ON_PLATFORM: {
+            form.setError('root.serverError', {
+              message: t(
+                'Your account is not set up on this platform, please contact your administrator',
+              ),
+            });
+            break;
+          }
           default: {
             form.setError('root.serverError', {
               message: t('Something went wrong, please try again later'),
@@ -135,10 +142,6 @@ const SignInForm: React.FC = () => {
     });
     mutate(data);
   };
-
-  if (!userCreated) {
-    return <Navigate to="/sign-up" />;
-  }
 
   return (
     <>
@@ -175,14 +178,25 @@ const SignInForm: React.FC = () => {
               <FormItem className="grid space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">{t('Password')}</Label>
-                  {edition !== ApEdition.COMMUNITY && (
-                    <Link
-                      to="/forget-password"
-                      className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
-                    >
-                      {t('Forgot your password?')}
-                    </Link>
-                  )}
+                  {edition !== ApEdition.COMMUNITY &&
+                    // Inside the auth card the reset flow is another step, not
+                    // another page — the caller hands us a handler for it.
+                    (onForgotPassword ? (
+                      <button
+                        type="button"
+                        onClick={onForgotPassword}
+                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                      >
+                        {t('Forgot your password?')}
+                      </button>
+                    ) : (
+                      <Link
+                        to="/forget-password"
+                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                      >
+                        {t('Forgot your password?')}
+                      </Link>
+                    ))}
                 </div>
                 <div className="relative">
                   <Input
@@ -246,3 +260,7 @@ const SignInForm: React.FC = () => {
 SignInForm.displayName = 'SignIn';
 
 export { SignInForm };
+
+type SignInFormProps = {
+  onForgotPassword?: () => void;
+};

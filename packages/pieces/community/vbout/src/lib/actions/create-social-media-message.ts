@@ -4,6 +4,7 @@ import { makeClient, vboutCommon } from '../common';
 export const createSocialMediaMessageAction = createAction({
   auth: vboutAuth,
   name: 'vbout_create_social_media_message',
+  classification: 'WRITE',
   displayName: 'Create Social Media Message',
   description: 'Post a message to one of your social media channel.',
   audience: 'both',

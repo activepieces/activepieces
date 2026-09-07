@@ -48,6 +48,7 @@ describe('removeDeprecatedJobs', () => {
         await seedQueue.add('usage-report', {}, { repeat: { pattern: '0 * * * *', tz: 'UTC' } })
         await seedQueue.upsertJobScheduler('trial-tracker', { pattern: '0 * * * *', tz: 'UTC' }, { name: 'trial-tracker', data: {} })
         await seedQueue.add('issue-reminder', {}, { jobId: 'issue-reminder-one-off', delay: 60_000 })
+        await seedQueue.add('bundle-piece', { name: '@activepieces/piece-slack', version: '1.0.0' }, { jobId: 'bundle-piece:@activepieces/piece-slack:1.0.0', delay: 60_000 })
         await seedQueue.upsertJobScheduler(SystemJobName.PIECES_ANALYTICS, { pattern: '0 * * * *', tz: 'UTC' }, { name: SystemJobName.PIECES_ANALYTICS, data: {} })
 
         await systemJobsSchedule(log).init()

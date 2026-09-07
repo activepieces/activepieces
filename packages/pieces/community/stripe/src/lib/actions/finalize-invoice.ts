@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { invoiceOutputSchema } from '../output-schemas';
 export const stripeFinalizeInvoice = createAction({
   name: 'finalize_invoice',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Finalize Invoice (Agent)',
   description: 'Finalize a draft invoice so it becomes payable.',

@@ -6,6 +6,7 @@ import { sheetsAppendValuesActionOutputSchema } from '../output-schemas';
 export const sheetsAppendValues = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_append_values',
+	classification: 'WRITE',
 	displayName: 'Append Values (Raw)',
 	description: 'Append rows of values after the last row with data in a worksheet.',
 	audience: 'ai',

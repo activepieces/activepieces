@@ -6,6 +6,7 @@ import { parseMondayColumnValue } from '../common/helper';
 export const getBoardItemValuesAction = createAction({
   auth: mondayAuth,
   name: 'monday_get_board_values',
+  classification: 'SEARCH',
   displayName: 'Get Board Values',
   description: "Gets a list of board's items.",
   audience: 'both',

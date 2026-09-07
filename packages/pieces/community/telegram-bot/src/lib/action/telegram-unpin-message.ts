@@ -7,6 +7,7 @@ import { telegramUnpinMessageActionOutputSchema } from '../output-schemas';
 export const telegramUnpinMessage = createAction({
   auth: telegramBotAuth,
   name: 'telegram_unpin_message',
+  classification: 'WRITE',
   displayName: 'Unpin Message',
   description: 'Unpin a message in a Telegram chat.',
   audience: 'ai',

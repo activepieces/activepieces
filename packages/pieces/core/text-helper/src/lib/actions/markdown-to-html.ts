@@ -6,6 +6,7 @@ import { z, type ZodTypeAny } from 'zod';
 export const markdownToHTML = createAction({
   audience: 'both',
   name: 'markdown_to_html',
+  classification: 'READ',
   displayName: 'Markdown to HTML',
   description: 'Convert markdown to HTML',
   aiMetadata: {

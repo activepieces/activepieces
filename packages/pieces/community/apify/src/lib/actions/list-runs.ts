@@ -16,6 +16,7 @@ const RUN_STATUS_OPTIONS = [
 
 export const apifyListRuns = createAction({
   name: 'apify_list_runs',
+  classification: 'SEARCH',
   auth: apifyAuth,
   displayName: 'List Runs',
   description: 'Lists Actor runs across the whole account.',

@@ -8,6 +8,7 @@ export const getClickupList = createAction({
   auth: clickupAuth,
 
   name: 'get_list',
+  classification: 'READ',
   description: 'Gets a list in a ClickUp',
   audience: 'human',
   aiMetadata: { description: 'Read-only: fetch the details of a single ClickUp list by its list ID. Use when you already know the list ID; does not modify anything and is safe to call repeatedly.', idempotent: true },

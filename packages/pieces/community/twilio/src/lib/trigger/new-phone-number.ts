@@ -100,6 +100,7 @@ const polling: Polling<
 export const twilioNewPhoneNumber = createTrigger({
   auth: twilioAuth,
   name: 'new_phone_number',
+  classification: 'READ',
   displayName: 'New Phone Number',
   description: 'Triggers when you add a new phone number to your account.',
   aiMetadata: {

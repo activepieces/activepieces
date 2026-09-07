@@ -11,6 +11,7 @@ import { discordListMessagesActionOutputSchema } from '../output-schemas';
 export const discordListMessages = createAction({
   auth: discordAuth,
   name: 'discord_list_messages',
+  classification: 'SEARCH',
   displayName: 'List Messages',
   description: 'Read recent messages from a channel.',
   audience: 'ai',

@@ -1,0 +1,62 @@
+---
+title: "Agent Tools"
+sidebarTitle: "Agent Tools"
+description: "How an agent reaches your apps, your flows, and your systems"
+icon: "wrench"
+---
+
+Tools are how an agent reaches the rest of your company, and it uses them two ways.
+
+**To find out.** It searches Slack, Linear, Drive, or any of 760+ apps at the moment it needs the answer, rather than working from whatever you pasted into the instructions.
+
+**To act.** It raises the invoice, drafts the document, updates the record.
+
+Attach none and it can only talk.
+
+<CardGroup cols={3}>
+  <Card title="Piece tool" icon="puzzle-piece" color="#8143E3">
+    A single action from one of your connected apps.
+  </Card>
+  <Card title="Flow tool" icon="sitemap" color="#16A34A">
+    One of your own flows, handed over as a tool.
+  </Card>
+  <Card title="MCP server" icon="plug" color="#0EA5E9">
+    An external server, for systems that aren't pieces.
+  </Card>
+</CardGroup>
+
+## Piece tools
+
+You attach individual actions, not whole apps. An agent given **Send message** can post to Slack and nothing else.
+
+Each input on that action is one of three modes, so you pin what has to be exact and leave the rest to the agent.
+
+<CardGroup cols={3}>
+  <Card title="Let agent decide" icon="wand-magic-sparkles" color="#8143E3">
+    It writes the value.
+  </Card>
+  <Card title="Set value myself" icon="thumbtack" color="#0EA5E9">
+    You pin it.
+  </Card>
+  <Card title="Leave empty" icon="ban" color="#64748B">
+    Nothing is sent.
+  </Card>
+</CardGroup>
+
+Pin the Slack channel, let the agent write the message.
+
+## Flow tools
+
+The most underused one. When part of a job has to happen the same way every time, build that part as a flow and hand it over.
+
+The agent chooses the moment. The flow guarantees the steps.
+
+## MCP servers
+
+Paste the URL and pick how it authenticates: none, an access token, an API key, or custom headers. Streamable HTTP, SSE, and plain HTTP all work.
+
+Activepieces lists the server's tools as soon as you add it, so you know it works before an agent depends on it.
+
+<Tip>
+When an agent keeps getting something wrong, ask what it was missing. Usually it needed somewhere to look something up, not a longer prompt.
+</Tip>

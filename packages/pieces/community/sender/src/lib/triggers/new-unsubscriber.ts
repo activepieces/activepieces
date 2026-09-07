@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newUnsubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_unsubscriber',
+  classification: 'READ',
   displayName: 'New Unsubscriber',
   description: 'Fires when someone unsubscribes globally',
   aiMetadata: {

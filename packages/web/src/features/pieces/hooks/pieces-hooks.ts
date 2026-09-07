@@ -15,11 +15,14 @@ import {
   FlowTriggerType,
   ApFlagId,
   ApEnvironment,
+  SuggestionType,
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
   QueryClient,
+  QueryKey,
   useMutation,
+  usePrefetchQuery,
   useQueries,
   useQuery,
 } from '@tanstack/react-query';
@@ -77,9 +80,16 @@ type UseMultiplePiecesProps = {
 };
 
 type UsePiecesProps = {
+  projectId?: string;
   searchQuery?: string;
   includeHidden?: boolean;
   isTableQuery?: boolean;
+  skipProjectFilter?: boolean;
+  suggestionType?: SuggestionType;
+  enabled?: boolean;
+  keepPreviousResults?: boolean;
+};
+type UsePrefetchPiecesProps = {
   skipProjectFilter?: boolean;
 };
 type UsePiecesSearchProps = {
@@ -175,41 +185,49 @@ export const piecesHooks = {
     return { summary, isLoading };
   },
   usePieces: ({
+    projectId,
     searchQuery,
     includeHidden = false,
     isTableQuery = false,
     skipProjectFilter = false,
+    suggestionType,
+    enabled = true,
+    keepPreviousResults = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
-    const projectId = skipProjectFilter
-      ? undefined
-      : authenticationSession.getProjectId()!;
     const query = useQuery<PieceMetadataModelSummary[], Error>({
-      queryKey: [
-        isTableQuery ? 'pieces-table' : 'pieces',
+      ...piecesQueryOptions({
+        projectId,
         searchQuery,
         includeHidden,
+        isTableQuery,
         skipProjectFilter,
-        projectId,
-        i18n.language,
-      ],
-      queryFn: () =>
-        piecesApi.list({
-          projectId,
-          searchQuery,
-          includeHidden,
-          locale: i18n.language as LocalesEnum,
-        }),
-      staleTime: searchQuery ? 0 : Infinity,
-      meta: isTableQuery
-        ? { showErrorDialog: true, loadSubsetOptions: {} }
-        : undefined,
+        suggestionType,
+        locale: i18n.language as LocalesEnum,
+        keepPreviousResults,
+      }),
+      enabled,
     });
     return {
       pieces: query.data,
       isLoading: query.isLoading,
+      isError: query.isError,
+      error: query.error,
       refetch: query.refetch,
     };
+  },
+  usePrefetchPieces: ({
+    skipProjectFilter = false,
+  }: UsePrefetchPiecesProps) => {
+    const { i18n } = useTranslation();
+    usePrefetchQuery(
+      piecesQueryOptions({
+        includeHidden: false,
+        isTableQuery: false,
+        skipProjectFilter,
+        locale: i18n.language as LocalesEnum,
+      }),
+    );
   },
   usePiecesSearch: (
     props: UsePiecesSearchProps,
@@ -578,3 +596,61 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
 }
 
 export const pieceCacheUtils = { invalidatePieceCaches };
+
+function piecesQueryOptions({
+  projectId,
+  searchQuery,
+  includeHidden,
+  isTableQuery,
+  skipProjectFilter,
+  suggestionType,
+  locale,
+  keepPreviousResults = false,
+}: {
+  projectId?: string;
+  searchQuery?: string;
+  includeHidden: boolean;
+  isTableQuery: boolean;
+  skipProjectFilter: boolean;
+  suggestionType?: SuggestionType;
+  locale: LocalesEnum;
+  keepPreviousResults?: boolean;
+}) {
+  const queriedProjectId = skipProjectFilter
+    ? undefined
+    : projectId ?? authenticationSession.getProjectId() ?? undefined;
+  return {
+    queryKey: [
+      isTableQuery ? 'pieces-table' : 'pieces',
+      queriedProjectId,
+      searchQuery,
+      includeHidden,
+      skipProjectFilter,
+      suggestionType,
+      locale,
+    ],
+    queryFn: () =>
+      piecesApi.list({
+        projectId: queriedProjectId,
+        searchQuery,
+        includeHidden,
+        suggestionType,
+        locale,
+      }),
+    staleTime: searchQuery ? SEARCH_RESULTS_STALE_TIME_MS : Infinity,
+    ...(keepPreviousResults
+      ? {
+          placeholderData: (
+            previousPieces: PieceMetadataModelSummary[] | undefined,
+            previousQuery: { queryKey: QueryKey } | undefined,
+          ) =>
+            previousQuery?.queryKey[PROJECT_ID_KEY_INDEX] === queriedProjectId
+              ? previousPieces
+              : undefined,
+        }
+      : {}),
+  };
+}
+
+const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
+const PROJECT_ID_KEY_INDEX = 1;

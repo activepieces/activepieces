@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const askQuestions = createAction({
   auth: ChatAidAuth,
   name: 'askQuestions',
+  classification: 'READ',
   displayName: 'Ask Questions',
   description:
     'Query your Chat Aid knowledge base and receive AI-generated answers with source citations',

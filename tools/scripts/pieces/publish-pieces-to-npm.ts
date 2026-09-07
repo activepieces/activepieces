@@ -17,10 +17,22 @@ const main = async () => {
   console.info(`[publishPieces] publishing ${piecesSource.length} pieces${changedPaths ? ' (scoped to changed)' : ' (all)'}`)
 
   const piecesSourceChunks = chunk(piecesSource, 30)
+  const failedPaths: string[] = []
 
   for (const chunk of piecesSourceChunks) {
-    await Promise.all(chunk.map((path) => publishNpmPackage(path)))
+    const results = await Promise.allSettled(chunk.map((path) => publishNpmPackage(path)))
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`[publishPieces] FAILED path=${chunk[index]}`, result.reason)
+        failedPaths.push(chunk[index])
+      }
+    })
     await new Promise(resolve => setTimeout(resolve, 5000))
+  }
+
+  if (failedPaths.length > 0) {
+    console.error(`[publishPieces] ${failedPaths.length}/${piecesSource.length} piece(s) failed to publish:\n  ${failedPaths.join('\n  ')}`)
+    process.exitCode = 1
   }
 }
 

@@ -6,6 +6,7 @@ import { columnIdsDropdown, docIdDropdown, tableIdDropdown } from '../common/pro
 export const findRowAction = createAction({
 	auth: codaAuth,
 	name: 'find-row',
+	classification: 'SEARCH',
 	displayName: 'Find Row(s)',
 	description: 'Find specific rows in the selected table using a column match search.',
 	audience: 'both',

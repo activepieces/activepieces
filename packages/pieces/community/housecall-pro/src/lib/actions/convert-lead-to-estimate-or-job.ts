@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const convertLeadToEstimateOrJob = createAction({
   auth: housecallProAuth,
   name: "convert_lead_to_estimate_or_job",
+  classification: 'WRITE',
   displayName: "Convert Lead to Estimate or Job",
   description: "Converts a lead into an estimate or job.",
   audience: 'both',

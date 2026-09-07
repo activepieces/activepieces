@@ -7,6 +7,7 @@ import { transactionRefDropdown } from '../common/props';
 export const deleteObject = createAction({
   auth: ApitemplateAuth,
   name: 'deleteObject',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Object',
   description: 'Deletes a generated PDF or image by its transaction reference or object ID.',
   audience: 'both',

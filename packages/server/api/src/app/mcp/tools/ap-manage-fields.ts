@@ -21,7 +21,7 @@ export const apManageFieldsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         permission: Permission.WRITE_TABLE,
         description: 'Add, rename, or delete fields on a table. Max 100 fields per table.',
         inputSchema: manageFieldsInput.shape,
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { tableId, operation, fieldId, name, type, options } = manageFieldsInput.parse(args)

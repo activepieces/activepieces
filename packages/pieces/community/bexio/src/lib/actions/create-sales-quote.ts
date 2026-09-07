@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const createSalesQuoteAction = createAction({
   auth: bexioAuth,
   name: 'create_sales_quote',
+  classification: 'WRITE',
   displayName: 'Create Sales Quote',
   description: 'Create a new product-based sales quote',
   audience: 'both',

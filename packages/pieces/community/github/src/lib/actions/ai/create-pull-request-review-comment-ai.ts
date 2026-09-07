@@ -7,6 +7,7 @@ import { pullRequestReviewCommentBodyOutputSchema } from '../../output-schemas';
 export const githubCreatePullRequestReviewCommentAiAction = createAction({
   auth: githubAuth,
   name: 'create_pull_request_review_comment_ai',
+  classification: 'WRITE',
   displayName: 'Create Pull Request Review Comment (Agent)',
   description: 'Posts an inline review comment on a pull request.',
   audience: 'ai',

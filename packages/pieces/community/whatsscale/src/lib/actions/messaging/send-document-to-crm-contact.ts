@@ -9,6 +9,7 @@ import { pollJob } from '../../common/poll-job';
 export const sendDocumentToCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_document_to_crm_contact',
+  classification: 'WRITE',
   displayName: 'Send a Document to a CRM Contact',
   description: 'Send a document to a WhatsScale CRM contact selected from the dropdown.',
   audience: 'both',

@@ -11,6 +11,7 @@ import { carboneProps } from '../common/props';
 export const deleteTemplateAction = createAction({
   auth: carboneAuth,
   name: 'carbone_delete_template',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Template',
   description: 'Delete a Carbone template by its ID.',
   audience: 'both',

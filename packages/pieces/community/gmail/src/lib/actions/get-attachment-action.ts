@@ -6,6 +6,7 @@ import { gmailGetAttachmentActionOutputSchema } from '../output-schemas';
 export const gmailGetAttachmentAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_attachment',
+  classification: 'READ',
   displayName: 'Get Attachment',
   description: 'Download an email attachment by message ID and attachment ID.',
   audience: 'ai',

@@ -55,12 +55,14 @@ import { EditTimeSavedPopover } from './edit-time-saved-popover';
 type FlowsDetailsProps = {
   report?: PlatformAnalyticsReport;
   isLoading: boolean;
+  isError: boolean;
   projects?: ProjectWithLimits[];
 };
 
 export function FlowsDetails({
   report,
   isLoading,
+  isError,
   projects,
 }: FlowsDetailsProps) {
   const {
@@ -321,6 +323,8 @@ export function FlowsDetails({
           previous: null,
         }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('flows')}
         clientPagination={true}
         initialSorting={[{ id: 'minutesSaved', desc: true }]}
         emptyStateTextTitle={t('No Flows Found')}

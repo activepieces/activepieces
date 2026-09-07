@@ -6,6 +6,7 @@ import { todoistAuth } from '../..';
 export const todoistUnarchiveProjectAction = createAction({
   auth: todoistAuth,
   name: 'todoist_unarchive_project',
+  classification: 'WRITE',
   displayName: 'Unarchive Project',
   description: 'Restore an archived Todoist project to active.',
   audience: 'ai',

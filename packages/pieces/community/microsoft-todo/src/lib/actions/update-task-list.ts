@@ -6,6 +6,7 @@ import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 export const updateTaskListAction = createAction({
     auth: microsoftToDoAuth,
     name: 'update_task_list',
+    classification: 'WRITE',
     displayName: 'Update Task List',
     description: 'Updates an existing task list.',
     audience: 'both',

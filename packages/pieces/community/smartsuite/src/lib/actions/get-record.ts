@@ -6,6 +6,7 @@ import { smartSuiteApiCall, TableStucture } from '../common';
 
 export const getRecord = createAction({
 	name: 'get_record',
+	classification: 'READ',
 	displayName: 'Get a Record',
 	description: 'Retrieves a specific record by ID',
 	audience: 'both',

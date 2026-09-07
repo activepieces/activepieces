@@ -7,6 +7,7 @@ import { clickupAuth } from '../../auth';
 export const clickupDeleteTaskDependencyAi = createAction({
   auth: clickupAuth,
   name: 'clickup_delete_task_dependency',
+  classification: 'WRITE',
   description: 'Remove a dependency between two tasks',
   audience: 'ai',
   aiMetadata: {

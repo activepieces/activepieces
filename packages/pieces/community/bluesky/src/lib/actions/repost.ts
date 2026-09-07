@@ -9,6 +9,7 @@ import { parseBlueskyUrl } from '../common/props';
 export const repostPost = createAction({
   auth: blueskyAuth,
   name: 'repostPost',
+  classification: 'WRITE',
   displayName: 'Repost Post',
   description: 'Share someone else\'s post to your timeline',
   audience: 'both',

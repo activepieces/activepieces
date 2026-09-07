@@ -9,6 +9,7 @@ import { AddressObject } from 'mailparser';
 export const gmailUpdateDraftAction = createAction({
   auth: gmailAuth,
   name: 'gmail_update_draft',
+  classification: 'WRITE',
   displayName: 'Update Draft',
   description: 'Replace the content of an existing draft email.',
   audience: 'ai',

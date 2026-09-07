@@ -9,6 +9,7 @@ import { pollJob } from '../../common/poll-job';
 export const sendVideoToGroupAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_send_video_to_group',
+  classification: 'WRITE',
   displayName: 'Send a Video to a Group',
   description: 'Send a video to a WhatsApp group selected from the dropdown.',
   audience: 'both',

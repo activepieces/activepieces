@@ -4,6 +4,7 @@ import { odooAuth } from '../auth';
 
 export default createAction({
     name: 'create_record',
+    classification: 'WRITE',
     auth: odooAuth,
     displayName: 'Custom Create Record',
     description: 'Create a new record in the specified model',

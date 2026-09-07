@@ -7,6 +7,7 @@ import { whatsscaleProps } from '../../common/props';
 export const getCrmContactAction = createAction({
   auth: whatsscaleAuth,
   name: 'whatsscale_get_crm_contact',
+  classification: 'READ',
   displayName: 'Get a CRM Contact',
   description: 'Retrieve a CRM contact by ID',
   audience: 'both',

@@ -4,6 +4,7 @@ import { getAssemblyAIClient } from '../../client';
 
 export const uploadFile = createAction({
   name: 'uploadFile',
+  classification: 'WRITE',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Upload File',

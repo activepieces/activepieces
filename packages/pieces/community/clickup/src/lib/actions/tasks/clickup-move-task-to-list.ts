@@ -8,6 +8,7 @@ import { moveTaskOutputSchema } from '../../output-schemas';
 export const clickupMoveTaskToListAi = createAction({
   auth: clickupAuth,
   name: 'clickup_move_task_to_list',
+  classification: 'WRITE',
   description: "Move a task to a different list (the task's home list)",
   audience: 'ai',
   aiMetadata: {

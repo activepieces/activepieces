@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCreateSubscriptionAi = createAction({
   name: 'create_subscription_ai',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Subscription (Agent)',
   description: 'Start a subscription for a customer with specified prices.',

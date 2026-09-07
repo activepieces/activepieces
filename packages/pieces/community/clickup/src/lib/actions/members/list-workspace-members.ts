@@ -8,6 +8,7 @@ import { workspaceMembersOutputSchema } from '../../output-schemas';
 export const clickupListWorkspaceMembers = createAction({
   auth: clickupAuth,
   name: 'clickup_list_workspace_members',
+  classification: 'SEARCH',
   displayName: 'List Workspace Members',
   description: 'List all members of a ClickUp workspace.',
   audience: 'ai',

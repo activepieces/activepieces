@@ -7,6 +7,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const textToSpeechAction = createAction({
   auth: deepgramAuth,
   name: 'text_to_speech',
+  classification: 'READ',
   displayName: 'Text to Speech',
   description: 'Converts text to audio file.',
   audience: 'both',

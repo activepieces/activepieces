@@ -158,6 +158,7 @@ async function createEnhancedLinkEmbed(url: string, agent: any): Promise<any> {
 export const createPost = createAction({
   auth: blueskyAuth,
   name: 'createPost',
+  classification: 'WRITE',
   displayName: 'Create Post',
   description: 'Create a new post on Bluesky',
   audience: 'both',

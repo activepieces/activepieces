@@ -1,31 +1,56 @@
 ---
-title: "Enterprise License"
-description: "Activate the optional self-hosted Enterprise Edition with a license key"
+title: "Activate an Enterprise License Key"
+sidebarTitle: "License key"
+description: "Unlock paid features on your self-hosted instance"
 icon: "key"
 ---
 
-<Info>
-This page applies only to the **optional** Enterprise Edition. Community Edition is free, open source, and needs no license — if you're running CE, you can skip this.
-</Info>
+Activepieces runs on the free plan by default. Every plan on the [pricing page](https://www.activepieces.com/pricing) is available self-hosted.
 
-<Tip>
-For licensing inquiries regarding the self-hosted enterprise edition, please reach out to `sales@activepieces.com`, as the code and Docker image are not covered by the MIT license.
-</Tip>
+<Note>
+**Upgrading to Plus or Team? You don't need this page.** Subscribe from inside the app and your plan applies automatically, with no key to enter.
+</Note>
 
-<Note>You can request a trial key from within the app or in the cloud by filling out the form. Alternatively, you can contact sales at [https://www.activepieces.com/sales](https://www.activepieces.com/sales).<br></br>Please know that when your trial runs out, all enterprise [features](https://www.activepieces.com/pricing) will be shut down meaning any user other than the platform admin will be deactivated, and your private pieces will be deleted, which could result in flows using them to fail.</Note>
+This page is for **custom and enterprise plans**. [Talk to us](https://www.activepieces.com/sales) and we'll send your license key once the agreement is in place.
 
-<Warning>
-Before version 0.73.0, you cannot switch from CE to EE directly. We suggest upgrading to 0.73.0 with the same edition first, then switch `AP_EDITION`.
-</Warning>
+## Features on paid plans
 
-<Warning>
-Enterprise edition must use `PostgreSQL` as the database backend and `Redis` as the Queue System.
-</Warning>
+Your key activates whichever of these your plan includes.
 
-## Installation
+<CardGroup cols={2}>
+  <Card title="Teams and access" icon="users">
+    - Projects and multi-tenancy
+    - SSO
+    - Standard and custom roles
+    - SCIM user provisioning
+  </Card>
+  <Card title="Governance" icon="shield-check">
+    - Audit logs
+    - Secret managers
+    - Piece management
+  </Card>
+  <Card title="Operations" icon="screwdriver-wrench">
+    - Releases and Git Sync
+    - Worker groups
+    - Global connections
+  </Card>
+  <Card title="Branding and embedding" icon="frame">
+    - Embeddable builder and JavaScript SDK
+    - Custom branding and domains
+    - Template management
+  </Card>
+</CardGroup>
 
-1. Set the `AP_EDITION` environment variable to `ee`.
-2. Set `AP_EXECUTION_MODE` to anything other than `UNSANDBOXED` (see [Sandboxing Mode](./sandboxing)).
-3. Once your instance is up, activate the license key under **Platform Admin → Setup → License Keys**.
+## How to activate a license key
 
-![Activation License Key](/resources/screenshots/activation-license-key-settings.png)
+Open **Platform Admin → Setup → Billing & subscription**, scroll to **Have a custom plan?**, and click **Activate license key**. Paste your key and save. No restart needed, and your flows and data stay as they are.
+
+<Frame>
+  <img src="/resources/screenshots/activation-license-key-settings.webp" alt="Activating a license key from Billing and subscription" />
+</Frame>
+
+## Billing page not showing
+
+The page appears when your instance runs the Enterprise edition. [Self host (Docker)](/install/options/docker-compose) and [Kubernetes](/install/options/helm) set that up for you. If you installed another way, follow either guide to switch.
+
+Installs on an embedded database, including [Hobby (Docker)](/install/options/docker), cannot run Enterprise at all.

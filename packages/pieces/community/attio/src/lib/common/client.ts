@@ -17,6 +17,7 @@ export type AttioApiCallParams = {
 	resourceUri: string;
 	query?: Record<string, string | number | string[] | undefined>;
 	body?: any;
+	retries?: number;
 };
 
 export async function attioApiCall<T extends HttpMessageBody>({
@@ -25,6 +26,7 @@ export async function attioApiCall<T extends HttpMessageBody>({
 	resourceUri,
 	query,
 	body,
+	retries,
 }: AttioApiCallParams): Promise<T> {
 	const qs: QueryParams = {};
 
@@ -45,6 +47,7 @@ export async function attioApiCall<T extends HttpMessageBody>({
 		},
 		queryParams: qs,
 		body,
+		retries,
 	};
 
 	const response = await httpClient.sendRequest<T>(request);

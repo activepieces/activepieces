@@ -44,7 +44,7 @@ export const enrichWideEventWithError = (error: unknown): void => {
         if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) {
             wideErrorFields.stack = error.stack
         }
-        wideEvent.set({ error: wideErrorFields })
+        wideEvent.set({ status: statusCode, error: wideErrorFields })
         return
     }
     const parsed = parseError(error)
@@ -65,7 +65,7 @@ export const enrichWideEventWithError = (error: unknown): void => {
     if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR.valueOf() && error instanceof Error) {
         wideErrorFields.stack = error.stack
     }
-    wideEvent.set({ error: wideErrorFields })
+    wideEvent.set({ status: statusCode, error: wideErrorFields })
 }
 
 function hasStatusCode(error: unknown): error is { statusCode: number } {
@@ -91,16 +91,19 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.AUTHORIZATION]: StatusCodes.FORBIDDEN,
     [ErrorCode.SIGN_UP_DISABLED]: StatusCodes.FORBIDDEN,
     [ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS]: StatusCodes.CONFLICT,
+    [ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS]: StatusCodes.CONFLICT,
     [ErrorCode.INVALID_CREDENTIALS]: StatusCodes.UNAUTHORIZED,
     [ErrorCode.SESSION_EXPIRED]: StatusCodes.FORBIDDEN,
     [ErrorCode.EMAIL_IS_NOT_VERIFIED]: StatusCodes.FORBIDDEN,
     [ErrorCode.USER_IS_INACTIVE]: StatusCodes.FORBIDDEN,
+    [ErrorCode.USER_NOT_FOUND_ON_PLATFORM]: StatusCodes.FORBIDDEN,
     [ErrorCode.DOMAIN_NOT_ALLOWED]: StatusCodes.FORBIDDEN,
     [ErrorCode.EMAIL_AUTH_DISABLED]: StatusCodes.FORBIDDEN,
     [ErrorCode.INVALID_SMTP_CREDENTIALS]: StatusCodes.BAD_REQUEST,
     [ErrorCode.INVALID_GIT_CREDENTIALS]: StatusCodes.BAD_REQUEST,
     [ErrorCode.INVALID_OTP]: StatusCodes.GONE,
     [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
+    [ErrorCode.FILE_TOO_LARGE]: StatusCodes.REQUEST_TOO_LONG,
     [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
     [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,
     [ErrorCode.INVALID_LICENSE_KEY]: StatusCodes.BAD_REQUEST,

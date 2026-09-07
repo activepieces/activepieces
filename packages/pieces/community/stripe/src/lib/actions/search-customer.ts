@@ -6,6 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { customerSearchOutputSchema } from '../output-schemas';
 export const stripeSearchCustomer = createAction({
   name: 'search_customer',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Customer',
   description: 'Search for a customer in stripe by email',

@@ -7,6 +7,7 @@ import { initializeAndDownloadBudget } from '../common/common';
 export const getAccounts = createAction({
   auth: actualBudgetAuth,
   name: 'get_accounts',
+  classification: 'SEARCH',
   displayName: 'Get Accounts',
   description: 'Get your accounts',
   audience: 'both',

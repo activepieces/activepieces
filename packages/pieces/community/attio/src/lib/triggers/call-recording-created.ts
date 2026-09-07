@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'call-recording-created-trigger';
 export const callRecordingCreatedTrigger = createTrigger({
 	auth: attioAuth,
 	name: 'call_recording_created',
+	classification: 'READ',
 	displayName: 'Call Recording Created',
 	description: 'Triggers when a call recording finishes and its media upload is complete.',
 	aiMetadata: {

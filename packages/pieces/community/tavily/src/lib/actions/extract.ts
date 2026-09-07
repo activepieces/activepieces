@@ -4,6 +4,7 @@ import { tavilyAuth } from '../auth';
 
 export const extractAction = createAction({
   name: 'extract',
+  classification: 'READ',
   displayName: 'Extract Content',
   description: 'Retrieve raw web content from specified URLs.',
   audience: 'both',

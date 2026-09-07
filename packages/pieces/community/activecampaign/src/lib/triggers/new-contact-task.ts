@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const newContactTaskTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_new_contact_task',
+	classification: 'READ',
 	displayName: 'New Contact Task',
 	description: 'Triggers when a new contact task is added.',
 	aiMetadata: {

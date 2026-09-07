@@ -7,6 +7,7 @@ import { createBranchActionOutputSchema } from '../output-schemas';
 export const githubCreateBranchAction = createAction({
   auth: githubAuth,
   name: 'create_branch',
+  classification: 'WRITE',
   displayName: 'Create Branch',
   description: 'Creates a new branch on a repository.',
   audience: 'human',

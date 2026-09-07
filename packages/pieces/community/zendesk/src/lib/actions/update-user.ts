@@ -13,6 +13,7 @@ import { userFieldsDynamicProp } from '../common/props';
 export const updateUserAction = createAction({
   auth: zendeskAuth,
   name: 'update-user',
+  classification: 'WRITE',
   displayName: 'Update User',
   description: 'Update existing user fields.',
   audience: 'both',

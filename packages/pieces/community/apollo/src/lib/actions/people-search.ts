@@ -9,6 +9,7 @@ import {
 export const peopleSearch = createAction({
   auth: apolloAuth,
   name: 'peopleSearch',
+  classification: 'SEARCH',
   displayName: 'People Search',
   description:
     'Search for people in the Apollo database (does not return email/phone, use enrichment for that)',

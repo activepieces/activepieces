@@ -8,6 +8,7 @@ import { getFileActionOutputSchema } from '../output-schemas';
 export const getFileAction = createAction({
 	auth: slackAuth,
 	name: 'get-file',
+	classification: 'READ',
 	displayName: 'Get File',
 	description: 'Return information about a given file ID.',
 	audience: 'human',

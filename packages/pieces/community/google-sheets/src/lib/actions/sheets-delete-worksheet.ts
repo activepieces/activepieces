@@ -6,6 +6,7 @@ import { sheetsDeleteWorksheetActionOutputSchema } from '../output-schemas';
 export const sheetsDeleteWorksheet = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_delete_worksheet',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Worksheet',
 	description: 'Permanently delete a specific worksheet.',
 	audience: 'ai',

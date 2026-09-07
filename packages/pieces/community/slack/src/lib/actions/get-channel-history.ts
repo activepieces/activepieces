@@ -8,6 +8,7 @@ import { channelHistoryActionOutputSchema } from '../output-schemas';
 export const getChannelHistory = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'getChannelHistory',
+  classification: 'SEARCH',
   auth: slackAuth,
   displayName: 'Get channel history',
   description:

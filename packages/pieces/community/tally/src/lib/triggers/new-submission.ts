@@ -14,6 +14,7 @@ const TRIGGER_KEY = 'new_submission';
 
 export const newSubmissionTrigger = createTrigger({
 	name: 'new-submission',
+	classification: 'READ',
 	displayName: 'New Submission',
 	auth: tallyAuth,
 	description: 'Triggers when a form receives a new submission',

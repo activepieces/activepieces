@@ -5,6 +5,7 @@ import {parse} from 'csv-parse/sync';
 export const csvToJsonAction = createAction({
   audience: 'both',
   name: 'convert_csv_to_json',
+  classification: 'READ',
   displayName: 'Convert CSV to JSON',
   description:
     'This function reads a CSV string and converts it into JSON array format.',

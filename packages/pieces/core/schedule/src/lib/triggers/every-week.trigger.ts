@@ -10,6 +10,7 @@ import {
 
 export const everyWeekTrigger = createTrigger({
   name: 'every_week',
+  classification: 'READ',
   displayName: 'Every Week',
   description: 'Triggers the current flow every week',
   aiMetadata: {
