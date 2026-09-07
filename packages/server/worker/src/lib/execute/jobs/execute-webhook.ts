@@ -1,9 +1,9 @@
 import { isNil, parseToJsonIfPossible, toError, tryCatch } from '@activepieces/core-utils'
-import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowRunStatus, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { isSandboxTimeout, sandboxErrorToFlowRunStatus } from '../utils/sandbox-helpers'
-import { recordTriggerRun } from '../utils/trigger-run-recorder'
+import { sandboxErrorToFlowRunStatus } from '../utils/sandbox-helpers'
+import { bumpTriggerHealthCounter } from '../utils/trigger-health-counter'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
 
 async function reportTriggerFailureAsFlowRun({ ctx, data, flowVersion, error }: { ctx: JobContext, data: WebhookJobData, flowVersion: FlowVersion, error: unknown }): Promise<void> {
@@ -131,12 +131,15 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
         })
 
         if (error) {
+            const failureStatus = sandboxErrorToFlowRunStatus(error)
             if (realExecutionStarted) {
-                await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
-                await reportTriggerFailureAsFlowRun({ ctx, data, flowVersion, error })
+                await Promise.all([
+                    bumpTriggerHealthCounter({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR }),
+                    reportTriggerFailureAsFlowRun({ ctx, data, flowVersion, error }),
+                ])
             }
-            if (isSandboxTimeout(error)) {
-                ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
+            if (failureStatus !== FlowRunStatus.INTERNAL_ERROR) {
+                ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun }, failureStatus }, 'Webhook trigger failed with a deterministic sandbox error, not retrying')
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             throw error
@@ -162,7 +165,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             }
         }
 
-        await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status })
+        await bumpTriggerHealthCounter({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status })
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
     },

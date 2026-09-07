@@ -3,7 +3,7 @@ import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, Flow
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
 import { sandboxErrorToFlowRunStatus } from '../utils/sandbox-helpers'
-import { recordTriggerRun } from '../utils/trigger-run-recorder'
+import { bumpTriggerHealthCounter } from '../utils/trigger-health-counter'
 import { getWebhookUrl } from '../utils/webhook-url'
 
 export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResult> = {
@@ -62,14 +62,16 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                 }
             }
 
-            await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: result.status })
+            await bumpTriggerHealthCounter({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: result.status })
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
             ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
-            await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
-            await reportPollingFailureAsFlowRun({ ctx, data, flowVersion, error: e })
+            await Promise.all([
+                bumpTriggerHealthCounter({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR }),
+                reportPollingFailureAsFlowRun({ ctx, data, flowVersion, error: e }),
+            ])
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
     },
