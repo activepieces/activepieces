@@ -20,7 +20,12 @@ import {
   UncategorizedFolderId,
   UpdateRunProgressRequest,
 } from '@activepieces/shared';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import {
+  QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -66,6 +71,7 @@ export const flowHooks = {
   useChangeFlowStatus: ({
     flowId,
     change,
+    requiresApproval,
     onSuccess,
     setIsPublishing,
   }: UseChangeFlowStatusParams) => {
@@ -76,6 +82,7 @@ export const flowHooks = {
       ApFlagId.TRIGGER_TIMEOUT_SECONDS,
     );
     const { openDialog } = useApErrorDialogStore();
+    const queryClient = useQueryClient();
     const { capture } = useTelemetry();
     return useMutation({
       mutationFn: async () => {
@@ -97,13 +104,18 @@ export const flowHooks = {
           },
         });
       },
-      onSuccess: (flow: PopulatedFlow) => {
+      onSuccess: async (flow: PopulatedFlow) => {
         if (change === 'publish') {
-          setIsPublishing?.(false);
-          capture({
-            name: TelemetryEventName.FLOW_PUBLISHED,
-            payload: { flowId: flow.id },
+          await queryClient.refetchQueries({
+            queryKey: ['flow-approval-requests'],
           });
+          setIsPublishing?.(false);
+          if (!requiresApproval) {
+            capture({
+              name: TelemetryEventName.FLOW_PUBLISHED,
+              payload: { flowId: flow.id },
+            });
+          }
         }
         onSuccess?.(flow);
       },
@@ -559,6 +571,7 @@ export const flowHooks = {
 type UseChangeFlowStatusParams = {
   flowId: string;
   change: 'publish' | FlowStatus;
+  requiresApproval?: boolean;
   onSuccess: (flow: PopulatedFlow) => void;
   setIsPublishing?: (isPublishing: boolean) => void;
 };

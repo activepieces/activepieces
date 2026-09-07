@@ -64,6 +64,7 @@ export const Project = z.object({
     pieceSetId: Nullable(ApId),
     workerGroupId: Nullable(z.string()),
     executionDataRetentionDays: Nullable(z.number()),
+    sensitive: z.boolean(),
 })
 
 const projectAnalytics = z.object({
