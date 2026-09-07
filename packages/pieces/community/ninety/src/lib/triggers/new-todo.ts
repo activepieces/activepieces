@@ -1,4 +1,4 @@
-import { Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { ninetyCommon, NinetyTodo } from '../common/client';
 import { ninetyProps } from '../common/props';
 import { todoTriggerOutputSchema } from '../common/output-schemas';
@@ -38,9 +38,7 @@ export const newTodo = createNinetyPollingTrigger({
       ...spreadIfDefined('teamId', propsValue.teamId),
       ...spreadIfDefined(
         'isPersonal',
-        propsValue.scope === undefined
-          ? undefined
-          : propsValue.scope === 'personal'
+        isNil(propsValue.scope) ? undefined : propsValue.scope === 'personal'
       ),
     };
     const collected = new Map<string, NinetyTodo>();

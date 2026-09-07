@@ -64,6 +64,7 @@ export const findIssues = createAction({
       displayName: 'Page Size',
       description: 'How many issues to return. Ninety defaults to 10.',
       required: false,
+      min: 1,
     }),
   },
   async run({ auth, propsValue }) {

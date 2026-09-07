@@ -370,7 +370,7 @@ export const ninetyProps = {
           placeholder: 'Connect your Ninety account first',
         };
       }
-      if (asOptionalString(teamId) === undefined) {
+      if (isNil(asOptionalString(teamId))) {
         return {
           disabled: true,
           options: [],
@@ -520,12 +520,14 @@ export const ninetyProps = {
     displayName: 'Page',
     description: 'Zero based. Leave empty for the first page.',
     required: false,
+    min: 0,
   }),
 
   page: Property.Number({
     displayName: 'Page',
     description: 'One based. Leave empty for the first page.',
     required: false,
+    min: 1,
   }),
 
 

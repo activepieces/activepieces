@@ -1,5 +1,6 @@
 import {
   createAction,
+  isNil,
   Property,
   spreadIfDefined,
 } from '@activepieces/pieces-framework';
@@ -77,6 +78,7 @@ export const findMeasurables = createAction({
       displayName: 'Page Size',
       description: 'How many measurables to return. Ninety defaults to 25.',
       required: false,
+      min: 1,
     }),
   },
   async run({ auth, propsValue }) {
@@ -95,7 +97,7 @@ export const findMeasurables = createAction({
         ...spreadIfDefined('pageSize', propsValue.pageSize),
         ...spreadIfDefined(
           'userIds',
-          propsValue.userIds === undefined || propsValue.userIds.length === 0
+          isNil(propsValue.userIds) || propsValue.userIds.length === 0
             ? undefined
             : propsValue.userIds
         ),

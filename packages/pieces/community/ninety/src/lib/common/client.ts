@@ -493,7 +493,6 @@ export type NinetyRock = {
   createdDate?: string;
   updatedAt?: string;
   additionalTeamIds?: string[];
-  milestones?: NinetyMilestone[];
 };
 
 export type NinetyRockInput = {

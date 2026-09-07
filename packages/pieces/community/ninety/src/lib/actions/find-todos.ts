@@ -1,5 +1,6 @@
 import {
   createAction,
+  isNil,
   Property,
   spreadIfDefined,
 } from '@activepieces/pieces-framework';
@@ -81,6 +82,8 @@ export const findTodos = createAction({
       displayName: 'Page Size',
       description: 'How many to-dos to return. Ninety allows up to 100.',
       required: false,
+      min: 1,
+      max: 100,
     }),
   },
   async run({ auth, propsValue }) {
@@ -91,11 +94,11 @@ export const findTodos = createAction({
         ...spreadIfDefined('teamId', propsValue.teamId),
         ...spreadIfDefined(
           'isPersonal',
-          scope === undefined ? undefined : scope === 'personal'
+          isNil(scope) ? undefined : scope === 'personal'
         ),
         ...spreadIfDefined(
           'userIds',
-          propsValue.userIds === undefined || propsValue.userIds.length === 0
+          isNil(propsValue.userIds) || propsValue.userIds.length === 0
             ? undefined
             : propsValue.userIds
         ),
@@ -126,7 +129,7 @@ export const findTodos = createAction({
         ...spreadIfDefined('sort', propsValue.sort),
         ...spreadIfDefined(
           'order',
-          propsValue.sort === undefined ? undefined : propsValue.order
+          isNil(propsValue.sort) ? undefined : propsValue.order
         ),
         ...spreadIfDefined('page', propsValue.page),
         ...spreadIfDefined('pageSize', propsValue.pageSize),

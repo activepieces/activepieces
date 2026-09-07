@@ -10,7 +10,7 @@ export const newRock = createNinetyPollingTrigger({
   displayName: 'New Rock',
   description: 'Fires when a rock is created in Ninety',
   aiDescription:
-    'Fires once for each new Ninety rock, the quarterly goal of the EOS model, carrying its id, title, owner, team, status, quarter and milestones. Ninety has no webhooks and cannot sort rocks by creation date, so this reads the team active rocks and reports the ones created since the last check.',
+    'Fires once for each new Ninety rock, the quarterly goal of the EOS model, carrying its id, title, owner, team, status, quarter and due date. Ninety has no webhooks and cannot sort rocks by creation date, so this reads the team active rocks and reports the ones created since the last check.',
   props: {
     teamId: ninetyProps.teamIdOptional,
     userId: ninetyProps.ownerIdFilter,

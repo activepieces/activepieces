@@ -1,5 +1,6 @@
 import {
   createAction,
+  isNil,
   Property,
   spreadIfDefined,
 } from '@activepieces/pieces-framework';
@@ -65,7 +66,7 @@ export const createRock = createAction({
         ...spreadIfDefined('futureScope', propsValue.futureScope),
         ...spreadIfDefined(
           'additionalTeamIds',
-          propsValue.additionalTeamIds === undefined ||
+          isNil(propsValue.additionalTeamIds) ||
             propsValue.additionalTeamIds.length === 0
             ? undefined
             : propsValue.additionalTeamIds

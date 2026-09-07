@@ -1,5 +1,6 @@
 import {
   createAction,
+  isNil,
   Property,
   spreadIfDefined,
 } from '@activepieces/pieces-framework';
@@ -117,7 +118,7 @@ export const updateRock = createAction({
           'additionalTeamIds',
           propsValue.clearAdditionalTeams === true
             ? []
-            : propsValue.additionalTeamIds === undefined ||
+            : isNil(propsValue.additionalTeamIds) ||
               propsValue.additionalTeamIds.length === 0
             ? undefined
             : propsValue.additionalTeamIds

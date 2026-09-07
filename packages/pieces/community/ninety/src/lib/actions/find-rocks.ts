@@ -97,6 +97,8 @@ export const findRocks = createAction({
       displayName: 'Page Size',
       description: 'How many rocks to return. Ninety allows up to 200.',
       required: false,
+      min: 0,
+      max: 200,
     }),
   },
   async run({ auth, propsValue }) {
