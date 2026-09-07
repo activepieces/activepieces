@@ -29,7 +29,7 @@ export const slackSendDirectMessageAiAction = createAction({
     text: Property.LongText({
       displayName: 'Message',
       description:
-        'The text of the direct message. Optional — leave it empty to send a blocks-only DM. When provided alongside blocks it renders as a section above them (consistent with Post Message), and is also used as the notification fallback text.',
+        'The text of the direct message. Renders as a section above any blocks, and is used as the notification fallback. Leave empty to send blocks only.',
       required: false,
     }),
     unfurlLinks: Property.Checkbox({
@@ -56,8 +56,6 @@ export const slackSendDirectMessageAiAction = createAction({
     }
 
     const blockList: (KnownBlock | Block)[] = [];
-    // Build a section from `text` only when provided, so a blocks-only DM is possible.
-    // `text` is also passed as the notification fallback. Consistent with Post Message.
     if (text) {
       blockList.push(...textToSectionBlocks(text));
     }

@@ -26,12 +26,10 @@ export const slackSendDirectMessageAction = createAction({
   outputSchema: chatPostMessageOutputSchema,
   props: {
     userId: userId(true),
-    // Inline (optional) instead of the shared `text` prop, which is required:true
-    // and reused by the approval/action actions — keep those unchanged.
     text: Property.LongText({
       displayName: 'Message',
       description:
-        'The text of the message. Optional — leave it empty to send a blocks-only DM. When provided alongside Block Kit blocks it renders as a section above them (consistent with Post Message), and is also used as the notification fallback text.',
+        'The text of your message. Renders as a section above any Block Kit blocks, and is used as the notification fallback. Leave empty to send blocks only.',
       required: false,
     }),
     username,
@@ -57,8 +55,6 @@ export const slackSendDirectMessageAction = createAction({
     }
 
     const blockList: (KnownBlock | Block)[] = [];
-    // Build a section from `text` only when provided, so a blocks-only DM is possible.
-    // `text` is also passed as the notification fallback. Consistent with Post Message.
     if (text) {
       blockList.push(...textToSectionBlocks(text));
     }

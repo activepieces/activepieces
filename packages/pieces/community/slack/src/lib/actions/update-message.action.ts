@@ -34,7 +34,7 @@ export const slackUpdateMessageAiAction = createAction({
     text: Property.LongText({
       displayName: 'Message',
       description:
-        'The new text of the message. Optional — leave it empty to send a blocks-only update. When provided alongside blocks it renders as a section above them (consistent with Post Message), and is also used as the notification fallback text.',
+        'The new text of the message. Renders as a section above any blocks, and is used as the notification fallback. Leave empty for a blocks-only update.',
       required: false,
     }),
     blocks: Property.Json({
@@ -54,9 +54,6 @@ export const slackUpdateMessageAiAction = createAction({
 
     const blockList: (KnownBlock | Block)[] = [];
 
-    // Build a section from `text` only when provided, so a blocks-only update is
-    // possible. `text` is also passed as the notification fallback. Consistent with
-    // the Post/Send Message action.
     if (propsValue.text) {
       blockList.push(...textToSectionBlocks(propsValue.text));
     }
@@ -65,7 +62,7 @@ export const slackUpdateMessageAiAction = createAction({
     }
 
     if (blockList.length === 0) {
-      throw new Error('Provide a Message and/or Block Kit blocks to update.');
+      throw new Error('Either Message or Block Kit blocks must be provided');
     }
 
     return await client.chat.update({
