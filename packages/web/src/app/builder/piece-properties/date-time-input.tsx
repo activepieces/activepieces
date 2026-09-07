@@ -57,7 +57,7 @@ export function DateTimeInput({
     nextDate.setHours(
       timeSource.getHours(),
       timeSource.getMinutes(),
-      timeSource.getSeconds(),
+      selectedDate?.getSeconds() ?? 0,
       0,
     );
     commitDate(nextDate);
