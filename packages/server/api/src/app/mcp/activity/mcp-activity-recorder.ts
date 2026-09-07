@@ -110,7 +110,7 @@ async function savePayload({ context, input, result, log }: SavePayloadParams): 
             compression: FileCompression.ZSTD,
             data: compressed,
             platformId: context.platformId,
-            ...(isNil(context.projectId) ? {} : { projectId: context.projectId }),
+            projectId: context.projectId,
         })
         return { id: file.id, truncated }
     }
@@ -134,7 +134,7 @@ function capRunActionField(value: string): string {
 
 export type McpActivityContext = {
     platformId: string
-    projectId: string | null
+    projectId: string
     userId: string
     clientKey: McpOAuthClientKey | null
 }

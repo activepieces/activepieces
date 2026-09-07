@@ -2,10 +2,13 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { McpActivity, McpOAuthClientKey } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { withActivityRecording } from '../../../../src/app/mcp/activity/mcp-activity-recorder'
+import { mcpProjectSelection } from '../../../../src/app/mcp/mcp-project-selection'
 import { mcpServerService } from '../../../../src/app/mcp/mcp-service'
+import { db } from '../../../helpers/db'
+import { createMockProject } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
@@ -43,6 +46,22 @@ async function callRunAction({ pieceName, connectionExternalId, clientKey }: { p
     })
 }
 
+async function callPlatformRunAction(): Promise<void> {
+    const mcp = await mcpServerService(app!.log).getPopulatedByPlatformId(ctx.platform.id)
+    const server = await mcpServerService(app!.log).buildServer({
+        mcp,
+        userId: ctx.user.id,
+        platformId: ctx.platform.id,
+    })
+
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    const client = new Client({ name: 'activity-test', version: '1.0.0' })
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)])
+    await client.callTool({ name: 'ap_run_action', arguments: { pieceName: 'doesnotexist', actionName: 'do_nothing' } })
+    await new Promise((resolve) => setTimeout(resolve, RECORD_SETTLE_MS))
+    await client.close()
+}
+
 async function findActivityRows(): Promise<McpActivity[]> {
     return databaseConnection()
         .getRepository('mcp_activity')
@@ -56,6 +75,10 @@ describe('MCP activity recording', () => {
 
     beforeEach(async () => {
         ctx = await createTestContext(app!)
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
     })
 
     // The project MCP server is the main path and it recorded nothing, because
@@ -76,6 +99,26 @@ describe('MCP activity recording', () => {
             connectionExternalId: 'conn-external-1',
         })
         expect(rows[0].payloadFileId).not.toBeNull()
+    })
+
+    // On the platform server the selected project is mutable Redis state, shared per
+    // user across sessions. The recorder used to re-read it after execute returned, so
+    // a selection that moved mid-call put the row and its payload in a project the
+    // action never ran in. One read per call is the invariant: any second read here
+    // returns the wrong project.
+    it('attributes a platform-server call to the project it actually ran in', async () => {
+        const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id, displayName: 'Switched to mid-call' })
+        await db.save('project', otherProject)
+        const readSelection = vi.spyOn(mcpProjectSelection, 'get')
+            .mockResolvedValueOnce(ctx.project.id)
+            .mockResolvedValue(otherProject.id)
+
+        await callPlatformRunAction()
+
+        const rows = await findActivityRows()
+        expect(rows).toHaveLength(1)
+        expect(rows[0].projectId).toBe(ctx.project.id)
+        expect(readSelection).toHaveBeenCalledTimes(1)
     })
 
     // The client is only knowable from the access token that authenticated the call,
