@@ -48,4 +48,20 @@ describe('platform configuration on cloud', () => {
 
         expect(enabled).toEqual([ctx.project.id])
     })
+
+    it('keeps every platform in the setup-report filter after the flag is switched off', async () => {
+        const ctx = await createTestContext(app!)
+        const service = platformConfigurationService(app!.log)
+
+        await service.update({
+            platformId: ctx.platform.id,
+            isInfraSetupTelemetryEnabled: false,
+        })
+
+        const enabled = await service.filterPlatformsWithInfraSetupTelemetryEnabled({
+            platformIds: [ctx.platform.id],
+        })
+
+        expect(enabled).toEqual([ctx.platform.id])
+    })
 })
