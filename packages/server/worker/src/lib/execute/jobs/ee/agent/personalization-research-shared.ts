@@ -9,17 +9,6 @@ export const TITLE_HARD_MAX_CHARS = 60
 
 export const MAX_DISPLAY_NAME_CHARS = 50
 
-
-export type PersonalizationUseCaseResult = {
-    id: string
-    title: string
-    prompt: string
-    imageId: typeof CHAT_SUGGESTION_CARD_IMAGE_IDS[number]
-    app?: string
-    kind?: 'mission' | 'routine'
-}
-
-
 export const PROFILE_SCHEMA = z.object({
     companyName: z.string(),
     displayName: z.string(),
@@ -29,7 +18,6 @@ export const PROFILE_SCHEMA = z.object({
     userRole: z.string().nullable(),
     roleConfidence: z.enum(['low', 'medium', 'high']).nullable(),
 })
-
 
 export const CARDS_SCHEMA = z.object({
     useCases: z.array(z.object({
@@ -42,3 +30,11 @@ export const CARDS_SCHEMA = z.object({
     })),
 })
 
+export type PersonalizationUseCaseResult = {
+    id: string
+    title: string
+    prompt: string
+    imageId: typeof CHAT_SUGGESTION_CARD_IMAGE_IDS[number]
+    app?: string
+    kind?: 'mission' | 'routine'
+}

@@ -7,18 +7,6 @@ import { CARDS_SCHEMA, MAX_DISPLAY_NAME_CHARS, MAX_USE_CASES, MIN_USE_CASES, Per
 import { aOrAn, cleanCards, cleanProfile } from './personalization-shaping'
 import { delayWithJitter } from './run-agent-turn'
 
-const FALLBACK_RESEARCH_TIMEOUT_MS = 15_000
-
-const GENERATE_TIMEOUT_MS = 30_000
-
-const CURATION_TIMEOUT_MS = 20_000
-
-const MAX_RESEARCH_STEPS = 3
-
-const CANDIDATE_USE_CASES = 28
-
-const MAX_TITLE_CHARS = 40
-
 export async function fallbackResearch({ provider, auth, providerConfig, fastModelId, companyRef, role, groundwork, log }: {
     provider: AIProviderName
     auth: Record<string, unknown>
@@ -51,7 +39,6 @@ ${groundworkBlock}`,
     }
     return `${groundworkBlock}\n\n--- RESEARCH ---\n${data.text}`
 }
-
 
 export async function generateProfile({ model, domain, companyText, digest, role, user, log }: {
     model: LanguageModel
@@ -96,7 +83,6 @@ ${digest}`
     return null
 }
 
-
 export async function generateCards({ model, digest, role, user, log }: {
     model: LanguageModel
     digest: string
@@ -133,53 +119,6 @@ export async function generateCards({ model, digest, role, user, log }: {
     }
     return null
 }
-
-
-function buildCardsPrompt({ digest, role, user, count, emphasis }: {
-    digest: string
-    role: string | null
-    user: { firstName: string, lastName: string, email: string }
-    count: number
-    emphasis: string
-}): string {
-    const perspective = role
-        ? `${user.firstName} WORKS AT this company as **${role}**. Every card is a job THEY personally run inside the company in that role.`
-        : `${user.firstName} WORKS AT this company. Every card is a job an EMPLOYEE runs inside the company.`
-    return `You design the "what can I do for you" use-case cards shown in the empty chat of an AI automation assistant (it builds automations, connects apps, runs research, sends emails, manages data — like a tireless operator).
-
-Produce exactly ${count} use-case cards personalized for ${user.firstName} — count them before answering; only the strongest will be shown.
-${emphasis}
-
-THE PERSPECTIVE — this is the rule everything else serves:
-${perspective}
-NEVER design cards for the company's customers or end-users. Example: for someone at Airbnb, never "find my next stay" or host/guest workflows — think like the Airbnb employee. And ROLE OWNERSHIP is strict: every card must be work this person's role actually owns and personally drives. A Product Manager does NOT run guest winback campaigns or recruit hosts (that's marketing/supply ops) — they own specs, discovery, roadmap trade-offs, metrics reviews, launch coordination, stakeholder alignment. If a card would sit on another team's desk, cut it.
-
-RESOLVE THE ROLE THROUGH THIS COMPANY. A title can mean different things in different places — interpret it as it exists AT THIS SPECIFIC COMPANY, and do NOT drift into an adjacent discipline just because the research mentions it. An "Operations Manager" at a payments/software company owns business & process ops (vendor management, internal tooling, SLAs, process automation, cross-team cadence) — NOT marketing campaigns, demand-gen, or martech (that's Marketing Ops, a different job). If the research material contains content for a neighbouring specialization, ignore it unless this person's actual role is that specialization.
-
-GROUND IN BOTH WORLDS — generic is failure. Every card must fuse the role's craft with THIS company's reality from the research below: its actual products, named competitors, recent moves, customers, business model. A card that could be shown unchanged to the same role at any other company is too generic — at least half the set must visibly lean on a company-specific fact (a named rival to monitor, a real product line to report on, a current strategic move to ride).
-
-BE LOUD. Every card must read like it takes over work that eats HOURS of their day or their week — a whole mission or a standing job, never a small task or a reminder. If completing the card wouldn't make this person say "that just saved me my afternoon" (or "my Monday"), it's too weak. MIX the set: bold one-time missions (a full competitive teardown, a launch-readiness audit, a deep metrics investigation) and recurring jobs put on permanent autopilot (the weekly exec update that writes itself, the daily metrics brief, continuous competitor monitoring).
-
-NO-SETUP WINS COME FIRST. The user just signed up and has connected NOTHING yet, so a solid share of this batch — and especially the strongest, most immediate cards — must deliver real value with ZERO account connections. These lean only on capabilities that need no login: web & company research, drafting and generating content (emails, docs, posts, briefs, plans), analysis and calculations, and Activepieces Tables — a built-in spreadsheet/database the assistant creates and fills with data on the spot. At most such a card leans on the single most ubiquitous tool the person certainly already has. Set "app" to null on every one of these no-setup cards. Cards that clearly require connecting a specific app (a CRM, a billing system, a support desk, a data warehouse) are still welcome, but they are NOT the immediate wins — they come later in the set.
-
-Card rules — match this exact voice:
-- "title": a short punchy imperative from the user's point of view, 2-5 words, max ${MAX_TITLE_CHARS} characters (titles longer than ${TITLE_HARD_MAX_CHARS} get cut off mid-thought on the card — keep them SHORT) — ALWAYS starting with a verb ("Run the weekly dashboard", never the noun phrase "Weekly dashboard"). "my"/"me" is welcome where it lands naturally ("Fill my pipeline", "Prep me for meetings") but NEVER force it — vary the phrasing across the set so it doesn't read like a template ("Chase down late payers", "Audit pay equity", "Launch benefits enrollment" are equally good). NEVER include the company name in the title.
-- "prompt": the aspirational first-person message sent when the card is tapped, 1-2 sentences, referencing their actual world (their product, their team's metrics, the tools people in their function/industry use) and scoped like a mission — end-to-end, not a step.
-- "id": a short kebab-case slug unique within the set.
-- "imageId": pick the semantically closest card art from the allowed list (an enum in the schema). Spread across the whole list — do not repeat an art until you have used most of the list, and never use the same art more than twice.
-- "app": ONLY when one obviously-dominant tool fits the card (a piece short-name like "hubspot", "shopify", "github", "slack", "gmail") AND the card genuinely needs that account connected — otherwise null. Leave it null on every no-setup card (see NO-SETUP WINS COME FIRST).
-- "kind": "mission" for a bold one-time play (audit, teardown, launch prep), "routine" for a recurring job on autopilot (daily brief, weekly report, continuous monitoring).
-- Each card is a DISTINCT job-to-be-done; order most-relevant-first for this person's role — the first 4 are the headline row: make them the strongest AND runnable with nothing connected (no "app").
-
---- RESEARCH MATERIAL ---
-${digest}`
-}
-
-
-const CURATION_SCHEMA = z.object({
-    keep: z.array(z.number()),
-})
-
 
 export async function curateCards({ model, cards, role, profile, user, log }: {
     model: LanguageModel
@@ -234,3 +173,58 @@ ${numbered}`,
     return picked.slice(0, MAX_USE_CASES)
 }
 
+const FALLBACK_RESEARCH_TIMEOUT_MS = 15_000
+
+const GENERATE_TIMEOUT_MS = 30_000
+
+const CURATION_TIMEOUT_MS = 20_000
+
+const MAX_RESEARCH_STEPS = 3
+
+const CANDIDATE_USE_CASES = 28
+
+const MAX_TITLE_CHARS = 40
+
+function buildCardsPrompt({ digest, role, user, count, emphasis }: {
+    digest: string
+    role: string | null
+    user: { firstName: string, lastName: string, email: string }
+    count: number
+    emphasis: string
+}): string {
+    const perspective = role
+        ? `${user.firstName} WORKS AT this company as **${role}**. Every card is a job THEY personally run inside the company in that role.`
+        : `${user.firstName} WORKS AT this company. Every card is a job an EMPLOYEE runs inside the company.`
+    return `You design the "what can I do for you" use-case cards shown in the empty chat of an AI automation assistant (it builds automations, connects apps, runs research, sends emails, manages data — like a tireless operator).
+
+Produce exactly ${count} use-case cards personalized for ${user.firstName} — count them before answering; only the strongest will be shown.
+${emphasis}
+
+THE PERSPECTIVE — this is the rule everything else serves:
+${perspective}
+NEVER design cards for the company's customers or end-users. Example: for someone at Airbnb, never "find my next stay" or host/guest workflows — think like the Airbnb employee. And ROLE OWNERSHIP is strict: every card must be work this person's role actually owns and personally drives. A Product Manager does NOT run guest winback campaigns or recruit hosts (that's marketing/supply ops) — they own specs, discovery, roadmap trade-offs, metrics reviews, launch coordination, stakeholder alignment. If a card would sit on another team's desk, cut it.
+
+RESOLVE THE ROLE THROUGH THIS COMPANY. A title can mean different things in different places — interpret it as it exists AT THIS SPECIFIC COMPANY, and do NOT drift into an adjacent discipline just because the research mentions it. An "Operations Manager" at a payments/software company owns business & process ops (vendor management, internal tooling, SLAs, process automation, cross-team cadence) — NOT marketing campaigns, demand-gen, or martech (that's Marketing Ops, a different job). If the research material contains content for a neighbouring specialization, ignore it unless this person's actual role is that specialization.
+
+GROUND IN BOTH WORLDS — generic is failure. Every card must fuse the role's craft with THIS company's reality from the research below: its actual products, named competitors, recent moves, customers, business model. A card that could be shown unchanged to the same role at any other company is too generic — at least half the set must visibly lean on a company-specific fact (a named rival to monitor, a real product line to report on, a current strategic move to ride).
+
+BE LOUD. Every card must read like it takes over work that eats HOURS of their day or their week — a whole mission or a standing job, never a small task or a reminder. If completing the card wouldn't make this person say "that just saved me my afternoon" (or "my Monday"), it's too weak. MIX the set: bold one-time missions (a full competitive teardown, a launch-readiness audit, a deep metrics investigation) and recurring jobs put on permanent autopilot (the weekly exec update that writes itself, the daily metrics brief, continuous competitor monitoring).
+
+NO-SETUP WINS COME FIRST. The user just signed up and has connected NOTHING yet, so a solid share of this batch — and especially the strongest, most immediate cards — must deliver real value with ZERO account connections. These lean only on capabilities that need no login: web & company research, drafting and generating content (emails, docs, posts, briefs, plans), analysis and calculations, and Activepieces Tables — a built-in spreadsheet/database the assistant creates and fills with data on the spot. At most such a card leans on the single most ubiquitous tool the person certainly already has. Set "app" to null on every one of these no-setup cards. Cards that clearly require connecting a specific app (a CRM, a billing system, a support desk, a data warehouse) are still welcome, but they are NOT the immediate wins — they come later in the set.
+
+Card rules — match this exact voice:
+- "title": a short punchy imperative from the user's point of view, 2-5 words, max ${MAX_TITLE_CHARS} characters (titles longer than ${TITLE_HARD_MAX_CHARS} get cut off mid-thought on the card — keep them SHORT) — ALWAYS starting with a verb ("Run the weekly dashboard", never the noun phrase "Weekly dashboard"). "my"/"me" is welcome where it lands naturally ("Fill my pipeline", "Prep me for meetings") but NEVER force it — vary the phrasing across the set so it doesn't read like a template ("Chase down late payers", "Audit pay equity", "Launch benefits enrollment" are equally good). NEVER include the company name in the title.
+- "prompt": the aspirational first-person message sent when the card is tapped, 1-2 sentences, referencing their actual world (their product, their team's metrics, the tools people in their function/industry use) and scoped like a mission — end-to-end, not a step.
+- "id": a short kebab-case slug unique within the set.
+- "imageId": pick the semantically closest card art from the allowed list (an enum in the schema). Spread across the whole list — do not repeat an art until you have used most of the list, and never use the same art more than twice.
+- "app": ONLY when one obviously-dominant tool fits the card (a piece short-name like "hubspot", "shopify", "github", "slack", "gmail") AND the card genuinely needs that account connected — otherwise null. Leave it null on every no-setup card (see NO-SETUP WINS COME FIRST).
+- "kind": "mission" for a bold one-time play (audit, teardown, launch prep), "routine" for a recurring job on autopilot (daily brief, weekly report, continuous monitoring).
+- Each card is a DISTINCT job-to-be-done; order most-relevant-first for this person's role — the first 4 are the headline row: make them the strongest AND runnable with nothing connected (no "app").
+
+--- RESEARCH MATERIAL ---
+${digest}`
+}
+
+const CURATION_SCHEMA = z.object({
+    keep: z.array(z.number()),
+})

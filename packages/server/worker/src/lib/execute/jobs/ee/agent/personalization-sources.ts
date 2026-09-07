@@ -2,26 +2,6 @@ import { isNil, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
 import { JobContext } from '../../../types'
 
-const HOMEPAGE_TIMEOUT_MS = 6_000
-
-const HOMEPAGE_MAX_BYTES = 1_000_000
-
-const HOMEPAGE_BODY_EXCERPT_CHARS = 3_000
-
-const SEARCH_TIMEOUT_MS = 6_000
-
-const SEARCH_RESULTS_PER_QUERY = 5
-
-const SEARCH_CONTENT_CLIP_CHARS = 800
-
-type HomepageExtract = {
-    siteName: string | null
-    title: string | null
-    description: string | null
-    bodyExcerpt: string
-}
-
-
 export async function readHomepage({ domain, log }: { domain: string, log: JobContext['log'] }): Promise<HomepageExtract | null> {
     const client = safeHttp.createAxios({
         timeout: HOMEPAGE_TIMEOUT_MS,
@@ -41,40 +21,6 @@ export async function readHomepage({ domain, log }: { domain: string, log: JobCo
     return null
 }
 
-
-function extractHomepage({ html }: { html: string }): HomepageExtract {
-    const clipped = html.slice(0, HOMEPAGE_MAX_BYTES)
-    const siteName = matchMetaContent({ html: clipped, key: 'og:site_name' })
-    const ogDescription = matchMetaContent({ html: clipped, key: 'og:description' })
-    const metaDescription = matchMetaContent({ html: clipped, key: 'description', attribute: 'name' })
-    const titleMatch = /<title[^>]*>([^<]*)<\/title>/i.exec(clipped)
-    const bodyExcerpt = clipped
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/&[a-z#0-9]+;/gi, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, HOMEPAGE_BODY_EXCERPT_CHARS)
-    return {
-        siteName: siteName ?? null,
-        title: titleMatch?.[1]?.trim() ?? null,
-        description: ogDescription ?? metaDescription ?? null,
-        bodyExcerpt,
-    }
-}
-
-
-function matchMetaContent({ html, key, attribute = 'property' }: { html: string, key: string, attribute?: string }): string | null {
-    const forward = new RegExp(`<meta[^>]*${attribute}=["']${key}["'][^>]*content=["']([^"']*)["']`, 'i').exec(html)
-    if (forward?.[1]) {
-        return forward[1].trim()
-    }
-    const reversed = new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*${attribute}=["']${key}["']`, 'i').exec(html)
-    return reversed?.[1]?.trim() ?? null
-}
-
-
 export function buildHomepageDigest({ domain, homepage }: { domain: string, homepage: HomepageExtract }): string {
     return [
         `Domain: ${domain}`,
@@ -86,7 +32,6 @@ export function buildHomepageDigest({ domain, homepage }: { domain: string, home
         '--- END HOMEPAGE ---',
     ].join('\n')
 }
-
 
 export async function tavilyResearch({ apiKey, queries, log }: {
     apiKey: string
@@ -126,14 +71,61 @@ export async function tavilyResearch({ apiKey, queries, log }: {
     return blocks
 }
 
+const HOMEPAGE_TIMEOUT_MS = 6_000
+
+const HOMEPAGE_MAX_BYTES = 1_000_000
+
+const HOMEPAGE_BODY_EXCERPT_CHARS = 3_000
+
+const SEARCH_TIMEOUT_MS = 6_000
+
+const SEARCH_RESULTS_PER_QUERY = 5
+
+const SEARCH_CONTENT_CLIP_CHARS = 800
+
+function extractHomepage({ html }: { html: string }): HomepageExtract {
+    const clipped = html.slice(0, HOMEPAGE_MAX_BYTES)
+    const siteName = matchMetaContent({ html: clipped, key: 'og:site_name' })
+    const ogDescription = matchMetaContent({ html: clipped, key: 'og:description' })
+    const metaDescription = matchMetaContent({ html: clipped, key: 'description', attribute: 'name' })
+    const titleMatch = /<title[^>]*>([^<]*)<\/title>/i.exec(clipped)
+    const bodyExcerpt = clipped
+        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&[a-z#0-9]+;/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, HOMEPAGE_BODY_EXCERPT_CHARS)
+    return {
+        siteName: siteName ?? null,
+        title: titleMatch?.[1]?.trim() ?? null,
+        description: ogDescription ?? metaDescription ?? null,
+        bodyExcerpt,
+    }
+}
+
+function matchMetaContent({ html, key, attribute = 'property' }: { html: string, key: string, attribute?: string }): string | null {
+    const forward = new RegExp(`<meta[^>]*${attribute}=["']${key}["'][^>]*content=["']([^"']*)["']`, 'i').exec(html)
+    if (forward?.[1]) {
+        return forward[1].trim()
+    }
+    const reversed = new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*${attribute}=["']${key}["']`, 'i').exec(html)
+    return reversed?.[1]?.trim() ?? null
+}
+
+type HomepageExtract = {
+    siteName: string | null
+    title: string | null
+    description: string | null
+    bodyExcerpt: string
+}
 
 export type SearchQuery = {
     query: string
     focus: 'company' | 'role'
 }
 
-
 type SearchBlock = SearchQuery & {
     block: string
 }
-

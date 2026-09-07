@@ -4,8 +4,6 @@ import { ExecutePersonalizationResearchJobData } from '@activepieces/shared'
 import { JobContext } from '../../../types'
 import { asRecord } from './personalization-shaping'
 
-const ENRICHMENT_TIMEOUT_MS = 8_000
-
 export async function runPrefillLookup({ data, apiClient, log }: {
     data: ExecutePersonalizationResearchJobData
     apiClient: JobContext['apiClient']
@@ -20,6 +18,7 @@ export async function runPrefillLookup({ data, apiClient, log }: {
     await emitPrefill({ enrichment, domain: website, apiClient, platformId, userId, log })
 }
 
+const ENRICHMENT_TIMEOUT_MS = 8_000
 
 async function emitPrefill({ enrichment, domain, apiClient, platformId, userId, log }: {
     enrichment: ApolloEnrichment | null
@@ -50,7 +49,6 @@ async function emitPrefill({ enrichment, domain, apiClient, platformId, userId, 
     }
     log.info({ platform: { id: platformId }, user: { id: userId }, confidence: enrichment.confidence }, '[executePersonalizationResearch] Prefill emitted')
 }
-
 
 async function enrichWithApollo({ apiKey, email, domain, log }: {
     apiKey: string
@@ -119,7 +117,6 @@ async function enrichWithApollo({ apiKey, email, domain, log }: {
     }
 }
 
-
 type ApolloEnrichment = {
     digest: string
     title: string | null
@@ -127,4 +124,3 @@ type ApolloEnrichment = {
     companyName: string | null
     confidence: 'low' | 'medium' | 'high' | null
 }
-
