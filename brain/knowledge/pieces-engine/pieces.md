@@ -19,6 +19,8 @@ The metadata catalog of automation integrations ("pieces") — each a named inte
 - **OutputSchema** — optional per-action/trigger structured render hint (`fields`, `itemLabel`); set by the piece author, consumed by the builder's Smart Output Viewer and data selector. Opt-in and non-breaking.
 
 ### Gotchas
+- Completed translated lists are cached by release, platform and locale for 60 seconds; project visibility, audience, search and sorting still run on each request. The cache retains at most four serialized lists within a 96 MiB payload budget and allows four fills at a time. It is bypassed with `AP_DEV_PIECES` and in tests.
+- Catalogue invalidation clears completed lists locally and through the existing Redis channel. In-flight fills carry a generation so an invalidated result cannot repopulate the cache. Returned lists are independently deserialized to prevent cross-request mutation; usage counts can lag by up to the TTL. The payload budget excludes transient query/parsed objects, and the first request after expiry still pays the database and translation cost.
 - Available all editions; base listing + install is Community-level.
 - EE/Cloud per-piece and per-action/trigger visibility flows through `resolveVisibility` (`ee/pieces/filters/piece-filtering-utils.ts`), which returns a `VisibilityPolicy` or `null` on CE / when `platformId`/`projectId` is nil (callers treat `null` as no filtering). The policy is derived from the project's **piece set** (via `project.pieceSetId`, falling back to the platform Default).
 - Install and sync also enqueue a tool-search reindex, but only when `isToolSearchEnabled()`; no-op otherwise.

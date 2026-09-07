@@ -23,11 +23,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const locale = params.locale ?? LocalesEnum.ENGLISH
-            const translatedPieces = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
-                platformId: params.platformId,
-                locale,
-                log,
-            }))
+            const key = JSON.stringify([apVersionUtil.getCurrentRelease(), params.platformId ?? null, locale])
+            const translatedPieces = await pieceCache(log).loadList({
+                key,
+                loader: () => fetchLatestPieces({ platformId: params.platformId, locale, log }),
+            })
             const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
             const audience = params.audience ?? PieceAudienceFilter.HUMAN
             const audiencePieces = translatedPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
@@ -406,7 +406,7 @@ const increaseMajorVersion = (version: string): string => {
 async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<PieceMetadataSchema[]> {
     const currentRelease = apVersionUtil.getCurrentRelease()
 
-    const latestPieces = await dedupe(`latest-pieces:${currentRelease}`, () => fetchLatestCompatiblePiecesFromDB(currentRelease))
+    const latestPieces = await dedupe(`latest-pieces:${currentRelease}:${pieceCache(log).getGeneration()}`, () => fetchLatestCompatiblePiecesFromDB(currentRelease))
     const translatedPieces = translatePieces(latestPieces, locale)
 
     const devPieces = await loadDevPiecesIfEnabled(log)
