@@ -209,6 +209,11 @@ describe('flowTriggerSideEffect', () => {
                 pieceTrigger: makeManualTrigger(),
                 ignoreError: true,
             })
+
+            expect(mockLog.warn).toHaveBeenCalledWith(
+                expect.objectContaining({ flow: { id: 'flow-1' }, error: 'Engine failed' }),
+                expect.stringContaining('Ignored error'),
+            )
         })
 
         it('should throw when submitAndWaitForResponse throws and ignoreError is false', async () => {

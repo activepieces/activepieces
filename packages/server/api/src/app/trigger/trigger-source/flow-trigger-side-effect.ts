@@ -15,6 +15,8 @@ import { appEventRoutingService } from '../app-event-routing/app-event-routing.s
 
 const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
+const IGNORED_DISABLE_ERROR = '[flowTriggerSideEffect#disable] Ignored error during trigger disable'
+
 export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
     return {
         async enable(params: EnableFlowTriggerParams): Promise<ActiveTriggerReturn> {
@@ -92,10 +94,13 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 if (!params.ignoreError) {
                     throw error
                 }
-                log.warn({ flow: { id: flowId }, error: error.message }, '[flowTriggerSideEffect#disable] Ignored error during trigger disable')
+                log.warn({ flow: { id: flowId }, error: error.message }, IGNORED_DISABLE_ERROR)
             }
             else if (!params.ignoreError) {
                 assertEngineResponseIsOk(engineHelperResponse!, flowId, flowVersionId)
+            }
+            else if (engineHelperResponse?.status !== EngineResponseStatus.OK) {
+                log.warn({ flow: { id: flowId }, error: engineHelperResponse?.error }, IGNORED_DISABLE_ERROR)
             }
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK:
