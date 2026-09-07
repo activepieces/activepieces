@@ -645,9 +645,9 @@ const VerificationRecordRow = ({
 
 const SsoDomainFormValues = z.object({
   ssoDomain: z
-    .hostname('invalidSsoDomain')
+    .string()
     .max(253, 'invalidSsoDomain')
-    .refine((v) => v.includes('.'), 'invalidSsoDomain'),
+    .regex(z.regexes.domain, 'invalidSsoDomain'),
 });
 type SsoDomainFormValues = z.infer<typeof SsoDomainFormValues>;
 

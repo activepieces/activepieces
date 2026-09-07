@@ -2,6 +2,7 @@ import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined,
 import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import { z } from 'zod'
 import { authenticationUtils } from '../authentication/authentication-utils'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
@@ -167,6 +168,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
             }
             : undefined
         await assertSignInMethodRemains({ params, platform, federatedAuthProviders, hasSamlConfigured: () => this.hasSamlConfigured(params.id) })
+        const allowedAuthDomains = normalizeAllowedAuthDomains(params.allowedAuthDomains)
         const updatedPlatform = {
             ...platform,
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
@@ -184,7 +186,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
-            ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('allowedAuthDomains', allowedAuthDomains),
             ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
             ...spreadIfDefined('ssoDomain', params.ssoDomain),
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
@@ -397,6 +399,24 @@ function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): pl
     return 'federatedAuthProviders' in platform
 }
 
+function normalizeAllowedAuthDomains(domains: string[] | undefined): string[] | undefined {
+    if (isNil(domains)) {
+        return undefined
+    }
+    return domains.map((domain) => {
+        const normalized = domain.trim().toLowerCase()
+        if (!AllowedAuthDomain.safeParse(normalized).success) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `"${domain}" is not a valid domain, enter a domain like acme.com`,
+                },
+            })
+        }
+        return normalized
+    })
+}
+
 async function assertSignInMethodRemains({ params, platform, federatedAuthProviders, hasSamlConfigured }: AssertSignInMethodRemainsParams): Promise<void> {
     const touchesSignInMethods = params.emailAuthEnabled !== undefined
         || params.googleAuthEnabled !== undefined
@@ -420,6 +440,8 @@ async function assertSignInMethodRemains({ params, platform, federatedAuthProvid
         },
     })
 }
+
+const AllowedAuthDomain = z.string().max(253).regex(z.regexes.domain)
 
 type AssertSignInMethodRemainsParams = {
     params: UpdateParams

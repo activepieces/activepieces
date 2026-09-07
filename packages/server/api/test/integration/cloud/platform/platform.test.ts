@@ -171,6 +171,101 @@ describe('Platform API', () => {
             expect(response?.json().emailAuthEnabled).toBe(false)
         }),
 
+        it.each([
+            'activepieces',
+            'acme.123',
+            'acme.c',
+            '-acme.com',
+            'acme-.com',
+            'acme..com',
+            'acme.com.',
+            'ac me.com',
+            'localhost',
+            '192.168.1.1',
+        ])('rejects %s as an allowed auth domain', async (invalidDomain) => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    allowedAuthDomains: ['acme.com'],
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { allowedAuthDomains: [invalidDomain] },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain(invalidDomain)
+
+            const platformAfter = await databaseConnection()
+                .getRepository('platform')
+                .findOneByOrFail({ id: mockPlatform.id })
+            expect(platformAfter.allowedAuthDomains).toStrictEqual(['acme.com'])
+        }),
+
+        it.each(['acme.com', 'acme.co.uk', 'sub.domain.acme.com', 'a.io', 'xn--bcher-kva.de'])(
+            'accepts %s as an allowed auth domain',
+            async (validDomain) => {
+                // arrange
+                const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({})
+                const testToken = await generateMockToken({
+                    type: PrincipalType.USER,
+                    id: mockOwner.id,
+                    platform: { id: mockPlatform.id },
+                })
+
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: `/api/v1/platforms/${mockPlatform.id}`,
+                    headers: {
+                        authorization: `Bearer ${testToken}`,
+                    },
+                    body: { allowedAuthDomains: [validDomain] },
+                })
+
+                // assert
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                expect(response?.json().allowedAuthDomains).toStrictEqual([validDomain])
+            },
+        ),
+
+        it('normalizes allowed auth domains before saving them', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({})
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { allowedAuthDomains: ['  Acme.COM  '] },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().allowedAuthDomains).toStrictEqual(['acme.com'])
+        }),
+
         it('updates the platform logo icons', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {

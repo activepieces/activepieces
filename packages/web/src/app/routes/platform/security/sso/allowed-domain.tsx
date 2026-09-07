@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { api } from '@/lib/api';
 
 type AllowedDomainDialogProps = {
   platform: PlatformWithoutSensitiveData;
@@ -32,7 +33,10 @@ type AllowedDomainDialogProps = {
 const AllowedDomainsFormValues = z.object({
   allowedAuthDomains: z.array(
     z.object({
-      domain: z.string().min(1),
+      domain: z
+        .string()
+        .max(253, 'invalidAuthDomain')
+        .regex(z.regexes.domain, 'invalidAuthDomain'),
     }),
   ),
 });
@@ -70,6 +74,14 @@ export const AllowedDomainDialog = ({
       });
       setOpen(false);
     },
+    onError: (error) => {
+      toast.error(
+        api.extractServerErrorMessage(
+          error,
+          t("Couldn't update allowed domains"),
+        ),
+      );
+    },
   });
 
   return (
@@ -96,8 +108,8 @@ export const AllowedDomainDialog = ({
             className="grid space-y-4"
             onSubmit={form.handleSubmit((data) => {
               mutate({
-                allowedAuthDomains: data.allowedAuthDomains.map(
-                  (d) => d.domain,
+                allowedAuthDomains: data.allowedAuthDomains.map((d) =>
+                  d.domain.trim().toLowerCase(),
                 ),
                 enforceAllowedAuthDomains:
                   data.allowedAuthDomains.length === 0 ? false : true,
@@ -115,8 +127,8 @@ export const AllowedDomainDialog = ({
               <FormField
                 key={field.id}
                 name={`allowedAuthDomains.${index}.domain`}
-                render={({ field }) => (
-                  <FormItem className="grid space-y-4">
+                render={({ field, fieldState, formState }) => (
+                  <FormItem className="grid space-y-2">
                     <div className="flex space-x-2">
                       <Input
                         {...field}
@@ -134,6 +146,9 @@ export const AllowedDomainDialog = ({
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
+                    {(fieldState.isTouched || formState.submitCount > 0) && (
+                      <FormMessage />
+                    )}
                   </FormItem>
                 )}
               />
