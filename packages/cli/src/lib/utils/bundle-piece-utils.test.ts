@@ -174,3 +174,85 @@ describe('bundlePiece — forked sibling entries (GIT-1772)', () => {
             .rejects.toThrow(/collides with another declared entry/)
     })
 })
+
+describe('bundlePiece — zod gate', () => {
+    let root: string | undefined
+
+    afterEach(() => {
+        if (root) {
+            rmSync(root, { recursive: true, force: true })
+            root = undefined
+        }
+    })
+
+    function writeZodPackage(): void {
+        const zodDir = join(root!, 'node_modules', 'zod')
+        mkdirSync(zodDir, { recursive: true })
+        writeFileSync(join(zodDir, 'package.json'), JSON.stringify({ name: 'zod', version: '4.3.6', main: 'index.js' }))
+        writeFileSync(join(zodDir, 'index.js'), 'exports.object = (shape) => ({ shape });\n')
+    }
+
+    it('rejects a piece whose first-party import pulls zod in without declaring it', async () => {
+        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        writeZodPackage()
+
+        const contractsDir = join(root, 'contracts')
+        mkdirSync(contractsDir, { recursive: true })
+        writeFileSync(join(contractsDir, 'index.ts'), 'import * as z from \'zod\'\nexport const Contract = z.object({})\n')
+
+        const piecePath = join(root, 'piece')
+        mkdirSync(join(piecePath, 'src'), { recursive: true })
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({ name: 'piece-undeclared-zod', version: '0.0.1' }))
+        writeFileSync(join(piecePath, 'src', 'index.ts'), 'import { Contract } from \'../../contracts\'\nexport const piece = { Contract }\n')
+        const distPath = join(piecePath, 'dist')
+        mkdirSync(distPath, { recursive: true })
+
+        await expect(bundlePieceUtils.bundlePiece({ piecePath, distPath, repoRoot: root }))
+            .rejects.toThrow(/bundles zod through first-party code that does not declare it/)
+    })
+
+    it('gates a forked entry bundle, not just the main one', async () => {
+        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        writeZodPackage()
+
+        const contractsDir = join(root, 'contracts')
+        mkdirSync(contractsDir, { recursive: true })
+        writeFileSync(join(contractsDir, 'index.ts'), 'import * as z from \'zod\'\nexport const Contract = z.object({})\n')
+
+        const piecePath = join(root, 'piece')
+        mkdirSync(join(piecePath, 'src', 'lib'), { recursive: true })
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({
+            name: 'piece-forked-zod',
+            version: '0.0.1',
+            bundleForkedEntries: ['src/lib/runner.ts'],
+        }))
+        writeFileSync(join(piecePath, 'src', 'index.ts'), 'export const piece = { name: \'forked\' }\n')
+        writeFileSync(join(piecePath, 'src', 'lib', 'runner.ts'), 'import { Contract } from \'../../../contracts\'\nconsole.log(Contract)\n')
+        const distPath = join(piecePath, 'dist')
+        mkdirSync(distPath, { recursive: true })
+
+        await expect(bundlePieceUtils.bundlePiece({ piecePath, distPath, repoRoot: root }))
+            .rejects.toThrow(/bundles zod through first-party code that does not declare it/)
+    })
+
+    it('allows zod that only a third-party dependency brings in', async () => {
+        root = mkdtempSync(join(tmpdir(), 'ap-bundle-'))
+        writeZodPackage()
+
+        const sdkDir = join(root, 'node_modules', 'fake-sdk')
+        mkdirSync(sdkDir, { recursive: true })
+        writeFileSync(join(sdkDir, 'package.json'), JSON.stringify({ name: 'fake-sdk', version: '1.0.0', main: 'index.js' }))
+        writeFileSync(join(sdkDir, 'index.js'), 'const z = require(\'zod\');\nmodule.exports = { schema: z.object({}) };\n')
+
+        const piecePath = join(root, 'piece')
+        mkdirSync(join(piecePath, 'src'), { recursive: true })
+        writeFileSync(join(piecePath, 'package.json'), JSON.stringify({ name: 'piece-vendor-zod', version: '0.0.1', dependencies: { 'fake-sdk': '1.0.0' } }))
+        writeFileSync(join(piecePath, 'src', 'index.ts'), 'import { schema } from \'fake-sdk\'\nexport const piece = { schema }\n')
+        const distPath = join(piecePath, 'dist')
+        mkdirSync(distPath, { recursive: true })
+
+        const result = await bundlePieceUtils.bundlePiece({ piecePath, distPath, repoRoot: root })
+
+        expect(result.inlined).toContain('zod')
+    })
+})

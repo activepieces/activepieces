@@ -1,4 +1,3 @@
-import * as z from "zod/mini";
 import { ActionContext } from '../context';
 import type { OutputSchema } from '../output-schema';
 import { ActionBase, Audience, AiMetadata, ActionClassification, PropertyGroup } from '../piece-metadata';
@@ -8,17 +7,16 @@ import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../pr
 export type ActionRunner<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty, ActionProps extends InputPropertyMap = InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
-export const ErrorHandlingOptionsParam = z.object({
-  retryOnFailure: z.object({
-    defaultValue: z.optional(z.boolean()),
-    hide: z.optional(z.boolean()),
-  }),
-  continueOnFailure: z.object({
-    defaultValue: z.optional(z.boolean()),
-    hide: z.optional(z.boolean()),
-  }),
-})
-export type ErrorHandlingOptionsParam = z.infer<typeof ErrorHandlingOptionsParam>
+export type ErrorHandlingOptionsParam = {
+  retryOnFailure: {
+    defaultValue?: boolean;
+    hide?: boolean;
+  };
+  continueOnFailure: {
+    defaultValue?: boolean;
+    hide?: boolean;
+  };
+}
 
 type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined, ActionProps extends InputPropertyMap> = {
   /**

@@ -1,25 +1,14 @@
-import * as z from "zod/mini";
 import { ApFile } from "./file-property";
 import { PropertyType } from "./property-type";
 
-
-
-export const BasePropertySchema = z.object({
-    displayName: z.string(),
-    description: z.optional(z.string()),
-    advanced: z.optional(z.boolean()),
-    width: z.optional(z.enum(['half', 'full'])),
-    icon: z.optional(z.string()),
-    placeholder: z.optional(z.string()),
-})
-
-export type BasePropertySchema = z.infer<typeof BasePropertySchema>
-
-export const TPropertyValue = <T extends z.ZodMiniType, U extends PropertyType>(_T: T, propertyType: U) => z.object({
-    type: z.literal(propertyType),
-    required: z.boolean(),
-    defaultValue: z.optional(z.any()),
-})
+export type BasePropertySchema = {
+    displayName: string;
+    description?: string;
+    advanced?: boolean;
+    width?: 'half' | 'full';
+    icon?: string;
+    placeholder?: string;
+}
 
 export type TPropertyValue<
   T,

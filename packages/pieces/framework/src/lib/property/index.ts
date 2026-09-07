@@ -1,6 +1,5 @@
-import { InputProperty } from './input';
-import { PieceAuthProperty } from './authentication';
-import * as z from "zod/mini";
+import type { InputProperty } from './input';
+import type { PieceAuthProperty } from './authentication';
 import { PropertyType } from './input/property-type';
 import { DropdownState } from './input/dropdown/common';
 
@@ -41,16 +40,13 @@ export { SecretTextProperty } from './authentication/secret-text-property'
 export { CustomAuthProperty } from './authentication/custom-auth-prop';
 
 export { JsonProperty } from './input/json-property'
-export const PieceProperty = z.union([InputProperty, PieceAuthProperty])
 export type PieceProperty = InputProperty | PieceAuthProperty;
 export {CustomProperty} from './input/custom-property'
 export type {CustomPropertyCodeFunctionParams} from './input/custom-property'
-export const PiecePropertyMap = z.record(z.string(), PieceProperty)
 export interface PiecePropertyMap {
   [name: string]: PieceProperty;
 }
 export type { InputProperty } from './input';
-export const InputPropertyMap = z.record(z.string(), InputProperty)
 export interface InputPropertyMap {
   [name: string]: InputProperty;
 }
@@ -66,8 +62,6 @@ export type PiecePropValueSchema<T extends PieceProperty> =
 export type StaticPropsValue<T extends PiecePropertyMap> = {
   [P in keyof T]: PiecePropValueSchema<T[P]>;
 };
-
-
 
 export type ExecutePropsResult<T extends PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC> = {
   type: T

@@ -1,4 +1,3 @@
-import * as z from "zod/mini";
 import { OnStartContext, TestOrRunHookContext, TriggerHookContext } from '../context';
 import type { OutputSchema } from '../output-schema';
 import { ActionClassification, AiMetadata, PropertyGroup, TriggerBase } from '../piece-metadata';
@@ -10,8 +9,6 @@ export { TriggerStrategy }
 
 export const DEDUPE_KEY_PROPERTY = '_dedupe_key'
 
-
-
 export enum WebhookRenewStrategy {
   CRON = 'CRON',
   NONE = 'NONE',
@@ -19,18 +16,14 @@ export enum WebhookRenewStrategy {
 
 type OnStartRunner<PieceAuth extends PieceAuthProperty | undefined, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
-
-
-export const WebhookRenewConfiguration = z.union([
-  z.object({
-    strategy: z.literal(WebhookRenewStrategy.CRON),
-    cronExpression: z.string(),
-  }),
-  z.object({
-    strategy: z.literal(WebhookRenewStrategy.NONE),
-  }),
-])
-export type WebhookRenewConfiguration = z.infer<typeof WebhookRenewConfiguration>
+export type WebhookRenewConfiguration =
+  | {
+    strategy: WebhookRenewStrategy.CRON;
+    cronExpression: string;
+  }
+  | {
+    strategy: WebhookRenewStrategy.NONE;
+  }
 
 export interface WebhookResponse {
   status: number,

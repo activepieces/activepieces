@@ -1,40 +1,17 @@
-import * as z from "zod/mini";
 import { BasePropertySchema, TPropertyValue } from "./common";
 import { PropertyType } from "./property-type";
 
+export type DateRangePreset = typeof DATE_RANGE_PRESETS[number]
 
-export const DateRangePreset = z.enum([
-    'any_time',
-    'last_24_hours',
-    'last_7_days',
-    'last_30_days',
-    'last_90_days',
-    'this_month',
-    'custom',
-])
-export type DateRangePreset = z.infer<typeof DateRangePreset>
-
-export const DateRangeValue = z.object({
-    preset: z.optional(DateRangePreset),
-    after: z.optional(z.string()),
-    before: z.optional(z.string()),
-})
 export type DateRangeValue = {
     preset?: DateRangePreset;
     after?: string;
     before?: string;
 }
 
-export const DateRangeProperty = z.object({
-    ...BasePropertySchema.shape,
-    display: z.optional(z.enum(['dropdown'])),
-    ...TPropertyValue(DateRangeValue, PropertyType.DATE_RANGE).shape,
-})
-
 export type DateRangeProperty<R extends boolean> = BasePropertySchema & {
     display?: 'dropdown';
 } & TPropertyValue<DateRangeValue, PropertyType.DATE_RANGE, R>;
-
 
 function isoDaysAgo(days: number): string {
     return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -74,4 +51,25 @@ function resolve(
     }
 }
 
-export const dateRangeUtils = { resolve };
+function isDateRangeValue(value: unknown): value is DateRangeValue {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return false;
+    }
+    const { preset, after, before } = value as Record<string, unknown>;
+    const presetIsValid = preset === undefined || DATE_RANGE_PRESETS.includes(preset as DateRangePreset);
+    const afterIsValid = after === undefined || typeof after === 'string';
+    const beforeIsValid = before === undefined || typeof before === 'string';
+    return presetIsValid && afterIsValid && beforeIsValid;
+}
+
+const DATE_RANGE_PRESETS = [
+    'any_time',
+    'last_24_hours',
+    'last_7_days',
+    'last_30_days',
+    'last_90_days',
+    'this_month',
+    'custom',
+] as const;
+
+export const dateRangeUtils = { resolve, isDateRangeValue };

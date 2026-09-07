@@ -1,4 +1,3 @@
-import * as z from "zod/mini";
 import { ArrayProperty } from './array-property';
 import { CheckboxProperty } from './checkbox-property';
 import { DateTimeProperty } from './date-time-property';
@@ -25,27 +24,6 @@ import { CustomProperty, CustomPropertyCodeFunctionParams } from './custom-prope
 import { ColorProperty } from './color-property';
 import { PieceAuthProperty } from '../authentication';
 
-export const InputProperty = z.union([
-  ShortTextProperty,
-  LongTextProperty,
-  RichTextProperty,
-  MarkDownProperty,
-  CheckboxProperty,
-  StaticDropdownProperty,
-  StaticMultiSelectDropdownProperty,
-  DropdownProperty,
-  MultiSelectDropdownProperty,
-  DynamicProperties,
-  NumberProperty,
-  ArrayProperty,
-  ObjectProperty,
-  JsonProperty,
-  DateTimeProperty,
-  DateRangeProperty,
-  FileProperty,
-  ColorProperty,
-]);
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type InputProperty =
   | ShortTextProperty<boolean>
@@ -67,7 +45,6 @@ export type InputProperty =
   | FileProperty<boolean, boolean>
   | CustomProperty<boolean>
   | ColorProperty<boolean>;
-
 
 type Properties<T> = Omit<
   T,
