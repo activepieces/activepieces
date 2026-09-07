@@ -1,9 +1,10 @@
-import { FlowVersionId, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
-import { Flow, FlowActionType, FlowOperationType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
+import { FlowVersionId, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
+import { Flow, FlowActionType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FindOptionsWhere, In } from 'typeorm'
+import { websocketService } from '../../../core/websockets.service'
+import { fileService } from '../../../file/file.service'
 import { flowRepo } from '../../../flows/flow/flow.repo'
-import { flowService } from '../../../flows/flow/flow.service'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { projectService } from '../../../project/project-service'
 
@@ -16,9 +17,11 @@ export const denoMigrationService = (log: FastifyBaseLogger) => ({
     },
 })
 
+const PAGE_SIZE = 100
+
 async function applyUseDeno({ log, platformId, projectId, flowIds, useDeno }: { log: FastifyBaseLogger, useDeno: boolean } & MigrateToDenoParams): Promise<MigrateToDenoResult> {
     const where = await buildFlowsFilter({ log, platformId, projectId, flowIds })
-    const totals: MigrateToDenoResult = { flowsProcessed: 0, republishedFlows: 0, flowVersionsMigrated: 0, staleFlows: 0 }
+    const totals: MigrateToDenoResult = { flowsProcessed: 0, flowVersionsMigrated: 0, notifiedFlows: 0 }
     let skip = 0
     for (;;) {
         const flows = await flowRepo().find({ where, skip, take: PAGE_SIZE, order: { created: 'ASC' } })
@@ -27,9 +30,8 @@ async function applyUseDeno({ log, platformId, projectId, flowIds, useDeno }: { 
         }
         for (const flow of flows) {
             const outcome = await migrateFlow({ log, flow, useDeno })
-            totals.republishedFlows += outcome.republished ? 1 : 0
-            totals.flowVersionsMigrated += outcome.versionsMigratedInPlace
-            totals.staleFlows += outcome.stale ? 1 : 0
+            totals.flowVersionsMigrated += outcome.versionsMigrated
+            totals.notifiedFlows += outcome.notified ? 1 : 0
         }
         totals.flowsProcessed += flows.length
         skip += flows.length
@@ -37,8 +39,6 @@ async function applyUseDeno({ log, platformId, projectId, flowIds, useDeno }: { 
     }
     return totals
 }
-
-const PAGE_SIZE = 100
 
 async function buildFlowsFilter({ log, platformId, projectId, flowIds }: { log: FastifyBaseLogger } & MigrateToDenoParams): Promise<FindOptionsWhere<Flow>> {
     if (!isNil(flowIds)) {
@@ -57,54 +57,30 @@ async function buildFlowsFilter({ log, platformId, projectId, flowIds }: { log: 
 async function migrateFlow({ log, flow, useDeno }: { log: FastifyBaseLogger, flow: Flow, useDeno: boolean }): Promise<FlowMigrationOutcome> {
     const latestVersion = await flowVersionRepo().findOne({ where: { flowId: flow.id }, order: { created: 'DESC' } })
     if (isNil(latestVersion)) {
-        return { republished: false, versionsMigratedInPlace: 0, stale: false }
+        return { versionsMigrated: 0, notified: false }
     }
 
-    const publishedIsLatest = !isNil(flow.publishedVersionId) && flow.publishedVersionId === latestVersion.id
-    if (publishedIsLatest) {
-        if (!hasCodeStepToChange({ flowVersion: latestVersion, useDeno })) {
-            return { republished: false, versionsMigratedInPlace: 0, stale: false }
-        }
-        await republishWithUseDeno({ log, flow, publishedVersion: latestVersion, useDeno })
-        return { republished: true, versionsMigratedInPlace: 0, stale: false }
+    const targetVersionIds = unique([latestVersion.id, ...isNil(flow.publishedVersionId) ? [] : [flow.publishedVersionId]])
+    let versionsMigrated = 0
+    let publishedVersionMigrated = false
+    for (const versionId of targetVersionIds) {
+        const migrated = await setUseDenoOnVersion({ versionId, useDeno })
+        versionsMigrated += migrated
+        publishedVersionMigrated = publishedVersionMigrated || (migrated > 0 && versionId === flow.publishedVersionId)
     }
 
-    let versionsMigratedInPlace = await setUseDenoOnVersion({ versionId: latestVersion.id, useDeno })
-    let stale = false
-    if (!isNil(flow.publishedVersionId)) {
-        const publishedMigrated = await setUseDenoOnVersion({ versionId: flow.publishedVersionId, useDeno })
-        versionsMigratedInPlace += publishedMigrated
-        stale = publishedMigrated > 0
+    if (publishedVersionMigrated && !isNil(flow.publishedVersionId)) {
+        await refreshWorkersForPublishedVersion({ log, flow, publishedVersionId: flow.publishedVersionId })
     }
-    return { republished: false, versionsMigratedInPlace, stale }
+    return { versionsMigrated, notified: publishedVersionMigrated }
 }
 
-async function republishWithUseDeno({ log, flow, publishedVersion, useDeno }: { log: FastifyBaseLogger, flow: Flow, publishedVersion: FlowVersion, useDeno: boolean }): Promise<void> {
-    const migratedVersion = setUseDenoOnCodeSteps({ flowVersion: publishedVersion, useDeno })
-    const flowPlatformId = await projectService(log).getPlatformId(flow.projectId)
-    await flowService(log).update({
-        id: flow.id,
-        projectId: flow.projectId,
-        platformId: flowPlatformId,
-        operation: {
-            type: FlowOperationType.IMPORT_FLOW,
-            request: {
-                displayName: migratedVersion.displayName,
-                trigger: migratedVersion.trigger,
-                schemaVersion: migratedVersion.schemaVersion,
-                notes: migratedVersion.notes,
-            },
-        },
-    })
-    await flowService(log).update({
-        id: flow.id,
-        projectId: flow.projectId,
-        platformId: flowPlatformId,
-        operation: {
-            type: FlowOperationType.LOCK_AND_PUBLISH,
-            request: { status: flow.status },
-        },
-    })
+async function refreshWorkersForPublishedVersion({ log, flow, publishedVersionId }: { log: FastifyBaseLogger, flow: Flow, publishedVersionId: FlowVersionId }): Promise<void> {
+    const { error } = await tryCatch(() => fileService(log).delete({ projectId: flow.projectId, fileId: publishedVersionId }))
+    if (error) {
+        log.debug({ flowVersion: { id: publishedVersionId }, error: String(error) }, 'No stored flow bundle to delete')
+    }
+    websocketService.notifyWorkers().flowPublished({ flowId: flow.id, flowVersionId: publishedVersionId, projectId: flow.projectId })
 }
 
 async function setUseDenoOnVersion({ versionId, useDeno }: { versionId: FlowVersionId, useDeno: boolean }): Promise<number> {
@@ -141,14 +117,12 @@ type MigrateToDenoParams = {
 }
 
 type FlowMigrationOutcome = {
-    republished: boolean
-    versionsMigratedInPlace: number
-    stale: boolean
+    versionsMigrated: number
+    notified: boolean
 }
 
 type MigrateToDenoResult = {
     flowsProcessed: number
-    republishedFlows: number
     flowVersionsMigrated: number
-    staleFlows: number
+    notifiedFlows: number
 }

@@ -125,7 +125,7 @@ describe('POST /v1/admin/flows/migrate-to-deno', () => {
         const response = await postMigrateToDeno({ flowIds: [flow.id] })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json()).toEqual({ flowsProcessed: 1, republishedFlows: 0, flowVersionsMigrated: 2, staleFlows: 1 })
+        expect(response.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 2, notifiedFlows: 1 })
 
         for (const versionId of [draftVersion.id, publishedVersion.id]) {
             const savedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: versionId })
@@ -143,7 +143,7 @@ describe('POST /v1/admin/flows/migrate-to-deno', () => {
         const response = await postMigrateToDeno({ projectId: ctx.project.id })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json()).toEqual({ flowsProcessed: 1, republishedFlows: 0, flowVersionsMigrated: 2, staleFlows: 1 })
+        expect(response.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 2, notifiedFlows: 1 })
 
         const migratedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: draftVersion.id })
         expect(getCodeStep(migratedVersion)?.settings.useDeno).toBe(true)
@@ -152,44 +152,39 @@ describe('POST /v1/admin/flows/migrate-to-deno', () => {
         expect(getCodeStep(untouchedVersion)?.settings.useDeno).toBeUndefined()
     })
 
-    it('republishes a flow whose published version is the latest, so workers pick a new version id', async () => {
+    it('updates a published version in place, keeping the same version id, and reports the worker notification', async () => {
         const ctx = await createTestContext(app!)
         const { flow, publishedVersion } = await setupFlowWithPublishedLatestVersion(ctx)
 
         const response = await postMigrateToDeno({ flowIds: [flow.id] })
 
         expect(response.statusCode).toBe(StatusCodes.OK)
-        expect(response.json()).toEqual({ flowsProcessed: 1, republishedFlows: 1, flowVersionsMigrated: 0, staleFlows: 0 })
+        expect(response.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 1, notifiedFlows: 1 })
 
         const savedFlow = await db.findOneByOrFail<Flow>('flow', { id: flow.id })
-        expect(savedFlow.publishedVersionId).not.toBe(publishedVersion.id)
+        expect(savedFlow.publishedVersionId).toBe(publishedVersion.id)
         expect(savedFlow.status).toBe(FlowStatus.DISABLED)
 
-        const newPublishedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: savedFlow.publishedVersionId })
-        expect(newPublishedVersion.state).toBe(FlowVersionState.LOCKED)
-        expect(getCodeStep(newPublishedVersion)?.settings.useDeno).toBe(true)
-
-        const oldVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: publishedVersion.id })
-        expect(getCodeStep(oldVersion)?.settings.useDeno).toBeUndefined()
+        const updatedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: publishedVersion.id })
+        expect(updatedVersion.state).toBe(FlowVersionState.LOCKED)
+        expect(getCodeStep(updatedVersion)?.settings.useDeno).toBe(true)
     })
 
     it('reverts a migrated flow back to the legacy sandbox via revert-from-deno', async () => {
         const ctx = await createTestContext(app!)
-        const { flow } = await setupFlowWithPublishedLatestVersion(ctx)
+        const { flow, publishedVersion } = await setupFlowWithPublishedLatestVersion(ctx)
 
         await postMigrateToDeno({ flowIds: [flow.id] })
         const revertResponse = await postRevertFromDeno({ flowIds: [flow.id] })
 
         expect(revertResponse.statusCode).toBe(StatusCodes.OK)
-        expect(revertResponse.json()).toEqual({ flowsProcessed: 1, republishedFlows: 1, flowVersionsMigrated: 0, staleFlows: 0 })
+        expect(revertResponse.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 1, notifiedFlows: 1 })
 
-        const savedFlow = await db.findOneByOrFail<Flow>('flow', { id: flow.id })
-        const revertedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: savedFlow.publishedVersionId })
-        expect(revertedVersion.state).toBe(FlowVersionState.LOCKED)
+        const revertedVersion = await db.findOneByOrFail<FlowVersion>('flow_version', { id: publishedVersion.id })
         expect(getCodeStep(revertedVersion)?.settings.useDeno).toBe(false)
 
         const secondRevert = await postRevertFromDeno({ flowIds: [flow.id] })
-        expect(secondRevert.json()).toEqual({ flowsProcessed: 1, republishedFlows: 0, flowVersionsMigrated: 0, staleFlows: 0 })
+        expect(secondRevert.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 0, notifiedFlows: 0 })
     })
 
     it('is idempotent: a second run reports zero migrated versions', async () => {
@@ -200,7 +195,7 @@ describe('POST /v1/admin/flows/migrate-to-deno', () => {
         const secondResponse = await postMigrateToDeno({ flowIds: [flow.id] })
 
         expect(secondResponse.statusCode).toBe(StatusCodes.OK)
-        expect(secondResponse.json()).toEqual({ flowsProcessed: 1, republishedFlows: 0, flowVersionsMigrated: 0, staleFlows: 0 })
+        expect(secondResponse.json()).toEqual({ flowsProcessed: 1, flowVersionsMigrated: 0, notifiedFlows: 0 })
     })
 
     it('rejects a body without exactly one selector', async () => {
