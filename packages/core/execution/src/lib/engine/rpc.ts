@@ -37,7 +37,7 @@ export function createRpcClient<T extends Contract>(
                     if (error instanceof Error && error.message.startsWith('RPC [')) {
                         throw error
                     }
-                    throw new Error(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${toError(error).message}`)
+                    throw new RpcTimeoutError({ method, timeoutMs, cause: error })
                 }
             }
         },
@@ -109,6 +109,16 @@ export function apErrorOf(error: unknown): RpcApError | undefined {
 
 function isRpcErrorEnvelope(value: unknown): value is { __rpcError: string, __rpcApError?: unknown } {
     return isObject(value) && '__rpcError' in value
+}
+
+export class RpcTimeoutError extends Error {
+    readonly method: string
+    readonly timeoutMs: number
+    constructor({ method, timeoutMs, cause }: { method: string, timeoutMs: number, cause: unknown }) {
+        super(`RPC [${method}] failed (timeout: ${timeoutMs}ms): ${toError(cause).message}`)
+        this.method = method
+        this.timeoutMs = timeoutMs
+    }
 }
 
 export type RpcTimeout = number | ((method: string) => number)
