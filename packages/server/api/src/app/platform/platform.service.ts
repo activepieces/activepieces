@@ -10,6 +10,7 @@ import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
@@ -165,6 +166,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 ...(params.federatedAuthProviders ?? {}),
             }
             : undefined
+        await assertSignInMethodRemains({ params, platform, federatedAuthProviders, hasSamlConfigured: () => this.hasSamlConfigured(params.id) })
         const updatedPlatform = {
             ...platform,
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
@@ -393,6 +395,37 @@ function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
 
 function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
     return 'federatedAuthProviders' in platform
+}
+
+async function assertSignInMethodRemains({ params, platform, federatedAuthProviders, hasSamlConfigured }: AssertSignInMethodRemainsParams): Promise<void> {
+    const touchesSignInMethods = params.emailAuthEnabled !== undefined
+        || params.googleAuthEnabled !== undefined
+        || params.federatedAuthProviders?.saml !== undefined
+    if (!touchesSignInMethods) {
+        return
+    }
+    const emailRemains = params.emailAuthEnabled ?? platform.emailAuthEnabled
+    const googleConfigured = !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
+    const googleRemains = googleConfigured && (params.googleAuthEnabled ?? platform.googleAuthEnabled)
+    const samlRemains = isNil(federatedAuthProviders)
+        ? await hasSamlConfigured()
+        : !isNil(federatedAuthProviders.saml)
+    if (emailRemains || googleRemains || samlRemains) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: 'At least one sign-in method must stay enabled, enable another one before turning this off',
+        },
+    })
+}
+
+type AssertSignInMethodRemainsParams = {
+    params: UpdateParams
+    platform: Platform | PlatformWithoutFederatedAuth
+    federatedAuthProviders: Platform['federatedAuthProviders'] | undefined
+    hasSamlConfigured: () => Promise<boolean>
 }
 
 type AddParams = {

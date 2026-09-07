@@ -40,10 +40,14 @@ function deletionJobIds(platformId: string) {
 }
 
 beforeAll(async () => {
+    process.env.AP_GOOGLE_CLIENT_ID = 'mock-google-client-id'
+    process.env.AP_GOOGLE_CLIENT_SECRET = 'mock-google-client-secret'
     app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
+    delete process.env.AP_GOOGLE_CLIENT_ID
+    delete process.env.AP_GOOGLE_CLIENT_SECRET
     await teardownTestEnvironment()
 })
 describe('Platform API', () => {
@@ -103,6 +107,68 @@ describe('Platform API', () => {
                 saml: null,
             })
             expect(responseBody.cloudAuthEnabled).toBe(false)
+        }),
+
+        it('rejects disabling the last remaining sign-in method', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: false,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+
+            const platformAfter = await databaseConnection()
+                .getRepository('platform')
+                .findOneByOrFail({ id: mockPlatform.id })
+            expect(platformAfter.emailAuthEnabled).toBe(true)
+        }),
+
+        it('allows disabling a sign-in method while another one remains', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().emailAuthEnabled).toBe(false)
         }),
 
         it('updates the platform logo icons', async () => {
