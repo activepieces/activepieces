@@ -18,7 +18,7 @@ const SHARED_CACHE_KEY = '__shared__'
 const CACHE_TTL_SECONDS = 5 * 60
 const LOCK_TIMEOUT_SECONDS = 30
 const PIECE_LOOKUP_CONCURRENCY = 25
-const EMPTY_RESPONSE: PrewarmDataResponse = { flows: [], pieces: [], codes: [], platformId: '', engineToken: '' }
+const EMPTY_RESPONSE: PrewarmDataResponse = { pieces: [], codes: [], platformId: '', engineToken: '' }
 const BASE_LIST_PARAMS = {
     status: [FlowStatus.ENABLED],
     versionState: FlowVersionState.LOCKED,
@@ -46,7 +46,7 @@ export const preWarmWorkersService = (log: FastifyBaseLogger) => ({
             projectId: scope.tokenProjectId,
             platformId: scope.platformId,
         })
-        return { flows: scope.flows, pieces: scope.pieces, codes: scope.codes, platformId: scope.platformId, engineToken }
+        return { pieces: scope.pieces, codes: scope.codes, platformId: scope.platformId, engineToken }
     },
 })
 
@@ -111,7 +111,6 @@ async function computeScope(input: PrewarmDataRequest, log: FastifyBaseLogger): 
     const activeFlows = await flowService(log).list(
         !isNil(projectIds) ? { ...BASE_LIST_PARAMS, projectIds } : { ...BASE_LIST_PARAMS, platformId },
     )
-    const flows = activeFlows.data.map((flow) => ({ id: flow.id, versionId: flow.version.id, projectId: flow.projectId }))
     // The versions are already loaded by the list above, so the pieces and code steps every flow needs
     // are computed here in one pass — the worker warms from the distinct set instead of resolving each
     // flow over RPC, which made prewarm scale with flow count instead of distinct piece count.
@@ -119,7 +118,7 @@ async function computeScope(input: PrewarmDataRequest, log: FastifyBaseLogger): 
     const codes = versions.flatMap(extractCodeSteps)
     const pieces = await resolvePiecePackages({ versions, platformId, log })
     const tokenProjectId = projectIds?.[0] ?? (await projectService(log).getProjectIdsByPlatform(platformId))[0]
-    return { flows, pieces, codes, platformId, tokenProjectId }
+    return { pieces, codes, platformId, tokenProjectId }
 }
 
 function extractCodeSteps(flowVersion: FlowVersion): PrewarmCodeStep[] {
@@ -192,7 +191,6 @@ function toPiecePackage({ metadata, platformId }: ToPiecePackageParams): PiecePa
 
 
 type PrewarmScope = {
-    flows: PrewarmDataResponse['flows']
     pieces: PiecePackage[]
     codes: PrewarmCodeStep[]
     platformId: string
