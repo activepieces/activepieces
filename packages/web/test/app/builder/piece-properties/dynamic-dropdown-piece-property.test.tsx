@@ -38,8 +38,19 @@ vi.mock(
   }),
 );
 
+const searchCalls: ((term: string) => void)[] = [];
+
 vi.mock('@/components/custom/searchable-select', () => ({
-  SearchableSelect: () => null,
+  SearchableSelect: ({
+    refreshOnSearch,
+  }: {
+    refreshOnSearch?: (term: string) => void;
+  }) => {
+    if (refreshOnSearch) {
+      searchCalls.push(refreshOnSearch);
+    }
+    return null;
+  },
 }));
 
 vi.mock('@/components/custom/multi-select-piece-property', () => ({
@@ -88,7 +99,13 @@ const CHILD_DROPDOWN_PATH = 'settings.input.childSelection';
 
 let formInstance: UseFormReturn | undefined;
 
-const Harness = ({ multiple }: { multiple: boolean }) => {
+const Harness = ({
+  multiple,
+  refreshOnSearch,
+}: {
+  multiple: boolean;
+  refreshOnSearch?: boolean;
+}) => {
   const form = useForm<FieldValues>({
     defaultValues: {
       settings: {
@@ -102,7 +119,11 @@ const Harness = ({ multiple }: { multiple: boolean }) => {
   formInstance = form;
   return (
     <FormProvider {...form}>
-      <ValueBridge form={form} multiple={multiple} />
+      <ValueBridge
+        form={form}
+        multiple={multiple}
+        refreshOnSearch={refreshOnSearch}
+      />
     </FormProvider>
   );
 };
@@ -138,11 +159,13 @@ const ValueBridge = ({
   multiple,
   propertyName = 'selection',
   refreshers = ['workspace'],
+  refreshOnSearch = false,
 }: {
   form: UseFormReturn;
   multiple: boolean;
   propertyName?: string;
   refreshers?: string[];
+  refreshOnSearch?: boolean;
 }) => {
   const value = useWatch({
     control: form.control,
@@ -163,6 +186,7 @@ const ValueBridge = ({
       pieceVersion="0.0.1"
       form={form}
       placedInside="stepSettings"
+      shouldRefreshOnSearch={refreshOnSearch}
     />
   );
 };
@@ -175,15 +199,23 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     act(() => root?.unmount());
     container?.remove();
     mutateCalls.length = 0;
+    searchCalls.length = 0;
     formInstance = undefined;
   });
 
-  const mount = ({ multiple }: { multiple: boolean } = { multiple: false }) => {
+  const mount = (
+    {
+      multiple,
+      refreshOnSearch,
+    }: { multiple: boolean; refreshOnSearch?: boolean } = { multiple: false },
+  ) => {
     container = document.createElement('div');
     document.body.appendChild(container);
     act(() => {
       root = createRoot(container!);
-      root.render(<Harness multiple={multiple} />);
+      root.render(
+        <Harness multiple={multiple} refreshOnSearch={refreshOnSearch} />,
+      );
     });
   };
 
@@ -307,6 +339,41 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     resolveFor('childSelection', ['row-1', 'row-2']);
 
     expect(formInstance!.getValues(CHILD_DROPDOWN_PATH)).toBe('row-2');
+  });
+
+  it('restores from the full list even when a search response arrives first', () => {
+    mount({ multiple: false, refreshOnSearch: true });
+    resolveOptions(['sheet-a', 'sheet-b']);
+    act(() => formInstance!.setValue(DROPDOWN_PATH, 'sheet-b'));
+
+    changeRefresher('second');
+    act(() => searchCalls.pop()!('sheet-a'));
+    expect(mutateCalls).toHaveLength(3);
+
+    act(() =>
+      mutateCalls[2].onSuccess({ options: dropdownState(['sheet-a']) }),
+    );
+    expect(formInstance!.getValues(DROPDOWN_PATH)).toBeNull();
+
+    act(() =>
+      mutateCalls[1].onSuccess({
+        options: dropdownState(['sheet-a', 'sheet-b']),
+      }),
+    );
+
+    expect(formInstance!.getValues(DROPDOWN_PATH)).toBe('sheet-b');
+  });
+
+  it('never overwrites a value the user picked while a restore was pending', () => {
+    mount();
+    resolveOptions(['sheet-a', 'sheet-b']);
+    act(() => formInstance!.setValue(DROPDOWN_PATH, 'sheet-b'));
+
+    changeRefresher('second');
+    act(() => formInstance!.setValue(DROPDOWN_PATH, 'sheet-a'));
+    resolveOptions(['sheet-a', 'sheet-b']);
+
+    expect(formInstance!.getValues(DROPDOWN_PATH)).toBe('sheet-a');
   });
 
   it('does not resurrect a selection the user cleared without a refresher change', () => {

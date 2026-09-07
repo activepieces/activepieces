@@ -30,6 +30,11 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
     );
     const valueToRestore = useRef<unknown>(undefined);
     const optionsRequestId = useRef(0);
+    const fullListRequestId = useRef(0);
+    const propertyPath =
+      props.placedInside === 'stepSettings'
+        ? `settings.input.${props.propertyName}`
+        : props.propertyName;
     const refreshersWithAuth = [
       ...props.refreshers,
       AUTHENTICATION_PROPERTY_NAME,
@@ -76,6 +81,9 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         return;
       }
       valueToRestore.current = undefined;
+      if (!isNil(props.form.getValues(propertyPath))) {
+        return;
+      }
       const isStillPresent = (value: unknown) =>
         options.options.some((option) => deepEqual(option.value, value));
       if (props.multiple) {
@@ -99,6 +107,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         input[refresher] = refresherValues[index];
       });
       const requestId = ++optionsRequestId.current;
+      const fullListId = isNil(term) ? ++fullListRequestId.current : null;
       mutate(
         {
           request: {
@@ -116,14 +125,18 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         },
         {
           onSuccess: (response) => {
-            if (requestId !== optionsRequestId.current) {
-              return;
+            if (requestId === optionsRequestId.current) {
+              if (!firstDropdownState.current) {
+                firstDropdownState.current = response.options;
+              }
+              setDropdownState(response.options);
             }
-            if (!firstDropdownState.current) {
-              firstDropdownState.current = response.options;
+            if (
+              !isNil(fullListId) &&
+              fullListId === fullListRequestId.current
+            ) {
+              restoreValueIfStillInOptions(response.options);
             }
-            setDropdownState(response.options);
-            restoreValueIfStillInOptions(response.options);
           },
         },
       );
