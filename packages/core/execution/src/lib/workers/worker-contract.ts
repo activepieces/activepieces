@@ -312,7 +312,7 @@ export type PrewarmCodeStep = {
 }
 
 export type PrewarmDataResponse = {
-    flows: { id: string, versionId: string, projectId: string }[]
+    flows?: { id: string, versionId: string, projectId: string }[]
     pieces: PiecePackage[]
     codes: PrewarmCodeStep[]
     platformId: string
