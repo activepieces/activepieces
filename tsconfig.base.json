@@ -907,6 +907,9 @@
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
+      "@activepieces/piece-ninety": [
+        "packages/pieces/community/ninety/src/index.ts"
+      ],
       "@activepieces/piece-ninjapipe": [
         "packages/pieces/community/ninjapipe/src/index.ts"
       ],

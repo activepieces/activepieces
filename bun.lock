@@ -6288,6 +6288,20 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/ninety": {
+      "name": "@activepieces/piece-ninety",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/ninjapipe": {
       "name": "@activepieces/piece-ninjapipe",
       "version": "0.0.5",
@@ -12035,6 +12049,8 @@
     "@activepieces/piece-neverbounce": ["@activepieces/piece-neverbounce@workspace:packages/pieces/community/neverbounce"],
 
     "@activepieces/piece-nifty": ["@activepieces/piece-nifty@workspace:packages/pieces/community/nifty"],
+
+    "@activepieces/piece-ninety": ["@activepieces/piece-ninety@workspace:packages/pieces/community/ninety"],
 
     "@activepieces/piece-ninjapipe": ["@activepieces/piece-ninjapipe@workspace:packages/pieces/community/ninjapipe"],
 
