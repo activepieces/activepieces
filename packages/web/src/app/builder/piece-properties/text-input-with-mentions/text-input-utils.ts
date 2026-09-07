@@ -90,6 +90,20 @@ function stringStateAfter({
   return current;
 }
 
+function formulaStartsAt({
+  expr,
+  index,
+}: {
+  expr: string;
+  index: number;
+}): boolean {
+  if (!expr.startsWith(formulaEvaluator.PREFIX, index)) {
+    return false;
+  }
+  const afterPrefix = index + formulaEvaluator.PREFIX.length;
+  return expr.indexOf(formulaEvaluator.SUFFIX, afterPrefix) !== -1;
+}
+
 function matchFunctionNameAt({
   expr,
   index,
@@ -112,7 +126,7 @@ function tokenizeExpression(expr: string): ExprToken[] {
   let inFormula = false;
 
   while (i < expr.length) {
-    if (!inFormula && expr.startsWith(formulaEvaluator.PREFIX, i)) {
+    if (!inFormula && formulaStartsAt({ expr, index: i })) {
       inFormula = true;
       i += formulaEvaluator.PREFIX.length;
       continue;
@@ -197,7 +211,7 @@ function tokenizeExpression(expr: string): ExprToken[] {
         continue;
       }
       if (ch === '\n') break;
-      if (!inFormula && expr.startsWith(formulaEvaluator.PREFIX, i)) break;
+      if (!inFormula && formulaStartsAt({ expr, index: i })) break;
       if (inFormula && expr.startsWith(formulaEvaluator.SUFFIX, i)) break;
       if (inFormula && ch === ')') break;
       if (ch === ';' && fnDepth > 0) break;

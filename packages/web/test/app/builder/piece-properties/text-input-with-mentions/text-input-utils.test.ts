@@ -58,7 +58,7 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
 
   describe('references inside quotes keep their mention node', () => {
     it.each([
-      '"{{step_4[\'output\'][\'result\']}}"',
+      "\"{{step_4['output']['result']}}\"",
       '"{{step_4["output"]["result"]}}"',
       "'{{step_4.result}}'",
       'fullText contains "{{step_4.result}}',
@@ -72,7 +72,7 @@ describe('textMentionUtils.convertTextToTipTapJsonContent', () => {
     });
 
     it.each([
-      '"{{step_4[\'output\'][\'result\']}}"',
+      "\"{{step_4['output']['result']}}\"",
       '"{{step_4["output"]["result"]}}"',
       '"{{step_1.name}} upper(x)"',
       'ap-formula-v1::{upper("(CEO); still inside")}::ap-formula-v1',
@@ -118,7 +118,9 @@ describe('plain text is never turned into function nodes', () => {
     'SELECT trim(x) FROM t',
     'plain ) ; text with upper( unbalanced',
   ])('renders %j as text only', (input) => {
-    expect(convert(input)[0].content.map((node) => node.type)).toEqual(['text']);
+    expect(convert(input)[0].content.map((node) => node.type)).toEqual([
+      'text',
+    ]);
   });
 
   it('keeps function nodes for wrapped formulas', () => {
@@ -133,5 +135,24 @@ describe('plain text is never turned into function nodes', () => {
       'hello foo(x) ap-formula-v1::{upper(y)}::ap-formula-v1 tail lower(z)';
     expect(roundTrip(input)).toBe(input);
     expect(roundTrip(roundTrip(input))).toBe(input);
+  });
+});
+
+describe('an unmatched formula marker stays literal text', () => {
+  it.each([
+    'literal ap-formula-v1::{ typed by hand',
+    'ap-formula-v1::{',
+    'prefix ap-formula-v1::{ and no suffix at all',
+    'ap-formula-v1::{uppercase(a',
+  ])('round-trips %j without eating the marker', (input) => {
+    expect(roundTrip(input)).toBe(input);
+    expect(roundTrip(roundTrip(input))).toBe(input);
+  });
+
+  it('still builds a function node once the suffix is present', () => {
+    const types = convert(
+      'ap-formula-v1::{uppercase(a)}::ap-formula-v1',
+    )[0].content.map((node) => node.type);
+    expect(types).toContain('function_start');
   });
 });
