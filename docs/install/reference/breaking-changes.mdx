@@ -89,18 +89,6 @@ Clearing a description from this action is therefore no longer possible; that is
 
 Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
 
-#### Delay For rejects a unit it does not recognise instead of not waiting
-
-Delay For's `Unit` accepts a dynamic value, and a static dropdown's value is never checked against the options it declares. A unit outside `seconds`, `minutes`, `hours` and `days` — an upstream step returning `Minute`, or an empty string — therefore reached the step's own duration maths, which had no branch for it and produced no duration at all. The step then waited roughly a millisecond and reported success. A flow written to wait did not wait, and nothing in the run said so.
-
-The unit is now validated where the amount already was, in the check both a real run and **Test Step** share, so an unrecognised value fails the step with an error naming it. A unit that is absent or empty still falls back to seconds exactly as before, so saved steps that never set one are unaffected.
-
-`Amount` also gains a default of `5`. A new Delay For step used to open with the field empty and could not be published until it was filled; it now starts at 5 seconds. Steps that already have an amount are untouched — a default only applies to a field that has never been set.
-
-#### What you need to do
-
-Nothing to configure or migrate. Review any flow that binds Delay For's `Unit` to a value from an earlier step: if that value is not one of the four units, the step was silently not waiting and will now fail instead. Map it to `seconds`, `minutes`, `hours` or `days`. Flows that pick the unit from the dropdown are unaffected.
-
 ## 0.91.0
 
 ### What has changed?
