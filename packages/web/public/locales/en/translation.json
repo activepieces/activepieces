@@ -14,6 +14,7 @@
   "Optional reason for rejection": "Optional reason for rejection",
   "Rejected": "Rejected",
   "Pending approvals": "Pending approvals",
+  "pending approvals": "pending approvals",
   "Flows awaiting approval to publish.": "Flows awaiting approval to publish.",
   "Submitted {time}": "Submitted {time}",
   "Review": "Review",
