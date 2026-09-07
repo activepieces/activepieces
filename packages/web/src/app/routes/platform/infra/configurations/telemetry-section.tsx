@@ -13,7 +13,7 @@ import {
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Switch } from '@/components/ui/switch';
 
-import { ConfigurationsFormValues } from './configurations-form';
+import type { ConfigurationsFormValues } from './index';
 
 export const TelemetrySection = ({
   control,

@@ -10,6 +10,7 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import { CenteredPage } from '@/app/components/centered-page';
@@ -19,10 +20,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 
-import {
-  configurationsForm,
-  ConfigurationsFormValues,
-} from './configurations-form';
 import { TelemetrySection } from './telemetry-section';
 
 export const ConfigurationsPage = () => {
@@ -52,7 +49,7 @@ const ConfigurationsContent = ({
   const queryClient = useQueryClient();
 
   const form = useForm<ConfigurationsFormValues>({
-    defaultValues: configurationsForm.toFormValues(configuration),
+    defaultValues: toFormValues(configuration),
     resolver: zodResolver(ConfigurationsFormValues),
     mode: 'onChange',
   });
@@ -64,7 +61,7 @@ const ConfigurationsContent = ({
       const productAnalyticsChanged =
         form.formState.defaultValues?.isProductTelemetryEnabled !==
         saved.isProductTelemetryEnabled;
-      form.reset(configurationsForm.toFormValues(saved));
+      form.reset(toFormValues(saved));
       await queryClient.invalidateQueries({
         queryKey: platformConfigurationHooks.queryKey,
       });
@@ -122,6 +119,18 @@ const ConfigurationsSkeleton = () => {
     </div>
   );
 };
+
+const toFormValues = (
+  configuration: PlatformConfiguration,
+): ConfigurationsFormValues => ({
+  isProductTelemetryEnabled: configuration.isProductTelemetryEnabled,
+});
+
+export const ConfigurationsFormValues = PlatformConfiguration.pick({
+  isProductTelemetryEnabled: true,
+});
+
+export type ConfigurationsFormValues = z.infer<typeof ConfigurationsFormValues>;
 
 type ConfigurationsContentProps = {
   configuration: PlatformConfiguration;
