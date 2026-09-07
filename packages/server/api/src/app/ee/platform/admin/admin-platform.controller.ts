@@ -86,8 +86,13 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send()
     })
 
-    app.post('/flows/migrate-to-deno', MigrateFlowsToDenoRequest, async (req, res) => {
+    app.post('/flows/migrate-to-deno', MigrateFlowsDenoRequest, async (req, res) => {
         const result = await denoMigrationService(req.log).migrateToDeno(req.body)
+        return res.status(StatusCodes.OK).send(result)
+    })
+
+    app.post('/flows/revert-from-deno', MigrateFlowsDenoRequest, async (req, res) => {
+        const result = await denoMigrationService(req.log).revertFromDeno(req.body)
         return res.status(StatusCodes.OK).send(result)
     })
 
@@ -218,7 +223,7 @@ const CreatePieceRequest = {
     },
 }
 
-const MigrateFlowsToDenoRequest = {
+const MigrateFlowsDenoRequest = {
     schema: {
         body: z.object({
             platformId: z.string().optional(),
