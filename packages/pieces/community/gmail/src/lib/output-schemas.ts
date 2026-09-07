@@ -1059,3 +1059,138 @@ export const gmailListHistoryActionOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const gmailAddLabelToEmailActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailRemoveLabelFromEmailActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailCreateLabelActionOutputSchema: OutputSchema = {
+  fields: gmailLabelBaseFields,
+};
+
+export const gmailArchiveEmailActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailDeleteEmailActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailRemoveLabelFromThreadActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Thread ID' },
+    { key: 'snippet', label: 'Snippet' },
+    { key: 'historyId', label: 'History ID' },
+    {
+      key: 'messages',
+      label: 'Messages',
+      labelKey: 'snippet',
+      listItems: gmailMessageResourceFields,
+    },
+  ],
+};
+
+export const newStarredEmailTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'subject',
+      label: 'Subject',
+      value: 'data.message.subject',
+    },
+    {
+      key: 'from',
+      label: 'From',
+      value: 'data.message.from.text',
+      format: 'email',
+    },
+    {
+      key: 'to',
+      label: 'To',
+      value: 'data.message.to.text',
+      format: 'email',
+    },
+    {
+      key: 'text',
+      label: 'Body (Text)',
+      value: 'data.message.text',
+    },
+    {
+      key: 'date',
+      label: 'Date',
+      value: 'data.message.date',
+      format: 'datetime',
+    },
+    {
+      key: 'id',
+      label: 'Message ID',
+      value: 'data.starInfo.messageId',
+    },
+    {
+      key: 'starredAt',
+      label: 'Starred At',
+      value: 'data.starInfo.starredAt',
+      format: 'datetime',
+    },
+    {
+      key: 'threadId',
+      label: 'Thread ID',
+      value: 'data.thread.id',
+    },
+  ],
+};
+
+export const newConversationTriggerOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'subject',
+      label: 'Subject',
+      value: 'data.conversation.starter.subject',
+    },
+    {
+      key: 'from',
+      label: 'From',
+      value: 'data.conversation.starter.from',
+    },
+    {
+      key: 'to',
+      label: 'To',
+      value: 'data.conversation.starter.to',
+    },
+    {
+      key: 'date',
+      label: 'Date',
+      value: 'data.conversation.starter.date',
+      format: 'datetime',
+    },
+    {
+      key: 'threadId',
+      label: 'Thread ID',
+      value: 'data.thread.id',
+    },
+    {
+      key: 'messageCount',
+      label: 'Message Count',
+      value: 'data.thread.messageCount',
+      format: 'number',
+    },
+    {
+      key: 'snippet',
+      label: 'Snippet',
+      value: 'data.thread.snippet',
+    },
+    {
+      key: 'messageId',
+      label: 'First Message ID',
+      value: 'data.message.id',
+    },
+    {
+      key: 'text',
+      label: 'Body (Text)',
+      value: 'data.message.text',
+    },
+  ],
+};

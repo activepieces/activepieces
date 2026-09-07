@@ -6,131 +6,16 @@ import {
 } from '@activepieces/pieces-framework';
 import { GmailProps } from '../common/props';
 import { gmailAuth, createGoogleClient } from '../auth';
-import { gmail as googleGmail } from '@googleapis/gmail';
+import { gmail as googleGmail, gmail_v1 } from '@googleapis/gmail';
 import { parseStream, convertAttachment } from '../common/data';
+import { gmailApiErrors } from '../common/gmail-errors';
+import { gmailHistory } from '../common/gmail-history';
+import { newConversationTriggerOutputSchema } from '../output-schemas';
 
-async function enrichNewConversation({
-  gmail,
-  threadId,
-  files,
-  conversationInfo,
-}: {
-  gmail: any;
-  threadId: string;
-  files: FilesService;
-  conversationInfo: {
-    createdAt: number;
-    historyId: string;
-  };
-}) {
-  const threadResponse = await gmail.users.threads.get({
-    userId: 'me',
-    id: threadId,
-    format: 'full',
-  });
-
-  const thread = threadResponse.data;
-  const messages = thread.messages || [];
-
-  const firstMessage = messages[0];
-  if (!firstMessage?.id) {
-    throw new Error('No messages found in thread');
-  }
-
-  const rawMessageResponse = await gmail.users.messages.get({
-    userId: 'me',
-    id: firstMessage.id,
-    format: 'raw',
-  });
-
-  const parsedFirstMessage = await parseStream(
-    Buffer.from(rawMessageResponse.data.raw as string, 'base64').toString(
-      'utf-8'
-    )
-  );
-
-  const headers = firstMessage.payload?.headers || [];
-  const headerMap = headers.reduce(
-    (acc: { [key: string]: string }, header: any) => {
-      if (header.name && header.value) {
-        acc[header.name.toLowerCase()] = header.value;
-      }
-      return acc;
-    },
-    {}
-  );
-
-  return {
-    conversation: {
-      threadId: threadId,
-      messageCount: messages.length,
-      snippet: thread.snippet || '',
-      historyId: thread.historyId,
-      participants: extractParticipants(messages),
-      subject: headerMap['subject'] || '',
-      starter: {
-        from: headerMap['from'] || '',
-        to: headerMap['to'] || '',
-        cc: headerMap['cc'] || '',
-        bcc: headerMap['bcc'] || '',
-        date: headerMap['date'] || '',
-        messageId: firstMessage.id,
-      },
-    },
-    firstMessage: {
-      ...parsedFirstMessage,
-      messageId: firstMessage.id,
-      attachments: await convertAttachment(
-        parsedFirstMessage.attachments,
-        files
-      ),
-    },
-    conversationInfo: {
-      ...conversationInfo,
-      triggeredAt: Date.now(),
-    },
-  };
-}
-
-function extractParticipants(messages: any[]): {
-  from: Set<string>;
-  to: Set<string>;
-  cc: Set<string>;
-} {
-  const participants = {
-    from: new Set<string>(),
-    to: new Set<string>(),
-    cc: new Set<string>(),
-  };
-
-  messages.forEach((message) => {
-    const headers = message.payload?.headers || [];
-    headers.forEach((header: any) => {
-      if (header.name && header.value) {
-        const name = header.name.toLowerCase();
-        const value = header.value;
-
-        if (name === 'from') {
-          participants.from.add(value);
-        } else if (name === 'to') {
-          value
-            .split(',')
-            .forEach((email: string) => participants.to.add(email.trim()));
-        } else if (name === 'cc') {
-          value
-            .split(',')
-            .forEach((email: string) => participants.cc.add(email.trim()));
-        }
-      }
-    });
-  });
-
-  return {
-    from: participants.from,
-    to: participants.to,
-    cc: participants.cc,
-  };
-}
+const LAST_HISTORY_ID_KEY = 'lastHistoryId';
+const PROCESSED_THREADS_KEY = 'processedThreads';
+const DEFAULT_MAX_AGE_HOURS = 24;
+const MAX_PROCESSED_THREADS = 1000;
 
 export const gmailNewConversationTrigger = createTrigger({
   auth: gmailAuth,
@@ -138,6 +23,10 @@ export const gmailNewConversationTrigger = createTrigger({
   classification: 'READ',
   displayName: 'New Conversation',
   description: 'Triggers when a new email conversation (thread) begins',
+  aiMetadata: {
+    description:
+      'Fires when a new Gmail conversation (thread) starts, optionally filtered by sender or subject. Each event is the first message of that thread. A quick reply before the next poll still counts as a new conversation because the first-message timestamp is used, not a one-message thread length.',
+  },
   props: {
     from: {
       ...GmailProps.from,
@@ -156,177 +45,102 @@ export const gmailNewConversationTrigger = createTrigger({
       description:
         'Only trigger for conversations started within this many hours',
       required: false,
-      defaultValue: 24,
+      defaultValue: DEFAULT_MAX_AGE_HOURS,
     }),
   },
+  outputSchema: newConversationTriggerOutputSchema,
   sampleData: {},
   type: TriggerStrategy.POLLING,
-  onEnable: async (context) => {
+  async onEnable(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
-
     const profile = await gmail.users.getProfile({ userId: 'me' });
-    await context.store.put('lastHistoryId', profile.data.historyId);
-    await context.store.put('processedThreads', []);
+    await context.store.put(LAST_HISTORY_ID_KEY, profile.data.historyId);
+    await context.store.put(PROCESSED_THREADS_KEY, []);
   },
-  onDisable: async (context) => {
-    await context.store.delete('lastHistoryId');
-    await context.store.delete('processedThreads');
+  async onDisable(context) {
+    await context.store.delete(LAST_HISTORY_ID_KEY);
+    await context.store.delete(PROCESSED_THREADS_KEY);
   },
-  run: async (context) => {
+  async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
-
-    const lastHistoryId = await context.store.get('lastHistoryId');
+    const lastHistoryId = await context.store.get<string>(LAST_HISTORY_ID_KEY);
     const processedThreads =
-      (await context.store.get<string[]>('processedThreads')) || [];
-    const maxAge = (context.propsValue.maxAgeHours || 24) * 60 * 60 * 1000;
-    const cutoffTime = Date.now() - maxAge;
+      (await context.store.get<string[]>(PROCESSED_THREADS_KEY)) ?? [];
+    const cutoffTime = conversationCutoffMs({
+      maxAgeHours: context.propsValue.maxAgeHours,
+    });
+
+    if (!lastHistoryId) {
+      const profile = await gmail.users.getProfile({ userId: 'me' });
+      await context.store.put(LAST_HISTORY_ID_KEY, profile.data.historyId);
+      return [];
+    }
 
     try {
-      const historyResponse = await gmail.users.history.list({
-        userId: 'me',
-        startHistoryId: lastHistoryId as string,
+      const { records, historyId } = await gmailHistory.listAllPages({
+        gmail,
+        startHistoryId: lastHistoryId,
         historyTypes: ['messageAdded'],
-        maxResults: 100,
       });
 
-      const newConversations: string[] = [];
+      const threadIds = gmailHistory.collectAddedThreadIds({ records });
+      const results = [];
+      const newlyProcessed = [...processedThreads];
 
-      if (historyResponse.data.history) {
-        for (const history of historyResponse.data.history) {
-          if (history.messagesAdded) {
-            for (const added of history.messagesAdded) {
-              const threadId = added.message?.threadId;
-              if (threadId && !processedThreads.includes(threadId)) {
-                const threadResponse = await gmail.users.threads.get({
-                  userId: 'me',
-                  id: threadId,
-                  format: 'minimal',
-                });
-
-                if (threadResponse.data.messages?.length === 1) {
-                  newConversations.push(threadId);
-                }
-              }
-            }
-          }
+      for (const threadId of threadIds) {
+        if (newlyProcessed.includes(threadId)) {
+          continue;
         }
-      }
-
-      const results: any[] = [];
-      for (const threadId of newConversations) {
-        const threadResponse = await gmail.users.threads.get({
-          userId: 'me',
-          id: threadId,
-          format: 'full',
-        });
-
-        const thread = threadResponse.data;
-        const firstMessage = thread.messages?.[0];
-        if (!firstMessage) continue;
-
-        const messageDate = parseInt(firstMessage.internalDate || '0');
-        if (messageDate < cutoffTime) continue;
-
-        const headers = firstMessage.payload?.headers || [];
-        const headerMap: { [key: string]: string } = {};
-        headers.forEach((h: any) => {
-          if (h.name && h.value) {
-            headerMap[h.name.toLowerCase()] = h.value;
-          }
-        });
-
-        if (context.propsValue.from) {
-          const from = headerMap['from'] || '';
-          if (
-            !from.toLowerCase().includes(context.propsValue.from.toLowerCase())
-          ) {
+        try {
+          const conversation = await enrichNewConversation({
+            gmail,
+            threadId,
+            files: context.files,
+            cutoffTime,
+            fromFilter: context.propsValue.from,
+            subjectFilter: context.propsValue.subject,
+          });
+          if (!conversation) {
+            newlyProcessed.push(threadId);
             continue;
           }
-        }
-
-        if (context.propsValue.subject) {
-          const subject = headerMap['subject'] || '';
-          if (
-            !subject
-              .toLowerCase()
-              .includes(context.propsValue.subject.toLowerCase())
-          ) {
+          results.push(conversation);
+          newlyProcessed.push(threadId);
+        } catch (error) {
+          if (gmailApiErrors.getCode(error) === 404) {
             continue;
           }
+          throw error;
         }
-
-        const rawResponse = await gmail.users.messages.get({
-          userId: 'me',
-          id: firstMessage.id!,
-          format: 'raw',
-        });
-
-        const parsedMessage = await parseStream(
-          Buffer.from(rawResponse.data.raw as string, 'base64').toString(
-            'utf-8'
-          )
-        );
-
-        results.push({
-          id: `conversation_${threadId}`,
-          data: {
-            thread: {
-              id: threadId,
-              snippet: thread.snippet,
-              messageCount: 1,
-            },
-            message: {
-              ...parsedMessage,
-              id: firstMessage.id,
-              threadId: threadId,
-              date: new Date(messageDate).toISOString(),
-              attachments: await convertAttachment(
-                parsedMessage.attachments,
-                context.files
-              ),
-            },
-            conversation: {
-              starter: {
-                from: headerMap['from'],
-                to: headerMap['to'],
-                subject: headerMap['subject'],
-                date: headerMap['date'],
-              },
-            },
-          },
-        });
-
-        processedThreads.push(threadId);
       }
 
-      if (historyResponse.data.historyId) {
-        await context.store.put(
-          'lastHistoryId',
-          historyResponse.data.historyId
-        );
+      if (historyId) {
+        await context.store.put(LAST_HISTORY_ID_KEY, historyId);
       }
-
-      const recentThreads = processedThreads.slice(-1000);
-      await context.store.put('processedThreads', recentThreads);
+      await context.store.put(
+        PROCESSED_THREADS_KEY,
+        newlyProcessed.slice(-MAX_PROCESSED_THREADS)
+      );
 
       return results;
-    } catch (error: any) {
-      if (error.code === 404) {
+    } catch (error) {
+      if (gmailApiErrors.getCode(error) === 404) {
         const profile = await gmail.users.getProfile({ userId: 'me' });
-        await context.store.put('lastHistoryId', profile.data.historyId);
+        await context.store.put(LAST_HISTORY_ID_KEY, profile.data.historyId);
         return [];
       }
       throw error;
     }
   },
-  test: async (context) => {
+  async test(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
-
-    const maxAge = (context.propsValue.maxAgeHours || 24) * 60 * 60 * 1000;
-    const cutoffSeconds = Math.floor((Date.now() - maxAge) / 1000);
+    const cutoffTime = conversationCutoffMs({
+      maxAgeHours: context.propsValue.maxAgeHours,
+    });
+    const cutoffSeconds = Math.floor(cutoffTime / 1000);
 
     let query = `after:${cutoffSeconds}`;
     if (context.propsValue.from) {
@@ -342,73 +156,148 @@ export const gmailNewConversationTrigger = createTrigger({
       maxResults: 5,
     });
 
-    const results: any[] = [];
-    if (threadsResponse.data.threads) {
-      for (const thread of threadsResponse.data.threads) {
-        const threadId = thread.id!;
-
-        const fullThread = await gmail.users.threads.get({
-          userId: 'me',
-          id: threadId,
-          format: 'full',
+    const results = [];
+    for (const thread of threadsResponse.data.threads ?? []) {
+      const threadId = thread.id;
+      if (!threadId) {
+        continue;
+      }
+      try {
+        const conversation = await enrichNewConversation({
+          gmail,
+          threadId,
+          files: context.files,
+          cutoffTime,
+          fromFilter: context.propsValue.from,
+          subjectFilter: context.propsValue.subject,
         });
-
-        if (fullThread.data.messages?.length === 1) {
-          const firstMessage = fullThread.data.messages[0];
-          const headers = firstMessage.payload?.headers || [];
-          const headerMap: { [key: string]: string } = {};
-          headers.forEach((h: any) => {
-            if (h.name && h.value) {
-              headerMap[h.name.toLowerCase()] = h.value;
-            }
-          });
-
-          const rawResponse = await gmail.users.messages.get({
-            userId: 'me',
-            id: firstMessage.id!,
-            format: 'raw',
-          });
-
-          const parsedMessage = await parseStream(
-            Buffer.from(rawResponse.data.raw as string, 'base64').toString(
-              'utf-8'
-            )
-          );
-
-          results.push({
-            id: `test_conversation_${threadId}`,
-            data: {
-              thread: {
-                id: threadId,
-                snippet: fullThread.data.snippet,
-                messageCount: 1,
-              },
-              message: {
-                ...parsedMessage,
-                id: firstMessage.id,
-                threadId: threadId,
-                date: new Date(
-                  parseInt(firstMessage.internalDate || '0')
-                ).toISOString(),
-                attachments: await convertAttachment(
-                  parsedMessage.attachments,
-                  context.files
-                ),
-              },
-              conversation: {
-                starter: {
-                  from: headerMap['from'],
-                  to: headerMap['to'],
-                  subject: headerMap['subject'],
-                  date: headerMap['date'],
-                },
-              },
-            },
-          });
+        if (conversation) {
+          results.push(conversation);
         }
+      } catch (error) {
+        if (gmailApiErrors.getCode(error) === 404) {
+          continue;
+        }
+        throw error;
       }
     }
-
     return results;
   },
 });
+
+async function enrichNewConversation({
+  gmail,
+  threadId,
+  files,
+  cutoffTime,
+  fromFilter,
+  subjectFilter,
+}: {
+  gmail: gmail_v1.Gmail;
+  threadId: string;
+  files: FilesService;
+  cutoffTime: number;
+  fromFilter?: string;
+  subjectFilter?: string;
+}) {
+  const threadResponse = await gmail.users.threads.get({
+    userId: 'me',
+    id: threadId,
+    format: 'full',
+  });
+
+  const firstMessage = threadResponse.data.messages?.[0];
+  if (!firstMessage?.id) {
+    return null;
+  }
+
+  const messageDate = Number(firstMessage.internalDate ?? 0);
+  if (
+    !gmailHistory.isFirstMessageWithinCutoff({
+      firstMessageInternalDate: messageDate,
+      cutoffTime,
+    })
+  ) {
+    return null;
+  }
+
+  const headerMap = headerMapFrom(firstMessage.payload?.headers);
+  if (
+    fromFilter &&
+    !(headerMap.from ?? '').toLowerCase().includes(fromFilter.toLowerCase())
+  ) {
+    return null;
+  }
+  if (
+    subjectFilter &&
+    !(headerMap.subject ?? '')
+      .toLowerCase()
+      .includes(subjectFilter.toLowerCase())
+  ) {
+    return null;
+  }
+
+  const rawResponse = await gmail.users.messages.get({
+    userId: 'me',
+    id: firstMessage.id,
+    format: 'raw',
+  });
+  const raw = rawResponse.data.raw;
+  if (typeof raw !== 'string') {
+    throw new Error(`Gmail message "${firstMessage.id}" has no raw payload.`);
+  }
+
+  const parsedMessage = await parseStream(
+    Buffer.from(raw, 'base64').toString('utf-8')
+  );
+
+  return {
+    id: `conversation_${threadId}`,
+    data: {
+      thread: {
+        id: threadId,
+        snippet: threadResponse.data.snippet,
+        messageCount: threadResponse.data.messages?.length ?? 0,
+      },
+      message: {
+        ...parsedMessage,
+        id: firstMessage.id,
+        threadId,
+        date: new Date(messageDate).toISOString(),
+        attachments: await convertAttachment(parsedMessage.attachments, files),
+      },
+      conversation: {
+        starter: {
+          from: headerMap.from,
+          to: headerMap.to,
+          subject: headerMap.subject,
+          date: headerMap.date,
+        },
+      },
+    },
+  };
+}
+
+function conversationCutoffMs({
+  maxAgeHours,
+}: {
+  maxAgeHours?: number;
+}): number {
+  const hours =
+    typeof maxAgeHours === 'number' && maxAgeHours > 0
+      ? maxAgeHours
+      : DEFAULT_MAX_AGE_HOURS;
+  return Date.now() - hours * 60 * 60 * 1000;
+}
+
+function headerMapFrom(
+  headers: Array<{ name?: string | null; value?: string | null }> | undefined
+): Record<string, string> {
+  const headerMap: Record<string, string> = {};
+  for (const header of headers ?? []) {
+    if (header.name && header.value) {
+      headerMap[header.name.toLowerCase()] = header.value;
+    }
+  }
+  return headerMap;
+}
