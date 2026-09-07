@@ -19,6 +19,20 @@ describe('codeExecutor', () => {
         expect(result.steps.echo_step.output).toEqual({ 'key': 3 })
     })
 
+    it('should execute a legacy step (useDeno unset) from the compiled index.js artifact', async () => {
+        const result = await codeExecutor.handle({
+            action: buildCodeAction({
+                name: 'echo_step_legacy',
+                useDeno: false,
+                input: {
+                    'key': '{{ 1 + 2 }}',
+                },
+            }), executionState: FlowExecutorContext.empty(), constants: generateMockEngineConstants(),
+        })
+        expect(result.verdict.status).toBe(FlowRunStatus.RUNNING)
+        expect(result.steps.echo_step_legacy.output).toEqual({ 'key': 3 })
+    })
+
     it('should execute code from a nested action-run namespace, which is how fork mode reads it off the host filesystem', async () => {
         const result = await codeExecutor.handle({
             action: buildCodeAction({
