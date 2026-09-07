@@ -70,7 +70,7 @@ function agentStep({ name, agentId, nextAction }: { name: string, agentId?: stri
     }
 }
 
-async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece = true, publish = false }: { ctx: TestContext, agentIds: string[], siblingAgentId?: string, stepIsAgentPiece?: boolean, publish?: boolean }): Promise<{ flowRunId: string, waitpointId: string }> {
+async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece = true, publish = false, siblingSharesName = false }: { ctx: TestContext, agentIds: string[], siblingAgentId?: string, stepIsAgentPiece?: boolean, publish?: boolean, siblingSharesName?: boolean }): Promise<{ flowRunId: string, waitpointId: string }> {
     const flow = createMockFlow({ projectId: ctx.project.id })
     await db.save('flow', flow)
     const version = createMockFlowVersion({
@@ -87,7 +87,7 @@ async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece =
                 ? agentStep({
                     name: AGENT_STEP_NAME,
                     agentId: agentIds[0],
-                    nextAction: siblingAgentId ? agentStep({ name: 'step_2', agentId: siblingAgentId }) : undefined,
+                    nextAction: siblingAgentId ? agentStep({ name: siblingSharesName ? AGENT_STEP_NAME : 'step_2', agentId: siblingAgentId }) : undefined,
                 })
                 : {
                     name: AGENT_STEP_NAME,
@@ -314,13 +314,18 @@ describe('a flow step that links a saved agent', () => {
         expect(JSON.stringify(replay.json())).toContain('already had its agent run')
     })
 
-    it('refuses a step that neither runs a saved agent nor names a model', async () => {
+    it('refuses a flow where two steps share the paused step name', async () => {
         const ctx = await context()
+        const mine = await createAgent(ctx)
+        const theirs = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${mine.id}/publish`)
+        await ctx.post(`/v1/agents/${theirs.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [mine.externalId], siblingAgentId: theirs.externalId, siblingSharesName: true })
 
-        const response = await startRun(ctx, { tools: [] })
+        const response = await startRun(ctx, { agentId: mine.externalId }, bound)
 
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
-        expect(JSON.stringify(response.json())).toContain('no model to run it with')
+        expect(JSON.stringify(response.json())).toContain('ambiguous')
     })
 })
 

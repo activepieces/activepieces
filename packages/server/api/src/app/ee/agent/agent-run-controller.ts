@@ -30,15 +30,15 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const { projectId, platform } = request.principal
-        if (!await agentHelpers.agentsSurfaceAvailable({ platformId: platform.id, log: request.log })) {
-            throw new ActivepiecesError({ code: ErrorCode.FEATURE_DISABLED, params: { message: 'Agents are not available on this platform' } })
-        }
         const { allowed, count } = await agentHelpers.incrementAndCheckLimit({ key: `flow-agent-runs:${projectId}`, limit: RUNS_PER_MINUTE, ttlSeconds: 60 })
         if (!allowed) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `This project started ${count} agent runs in the last minute, above the limit of ${RUNS_PER_MINUTE}` } })
         }
         if (!isNil(agentId) && (inlineTools?.length ?? 0) > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step both links an agent and carries its own tools, so which one to run is ambiguous' } })
+        }
+        if (!isNil(agentId) && !await agentHelpers.agentsSurfaceAvailable({ platformId: platform.id, log: request.log })) {
+            throw new ActivepiecesError({ code: ErrorCode.FEATURE_DISABLED, params: { message: 'This step runs a saved agent, and agents are not available on this platform' } })
         }
         const linked = isNil(agentId) ? null : await resolvePublishedAgent({ projectId, externalId: agentId, flowRunId, waitpointId, log: request.log })
         const runFields = isNil(linked)
@@ -52,9 +52,6 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             }
             : agentHelpers.jobFieldsFromConfig({ config: linked })
         const { tools, structuredOutput, provider } = runFields
-        if (isNil(linked) && (isNil(provider) || isNil(runFields.modelName))) {
-            throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step neither runs a saved agent nor names an AI model, so there is no model to run it with' } })
-        }
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const runnableToolTypes = [AgentToolType.PIECE, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const supportedTools = (tools ?? []).filter((tool) => runnableToolTypes.includes(tool.type))
@@ -130,7 +127,11 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That step has already had its agent run. A finished waitpoint cannot start another one.' } })
     }
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowRun.flowVersionId)
-    const step = flowStructureUtil.getStep(waitpoint.stepName, flowVersion.trigger)
+    const named = flowStructureUtil.getAllSteps(flowVersion.trigger).filter((candidate) => candidate.name === waitpoint.stepName)
+    if (named.length > 1) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `More than one step in this flow is called "${waitpoint.stepName}", so which one paused is ambiguous. Rename one of them.` } })
+    }
+    const [step] = named
     if (isNil(step) || !flowStructureUtil.isAgentPiece(step) || step.settings.input?.[AgentPieceProps.AGENT_ID] !== externalId) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step did not name that agent when the flow was saved. An agent has to be picked on the step, not supplied while the flow runs.' } })
     }
