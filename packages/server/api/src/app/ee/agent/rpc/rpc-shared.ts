@@ -8,13 +8,13 @@ import { appConnectionService } from '../../../app-connection/app-connection-ser
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 
-import { CONFIGURED_TOOL_SOURCES } from './tool-execution-rpc'
 
 export const CONNECTION_INVENTORY_LIMIT = 200
 
 // Gate the UPDATE on the persisted owning run (activeRunId, claimed at turn start) so a run
 // preempted by a newer message matches zero rows — the ownership check is part of the write, with
 // no check-then-write window. A nil runId or unclaimed row (activeRunId IS NULL) writes freely.
+export const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
 export async function updateConversationForRun({ conversationId, runId, updates }: {
     conversationId: string
     runId?: string

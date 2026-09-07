@@ -11,13 +11,12 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
-import { byteLengthOf, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent } from './rpc-shared'
+import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent } from './rpc-shared'
 
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
-export const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
 const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
@@ -220,9 +219,4 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         return { result }
     },
 
-    // Security boundary for the chat agent's ap_send_email tool. Recipients may be any valid
-    // address (incl. external), but the abuse controls are re-enforced here so a manipulated LLM
-    // (e.g. via prompt injection) can't quietly fan out mail on the platform's SMTP reputation:
-    // recipient addresses are format-validated, recipient count and per-platform/per-conversation/
-    // per-hour volume are capped, and the email is rendered through a branded template with
 })

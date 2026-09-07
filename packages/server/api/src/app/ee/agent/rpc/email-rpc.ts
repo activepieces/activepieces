@@ -39,6 +39,11 @@ function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
 
 
 export const emailRpc = (log: FastifyBaseLogger) => ({
+    // Security boundary for the chat agent's ap_send_email tool. Recipients may be any valid
+    // address (incl. external), but the abuse controls are re-enforced here so a manipulated LLM
+    // (e.g. via prompt injection) can't quietly fan out mail on the platform's SMTP reputation:
+    // recipient addresses are format-validated, recipient count and per-platform/per-conversation/
+    // per-hour volume are capped, and the email is rendered through a branded template with
     // Reply-To set to the real user. The system prompt further constrains the agent to send only
     // on the user's direct request — never because an email instruction appeared in fetched page
     // or tool content.
