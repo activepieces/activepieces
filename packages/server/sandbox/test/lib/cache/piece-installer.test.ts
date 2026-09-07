@@ -73,7 +73,7 @@ const fakeLog = {
 } as unknown as ApLogger
 
 // Every piece is installed from its bundle link; the dependency value is the engine bundle endpoint.
-const bundleSource = { publicApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' }
+const bundleSource = { internalApiUrl: 'http://localhost:3000/api/', engineToken: 'test-token' }
 
 const fakeGetSettings = () => ({
     EXECUTION_MODE: 'UNSANDBOXED',
@@ -283,6 +283,50 @@ describe('pieceInstaller', () => {
         expect(mockInstall.mock.calls[2]?.[0]).toMatchObject({
             filtersPath: [expect.stringContaining(`${piece2.pieceName}-${piece2.pieceVersion}`)],
         })
+    })
+
+    it('downloads piece bundles using internalApiUrl and not publicApiUrl', async () => {
+        const piece = makePiece('@activepieces/piece-test')
+        const installer = pieceInstaller(fakeLog, testWorkspace, fakeGetSettings)
+        mockInstall.mockResolvedValueOnce({ output: '' })
+
+        const internalApiUrl = 'http://internal-api.local:3000/api/'
+        const publicApiUrl = 'https://public.activepieces.com/api/'
+
+        const fetchMock = vi.fn().mockImplementation((url: string) => {
+            if (url.startsWith(internalApiUrl)) {
+                return Promise.resolve({
+                    ok: true,
+                    arrayBuffer: async () => new TextEncoder().encode('tgz').buffer,
+                })
+            }
+            return Promise.resolve({
+                ok: false,
+                status: 502,
+                statusText: 'Bad Gateway - worker cannot route to publicApiUrl',
+            })
+        })
+        vi.stubGlobal('fetch', fetchMock)
+
+        await installer.install({
+            pieces: [piece],
+            includeFilters: true,
+            internalApiUrl,
+            engineToken: 'test-token',
+        })
+
+        expect(fetchMock).toHaveBeenCalledOnce()
+        expect(fetchMock).toHaveBeenCalledWith(
+            expect.stringContaining(`${internalApiUrl}v1/engine/pieces/bundle`),
+            expect.objectContaining({
+                headers: { Authorization: 'Bearer test-token' },
+            }),
+        )
+        expect(fetchMock).not.toHaveBeenCalledWith(
+            expect.stringContaining(publicApiUrl),
+            expect.anything(),
+        )
+        expect(await pathExists(readyFilePath(piece))).toBe(true)
     })
 })
 

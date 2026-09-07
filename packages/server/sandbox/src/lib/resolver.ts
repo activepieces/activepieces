@@ -48,7 +48,7 @@ export function createResolver({ apiClient, basePath, getSettings, log }: Create
                 flowVersionId: flowVersion?.id,
                 pieces: uniquePieces,
                 codes,
-                publicApiUrl: input.publicApiUrl,
+                internalApiUrl: input.internalApiUrl,
                 engineToken: input.engineToken,
             }
             return { kind: 'ready', provision, flowVersion }

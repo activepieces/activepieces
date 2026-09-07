@@ -15,10 +15,10 @@ const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
-    async install({ pieces, includeFilters, publicApiUrl, engineToken }: InstallParams): Promise<void> {
+    async install({ pieces, includeFilters, internalApiUrl, engineToken }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, { internalApiUrl, engineToken }, getSettings)
         })
         await Promise.all(installPromises)
     },
@@ -247,13 +247,13 @@ function bundleTgzPath(rootWorkspace: string, piece: PiecePackage): string {
 // `fetch` follows the redirect and carries the engine token in the Authorization header.
 // ARCHIVE pieces are fetched by archiveId (they may not be registered in metadata yet, e.g. during
 // EXTRACT_PIECE_METADATA); REGISTRY pieces by name@version.
-async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: PiecePackage[], { publicApiUrl, engineToken }: BundleSource): Promise<void> {
+async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: PiecePackage[], { internalApiUrl, engineToken }: BundleSource): Promise<void> {
     await Promise.all(pieces.map(async (piece) => {
         const bundlePath = bundleTgzPath(rootWorkspace, piece)
         if (await fileSystemUtils.fileExists(bundlePath)) {
             return
         }
-        const url = pieceBundleEndpointUrl(publicApiUrl, piece)
+        const url = pieceBundleEndpointUrl(internalApiUrl, piece)
         const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
         if (!response.ok) {
             throw new Error(`Failed to fetch piece bundle ${piece.pieceName}@${piece.pieceVersion}: ${response.status} ${response.statusText}`)
@@ -263,8 +263,8 @@ async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: Piece
     }))
 }
 
-function pieceBundleEndpointUrl(publicApiUrl: string, piece: PiecePackage): string {
-    const base = `${ensureTrailingSlash(publicApiUrl)}v1/engine/pieces/bundle`
+function pieceBundleEndpointUrl(internalApiUrl: string, piece: PiecePackage): string {
+    const base = `${ensureTrailingSlash(internalApiUrl)}v1/engine/pieces/bundle`
     if (piece.packageType === PackageType.ARCHIVE) {
         return `${base}?archiveId=${encodeURIComponent(piece.archiveId)}`
     }
@@ -319,12 +319,12 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
 }
 
 type BundleSource = {
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
 }
 

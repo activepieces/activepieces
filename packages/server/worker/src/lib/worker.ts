@@ -109,7 +109,7 @@ export const worker = {
             logger.info('Connected to API server via Socket.IO')
             resetPollLoopLiveness({ loopCount: 0 })
             await fetchAndStoreSettings(socket!)
-            void startPollingWorkers(apiClient).catch((err) => {
+            void startPollingWorkers(apiClient, apiUrl).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
             })
         })
@@ -144,7 +144,7 @@ export const worker = {
         createNotifyServer<ApiToWorkerContract>(socket, createApiToWorkerHandlers({
             getRuntime: () => runtime,
             apiClient,
-            getPublicApiUrl: () => ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            getInternalApiUrl: () => apiUrl,
             log: logger,
         }), logger)
 
@@ -173,7 +173,7 @@ export const worker = {
     },
 }
 
-async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void> {
+async function startPollingWorkers(apiClient: WorkerToApiContract, apiUrl: string): Promise<void> {
     if (polling) return
     polling = true
 
@@ -213,7 +213,7 @@ async function startPollingWorkers(apiClient: WorkerToApiContract): Promise<void
         const { error: prewarmError } = await tryCatch(() => createdRuntime.prewarm({
             log: logger,
             apiClient,
-            publicApiUrl: ensurePublicApiUrl(workerSettings.getSettings().PUBLIC_URL),
+            internalApiUrl: apiUrl,
         }))
         if (prewarmError) {
             logger.error({ error: prewarmError }, 'Prewarm failed, continuing without a warm cache')

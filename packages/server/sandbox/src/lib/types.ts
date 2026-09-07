@@ -14,7 +14,7 @@ export type Resolver = {
 
 export type ResolveInput = {
     platformId: string
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
     flow?: { id: string, versionId: string, projectId: string }
     pieces?: PiecePackage[]
@@ -49,22 +49,22 @@ export type ExecuteParams = {
 export type PreWarmSandboxParams = {
     log: ApLogger
     apiClient?: WorkerToApiContract
-    publicApiUrl?: string
+    internalApiUrl?: string
     // Warm just this flow (e.g. on publish) instead of the platform's whole active set.
     flow?: { id: string, versionId: string, projectId: string }
 }
 
 // The Resolver's output and the pool's input. The pool installs each piece straight from a link: it
-// builds `${publicApiUrl}v1/engine/pieces/bundle?name=&version=&token=` per piece and hands that URL
+// builds `${internalApiUrl}v1/engine/pieces/bundle?name=&version=&token=` per piece and hands that URL
 // to `bun install`, which follows the endpoint's redirect to npm / signed-S3 (or streams the custom
 // archive). No bytes cross the worker socket and the pool never imports WorkerToApiContract; the link
-// is publicApiUrl-based so it is reachable from a remote pool (Cloud Run). See ADR 0002.
+// is internalApiUrl-based for service-to-service communication. See ADR 0002.
 export type ProvisionInput = {
     platformId: string
     flowVersionId?: string
     pieces: PiecePackage[]
     codes: CodeArtifact[]
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
 }
 

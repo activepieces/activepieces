@@ -43,7 +43,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             const { error: provisionError } = await tryCatch(() => localExecutionCache(log, basePath, getSettings).provision({
                 pieces: provision.pieces,
                 codeSteps: provision.codes,
-                publicApiUrl: provision.publicApiUrl,
+                internalApiUrl: provision.internalApiUrl,
                 engineToken: provision.engineToken,
             }))
             if (provisionError) {
@@ -112,8 +112,8 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     busy: info.busy,
                 }))
         },
-        async prewarm({ log, apiClient, publicApiUrl, flow }: PreWarmSandboxParams): Promise<void> {
-            if (isNil(apiClient) || isNil(publicApiUrl)) {
+        async prewarm({ log, apiClient, internalApiUrl, flow }: PreWarmSandboxParams): Promise<void> {
+            if (isNil(apiClient) || isNil(internalApiUrl)) {
                 return
             }
             const startedAt = Date.now()
@@ -124,10 +124,10 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                     flow,
                 })
                 const resolver = createResolver({ apiClient, basePath, getSettings, log })
-                const provisions = await resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log })
+                const provisions = await resolveFlowsForPrewarm({ resolver, flows, platformId, internalApiUrl, engineToken, log })
                 const pieces = provisions.flatMap((provision) => provision.pieces)
                 const codeSteps = provisions.flatMap((provision) => provision.codes)
-                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken })
+                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, internalApiUrl, engineToken })
                 log.info({ flowCount: flows.length, pieceCount: pieces.length, durationMs: Date.now() - startedAt }, 'Prewarmed sandbox cache')
             })
             if (error) {
@@ -140,11 +140,11 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
     }
 }
 
-async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ProvisionInput[]> {
+async function resolveFlowsForPrewarm({ resolver, flows, platformId, internalApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ProvisionInput[]> {
     const provisions: ProvisionInput[] = []
     for (const batch of chunk(flows, PREWARM_RESOLVE_CONCURRENCY)) {
         const resolvedBatch = await Promise.all(batch.map(async (flow) => {
-            const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, publicApiUrl, engineToken }))
+            const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, internalApiUrl, engineToken }))
             if (flowError) {
                 log.warn({ error: String(flowError), flow: { id: flow.id } }, 'Failed to resolve flow for prewarm')
                 return null
@@ -168,7 +168,7 @@ type ResolveFlowsForPrewarmParams = {
     resolver: Resolver
     flows: { id: string, versionId: string, projectId: string }[]
     platformId: string
-    publicApiUrl: string
+    internalApiUrl: string
     engineToken: string
     log: ApLogger
 }
