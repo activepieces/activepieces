@@ -3,6 +3,7 @@ import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
 import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
+import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -63,6 +64,7 @@ export default function PlatformMcpPage() {
 
   return (
     <CenteredPage
+      widthClassName="max-w-[1198px]"
       title={t('Platform MCP Server')}
       description={t(
         'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
@@ -74,6 +76,7 @@ export default function PlatformMcpPage() {
             <TabsList>
               <TabsTrigger value="connection">{t('Connection')}</TabsTrigger>
               <TabsTrigger value="tools">{t('Tools')}</TabsTrigger>
+              <TabsTrigger value="activity">{t('Activity')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
@@ -126,6 +129,14 @@ export default function PlatformMcpPage() {
                   }
                 />
               </div>
+            </TabsContent>
+
+            <TabsContent
+              value="activity"
+              className="mt-4 flex flex-col gap-2 pb-6"
+              tabIndex={-1}
+            >
+              <ActivityFeed />
             </TabsContent>
           </Tabs>
         )}
