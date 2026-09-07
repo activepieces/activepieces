@@ -2,35 +2,37 @@
 
 const { sendRequest } = vi.hoisted(() => ({ sendRequest: vi.fn() }));
 
-vi.mock('@activepieces/pieces-common', () => ({
-  HttpMethod: {
-    GET: 'GET',
-    POST: 'POST',
-    PATCH: 'PATCH',
-    DELETE: 'DELETE',
-  },
-  AuthenticationType: { BEARER_TOKEN: 'BEARER_TOKEN' },
-  HttpError: class extends Error {},
-  httpClient: {
-    sendRequest: (...args: unknown[]) => sendRequest(...args),
-  },
-  createCustomApiCallAction: () => ({ name: 'custom_api_call' }),
-}));
+vi.mock('@activepieces/pieces-common', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@activepieces/pieces-common')
+  >();
+  return {
+    ...actual,
+    httpClient: {
+      sendRequest: (...args: unknown[]) => sendRequest(...args),
+    },
+  };
+});
 
 import { createIssue } from '../src/lib/actions/create-issue';
 import { createMilestone } from '../src/lib/actions/create-milestone';
 import { createRock } from '../src/lib/actions/create-rock';
 import { createTodo } from '../src/lib/actions/create-todo';
 import { findIssues } from '../src/lib/actions/find-issues';
+import { findMeasurables } from '../src/lib/actions/find-measurables';
 import { findRocks } from '../src/lib/actions/find-rocks';
 import { findTodos } from '../src/lib/actions/find-todos';
+import { listTeams } from '../src/lib/actions/list-teams';
+import { setMeasurableScore } from '../src/lib/actions/set-measurable-score';
 import { updateIssue } from '../src/lib/actions/update-issue';
+import { updateRock } from '../src/lib/actions/update-rock';
 import { updateTodo } from '../src/lib/actions/update-todo';
 
 const auth = { secret_text: 'a-token' };
 
 const lastBody = () => sendRequest.mock.calls.at(-1)?.[0]?.body;
 const lastUrl = () => sendRequest.mock.calls.at(-1)?.[0]?.url;
+const lastMethod = () => sendRequest.mock.calls.at(-1)?.[0]?.method;
 
 function reply(body: unknown) {
   sendRequest.mockResolvedValueOnce({ body });
@@ -312,5 +314,250 @@ describe('find rocks', () => {
     reply({ items: [], totalCount: 0 });
     await runAction(findRocks, { archived: 'no' });
     expect(lastBody().archived).toBe(false);
+  });
+});
+
+describe('the HTTP verb each action sends, so a PATCH cannot silently become a POST', () => {
+  test('create to-do is a POST', async () => {
+    reply({ id: 't1' });
+    await runAction(createTodo, { title: 'x' });
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('update to-do is a PATCH', async () => {
+    reply({ id: 't1' });
+    await runAction(updateTodo, { todoId: 't1', title: 'x' });
+    expect(lastMethod()).toBe('PATCH');
+  });
+
+  test('find to-dos queries with a POST', async () => {
+    reply([]);
+    await runAction(findTodos, {});
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('create issue is a POST', async () => {
+    reply({ id: 'i1' });
+    await runAction(createIssue, { title: 'x', teamId: 't1' });
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('update issue is a PATCH', async () => {
+    reply({ id: 'i1' });
+    await runAction(updateIssue, { issueId: 'i1', title: 'x' });
+    expect(lastMethod()).toBe('PATCH');
+  });
+
+  test('find issues queries with a POST', async () => {
+    reply({ items: [], totalCount: 0 });
+    await runAction(findIssues, {});
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('create rock is a POST', async () => {
+    reply({ _id: 'r1' });
+    await runAction(createRock, {
+      title: 'x',
+      teamId: 't1',
+      dueDate: '2026-09-30T00:00:00.000Z',
+      statusCode: 'ON_TRACK',
+      levelCode: 'USER',
+      quarter: 'Q3',
+    });
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('update rock is a PATCH', async () => {
+    reply({ _id: 'r1' });
+    await runAction(updateRock, { rockId: 'r1', title: 'x' });
+    expect(lastMethod()).toBe('PATCH');
+  });
+
+  test('find rocks queries with a POST', async () => {
+    reply({ items: [], totalCount: 0 });
+    await runAction(findRocks, {});
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('create milestone is a POST', async () => {
+    reply({ _id: 'm1' });
+    await runAction(createMilestone, {
+      teamId: 't1',
+      rockId: 'r1',
+      title: 'x',
+      dueDate: '2026-09-12T00:00:00.000Z',
+    });
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('find measurables queries with a POST', async () => {
+    reply({ items: [], totalCount: 0 });
+    await runAction(findMeasurables, {});
+    expect(lastMethod()).toBe('POST');
+  });
+
+  test('list teams is a GET', async () => {
+    reply([]);
+    await runAction(listTeams, {});
+    expect(lastMethod()).toBe('GET');
+  });
+
+  test('set measurable score is a POST', async () => {
+    reply({});
+    await runAction(setMeasurableScore, {
+      measurableId: 'k1',
+      value: 1,
+      periodStartDate: '2026-09-07',
+    });
+    expect(lastMethod()).toBe('POST');
+  });
+});
+
+describe('every optional field lands in the body, so none is silently dropped', () => {
+  test('create to-do sends every field it was given', async () => {
+    reply({ id: 't1' });
+    await runAction(createTodo, {
+      title: 'x',
+      teamId: 'team-1',
+      userId: 'user-1',
+      dueDate: '2026-09-11T00:00:00.000Z',
+      description: 'desc',
+      repeat: 'weekly',
+    });
+    expect(lastBody()).toEqual({
+      title: 'x',
+      teamId: 'team-1',
+      userId: 'user-1',
+      dueDate: '2026-09-11',
+      description: 'desc',
+      repeat: 'weekly',
+    });
+  });
+
+  test('update to-do sends every field it was given', async () => {
+    reply({ id: 't1' });
+    await runAction(updateTodo, {
+      todoId: 't1',
+      title: 'x',
+      description: 'desc',
+      dueDate: '2026-09-11T00:00:00.000Z',
+      teamId: 'team-1',
+      userId: 'user-1',
+      completed: 'yes',
+      archived: 'yes',
+      repeat: 'weekly',
+    });
+    expect(lastBody()).toEqual({
+      title: 'x',
+      description: 'desc',
+      dueDate: '2026-09-11',
+      teamId: 'team-1',
+      userId: 'user-1',
+      completed: true,
+      archived: true,
+      repeat: 'weekly',
+    });
+  });
+
+  test('create issue sends every field it was given', async () => {
+    reply({ id: 'i1' });
+    await runAction(createIssue, {
+      title: 'x',
+      teamId: 'team-1',
+      interval: 'LONG_TERM',
+      priority: '3',
+      userId: 'user-1',
+      description: 'desc',
+    });
+    expect(lastBody()).toEqual({
+      title: 'x',
+      teamId: 'team-1',
+      interval: 'LONG_TERM',
+      priority: 3,
+      userId: 'user-1',
+      description: 'desc',
+    });
+  });
+
+  test('update issue sends every field it was given', async () => {
+    reply({ id: 'i1' });
+    await runAction(updateIssue, {
+      issueId: 'i1',
+      title: 'x',
+      teamId: 'team-1',
+      interval: 'LONG_TERM',
+      priority: '3',
+      completed: 'yes',
+      description: 'desc',
+    });
+    expect(lastBody()).toEqual({
+      title: 'x',
+      teamId: 'team-1',
+      interval: 'LONG_TERM',
+      priority: 3,
+      completed: true,
+      description: 'desc',
+    });
+  });
+
+  test('create rock sends every field it was given', async () => {
+    reply({ _id: 'r1' });
+    await runAction(createRock, {
+      title: 'x',
+      teamId: 'team-1',
+      dueDate: '2026-09-30T00:00:00.000Z',
+      statusCode: 'ON_TRACK',
+      levelCode: 'USER',
+      quarter: 'Q3',
+      description: 'desc',
+      futureScope: 'Current',
+      additionalTeamIds: ['t2'],
+      addCreatorToFollowersList: true,
+    });
+    expect(lastBody()).toEqual({
+      rock: {
+        title: 'x',
+        teamId: 'team-1',
+        dueDate: '2026-09-30T00:00:00.000Z',
+        statusCode: 'ON_TRACK',
+        levelCode: 'USER',
+        quarter: 'Q3',
+        description: 'desc',
+        futureScope: 'Current',
+        additionalTeamIds: ['t2'],
+      },
+      addCreatorToFollowersList: true,
+    });
+  });
+
+  test('update rock sends every field it was given, including the status', async () => {
+    reply({ _id: 'r1' });
+    await runAction(updateRock, {
+      rockId: 'r1',
+      title: 'x',
+      statusCode: 'DONE',
+      levelCode: 'COMPANY',
+      quarter: 'Q4',
+      dueDate: '2026-09-30T17:30:00.000Z',
+      teamId: 'team-1',
+      userId: 'user-1',
+      description: 'desc',
+      futureScope: 'Next',
+      additionalTeamIds: ['t2'],
+      archived: 'yes',
+    });
+    expect(lastBody()).toEqual({
+      title: 'x',
+      statusCode: 'DONE',
+      levelCode: 'COMPANY',
+      quarter: 'Q4',
+      dueDate: '2026-09-30T17:30:00.000Z',
+      teamId: 'team-1',
+      userId: 'user-1',
+      description: 'desc',
+      futureScope: 'Next',
+      additionalTeamIds: ['t2'],
+      archived: true,
+    });
   });
 });

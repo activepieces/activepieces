@@ -2,13 +2,17 @@
 
 const { sendRequest } = vi.hoisted(() => ({ sendRequest: vi.fn() }));
 
-vi.mock('@activepieces/pieces-common', () => ({
-  HttpMethod: { GET: 'GET', POST: 'POST', PATCH: 'PATCH', DELETE: 'DELETE' },
-  AuthenticationType: { BEARER_TOKEN: 'BEARER_TOKEN' },
-  HttpError: class extends Error {},
-  httpClient: { sendRequest: (...args: unknown[]) => sendRequest(...args) },
-  createCustomApiCallAction: () => ({ name: 'custom_api_call' }),
-}));
+vi.mock('@activepieces/pieces-common', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('@activepieces/pieces-common')
+  >();
+  return {
+    ...actual,
+    httpClient: {
+      sendRequest: (...args: unknown[]) => sendRequest(...args),
+    },
+  };
+});
 
 import { createIssue } from '../src/lib/actions/create-issue';
 import { createMilestone } from '../src/lib/actions/create-milestone';

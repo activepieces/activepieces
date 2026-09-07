@@ -281,7 +281,10 @@ describe('user labels', () => {
     expect(ninetyCommon.userLabel({ id: 'u1', firstName: '   ' })).toBe('u1');
   });
 
-  test('the label never falls back to _id, which Ninety does not send for users', () => {
-    expect(ninetyCommon.userLabel({ id: 'u1' })).not.toBe(undefined);
+  test('the label reads id, not _id, which Ninety does not send for users', () => {
+    const userWithNoRealId = { id: 'u1', _id: 'wrong' } as unknown as Parameters<
+      typeof ninetyCommon.userLabel
+    >[0];
+    expect(ninetyCommon.userLabel(userWithNoRealId)).toBe('u1');
   });
 });
