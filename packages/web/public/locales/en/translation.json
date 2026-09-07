@@ -2389,6 +2389,7 @@
   "External ID can only contain letters, numbers and underscores": "External ID can only contain letters, numbers and underscores",
   "required": "Required",
   "invalidExternalId": "External ID may only contain letters, numbers, dot, dash and underscore (up to 128 characters)",
+  "invalidSsoDomain": "Enter a valid domain, like acme.com",
   "Please connect your account first": "Please connect your account first",
   "Recommended": "Recommended",
   "Others": "Others",

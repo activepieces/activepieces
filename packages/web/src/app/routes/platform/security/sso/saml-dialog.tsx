@@ -307,7 +307,7 @@ const DomainStep = ({
       >
         <FormField
           name="ssoDomain"
-          render={({ field }) => (
+          render={({ field, fieldState, formState }) => (
             <FormItem className="grid space-y-2">
               <Label htmlFor="ssoDomain">{t('Domain')}</Label>
               <Input
@@ -321,7 +321,9 @@ const DomainStep = ({
                   'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
                 )}
               </FormDescription>
-              <FormMessage />
+              {(fieldState.isTouched || formState.submitCount > 0) && (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />
