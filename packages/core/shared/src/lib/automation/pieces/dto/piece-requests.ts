@@ -117,3 +117,34 @@ export const AddPieceRequestBody = z.union([
 
 export type AddPieceRequestBody = z.infer<typeof AddPieceRequestBody>
 
+export const BulkUpgradePieceVersionRequestBody = z.object({
+    pieceName: z.string().min(1),
+    targetVersion: ExactVersionType,
+    dryRun: z.boolean(),
+    flowIds: z.array(z.string()).optional(),
+})
+
+export type BulkUpgradePieceVersionRequestBody = z.infer<typeof BulkUpgradePieceVersionRequestBody>
+
+export const BulkUpgradePieceVersionFlowResult = z.object({
+    flowId: z.string(),
+    flowName: z.string(),
+    projectId: z.string(),
+    currentVersions: z.array(z.string()),
+    matchingStepCount: z.number(),
+})
+
+export type BulkUpgradePieceVersionFlowResult = z.infer<typeof BulkUpgradePieceVersionFlowResult>
+
+export const BulkUpgradePieceVersionResponse = z.object({
+    autoUpgradeable: z.array(BulkUpgradePieceVersionFlowResult),
+    needsManual: z.array(BulkUpgradePieceVersionFlowResult),
+    failed: z.array(z.object({
+        flowId: z.string(),
+        flowName: z.string(),
+        message: z.string(),
+    })),
+})
+
+export type BulkUpgradePieceVersionResponse = z.infer<typeof BulkUpgradePieceVersionResponse>
+
