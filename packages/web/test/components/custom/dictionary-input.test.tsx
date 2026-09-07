@@ -67,6 +67,32 @@ describe('DictionaryInput', () => {
     );
   });
 
+  it('orders numeric, tied, case-variant, and empty keys deterministically', () => {
+    render(
+      <Harness
+        initial={{
+          '': '7',
+          a1: '1',
+          a01: '2',
+          item10: '3',
+          item2: '4',
+          Zip: '5',
+          zip: '6',
+        }}
+      />,
+    );
+
+    expect(keyInputValues()).toEqual([
+      'a01',
+      'a1',
+      'item2',
+      'item10',
+      'zip',
+      'Zip',
+      '',
+    ]);
+  });
+
   it('keeps duplicate-prefix rows intact while typing a key', () => {
     render(<Harness initial={{ u_le: '1', b: '2' }} />);
     expect(keyInputValues()).toEqual(['b', 'u_le']);
