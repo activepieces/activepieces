@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, ProjectId, SeekPage } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, isNil, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { EngineResponse, EngineResponseStatus, ExecuteTriggerResponse, FileCompression, FileType, FlowTrigger, FlowTriggerType, getPieceMajorAndMinorVersion, PieceTrigger, PopulatedFlow, TriggerEventWithPayload, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -67,18 +67,18 @@ export const triggerEventService = (log: FastifyBaseLogger) => ({
                     jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
                     platformId,
                 }, log)
+                if (engineResponse.status !== EngineResponseStatus.OK || isNil(engineResponse.response)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.TEST_TRIGGER_FAILED,
+                        params: {
+                            message: engineResponse.error ?? 'The worker skipped the trigger test hook',
+                        },
+                    })
+                }
                 await triggerEventRepo().delete({
                     projectId,
                     flowId: flow.id,
                 })
-                if (engineResponse.status !== EngineResponseStatus.OK) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.TEST_TRIGGER_FAILED,
-                        params: {
-                            message: engineResponse.error ?? 'Unknown trigger error',
-                        },
-                    })
-                }
 
                 for (const output of engineResponse.response.output) {
                     await this.saveEvent({
