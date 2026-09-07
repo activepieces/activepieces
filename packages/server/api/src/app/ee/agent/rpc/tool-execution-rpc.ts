@@ -13,15 +13,6 @@ import { runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
 import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent } from './rpc-shared'
 
-const MAX_APPROVAL_BLOCK_MS = 50_000
-const CHAT_ONLY_TOOL_PREFIX = '__'
-const OWNER_SCOPED_TOOLS = ['ap_remember']
-const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
-const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
-const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
-const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
-const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
-
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
         const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
@@ -220,3 +211,13 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+
+const MAX_APPROVAL_BLOCK_MS = 50_000
+const CHAT_ONLY_TOOL_PREFIX = '__'
+const OWNER_SCOPED_TOOLS = ['ap_remember']
+const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
+const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
+const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
+const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5

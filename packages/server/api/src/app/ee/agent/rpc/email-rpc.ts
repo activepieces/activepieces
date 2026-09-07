@@ -7,37 +7,6 @@ import { userService } from '../../../user/user-service'
 import { smtpEmailSender } from '../../helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../../helper/email/email-service'
 
-
-const MAX_EMAIL_RECIPIENTS = 10
-const MAX_EMAIL_SUBJECT_LENGTH = 300
-const MAX_EMAIL_BODY_LENGTH = 10_000
-const EMAILS_PER_CONVERSATION = 20
-const EMAILS_PER_USER_PER_HOUR = 30
-const CONVERSATION_LIMIT_TTL_SECONDS = 24 * 60 * 60
-const HOURLY_LIMIT_TTL_SECONDS = 60 * 60
-function isLikelyEmailAddress(email: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-// The approval is only valid for the exact recipients/subject/body the user saw in the preview.
-// A different payload reusing an approved gate id (stale/replayed within the TTL) must not pass.
-function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
-    approvedInput?: Record<string, unknown>
-    recipients: string[]
-    subject: string
-    body: string
-}): boolean {
-    if (isNil(approvedInput)) {
-        return false
-    }
-    const approvedRecipients = Array.isArray(approvedInput.to)
-        ? unique(approvedInput.to.filter((email): email is string => typeof email === 'string').map((email) => email.toLowerCase().trim()))
-        : []
-    const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
-    return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
-}
-
-
 export const emailRpc = (log: FastifyBaseLogger) => ({
     // Security boundary for the chat agent's ap_send_email tool. Recipients may be any valid
     // address (incl. external), but the abuse controls are re-enforced here so a manipulated LLM
@@ -137,3 +106,33 @@ export const emailRpc = (log: FastifyBaseLogger) => ({
         return { sent: true, message: `Email sent to ${recipients.join(', ')}.` }
     },
 })
+
+
+const MAX_EMAIL_RECIPIENTS = 10
+const MAX_EMAIL_SUBJECT_LENGTH = 300
+const MAX_EMAIL_BODY_LENGTH = 10_000
+const EMAILS_PER_CONVERSATION = 20
+const EMAILS_PER_USER_PER_HOUR = 30
+const CONVERSATION_LIMIT_TTL_SECONDS = 24 * 60 * 60
+const HOURLY_LIMIT_TTL_SECONDS = 60 * 60
+function isLikelyEmailAddress(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+// The approval is only valid for the exact recipients/subject/body the user saw in the preview.
+// A different payload reusing an approved gate id (stale/replayed within the TTL) must not pass.
+function emailApprovalMatches({ approvedInput, recipients, subject, body }: {
+    approvedInput?: Record<string, unknown>
+    recipients: string[]
+    subject: string
+    body: string
+}): boolean {
+    if (isNil(approvedInput)) {
+        return false
+    }
+    const approvedRecipients = Array.isArray(approvedInput.to)
+        ? unique(approvedInput.to.filter((email): email is string => typeof email === 'string').map((email) => email.toLowerCase().trim()))
+        : []
+    const sameRecipients = approvedRecipients.length === recipients.length && approvedRecipients.every((email) => recipients.includes(email))
+    return sameRecipients && approvedInput.subject === subject && approvedInput.body === body
+}
