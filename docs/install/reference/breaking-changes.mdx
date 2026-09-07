@@ -8,18 +8,6 @@ icon: "hammer"
 
 ### What has changed?
 
-#### `AP_AGENTS_ENABLED` is removed and the plan decides on its own
-
-Agents sat behind two switches: the `AP_AGENTS_ENABLED` environment variable, surfaced to the frontend as the `AGENTS_ENABLED` flag, and the platform's own entitlement. The environment variable is gone, along with that flag, and the entitlement decides alone.
-
-It was only ever half a switch. The web app and the chat tools required both it and the entitlement, but the `/v1/agents` routes were gated on the entitlement by itself, so setting `AP_AGENTS_ENABLED=false` hid Agents from the interface while the API kept answering. One gate, checked on the server, replaces a gate that looked like protection from the outside.
-
-Community edition is unaffected: its plan sets `agentsEnabled` to false, as it did before. On Enterprise and Cloud the plan starts with it true, so an installation that was holding Agents back with the environment variable alone will find Agents reachable after upgrading.
-
-#### What you need to do
-
-Remove `AP_AGENTS_ENABLED` from your environment. It is ignored now rather than rejected, so leaving it does no harm, but it no longer does anything either. If you were using it to keep Agents off an Enterprise installation, turn the entitlement off on the platform's plan instead. Anything reading the `AGENTS_ENABLED` flag from `/v1/flags` should read `plan.agentsEnabled` on the platform.
-
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
 Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
