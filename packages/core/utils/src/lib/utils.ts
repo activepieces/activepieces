@@ -174,7 +174,7 @@ export function partition<T>(array: T[], predicate: (item: T, index: number, arr
 }
 
 export function unique<T>(array: T[]): T[] {
-    const seen = new Set<string>()
+    const seen = new Set<string | undefined>()
     return array.filter((item) => {
         const key = JSON.stringify(item)
         if (seen.has(key)) {
