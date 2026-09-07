@@ -9,8 +9,8 @@ export const PlatformConfiguration = z.object({
 })
 export type PlatformConfiguration = z.infer<typeof PlatformConfiguration>
 
-export const UpdatePlatformConfigurationRequestBody = z.object({
-    isProductTelemetryEnabled: z.boolean().optional(),
-    isInfraSetupTelemetryEnabled: z.boolean().optional(),
-})
+export const UpdatePlatformConfigurationRequestBody = PlatformConfiguration.pick({
+    isProductTelemetryEnabled: true,
+    isInfraSetupTelemetryEnabled: true,
+}).partial()
 export type UpdatePlatformConfigurationRequestBody = z.infer<typeof UpdatePlatformConfigurationRequestBody>

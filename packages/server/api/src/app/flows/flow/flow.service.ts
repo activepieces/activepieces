@@ -59,10 +59,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
 
         rejectedPromiseHandler(
-            telemetry(log).trackProject(savedFlow.projectId, {
-                name: TelemetryEventName.CREATED_FLOW,
-                payload: {
-                    flowId: savedFlow.id,
+            telemetry(log).trackProject({
+                projectId: savedFlow.projectId,
+                event: {
+                    name: TelemetryEventName.CREATED_FLOW,
+                    payload: {
+                        flowId: savedFlow.id,
+                    },
                 },
             }),
             log,

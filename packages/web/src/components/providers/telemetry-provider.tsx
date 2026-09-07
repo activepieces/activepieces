@@ -11,9 +11,10 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { acquisitionUtils } from '@/lib/acquisition-utils';
-import { isRunningCloudInDevMode } from '@/lib/api';
+import { CLOUD_HOSTNAME, isRunningCloudInDevMode } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 
 interface TelemetryProviderProps {
@@ -24,10 +25,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
   const identifiedKey = useRef<string | null>(null);
 
-  const { data: telemetryFlagEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.TELEMETRY_ENABLED,
-  );
-  const telemetryEnabled = telemetryFlagEnabled && !isRunningCloudInDevMode;
+  const { data: configuration } =
+    platformConfigurationHooks.useCurrentPlatformConfiguration();
   const { data: flagCurrentVersion } = flagsHooks.useFlag<string>(
     ApFlagId.CURRENT_VERSION,
   );
@@ -36,6 +35,18 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   );
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
+
+  const isCloud = edition === ApEdition.CLOUD;
+  const isPreLoginCloudFunnel =
+    isNil(currentUser) &&
+    isCloud &&
+    window.location.hostname === CLOUD_HOSTNAME;
+  const isSignedInWithAnalyticsOn =
+    !isNil(currentUser) &&
+    (isCloud || configuration?.isProductTelemetryEnabled === true);
+  const telemetryEnabled =
+    (isPreLoginCloudFunnel || isSignedInWithAnalyticsOn) &&
+    !isRunningCloudInDevMode;
 
   const posthogInitialized = useRef(false);
 
@@ -49,8 +60,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       return;
     }
     posthogInitialized.current = true;
-
-    const isCloud = edition === ApEdition.CLOUD;
 
     posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
       // Same-origin reverse proxy (/ingest) so ad blockers don't drop ingestion.
@@ -94,7 +103,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
       posthog.startSessionRecording();
     }
-  }, [telemetryEnabled, embedState.isEmbedded, edition]);
+  }, [telemetryEnabled, embedState.isEmbedded, edition, isCloud]);
 
   useEffect(() => {
     if (!posthogInitialized.current) {

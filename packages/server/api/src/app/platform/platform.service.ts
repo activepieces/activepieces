@@ -9,6 +9,7 @@ import { distributedLock } from '../database/redis-connections'
 import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-client'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -300,7 +301,7 @@ async function linkOwnerToPlatform({ ownerId, platformId, identityId, name, inva
         log,
     })
     if (!isNil(response.projectId)) {
-        await reportSignup({ identityId, user: owner, projectId: response.projectId, log })
+        rejectedPromiseHandler(reportSignup({ identityId, user: owner, projectId: response.projectId, log }), log)
     }
     return { response, provisioned: true }
 }
