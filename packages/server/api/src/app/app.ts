@@ -95,6 +95,7 @@ import { systemSnapshot } from './helper/system-snapshot'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { shutdownTelemetry } from './helper/telemetry.utils'
 import { knowledgeBaseModule } from './knowledge-base/knowledge-base.module'
+import { mcpActivityController } from './mcp/activity/mcp-activity-controller'
 import { mcpServerModule } from './mcp/mcp-module'
 import { mcpOAuthApproveController } from './mcp/oauth/code/mcp-oauth-approve.controller'
 import { mcpOAuthGrantsController } from './mcp/oauth/token/mcp-oauth-grants.controller'
@@ -250,6 +251,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(mcpServerModule)
     await app.register(mcpOAuthApproveController)
     await app.register(mcpOAuthGrantsController)
+    await app.register(mcpActivityController)
     await app.register(agentsModule)
     await app.register(platformUserModule)
     await app.register(alertsModule)
