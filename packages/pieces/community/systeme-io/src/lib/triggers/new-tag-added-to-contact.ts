@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { randomBytes } from 'crypto';
+import { newTagAddedToContactTriggerOutputSchema } from '../output-schemas';
 
 export const newTagAddedToContact = createTrigger({
     auth: systemeIoAuth,
@@ -57,6 +58,7 @@ export const newTagAddedToContact = createTrigger({
         },
         addedAt: "2024-01-01T10:30:00+00:00"
     },
+    outputSchema: newTagAddedToContactTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         const secret = randomBytes(32).toString('hex');

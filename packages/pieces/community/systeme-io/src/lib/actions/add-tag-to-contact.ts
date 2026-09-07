@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { addTagToContactActionOutputSchema } from '../output-schemas';
 
 export const addTagToContact = createAction({
   auth: systemeIoAuth,
@@ -88,6 +89,7 @@ export const addTagToContact = createAction({
       required: false,
     }),
   },
+  outputSchema: addTagToContactActionOutputSchema,
   async run(context) {
     const { contactId, tagSource, existingTagId, newTagName } = context.propsValue;
     
