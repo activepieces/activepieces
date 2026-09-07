@@ -4,6 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { authenticationUtils } from '../authentication/authentication-utils'
+import { signInMethodUtils } from '../authentication/sign-in-methods'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
@@ -11,7 +12,6 @@ import { invalidateSamlClientCache } from '../ee/authentication/saml-authn/saml-
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { billingProvider } from './billing-provider'
@@ -425,10 +425,7 @@ async function assertSignInMethodRemains({ params, platform, federatedAuthProvid
         return
     }
     const emailRemains = params.emailAuthEnabled ?? platform.emailAuthEnabled
-    const googleClientId = system.get(AppSystemProp.GOOGLE_CLIENT_ID)
-    const googleClientSecret = system.get(AppSystemProp.GOOGLE_CLIENT_SECRET)
-    const googleConfigured = !isNil(googleClientId) && googleClientId.trim().length > 0
-        && !isNil(googleClientSecret) && googleClientSecret.trim().length > 0
+    const googleConfigured = signInMethodUtils.isGoogleConfigured()
     const googleRemains = googleConfigured && (params.googleAuthEnabled ?? platform.googleAuthEnabled)
     const samlRemains = isNil(federatedAuthProviders)
         ? await hasSamlConfigured()

@@ -171,6 +171,49 @@ describe('Platform API', () => {
             expect(response?.json().emailAuthEnabled).toBe(false)
         }),
 
+        it('rejects disabling the last sign-in method when the Google credentials are blank', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const googleClientId = process.env.AP_GOOGLE_CLIENT_ID
+            const googleClientSecret = process.env.AP_GOOGLE_CLIENT_SECRET
+            process.env.AP_GOOGLE_CLIENT_ID = '   '
+            process.env.AP_GOOGLE_CLIENT_SECRET = ''
+
+            try {
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: `/api/v1/platforms/${mockPlatform.id}`,
+                    headers: {
+                        authorization: `Bearer ${testToken}`,
+                    },
+                    body: { emailAuthEnabled: false },
+                })
+
+                // assert
+                expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+
+                const platformAfter = await databaseConnection()
+                    .getRepository('platform')
+                    .findOneByOrFail({ id: mockPlatform.id })
+                expect(platformAfter.emailAuthEnabled).toBe(true)
+            }
+            finally {
+                process.env.AP_GOOGLE_CLIENT_ID = googleClientId
+                process.env.AP_GOOGLE_CLIENT_SECRET = googleClientSecret
+            }
+        }),
+
         it.each([
             'activepieces',
             'acme.123',
