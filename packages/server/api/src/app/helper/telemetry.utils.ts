@@ -14,14 +14,14 @@ function getPostHog(): PostHog {
     if (!posthogInstance) {
         posthogInstance = new PostHog('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
             host: 'https://us.i.posthog.com',
-            maxQueueSize: BILLING_EVENTS_MAX_QUEUE_SIZE,
+            maxQueueSize: POSTHOG_MAX_QUEUE_SIZE,
         })
     }
     return posthogInstance
 }
 
-export const BILLING_EVENTS_FLUSH_BATCH_SIZE = 10_000
-const BILLING_EVENTS_MAX_QUEUE_SIZE = 20_000
+export const LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE = 10_000
+const POSTHOG_MAX_QUEUE_SIZE = 20_000
 
 export const telemetry = (log: FastifyBaseLogger) => ({
     async identify({ identity, platformId, user, projectId }: IdentifyParams): Promise<void> {
@@ -74,14 +74,14 @@ export const telemetry = (log: FastifyBaseLogger) => ({
     },
 })
 
-export function captureBillingEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
+export function captureLicenseKeyEvent({ licenseKey, event, properties }: CaptureLicenseKeyEventParams): void {
     getPostHog().capture({
         distinctId: licenseKey,
         event,
         properties,
     })
 }
-export async function flushBillingEvents(): Promise<void> {
+export async function flushLicenseKeyPostHogEvents(): Promise<void> {
     if (posthogInstance !== null) {
         await posthogInstance.flush()
     }
@@ -136,7 +136,7 @@ async function getMetadata() {
     }
 }
 
-export enum BillingEvents {
+export enum LicenseKeyPostHogEvents {
     AI_USAGE_PER_RUN = 'ai_usage_per_run',
     CHAT_MESSAGE = 'chat_message',
     TOTAL_RUNS_PER_DAY = 'total_runs_per_day',
@@ -170,12 +170,12 @@ export type ChatMessageProperties = {
     toolsUsed: number
 }
 
-export type BillingEventPayload =
-    | { event: BillingEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
-    | { event: BillingEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
-    | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
+export type LicenseKeyEventPayload =
+    | { event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
+    | { event: LicenseKeyPostHogEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
+    | { event: LicenseKeyPostHogEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
 
-type CaptureBillingEventParams = { licenseKey: string } & BillingEventPayload
+type CaptureLicenseKeyEventParams = { licenseKey: string } & LicenseKeyEventPayload
 
 type IdentifyParams = {
     identity: UserIdentity
