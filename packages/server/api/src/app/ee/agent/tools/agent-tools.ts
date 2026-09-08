@@ -1,6 +1,6 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { Agent, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -726,21 +726,23 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         log,
     })
 
+    const resultObj = isObject(result) ? result : undefined
+    const structured = !isNil(resultObj) && isObject(resultObj.structuredContent) ? resultObj.structuredContent : undefined
+    const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
+
     await recordChatAction({
         piece: { pieceName: normalizedPiece, actionName },
         input: parsedInput ?? {},
         projectId: resolvedProjectId,
         userId,
         connection: { ...spreadIfDefined('externalId', connectionExternalId), ...spreadIfDefined('label', connectionLabel) },
+        outcome: isNil(errorSummary) ? AgentActionOutcome.SUCCEEDED : AgentActionOutcome.FAILED,
         log,
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('conversationId', conversationId),
     })
 
-    if (typeof result === 'object' && result !== null) {
-        const resultObj = result as Record<string, unknown>
-        const structured = isObject(resultObj.structuredContent) ? resultObj.structuredContent as Record<string, unknown> : undefined
-        const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
+    if (!isNil(resultObj)) {
         if (isNil(connectionLabel) && isNil(errorSummary)) {
             return result
         }
@@ -947,7 +949,7 @@ type RunCodeToolResult = {
 
 export { executeCrossProjectTool, findConnectionsForPiece }
 
-async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, log }: {
+async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
     piece: { pieceName: string, actionName: string }
     input: Record<string, unknown>
     projectId: string
@@ -955,6 +957,7 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
     userId: string
     conversationId?: string
     connection: { externalId?: string, label?: string }
+    outcome: AgentActionOutcome
     log: FastifyBaseLogger
 }): Promise<void> {
     if (isNil(platformId)) {
@@ -967,6 +970,7 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
         piece,
         resolvedInput: input,
         names: { action: action?.displayName ?? piece.actionName, piece: metadata?.displayName ?? piece.pieceName },
+        outcome,
         connection,
         log,
         ...spreadIfDefined('conversationId', conversationId),

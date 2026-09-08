@@ -1,6 +1,6 @@
 import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, Permission, spreadIfDefined } from '@activepieces/core-utils'
 import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
-import { AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ApplicationEventName } from '@activepieces/shared'
+import { AgentActionKind, AgentActionOutcome, AgentActionRef, AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ApplicationEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentHelpers } from '.././agent-helpers'
 import { agentService } from '.././agent-service'
@@ -180,7 +180,7 @@ export type ConfiguredToolRun = {
     agent?: { id: string, displayName?: string }
 }
 
-export function recordAgentAction({ run, conversationId, flow, piece, resolvedInput, names, classification, connection, log }: {
+export function recordAgentAction({ run, conversationId, flow, piece, resolvedInput, names, classification, outcome, connection, log }: {
     run: { projectId: string, platformId: string, userId: string, source: AgentRunSource, agent?: { id: string, displayName?: string } }
     conversationId?: string
     flow?: { id: string, runId: string }
@@ -188,6 +188,7 @@ export function recordAgentAction({ run, conversationId, flow, piece, resolvedIn
     resolvedInput: Record<string, unknown>
     names: { action: string, piece: string }
     classification?: ActionClassification
+    outcome: AgentActionOutcome
     connection: { externalId?: string, label?: string }
     log: FastifyBaseLogger
 }): void {
@@ -197,6 +198,51 @@ export function recordAgentAction({ run, conversationId, flow, piece, resolvedIn
     if (readOnly) {
         return
     }
+    recordAgentToolUse({
+        run,
+        ...spreadIfDefined('conversationId', conversationId),
+        ...spreadIfDefined('flow', flow),
+        action: {
+            kind: AgentActionKind.PIECE,
+            pieceName: piece.pieceName,
+            pieceDisplayName: names.piece,
+            actionName: piece.actionName,
+            displayName: names.action,
+        },
+        outcome,
+        connection,
+        log,
+    })
+}
+
+export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcome, log }: {
+    run: { projectId: string, platformId: string, userId: string, source: AgentRunSource, agent?: { id: string, displayName?: string } }
+    conversationId?: string
+    flow?: { id: string, runId: string }
+    tool: { flowId: string, displayName: string }
+    outcome: AgentActionOutcome
+    log: FastifyBaseLogger
+}): void {
+    recordAgentToolUse({
+        run,
+        ...spreadIfDefined('conversationId', conversationId),
+        ...spreadIfDefined('flow', flow),
+        action: { kind: AgentActionKind.FLOW, flowId: tool.flowId, displayName: tool.displayName },
+        outcome,
+        connection: {},
+        log,
+    })
+}
+
+function recordAgentToolUse({ run, conversationId, flow, action, outcome, connection, log }: {
+    run: { projectId: string, platformId: string, userId: string, source: AgentRunSource, agent?: { id: string, displayName?: string } }
+    conversationId?: string
+    flow?: { id: string, runId: string }
+    action: AgentActionRef
+    outcome: AgentActionOutcome
+    connection: { externalId?: string, label?: string }
+    log: FastifyBaseLogger
+}): void {
     const { projectId, platformId, userId, source, agent } = run
     applicationEvents(log).sendUserEvent({ platformId, projectId, userId }, {
         action: ApplicationEventName.AGENT_ACTION_EXECUTED,
@@ -205,16 +251,9 @@ export function recordAgentAction({ run, conversationId, flow, piece, resolvedIn
             ...spreadIfDefined('flow', flow),
             source,
             ...spreadIfDefined('agent', agent),
-            action: {
-                pieceName: piece.pieceName,
-                pieceDisplayName: names.piece,
-                actionName: piece.actionName,
-                displayName: names.action,
-            },
-            ...spreadIfDefined('connection', isNil(connection.externalId) ? undefined : {
-                externalId: connection.externalId,
-                ...spreadIfDefined('label', connection.label),
-            }),
+            action,
+            outcome,
+            ...spreadIfDefined('connection', isNil(connection.externalId) ? undefined : { externalId: connection.externalId, ...spreadIfDefined('label', connection.label) }),
         },
     })
 }
