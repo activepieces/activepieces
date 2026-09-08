@@ -24,6 +24,16 @@ The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses`
 
 Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
 
+#### A custom AI provider is now checked when you save it
+
+The custom OpenAI-compatible provider accepted any text as its base URL and as its API key header name. A config that cannot be used saved without complaint and then failed on every run that used it, with a message from the HTTP layer rather than from Activepieces: a header name of `authorization: bearer` produced *"Headers.append: is an invalid header name"*, and a base URL that will not parse produced *"Invalid URL"*.
+
+Saving now fails with a message naming the field to fix. Nothing changes for a provider whose config already works, and no stored config is altered or re-checked in place.
+
+#### What you need to do
+
+Nothing, unless you have a custom AI provider whose base URL or API key header is malformed. Those already fail at run time. The next time you save that provider you will be told which field is wrong: enter the header name on its own, such as `Authorization`, with its value in the API key field, and give the base URL in full including the scheme, such as `https://api.example.com/v1`.
+
 #### Agent steps on Activepieces AI credits are limited to the models Activepieces offers
 
 The managed Activepieces AI provider used to accept any model id a flow named, because it serves the OpenRouter catalogue unfiltered and nothing checked the value server-side. The model picker only ever offered the three chat tiers, but the API took `modelName` as free text, so a flow, a saved agent, or a direct call to `POST /v1/agents/runs` could run any model OpenRouter publishes on Activepieces' own key.
