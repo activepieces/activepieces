@@ -1,8 +1,8 @@
 {
-  "Add custom tags to your run for filtration": "Add custom tags to your run for filtration",
-  "Add Tag": "Add Tag",
-  "Add a tag to the current execution": "Add a tag to the current execution",
+  "Add custom tags to your run for filtration": "添加自定义标签到您的运行进行过滤",
+  "Add Tag": "添加标签",
+  "Add a tag to the current execution": "在当前执行中添加标签",
   "Markdown": "Markdown",
-  "Tag Name": "Tag Name",
-  "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n": "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n"
+  "Tag Name": "标签名称",
+  "\nThis action add a tag to the current execution, this tag can be used to filter the execution in the **API** only at this moment.\n<br>\n<br>\n**Note:** If you are looking to use it in the user interface, please open a feature request.\n": "\n此操作会为当前执行添加一个标签，该标签目前只能在 **API** 中用于筛选执行。\n<br>\n<br>\n**注意：** 如果你希望在用户界面中使用它，请提交一个功能请求。\n"
 }
