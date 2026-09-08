@@ -3,7 +3,6 @@ import {
   ChatPersonalizationScope,
   ChatPersonalizationStatus,
   ChatPersonalizationView,
-  PersonalizationUseCase,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -147,10 +146,3 @@ function isResearchingStatus(status: ChatPersonalizationStatus | undefined) {
     status === ChatPersonalizationStatus.RESEARCHING
   );
 }
-
-export type PersonalizationState = {
-  status: ChatPersonalizationStatus | null;
-  personalStatus: ChatPersonalizationStatus | null;
-  useCases: PersonalizationUseCase[] | null;
-  isResearching: boolean;
-};

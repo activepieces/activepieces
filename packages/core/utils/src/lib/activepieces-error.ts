@@ -39,6 +39,7 @@ export type ApErrorParams =
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
+    | PausedFlowTimeoutExceededParams
     | PermissionDeniedErrorParams
     | QuotaExceededParams
     | FeatureDisabledErrorParams
@@ -341,6 +342,11 @@ ErrorCode.PAUSE_METADATA_MISSING,
 Record<string, never>
 >
 
+export type PausedFlowTimeoutExceededParams = BaseErrorParams<ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED, {
+    pauseTimeoutDays: number
+    flowRunId: string
+}>
+
 export type InvalidApiKeyParams = BaseErrorParams<
 ErrorCode.INVALID_API_KEY,
 Record<string, never>
@@ -563,6 +569,7 @@ export enum ErrorCode {
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
+    PAUSED_FLOW_TIMEOUT_EXCEEDED = 'PAUSED_FLOW_TIMEOUT_EXCEEDED',
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',

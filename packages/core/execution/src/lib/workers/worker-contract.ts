@@ -250,6 +250,7 @@ export type ExecuteFlowToolRequest = {
     conversationId: string
     toolName: string
     flowId: string
+    flowVersionId?: string
     toolInput: Record<string, unknown>
     returnsResponse: boolean
 }
