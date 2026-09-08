@@ -48,7 +48,7 @@ const ApErrorDialog = () => {
           <CollapsibleJson
             json={params?.error}
             label={t('Technical Details')}
-            defaultOpen={false}
+            defaultOpen={params.technicalDetailsDefaultOpen ?? false}
             className="w-full text-left"
           />
         </div>

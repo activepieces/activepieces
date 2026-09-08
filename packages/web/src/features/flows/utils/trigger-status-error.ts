@@ -7,7 +7,7 @@ function describeStandardError(
   if (isNil(friendlyError)) {
     return null;
   }
-  const reported = (friendlyError.apiMessage ?? friendlyError.message).trim();
+  const reported = friendlyError.message.trim();
   return reported.length === 0 ? null : reported;
 }
 

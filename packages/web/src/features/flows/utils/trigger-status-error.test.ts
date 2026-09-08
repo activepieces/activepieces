@@ -1,38 +1,76 @@
+import { formatPieceError } from '@activepieces/core-utils';
 import { describe, expect, it } from 'vitest';
 
 import { triggerStatusErrorUtils } from './trigger-status-error';
 
 const { describeStandardError } = triggerStatusErrorUtils;
 
+function serializeEngineError(error: unknown): string {
+  return JSON.stringify(
+    formatPieceError(error, {
+      raw: 'Error: at j (/usr/src/app/cache/v14/index.js:1:1)',
+    }),
+  );
+}
+
+function httpErrorFromPiece({
+  status,
+  responseBody,
+  requestBody,
+}: {
+  status: number;
+  responseBody: unknown;
+  requestBody: unknown;
+}): unknown {
+  return {
+    name: 'HttpError',
+    message: JSON.stringify({
+      response: { status, body: responseBody },
+      request: { body: requestBody },
+    }),
+    response: { status, body: responseBody },
+    request: { body: requestBody },
+  };
+}
+
 describe('triggerStatusErrorUtils.describeStandardError', () => {
-  it('pulls the plain message out of a serialized piece error', () => {
-    const standardError = JSON.stringify({
-      __apErrorVersion: 1,
-      message:
-        'Authentication required, not authenticated - You need to authenticate to access this operation.',
-      errorName: '_',
-      status: 401,
-    });
+  it('surfaces the api message behind a piece http failure', () => {
+    const standardError = serializeEngineError(
+      httpErrorFromPiece({
+        status: 401,
+        responseBody: { ok: false, error: 'invalid_auth' },
+        requestBody: { token: 'xoxb-token' },
+      }),
+    );
+
+    expect(describeStandardError(standardError)).toBe('invalid_auth');
+  });
+
+  it('surfaces the api message when the error body is a bare array', () => {
+    const standardError = serializeEngineError(
+      httpErrorFromPiece({
+        status: 400,
+        responseBody: [{ message: 'A public HTTPS URL is required' }],
+        requestBody: { url: 'http://localhost:3000/hook' },
+      }),
+    );
 
     expect(describeStandardError(standardError)).toBe(
-      'Authentication required, not authenticated - You need to authenticate to access this operation.',
+      'A public HTTPS URL is required',
     );
   });
 
-  it('prefers the api message when the third party supplied one', () => {
-    const standardError = JSON.stringify({
-      __apErrorVersion: 1,
-      message: 'Request failed with status code 403',
-      apiMessage: 'Invalid role: admin required.',
-      status: 403,
-    });
+  it('surfaces the message of a plain error thrown by a trigger', () => {
+    const standardError = serializeEngineError(
+      new Error('This trigger does not support webhook registration'),
+    );
 
     expect(describeStandardError(standardError)).toBe(
-      'Invalid role: admin required.',
+      'This trigger does not support webhook registration',
     );
   });
 
-  it('never surfaces http details that can carry integration secrets', () => {
+  it('returns the parsed message alone, never the http details beside it', () => {
     const standardError = JSON.stringify({
       __apErrorVersion: 1,
       message: 'Authentication required',
@@ -59,6 +97,12 @@ describe('triggerStatusErrorUtils.describeStandardError', () => {
   it('returns null when the payload is not a serialized piece error', () => {
     expect(describeStandardError('Engine response is undefined')).toBeNull();
     expect(describeStandardError('{"not":"a friendly error"}')).toBeNull();
+  });
+
+  it('returns null instead of throwing on a payload nested past the parser limit', () => {
+    const standardError = `${'['.repeat(200_000)}"leaf"${']'.repeat(200_000)}`;
+
+    expect(describeStandardError(standardError)).toBeNull();
   });
 
   it('returns null when the parsed message is blank', () => {

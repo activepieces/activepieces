@@ -175,6 +175,7 @@ export const flowHooks = {
               standardError: params.standardError || '',
               standardOutput: params.standardOutput || '',
             },
+            technicalDetailsDefaultOpen: isNil(reportedError),
           });
         } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
           toast.error(t('Active flows limit reached'), {
