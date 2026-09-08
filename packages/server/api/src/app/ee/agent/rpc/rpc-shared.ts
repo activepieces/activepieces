@@ -45,12 +45,12 @@ export async function connectionForConfiguredTool({ piece, projectId, platformId
     return { externalId: pinned, ...spreadIfDefined('label', connection?.displayName) }
 }
 
-export async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string, modelName: string | null }> {
+export async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string }> {
     const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
     if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
     }
-    return { projectId: conversation.projectId, platformId: conversation.platformId, modelName: conversation.modelName ?? null }
+    return { projectId: conversation.projectId, platformId: conversation.platformId }
 }
 
 export async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {

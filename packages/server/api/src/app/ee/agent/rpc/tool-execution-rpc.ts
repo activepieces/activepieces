@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, spreadIfNotUndefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
 import { embed } from 'ai'
@@ -15,8 +15,8 @@ import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThro
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const { projectId, platformId, modelName } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
-        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), ...spreadIfNotUndefined('runModelId', modelName ?? undefined) })
+        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: run, error: runError } = await tryCatch(async () => {

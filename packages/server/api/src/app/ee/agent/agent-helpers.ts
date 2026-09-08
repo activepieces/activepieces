@@ -153,9 +153,9 @@ function reportKeyOutcome({ platformId, providerId, log }: { platformId: string,
     }
 }
 
-async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log, runModelId }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger, runModelId?: string }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
+async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = agentModelResolution.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, ...spreadIfDefined('runModelId', runModelId) })
+    const modelId = agentModelResolution.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
     return {
         model: agentAiUtils.createChatModel({
             provider: providerConfig.provider,
@@ -169,8 +169,8 @@ async function resolveTierModel({ platformId, tierId, provider, providerConfigId
     }
 }
 
-async function resolveFastModel({ platformId, provider, providerConfigId, scope, log, runModelId }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger, runModelId?: string }): Promise<LanguageModel> {
-    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId), ...spreadIfDefined('runModelId', runModelId) })).model
+async function resolveFastModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
+    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
 }
 
 

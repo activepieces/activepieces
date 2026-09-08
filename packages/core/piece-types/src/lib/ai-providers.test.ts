@@ -128,3 +128,17 @@ describe('canDisableReasoning', () => {
         expect(aiProviderUtils.canDisableReasoning({ modelId: 'x-ai/grok-4.20' })).toBe(false)
     })
 })
+
+describe('tier native model ids', () => {
+    it('names a model the native Anthropic list actually offers, so no tier resolves to an id that does not exist', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ANTHROPIC], tier.id).toContain(tier.nativeModelId)
+        }
+    })
+
+    it('gives every tier a native id, so none falls back to an arbitrary model', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(tier.nativeModelId, tier.id).toBeTruthy()
+        }
+    })
+})

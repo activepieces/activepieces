@@ -76,8 +76,12 @@ describe('resolveModelIdForProvider', () => {
     it('falls back to the first curated model when the tier has no provider equivalent', () => {
         expect(resolve({ provider: AIProviderName.OPENAI, selectedModel: 'smart' })).toBe('gpt-5.5')
         expect(resolve({ provider: AIProviderName.GOOGLE, selectedModel: 'smart' })).toBe('gemini-2.5-pro')
-        // the premium tier runs opus 4.8, which the native anthropic list does not carry
-        expect(resolve({ provider: AIProviderName.ANTHROPIC, selectedModel: 'premium' })).toBe('claude-sonnet-4-6')
+    })
+
+    it('gives each tier the native model it declares, rather than one derived from its id', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(resolve({ provider: AIProviderName.ANTHROPIC, selectedModel: tier.id }), tier.id).toBe(tier.nativeModelId)
+        }
     })
 
     it('never sends another provider stale selection through', () => {
@@ -90,8 +94,17 @@ describe('resolveModelIdForProvider', () => {
         expect(resolve({ provider: AIProviderName.OPENAI, selectedModel: null })).toBe('gpt-5.5')
     })
 
-    it('strips the tier vendor prefix for providers that declare no curated models', () => {
-        expect(resolve({ provider: AIProviderName.BEDROCK, selectedModel: 'smart' })).toBe('claude-sonnet-4-6')
+    it('refuses rather than inventing a model id for a provider whose models we do not know', () => {
+        for (const provider of [AIProviderName.BEDROCK, AIProviderName.AZURE, AIProviderName.XAI, AIProviderName.MISTRAL, AIProviderName.DEEPSEEK, AIProviderName.MOONSHOT]) {
+            expect(() => resolve({ provider, selectedModel: 'smart' }), provider).toThrow(ActivepiecesError)
+        }
+    })
+
+    it('never answers a catalogue-less provider with an Anthropic model name', () => {
+        const { error } = tryCatchSync(() => resolve({ provider: AIProviderName.BEDROCK, selectedModel: 'smart' }))
+
+        expect(error).toBeInstanceOf(ActivepiecesError)
+        expect(String(error)).not.toContain('claude')
     })
 
     it('resolves the fast round to a model the provider offers', () => {
@@ -169,46 +182,16 @@ describe('resolveChatProviderName', () => {
     })
 })
 
-describe('a provider with no model catalogue', () => {
-    const BEDROCK_MODEL = 'us.anthropic.claude-sonnet-4-20250514-v1:0'
-
-    it('uses the model the run is already on rather than inventing one', () => {
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: BEDROCK_MODEL })).toBe(BEDROCK_MODEL)
+describe('defaultModelIdForProvider', () => {
+    it('picks the default tier model for a provider we have a catalogue for', () => {
+        expect(agentModelResolution.defaultModelIdForProvider({ provider: AIProviderName.ANTHROPIC })).toBe('claude-sonnet-4-6')
+        expect(agentModelResolution.defaultModelIdForProvider({ provider: AIProviderName.ACTIVEPIECES })).toBe('anthropic/claude-sonnet-4.6')
     })
 
-    it('never derives a Bedrock id by mangling a tier id, which is what it rejected', () => {
-        const resolved = agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: BEDROCK_MODEL })
-
-        expect(resolved).not.toBe('claude-haiku-4-5')
-        expect(resolved).not.toMatch(/^claude-/)
-    })
-
-    it('ignores a tier id handed in as the run model, since that is not a real model', () => {
-        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: tier.id }), tier.id).toBe('claude-haiku-4-5')
+    it('answers nothing for a provider whose models we do not know, so no invented id is ever stored', () => {
+        for (const provider of [AIProviderName.BEDROCK, AIProviderName.AZURE, AIProviderName.XAI]) {
+            expect(agentModelResolution.defaultModelIdForProvider({ provider }), provider).toBeNull()
         }
-    })
-
-    it('ignores an empty run model', () => {
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: '' })).toBe('claude-haiku-4-5')
-    })
-
-    it('still honours a key scoped to specific models', () => {
-        expect(() => agentModelResolution.resolveFastModelId({
-            provider: AIProviderName.BEDROCK,
-            runModelId: BEDROCK_MODEL,
-            modelScope: 'selected',
-            modelIds: ['some.other.model'],
-        })).toThrow(ActivepiecesError)
-    })
-
-    it('leaves a provider that does have a curated list alone', () => {
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.OPENAI, runModelId: BEDROCK_MODEL })).not.toBe(BEDROCK_MODEL)
-    })
-
-    it('leaves a provider whose key lists its own models alone', () => {
-        const config = { project: 'p', region: 'r', models: [{ modelId: 'gemini-2.5-flash', modelName: 'g', modelType: AIProviderModelType.TEXT }] }
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.VERTEX, config, runModelId: BEDROCK_MODEL })).toBe('gemini-2.5-flash')
     })
 })
 

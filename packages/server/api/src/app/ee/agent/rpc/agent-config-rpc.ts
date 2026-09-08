@@ -243,7 +243,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             auth: providerConfig.auth as Record<string, unknown>,
             providerConfig: providerConfig.config as Record<string, unknown>,
             modelId: resolvedModelId,
-            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds, runModelId: resolvedModelId }),
+            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds }),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
