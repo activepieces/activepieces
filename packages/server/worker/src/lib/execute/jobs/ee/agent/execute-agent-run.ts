@@ -233,6 +233,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         tools: mergedTools,
                         allToolNames,
                         tier: config.tier,
+                        modelId: config.modelId,
+                        ...spreadIfDefined('fastModelId', dryRun ? undefined : config.fastModelId),
                         phaseState,
                         abortSignal: abortController.signal,
                         log,
