@@ -142,13 +142,13 @@ export const DictionaryInput = ({
   );
 };
 
+const keyCollator = new Intl.Collator('en', { numeric: true });
+
 function compareKeys(firstKey: string, secondKey: string): number {
   if (firstKey === '' || secondKey === '') {
     return firstKey === secondKey ? 0 : firstKey === '' ? 1 : -1;
   }
-  const humanOrder = firstKey.localeCompare(secondKey, 'en', {
-    numeric: true,
-  });
+  const humanOrder = keyCollator.compare(firstKey, secondKey);
   if (humanOrder !== 0) {
     return humanOrder;
   }
