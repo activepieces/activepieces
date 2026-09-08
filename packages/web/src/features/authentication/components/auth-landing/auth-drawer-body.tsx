@@ -49,8 +49,12 @@ import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { federatedLoginRedirect } from '@/lib/federated-login-redirect';
 import { formatUtils } from '@/lib/format-utils';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
+import {
+  FROM_QUERY_PARAM,
+  useRedirectAfterLogin,
+} from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
 import { CheckEmailNote } from '../check-email-note';
@@ -223,6 +227,7 @@ function AuthStep({
   const passwordlessAvailable = usePasswordlessAvailable();
   const showThirdParty = useShowThirdPartyProviders();
   const thirdParty = useThirdPartyAvailability();
+  const [searchParams] = useSearchParams();
 
   // The confirmation is a beat, not a screen: hold it just long enough to read
   // as "that worked" before the name question replaces it.
@@ -423,6 +428,7 @@ function AuthStep({
                   setSamlOpen(true);
                   return;
                 }
+                federatedLoginRedirect.save(searchParams.get(FROM_QUERY_PARAM));
                 window.location.href = '/api/v1/authn/saml/login';
               }}
               className="transition-colors hover:text-foreground"

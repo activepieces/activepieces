@@ -2,6 +2,7 @@ import { isNil, tryCatchSync } from '@activepieces/core-utils';
 
 function save(from: string | null | undefined) {
   if (!isSameSitePath(from)) {
+    tryCatchSync(() => sessionStorage.removeItem(STORAGE_KEY));
     return;
   }
   tryCatchSync(() => sessionStorage.setItem(STORAGE_KEY, from));

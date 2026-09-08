@@ -46,6 +46,20 @@ describe('federatedLoginRedirect', () => {
     expect(federatedLoginRedirect.consume()).toBeNull();
   });
 
+  it('clears a stored value when a later login has nothing to save', () => {
+    federatedLoginRedirect.save('/mcp-authorize?authRequestId=abc');
+    federatedLoginRedirect.save(null);
+
+    expect(federatedLoginRedirect.consume()).toBeNull();
+  });
+
+  it('clears a stored value when a later login carries an off-site one', () => {
+    federatedLoginRedirect.save('/mcp-authorize?authRequestId=abc');
+    federatedLoginRedirect.save('//evil.com');
+
+    expect(federatedLoginRedirect.consume()).toBeNull();
+  });
+
   it('returns null when nothing was saved', () => {
     expect(federatedLoginRedirect.consume()).toBeNull();
   });
