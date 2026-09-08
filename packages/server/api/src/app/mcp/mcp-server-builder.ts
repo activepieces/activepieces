@@ -2,6 +2,7 @@ import { isNil, Permission } from '@activepieces/core-utils'
 import { FlowStatus, McpProperty, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
+import { flowService } from '../flows/flow/flow.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -145,7 +146,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
                 return flowPermissionError
             }
 
-            const result = await runFlowAsTool({ flow, payload: args, returnsResponse, log })
+            const result = await runFlowAsTool({ flow, properties: mcpInputs, payload: args, returnsResponse, log })
 
             rejectedPromiseHandler(telemetry(log).trackProject({
                 projectId,
@@ -170,8 +171,20 @@ export function extractMcpTriggerInput(flow: PopulatedFlow): { toolName?: string
     }
 }
 
-export async function runFlowAsTool({ flow, payload, returnsResponse, log }: {
+export async function resolveRunnableFlow({ flow, projectId, log }: {
     flow: PopulatedFlow
+    projectId: string
+    log: FastifyBaseLogger
+}): Promise<PopulatedFlow> {
+    if (isNil(flow.publishedVersionId) || flow.publishedVersionId === flow.version.id) {
+        return flow
+    }
+    return flowService(log).getOnePopulatedOrThrow({ id: flow.id, projectId, versionId: flow.publishedVersionId })
+}
+
+export async function runFlowAsTool({ flow, properties, payload, returnsResponse, log }: {
+    flow: PopulatedFlow
+    properties: McpProperty[]
     payload: Record<string, unknown>
     returnsResponse: boolean
     log: FastifyBaseLogger
@@ -190,7 +203,7 @@ export async function runFlowAsTool({ flow, payload, returnsResponse, log }: {
         async: !returnsResponse,
         flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
         saveSampleData: false,
-        payload: mcpToolInput.toFlowPayload({ properties: extractMcpTriggerInput(flow).mcpInputs, modelArgs: payload }),
+        payload: mcpToolInput.toFlowPayload({ properties, modelArgs: payload }),
         execute: true,
         failParentOnFailure: false,
         timeoutMs: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000,

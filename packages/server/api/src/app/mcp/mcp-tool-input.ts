@@ -3,10 +3,12 @@ import { z } from 'zod'
 
 export const mcpToolInput = {
     modelKeyByPropertyName({ properties }: { properties: McpProperty[] }): Map<string, string> {
+        const propertyNames = new Set(properties.map((property) => property.name))
         const taken = new Set<string>()
         return properties.reduce((keys, property, index) => {
             const candidate = mcpToolNameUtils.toProviderSafeIdentifier({ name: property.name, fallback: positionalKey(index) })
-            const key = deduplicate({ candidate, taken })
+            const claimedByAnotherField = new Set([...taken, ...propertyNames].filter((claimed) => claimed !== property.name))
+            const key = deduplicate({ candidate, taken: claimedByAnotherField })
             taken.add(key)
             return keys.set(property.name, key)
         }, new Map<string, string>())

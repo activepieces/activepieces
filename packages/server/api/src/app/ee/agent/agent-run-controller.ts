@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { AgentFlowTool, AgentOutputField, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -6,7 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
-import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
+import { extractMcpTriggerInput, resolveRunnableFlow } from '../../mcp/mcp-server-builder'
 import { mcpToolInput } from '../../mcp/mcp-tool-input'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
@@ -111,9 +111,7 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
         })
     }
     const runnableByExternalId = new Map(await Promise.all(matchedFlows.map(async (flow) => {
-        const runnable = isNil(flow.publishedVersionId) || flow.publishedVersionId === flow.version.id
-            ? flow
-            : await flowService(log).getOnePopulatedOrThrow({ id: flow.id, projectId, versionId: flow.publishedVersionId })
+        const runnable = await resolveRunnableFlow({ flow, projectId, log })
         return [flow.externalId, runnable] as const
     })))
     return flowToolRequests.map((toolRequest) => {

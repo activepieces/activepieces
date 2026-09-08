@@ -9,7 +9,7 @@ import { executeCrossProjectTool } from '.././tools/agent-tools'
 import { pieceToolRunner } from '.././tools/piece-tool-runner'
 import { flowService } from '../../../flows/flow/flow.service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
-import { runFlowAsTool } from '../../../mcp/mcp-server-builder'
+import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
 import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent } from './rpc-shared'
 
@@ -84,7 +84,8 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         if (isNil(flow)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That flow is not in this run\'s project' } })
         }
-        const result = await runFlowAsTool({ flow, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
+        const runnable = await resolveRunnableFlow({ flow, projectId: conversation.projectId, log })
+        const result = await runFlowAsTool({ flow: runnable, properties: extractMcpTriggerInput(runnable).mcpInputs, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id } }, '[agentRpc#executeFlowTool] Ran a flow tool')
         return { result }
     },

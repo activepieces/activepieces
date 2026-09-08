@@ -7,7 +7,6 @@ const ANTHROPIC_PROPERTY_KEY_PATTERN = /^[a-zA-Z0-9_.-]{1,64}$/
 
 const text = (name: string, required = false): McpProperty => ({ name, type: McpPropertyType.TEXT, required })
 
-// The exact schema that made every run of one customer's agent step fail on 2026-09-08.
 const EMAIL_LOOKUP_FLOW: McpProperty[] = [
     text('Email Sender'),
     text('Email Subject'),
@@ -17,6 +16,12 @@ const EMAIL_LOOKUP_FLOW: McpProperty[] = [
 ]
 
 const modelKeys = (properties: McpProperty[]) => Object.keys(mcpToolInput.modelInputShape({ properties }))
+
+const keyFor = ({ properties, name }: { properties: McpProperty[], name: string }) => {
+    const key = mcpToolInput.modelKeyByPropertyName({ properties }).get(name)
+    expect(key, `no key was generated for ${name}`).toBeDefined()
+    return key ?? name
+}
 
 describe('modelInputShape', () => {
     it('produces keys every provider accepts for the flow that was failing in production', () => {
@@ -101,5 +106,39 @@ describe('toFlowPayload', () => {
         const properties = [text('Send Copy'), text('Retry Count')]
         expect(mcpToolInput.toFlowPayload({ properties, modelArgs: { send_copy: false, retry_count: 0 } }))
             .toEqual({ 'Send Copy': false, 'Retry Count': 0 })
+    })
+})
+
+describe('a rewritten key that looks like another field name', () => {
+    const OVERLAPPING: McpProperty[] = [text('Email Sender'), text('email_sender')]
+
+    it('never hands one field a key that is another field\'s name', () => {
+        const keys = mcpToolInput.modelKeyByPropertyName({ properties: OVERLAPPING })
+        const names = new Set(OVERLAPPING.map((property) => property.name))
+        for (const [name, key] of keys) {
+            expect(names.has(key) && key !== name, `${name} -> ${key}`).toBe(false)
+        }
+    })
+
+    it('keeps both values distinct when a cached client sends the original labels', () => {
+        expect(mcpToolInput.toFlowPayload({ properties: OVERLAPPING, modelArgs: { 'Email Sender': 'AAA', email_sender: 'BBB' } }))
+            .toEqual({ 'Email Sender': 'AAA', email_sender: 'BBB' })
+    })
+
+    it('keeps both values distinct when the model sends the rewritten keys', () => {
+        const modelArgs = {
+            [keyFor({ properties: OVERLAPPING, name: 'Email Sender' })]: 'AAA',
+            [keyFor({ properties: OVERLAPPING, name: 'email_sender' })]: 'BBB',
+        }
+        expect(mcpToolInput.toFlowPayload({ properties: OVERLAPPING, modelArgs }))
+            .toEqual({ 'Email Sender': 'AAA', email_sender: 'BBB' })
+    })
+
+    it('holds when a field is named the same as the positional fallback', () => {
+        const properties = [text('日本語'), text('field_1')]
+        expect(keyFor({ properties, name: '日本語' })).not.toBe('field_1')
+        expect(keyFor({ properties, name: 'field_1' })).toBe('field_1')
+        expect(mcpToolInput.toFlowPayload({ properties, modelArgs: { [keyFor({ properties, name: '日本語' })]: 'A', field_1: 'B' } }))
+            .toEqual({ '日本語': 'A', field_1: 'B' })
     })
 })
