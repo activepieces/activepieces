@@ -6,7 +6,7 @@ const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../../../src/app/flows/flow-run/flow-run-service', () => ({
-    flowRunService: () => ({ getOneOrThrow: mockGetFlowRun }),
+    flowRunService: () => ({ getOneOrThrow: mockGetFlowRun, getOne: mockGetFlowRun }),
 }))
 
 vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
@@ -602,6 +602,33 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
             waitpointId: 'wp-1',
             resumePayload: { body: { success: true }, headers: {}, queryParams: {} },
         })
+    })
+
+    it('does not fail the job when the flow run is gone, so the real error is not masked', async () => {
+        mockResumeFromWaitpoint.mockClear()
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-gone', waitpointId: 'wp-1', output: { success: true },
+        })).resolves.toBeUndefined()
+
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('still looks the flow run up inside the conversation\'s own project', async () => {
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-elsewhere', waitpointId: 'wp-1', output: {},
+        })
+
+        expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-elsewhere', projectId: 'proj-own' })
     })
 
     it('sends an empty queryParams, so this path can never approve anything', async () => {

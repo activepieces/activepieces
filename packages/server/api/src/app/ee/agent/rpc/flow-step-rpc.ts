@@ -27,13 +27,17 @@ export const flowStepRpc = (log: FastifyBaseLogger) => ({
         if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can resume a flow' } })
         }
-        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
+        const resumeFields = { conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId }, waitpoint: { id: input.waitpointId } }
+        const flowRun = await flowRunService(log).getOne({ id: input.flowRunId, projectId: conversation.projectId })
+        if (isNil(flowRun)) {
+            log.warn(resumeFields, '[agentRpc#resumeFlowStep] That flow run is gone from this project, so there is nothing left to resume')
+            return
+        }
         const { stale } = await resumeService(log).resumeFromWaitpoint({
             flowRunId: flowRun.id,
             waitpointId: input.waitpointId,
             resumePayload: { body: sanitizeObjectForPostgresql(input.output), headers: {}, queryParams: {} },
         })
-        const resumeFields = { conversation: { id: input.conversationId }, flowRun: { id: flowRun.id }, waitpoint: { id: input.waitpointId } }
         if (stale) {
             log.warn(resumeFields, '[agentRpc#resumeFlowStep] Nothing to resume, so the flow keeps waiting unless another attempt already released it')
             return
