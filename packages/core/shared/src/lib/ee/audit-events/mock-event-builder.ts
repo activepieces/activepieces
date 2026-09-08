@@ -17,6 +17,7 @@ import {
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
+    AgentActionExecutedEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     ProjectRoleEvent,
@@ -214,6 +215,19 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                         id: apId(),
                         displayName: 'Marketing agent',
                     },
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const mock: AgentActionExecutedEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    conversation: { id: apId(), source: 'CHAT' },
+                    agent: { id: apId(), displayName: 'Marketing agent' },
+                    action: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', displayName: 'Send Email', readOnly: false },
+                    connection: { externalId: apId() },
                 },
             }
             return mock

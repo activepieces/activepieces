@@ -550,6 +550,24 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
           : []),
       ];
     }
+    case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+      const { agent, action, connection, conversation } = event.data;
+      return [
+        ...(agent ? [{ label: t('Agent'), value: agent.displayName }] : []),
+        {
+          label: t('Action'),
+          value: `${action.displayName ?? action.actionName} (${action.pieceName})`,
+        },
+        {
+          label: t('Ran from'),
+          value:
+            conversation.source === 'FLOW_STEP' ? t('A flow step') : t('Chat'),
+        },
+        ...(connection
+          ? [{ label: t('Connection'), value: connection.externalId }]
+          : []),
+      ];
+    }
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_UPDATED:
     case ApplicationEventName.FOLDER_DELETED:

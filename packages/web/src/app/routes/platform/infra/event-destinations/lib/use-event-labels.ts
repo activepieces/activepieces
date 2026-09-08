@@ -16,6 +16,12 @@ export const useEventLabels = (): EventLabelsMap => {
       label: t('Agent taken offline'),
       description: t('Fires when someone takes an agent offline.'),
     },
+    [ApplicationEventName.AGENT_ACTION_EXECUTED]: {
+      label: t('Agent ran an action'),
+      description: t(
+        'Fires when an agent runs a configured action that is not a read.',
+      ),
+    },
     [ApplicationEventName.FLOW_RUN_STARTED]: { label: t('Flow run started') },
     [ApplicationEventName.FLOW_RUN_FINISHED]: {
       label: t('Flow run finished'),

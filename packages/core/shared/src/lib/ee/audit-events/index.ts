@@ -41,6 +41,7 @@ export enum ApplicationEventName {
     AGENT_DELETED = 'agent.deleted',
     AGENT_PUBLISHED = 'agent.published',
     AGENT_UNPUBLISHED = 'agent.unpublished',
+    AGENT_ACTION_EXECUTED = 'agent.action.executed',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -118,6 +119,33 @@ const AgentEventData = z.object({
         publishedToolNames: z.array(z.string()).optional(),
     }),
 })
+
+const AgentActionEventData = z.object({
+    conversation: z.object({
+        id: z.string(),
+        source: z.string(),
+    }),
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string(),
+    }).optional(),
+    action: z.object({
+        pieceName: z.string(),
+        actionName: z.string(),
+        displayName: z.string().optional(),
+        readOnly: z.boolean(),
+    }),
+    connection: z.object({
+        externalId: z.string(),
+    }).optional(),
+})
+
+export const AgentActionExecutedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.AGENT_ACTION_EXECUTED),
+    data: AgentActionEventData,
+})
+export type AgentActionExecutedEvent = z.infer<typeof AgentActionExecutedEvent>
 
 export const AgentAuditEvent = z.object({
     ...BaseAuditEventProps,
@@ -565,6 +593,7 @@ export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
 
 export const ApplicationEvent = z.union([
     AgentAuditEvent,
+    AgentActionExecutedEvent,
     ConnectionEvent,
     VariableEvent,
     FlowCreatedEvent,
@@ -641,6 +670,10 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is published`
         case ApplicationEventName.AGENT_UNPUBLISHED:
             return `Agent ${event.data.agent.displayName} is taken offline`
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const who = event.data.agent?.displayName ?? 'An agent'
+            return `${who} ran ${event.data.action.displayName ?? event.data.action.actionName} on ${event.data.action.pieceName}`
+        }
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
