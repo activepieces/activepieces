@@ -9,7 +9,7 @@ description: "Track every action on your platform and forward events to your too
 
 Activepieces records an audit event for every meaningful action on the platform — a flow gets created, a run finishes, a user signs in, a connection is saved, a signing key is rotated, and so on. Each event captures what happened, who did it, when, and the project or platform it belongs to.
 
-Agent actions are recorded too. When an agent runs a piece action that writes something — sending an email, updating a row, posting a message — the event names the agent, the app, the action, the account it used and where the run came from. Reads are not recorded, and the values the agent passed to the action are never stored.
+Agent actions are recorded too. When an agent runs a **piece action** that writes something — sending an email, updating a row, posting a message — the event names the agent, the app, the action, the account it used and where the run came from. Reads are not recorded, and the values the agent passed to the action are never stored. The other tool types an agent can carry do not write this event: a flow tool is recorded as a flow run instead, and an MCP server tool is not recorded at all, so neither shows up here even though both can change things.
 
 You can do two things with these events: **view them in the audit log table** for compliance and forensics, or **stream them to a webhook** to react in real time.
 
