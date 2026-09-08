@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryParseFriendlyPieceError } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { AlertCircleIcon } from 'lucide-react';
 
@@ -21,6 +21,8 @@ const ApErrorDialog = () => {
 
   if (isNil(params)) return null;
 
+  const friendlyError = tryParseFriendlyPieceError(params.error);
+
   return (
     <Dialog open={!!params} onOpenChange={closeDialog}>
       <DialogContent>
@@ -41,6 +43,11 @@ const ApErrorDialog = () => {
                   {params.description}
                 </DialogDescription>
               )}
+              {friendlyError && (
+                <p className="text-sm text-foreground">
+                  {friendlyError.message}
+                </p>
+              )}
             </div>
           </div>
         </DialogHeader>
@@ -48,7 +55,7 @@ const ApErrorDialog = () => {
           <CollapsibleJson
             json={params?.error}
             label={t('Technical Details')}
-            defaultOpen={true}
+            defaultOpen={!friendlyError}
             className="w-full text-left"
           />
         </div>
