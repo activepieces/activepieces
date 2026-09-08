@@ -68,7 +68,7 @@ export async function buildMcpServer({ mcp, userId, selectionScope, log, resolve
         const permissionChecker = userId
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
-        registerFlowTools({ server, mcp, projectId, permissionChecker, log })
+        await registerFlowTools({ server, mcp, projectId, permissionChecker, log })
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
@@ -131,9 +131,10 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     })
 }
 
-function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
+async function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): Promise<void> {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
-    for (const flow of enabledFlows) {
+    const runnableFlows = await Promise.all(enabledFlows.map((flow) => resolveRunnableFlow({ flow, projectId, log })))
+    for (const flow of runnableFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
         const zodFromInputSchema = mcpToolInput.modelInputShape({ properties: mcpInputs })
 
