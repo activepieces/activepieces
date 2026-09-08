@@ -42,9 +42,9 @@ describe('the agent eval gate is wired to the code it gates', () => {
     })
 
     it('runs the tests for every package it gates, so a gated file is not merely a trigger', () => {
-        const gate = readFileSync(workflowPath, 'utf8')
+        const commands = pullRequestGateCommands()
         for (const pkg of PACKAGES_UNDER_GATE) {
-            expect(gate, `the gate triggers on ${pkg} but never runs its tests`).toContain(`--filter=${pkg}`)
+            expect(commands, `the pull-request gate triggers on ${pkg} but never runs its tests`).toContain(`--filter=${pkg}`)
         }
     })
 })
@@ -64,4 +64,13 @@ function pullRequestPathFilters(): string[] {
         entries.push(entry[1])
     }
     return entries
+}
+
+function pullRequestGateCommands(): string {
+    const lines = readFileSync(workflowPath, 'utf8').split('\n')
+    const gateAt = lines.findIndex((line) => /^ {2}gate:\s*$/.test(line))
+    expect(gateAt, 'agent-evals.yml has no gate job').toBeGreaterThan(-1)
+    const nextJobAt = lines.findIndex((line, index) => index > gateAt && /^ {2}\S+:\s*$/.test(line))
+    const gate = lines.slice(gateAt, nextJobAt === -1 ? lines.length : nextJobAt)
+    return gate.filter((line) => !line.trim().startsWith('#')).join('\n')
 }
