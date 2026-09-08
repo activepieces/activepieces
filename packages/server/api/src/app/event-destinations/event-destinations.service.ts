@@ -265,6 +265,17 @@ const skipInternalDestinationsOnFlowCycle = ({
     event,
     log,
 }: SkipDestinationsParams): ClassifiedDestination[] => {
+    if (event.action === ApplicationEventName.AGENT_ACTION_EXECUTED) {
+        const [keptDestinations, droppedDestinations] = partition(classifiedDestinations, ({ destination }) =>
+            isNil(extractWebhookFlowIdCandidate({ destinationUrl: destination.url })))
+        if (droppedDestinations.length > 0) {
+            log.warn({
+                action: event.action,
+                droppedDestinations: droppedDestinations.map(({ destination }) => ({ id: destination.id, url: destination.url })),
+            }, '[eventDestinationService#trigger] An agent action names no flow, so a webhook-flow destination could be the flow that raised it; dropping those to break the cycle, other destinations still fire')
+        }
+        return keptDestinations
+    }
     if (!isFlowRunEvent(event)) {
         return classifiedDestinations
     }

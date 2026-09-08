@@ -1,8 +1,10 @@
-import { AgentIcon, AgentRunSource, AIProviderName, apId, ApplicationEventName, ColorName } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AIProviderName, apId, ApplicationEvent, ApplicationEventName, ColorName, summarizeApplicationEvent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
+import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agent-tools'
 import { pieceToolRunner } from '../../../../src/app/ee/agent/tools/piece-tool-runner'
+import * as flowRunUtils from '../../../../src/app/mcp/tools/flow-run-utils'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -23,16 +25,23 @@ afterEach(() => {
     vi.restoreAllMocks()
 })
 
-async function agentThatRuns(ctx: TestContext): Promise<{ conversationId: string, agentId: string }> {
-    const response = await ctx.post('/v1/agents', {
+const RECIPIENT = 'someone@example.com'
+
+async function contextWithProvider(): Promise<TestContext> {
+    const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, auditLogEnabled: true } })
+    await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
+    return ctx
+}
+
+async function conversationFor(ctx: TestContext, params: { source: AgentRunSource, withAgent: boolean }): Promise<{ conversationId: string, agentId?: string }> {
+    const agentId = params.withAgent ? (await ctx.post('/v1/agents', {
         projectId: ctx.project.id,
         displayName: 'Ops agent',
         description: null,
         icon: AgentIcon.BOT,
         color: ColorName.PURPLE,
         draft: { instructions: 'Do the ops work.', maxSteps: 5, tools: [], structuredOutput: [], modelName: null },
-    })
-    const agentId = response.json().id
+    })).json().id : undefined
     const conversationId = apId()
     await db.save('agent_conversation', {
         id: conversationId,
@@ -41,33 +50,39 @@ async function agentThatRuns(ctx: TestContext): Promise<{ conversationId: string
         platformId: ctx.platform.id,
         projectId: ctx.project.id,
         userId: ctx.user.id,
-        agentId,
-        source: AgentRunSource.AGENT,
+        agentId: agentId ?? null,
+        source: params.source,
         status: 'STREAMING',
         messages: [],
         uiMessages: [],
     })
-    return { conversationId, agentId }
+    return { conversationId, ...(agentId === undefined ? {} : { agentId }) }
 }
 
-function stubTheRun(): void {
-    vi.spyOn(pieceToolRunner, 'resolveInput').mockResolvedValue({ resolvedInput: { to: 'someone@example.com' }, actionDisplayName: 'Send Email' } as never)
-    vi.spyOn(pieceToolRunner, 'runResolved').mockResolvedValue({ result: { success: true }, resolvedInput: { to: 'someone@example.com' } } as never)
+function stubTheRun(params: { classification?: string, input?: Record<string, unknown> } = {}): void {
+    const resolvedInput = params.input ?? { to: RECIPIENT, subject: 'hello' }
+    vi.spyOn(pieceToolRunner, 'resolveInput').mockResolvedValue({
+        resolvedInput,
+        actionDisplayName: 'Send Email',
+        pieceDisplayName: 'Gmail',
+        ...(params.classification === undefined ? {} : { classification: params.classification }),
+    } as never)
+    vi.spyOn(pieceToolRunner, 'runResolved').mockResolvedValue({ result: { success: true }, resolvedInput } as never)
 }
 
-async function auditRowsFor(ctx: TestContext): Promise<{ action: string, data: Record<string, unknown> }[]> {
-    for (let attempt = 0; attempt < 20; attempt++) {
-        const rows = await db.findBy<{ action: string, data: Record<string, unknown> }>('audit_event', { platformId: ctx.platform.id })
-        const agentRows = rows.filter((row) => row.action === ApplicationEventName.AGENT_ACTION_EXECUTED)
-        if (agentRows.length > 0) {
-            return agentRows
+async function agentActionRows(ctx: TestContext): Promise<ApplicationEvent[]> {
+    for (let attempt = 0; attempt < 24; attempt++) {
+        const rows = await db.findBy<ApplicationEvent>('audit_event', { platformId: ctx.platform.id })
+        const found = rows.filter((row) => row.action === ApplicationEventName.AGENT_ACTION_EXECUTED)
+        if (found.length > 0) {
+            return found
         }
         await new Promise((resolve) => setTimeout(resolve, 25))
     }
     return []
 }
 
-async function runAction(ctx: TestContext, conversationId: string, actionName: string) {
+async function runConfiguredAction(conversationId: string, actionName: string) {
     return agentRpcHandlers(app.log).executePieceTool({
         conversationId,
         toolName: `gmail-${actionName}`,
@@ -79,43 +94,104 @@ async function runAction(ctx: TestContext, conversationId: string, actionName: s
 describe('an action an agent ran reaches the audit log', () => {
     // The receipt for a configured action lives in the conversation that ran it, which nobody
     // outside that conversation can find. A platform admin looks in the audit log instead.
-    it('records a write, naming the agent, the action and the account it used', async () => {
-        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, auditLogEnabled: true } })
-        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
-        const { conversationId, agentId } = await agentThatRuns(ctx)
+    it('records the whole row a person needs: who, what, where and which account', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId, agentId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
         stubTheRun()
 
-        await runAction(ctx, conversationId, 'send_email')
+        await runConfiguredAction(conversationId, 'send_email')
 
-        const [row] = await auditRowsFor(ctx)
+        const [row] = await agentActionRows(ctx)
         expect(row).toBeDefined()
-        expect(JSON.stringify(row.data)).toContain('send_email')
-        expect(JSON.stringify(row.data)).toContain(agentId)
-        expect(JSON.stringify(row.data)).toContain('Ops agent')
+        expect(row.projectId).toBe(ctx.project.id)
+        expect(row.userId).toBe(ctx.user.id)
+        expect(row.data).toMatchObject({
+            source: AgentRunSource.AGENT,
+            conversation: { id: conversationId, source: AgentRunSource.AGENT },
+            agent: { id: agentId, displayName: 'Ops agent' },
+            action: {
+                pieceName: '@activepieces/piece-gmail',
+                pieceDisplayName: 'Gmail',
+                actionName: 'send_email',
+                displayName: 'Send Email',
+            },
+        })
+        expect(summarizeApplicationEvent(row)).toBe('Ops agent ran Gmail: Send Email')
+    })
+
+    // An audit row is readable by every platform admin and is forwarded to event destinations, so
+    // what the action carried stays out of it.
+    it('keeps the action input out of the row', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
+        stubTheRun()
+
+        await runConfiguredAction(conversationId, 'send_email')
+
+        const [row] = await agentActionRows(ctx)
+        expect(JSON.stringify(row.data)).not.toContain(RECIPIENT)
     })
 
     // Reading is not a change, and logging every read would bury the writes that matter.
     it('leaves a read out of it', async () => {
-        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, auditLogEnabled: true } })
-        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
-        const { conversationId } = await agentThatRuns(ctx)
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
         stubTheRun()
 
-        await runAction(ctx, conversationId, 'search_mail')
+        await runConfiguredAction(conversationId, 'search_mail')
 
-        expect(await auditRowsFor(ctx)).toHaveLength(0)
+        expect(await agentActionRows(ctx)).toHaveLength(0)
     })
 
-    // custom_api_call carries no verb, so the method decides. An unknown method is a write.
-    it('records a raw API call whose method is not provably safe', async () => {
-        const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true, auditLogEnabled: true } })
-        await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENAI, enabledForChat: true })
-        const { conversationId } = await agentThatRuns(ctx)
-        vi.spyOn(pieceToolRunner, 'resolveInput').mockResolvedValue({ resolvedInput: { method: 'POST' }, actionDisplayName: 'Custom API Call' } as never)
-        vi.spyOn(pieceToolRunner, 'runResolved').mockResolvedValue({ result: { success: true }, resolvedInput: { method: 'POST' } } as never)
+    // The piece says what its own action does. A name that reads like a search but is declared a
+    // write is recorded, which the old name-only rule got backwards.
+    it('believes the piece over the action name, in both directions', async () => {
+        const ctx = await contextWithProvider()
+        const write = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
+        stubTheRun({ classification: 'WRITE' })
+        await runConfiguredAction(write.conversationId, 'search_and_replace_text')
+        expect(await agentActionRows(ctx)).toHaveLength(1)
 
-        await runAction(ctx, conversationId, 'custom_api_call')
+        const other = await contextWithProvider()
+        const read = await conversationFor(other, { source: AgentRunSource.AGENT, withAgent: true })
+        stubTheRun({ classification: 'READ' })
+        await runConfiguredAction(read.conversationId, 'send_report')
+        expect(await agentActionRows(other)).toHaveLength(0)
+    })
 
-        expect(await auditRowsFor(ctx)).toHaveLength(1)
+    // A flow step has no agent of its own when its tools are inline, and the row still has to land.
+    it('records a flow step that runs inline tools, with no agent to name', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.FLOW_STEP, withAgent: false })
+        stubTheRun()
+
+        await runConfiguredAction(conversationId, 'send_email')
+
+        const [row] = await agentActionRows(ctx)
+        expect(row.data).toMatchObject({ source: AgentRunSource.FLOW_STEP })
+        expect(row.data).not.toHaveProperty('agent')
+        expect(summarizeApplicationEvent(row)).toBe('An agent ran Gmail: Send Email')
+    })
+
+    // Chat runs pieces through its own path. Auditing only the configured path would leave the
+    // surface most likely to touch a customer system invisible.
+    it('records a write chat ran, not only a configured tool', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.CHAT, withAgent: false })
+        vi.spyOn(flowRunUtils, 'executePieceActionRun').mockResolvedValue({ content: [] } as never)
+
+        await executeCrossProjectTool({
+            toolName: 'ap_execute_action',
+            toolInput: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', input: { to: RECIPIENT } },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            conversationId,
+            log: app.log,
+        })
+
+        const [row] = await agentActionRows(ctx)
+        expect(row).toBeDefined()
+        expect(row.data).toMatchObject({ source: AgentRunSource.CHAT })
+        expect(JSON.stringify(row.data)).not.toContain(RECIPIENT)
     })
 })

@@ -1,28 +1,27 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ApplicationEventName, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
+import { AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
 import { embed } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentHelpers } from '.././agent-helpers'
-import { agentRepo } from '.././agent-service'
 import { executeCrossProjectTool } from '.././tools/agent-tools'
 import { pieceToolRunner } from '.././tools/piece-tool-runner'
 import { flowService } from '../../../flows/flow/flow.service'
-import { applicationEvents } from '../../../helper/application-events'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
-import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent } from './rpc-shared'
+import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent, recordAgentAction } from './rpc-shared'
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const { projectId, platformId, source, agentId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const { projectId, platformId } = configuredRun
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: run, error: runError } = await tryCatch(async () => {
-            const { resolvedInput, actionDisplayName } = await pieceToolRunner.resolveInput({
+            const { resolvedInput, actionDisplayName, pieceDisplayName, classification } = await pieceToolRunner.resolveInput({
                 model,
                 piece,
                 instruction: input.instruction,
@@ -33,23 +32,21 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                 ...spreadIfDefined('connectionExternalId', connection.externalId),
             })
             const { result } = await pieceToolRunner.runResolved({ piece, resolvedInput, projectId, log })
-            return { result, resolvedInput: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName }
+            return { result, resolvedInput: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName, pieceDisplayName, classification }
         })
         if (!isNil(runError) || isNil(run)) {
             log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
             throw runError
         }
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: run.resolvedInput }, connection: { externalId: connection.externalId ?? null }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
-        await recordAgentAction({
-            projectId,
-            platformId,
+        recordAgentAction({
+            run: configuredRun,
             conversationId: input.conversationId,
-            source,
-            agentId,
-            piece: input.piece,
+            piece,
             resolvedInput: run.resolvedInput,
-            actionDisplayName: run.actionDisplayName,
-            connectionExternalId: connection.externalId,
+            names: { action: run.actionDisplayName, piece: run.pieceDisplayName },
+            ...spreadIfDefined('classification', run.classification),
+            connection,
             log,
         })
         return { result: run.result, resolvedInput: run.resolvedInput, actionDisplayName: run.actionDisplayName, ...spreadIfDefined('connectionLabel', connection.label) }
@@ -236,41 +233,3 @@ const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_age
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
-
-// An action a configured agent ran leaves a receipt in its conversation, which nobody outside that
-// conversation can find. The audit log is where a platform admin looks for "what changed and who
-// did it", so anything that was not provably a read is recorded there too.
-async function recordAgentAction({ projectId, platformId, conversationId, source, agentId, piece, resolvedInput, actionDisplayName, connectionExternalId, log }: {
-    projectId: string
-    platformId: string
-    conversationId: string
-    source: AgentRunSource
-    agentId: string | null
-    piece: AgentPieceToolMetadata
-    resolvedInput: Record<string, unknown>
-    actionDisplayName?: string
-    connectionExternalId?: string
-    log: FastifyBaseLogger
-}): Promise<void> {
-    const readOnly = agentToolClassification.isReadOnlyActionCall({ actionName: piece.actionName, input: resolvedInput })
-    if (readOnly) {
-        return
-    }
-    const agent = isNil(agentId) ? undefined : (await tryCatch(() => agentRepo().findOne({ where: { id: agentId, projectId }, select: ['id', 'displayName'] }))).data
-    applicationEvents(log).sendWorkerEvent({
-        projectId,
-        platformId,
-        action: ApplicationEventName.AGENT_ACTION_EXECUTED,
-        data: {
-            conversation: { id: conversationId, source },
-            ...spreadIfDefined('agent', isNil(agent) ? undefined : { id: agent.id, displayName: agent.displayName }),
-            action: {
-                pieceName: piece.pieceName,
-                actionName: piece.actionName,
-                readOnly,
-                ...spreadIfDefined('displayName', actionDisplayName),
-            },
-            ...spreadIfDefined('connection', isNil(connectionExternalId) ? undefined : { externalId: connectionExternalId }),
-        },
-    })
-}

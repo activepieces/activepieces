@@ -1,4 +1,4 @@
-import { Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
+import { AgentRunSource, Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
 import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
@@ -121,22 +121,24 @@ const AgentEventData = z.object({
 })
 
 const AgentActionEventData = z.object({
+    source: z.enum(AgentRunSource),
     conversation: z.object({
         id: z.string(),
-        source: z.string(),
-    }),
+        source: z.enum(AgentRunSource),
+    }).optional(),
     agent: z.object({
         id: z.string(),
-        displayName: z.string(),
+        displayName: z.string().optional(),
     }).optional(),
     action: z.object({
         pieceName: z.string(),
+        pieceDisplayName: z.string(),
         actionName: z.string(),
-        displayName: z.string().optional(),
-        readOnly: z.boolean(),
+        displayName: z.string(),
     }),
     connection: z.object({
         externalId: z.string(),
+        label: z.string().optional(),
     }).optional(),
 })
 
@@ -672,7 +674,7 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is taken offline`
         case ApplicationEventName.AGENT_ACTION_EXECUTED: {
             const who = event.data.agent?.displayName ?? 'An agent'
-            return `${who} ran ${event.data.action.displayName ?? event.data.action.actionName} on ${event.data.action.pieceName}`
+            return `${who} ran ${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
         }
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`

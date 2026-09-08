@@ -1,6 +1,7 @@
-import { FlowOperationType, FlowStatus } from '@activepieces/core-execution'
+import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import {
+    AgentActionExecutedEvent,
     AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
@@ -17,7 +18,6 @@ import {
     FlowRunEvent,
     FlowUpdatedEvent,
     FolderEvent,
-    AgentActionExecutedEvent,
     ProjectReleaseEvent,
     ProjectReplacedEvent,
     ProjectRoleEvent,
@@ -224,10 +224,11 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                 ...baseEnvelope,
                 action: event,
                 data: {
-                    conversation: { id: apId(), source: 'CHAT' },
+                    source: AgentRunSource.AGENT,
+                    conversation: { id: apId(), source: AgentRunSource.AGENT },
                     agent: { id: apId(), displayName: 'Marketing agent' },
-                    action: { pieceName: '@activepieces/piece-gmail', actionName: 'send_email', displayName: 'Send Email', readOnly: false },
-                    connection: { externalId: apId() },
+                    action: { pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
+                    connection: { externalId: apId(), label: 'marketing@acme.com' },
                 },
             }
             return mock
