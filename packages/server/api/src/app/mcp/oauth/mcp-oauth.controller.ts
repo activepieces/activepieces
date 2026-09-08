@@ -73,7 +73,7 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
             : mcp
-        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId })
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, clientId: identity.clientId })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -119,10 +119,10 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
     const { projectId } = payload
     const isPlatformToken = isNil(projectId)
     if (isPlatformToken && scope === McpServerType.PLATFORM) {
-        return { type: McpServerType.PLATFORM, platformId: payload.platformId, userId: payload.sub }
+        return { type: McpServerType.PLATFORM, platformId: payload.platformId, userId: payload.sub, clientId: payload.clientId }
     }
     if (!isPlatformToken && scope === McpServerType.PROJECT) {
-        return { type: McpServerType.PROJECT, projectId, userId: payload.sub }
+        return { type: McpServerType.PROJECT, projectId, userId: payload.sub, clientId: payload.clientId }
     }
     return null
 }
@@ -167,8 +167,8 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
 }
 
 type ResolvedIdentity =
-    | { type: McpServerType.PROJECT, projectId: string, userId: string }
-    | { type: McpServerType.PLATFORM, platformId: string, userId: string }
+    | { type: McpServerType.PROJECT, projectId: string, userId: string, clientId: string }
+    | { type: McpServerType.PLATFORM, platformId: string, userId: string, clientId: string }
 
 const chatConversationRepo = repoFactory(AgentConversationEntity)
 

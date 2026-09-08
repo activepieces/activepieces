@@ -1,6 +1,6 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_CAPABILITIES, aiProviderUtils, ALLOWED_CHAT_MODELS_BY_PROVIDER } from './ai-providers'
+import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_CAPABILITIES, aiProviderUtils, ALLOWED_CHAT_MODELS_BY_PROVIDER, MANAGED_MODEL_WEIGHTS, MODELS_AWAITING_A_CREDIT_WEIGHT } from './ai-providers'
 
 describe('AI_PROVIDER_CAPABILITIES', () => {
     it('has an entry for every provider', () => {
@@ -126,5 +126,42 @@ describe('canDisableReasoning', () => {
     it('is false for a managed model we have never observed accepting one', () => {
         expect(aiProviderUtils.canDisableReasoning({ modelId: 'google/gemini-3.7-flash' })).toBe(false)
         expect(aiProviderUtils.canDisableReasoning({ modelId: 'x-ai/grok-4.20' })).toBe(false)
+    })
+})
+
+describe('tier native model ids', () => {
+    it('names a model the native Anthropic list actually offers, so no tier resolves to an id that does not exist', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ANTHROPIC], tier.id).toContain(tier.nativeModelId)
+        }
+    })
+
+    it('gives every tier a native id, so none falls back to an arbitrary model', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(tier.nativeModelId, tier.id).toBeTruthy()
+        }
+    })
+})
+
+describe('every managed model we offer has a credit weight somebody chose', () => {
+    const offered = ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? []
+
+    const priced = (model: string) =>
+        ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.modelId === model) || !isNil(MANAGED_MODEL_WEIGHTS[model])
+
+    it('offers nothing that quietly falls back to the default rate, apart from what is still pending', () => {
+        expect(offered.filter((model) => !priced(model))).toEqual(MODELS_AWAITING_A_CREDIT_WEIGHT)
+    })
+
+    it('leaves nothing in the pending list that is no longer offered, so the exception cannot outlive the model', () => {
+        for (const model of MODELS_AWAITING_A_CREDIT_WEIGHT) {
+            expect(offered, model).toContain(model)
+        }
+    })
+
+    it('never lists a model as both priced and pending', () => {
+        for (const model of MODELS_AWAITING_A_CREDIT_WEIGHT) {
+            expect(priced(model), model).toBe(false)
+        }
     })
 })
