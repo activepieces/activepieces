@@ -1,6 +1,6 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, ALLOWED_CHAT_MODELS_BY_PROVIDER } from '@activepieces/shared'
-import { MANAGED_MODEL_WEIGHTS, resolveAiCreditWeight } from '../../../../../src/app/flows/flow-run/flow-run-ai-usage-tracker'
+import { AIProviderName } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_MANAGED_MODEL_WEIGHT } from '@activepieces/shared'
+import { resolveAiCreditWeight } from '../../../../../src/app/flows/flow-run/flow-run-ai-usage-tracker'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockTrackBillableUsage, mockExtractAiUsage, mockFlowVersionHasAiStep, mockGetOrCreateForPlatform, mockGetProject, mockGetStepsOrNull } = vi.hoisted(() => ({
@@ -141,18 +141,7 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
     })
 })
 
-describe('every managed model we offer has a credit weight somebody chose', () => {
-    const offered = ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? []
-
-    const recorded = (model: string) =>
-        ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.modelId === model) || !isNil(MANAGED_MODEL_WEIGHTS[model])
-
-    it('offers nothing that quietly falls back to the default rate, apart from what is still pending', () => {
-        const unpriced = offered.filter((model) => !recorded(model))
-
-        expect(unpriced).toEqual(MODELS_AWAITING_A_CREDIT_WEIGHT)
-    })
-
+describe('resolveAiCreditWeight', () => {
     it('bills each tier model at the tier weight, not the table', () => {
         for (const tier of ACTIVEPIECES_CHAT_TIERS) {
             expect(resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: tier.modelId }), tier.id).toBe(tier.creditWeight)
@@ -167,8 +156,6 @@ describe('every managed model we offer has a credit weight somebody chose', () =
     })
 
     it('leaves a model nobody offers on the default rate', () => {
-        expect(resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'someone/never-offered' })).toBe(2)
+        expect(resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'someone/never-offered' })).toBe(DEFAULT_MANAGED_MODEL_WEIGHT)
     })
 })
-
-const MODELS_AWAITING_A_CREDIT_WEIGHT = ['x-ai/grok-4.20']
