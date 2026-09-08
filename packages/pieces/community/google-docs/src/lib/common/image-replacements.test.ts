@@ -14,7 +14,21 @@ describe('toImageReplacements', () => {
     ]);
   });
 
-  it('maps the legacy dictionary shape saved by older flows', () => {
+  it('maps the legacy dictionary after the engine wraps it in a one-element array', () => {
+    expect(
+      toImageReplacements([
+        {
+          'kix.one': 'https://example.com/one.png',
+          'kix.two': 'https://example.com/two.png',
+        },
+      ]),
+    ).toEqual([
+      { imageObjectId: 'kix.one', url: 'https://example.com/one.png' },
+      { imageObjectId: 'kix.two', url: 'https://example.com/two.png' },
+    ]);
+  });
+
+  it('maps the bare legacy dictionary shape', () => {
     expect(
       toImageReplacements({
         'kix.one': 'https://example.com/one.png',
@@ -26,7 +40,7 @@ describe('toImageReplacements', () => {
     ]);
   });
 
-  it('skips array rows that are missing either column', () => {
+  it('skips half-filled editor rows and non-object rows', () => {
     expect(
       toImageReplacements([
         { imageObjectId: 'kix.one' },
@@ -43,5 +57,6 @@ describe('toImageReplacements', () => {
     expect(toImageReplacements(null)).toEqual([]);
     expect(toImageReplacements([])).toEqual([]);
     expect(toImageReplacements({})).toEqual([]);
+    expect(toImageReplacements([{}])).toEqual([]);
   });
 });
