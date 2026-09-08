@@ -1,6 +1,6 @@
 import { readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { ensureTrailingSlash, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ensureTrailingSlash, ErrorCode, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
@@ -258,6 +258,12 @@ async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: Piece
         const url = pieceBundleEndpointUrl(publicApiUrl, piece)
         const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
         if (!response.ok) {
+            if (response.status === 404 || response.status === 410) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                    params: { pieceName: piece.pieceName, pieceVersion: piece.pieceVersion, status: response.status },
+                })
+            }
             throw new Error(`Failed to fetch piece bundle ${piece.pieceName}@${piece.pieceVersion}: ${response.status} ${response.statusText}`)
         }
         await fileSystemUtils.threadSafeMkdir(dirname(bundlePath))

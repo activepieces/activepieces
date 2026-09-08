@@ -233,6 +233,28 @@ describe('executeFlowJob', () => {
             )
         })
 
+        it('reports a missing piece bundle (404) as FAILED with a user-facing message, not INTERNAL_ERROR', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(new ActivepiecesError({
+                code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                params: { pieceName: 'url-crawl', pieceVersion: '0.2.2', status: 404 },
+            }))
+
+            const result = await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(result.status).toBe(EngineResponseStatus.OK)
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.FAILED,
+                    failedStep: expect.objectContaining({
+                        message: expect.stringContaining('url-crawl'),
+                    }),
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
         it('reports an engine INTERNAL_ERROR with both ids', async () => {
             const ctx = makeMockContext()
             ctx.runtime.execute = vi.fn().mockResolvedValue({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'boom', timings: {} })

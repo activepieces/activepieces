@@ -102,6 +102,16 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                     await reportFlowStatus({ ctx, data, status: FlowRunStatus.LOG_SIZE_EXCEEDED })
                     return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED }
                 }
+                if (e.error.code === ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE) {
+                    const { pieceName, pieceVersion } = e.error.params
+                    await reportFlowStatus({
+                        ctx,
+                        data,
+                        status: FlowRunStatus.FAILED,
+                        failedStep: { name: flowVersion.trigger.name, displayName: flowVersion.trigger.displayName, message: `Piece "${pieceName}@${pieceVersion}" is no longer available in the piece registry. Republish the piece or upgrade the flow to a newer version.` },
+                    })
+                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+                }
             }
             await reportFlowStatus({ ctx, data, status: FlowRunStatus.INTERNAL_ERROR, internalError: toInternalError(RunInternalErrorSource.WORKER, e) })
             throw e
