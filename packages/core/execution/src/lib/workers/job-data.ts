@@ -298,6 +298,7 @@ export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
 export const ResolvedAgentFlowTool = z.object({
     toolName: z.string(),
     flowId: z.string(),
+    flowVersionId: z.string().optional(),
     description: z.string(),
     inputSchema: z.record(z.string(), z.unknown()),
     returnsResponse: z.boolean(),

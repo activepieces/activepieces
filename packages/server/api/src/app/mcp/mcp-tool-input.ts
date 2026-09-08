@@ -29,9 +29,7 @@ export const mcpToolInput = {
             const suppliedKey = [key, property.name].find((candidate) => candidate in modelArgs)
             return suppliedKey === undefined ? [] : [[property.name, modelArgs[suppliedKey], suppliedKey] as const]
         })
-        const consumed = new Set(declared.map(([, , suppliedKey]) => suppliedKey))
-        const unrecognised = Object.entries(modelArgs).filter(([key]) => !consumed.has(key))
-        return Object.fromEntries([...unrecognised, ...declared.map(([name, value]) => [name, value] as const)])
+        return Object.fromEntries(declared.map(([name, value]) => [name, value] as const))
     },
 
     propertyToZod(property: McpProperty): z.ZodTypeAny {

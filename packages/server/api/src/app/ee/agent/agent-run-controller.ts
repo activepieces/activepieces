@@ -122,6 +122,7 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
         return {
             toolName: toolRequest.toolName,
             flowId: flow.id,
+            flowVersionId: flow.version.id,
             description: toolDescription.length > 0 ? toolDescription : `Run the flow "${flow.version.displayName}"`,
             inputSchema: z.toJSONSchema(z.object(inputShape)),
             returnsResponse,

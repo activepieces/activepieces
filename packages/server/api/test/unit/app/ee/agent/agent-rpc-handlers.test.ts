@@ -441,7 +441,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
 })
 
 describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a flow tool, scoped to its own project', () => {
-    async function runFlowTool(conversation: unknown, flowId = 'flow-1') {
+    async function runFlowTool(conversation: unknown, flowId = 'flow-1', flowVersionId?: string) {
         mockRunFlowAsTool.mockClear()
         mockGetOnePopulated.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
@@ -450,6 +450,7 @@ describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a f
             conversationId: 'conv-1',
             toolName: 'run_subflow',
             flowId,
+            ...(flowVersionId === undefined ? {} : { flowVersionId }),
             toolInput: { foo: 'bar' },
             returnsResponse: false,
         })
@@ -487,7 +488,19 @@ describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a f
         expect(mockRunFlowAsTool).toHaveBeenCalledTimes(1)
     })
 
-    it('translates the arguments with the schema of the version that will actually run, not the draft', async () => {
+    it('translates with the exact version whose schema the model was shown, not whatever is published now', async () => {
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-advertised', publishedVersionId: 'v-newer', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' }, 'flow-1', 'v-advertised')
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own', versionId: 'v-advertised' })
+        expect(mockGetOnePopulatedOrThrow).not.toHaveBeenCalled()
+        const [call] = mockRunFlowAsTool.mock.calls
+        expect(call[0].flow.version.id).toBe('v-advertised')
+        expect(call[0].properties.map((property: { name: string }) => property.name)).toEqual(['Email Sender'])
+    })
+
+    it('falls back to the runnable version for a run enqueued before the version was pinned', async () => {
         mockGetOnePopulatedOrThrow.mockClear()
         mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-draft', publishedVersionId: 'v-published', fields: ['Renamed In Draft'] }))
         mockGetOnePopulatedOrThrow.mockResolvedValue(flowWithFields({ versionId: 'v-published', publishedVersionId: 'v-published', fields: ['Email Sender'] }))

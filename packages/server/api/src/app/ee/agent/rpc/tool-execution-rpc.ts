@@ -80,12 +80,12 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a flow tool' } })
         }
-        const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: conversation.projectId })
+        const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: conversation.projectId, ...spreadIfDefined('versionId', input.flowVersionId) })
         if (isNil(flow)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That flow is not in this run\'s project' } })
         }
-        const runnable = await resolveRunnableFlow({ flow, projectId: conversation.projectId, log })
-        const result = await runFlowAsTool({ flow: runnable, properties: extractMcpTriggerInput(runnable).mcpInputs, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
+        const advertised = isNil(input.flowVersionId) ? await resolveRunnableFlow({ flow, projectId: conversation.projectId, log }) : flow
+        const result = await runFlowAsTool({ flow: advertised, properties: extractMcpTriggerInput(advertised).mcpInputs, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id } }, '[agentRpc#executeFlowTool] Ran a flow tool')
         return { result }
     },
