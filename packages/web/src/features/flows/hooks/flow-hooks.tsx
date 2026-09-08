@@ -3,7 +3,6 @@ import {
   isNil,
   ErrorCode,
   SeekPage,
-  tryParseFriendlyPieceError,
 } from '@activepieces/core-utils';
 import {
   ApFlagId,
@@ -144,9 +143,6 @@ export const flowHooks = {
         const apError = error.response.data as ApErrorParams;
         if (apError.code === ErrorCode.TRIGGER_UPDATE_STATUS) {
           const params = apError.params as Record<string, string>;
-          const friendlyError = tryParseFriendlyPieceError(
-            params.standardError,
-          );
           openDialog({
             title:
               change === 'publish'
@@ -160,7 +156,7 @@ export const flowHooks = {
               </p>
             ),
             error: {
-              standardError: friendlyError ?? params.standardError ?? '',
+              standardError: params.standardError ?? '',
               standardOutput: params.standardOutput || '',
             },
           });

@@ -88,4 +88,30 @@ describe('ApErrorDialog', () => {
     expect(container.textContent).not.toContain('stack trace and request details');
     expect(collapsibleJsonMock.defaultOpen).toBe(false);
   });
+
+  it('shows the friendly nested standardError and keeps technical details collapsed', () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    act(() => {
+      useApErrorDialogStore.getState().openDialog({
+        title: 'Status update failed',
+        description: <p>Could not update the flow.</p>,
+        error: {
+          standardError: JSON.stringify({
+            __apErrorVersion: 1,
+            message: 'Authentication required',
+            raw: 'stack trace and request details',
+          }),
+          standardOutput: 'not used',
+        },
+      });
+      root.render(<ApErrorDialog />);
+    });
+
+    expect(container.textContent).toContain('Authentication required');
+    expect(container.textContent).not.toContain('stack trace and request details');
+    expect(collapsibleJsonMock.defaultOpen).toBe(false);
+  });
 });

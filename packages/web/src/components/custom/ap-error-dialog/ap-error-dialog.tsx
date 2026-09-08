@@ -21,7 +21,15 @@ const ApErrorDialog = () => {
 
   if (isNil(params)) return null;
 
-  const friendlyError = tryParseFriendlyPieceError(params.error);
+  const friendlyError =
+    tryParseFriendlyPieceError(params.error) ??
+    tryParseFriendlyPieceError(
+      isNil(params.error) ||
+        typeof params.error !== 'object' ||
+        Array.isArray(params.error)
+        ? undefined
+        : params.error.standardError,
+    );
 
   return (
     <Dialog open={!!params} onOpenChange={closeDialog}>
