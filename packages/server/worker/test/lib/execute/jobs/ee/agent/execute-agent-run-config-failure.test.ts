@@ -60,27 +60,38 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
             waitpointId: 'waitpoint-1',
         })
 
-        await expect(executeAgentRunJob.execute(ctx, data)).rejects.toThrow('ENTITY_NOT_FOUND')
+        const result = await executeAgentRunJob.execute(ctx, data)
 
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
         expect(resumed).toHaveLength(1)
         expect(resumed[0].waitpointId).toBe('waitpoint-1')
         expect(JSON.stringify(resumed[0].output)).toContain('FAILED')
+        expect(resumed[0].output).toMatchObject({ failure: expect.stringContaining('ENTITY_NOT_FOUND') })
     })
 
     it('tells the chat client the turn failed instead of leaving it streaming', async () => {
         const { ctx, events } = buildContext()
 
-        await expect(executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))).rejects.toThrow('ENTITY_NOT_FOUND')
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
 
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 
-    it('completes the job when the platform is out of credits, so it is not retried or paged', async () => {
+    it('tells the client it was a billing failure, so the UI can offer a top-up', async () => {
         const { ctx, events } = buildContext(new Error('You have run out of AI credits'))
 
         const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
 
-        expect(result.status).toBe(EngineResponseStatus.OK)
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
+        expect(events[0]).toMatchObject({ type: AgentEventType.ERROR, data: { code: ErrorCode.QUOTA_EXCEEDED } })
+    })
+
+    it('still fails the job on an unrecognised error, so our own bugs are not laundered', async () => {
+        const { ctx, events } = buildContext(new Error('Cannot read properties of undefined'))
+
+        await expect(executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))).rejects.toThrow('Cannot read properties of undefined')
+
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 })

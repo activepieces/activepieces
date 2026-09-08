@@ -6,6 +6,7 @@ import {
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { clickupCommon, callClickUpApi, listTags } from '../../common';
 import { clickupAuth } from '../../auth';
+import { updateSpaceTagOutputSchema } from '../../output-schemas';
 
 export const clickupUpdateSpaceTag = createAction({
   auth: clickupAuth,
@@ -65,6 +66,7 @@ export const clickupUpdateSpaceTag = createAction({
       required: false,
     }),
   },
+  outputSchema: updateSpaceTagOutputSchema,
   async run(configValue) {
     const { space_id, tag_name, new_name, tag_fg, tag_bg } =
       configValue.propsValue;

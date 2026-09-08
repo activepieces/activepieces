@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown, messageIdDropdown } from '../common/props';
+import { messageActionOutputSchema } from '../output-schemas';
 
 export const moveEmailToFolderAction = createAction({
 	auth: microsoftOutlookAuth,
@@ -11,6 +12,7 @@ export const moveEmailToFolderAction = createAction({
 	description: 'Moves an email message to a specific folder.',
 	audience: 'both',
 	aiMetadata: { description: 'Moves a specific Outlook message into a chosen mail folder. Use this to organize, archive, or route an email after processing it. Note: the move assigns a new message ID, so re-running with the original ID will fail once moved.', idempotent: false },
+	outputSchema: messageActionOutputSchema,
 	props: {
 		messageId: messageIdDropdown({
 			displayName: 'Email',

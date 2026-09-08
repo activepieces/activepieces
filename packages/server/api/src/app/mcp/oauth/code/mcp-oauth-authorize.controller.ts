@@ -66,7 +66,7 @@ const AuthorizeRequest = {
             response_type: z.string().max(64),
             code_challenge: mcpOAuthValidation.storableText(256).refine((value) => value.length >= 43, { message: 'code_challenge is too short' }),
             code_challenge_method: z.string().max(8).default('S256'),
-            state: mcpOAuthValidation.storableText(512).optional(),
+            state: mcpOAuthValidation.storableText(2048).optional(),
             scope: mcpOAuthValidation.storableText(512).optional(),
             resource: mcpOAuthValidation.storableText(2048).optional(),
         }),

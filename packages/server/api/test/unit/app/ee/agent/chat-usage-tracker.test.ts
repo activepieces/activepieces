@@ -10,8 +10,8 @@ const { mockTrackBillableUsage, mockResolveMessages, mockCountBillableToolCalls,
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
-    BillingEvents: { CHAT_MESSAGE: 'chat_message' },
-    captureBillingEvent: vi.fn(),
+    LicenseKeyPostHogEvents: { CHAT_MESSAGE: 'chat_message' },
+    captureLicenseKeyEvent: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/platform/billing-provider', () => ({
@@ -31,6 +31,8 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         resolveChatProviderName: vi.fn().mockResolvedValue(AIProviderName.ACTIVEPIECES),
         resolveModelIdForAnalytics: vi.fn().mockReturnValue('model-x'),
         resolveTier: vi.fn().mockReturnValue({ id: 'tier-1', creditWeight: 5 }),
+        providerScopeFor: ({ projectId }: { projectId: string | null }) =>
+            projectId === null ? { type: 'platform' } : { type: 'project', projectId },
     },
 }))
 

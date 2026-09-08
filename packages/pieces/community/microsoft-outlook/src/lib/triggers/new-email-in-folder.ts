@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
 import { mailFolderIdDropdown } from '../common/props';
+import { newEmailTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlookAuth>, { folderId?: string }> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -64,6 +65,7 @@ export const newEmailInFolderTrigger = createTrigger({
 	aiMetadata: {
 		description: 'Fires when a new message appears in the chosen Outlook mail folder. Each fire represents one new email added to that folder.',
 	},
+	outputSchema: newEmailTriggerOutputSchema,
 	props: {
 		folderId: mailFolderIdDropdown({
 			displayName: 'Folder',

@@ -16,14 +16,14 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         title: 'ap_list_ai_models',
         description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for configuring Run Agent steps. The output shows provider names and model IDs needed for the aiProviderModel input.',
         inputSchema: listAiModelsInput.shape,
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { provider: filterProvider } = listAiModelsInput.parse(args)
 
                 const platformId = await mcpUtils.resolvePlatformId({ mcp, log })
                 const service = aiProviderService(log)
-                const providers = await service.listProviders(platformId)
+                const providers = await service.listForProject({ platformId, projectId: mcp.projectId })
 
                 if (providers.length === 0) {
                     return {
@@ -49,7 +49,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
                 const sections = await Promise.all(
                     filteredProviders.map(async (p) => {
                         try {
-                            const models = await service.listModels(platformId, p.provider)
+                            const models = await service.listModels({ platformId, provider: p.provider, scope: { type: 'project', projectId: mcp.projectId } })
                             const textModels = models.filter(m => m.type === AIProviderModelType.TEXT)
                             const capped = textModels.slice(0, MAX_MODELS_PER_PROVIDER)
                             structuredProviders.push({

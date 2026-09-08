@@ -185,4 +185,5 @@ export const pieceSearchUtils = {
   getPinnedPieces,
   getPopularPieces,
   getHighlightedPieces,
+  POPULAR_PIECES_NAMES,
 };

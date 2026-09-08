@@ -1,12 +1,12 @@
 import { ActivepiecesError, apId, ErrorCode, isNil, Result, tryCatch } from '@activepieces/core-utils'
 import { ActionRunStep, CodeAction, FlowActionType, FlowRunStatus, PieceAction, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { getPiecePackageWithoutArchive } from '../pieces/metadata/piece-metadata-service'
 import { jobQueue } from '../workers/job-queue/job-queue'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 import { ActionRunOutcome, deriveActionRunOutcome, EngineActionResponse } from './action-run-outcome'
-
-const ACTION_RUN_BUDGET_MS = 120 * 1000
 
 export const actionRunService = (log: FastifyBaseLogger) => ({
     async run({ projectId, platformId, step }: RunParams): Promise<ActionRunResult> {
@@ -25,7 +25,7 @@ export const actionRunService = (log: FastifyBaseLogger) => ({
             platformId,
             step: validatedStep,
             piece,
-            expiresAt: Date.now() + ACTION_RUN_BUDGET_MS,
+            expiresAt: Date.now() + system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000,
         }, log, id))
 
         const outcome = deriveActionRunOutcome({ result })

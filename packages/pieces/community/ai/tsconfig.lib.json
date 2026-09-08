@@ -16,5 +16,6 @@
     "declarationMap": true,
     "types": ["node"]
   },
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
   "include": ["src/**/*.ts"]
 }

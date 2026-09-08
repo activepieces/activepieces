@@ -47,7 +47,7 @@ export const ActivateLicenseDialog = ({
   });
 
   const { mutate: activateLicenseKey, isPending } =
-    platformHooks.useUpdateLisenceKey(queryClinet);
+    platformHooks.useUpdateLisenceKey({ queryClient: queryClinet });
 
   const handleSubmit = (data: LicenseKeySchema) => {
     form.clearErrors();

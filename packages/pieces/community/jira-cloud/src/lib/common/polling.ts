@@ -8,6 +8,7 @@ const LOOKBACK_MS = 15 * 60 * 1000;
 const MAX_RESULTS = 1000;
 const MAX_PAGES = 10;
 const MAX_LEDGER_ENTRIES = 2000;
+const TEST_FETCH_LIMIT = 50;
 const TEST_ITEMS_LIMIT = 5;
 const STATE_STORE_KEY = 'pollingState';
 
@@ -44,26 +45,32 @@ function stripTrailingOrderBy(jql: string): string {
 	return (orderByIndex === -1 ? jql : jql.slice(0, orderByIndex)).trim();
 }
 
-async function composeJql({
+async function composeJql<Props extends JiraPollingProps>({
 	auth,
 	propsValue,
 	since,
 	direction,
+	timeField,
+	extraScope,
 }: {
 	auth: JiraAuth;
-	propsValue: JiraPollingContext['propsValue'];
+	propsValue: Props;
 	since: string | null;
 	direction: 'ASC' | 'DESC';
+	timeField: JiraTimeField;
+	extraScope?: JiraPollingConfig<Props>['extraScope'];
 }): Promise<string> {
 	const userJql = isNil(propsValue.jql) ? '' : stripTrailingOrderBy(propsValue.jql);
 	const scope =
 		userJql.length === 0
 			? null
 			: `(${propsValue.sanitizeJql ? await sanitizeJqlQuery({ auth, jql: userJql }) : userJql})`;
-	const conditions = [scope, isNil(since) ? null : `updated > '${since}'`].filter(
-		(condition): condition is string => !isNil(condition),
-	);
-	const orderBy = `ORDER BY updated ${direction}`;
+	const conditions = [
+		scope,
+		extraScope ? extraScope({ propsValue, since }) : null,
+		isNil(since) ? null : `${timeField} > '${since}'`,
+	].filter((condition): condition is string => !isNil(condition));
+	const orderBy = `ORDER BY ${timeField} ${direction}`;
 	return conditions.length === 0 ? orderBy : `${conditions.join(' AND ')} ${orderBy}`;
 }
 
@@ -72,12 +79,16 @@ async function fetchIssues({
 	jql,
 	maxResults,
 	maxPages = 1,
+	fields,
+	expand,
 }: {
 	auth: JiraAuth;
 	jql: string;
 	maxResults: number;
 	maxPages?: number;
-}): Promise<{ items: PollingItem[]; truncated: boolean }> {
+	fields?: string[];
+	expand?: string[];
+}): Promise<{ issues: JiraSearchResponse['issues']; truncated: boolean }> {
 	const issues: JiraSearchResponse['issues'] = [];
 	let nextPageToken: string | undefined;
 	let truncated = false;
@@ -89,6 +100,8 @@ async function fetchIssues({
 			maxResults,
 			sanitizeJql: false,
 			nextPageToken,
+			fields,
+			expand,
 		});
 		issues.push(...(response.issues ?? []));
 		nextPageToken = response.nextPageToken;
@@ -101,18 +114,52 @@ async function fetchIssues({
 		}
 	}
 
-	return { items: toItems(issues), truncated };
+	return { issues, truncated };
 }
 
-function toItems(issues: JiraSearchResponse['issues']): PollingItem[] {
+function issueEpoch({
+	issue,
+	epochField,
+}: {
+	issue: JiraSearchResponse['issues'][number];
+	epochField: string;
+}): number {
+	return Date.parse(issue?.fields?.[epochField]);
+}
+
+function toItems<Props extends JiraPollingProps>({
+	issues,
+	propsValue,
+	extractItems,
+}: {
+	issues: JiraSearchResponse['issues'];
+	propsValue: Props;
+	extractItems: (params: {
+		issue: JiraSearchResponse['issues'][number];
+		propsValue: Props;
+	}) => JiraPollingItem[];
+}): LedgeredItem[] {
 	return issues
-		.flatMap((issue) => {
-			const epochMilliSeconds = Date.parse(issue?.fields?.updated);
-			return Number.isFinite(epochMilliSeconds)
-				? [{ key: `${issue?.id}:${epochMilliSeconds}`, epochMilliSeconds, data: issue }]
-				: [];
-		})
+		.flatMap((issue) => extractItems({ issue, propsValue }))
+		.filter((item) => Number.isFinite(item.epochMilliSeconds))
+		.map((item) => ({ ...item, key: `${item.id}:${item.epochMilliSeconds}` }))
 		.sort((first, second) => first.epochMilliSeconds - second.epochMilliSeconds);
+}
+
+function truncatedWindowStart({
+	issues,
+	timeField,
+	windowStart,
+}: {
+	issues: JiraSearchResponse['issues'];
+	timeField: JiraTimeField;
+	windowStart: number;
+}): number {
+	const highestEpoch = issues.reduce((highest, issue) => {
+		const epoch = issueEpoch({ issue, epochField: timeField });
+		return Number.isFinite(epoch) ? Math.max(highest, epoch) : highest;
+	}, Number.NEGATIVE_INFINITY);
+	return Number.isFinite(highestEpoch) ? Math.max(windowStart, highestEpoch - 1) : windowStart;
 }
 
 function pruneState({
@@ -147,82 +194,131 @@ function initialState(now: number): PollingState {
 	return { windowStart: now, floor: now, entries: [] };
 }
 
-export const jiraPolling = {
-	async onEnable({ context }: { context: JiraPollingContext }): Promise<void> {
-		const { store, isRepublish } = context;
-		if (isRepublish && !isNil(await store.get<PollingState>(STATE_STORE_KEY))) {
-			return;
-		}
-		await store.put(STATE_STORE_KEY, initialState(Date.now()));
-	},
+export function createJiraPolling<Props extends JiraPollingProps = JiraPollingProps>(
+	config: JiraPollingConfig<Props> = {},
+) {
+	const timeField = config.timeField ?? 'updated';
+	const epochField = config.epochField ?? timeField;
+	const fields = isNil(config.fields)
+		? undefined
+		: Array.from(new Set([...config.fields, timeField, epochField]));
+	const extractItems =
+		config.extractItems ??
+		(({ issue }: { issue: JiraSearchResponse['issues'][number] }): JiraPollingItem[] => [
+			{ id: `${issue?.id}`, epochMilliSeconds: issueEpoch({ issue, epochField }), data: issue },
+		]);
 
-	async poll({ context }: { context: JiraPollingContext }): Promise<unknown[]> {
-		const { auth, propsValue, store } = context;
-		const now = Date.now();
-		const state = (await store.get<PollingState>(STATE_STORE_KEY)) ?? initialState(now);
-		const windowStart = Math.max(state.windowStart, state.floor);
+	return {
+		async onEnable({ context }: { context: JiraPollingContext<Props> }): Promise<void> {
+			const { store, isRepublish } = context;
+			if (isRepublish && !isNil(await store.get<PollingState>(STATE_STORE_KEY))) {
+				return;
+			}
+			await store.put(STATE_STORE_KEY, initialState(Date.now()));
+		},
 
-		const { items, truncated } = await fetchIssues({
-			auth,
-			jql: await composeJql({
+		async poll({ context }: { context: JiraPollingContext<Props> }): Promise<unknown[]> {
+			const { auth, propsValue, store } = context;
+			const now = Date.now();
+			const state = (await store.get<PollingState>(STATE_STORE_KEY)) ?? initialState(now);
+			const windowStart = Math.max(state.windowStart, state.floor);
+
+			const { issues, truncated } = await fetchIssues({
 				auth,
-				propsValue,
-				since: toRelativeJqlDate({ sinceEpochMS: windowStart, now }),
-				direction: 'ASC',
-			}),
-			maxResults: MAX_RESULTS,
-			maxPages: MAX_PAGES,
-		});
+				jql: await composeJql({
+					auth,
+					propsValue,
+					since: toRelativeJqlDate({ sinceEpochMS: windowStart, now }),
+					direction: 'ASC',
+					timeField,
+					extraScope: config.extraScope,
+				}),
+				maxResults: MAX_RESULTS,
+				maxPages: MAX_PAGES,
+				fields,
+				expand: config.expand,
+			});
+			const items = toItems({ issues, propsValue, extractItems });
 
-		const alreadyEmitted = new Set(state.entries.map(([key]) => key));
-		const freshItems = items.filter(
-			(item) => item.epochMilliSeconds > windowStart && !alreadyEmitted.has(item.key),
-		);
+			const alreadyEmitted = new Set(state.entries.map(([key]) => key));
+			const freshItems = items.filter(
+				(item) => item.epochMilliSeconds > windowStart && !alreadyEmitted.has(item.key),
+			);
 
-		const highestEpoch = items.at(-1)?.epochMilliSeconds;
-		const nextWindowStart = truncated
-			? Math.max(windowStart, isNil(highestEpoch) ? windowStart : highestEpoch - 1)
-			: Math.max(windowStart, now - LOOKBACK_MS);
+			const nextWindowStart = truncated
+				? truncatedWindowStart({ issues, timeField, windowStart })
+				: Math.max(windowStart, now - LOOKBACK_MS);
 
-		await store.put(
-			STATE_STORE_KEY,
-			pruneState({
-				entries: [
-					...state.entries,
-					...freshItems.map((item): LedgerEntry => [item.key, item.epochMilliSeconds]),
-				],
-				floor: state.floor,
-				windowStart: nextWindowStart,
-			}),
-		);
+			await store.put(
+				STATE_STORE_KEY,
+				pruneState({
+					entries: [
+						...state.entries,
+						...freshItems.map((item): LedgerEntry => [item.key, item.epochMilliSeconds]),
+					],
+					floor: state.floor,
+					windowStart: nextWindowStart,
+				}),
+			);
 
-		return freshItems.map((item) => ({ ...item.data, [DEDUPE_KEY_PROPERTY]: item.key }));
-	},
+			return freshItems.map((item) => ({ ...item.data, [DEDUPE_KEY_PROPERTY]: item.key }));
+		},
 
-	async test({ context }: { context: JiraPollingContext }): Promise<unknown[]> {
-		const { auth, propsValue } = context;
-		const { items } = await fetchIssues({
-			auth,
-			jql: await composeJql({ auth, propsValue, since: null, direction: 'DESC' }),
-			maxResults: TEST_ITEMS_LIMIT,
-		});
+		async test({ context }: { context: JiraPollingContext<Props> }): Promise<unknown[]> {
+			const { auth, propsValue } = context;
+			const { issues } = await fetchIssues({
+				auth,
+				jql: await composeJql({
+					auth,
+					propsValue,
+					since: null,
+					direction: 'DESC',
+					timeField,
+					extraScope: config.extraScope,
+				}),
+				maxResults: TEST_FETCH_LIMIT,
+				fields,
+				expand: config.expand,
+			});
 
-		return items.reverse().map((item) => item.data);
-	},
+			return toItems({ issues, propsValue, extractItems })
+				.slice(-TEST_ITEMS_LIMIT)
+				.map((item) => item.data)
+				.reverse();
+		},
+	};
+}
+
+export type JiraPollingProps = { jql?: string; sanitizeJql?: boolean };
+
+export type JiraPollingItem = {
+	id: string;
+	epochMilliSeconds: number;
+	data: Record<string, unknown>;
 };
 
-type JiraPollingContext = {
+type JiraTimeField = 'updated' | 'created';
+
+type JiraPollingConfig<Props extends JiraPollingProps> = {
+	timeField?: JiraTimeField;
+	epochField?: string;
+	fields?: string[];
+	expand?: string[];
+	extraScope?: (params: { propsValue: Props; since: string | null }) => string | null;
+	extractItems?: (params: {
+		issue: JiraSearchResponse['issues'][number];
+		propsValue: Props;
+	}) => JiraPollingItem[];
+};
+
+type JiraPollingContext<Props extends JiraPollingProps> = {
 	auth: JiraAuth;
-	propsValue: { jql?: string; sanitizeJql?: boolean };
+	propsValue: Props;
 	store: Store;
 	isRepublish?: boolean;
 };
 
-type PollingItem = {
-	key: string;
-	epochMilliSeconds: number;
-	data: Record<string, unknown>;
-};
+type LedgeredItem = JiraPollingItem & { key: string };
 
 type LedgerEntry = [key: string, epochMilliSeconds: number];
 

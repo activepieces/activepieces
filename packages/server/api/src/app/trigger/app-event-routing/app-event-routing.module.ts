@@ -1,6 +1,7 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
 import { facebookLeads } from '@activepieces/piece-facebook-leads'
 import { intercom } from '@activepieces/piece-intercom'
+import { microsoftTeamsBot } from '@activepieces/piece-microsoft-teams-bot'
 import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
@@ -24,12 +25,14 @@ const appWebhooks: Record<string, Piece<PieceAuthProperty | PieceAuthProperty[] 
     square,
     'facebook-leads': facebookLeads,
     intercom,
+    'microsoft-teams-bot': microsoftTeamsBot,
 }
 const pieceNames: Record<string, string> = {
     slack: '@activepieces/piece-slack',
     square: '@activepieces/piece-square',
     'facebook-leads': '@activepieces/piece-facebook-leads',
     intercom: '@activepieces/piece-intercom',
+    'microsoft-teams-bot': '@activepieces/piece-microsoft-teams-bot',
 }
 
 export const appEventRoutingModule: FastifyPluginAsyncZod = async (app) => {

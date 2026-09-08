@@ -8,6 +8,7 @@ import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
 import { Languages, baseUrl } from '../common/common';
+import { transcribeActionOutputSchema } from '../output-schemas';
 
 export const transcribeAction = createAction({
   audience: 'both',
@@ -33,6 +34,7 @@ export const transcribeAction = createAction({
       defaultValue: 'en',
     }),
   },
+  outputSchema: transcribeActionOutputSchema,
   run: async (context) => {
     const fileData = context.propsValue.audio;
     const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');

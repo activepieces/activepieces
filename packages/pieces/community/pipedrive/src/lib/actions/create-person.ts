@@ -10,10 +10,12 @@ import {
 import { GetField, GetPersonResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isEmpty } from '@activepieces/pieces-framework';
+import { createPersonActionOutputSchema } from '../output-schemas';
 
 export const createPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'create-person',
+	outputSchema: createPersonActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Person',
 	description: 'Creates a new person.',

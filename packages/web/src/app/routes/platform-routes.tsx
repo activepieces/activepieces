@@ -13,6 +13,9 @@ const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
+const PlatformConfigurationsPage = React.lazy(
+  () => import('./platform/infra/configurations'),
+);
 const TriggerHealthPage = React.lazy(() => import('./platform/infra/triggers'));
 const SettingsWorkersPage = React.lazy(
   () => import('./platform/infra/workers'),
@@ -43,9 +46,6 @@ const SSOPage = React.lazy(() =>
   import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
 );
 const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
-const AiCapabilitiesPage = React.lazy(
-  () => import('./platform/setup/ai-capabilities'),
-);
 const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
 const GeneralPage = React.lazy(() =>
   import('./platform/setup/general').then((m) => ({
@@ -142,7 +142,7 @@ export const platformRoutes = [
     path: '/platform/setup/ai',
     element: (
       <PlatformLayout>
-        <PageTitle title="AI">
+        <PageTitle title="AI Center">
           <SuspenseWrapper>
             <AIProvidersPage />
           </SuspenseWrapper>
@@ -152,15 +152,7 @@ export const platformRoutes = [
   },
   {
     path: '/platform/setup/ai-capabilities',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="AI Capabilities">
-          <SuspenseWrapper>
-            <AiCapabilitiesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
+    element: <Navigate to="/platform/setup/ai?tab=capabilities" replace />,
   },
   {
     path: '/platform/setup/mcp',
@@ -393,6 +385,18 @@ export const platformRoutes = [
         <PageTitle title="Health">
           <SuspenseWrapper>
             <SettingsHealthPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/configurations',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Configurations">
+          <SuspenseWrapper>
+            <PlatformConfigurationsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

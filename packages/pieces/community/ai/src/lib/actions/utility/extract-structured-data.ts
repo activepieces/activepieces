@@ -3,8 +3,8 @@ import { createAIModel } from '../../common/ai-sdk';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import mime from 'mime-types';
 import Ajv from 'ajv';
-import { aiProps } from '../../common/props';
-import { AIProviderName } from '@activepieces/pieces-framework';
+import { aiProps, aiProviderSelection } from '../../common/props';
+import { spreadIfDefined } from '@activepieces/pieces-framework';
 
 export const extractStructuredData = createAction({
   audience: 'both',
@@ -128,7 +128,7 @@ export const extractStructuredData = createAction({
 		}),
 	},
 	async run(context) {
-		const provider = context.propsValue.provider;
+		const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
 		const modelId = context.propsValue.model;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
@@ -141,7 +141,8 @@ export const extractStructuredData = createAction({
 		}
 
 		const model = await createAIModel({
-			provider: provider as AIProviderName,
+			provider,
+			...spreadIfDefined('configId', configId),
 			modelId,
 			engineToken: context.server.token,
 			apiUrl: context.server.apiUrl,

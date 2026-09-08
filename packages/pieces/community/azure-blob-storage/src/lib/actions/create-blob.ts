@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { streamUtils } from '@activepieces/pieces-common';
 import { azureBlobStorageAuth } from '../auth';
 import { BlobServiceClient, Tags } from '@azure/storage-blob';
 import { containerProp } from '../common';
@@ -32,12 +33,13 @@ export const createBlob = createAction({
     },
     async run(context) {
       const { container, blobName, file, tags } = context.propsValue;
+      const { body } = streamUtils.toStreamingBody(file);
       const auth = context.auth.props;
   
       const blobServiceClient = BlobServiceClient.fromConnectionString(auth.connectionString);
       const containerClient = blobServiceClient.getContainerClient(container);
       const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-      return await blockBlobClient.uploadStream(file.body, undefined, undefined, { tags: tags as Tags });
+      return await blockBlobClient.uploadStream(body, undefined, undefined, { tags: tags as Tags });
     },
 });

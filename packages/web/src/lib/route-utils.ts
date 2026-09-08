@@ -17,6 +17,7 @@ export const routesThatRequireProjectId = {
   settings: '/settings',
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
+  approvals: '/approvals',
 };
 
 export const CHAT_ROUTE = '/chat';
@@ -40,5 +41,6 @@ export const determineDefaultRoute = ({
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
 
+export const TRIAL_KEY_QUERY_PARAM = 'licenseKey';
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';

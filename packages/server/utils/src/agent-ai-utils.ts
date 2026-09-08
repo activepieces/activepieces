@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
+import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -56,13 +56,14 @@ function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boo
     return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
 }
 
-function createChatModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false }: {
+function createChatModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
     metadata?: ChatModelMetadata
     webSearchEnabled?: boolean
+    onOutcome?: ProviderOutcomeReporter
 }): LanguageModel {
     if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -72,6 +73,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
             name: 'cloudflare',
             baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
             headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
+            ...spreadIfDefined('fetch', observedProviderFetch(onOutcome)),
         }).chatModel(actualModelId)
     }
     return createLanguageModel({
@@ -83,6 +85,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
             openRouterSettings: openRouterModelSettings(provider, webSearchEnabled),
             mistralViaOpenRouter: true,
             ...spreadIfDefined('extraHeaders', managedProviderMetadataHeaders({ provider, metadata })),
+            ...spreadIfDefined('onOutcome', onOutcome),
         },
     })
 }
@@ -101,32 +104,34 @@ function toStorageEmbedding(embedding: number[]): number[] {
     return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
 }
 
-function createEmbeddingModel({ provider, auth, config }: {
+function createEmbeddingModel({ provider, auth, config, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
+    onOutcome?: ProviderOutcomeReporter
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
     const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
     if (isNil(embeddingModelId)) {
         throw new Error(`Provider ${provider} does not support knowledge base search`)
     }
     const apiKey = readStringField(auth, 'apiKey')
+    const fetch = observedProviderFetch(onOutcome)
     switch (provider) {
         case AIProviderName.OPENAI:
-            return { model: createOpenAI({ apiKey }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+            return { model: createOpenAI({ apiKey, ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         case AIProviderName.GOOGLE:
-            return { model: createGoogleGenerativeAI({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
+            return { model: createGoogleGenerativeAI({ apiKey, ...spreadIfDefined('fetch', fetch) }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
         case AIProviderName.AZURE: {
             const resourceName = readStringField(config, 'resourceName')
             const apiVersion = readStringField(config, 'apiVersion')
             return {
-                model: createAzure({ resourceName, apiKey, ...spreadIfDefined('apiVersion', apiVersion || undefined) }).embeddingModel(embeddingModelId),
+                model: createAzure({ resourceName, apiKey, ...spreadIfDefined('apiVersion', apiVersion || undefined), ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId),
                 providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS,
             }
         }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { model: createOpenRouter({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
+            return { model: createOpenRouter({ apiKey, ...spreadIfDefined('fetch', fetch) }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
         default:
             throw new Error(`Provider ${provider} does not support knowledge base search`)
     }
@@ -233,7 +238,7 @@ function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelM
 function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
     const totalToolResults = messages.reduce((count, message) => {
         if (message.role !== 'tool' || !Array.isArray(message.content)) return count
-        return count + message.content.filter((part) => part.type === 'tool-result').length
+        return count + message.content.filter((part) => part.type === 'tool-result' && !SCHEMA_TOOL_NAMES.has(part.toolName)).length
     }, 0)
 
     const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS

@@ -18,7 +18,7 @@ export const apTestStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBase
         permission: Permission.WRITE_FLOW,
         description: 'Test a single step within a flow. Runs all steps up to and including the specified step. The flow must have a configured trigger. Pass triggerTestData when no sample data exists.',
         inputSchema: testStepInput.shape,
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: true },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
         execute: async (args) => {
             try {
                 const { flowId, stepName, triggerTestData } = testStepInput.parse(args)

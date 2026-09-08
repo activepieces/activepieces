@@ -1,43 +1,98 @@
 import {
   Agent,
+  AgentListSort,
   CreateAgentRequest,
   DraftAgentRequest,
+  MoveAgentRequest,
+  Permission,
   UpdateAgentRequest,
 } from '@activepieces/shared';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 import { internalErrorToast } from '@/components/ui/sonner';
+import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { agentsApi } from '../api/agents';
 
 const AGENTS_KEY = 'agents';
-const AGENT_TEMPLATES_KEY = 'agent-templates';
+
+export const useAgentsAvailable = (): boolean => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  return platform.plan.agentsEnabled;
+};
+
+export const useAgentsNavVisible = (): boolean => {
+  const available = useAgentsAvailable();
+  const { checkAccess } = useAuthorization();
+  return available && checkAccess(Permission.READ_AGENT);
+};
+
+const AGENTS_PAGE_SIZE = 100;
 
 export const agentsQueries = {
   useAgents: ({
     projectId,
+    search,
+    sort,
     enabled = true,
   }: {
     projectId?: string;
+    search?: string;
+    sort?: AgentListSort;
     enabled?: boolean;
   }) =>
-    useQuery({
-      queryKey: [AGENTS_KEY, projectId ?? 'all'],
-      queryFn: () => agentsApi.listAll({ ...(projectId ? { projectId } : {}) }),
+    useInfiniteQuery({
+      queryKey: [
+        AGENTS_KEY,
+        projectId ?? 'all',
+        search ?? '',
+        sort ?? 'default',
+      ],
+      queryFn: ({ pageParam }) =>
+        agentsApi.list({
+          limit: AGENTS_PAGE_SIZE,
+          ...(projectId ? { projectId } : {}),
+          ...(search ? { search } : {}),
+          ...(sort ? { sort } : {}),
+          ...(pageParam ? { cursor: pageParam } : {}),
+        }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       enabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
-  useAgent: ({ id, enabled = true }: { id: string; enabled?: boolean }) =>
+  useMovePreview: ({
+    id,
+    targetProjectId,
+    enabled,
+  }: {
+    id: string;
+    targetProjectId: string | null;
+    enabled: boolean;
+  }) =>
     useQuery({
-      queryKey: [AGENTS_KEY, 'one', id],
-      queryFn: () => agentsApi.get(id),
+      queryKey: [AGENTS_KEY, 'move-preview', id, targetProjectId],
+      queryFn: () => agentsApi.movePreview(id, targetProjectId ?? ''),
+      enabled: enabled && targetProjectId !== null,
+    }),
+  useAgent: ({
+    id,
+    enabled = true,
+    includeUsage = false,
+  }: {
+    id: string;
+    enabled?: boolean;
+    includeUsage?: boolean;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
+      queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
-    }),
-  useAgentTemplates: () =>
-    useQuery({
-      queryKey: [AGENT_TEMPLATES_KEY],
-      queryFn: () => agentsApi.templates(),
-      staleTime: Infinity,
     }),
 };
 
@@ -68,6 +123,22 @@ export const agentsMutations = {
         await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
       },
       onError: internalErrorToast,
+    });
+  },
+  useMoveAgent: ({
+    id,
+    onSuccess,
+  }: {
+    id: string;
+    onSuccess?: (agent: Agent) => void;
+  }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (request: MoveAgentRequest) => agentsApi.move(id, request),
+      onSuccess: async (agent) => {
+        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
+        onSuccess?.(agent);
+      },
     });
   },
   useDraftAgent: () =>

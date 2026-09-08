@@ -10,9 +10,10 @@ import {
 } from '@activepieces/pieces-common';
 import { grokAuth } from '../common/auth';
 import { XAI_BASE_URL } from '../common/constants';
-import { 
+import {
   createModelProperty
 } from '../common/utils';
+import { generateImageActionOutputSchema } from '../output-schemas';
 import * as z from 'zod/mini'
 
 export const generateImage = createAction({
@@ -54,6 +55,7 @@ export const generateImage = createAction({
       },
     }),
   },
+  outputSchema: generateImageActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       numberOfImages: z.optional(z.number().check(z.minimum(1), z.maximum(10))),

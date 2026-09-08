@@ -3,6 +3,7 @@ import OpenAI, { toFile } from 'openai';
 import type { FilePurpose } from 'openai/resources/files';
 import mime from 'mime-types';
 import { openaiAuth } from '../auth';
+import { uploadFileActionOutputSchema } from '../output-schemas';
 
 const allowedPurposes: readonly FilePurpose[] = [
   'assistants',
@@ -51,6 +52,7 @@ export const uploadFile = createAction({
       required: false,
     }),
   },
+  outputSchema: uploadFileActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { file, purpose, fileName } = context.propsValue;

@@ -28,6 +28,7 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             ownerId: actorUserId(request),
             templateId: request.body.templateId,
             ip: networkUtils.clientIp(request),
+            externalId: request.body.externalId,
         })
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
@@ -110,6 +111,8 @@ export const flowController: FastifyPluginAsyncZod = async (app) => {
             externalIds: request.query.externalIds,
             connectionExternalIds: request.query.connectionExternalIds,
             agentExternalIds: request.query.agentExternalIds,
+            sortBy: request.query.sortBy,
+            order: request.query.order,
         })
     })
 

@@ -4,7 +4,9 @@ import {
   createTrigger,
 } from '@activepieces/pieces-framework';
 import { jiraCloudAuth } from '../../auth';
-import { jiraPolling } from '../common/polling';
+import { createJiraPolling } from '../common/polling';
+
+const polling = createJiraPolling();
 
 export const updatedIssue = createTrigger({
   name: 'updated_issue',
@@ -30,15 +32,15 @@ export const updatedIssue = createTrigger({
   },
   sampleData: {},
   async onEnable(context) {
-    await jiraPolling.onEnable({ context });
+    await polling.onEnable({ context });
   },
   async onDisable() {
     return;
   },
   async run(context) {
-    return await jiraPolling.poll({ context });
+    return await polling.poll({ context });
   },
   async test(context) {
-    return await jiraPolling.test({ context });
+    return await polling.test({ context });
   },
 });

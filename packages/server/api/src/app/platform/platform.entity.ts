@@ -77,6 +77,11 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: Boolean,
             nullable: false,
         },
+        autoCreatePersonalProjects: {
+            type: Boolean,
+            nullable: false,
+            default: true,
+        },
         federatedAuthProviders: {
             type: 'jsonb',
             select: false,

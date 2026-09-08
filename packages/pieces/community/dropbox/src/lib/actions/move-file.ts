@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { fileMetadataOutputSchema } from '../output-schemas';
 
 export const dropboxMoveFile = createAction({
   auth: dropboxAuth,
@@ -14,6 +15,7 @@ export const dropboxMoveFile = createAction({
   audience: 'both',
   aiMetadata: { description: 'Moves (or renames) the file at the source path to a new destination path within Dropbox; optionally autorenames on conflict. Use to relocate or rename a single file. Not idempotent: after a successful move the source no longer exists, so repeating the call fails or, with autorename, can produce a differently named copy.', idempotent: false },
   displayName: 'Move file',
+  outputSchema: fileMetadataOutputSchema,
   props: {
     from_path: Property.ShortText({
       displayName: 'From Path',

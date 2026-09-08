@@ -3,14 +3,8 @@ import {
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
-import {
-	DedupeStrategy,
-	Polling,
-	pollingHelper,
-} from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
+import { jiraCloudAuth } from '../../auth';
+import { JiraPollingItem, createJiraPolling } from '../common/polling';
 
 type JiraComment = {
 	id: string;
@@ -36,48 +30,22 @@ type IssueWithComments = {
 	};
 };
 
-const polling: Polling<JiraAuth, { jql?: string; sanitizeJql?: boolean }> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-		const { jql, sanitizeJql } = propsValue;
-
-		const searchQuery = `${jql ? jql + ' AND ' : ''}updated > '${dayjs(
-			lastFetchEpochMS,
-		).format('YYYY-MM-DD HH:mm')}'`;
-
-		const searchResponse = await searchIssuesByJql({
-			auth,
-			jql: searchQuery,
-			maxResults: 50,
-			sanitizeJql: sanitizeJql ?? false,
-			fields: ['summary', 'comment'],
-		});
-
-		const issues = searchResponse.issues as IssueWithComments[];
-		const results: Array<{ epochMilliSeconds: number; data: unknown }> = [];
-
-		for (const issue of issues) {
-			const comments = issue.fields?.comment?.comments ?? [];
-			for (const comment of comments) {
-				const createdMS = Date.parse(comment.created);
-				if (Number.isNaN(createdMS) || createdMS <= lastFetchEpochMS) continue;
-				results.push({
-					epochMilliSeconds: createdMS,
-					data: {
-						issue: {
-							id: issue.id,
-							key: issue.key,
-							summary: issue.fields?.summary,
-						},
-						comment,
-					},
-				});
-			}
-		}
-
-		return results;
-	},
-};
+const polling = createJiraPolling({
+	fields: ['summary', 'comment'],
+	extractItems: ({ issue }: { issue: IssueWithComments }): JiraPollingItem[] =>
+		(issue.fields?.comment?.comments ?? []).map((comment) => ({
+			id: comment.id,
+			epochMilliSeconds: Date.parse(comment.created),
+			data: {
+				issue: {
+					id: issue.id,
+					key: issue.key,
+					summary: issue.fields?.summary,
+				},
+				comment,
+			},
+		})),
+});
 
 export const newComment = createTrigger({
 	name: 'new_comment',
@@ -116,15 +84,15 @@ Not sure what to write? Open Jira → Filters → Advanced search, build the fil
 	},
 	sampleData: {},
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, context);
+		await polling.onEnable({ context });
 	},
-	async onDisable(context) {
-		await pollingHelper.onDisable(polling, context);
+	async onDisable() {
+		return;
 	},
 	async run(context) {
-		return await pollingHelper.poll(polling, context);
+		return await polling.poll({ context });
 	},
 	async test(context) {
-		return await pollingHelper.test(polling, context);
+		return await polling.test({ context });
 	},
 });

@@ -5,6 +5,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { folderMetadataOutputSchema } from '../output-schemas';
 
 export const dropboxMoveFolder = createAction({
   auth: dropboxAuth,
@@ -14,6 +15,7 @@ export const dropboxMoveFolder = createAction({
   audience: 'both',
   aiMetadata: { description: 'Moves (or renames) the folder at the source path, including its contents, to a new destination path within Dropbox; optionally autorenames on conflict. Use to relocate or rename an entire directory. Not idempotent: after a successful move the source no longer exists, so repeating the call fails or, with autorename, produces a differently named folder.', idempotent: false },
   displayName: 'Move folder',
+  outputSchema: folderMetadataOutputSchema,
   props: {
     from_path: Property.ShortText({
       displayName: 'From Path',

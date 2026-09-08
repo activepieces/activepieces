@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { streamUtils } from '@activepieces/pieces-common';
 import mime from 'mime-types';
 import { drive as googleDrive } from '@googleapis/drive';
 import { googleDriveAuth, createGoogleClient } from '../auth';
@@ -31,6 +32,7 @@ export const googleDriveUploadFile = createAction({
   outputSchema: uploadGdriveFileActionOutputSchema,
   async run(context) {
     const fileData = context.propsValue.file;
+    const { body } = streamUtils.toStreamingBody(fileData);
     const mimeType = mime.lookup(fileData.extension ?? '') || 'application/octet-stream';
 
     const authClient = await createGoogleClient(context.auth);
@@ -45,7 +47,7 @@ export const googleDriveUploadFile = createAction({
       },
       media: {
         mimeType,
-        body: fileData.body,
+        body,
       },
       supportsAllDrives: context.propsValue.include_team_drives ?? false,
       fields: 'id, name, mimeType, kind',

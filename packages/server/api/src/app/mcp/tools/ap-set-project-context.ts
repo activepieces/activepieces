@@ -19,6 +19,8 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
     },
     annotations: {
         readOnlyHint: false,
+        destructiveHint: false,
+        openWorldHint: false,
         idempotentHint: true,
     },
     execute: async (args: Record<string, unknown>) => {

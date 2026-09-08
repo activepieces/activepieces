@@ -81,6 +81,17 @@ describe('stepResultFrom', () => {
     })
 })
 
+describe('stepResultFrom — a turn that produced output must not fail the flow step', () => {
+    const at = '2026-08-05T00:00:00.000Z'
+
+    it('leaves the fatal signal unset even when it reports an incomplete reason', () => {
+        const result = stepResultFrom({ tools: [], prompt: 'do it', uiParts: [], timestamp: at, failure: 'The response reached the output limit before the agent finished' })
+
+        expect(result.status).toBe('FAILED')
+        expect(result.failure).toBeUndefined()
+    })
+})
+
 describe('stepResultFrom — a failed tool call must not read as success', () => {
     const at = '2026-08-05T00:00:00.000Z'
     const failedCall = {

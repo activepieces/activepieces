@@ -4,9 +4,12 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { youtubeAuth } from '../common/auth';
+import { listCaptionsOutputSchema } from '../output-schemas';
 
 export const youtubeListCaptionsAction = createAction({
   auth: youtubeAuth,
+
+  outputSchema: listCaptionsOutputSchema,
   name: 'list_captions',
   classification: 'SEARCH',
   displayName: 'List Captions',
