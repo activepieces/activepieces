@@ -34,10 +34,6 @@ const TS_CONFIG_CONTENT = `
 }
 `
 
-const CACHE_STATUS_SEPARATOR = '::'
-
-const BUILD_STATUSES = ['success', 'install-failed', 'compile-failed'] as const
-
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
 
 const INVALID_ARTIFACT_TEMPLATE = `
@@ -128,6 +124,10 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         return cacheHit ? parseBuildState(state).status : buildStatus
     },
 })
+
+const CACHE_STATUS_SEPARATOR = '::'
+
+const BUILD_STATUSES = ['success', 'install-failed', 'compile-failed'] as const
 
 function isPackagesAllowed(getSettings: () => SandboxSettings): boolean {
     switch (getSettings().EXECUTION_MODE) {
