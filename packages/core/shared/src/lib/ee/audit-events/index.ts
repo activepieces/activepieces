@@ -1,4 +1,4 @@
-import { Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
+import { AgentRunSource, Flow, FlowOperationRequest, FlowOperationType, FlowVersion, Folder } from '@activepieces/core-execution'
 import { BaseModelSchema, DateOrString, Nullable, OptionalArrayFromQuery, ProjectRole } from '@activepieces/core-utils'
 import { z } from 'zod'
 import * as zMini from 'zod/mini'
@@ -41,6 +41,7 @@ export enum ApplicationEventName {
     AGENT_DELETED = 'agent.deleted',
     AGENT_PUBLISHED = 'agent.published',
     AGENT_UNPUBLISHED = 'agent.unpublished',
+    AGENT_ACTION_EXECUTED = 'agent.action.executed',
     VARIABLE_UPSERTED = 'variable.upserted',
     VARIABLE_DELETED = 'variable.deleted',
     VARIABLE_VALUE_REVEALED = 'variable.value.revealed',
@@ -118,6 +119,39 @@ const AgentEventData = z.object({
         publishedToolNames: z.array(z.string()).optional(),
     }),
 })
+
+const AgentActionEventData = z.object({
+    source: z.enum(AgentRunSource),
+    conversation: z.object({
+        id: z.string(),
+        source: z.enum(AgentRunSource),
+    }).optional(),
+    agent: z.object({
+        id: z.string(),
+        displayName: z.string().optional(),
+    }).optional(),
+    flow: z.object({
+        id: z.string(),
+        runId: z.string(),
+    }).optional(),
+    action: z.object({
+        pieceName: z.string(),
+        pieceDisplayName: z.string(),
+        actionName: z.string(),
+        displayName: z.string(),
+    }),
+    connection: z.object({
+        externalId: z.string(),
+        label: z.string().optional(),
+    }).optional(),
+})
+
+export const AgentActionExecutedEvent = z.object({
+    ...BaseAuditEventProps,
+    action: z.literal(ApplicationEventName.AGENT_ACTION_EXECUTED),
+    data: AgentActionEventData,
+})
+export type AgentActionExecutedEvent = z.infer<typeof AgentActionExecutedEvent>
 
 export const AgentAuditEvent = z.object({
     ...BaseAuditEventProps,
@@ -565,6 +599,7 @@ export type FlowApprovalEvent = z.infer<typeof FlowApprovalEvent>
 
 export const ApplicationEvent = z.union([
     AgentAuditEvent,
+    AgentActionExecutedEvent,
     ConnectionEvent,
     VariableEvent,
     FlowCreatedEvent,
@@ -641,6 +676,10 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is published`
         case ApplicationEventName.AGENT_UNPUBLISHED:
             return `Agent ${event.data.agent.displayName} is taken offline`
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const who = event.data.agent?.displayName ?? 'An agent'
+            return `${who} ran ${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
+        }
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
         case ApplicationEventName.VARIABLE_DELETED:
