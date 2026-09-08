@@ -19,7 +19,7 @@
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "From": "差出人:",
   "Message Body": "メッセージ本文",
-  "To": "終了日",
+  "To": "送信先",
   "Phone Number": "電話番号",
   "Message to Say": "メッセージを送信する",
   "Voice": "音声",
