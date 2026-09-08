@@ -84,20 +84,24 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       if (!isNil(props.form.getValues(propertyPath))) {
         return;
       }
-      const isStillPresent = (value: unknown) =>
-        options.options.some((option) => deepEqual(option.value, value));
+      const findMatchingOption = (value: unknown) =>
+        options.options.find((option) => deepEqual(option.value, value));
       if (props.multiple) {
         if (!Array.isArray(previousValue)) {
           return;
         }
-        const stillPresent = previousValue.filter(isStillPresent);
+        const stillPresent = previousValue.flatMap((value) => {
+          const option = findMatchingOption(value);
+          return isNil(option) ? [] : [option.value];
+        });
         if (stillPresent.length > 0) {
           props.onChange(stillPresent);
         }
         return;
       }
-      if (isStillPresent(previousValue)) {
-        props.onChange(previousValue);
+      const matchingOption = findMatchingOption(previousValue);
+      if (!isNil(matchingOption)) {
+        props.onChange(matchingOption.value);
       }
     };
 
@@ -107,7 +111,8 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         input[refresher] = refresherValues[index];
       });
       const requestId = ++optionsRequestId.current;
-      const fullListId = isNil(term) ? ++fullListRequestId.current : null;
+      const isFullList = isNil(term) || term === '';
+      const fullListId = isFullList ? ++fullListRequestId.current : null;
       mutate(
         {
           request: {
@@ -126,7 +131,10 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         {
           onSuccess: (response) => {
             if (requestId === optionsRequestId.current) {
-              if (!firstDropdownState.current) {
+              if (
+                !firstDropdownState.current &&
+                response.options.options.length > 0
+              ) {
                 firstDropdownState.current = response.options;
               }
               setDropdownState(response.options);
@@ -150,6 +158,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
         if (!isNil(props.value)) {
           valueToRestore.current = props.value;
         }
+        firstDropdownState.current = undefined;
         props.onChange(null);
       }
 

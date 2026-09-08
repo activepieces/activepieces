@@ -53,8 +53,24 @@ vi.mock('@/components/custom/searchable-select', () => ({
   },
 }));
 
+type RenderedOption = { label: string; value: unknown };
+
+const multiSelectRenders: {
+  options: RenderedOption[];
+  cachedOptions: RenderedOption[];
+}[] = [];
+
 vi.mock('@/components/custom/multi-select-piece-property', () => ({
-  MultiSelectPieceProperty: () => null,
+  MultiSelectPieceProperty: ({
+    options,
+    cachedOptions,
+  }: {
+    options: RenderedOption[];
+    cachedOptions?: RenderedOption[];
+  }) => {
+    multiSelectRenders.push({ options, cachedOptions: cachedOptions ?? [] });
+    return null;
+  },
 }));
 
 declare global {
@@ -200,6 +216,7 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     container?.remove();
     mutateCalls.length = 0;
     searchCalls.length = 0;
+    multiSelectRenders.length = 0;
     formInstance = undefined;
   });
 
@@ -269,6 +286,28 @@ describe('DynamicDropdownPieceProperty refresher change', () => {
     resolveOptions(['sheet-c']);
 
     expect(formInstance!.getValues(DROPDOWN_PATH)).toBeNull();
+  });
+
+  it('rebuilds the cached option list for the new refresher', () => {
+    mount({ multiple: true });
+    resolveOptions(['sheet-a', 'sheet-b', 'sheet-c']);
+    act(() => formInstance!.setValue(DROPDOWN_PATH, ['sheet-c']));
+
+    changeRefresher('second');
+    resolveOptions(['sheet-c', 'sheet-d']);
+
+    expect(formInstance!.getValues(DROPDOWN_PATH)).toEqual(['sheet-c']);
+    const lastRender = multiSelectRenders[multiSelectRenders.length - 1];
+    expect(lastRender.cachedOptions).toEqual(lastRender.options);
+  });
+
+  it('never pins the cached option list to a failed, empty response', () => {
+    mount({ multiple: true });
+    resolveOptions([]);
+    resolveOptions(['sheet-a', 'sheet-b']);
+
+    const lastRender = multiSelectRenders[multiSelectRenders.length - 1];
+    expect(lastRender.cachedOptions).toEqual(lastRender.options);
   });
 
   it('keeps only the multi-select values still present in the new options', () => {
