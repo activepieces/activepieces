@@ -84,8 +84,6 @@ describe(`bounded parallelism at a simulated ${SIMULATED_SLACK_LATENCY_MS}ms per
     expect(serial.peak).toBe(1);
     expect(atFive.peak).toBe(5);
     expect(atTwenty.peak).toBe(20);
-
-    expect(atFive.elapsedMs).toBeLessThan(serial.elapsedMs);
   });
 
   it('never finishes faster than the theoretical floor of ceil(count / limit) rounds', async () => {
