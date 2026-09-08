@@ -1,0 +1,19 @@
+{
+  "API Key": "API Key",
+  "Networks": "Networks",
+  "Text": "Text",
+  "Idea": "Idea",
+  "Media URL": "Media URL",
+  "Brand": "Brand",
+  "Brand Voice": "Brand Voice",
+  "Publish At": "Publish At",
+  "Publish": "Publish",
+  "Write and Publish": "Write and Publish",
+  "Schedule a Post": "Schedule a Post",
+  "Get Account": "Get Account",
+  "Publish the same text to one or more social networks.": "Publish the same text to one or more social networks.",
+  "Turn one idea into a native post per network, then publish it.": "Turn one idea into a native post per network, then publish it.",
+  "Queue a post for a later time. Its rules are checked now, not when it fires.": "Queue a post for a later time. Its rules are checked now, not when it fires.",
+  "Plan, posts used this month and connected networks.": "Plan, posts used this month and connected networks.",
+  "Connect these in the PostWire dashboard first.": "Connect these in the PostWire dashboard first."
+}

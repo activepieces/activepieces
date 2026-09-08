@@ -1031,6 +1031,9 @@
       "@activepieces/piece-posthog": [
         "packages/pieces/community/posthog/src/index.ts"
       ],
+      "@activepieces/piece-postwire": [
+        "packages/pieces/community/postwire/src/index.ts"
+      ],
       "@activepieces/piece-postiz": [
         "packages/pieces/community/postiz/src/index.ts"
       ],
