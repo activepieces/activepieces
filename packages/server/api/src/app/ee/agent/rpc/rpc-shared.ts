@@ -180,9 +180,10 @@ export type ConfiguredToolRun = {
     agent?: { id: string, displayName?: string }
 }
 
-export function recordAgentAction({ run, conversationId, piece, resolvedInput, names, classification, connection, log }: {
+export function recordAgentAction({ run, conversationId, flow, piece, resolvedInput, names, classification, connection, log }: {
     run: { projectId: string, platformId: string, userId: string, source: AgentRunSource, agent?: { id: string, displayName?: string } }
     conversationId?: string
+    flow?: { id: string, runId: string }
     piece: { pieceName: string, actionName: string }
     resolvedInput: Record<string, unknown>
     names: { action: string, piece: string }
@@ -201,6 +202,7 @@ export function recordAgentAction({ run, conversationId, piece, resolvedInput, n
         action: ApplicationEventName.AGENT_ACTION_EXECUTED,
         data: {
             ...spreadIfDefined('conversation', isNil(conversationId) ? undefined : { id: conversationId, source }),
+            ...spreadIfDefined('flow', flow),
             source,
             ...spreadIfDefined('agent', agent),
             action: {

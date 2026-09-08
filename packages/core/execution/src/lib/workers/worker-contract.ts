@@ -219,6 +219,7 @@ export type ExecuteAgentToolRequest = {
 
 export type ExecutePieceToolRequest = {
     conversationId: string
+    flowRunId?: string
     toolName: string
     instruction: string
     provider?: AIProviderName

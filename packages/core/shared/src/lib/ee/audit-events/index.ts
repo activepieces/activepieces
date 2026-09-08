@@ -130,6 +130,10 @@ const AgentActionEventData = z.object({
         id: z.string(),
         displayName: z.string().optional(),
     }).optional(),
+    flow: z.object({
+        id: z.string(),
+        runId: z.string(),
+    }).optional(),
     action: z.object({
         pieceName: z.string(),
         pieceDisplayName: z.string(),

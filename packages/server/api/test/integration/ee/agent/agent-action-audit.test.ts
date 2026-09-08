@@ -6,6 +6,7 @@ import { executeCrossProjectTool } from '../../../../src/app/ee/agent/tools/agen
 import { pieceToolRunner } from '../../../../src/app/ee/agent/tools/piece-tool-runner'
 import * as flowRunUtils from '../../../../src/app/mcp/tools/flow-run-utils'
 import { db } from '../../../helpers/db'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../helpers/mocks'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -163,6 +164,29 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(row.data).toMatchObject({ source: AgentRunSource.FLOW_STEP })
         expect(row.data).not.toHaveProperty('agent')
         expect(summarizeApplicationEvent(row)).toBe('An agent ran Gmail: Send Email')
+    })
+
+    it('names the flow run it came from, so a destination cycle can be told apart', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.FLOW_STEP, withAgent: false })
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+        const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id })
+        await db.save('flow_version', version)
+        const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: version.id })
+        await db.save('flow_run', flowRun)
+        stubTheRun()
+
+        await agentRpcHandlers(app.log).executePieceTool({
+            conversationId,
+            flowRunId: flowRun.id,
+            toolName: 'gmail-send_email',
+            instruction: 'do the thing',
+            piece: { pieceName: '@activepieces/piece-gmail', pieceVersion: '0.9.0', actionName: 'send_email' },
+        })
+
+        const [row] = await agentActionRows(ctx)
+        expect(row.data).toMatchObject({ flow: { id: flow.id, runId: flowRun.id } })
     })
 
     it('records a write chat ran, not only a configured tool', async () => {

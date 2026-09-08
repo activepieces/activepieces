@@ -8,6 +8,7 @@ import { agentHelpers } from '.././agent-helpers'
 import { executeCrossProjectTool } from '.././tools/agent-tools'
 import { pieceToolRunner } from '.././tools/piece-tool-runner'
 import { flowService } from '../../../flows/flow/flow.service'
+import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
@@ -39,9 +40,11 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             throw runError
         }
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: run.resolvedInput }, connection: { externalId: connection.externalId ?? null }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        const flow = isNil(input.flowRunId) ? undefined : await flowOfRun({ flowRunId: input.flowRunId, projectId, log })
         recordAgentAction({
             run: configuredRun,
             conversationId: input.conversationId,
+            ...spreadIfDefined('flow', flow),
             piece,
             resolvedInput: run.resolvedInput,
             names: { action: run.actionDisplayName, piece: run.pieceDisplayName },
@@ -233,3 +236,8 @@ const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_age
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
+
+async function flowOfRun({ flowRunId, projectId, log }: { flowRunId: string, projectId: string, log: FastifyBaseLogger }): Promise<{ id: string, runId: string } | undefined> {
+    const { data: flowRun } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
+    return isNil(flowRun) ? undefined : { id: flowRun.flowId, runId: flowRun.id }
+}

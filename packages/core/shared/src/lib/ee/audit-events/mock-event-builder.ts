@@ -224,8 +224,9 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                 ...baseEnvelope,
                 action: event,
                 data: {
-                    source: AgentRunSource.AGENT,
-                    conversation: { id: apId(), source: AgentRunSource.AGENT },
+                    source: AgentRunSource.FLOW_STEP,
+                    flow: { id: apId(), runId: apId() },
+                    conversation: { id: apId(), source: AgentRunSource.FLOW_STEP },
                     agent: { id: apId(), displayName: 'Marketing agent' },
                     action: { pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
                     connection: { externalId: apId(), label: 'marketing@acme.com' },

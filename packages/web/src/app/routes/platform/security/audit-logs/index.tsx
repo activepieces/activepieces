@@ -558,7 +558,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       ];
     }
     case ApplicationEventName.AGENT_ACTION_EXECUTED: {
-      const { agent, action, connection, source } = event.data;
+      const { agent, action, connection, source, flow } = event.data;
       return [
         ...(agent
           ? [{ label: t('Agent'), value: agent.displayName ?? agent.id }]
@@ -566,6 +566,7 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Action'), value: action.displayName },
         { label: t('App'), value: action.pieceDisplayName },
         { label: t('Ran from'), value: RAN_FROM_LABEL[source]() },
+        ...(flow ? [{ label: t('Flow run'), value: flow.runId }] : []),
         ...(connection
           ? [
               {
