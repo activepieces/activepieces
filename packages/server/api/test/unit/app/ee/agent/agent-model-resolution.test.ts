@@ -169,6 +169,49 @@ describe('resolveChatProviderName', () => {
     })
 })
 
+describe('a provider with no model catalogue', () => {
+    const BEDROCK_MODEL = 'us.anthropic.claude-sonnet-4-20250514-v1:0'
+
+    it('uses the model the run is already on rather than inventing one', () => {
+        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: BEDROCK_MODEL })).toBe(BEDROCK_MODEL)
+    })
+
+    it('never derives a Bedrock id by mangling a tier id, which is what it rejected', () => {
+        const resolved = agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: BEDROCK_MODEL })
+
+        expect(resolved).not.toBe('claude-haiku-4-5')
+        expect(resolved).not.toMatch(/^claude-/)
+    })
+
+    it('ignores a tier id handed in as the run model, since that is not a real model', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: tier.id }), tier.id).toBe('claude-haiku-4-5')
+        }
+    })
+
+    it('ignores an empty run model', () => {
+        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.BEDROCK, runModelId: '' })).toBe('claude-haiku-4-5')
+    })
+
+    it('still honours a key scoped to specific models', () => {
+        expect(() => agentModelResolution.resolveFastModelId({
+            provider: AIProviderName.BEDROCK,
+            runModelId: BEDROCK_MODEL,
+            modelScope: 'selected',
+            modelIds: ['some.other.model'],
+        })).toThrow(ActivepiecesError)
+    })
+
+    it('leaves a provider that does have a curated list alone', () => {
+        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.OPENAI, runModelId: BEDROCK_MODEL })).not.toBe(BEDROCK_MODEL)
+    })
+
+    it('leaves a provider whose key lists its own models alone', () => {
+        const config = { project: 'p', region: 'r', models: [{ modelId: 'gemini-2.5-flash', modelName: 'g', modelType: AIProviderModelType.TEXT }] }
+        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.VERTEX, config, runModelId: BEDROCK_MODEL })).toBe('gemini-2.5-flash')
+    })
+})
+
 describe('resolveNamedModelId', () => {
     const named = ({ provider, modelName, ...scope }: { provider: AIProviderName, modelName: string, modelScope?: 'selected', modelIds?: string[] }) =>
         agentModelResolution.resolveNamedModelId({ provider, modelName, ...scope })
