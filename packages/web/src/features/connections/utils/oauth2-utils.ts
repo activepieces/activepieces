@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import { OAuth2Property, OAuth2Props } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
@@ -15,7 +15,25 @@ import {
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
 
+const CLOUD_OAUTH2_REDIRECT_URL = 'https://secrets.activepieces.com/redirect';
+
 let currentPopup: Window | null = null;
+
+function resolveRedirectContract({
+  oauth2Type,
+  platformRedirectUrl,
+}: ResolveRedirectContractParams): RedirectContract {
+  if (oauth2Type === AppConnectionType.CLOUD_OAUTH2) {
+    return {
+      redirectUrl: CLOUD_OAUTH2_REDIRECT_URL,
+      postsPercentEncodedCode: true,
+    };
+  }
+  return {
+    redirectUrl: platformRedirectUrl,
+    postsPercentEncodedCode: false,
+  };
+}
 
 function useThirdPartyLogin() {
   const [searchParams] = useSearchParams();
@@ -42,7 +60,7 @@ async function openOAuth2Popup(
   closeOAuth2Popup();
   currentPopup = openWindow(params.authorizationUrl);
   return {
-    code: await getCode(params.redirectUrl),
+    code: await getCode(params.redirect),
     codeVerifier: params.codeVerifier,
   };
 }
@@ -68,20 +86,44 @@ function closeOAuth2Popup() {
   currentPopup?.close();
 }
 
-function getCode(redirectUrl: string): Promise<string> {
+function getCode(redirect: RedirectContract): Promise<string> {
+  const { data: expectedOrigin } = tryCatchSync(
+    () => new URL(redirect.redirectUrl).origin,
+  );
   return new Promise<string>((resolve) => {
     window.addEventListener('message', function handler(event) {
       if (
-        redirectUrl &&
-        redirectUrl.startsWith(event.origin) &&
-        event.data['code']
+        isNil(expectedOrigin) ||
+        event.origin !== expectedOrigin ||
+        isNil(event.data) ||
+        !event.data['code']
       ) {
-        resolve(decodeURIComponent(event.data.code));
-        closeOAuth2Popup();
-        window.removeEventListener('message', handler);
+        return;
       }
+      resolve(
+        readPostedCode({
+          postedCode: event.data.code,
+          postsPercentEncodedCode: redirect.postsPercentEncodedCode,
+        }),
+      );
+      closeOAuth2Popup();
+      window.removeEventListener('message', handler);
     });
   });
+}
+
+function readPostedCode({
+  postedCode,
+  postsPercentEncodedCode,
+}: ReadPostedCodeParams): string {
+  if (!postsPercentEncodedCode) {
+    return postedCode;
+  }
+  const { data, error } = tryCatchSync(() => decodeURIComponent(postedCode));
+  if (error !== null) {
+    return postedCode;
+  }
+  return data;
 }
 
 function getGrantType(property: OAuth2Property<OAuth2Props>) {
@@ -116,6 +158,12 @@ export const oauth2Utils = {
   useThirdPartyLogin,
   getGrantType,
   getPredefinedOAuth2App,
+  resolveRedirectContract,
+};
+
+export type RedirectContract = {
+  redirectUrl: string;
+  postsPercentEncodedCode: boolean;
 };
 
 export type OAuth2App =
@@ -139,9 +187,19 @@ export type PiecesOAuth2AppsMap = Record<
   | undefined
 >;
 
+type ResolveRedirectContractParams = {
+  oauth2Type: OAuth2App['oauth2Type'];
+  platformRedirectUrl: string;
+};
+
+type ReadPostedCodeParams = {
+  postedCode: string;
+  postsPercentEncodedCode: boolean;
+};
+
 type OAuth2PopupParams = {
   authorizationUrl: string;
-  redirectUrl: string;
+  redirect: RedirectContract;
   codeVerifier?: string;
 };
 
