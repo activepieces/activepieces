@@ -13,8 +13,8 @@ const config = (overrides: Partial<OpenAICompatibleProviderConfig> = {}): OpenAI
     ...overrides,
 })
 
-const rejectionFor = async (overrides: Partial<OpenAICompatibleProviderConfig>) => {
-    const { error } = await tryCatch(() => openAICompatibleProvider.validateConnection(auth, config(overrides), log))
+const rejectionFor = async (overrides: Partial<OpenAICompatibleProviderConfig>, apiKey = 'sk-test') => {
+    const { error } = await tryCatch(() => openAICompatibleProvider.validateConnection({ apiKey }, config(overrides), log))
     return error instanceof ActivepiecesError ? error.error : undefined
 }
 
@@ -36,6 +36,30 @@ describe('openAICompatibleProvider.validateConnection', () => {
         }
     })
 
+    it('refuses a base URL the HTTP client could never call', async () => {
+        for (const baseUrl of ['file:///etc/passwd', 'ftp://example.com/v1', 'data:text/plain,hi', 'javascript:alert(1)']) {
+            expect((await rejectionFor({ baseUrl }))?.code, baseUrl).toBe(ErrorCode.VALIDATION)
+        }
+    })
+
+    it('refuses an API key that cannot be sent as a header value, and never echoes it back', async () => {
+        const rejection = await rejectionFor({}, 'sk-secret\r\nX-Injected: yes')
+
+        expect(rejection?.code).toBe(ErrorCode.VALIDATION)
+        expect(JSON.stringify(rejection?.params)).not.toContain('sk-secret')
+    })
+
+    it('refuses an extra header value carrying a line break', async () => {
+        expect((await rejectionFor({ defaultHeaders: { 'x-tenant': 'acme\r\nX-Injected: yes' } }))?.code).toBe(ErrorCode.VALIDATION)
+    })
+
+    it('never echoes the API key header field back, since tenants paste keys into it', async () => {
+        const rejection = await rejectionFor({ apiKeyHeader: 'Bearer sk-live-abcdef' })
+
+        expect(rejection?.code).toBe(ErrorCode.VALIDATION)
+        expect(JSON.stringify(rejection?.params)).not.toContain('sk-live-abcdef')
+    })
+
     it('refuses an unusable extra header, naming which one', async () => {
         const rejection = await rejectionFor({ defaultHeaders: { 'x-tenant: acme': 'value' } })
 
@@ -51,6 +75,12 @@ describe('openAICompatibleProvider.validateConnection', () => {
     it('accepts the header shapes a real gateway needs', async () => {
         for (const apiKeyHeader of ['Authorization', 'x-api-key', 'X_Custom_Key', 'api-key']) {
             await expect(openAICompatibleProvider.validateConnection(auth, config({ apiKeyHeader }), log), apiKeyHeader).resolves.toBeUndefined()
+        }
+    })
+
+    it('accepts a self-hosted gateway on the local network, which is a normal setup', async () => {
+        for (const baseUrl of ['http://localhost:1234/v1', 'http://192.168.2.235:1234/v1', 'https://api.example.com/v1']) {
+            await expect(openAICompatibleProvider.validateConnection(auth, config({ baseUrl }), log), baseUrl).resolves.toBeUndefined()
         }
     })
 
