@@ -6,7 +6,8 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { flowService } from '../../flows/flow/flow.service'
-import { extractMcpTriggerInput, mcpPropertyToZod } from '../../mcp/mcp-server-builder'
+import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
+import { mcpToolInput } from '../../mcp/mcp-tool-input'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -119,7 +120,7 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
         const flow = runnableByExternalId.get(toolRequest.externalFlowId)
         assertNotNullOrUndefined(flow, `flow for tool ${toolRequest.toolName}`)
         const { toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
-        const inputShape = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
+        const inputShape = mcpToolInput.modelInputShape({ properties: mcpInputs })
         return {
             toolName: toolRequest.toolName,
             flowId: flow.id,

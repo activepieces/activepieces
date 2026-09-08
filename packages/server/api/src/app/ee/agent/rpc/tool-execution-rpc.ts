@@ -84,7 +84,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         if (isNil(flow)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That flow is not in this run\'s project' } })
         }
-        const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
+        const result = await runFlowAsTool({ flow, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id } }, '[agentRpc#executeFlowTool] Ran a flow tool')
         return { result }
     },

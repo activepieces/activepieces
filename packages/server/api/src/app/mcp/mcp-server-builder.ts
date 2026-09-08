@@ -1,8 +1,7 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowStatus, McpProperty, McpPropertyType, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, McpProperty, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
-import { z } from 'zod'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -10,6 +9,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
+import { mcpToolInput } from './mcp-tool-input'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
@@ -134,7 +134,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
-        const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
+        const zodFromInputSchema = mcpToolInput.modelInputShape({ properties: mcpInputs })
 
         const baseName = (mcpToolNameInput ?? flow.version.displayName) + '_' + flow.id.substring(0, 4)
         const toolName = mcpToolNameUtils.createToolName(baseName)
@@ -145,7 +145,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
                 return flowPermissionError
             }
 
-            const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: args, returnsResponse, log })
+            const result = await runFlowAsTool({ flow, payload: args, returnsResponse, log })
 
             rejectedPromiseHandler(telemetry(log).trackProject({
                 projectId,
@@ -170,13 +170,14 @@ export function extractMcpTriggerInput(flow: PopulatedFlow): { toolName?: string
     }
 }
 
-export async function runFlowAsTool({ flowId, flowDisplayName, payload, returnsResponse, log }: {
-    flowId: string
-    flowDisplayName: string
+export async function runFlowAsTool({ flow, payload, returnsResponse, log }: {
+    flow: PopulatedFlow
     payload: Record<string, unknown>
     returnsResponse: boolean
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
+    const flowId = flow.id
+    const flowDisplayName = flow.version.displayName
     const response = await webhookService.handleWebhook({
         data: () => Promise.resolve({
             body: {},
@@ -189,7 +190,7 @@ export async function runFlowAsTool({ flowId, flowDisplayName, payload, returnsR
         async: !returnsResponse,
         flowVersionToRun: WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
         saveSampleData: false,
-        payload,
+        payload: mcpToolInput.toFlowPayload({ properties: extractMcpTriggerInput(flow).mcpInputs, modelArgs: payload }),
         execute: true,
         failParentOnFailure: false,
         timeoutMs: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS) * 1000,
@@ -226,28 +227,6 @@ function registerPlaceholderTools(server: McpServer): void {
             content: [{ type: 'text' as const, text: `No project selected. Please select a project from the dropdown in the chat input area before using ${toolName}.` }],
         }))
     })
-}
-
-export function mcpPropertyToZod(property: McpProperty): z.ZodTypeAny {
-    const base = (() => {
-        switch (property.type) {
-            case McpPropertyType.TEXT:
-            case McpPropertyType.DATE:
-                return z.string()
-            case McpPropertyType.NUMBER:
-                return z.number()
-            case McpPropertyType.BOOLEAN:
-                return z.boolean()
-            case McpPropertyType.ARRAY:
-                return z.array(z.string())
-            case McpPropertyType.OBJECT:
-                return z.record(z.string(), z.string())
-            default:
-                return z.unknown()
-        }
-    })()
-    const described = property.description ? base.describe(property.description) : base
-    return property.required ? described : described.nullish()
 }
 
 function registerEmptyResourcesAndPrompts(server: McpServer): void {
