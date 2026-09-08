@@ -10,7 +10,7 @@
   "Get information about CNAM, HLR, MNP, RCS capabilities and Number formats.": "CNAM、HLR、MNP、RCS機能と数値フォーマットに関する情報を取得します。",
   "Sends a Rich Communication Services message.": "リッチ・コミュニケーション・サービス・メッセージを送信します。",
   "To": "終了日",
-  "Delay": "遅延",
+  "Delay": "待機",
   "Flash SMS ?": "SMSのフラッシュ",
   "From": "差出人:",
   "Message Body": "メッセージ本文",
