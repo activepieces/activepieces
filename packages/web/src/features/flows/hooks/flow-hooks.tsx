@@ -171,7 +171,9 @@ export const flowHooks = {
                 )}
               </div>
             ),
-            error: {
+            error: triggerStatusErrorUtils.parseStandardError(
+              params.standardError,
+            ) ?? {
               standardError: params.standardError || '',
               standardOutput: params.standardOutput || '',
             },
