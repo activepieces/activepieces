@@ -1,7 +1,7 @@
 {
-  "Formsite is an online form builder that allows you to create forms and surveys easily.": "Formsite 是一个在线表单生成器，您可以轻松创建表单和调查。",
-  "New Form Result": "新建表单结果",
-  "Trigger when a new form result is submitted": "提交新表单结果时触发",
+  "Formsite is an online form builder that allows you to create forms and surveys easily.": "Formsite is an online form builder that allows you to create forms and surveys easily.",
+  "New Form Result": "New Form Result",
+  "Trigger when a new form result is submitted": "Trigger when a new form result is submitted",
   "Markdown": "Markdown",
-  "\n  **Enable Basic Authentication:**\n  1. Login to your Formbricks account\n  2. Open the form you want to connect\n  3. Change tab to *From Settings* -> *Integrations* -> *Server Post*\n  4. Enable *Server Post* and set the URL to the webhook URL generated after you save the trigger.\n  ```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n5. Select Message format as *JSON*\n6. Save the settings\n": "\n  **启用基本身份验证：**\n  1. 登录到您的 Formbricks 帐户\n  2. 打开您要连接的表单\n  3. 切换选项卡到 *From Settings* -> *Integrations* -> *Server Post*\n  4. 启用 *Server Post*，并将 URL 设置为您保存触发器后生成的 webhook URL。\n  ```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n5. 将消息格式选择为 *JSON*\n6. 保存设置\n"
+  "\n  **Enable Basic Authentication:**\n  1. Login to your Formbricks account\n  2. Open the form you want to connect\n  3. Change tab to *From Settings* -> *Integrations* -> *Server Post*\n  4. Enable *Server Post* and set the URL to the webhook URL generated after you save the trigger.\n  ```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n5. Select Message format as *JSON*\n6. Save the settings\n": "\n  **Enable Basic Authentication:**\n  1. Login to your Formbricks account\n  2. Open the form you want to connect\n  3. Change tab to *From Settings* -> *Integrations* -> *Server Post*\n  4. Enable *Server Post* and set the URL to the webhook URL generated after you save the trigger.\n  ```text\n\t\t\t{{webhookUrl}}\n\t\t\t```\n5. Select Message format as *JSON*\n6. Save the settings\n"
 }
