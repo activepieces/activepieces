@@ -1,5 +1,5 @@
 import { ApFile } from '@activepieces/pieces-framework';
-import { Block, KnownBlock, WebClient } from '@slack/web-api';
+import { Block, KnownBlock, WebClient, WebClientOptions } from '@slack/web-api';
 
 const SLACK_SECTION_TEXT_MAX_LENGTH = 3000;
 
@@ -60,8 +60,9 @@ export const slackSendMessage = async ({
   file,
   replyBroadcast,
   unfurlLinks,
+  clientOptions,
 }: SlackSendMessageParams) => {
-  const client = new WebClient(token);
+  const client = new WebClient(token, clientOptions);
 
   if (file) {
     return await client.files.uploadV2({
@@ -110,6 +111,7 @@ type SlackSendMessageParams = {
   threadTs?: string;
   replyBroadcast?: boolean;
   unfurlLinks?: boolean;
+  clientOptions?: WebClientOptions;
 };
 
 export function processMessageTimestamp(input: string) {
