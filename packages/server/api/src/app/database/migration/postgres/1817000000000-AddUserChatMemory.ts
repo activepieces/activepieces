@@ -24,12 +24,26 @@ export class AddUserChatMemory1817000000000 implements Migration {
             CREATE UNIQUE INDEX IF NOT EXISTS "idx_user_chat_memory_platform_user" ON "user_chat_memory" ("platformId", "userId")
         `)
         await queryRunner.query(`
-            ALTER TABLE "user_chat_memory"
-            ADD CONSTRAINT "fk_user_chat_memory_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_user_chat_memory_platform_id') THEN
+                    ALTER TABLE "user_chat_memory"
+                    ADD CONSTRAINT "fk_user_chat_memory_platform_id"
+                    FOREIGN KEY ("platformId") REFERENCES "platform" ("id")
+                    ON DELETE CASCADE ON UPDATE NO ACTION;
+                END IF;
+            END $$
         `)
         await queryRunner.query(`
-            ALTER TABLE "user_chat_memory"
-            ADD CONSTRAINT "fk_user_chat_memory_user_id" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON DELETE CASCADE ON UPDATE NO ACTION
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_user_chat_memory_user_id') THEN
+                    ALTER TABLE "user_chat_memory"
+                    ADD CONSTRAINT "fk_user_chat_memory_user_id"
+                    FOREIGN KEY ("userId") REFERENCES "user" ("id")
+                    ON DELETE CASCADE ON UPDATE NO ACTION;
+                END IF;
+            END $$
         `)
     }
 
