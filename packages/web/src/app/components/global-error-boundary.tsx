@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Check, Copy, RefreshCcw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { Button } from '@/components/ui/button';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -30,6 +29,35 @@ function buildDiagnosticsText(
   ].join('\n');
 }
 
+// The global fallback renders above every provider (GlobalErrorBoundary wraps
+// QueryClientProvider in app.tsx), so nothing in it may depend on app context:
+// no react-query hooks, no toast, no clipboard helpers that use them.
+// Otherwise showing the details throws inside the fallback, and
+// react-error-boundary does not catch errors thrown by its own fallback, so
+// the whole tree unmounts (#15366).
+const CopyDiagnosticsButton = ({ text }: { text: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <Button
+      variant="ghost"
+      className="absolute right-2 top-2 size-7 text-muted-foreground"
+      aria-label={t('Copy technical details')}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 3000);
+        } catch {
+          setCopied(false);
+        }
+      }}
+    >
+      {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+    </Button>
+  );
+};
+
 const ErrorFallbackContent = ({
   error,
   componentStack,
@@ -39,6 +67,9 @@ const ErrorFallbackContent = ({
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const isChunkError = errorReporting.isChunkLoadError(error);
+  const diagnosticsText = showDetails
+    ? buildDiagnosticsText(error, componentStack)
+    : null;
 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center p-6">
@@ -84,16 +115,11 @@ const ErrorFallbackContent = ({
               ? t('Hide technical details')
               : t('Show technical details')}
           </button>
-          {showDetails && (
+          {showDetails && diagnosticsText && (
             <div className="relative w-full text-left">
-              <CopyButton
-                textToCopy={buildDiagnosticsText(error, componentStack)}
-                variant="ghost"
-                withoutTooltip
-                className="absolute right-2 top-2 size-7 text-muted-foreground"
-              />
+              <CopyDiagnosticsButton text={diagnosticsText} />
               <pre className="max-h-56 overflow-auto rounded-lg border bg-muted/40 p-4 pr-12 font-mono text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
-                {buildDiagnosticsText(error, componentStack)}
+                {diagnosticsText}
               </pre>
             </div>
           )}
