@@ -1,0 +1,47 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { crmContactOutputSchema } from '../../../output-schemas';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { whatsscaleAuth } from '../../../auth';
+import { whatsscaleClient } from '../../../common/client';
+import { whatsscaleProps } from '../../../common/props';
+import { ConductorCrmContact, flattenCrmContact } from '../../../common/crm';
+
+export const updateCrmContactAction = createAction({
+  auth: whatsscaleAuth,
+  name: 'whatsscale_update_crm_contact',
+  classification: 'WRITE',
+  displayName: 'Update a CRM Contact',
+  description: 'Update the name or tags of an existing CRM contact',
+  audience: 'human',
+  aiMetadata: { description: 'Updates the name and/or tags of an existing WhatsScale CRM contact identified by contact ID. Leave a field empty to keep its current value unchanged; tags are replaced wholesale, not merged. Idempotent: re-running with the same values converges the contact to the same state. Sources the contact from a builder dropdown. Its twin Update a CRM Contact (By ID) makes the identical call with the ID passed as free text, which is the better fit when an ID is already in hand.', idempotent: true },
+  outputSchema: crmContactOutputSchema,
+  props: {
+    contactId: whatsscaleProps.crmContact,
+    name: Property.ShortText({
+      displayName: 'Name',
+      description: 'Leave empty to keep the current name unchanged. Clearing the name is not supported.',
+      required: false,
+    }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Replaces all existing tags (e.g. vip, lead). Leave untouched to keep current tags unchanged. Clearing every tag is not supported.',
+      required: false,
+    }),
+  },
+  async run(context) {
+    const auth = context.auth.secret_text;
+    const { contactId, name, tags } = context.propsValue;
+
+    const body: Record<string, unknown> = {};
+    if (name !== undefined && name !== null) body['name'] = name;
+    if (tags !== undefined) body['tags'] = tags.join(',');
+
+    const response = await whatsscaleClient(
+      auth,
+      HttpMethod.PATCH,
+      `/api/crm/contacts/${contactId}`,
+      body
+    );
+    return flattenCrmContact(response.body as ConductorCrmContact);
+  },
+});
