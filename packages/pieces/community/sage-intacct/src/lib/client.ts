@@ -93,7 +93,7 @@ async function queryAll<T extends Record<string, unknown>>({
       filters,
       filterExpression,
       orderBy,
-      start: page * pageSize,
+      start: page * pageSize + 1,
       size: pageSize,
     });
     records.push(...pageRecords);
