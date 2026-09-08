@@ -1,7 +1,7 @@
 {
-  "New Submission": "新建提交",
-  "Triggers when form receives a new submission.": "当表单收到新的提交时触发.",
+  "New Submission": "New Submission",
+  "Triggers when form receives a new submission.": "Triggers when form receives a new submission.",
   "Markdown": "Markdown",
-  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**实时 URL:**\n```text\n{{webhookUrl}}\n```\n生成示例数据并发布 flow 的触发器。\n\n",
-  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n": "\n要为新的表单提交设置触发器，请按以下步骤操作：\n\n1. 转到“Dashboard”部分。\n2. 选择你希望触发器发生的表单。\n3. 点击“Settings”部分。\n4. 找到“Webhook URL”字段，并将上面的 URL 粘贴到那里。  \n6. 点击“Save”。\n"
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n",
+  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n": "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n"
 }
