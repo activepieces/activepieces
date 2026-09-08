@@ -35,6 +35,7 @@ import { useSocket } from '@/components/providers/socket-provider';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/api/flow-runs-api';
+import { triggerStatusErrorUtils } from '@/features/flows/utils/trigger-status-error';
 import { foldersApi } from '@/features/folders/api/folders-api';
 import { piecesApi } from '@/features/pieces/api/pieces-api';
 import { pieceSelectorUtils } from '@/features/pieces/utils/piece-selector-utils';
@@ -143,22 +144,40 @@ export const flowHooks = {
         const apError = error.response.data as ApErrorParams;
         if (apError.code === ErrorCode.TRIGGER_UPDATE_STATUS) {
           const params = apError.params as Record<string, string>;
+          const reportedError = triggerStatusErrorUtils.describeStandardError(
+            params.standardError,
+          );
           openDialog({
             title:
               change === 'publish'
                 ? t('Publish failed')
                 : t('Status update failed'),
             description: (
-              <p>
-                {t(
-                  'An error occurred while changing the flow status. This may be due to an issue in the trigger piece or its settings.',
+              <div className="flex flex-col gap-2">
+                <p>
+                  {t(
+                    'An error occurred while changing the flow status. This may be due to an issue in the trigger piece or its settings.',
+                  )}
+                </p>
+                {reportedError && (
+                  <div className="flex flex-col gap-1 rounded-md bg-muted p-3">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t('The connected app reported')}
+                    </span>
+                    <span className="line-clamp-4 text-sm text-foreground">
+                      {reportedError}
+                    </span>
+                  </div>
                 )}
-              </p>
+              </div>
             ),
-            error: {
+            error: triggerStatusErrorUtils.parseStandardError(
+              params.standardError,
+            ) ?? {
               standardError: params.standardError || '',
               standardOutput: params.standardOutput || '',
             },
+            technicalDetailsDefaultOpen: isNil(reportedError),
           });
         } else if (apError.code === ErrorCode.QUOTA_EXCEEDED) {
           toast.error(t('Active flows limit reached'), {
