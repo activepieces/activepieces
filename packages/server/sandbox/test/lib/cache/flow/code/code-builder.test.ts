@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { ExecutionMode, FlowVersionState, NetworkMode } from '@activepieces/shared'
-import { ApLogger } from '@activepieces/server-utils'
+import { ApLogger, cryptoUtils } from '@activepieces/server-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const installMock = vi.fn()
@@ -219,18 +219,54 @@ describe('codeBuilder.processCodeStep', () => {
         await expect(readFile(compiledPath, 'utf8')).resolves.toContain('exports.code')
     })
 
-    it('caches a deterministic compile failure — install is not re-run for unchanged source', async () => {
+    it('never reports a cached bundling failure as a successful build (GIT-1864)', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
         installMock.mockResolvedValue({ stdout: '', stderr: '' })
-        buildMock.mockRejectedValue(new Error('esbuild: Unexpected token'))
+        buildMock.mockRejectedValue(new Error('Could not resolve "jsrsasign" (index.ts:1:22)'))
 
         const builder = codeBuilder(noopLog, getSettings)
 
         await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('compile-failed')
-        // Cache hit — the deterministic failure is not retried.
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('compile-failed')
+
+        expect(installMock).toHaveBeenCalledTimes(2)
+        expect(buildMock).toHaveBeenCalledTimes(2)
+    })
+
+    it('recovers on the next build when a bundling failure was transient', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        installMock.mockResolvedValue({ stdout: '', stderr: '' })
+        buildMock
+            .mockRejectedValueOnce(new Error('Could not resolve "axios" (index.ts:3:18)'))
+            .mockResolvedValue({ stdout: '', stderr: '' })
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('compile-failed')
         await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
 
-        expect(installMock).toHaveBeenCalledTimes(1)
+        expect(buildMock).toHaveBeenCalledTimes(2)
+    })
+
+    it('reads a cache entry written before the build status was recorded as a successful build', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')
+        const stepDir = codeCache(codesFolderPath).stepDir({
+            flowVersionId: artifact.flowVersionId,
+            stepName: artifact.name,
+        })
+        const legacyHash = await cryptoUtils.hashObject(artifact.sourceCode)
+        await mkdir(stepDir, { recursive: true })
+        await writeFile(join(stepDir, 'index.js'), 'exports.code = async () => 42', 'utf8')
+        await writeFile(join(stepDir, 'cache.json'), JSON.stringify({ [stepDir]: legacyHash }), 'utf8')
+
+        await expect(
+            codeBuilder(noopLog, getSettings).processCodeStep({ artifact, codesFolderPath }),
+        ).resolves.toBe('success')
+
+        expect(installMock).not.toHaveBeenCalled()
+        expect(buildMock).not.toHaveBeenCalled()
     })
 })
