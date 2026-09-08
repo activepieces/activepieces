@@ -69,8 +69,11 @@ jobs:
       - name: Build worker dependency graph
         run: npx turbo run build --filter=worker
 
-      - name: Run deterministic chat evals
+      - name: Run deterministic agent evals
         run: npm run agent-evals:ci
+
+      - name: Run the tests covering the gated provider code
+        run: npx turbo run test --filter=@activepieces/server-utils --filter=@activepieces/core-piece-types
 
   live:
     name: Live judge gate

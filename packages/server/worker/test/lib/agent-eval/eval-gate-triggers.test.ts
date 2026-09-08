@@ -17,7 +17,12 @@ const GATED_FILTERS = [
     'packages/core/piece-types/src/lib/ai-providers.ts',
 ]
 
-describe('the agent eval gate covers the code it is meant to guard', () => {
+const PACKAGES_UNDER_GATE = [
+    '@activepieces/server-utils',
+    '@activepieces/core-piece-types',
+]
+
+describe('the agent eval gate is wired to the code it gates', () => {
     it('finds the workflow it is asserting about', () => {
         expect(existsSync(workflowPath), workflowPath).toBe(true)
     })
@@ -33,6 +38,13 @@ describe('the agent eval gate covers the code it is meant to guard', () => {
         const declared = pullRequestPathFilters()
         for (const filter of GATED_FILTERS) {
             expect(declared, `agent-evals.yml does not run for changes matching ${filter}`).toContain(filter)
+        }
+    })
+
+    it('runs the tests for every package it gates, so a gated file is not merely a trigger', () => {
+        const gate = readFileSync(workflowPath, 'utf8')
+        for (const pkg of PACKAGES_UNDER_GATE) {
+            expect(gate, `the gate triggers on ${pkg} but never runs its tests`).toContain(`--filter=${pkg}`)
         }
     })
 })
