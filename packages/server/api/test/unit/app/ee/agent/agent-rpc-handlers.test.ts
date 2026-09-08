@@ -1,3 +1,4 @@
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
@@ -629,6 +630,45 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         })
 
         expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-elsewhere', projectId: 'proj-own' })
+    })
+
+    it('does not fail the job when the run disappears while resuming, which the pre-check cannot catch', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'flow_run', entityId: 'run-1', message: 'Flow run not found' },
+        }))
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).resolves.toBeUndefined()
+    })
+
+    it('still fails on a not-found that is not the flow run, so unrelated faults stay visible', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'waitpoint', entityId: 'wp-1', message: 'Waitpoint not found' },
+        }))
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).rejects.toThrow(ActivepiecesError)
+    })
+
+    it('still fails on any other resume error, so a real fault is never swallowed', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new Error('lock timed out'))
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).rejects.toThrow('lock timed out')
     })
 
     it('sends an empty queryParams, so this path can never approve anything', async () => {
