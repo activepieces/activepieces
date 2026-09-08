@@ -947,9 +947,6 @@ type RunCodeToolResult = {
 
 export { executeCrossProjectTool, findConnectionsForPiece }
 
-// Chat runs any piece the person asks for, through a different path than a configured agent tool,
-// and its writes belong in the same audit trail. The piece's own classification decides, so this
-// needs the metadata; without a platform there is nothing to attribute the row to.
 async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, log }: {
     piece: { pieceName: string, actionName: string }
     input: Record<string, unknown>

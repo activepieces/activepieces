@@ -180,11 +180,6 @@ export type ConfiguredToolRun = {
     agent?: { id: string, displayName?: string }
 }
 
-// An action a configured agent ran leaves a receipt in its conversation, which nobody outside that
-// conversation can find. The audit log is where a platform admin looks for "what changed and who
-// did it", so anything that was not a declared read is recorded there too. The piece's own
-// classification decides; the name heuristic is only the fallback for a piece that declares none,
-// and it errs towards recording.
 export function recordAgentAction({ run, conversationId, piece, resolvedInput, names, classification, connection, log }: {
     run: { projectId: string, platformId: string, userId: string, source: AgentRunSource, agent?: { id: string, displayName?: string } }
     conversationId?: string

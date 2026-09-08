@@ -92,8 +92,6 @@ async function runConfiguredAction(conversationId: string, actionName: string) {
 }
 
 describe('an action an agent ran reaches the audit log', () => {
-    // The receipt for a configured action lives in the conversation that ran it, which nobody
-    // outside that conversation can find. A platform admin looks in the audit log instead.
     it('records the whole row a person needs: who, what, where and which account', async () => {
         const ctx = await contextWithProvider()
         const { conversationId, agentId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
@@ -119,8 +117,6 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(summarizeApplicationEvent(row)).toBe('Ops agent ran Gmail: Send Email')
     })
 
-    // An audit row is readable by every platform admin and is forwarded to event destinations, so
-    // what the action carried stays out of it.
     it('keeps the action input out of the row', async () => {
         const ctx = await contextWithProvider()
         const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
@@ -132,7 +128,6 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(JSON.stringify(row.data)).not.toContain(RECIPIENT)
     })
 
-    // Reading is not a change, and logging every read would bury the writes that matter.
     it('leaves a read out of it', async () => {
         const ctx = await contextWithProvider()
         const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
@@ -143,8 +138,6 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(await agentActionRows(ctx)).toHaveLength(0)
     })
 
-    // The piece says what its own action does. A name that reads like a search but is declared a
-    // write is recorded, which the old name-only rule got backwards.
     it('believes the piece over the action name, in both directions', async () => {
         const ctx = await contextWithProvider()
         const write = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
@@ -159,7 +152,6 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(await agentActionRows(other)).toHaveLength(0)
     })
 
-    // A flow step has no agent of its own when its tools are inline, and the row still has to land.
     it('records a flow step that runs inline tools, with no agent to name', async () => {
         const ctx = await contextWithProvider()
         const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.FLOW_STEP, withAgent: false })
@@ -173,8 +165,6 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(summarizeApplicationEvent(row)).toBe('An agent ran Gmail: Send Email')
     })
 
-    // Chat runs pieces through its own path. Auditing only the configured path would leave the
-    // surface most likely to touch a customer system invisible.
     it('records a write chat ran, not only a configured tool', async () => {
         const ctx = await contextWithProvider()
         const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.CHAT, withAgent: false })
