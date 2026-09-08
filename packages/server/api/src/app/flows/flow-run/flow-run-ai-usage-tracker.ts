@@ -80,7 +80,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
 })
 
 
-function resolveAiCreditWeight({ provider, model }: { provider: string, model: string }): number {
+export function resolveAiCreditWeight({ provider, model }: { provider: string, model: string }): number {
     if (provider !== AIProviderName.ACTIVEPIECES) {
         return 1
     }
@@ -91,7 +91,7 @@ function resolveAiCreditWeight({ provider, model }: { provider: string, model: s
     return MANAGED_MODEL_WEIGHTS[model] ?? 2
 }
 
-const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
+export const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
     'ai21/jamba-large-1.7': 6,
     'amazon/nova-premier-v1': 6,
     'anthropic/claude-fable-5': 45,
@@ -109,9 +109,11 @@ const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
     'anthropic/claude-sonnet-5': 6,
     'cohere/command-a': 6,
     'cohere/command-r-plus-08-2024': 6,
+    'google/gemini-2.5-flash': 2,
     'google/gemini-2.5-pro': 6,
     'google/gemini-2.5-pro-preview': 6,
     'google/gemini-2.5-pro-preview-05-06': 6,
+    'google/gemini-3-flash-preview': 2,
     'google/gemini-3-pro-image': 6,
     'google/gemini-3-pro-image-preview': 6,
     'google/gemini-3.1-pro-preview': 6,
@@ -121,6 +123,9 @@ const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
     'google/gemini-3.7-flash': 6,
     'mistralai/mistral-medium-3-5': 6,
     'moonshotai/kimi-k3': 10,
+    'openai/gpt-4.1-mini': 2,
+    'openai/gpt-5.4-mini': 2,
+    'openai/gpt-5.4-nano': 2,
     'openai/gpt-4': 45,
     'openai/gpt-4-turbo': 20,
     'openai/gpt-4-turbo-preview': 20,
