@@ -244,7 +244,7 @@ type NodeFormData = {
 };
 
 // ponytail: transient double-buffering cap — above it we stream chunked exactly as before this fix.
-const MAX_BUFFERED_FORM_DATA_BYTES = 10 * 1024 * 1024;
+const MAX_BUFFERED_FORM_DATA_BYTES = 100 * 1024 * 1024;
 
 type ResponseType = NonNullable<HttpRequest['responseType']>;
 

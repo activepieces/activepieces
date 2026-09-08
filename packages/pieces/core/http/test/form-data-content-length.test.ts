@@ -81,7 +81,7 @@ describe('multipart form-data body framing', () => {
 
   test('a form over the buffering cap streams chunked instead of double-buffering', async () => {
     const formData = new FormData();
-    formData.append('file', Buffer.alloc(11 * 1024 * 1024), { filename: 'big.bin' });
+    formData.append('file', Buffer.alloc(101 * 1024 * 1024), { filename: 'big.bin' });
 
     await httpClient.sendRequest({
       method: HttpMethod.POST,
@@ -92,7 +92,7 @@ describe('multipart form-data body framing', () => {
     expect(seen[0].contentType).toContain('multipart/form-data');
     expect(seen[0].transferEncoding).toBe('chunked');
     expect(seen[0].contentLength).toBeUndefined();
-    expect(seen[0].bodyBytes).toBeGreaterThan(11 * 1024 * 1024);
+    expect(seen[0].bodyBytes).toBeGreaterThan(101 * 1024 * 1024);
   });
 
   test('form-data with an unknown-length stream part still streams chunked', async () => {
