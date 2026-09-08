@@ -79,3 +79,52 @@ describe('isCuratedChatModelId', () => {
         expect(aiProviderUtils.isCuratedChatModelId({ modelId: '' })).toBe(false)
     })
 })
+
+describe('managed chat model vocabulary', () => {
+    it('covers every tier model, so tier drift can never deny the model a tier runs on', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(aiProviderUtils.isManagedChatModelId({ modelId: tier.modelId }), tier.modelId).toBe(true)
+        }
+    })
+
+    it('covers every id the managed allow-list declares', () => {
+        for (const id of ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? []) {
+            expect(aiProviderUtils.isManagedChatModelId({ modelId: id }), id).toBe(true)
+        }
+    })
+
+    it('rejects the models that reached managed credits during the 2026-09 incident', () => {
+        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1']) {
+            expect(aiProviderUtils.isManagedChatModelId({ modelId: id }), id).toBe(false)
+        }
+    })
+
+    it('rejects an empty or arbitrary string', () => {
+        expect(aiProviderUtils.isManagedChatModelId({ modelId: '' })).toBe(false)
+        expect(aiProviderUtils.isManagedChatModelId({ modelId: 'anything/at-all' })).toBe(false)
+    })
+
+    it('lists no duplicates, so an error message never repeats a model', () => {
+        const ids = aiProviderUtils.managedChatModelIds()
+        expect(ids).toEqual([...new Set(ids)])
+    })
+})
+
+describe('canDisableReasoning', () => {
+    it('is true for every tier model, so the default path keeps its zero-reasoning first step', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(aiProviderUtils.canDisableReasoning({ modelId: tier.modelId }), tier.modelId).toBe(true)
+        }
+    })
+
+    it('is false for the reasoning-native models that rejected a disable directive in production', () => {
+        for (const id of ['google/gemini-3.8-flash', 'openai/gpt-6-astra', 'openai/gpt-6-astra-pro', 'anthropic/claude-fable-5.1']) {
+            expect(aiProviderUtils.canDisableReasoning({ modelId: id }), id).toBe(false)
+        }
+    })
+
+    it('is false for a managed model we have never observed accepting one', () => {
+        expect(aiProviderUtils.canDisableReasoning({ modelId: 'google/gemini-3.7-flash' })).toBe(false)
+        expect(aiProviderUtils.canDisableReasoning({ modelId: 'x-ai/grok-4.20' })).toBe(false)
+    })
+})
