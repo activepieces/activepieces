@@ -207,13 +207,18 @@ const PlatformTemplatesPage = () => {
   const isEnabled = platform.plan.manageTemplatesEnabled;
   return (
     <LockedFeatureGuard
-      featureKey="TEMPLATES"
       locked={!isEnabled}
       lockTitle={t('Unlock Templates')}
       lockDescription={t(
         'Convert the most common automations into reusable templates 1 click away from your users',
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/templates.mp4"
+      lockTier="ultimate"
+      lockBullets={[
+        t('Publish reusable templates to every project'),
+        t('One click from template to running flow'),
+        t('Standardize how your teams automate'),
+      ]}
     >
       <div className="flex flex-col w-full">
         <DashboardPageHeader

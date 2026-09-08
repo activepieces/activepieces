@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -32,12 +31,10 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 import AddEditSecretManagerConnectionDialog from './connect-secret-manager-dialog';
 
 const SecretManagersPage = () => {
-  const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: connections,
     isLoading: isLoadingConnections,
@@ -191,39 +188,32 @@ const SecretManagersPage = () => {
   ];
 
   return (
-    <LockedFeatureGuard
-      featureKey="SECRET_MANAGERS"
-      locked={!platform.plan.secretManagersEnabled}
-      lockTitle={t('Enable Secret Managers')}
-      lockDescription={t('Manage your secrets from a single and secure place')}
-    >
-      <div className="flex-col w-full">
-        <DashboardPageHeader
-          title={t('Secret Managers')}
-          description={t('Manage Secret Manager connections')}
-        >
-          <AddEditSecretManagerConnectionDialog>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Connection')}
-            </AnimatedIconButton>
-          </AddEditSecretManagerConnectionDialog>
-        </DashboardPageHeader>
-        <DataTable
-          emptyStateTextTitle={t('No connections found')}
-          emptyStateTextDescription={t(
-            'Add a secret manager connection to manage your secrets',
-          )}
-          emptyStateIcon={<KeyRound className="size-14" />}
-          columns={columns}
-          page={page}
-          isLoading={isLoading}
-          isError={isConnectionsError}
-          errorStateEntity={t('secret managers')}
-          onRetry={refetchConnections}
-          hidePagination={true}
-        />
-      </div>
-    </LockedFeatureGuard>
+    <div className="flex-col w-full">
+      <DashboardPageHeader
+        title={t('Secret Managers')}
+        description={t('Manage Secret Manager connections')}
+      >
+        <AddEditSecretManagerConnectionDialog>
+          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+            {t('New Connection')}
+          </AnimatedIconButton>
+        </AddEditSecretManagerConnectionDialog>
+      </DashboardPageHeader>
+      <DataTable
+        emptyStateTextTitle={t('No connections found')}
+        emptyStateTextDescription={t(
+          'Add a secret manager connection to manage your secrets',
+        )}
+        emptyStateIcon={<KeyRound className="size-14" />}
+        columns={columns}
+        page={page}
+        isLoading={isLoading}
+        isError={isConnectionsError}
+        errorStateEntity={t('secret managers')}
+        onRetry={refetchConnections}
+        hidePagination={true}
+      />
+    </div>
   );
 };
 

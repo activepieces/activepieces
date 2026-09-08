@@ -127,12 +127,17 @@ const EmbedPage = () => {
 
   return (
     <LockedFeatureGuard
-      featureKey="SIGNING_KEYS"
       locked={!platform.plan.embeddingEnabled}
       lockTitle={t('Unlock Embedding Through JS SDK')}
       lockDescription={t(
         'Enable signing keys to access embedding functionalities.',
       )}
+      lockTier="ultimate"
+      lockBullets={[
+        t('Drop the builder into your app with the JS SDK'),
+        t('Authenticate users with signing keys'),
+        t('Your customers automate without leaving your product'),
+      ]}
     >
       <div className="w-full max-w-4/5 2xl:max-w-6xl mx-auto py-6">
         <div className="flex flex-col gap-1">

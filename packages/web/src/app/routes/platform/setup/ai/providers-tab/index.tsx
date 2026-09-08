@@ -177,7 +177,7 @@ export function ProvidersTab() {
 
   return (
     <>
-      <div className="flex flex-col gap-6">
+      <div className="flex w-full mx-auto max-w-6xl flex-col gap-6 px-6 py-6">
         <div className="flex items-start justify-between gap-3">
           <SectionHeader
             title={t('Providers')}

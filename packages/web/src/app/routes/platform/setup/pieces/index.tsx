@@ -20,7 +20,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { RequestTrial } from '@/app/components/request-trial';
+import { FeatureBanner } from '@/app/components/feature-banner';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
@@ -29,7 +29,6 @@ import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/u
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { LockedAlert } from '@/components/custom/locked-alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { oauthAppsQueries } from '@/features/connections';
@@ -242,18 +241,11 @@ const PlatformPiecesPage = () => {
       />
       <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
         {!platform.plan.managePiecesEnabled && (
-          <div className="px-4 shrink-0">
-            <LockedAlert
-              title={t('Control Pieces')}
-              description={t(
-                "Show the pieces that matter most to your users and hide the ones you don't like.",
+          <div className="px-6 shrink-0 pb-4">
+            <FeatureBanner
+              message={t(
+                "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
               )}
-              button={
-                <RequestTrial
-                  featureKey="ENTERPRISE_PIECES"
-                  buttonVariant="basic"
-                />
-              }
             />
           </div>
         )}

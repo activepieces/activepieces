@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import {
@@ -46,29 +45,19 @@ const ProjectRolePage = () => {
   );
 
   return (
-    <LockedFeatureGuard
-      featureKey="TEAM"
-      locked={!platform.plan.projectRolesEnabled}
-      lockTitle={t('Project Role Management')}
-      lockDescription={t(
-        'Define custom roles and permissions to control what your team members can access and modify',
+    <CenteredPage
+      title={t('Project Role Management')}
+      description={t(
+        'Define custom roles and permissions that can be assigned to your team members',
       )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
+      actions={newRoleButton}
     >
-      <CenteredPage
-        title={t('Project Role Management')}
-        description={t(
-          'Define custom roles and permissions that can be assigned to your team members',
-        )}
-        actions={newRoleButton}
-      >
-        <ProjectRolesTable
-          projectRoles={data}
-          isLoading={isLoading}
-          refetch={refetch}
-        />
-      </CenteredPage>
-    </LockedFeatureGuard>
+      <ProjectRolesTable
+        projectRoles={data}
+        isLoading={isLoading}
+        refetch={refetch}
+      />
+    </CenteredPage>
   );
 };
 

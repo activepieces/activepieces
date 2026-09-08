@@ -20,7 +20,7 @@ export const GeneralPage = () => {
 
   return (
     <CenteredPage
-      title={t('General')}
+      title={t('Platform Settings')}
       description={t('Change the settings for your platform.')}
     >
       <AppearanceSection />
