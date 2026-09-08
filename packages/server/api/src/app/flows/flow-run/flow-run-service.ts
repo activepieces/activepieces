@@ -345,6 +345,33 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         return flowRun
     },
 
+    async createTriggerFailedRun({ flowVersion, projectId, environment, status, errorMessage }: CreateTriggerFailedRunParams): Promise<FlowRun> {
+        const now = new Date().toISOString()
+        const flowRun: FlowRun = {
+            id: apId(),
+            projectId,
+            flowId: flowVersion.flowId,
+            flowVersionId: flowVersion.id,
+            environment,
+            failParentOnFailure: false,
+            status,
+            failedStep: {
+                name: flowVersion.trigger.name,
+                displayName: flowVersion.trigger.displayName,
+                message: errorMessage,
+            },
+            created: now,
+            updated: now,
+            startTime: now,
+            finishTime: now,
+            tags: [],
+            steps: {},
+        }
+        await runsMetadataQueue(log).add(flowRun)
+        log.warn({ flowRun: { id: flowRun.id }, flow: { id: flowVersion.flowId }, project: { id: projectId }, status }, 'Flow run admitted as trigger failure')
+        return flowRun
+    },
+
     async test({ projectId, flowVersionId, parentRunId, stepNameToTest, triggeredBy }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
         await flowService(log).getOneOrThrow({ id: flowVersion.flowId, projectId })
@@ -840,6 +867,14 @@ type CreateQuotaExceededRunParams = {
     failParentOnFailure: boolean | undefined
     triggeredBy?: string
     shouldExecuteTriggerOnRetry: boolean
+}
+
+type CreateTriggerFailedRunParams = {
+    flowVersion: FlowVersion
+    projectId: ProjectId
+    environment: RunEnvironment
+    status: FlowRunStatus
+    errorMessage: string
 }
 
 type PersistQuotaExceededTriggerLogParams = {

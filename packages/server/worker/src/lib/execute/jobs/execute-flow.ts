@@ -5,7 +5,7 @@ import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, E
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
-import { isSandboxTimeout } from '../utils/sandbox-helpers'
+import { flowRunStatusToEngineResponseStatus, sandboxErrorToFlowRunStatus } from '../utils/sandbox-helpers'
 
 export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_FLOW,
@@ -89,22 +89,13 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
-            if (isSandboxTimeout(e)) {
-                await reportFlowStatus({ ctx, data, status: FlowRunStatus.TIMEOUT })
-                return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.TIMEOUT }
+            const status = sandboxErrorToFlowRunStatus(e)
+            if (status === FlowRunStatus.INTERNAL_ERROR) {
+                await reportFlowStatus({ ctx, data, status, internalError: toInternalError(RunInternalErrorSource.WORKER, e) })
+                throw e
             }
-            if (e instanceof ActivepiecesError) {
-                if (e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE) {
-                    await reportFlowStatus({ ctx, data, status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED })
-                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.MEMORY_ISSUE }
-                }
-                if (e.error.code === ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED) {
-                    await reportFlowStatus({ ctx, data, status: FlowRunStatus.LOG_SIZE_EXCEEDED })
-                    return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.LOG_SIZE_EXCEEDED }
-                }
-            }
-            await reportFlowStatus({ ctx, data, status: FlowRunStatus.INTERNAL_ERROR, internalError: toInternalError(RunInternalErrorSource.WORKER, e) })
-            throw e
+            await reportFlowStatus({ ctx, data, status })
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: flowRunStatusToEngineResponseStatus(status) }
         }
     },
 }
