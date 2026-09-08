@@ -1,7 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { AgentConversation, AgentRunSource, CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { BillingEvents } from '../../helper/telemetry.utils'
+import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -69,7 +69,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
                 },
             } : undefined,
             telemetry: {
-                event: BillingEvents.CHAT_MESSAGE,
+                event: LicenseKeyPostHogEvents.CHAT_MESSAGE,
                 properties: {
                     provider,
                     model,

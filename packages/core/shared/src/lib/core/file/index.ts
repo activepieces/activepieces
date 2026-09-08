@@ -88,8 +88,6 @@ export enum FileCompression {
     ZSTD = 'ZSTD',
 }
 
-export const CONTENT_ENCODING_ZSTD = 'zstd'
-
 const ZSTD_MAGIC = 0xFD2FB528
 const ZSTD_SKIPPABLE_START = 0x184D2A50
 const ZSTD_SKIPPABLE_END = 0x184D2A5F

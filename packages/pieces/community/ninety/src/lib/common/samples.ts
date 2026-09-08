@@ -1,0 +1,45 @@
+export const SAMPLE_TODO = {
+  _id: '66c1f0a4b2d3e40012a4c9f1',
+  title: 'Send the Q3 scorecard to the leadership team',
+  description: 'Include the two measurables that went off track.',
+  dueDate: '2026-09-11',
+  isPersonal: false,
+  completed: false,
+  archived: false,
+  teamId: '66b0c1d2e3f4a50012b3d8e2',
+  teamName: 'Leadership',
+  userId: '66a9b8c7d6e5f40012c2a7b3',
+  companyId: '669f8e7d6c5b4a0012d1f6e5',
+  createdDate: '2026-09-04T09:12:44.118Z',
+};
+
+export const SAMPLE_ISSUE = {
+  _id: '66c1f13ab2d3e40012a4ca07',
+  title: 'Onboarding handoff keeps missing the kickoff call',
+  description: '<p>Two accounts started without a kickoff last week.</p>',
+  intervalCode: 'SHORT_TERM',
+  priority: 3,
+  completed: false,
+  archived: false,
+  teamId: '66b0c1d2e3f4a50012b3d8e2',
+  userId: '66a9b8c7d6e5f40012c2a7b3',
+  companyId: '669f8e7d6c5b4a0012d1f6e5',
+  createdDate: '2026-09-04T09:20:02.771Z',
+};
+
+export const SAMPLE_ROCK = {
+  _id: '66c1f1c9b2d3e40012a4ca2b',
+  title: 'Cut onboarding time to 14 days',
+  description: 'Rebuild the handoff checklist and automate the kickoff invite.',
+  teamId: '66b0c1d2e3f4a50012b3d8e2',
+  userId: '66a9b8c7d6e5f40012c2a7b3',
+  companyId: '669f8e7d6c5b4a0012d1f6e5',
+  statusCode: 'ON_TRACK',
+  levelCode: 'USER',
+  quarter: 'Q3',
+  dueDate: '2026-09-30T00:00:00.000Z',
+  futureScope: 'Current',
+  archived: false,
+  completed: false,
+  createdDate: '2026-09-04T09:31:15.402Z',
+};

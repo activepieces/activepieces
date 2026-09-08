@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { removeTagFromContactActionOutputSchema } from '../output-schemas';
 
 export const removeTagFromContact = createAction({
   auth: systemeIoAuth,
@@ -74,6 +75,7 @@ export const removeTagFromContact = createAction({
       },
     }),
   },
+  outputSchema: removeTagFromContactActionOutputSchema,
   async run(context) {
     const { contactId, tagId } = context.propsValue;
     

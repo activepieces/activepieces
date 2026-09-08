@@ -85,6 +85,18 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.FLOW_DEACTIVATED]: {
       label: t('Flow deactivated'),
     },
+    [ApplicationEventName.FLOW_APPROVAL_REQUESTED]: {
+      label: t('Flow approval requested'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_GRANTED]: {
+      label: t('Flow approval granted'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_REJECTED]: {
+      label: t('Flow approval rejected'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_WITHDRAWN]: {
+      label: t('Flow approval withdrawn'),
+    },
   };
 };
 

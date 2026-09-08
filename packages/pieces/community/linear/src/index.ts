@@ -1,5 +1,6 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece, PieceAuth, tryCatch } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
+import { LinearClient } from '@linear/sdk';
 import { linearCreateComment } from './lib/actions/comments/create-comment';
 import { linearCreateIssue } from './lib/actions/issues/create-issue';
 import { linearUpdateIssue } from './lib/actions/issues/update-issue';
@@ -26,14 +27,27 @@ export const linearAuth = PieceAuth.SecretText({
   required: true,
   description: markdown,
   validate: async ({ auth }) => {
-    if (auth.startsWith('lin_api_')) {
+    if (!auth.startsWith('lin_api_')) {
+      return {
+        valid: false,
+        error: 'Invalid API Key',
+      };
+    }
+    const { error } = await tryCatch(() => new LinearClient({ apiKey: auth }).viewer);
+    if (!error) {
       return {
         valid: true,
       };
     }
+    if (isUnauthorized(error)) {
+      return {
+        valid: false,
+        error: 'Linear did not accept this API key. It may have been revoked or rotated. Create a new personal API key under Settings, Security & access in Linear, then try again.',
+      };
+    }
     return {
       valid: false,
-      error: 'Invalid API Key',
+      error: 'Could not reach Linear to check this API key. Please try again.',
     };
   },
 });
@@ -64,3 +78,7 @@ export const linear = createPiece({
     linearRemovedProject,
   ],
 });
+
+function isUnauthorized(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'status' in error && error.status === 401;
+}
