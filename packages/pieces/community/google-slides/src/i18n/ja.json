@@ -16,7 +16,7 @@
   "Query Parameters": "クエリパラメータ",
   "Body Type": "ボディタイプ",
   "Body": "本文",
-  "Response is Binary ?": "応答はバイナリですか?",
+  "Response is Binary ?": "応答はバイナリですか？",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
   "Follow redirects": "リダイレクトをフォローする",
