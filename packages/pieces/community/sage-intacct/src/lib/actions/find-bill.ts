@@ -2,18 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
-type BillRecord = {
-  key: string;
-  id: string;
-  billNumber: string | null;
-  referenceNumber: string | null;
-  state: string;
-  createdDate: string;
-  dueDate: string;
-  totalTxnAmount: number | null;
-  totalTxnAmountDue: number | null;
-};
-
 export const findBillAction = createAction({
   auth: sageIntacctAuth,
   name: 'find_bill',
@@ -107,3 +95,15 @@ export const findBillAction = createAction({
     return records;
   },
 });
+
+type BillRecord = {
+  key: string;
+  id: string;
+  billNumber: string | null;
+  referenceNumber: string | null;
+  state: string;
+  createdDate: string;
+  dueDate: string;
+  totalTxnAmount: number | null;
+  totalTxnAmountDue: number | null;
+};

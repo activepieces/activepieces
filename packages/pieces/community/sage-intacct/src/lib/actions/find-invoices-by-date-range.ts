@@ -2,17 +2,6 @@ import { createAction, Property, dateRangeUtils } from '@activepieces/pieces-fra
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
-type InvoiceRecord = {
-  key: string;
-  id: string;
-  invoiceNumber: string | null;
-  state: string;
-  invoiceDate: string;
-  dueDate: string;
-  totalTxnAmount: number | null;
-  totalTxnAmountDue: number | null;
-};
-
 export const findInvoicesByDateRangeAction = createAction({
   auth: sageIntacctAuth,
   name: 'find_invoices_by_date_range',
@@ -76,3 +65,14 @@ export const findInvoicesByDateRangeAction = createAction({
     return records;
   },
 });
+
+type InvoiceRecord = {
+  key: string;
+  id: string;
+  invoiceNumber: string | null;
+  state: string;
+  invoiceDate: string;
+  dueDate: string;
+  totalTxnAmount: number | null;
+  totalTxnAmountDue: number | null;
+};

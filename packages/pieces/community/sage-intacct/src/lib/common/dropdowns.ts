@@ -1,4 +1,4 @@
-import { Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { Property } from '@activepieces/pieces-framework';
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
@@ -27,7 +27,8 @@ function referenceDropdown({
     auth: sageIntacctAuth,
     refreshers: [],
     required,
-    options: async ({ auth }) => {
+    refreshOnSearch: true,
+    options: async ({ auth }, { searchValue }) => {
       if (!auth) {
         return {
           disabled: true,
@@ -35,11 +36,15 @@ function referenceDropdown({
           placeholder: 'Connect your Sage Intacct account first',
         };
       }
+      const combinedFilters = [
+        ...(filters ?? []),
+        ...(searchValue ? [{ $contains: { [fields[0]]: searchValue } }] : []),
+      ];
       const { records } = await sageIntacctClient.query<Record<string, string>>({
         accessToken: auth.access_token,
         object,
         fields,
-        ...spreadIfDefined('filters', filters),
+        ...(combinedFilters.length > 0 ? { filters: combinedFilters } : {}),
         orderBy: [{ [fields[0]]: 'asc' }],
         size: 100,
       });

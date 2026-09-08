@@ -2,15 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
-type VendorRecord = {
-  key: string;
-  id: string;
-  name: string;
-  status: string;
-  billingType: string | null;
-  totalDue: number | null;
-};
-
 export const findVendorAction = createAction({
   auth: sageIntacctAuth,
   name: 'find_vendor',
@@ -89,3 +80,12 @@ export const findVendorAction = createAction({
     return records;
   },
 });
+
+type VendorRecord = {
+  key: string;
+  id: string;
+  name: string;
+  status: string;
+  billingType: string | null;
+  totalDue: number | null;
+};

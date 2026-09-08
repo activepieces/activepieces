@@ -7,17 +7,6 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
-type SalesInvoicePollRecord = {
-  key: string;
-  id: string;
-  documentNumber: string | null;
-  txnDate: string;
-  dueDate: string | null;
-  total: number | null;
-  state: string;
-  'audit.createdDateTime': string;
-};
-
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof sageIntacctAuth>,
   Record<string, never>
@@ -29,7 +18,7 @@ const polling: Polling<
       filters.push({ $gt: { 'audit.createdDateTime': new Date(lastFetchEpochMS).toISOString() } });
     }
 
-    const { records } = await sageIntacctClient.query<SalesInvoicePollRecord>({
+    const records = await sageIntacctClient.queryAll<SalesInvoicePollRecord>({
       accessToken: auth.access_token,
       object: sageIntacctClient.objects.orderEntryDocument,
       fields: [
@@ -44,7 +33,6 @@ const polling: Polling<
       ],
       filters,
       orderBy: [{ 'audit.createdDateTime': 'asc' }],
-      size: 100,
     });
 
     return records.map((record) => ({
@@ -89,3 +77,14 @@ export const newSalesInvoiceTrigger = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+type SalesInvoicePollRecord = {
+  key: string;
+  id: string;
+  documentNumber: string | null;
+  txnDate: string;
+  dueDate: string | null;
+  total: number | null;
+  state: string;
+  'audit.createdDateTime': string;
+};

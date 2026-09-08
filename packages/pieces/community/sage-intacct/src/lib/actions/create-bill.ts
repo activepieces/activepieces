@@ -4,13 +4,6 @@ import { sageIntacctAuth } from '../auth';
 import { sageIntacctClient, IntacctObjectReference } from '../client';
 import { sageIntacctDropdowns } from '../common/dropdowns';
 
-type BillLineInput = {
-  glAccountId: string;
-  amount: number;
-  locationId?: string;
-  memo?: string;
-};
-
 export const createBillAction = createAction({
   auth: sageIntacctAuth,
   name: 'create_bill',
@@ -76,3 +69,10 @@ export const createBillAction = createAction({
     });
   },
 });
+
+type BillLineInput = {
+  glAccountId: string;
+  amount: number;
+  locationId?: string;
+  memo?: string;
+};

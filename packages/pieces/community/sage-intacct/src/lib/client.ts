@@ -2,20 +2,6 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 const BASE_URL = 'https://api.intacct.com/ia/api/v1';
 
-type IntacctFilterOperator = '$eq' | '$gt' | '$gte' | '$lte' | '$between' | '$contains';
-
-type IntacctFilterValue = string | number | boolean | (string | number)[];
-
-export type IntacctFilter = Partial<
-  Record<IntacctFilterOperator, Record<string, IntacctFilterValue>>
->;
-
-export type IntacctObjectReference = {
-  key: string;
-  id: string;
-  href: string;
-};
-
 async function apiCall<T>({
   accessToken,
   method,
@@ -81,6 +67,41 @@ async function query<T extends Record<string, unknown>>({
   };
 }
 
+async function queryAll<T extends Record<string, unknown>>({
+  accessToken,
+  object,
+  fields,
+  filters,
+  filterExpression,
+  orderBy,
+}: {
+  accessToken: string;
+  object: string;
+  fields: string[];
+  filters?: IntacctFilter[];
+  filterExpression?: string;
+  orderBy?: Record<string, 'asc' | 'desc'>[];
+}): Promise<T[]> {
+  const pageSize = 100;
+  const maxPages = 10;
+  const records: T[] = [];
+  for (let page = 0; page < maxPages; page++) {
+    const { records: pageRecords } = await query<T>({
+      accessToken,
+      object,
+      fields,
+      filters,
+      filterExpression,
+      orderBy,
+      start: page * pageSize,
+      size: pageSize,
+    });
+    records.push(...pageRecords);
+    if (pageRecords.length < pageSize) break;
+  }
+  return records;
+}
+
 function toDate(isoDateTime: string): string {
   return isoDateTime.slice(0, 10);
 }
@@ -101,6 +122,7 @@ function documentPath({
 export const sageIntacctClient = {
   apiCall,
   query,
+  queryAll,
   toDate,
   documentPath,
   objects: {
@@ -117,4 +139,18 @@ export const sageIntacctClient = {
     employee: 'company-config/employee',
     item: 'inventory-control/item',
   },
+};
+
+type IntacctFilterOperator = '$eq' | '$gt' | '$gte' | '$lte' | '$between' | '$contains';
+
+type IntacctFilterValue = string | number | boolean | (string | number)[];
+
+export type IntacctFilter = Partial<
+  Record<IntacctFilterOperator, Record<string, IntacctFilterValue>>
+>;
+
+export type IntacctObjectReference = {
+  key: string;
+  id: string;
+  href: string;
 };

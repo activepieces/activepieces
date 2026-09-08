@@ -4,15 +4,6 @@ import { sageIntacctAuth } from '../auth';
 import { sageIntacctClient, IntacctObjectReference } from '../client';
 import { sageIntacctDropdowns } from '../common/dropdowns';
 
-type VendorInvoiceLineInput = {
-  itemId: string;
-  warehouseId: string;
-  locationId: string;
-  unit: string;
-  unitQuantity: number;
-  unitPrice: number;
-};
-
 export const createVendorInvoiceAction = createAction({
   auth: sageIntacctAuth,
   name: 'create_vendor_invoice',
@@ -75,3 +66,12 @@ export const createVendorInvoiceAction = createAction({
     });
   },
 });
+
+type VendorInvoiceLineInput = {
+  itemId: string;
+  warehouseId: string;
+  locationId: string;
+  unit: string;
+  unitQuantity: number;
+  unitPrice: number;
+};

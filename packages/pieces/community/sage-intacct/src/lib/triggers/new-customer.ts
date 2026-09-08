@@ -7,16 +7,6 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
-type CustomerPollRecord = {
-  key: string;
-  id: string;
-  name: string;
-  status: string;
-  creditLimit: number | null;
-  taxId: string | null;
-  'audit.createdDateTime': string;
-};
-
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof sageIntacctAuth>,
   Record<string, never>
@@ -28,13 +18,12 @@ const polling: Polling<
         ? [{ $gt: { 'audit.createdDateTime': new Date(lastFetchEpochMS).toISOString() } }]
         : [];
 
-    const { records } = await sageIntacctClient.query<CustomerPollRecord>({
+    const records = await sageIntacctClient.queryAll<CustomerPollRecord>({
       accessToken: auth.access_token,
       object: sageIntacctClient.objects.customer,
       fields: ['key', 'id', 'name', 'status', 'creditLimit', 'taxId', 'audit.createdDateTime'],
       ...(filters.length > 0 ? { filters } : {}),
       orderBy: [{ 'audit.createdDateTime': 'asc' }],
-      size: 100,
     });
 
     return records.map((record) => ({
@@ -77,3 +66,13 @@ export const newCustomerTrigger = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+type CustomerPollRecord = {
+  key: string;
+  id: string;
+  name: string;
+  status: string;
+  creditLimit: number | null;
+  taxId: string | null;
+  'audit.createdDateTime': string;
+};

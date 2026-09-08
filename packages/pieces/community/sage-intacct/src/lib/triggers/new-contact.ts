@@ -7,16 +7,6 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
-type ContactPollRecord = {
-  key: string;
-  id: string;
-  printAs: string;
-  email1: string | null;
-  phone1: string | null;
-  status: string;
-  'audit.createdDateTime': string;
-};
-
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof sageIntacctAuth>,
   Record<string, never>
@@ -28,13 +18,12 @@ const polling: Polling<
         ? [{ $gt: { 'audit.createdDateTime': new Date(lastFetchEpochMS).toISOString() } }]
         : [];
 
-    const { records } = await sageIntacctClient.query<ContactPollRecord>({
+    const records = await sageIntacctClient.queryAll<ContactPollRecord>({
       accessToken: auth.access_token,
       object: sageIntacctClient.objects.contact,
       fields: ['key', 'id', 'printAs', 'email1', 'phone1', 'status', 'audit.createdDateTime'],
       ...(filters.length > 0 ? { filters } : {}),
       orderBy: [{ 'audit.createdDateTime': 'asc' }],
-      size: 100,
     });
 
     return records.map((record) => ({
@@ -77,3 +66,13 @@ export const newContactTrigger = createTrigger({
     return await pollingHelper.poll(polling, context);
   },
 });
+
+type ContactPollRecord = {
+  key: string;
+  id: string;
+  printAs: string;
+  email1: string | null;
+  phone1: string | null;
+  status: string;
+  'audit.createdDateTime': string;
+};

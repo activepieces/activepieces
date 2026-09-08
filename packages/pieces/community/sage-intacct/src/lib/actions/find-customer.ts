@@ -2,16 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sageIntacctAuth } from '../auth';
 import { IntacctFilter, sageIntacctClient } from '../client';
 
-type CustomerRecord = {
-  key: string;
-  id: string;
-  name: string;
-  status: string;
-  creditLimit: number | null;
-  taxId: string | null;
-  totalDue: number | null;
-};
-
 export const findCustomerAction = createAction({
   auth: sageIntacctAuth,
   name: 'find_customer',
@@ -90,3 +80,13 @@ export const findCustomerAction = createAction({
     return records;
   },
 });
+
+type CustomerRecord = {
+  key: string;
+  id: string;
+  name: string;
+  status: string;
+  creditLimit: number | null;
+  taxId: string | null;
+  totalDue: number | null;
+};
