@@ -383,3 +383,7 @@ export const googleSheetsAuth =[PieceAuth.OAuth2({
 	})];
 
 	
+
+export function escapeDriveQueryLiteral(value: string): string {
+	return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}

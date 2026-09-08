@@ -4,6 +4,7 @@ import { drive as googleDrive, drive_v3 } from '@googleapis/drive';
 import {
 	columnToLabel,
 	createGoogleClient,
+	escapeDriveQueryLiteral,
 	getHeaderRow,
 	googleSheetsAuth,
 	GoogleSheetsAuthValue,
@@ -49,7 +50,7 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 			const q = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed = false'];
 
 			if (searchValue) {
-				q.push(`name contains '${searchValue}'`);
+				q.push(`name contains '${escapeDriveQueryLiteral(searchValue)}'`);
 			}
 
 			let nextPageToken;

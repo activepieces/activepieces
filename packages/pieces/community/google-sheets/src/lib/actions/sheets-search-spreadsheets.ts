@@ -5,7 +5,7 @@ import {
 	AuthenticationType,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { getAccessToken, googleSheetsAuth } from '../common/common';
+import { escapeDriveQueryLiteral, getAccessToken, googleSheetsAuth } from '../common/common';
 import { sheetsSearchSpreadsheetsActionOutputSchema } from '../output-schemas';
 
 export const sheetsSearchSpreadsheets = createAction({
@@ -40,9 +40,9 @@ export const sheetsSearchSpreadsheets = createAction({
 		const queries = ["mimeType='application/vnd.google-apps.spreadsheet'", 'trashed=false'];
 
 		if (propsValue.exact_match) {
-			queries.push(`name = '${searchValue}'`);
+			queries.push(`name = '${escapeDriveQueryLiteral(searchValue)}'`);
 		} else {
-			queries.push(`name contains '${searchValue}'`);
+			queries.push(`name contains '${escapeDriveQueryLiteral(searchValue)}'`);
 		}
 
 		const files = [];
