@@ -238,6 +238,10 @@ const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
 
 async function flowOfRun({ flowRunId, projectId, log }: { flowRunId: string, projectId: string, log: FastifyBaseLogger }): Promise<{ id: string, runId: string } | undefined> {
-    const { data: flowRun } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
-    return isNil(flowRun) ? undefined : { id: flowRun.flowId, runId: flowRun.id }
+    const { data: flowRun, error } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
+    if (isNil(flowRun)) {
+        log.warn({ error, flowRun: { id: flowRunId }, project: { id: projectId } }, '[agentRpc#executePieceTool] Could not name the flow run behind this action; the audit event ships without it and every webhook-flow destination is dropped')
+        return undefined
+    }
+    return { id: flowRun.flowId, runId: flowRun.id }
 }
