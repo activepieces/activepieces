@@ -44,7 +44,6 @@ const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
   const { googleEnabledButNotConfigured } = useSignInMethods();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-  const isCloud = edition === ApEdition.CLOUD;
 
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const ssoDomainVerified =
@@ -108,41 +107,39 @@ const SSOPage = () => {
             </ItemActions>
           </Item>
 
-          {!isCloud && (
-            <Item variant="outline">
-              <ItemMedia variant="icon">
-                <img className="size-6" src={GoogleIcon} alt="icon" />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle>Google</ItemTitle>
-                <ItemDescription>
-                  {t(
-                    "Allow logins through google's single sign-on functionality.",
-                  )}
-                </ItemDescription>
-                {googleEnabledButNotConfigured && (
-                  <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <TriangleAlert className="size-3 shrink-0" />
-                    {t(
-                      'Set AP_GOOGLE_CLIENT_ID and AP_GOOGLE_CLIENT_SECRET on your server to make Google sign-in work.',
-                    )}
-                  </div>
+          <Item variant="outline">
+            <ItemMedia variant="icon">
+              <img className="size-6" src={GoogleIcon} alt="icon" />
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>Google</ItemTitle>
+              <ItemDescription>
+                {t(
+                  "Allow logins through google's single sign-on functionality.",
                 )}
-              </ItemContent>
-              <ItemActions>
-                <SignInMethodSwitch
-                  method="google"
-                  checked={platform.googleAuthEnabled}
-                  onCheckedChange={() =>
-                    toggleGoogleAuth({
-                      googleAuthEnabled: !platform.googleAuthEnabled,
-                    })
-                  }
-                  isPending={isGoogleAuthPending}
-                />
-              </ItemActions>
-            </Item>
-          )}
+              </ItemDescription>
+              {googleEnabledButNotConfigured && edition !== ApEdition.CLOUD && (
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <TriangleAlert className="size-3 shrink-0" />
+                  {t(
+                    'Set AP_GOOGLE_CLIENT_ID and AP_GOOGLE_CLIENT_SECRET on your server to make Google sign-in work.',
+                  )}
+                </div>
+              )}
+            </ItemContent>
+            <ItemActions>
+              <SignInMethodSwitch
+                method="google"
+                checked={platform.googleAuthEnabled}
+                onCheckedChange={() =>
+                  toggleGoogleAuth({
+                    googleAuthEnabled: !platform.googleAuthEnabled,
+                  })
+                }
+                isPending={isGoogleAuthPending}
+              />
+            </ItemActions>
+          </Item>
 
           <Item variant="outline">
             <ItemMedia variant="icon">
