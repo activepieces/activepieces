@@ -232,7 +232,7 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
     'google-vertex-ai': AIProviderName.GOOGLE,
 }
 
-const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
+const OPENAI_CHAT_MODELS = ['gpt-5.6-sol', 'gpt-5.6-sol-pro', 'gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
 const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
@@ -254,6 +254,8 @@ export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, rea
 }
 
 const CHAT_MODEL_LABELS: Record<string, string> = {
+    'gpt-5.6-sol': 'GPT-5.6 Sol',
+    'gpt-5.6-sol-pro': 'GPT-5.6 Sol Pro',
     'gpt-5.5': 'GPT-5.5',
     'gpt-5.4-mini': 'GPT-5.4 mini',
     'gpt-5.4-nano': 'GPT-5.4 nano',
