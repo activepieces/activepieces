@@ -24,6 +24,26 @@ The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses`
 
 Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
 
+#### A custom AI provider is now checked when you save it
+
+The custom OpenAI-compatible provider accepted any text as its base URL and as its API key header name. A config that cannot be used saved without complaint and then failed on every run that used it, with a message from the HTTP layer rather than from Activepieces: a header name of `authorization: bearer` produced *"Headers.append: is an invalid header name"*, and a base URL that will not parse produced *"Invalid URL"*.
+
+Saving now fails with a message naming the field to fix. Nothing changes for a provider whose config already works, and no stored config is altered or re-checked in place.
+
+#### What you need to do
+
+Nothing, unless you have a custom AI provider whose base URL or API key header is malformed. Those already fail at run time. The next time you save that provider you will be told which field is wrong: enter the header name on its own, such as `Authorization`, with its value in the API key field, and give the base URL in full including the scheme, such as `https://api.example.com/v1`.
+
+#### Agent steps on Activepieces AI credits are limited to the models Activepieces offers
+
+The managed Activepieces AI provider used to accept any model id a flow named, because it serves the OpenRouter catalogue unfiltered and nothing checked the value server-side. The model picker only ever offered the three chat tiers, but the API took `modelName` as free text, so a flow, a saved agent, or a direct call to `POST /v1/agents/runs` could run any model OpenRouter publishes on Activepieces' own key.
+
+An agent step, saved agent, or agent run that names a model outside the offered list now fails with a `VALIDATION` error that lists the models available to it, instead of running a model nobody selected. Bring-your-own keys are unaffected: an OpenRouter, OpenAI, Anthropic, or custom provider key can still name any model it pays for.
+
+#### What you need to do
+
+Nothing, if your agent steps use the model picker. If a flow, a saved agent, or an API call names a model id directly while running on Activepieces AI credits, switch it to one of the offered models or to your own provider key. The error message lists the available ids.
+
 #### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
 
 An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.

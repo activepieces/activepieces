@@ -1,17 +1,6 @@
 import { isNil, Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { AiCreditsAutoTopUpState, ConsumableFeatureId, PlanName, PlatformPlanWithOnlyLimits, UnconsumableFeatureId } from '../../management/platform'
-import { PiecesFilterType } from '../../management/project'
-
-export type ProjectPlanLimits = {
-    nickname?: string
-    locked?: boolean
-    pieces?: string[]
-    aiCredits?: number | null
-    piecesFilterType?: PiecesFilterType
-    activeFlowsLimit?: number | null
-}
-
 
 export const AdjustUnconsumableFeatureQuantityParams = z.object({
     featureId: z.enum(UnconsumableFeatureId),

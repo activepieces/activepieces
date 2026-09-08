@@ -233,6 +233,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         tools: mergedTools,
                         allToolNames,
                         tier: config.tier,
+                        modelId: config.modelId,
+                        ...spreadIfDefined('fastModelId', dryRun ? undefined : config.fastModelId),
                         phaseState,
                         abortSignal: abortController.signal,
                         log,
@@ -658,7 +660,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
         tools: dryRun || discoveryOnly ? [] : configuredFlowTools,
-        runFlowTool: ({ toolName, flowId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, toolName, flowId, toolInput, returnsResponse }),
+        runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse }),
         log,
     })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
