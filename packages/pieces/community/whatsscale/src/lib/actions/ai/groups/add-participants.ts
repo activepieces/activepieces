@@ -24,7 +24,7 @@ export const addGroupParticipantsAction = createAction({
     }),
     participants: Property.Array({
       displayName: 'Participants',
-      description: 'Phone numbers with country code (e.g. +31612345678).',
+      description: 'Phone numbers in international format, digits only (e.g. 31649931832 — no +, spaces or dashes).',
       required: true,
     }),
   },

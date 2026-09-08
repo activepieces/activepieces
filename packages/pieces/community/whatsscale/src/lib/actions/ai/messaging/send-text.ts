@@ -25,7 +25,6 @@ export const sendTextManualAction = createAction({
       required: true,
       display: 'cards',
       options: {
-        disabled: false,
         options: [
           { label: 'Contact', value: ChatType.CONTACT, description: 'A phone number with country code', icon: 'user' },
           { label: 'Group', value: ChatType.GROUP, description: 'A WhatsApp group by ID', icon: 'users' },

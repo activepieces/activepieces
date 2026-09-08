@@ -17,7 +17,7 @@ export const createCrmContactAction = createAction({
   props: {
     phone: Property.ShortText({
       displayName: 'Phone Number',
-      description: 'With country code e.g. +31612345678',
+      description: 'The phone number in international format, digits only (e.g. 31649931832 — no +, spaces or dashes).',
       required: true,
     }),
     name: Property.ShortText({
