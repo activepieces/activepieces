@@ -5,6 +5,7 @@ import { callPlivoApi } from './lib/common';
 import { plivoSendSms } from './lib/action/send-sms';
 import { plivoMakeCall } from './lib/action/make-call';
 import { plivoLookupNumber } from './lib/action/lookup-number';
+import { plivoAnswerCall } from './lib/action/answer-call';
 import { plivoNewIncomingSms } from './lib/trigger/new-incoming-sms';
 import { plivoNewIncomingCall } from './lib/trigger/new-incoming-call';
 import { plivoCompletedCall } from './lib/trigger/completed-call';
@@ -51,6 +52,7 @@ export const plivo = createPiece({
     plivoSendSms,
     plivoMakeCall,
     plivoLookupNumber,
+    plivoAnswerCall,
     createCustomApiCallAction({
       baseUrl: (auth) =>
         `https://api.plivo.com/v1/Account/${auth?.username}`,

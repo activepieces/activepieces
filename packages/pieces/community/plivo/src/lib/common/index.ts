@@ -278,9 +278,10 @@ export const provisionWebhook = async (params: {
         );
       }
       appId = currentAppId;
-      // A URL belonging to this same flow is this flow's own leftover, and restoring it
-      // later would point the number back at a disabled flow.
-      if (!existingIdentity) {
+      // Only the exact URL this lifecycle registered is its own leftover. A different URL
+      // for the same flow belongs to its other lifecycle, because a test run and the
+      // published flow share one application, so it has to be restored on release.
+      if (existingUrl !== params.webhookUrl) {
         previousUrl = existingUrl;
         previousMethod =
           (currentApp as Record<string, string | undefined>)[field.method] ?? 'POST';

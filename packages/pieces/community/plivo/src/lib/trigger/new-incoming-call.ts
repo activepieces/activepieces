@@ -22,10 +22,12 @@ Fires the moment a call reaches the selected number, before it is answered, so t
 decides what happens next. While the flow is enabled that number is pointed at this flow
 automatically and it is returned to the application it used before on disable.
 
-Add a **Return Response** step as the last step and set the response type to **Raw** with
-Plivo XML as the body, for example \`<Response><Speak>Hello</Speak></Response>\`. Plivo waits
-for that XML and plays it to the caller. Without it the caller hears nothing and the call
-ends.
+Add the **Answer Call** action as the last step. Plivo waits for the XML that action returns
+and plays it to the caller. Without it the caller hears nothing and the call ends.
+
+Only an action from this piece can answer the call, because Activepieces sends a synchronous
+webhook response solely when the responding action belongs to the same piece as the trigger.
+A generic Return Response step leaves the call unanswered.
 
 Loading sample data captures the call details but cannot answer the caller, because the
 test webhook has no synchronous form.
@@ -55,7 +57,7 @@ export const plivoNewIncomingCall = createTrigger({
   description: 'Triggers when a call comes in, before it is answered',
   aiMetadata: {
     description:
-      'Fires when an inbound voice call reaches a Plivo number whose application Answer URL points at this webhook. The call is still ringing, so the flow can answer it by returning Plivo XML from a Return Response step. Each event carries the caller, the dialled number, the call UUID, and the call direction.',
+      'Fires when an inbound voice call reaches a Plivo number whose application Answer URL points at this webhook. The call is still ringing, so the flow can answer it with the Answer Call action from this same piece, which returns Plivo XML to the caller. Each event carries the caller, the dialled number, the call UUID, and the call direction.',
   },
   type: TriggerStrategy.WEBHOOK,
   props: {
