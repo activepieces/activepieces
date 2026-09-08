@@ -1,7 +1,7 @@
 import { inspect } from 'node:util'
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { onCallService } from '@activepieces/server-utils'
-import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowRunStatus, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
+import { BeginExecuteFlowOperation, EngineOperationType, EngineResponseStatus, ExecuteFlowJobData, ExecutionType, FailedStep, FlowActionType, FlowRunStatus, flowStructureUtil, FlowVersion, ResumeExecuteFlowOperation, RunInternalError, RunInternalErrorSource, WorkerJobType } from '@activepieces/shared'
 import { system, WorkerSystemProp } from '../../config/configs'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
@@ -104,11 +104,16 @@ export const executeFlowJob: JobHandler<ExecuteFlowJobData, FireAndForgetJobResu
                 }
                 if (e.error.code === ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE) {
                     const { pieceName, pieceVersion } = e.error.params
+                    const owner = findStepOwningPiece({ flowVersion, pieceName, pieceVersion })
                     await reportFlowStatus({
                         ctx,
                         data,
                         status: FlowRunStatus.FAILED,
-                        failedStep: { name: flowVersion.trigger.name, displayName: flowVersion.trigger.displayName, message: `Piece "${pieceName}@${pieceVersion}" is no longer available in the piece registry. Republish the piece or upgrade the flow to a newer version.` },
+                        failedStep: {
+                            name: owner.name,
+                            displayName: owner.displayName,
+                            message: `Piece "${pieceName}@${pieceVersion}" is unavailable in this environment (bundle not accessible). Confirm the piece and version are installed and visible in this project, or update the step to a supported version.`,
+                        },
                     })
                     return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
                 }
@@ -160,6 +165,15 @@ function buildFlowOperation(
     }
 }
 
+function findStepOwningPiece({ flowVersion, pieceName, pieceVersion }: FindStepOwningPieceParams): { name: string, displayName: string } {
+    const match = flowStructureUtil.getAllSteps(flowVersion.trigger).find(step => {
+        if (step.type !== FlowActionType.PIECE) return false
+        return step.settings.pieceName === pieceName && step.settings.pieceVersion === pieceVersion
+    })
+    if (match) return { name: match.name, displayName: match.displayName }
+    return { name: flowVersion.trigger.name, displayName: flowVersion.trigger.displayName }
+}
+
 function toInternalError(source: RunInternalErrorSource, error: unknown): RunInternalError {
     const isApError = error instanceof ActivepiecesError
     const base = error instanceof Error
@@ -208,4 +222,10 @@ type ReportFlowStatusParams = {
     status: FlowRunStatus
     internalError?: RunInternalError
     failedStep?: FailedStep
+}
+
+type FindStepOwningPieceParams = {
+    flowVersion: FlowVersion
+    pieceName: string
+    pieceVersion: string
 }
