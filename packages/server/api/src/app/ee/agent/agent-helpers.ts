@@ -1,7 +1,7 @@
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -14,10 +14,10 @@ import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
 import { AgentConversationEntity, AgentConversationWithRelations } from './agent-conversation-entity'
+import { agentModelResolution, FAST_TIER_ID } from './agent-model-resolution'
 import { UserMemoryEntity } from './user-memory-entity'
 
 const STREAMING_STALENESS_TIMEOUT_MS = 90 * 1_000
-const FAST_TIER_ID = 'fast'
 
 // Interactive-eval conversations carry this id prefix (within the 21-char id column) so both the
 // eval endpoints and the regular chat path can tell them apart from real user conversations.
@@ -145,69 +145,6 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     }
 }
 
-function findTier({ tierId }: { tierId: string | null }) {
-    return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
-}
-
-function resolveTier({ tierId }: { tierId: string | null }) {
-    return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
-}
-
-// An admin-listed catalog is the whole truth about what a key exposes, so an empty one means the key
-// serves no text model - not that we may fall back to a curated id it was never configured for.
-function manualTextModelCatalog({ config }: { config?: AIProviderConfig }): string[] | undefined {
-    if (isNil(config) || !('models' in config)) {
-        return undefined
-    }
-    return config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
-}
-
-function pickAllowedModel({ provider, selectedModel, candidates, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, candidates: string[], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
-    const allowed = modelScope === 'selected' && !isNil(modelIds)
-        ? candidates.filter((candidate) => modelIds.includes(candidate))
-        : candidates
-    if (allowed.length === 0) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: { entityId: provider, entityType: AI_PROVIDER_ENTITY_TYPES.provider },
-        }, 'this AI provider key allows no text model a chat turn can run on')
-    }
-    return selectedModel && allowed.includes(selectedModel) ? selectedModel : allowed[0]
-}
-
-function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
-    const catalog = manualTextModelCatalog({ config })
-    if (!isNil(catalog)) {
-        return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
-    }
-    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
-    const tierModelId = resolveTier({ tierId: selectedModel }).modelId
-    if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
-        return tierModelId
-    }
-    const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
-    const candidates = isNil(curatedModels) ? [nativeModelId] : curatedModels.map((model) => model.id)
-    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelId
-    return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
-}
-
-// Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
-// chat provider no longer resolves, so fall back to the stored selection — but only when it is one
-// of our own ids, never echoing an arbitrary stored string out to the analytics sink.
-function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIProviderName | null, selectedModel: string | null }): string | null {
-    if (isNil(selectedModel)) {
-        return null
-    }
-    if (!isNil(provider)) {
-        return resolveModelIdForProvider({ provider, selectedModel })
-    }
-    const tier = findTier({ tierId: selectedModel })
-    if (!isNil(tier)) {
-        return tier.modelId
-    }
-    return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
-}
-
 function reportKeyOutcome({ platformId, providerId, log }: { platformId: string, providerId: string, log: FastifyBaseLogger }): ProviderOutcomeReporter {
     return async (signal) => {
         const { error } = await tryCatch(() => aiProviderService(log).recordKeyObservation({ platformId, providerId, signal }))
@@ -219,7 +156,7 @@ function reportKeyOutcome({ platformId, providerId, log }: { platformId: string,
 
 async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
+    const modelId = agentModelResolution.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
     return {
         model: agentAiUtils.createChatModel({
             provider: providerConfig.provider,
@@ -237,9 +174,6 @@ async function resolveFastModel({ platformId, provider, providerConfigId, scope,
     return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
 }
 
-function resolveFastModelId({ provider, config, modelScope, modelIds }: { provider: AIProviderName, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
-    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
-}
 
 async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
@@ -381,10 +315,7 @@ export const agentHelpers = {
     getUserProjects,
     resolveChatProvider,
     assertRunProviderConfigured,
-    resolveTier,
-    resolveModelIdForProvider,
-    resolveModelIdForAnalytics,
-    resolveFastModelId,
+    ...agentModelResolution,
     resolveFastModel,
     resolveTierModel,
     resolveRunProvider,

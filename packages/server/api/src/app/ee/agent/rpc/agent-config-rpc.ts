@@ -124,7 +124,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const namesItsOwnModel = requestedSource === AgentRunSource.FLOW_STEP || requestedSource === AgentRunSource.AGENT
         const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
-            ? modelName
+            ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
             : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
 
         // Inject an inventory of the project's existing connections into context so the agent

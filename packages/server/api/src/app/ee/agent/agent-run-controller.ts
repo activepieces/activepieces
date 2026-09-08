@@ -1,6 +1,6 @@
 import { flowStructureUtil } from '@activepieces/core-execution'
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, FlowVersionState, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -9,7 +9,8 @@ import { securityAccess } from '../../core/security/authorization/fastify-securi
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { extractMcpTriggerInput, mcpPropertyToZod } from '../../mcp/mcp-server-builder'
+import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
+import { mcpToolInput } from '../../mcp/mcp-tool-input'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
@@ -154,34 +155,32 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
         return []
     }
     const externalFlowIds = unique(flowToolRequests.map((tool) => tool.externalFlowId))
-    const { data: matchedFlows } = await flowService(log).list({
+    const listFlows = (versionState: FlowVersionState) => flowService(log).list({
         projectIds: [projectId],
         externalIds: externalFlowIds,
         cursorRequest: null,
         includeTriggerSource: false,
+        versionState,
     })
-    const flowsByExternalId = new Map(matchedFlows.map((flow) => [flow.externalId, flow]))
-    const missing = flowToolRequests.filter((tool) => !flowsByExternalId.has(tool.externalFlowId))
+    const [published, drafts] = await Promise.all([listFlows(FlowVersionState.LOCKED), listFlows(FlowVersionState.DRAFT)])
+    const publishedByExternalId = new Map(published.data.map((flow) => [flow.externalId, flow]))
+    const runnableByExternalId = new Map(drafts.data.map((flow) => [flow.externalId, publishedByExternalId.get(flow.externalId) ?? flow]))
+    const missing = flowToolRequests.filter((tool) => !runnableByExternalId.has(tool.externalFlowId))
     if (missing.length > 0) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
             params: { message: `An agent step cannot use flow tool(s) ${unique(missing.map((tool) => tool.toolName)).join(', ')}: the referenced flow was not found in this project` },
         })
     }
-    const runnableByExternalId = new Map(await Promise.all(matchedFlows.map(async (flow) => {
-        const runnable = isNil(flow.publishedVersionId) || flow.publishedVersionId === flow.version.id
-            ? flow
-            : await flowService(log).getOnePopulatedOrThrow({ id: flow.id, projectId, versionId: flow.publishedVersionId })
-        return [flow.externalId, runnable] as const
-    })))
     return flowToolRequests.map((toolRequest) => {
         const flow = runnableByExternalId.get(toolRequest.externalFlowId)
         assertNotNullOrUndefined(flow, `flow for tool ${toolRequest.toolName}`)
         const { toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
-        const inputShape = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
+        const inputShape = mcpToolInput.modelInputShape({ properties: mcpInputs })
         return {
             toolName: toolRequest.toolName,
             flowId: flow.id,
+            flowVersionId: flow.version.id,
             description: toolDescription.length > 0 ? toolDescription : `Run the flow "${flow.version.displayName}"`,
             inputSchema: z.toJSONSchema(z.object(inputShape)),
             returnsResponse,

@@ -219,6 +219,7 @@ export type ExecuteAgentToolRequest = {
 
 export type ExecutePieceToolRequest = {
     conversationId: string
+    flowRunId?: string
     toolName: string
     instruction: string
     provider?: AIProviderName
@@ -250,6 +251,7 @@ export type ExecuteFlowToolRequest = {
     conversationId: string
     toolName: string
     flowId: string
+    flowVersionId?: string
     toolInput: Record<string, unknown>
     returnsResponse: boolean
 }

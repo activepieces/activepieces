@@ -197,7 +197,7 @@ const jsonSchema7Shape = z.custom<JSONSchema7>()
 
 export function createConfiguredFlowTools({ tools, runFlowTool, log }: {
     tools: ResolvedAgentFlowTool[]
-    runFlowTool: (input: { toolName: string, flowId: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
+    runFlowTool: (input: { toolName: string, flowId: string, flowVersionId?: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
     log: FastifyBaseLogger
 }): ToolSet {
     let callsMade = 0
@@ -212,7 +212,7 @@ export function createConfiguredFlowTools({ tools, runFlowTool, log }: {
                     log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredFlowTool] Refused, this run has already run enough actions')
                     return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
                 }
-                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, returnsResponse: configured.returnsResponse, toolInput }))
+                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, ...spreadIfDefined('flowVersionId', configured.flowVersionId), returnsResponse: configured.returnsResponse, toolInput }))
                 if (error) {
                     const reachedTheServer = String(error).includes('handler threw')
                     log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')

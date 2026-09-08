@@ -3,11 +3,8 @@ import { distributedStore } from '../database/redis-connections'
 const KEY_PREFIX = 'mcp-project-selection:'
 const TTL_SECONDS = 24 * 60 * 60
 
-function resolveKey(scope: ProjectSelectionScope): string {
-    if ('conversationId' in scope) {
-        return `${KEY_PREFIX}conv:${scope.conversationId}`
-    }
-    return `${KEY_PREFIX}user:${scope.platformId}:${scope.userId}`
+function resolveKey({ platformId, userId, clientId }: ProjectSelectionScope): string {
+    return `${KEY_PREFIX}client:${platformId}:${userId}:${clientId}`
 }
 
 export const mcpProjectSelection = {
@@ -22,6 +19,8 @@ export const mcpProjectSelection = {
     },
 }
 
-export type ProjectSelectionScope =
-    | { conversationId: string }
-    | { platformId: string, userId: string }
+export type ProjectSelectionScope = {
+    platformId: string
+    userId: string
+    clientId: string
+}

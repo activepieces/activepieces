@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { ApplicationEventName, EventDestinationScope, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, WorkerJobType } from '@activepieces/shared'
+import { AgentActionExecutedEvent, AgentRunSource, ApplicationEventName, EventDestinationScope, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { applicationEvents } from '../../../../src/app/helper/application-events'
@@ -43,6 +43,21 @@ const buildFlowEvent = (action: FlowEventAction, params: { platformId: string, p
         },
     }
 }
+
+const buildAgentActionEvent = ({ platformId, projectId, flow }: { platformId: string, projectId?: string, flow?: { id: string, runId: string } }): AgentActionExecutedEvent => ({
+    ...buildEnvelope({ platformId, projectId }),
+    action: ApplicationEventName.AGENT_ACTION_EXECUTED,
+    data: {
+        source: AgentRunSource.FLOW_STEP,
+        ...(flow ? { flow } : {}),
+        action: {
+            pieceName: '@activepieces/piece-gmail',
+            pieceDisplayName: 'Gmail',
+            actionName: 'send_email',
+            displayName: 'Send Email',
+        },
+    },
+})
 
 const buildFlowRunEvent = (params: { platformId: string, projectId?: string, flowId?: string, status?: 'SUCCEEDED' | 'FAILED' | 'RUNNING' }): FlowRunEvent => {
     return {
@@ -607,6 +622,90 @@ describe('Event Destination Trigger', () => {
                 data: expect.objectContaining({ webhookUrl: userDestination.url }),
             }),
         )
+    })
+
+    it('should keep every webhook-flow destination when the flow that ran an agent action is not wired as one', async () => {
+        const ctx = await createTestContext(app)
+        const anotherFlowDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://other-instance.example.com/api/v1/webhooks/${apId()}`,
+        })
+        const externalDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://hooks.slack.example.com/services/abc',
+        })
+        await db.save('event_destination', [anotherFlowDestination, externalDestination])
+
+        await eventDestinationService(app.log).trigger({
+            event: buildAgentActionEvent({ platformId: ctx.platform.id, flow: { id: apId(), runId: apId() } }),
+        })
+
+        const dispatchedUrls = addSpy.mock.calls.map(([job]) => job.data.webhookUrl)
+        expect(dispatchedUrls.sort()).toEqual([anotherFlowDestination.url, externalDestination.url].sort())
+    })
+
+    it('should drop both webhook-flow destinations when two flows running agent actions are mutually wired (A<->B cycle), and still fire externals', async () => {
+        const ctx = await createTestContext(app)
+        const flowAId = apId()
+        const flowBId = apId()
+        const flowADestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://other-instance.example.com/api/v1/webhooks/${flowAId}`,
+        })
+        const flowBDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://other-instance.example.com/api/v1/webhooks/${flowBId}`,
+        })
+        const externalDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://hooks.slack.example.com/services/abc',
+        })
+        await db.save('event_destination', [flowADestination, flowBDestination, externalDestination])
+
+        await eventDestinationService(app.log).trigger({
+            event: buildAgentActionEvent({ platformId: ctx.platform.id, flow: { id: flowBId, runId: apId() } }),
+        })
+
+        expect(addSpy).toHaveBeenCalledTimes(1)
+        expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({ webhookUrl: externalDestination.url }),
+        }))
+    })
+
+    it('should drop every webhook-flow destination when an agent action cannot name the flow it ran in', async () => {
+        const ctx = await createTestContext(app)
+        const webhookFlowDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
+            scope: EventDestinationScope.PLATFORM,
+            url: `https://other-instance.example.com/api/v1/webhooks/${apId()}`,
+        })
+        const externalDestination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.AGENT_ACTION_EXECUTED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://hooks.slack.example.com/services/abc',
+        })
+        await db.save('event_destination', [webhookFlowDestination, externalDestination])
+
+        await eventDestinationService(app.log).trigger({
+            event: buildAgentActionEvent({ platformId: ctx.platform.id }),
+        })
+
+        expect(addSpy).toHaveBeenCalledTimes(1)
+        expect(addSpy).toHaveBeenCalledWith(expect.objectContaining({
+            data: expect.objectContaining({ webhookUrl: externalDestination.url }),
+        }))
     })
 
     it('should NOT skip a same-host destination for non flow-run events (e.g. FLOW_CREATED)', async () => {

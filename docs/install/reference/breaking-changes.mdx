@@ -24,6 +24,26 @@ The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses`
 
 Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
 
+#### A custom AI provider is now checked when you save it
+
+The custom OpenAI-compatible provider accepted any text as its base URL and as its API key header name. A config that cannot be used saved without complaint and then failed on every run that used it, with a message from the HTTP layer rather than from Activepieces: a header name of `authorization: bearer` produced *"Headers.append: is an invalid header name"*, and a base URL that will not parse produced *"Invalid URL"*.
+
+Saving now fails with a message naming the field to fix. Nothing changes for a provider whose config already works, and no stored config is altered or re-checked in place.
+
+#### What you need to do
+
+Nothing, unless you have a custom AI provider whose base URL or API key header is malformed. Those already fail at run time. The next time you save that provider you will be told which field is wrong: enter the header name on its own, such as `Authorization`, with its value in the API key field, and give the base URL in full including the scheme, such as `https://api.example.com/v1`.
+
+#### Agent steps on Activepieces AI credits are limited to the models Activepieces offers
+
+The managed Activepieces AI provider used to accept any model id a flow named, because it serves the OpenRouter catalogue unfiltered and nothing checked the value server-side. The model picker only ever offered the three chat tiers, but the API took `modelName` as free text, so a flow, a saved agent, or a direct call to `POST /v1/agents/runs` could run any model OpenRouter publishes on Activepieces' own key.
+
+An agent step, saved agent, or agent run that names a model outside the offered list now fails with a `VALIDATION` error that lists the models available to it, instead of running a model nobody selected. Bring-your-own keys are unaffected: an OpenRouter, OpenAI, Anthropic, or custom provider key can still name any model it pays for.
+
+#### What you need to do
+
+Nothing, if your agent steps use the model picker. If a flow, a saved agent, or an API call names a model id directly while running on Activepieces AI credits, switch it to one of the offered models or to your own provider key. The error message lists the available ids.
+
 #### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
 
 An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
@@ -232,6 +252,33 @@ A code found to be expired is thrown away when it is next presented, rather than
 Nothing, and no new configuration: the key is derived from a secret your instance already has. Codes written by an older build are recorded as such and keep working until they expire, so a sign-in already underway when you deploy still completes, an email verification link still opens, and a rolling deploy where both builds are serving at once behaves the same.
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
+
+#### WhatsScale media actions take a file input, capping media at the instance file-size limit
+
+The 17 WhatsScale actions that send media — image, video, document and audio sends across the contact, group, channel and CRM-contact variants, plus the image and video Status posts — used to take a plain text URL and hand it straight to WhatsScale, which fetched it itself. Those fields are now file inputs: the engine resolves whatever you pass (a URL, or a file from a previous step) into a file, stores it on your instance, and gives WhatsScale that copy to fetch.
+
+The field keys are unchanged (`imageUrl`, `videoUrl`, `documentUrl`, `audioUrl`), so existing flows keep their configured value and a stored URL still works. Two behaviour changes come with the new path:
+
+- **Media is now capped by `AP_MAX_FILE_SIZE_MB` — 10 MB on Cloud, 25 MB by default self-hosted.** The file travels through your instance instead of going vendor-to-vendor, so a URL pointing at something larger than that limit now fails where it previously sent. This mostly affects video and document sends. Streaming does not lift the ceiling: writing into storage is counted against the cap either way, and producing a URL for WhatsScale to fetch requires writing into storage. See [Limits](/install/reference/limits).
+- **The URL WhatsScale fetches is now one your instance serves.** It is a signed, expiring link on your public API URL. An instance that is not reachable from the internet cannot hand WhatsScale a URL it can fetch, so media sends need a publicly resolvable `AP_FRONTEND_URL` on self-hosted installs.
+
+#### What you need to do
+
+Nothing if your media is comfortably under the cap and your instance is reachable from the internet. On Cloud that cap is 10 MB, so check any flow that forwards video or large documents.
+
+If you send files larger than the cap on a self-hosted install, raise `AP_MAX_FILE_SIZE_MB` to cover the largest media you send and redeploy. On Cloud the 10 MB cap is not configurable. If your instance is not publicly reachable, keep media sends on a host that is, or leave these actions unused; there is no way for WhatsScale to fetch a file from a private address.
+
+#### WhatsScale "Add a Tag to a CRM Contact" now takes a list of tags
+
+The two add-tag actions ("Add Tags to a CRM Contact" and its By-ID twin) accepted a single tag in a text field named `tag`. They now accept a list, in a field named `tags`, and send one request per tag so existing tags are kept.
+
+Because the field was renamed, **a step configured before this release loses its tag value** and shows "Tags" as an empty required field. The field could not keep its old name: a stored single string does not validate as a list.
+
+Adding several tags is **not atomic** — each tag is its own request, so a failure part-way through leaves the earlier tags applied. Re-running is safe: adding a tag a contact already has converges on the same set.
+
+#### What you need to do
+
+Re-enter the tag on any flow that uses either add-tag action, as a list entry rather than free text. The removal actions are unchanged and still take one tag at a time.
 
 #### Front's Attachments field takes files instead of URLs
 

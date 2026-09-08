@@ -289,6 +289,22 @@ function suggestToolName(sourceName: string): string {
     return toValidToolName(sanitizeToolName(sourceName))
 }
 
+function isProviderSafeIdentifier(name: string): boolean {
+    return PROVIDER_TOOL_NAME_PATTERN.test(name)
+}
+
+function toProviderSafeIdentifier({ name, fallback }: { name: string, fallback: string }): string {
+    if (isProviderSafeIdentifier(name)) {
+        return name
+    }
+    const sanitized = sanitizeToolName(name).slice(0, MAX_IDENTIFIER_LENGTH)
+    if (sanitized.length === 0) {
+        return fallback
+    }
+    const seeded = /^[a-z_]/.test(sanitized) ? sanitized : `_${sanitized}`
+    return isProviderSafeIdentifier(seeded) ? seeded : fallback
+}
+
 function createPieceToolName(pieceName: string, actionName: string): string {
     const PIECE_NAME_PREFIX = 'piece-'
     const idx = pieceName.indexOf(PIECE_NAME_PREFIX)
@@ -298,9 +314,10 @@ function createPieceToolName(pieceName: string, actionName: string): string {
 }
 
 const MAX_PREFIX_LENGTH = 53
+const MAX_IDENTIFIER_LENGTH = 64
 const PROVIDER_TOOL_NAME_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$/
 
-export const mcpToolNameUtils = { createToolName, createPieceToolName, toValidToolName, suggestToolName }
+export const mcpToolNameUtils = { createToolName, createPieceToolName, toValidToolName, suggestToolName, isProviderSafeIdentifier, toProviderSafeIdentifier }
 
 export type ToolCallBase = z.infer<typeof toolCallBaseSchema>
 

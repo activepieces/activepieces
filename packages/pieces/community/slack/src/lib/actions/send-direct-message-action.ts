@@ -4,7 +4,6 @@ import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import {
   profilePicture,
-  text,
   userId,
   username,
   blocks,
@@ -27,7 +26,12 @@ export const slackSendDirectMessageAction = createAction({
   outputSchema: chatPostMessageOutputSchema,
   props: {
     userId: userId(true),
-    text,
+    text: Property.LongText({
+      displayName: 'Message',
+      description:
+        'The text of your message. Renders as a section above any Block Kit blocks, and is used as the notification fallback. Leave empty to send blocks only.',
+      required: false,
+    }),
     username,
     profilePicture,
     iconEmoji,
@@ -45,10 +49,15 @@ export const slackSendDirectMessageAction = createAction({
     const { text, userId, blocks, unfurlLinks, mentionOriginFlow } = context.propsValue;
 
     assertNotNullOrUndefined(token, 'token');
-    assertNotNullOrUndefined(text, 'text');
     assertNotNullOrUndefined(userId, 'userId');
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(text)]
+    const blockList: (KnownBlock | Block)[] = [];
+    if (text) {
+      blockList.push(...textToSectionBlocks(text));
+    }
 
     if(blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
@@ -60,7 +69,7 @@ export const slackSendDirectMessageAction = createAction({
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       username: context.propsValue.username,
       profilePicture: context.propsValue.profilePicture,
       iconEmoji: context.propsValue.iconEmoji,

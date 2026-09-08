@@ -8,19 +8,21 @@ import { agentHelpers } from '.././agent-helpers'
 import { executeCrossProjectTool } from '.././tools/agent-tools'
 import { pieceToolRunner } from '.././tools/piece-tool-runner'
 import { flowService } from '../../../flows/flow/flow.service'
+import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
-import { runFlowAsTool } from '../../../mcp/mcp-server-builder'
+import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
-import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent } from './rpc-shared'
+import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent, recordAgentAction } from './rpc-shared'
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const { projectId, platformId } = configuredRun
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: run, error: runError } = await tryCatch(async () => {
-            const { resolvedInput, actionDisplayName } = await pieceToolRunner.resolveInput({
+            const { resolvedInput, actionDisplayName, pieceDisplayName, classification } = await pieceToolRunner.resolveInput({
                 model,
                 piece,
                 instruction: input.instruction,
@@ -31,13 +33,25 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                 ...spreadIfDefined('connectionExternalId', connection.externalId),
             })
             const { result } = await pieceToolRunner.runResolved({ piece, resolvedInput, projectId, log })
-            return { result, resolvedInput: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName }
+            return { result, resolvedInput: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName, pieceDisplayName, classification }
         })
         if (!isNil(runError) || isNil(run)) {
             log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
             throw runError
         }
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: run.resolvedInput }, connection: { externalId: connection.externalId ?? null }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        const flow = isNil(input.flowRunId) ? undefined : await flowOfRun({ flowRunId: input.flowRunId, projectId, log })
+        recordAgentAction({
+            run: configuredRun,
+            conversationId: input.conversationId,
+            ...spreadIfDefined('flow', flow),
+            piece,
+            resolvedInput: run.resolvedInput,
+            names: { action: run.actionDisplayName, piece: run.pieceDisplayName },
+            ...spreadIfDefined('classification', run.classification),
+            connection,
+            log,
+        })
         return { result: run.result, resolvedInput: run.resolvedInput, actionDisplayName: run.actionDisplayName, ...spreadIfDefined('connectionLabel', connection.label) }
     },
 
@@ -80,11 +94,12 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a flow tool' } })
         }
-        const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: conversation.projectId })
+        const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: conversation.projectId, ...spreadIfDefined('versionId', input.flowVersionId) })
         if (isNil(flow)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That flow is not in this run\'s project' } })
         }
-        const result = await runFlowAsTool({ flowId: flow.id, flowDisplayName: flow.version.displayName, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
+        const advertised = isNil(input.flowVersionId) ? await resolveRunnableFlow({ flow, projectId: conversation.projectId, log }) : flow
+        const result = await runFlowAsTool({ flow: advertised, properties: extractMcpTriggerInput(advertised).mcpInputs, payload: input.toolInput, returnsResponse: input.returnsResponse, log })
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id } }, '[agentRpc#executeFlowTool] Ran a flow tool')
         return { result }
     },
@@ -221,3 +236,12 @@ const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_age
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
+
+async function flowOfRun({ flowRunId, projectId, log }: { flowRunId: string, projectId: string, log: FastifyBaseLogger }): Promise<{ id: string, runId: string } | undefined> {
+    const { data: flowRun, error } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
+    if (isNil(flowRun)) {
+        log.warn({ error, flowRun: { id: flowRunId }, project: { id: projectId } }, '[agentRpc#executePieceTool] Could not name the flow run behind this action; the audit event ships without it and every webhook-flow destination is dropped')
+        return undefined
+    }
+    return { id: flowRun.flowId, runId: flowRun.id }
+}

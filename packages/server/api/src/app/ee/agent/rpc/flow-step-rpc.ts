@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import { AgentRunSource, ResumeFlowStepRequest, UpdateFlowStepProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentHelpers } from '.././agent-helpers'
@@ -27,14 +27,25 @@ export const flowStepRpc = (log: FastifyBaseLogger) => ({
         if (conversation?.source !== AgentRunSource.FLOW_STEP || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'Only a flow-step run can resume a flow' } })
         }
-        const flowRun = await flowRunService(log).getOneOrThrow({ id: input.flowRunId, projectId: conversation.projectId })
-        const { stale } = await resumeService(log).resumeFromWaitpoint({
+        const resumeFields = { conversation: { id: input.conversationId }, flowRun: { id: input.flowRunId }, waitpoint: { id: input.waitpointId } }
+        const flowRun = await flowRunService(log).getOne({ id: input.flowRunId, projectId: conversation.projectId })
+        if (isNil(flowRun)) {
+            log.warn(resumeFields, '[agentRpc#resumeFlowStep] That flow run is gone from this project, so there is nothing left to resume')
+            return
+        }
+        const { data: resumed, error } = await tryCatch(() => resumeService(log).resumeFromWaitpoint({
             flowRunId: flowRun.id,
             waitpointId: input.waitpointId,
             resumePayload: { body: sanitizeObjectForPostgresql(input.output), headers: {}, queryParams: {} },
-        })
-        const resumeFields = { conversation: { id: input.conversationId }, flowRun: { id: flowRun.id }, waitpoint: { id: input.waitpointId } }
-        if (stale) {
+        }))
+        if (!isNil(error)) {
+            if (!isFlowRunGone(error)) {
+                throw error
+            }
+            log.warn(resumeFields, '[agentRpc#resumeFlowStep] That flow run went away while resuming, so there is nothing left to resume')
+            return
+        }
+        if (isNil(resumed) || resumed.stale) {
             log.warn(resumeFields, '[agentRpc#resumeFlowStep] Nothing to resume, so the flow keeps waiting unless another attempt already released it')
             return
         }
@@ -42,3 +53,11 @@ export const flowStepRpc = (log: FastifyBaseLogger) => ({
     },
 
 })
+
+function isFlowRunGone(error: unknown): boolean {
+    return error instanceof ActivepiecesError
+        && error.error.code === ErrorCode.ENTITY_NOT_FOUND
+        && error.error.params.entityType === FLOW_RUN_ENTITY_TYPE
+}
+
+const FLOW_RUN_ENTITY_TYPE = 'flow_run'

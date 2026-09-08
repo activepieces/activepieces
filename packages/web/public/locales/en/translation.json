@@ -31,6 +31,13 @@
   "Instructions, tools and model come from the agent. Editing the agent changes what this step runs.": "Instructions, tools and model come from the agent. Editing the agent changes what this step runs.",
   "This agent has never been published, and a flow runs the published version.": "This agent has never been published, and a flow runs the published version.",
   "This agent is not in this project, so the step cannot run.": "This agent is not in this project, so the step cannot run.",
+  "Agent action": "Agent action",
+  "The agent page": "The agent page",
+  "The agent builder": "The agent builder",
+  "Ran from": "Ran from",
+  "A flow step": "A flow step",
+  "Agent ran an action": "Agent ran an action",
+  "Fires when an agent runs a configured action that is not a read.": "Fires when an agent runs a configured action that is not a read.",
   "Agents need an AI provider": "Agents need an AI provider",
   "Add a provider once, then I can build agents from a sentence.": "Add a provider once, then I can build agents from a sentence.",
   "agentStillUsedNamed": "{count, plural, =1 {Still used by {flows}. Remove the agent from that flow first.} other {Still used by # published flows: {flows}. Remove the agent from each one first.}}",
@@ -2854,5 +2861,6 @@
   "Flows and the builder": "Flows and the builder",
   "See the events we track": "See the events we track",
   "Events we track": "Events we track",
-  "Read the telemetry docs": "Read the telemetry docs"
+  "Read the telemetry docs": "Read the telemetry docs",
+  "The connected app reported": "The connected app reported"
 }
