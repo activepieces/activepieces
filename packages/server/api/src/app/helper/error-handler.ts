@@ -111,6 +111,7 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.INVALID_GIT_CREDENTIALS]: StatusCodes.BAD_REQUEST,
     [ErrorCode.INVALID_OTP]: StatusCodes.GONE,
     [ErrorCode.VALIDATION]: StatusCodes.CONFLICT,
+    [ErrorCode.FLOW_VERSION_CONFLICT]: StatusCodes.PRECONDITION_FAILED,
     [ErrorCode.FILE_TOO_LARGE]: StatusCodes.REQUEST_TOO_LONG,
     [ErrorCode.INVITATION_ONLY_SIGN_UP]: StatusCodes.FORBIDDEN,
     [ErrorCode.AUTHENTICATION]: StatusCodes.UNAUTHORIZED,

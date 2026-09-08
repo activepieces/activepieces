@@ -1,4 +1,4 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { ErrorCode, SeekPage } from '@activepieces/core-utils';
 import {
   GetFlowTemplateRequestQuery,
   CreateFlowRequest,
@@ -11,7 +11,9 @@ import {
   PopulatedFlow,
   SharedTemplate,
   CountFlowsRequest,
+  FLOW_VERSION_TOKEN_HEADER,
 } from '@activepieces/shared';
+import { HttpStatusCode } from 'axios';
 import { toast } from 'sonner';
 
 import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
@@ -35,10 +37,21 @@ export const flowsApi = {
     flowId: string,
     request: FlowOperationRequest,
     showErrorToast = false,
+    baseVersionToken?: string,
   ) {
     return api
-      .post<PopulatedFlow>(`/v1/flows/${flowId}`, request)
+      .post<PopulatedFlow>(
+        `/v1/flows/${flowId}`,
+        request,
+        undefined,
+        baseVersionToken
+          ? { [FLOW_VERSION_TOKEN_HEADER]: baseVersionToken }
+          : undefined,
+      )
       .catch((error) => {
+        if (isFlowVersionConflict(error)) {
+          throw error;
+        }
         if (showErrorToast) {
           toast.error(UNSAVED_CHANGES_TOAST.title, {
             description: UNSAVED_CHANGES_TOAST.description,
@@ -85,3 +98,12 @@ export const flowsApi = {
     return api.get<number>('/v1/flows/count', query);
   },
 };
+
+export function isFlowVersionConflict(error: unknown): boolean {
+  return (
+    api.isError(error) &&
+    error.response?.status === HttpStatusCode.PreconditionFailed &&
+    (error.response?.data as { code?: string })?.code ===
+      ErrorCode.FLOW_VERSION_CONFLICT
+  );
+}
