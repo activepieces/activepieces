@@ -135,10 +135,16 @@ export const slackSendMessageToMultipleUsersAction = createAction({
       return { recipient, blockList };
     });
 
+    const sender = {
+      username: context.propsValue.username,
+      profilePicture: context.propsValue.profilePicture,
+      iconEmoji: context.propsValue.iconEmoji,
+    };
+
     const outcomes = await slackConcurrency.mapWithConcurrency({
       items: payloads,
       limit,
-      handler: async ({ item }) => sendOne({ ...item, token, unfurlLinks }),
+      handler: async ({ item }) => sendOne({ ...item, token, unfurlLinks, sender }),
     });
 
     const sent = outcomes.filter((outcome): outcome is SentOutcome => outcome.status === 'sent');
@@ -184,16 +190,21 @@ async function sendOne({
   blockList,
   token,
   unfurlLinks,
+  sender,
 }: {
   recipient: BulkDmRecipient;
   blockList: (KnownBlock | Block)[];
   token: string;
   unfurlLinks?: boolean;
+  sender: BulkDmSender;
 }): Promise<SendOutcome> {
   try {
     const response = await slackSendMessage({
       token,
       text: recipient.text || undefined,
+      username: sender.username,
+      profilePicture: sender.profilePicture,
+      iconEmoji: sender.iconEmoji,
       conversationId: recipient.userId,
       blocks: blockList,
       unfurlLinks,
@@ -259,6 +270,12 @@ const AUTH_FAILURE_CODES = [
   'no_permission',
   'ekm_access_denied',
 ];
+
+type BulkDmSender = {
+  username?: string;
+  profilePicture?: string;
+  iconEmoji?: string;
+};
 
 type SentOutcome = {
   status: 'sent';

@@ -1,7 +1,14 @@
 import { AppConnectionType } from '@activepieces/pieces-framework';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-type PostArgs = { channel?: unknown; text?: unknown; blocks?: unknown };
+type PostArgs = {
+  channel?: unknown;
+  text?: unknown;
+  blocks?: unknown;
+  username?: unknown;
+  icon_url?: unknown;
+  icon_emoji?: unknown;
+};
 
 const calls: PostArgs[] = [];
 const behaviours = new Map<string, () => never>();
@@ -280,5 +287,33 @@ describe('the SDK client is bounded, not left on its defaults', () => {
     const worstCaseMs = timeoutMs * (retries + 1) + maxTimeoutMs * retries;
 
     expect(worstCaseMs).toBeLessThan(60_000);
+  });
+});
+
+describe('sender customization reaches Slack', () => {
+  it('forwards username, profile picture and icon emoji to every recipient', async () => {
+    await runAction({
+      mode: 'same_message',
+      recipients: { userIds: ['U00000000A', 'U00000000B'], text: 'hi' },
+      username: 'Standup Bot',
+      profilePicture: 'https://example.com/avatar.png',
+      iconEmoji: ':robot_face:',
+      concurrency: 2,
+    });
+
+    expect(calls).toHaveLength(2);
+    for (const call of calls) {
+      expect(call.username).toBe('Standup Bot');
+      expect(call.icon_url).toBe('https://example.com/avatar.png');
+      expect(call.icon_emoji).toBe(':robot_face:');
+    }
+  });
+
+  it('sends no sender overrides when the props are left empty', async () => {
+    await runAction(sameMessageProps(['U00000000A']));
+
+    expect(calls[0].username).toBeUndefined();
+    expect(calls[0].icon_url).toBeUndefined();
+    expect(calls[0].icon_emoji).toBeUndefined();
   });
 });
