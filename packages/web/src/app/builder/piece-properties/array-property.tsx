@@ -73,15 +73,7 @@ const ArrayPieceProperty = React.memo(
     const form = useFormContext();
 
     const [fields, setFields] = useState<ArrayField[]>(() => {
-      const formValues = form.getValues(inputName);
-      if (formValues) {
-        return formValues.map((value: string | Record<string, unknown>) => ({
-          id: nanoid(),
-          value,
-        }));
-      } else {
-        return [];
-      }
+      return toArrayFields(form.getValues(inputName));
     });
 
     const updateFormValue = (newFields: ArrayField[]) => {
@@ -97,12 +89,8 @@ const ArrayPieceProperty = React.memo(
       const value = arrayProperty.properties
         ? getDefaultValuesForInputs(arrayProperty.properties)
         : '';
-      const formValues = form.getValues(inputName) || [];
       const newFields = [
-        ...formValues.map((value: string | Record<string, unknown>) => ({
-          id: nanoid(),
-          value,
-        })),
+        ...toArrayFields(form.getValues(inputName)),
         { id: nanoid(), value },
       ];
 
@@ -111,12 +99,7 @@ const ArrayPieceProperty = React.memo(
     };
 
     const remove = (index: number) => {
-      const currentFields: ArrayField[] = form
-        .getValues(inputName)
-        .map((value: string | Record<string, unknown>) => ({
-          id: nanoid(),
-          value,
-        }));
+      const currentFields = toArrayFields(form.getValues(inputName));
       const newFields = currentFields.filter((_, i) => i !== index);
       setFields(newFields);
       updateFormValue(newFields);
@@ -216,4 +199,15 @@ const ArrayPieceProperty = React.memo(
 );
 
 ArrayPieceProperty.displayName = 'ArrayPieceProperty';
+
+function toArrayFields(value: unknown): ArrayField[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.map((item: string | Record<string, unknown>) => ({
+    id: nanoid(),
+    value: item,
+  }));
+}
+
 export { ArrayPieceProperty };
