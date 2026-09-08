@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { authenticationSession } from '@/lib/authentication-session';
+import { federatedLoginRedirect } from '@/lib/federated-login-redirect';
 
 const AuthenticatePage = () => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const AuthenticatePage = () => {
     if (response) {
       const decodedResponse = JSON.parse(response);
       authenticationSession.saveResponse(decodedResponse, false);
-      navigate('/flows');
+      navigate(federatedLoginRedirect.consume() ?? '/flows');
     }
   }, [response]);
 

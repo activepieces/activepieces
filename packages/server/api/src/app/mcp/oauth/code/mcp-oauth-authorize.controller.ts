@@ -7,7 +7,7 @@ import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
-const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
+const AUTH_REQUEST_TTL_SECONDS = 30 * 60
 
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
 
@@ -45,11 +45,14 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 type: 'mcp_auth_request',
             },
             key,
-            expiresInSeconds: AUTH_REQUEST_TTL_10_MINUTES_SECONDS,
+            expiresInSeconds: AUTH_REQUEST_TTL_SECONDS,
             audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
         })
 
-        const authorizePageUrl = new URL(domainHelper.getPublicUrlFromRequest({ req, path: '/mcp-authorize' }))
+        const consentPageUrl = domainHelper.isMcpHostRequest({ req })
+            ? await domainHelper.getPublicUrl({ path: '/mcp-authorize' })
+            : domainHelper.getPublicUrlFromRequest({ req, path: '/mcp-authorize' })
+        const authorizePageUrl = new URL(consentPageUrl)
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
 
         return reply.redirect(authorizePageUrl.toString())

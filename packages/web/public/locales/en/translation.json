@@ -923,6 +923,7 @@
   "Build, test, and manage automations": "Build, test, and manage automations",
   "Use connections and execute flows": "Use connections and execute flows",
   "Authorization failed. Please try again.": "Authorization failed. Please try again.",
+  "This authorization request has expired. Start the connection again from your application.": "This authorization request has expired. Start the connection again from your application.",
   "Deny": "Deny",
   "Authorize": "Authorize",
   "Unknown app": "Unknown app",

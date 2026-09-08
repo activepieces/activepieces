@@ -100,4 +100,86 @@ describe('MCP OAuth deployment shapes', () => {
             expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/automation\/mcp-authorize\?/)
         })
     })
+    describe('with MCP served from its own hostname', () => {
+        const DUAL_FRONTEND_URL = 'https://apps.customer.example.com/automation'
+        const DUAL_MCP_URL = 'https://mcp.customer.example.com'
+        const mcpHostHeaders = { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'mcp.customer.example.com' }
+        const frontendHostHeaders = { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'apps.customer.example.com' }
+
+        beforeAll(() => {
+            const realGet = system.get.bind(system)
+            const realGetOrThrow = system.getOrThrow.bind(system)
+            vi.spyOn(system, 'get').mockImplementation((prop) => {
+                if (prop === AppSystemProp.MCP_URL) {
+                    return DUAL_MCP_URL
+                }
+                if (prop === AppSystemProp.FRONTEND_URL) {
+                    return DUAL_FRONTEND_URL
+                }
+                return realGet(prop)
+            })
+            vi.spyOn(system, 'getOrThrow').mockImplementation((prop) => prop === AppSystemProp.FRONTEND_URL ? DUAL_FRONTEND_URL : realGetOrThrow(prop))
+        })
+
+        it('advertises the MCP host without the frontend path prefix', async () => {
+            const metadata = await discovery(mcpHostHeaders)
+
+            expect(metadata.issuer).toBe(DUAL_MCP_URL)
+            expect(metadata.token_endpoint).toBe(`${DUAL_MCP_URL}/token`)
+            expect(metadata.registration_endpoint).toBe(`${DUAL_MCP_URL}/register`)
+        })
+
+        it('keeps advertising the prefixed frontend base on the frontend host', async () => {
+            const metadata = await discovery(frontendHostHeaders)
+
+            expect(metadata.issuer).toBe(DUAL_FRONTEND_URL)
+            expect(metadata.token_endpoint).toBe(`${DUAL_FRONTEND_URL}/token`)
+        })
+
+        it('points protected resource metadata at the MCP host', async () => {
+            const res = await app.inject({
+                method: 'GET',
+                url: '/.well-known/oauth-protected-resource/mcp',
+                headers: mcpHostHeaders,
+            })
+
+            expect(res.json().resource).toBe(`${DUAL_MCP_URL}/mcp`)
+            expect(res.json().authorization_servers).toEqual([DUAL_MCP_URL])
+        })
+
+        it('challenges an unauthenticated MCP call on the MCP host with its own metadata URL', async () => {
+            const res = await app.inject({ method: 'POST', url: '/mcp', headers: mcpHostHeaders })
+
+            expect(res.statusCode).toBe(401)
+            expect(res.headers['www-authenticate']).toContain(`${DUAL_MCP_URL}/.well-known/oauth-protected-resource/mcp`)
+        })
+
+        it('sends consent to the frontend base, so the user signs in on the main host', async () => {
+            const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
+            const { challenge } = mcpOAuthTestHelpers.generatePkce()
+
+            const res = await app.inject({
+                method: 'GET',
+                headers: mcpHostHeaders,
+                url: `/authorize?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(MCP_OAUTH_REDIRECT_URI)}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256`,
+            })
+
+            expect(res.statusCode).toBe(302)
+            expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/automation\/mcp-authorize\?/)
+        })
+
+        it('leaves consent on the request host for a host matching neither setting', async () => {
+            const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
+            const { challenge } = mcpOAuthTestHelpers.generatePkce()
+
+            const res = await app.inject({
+                method: 'GET',
+                headers: { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'byo.customer.example.com' },
+                url: `/authorize?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(MCP_OAUTH_REDIRECT_URI)}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256`,
+            })
+
+            expect(res.statusCode).toBe(302)
+            expect(res.headers.location).toMatch(/^https:\/\/byo\.customer\.example\.com\/automation\/mcp-authorize\?/)
+        })
+    })
 })

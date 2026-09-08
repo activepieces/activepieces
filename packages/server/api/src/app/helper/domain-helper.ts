@@ -1,4 +1,4 @@
-import { tryCatchSync } from '@activepieces/core-utils'
+import { isNil, tryCatchSync } from '@activepieces/core-utils'
 import { FastifyRequest } from 'fastify'
 import { networkUtils } from './network-utils'
 import { system } from './system/system'
@@ -9,12 +9,23 @@ export const domainHelper = {
         return networkUtils.combineUrl(system.getOrThrow(AppSystemProp.FRONTEND_URL), path ?? '')
     },
     getPublicUrlFromRequest({ req, path }: PublicUrlFromRequestParams): string {
-        const requestBase = networkUtils.getRequestBaseUrl(req)
-        const baseWithPrefix = networkUtils.combineUrl(requestBase, getConfiguredBasePath())
-        return cleanTrailingSlash(networkUtils.combineUrl(baseWithPrefix, path ?? ''))
+        const matchedBaseUrl = findConfiguredBaseUrl(req)
+        const baseWithPrefix = matchedBaseUrl ?? networkUtils.combineUrl(networkUtils.getRequestBaseUrl(req), getConfiguredBasePath())
+        return networkUtils.cleanTrailingSlash(networkUtils.combineUrl(baseWithPrefix, path ?? ''))
+    },
+    isMcpHostRequest({ req }: PublicUrlFromRequestParams): boolean {
+        const mcpUrl = system.get(AppSystemProp.MCP_URL)
+        if (isNil(mcpUrl)) {
+            return false
+        }
+        return findConfiguredBaseUrl(req) === networkUtils.cleanTrailingSlash(mcpUrl)
+    },
+    getMcpUrl({ path }: PublicUrlParams): string {
+        const mcpUrl = system.get(AppSystemProp.MCP_URL) ?? system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        return networkUtils.cleanTrailingSlash(networkUtils.combineUrl(mcpUrl, path ?? ''))
     },
     async getPublicApiUrl({ path }: PublicUrlParams): Promise<string> {
-        return domainHelper.getPublicUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}` })
+        return domainHelper.getPublicUrl({ path: `/api/${networkUtils.cleanLeadingSlash(path ?? '')}` })
     },
     async getInternalUrl({ path }: InternalUrlParams): Promise<string> {
         const internalUrl = system.get(AppSystemProp.INTERNAL_URL)
@@ -24,7 +35,7 @@ export const domainHelper = {
         return this.getPublicUrl({ path })
     },
     async getInternalApiUrl({ path }: InternalUrlParams): Promise<string> {
-        return this.getInternalUrl({ path: `/api/${cleanLeadingSlash(path ?? '')}` })
+        return this.getInternalUrl({ path: `/api/${networkUtils.cleanLeadingSlash(path ?? '')}` })
     },
     async getApiUrlForWorker({ path }: PublicUrlParams): Promise<string> {
         const hasWorkerModule = system.isWorker()
@@ -36,17 +47,30 @@ export const domainHelper = {
     },
 }
 
-function cleanLeadingSlash(path: string) {
-    return path.startsWith('/') ? path.slice(1) : path
-}
-
-function cleanTrailingSlash(url: string) {
-    return url.endsWith('/') ? url.slice(0, -1) : url
-}
-
 function getConfiguredBasePath(): string {
     const { data: url } = tryCatchSync(() => new URL(system.getOrThrow(AppSystemProp.FRONTEND_URL)))
     return url && url.pathname !== '/' ? url.pathname : ''
+}
+
+function getConfiguredBaseUrls(): ConfiguredBaseUrl[] {
+    const { data: frontendUrl } = tryCatchSync(() => system.getOrThrow(AppSystemProp.FRONTEND_URL))
+    return [system.get(AppSystemProp.MCP_URL), frontendUrl]
+        .filter((url): url is string => !isNil(url))
+        .map((baseUrl) => ({ baseUrl, parsed: tryCatchSync(() => new URL(baseUrl)) }))
+        .flatMap(({ baseUrl, parsed }) => parsed.error ? [] : [{
+            host: parsed.data.host.toLowerCase(),
+            baseUrl: networkUtils.cleanTrailingSlash(baseUrl),
+        }])
+}
+
+function findConfiguredBaseUrl(req: FastifyRequest): string | null {
+    const requestHost = networkUtils.getRequestHost(req).toLowerCase()
+    return getConfiguredBaseUrls().find((entry) => entry.host === requestHost)?.baseUrl ?? null
+}
+
+type ConfiguredBaseUrl = {
+    host: string
+    baseUrl: string
 }
 
 type PublicUrlParams = {
