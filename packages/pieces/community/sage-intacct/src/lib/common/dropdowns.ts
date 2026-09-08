@@ -136,7 +136,7 @@ export const sageIntacctDropdowns = {
     displayName: 'Existing Project Resource',
     description: 'Leave blank to create a new project resource; select one to update it instead.',
     object: sageIntacctClient.objects.projectResource,
-    fields: ['id', 'key', 'description'],
+    fields: ['description', 'key', 'id'],
     label: (r) => `${r['description'] || r['id']} (${r['id']})`,
     value: (r) => r['key'],
     required: false,
