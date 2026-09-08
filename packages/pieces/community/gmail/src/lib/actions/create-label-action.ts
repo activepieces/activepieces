@@ -12,7 +12,7 @@ export const gmailCreateLabelAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Creates a new user label in the mailbox with the given name and visibility settings. Look it up first with List Labels to avoid creating a duplicate, since Gmail allows two labels with the same name. Idempotent: false — each call creates a new label, even if one with the same name already exists.',
+      'Creates a new user label in the mailbox with the given name. Look it up first with List Labels to avoid attempting to create a duplicate. Idempotent: false — each call creates a new label, and a duplicate name fails the request rather than reusing the existing label.',
     idempotent: false,
   },
   props: {
