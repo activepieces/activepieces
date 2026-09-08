@@ -315,8 +315,6 @@
   "Client Secret": "Секрет клиента",
   "Connect": "Подключиться",
   "Disconnect": "Отключиться",
-  "I would like to use my own App Credentials": "Я хотел бы использовать свои учётные данные приложения",
-  "I would like to use predefined App Credentials": "Я хотел бы использовать предопределенные учетные данные приложений",
   "I would like to use Client Credentials": "Я хотел бы использовать учетные данные клиента",
   "I would like to use Authorization Code": "Я хотел бы использовать код авторизации",
   "Permission needed": "Требуется разрешение",
