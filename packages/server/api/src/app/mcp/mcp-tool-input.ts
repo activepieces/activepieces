@@ -24,11 +24,14 @@ export const mcpToolInput = {
 
     toFlowPayload({ properties, modelArgs }: { properties: McpProperty[], modelArgs: Record<string, unknown> }): Record<string, unknown> {
         const keys = mcpToolInput.modelKeyByPropertyName({ properties })
-        return Object.fromEntries(properties.flatMap((property) => {
+        const declared = properties.flatMap((property) => {
             const key = keys.get(property.name) ?? property.name
             const suppliedKey = [key, property.name].find((candidate) => candidate in modelArgs)
-            return suppliedKey === undefined ? [] : [[property.name, modelArgs[suppliedKey]] as const]
-        }))
+            return suppliedKey === undefined ? [] : [[property.name, modelArgs[suppliedKey], suppliedKey] as const]
+        })
+        const consumed = new Set(declared.map(([, , suppliedKey]) => suppliedKey))
+        const unrecognised = Object.entries(modelArgs).filter(([key]) => !consumed.has(key))
+        return Object.fromEntries([...unrecognised, ...declared.map(([name, value]) => [name, value] as const)])
     },
 
     propertyToZod(property: McpProperty): z.ZodTypeAny {

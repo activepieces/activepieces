@@ -87,8 +87,14 @@ describe('toFlowPayload', () => {
             .toEqual({ 'Email Sender': 'a@b.com' })
     })
 
-    it('drops a key the schema never declared rather than passing it into the flow', () => {
-        expect(mcpToolInput.toFlowPayload({ properties: EMAIL_LOOKUP_FLOW, modelArgs: { injected: 'x' } })).toEqual({})
+    it('passes an unrecognised key straight through, so a schema change can never silently drop a value', () => {
+        expect(mcpToolInput.toFlowPayload({ properties: EMAIL_LOOKUP_FLOW, modelArgs: { unknown_field: 'x' } }))
+            .toEqual({ unknown_field: 'x' })
+    })
+
+    it('renames what it recognises and leaves the rest alone in the same call', () => {
+        expect(mcpToolInput.toFlowPayload({ properties: EMAIL_LOOKUP_FLOW, modelArgs: { email_sender: 'a@b.com', unknown_field: 'x' } }))
+            .toEqual({ 'Email Sender': 'a@b.com', unknown_field: 'x' })
     })
 
     it('omits a field the model did not supply instead of sending undefined', () => {
@@ -140,5 +146,24 @@ describe('a rewritten key that looks like another field name', () => {
         expect(keyFor({ properties, name: 'field_1' })).toBe('field_1')
         expect(mcpToolInput.toFlowPayload({ properties, modelArgs: { [keyFor({ properties, name: '日本語' })]: 'A', field_1: 'B' } }))
             .toEqual({ '日本語': 'A', field_1: 'B' })
+    })
+})
+
+describe('the flow is republished between building the schema and calling the tool', () => {
+    it('keeps a value whose field was renamed in the new version', () => {
+        expect(mcpToolInput.toFlowPayload({ properties: [text('Sender')], modelArgs: { email_sender: 'A' } }))
+            .toEqual({ email_sender: 'A' })
+    })
+
+    it('keeps a value whose field was removed in the new version', () => {
+        expect(mcpToolInput.toFlowPayload({ properties: [], modelArgs: { email_sender: 'A' } }))
+            .toEqual({ email_sender: 'A' })
+    })
+
+    it('still maps the fields the new version does share', () => {
+        expect(mcpToolInput.toFlowPayload({
+            properties: [text('Email Sender'), text('Brand New Field')],
+            modelArgs: { email_sender: 'A', gone_from_new_schema: 'B' },
+        })).toEqual({ 'Email Sender': 'A', gone_from_new_schema: 'B' })
     })
 })
