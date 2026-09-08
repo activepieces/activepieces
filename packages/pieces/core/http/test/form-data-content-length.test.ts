@@ -59,6 +59,42 @@ describe('multipart form-data body framing', () => {
     expect(seen[0].bodyBytes).toBeGreaterThan(0);
   });
 
+  test('a stream part with knownLength does not crash and falls back to chunked streaming', async () => {
+    const formData = new FormData();
+    const content = 'streamed with known length';
+    formData.append('file', Readable.from([content]), {
+      filename: 'c.txt',
+      knownLength: content.length,
+    });
+
+    await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: baseUrl,
+      body: formData,
+    });
+
+    expect(seen[0].contentType).toContain('multipart/form-data');
+    expect(seen[0].transferEncoding).toBe('chunked');
+    expect(seen[0].contentLength).toBeUndefined();
+    expect(seen[0].bodyBytes).toBeGreaterThan(0);
+  });
+
+  test('a form over the buffering cap streams chunked instead of double-buffering', async () => {
+    const formData = new FormData();
+    formData.append('file', Buffer.alloc(11 * 1024 * 1024), { filename: 'big.bin' });
+
+    await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: baseUrl,
+      body: formData,
+    });
+
+    expect(seen[0].contentType).toContain('multipart/form-data');
+    expect(seen[0].transferEncoding).toBe('chunked');
+    expect(seen[0].contentLength).toBeUndefined();
+    expect(seen[0].bodyBytes).toBeGreaterThan(11 * 1024 * 1024);
+  });
+
   test('form-data with an unknown-length stream part still streams chunked', async () => {
     const formData = new FormData();
     formData.append('file', Readable.from(['streamed content']), { filename: 'b.txt' });

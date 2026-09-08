@@ -1,4 +1,5 @@
 import { PassThrough, Readable } from 'node:stream';
+import { tryCatchSync } from '@activepieces/core-utils';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import { HttpError } from './http-error';
@@ -105,9 +106,12 @@ function serializeBody(
   }
   if (isNodeFormData(body)) {
     // A buffered multipart body lets undici send Content-Length; a streamed one is sent
-    // chunked without a length, which strict multipart parsers reject with a 500.
-    if (body.hasKnownLength()) {
-      return { body: body.getBuffer(), extraHeaders: body.getHeaders(), isStream: false };
+    // chunked without a length, which strict multipart parsers reject with a 500. Streaming
+    // with an explicit content-length header is not an option: undici stalls or throws
+    // RequestContentLengthMismatchError on stream bodies that carry one.
+    const buffered = bufferFormDataIfSafe(body);
+    if (buffered !== null) {
+      return { body: buffered, extraHeaders: body.getHeaders(), isStream: false };
     }
     const stream = new PassThrough();
     body.on('error', (error) => stream.destroy(error));
@@ -207,6 +211,15 @@ function toHttpHeaders(headers: Headers): HttpHeaders {
   return result;
 }
 
+function bufferFormDataIfSafe(body: NodeFormData): Buffer | null {
+  if (!body.hasKnownLength() || body.getLengthSync() > MAX_BUFFERED_FORM_DATA_BYTES) {
+    return null;
+  }
+  // getBuffer throws on stream parts appended with an explicit knownLength; fall back to streaming.
+  const { data } = tryCatchSync(() => body.getBuffer());
+  return data;
+}
+
 function isNodeFormData(body: unknown): body is NodeFormData {
   return (
     typeof body === 'object' &&
@@ -226,8 +239,12 @@ type NodeFormData = {
   pipe: (...args: unknown[]) => unknown;
   on: (event: 'error', listener: (error: Error) => void) => unknown;
   hasKnownLength: () => boolean;
+  getLengthSync: () => number;
   getBuffer: () => Buffer;
 };
+
+// ponytail: transient double-buffering cap — above it we stream chunked exactly as before this fix.
+const MAX_BUFFERED_FORM_DATA_BYTES = 10 * 1024 * 1024;
 
 type ResponseType = NonNullable<HttpRequest['responseType']>;
 
