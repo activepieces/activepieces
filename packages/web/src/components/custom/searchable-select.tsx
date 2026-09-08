@@ -40,6 +40,8 @@ type SearchableSelectProps<T> = {
   showRefresh?: boolean;
   onClose?: () => void;
   triggerClassName?: string;
+  /**Widens the popover past the trigger, for compact or inline triggers */
+  contentWidth?: string;
   valuesRendering?: (value: unknown) => React.ReactNode;
   openState?: {
     open: boolean;
@@ -79,6 +81,7 @@ export const SearchableSelect = <T,>({
   showRefresh,
   onClose,
   triggerClassName,
+  contentWidth,
   valuesRendering,
   openState: openStateInitializer,
   refreshOnSearch,
@@ -90,7 +93,7 @@ export const SearchableSelect = <T,>({
   const { open, setOpen } = useOpenState(openStateInitializer);
   const triggerWidth = `${triggerRef.current?.clientWidth ?? 0}px`;
   const selectedOption =
-    [...cachedOptions, ...options].find((option) =>
+    [...options, ...cachedOptions].find((option) =>
       deepEqual(option.value, value),
     ) ?? undefined;
   const filterOptionsIndices = options
@@ -209,8 +212,8 @@ export const SearchableSelect = <T,>({
           }
         }}
         style={{
-          maxWidth: triggerWidth,
-          minWidth: triggerWidth,
+          maxWidth: contentWidth ?? triggerWidth,
+          minWidth: contentWidth ?? triggerWidth,
         }}
         className="min-w-full w-full p-0"
       >

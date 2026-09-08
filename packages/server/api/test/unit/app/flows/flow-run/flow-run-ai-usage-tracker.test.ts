@@ -1,4 +1,6 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_MANAGED_MODEL_WEIGHT } from '@activepieces/shared'
+import { resolveAiCreditWeight } from '../../../../../src/app/flows/flow-run/flow-run-ai-usage-tracker'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockTrackBillableUsage, mockExtractAiUsage, mockFlowVersionHasAiStep, mockGetOrCreateForPlatform, mockGetProject, mockGetStepsOrNull } = vi.hoisted(() => ({
@@ -11,8 +13,8 @@ const { mockTrackBillableUsage, mockExtractAiUsage, mockFlowVersionHasAiStep, mo
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
-    BillingEvents: { AI_USAGE_PER_RUN: 'ai_usage_per_run' },
-    captureBillingEvent: vi.fn(),
+    LicenseKeyPostHogEvents: { AI_USAGE_PER_RUN: 'ai_usage_per_run' },
+    captureLicenseKeyEvent: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({
@@ -136,5 +138,24 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
         await callTrack({ startTime: FIRST_ATTEMPT_START })
 
         expect(appSumoKeyFromLastCall()).toBe(`run-1:appSumoAi:${FIRST_ATTEMPT_START}`)
+    })
+})
+
+describe('resolveAiCreditWeight', () => {
+    it('bills each tier model at the tier weight, not the table', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: tier.modelId }), tier.id).toBe(tier.creditWeight)
+        }
+    })
+
+    it('charges more for a frontier model than for a mini one, so the table is not uniformly the default', () => {
+        const frontier = resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'openai/gpt-5.5' })
+        const mini = resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'openai/gpt-5.4-mini' })
+
+        expect(frontier).toBeGreaterThan(mini)
+    })
+
+    it('leaves a model nobody offers on the default rate', () => {
+        expect(resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'someone/never-offered' })).toBe(DEFAULT_MANAGED_MODEL_WEIGHT)
     })
 })

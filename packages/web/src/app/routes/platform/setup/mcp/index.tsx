@@ -5,6 +5,7 @@ import { CenteredPage } from '@/app/components/centered-page';
 import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -12,8 +13,12 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformMcpHooks } from './platform-mcp-hooks';
 
 export default function PlatformMcpPage() {
-  const { data: mcpServer, isLoading } =
-    platformMcpHooks.usePlatformMcpServer();
+  const {
+    data: mcpServer,
+    isLoading,
+    isError,
+    refetch,
+  } = platformMcpHooks.usePlatformMcpServer();
   const { mutate: updateTools, isPending: isToolsUpdating } =
     platformMcpHooks.useUpdatePlatformMcpTools();
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
@@ -29,6 +34,19 @@ export default function PlatformMcpPage() {
         <div className="flex items-center justify-center py-20">
           <LoadingSpinner />
         </div>
+      </CenteredPage>
+    );
+  }
+
+  if (isError) {
+    return (
+      <CenteredPage
+        title={t('Platform MCP Server')}
+        description={t(
+          'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
+        )}
+      >
+        <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
       </CenteredPage>
     );
   }

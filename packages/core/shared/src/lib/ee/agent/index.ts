@@ -175,16 +175,6 @@ export const PersistedAgentMessageSchema = z.object({
     feedback: AgentMessageFeedbackSchema.optional(),
 })
 
-export type PersistedTextPart = z.infer<typeof PersistedTextPartSchema>
-export type PersistedReasoningPart = z.infer<typeof PersistedReasoningPartSchema>
-export type PersistedToolCallPart = z.infer<typeof PersistedToolCallPartSchema>
-export type PersistedThinkingStatusPart = z.infer<typeof PersistedThinkingStatusPartSchema>
-export type PersistedActionReceiptPart = z.infer<typeof PersistedActionReceiptPartSchema>
-export type PersistedBuildPlanPart = z.infer<typeof PersistedBuildPlanPartSchema>
-export type PersistedSourceUrlPart = z.infer<typeof PersistedSourceUrlPartSchema>
-export type PersistedSourceDocumentPart = z.infer<typeof PersistedSourceDocumentPartSchema>
-export type PersistedImagePart = z.infer<typeof PersistedImagePartSchema>
-export type PersistedFilePart = z.infer<typeof PersistedFilePartSchema>
 export type PersistedAgentPart = z.infer<typeof PersistedAgentPartSchema>
 export type PersistedAgentMessage = z.infer<typeof PersistedAgentMessageSchema>
 export type AgentMessageFeedback = z.infer<typeof AgentMessageFeedbackSchema>

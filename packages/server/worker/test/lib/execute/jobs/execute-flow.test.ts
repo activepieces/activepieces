@@ -205,4 +205,137 @@ describe('executeFlowJob', () => {
             expect(ctx.runtime.execute).not.toHaveBeenCalled()
         })
     })
+    describe('correlation ids on a terminal status report', () => {
+        const syncJobData = (overrides?: Partial<ExecuteFlowJobData>) => makeResumeJobData({
+            executionType: ExecutionType.BEGIN,
+            workerHandlerId: 'server-1',
+            httpRequestId: 'req-1',
+            ...overrides,
+        })
+
+        const sandboxError = (code: ErrorCode) => new ActivepiecesError({
+            code,
+            params: { standardOutput: '', standardError: '' },
+        })
+
+        it.each([
+            [ErrorCode.SANDBOX_EXECUTION_TIMEOUT, FlowRunStatus.TIMEOUT],
+            [ErrorCode.SANDBOX_MEMORY_ISSUE, FlowRunStatus.MEMORY_LIMIT_EXCEEDED],
+            [ErrorCode.SANDBOX_LOG_SIZE_EXCEEDED, FlowRunStatus.LOG_SIZE_EXCEEDED],
+        ])('reports %s as %s with both ids so the waiting sync caller can be answered', async (code, status) => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(sandboxError(code))
+
+            await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({ status, workerHandlerId: 'server-1', httpRequestId: 'req-1' }),
+            )
+        })
+
+        it('reports a missing action-piece bundle (404) as FAILED anchored on the owning action step', async () => {
+            // The unavailable piece belongs to step_1 (Slack Action). Anchoring on the trigger
+            // would mislead run dialogs, alerts, and "jump to failed step" — the fix walks the
+            // flow_version tree and matches on (pieceName, pieceVersion).
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(new ActivepiecesError({
+                code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                params: { pieceName: '@activepieces/piece-slack', pieceVersion: '~0.2.0', status: 404 },
+            }))
+
+            const result = await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(result.status).toBe(EngineResponseStatus.OK)
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.FAILED,
+                    failedStep: expect.objectContaining({
+                        name: 'step_1',
+                        displayName: 'Slack Action',
+                        message: expect.stringContaining('@activepieces/piece-slack'),
+                    }),
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('falls back to the trigger step when no step in the flow matches the missing piece', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(new ActivepiecesError({
+                code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                params: { pieceName: 'url-crawl', pieceVersion: '0.2.2', status: 404 },
+            }))
+
+            const result = await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(result.status).toBe(EngineResponseStatus.OK)
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.FAILED,
+                    failedStep: expect.objectContaining({
+                        name: 'trigger_1',
+                        displayName: 'Gmail Trigger',
+                        message: expect.stringContaining('url-crawl'),
+                    }),
+                }),
+            )
+        })
+
+        it('reports an engine INTERNAL_ERROR with both ids', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockResolvedValue({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'boom', timings: {} })
+
+            await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.INTERNAL_ERROR,
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('reports a sandbox crash as INTERNAL_ERROR with both ids before rethrowing', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(new Error('SANDBOX_INTERNAL_ERROR'))
+
+            await expect(executeFlowJob.execute(ctx, syncJobData())).rejects.toThrow('SANDBOX_INTERNAL_ERROR')
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.INTERNAL_ERROR,
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('reports a vanished flow version as FAILED with both ids', async () => {
+            const ctx = makeMockContext({ resolveResult: { kind: 'flow-not-found' } })
+
+            await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.FAILED,
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('omits both ids for an async run so nothing is published for it', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(sandboxError(ErrorCode.SANDBOX_EXECUTION_TIMEOUT))
+
+            await executeFlowJob.execute(ctx, makeResumeJobData({ executionType: ExecutionType.BEGIN }))
+
+            const reported = ctx.apiClient.uploadRunLog.mock.calls.at(-1)[0]
+            expect(reported.status).toBe(FlowRunStatus.TIMEOUT)
+            expect(reported).not.toHaveProperty('workerHandlerId')
+            expect(reported).not.toHaveProperty('httpRequestId')
+        })
+    })
 })

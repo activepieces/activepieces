@@ -1,5 +1,4 @@
 import {
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 	createTrigger,
@@ -9,7 +8,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 import dayjs from 'dayjs';
 
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 
 import {
 	getDefaultPropertiesForObject,
@@ -22,6 +21,8 @@ import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
+import { crmObjectOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
@@ -29,12 +30,10 @@ type Props = {
 	stageId?: string;
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
-import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultDealProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);

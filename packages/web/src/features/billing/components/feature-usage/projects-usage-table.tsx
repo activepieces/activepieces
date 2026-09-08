@@ -31,7 +31,7 @@ export function ProjectsUsageTable({
   const [searchParams] = useSearchParams();
   const cursor = searchParams.get(CURSOR_QUERY_PARAM) ?? undefined;
 
-  const { data, isLoading } = billingQueries.useProjectsUsage(
+  const { data, isLoading, isError, refetch } = billingQueries.useProjectsUsage(
     platformId,
     {
       startDate: range.from.toISOString(),
@@ -66,6 +66,9 @@ export function ProjectsUsageTable({
         columns={COLUMNS}
         page={page}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('project usage')}
+        onRetry={refetch}
         emptyStateIcon={<Coins className="size-14 text-muted-foreground" />}
         emptyStateTextTitle={t('No project usage yet')}
         emptyStateTextDescription={t(

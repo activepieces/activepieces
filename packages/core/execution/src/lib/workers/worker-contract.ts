@@ -1,9 +1,10 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AgentPieceToolMetadata } from '@activepieces/core-piece-types'
+import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
 import { FlowRun, RunEnvironment } from '../flow-run/flow-run'
-import { FlowVersion } from '../flows/flow-version'
+import { SourceCode } from '../flows/actions/action'
+import { FlowVersion, FlowVersionState } from '../flows/flow-version'
 import { TriggerRunStatus } from '../flows/triggers/trigger-run'
 import { AgentEvent } from './agent-events'
 import { AgentPromptOverride, AgentRunSource, PersonalizationScope } from './job-data'
@@ -227,6 +228,9 @@ export type ExecutePieceToolRequest = {
 
 export type ExecutePieceToolResponse = {
     result: unknown
+    resolvedInput: Record<string, unknown>
+    actionDisplayName: string
+    connectionLabel?: string
 }
 
 export type ExecuteKnowledgeBaseToolRequest = {
@@ -246,6 +250,7 @@ export type ExecuteFlowToolRequest = {
     conversationId: string
     toolName: string
     flowId: string
+    flowVersionId?: string
     toolInput: Record<string, unknown>
     returnsResponse: boolean
 }
@@ -300,8 +305,17 @@ export type PrewarmDataRequest = {
     flow?: { id: string, versionId: string, projectId: string }
 }
 
+export type PrewarmCodeStep = {
+    name: string
+    sourceCode: SourceCode
+    flowVersionId: string
+    flowVersionState: FlowVersionState
+}
+
 export type PrewarmDataResponse = {
-    flows: { id: string, versionId: string, projectId: string }[]
+    flows?: { id: string, versionId: string, projectId: string }[]
+    pieces: PiecePackage[]
+    codes: PrewarmCodeStep[]
     platformId: string
     engineToken: string
 }
@@ -370,3 +384,10 @@ export type SendPersonalizationProgressRequest = {
     phase: string
     message: string
 }
+
+export const LONG_RUNNING_RPC_METHODS: readonly string[] = [
+    'executePieceTool',
+    'executeFlowTool',
+    'executeKnowledgeBaseTool',
+    'executeAgentTool',
+]

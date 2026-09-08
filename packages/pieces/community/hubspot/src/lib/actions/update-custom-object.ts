@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	customObjectDropdown,
 	customObjectDynamicProperties,
@@ -67,7 +67,7 @@ export const updateCustomObjectAction = createAction({
 			customObjectProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const updatedCustomObject = await client.crm.objects.basicApi.update(
 			customObjectType,

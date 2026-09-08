@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { PersonalizationIdentity } from '../personalization/chat-personalization-service'
+import { PersonalizationIdentity } from '../personalization/personalization-view'
 
 function fullName({ firstName, lastName }: { firstName: string, lastName: string }): string {
     return [firstName, lastName].map((part) => part.trim()).filter((part) => part.length > 0).join(' ')

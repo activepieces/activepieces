@@ -26,10 +26,6 @@ export enum ProjectType {
     PERSONAL = 'PERSONAL',
 }
 
-
-
-export type ProjectPlanId = string
-
 export const ProjectPlan = z.object({
     ...BaseModelSchema,
     projectId: z.string(),
@@ -64,6 +60,7 @@ export const Project = z.object({
     pieceSetId: Nullable(ApId),
     workerGroupId: Nullable(z.string()),
     executionDataRetentionDays: Nullable(z.number()),
+    sensitive: z.boolean(),
 })
 
 const projectAnalytics = z.object({
@@ -95,7 +92,6 @@ export const ProjectWithLimitsWithPlatform = z.object({
 })
 
 export type ProjectWithLimitsWithPlatform = z.infer<typeof ProjectWithLimitsWithPlatform>
-
 
 const ProjectColor = z.object({
     textColor: z.string(),

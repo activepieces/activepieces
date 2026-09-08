@@ -8,7 +8,7 @@ import { transaction } from '../../core/db/transaction'
 import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import Paginator, { Order } from '../../helper/pagination/paginator'
+import Paginator, { CURSOR_SELECT_PREFIX, Order } from '../../helper/pagination/paginator'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -21,6 +21,7 @@ import { flowVersionMigrationService } from '../flow-version/flow-version-migrat
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
+import { flowPublishHooks, publishHooksFactory } from './flow-publish-hooks'
 import { flowPublishUtils } from './flow-publish-utils'
 import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
@@ -30,6 +31,7 @@ import { flowRepo } from './flow.repo'
 
 export const flowService = (log: FastifyBaseLogger) => ({
     async create({ projectId, request, externalId, ownerId, templateId, createdBy, ip, emitEvents = true }: CreateParams): Promise<PopulatedFlow> {
+        await assertExternalIdIsUnique({ projectId, externalId })
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -57,10 +59,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
 
         rejectedPromiseHandler(
-            telemetry(log).trackProject(savedFlow.projectId, {
-                name: TelemetryEventName.CREATED_FLOW,
-                payload: {
-                    flowId: savedFlow.id,
+            telemetry(log).trackProject({
+                projectId: savedFlow.projectId,
+                event: {
+                    name: TelemetryEventName.CREATED_FLOW,
+                    payload: {
+                        flowId: savedFlow.id,
+                    },
                 },
             }),
             log,
@@ -97,7 +102,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
         externalIds,
         versionState = FlowVersionState.DRAFT,
         includeTriggerSource = true,
+        sortBy,
+        order,
     }: ListParams): Promise<SeekPage<PopulatedFlow>> {
+        assertSortIsNotCombinedWithCursor({ sortBy, cursor: cursorRequest })
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
             entity: FlowEntity,
@@ -190,6 +198,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
             queryBuilder.andWhere('latest_version."agentIds" && :agentExternalIds', { agentExternalIds })
         }
 
+        if (!isNil(sortBy)) {
+            const nameSortAlias = `${CURSOR_SELECT_PREFIX}name`
+            const nameSortColumn = versionState === FlowVersionState.DRAFT ? 'latest_version."displayName"' : 'published_version."displayName"'
+            queryBuilder.addSelect(`LOWER(COALESCE(${nameSortColumn}, ''))`, nameSortAlias)
+            queryBuilder.addOrderBy(nameSortAlias, order ?? 'ASC')
+        }
+
         const paginationResult = await paginator.paginate<Flow & { version: FlowVersion | null, triggerSource?: TriggerSource }>(queryBuilder)
 
         const populatedFlows = await Promise.all(paginationResult.data.map(async (flow) => {
@@ -213,7 +228,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     : undefined,
             }
         }))
-        return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
+        return paginationHelper.createPage(populatedFlows, isNil(sortBy) ? paginationResult.cursor : null)
     },
     async exists(id: FlowId): Promise<boolean> {
         return flowRepo().existsBy({
@@ -356,6 +371,19 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         switch (operation.type) {
             case FlowOperationType.LOCK_AND_PUBLISH: {
+                const flow = await this.getOneOrThrow({ id, projectId })
+                const requestedStatus = operation.request.status ?? FlowStatus.ENABLED
+                const route = await publishHooksFactory.get(log).routePublish({ flow, projectId, platformId, userId })
+                if (route === 'NEEDS_APPROVAL') {
+                    await publishHooksFactory.get(log).submitForApproval({
+                        flow,
+                        userId,
+                        projectId,
+                        platformId,
+                        requestedStatus,
+                    })
+                    break
+                }
                 const publishedFlow = await this.updatedPublishedVersionId({
                     id,
                     userId,
@@ -366,7 +394,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     published: previouslyPublishedVersion.trigger,
                     toPublish: publishedFlow.version.trigger,
                 })
-                await applyStatusChange({ id, projectId, newStatus: operation.request.status ?? FlowStatus.ENABLED, isRepublish }, log)
+                await applyStatusChange({ id, projectId, newStatus: requestedStatus, isRepublish }, log)
                 break
             }
 
@@ -488,6 +516,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         const publishedFlow = await transaction(async (entityManager) => {
+            await flowPublishHooks.get(log).assertReferencesResolve({
+                projectId,
+                agentExternalIds: flowVersionToPublish.agentIds ?? [],
+                entityManager,
+            })
             const lockedFlowVersion = await lockFlowVersionIfNotLocked({
                 flowVersion: flowVersionToPublish,
                 userId,
@@ -496,20 +529,33 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 entityManager,
                 log,
             })
-
-            flowToUpdate.publishedVersionId = lockedFlowVersion.id
-            flowToUpdate.status = FlowStatus.DISABLED
-            const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-            await flowExecutionCache(log).invalidate(updatedFlow.id)
+            await this.setPublishedVersion({
+                flow: flowToUpdate,
+                lockedVersion: lockedFlowVersion,
+                entityManager,
+            })
+            await flowExecutionCache(log).invalidate(flowToUpdate.id)
             return {
-                ...updatedFlow,
+                ...flowToUpdate,
+                publishedVersionId: lockedFlowVersion.id,
+                status: FlowStatus.DISABLED,
                 version: lockedFlowVersion,
             }
         })
-        // a static import here closes a circular graph (→ websockets → mcp/tools → mcp-utils → back here) that crashes module load.
         const { websocketService } = await import('../../core/websockets.service')
         websocketService.notifyWorkers().flowPublished({ flowId: publishedFlow.id, flowVersionId: publishedFlow.version.id, projectId: publishedFlow.projectId })
         return publishedFlow
+    },
+
+    async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
+        await flowRepo(entityManager).update({ id: flow.id }, {
+            publishedVersionId: lockedVersion.id,
+            status: FlowStatus.DISABLED,
+        })
+    },
+
+    async applyStatusChangeForPublishedFlow({ id, projectId, newStatus }: { id: FlowId, projectId: ProjectId, newStatus: FlowStatus }): Promise<void> {
+        await applyStatusChange({ id, projectId, newStatus }, log)
     },
 
     async delete({ id, projectId, previousFlow, userId, ip, emitEvents = true }: DeleteParams): Promise<void> {
@@ -802,6 +848,29 @@ const assertFlowIsNotNull: <T extends Flow>(
     }
 }
 
+function assertSortIsNotCombinedWithCursor({ sortBy, cursor }: { sortBy: 'NAME' | undefined, cursor: Cursor | undefined | null }): void {
+    if (isNil(sortBy) || isNil(cursor)) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.GENERIC_ERROR,
+        params: { message: 'sortBy cannot be combined with cursor' },
+    })
+}
+
+async function assertExternalIdIsUnique({ projectId, externalId }: { projectId: ProjectId, externalId: string | undefined }): Promise<void> {
+    if (isNil(externalId)) {
+        return
+    }
+    const exists = await flowRepo().existsBy({ projectId, externalId })
+    if (exists) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FLOW_EXTERNAL_ID_ALREADY_EXISTS,
+            params: { externalId },
+        })
+    }
+}
+
 type CreateParams = EventEmissionParams & {
     projectId: ProjectId
     request: CreateFlowRequest
@@ -823,6 +892,8 @@ type ListParamsBase = {
     connectionExternalIds?: string[]
     agentExternalIds?: string[]
     includeTriggerSource?: boolean
+    sortBy?: 'NAME'
+    order?: 'ASC' | 'DESC'
 }
 
 type ListParams = ListParamsBase & (
@@ -869,6 +940,12 @@ type UpdatePublishedVersionIdParams = {
     userId: UserId | null
     platformId: PlatformId
     projectId: ProjectId
+}
+
+type SetPublishedVersionParams = {
+    flow: Flow
+    lockedVersion: FlowVersion
+    entityManager?: EntityManager
 }
 
 type DeleteParams = EventEmissionParams & {

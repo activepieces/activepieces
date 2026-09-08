@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { frontAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
+import { makeMultipartRequest, makeRequest } from '../common/client';
+import { frontAttachments } from '../common/attachments';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { channelIdDropdown } from '../common/dropdown';
 
@@ -42,11 +43,7 @@ export const createDraft = createAction({
       description: 'The body of the draft message.',
       required: true,
     }),
-    attachments: Property.Array({
-      displayName: 'Attachments',
-      description: 'List of attachment URLs.',
-      required: false,
-    }),
+    attachments: frontAttachments.property,
     mode: Property.StaticDropdown({
       displayName: 'Mode',
       description: 'Mode of the draft reply',
@@ -94,12 +91,21 @@ export const createDraft = createAction({
     if (cc) requestBody['cc'] = cc;
     if (bcc) requestBody['bcc'] = bcc;
     if (subject) requestBody['subject'] = subject;
-    if (attachments) requestBody['attachments'] = attachments;
     if (mode) requestBody['mode'] = mode;
     if (signature_id) requestBody['signature_id'] = signature_id;
     if (should_add_default_signature !== undefined)
       requestBody['should_add_default_signature'] =
         should_add_default_signature;
+
+    const files = frontAttachments.resolve(attachments);
+    if (files.length > 0) {
+      return await makeMultipartRequest({
+        auth,
+        method: HttpMethod.POST,
+        path: `/channels/${channel_id}/drafts`,
+        form: frontAttachments.buildBody({ fields: requestBody, files }),
+      });
+    }
 
     return await makeRequest(
       auth,

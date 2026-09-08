@@ -1,4 +1,3 @@
-import { SeekPage } from '@activepieces/core-utils';
 import { FolderDto, PopulatedFlow, Table } from '@activepieces/shared';
 
 export type TreeItemType = 'folder' | 'flow' | 'table' | 'load-more-folder';
@@ -32,7 +31,4 @@ export type FolderContent = {
   tables: Table[];
 };
 
-export type RootPage = {
-  flows: SeekPage<PopulatedFlow>;
-  tables: SeekPage<Table>;
-};
+export type AutomationsSort = 'default' | 'name-asc' | 'name-desc';

@@ -740,7 +740,7 @@ export const createMockFolder = (folder?: Partial<Folder>): Folder => {
         created: folder?.created ?? faker.date.recent().toISOString(),
         updated: folder?.updated ?? faker.date.recent().toISOString(),
         projectId: folder?.projectId ?? apId(),
-        displayName: folder?.displayName ?? faker.lorem.word(),
+        displayName: folder?.displayName ?? `${faker.lorem.word()}-${apId()}`,
         displayOrder: folder?.displayOrder ?? faker.number.int({ min: 0, max: 100 }),
     }
 }

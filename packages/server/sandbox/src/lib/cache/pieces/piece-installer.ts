@@ -1,6 +1,6 @@
-import { rm, writeFile } from 'node:fs/promises'
+import { readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { ensureTrailingSlash, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ensureTrailingSlash, ErrorCode, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
@@ -8,7 +8,6 @@ import { SandboxSettings } from '../../types'
 import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
-const usedPiecesMemoryCache: Record<string, boolean> = {}
 const VALID_SCOPED_NAME_REGEX = /^@[^/]+\/[^/]+$/
 const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -76,7 +75,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[pieceInstaller] acquired lock and starting to install pieces')
 
-            await createRootPackageJson({
+            await createRootWorkspaceFiles({
                 path: rootWorkspace,
             })
 
@@ -207,7 +206,9 @@ function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getS
     })
 }
 
-async function createRootPackageJson({ path }: { path: string }): Promise<void> {
+const WORKSPACE_BUNFIG = '[install]\nlinker = "isolated"\nminimumReleaseAge = 259200\n'
+
+async function createRootWorkspaceFiles({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFileAtomic(packageJsonPath, JSON.stringify({
@@ -217,6 +218,7 @@ async function createRootPackageJson({ path }: { path: string }): Promise<void> 
             'pieces/**',
         ],
     }, null, 2), 'utf8')
+    await writeFileAtomic(join(path, 'bunfig.toml'), WORKSPACE_BUNFIG, 'utf8')
 }
 
 async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
@@ -256,6 +258,12 @@ async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: Piece
         const url = pieceBundleEndpointUrl(publicApiUrl, piece)
         const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
         if (!response.ok) {
+            if (response.status === 404 || response.status === 410) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                    params: { pieceName: piece.pieceName, pieceVersion: piece.pieceVersion, status: response.status },
+                })
+            }
             throw new Error(`Failed to fetch piece bundle ${piece.pieceName}@${piece.pieceVersion}: ${response.status} ${response.statusText}`)
         }
         await fileSystemUtils.threadSafeMkdir(dirname(bundlePath))
@@ -288,20 +296,47 @@ async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePack
 
 async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PiecePackage): Promise<boolean> {
     const pieceFolder = piecePath(rootWorkspace, piece)
-    if (usedPiecesMemoryCache[pieceFolder]) {
-        return true
-    }
     const readyExists = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
     if (!readyExists) {
         return false
     }
-    const nodeModulesExist = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules'))
-    if (!nodeModulesExist) {
+    const engineCanResolve = await pieceEntryFileExists({ pieceFolder, pieceName: piece.pieceName })
+    if (!engineCanResolve) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }
-    usedPiecesMemoryCache[pieceFolder] = true
     return true
+}
+
+async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileExistsParams): Promise<boolean> {
+    const packageDir = join(pieceFolder, 'node_modules', pieceName)
+    const { data: declaredMain } = await tryCatch(async () => {
+        const manifest: unknown = JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8'))
+        if (typeof manifest !== 'object' || isNil(manifest) || !('main' in manifest)) {
+            return null
+        }
+        const { main } = manifest
+        return typeof main === 'string' ? main : null
+    })
+    if (!isNil(declaredMain)) {
+        const mainPath = join(packageDir, declaredMain)
+        if (await fileSystemUtils.fileExists(mainPath)) {
+            return isLoadableEntry(mainPath)
+        }
+    }
+    return isLoadableEntry(join(packageDir, 'src', 'index.js'))
+}
+
+async function isLoadableEntry(entryPath: string): Promise<boolean> {
+    if (await isLoadableFile(entryPath)) {
+        return true
+    }
+    return isLoadableFile(join(entryPath, 'index.js'))
+}
+
+async function isLoadableFile(entryPath: string): Promise<boolean> {
+    const { data: stats } = await tryCatch(async () => stat(entryPath))
+    return stats?.isFile() ?? false
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
@@ -314,6 +349,11 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
         )
     })
     await Promise.all(writeToDiskJobs)
+}
+
+type PieceEntryFileExistsParams = {
+    pieceFolder: string
+    pieceName: string
 }
 
 type InstallParams = {

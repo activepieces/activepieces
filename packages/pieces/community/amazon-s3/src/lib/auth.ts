@@ -1,5 +1,5 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
-import { createS3 } from './common';
+import { isPieceServerContextError, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createS3, getTemporaryCredentials } from './common';
 
 const accessKeyDescription = `
 Connect your Amazon S3 account using AWS Access Key credentials.
@@ -239,7 +239,7 @@ export const amazonS3OidcAuth = PieceAuth.OIDC({
       required: true,
     }),
   },
-  validate: async ({ auth }) => {
+  validate: async ({ auth, server }) => {
     if (!auth.roleArn) {
       return { valid: false, error: 'Role ARN is required for IAM Role authentication.' };
     }
@@ -247,12 +247,27 @@ export const amazonS3OidcAuth = PieceAuth.OIDC({
     if (!arnRegex.test(auth.roleArn)) {
       return { valid: false, error: 'Invalid IAM Role ARN format. Expected: arn:aws:iam::123456789012:role/RoleName' };
     }
-    return { valid: true };
+    try {
+      await getTemporaryCredentials({ auth: { roleArn: auth.roleArn, bucket: auth.bucket, region: auth.region }, server });
+      return { valid: true };
+    } catch (error) {
+      if (isPieceServerContextError(error)) throw error;
+      return { valid: false, error: formatAssumeRoleError(error) };
+    }
   },
   required: true,
 });
 
 export const amazonS3CombinedAuth = [amazonS3Auth, amazonS3OidcAuth];
+
+function formatAssumeRoleError(error: unknown): string {
+  const fallback = 'Failed to assume the IAM role. Check the role ARN and trust policy.';
+  if (error instanceof Error) {
+    if (error.name && error.name !== 'Error') return `${error.name}: ${error.message}`;
+    return error.message || fallback;
+  }
+  return fallback;
+}
 
 export type AccessKeyAuthProps = {
   accessKeyId: string | undefined;

@@ -1,38 +1,61 @@
 ---
-title: "Manage User Roles"
-description: "Documentation on project permissions in Activepieces"
-icon: 'user'
+title: "Users"
+icon: "user"
 ---
 
 <Snippet file="enterprise-feature.mdx" />
 
 Activepieces utilizes Role-Based Access Control (RBAC) for managing permissions within projects. Each project consists of multiple flows and users, with each user assigned specific roles that define their actions within the project.
 
-## Default Roles
+The Users tab is a dedicated place for your platform admin to manage, delete, activate, and deactivate users at the entire platform level, not just from projects. 
+
+### How To Invite a User To Your Platform
+
+**Step 1**: Click on Users in the platform admin
+
+**Step 2**: Navigate to the upper right and click the **invite** button
+
+**Step 3**: Add the invitee’s email and assign them a role 
+
+**Step 4:** Click **Invite**
+
+<video src="https://cdn.activepieces.com/videos/docs/Invite-user-to-platfom.mp4" controls />
+
+### **How To Edit User Role**
+
+**Step 1**: Go to Users in the platform admin
+
+**Step 2**: Click on the 3 dots to the right of the user you want to edit
+
+**Step 3**: Click on Edit
+
+<video src="https://cdn.activepieces.com/videos/docs/Edit-user-role.mp4" controls />
+
+#### <br /><br />Default Roles
 
 Activepieces comes with four standard roles out of the box. The table below shows the permissions for each role:
 
 | Permission | Admin | Editor | Operator | Viewer |
-|------------|:-----:|:------:|:--------:|:------:|
-| **Flows** |||||
+| --- | :-: | :-: | :-: | :-: |
+| **Flows** |  |  |  |  |
 | View Flows | ✓ | ✓ | ✓ | ✓ |
-| Edit Flows | ✓ | ✓ | | |
-| Publish / Toggle Flows | ✓ | ✓ | ✓ | |
-| **Runs** |||||
+| Edit Flows | ✓ | ✓ |  |  |
+| Publish / Toggle Flows | ✓ | ✓ | ✓ |  |
+| **Runs** |  |  |  |  |
 | View Runs | ✓ | ✓ | ✓ | ✓ |
-| Retry Runs | ✓ | ✓ | ✓ | |
-| **Connections** |||||
+| Retry Runs | ✓ | ✓ | ✓ |  |
+| **Connections** |  |  |  |  |
 | View Connections | ✓ | ✓ | ✓ | ✓ |
-| Edit Connections | ✓ | ✓ | ✓ | |
-| **Team** |||||
+| Edit Connections | ✓ | ✓ | ✓ |  |
+| **Team** |  |  |  |  |
 | View Project Members | ✓ | ✓ | ✓ | ✓ |
-| Add/Remove Project Members | ✓ | | | |
-| **Git Sync**    |      |        |      |      |
-| Configure Git Repo      | ✓    |        |      |      |
-| Pull Flows from Git     | ✓    |        |      |      |
-| Push Flows to Git       | ✓    |        |      |      |
+| Add/Remove Project Members | ✓ |  |  |  |
+| **Git Sync** |  |  |  |  |
+| Configure Git Repo | ✓ |  |  |  |
+| Pull Flows from Git | ✓ |  |  |  |
+| Push Flows to Git | ✓ |  |  |  |
 
-## Custom Roles
+#### Custom Roles
 
 If the default roles don't fit your needs, you can create custom roles with specific permissions.
 
@@ -49,5 +72,32 @@ If the default roles don't fit your needs, you can create custom roles with spec
 </Steps>
 
 <Tip>
-Custom roles are useful when you need fine-grained control, such as allowing users to view and retry runs without being able to edit flows.
+  Custom roles are useful when you need fine-grained control, such as allowing users to view and retry runs without being able to edit flows.
 </Tip>
+
+### **Deactivate & Delete User:**
+
+**Step 1**: Click on Users in the platform admin
+
+**Step 2**: Click on the 3 dots to the right of the user you want to delete or deactivate
+
+**Step 3:** Click on either Delete or Deactivate depending on what you want 
+
+![Delete Or Deactivate User](https://cdn.activepieces.com/assets/delete-or-deactivate-user.png "Delete Or Deactivate User")
+
+**_NB_**: 
+
+- If you **Deactivate a user**, they will lose access but won't lose all their data. You can always activate them again.
+- However, if you **Delete** a user, all their data will be deleted as well.
+
+### **Managing users in larger organizations**
+
+For larger teams, managing users one by one can quickly become difficult. Instead, you can use [**Single Sign-On (SSO)**](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/dbcb5d11-21d1-444b-bd97-4a062786a2ec) to let users sign in with your organization’s identity provider and [**SCIM**](https://app.mintlify.com/activepieces/activepieces/editor/ginika%2Fdraft-aug-31/~/e1d21d0e-a53d-478d-9f6b-d788b5f01576) to automate user provisioning and deprovisioning.
+
+This makes it easier to manage access as your organization grows without manually inviting, activating, or deactivating every user.
+
+### <br />**Navigating Users Via API**
+
+Refer to [<u>API reference</u>](https://www.activepieces.com/docs/endpoints/users/schema)
+
+<br /><br />

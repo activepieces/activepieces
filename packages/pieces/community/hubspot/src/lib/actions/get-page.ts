@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { pageType } from '../common/props';
@@ -27,7 +27,7 @@ export const getPageAction = createAction({
 	},
 	async run(context) {
 		const { pageId, pageType } = context.propsValue;
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		if (pageType === 'site_page') {
 			return await client.cms.pages.sitePagesApi.getById(pageId);

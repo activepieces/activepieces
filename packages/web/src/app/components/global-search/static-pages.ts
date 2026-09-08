@@ -3,6 +3,7 @@ import { type ComponentType } from 'react';
 import { BotIcon } from '@/components/icons/bot';
 import { ChartLineIcon } from '@/components/icons/chart-line';
 import { CompassIcon } from '@/components/icons/compass';
+import { ConnectIcon } from '@/components/icons/connect';
 import { FileHeartIcon } from '@/components/icons/file-heart';
 import { FileJson2Icon } from '@/components/icons/file-json2';
 import { FrameIcon } from '@/components/icons/frame';
@@ -48,6 +49,12 @@ export const STATIC_PAGES: StaticPage[] = [
     label: 'Impact',
     href: '/impact',
     icon: ChartLineIcon,
+  },
+  {
+    id: 'page-mcp',
+    label: 'MCP',
+    href: '/mcp-server',
+    icon: ConnectIcon,
   },
   // Platform Admin pages
   {

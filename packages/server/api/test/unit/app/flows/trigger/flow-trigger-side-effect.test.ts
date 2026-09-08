@@ -142,6 +142,19 @@ describe('flowTriggerSideEffect', () => {
             })
         })
 
+        it('should throw when the worker skipped the enable hook (OK with undefined response)', async () => {
+            mockSubmitAndWaitForResponse.mockResolvedValue({ ...okEngineResponse(), response: undefined })
+
+            await expect(
+                flowTriggerSideEffect(mockLog).enable({
+                    ...BASE_PARAMS,
+                    pieceTrigger: makePollingTrigger(),
+                }),
+            ).rejects.toThrow(ActivepiecesError)
+
+            expect(mockAddJob).not.toHaveBeenCalled()
+        })
+
         it('should keep engine-provided schedule options untouched', async () => {
             const engineSchedule = {
                 type: TriggerSourceScheduleType.CRON_EXPRESSION,
@@ -196,6 +209,46 @@ describe('flowTriggerSideEffect', () => {
                 pieceTrigger: makeManualTrigger(),
                 ignoreError: true,
             })
+
+            expect(mockLog.warn).toHaveBeenCalledWith(
+                expect.objectContaining({ flow: { id: 'flow-1' }, error: 'Engine failed' }),
+                expect.stringContaining('Ignored error'),
+            )
+        })
+
+        it('should log only the plain message when the ignored engine error carries http details', async () => {
+            const serializedPieceError = JSON.stringify({
+                __apErrorVersion: 1,
+                message: 'Authentication required, not authenticated - You need to authenticate to access this operation.',
+                errorName: '_',
+                status: 401,
+                responseHeaders: { 'set-cookie': 'session=super-secret-value' },
+                requestBody: { apiKey: 'lin_api_should_never_be_logged' },
+                raw: 'Error: Authentication required\n    at j (/usr/src/app/cache/v14/common/node_modules/...)',
+            })
+            mockSubmitAndWaitForResponse.mockResolvedValue({
+                status: EngineResponseStatus.ERROR,
+                response: undefined,
+                error: serializedPieceError,
+            })
+
+            await flowTriggerSideEffect(mockLog).disable({
+                ...BASE_PARAMS,
+                pieceTrigger: makeManualTrigger(),
+                ignoreError: true,
+            })
+
+            expect(mockLog.warn).toHaveBeenCalledWith(
+                {
+                    flow: { id: 'flow-1' },
+                    error: 'Authentication required, not authenticated - You need to authenticate to access this operation.',
+                },
+                expect.stringContaining('Ignored error'),
+            )
+            const logged = JSON.stringify(vi.mocked(mockLog.warn).mock.calls)
+            expect(logged).not.toContain('super-secret-value')
+            expect(logged).not.toContain('lin_api_should_never_be_logged')
+            expect(logged).not.toContain('set-cookie')
         })
 
         it('should throw when submitAndWaitForResponse throws and ignoreError is false', async () => {

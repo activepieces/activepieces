@@ -27,10 +27,9 @@ export const aiProviderQueries = {
     useQuery({
       queryKey: aiProviderKeys.configs,
       queryFn: () => aiProviderApi.listConfigs(),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
-  useProjectAiProviders: () => {
-    const projectId = authenticationSession.getProjectId();
+  useProjectAiProviders: (forProjectId?: string) => {
+    const projectId = forProjectId ?? authenticationSession.getProjectId();
     return useQuery({
       queryKey: aiProviderKeys.forProject(projectId),
       queryFn: () =>
@@ -38,14 +37,20 @@ export const aiProviderQueries = {
       enabled: !isNil(projectId),
     });
   },
-  useChatProvider: () => {
+  useChatProvider: (forProjectId?: string) => {
     const { data: providers, ...rest } =
-      aiProviderQueries.useProjectAiProviders();
+      aiProviderQueries.useProjectAiProviders(forProjectId);
     return { ...rest, data: providers?.find((p) => p.enabledForChat) };
   },
 };
 
 export const aiProviderMutations = {
+  useRecheckAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+    return useMutation({
+      mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
+      onSuccess,
+    });
+  },
   useDeleteAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.delete(providerId),

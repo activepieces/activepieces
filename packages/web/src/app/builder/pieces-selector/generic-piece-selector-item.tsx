@@ -1,6 +1,4 @@
-import type { ActionClassification } from '@activepieces/pieces-framework';
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
-import { t } from 'i18next';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +8,7 @@ import {
   StepMetadataWithSuggestions,
   PIECE_SELECTOR_ELEMENTS_HEIGHTS,
 } from '@/features/pieces';
+import { ACTION_CLASSIFICATION_BADGES } from '@/features/pieces/utils/action-classification';
 import { cn } from '@/lib/utils';
 type GenericActionOrTriggerItemProps = {
   item: PieceSelectorItem;
@@ -79,12 +78,13 @@ const GenericActionOrTriggerItem = ({
             {pieceSelectorItemInfo.classification && (
               <Badge
                 variant={
-                  CLASSIFICATION_BADGE[pieceSelectorItemInfo.classification]
-                    .variant
+                  ACTION_CLASSIFICATION_BADGES[
+                    pieceSelectorItemInfo.classification
+                  ].variant
                 }
                 className="shrink-0 px-1.5 py-0 text-[10px] font-normal"
               >
-                {CLASSIFICATION_BADGE[
+                {ACTION_CLASSIFICATION_BADGES[
                   pieceSelectorItemInfo.classification
                 ].label()}
               </Badge>
@@ -107,13 +107,3 @@ const GenericActionOrTriggerItem = ({
 
 GenericActionOrTriggerItem.displayName = 'GenericActionOrTriggerItem';
 export default GenericActionOrTriggerItem;
-
-const CLASSIFICATION_BADGE: Record<
-  ActionClassification,
-  { label: () => string; variant: 'accent' | 'destructive' }
-> = {
-  READ: { label: () => t('Read'), variant: 'accent' },
-  SEARCH: { label: () => t('Search'), variant: 'accent' },
-  WRITE: { label: () => t('Write'), variant: 'accent' },
-  DESTRUCTIVE: { label: () => t('Destructive'), variant: 'destructive' },
-};

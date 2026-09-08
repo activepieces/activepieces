@@ -4,7 +4,7 @@ import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getTicketAction = createAction({
@@ -43,7 +43,7 @@ export const getTicketAction = createAction({
 
 		const defaultTicketProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TICKET);
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const ticketDetails = await client.crm.tickets.basicApi.getById(ticketId, [
 			...defaultTicketProperties,

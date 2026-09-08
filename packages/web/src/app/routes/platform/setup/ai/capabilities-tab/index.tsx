@@ -12,6 +12,7 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -31,7 +32,11 @@ import {
 import { SectionHeader } from '../components/section-header';
 
 export function CapabilitiesTab() {
-  const { data: configs, refetch } = aiToolConfigQueries.useAiToolConfigs();
+  const {
+    data: configs,
+    isError,
+    refetch,
+  } = aiToolConfigQueries.useAiToolConfigs();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
 
@@ -51,26 +56,30 @@ export function CapabilitiesTab() {
           'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
         )}
       />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {AI_TOOL_CATALOG.map((capabilityInfo) => {
-          const config = configs?.find(
-            (c) => c.capability === capabilityInfo.capability,
-          );
-          return (
-            <CapabilityCard
-              key={capabilityInfo.capability}
-              capabilityInfo={capabilityInfo}
-              config={config}
-              allowWrite={allowWrite}
-              onToggle={(enabled) =>
-                config && toggle({ id: config.id, request: { enabled } })
-              }
-              onDelete={() => config && remove(config.id)}
-              onSaved={() => refetch()}
-            />
-          );
-        })}
-      </div>
+      {isError ? (
+        <DataFetchErrorState entity={t('AI tools')} onRetry={refetch} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {AI_TOOL_CATALOG.map((capabilityInfo) => {
+            const config = configs?.find(
+              (c) => c.capability === capabilityInfo.capability,
+            );
+            return (
+              <CapabilityCard
+                key={capabilityInfo.capability}
+                capabilityInfo={capabilityInfo}
+                config={config}
+                allowWrite={allowWrite}
+                onToggle={(enabled) =>
+                  config && toggle({ id: config.id, request: { enabled } })
+                }
+                onDelete={() => config && remove(config.id)}
+                onSaved={() => refetch()}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
