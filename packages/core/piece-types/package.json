@@ -5,7 +5,8 @@
   "main": "./dist/src/index.js",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "dependencies": {
     "@activepieces/core-utils": "workspace:*",
