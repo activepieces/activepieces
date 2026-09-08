@@ -365,9 +365,9 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000, creditWeight: 2 },
-    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000, creditWeight: 10 },
-    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000, creditWeight: 20 },
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', nativeModelId: 'claude-haiku-4-5', thinkingBudget: 5_000, creditWeight: 2 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', nativeModelId: 'claude-sonnet-4-6', thinkingBudget: 10_000, creditWeight: 10 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', nativeModelId: 'claude-opus-4-7', thinkingBudget: 20_000, creditWeight: 20 },
 ] as const
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const

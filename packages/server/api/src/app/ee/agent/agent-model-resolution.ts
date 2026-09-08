@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
 
 function findTier({ tierId }: { tierId: string | null }) {
@@ -56,15 +56,18 @@ function resolveModelIdForProvider({ provider, selectedModel, config, modelScope
     if (!isNil(catalog)) {
         return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
     }
-    const curatedModels = aiProviderUtils.getCuratedChatModels({ provider })
-    const tierModelId = resolveTier({ tierId: selectedModel }).modelId
+    const tier = resolveTier({ tierId: selectedModel })
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
-        return tierModelId
+        return tier.modelId
     }
-    const nativeModelId = tierModelId.replace(/^[^/]+\//, '').replace(/\./g, '-')
-    const candidates = isNil(curatedModels) ? [nativeModelId] : curatedModels.map((model) => model.id)
-    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelId
+    const candidates = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
+    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : tier.nativeModelId
     return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
+}
+
+function defaultModelIdForProvider({ provider }: { provider: AIProviderName }): string | null {
+    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: DEFAULT_CHAT_TIER_ID }))
+    return data
 }
 
 // Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
@@ -93,6 +96,7 @@ export const agentModelResolution = {
     resolveTier,
     resolveNamedModelId,
     resolveModelIdForProvider,
+    defaultModelIdForProvider,
     resolveModelIdForAnalytics,
     resolveFastModelId,
 }
