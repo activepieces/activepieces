@@ -265,33 +265,20 @@ const skipInternalDestinationsOnFlowCycle = ({
     event,
     log,
 }: SkipDestinationsParams): ClassifiedDestination[] => {
-    const agentActionOrigin = agentActionOriginOf(event)
-    if (!isNil(agentActionOrigin)) {
-        if (isNil(agentActionOrigin.flowId)) {
-            return dropWebhookFlowDestinations({
-                classifiedDestinations,
-                event,
-                log,
-                message: '[eventDestinationService#trigger] This agent action ran inside a flow that could not be named; dropping every webhook-flow destination to break a possible cycle, non-webhook destinations will still fire',
-            })
-        }
-        const [keptDestinations, droppedDestinations] = partition(classifiedDestinations, ({ destination }) =>
-            extractWebhookFlowIdCandidate({ destinationUrl: destination.url }) !== agentActionOrigin.flowId)
-        if (droppedDestinations.length > 0) {
-            log.warn({
-                flow: { id: agentActionOrigin.flowId },
-                action: event.action,
-                droppedDestinations: droppedDestinations.map(({ destination }) => ({ id: destination.id, url: destination.url })),
-            }, '[eventDestinationService#trigger] The flow that ran this agent action is wired as a destination for it; dropping that one to break the cycle, every other destination still fires')
-        }
-        return keptDestinations
-    }
-    if (!isFlowRunEvent(event)) {
+    const origin = flowBehindEventOf(event)
+    if (isNil(origin)) {
         return classifiedDestinations
     }
-    const eventFlowId = event.data.flowRun.flowId
+    if (isNil(origin.flowId)) {
+        return dropWebhookFlowDestinations({
+            classifiedDestinations,
+            event,
+            log,
+            message: '[eventDestinationService#trigger] This agent action ran inside a flow that could not be named; dropping every webhook-flow destination to break a possible cycle, non-webhook destinations will still fire',
+        })
+    }
     const targetsEventFlow = classifiedDestinations.some(({ destination }) =>
-        extractWebhookFlowIdCandidate({ destinationUrl: destination.url }) === eventFlowId)
+        extractWebhookFlowIdCandidate({ destinationUrl: destination.url }) === origin.flowId)
     if (!targetsEventFlow) {
         return classifiedDestinations
     }
@@ -299,7 +286,7 @@ const skipInternalDestinationsOnFlowCycle = ({
         classifiedDestinations,
         event,
         log,
-        flowId: eventFlowId,
+        flowId: origin.flowId,
         message: '[eventDestinationService#trigger] Source flow is wired as a webhook-flow destination; dropping all webhook-flow destinations to break the cycle, non-webhook destinations will still fire',
     })
 }
@@ -317,7 +304,10 @@ const dropWebhookFlowDestinations = ({ classifiedDestinations, event, log, flowI
     return keptDestinations
 }
 
-const agentActionOriginOf = (event: Pick<ApplicationEvent, 'action' | 'data'>): { flowId?: string } | undefined => {
+const flowBehindEventOf = (event: Pick<ApplicationEvent, 'action' | 'data'>): { flowId?: string } | undefined => {
+    if (isFlowRunEvent(event)) {
+        return { flowId: event.data.flowRun.flowId }
+    }
     if (event.action !== ApplicationEventName.AGENT_ACTION_EXECUTED || !('source' in event.data) || event.data.source !== AgentRunSource.FLOW_STEP) {
         return undefined
     }
