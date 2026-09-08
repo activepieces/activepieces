@@ -104,6 +104,11 @@ function serializeBody(
     return { body: undefined, extraHeaders: {}, isStream: false };
   }
   if (isNodeFormData(body)) {
+    // A buffered multipart body lets undici send Content-Length; a streamed one is sent
+    // chunked without a length, which strict multipart parsers reject with a 500.
+    if (body.hasKnownLength()) {
+      return { body: body.getBuffer(), extraHeaders: body.getHeaders(), isStream: false };
+    }
     const stream = new PassThrough();
     body.on('error', (error) => stream.destroy(error));
     body.pipe(stream);
@@ -220,6 +225,8 @@ type NodeFormData = {
   getHeaders: () => Record<string, string>;
   pipe: (...args: unknown[]) => unknown;
   on: (event: 'error', listener: (error: Error) => void) => unknown;
+  hasKnownLength: () => boolean;
+  getBuffer: () => Buffer;
 };
 
 type ResponseType = NonNullable<HttpRequest['responseType']>;
