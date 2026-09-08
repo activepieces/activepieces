@@ -79,14 +79,16 @@ const { mockGetOnePopulated } = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../../../src/app/flows/flow/flow.service', () => ({
-    flowService: () => ({ getOnePopulated: mockGetOnePopulated }),
+    flowService: () => ({ getOnePopulated: mockGetOnePopulated, getOnePopulatedOrThrow: mockGetOnePopulatedOrThrow }),
 }))
 
-const { mockRunFlowAsTool } = vi.hoisted(() => ({
+const { mockRunFlowAsTool, mockGetOnePopulatedOrThrow } = vi.hoisted(() => ({
     mockRunFlowAsTool: vi.fn().mockResolvedValue({ content: [{ type: 'text', text: 'ok' }] }),
+    mockGetOnePopulatedOrThrow: vi.fn(),
 }))
 
-vi.mock('../../../../../src/app/mcp/mcp-server-builder', () => ({
+vi.mock('../../../../../src/app/mcp/mcp-server-builder', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
     runFlowAsTool: mockRunFlowAsTool,
 }))
 
@@ -439,7 +441,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
 })
 
 describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a flow tool, scoped to its own project', () => {
-    async function runFlowTool(conversation: unknown, flowId = 'flow-1') {
+    async function runFlowTool(conversation: unknown, flowId = 'flow-1', flowVersionId?: string) {
         mockRunFlowAsTool.mockClear()
         mockGetOnePopulated.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
@@ -448,6 +450,7 @@ describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a f
             conversationId: 'conv-1',
             toolName: 'run_subflow',
             flowId,
+            ...(flowVersionId === undefined ? {} : { flowVersionId }),
             toolInput: { foo: 'bar' },
             returnsResponse: false,
         })
@@ -477,14 +480,71 @@ describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a f
     })
 
     it('runs the flow scoped to the conversation\'s own project when everything checks out', async () => {
-        mockGetOnePopulated.mockResolvedValue({ id: 'flow-1', version: { displayName: 'My Flow' } })
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-1', fields: ['Email Sender'] }))
 
         await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
 
         expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own' })
         expect(mockRunFlowAsTool).toHaveBeenCalledTimes(1)
     })
+
+    it('translates with the exact version whose schema the model was shown, not whatever is published now', async () => {
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-advertised', publishedVersionId: 'v-newer', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' }, 'flow-1', 'v-advertised')
+
+        expect(mockGetOnePopulated).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own', versionId: 'v-advertised' })
+        expect(mockGetOnePopulatedOrThrow).not.toHaveBeenCalled()
+        const [call] = mockRunFlowAsTool.mock.calls
+        expect(call[0].flow.version.id).toBe('v-advertised')
+        expect(call[0].properties.map((property: { name: string }) => property.name)).toEqual(['Email Sender'])
+    })
+
+    it('falls back to the runnable version for a run enqueued before the version was pinned', async () => {
+        mockGetOnePopulatedOrThrow.mockClear()
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-draft', publishedVersionId: 'v-published', fields: ['Renamed In Draft'] }))
+        mockGetOnePopulatedOrThrow.mockResolvedValue(flowWithFields({ versionId: 'v-published', publishedVersionId: 'v-published', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        expect(mockGetOnePopulatedOrThrow).toHaveBeenCalledWith({ id: 'flow-1', projectId: 'proj-own', versionId: 'v-published' })
+        const [call] = mockRunFlowAsTool.mock.calls
+        expect(call[0].properties.map((property: { name: string }) => property.name)).toEqual(['Email Sender'])
+        expect(call[0].flow.version.id).toBe('v-published')
+    })
+
+    it('runs the draft directly when nothing has been published yet', async () => {
+        mockGetOnePopulatedOrThrow.mockClear()
+        mockGetOnePopulated.mockResolvedValue(flowWithFields({ versionId: 'v-draft', fields: ['Email Sender'] }))
+
+        await runFlowTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+
+        expect(mockGetOnePopulatedOrThrow).not.toHaveBeenCalled()
+        const [call] = mockRunFlowAsTool.mock.calls
+        expect(call[0].flow.version.id).toBe('v-draft')
+    })
 })
+
+function flowWithFields({ versionId, publishedVersionId, fields }: { versionId: string, publishedVersionId?: string, fields: string[] }) {
+    return {
+        id: 'flow-1',
+        ...(publishedVersionId === undefined ? {} : { publishedVersionId }),
+        version: {
+            id: versionId,
+            displayName: 'My Flow',
+            trigger: {
+                settings: {
+                    input: {
+                        toolName: 'run_subflow',
+                        toolDescription: 'runs a subflow',
+                        returnsResponse: false,
+                        inputSchema: fields.map((name) => ({ name, type: 'Text', required: false })),
+                    },
+                },
+            },
+        },
+    }
+}
 
 describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may report progress', () => {
 

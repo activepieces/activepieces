@@ -660,7 +660,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
         tools: dryRun || discoveryOnly ? [] : configuredFlowTools,
-        runFlowTool: ({ toolName, flowId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, toolName, flowId, toolInput, returnsResponse }),
+        runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse }),
         log,
     })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
