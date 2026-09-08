@@ -973,6 +973,22 @@ export const gmailGetLabelActionOutputSchema: OutputSchema = {
   ],
 };
 
+export const gmailCreateLabelActionOutputSchema: OutputSchema = {
+  fields: gmailLabelBaseFields,
+};
+
+export const gmailAddLabelToEmailActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailRemoveLabelFromEmailActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
+export const gmailArchiveEmailActionOutputSchema: OutputSchema = {
+  fields: gmailMessageResourceFields,
+};
+
 export const gmailGetProfileActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'emailAddress', label: 'Email Address', format: 'email' },

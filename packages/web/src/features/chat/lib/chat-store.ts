@@ -278,4 +278,3 @@ export const chatBuildUtils = {
 };
 
 export type SetChatStore = StoreApi<ChatStoreState>['setState'];
-export type GetChatStore = StoreApi<ChatStoreState>['getState'];

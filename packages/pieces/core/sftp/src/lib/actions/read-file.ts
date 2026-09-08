@@ -5,6 +5,7 @@ import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { PassThrough, Readable } from 'stream';
 import { getSftpError } from './common';
+import { readFileActionOutputSchema } from '../output-schemas';
 
 // Return a Readable and let the transfer run in the background; files.write
 // consumes it, so the file is never fully buffered in the sandbox. The client
@@ -35,6 +36,7 @@ export const readFileContent = createAction({
       required: true,
     }),
   },
+  outputSchema: readFileActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const filePath = context.propsValue['filePath'];
