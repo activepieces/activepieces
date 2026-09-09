@@ -64,17 +64,23 @@ export function useAutomationsData({
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
 
+  const hasConnectionFilter = filters.connectionFilter.length > 0;
+  const skipFlows =
+    filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
+  const skipTables =
+    (filters.typeFilter.length > 0 && !filters.typeFilter.includes('table')) ||
+    hasConnectionFilter;
+
   const folderCounts = useMemo(() => {
     const folders = foldersQuery.data ?? [];
     return new Map(
       folders.map((folder) => [
         folder.id,
-        hideTables
-          ? folder.numberOfFlows
-          : folder.numberOfFlows + folder.numberOfTables,
+        (skipFlows ? 0 : folder.numberOfFlows) +
+          (hideTables || skipTables ? 0 : folder.numberOfTables),
       ]),
     );
-  }, [foldersQuery.data, hideTables]);
+  }, [foldersQuery.data, hideTables, skipFlows, skipTables]);
 
   const folderContentsQuery = useQuery<FolderContentsMap>({
     queryKey: ['all-folder-contents', projectId, folderIds, hideTables],
@@ -104,11 +110,6 @@ export function useAutomationsData({
     refetchOnMount: 'always',
   });
 
-  const skipFlows =
-    filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
-  const skipTables =
-    filters.typeFilter.length > 0 && !filters.typeFilter.includes('table');
-
   const rootFlowsQuery = useQuery({
     queryKey: ['root-flows', projectId, filters, sort],
     queryFn: () =>
@@ -122,10 +123,9 @@ export function useAutomationsData({
           filters.statusFilter.length > 0
             ? (filters.statusFilter as FlowStatus[])
             : undefined,
-        connectionExternalIds:
-          filters.connectionFilter.length > 0
-            ? filters.connectionFilter
-            : undefined,
+        connectionExternalIds: hasConnectionFilter
+          ? filters.connectionFilter
+          : undefined,
         sortBy: sort === 'default' ? undefined : 'NAME',
         order: sortOrder(sort),
       }),
@@ -194,7 +194,11 @@ export function useAutomationsData({
     let folders = foldersQuery.data ?? [];
     let rootFlows = rootFlowsQuery.data?.data ?? [];
     let rootTables = rootTablesQuery.data?.data ?? [];
-    const folderContents = folderContentsQuery.data ?? new Map();
+    const folderContents = stripSkippedFolderContents({
+      folderContents: folderContentsQuery.data ?? new Map(),
+      skipFlows,
+      skipTables,
+    });
 
     const hasFolderFilter = filters.folderFilter.length > 0;
 
@@ -260,6 +264,8 @@ export function useAutomationsData({
     filters.folderFilter,
     pinnedList,
     sort,
+    skipFlows,
+    skipTables,
   ]);
 
   const hasFolderFilter = filters.folderFilter.length > 0;
@@ -365,6 +371,29 @@ function buildFolderContentsMap(
     }
   });
   return map;
+}
+
+function stripSkippedFolderContents({
+  folderContents,
+  skipFlows,
+  skipTables,
+}: {
+  folderContents: FolderContentsMap;
+  skipFlows: boolean;
+  skipTables: boolean;
+}): FolderContentsMap {
+  if (!skipFlows && !skipTables) {
+    return folderContents;
+  }
+  return new Map(
+    [...folderContents].map(([folderId, content]) => [
+      folderId,
+      {
+        flows: skipFlows ? [] : content.flows,
+        tables: skipTables ? [] : content.tables,
+      },
+    ]),
+  );
 }
 
 function emptyTablePage(): SeekPage<Table> {
