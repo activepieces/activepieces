@@ -1,6 +1,6 @@
-import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { aiUtils } from '@activepieces/server-utils'
-import { AiStepAction, EngineResponseStatus, ExecuteAiJobData, WorkerJobType } from '@activepieces/shared'
+import { AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
+import { AiStepAction, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
 
@@ -30,8 +30,18 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
     })
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
+    const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: data.modelId })
     const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: data.modelId, auth, webSearchEnabled, options: webSearchOptions })
-    const model = aiUtils.createModel({ provider, auth, config, modelId: data.modelId, webSearchEnabled, webSearchOptions })
+    const model = aiUtils.createModel({
+        provider,
+        auth,
+        config,
+        modelId: data.modelId,
+        flowStep: flowStepMetadata(data),
+        openaiResponsesModel: webSearchEnabled && (effectiveProvider ?? provider) === AIProviderName.OPENAI,
+        webSearchEnabled,
+        webSearchOptions,
+    })
 
     const response = await generateText({
         model,
@@ -43,6 +53,15 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
     })
 
     return toStepOutput({ data, text: response.text ?? '', sources: response.sources })
+}
+
+function flowStepMetadata(data: ExecuteAiJobData): FlowStepMetadata {
+    return {
+        projectId: data.projectId,
+        platformId: data.platformId,
+        flowId: data.flowId,
+        runId: data.flowRunId,
+    }
 }
 
 function buildMessages(data: ExecuteAiJobData): ModelMessage[] {

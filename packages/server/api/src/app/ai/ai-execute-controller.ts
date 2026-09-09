@@ -16,7 +16,7 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const { projectId, platform } = request.principal
-        const { action, provider, providerConfigId, modelId, prompt, text, categories, conversation, maxOutputTokens, temperature, webSearch, flowRunId, waitpointId } = request.body
+        const { action, provider, providerConfigId, modelId, prompt, text, categories, conversation, maxOutputTokens, temperature, webSearch, flowId, flowRunId, waitpointId } = request.body
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
 
         const requestId = apId()
@@ -31,6 +31,7 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
                 requestId,
                 projectId,
                 platformId: platform.id,
+                flowId,
                 flowRunId,
                 waitpointId,
                 action,
@@ -56,6 +57,7 @@ const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 const ExecuteAiRequest = z.object({
     action: AiStepAction,
+    flowId: z.string(),
     flowRunId: z.string(),
     waitpointId: z.string(),
     provider: z.enum(AIProviderName),

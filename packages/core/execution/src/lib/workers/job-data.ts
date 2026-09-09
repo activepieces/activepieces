@@ -397,6 +397,7 @@ export const ExecuteAiJobData = z.object({
     requestId: z.string(),
     projectId: z.string(),
     platformId: z.string(),
+    flowId: z.string(),
     flowRunId: z.string(),
     waitpointId: z.string(),
     action: AiStepAction,
