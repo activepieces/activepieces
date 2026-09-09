@@ -64,9 +64,12 @@ orphans `pointer-events: none` on `<body>` and the page behind stops taking clic
 **A feature you cannot act on shows itself filled with sample data.** `Audit logs` is a table, so there is
 no action to crown, and opening it freely would show an empty table with nothing to explain why. It renders
 its real filters, columns and pagination populated with believable sample rows, crisp rather than blurred,
-with a strip pinned above the content naming the feature, its tier and the upgrade button. Blurring was
-tried first and dropped: it was chosen while the table was empty, and once there are rows worth reading it
-hides the very thing the treatment exists to show.
+inside a **framed container** whose header carries the crown, the feature's name, its tier badge and the
+upgrade button. Two earlier attempts were dropped: blurring, chosen while the table was empty, hides the
+very rows the treatment exists to show; and a plain strip above the content said the right words but left
+the page reading as ordinary, so the boundary between real chrome and preview content has to be structural
+rather than a sentence. The container hugs its content, so a short form does not sit in a large empty
+frame.
 
 The sample content is **inert and visibly so**: the region takes `pointer-events: none`, filters and
 pagination render disabled, and the only live control is the upgrade button. The alternative, making the
