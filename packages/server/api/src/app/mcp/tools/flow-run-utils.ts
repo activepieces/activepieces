@@ -20,11 +20,6 @@ const MAX_WAIT_MS = 120_000
 // 300 chars, so the agent never saw it. Keep the head but allow enough to carry the real guidance.
 const ERROR_SUMMARY_MAX_LENGTH = 900
 
-type PieceActionRunResult = {
-    text: string
-    errorSummary?: string
-}
-
 export async function executeFlowTest({ flowId, projectId, userId, stepName, triggerTestData, log }: {
     flowId: FlowId
     projectId: ProjectId
@@ -188,10 +183,10 @@ export async function executePieceActionRun({
         componentType: 'action',
     })
     if (diagnosis.unknownKeys.length > 0) {
-        return { content: [{ type: 'text', text: `❌ ${diagnosis.parts.join(' ')}` }] }
+        return { content: [{ type: 'text', text: `❌ ${diagnosis.parts.join(' ')}` }], isError: true }
     }
     if (diagnosis.missing.length > 0 || diagnosis.invalidEnums.length > 0) {
-        return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }] }
+        return { content: [{ type: 'text', text: `❌ Cannot run action: ${diagnosis.parts.join(' ')}` }], isError: true }
     }
 
     const { data: project, error: projectError } = await tryCatch(
@@ -224,7 +219,7 @@ export async function executePieceActionRun({
         const message = parsedAction.success
             ? 'expected a piece action'
             : parsedAction.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ')
-        return { content: [{ type: 'text', text: `❌ Invalid action configuration: ${message}` }] }
+        return { content: [{ type: 'text', text: `❌ Invalid action configuration: ${message}` }], isError: true }
     }
     const step: PieceAction = { ...parsedAction.data, lastUpdatedDate: dayjs().toISOString() }
 
@@ -245,6 +240,7 @@ export async function executePieceActionRun({
                 text: `⏳ ${action.displayName} never started — nothing ran and nothing was written. Run ID: ${actionRun.id}. Safe to retry as-is.`,
             }],
             structuredContent: { errorSummary: 'The action never started, so nothing ran.' },
+            isError: true,
         }
     }
 
@@ -255,6 +251,7 @@ export async function executePieceActionRun({
                 text: `⏳ ${action.displayName} timed out before it finished. Run ID: ${actionRun.id}. It may have partially completed, so do not re-run it blindly — check the app for a write from this attempt first, or ask the user.`,
             }],
             structuredContent: { errorSummary: 'The action timed out before it finished and may have partially completed.' },
+            isError: true,
         }
     }
 
@@ -265,6 +262,7 @@ export async function executePieceActionRun({
                 text: `❌ ${action.displayName} failed with INTERNAL_ERROR — the engine crashed while loading or executing the piece. Run ID: ${actionRun.id}.`,
             }],
             structuredContent: { errorSummary: 'The step couldn’t start — something went wrong loading it.' },
+            isError: true,
         }
     }
 
@@ -275,11 +273,7 @@ export async function executePieceActionRun({
         }
     }
 
-    const formatted = formatPieceActionRunResult({ outcome: actionRun, runId: actionRun.id, displayName: action.displayName, actionName: action.name })
-    return {
-        content: [{ type: 'text', text: formatted.text }],
-        ...(formatted.errorSummary !== undefined ? { structuredContent: { errorSummary: formatted.errorSummary } } : {}),
-    }
+    return formatPieceActionRunResult({ outcome: actionRun, runId: actionRun.id, displayName: action.displayName, actionName: action.name })
 }
 
 export async function executeCodeActionRun({
@@ -474,26 +468,27 @@ function serializeOutput({ payload, summary }: { payload: unknown, summary: stri
     return fitted ?? `${summary}The output was too large to include.${sizeNote} Retry with a narrower filter or fewer items.`
 }
 
-function formatPieceActionRunResult({ outcome, runId, displayName, actionName }: {
+export function formatPieceActionRunResult({ outcome, runId, displayName, actionName }: {
     outcome: ActionRunResult
     runId: string
     displayName: string
     actionName?: string
-}): PieceActionRunResult {
+}): McpToolResult {
     if (outcome.status === FlowRunStatus.SUCCEEDED) {
         const { payload, statusNote } = actionName === 'custom_api_call'
             ? slimCustomApiCallOutput(outcome.output)
             : { payload: outcome.output, statusNote: '' }
         const text = serializeOutput({ payload, summary: `✅ ${displayName} completed (run ${runId})${statusNote}.\n\n` })
         if (looksEmpty(payload)) {
-            return { text: `${text}\n\n${emptyResultNote(actionName)}` }
+            return { content: [{ type: 'text', text: `${text}\n\n${emptyResultNote(actionName)}` }] }
         }
-        return { text }
+        return { content: [{ type: 'text', text }] }
     }
     const summary = isNil(outcome.errorMessage) ? 'The step failed without an error message.' : summarizeActionError(outcome.errorMessage)
     return {
-        text: `❌ ${displayName} failed (run ${runId}): ${summary}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.`,
-        errorSummary: summary,
+        content: [{ type: 'text', text: `❌ ${displayName} failed (run ${runId}): ${summary}\n\nRetry suggestion: Check the error above. If it mentions missing criteria, try adding a broad filter (e.g., after_date with a recent date, or a common search term). If it mentions auth, verify the connection.` }],
+        structuredContent: { errorSummary: summary },
+        isError: true,
     }
 }
 

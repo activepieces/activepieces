@@ -1,6 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { McpActivity, McpOAuthClientKey } from '@activepieces/shared'
+import { McpActivity, McpOAuthClientKey, PackageType, PieceType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -8,7 +8,7 @@ import { withActivityRecording } from '../../../../src/app/mcp/activity/mcp-acti
 import { mcpProjectSelection } from '../../../../src/app/mcp/mcp-project-selection'
 import { mcpServerService } from '../../../../src/app/mcp/mcp-service'
 import { db } from '../../../helpers/db'
-import { createMockProject } from '../../../helpers/mocks'
+import { createMockPieceMetadata, createMockProject } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
@@ -174,6 +174,37 @@ describe('MCP activity recording', () => {
         expect(rows).toHaveLength(1)
         expect(rows[0].status).toBe('FAILED')
         expect(rows[0].errorMessage).toContain('auth must be a plain externalId')
+    })
+
+    // The path a model hits most often: it left a required input out. The tool answers
+    // with error text and no isError, so the row used to read SUCCEEDED with a null
+    // errorMessage — a rejected call showing green in the feed.
+    it('records a validation failure as FAILED', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: '@activepieces/piece-activity-probe',
+            displayName: 'Activity Probe',
+            version: '0.1.0',
+            pieceType: PieceType.OFFICIAL,
+            packageType: PackageType.REGISTRY,
+            platformId: undefined,
+            actions: {
+                send: {
+                    name: 'send',
+                    displayName: 'Send',
+                    description: 'Send something',
+                    requireAuth: false,
+                    props: { to: { type: 'SHORT_TEXT', displayName: 'To', required: true } },
+                },
+            },
+            triggers: {},
+        }))
+
+        await callProjectTool({ name: 'ap_run_action', args: { pieceName: '@activepieces/piece-activity-probe', actionName: 'send' } })
+
+        const rows = await findActivityRows()
+        expect(rows).toHaveLength(1)
+        expect(rows[0].status).toBe('FAILED')
+        expect(rows[0].errorMessage).toContain('Missing required inputs')
     })
 
     it('does not record a read-only tool', async () => {
