@@ -6,12 +6,14 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
+import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { barrierQueue } from './barrier-queue'
 import { resumeService } from './resume-service'
 import { WaitpointEntity } from './waitpoint-entity'
 import { WaitpointSignalEntity } from './waitpoint-signal-entity'
+import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { Waitpoint, WaitpointSignal, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
@@ -21,6 +23,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     async create(params: CreateBarrierParams): Promise<CreateBarrierResult> {
         const labels = params.signalLabels ?? []
         assertSignalCountWithinLimit({ signalCount: labels.length })
+        const flowRun = await flowRunRepo().findOneByOrFail({ id: params.flowRunId, projectId: params.projectId })
 
         const creation = await transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
@@ -45,7 +48,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
                     type: PauseType.BARRIER,
                     version: params.version,
                     status: WaitpointStatus.PENDING,
-                    resumeDateTime: defaultBarrierDeadline(),
+                    resumeDateTime: defaultBarrierDeadline({ flowRunCreated: flowRun.created }),
                     responseToSend: params.responseToSend ?? null,
                     workerHandlerId: params.workerHandlerId ?? null,
                     httpRequestId: params.httpRequestId ?? null,
@@ -63,6 +66,15 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         })
 
         if (creation.inserted) {
+            if (!isNil(creation.barrier.resumeDateTime)) {
+                await waitpointTimeoutJob.schedule({
+                    flowRunId: params.flowRunId,
+                    projectId: params.projectId,
+                    waitpointId: creation.barrier.id,
+                    resumeDateTime: creation.barrier.resumeDateTime,
+                    log,
+                })
+            }
             await barrierQueue(log).enqueueEvaluation({ barrierId: creation.barrier.id, projectId: params.projectId })
         }
 
@@ -231,9 +243,9 @@ function assertSignalCountWithinLimit({ signalCount }: { signalCount: number }):
     }
 }
 
-function defaultBarrierDeadline(): string {
+function defaultBarrierDeadline({ flowRunCreated }: DefaultBarrierDeadlineParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    return dayjs().add(maxDurationInDays, 'day').toISOString()
+    return dayjs(flowRunCreated).add(maxDurationInDays, 'day').toISOString()
 }
 
 function readStoredSummary(waitpoint: Waitpoint | null): BarrierSummary | null {
@@ -319,4 +331,8 @@ type BuildPendingSignalsParams = {
     barrierId: string
     projectId: string
     labels: (string | null)[]
+}
+
+type DefaultBarrierDeadlineParams = {
+    flowRunCreated: string
 }
