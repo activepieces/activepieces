@@ -14,42 +14,87 @@ import { Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
-export async function sweepOverdueDeadlines({ log }: SweepOverdueDeadlinesParams): Promise<string[]> {
-    const overdue = await findOverdueWaitpoints()
-    const probes = await probeDeadlineJobs({ overdue, log })
-    const unarmed = probes.filter((probe) => probe.state === 'unarmed').map((probe) => probe.waitpoint)
-    const deadLettered = probes.filter((probe) => probe.state === 'dead-lettered').map((probe) => probe.waitpoint)
-    const armed = await armDeadlines({ unarmed, log })
-    await stampDeadLettered({ deadLettered })
+export async function sweepOverdueDeadlines({ log, pageSize }: SweepOverdueDeadlinesParams): Promise<string[]> {
+    const sweep = await runSweepPages({ log, pageSize: pageSize ?? SCAN_PAGE_SIZE })
 
-    if (armed.length > 0) {
-        log.info({ armedCount: armed.length, scannedCount: overdue.length }, '[sweepOverdueDeadlines] Re-armed overdue waitpoint deadlines')
+    if (sweep.armed.length > 0) {
+        log.info({ armedCount: sweep.armed.length, scannedCount: sweep.scannedCount }, '[sweepOverdueDeadlines] Re-armed overdue waitpoint deadlines')
     }
-    if (deadLettered.length > 0) {
+    if (sweep.deadLettered.length > 0) {
         log.warn({
-            deadLetteredCount: deadLettered.length,
-            scannedCount: overdue.length,
-            sample: deadLettered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((waitpoint) => waitpoint.id),
+            deadLetteredCount: sweep.deadLettered.length,
+            scannedCount: sweep.scannedCount,
+            sample: sweep.deadLettered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((waitpoint) => waitpoint.id),
         }, '[sweepOverdueDeadlines] Deadlines exhausted their attempts and leave the scan for good rather than spending its budget every tick; their runs stay paused until someone intervenes')
     }
-    if (armed.length >= MAX_ARMED_PER_TICK) {
-        log.warn({ armedCount: armed.length, scannedCount: overdue.length }, '[sweepOverdueDeadlines] Hit the per-tick arm quota; the oldest deadlines went first and the rest follow next tick')
+    if (sweep.armed.length >= MAX_ARMED_PER_TICK) {
+        log.warn({ armedCount: sweep.armed.length, scannedCount: sweep.scannedCount }, '[sweepOverdueDeadlines] Hit the per-tick arm quota; the oldest deadlines went first and the rest follow next tick')
     }
-    return armed
+    if (sweep.exhaustedPageBudget) {
+        log.warn({ scannedCount: sweep.scannedCount, armedCount: sweep.armed.length }, '[sweepOverdueDeadlines] Spent the per-tick scan budget without reaching the end of the overdue backlog; deadlines already armed elsewhere are holding the window and the remainder waits for the next tick')
+    }
+    return sweep.armed
 }
 
-async function findOverdueWaitpoints(): Promise<Waitpoint[]> {
+async function runSweepPages({ log, pageSize }: RunSweepPagesParams): Promise<SweepOutcome> {
+    const window = buildScanWindow()
+    const armed: string[] = []
+    const deadLettered: Waitpoint[] = []
+    let scannedCount = 0
+    let cursor: DeadlineCursor | undefined = undefined
+
+    for (let page = 0; page < MAX_SCAN_PAGES_PER_TICK; page++) {
+        const overdue = await findOverdueWaitpoints({ window, cursor, pageSize })
+        if (overdue.length === 0) {
+            return { armed, deadLettered, scannedCount, exhaustedPageBudget: false }
+        }
+        scannedCount += overdue.length
+        cursor = toCursor(overdue[overdue.length - 1])
+
+        const probes = await probeDeadlineJobs({ overdue, log })
+        const pageDeadLettered = probes.filter((probe) => probe.state === 'dead-lettered').map((probe) => probe.waitpoint)
+        await stampDeadLettered({ deadLettered: pageDeadLettered })
+        deadLettered.push(...pageDeadLettered)
+
+        const unarmed = probes.filter((probe) => probe.state === 'unarmed').map((probe) => probe.waitpoint)
+        armed.push(...await armDeadlines({ unarmed, remainingQuota: MAX_ARMED_PER_TICK - armed.length, log }))
+
+        if (armed.length >= MAX_ARMED_PER_TICK || overdue.length < pageSize) {
+            return { armed, deadLettered, scannedCount, exhaustedPageBudget: false }
+        }
+    }
+    return { armed, deadLettered, scannedCount, exhaustedPageBudget: true }
+}
+
+function buildScanWindow(): ScanWindow {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    return waitpointRepo()
+    const now = dayjs()
+    return { now: now.toISOString(), floor: now.subtract(maxDurationInDays, 'day').toISOString() }
+}
+
+function toCursor(waitpoint: Waitpoint): DeadlineCursor | undefined {
+    return isNil(waitpoint.resumeDateTime) ? undefined : { resumeDateTime: waitpoint.resumeDateTime, id: waitpoint.id }
+}
+
+async function findOverdueWaitpoints({ window, cursor, pageSize }: FindOverdueWaitpointsParams): Promise<Waitpoint[]> {
+    const query = waitpointRepo()
         .createQueryBuilder('waitpoint')
         .innerJoin('flow_run', 'flowRun', '"flowRun"."id" = "waitpoint"."flowRunId"')
         .where('"waitpoint"."status" = :status', { status: WaitpointStatus.PENDING })
-        .andWhere('"waitpoint"."resumeDateTime" < :now', { now: dayjs().toISOString() })
-        .andWhere('"waitpoint"."resumeDateTime" > :floor', { floor: dayjs().subtract(maxDurationInDays, 'day').toISOString() })
+        .andWhere('"waitpoint"."resumeDateTime" < :now', { now: window.now })
+        .andWhere('"waitpoint"."resumeDateTime" > :floor', { floor: window.floor })
         .andWhere('"waitpoint"."deadLetteredAt" IS NULL')
         .andWhere('"flowRun"."status" = :runStatus', { runStatus: FlowRunStatus.PAUSED })
+    if (!isNil(cursor)) {
+        query.andWhere('("waitpoint"."resumeDateTime", "waitpoint"."id") > (:cursorResumeDateTime, :cursorId)', {
+            cursorResumeDateTime: cursor.resumeDateTime,
+            cursorId: cursor.id,
+        })
+    }
+    return query
         .orderBy('"waitpoint"."resumeDateTime"', 'ASC')
-        .limit(SWEEP_SCAN_LIMIT)
+        .addOrderBy('"waitpoint"."id"', 'ASC')
+        .limit(pageSize)
         .getMany()
 }
 
@@ -70,16 +115,20 @@ async function probeDeadlineJob({ waitpoint, log }: ProbeDeadlineJobParams): Pro
 }
 
 async function stampDeadLettered({ deadLettered }: StampDeadLetteredParams): Promise<void> {
-    if (deadLettered.length === 0) {
-        return
-    }
-    await waitpointRepo().update({ id: In(deadLettered.map((waitpoint) => waitpoint.id)) }, { deadLetteredAt: dayjs().toISOString() })
+    const stampedAt = dayjs().toISOString()
+    const idsByProject = deadLettered.reduce<Record<string, string[]>>((grouped, waitpoint) => ({
+        ...grouped,
+        [waitpoint.projectId]: [...grouped[waitpoint.projectId] ?? [], waitpoint.id],
+    }), {})
+    await Promise.all(Object.entries(idsByProject).map(([projectId, ids]) =>
+        waitpointRepo().update({ id: In(ids), projectId }, { deadLetteredAt: stampedAt }),
+    ))
 }
 
-async function armDeadlines({ unarmed, log }: ArmDeadlinesParams): Promise<string[]> {
+async function armDeadlines({ unarmed, remainingQuota, log }: ArmDeadlinesParams): Promise<string[]> {
     const armed: string[] = []
     for (const waitpoint of unarmed) {
-        if (armed.length >= MAX_ARMED_PER_TICK) {
+        if (armed.length >= remainingQuota) {
             break
         }
         if (isNil(waitpoint.resumeDateTime)) {
@@ -99,18 +148,48 @@ async function armDeadlines({ unarmed, log }: ArmDeadlinesParams): Promise<strin
     return armed
 }
 
-const SWEEP_SCAN_LIMIT = 2000
+const SCAN_PAGE_SIZE = 500
+const MAX_SCAN_PAGES_PER_TICK = 8
 const MAX_ARMED_PER_TICK = 500
 const DEADLINE_PROBE_CHUNK_SIZE = 50
 const DEAD_LETTER_SAMPLE_SIZE = 10
 
 type SweepOverdueDeadlinesParams = {
     log: FastifyBaseLogger
+    pageSize?: number
+}
+
+type RunSweepPagesParams = {
+    log: FastifyBaseLogger
+    pageSize: number
+}
+
+type SweepOutcome = {
+    armed: string[]
+    deadLettered: Waitpoint[]
+    scannedCount: number
+    exhaustedPageBudget: boolean
+}
+
+type ScanWindow = {
+    now: string
+    floor: string
+}
+
+type DeadlineCursor = {
+    resumeDateTime: string
+    id: string
 }
 
 type DeadlineProbe = {
     waitpoint: Waitpoint
     state: 'unarmed' | 'armed' | 'dead-lettered'
+}
+
+type FindOverdueWaitpointsParams = {
+    window: ScanWindow
+    cursor: DeadlineCursor | undefined
+    pageSize: number
 }
 
 type ProbeDeadlineJobsParams = {
@@ -129,5 +208,6 @@ type StampDeadLetteredParams = {
 
 type ArmDeadlinesParams = {
     unarmed: Waitpoint[]
+    remainingQuota: number
     log: FastifyBaseLogger
 }
