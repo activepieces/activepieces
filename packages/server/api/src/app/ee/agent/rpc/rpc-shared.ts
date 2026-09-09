@@ -215,6 +215,18 @@ export function recordAgentAction({ run, conversationId, flow, piece, resolvedIn
     })
 }
 
+export function outcomeOfToolResult(result: unknown): AgentActionOutcome {
+    if (!isObject(result)) {
+        return AgentActionOutcome.SUCCEEDED
+    }
+    if (result.isError === true) {
+        return AgentActionOutcome.FAILED
+    }
+    const structured = result.structuredContent
+    const failed = isObject(structured) && typeof structured.errorSummary === 'string'
+    return failed ? AgentActionOutcome.FAILED : AgentActionOutcome.SUCCEEDED
+}
+
 export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcome, log }: {
     run: { projectId: string, platformId: string, userId: string, source: AgentRunSource, agent?: { id: string, displayName?: string } }
     conversationId?: string
@@ -232,6 +244,10 @@ export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcom
         connection: {},
         log,
     })
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && !isNil(value)
 }
 
 function recordAgentToolUse({ run, conversationId, flow, action, outcome, connection, log }: {

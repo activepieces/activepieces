@@ -12,7 +12,7 @@ import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
-import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent, recordAgentAction, recordAgentFlowToolUse } from './rpc-shared'
+import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, outcomeOfToolResult, pinConnectionToAgent, recordAgentAction, recordAgentFlowToolUse } from './rpc-shared'
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
@@ -55,8 +55,9 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             record(AgentActionOutcome.FAILED)
             throw runError
         }
-        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: connection.externalId ?? null }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
-        record(AgentActionOutcome.SUCCEEDED)
+        const outcome = outcomeOfToolResult(run.result)
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: resolvedInput }, connection: { externalId: connection.externalId ?? null }, piece: { name: input.piece.pieceName }, outcome }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        record(outcome)
         return { result: run.result, resolvedInput, actionDisplayName: resolved.actionDisplayName, ...spreadIfDefined('connectionLabel', connection.label) }
     },
 
@@ -114,8 +115,9 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             record(AgentActionOutcome.FAILED)
             throw runError
         }
-        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id } }, '[agentRpc#executeFlowTool] Ran a flow tool')
-        record(AgentActionOutcome.SUCCEEDED)
+        const outcome = outcomeOfToolResult(result)
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id }, outcome }, '[agentRpc#executeFlowTool] Ran a flow tool')
+        record(outcome)
         return { result }
     },
 

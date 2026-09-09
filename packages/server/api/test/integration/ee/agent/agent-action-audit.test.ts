@@ -173,6 +173,46 @@ describe('an action an agent ran reaches the audit log', () => {
         expect(summarizeApplicationEvent(row)).toBe('Ops agent ran the flow Refund handler')
     })
 
+    it('records a failure the piece reported in its result rather than by throwing', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
+        stubTheRun()
+        vi.spyOn(pieceToolRunner, 'runResolved').mockResolvedValue({
+            result: { content: [], structuredContent: { errorSummary: 'Gmail rejected the recipient' } },
+            resolvedInput: { to: RECIPIENT },
+        } as never)
+
+        await runConfiguredAction(conversationId, 'send_email')
+
+        const [row] = await agentActionRows(ctx)
+        expect(row.data).toMatchObject({ outcome: AgentActionOutcome.FAILED })
+    })
+
+    it('records a flow that ran and failed, so the row cannot disagree with its flow run', async () => {
+        const ctx = await contextWithProvider()
+        const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })
+        const flow = createMockFlow({ projectId: ctx.project.id })
+        await db.save('flow', flow)
+        const version = createMockFlowVersion({ flowId: flow.id, updatedBy: ctx.user.id, displayName: 'Refund handler' })
+        await db.save('flow_version', version)
+        vi.spyOn(mcpServerBuilder, 'resolveRunnableFlow').mockResolvedValue({ ...flow, version } as never)
+        vi.spyOn(mcpServerBuilder, 'runFlowAsTool').mockResolvedValue({ content: [], isError: true } as never)
+
+        await agentRpcHandlers(app.log).executeFlowTool({
+            conversationId,
+            toolName: 'flow-refund-handler',
+            flowId: flow.id,
+            toolInput: {},
+            returnsResponse: true,
+        })
+
+        const [row] = await agentActionRows(ctx)
+        expect(row.data).toMatchObject({
+            action: { kind: AgentActionKind.FLOW, flowId: flow.id },
+            outcome: AgentActionOutcome.FAILED,
+        })
+    })
+
     it('keeps the action input out of the row', async () => {
         const ctx = await contextWithProvider()
         const { conversationId } = await conversationFor(ctx, { source: AgentRunSource.AGENT, withAgent: true })

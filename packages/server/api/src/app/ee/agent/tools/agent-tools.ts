@@ -20,7 +20,7 @@ import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
 import { agentService } from '../agent-service'
 import { agentPrompt } from '../prompt/agent-prompt'
-import { recordAgentAction } from '../rpc/rpc-shared'
+import { outcomeOfToolResult, recordAgentAction } from '../rpc/rpc-shared'
 
 const AGENT_LIST_LIMIT = 50
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
@@ -736,7 +736,7 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         projectId: resolvedProjectId,
         userId,
         connection: { ...spreadIfDefined('externalId', connectionExternalId), ...spreadIfDefined('label', connectionLabel) },
-        outcome: isNil(errorSummary) ? AgentActionOutcome.SUCCEEDED : AgentActionOutcome.FAILED,
+        outcome: outcomeOfToolResult(result),
         log,
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('conversationId', conversationId),
