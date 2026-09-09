@@ -417,6 +417,9 @@
       "@activepieces/piece-dittofeed": [
         "packages/pieces/community/dittofeed/src/index.ts"
       ],
+      "@activepieces/piece-docling": [
+        "packages/pieces/community/docling/src/index.ts"
+      ],
       "@activepieces/piece-docsbot": [
         "packages/pieces/community/docsbot/src/index.ts"
       ],
