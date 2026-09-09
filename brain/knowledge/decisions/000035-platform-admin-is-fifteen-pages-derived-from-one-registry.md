@@ -239,3 +239,12 @@ PR #15153 had just expanded.
 
 Grilled 2026-09-07 against the `maybe-chat.activepieces.ai/docs/admin-nav` concept and Langdock's settings
 IA as references.
+
+The sample-data treatment was checked against Mobbin afterwards, and the survey supports dropping the
+blur: every product found picks one side or the other, never both. Later and Churnkey show crisp,
+realistic figures under a labelled band ("just a glimpse", "ANALYTICS PREVIEW"), while Juicebox, Asana
+Admin and Hex fade an essentially empty shell behind a card and teach the reader nothing about the
+feature. Churnkey's one-word "preview" also reads better than a sentence explaining that the data is not
+real. No product in the survey samples a *form*, so our Single sign on, Branding and Embedding treatment
+has no precedent to lean on, which is worth remembering given it is the same part that costs two working
+controls.
