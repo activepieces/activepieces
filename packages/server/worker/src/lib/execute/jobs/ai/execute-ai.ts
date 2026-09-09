@@ -3,6 +3,8 @@ import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
+import { extractStructuredData } from './extract-structured-data'
+import { generateImageStep } from './generate-image'
 
 export const executeAiJob: JobHandler<ExecuteAiJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AI,
@@ -45,12 +47,19 @@ async function waitBeforeRetry(attempt: number): Promise<void> {
 }
 
 async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unknown> {
-    const { provider, auth, config } = await ctx.apiClient.resolveAiProvider({
+    const resolved = await ctx.apiClient.resolveAiProvider({
         projectId: data.projectId,
         platformId: data.platformId,
         provider: data.provider,
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
+    const { provider, auth, config } = resolved
+    if (data.action === AiStepAction.EXTRACT_STRUCTURED_DATA) {
+        return { answer: await extractStructuredData({ data, resolved }) }
+    }
+    if (data.action === AiStepAction.GENERATE_IMAGE) {
+        return { answer: await generateImageStep({ ctx, data, resolved }) }
+    }
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: data.modelId })
@@ -91,12 +100,15 @@ function buildMessages(data: ExecuteAiJobData): ModelMessage[] {
     switch (data.action) {
         case AiStepAction.ASK_AI: {
             const history = (data.conversation ?? []) as ModelMessage[]
-            return [...history, { role: 'user', content: data.prompt }]
+            return [...history, { role: 'user', content: data.prompt ?? '' }]
         }
         case AiStepAction.SUMMARIZE_TEXT:
             return [{ role: 'user', content: `${data.prompt} Summarize the following text : ${data.text ?? ''}` }]
         case AiStepAction.CLASSIFY_TEXT:
             return [{ role: 'user', content: classificationPrompt(data) }]
+        case AiStepAction.EXTRACT_STRUCTURED_DATA:
+        case AiStepAction.GENERATE_IMAGE:
+            throw new Error(`${data.action} does not build plain messages`)
     }
 }
 
@@ -110,7 +122,7 @@ function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: s
         case AiStepAction.ASK_AI: {
             const conversation = isNil(data.conversation) ? undefined : [
                 ...(data.conversation as ModelMessage[]),
-                { role: 'user' as const, content: data.prompt },
+                { role: 'user' as const, content: data.prompt ?? '' },
                 { role: 'assistant' as const, content: text },
             ]
             const answer = data.webSearch?.enabled === true && data.webSearch.options?.includeSources === true
@@ -127,6 +139,9 @@ function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: s
             }
             return { answer: label }
         }
+        case AiStepAction.EXTRACT_STRUCTURED_DATA:
+        case AiStepAction.GENERATE_IMAGE:
+            throw new Error(`${data.action} returns its own output shape`)
     }
 }
 
