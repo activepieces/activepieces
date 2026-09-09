@@ -95,6 +95,9 @@ export type WorkerToApiContract = {
     updateProjectContext(input: UpdateProjectContextRequest): Promise<void>
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
+    resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse>
+    saveAiFile(input: SaveAiFileRequest): Promise<SaveAiFileResponse>
+    resumeAiStep(input: ResumeAiStepRequest): Promise<void>
     updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
     executeKnowledgeBaseTool(input: ExecuteKnowledgeBaseToolRequest): Promise<ExecuteKnowledgeBaseToolResponse>
@@ -405,6 +408,41 @@ export type SendPersonalizationProgressRequest = {
     researchToken: string | null
     phase: string
     message: string
+}
+
+export type ResolveAiProviderRequest = {
+    projectId: string
+    platformId: string
+    provider: AIProviderName
+    providerConfigId?: string
+}
+
+export type ResolveAiProviderResponse = {
+    provider: AIProviderName
+    providerConfigId: string
+    auth: Record<string, unknown>
+    config: Record<string, unknown>
+}
+
+export type SaveAiFileRequest = {
+    projectId: string
+    platformId: string
+    flowRunId: string
+    data: Buffer
+    mediaType: string
+    fileName?: string
+}
+
+export type SaveAiFileResponse = {
+    fileId: string
+    url: string
+}
+
+export type ResumeAiStepRequest = {
+    projectId: string
+    flowRunId: string
+    waitpointId: string
+    output: unknown
 }
 
 export const LONG_RUNNING_RPC_METHODS: readonly string[] = [

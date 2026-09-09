@@ -67,6 +67,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_TOKEN_REFRESH:
             return 'critical'
         case WorkerJobType.EXECUTE_AGENT_RUN:
+        case WorkerJobType.EXECUTE_AI:
         case WorkerJobType.EXECUTE_ACTION:
             return 'high'
     }
@@ -84,6 +85,7 @@ export enum WorkerJobType {
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
     EVENT_DESTINATION = 'EVENT_DESTINATION',
     EXECUTE_AGENT_RUN = 'EXECUTE_AGENT_RUN',
+    EXECUTE_AI = 'EXECUTE_AI',
     EXECUTE_TOKEN_REFRESH = 'EXECUTE_TOKEN_REFRESH',
     EXECUTE_ACTION = 'EXECUTE_ACTION',
     EXECUTE_PERSONALIZATION_RESEARCH = 'EXECUTE_PERSONALIZATION_RESEARCH',
@@ -367,6 +369,50 @@ export const EventDestinationJobData = z.object({
 
 export type EventDestinationJobData = z.infer<typeof EventDestinationJobData>
 
+export const AiStepAction = z.enum(['ASK_AI', 'SUMMARIZE_TEXT', 'CLASSIFY_TEXT'])
+export type AiStepAction = z.infer<typeof AiStepAction>
+
+export const AiStepWebSearchOptions = z.object({
+    maxUses: z.number().optional(),
+    includeSources: z.boolean().optional(),
+    userLocationCity: z.string().optional(),
+    userLocationRegion: z.string().optional(),
+    userLocationCountry: z.string().optional(),
+    userLocationTimezone: z.string().optional(),
+    allowedDomains: z.array(z.object({ domain: z.string() })).optional(),
+    blockedDomains: z.array(z.object({ domain: z.string() })).optional(),
+    searchContextSize: z.enum(['low', 'medium', 'high']).optional().catch(undefined),
+})
+export type AiStepWebSearchOptions = z.infer<typeof AiStepWebSearchOptions>
+
+export const AiStepWebSearch = z.object({
+    enabled: z.boolean(),
+    options: AiStepWebSearchOptions.optional(),
+})
+export type AiStepWebSearch = z.infer<typeof AiStepWebSearch>
+
+export const ExecuteAiJobData = z.object({
+    schemaVersion: z.number(),
+    jobType: z.literal(WorkerJobType.EXECUTE_AI),
+    requestId: z.string(),
+    projectId: z.string(),
+    platformId: z.string(),
+    flowRunId: z.string(),
+    waitpointId: z.string(),
+    action: AiStepAction,
+    provider: z.enum(AIProviderName),
+    providerConfigId: z.string().optional(),
+    modelId: z.string(),
+    prompt: z.string(),
+    text: z.string().optional(),
+    categories: z.array(z.string()).optional(),
+    conversation: z.array(z.record(z.string(), z.unknown())).optional(),
+    maxOutputTokens: z.number().optional(),
+    temperature: z.number().optional(),
+    webSearch: AiStepWebSearch.optional(),
+})
+export type ExecuteAiJobData = z.infer<typeof ExecuteAiJobData>
+
 export const JobData = z.union([
     PollingJobData,
     RenewWebhookJobData,
@@ -375,6 +421,7 @@ export const JobData = z.union([
     UserInteractionJobData,
     EventDestinationJobData,
     ExecuteAgentRunJobData,
+    ExecuteAiJobData,
     ExecutePersonalizationResearchJobData,
 ])
 export type JobData = z.infer<typeof JobData>
