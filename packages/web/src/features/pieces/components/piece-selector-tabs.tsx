@@ -35,14 +35,14 @@ export const PieceSelectorTabs = ({
           <TabsTrigger
             key={tab.key}
             value={tab.key}
-            className={`flex flex-col h-full rounded-md w-[85px] max-w-[85px] shrink-0
+            className={`flex flex-col h-full rounded-md min-w-[85px] px-3 shrink-0
               hover:bg-gray-300/30 dark:hover:bg-gray-300/10
                data-[state=active]:text-primary data-[state=active]:shadow-none
                border-transparent data-[state=active]:border-primary data-[state=active]:active data-[state=active]:bg-transparent
                text-accent-foreground [&>svg]:size-5 [&>svg]:shrink-0`}
           >
             {tab.icon}
-            <span className="mt-1.5 text-sm truncate w-full text-center">
+            <span className="mt-1.5 text-sm whitespace-nowrap text-center">
               {tab.name}
             </span>
           </TabsTrigger>
