@@ -68,7 +68,7 @@ export const updateMultipleRowsAction = createAction({
         //check for empty headers
         if (Object.keys(firstRow).length === 0) {
           fields['markdown'] = Property.MarkDown({
-            value: `We couldn't find any headers in the selected spreadsheet or worksheet. Please add headers to the sheet and refresh the page to reflect the columns.`,
+            value: `No headers found in this worksheet. Add a header row, then reselect the worksheet to load its columns.`,
             variant: MarkdownVariant.INFO,
           });
         } else {
@@ -76,8 +76,8 @@ export const updateMultipleRowsAction = createAction({
             [key: string]: any;
           } = {
             rowId: Property.Number({
-              displayName: 'Row Id',
-              description: 'The row id to update',
+              displayName: 'Row Number',
+              description: 'The row to update, counting from 1.',
               required: true,
             }),
           };
@@ -103,12 +103,13 @@ export const updateMultipleRowsAction = createAction({
     as_string: Property.Checkbox({
       displayName: 'As String',
       description:
-        'Inserted values that are dates and formulas will be entered as strings and have no effect',
+        'Store dates and formulas as plain text instead of evaluating them.',
       required: false,
+      advanced: true,
     }),
     headerRow: Property.Number({
       displayName: 'Header Row',
-      description: 'Which row contains the headers?',
+      description: 'The row that contains the column names.',
       required: true,
       defaultValue: 1,
     }),

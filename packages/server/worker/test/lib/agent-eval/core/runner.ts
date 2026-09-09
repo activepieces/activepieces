@@ -122,6 +122,7 @@ async function runTurn({ fixture, systemPrompt, guides, auth }: { fixture: ChatE
         tools,
         allToolNames: Object.keys(tools),
         tier: fixture.model.tier,
+        modelId: fixture.model.tier.modelId,
         phaseState,
         abortSignal: new AbortController().signal,
         log: {

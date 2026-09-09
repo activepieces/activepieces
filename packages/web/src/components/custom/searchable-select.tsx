@@ -93,7 +93,7 @@ export const SearchableSelect = <T,>({
   const { open, setOpen } = useOpenState(openStateInitializer);
   const triggerWidth = `${triggerRef.current?.clientWidth ?? 0}px`;
   const selectedOption =
-    [...cachedOptions, ...options].find((option) =>
+    [...options, ...cachedOptions].find((option) =>
       deepEqual(option.value, value),
     ) ?? undefined;
   const filterOptionsIndices = options

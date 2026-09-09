@@ -620,3 +620,41 @@ describe('agentWorkerTools', () => {
         })
     })
 })
+
+describe('an agent does not offer to connect an account its author already chose', () => {
+    function pickerTools({ accountAlreadyChosenFor }: { accountAlreadyChosenFor?: (pieceName: string) => boolean }) {
+        const gatesOpened: string[] = []
+        const tools = agentWorkerTools.createDisplayTools({
+            waitForApproval: async () => ({ outcome: 'approved' as const, payload: { connectionExternalId: 'conn-1', label: 'Sales Inbox', projectId: 'proj-1' } }),
+            displayToolTimeoutMs: 1000,
+            onGateOpened: async ({ toolName }) => { gatesOpened.push(toolName) },
+            ...(accountAlreadyChosenFor ? { accountAlreadyChosenFor } : {}),
+        })
+        return { tools, gatesOpened }
+    }
+
+    async function showPicker({ toolName, accountAlreadyChosenFor }: { toolName: string, accountAlreadyChosenFor?: (pieceName: string) => boolean }) {
+        const { tools, gatesOpened } = pickerTools({ accountAlreadyChosenFor })
+        const result = await tools[toolName].execute({ piece: 'google-sheets', displayName: 'Google Sheets' }, { toolCallId: 'call-1' })
+        return { result, gatesOpened }
+    }
+
+    it.each(['ap_show_connection_picker', 'ap_show_connection_required'])('refuses %s for a piece the author gave an account, without blocking the turn', async (toolName) => {
+        const { result, gatesOpened } = await showPicker({ toolName, accountAlreadyChosenFor: (pieceName) => pieceName === '@activepieces/piece-google-sheets' })
+
+        expect(JSON.stringify(result)).toContain('nothing to connect or reconnect')
+        expect(gatesOpened).toEqual([])
+    })
+
+    it('still shows the card for a piece with no account chosen for it', async () => {
+        const { gatesOpened } = await showPicker({ toolName: 'ap_show_connection_picker', accountAlreadyChosenFor: () => false })
+
+        expect(gatesOpened).toEqual(['ap_show_connection_picker'])
+    })
+
+    it('still shows the card where no agent chose accounts at all, which is ordinary chat', async () => {
+        const { gatesOpened } = await showPicker({ toolName: 'ap_show_connection_picker' })
+
+        expect(gatesOpened).toEqual(['ap_show_connection_picker'])
+    })
+})

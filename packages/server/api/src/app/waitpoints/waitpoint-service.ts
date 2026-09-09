@@ -1,10 +1,13 @@
-import { apId, isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/core-utils'
 import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
+import { flowRunRepo } from '../flows/flow-run/flow-run-service'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
@@ -24,6 +27,9 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             return { inserted: false, waitpoint: preCompleted }
         }
 
+        const flowRun = await flowRunRepo().findOneByOrFail({ id: params.flowRunId, projectId: params.projectId })
+        const resumeDateTime = clampWaitpointResumeDeadline({ requested: params.resumeDateTime, type: params.type, flowRunCreated: flowRun.created, flowRunId: flowRun.id })
+
         const id = apId()
         await waitpointRepo()
             .createQueryBuilder()
@@ -37,7 +43,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 type: params.type,
                 version: params.version,
                 status: WaitpointStatus.PENDING,
-                resumeDateTime: params.resumeDateTime ?? null,
+                resumeDateTime: resumeDateTime ?? null,
                 responseToSend: params.responseToSend ?? null,
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
@@ -56,7 +62,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         else {
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
         }
-        if (!isNil(params.resumeDateTime)) {
+        if (!isNil(resumeDateTime)) {
             await systemJobsSchedule(log).upsertJob({
                 job: {
                     name: SystemJobName.RESUME_DELAY_WAITPOINT,
@@ -65,7 +71,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 },
                 schedule: {
                     type: 'one-time',
-                    date: dayjs(params.resumeDateTime),
+                    date: dayjs(resumeDateTime),
                 },
             })
         }
@@ -204,6 +210,21 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 })
 
+function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRunId }: ClampWaitpointResumeDeadlineParams): string | undefined {
+    const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
+    const runDeadline = dayjs(flowRunCreated).add(pauseTimeoutDays, 'day')
+    if (isNil(requested)) {
+        return type === PauseType.WEBHOOK ? runDeadline.toISOString() : undefined
+    }
+    if (dayjs(requested).isAfter(runDeadline)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED,
+            params: { pauseTimeoutDays, flowRunId },
+        })
+    }
+    return requested
+}
+
 type HasPendingBarrierParams = {
     flowRunId: string
     projectId: string
@@ -232,4 +253,11 @@ type FindSubflowWaitpointParams = {
 type DeleteWaitpointParams = {
     id: string
     projectId: string
+}
+
+type ClampWaitpointResumeDeadlineParams = {
+    requested: string | undefined
+    type: `${PauseType}`
+    flowRunCreated: string
+    flowRunId: string
 }

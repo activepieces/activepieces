@@ -59,9 +59,8 @@ export function GrantsTab() {
     request.memberIds !== undefined ||
     request.clientKeys !== undefined;
 
-  const { data, isLoading, isError } = mcpGrantsQueries.useGrants({
+  const { data, isLoading, isError, refetch } = mcpGrantsQueries.useGrants({
     request,
-    showErrorDialog: true,
   });
   const revoke = mcpGrantsMutations.useRevoke();
 
@@ -106,6 +105,9 @@ export function GrantsTab() {
         columns={columns}
         page={data}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('connected clients')}
+        onRetry={refetch}
         filters={buildFilters({ projects, members: users?.data ?? [] })}
         selectColumn={true}
         bordered={true}

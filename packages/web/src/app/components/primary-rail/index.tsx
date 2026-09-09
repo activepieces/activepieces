@@ -130,6 +130,15 @@ export function PrimaryRail() {
                 }
               />
             )}
+            {checkAccess(Permission.READ_MCP) && (
+              <RailNavButton
+                collapsed={collapsed}
+                to="/mcp-server"
+                icon={Unplug}
+                label={t('MCP')}
+                isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
+              />
+            )}
             {showAgents && (
               <RailNavButton
                 collapsed={collapsed}
@@ -159,15 +168,6 @@ export function PrimaryRail() {
               label={t('Impact')}
               isActive={({ pathname }) => pathname.startsWith('/impact')}
             />
-            {checkAccess(Permission.READ_MCP) && (
-              <RailNavButton
-                collapsed={collapsed}
-                to="/mcp-server"
-                icon={Unplug}
-                label={t('MCP')}
-                isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
-              />
-            )}
           </div>
           <RailPinnedProjects collapsed={collapsed} />
         </div>

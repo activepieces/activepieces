@@ -162,4 +162,3 @@ export const chatPersonalizationUtils = {
     companyFromPlatformName,
 }
 
-export type ChatSuggestionCardImageId = typeof CHAT_SUGGESTION_CARD_IMAGE_IDS[number]

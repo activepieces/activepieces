@@ -73,6 +73,7 @@ export function ProjectSettingsDialog({
       externalId: initialValues?.externalId,
       maxConcurrentJobs: project.maxConcurrentJobs,
       activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
+      sensitive: project.sensitive ?? false,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
@@ -86,6 +87,7 @@ export function ProjectSettingsDialog({
       externalId: values.externalId,
       icon: values.icon,
       maxConcurrentJobs: values.maxConcurrentJobs,
+      sensitive: values.sensitive,
       plan: activeFlowsLimitChanged
         ? { ...project.plan, activeFlowsLimit: values.activeFlowsLimit ?? null }
         : undefined,

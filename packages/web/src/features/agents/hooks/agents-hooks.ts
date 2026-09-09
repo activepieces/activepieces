@@ -1,9 +1,9 @@
 import {
   Agent,
   AgentListSort,
-  ApFlagId,
   CreateAgentRequest,
   DraftAgentRequest,
+  MoveAgentRequest,
   Permission,
   UpdateAgentRequest,
 } from '@activepieces/shared';
@@ -16,24 +16,15 @@ import {
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { agentsApi } from '../api/agents';
 
 const AGENTS_KEY = 'agents';
 
-export const useAgentsEnabled = (): boolean => {
-  const { data: agentsEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_ENABLED,
-  );
-  return agentsEnabled === true;
-};
-
 export const useAgentsAvailable = (): boolean => {
-  const releaseEnabled = useAgentsEnabled();
   const { platform } = platformHooks.useCurrentPlatform();
-  return releaseEnabled && platform.plan.agentsEnabled;
+  return platform.plan.agentsEnabled;
 };
 
 export const useAgentsNavVisible = (): boolean => {
@@ -74,7 +65,20 @@ export const agentsQueries = {
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       enabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
+    }),
+  useMovePreview: ({
+    id,
+    targetProjectId,
+    enabled,
+  }: {
+    id: string;
+    targetProjectId: string | null;
+    enabled: boolean;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'move-preview', id, targetProjectId],
+      queryFn: () => agentsApi.movePreview(id, targetProjectId ?? ''),
+      enabled: enabled && targetProjectId !== null,
     }),
   useAgent: ({
     id,
@@ -89,7 +93,6 @@ export const agentsQueries = {
       queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
-      meta: { showErrorDialog: !includeUsage, loadSubsetOptions: {} },
     }),
 };
 
@@ -120,6 +123,22 @@ export const agentsMutations = {
         await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
       },
       onError: internalErrorToast,
+    });
+  },
+  useMoveAgent: ({
+    id,
+    onSuccess,
+  }: {
+    id: string;
+    onSuccess?: (agent: Agent) => void;
+  }) => {
+    const queryClient = useQueryClient();
+    return useMutation({
+      mutationFn: (request: MoveAgentRequest) => agentsApi.move(id, request),
+      onSuccess: async (agent) => {
+        await queryClient.invalidateQueries({ queryKey: [AGENTS_KEY] });
+        onSuccess?.(agent);
+      },
     });
   },
   useDraftAgent: () =>

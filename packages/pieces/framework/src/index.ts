@@ -64,6 +64,8 @@ export {
   GetProviderConfigResponse,
   OpenAICompatibleProviderConfig,
   OpenAiCompatibleVendorConfig,
+  VertexProviderAuthConfig,
+  VertexProviderConfig,
   OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
   getEffectiveProviderAndModel,
   splitCloudflareGatewayModelId,
