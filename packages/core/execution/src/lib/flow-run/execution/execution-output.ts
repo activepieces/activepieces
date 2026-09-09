@@ -10,11 +10,13 @@ export enum ExecutionType {
 export type ExecutionState = {
     steps: Record<string, StepOutput>
     tags: string[]
+    entryStepName?: string
 }
 
 export const ExecutionState = z.object({
     steps: z.record(z.string(), z.unknown()),
     tags: z.array(z.string()),
+    entryStepName: z.string().optional(),
 })
 
 export enum RunInternalErrorSource {

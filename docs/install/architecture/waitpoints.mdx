@@ -103,7 +103,7 @@ Duplicate callbacks are absorbed by the uniqueness constraint; the engine never 
 
 | Method | Path | Notes |
 | --- | --- | --- |
-| `POST` | `/v1/waitpoints` | Engine-only. Creates a `PENDING` waitpoint, returns its resume URL. For `BARRIER`, also creates its signals. |
+| `POST` | `/v1/waitpoints` | Engine-only. Creates a `PENDING` waitpoint, returns its resume URL. For `BARRIER`, also creates the signals and starts the fan-out. |
 | `ALL` | `/v1/flow-runs/:id/signals/:signalId/confirm` | Records one signal's outcome. `GET`/`HEAD` serve the page and never decide; only `POST` does. |
 | `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId` | Resume, async. |
 | `ALL` | `/v1/flow-runs/:id/waitpoints/:waitpointId/sync` | Resume, sync. The HTTP response is whatever the flow produces after resuming. |

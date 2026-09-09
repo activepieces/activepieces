@@ -24,6 +24,7 @@ export const waitpointController: FastifyPluginAsyncZod = async (app) => {
                 httpRequestId: httpRequestId ?? undefined,
                 policy: barrier?.policy,
                 signalLabels: barrier?.signals?.map((signal) => signal.label ?? null),
+                fanOut: barrier?.fanOut,
             })
             return reply.status(StatusCodes.CREATED).send({
                 id: created.barrier.id,
@@ -59,6 +60,7 @@ async function buildBarrierState({ flowRunId, created }: BuildBarrierStateParams
     const truncatedForSize = created.signals.length > MAX_INLINE_BARRIER_SIGNALS
     return {
         signalCount: created.signalCount,
+        batchSize: created.batchSize,
         ...(truncatedForSize ? { signalsTruncated: true } : {}),
         ...(inlineable ? { signals: await Promise.all(created.signals.map((signal) => toSignalLink({ flowRunId, signal }))) } : {}),
     }
