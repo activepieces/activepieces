@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { EngineResponseStatus, ExecutePersonalizationResearchJobData, WorkerJobType } from '@activepieces/shared'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { runPrefillLookup } from './personalization-enrichment'
@@ -75,7 +75,7 @@ async function runResearch({ data, config, progress, log }: {
     log: JobContext['log']
 }): Promise<ResearchOutput | null> {
     const provider = config.provider as AIProviderName
-    const fastModel = agentAiUtils.createChatModel({
+    const fastModel = aiUtils.createModel({
         provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
     })
 
