@@ -49,4 +49,4 @@ re-decision happens.
 - If the product ever wants a *seat-limited* embedding/SCIM/SSO tier, that is the trigger to reopen this
   ADR and add the per-path seat gate that was deliberately not built here.
 - Billing is never overcharged regardless: Autumn is metered on ACTIVE Users via a separate ACTIVE-only
-  query (`billing-usage-report-service.ts`), independent of `usersLimit` enforcement.
+  query (`license-key-usage-report-service.ts`), independent of `usersLimit` enforcement.

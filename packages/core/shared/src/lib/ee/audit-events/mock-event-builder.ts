@@ -1,12 +1,14 @@
-import { FlowOperationType, FlowStatus } from '@activepieces/core-execution'
+import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/core-execution'
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import {
+    AgentActionExecutedEvent,
     AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
     AuthenticationEvent,
     ConnectionEvent,
     FlowActivatedEvent,
+    FlowApprovalEvent,
     FlowCreatedEvent,
     FlowDeactivatedEvent,
     FlowDeletedEvent,
@@ -217,6 +219,21 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
             }
             return mock
         }
+        case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+            const mock: AgentActionExecutedEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    source: AgentRunSource.FLOW_STEP,
+                    flow: { id: apId(), runId: apId() },
+                    conversation: { id: apId(), source: AgentRunSource.FLOW_STEP },
+                    agent: { id: apId(), displayName: 'Marketing agent' },
+                    action: { pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
+                    connection: { externalId: apId(), label: 'marketing@acme.com' },
+                },
+            }
+            return mock
+        }
         case ApplicationEventName.VARIABLE_UPSERTED:
         case ApplicationEventName.VARIABLE_DELETED:
         case ApplicationEventName.VARIABLE_VALUE_REVEALED: {
@@ -328,6 +345,23 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     failedCount: 0,
                     outcome: 'SUCCESS',
                     durationMs: 1234,
+                },
+            }
+            return mock
+        }
+        case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+        case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+        case ApplicationEventName.FLOW_APPROVAL_REJECTED:
+        case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN: {
+            const mock: FlowApprovalEvent = {
+                ...baseEnvelope,
+                action: event,
+                data: {
+                    approvalRequestId: apId(),
+                    flowId: flow.id,
+                    flowVersionId: flowVersion.id,
+                    flowDisplayName: flowVersion.displayName,
+                    rejectionReason: event === ApplicationEventName.FLOW_APPROVAL_REJECTED ? 'Needs stricter validation' : null,
                 },
             }
             return mock

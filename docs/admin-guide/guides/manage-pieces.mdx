@@ -1,5 +1,5 @@
 ---
-title: "How to Manage Pieces"
+title: "Pieces"
 description: "Control which integrations are available to your users"
 icon: "puzzle-piece"
 ---
@@ -19,12 +19,12 @@ As a platform administrator, you have full control over which pieces are availab
 There are **two levels** of piece management:
 
 | Level | Who Can Manage | Scope |
-|-------|----------------|-------|
+| --- | --- | --- |
 | **Platform Level** | Platform Admin | Install and remove across the entire platform |
 | **Project Level** | Project Admin | Show/hide specific pieces for specfic project |
 
 <Note>
-Pieces are standard npm packages — official pieces are **auto-synced from the registry hourly**, so you don't need to upgrade the server to get new versions. Each step in a flow is pinned to a specific piece version, and drafts can be upgraded from the builder. See [Piece Syncing & Versioning](/install/architecture/piece-syncing) for the full pipeline.
+  Pieces are standard npm packages — official pieces are **auto-synced from the registry hourly**, so you don't need to upgrade the server to get new versions. Each step in a flow is pinned to a specific piece version, and drafts can be upgraded from the builder. See [Piece Syncing & Versioning](/install/architecture/piece-syncing) for the full pipeline.
 </Note>
 
 ---
@@ -45,6 +45,7 @@ Project administrators can further restrict which pieces are available within th
   </Step>
   <Step title="Configure Visibility">
     You'll see a list of all pieces installed on the platform. Toggle the visibility for each piece:
+
     - **Enabled**: Users in this project can use the piece
     - **Disabled**: The piece is hidden from users in this project
   </Step>
@@ -53,29 +54,28 @@ Project administrators can further restrict which pieces are available within th
   </Step>
 </Steps>
 
-![Manage Pieces](/resources/screenshots/manage-pieces.png)
-![Manage Pieces](/resources/screenshots/manage-pieces-2.png)
+<img src="/resources/screenshots/manage-pieces.png" alt="Manage Pieces" /> <img src="/resources/screenshots/manage-pieces-2.png" alt="Manage Pieces" />
 
 <Note>
-Project-level settings can only **hide** pieces that are installed at the platform level. You cannot add pieces at the project level that aren't already installed on the platform.
+  Project-level settings can only **hide** pieces that are installed at the platform level. You cannot add pieces at the project level that aren't already installed on the platform.
 </Note>
-
 
 ### Install Private Pieces
 
 <Tip>
-For detailed instructions on building custom pieces, check the [Building Pieces](/build-pieces/building-pieces/overview) documentation.
+  For detailed instructions on building custom pieces, check the [Building Pieces](/build-pieces/building-pieces/overview) documentation.
 </Tip>
-
 
 If you've built a custom piece for your organization, you can upload it directly as a tarball (`.tgz`) file.
 
 <Steps>
   <Step title="Build Your Piece">
     Build your piece using the Activepieces CLI:
+
     ```bash
     npm run pieces -- build --name=your-piece-name
     ```
+
     This generates a tarball in `dist/packages/pieces/your-piece-name`.
   </Step>
   <Step title="Navigate to Pieces Settings">

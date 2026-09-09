@@ -50,10 +50,11 @@ export default function ImpactPage() {
   const activeTab = (searchParams.get('tab') as TabValue) || 'analytics';
 
   const { data: projects } = projectCollectionUtils.useAll();
-  const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(
-    selectedTimePeriod,
-    selectedProjectId,
-  );
+  const { data, isLoading, isError } =
+    platformAnalyticsHooks.useAnalyticsTimeBased(
+      selectedTimePeriod,
+      selectedProjectId,
+    );
 
   const { mutate: refreshAnalytics } =
     platformAnalyticsHooks.useRefreshAnalytics();
@@ -222,6 +223,7 @@ export default function ImpactPage() {
             <FlowsDetails
               report={report}
               isLoading={isLoading}
+              isError={isError}
               projects={projects}
             />
           </TabsContent>

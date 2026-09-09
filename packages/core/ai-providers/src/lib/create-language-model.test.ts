@@ -1,13 +1,19 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderConfig, AIProviderModelType, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { describe, expect, it } from 'vitest'
 import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-language-model'
 
 type ModelIdentity = { provider: string, modelId: string, settings?: { plugins?: unknown[] } }
 
+type VertexModelIdentity = { config: { baseURL: string | (() => string) } }
 type CustomModelIdentity = { config: { headers: () => Record<string, string>, fetch?: typeof globalThis.fetch } }
 
 function identify(model: unknown): ModelIdentity {
     return model as ModelIdentity
+}
+
+function identifyVertex(model: unknown): VertexModelIdentity {
+    return model as VertexModelIdentity
 }
 
 function identifyCustom(model: unknown): CustomModelIdentity {
@@ -36,12 +42,19 @@ async function captureHeaders({ patchedFetch, headers }: {
 
 const authFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.BEDROCK]: { accessKeyId: 'a', secretAccessKey: 'b' },
+    [AIProviderName.VERTEX]: { serviceAccountJson: JSON.stringify({
+        type: 'service_account',
+        project_id: 'gcp-project',
+        client_email: 'sa@gcp-project.iam.gserviceaccount.com',
+        private_key: '-----BEGIN PRIVATE KEY-----\\nnot-a-real-key\\n-----END PRIVATE KEY-----\\n',
+    }) },
 }
 
 const configFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.AZURE]: { resourceName: 'res', apiVersion: '2024-01-01' },
     [AIProviderName.BEDROCK]: { region: 'us-east-1' },
     [AIProviderName.CUSTOM]: { apiKeyHeader: 'x-api-key', baseUrl: 'https://example.test/v1', models: [] },
+    [AIProviderName.VERTEX]: { project: 'gcp-project', region: 'europe-west4', models: [] },
 }
 
 const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) => createLanguageModel({
@@ -53,6 +66,28 @@ const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) =
 })
 
 const supportedProviders = Object.values(AIProviderName).filter((p) => p !== AIProviderName.CLOUDFLARE_GATEWAY)
+
+describe('AIProviderConfig union', () => {
+    it('keeps every Vertex field instead of losing them to a looser member', () => {
+        const config = {
+            project: 'gcp-project',
+            region: 'europe-west4',
+            models: [{ modelId: 'gemini-2.5-pro', modelName: 'Gemini 2.5 Pro', modelType: AIProviderModelType.TEXT }],
+        }
+
+        expect(AIProviderConfig.parse(config)).toEqual(config)
+    })
+
+    it('rejects a region that would escape the Vertex hostname', () => {
+        const withRegion = (region: string) => VertexProviderConfig.safeParse({ project: 'gcp-project', region, models: [] }).success
+
+        expect(withRegion('europe-west4')).toBe(true)
+        expect(withRegion('global')).toBe(true)
+        expect(withRegion('evil.test/')).toBe(false)
+        expect(withRegion('foo.attacker.test')).toBe(false)
+        expect(withRegion('a/../../b')).toBe(false)
+    })
+})
 
 describe('createLanguageModel', () => {
     it.each(supportedProviders)('passes the model id straight through for %s', (provider) => {
@@ -71,6 +106,41 @@ describe('createLanguageModel', () => {
     it('uses the OpenAI Chat API by default and the Responses API when asked', () => {
         expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
         expect(identify(buildFor(AIProviderName.OPENAI, { openaiResponsesModel: true })).provider).toBe('openai.responses')
+    })
+
+    it('routes Vertex straight at the configured GCP project and region', () => {
+        const model = buildFor(AIProviderName.VERTEX)
+        const { config } = identifyVertex(model)
+        const baseUrl = typeof config.baseURL === 'function' ? config.baseURL() : config.baseURL
+
+        expect(identify(model).provider).toBe('google.vertex.chat')
+        expect(baseUrl).toBe('https://europe-west4-aiplatform.googleapis.com/v1beta1/projects/gcp-project/locations/europe-west4/publishers/google')
+    })
+
+    it('sends Model Garden Claude ids to the Vertex Anthropic client, not the Gemini one', () => {
+        const anthropicOnVertex = createLanguageModel({
+            provider: AIProviderName.VERTEX,
+            auth: authFor[AIProviderName.VERTEX],
+            config: configFor[AIProviderName.VERTEX],
+            modelId: 'claude-sonnet-4-6',
+        })
+
+        expect(identify(buildFor(AIProviderName.VERTEX)).provider).toBe('google.vertex.chat')
+        expect(identify(anthropicOnVertex).provider).toBe('googleVertex.anthropic.messages')
+    })
+
+    it('sends Model Garden MaaS ids to the Vertex MaaS client', () => {
+        const build = (modelId: string) => identify(createLanguageModel({
+            provider: AIProviderName.VERTEX,
+            auth: authFor[AIProviderName.VERTEX],
+            config: configFor[AIProviderName.VERTEX],
+            modelId,
+        })).provider
+
+        expect(build('meta/llama-4-scout-17b-16e-instruct-maas')).toBe('vertex.maas.chat')
+        expect(build('mistral-large-2411-maas')).toBe('vertex.maas.chat')
+        expect(build('gemini-2.5-pro')).toBe('google.vertex.chat')
+        expect(build('claude-3-5-sonnet@20241022')).toBe('googleVertex.anthropic.messages')
     })
 
     it('keeps the custom provider on chat completions unless apiStyle asks for responses', () => {

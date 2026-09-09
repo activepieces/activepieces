@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
+import { AI_PROVIDER_CAPABILITIES, aiProviderUtils, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -8,6 +8,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
+import { agentProviderOptions } from './agent-provider-options'
 import { EmbeddingModel, LanguageModel, ModelMessage, SystemModelMessage, TelemetryOptions, ToolSet } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { wideEvent } from './wide-event'
@@ -264,29 +265,6 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
         })
         return { ...message, content }
     })
-}
-
-function buildProviderOptions({ provider, tier, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, disableThinking?: boolean }): SharedV3ProviderOptions {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: disableThinking ? { type: 'disabled' } : { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
-        case AIProviderName.ACTIVEPIECES:
-        case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: disableThinking ? { enabled: false } : { max_tokens: tier.thinkingBudget } } }
-        default:
-            return {}
-    }
-}
-
-function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt: string, provider: AIProviderName }): string | SystemModelMessage {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { role: 'system', content: systemPrompt, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } }
-        default:
-            return systemPrompt
-    }
 }
 
 function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
@@ -548,8 +526,7 @@ export const agentAiUtils = {
     collectStepMessages,
     estimateTokenCount,
     collapseStaleToolOutputs,
-    buildProviderOptions,
-    buildSystemPromptWithCaching,
+    ...agentProviderOptions,
     buildTelemetry,
     buildStepParts,
     findDataArray,

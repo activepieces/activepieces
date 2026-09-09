@@ -30,26 +30,7 @@ export function assertNotEqual<T>(
     }
 }
 
-
 export const isNotUndefined = <T>(value: T | undefined): value is T => {
     return value !== undefined
 }
 
-export function assertNull<T>(
-    value: T | null,
-    fieldName: string,
-): asserts value is T {
-    if (value !== null) {
-        throw new Error(`${fieldName} should be null`)
-    }
-} 
-
-export function asserNotEmpty<T>(
-    value: T[] | null | undefined,
-    fieldName: string,
-): asserts value is T[] {
-    assertNotNullOrUndefined(value, fieldName)
-    if (value.length === 0) {
-        throw new Error(`${fieldName} should be not empty`)
-    }
-} 

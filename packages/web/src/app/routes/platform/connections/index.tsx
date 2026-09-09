@@ -43,8 +43,12 @@ import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { formatUtils } from '@/lib/format-utils';
 
 export default function PlatformConnectionsPage() {
-  const { data: connections, isLoading } =
-    platformAppConnectionsQueries.useList();
+  const {
+    data: connections,
+    isLoading,
+    isError,
+    refetch,
+  } = platformAppConnectionsQueries.useList();
   const { data: owners } = platformAppConnectionsQueries.useOwners();
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
   const { pieces } = piecesHooks.usePieces({});
@@ -242,6 +246,9 @@ export default function PlatformConnectionsPage() {
         columns={columns}
         page={connections}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('connections')}
+        onRetry={refetch}
         filters={filters}
       />
     </div>

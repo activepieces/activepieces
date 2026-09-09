@@ -20,6 +20,7 @@ import { appConnectionsQueries } from '@/features/connections/hooks/app-connecti
 import { stepsHooks } from '@/features/pieces/hooks/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/features/pieces/types';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 import { agentToolAccount } from '../lib/agent-tool-account';
 import { usePieceToolsDialogStore } from '../stores/pieces-tools';
@@ -95,11 +96,15 @@ export const AgentPieceToolComponent = ({
       )?.requireAuth,
     }),
   );
-  const accountLabel = agentToolAccount.label({
+  const account = agentToolAccount.resolve({
     tools: toolsNeedingAccount,
     connections: connections?.data ?? [],
     connectionsComplete,
   });
+  const accountText =
+    account?.state === 'connected' && account.text === pieceMetadata.displayName
+      ? t('Connected')
+      : account?.text;
 
   const handleEditTool = (tool: AgentPieceTool) => {
     openAddPieceToolDialog({ page: 'action-inputs', tool });
@@ -129,9 +134,18 @@ export const AgentPieceToolComponent = ({
               {pieceMetadata.displayName}
             </span>
           </div>
-          {!isNil(accountLabel) && (
-            <span className="ml-3 min-w-0 shrink truncate text-xs text-muted-foreground">
-              {accountLabel}
+          {!isNil(account) && (
+            <span className="ms-3 flex min-w-0 shrink items-center gap-1.5 text-xs text-muted-foreground">
+              <span
+                className={cn(
+                  'size-[6px] shrink-0 rounded-full',
+                  account.state === 'connected' && 'bg-success',
+                  account.state === 'deleted' && 'bg-destructive',
+                  account.state === 'missing' && 'bg-warning',
+                  account.state === 'mixed' && 'bg-muted-foreground',
+                )}
+              />
+              <span className="truncate">{accountText}</span>
             </span>
           )}
         </div>
