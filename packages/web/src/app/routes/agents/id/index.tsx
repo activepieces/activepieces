@@ -1214,72 +1214,71 @@ const AgentEditorContent = () => {
   }
 
   return (
-    <div className="flex h-full w-full">
-      <aside
-        className={cn(
-          'shrink-0 overflow-hidden border-r border-border transition-[width] duration-200 ease-out',
-          conversationsOpen ? 'w-[220px]' : 'w-0',
-        )}
-      >
-        <div className="flex h-full w-[220px] flex-col">
-          <ConversationList
-            agentId={agent.id}
-            selectedId={openedConversationId ?? conversationId ?? null}
-            onSelect={openConversation}
-            onNewChat={startNewConversation}
-          />
+    <div className="flex h-full w-full flex-col">
+      <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+        <button
+          type="button"
+          aria-label={t('Back to agents')}
+          onClick={() => navigate('/agents')}
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
+        <button
+          type="button"
+          aria-label={
+            conversationsOpen
+              ? t('Collapse conversations')
+              : t('Expand conversations')
+          }
+          onClick={() => setConversationsOpen(!conversationsOpen)}
+          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          {conversationsOpen ? (
+            <PanelLeftCloseIcon size={16} />
+          ) : (
+            <HistoryIcon size={16} />
+          )}
+        </button>
+        <AgentMark size="sm" icon={agent.icon} color={agent.color} />
+        <div className="flex min-w-0 grow basis-0 flex-col gap-px">
+          <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+            {agent.displayName}
+          </span>
+          <span className="truncate text-xs leading-4 text-muted-foreground">
+            {agent.description ?? t('No description yet')}
+          </span>
         </div>
-      </aside>
-      <div className="flex min-w-0 grow flex-col">
-        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
-          <button
+        <div className="flex min-w-0 shrink items-center gap-2">
+          <Button
             type="button"
-            aria-label={t('Back to agents')}
-            onClick={() => navigate('/agents')}
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            variant="outline"
+            className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
+            onClick={() => setEditing(true)}
           >
-            <ChevronLeft size={16} />
-          </button>
-          <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
-          <button
-            type="button"
-            aria-label={
-              conversationsOpen
-                ? t('Collapse conversations')
-                : t('Expand conversations')
-            }
-            onClick={() => setConversationsOpen(!conversationsOpen)}
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            {conversationsOpen ? (
-              <PanelLeftCloseIcon size={16} />
-            ) : (
-              <HistoryIcon size={16} />
-            )}
-          </button>
-          <AgentMark size="sm" icon={agent.icon} color={agent.color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
-              {agent.displayName}
-            </span>
-            <span className="truncate text-xs leading-4 text-muted-foreground">
-              {agent.description ?? t('No description yet')}
-            </span>
-          </div>
-          <div className="flex min-w-0 shrink items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
-              onClick={() => setEditing(true)}
-            >
-              <Settings2 size={15} />
-              {t('Configure')}
-            </Button>
-          </div>
+            <Settings2 size={15} />
+            {t('Configure')}
+          </Button>
         </div>
-
-        <div className="flex min-h-0 grow flex-col">
+      </div>
+      <div className="flex min-h-0 grow">
+        <aside
+          className={cn(
+            'shrink-0 overflow-hidden border-r border-border transition-[width] duration-200 ease-out',
+            conversationsOpen ? 'w-[220px]' : 'w-0',
+          )}
+        >
+          <div className="flex h-full w-[220px] flex-col">
+            <ConversationList
+              agentId={agent.id}
+              selectedId={openedConversationId ?? conversationId ?? null}
+              onSelect={openConversation}
+              onNewChat={startNewConversation}
+            />
+          </div>
+        </aside>
+        <div className="flex min-h-0 min-w-0 grow flex-col">
           <AIChatBox
             key={openedConversationId ?? `new-${freshConversations}`}
             incognito={false}
