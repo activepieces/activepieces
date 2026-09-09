@@ -61,12 +61,25 @@ since a footer button calling `setOpen(false)` skips `onOpenChange` and the next
 instead of the form; and check any two-dialog interaction in the browser, because that is where Radix
 orphans `pointer-events: none` on `<body>` and the page behind stops taking clicks.
 
-**A feature you only read gets the other treatment: its own UI, blurred.** `Audit logs` is a table, so
-there is no action to crown, and opening it freely would show an empty table with nothing to explain why.
-It renders its real filters, columns and pagination, blurred and inert, with the upgrade card floating over
-them, so the shape of what you would be buying stays visible. A tab opts in with `overlay: true`.
+**A feature you cannot act on shows itself filled with sample data.** `Audit logs` is a table, so there is
+no action to crown, and opening it freely would show an empty table with nothing to explain why. It renders
+its real filters, columns and pagination populated with believable sample rows, crisp rather than blurred,
+with a strip pinned above the content naming the feature, its tier and the upgrade button. Blurring was
+tried first and dropped: it was chosen while the table was empty, and once there are rows worth reading it
+hides the very thing the treatment exists to show.
 
-So the rule is: crown the action where there is one, blur the surface where there is not.
+The sample content is **inert and visibly so**: the region takes `pointer-events: none`, filters and
+pagination render disabled, and the only live control is the upgrade button. The alternative, making the
+controls work against the fixtures, means a second implementation of every filter that exists only for
+customers who have not paid.
+
+Sample data is **generated in the browser and never crosses the API**. A locked page skips its plan-gated
+query outright rather than letting it answer 402, and the endpoints keep refusing. Serving fabricated rows
+from a gated endpoint was rejected outright: an audit trail that returns fiction is a support and
+compliance hazard, and every API key and script would see it too.
+
+So the rule is: crown the action where there is one, and fill the surface with sample data where there is
+not.
 
 The nav still marks a page when **every** section on it is gated, and marks a gated **section** directly,
 so `Security` stays uncrowned while its API keys section works and its three paid sections each carry a
@@ -176,6 +189,27 @@ scrolls, so none of them needs `overflow-auto`. Check the old wrapper before pro
 
 **Do not give a section a page header when it already opens with a `SectionHeader`.** Providers and
 Capabilities each led with one, so adding a header above it printed the title twice.
+
+**Sampling every locked page costs two working controls on Single sign on.** `ssoEnabled` gates only
+SAML: `platform.service.ts` checks the plan solely when the payload carries `federatedAuthProviders.saml`,
+and `googleAuthEnabled` is enforced with no plan check at all, so the Google and Allowed Email Login
+toggles genuinely work on a plan without SSO. Sampling the section wholesale, rather than only its SAML
+row, therefore takes two live controls away from EE and Cloud admins who have them today. Taken knowingly,
+for one consistent treatment across all nine locked pages. Community is unaffected, because its
+sign-in enforcement returns early on that edition anyway.
+
+**Sample data does not mean inventing fixtures for audit events.** `buildMockEvent` in
+`@activepieces/shared` already builds realistic `ApplicationEvent` values across forty event names, and the
+web app already calls it for the test-destination flow. Reuse it there; only the other locked surfaces need
+fixtures written by hand.
+
+**Community keeps its quiet copy inside the loud treatment.** It sees the same sample content, but the
+strip names the feature as Enterprise with a docs link in place of the upgrade button, so the open-source
+product still avoids a sales button on a dozen pages.
+
+**Nothing renders the full-page teaser once all nine are sampled.** `LockedFeatureGuard` and the page-level
+`FeatureTeaser` lose their last callers in platform admin, and `overlay: true` in the registry is replaced
+by the sample opt-in. `FeatureTeaserContent` survives inside the upgrade dialog.
 
 **Splitting one form in two.** `appearance-section.tsx` is a single react-hook-form whose submit handler
 deliberately skips the branding fields when locked. Platform Settings and Branding each need their own form.
