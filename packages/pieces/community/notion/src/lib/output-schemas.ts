@@ -1,112 +1,78 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
+/**
+ * Shared output schema for an ENRICHED Notion page/row (see common/enrich-page.ts).
+ * Content-first: the human-readable Title and flattened Properties come first,
+ * metadata below, and the raw `properties` object stays last as "Raw Properties".
+ *
+ * `property_values` and `title` are the two computed fields added by enrichPage;
+ * `property_values` is a `dynamicKey` map so the viewer renders one flat
+ * name -> value row per property (like Airtable's `fields`), instead of forcing
+ * a 3-4 click drill into each rich property object.
+ *
+ * Used by the three page/row triggers (new_database_item, updated_database_item,
+ * updated_page). The raw-page shape used by the AI-action variants lives in
+ * `notionRawPageFields` below (migrated to enrichment in Stage 2).
+ */
+export const notionPageFields: OutputSchema['fields'] = [
+  { key: 'title', label: 'Title', value: 'title' },
+  {
+    key: 'property_values',
+    label: 'Properties',
+    value: 'property_values',
+    dynamicKey: true,
+  },
+  { key: 'url', label: 'Page URL', value: 'url', format: 'url' },
+  {
+    key: 'last_edited_time',
+    label: 'Last Edited Time',
+    value: 'last_edited_time',
+    format: 'datetime',
+  },
+  {
+    key: 'created_time',
+    label: 'Created Time',
+    value: 'created_time',
+    format: 'datetime',
+  },
+  { key: 'id', label: 'Page ID', value: 'id' },
+  { key: 'object', label: 'Object Type', value: 'object' },
+  {
+    key: 'is_archived',
+    label: 'Archived',
+    value: 'is_archived',
+    format: 'boolean',
+  },
+  { key: 'is_locked', label: 'Locked', value: 'is_locked', format: 'boolean' },
+  { key: 'in_trash', label: 'In Trash', value: 'in_trash', format: 'boolean' },
+  {
+    key: 'parent',
+    label: 'Parent',
+    value: 'parent',
+    children: [{ key: 'type', label: 'Parent Type', value: 'type' }],
+  },
+  {
+    key: 'created_by',
+    label: 'Created By',
+    value: 'created_by',
+    children: [{ key: 'id', label: 'User ID', value: 'id' }],
+  },
+  {
+    key: 'last_edited_by',
+    label: 'Last Edited By',
+    value: 'last_edited_by',
+    children: [{ key: 'id', label: 'User ID', value: 'id' }],
+  },
+  {
+    key: 'properties',
+    label: 'Raw Properties',
+    value: 'properties',
+    dynamicKey: true,
+  },
+];
+
 export const updatedPageTriggerOutputSchema: OutputSchema = {
-  fields: [
-    {
-      key: 'id',
-      label: 'Page ID',
-      value: 'id',
-    },
-    {
-      key: 'url',
-      label: 'Page URL',
-      value: 'url',
-      format: 'url',
-    },
-    {
-      key: 'last_edited_time',
-      label: 'Last Edited Time',
-      value: 'last_edited_time',
-      format: 'datetime',
-    },
-    {
-      key: 'created_time',
-      label: 'Created Time',
-      value: 'created_time',
-      format: 'datetime',
-    },
-    {
-      key: 'is_archived',
-      label: 'Archived',
-      value: 'is_archived',
-      format: 'boolean',
-    },
-    {
-      key: 'is_locked',
-      label: 'Locked',
-      value: 'is_locked',
-      format: 'boolean',
-    },
-    {
-      key: 'parent',
-      label: 'Parent',
-      value: 'parent',
-      children: [
-        {
-          key: 'type',
-          label: 'Parent Type',
-          value: 'type',
-        },
-        {
-          key: 'database_id',
-          label: 'Database ID',
-          value: 'database_id',
-        },
-      ],
-    },
-    {
-      key: 'last_edited_by',
-      label: 'Last Edited By',
-      value: 'last_edited_by',
-      children: [
-        {
-          key: 'id',
-          label: 'User ID',
-          value: 'id',
-        },
-      ],
-    },
-    {
-      key: 'created_by',
-      label: 'Created By',
-      value: 'created_by',
-      children: [
-        {
-          key: 'id',
-          label: 'User ID',
-          value: 'id',
-        },
-      ],
-    },
-    {
-      key: 'properties',
-      label: 'Properties',
-      value: 'properties',
-      children: [
-        {
-          key: 'Task name',
-          label: 'Task Name',
-          value: 'Task name.title[0].plain_text',
-        },
-        {
-          key: 'Status',
-          label: 'Status',
-          value: 'Status.status.name',
-        },
-        {
-          key: 'Due date',
-          label: 'Due Date',
-          value: 'Due date.date.start',
-          format: 'date',
-        },
-        {
-          key: 'Assignee',
-          label: 'Assignee User ID',
-          value: 'Assignee.people[0].id',
-        },
-      ],
-    },
-  ],
+  fields: notionPageFields,
 };
 
 export const newCommentTriggerOutputSchema: OutputSchema = {
@@ -177,202 +143,11 @@ export const newCommentTriggerOutputSchema: OutputSchema = {
 };
 
 export const newDatabaseItemTriggerOutputSchema: OutputSchema = {
-  fields: [
-    {
-      key: 'taskName',
-      label: 'Task Name',
-      value: 'properties.Task name.title[0].plain_text',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      value: 'properties.Status.status.name',
-    },
-    {
-      key: 'dueDate',
-      label: 'Due Date',
-      value: 'properties.Due date.date.start',
-      format: 'date',
-    },
-    {
-      key: 'url',
-      label: 'Page URL',
-      value: 'url',
-      format: 'url',
-    },
-    {
-      key: 'id',
-      label: 'Page ID',
-      value: 'id',
-    },
-    {
-      key: 'createdTime',
-      label: 'Created Time',
-      value: 'created_time',
-      format: 'datetime',
-    },
-    {
-      key: 'lastEditedTime',
-      label: 'Last Edited Time',
-      value: 'last_edited_time',
-      format: 'datetime',
-    },
-    {
-      key: 'createdBy',
-      label: 'Created By User ID',
-      value: 'created_by.id',
-    },
-    {
-      key: 'lastEditedBy',
-      label: 'Last Edited By User ID',
-      value: 'last_edited_by.id',
-    },
-    {
-      key: 'isArchived',
-      label: 'Archived',
-      value: 'is_archived',
-      format: 'boolean',
-    },
-    {
-      key: 'isLocked',
-      label: 'Locked',
-      value: 'is_locked',
-      format: 'boolean',
-    },
-    {
-      key: 'parent',
-      label: 'Parent',
-      children: [
-        {
-          key: 'type',
-          label: 'Type',
-          value: 'type',
-        },
-        {
-          key: 'database_id',
-          label: 'Database ID',
-          value: 'database_id',
-        },
-      ],
-    },
-    {
-      key: 'assignees',
-      label: 'Assignees',
-      value: 'properties.Assignee.people',
-      listItems: [
-        {
-          key: 'id',
-          label: 'User ID',
-          value: 'id',
-        },
-      ],
-    },
-  ],
+  fields: notionPageFields,
 };
 
 export const updatedDatabaseItemTriggerOutputSchema: OutputSchema = {
-  fields: [
-    {
-      key: 'id',
-      label: 'Page ID',
-      value: 'id',
-    },
-    {
-      key: 'url',
-      label: 'Page URL',
-      value: 'url',
-      format: 'url',
-    },
-    {
-      key: 'last_edited_time',
-      label: 'Last Edited Time',
-      value: 'last_edited_time',
-      format: 'datetime',
-    },
-    {
-      key: 'created_time',
-      label: 'Created Time',
-      value: 'created_time',
-      format: 'datetime',
-    },
-    {
-      key: 'object',
-      label: 'Object Type',
-      value: 'object',
-    },
-    {
-      key: 'is_archived',
-      label: 'Archived',
-      value: 'is_archived',
-      format: 'boolean',
-    },
-    {
-      key: 'is_locked',
-      label: 'Locked',
-      value: 'is_locked',
-      format: 'boolean',
-    },
-    {
-      key: 'in_trash',
-      label: 'In Trash',
-      value: 'in_trash',
-      format: 'boolean',
-    },
-    {
-      key: 'parent',
-      label: 'Parent',
-      value: 'parent',
-      children: [
-        {
-          key: 'type',
-          label: 'Type',
-          value: 'type',
-        },
-        {
-          key: 'database_id',
-          label: 'Database ID',
-          value: 'database_id',
-        },
-      ],
-    },
-    {
-      key: 'created_by',
-      label: 'Created By',
-      value: 'created_by',
-      children: [
-        {
-          key: 'id',
-          label: 'User ID',
-          value: 'id',
-        },
-      ],
-    },
-    {
-      key: 'last_edited_by',
-      label: 'Last Edited By',
-      value: 'last_edited_by',
-      children: [
-        {
-          key: 'id',
-          label: 'User ID',
-          value: 'id',
-        },
-      ],
-    },
-    {
-      key: 'properties',
-      label: 'Properties',
-      value: 'properties',
-      dynamicKey: true,
-      children: [
-        {
-          key: 'type',
-          label: 'Property Type',
-          value: 'type',
-        },
-      ],
-    },
-  ],
+  fields: notionPageFields,
 };
 
 export const createDatabaseItemActionOutputSchema: OutputSchema = {
@@ -424,53 +199,9 @@ export const createDatabaseItemActionOutputSchema: OutputSchema = {
     },
     {
       key: 'properties',
-      label: 'Properties',
+      label: 'Raw Properties',
       value: 'properties',
-      children: [
-        {
-          key: 'Task name',
-          label: 'Task Name',
-          value: 'Task name',
-          children: [
-            {
-              key: 'plain_text',
-              label: 'Title Text',
-              value: 'title[0].plain_text',
-            },
-          ],
-        },
-        {
-          key: 'Status',
-          label: 'Status',
-          value: 'Status',
-          children: [
-            {
-              key: 'name',
-              label: 'Status Name',
-              value: 'status.name',
-            },
-          ],
-        },
-        {
-          key: 'Assignee',
-          label: 'Assignee',
-          value: 'Assignee',
-          children: [
-            {
-              key: 'people',
-              label: 'People',
-              value: 'people',
-              listItems: [
-                {
-                  key: 'id',
-                  label: 'User ID',
-                  value: 'id',
-                },
-              ],
-            },
-          ],
-        },
-      ],
+      dynamicKey: true,
     },
     {
       key: 'created_by',
@@ -532,32 +263,9 @@ export const updateDatabaseItemActionOutputSchema: OutputSchema = {
     },
     {
       key: 'properties',
-      label: 'Properties',
+      label: 'Raw Properties',
       value: 'properties',
-      children: [
-        {
-          key: 'Task name',
-          label: 'Task Name',
-          value: 'Task name.title[0].plain_text',
-        },
-        {
-          key: 'Status',
-          label: 'Status',
-          value: 'Status.status.name',
-        },
-        {
-          key: 'Assignee',
-          label: 'Assignee User IDs',
-          value: 'Assignee.people',
-          listItems: [
-            {
-              key: 'id',
-              label: 'User ID',
-              value: 'id',
-            },
-          ],
-        },
-      ],
+      dynamicKey: true,
     },
     {
       key: 'parent',
@@ -603,16 +311,6 @@ export const notionFindDatabaseItemActionOutputSchema: OutputSchema = {
       value: 'results',
       listItems: [
         {
-          key: 'taskName',
-          label: 'Task Name',
-          value: 'properties.Task name.title[0].plain_text',
-        },
-        {
-          key: 'status',
-          label: 'Status',
-          value: 'properties.Status.status.name',
-        },
-        {
           key: 'id',
           label: 'Page ID',
           value: 'id',
@@ -640,29 +338,12 @@ export const notionFindDatabaseItemActionOutputSchema: OutputSchema = {
           label: 'Database ID',
           value: 'parent.database_id',
         },
-        {
-          key: 'assignee',
-          label: 'Assignee IDs',
-          value: 'properties.Assignee.people',
-          listItems: [
-            {
-              key: 'userId',
-              label: 'User ID',
-              value: 'id',
-            },
-          ],
-        },
-        {
-          key: 'dueDate',
-          label: 'Due Date',
-          value: 'properties.Due date.date',
-        },
       ],
     },
   ],
 };
 
-const notionPageFields: OutputSchema['fields'] = [
+const notionRawPageFields: OutputSchema['fields'] = [
   {
     key: 'url',
     label: 'Page URL',
@@ -753,7 +434,7 @@ const notionPageFields: OutputSchema['fields'] = [
 ];
 
 export const createPageActionOutputSchema: OutputSchema = {
-  fields: notionPageFields,
+  fields: notionRawPageFields,
 };
 
 export const appendToPageActionOutputSchema: OutputSchema = {
@@ -1507,7 +1188,7 @@ export const notionSearchActionOutputSchema: OutputSchema = {
 };
 
 export const notionGetPageActionOutputSchema: OutputSchema = {
-  fields: notionPageFields,
+  fields: notionRawPageFields,
 };
 
 export const notionGetDatabaseActionOutputSchema: OutputSchema = {
@@ -1621,7 +1302,7 @@ export const notionQueryDatabaseActionOutputSchema: OutputSchema = {
       key: 'results',
       label: 'Results',
       value: 'results',
-      listItems: notionPageFields,
+      listItems: notionRawPageFields,
     },
     { key: 'count', label: 'Count', value: 'count', format: 'number' },
     {
@@ -1635,7 +1316,7 @@ export const notionQueryDatabaseActionOutputSchema: OutputSchema = {
 };
 
 export const notionCreatePageActionOutputSchema: OutputSchema = {
-  fields: notionPageFields,
+  fields: notionRawPageFields,
 };
 
 export const notionAppendToPageActionOutputSchema: OutputSchema = {
@@ -1663,14 +1344,24 @@ export const notionUpdateBlockActionOutputSchema: OutputSchema = {
 export const notionCreateDatabaseItemActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', value: 'success', format: 'boolean' },
-    { key: 'item', label: 'Item', value: 'item', children: notionPageFields },
+    {
+      key: 'item',
+      label: 'Item',
+      value: 'item',
+      children: notionRawPageFields,
+    },
   ],
 };
 
 export const notionUpdateDatabaseItemActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', value: 'success', format: 'boolean' },
-    { key: 'item', label: 'Item', value: 'item', children: notionPageFields },
+    {
+      key: 'item',
+      label: 'Item',
+      value: 'item',
+      children: notionRawPageFields,
+    },
   ],
 };
 
@@ -1681,14 +1372,14 @@ export const notionFindDatabaseItemsActionOutputSchema: OutputSchema = {
       key: 'results',
       label: 'Results',
       value: 'results',
-      listItems: notionPageFields,
+      listItems: notionRawPageFields,
     },
     { key: 'count', label: 'Count', value: 'count', format: 'number' },
     {
       key: 'firstMatch',
       label: 'First Match',
       value: 'firstMatch',
-      children: notionPageFields,
+      children: notionRawPageFields,
     },
     {
       key: 'has_more',
@@ -1751,11 +1442,11 @@ export const notionRestoreDatabaseItemActionOutputSchema: OutputSchema = {
 };
 
 export const notionArchivePageActionOutputSchema: OutputSchema = {
-  fields: notionPageFields,
+  fields: notionRawPageFields,
 };
 
 export const notionMovePageActionOutputSchema: OutputSchema = {
-  fields: notionPageFields,
+  fields: notionRawPageFields,
 };
 
 export const notionDeleteBlockActionOutputSchema: OutputSchema = {

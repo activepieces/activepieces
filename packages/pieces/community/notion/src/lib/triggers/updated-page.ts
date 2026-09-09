@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 import { getPages, NotionAuthValue } from '../common';
 import { notionAuth } from '../auth';
 import { updatedPageTriggerOutputSchema } from '../output-schemas';
+import { enrichPage } from '../common/enrich-page';
 
 export const updatedPage = createTrigger({
   auth: notionAuth,
@@ -28,37 +29,97 @@ export const updatedPage = createTrigger({
   outputSchema: updatedPageTriggerOutputSchema,
   sampleData: {
     object: 'page',
-    id: '1d4805e9-774b-8056-820b-c1083bff77e3',
-    created_time: '2025-04-13T23:35:00.000Z',
-    last_edited_time: '2025-07-01T07:29:00.000Z',
+    id: '1a8fa248-94e2-8120-8ccc-e464193fe999',
+    title: 'Notes: Meeting Feb 25, 2025 at 09:28 GMT+03:00',
+    property_values: {
+      'Last Edited Time': '2026-06-26T15:56:00.000Z',
+      'Created By': 'Activepieces',
+      Created: '2025-02-28T13:25:00.000Z',
+      Type: 'Ad Hoc',
+      Participants: 'root sudo',
+      Name: 'Notes: Meeting Feb 25, 2025 at 09:28 GMT+03:00',
+    },
+    url: 'https://app.notion.com/p/Notes-Meeting-Feb-25-2025-at-09-28-GMT-03-00-1a8fa24894e281208ccce464193fe999',
+    public_url: null,
+    created_time: '2025-02-28T13:25:00.000Z',
+    last_edited_time: '2026-06-26T15:56:00.000Z',
     created_by: {
       object: 'user',
-      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6',
+      id: '1a8fa248-94e2-81d5-9ba3-00274355c726',
     },
     last_edited_by: {
       object: 'user',
-      id: '0f46d5cf-06ee-4350-8051-79ad10c898a6',
+      id: '1a8fa248-94e2-81d5-9ba3-00274355c726',
     },
     cover: null,
-    icon: {
-      type: 'emoji',
-      emoji: '💰',
-    },
+    icon: null,
     parent: {
-      type: 'workspace',
-      workspace: true,
+      type: 'database_id',
+      database_id: '1a8fa248-94e2-80fa-8798-f9c67ea7ba28',
     },
-    archived: false,
     in_trash: false,
+    is_archived: false,
+    is_locked: false,
+    archived: false,
     properties: {
-      title: {
+      'Last Edited Time': {
+        id: '0AiB',
+        type: 'last_edited_time',
+        last_edited_time: '2026-06-26T15:56:00.000Z',
+      },
+      'Created By': {
+        id: 'F%5D)%3F',
+        type: 'created_by',
+        created_by: {
+          object: 'user',
+          id: '1a8fa248-94e2-81d5-9ba3-00274355c726',
+          name: 'Activepieces',
+          avatar_url:
+            'https://s3-us-west-2.amazonaws.com/public.notion-static.com/5d61a7cb-299e-46d7-9d21-c8d77b1aab18/256x256logo.svg',
+          type: 'bot',
+          bot: {},
+        },
+      },
+      Created: {
+        id: 'Ird4',
+        type: 'created_time',
+        created_time: '2025-02-28T13:25:00.000Z',
+      },
+      Type: {
+        id: '_%7B%5C7',
+        type: 'select',
+        select: {
+          id: '1747fcca-8207-42c8-802f-fd43965c016a',
+          name: 'Ad Hoc',
+          color: 'orange',
+        },
+      },
+      Participants: {
+        id: 'b%3AeA',
+        type: 'people',
+        people: [
+          {
+            object: 'user',
+            id: 'eb85488e-97f8-46d2-85fa-49b87bc1037d',
+            name: 'root sudo',
+            avatar_url:
+              'https://lh3.googleusercontent.com/a/AGNmyxbz-0u47oQeDeTL54d4olDg8tuLpDmMsbJuknV4=s100',
+            type: 'person',
+            person: {
+              email: 'rootsudo2000@gmail.com',
+              email_verified: true,
+            },
+          },
+        ],
+      },
+      Name: {
         id: 'title',
         type: 'title',
         title: [
           {
             type: 'text',
             text: {
-              content: 'Saas Ideas',
+              content: 'Notes: Meeting Feb 25, 2025 at 09:28 GMT+03:00',
               link: null,
             },
             annotations: {
@@ -69,15 +130,14 @@ export const updatedPage = createTrigger({
               code: false,
               color: 'default',
             },
-            plain_text: 'Saas Ideas',
+            plain_text: 'Notes: Meeting Feb 25, 2025 at 09:28 GMT+03:00',
             href: null,
           },
         ],
       },
     },
-    url: 'https://www.notion.so/Saas-Ideas-1d4805e9774b8056820bc1083bff77e3',
-    public_url: null,
   },
+
   type: TriggerStrategy.POLLING,
   async test(ctx) {
     return await pollingHelper.test(polling, {
@@ -130,7 +190,7 @@ const polling: Polling<
       const page = item as { last_edited_time: string; id: string };
       return {
         id: page.id + '|' + dayjs(page.last_edited_time).valueOf(),
-        data: item,
+        data: enrichPage(item),
       };
     });
   },
