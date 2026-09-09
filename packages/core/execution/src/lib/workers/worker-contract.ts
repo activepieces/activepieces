@@ -77,6 +77,7 @@ export type WorkerToApiContract = {
     getFlowVersion(input: GetFlowVersionForWorkerRequest): Promise<FlowVersion | null>
     getPiece(input: GetPieceRequest): Promise<unknown>
     getPrewarmData(input: PrewarmDataRequest): Promise<PrewarmDataResponse>
+    getPrewarmScopeFile(input: GetPrewarmScopeFileRequest): Promise<GetPrewarmScopeFileResponse | null>
     getPieceArchive(input: { archiveId: string }): Promise<Buffer>
     getFlowBundle(input: GetFlowBundleRequest): Promise<GetFlowBundleResponse | null>
     prepareFlowBundleUpload(input: PrepareFlowBundleUploadRequest): Promise<PrepareFlowBundleUploadResponse>
@@ -235,6 +236,7 @@ export type DisableFlowRequest = {
 export type PrewarmDataRequest = {
     workerGroupId: string | undefined
     projectWorker: boolean | undefined
+    workerVersion?: string
     flow?: { id: string, versionId: string, projectId: string }
 }
 
@@ -247,11 +249,25 @@ export type PrewarmCodeStep = {
 
 export type PrewarmDataResponse = {
     flows?: { id: string, versionId: string, projectId: string }[]
-    pieces: PiecePackage[]
-    codes: PrewarmCodeStep[]
+    scopeFileId?: string
+    pieces?: PiecePackage[]
+    codes?: PrewarmCodeStep[]
     platformId: string
     engineToken: string
 }
+
+export type PrewarmScopeFileContent = {
+    pieces: PiecePackage[]
+    codes: PrewarmCodeStep[]
+}
+
+export type GetPrewarmScopeFileRequest = {
+    fileId: string
+}
+
+export type GetPrewarmScopeFileResponse =
+    | { kind: 'inline', data: Buffer }
+    | { kind: 'url', url: string }
 
 export type ApiToWorkerContract = {
     flowPublished(input: { flowId: string, flowVersionId: string, projectId: string }): void

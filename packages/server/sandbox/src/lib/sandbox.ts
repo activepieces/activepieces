@@ -1,5 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { type ApLogger, wideEvent } from '@activepieces/server-utils'
+import { type ApLogger, apVersionUtil, wideEvent } from '@activepieces/server-utils'
+import { PrewarmScopeFileContent, WorkerToApiContract } from '@activepieces/shared'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
@@ -13,6 +14,7 @@ import {
     RuntimeExecutorInfo,
     SandboxSettings,
 } from './types'
+import { bundleHttp } from './utils/bundle-http'
 
 // One box per worker at the destination (concurrency 1), or N independent boxes in the transitional
 // compatibility mode that honors AP_WORKER_CONCURRENCY. Each box is its own manager, holding one
@@ -108,6 +110,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 const prewarmData = await apiClient.getPrewarmData({
                     workerGroupId: getSettings().WORKER_GROUP_ID,
                     projectWorker: getSettings().PROJECT_WORKER,
+                    workerVersion: apVersionUtil.getCurrentRelease(),
                     flow,
                 })
                 const { platformId, engineToken } = prewarmData
@@ -115,7 +118,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                 // The targeted (flowPublished) prewarm still resolves worker-side, which also publishes
                 // the flow bundle.
                 const { pieces, codeSteps } = isNil(flow)
-                    ? { pieces: prewarmData.pieces, codeSteps: prewarmData.codes }
+                    ? await fetchScopeFile({ apiClient, scopeFileId: prewarmData.scopeFileId })
                     : await resolveFlowsForPrewarm({
                         resolver: createResolver({ apiClient, basePath, getSettings, log }),
                         flows: prewarmData.flows ?? [],
@@ -137,6 +140,19 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
     }
 }
 
+async function fetchScopeFile({ apiClient, scopeFileId }: FetchScopeFileParams): Promise<ResolvedPrewarmInputs> {
+    if (isNil(scopeFileId)) {
+        return { pieces: [], codeSteps: [] }
+    }
+    const response = await apiClient.getPrewarmScopeFile({ fileId: scopeFileId })
+    if (isNil(response)) {
+        return { pieces: [], codeSteps: [] }
+    }
+    const data = response.kind === 'url' ? await bundleHttp.getBuffer(response.url) : response.data
+    const content = JSON.parse(data.toString('utf8')) as PrewarmScopeFileContent
+    return { pieces: content.pieces, codeSteps: content.codes }
+}
+
 async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUrl, engineToken, log }: ResolveFlowsForPrewarmParams): Promise<ResolvedPrewarmInputs> {
     const resolvedFlows = await Promise.all(flows.map(async (flow) => {
         const { data: resolved, error: flowError } = await tryCatch(() => resolver.resolve({ flow, platformId, publicApiUrl, engineToken }))
@@ -151,6 +167,19 @@ async function resolveFlowsForPrewarm({ resolver, flows, platformId, publicApiUr
         pieces: provisions.flatMap((provision) => provision.pieces),
         codeSteps: provisions.flatMap((provision) => provision.codes),
     }
+}
+
+
+function remainingTimeoutInSeconds({ timeoutInSeconds, expiresAt }: { timeoutInSeconds: number, expiresAt?: number }): number {
+    if (isNil(expiresAt)) {
+        return timeoutInSeconds
+    }
+    return Math.min(timeoutInSeconds, Math.floor((expiresAt - Date.now()) / 1000))
+}
+
+type FetchScopeFileParams = {
+    apiClient: WorkerToApiContract
+    scopeFileId: string | undefined
 }
 
 type ResolveFlowsForPrewarmParams = {
