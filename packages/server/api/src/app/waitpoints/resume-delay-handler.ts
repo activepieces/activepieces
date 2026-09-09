@@ -38,6 +38,13 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
             '[RESUME_DELAY_WAITPOINT] Waitpoint no longer PENDING (stale timer from completed/deleted waitpoint), skipping')
         return
     }
+    if (waitpoint.type === PauseType.BARRIER) {
+        log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
+            '[RESUME_DELAY_WAITPOINT] Barrier reached its deadline, releasing it with a timed-out summary')
+        await barrierService(log).release({ barrier: waitpoint, timedOut: true, releaseReason: 'timeout' })
+        return
+    }
+
     const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
     const pastPauseTimeout = dayjs().isAfter(dayjs(flowRun.created).add(pauseTimeoutDays, 'day'))
     const isWebhookExpiry = waitpoint.type === PauseType.WEBHOOK
@@ -61,16 +68,11 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
     log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
         '[RESUME_DELAY_WAITPOINT] Resuming flow')
 
-    if (waitpoint.type !== PauseType.BARRIER) {
-        await resumeService(log).resumeFromWaitpoint({
-            flowRunId: data.flowRunId,
-            waitpointId: data.waitpointId,
-            resumePayload: null,
-        })
-        return
-    }
-
-    await barrierService(log).release({ barrier: waitpoint, timedOut: true, releaseReason: 'timeout' })
+    await resumeService(log).resumeFromWaitpoint({
+        flowRunId: data.flowRunId,
+        waitpointId: data.waitpointId,
+        resumePayload: null,
+    })
 }
 
 async function resolveStepDisplayName({ flowVersionId, stepName, log }: ResolveStepDisplayNameParams): Promise<string> {

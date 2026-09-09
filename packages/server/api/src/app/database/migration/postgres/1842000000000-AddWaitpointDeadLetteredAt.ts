@@ -25,16 +25,10 @@ export class AddWaitpointDeadLetteredAt1842000000000 implements Migration {
         `)
 
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_pending_resume_date_time"`)
-        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_project_id"`)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         const concurrently = isPGlite() ? '' : 'CONCURRENTLY'
-
-        await queryRunner.query(`
-            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_project_id"
-            ON "waitpoint" ("projectId")
-        `)
 
         await queryRunner.query(`
             CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_pending_resume_date_time"

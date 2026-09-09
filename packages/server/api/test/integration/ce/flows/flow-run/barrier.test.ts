@@ -105,6 +105,8 @@ async function waitFor(condition: () => Promise<boolean>): Promise<void> {
     throw new Error('Timed out waiting for the barrier to settle')
 }
 
+const PAUSE_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS ?? '30')
+
 async function readStatus(barrierId: string): Promise<WaitpointStatus> {
     const barrier = await db.findOneByOrFail<{ status: WaitpointStatus }>('waitpoint', { id: barrierId })
     return barrier.status
@@ -505,6 +507,39 @@ describe('barrier deadline', () => {
         expect(await readDeadLetteredAt(waitpoint.id)).toBeNull()
     })
 
+    it('releases a barrier whose deadline lands past the run-age window instead of failing the run', async () => {
+        const { flowRun, barrier } = await createOverdueBarrier()
+        await db.update('flow_run', flowRun.id, { created: dayjs().subtract(PAUSE_TIMEOUT_DAYS + 1, 'day').toISOString() })
+        await dropDeadlineJob(barrier.id)
+
+        await handleResumeDelayWaitpoint({
+            data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
+            log: app.log,
+        })
+
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+        expect(await readSummary(barrier.id)).toMatchObject({ timedOut: true, stillRunning: 2 })
+    })
+
+    it('anchors the barrier deadline to the run start, not to the moment the barrier opened', async () => {
+        const { flowRun } = await createParentRun()
+        const runCreated = dayjs().subtract(10, 'day').toISOString()
+        await db.update('flow_run', flowRun.id, { created: runCreated })
+
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+
+        expect(dayjs(barrier.resumeDateTime).toISOString()).toBe(dayjs(runCreated).add(PAUSE_TIMEOUT_DAYS, 'day').toISOString())
+    })
+
+    it('re-arms a deadline that fell behind the run-age window instead of leaving its run paused for good', async () => {
+        const { barrier } = await createOverdueBarrier({ overdueByMinutes: (PAUSE_TIMEOUT_DAYS + 5) * 24 * 60 })
+        await dropDeadlineJob(barrier.id)
+
+        const armed = await sweepOverdueDeadlines({ log: app.log })
+
+        expect(armed).toContain(barrier.id)
+    })
+
     it('counts the signals nobody answered as still running and marks the release as timed out', async () => {
         const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
@@ -518,8 +553,8 @@ describe('barrier deadline', () => {
 })
 
 describe('multi-approval confirm page', () => {
-    async function createApprovalBarrier({ reasonRequiredOn, requiredSuccesses }: { reasonRequiredOn?: 'none' | 'reject' | 'both', requiredSuccesses?: number } = {}) {
-        const { flowRun } = await createParentRun()
+    async function createApprovalBarrier({ reasonRequiredOn, requiredSuccesses, runStatus }: { reasonRequiredOn?: 'none' | 'reject' | 'both', requiredSuccesses?: number, runStatus?: FlowRunStatus } = {}) {
+        const { flowRun } = await createParentRun(runStatus ?? FlowRunStatus.PAUSED)
         const created = await barrierService(app.log).create({
             flowRunId: flowRun.id,
             projectId: ctx.project.id,
@@ -561,6 +596,20 @@ describe('multi-approval confirm page', () => {
 
         await waitFor(async () => await readStatus(created.barrier.id) === WaitpointStatus.CONSUMED)
         expect(await listSignals(created.barrier.id)).toHaveLength(0)
+    })
+
+    it('records a decision that lands before the run has flipped to PAUSED', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier({ runStatus: FlowRunStatus.RUNNING })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=approve`,
+            payload: { reason: 'approving from the email before the engine paused' },
+        })
+
+        expect(response.statusCode).toBe(200)
+        const stored = (await listSignals(created.barrier.id)).find((signal) => signal.id === signals[0].id)
+        expect(stored?.status).toBe(BarrierSignalStatus.SUCCEEDED)
     })
 
     it('rejects a reject with no reason when reasonRequiredOn is reject', async () => {
