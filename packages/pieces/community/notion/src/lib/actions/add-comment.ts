@@ -10,7 +10,7 @@ export const addComment = createAction({
   classification: 'WRITE',
   displayName: 'Add Comment',
   description:
-    'Add a comment to any Notion page to start discussions, provide feedback, or leave notes for team collaboration.',
+    'Add a comment to a page.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -21,8 +21,7 @@ export const addComment = createAction({
     page_id: notionCommon.page,
     comment_text: Property.LongText({
       displayName: 'Comment Text',
-      description:
-        'Enter your comment text. Supports plain text and will be posted as a new comment thread on the selected page.',
+      description: 'Posted as a new comment thread on the page.',
       required: true,
     }),
   },
