@@ -8,6 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@datadog/datadog-api-client": "^1.43.0",
+    "deepmerge-ts": "7.1.0",
     "zod": "4.3.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
