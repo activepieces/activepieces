@@ -64,11 +64,10 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             resumeDateTime: params.resumeDateTime,
             log,
         })
-        if (isNil(waitpoint.deadLetteredAt)) {
-            return { inserted, waitpoint }
-        }
         await waitpointRepo().update({ id: waitpoint.id, projectId: params.projectId }, { deadLetteredAt: null })
-        log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: params.flowRunId } }, '[waitpointService#createForPause] Re-armed a dead-lettered deadline, so the sweep covers it again')
+        if (!isNil(waitpoint.deadLetteredAt)) {
+            log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: params.flowRunId } }, '[waitpointService#createForPause] Re-armed a dead-lettered deadline, so the sweep covers it again')
+        }
         return { inserted, waitpoint: { ...waitpoint, deadLetteredAt: null } }
     },
 

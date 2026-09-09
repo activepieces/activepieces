@@ -468,6 +468,17 @@ describe('barrier deadline', () => {
         expect(armed).toEqual([newer.barrier.id])
     })
 
+    it('pages past deadlines that are already armed to reach a newer unarmed one', async () => {
+        const alreadyArmed = await createOverdueBarrier({ overdueByMinutes: 30 })
+        const newer = await createOverdueBarrier({ overdueByMinutes: 10 })
+        await dropDeadlineJob(newer.barrier.id)
+
+        const armed = await sweepOverdueDeadlines({ log: app.log, pageSize: 1 })
+
+        expect(armed).toEqual([newer.barrier.id])
+        expect(await readDeadLetteredAt(alreadyArmed.barrier.id)).toBeNull()
+    })
+
     it('clears the mark when a fresh pause re-arms the same deadline', async () => {
         const { flowRun } = await createParentRun()
         const resumeDateTime = dayjs().add(1, 'hour').toISOString()
