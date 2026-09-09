@@ -86,6 +86,7 @@ export type ApErrorParams =
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
     | SandboxLogSizeExceededParams
+    | PieceBundleNotAvailableParams
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
@@ -117,6 +118,12 @@ export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EX
     standardOutput: string
     standardError: string
     neverStarted?: boolean
+}>
+
+export type PieceBundleNotAvailableParams = BaseErrorParams<ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE, {
+    pieceName: string
+    pieceVersion: string
+    status: number
 }>
 
 export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
@@ -545,6 +552,7 @@ export enum ErrorCode {
     SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
     SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
     SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
+    PIECE_BUNDLE_NOT_AVAILABLE = 'PIECE_BUNDLE_NOT_AVAILABLE',
     SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',

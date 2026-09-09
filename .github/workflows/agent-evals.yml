@@ -1,7 +1,7 @@
 name: Chat Evals
 
-# Regression gate for the AI Copilot chat prompt + agent loop.
-#   gate — every PR touching chat/prompt/eval files: deterministic replay + assertion
+# Regression gate for the AI agent prompt + agent loop.
+#   gate — every PR touching agent/prompt/eval files: deterministic replay + assertion
 #          tests, no key, hermetic. Blocks the PR.
 #   live — nightly + manual: fixtures against the real model + LLM-judge, key from secrets.
 #          Nightly runs the regression fixtures only (cheap + stable); run the full suite
@@ -10,11 +10,14 @@ name: Chat Evals
 on:
   pull_request:
     paths:
-      - packages/server/worker/src/lib/execute/jobs/ee/chat/**
+      - packages/server/worker/src/lib/execute/jobs/ee/agent/**
       - packages/server/worker/test/lib/agent-eval/**
-      - packages/server/api/src/app/ee/chat/**
+      - packages/server/api/src/app/ee/agent/**
       - packages/server/api/src/assets/prompts/**
-      - packages/core/shared/src/lib/ee/chat/**
+      - packages/core/shared/src/lib/ee/agent/**
+      - packages/server/utils/src/agent-ai-utils.ts
+      - packages/server/utils/src/agent-provider-options.ts
+      - packages/core/piece-types/src/lib/ai-providers.ts
       - .github/workflows/agent-evals.yml
   schedule:
     - cron: '0 6 * * *'
@@ -66,8 +69,11 @@ jobs:
       - name: Build worker dependency graph
         run: npx turbo run build --filter=worker
 
-      - name: Run deterministic chat evals
+      - name: Run deterministic agent evals
         run: npm run agent-evals:ci
+
+      - name: Run the tests covering the gated provider code
+        run: npx turbo run test --filter=@activepieces/server-utils --filter=@activepieces/core-piece-types
 
   live:
     name: Live judge gate

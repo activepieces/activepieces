@@ -1,3 +1,4 @@
+import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
@@ -6,7 +7,7 @@ const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../../../src/app/flows/flow-run/flow-run-service', () => ({
-    flowRunService: () => ({ getOneOrThrow: mockGetFlowRun }),
+    flowRunService: () => ({ getOneOrThrow: mockGetFlowRun, getOne: mockGetFlowRun }),
 }))
 
 vi.mock('../../../../../src/app/waitpoints/resume-service', () => ({
@@ -403,7 +404,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
     async function runPieceTool(conversation: unknown) {
         mockRunResolved.mockClear()
         mockResolveInput.mockClear()
-        mockFindOneBy.mockResolvedValue(conversation)
+        mockFindOne.mockResolvedValue(conversation)
         mockGetOneWithoutValue.mockResolvedValue({ id: 'ac-1', externalId: 'conn-1', displayName: 'Sales Inbox' })
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executePieceTool({
@@ -415,7 +416,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
     }
 
     it('runs the action in the conversation\'s own project', async () => {
-        await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1' })
+        await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1' })
 
         expect(mockRunResolved).toHaveBeenCalledTimes(1)
         expect(mockRunResolved.mock.calls[0][0].projectId).toBe('proj-1')
@@ -604,6 +605,72 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         })
     })
 
+    it('does not fail the job when the flow run is gone, so the real error is not masked', async () => {
+        mockResumeFromWaitpoint.mockClear()
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-gone', waitpointId: 'wp-1', output: { success: true },
+        })).resolves.toBeUndefined()
+
+        expect(mockResumeFromWaitpoint).not.toHaveBeenCalled()
+    })
+
+    it('still looks the flow run up inside the conversation\'s own project', async () => {
+        mockGetFlowRun.mockClear()
+        mockGetFlowRun.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-elsewhere', waitpointId: 'wp-1', output: {},
+        })
+
+        expect(mockGetFlowRun).toHaveBeenCalledWith({ id: 'run-elsewhere', projectId: 'proj-own' })
+    })
+
+    it('does not fail the job when the run disappears while resuming, which the pre-check cannot catch', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'flow_run', entityId: 'run-1', message: 'Flow run not found' },
+        }))
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).resolves.toBeUndefined()
+    })
+
+    it('still fails on a not-found that is not the flow run, so unrelated faults stay visible', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityType: 'waitpoint', entityId: 'wp-1', message: 'Waitpoint not found' },
+        }))
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).rejects.toThrow(ActivepiecesError)
+    })
+
+    it('still fails on any other resume error, so a real fault is never swallowed', async () => {
+        mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
+        mockResumeFromWaitpoint.mockRejectedValueOnce(new Error('lock timed out'))
+        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+
+        await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
+            conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
+        })).rejects.toThrow('lock timed out')
+    })
+
     it('sends an empty queryParams, so this path can never approve anything', async () => {
         await resume({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
 
@@ -681,13 +748,13 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding i
 })
 
 describe('agentRpcHandlers.executePieceTool — which account a configured action runs as', () => {
-    const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' }
+    const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1' }
     const PINNED = 'conn-author-pinned'
 
     async function run({ pinnedExists, pinnedAuth = PINNED }: { pinnedExists: boolean, pinnedAuth?: string }) {
         mockResolveInput.mockClear()
         mockGetOneWithoutValue.mockClear()
-        mockFindOneBy.mockResolvedValue(AGENT_CHAT)
+        mockFindOne.mockResolvedValue(AGENT_CHAT)
         mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         const response = await agentRpcHandlers(noopLogger as never).executePieceTool({

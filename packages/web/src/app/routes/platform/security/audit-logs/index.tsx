@@ -1,11 +1,13 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  AgentRunSource,
   ApplicationEvent,
   ApplicationEventName,
   summarizeApplicationEvent,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  Bot,
   CheckIcon,
   CircleArrowUp,
   Eye,
@@ -398,6 +400,11 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Link2 className="size-4" />,
         tooltip: t('Variable'),
       };
+    case ApplicationEventName.AGENT_ACTION_EXECUTED:
+      return {
+        icon: <Bot className="size-4" />,
+        tooltip: t('Agent action'),
+      };
     case ApplicationEventName.USER_SIGNED_UP:
     case ApplicationEventName.USER_SIGNED_IN:
     case ApplicationEventName.USER_PASSWORD_RESET:
@@ -550,6 +557,26 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
           : []),
       ];
     }
+    case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+      const { agent, action, connection, source, flow } = event.data;
+      return [
+        ...(agent
+          ? [{ label: t('Agent'), value: agent.displayName ?? agent.id }]
+          : []),
+        { label: t('Action'), value: action.displayName },
+        { label: t('App'), value: action.pieceDisplayName },
+        { label: t('Ran from'), value: RAN_FROM_LABEL[source]() },
+        ...(flow ? [{ label: t('Flow run'), value: flow.runId }] : []),
+        ...(connection
+          ? [
+              {
+                label: t('Account'),
+                value: connection.label ?? connection.externalId,
+              },
+            ]
+          : []),
+      ];
+    }
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_UPDATED:
     case ApplicationEventName.FOLDER_DELETED:
@@ -649,4 +676,11 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
 type EventDetailRow = {
   label: string;
   value: string;
+};
+
+const RAN_FROM_LABEL: Record<AgentRunSource, () => string> = {
+  [AgentRunSource.FLOW_STEP]: () => t('A flow step'),
+  [AgentRunSource.AGENT]: () => t('The agent page'),
+  [AgentRunSource.CHAT]: () => t('Chat'),
+  [AgentRunSource.AGENT_BUILDER]: () => t('The agent builder'),
 };

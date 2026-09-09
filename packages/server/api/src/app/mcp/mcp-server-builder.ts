@@ -34,10 +34,10 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, selectionScope, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, clientId, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId?: string
-    selectionScope: ProjectSelectionScope | null
+    clientId: string
     log: FastifyBaseLogger
     resolveProjectMcp?: (projectId: string) => Promise<PopulatedMcpServer>
 }): Promise<McpServer> {
@@ -72,7 +72,7 @@ export async function buildMcpServer({ mcp, userId, selectionScope, log, resolve
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
-        registerPlatformTools({ server, mcp, userId, selectionScope: selectionScope ?? { platformId: mcp.platformId, userId }, resolveProjectMcp, log })
+        registerPlatformTools({ server, mcp, userId, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, log })
     }
     else {
         registerPlaceholderTools(server)
