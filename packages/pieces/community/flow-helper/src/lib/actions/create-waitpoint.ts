@@ -20,7 +20,7 @@ export const createWaitpoint = createAction({
     markdown: Property.MarkDown({
       variant: MarkdownVariant.INFO,
       value:
-        'Returns a **resume URL** without pausing. Post your own control (e.g. a Slack button) whose value is this URL, then use **Wait for Resume** to pause and read the full payload when it is called.',
+        'Returns a **resume URL** without pausing. Post your own control (e.g. a Slack button) whose value is this URL, then use **Wait for Resume** to pause and read the full payload when it is called.\n\n**Only one waitpoint can be pending per flow run at a time** — create it, embed its URL, and pause with Wait for Resume before creating another.',
     }),
   },
   errorHandlingOptions: {
