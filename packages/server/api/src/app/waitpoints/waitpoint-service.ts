@@ -55,22 +55,28 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
 
         const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
         const inserted = waitpoint.id === id
-        if (!inserted) {
+        if (inserted) {
+            log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
+        }
+        else {
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
+        }
+        if (isNil(resumeDateTime)) {
             return { inserted, waitpoint }
         }
-
-        log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
-        if (!isNil(resumeDateTime)) {
-            await waitpointTimeoutJob.schedule({
-                flowRunId: params.flowRunId,
-                projectId: params.projectId,
-                waitpointId: id,
-                resumeDateTime,
-                log,
-            })
+        await waitpointTimeoutJob.schedule({
+            flowRunId: params.flowRunId,
+            projectId: params.projectId,
+            waitpointId: waitpoint.id,
+            resumeDateTime,
+            log,
+        })
+        if (isNil(waitpoint.deadLetteredAt)) {
+            return { inserted, waitpoint }
         }
-        return { inserted, waitpoint }
+        await waitpointRepo().update({ id: waitpoint.id, projectId: params.projectId }, { deadLetteredAt: null })
+        log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: params.flowRunId } }, '[waitpointService#createForPause] Re-armed a dead-lettered deadline, so the sweep covers it again')
+        return { inserted, waitpoint: { ...waitpoint, deadLetteredAt: null } }
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
