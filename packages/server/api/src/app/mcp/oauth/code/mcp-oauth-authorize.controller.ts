@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
+import { networkUtils } from '../../../helper/network-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
 import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
@@ -50,8 +51,8 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
         })
 
         const consentPageUrl = domainHelper.isMcpHostRequest({ req })
-            ? await domainHelper.getPublicUrl({ path: '/mcp-authorize' })
-            : domainHelper.getPublicUrlFromRequest({ req, path: '/mcp-authorize' })
+            ? await domainHelper.getBrowserLandingUrl({ path: '/mcp-authorize' })
+            : networkUtils.combineUrl(networkUtils.getRequestBaseUrl(req), '/mcp-authorize')
         const authorizePageUrl = new URL(consentPageUrl)
         authorizePageUrl.searchParams.set('authRequestId', authRequestToken)
 

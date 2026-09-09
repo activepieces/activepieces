@@ -23,6 +23,7 @@ const PREFIXED_FRONTEND_URL = 'https://apps.customer.example.com/automation'
 const SSO_EMAIL = 'sso-user@customer.example.com'
 
 let app: FastifyInstance
+let platformId: string
 
 async function createSamlPlatform(): Promise<string> {
     const mockUserIdentity = createMockUserIdentity({ verified: true })
@@ -64,11 +65,28 @@ async function createSamlPlatform(): Promise<string> {
     return mockPlatform.id
 }
 
+async function acs({ host }: { host: string }): Promise<URL> {
+    const response = await app.inject({
+        method: 'POST',
+        url: `/api/v1/authn/saml/acs?platformId=${platformId}`,
+        headers: {
+            'x-forwarded-proto': 'https',
+            'x-forwarded-host': host,
+            'content-type': 'application/x-www-form-urlencoded',
+        },
+        payload: 'SAMLResponse=stubbed',
+    })
+
+    expect(response.statusCode).toBe(302)
+    return new URL(response.headers.location as string)
+}
+
 describe('SAML ACS redirect', () => {
     beforeAll(async () => {
         app = await setupTestEnvironment({ fresh: true })
         const realGetOrThrow = system.getOrThrow.bind(system)
         vi.spyOn(system, 'getOrThrow').mockImplementation((prop) => prop === AppSystemProp.FRONTEND_URL ? PREFIXED_FRONTEND_URL : realGetOrThrow(prop))
+        platformId = await createSamlPlatform()
     })
 
     afterAll(async () => {
@@ -76,24 +94,26 @@ describe('SAML ACS redirect', () => {
         await teardownTestEnvironment()
     })
 
-    it('returns the browser to /authenticate under the configured path prefix', async () => {
-        const platformId = await createSamlPlatform()
+    it('returns the browser to /authenticate at the origin root, never under the configured prefix', async () => {
+        const location = await acs({ host: 'apps.customer.example.com' })
 
-        const response = await app.inject({
-            method: 'POST',
-            url: `/api/v1/authn/saml/acs?platformId=${platformId}`,
-            headers: {
-                'x-forwarded-proto': 'https',
-                'x-forwarded-host': 'apps.customer.example.com',
-                'content-type': 'application/x-www-form-urlencoded',
-            },
-            payload: 'SAMLResponse=stubbed',
-        })
-
-        expect(response.statusCode).toBe(302)
-        const location = new URL(response.headers.location as string)
         expect(location.origin).toBe('https://apps.customer.example.com')
-        expect(location.pathname).toBe('/automation/authenticate')
+        expect(location.pathname).toBe('/authenticate')
         expect(location.searchParams.get('response')).toBeTruthy()
+    })
+
+    it('carries the session response so the SPA can consume it on landing', async () => {
+        const location = await acs({ host: 'apps.customer.example.com' })
+        const response = JSON.parse(location.searchParams.get('response') as string)
+
+        expect(response.email).toBe(SSO_EMAIL)
+        expect(response.token).toBeTruthy()
+    })
+
+    it('follows the host the assertion was posted to, so a custom domain returns to itself', async () => {
+        const location = await acs({ host: 'sso.customer.example.com' })
+
+        expect(location.origin).toBe('https://sso.customer.example.com')
+        expect(location.pathname).toBe('/authenticate')
     })
 })

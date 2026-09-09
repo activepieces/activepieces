@@ -86,7 +86,7 @@ describe('MCP OAuth deployment shapes', () => {
             expect(metadata.registration_endpoint).toBe('https://apps.customer.example.com/automation/register')
         })
 
-        it('sends the consent redirect under the prefix', async () => {
+        it('sends the consent redirect to the hostname root, the only path the app can route', async () => {
             const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
             const { challenge } = mcpOAuthTestHelpers.generatePkce()
 
@@ -97,7 +97,7 @@ describe('MCP OAuth deployment shapes', () => {
             })
 
             expect(res.statusCode).toBe(302)
-            expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/automation\/mcp-authorize\?/)
+            expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/mcp-authorize\?/)
         })
     })
     describe('with MCP served from its own hostname', () => {
@@ -154,7 +154,7 @@ describe('MCP OAuth deployment shapes', () => {
             expect(res.headers['www-authenticate']).toContain(`${DUAL_MCP_URL}/.well-known/oauth-protected-resource/mcp`)
         })
 
-        it('sends consent to the frontend base, so the user signs in on the main host', async () => {
+        it('sends consent to the frontend origin, so the user signs in on the main host', async () => {
             const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
             const { challenge } = mcpOAuthTestHelpers.generatePkce()
 
@@ -165,7 +165,7 @@ describe('MCP OAuth deployment shapes', () => {
             })
 
             expect(res.statusCode).toBe(302)
-            expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/automation\/mcp-authorize\?/)
+            expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/mcp-authorize\?/)
         })
 
         it('leaves consent on the request host for a host matching neither setting', async () => {
@@ -179,7 +179,61 @@ describe('MCP OAuth deployment shapes', () => {
             })
 
             expect(res.statusCode).toBe(302)
-            expect(res.headers.location).toMatch(/^https:\/\/byo\.customer\.example\.com\/automation\/mcp-authorize\?/)
+            expect(res.headers.location).toMatch(/^https:\/\/byo\.customer\.example\.com\/mcp-authorize\?/)
+        })
+    })
+
+    describe('with AP_MCP_URL sharing the frontend hostname', () => {
+        const SHARED_FRONTEND_URL = 'https://apps.customer.example.com/automation'
+        const SHARED_MCP_URL = 'https://apps.customer.example.com'
+        const sharedHostHeaders = { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'apps.customer.example.com' }
+
+        beforeAll(() => {
+            const realGet = system.get.bind(system)
+            const realGetOrThrow = system.getOrThrow.bind(system)
+            vi.spyOn(system, 'get').mockImplementation((prop) => {
+                if (prop === AppSystemProp.MCP_URL) {
+                    return SHARED_MCP_URL
+                }
+                if (prop === AppSystemProp.FRONTEND_URL) {
+                    return SHARED_FRONTEND_URL
+                }
+                return realGet(prop)
+            })
+            vi.spyOn(system, 'getOrThrow').mockImplementation((prop) => prop === AppSystemProp.FRONTEND_URL ? SHARED_FRONTEND_URL : realGetOrThrow(prop))
+        })
+
+        it('serves MCP at the host root while the app keeps its prefix', async () => {
+            const metadata = await discovery(sharedHostHeaders)
+
+            expect(metadata.issuer).toBe(SHARED_MCP_URL)
+            expect(metadata.authorization_endpoint).toBe(`${SHARED_MCP_URL}/authorize`)
+            expect(metadata.token_endpoint).toBe(`${SHARED_MCP_URL}/token`)
+        })
+
+        it('gives a client pointed at the host-root /mcp a resource identifier that matches', async () => {
+            const res = await app.inject({
+                method: 'GET',
+                url: '/.well-known/oauth-protected-resource/mcp',
+                headers: sharedHostHeaders,
+            })
+
+            expect(res.json().resource).toBe(`${SHARED_MCP_URL}/mcp`)
+            expect(res.json().authorization_servers).toEqual([SHARED_MCP_URL])
+        })
+
+        it('sends consent to the frontend origin, without the configured prefix', async () => {
+            const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
+            const { challenge } = mcpOAuthTestHelpers.generatePkce()
+
+            const res = await app.inject({
+                method: 'GET',
+                headers: sharedHostHeaders,
+                url: `/authorize?client_id=${client.client_id}&redirect_uri=${encodeURIComponent(MCP_OAUTH_REDIRECT_URI)}&response_type=code&code_challenge=${challenge}&code_challenge_method=S256`,
+            })
+
+            expect(res.statusCode).toBe(302)
+            expect(res.headers.location).toMatch(/^https:\/\/apps\.customer\.example\.com\/mcp-authorize\?/)
         })
     })
 })

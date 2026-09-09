@@ -4,7 +4,6 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { applicationEvents } from '../../../helper/application-events'
-import { domainHelper } from '../../../helper/domain-helper'
 import { networkUtils } from '../../../helper/network-utils'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -31,7 +30,7 @@ export const authnSsoSamlController: FastifyPluginAsyncZod = async (app) => {
             body: req.body,
             query: req.query,
         })
-        const url = new URL(domainHelper.getPublicUrlFromRequest({ req, path: '/authenticate' }))
+        const url = new URL('/authenticate', networkUtils.getRequestBaseUrl(req))
         url.searchParams.append('response', JSON.stringify(response))
         applicationEvents(req.log).sendUserEvent({
             platformId,

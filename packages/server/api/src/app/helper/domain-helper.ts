@@ -8,6 +8,10 @@ export const domainHelper = {
     async getPublicUrl({ path }: PublicUrlParams): Promise<string> {
         return networkUtils.combineUrl(system.getOrThrow(AppSystemProp.FRONTEND_URL), path ?? '')
     },
+    async getBrowserLandingUrl({ path }: PublicUrlParams): Promise<string> {
+        const { origin } = new URL(system.getOrThrow(AppSystemProp.FRONTEND_URL))
+        return networkUtils.cleanTrailingSlash(networkUtils.combineUrl(origin, path ?? ''))
+    },
     getPublicUrlFromRequest({ req, path }: PublicUrlFromRequestParams): string {
         const matchedBaseUrl = findConfiguredBaseUrl(req)
         const baseWithPrefix = matchedBaseUrl ?? networkUtils.combineUrl(networkUtils.getRequestBaseUrl(req), getConfiguredBasePath())
