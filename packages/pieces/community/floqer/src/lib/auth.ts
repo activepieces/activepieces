@@ -6,7 +6,7 @@ import { FloqerUser } from './common/types';
 export const floqerAuth = PieceAuth.SecretText({
     displayName: 'API Key',
     description:
-        'Your Floqer API key. It starts with `floq_`. Create one from your Floqer workspace settings.',
+        'Your Floqer API key. It starts with `floq_`. Create one from your workspace settings in [Floqer](https://app.floqer.com).',
     required: true,
     validate: async ({ auth }) => {
         try {

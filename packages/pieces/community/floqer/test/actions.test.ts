@@ -205,3 +205,88 @@ describe('error extraction', () => {
         expect(floqerApi.statusOf(new Error('network'))).toBeUndefined();
     });
 });
+
+describe('Run Shortcut — input_schema as Floqer really returns it', () => {
+    // Captured from a live published shortcut. Every field came back
+    // type:"string", including is_active and created_at, so the type carries
+    // no discriminating information and the default branch is the live path.
+    const REAL_SCHEMA = [
+        { reference: 'telegram_id', name: 'telegram_id', description: '', type: 'string', required: false },
+        { reference: 'user_name', name: 'user_name', description: '', type: 'string', required: true },
+        { reference: 'is_active', name: 'is_active', description: '', type: 'string', required: true },
+        { reference: 'created_at', name: 'created_at', description: '', type: 'string', required: false },
+    ];
+
+    async function buildProps(schema: unknown[]) {
+        sendRequest.mockResolvedValueOnce(
+            envelope([{ id: 'sc1', name: 'test', is_published: true, is_master: true, workflow_id: 'w', input_schema: schema }]),
+        );
+        const prop = runShortcutAction.props['inputData'];
+        return (prop as unknown as { props: (ctx: unknown) => Promise<Record<string, { type: string; required: boolean; displayName: string }>> })
+            .props({ auth: AUTH, shortcutId: 'sc1' });
+    }
+
+    it('builds one prop per field, in schema order', async () => {
+        const props = await buildProps(REAL_SCHEMA);
+
+        expect(Object.keys(props)).toEqual(['telegram_id', 'user_name', 'is_active', 'created_at']);
+    });
+
+    it('keys props by reference, not by name', async () => {
+        // On the live shortcut every reference happened to equal its name, so a
+        // fixture copied from it cannot tell the two apart. The spec's own
+        // example has them differ, and input_data is keyed by reference.
+        const props = await buildProps([
+            { reference: 'linkedin_url', name: 'LinkedIn URL', type: 'string', required: true },
+        ]);
+
+        expect(Object.keys(props)).toEqual(['linkedin_url']);
+        expect(props['linkedin_url'].displayName).toBe('LinkedIn URL');
+    });
+
+    it('carries required through, which is the only guard Floqer does not apply itself', async () => {
+        const props = await buildProps(REAL_SCHEMA);
+
+        expect(props['user_name'].required).toBe(true);
+        expect(props['is_active'].required).toBe(true);
+        expect(props['telegram_id'].required).toBe(false);
+    });
+
+    it('renders every string field as short text', async () => {
+        const props = await buildProps(REAL_SCHEMA);
+
+        expect(new Set(Object.values(props).map((p) => p.type))).toEqual(new Set(['SHORT_TEXT']));
+    });
+
+    it('still renders a shortcut whose field type it has never seen', async () => {
+        const props = await buildProps([
+            { reference: 'a', name: 'a', type: 'some_future_type', required: false },
+            { reference: 'b', name: 'b', required: false },
+        ]);
+
+        expect(Object.keys(props)).toEqual(['a', 'b']);
+        expect(props['a'].type).toBe('SHORT_TEXT');
+        expect(props['b'].type).toBe('SHORT_TEXT');
+    });
+
+    it('maps the typed variants the spec documents, should Floqer ever send them', async () => {
+        const props = await buildProps([
+            { reference: 'n', name: 'n', type: 'number', required: false },
+            { reference: 'c', name: 'c', type: 'boolean', required: false },
+            { reference: 'l', name: 'l', type: 'textarea', required: false },
+        ]);
+
+        expect(props['n'].type).toBe('NUMBER');
+        expect(props['c'].type).toBe('CHECKBOX');
+        expect(props['l'].type).toBe('LONG_TEXT');
+    });
+
+    it('returns nothing when the chosen shortcut is gone', async () => {
+        sendRequest.mockResolvedValueOnce(envelope([]));
+        const prop = runShortcutAction.props['inputData'];
+        const props = await (prop as unknown as { props: (ctx: unknown) => Promise<Record<string, unknown>> })
+            .props({ auth: AUTH, shortcutId: 'missing' });
+
+        expect(props).toEqual({});
+    });
+});
