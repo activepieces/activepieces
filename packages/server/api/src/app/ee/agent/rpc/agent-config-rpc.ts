@@ -33,6 +33,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // A saved agent answers from its own instructions, so one person's remembered preferences
         // must not change how it behaves for everyone else who talks to it.
         const isBuilder = requestedSource === AgentRunSource.AGENT_BUILDER
+        const editsItself = requestedSource === AgentRunSource.AGENT
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
         const [conversation, userProjects, enabledAiTools] = await Promise.all([
@@ -92,7 +93,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = actingRun && (carriesChatContext || isBuilder) && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const agentsAvailable = actingRun && (carriesChatContext || isBuilder || editsItself) && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
