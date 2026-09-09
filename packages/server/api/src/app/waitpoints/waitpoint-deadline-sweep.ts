@@ -2,6 +2,7 @@ import { chunk, isNil } from '@activepieces/core-utils'
 import { FlowRunStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -19,6 +20,7 @@ export async function sweepOverdueDeadlines({ log }: SweepOverdueDeadlinesParams
     const unarmed = probes.filter((probe) => probe.state === 'unarmed').map((probe) => probe.waitpoint)
     const deadLettered = probes.filter((probe) => probe.state === 'dead-lettered').map((probe) => probe.waitpoint)
     const armed = await armDeadlines({ unarmed, log })
+    await stampDeadLettered({ deadLettered })
 
     if (armed.length > 0) {
         log.info({ armedCount: armed.length, scannedCount: overdue.length }, '[sweepOverdueDeadlines] Re-armed overdue waitpoint deadlines')
@@ -27,9 +29,8 @@ export async function sweepOverdueDeadlines({ log }: SweepOverdueDeadlinesParams
         log.warn({
             deadLetteredCount: deadLettered.length,
             scannedCount: overdue.length,
-            scanWindowFull: overdue.length >= SWEEP_SCAN_LIMIT,
             sample: deadLettered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((waitpoint) => waitpoint.id),
-        }, '[sweepOverdueDeadlines] Deadlines exhausted their attempts and stay dead-lettered rather than being re-armed every tick; their runs stay paused until someone intervenes')
+        }, '[sweepOverdueDeadlines] Deadlines exhausted their attempts and leave the scan for good rather than spending its budget every tick; their runs stay paused until someone intervenes')
     }
     if (armed.length >= MAX_ARMED_PER_TICK) {
         log.warn({ armedCount: armed.length, scannedCount: overdue.length }, '[sweepOverdueDeadlines] Hit the per-tick arm quota; the oldest deadlines went first and the rest follow next tick')
@@ -45,6 +46,7 @@ async function findOverdueWaitpoints(): Promise<Waitpoint[]> {
         .where('"waitpoint"."status" = :status', { status: WaitpointStatus.PENDING })
         .andWhere('"waitpoint"."resumeDateTime" < :now', { now: dayjs().toISOString() })
         .andWhere('"waitpoint"."resumeDateTime" > :floor', { floor: dayjs().subtract(maxDurationInDays, 'day').toISOString() })
+        .andWhere('"waitpoint"."deadLetteredAt" IS NULL')
         .andWhere('"flowRun"."status" = :runStatus', { runStatus: FlowRunStatus.PAUSED })
         .orderBy('"waitpoint"."resumeDateTime"', 'ASC')
         .limit(SWEEP_SCAN_LIMIT)
@@ -65,6 +67,13 @@ async function probeDeadlineJob({ waitpoint, log }: ProbeDeadlineJobParams): Pro
         return { waitpoint, state: 'unarmed' }
     }
     return { waitpoint, state: await existingJob.isFailed() ? 'dead-lettered' : 'armed' }
+}
+
+async function stampDeadLettered({ deadLettered }: StampDeadLetteredParams): Promise<void> {
+    if (deadLettered.length === 0) {
+        return
+    }
+    await waitpointRepo().update({ id: In(deadLettered.map((waitpoint) => waitpoint.id)) }, { deadLetteredAt: dayjs().toISOString() })
 }
 
 async function armDeadlines({ unarmed, log }: ArmDeadlinesParams): Promise<string[]> {
@@ -112,6 +121,10 @@ type ProbeDeadlineJobsParams = {
 type ProbeDeadlineJobParams = {
     waitpoint: Waitpoint
     log: FastifyBaseLogger
+}
+
+type StampDeadLetteredParams = {
+    deadLettered: Waitpoint[]
 }
 
 type ArmDeadlinesParams = {
