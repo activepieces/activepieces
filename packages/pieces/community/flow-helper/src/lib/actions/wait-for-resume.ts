@@ -1,5 +1,5 @@
 import { createAction, PieceAuth } from '@activepieces/pieces-framework';
-import { ExecutionType, MarkdownVariant, Property } from '@activepieces/pieces-framework';
+import { ExecutionType, Property } from '@activepieces/pieces-framework';
 import { waitForResumeActionOutputSchema } from '../output-schemas';
 
 export const waitForResume = createAction({
@@ -9,18 +9,19 @@ export const waitForResume = createAction({
   classification: 'READ',
   displayName: 'Wait for Resume',
   description:
-    'Pauses the flow until its resume URL is called, then returns the full resume payload (body + query params).',
+    "Pauses the flow on a waitpoint created by Create Waitpoint, and returns the full resume payload (body + query params) when that waitpoint's resume URL is called.",
   aiMetadata: {
     description:
-      "Pauses the current flow run and resumes only when the run's waitpoint resume URL is called, returning the caller's full payload (request body and query params) rather than just an approve/disapprove boolean. Pick this when you post your own interactive control (e.g. a Slack button whose value is a resume URL from Create Approval Links) and need to inspect who acted or what they sent on resume. Takes no inputs. Not idempotent, since each execution creates a new waitpoint.",
+      "Pauses the current flow run on a specific waitpoint (from Create Waitpoint) and resumes only when that waitpoint's resume URL is called, returning the caller's full payload (request body and query params) rather than just an approve/disapprove boolean. Pass the waitpointId returned by Create Waitpoint. Pick this when you post your own interactive control (e.g. a Slack button whose value is the waitpoint's resume URL) and need to inspect who acted or what they sent. Not idempotent, since the waitpoint is consumed on resume.",
     idempotent: false,
   },
   outputSchema: waitForResumeActionOutputSchema,
   props: {
-    markdown: Property.MarkDown({
-      variant: MarkdownVariant.INFO,
-      value:
-        'Pair this with **Create Approval Links** (which hands out a resume URL without pausing): post your own control (button/link) with that URL, then use this action to pause and read back the full payload when it is called.',
+    waitpointId: Property.ShortText({
+      displayName: 'Waitpoint ID',
+      description:
+        "The waitpoint id returned by Create Waitpoint. The flow pauses until this waitpoint's resume URL is called.",
+      required: true,
     }),
   },
   errorHandlingOptions: {
@@ -33,11 +34,11 @@ export const waitForResume = createAction({
   },
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
-      const waitpoint = await ctx.run.createWaitpoint({
-        type: 'WEBHOOK',
-      });
-      ctx.run.waitForWaitpoint(waitpoint.id);
-
+      // Park on the waitpoint that Create Waitpoint already minted — do NOT create a
+      // new one. The engine's waitForWaitpoint just flags the run paused; the pending
+      // waitpoint (whose id + resume URL came from Create Waitpoint) is what resumes it,
+      // and it is validated + consumed on resume (single-use).
+      ctx.run.waitForWaitpoint(ctx.propsValue.waitpointId);
       return {
         payload: null,
         queryParams: {},
