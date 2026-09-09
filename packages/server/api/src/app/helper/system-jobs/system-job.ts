@@ -1,11 +1,11 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { apDayjs, apDayjsDuration } from '@activepieces/server-utils'
+import { apDayjs, apDayjsDuration, createLogger, wideEvent } from '@activepieces/server-utils'
 import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
 import { exceptionHandler } from '../exception-handler'
-import { SystemJobData, SystemJobName, SystemJobSchedule } from './common'
+import { SystemJobData, SystemJobName, SystemJobSchedule, UpsertJobResult } from './common'
 import { systemJobHandlers } from './job-handlers'
 
 const FIFTEEN_MINUTES = apDayjsDuration(15, 'minute').asMilliseconds()
@@ -46,9 +46,21 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             SYSTEM_JOB_QUEUE,
             async (job) => {
                 log.debug({ jobName: job.name }, '[systemJob#worker] Executing job')
-
-                const jobHandler = systemJobHandlers.getJobHandler(job.name)
-                await jobHandler(job.data)
+                const jobLogger = createLogger({
+                    event: 'system-job.execute',
+                    job: { id: job.id, type: job.name },
+                })
+                return wideEvent.run({
+                    logger: jobLogger,
+                    fn: () => processSystemJob(job)
+                        .then(() => wideEvent.set({ outcome: 'success' }))
+                        .catch((error: unknown) => {
+                            wideEvent.error(error)
+                            wideEvent.set({ outcome: 'failed' })
+                            throw error
+                        })
+                        .finally(() => jobLogger.emit()),
+                })
             },
             {
                 connection: await redisConnections.create(),
@@ -67,7 +79,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         await systemJobWorker.waitUntilReady()
     },
 
-    async upsertJob({ job, schedule, customConfig }): Promise<void> {
+    async upsertJob({ job, schedule, customConfig }): Promise<UpsertJobResult> {
         log.info({ jobName: job.name }, '[systemJob#upsertJob] Upserting job')
         if (schedule.type === 'repeated') {
             const schedulers = await systemJobsQueue.getJobSchedulers()
@@ -77,20 +89,22 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
                 await systemJobsQueue.removeJobScheduler(scheduler.id ?? scheduler.key)
             }
             await systemJobsQueue.upsertJobScheduler(job.name, { pattern: schedule.cron, tz: 'UTC' }, { name: job.name, data: job.data, opts: customConfig })
-            return
+            return { status: 'scheduler-upserted' }
         }
         const existingJob = await getJobByNameAndJobId(job.name, job.jobId)
         if (!isNil(existingJob) && await existingJob.isFailed()) {
             log.info({ jobName: job.name }, '[systemJob#upsertJob] Retrying failed job')
             await existingJob.retry()
+            return { status: 'retried' }
         }
         if (isNil(existingJob)) {
             log.info({ jobName: job.name }, '[systemJob#upsertJob] Adding job to queue')
             await systemJobsQueue.add(job.name, job.data, configureJobOptions({ date: schedule.date, jobId: job.jobId, customConfig }))
-            return
+            return { status: 'added' }
         }
         log.warn({ jobName: job.name, jobId: job.jobId, existingDelay: existingJob.opts.delay },
             '[systemJob#upsertJob] A one-time job already exists under this id; the requested schedule was dropped and the existing one stands')
+        return { status: 'kept' }
     },
 
     async getJob<T extends SystemJobName>(jobId: string) {
@@ -121,6 +135,11 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         ])
     },
 })
+
+async function processSystemJob(job: Job<SystemJobData, unknown, SystemJobName>): Promise<void> {
+    const jobHandler = systemJobHandlers.getJobHandler(job.name)
+    await jobHandler(job.data)
+}
 
 async function removeDeprecatedJobs(log: FastifyBaseLogger): Promise<void> {
     const deprecatedJobs = [
