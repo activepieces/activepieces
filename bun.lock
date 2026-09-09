@@ -10455,7 +10455,7 @@
     },
     "packages/pieces/core/manual-trigger": {
       "name": "@activepieces/piece-manual-trigger",
-      "version": "0.0.7",
+      "version": "0.0.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
