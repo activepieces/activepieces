@@ -61,21 +61,21 @@ since a footer button calling `setOpen(false)` skips `onOpenChange` and the next
 instead of the form; and check any two-dialog interaction in the browser, because that is where Radix
 orphans `pointer-events: none` on `<body>` and the page behind stops taking clicks.
 
-**A feature you cannot act on shows itself filled with sample data, under one branded banner.** `Audit
-logs` is a table, so there is no action to crown, and opening it freely would show an empty table with
-nothing to explain why. It renders its real filters, columns and pagination populated with believable
-sample rows, crisp and legible, beneath a single full-bleed banner carrying a chip with the feature name,
-the line that the data below is sample, the feature's description and one call to action. Nothing else on
-the page changes.
+**A feature you cannot act on shows itself filled with sample data, fading into the upgrade prompt.**
+`Audit logs` is a table, so there is no action to crown, and opening it freely would show an empty table
+with nothing to explain why. It renders its real header, filters and rows populated with believable sample
+data, then dissolves down the page through a `linear-gradient` mask, and a lock medallion, the feature's
+name, its description and the CTA sit in the space the fade opens. It reads as one surface rather than a
+page wearing a notice, and it suits a form as well as a table: `Branding` shows three fields before
+dissolving mid-field.
 
-Four treatments were tried in this order and the first three dropped: **blur**, chosen while the table was
-still empty, hides the very rows the treatment exists to show; a **strip** above the content said the right
-words but left the page reading as ordinary; a **framed container** did read as locked but dominated the
-page it was meant to preview; and **chrome merged into the page's own header** (a tier pill by the title, a
-sample row above the rows) was too quiet and needed a React context plus edits to both shared page headers
-and `DataTable` to deliver. The banner is louder than all of them, owns the whole signal in one component,
-and was the smallest diff. A Mobbin survey found the same split in the wild, with Later and Churnkey
-shipping crisp figures under a labelled band while Juicebox, Asana Admin and Hex fade an empty shell.
+Five treatments were tried, in this order, and the first four dropped: **blur** hides the very rows the
+treatment exists to show; a **strip** above the content said the right words but left the page reading as
+ordinary; a **framed container** read as locked but dominated the page it was previewing; **chrome merged
+into the page's own header** was too quiet and needed a React context plus edits to both shared headers and
+`DataTable`; a **full-bleed banner** announced the paywall before the page had shown anything. A Mobbin
+survey found products split between crisp-and-labelled and fade-an-empty-shell, and nothing sampling a
+form, so the fade over real sample content has no direct precedent.
 
 The sample content is **inert and visibly so**: the region takes `pointer-events: none`, filters and
 pagination render disabled, and the only live control is the banner's CTA. The alternative, making the
