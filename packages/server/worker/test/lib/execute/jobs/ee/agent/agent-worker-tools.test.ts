@@ -401,6 +401,34 @@ describe('agentWorkerTools', () => {
             expect(taintState.tainted).toBe(true)
         })
 
+        it('marks the turn even when the flow failed, because its output still reaches the model', async () => {
+            const taintState = { tainted: false }
+            const tools = agentWorkerTools.createConfiguredFlowTools({
+                taintState,
+                tools: [{ toolName: 'run_my_flow', flowId: 'flow_1', description: 'runs', inputSchema: {}, returnsResponse: true }] as never,
+                runFlowTool: vi.fn().mockResolvedValue({ result: mcpFailure('the vendor said no') }),
+                log: mockLog,
+            })
+
+            await tools.run_my_flow.execute({}, { toolCallId: 'tc-flow-fail', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(taintState.tainted).toBe(true)
+        })
+
+        it('marks the turn after a knowledge base search fails, for the same reason', async () => {
+            const taintState = { tainted: false }
+            const tools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+                taintState,
+                tools: [{ type: AgentToolType.KNOWLEDGE_BASE, toolName: 'search_handbook', sourceType: KnowledgeBaseSourceType.FILE, sourceId: 'file_1', sourceName: 'Handbook' }] as never,
+                runKnowledgeBaseTool: vi.fn().mockRejectedValue(new Error('index is down')),
+                log: mockLog,
+            })
+
+            await tools.search_handbook.execute({ query: 'refunds' }, { toolCallId: 'tc-kb-fail', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(taintState.tainted).toBe(true)
+        })
+
         it('marks the turn after a flow tool returns', async () => {
             const taintState = { tainted: false }
             const tools = agentWorkerTools.createConfiguredFlowTools({

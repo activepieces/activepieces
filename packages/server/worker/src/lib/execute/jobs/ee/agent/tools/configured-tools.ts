@@ -184,11 +184,11 @@ export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool
                         return { content: [{ type: 'text', text: `This run has already searched knowledge bases ${MAX_CONFIGURED_TOOL_CALLS} times, which is the limit. Do not try again; say what is left undone.` }] }
                     }
                     const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
+                    taintState.tainted = true
                     if (error) {
                         log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
                         return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
                     }
-                    taintState.tainted = true
                     return truncateLargeResult(data.result)
                 },
             }),
@@ -216,6 +216,7 @@ export function createConfiguredFlowTools({ tools, runFlowTool, taintState, log 
                     return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
                 }
                 const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, ...spreadIfDefined('flowVersionId', configured.flowVersionId), returnsResponse: configured.returnsResponse, toolInput }))
+                taintState.tainted = true
                 if (error) {
                     const reachedTheServer = String(error).includes('handler threw')
                     log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')
@@ -227,7 +228,6 @@ export function createConfiguredFlowTools({ tools, runFlowTool, taintState, log 
                     log.warn({ tool: { name: configured.toolName }, flow: { id: configured.flowId } }, '[configuredFlowTool] Flow reported a failure')
                     return { content: [{ type: 'text', text: `That flow failed: ${extractUserFacingError({ result: data.result })}` }] }
                 }
-                taintState.tainted = true
                 return truncateLargeResult(data.result)
             },
         }),
