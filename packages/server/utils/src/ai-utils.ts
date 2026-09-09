@@ -1,11 +1,10 @@
 import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
-import { createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, BaseAIProviderAuthConfig, CloudflareGatewayProviderConfig, getEffectiveProviderAndModel, splitCloudflareGatewayModelId } from '@activepieces/shared';
+import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createLanguageModel } from '@activepieces/ai-providers';
+import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, BaseAIProviderAuthConfig, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, LanguageModel, ToolSet } from 'ai'
@@ -23,13 +22,6 @@ const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
     openai: { dimensions: EMBEDDING_DIMENSIONS },
 }
 
-// Which providers support web search (and how) is declared in AI_PROVIDER_CAPABILITIES; the native
-// tool builders stay here because they need the provider SDKs. AI_PROVIDER_CAPABILITIES lists no
-// web-search mode for OPENAI, so supportsWebSearch gates it off for callers that ask; a caller that
-// names OPENAI outright still gets the Responses-API tool below. Keyed on the provider that serves
-// the model, which is why buildWebSearchTools resolves through getEffectiveProviderAndModel first:
-// a Cloudflare Gateway model is served by whichever submodel its id names, and there is no
-// CLOUDFLARE_GATEWAY entry here to fall back to.
 const NATIVE_WEB_SEARCH_TOOLS: Record<string, (params: NativeWebSearchToolParams) => ToolSet> = {
     [AIProviderName.ANTHROPIC]: ({ auth: { apiKey }, options }) => ({
         web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({
@@ -125,26 +117,28 @@ function openRouterModelSettings({ provider, webSearchEnabled, options }: {
     return { plugins: [{ id: 'web', max_results: maxResults }] }
 }
 
-function createModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false, webSearchOptions, onOutcome }: {
+function createModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
     metadata?: ChatModelMetadata
+    flowStep?: FlowStepMetadata
+    openaiResponsesModel?: boolean
     webSearchEnabled?: boolean
     webSearchOptions?: WebSearchOptions
     onOutcome?: ProviderOutcomeReporter
 }): LanguageModel {
     if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
-        const { apiKey } = auth as BaseAIProviderAuthConfig
-        const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
-        const { model: actualModelId } = splitCloudflareGatewayModelId(modelId)
-        return createOpenAICompatible({
-            name: 'cloudflare',
-            baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
-            headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
-            ...spreadIfDefined('fetch', observedProviderFetch(onOutcome)),
-        }).chatModel(actualModelId)
+        return createCloudflareGatewayModel({
+            auth,
+            config,
+            modelId,
+            openaiResponsesModel,
+            routing: isNil(flowStep) ? 'compat' : 'submodel',
+            ...spreadIfDefined('metadata', cloudflareGatewayMetadata(flowStep)),
+            ...spreadIfDefined('onOutcome', onOutcome),
+        })
     }
     return createLanguageModel({
         provider,
@@ -153,11 +147,31 @@ function createModel({ provider, auth, config, modelId, metadata, webSearchEnabl
         modelId,
         options: {
             openRouterSettings: openRouterModelSettings({ provider, webSearchEnabled, options: webSearchOptions }),
-            mistralViaOpenRouter: true,
-            ...spreadIfDefined('extraHeaders', managedProviderMetadataHeaders({ provider, metadata })),
+            mistralViaOpenRouter: isNil(flowStep),
+            openaiResponsesModel,
+            ...spreadIfDefined('extraHeaders', flowStepMetadataHeaders(flowStep) ?? managedProviderMetadataHeaders({ provider, metadata })),
             ...spreadIfDefined('onOutcome', onOutcome),
         },
     })
+}
+
+function cloudflareGatewayMetadata(flowStep?: FlowStepMetadata): CloudflareGatewayMetadata | undefined {
+    if (isNil(flowStep)) {
+        return undefined
+    }
+    return { projectId: flowStep.projectId, flowId: flowStep.flowId, runId: flowStep.runId }
+}
+
+function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, string> | undefined {
+    if (isNil(flowStep)) {
+        return undefined
+    }
+    return {
+        'x-ap-project-id': flowStep.projectId,
+        'x-ap-platform-id': flowStep.platformId,
+        'x-ap-flow-id': flowStep.flowId,
+        'x-ap-run-id': flowStep.runId,
+    }
 }
 
 function readStringField(source: Record<string, unknown>, key: string): string {
@@ -256,10 +270,17 @@ type WebSearchOptions = {
     searchContextSize?: 'low' | 'medium' | 'high'
 }
 
+type FlowStepMetadata = {
+    projectId: string
+    platformId: string
+    flowId: string
+    runId: string
+}
+
 type ChatModelMetadata = {
     platformId: string
     conversationId: string
     runId?: string
 }
 
-export type { ChatModelMetadata, WebSearchOptions }
+export type { ChatModelMetadata, FlowStepMetadata, WebSearchOptions }
