@@ -64,7 +64,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -648,6 +647,10 @@ const AgentConfigurePanel = ({
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
   const [tab, setTab] = useState('behavior');
+  const [scrolled, setScrolled] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const checkScrolled = () =>
+    setScrolled((bodyRef.current?.scrollTop ?? 0) > 5);
 
   const values = form.watch();
   const formNeedsModel =
@@ -751,7 +754,39 @@ const AgentConfigurePanel = ({
         onSubmit={submitIfIdle}
         className="flex h-full min-h-0 w-full shrink-0 flex-col"
       >
-        <div className="flex h-[60px] shrink-0 items-center justify-between gap-2 border-b border-border px-[18px]">
+        <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-border px-[18px]">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+              {t('Configure')}
+            </span>
+            {unsavedTyping && (
+              <span className="flex shrink-0 items-center gap-1.5 text-xs leading-4 text-muted-foreground animate-in fade-in duration-200">
+                <span className="size-[6px] rounded-full bg-primary" />
+                {t('Unsaved')}
+              </span>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {hasChanges && (
+              <Button
+                type="submit"
+                loading={updateAgent.isPending}
+                className="h-[34px] shrink-0 rounded-lg px-4 animate-in fade-in duration-200"
+              >
+                {t('Publish')}
+              </Button>
+            )}
+            <button
+              type="button"
+              aria-label={t('Close')}
+              onClick={requestExit}
+              className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+        <div className="flex h-[44px] shrink-0 items-stretch border-b border-border px-[18px]">
           <Tabs
             value={tab}
             onValueChange={setTab}
@@ -770,58 +805,37 @@ const AgentConfigurePanel = ({
               ))}
             </TabsList>
           </Tabs>
-          <button
-            type="button"
-            aria-label={t('Close')}
-            onClick={requestExit}
-            className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <X size={16} />
-          </button>
         </div>
-        <ScrollArea className="min-h-0 grow">
-          <div className="flex flex-col gap-5 p-[18px]">
-            {tab === 'behavior' && (
-              <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
-            )}
-            {tab === 'settings' && (
-              <ConfigureSettingsTab
-                agent={agent}
-                form={form}
-                onDeleted={() => {
-                  deletedRef.current = true;
-                }}
-              />
-            )}
-            {form.formState.errors.root?.serverError && (
-              <p className="text-[13px] leading-4 text-destructive">
-                {form.formState.errors.root.serverError.message}
-              </p>
-            )}
+        <div className="relative min-h-0 grow">
+          {scrolled && (
+            <div className="pointer-events-none absolute left-0 right-0 top-0 z-[1] h-5 bg-gradient-to-b from-background to-transparent" />
+          )}
+          <div
+            ref={bodyRef}
+            onScroll={checkScrolled}
+            className="scrollbar-thin h-full overflow-y-auto"
+          >
+            <div className="flex flex-col gap-5 p-[18px]">
+              {tab === 'behavior' && (
+                <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
+              )}
+              {tab === 'settings' && (
+                <ConfigureSettingsTab
+                  agent={agent}
+                  form={form}
+                  onDeleted={() => {
+                    deletedRef.current = true;
+                  }}
+                />
+              )}
+              {form.formState.errors.root?.serverError && (
+                <p className="text-[13px] leading-4 text-destructive">
+                  {form.formState.errors.root.serverError.message}
+                </p>
+              )}
+            </div>
           </div>
-        </ScrollArea>
-        {(hasChanges || formNeedsModel) && (
-          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-muted/40 px-[18px] py-3 animate-in fade-in slide-in-from-bottom-2 duration-200 ease-out">
-            {formNeedsModel ? (
-              <span className="flex items-center gap-1.5 text-xs leading-4 text-destructive">
-                <span className="size-[6px] rounded-full bg-destructive" />
-                {t('Needs a model')}
-              </span>
-            ) : (
-              <span className="truncate text-xs leading-4 text-muted-foreground">
-                {t('Not live yet')}
-              </span>
-            )}
-            <Button
-              type="submit"
-              loading={updateAgent.isPending}
-              disabled={!hasChanges}
-              className="h-[34px] shrink-0 rounded-lg px-4"
-            >
-              {t('Publish')}
-            </Button>
-          </div>
-        )}
+        </div>
       </form>
     </Form>
   );
@@ -973,17 +987,19 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <div className="flex min-w-0 shrink items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
-              onClick={() => showConfigure(!configureOpen)}
-            >
-              <Settings2 size={15} />
-              {t('Configure')}
-            </Button>
-          </div>
+          {!configureOpen && (
+            <div className="flex min-w-0 shrink items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
+                onClick={() => showConfigure(true)}
+              >
+                <Settings2 size={15} />
+                {t('Configure')}
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex min-h-0 grow">
           <aside
