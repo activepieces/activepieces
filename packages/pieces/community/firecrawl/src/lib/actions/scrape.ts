@@ -301,7 +301,9 @@ export const scrape = createAction({
     });
 
     const result = response.body;
-    const savedScreenshot = await downloadAndSaveScreenshot(result.data, context);
+    const savedScreenshot = result.data.screenshot
+      ? await downloadAndSaveScreenshot(result.data, context)
+      : undefined;
     const savedPdfs = await downloadAndSavePdfs(result.data, context);
     const savedActionScreenshots = await Promise.all(
       (result.data.actions?.screenshots ?? []).map((url: string) =>
