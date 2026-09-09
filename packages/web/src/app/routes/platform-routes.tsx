@@ -32,7 +32,7 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
     return (
       <FeatureSample
         locked={page.sample === true && page.nav?.isLocked?.(context) === true}
-        label={page.nav?.label ?? page.title}
+        title={page.teaser?.title ?? page.nav?.label ?? page.title}
         description={page.teaser?.description}
         tier={page.teaser?.tier}
         documentationUrl={page.teaser?.documentationUrl}
@@ -66,7 +66,7 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
       locked={
         activeTab.sample === true && activeTab.isLocked?.(context) === true
       }
-      label={activeTab.label}
+      title={activeTab.teaser?.title ?? activeTab.label}
       description={activeTab.teaser?.description}
       tier={activeTab.teaser?.tier}
       documentationUrl={activeTab.teaser?.documentationUrl}
