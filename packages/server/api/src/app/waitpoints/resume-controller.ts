@@ -50,7 +50,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 
     app.all('/:id/signals/:signalId/confirm', ConfirmSignalRequest, async (req, reply) => {
         const queryParams = req.query as Record<string, string>
-        if (req.method === 'GET' || req.method === 'HEAD') {
+        if (req.method !== 'POST') {
             await serveSignalConfirmationPage({ flowRunId: req.params.id, signalId: req.params.signalId, url: req.url, queryParams, log: req.log, reply })
             return
         }
@@ -158,34 +158,38 @@ async function serveSignalConfirmationPage({ flowRunId, signalId, url, queryPara
 
 async function handleSignalDecision({ flowRunId, signalId, action, body, headers, log, reply }: SignalDecisionParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
-    const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
+    const projectId = flowRun.projectId
     if (action !== 'approve' && action !== 'disapprove') {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: UNKNOWN_ACTION_TITLE, message: UNKNOWN_ACTION_MESSAGE, success: false } })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.BAD_REQUEST, extra: { title: UNKNOWN_ACTION_TITLE, message: UNKNOWN_ACTION_MESSAGE, success: false } })
         return
     }
-    const open = await resolveOpenSignal({ flowRunId, signalId, projectId: flowRun.projectId, flowRunStatus: flowRun.status, log })
+    const open = await resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus: flowRun.status, log })
     if (isNil(open)) {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
         return
     }
     const approved = action === 'approve'
     const reason = readReason(body)
     if (!isNil(reason) && reason.length > MAX_SIGNAL_REASON_LENGTH) {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_TOO_LONG_TITLE, message: reasonTooLongMessage(), success: false } })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_TOO_LONG_TITLE, message: reasonTooLongMessage(), success: false } })
         return
     }
     if (isReasonMissing({ reasonRequiredOn: open.barrier.policy?.reasonRequiredOn, approved, reason })) {
-        await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_REQUIRED_TITLE, message: REASON_REQUIRED_MESSAGE, success: false } })
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.BAD_REQUEST, extra: { title: REASON_REQUIRED_TITLE, message: REASON_REQUIRED_MESSAGE, success: false } })
         return
     }
 
-    await barrierService(log).receiveSignal({
+    const recorded = await barrierService(log).receiveSignal({
         signalId,
-        projectId: flowRun.projectId,
+        projectId,
         status: approved ? BarrierSignalStatus.SUCCEEDED : BarrierSignalStatus.REJECTED,
         result: { outcome: approved ? 'approved' : 'rejected', reason: reason ?? null, decidedBy: open.signal.label },
     })
-    await respondToSignalDecision({ reply, headers, theme, status: StatusCodes.OK, extra: { title: RECORDED_TITLE, message: recordedMessageForAction(approved ? 'approve' : 'disapprove'), success: true } })
+    if (isNil(recorded)) {
+        await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
+        return
+    }
+    await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.OK, extra: { title: RECORDED_TITLE, message: recordedMessageForAction(approved ? 'approve' : 'disapprove'), success: true } })
 }
 
 async function resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus, log }: ResolveOpenSignalParams): Promise<OpenSignal | null> {
@@ -226,11 +230,12 @@ function reasonTooLongMessage(): string {
     return `Your reason is longer than the ${MAX_SIGNAL_REASON_LENGTH} characters this form accepts. Shorten it and submit again — nothing was recorded.`
 }
 
-async function respondToSignalDecision({ reply, headers, theme, status, extra }: RespondToSignalDecisionParams): Promise<void> {
+async function respondToSignalDecision({ reply, headers, projectId, log, status, extra }: RespondToSignalDecisionParams): Promise<void> {
     if (!acceptsHtml(headers)) {
         await reply.status(status).send({ message: extra.message })
         return
     }
+    const theme = await resolveResumePageTheme({ projectId, log })
     await replyWithHtml({ reply, status, html: renderPage({ theme, extra }) })
 }
 
@@ -508,7 +513,8 @@ type IsReasonMissingParams = {
 type RespondToSignalDecisionParams = {
     reply: FastifyReply
     headers: Record<string, string>
-    theme: ResumePageTheme
+    projectId: string
+    log: FastifyBaseLogger
     status: number
     extra: { title: string, message: string, success: boolean }
 }
