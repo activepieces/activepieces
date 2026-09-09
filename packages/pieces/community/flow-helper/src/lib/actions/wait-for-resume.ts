@@ -34,11 +34,22 @@ export const waitForResume = createAction({
   },
   async run(ctx) {
     if (ctx.executionType === ExecutionType.BEGIN) {
+      // Fail fast on a blank id rather than parking the run un-resumably. The engine's
+      // waitForWaitpoint just flags the run paused (it does not look the id up), so the
+      // run resumes only if a live waitpoint exists for it — which Create Waitpoint must
+      // have minted earlier in this same run. A missing/blank id is the realistic
+      // misconfiguration (Create Waitpoint not wired in) that would otherwise strand the
+      // run, so reject it before pausing.
+      const waitpointId = ctx.propsValue.waitpointId?.trim();
+      if (!waitpointId) {
+        throw new Error(
+          'Wait for Resume: waitpointId is empty. Wire in the "Waitpoint ID" output of a Create Waitpoint step that runs earlier in this same flow run.'
+        );
+      }
       // Park on the waitpoint that Create Waitpoint already minted — do NOT create a
-      // new one. The engine's waitForWaitpoint just flags the run paused; the pending
-      // waitpoint (whose id + resume URL came from Create Waitpoint) is what resumes it,
-      // and it is validated + consumed on resume (single-use).
-      ctx.run.waitForWaitpoint(ctx.propsValue.waitpointId);
+      // new one. The pending waitpoint (whose id + resume URL came from Create Waitpoint)
+      // is what resumes the run, and it is validated + consumed on resume (single-use).
+      ctx.run.waitForWaitpoint(waitpointId);
       return {
         payload: null,
         queryParams: {},
