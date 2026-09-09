@@ -431,8 +431,7 @@ export type SaveFlowStepFileRequest = {
     platformId: string
     flowRunId: string
     data: Buffer
-    mediaType: string
-    fileName?: string
+    fileName: string
 }
 
 export type SaveFlowStepFileResponse = {
