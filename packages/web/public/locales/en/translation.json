@@ -2986,5 +2986,6 @@
   "{provider} powers chat": "{provider} powers chat",
   "{used} of {total} credits used this period": "{used} of {total} credits used this period",
   "Sample data. {feature} requires a paid plan.": "Sample data. {feature} requires a paid plan.",
-  "Sample data. {feature} requires the {tier} plan.": "Sample data. {feature} requires the {tier} plan."
+  "Sample data. {feature} requires the {tier} plan.": "Sample data. {feature} requires the {tier} plan.",
+  "Everything below is sample data, shown so you can see how it works.": "Everything below is sample data, shown so you can see how it works."
 }
