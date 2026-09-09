@@ -324,4 +324,10 @@ describe('tryParseFriendlyPieceError', () => {
         expect(tryParseFriendlyPieceError(null)).toBeNull()
         expect(tryParseFriendlyPieceError(undefined)).toBeNull()
     })
+
+    it('returns null safely when JSON string is truncated or malformed without uncaught error', () => {
+        expect(tryParseFriendlyPieceError('{"status": 500, "message":')).toBeNull()
+        expect(tryParseFriendlyPieceError('{"status": 404,')).toBeNull()
+    })
 })
+
