@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, AgentActionOutcome, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
 import { embed } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -80,7 +80,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         const results = await knowledgeBaseService(log).search({
             projectId,
             knowledgeBaseFileIds: [input.knowledgeBaseFileId],
-            queryEmbedding: agentAiUtils.toStorageEmbedding(embedding),
+            queryEmbedding: aiUtils.toStorageEmbedding(embedding),
             limit: KNOWLEDGE_BASE_SEARCH_LIMIT,
             similarityThreshold: KNOWLEDGE_BASE_SIMILARITY_THRESHOLD,
         })
