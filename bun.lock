@@ -3114,6 +3114,19 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/feedjolt": {
+      "name": "@activepieces/piece-feedjolt",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/fellow": {
       "name": "@activepieces/piece-fellow",
       "version": "0.1.7",
@@ -11580,6 +11593,8 @@
     "@activepieces/piece-feathery": ["@activepieces/piece-feathery@workspace:packages/pieces/community/feathery"],
 
     "@activepieces/piece-feedhive": ["@activepieces/piece-feedhive@workspace:packages/pieces/community/feedhive"],
+
+    "@activepieces/piece-feedjolt": ["@activepieces/piece-feedjolt@workspace:packages/pieces/community/feedjolt"],
 
     "@activepieces/piece-fellow": ["@activepieces/piece-fellow@workspace:packages/pieces/community/fellow"],
 
