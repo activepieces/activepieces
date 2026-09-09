@@ -107,7 +107,7 @@
   "Only events that end after this time.": "Only events that end after this time.",
   "Only events starting before this. Requires Start Time.": "Only events starting before this. Requires Start Time.",
   "Returns each occurrence of a recurring event separately.": "Returns each occurrence of a recurring event separately.",
-  "Only the fields you fill in are changed.": "Only the fields you fill in are changed.",
+  "Empty fields keep their current value. The guest toggles below are always applied.": "Empty fields keep their current value. The guest toggles below are always applied.",
   "Calendars to check.": "Calendars to check.",
   "The start of the time range to check.": "The start of the time range to check.",
   "The end of the time range to check.": "The end of the time range to check.",

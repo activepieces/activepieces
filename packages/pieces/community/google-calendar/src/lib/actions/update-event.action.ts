@@ -12,7 +12,7 @@ export const updateEventProps = {
     required: true,
   }),
   hint: Property.MarkDown({
-    value: 'Only the fields you fill in are changed.',
+    value: 'Empty fields keep their current value. The guest toggles below are always applied.',
     variant: MarkdownVariant.INFO,
   }),
   title: Property.ShortText({
@@ -46,19 +46,16 @@ export const updateEventProps = {
     displayName: 'Guests Can Modify',
     defaultValue: false,
     required: false,
-    advanced: true,
   }),
   guests_can_invite_others: Property.Checkbox({
     displayName: 'Guests Can Invite Others',
     defaultValue: false,
     required: false,
-    advanced: true,
   }),
   guests_can_see_other_guests: Property.Checkbox({
     displayName: 'Guests Can See Other Guests',
     defaultValue: false,
     required: false,
-    advanced: true,
   }),
 };
 
