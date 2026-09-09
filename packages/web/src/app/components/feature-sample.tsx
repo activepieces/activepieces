@@ -27,7 +27,7 @@ export function FeatureSample({
 
   return (
     <div className="flex flex-1 min-h-0 min-w-0 flex-col">
-      <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 bg-primary px-6 py-4 text-primary-foreground">
+      <div className="relative z-10 flex shrink-0 flex-wrap items-center gap-x-5 gap-y-3 bg-primary px-6 py-4 text-primary-foreground shadow-[0_12px_28px_-6px] shadow-primary/45">
         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-primary-foreground/15 px-2.5 py-1 text-xs font-medium">
           <Crown className="size-3.5" />
           {t(label)}
@@ -64,6 +64,10 @@ export function FeatureSample({
           </Button>
         )}
       </div>
+      <div
+        aria-hidden
+        className="h-4 shrink-0 bg-gradient-to-b from-primary/15 to-transparent"
+      />
       <div
         aria-hidden
         className="flex flex-1 min-h-0 min-w-0 flex-col pointer-events-none select-none"
