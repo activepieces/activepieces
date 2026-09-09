@@ -38,7 +38,6 @@ import {
 import { cn } from '@/lib/utils';
 
 import { DataFetchErrorState } from '../data-fetch-error-state';
-import { SampleDataNotice } from '../feature-sample';
 
 import { DataTableBulkActions } from './data-table-bulk-actions';
 import { DataTableColumnHeader } from './data-table-column-header';
@@ -378,8 +377,6 @@ export function DataTable<
           </div>
         </DataTableToolbar>
       )}
-
-      <SampleDataNotice />
 
       <div
         ref={scrollContainerRef}

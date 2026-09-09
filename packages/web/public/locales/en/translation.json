@@ -2989,5 +2989,7 @@
   "Sample data. {feature} requires the {tier} plan.": "Sample data. {feature} requires the {tier} plan.",
   "Everything below is sample data, shown so you can see how it works.": "Everything below is sample data, shown so you can see how it works.",
   "Sample data · shows what you'll see once enabled": "Sample data · shows what you'll see once enabled",
-  "Upgrade to {tier}": "Upgrade to {tier}"
+  "Upgrade to {tier}": "Upgrade to {tier}",
+  "What you're seeing is sample data": "What you're seeing is sample data",
+  "Upgrade to unlock": "Upgrade to unlock"
 }

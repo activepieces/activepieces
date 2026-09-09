@@ -274,7 +274,11 @@ export const ADMIN_PAGES: AdminPage[] = [
   {
     id: 'branding',
     sample: true,
-    teaser: { title: 'Unlock Branding', description: '', tier: 'ultimate' },
+    teaser: {
+      title: 'Unlock Branding',
+      description: 'Your name, logo and colors across the entire experience.',
+      tier: 'ultimate',
+    },
     path: '/platform/setup/branding',
     title: 'Branding',
     description: 'Your name, logo and colors across the product.',
@@ -323,7 +327,12 @@ export const ADMIN_PAGES: AdminPage[] = [
   {
     id: 'templates',
     sample: true,
-    teaser: { title: 'Unlock Templates', description: '', tier: 'ultimate' },
+    teaser: {
+      title: 'Unlock Templates',
+      description:
+        'Convert the most common automations into reusable templates 1 click away from your users',
+      tier: 'ultimate',
+    },
     path: '/platform/setup/templates',
     title: 'Templates',
     component: PlatformTemplatesPage,
@@ -339,7 +348,7 @@ export const ADMIN_PAGES: AdminPage[] = [
     sample: true,
     teaser: {
       title: 'Unlock Embedding Through JS SDK',
-      description: '',
+      description: 'Enable signing keys to access embedding functionalities.',
       tier: 'ultimate',
     },
     path: '/platform/security/embed',

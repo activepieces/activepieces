@@ -14,12 +14,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { SampleUpgradeButton } from '@/app/components/feature-sample';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
-import {
-  SampleDataNotice,
-  SampleTierPill,
-} from '@/components/custom/feature-sample';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SkeletonList } from '@/components/ui/skeleton';
@@ -137,13 +132,7 @@ const EmbedPage = () => {
   return (
     <div className="w-full max-w-4/5 2xl:max-w-6xl mx-auto py-6">
       <div className="flex flex-col gap-1">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
-            <SampleTierPill />
-          </div>
-          <SampleUpgradeButton />
-        </div>
+        <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
         <div className="text-sm text-muted-foreground">
           {description}
           <Button
@@ -163,7 +152,6 @@ const EmbedPage = () => {
           </Button>
         </div>
       </div>
-      <SampleDataNotice className="mt-4 rounded-md border" />
       <Separator className="mt-4 mb-12" />
 
       <div className="grid grid-cols-[16rem_1fr] gap-16">
