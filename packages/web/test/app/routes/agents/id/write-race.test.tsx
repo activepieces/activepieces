@@ -14,9 +14,16 @@ vi.mock('@/app/routes/chat-with-ai/ai-chat-box', () => ({
 vi.mock('@/app/builder/step-settings/agent-settings/agent-tools', () => ({
   AgentTools: () => <div data-testid="tools" />,
 }));
+vi.mock('@/hooks/flags-hooks', () => ({
+  flagsHooks: { useFlag: () => ({ data: true }) },
+}));
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useAuthorization: () => ({ checkAccess: () => true }),
+}));
 vi.mock('@/features/agents', () => ({
   AIModelSelector: () => <div data-testid="model" />,
   AgentStructuredOutput: () => <div data-testid="structured" />,
+  KnowledgeBaseSection: () => <div data-testid="knowledge" />,
   useAgentsAvailable: () => true,
 }));
 vi.mock('@/features/agents/hooks/agents-hooks', () => ({

@@ -11,7 +11,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 export const amazonSecretsManager = createPiece({
   displayName: 'AWS Secrets Manager',
   auth: awsSecretsManagerCombinedAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.90.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/amazon-secrets-manager.png',
   authors: ['sanket-a11y'],
   categories: [PieceCategory.DEVELOPER_TOOLS],

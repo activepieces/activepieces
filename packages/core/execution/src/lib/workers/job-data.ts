@@ -25,7 +25,6 @@ export const RefJobPayload = z.object({
 
 export const JobPayload = z.discriminatedUnion('type', [InlineJobPayload, RefJobPayload])
 
-
 export const JOB_PRIORITY = {
     critical: 1,
     high: 2,
@@ -77,7 +76,6 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
     }
 }
 
-
 export enum WorkerJobType {
     RENEW_WEBHOOK = 'RENEW_WEBHOOK',
     EXECUTE_POLLING = 'EXECUTE_POLLING',
@@ -95,21 +93,6 @@ export enum WorkerJobType {
     EXECUTE_PERSONALIZATION_RESEARCH = 'EXECUTE_PERSONALIZATION_RESEARCH',
 }
 
-export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
-    WorkerJobType.EXECUTE_WEBHOOK,
-    WorkerJobType.EXECUTE_FLOW,
-    WorkerJobType.EXECUTE_VALIDATION,
-    WorkerJobType.EXECUTE_TRIGGER_HOOK,
-    WorkerJobType.EXECUTE_PROPERTY,
-    WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
-    WorkerJobType.EXECUTE_AGENT_RUN,
-    WorkerJobType.EXECUTE_TOKEN_REFRESH,
-    WorkerJobType.EXECUTE_RESOLVE_CONNECTION_IDENTIFIER,
-    WorkerJobType.EXECUTE_PERSONALIZATION_RESEARCH,
-    WorkerJobType.EXECUTE_ACTION,
-] as const
-
-// Never change without increasing LATEST_JOB_DATA_SCHEMA_VERSION, and adding a migration
 export const RenewWebhookJobData = z.object({
     schemaVersion: z.number(),
     projectId: z.string(),
@@ -320,6 +303,7 @@ export type AgentPromptOverride = z.infer<typeof AgentPromptOverride>
 export const ResolvedAgentFlowTool = z.object({
     toolName: z.string(),
     flowId: z.string(),
+    flowVersionId: z.string().optional(),
     description: z.string(),
     inputSchema: z.record(z.string(), z.unknown()),
     returnsResponse: z.boolean(),

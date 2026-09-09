@@ -818,9 +818,7 @@ function CodeStep({
     authMutations.useVerifyEmailCode({
       onSuccess: (data) => {
         authenticationSession.saveResponse(data, false);
-        // A brand-new member arrives on the pre-platform onboarding token, so
-        // there is no project yet: ask their name before building the platform.
-        if (isNil(data.projectId)) {
+        if (isNil(data.platformId)) {
           onNeedsName();
           return;
         }
@@ -966,13 +964,16 @@ function ModeSwitch({
 }
 
 function usePasswordlessAvailable(): boolean {
+  const { data: codeAuthEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+  );
   const { data: emailAuthEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.EMAIL_AUTH_ENABLED,
   );
   const { data: smtpConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.SMTP_CONFIGURED,
   );
-  return (emailAuthEnabled ?? true) && !!smtpConfigured;
+  return !!codeAuthEnabled && (emailAuthEnabled ?? true) && !!smtpConfigured;
 }
 
 // Country variants are endless (yahoo.co.uk, hotmail.fr, …), so match the

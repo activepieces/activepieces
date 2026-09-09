@@ -2,6 +2,7 @@ import { codaAuth } from '../auth';
 import { createAction } from '@activepieces/pieces-framework';
 import { docIdDropdown, tableIdDropdown } from '../common/props';
 import { codaClient } from '../common/types';
+import { getTableActionOutputSchema } from '../output-schemas';
 
 export const getTableAction = createAction({
 	auth: codaAuth,
@@ -15,6 +16,7 @@ export const getTableAction = createAction({
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,
 	},
+	outputSchema: getTableActionOutputSchema,
 	async run(context) {
 		const { docId, tableId } = context.propsValue;
 		const client = codaClient(context.auth);

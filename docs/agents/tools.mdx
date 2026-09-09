@@ -57,6 +57,23 @@ Paste the URL and pick how it authenticates: none, an access token, an API key, 
 
 Activepieces lists the server's tools as soon as you add it, so you know it works before an agent depends on it.
 
+## Seeing what an agent did
+
+**Piece actions** leave a record. On plans with audit logs, open **Platform Admin → Security → Audit Logs** and you get the agent, the app, the action, the account it used and whether the run came from chat, the agent page or a flow step. Reads are left out, so the log stays about what changed rather than what was looked at, and the values the agent passed to the action are never stored.
+
+The other tool types do not write this event, and one of them can still change things outside Activepieces:
+
+| Tool | Audit event |
+| --- | --- |
+| Piece action | Yes, when it is not a read |
+| Flow tool | No. The flow run is recorded as a flow run, not as an agent action |
+| MCP server tool | No |
+| Knowledge base search | No, it is a read |
+
+So a flow tool or an MCP tool is a gap if you are relying on this log to see everything an agent changed. Pick piece actions for the steps you need a trail for.
+
+See [Agent action executed](/admin-guide/security/audit-logs/agent-action-executed) for the event itself, and [Event Streaming](/admin-guide/guides/event-streaming) to send it somewhere in real time.
+
 <Tip>
 When an agent keeps getting something wrong, ask what it was missing. Usually it needed somewhere to look something up, not a longer prompt.
 </Tip>

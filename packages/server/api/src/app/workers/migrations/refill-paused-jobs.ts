@@ -8,7 +8,7 @@ import { redisConnections } from '../../database/redis-connections'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { SystemJobName } from '../../helper/system-jobs/common'
+import { systemJobIds, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { WaitpointEntity } from '../../waitpoints/waitpoint-entity'
 import { jobQueue } from '../job-queue/job-queue'
@@ -68,7 +68,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 job: {
                     name: SystemJobName.RESUME_DELAY_WAITPOINT,
                     data: { flowRunId: pausedRun.id, projectId: pausedRun.projectId, waitpointId: waitpoint.id },
-                    jobId: `resume-delay-${pausedRun.id}`,
+                    jobId: systemJobIds.resumeDelay({ waitpointId: waitpoint.id }),
                 },
                 schedule: {
                     type: 'one-time',

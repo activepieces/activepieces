@@ -30,7 +30,10 @@ import { DynamicProperties } from './dynamic-piece-property';
 import { NumberStepper } from './number-stepper';
 import { RichTextProperty } from './rich-text-property';
 import { StaticDropdownCards } from './static-dropdown-cards';
-import { TextInputWithMentions } from './text-input-with-mentions';
+import {
+  FormFieldMentionInput,
+  TextInputWithMentions,
+} from './text-input-with-mentions';
 
 export const selectGenericFormComponentForProperty = ({
   field,
@@ -292,12 +295,13 @@ export const selectGenericFormComponentForProperty = ({
           dynamicInputModeToggled={dynamicInputModeToggled}
         >
           {useMentionTextInput ? (
-            <TextInputWithMentions
+            <FormFieldMentionInput
               disabled={disabled}
               initialValue={field.value}
               onChange={field.onChange}
               enableMarkdown={enableMarkdownForInputWithMention}
-            ></TextInputWithMentions>
+              ariaLabel={property.displayName}
+            ></FormFieldMentionInput>
           ) : (
             <SecretInput
               ref={field.ref}
@@ -348,7 +352,7 @@ export const selectGenericFormComponentForProperty = ({
           dynamicInputModeToggled={dynamicInputModeToggled}
         >
           {useMentionTextInput ? (
-            <TextInputWithMentions
+            <FormFieldMentionInput
               disabled={disabled}
               initialValue={field.value}
               onChange={field.onChange}
@@ -356,7 +360,8 @@ export const selectGenericFormComponentForProperty = ({
                 'placeholder' in property ? property.placeholder : undefined
               }
               enableMarkdown={enableMarkdownForInputWithMention}
-            ></TextInputWithMentions>
+              ariaLabel={property.displayName}
+            ></FormFieldMentionInput>
           ) : (
             <SecretInput
               ref={field.ref}

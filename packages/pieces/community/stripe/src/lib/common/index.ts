@@ -40,7 +40,7 @@ export const stripeCommon = {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {
-        enabled_events: [eventName],
+        'enabled_events[]': eventName,
         url: webhookUrl,
       },
       authentication: {

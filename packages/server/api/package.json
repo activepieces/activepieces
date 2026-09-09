@@ -19,6 +19,7 @@
     "@ai-sdk/azure": "4.0.26",
     "@ai-sdk/google": "4.0.29",
     "@ai-sdk/google-vertex": "5.0.36",
+    "google-auth-library": "10.6.1",
     "@ai-sdk/mcp": "2.0.20",
     "@ai-sdk/openai": "4.0.25",
     "@ai-sdk/openai-compatible": "3.0.18",
