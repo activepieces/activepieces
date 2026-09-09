@@ -736,7 +736,7 @@ describe('fan-out dispatch', () => {
         const { flowRun } = await createParentRun()
         const { barrier } = await createFanOutBarrier({ flowRunId: flowRun.id, items: [1, 2, 3, 4], batchSize: 1 })
 
-        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+        await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
         expect(await listSignals(barrier.id)).toHaveLength(0)
         const beforeCancel = (await listChildren(barrier.id)).length
 
