@@ -17,6 +17,7 @@ import {
   HttpMethod,
   HttpRequest,
   QueryParams,
+  acceptsRequestBody,
   httpClient,
   toFailsafeOutput,
 } from '../http';
@@ -235,39 +236,38 @@ export function createCustomApiCallAction<
         required: false,
         ...(props?.queryParams ?? {}),
       }),
-      body_type: Property.StaticDropdown({
+      body_type: Property.Dropdown({
+        auth,
         displayName: 'Body Type',
         required: false,
         defaultValue: 'none',
-        options: {
-          disabled: false,
-          options: [
-            {
-              label: 'None',
-              value: 'none',
-            },
-            {
-              label: 'JSON',
-              value: 'json',
-            },
-            {
-              label: 'Form Data',
-              value: 'form_data',
-            },
-            {
-              label: 'Raw',
-              value: 'raw',
-            },
-          ],
+        refreshers: ['method'],
+        options: async ({ method }) => {
+          if (!acceptsRequestBody(method as HttpMethod)) {
+            return {
+              disabled: true,
+              placeholder: 'Not available for GET or HEAD requests',
+              options: [],
+            };
+          }
+          return {
+            disabled: false,
+            options: [
+              { label: 'None', value: 'none' },
+              { label: 'JSON', value: 'json' },
+              { label: 'Form Data', value: 'form_data' },
+              { label: 'Raw', value: 'raw' },
+            ],
+          };
         },
       }),
       body: Property.DynamicProperties({
         auth,
         displayName: 'Body',
-        refreshers: ['body_type'],
+        refreshers: ['body_type', 'method'],
         required: false,
-        props: async ({ body_type }) => {
-          if (!body_type) return {};
+        props: async ({ body_type, method }) => {
+          if (!body_type || !acceptsRequestBody(method as HttpMethod)) return {};
 
           const bodyTypeInput = body_type as unknown as string;
 
