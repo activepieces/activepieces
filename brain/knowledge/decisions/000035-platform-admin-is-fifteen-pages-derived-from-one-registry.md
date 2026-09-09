@@ -61,21 +61,22 @@ since a footer button calling `setOpen(false)` skips `onOpenChange` and the next
 instead of the form; and check any two-dialog interaction in the browser, because that is where Radix
 orphans `pointer-events: none` on `<body>` and the page behind stops taking clicks.
 
-**A feature you cannot act on shows itself filled with sample data, fading into the upgrade prompt.**
+**A feature you cannot act on shows itself filled with sample data, behind a floating upgrade card.**
 `Audit logs` is a table, so there is no action to crown, and opening it freely would show an empty table
-with nothing to explain why. It renders its real header, filters and rows populated with believable sample
-data, then dissolves down the page through a `linear-gradient` mask, and a lock medallion, the feature's
-name, its description and the CTA sit in the space the fade opens. It reads as one surface rather than a
-page wearing a notice, and it suits a form as well as a table: `Branding` shows three fields before
-dissolving mid-field.
+with nothing to explain why. The page renders its real header, filters and rows populated with believable
+sample data, drops to a quarter opacity, and an elevated card sits centred over it carrying the lock, the
+feature's name, its description, a full-width CTA and the plan line. It borrows the shape of the sign-in
+screen, and unlike a fade it keeps the whole page visible rather than only its top third.
 
-Five treatments were tried, in this order, and the first four dropped: **blur** hides the very rows the
-treatment exists to show; a **strip** above the content said the right words but left the page reading as
-ordinary; a **framed container** read as locked but dominated the page it was previewing; **chrome merged
-into the page's own header** was too quiet and needed a React context plus edits to both shared headers and
-`DataTable`; a **full-bleed banner** announced the paywall before the page had shown anything. A Mobbin
-survey found products split between crisp-and-labelled and fade-an-empty-shell, and nothing sampling a
-form, so the fade over real sample content has no direct precedent.
+**The presentation was iterated six times, and the rejected five are the useful record**, because each
+failed for a reason worth not rediscovering. **Blur** hides the very rows the treatment exists to show. A
+**strip** above the content said the right words but left the page reading as ordinary. A **framed
+container** read as locked but dominated the page it was previewing. **Chrome merged into the page's own
+header** was too quiet, and needed a React context plus edits to both shared headers and `DataTable` to
+deliver. A **full-bleed banner** announced the paywall before the page had shown anything. A **gradient
+fade** read as one surface but revealed only the top of a page and cut a form mid-field. A Mobbin survey
+found products split between crisp-and-labelled and fade-an-empty-shell, and none sampling a form, so
+there is no direct precedent to defer to here.
 
 The sample content is **inert and visibly so**: the region takes `pointer-events: none`, filters and
 pagination render disabled, and the only live control is the banner's CTA. The alternative, making the
