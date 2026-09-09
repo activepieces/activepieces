@@ -3236,6 +3236,18 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/floqer": {
+      "name": "@activepieces/piece-floqer",
+      "version": "0.1.0",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/flow-helper": {
       "name": "@activepieces/piece-flow-helper",
       "version": "0.1.8",
@@ -11600,6 +11612,8 @@
     "@activepieces/piece-flipando": ["@activepieces/piece-flipando@workspace:packages/pieces/community/flipando"],
 
     "@activepieces/piece-fliqr-ai": ["@activepieces/piece-fliqr-ai@workspace:packages/pieces/community/fliqr-ai"],
+
+    "@activepieces/piece-floqer": ["@activepieces/piece-floqer@workspace:packages/pieces/community/floqer"],
 
     "@activepieces/piece-flow-helper": ["@activepieces/piece-flow-helper@workspace:packages/pieces/community/flow-helper"],
 
