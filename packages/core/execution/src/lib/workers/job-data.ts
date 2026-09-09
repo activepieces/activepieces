@@ -369,7 +369,7 @@ export const EventDestinationJobData = z.object({
 
 export type EventDestinationJobData = z.infer<typeof EventDestinationJobData>
 
-export const AiStepAction = z.enum(['ASK_AI', 'SUMMARIZE_TEXT', 'CLASSIFY_TEXT'])
+export const AiStepAction = z.enum(['ASK_AI', 'SUMMARIZE_TEXT', 'CLASSIFY_TEXT', 'EXTRACT_STRUCTURED_DATA', 'GENERATE_IMAGE'])
 export type AiStepAction = z.infer<typeof AiStepAction>
 
 export const AiStepWebSearchOptions = z.object({
@@ -391,6 +391,19 @@ export const AiStepWebSearch = z.object({
 })
 export type AiStepWebSearch = z.infer<typeof AiStepWebSearch>
 
+export const AiStepFile = z.object({
+    mimeType: z.string(),
+    base64: z.string(),
+    filename: z.string().optional(),
+})
+export type AiStepFile = z.infer<typeof AiStepFile>
+
+export const AiStepSchema = z.object({
+    mode: z.enum(['simple', 'advanced']),
+    fields: z.unknown(),
+})
+export type AiStepSchema = z.infer<typeof AiStepSchema>
+
 export const ExecuteAiJobData = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_AI),
@@ -404,9 +417,12 @@ export const ExecuteAiJobData = z.object({
     provider: z.enum(AIProviderName),
     providerConfigId: z.string().optional(),
     modelId: z.string(),
-    prompt: z.string(),
+    prompt: z.string().optional(),
     text: z.string().optional(),
     categories: z.array(z.string()).optional(),
+    files: z.array(AiStepFile).optional(),
+    schema: AiStepSchema.optional(),
+    advancedOptions: z.record(z.string(), z.unknown()).optional(),
     conversation: z.array(z.record(z.string(), z.unknown())).optional(),
     maxOutputTokens: z.number().optional(),
     temperature: z.number().optional(),

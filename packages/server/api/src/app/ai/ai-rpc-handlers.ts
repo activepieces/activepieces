@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
-import { FileCompression, FileType, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
+import { FileCompression, FileSizeError, FileType, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
@@ -29,12 +29,10 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
 
     async saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse> {
         await assertProjectBelongsToPlatform({ ...input, log })
-        const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
+        const maxFileSizeMb = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
+        const maxFileSizeInBytes = maxFileSizeMb * BYTES_PER_MB
         if (input.data.length > maxFileSizeInBytes) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: `This AI step produced a ${Math.ceil(input.data.length / 1024 / 1024)}MB file, over the ${maxFileSizeInBytes / 1024 / 1024}MB limit` },
-            })
+            throw new FileSizeError(Math.ceil(input.data.length / BYTES_PER_MB * 100) / 100, maxFileSizeMb)
         }
         const file = await fileService(log).save({
             projectId: input.projectId,
@@ -44,7 +42,6 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
             type: FileType.FLOW_STEP_FILE,
             fileName: input.fileName,
             compression: FileCompression.NONE,
-            metadata: { mimetype: input.mediaType },
         })
         const url = await filesService.constructReadUrl({
             fileId: file.id,
@@ -98,3 +95,4 @@ function isFlowRunGone(error: unknown): boolean {
 }
 
 const FLOW_RUN_ENTITY_TYPE = 'flow_run'
+const BYTES_PER_MB = 1024 * 1024

@@ -3,6 +3,8 @@ import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
+import { extractStructuredData } from './extract-structured-data'
+import { generateImageStep } from './generate-image'
 
 export const executeAiJob: JobHandler<ExecuteAiJobData, FireAndForgetJobResult> = {
     jobType: WorkerJobType.EXECUTE_AI,
@@ -22,12 +24,19 @@ export const executeAiJob: JobHandler<ExecuteAiJobData, FireAndForgetJobResult> 
 }
 
 async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unknown> {
-    const { provider, auth, config } = await ctx.apiClient.resolveAiProvider({
+    const resolved = await ctx.apiClient.resolveAiProvider({
         projectId: data.projectId,
         platformId: data.platformId,
         provider: data.provider,
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
+    const { provider, auth, config } = resolved
+    if (data.action === AiStepAction.enum.EXTRACT_STRUCTURED_DATA) {
+        return { answer: await extractStructuredData({ data, resolved }) }
+    }
+    if (data.action === AiStepAction.enum.GENERATE_IMAGE) {
+        return { answer: await generateImageStep({ ctx, data, resolved }) }
+    }
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: data.modelId })
@@ -68,11 +77,14 @@ function buildMessages(data: ExecuteAiJobData): ModelMessage[] {
     const history = (data.conversation ?? []) as ModelMessage[]
     switch (data.action) {
         case AiStepAction.enum.ASK_AI:
-            return [...history, { role: 'user', content: data.prompt }]
+            return [...history, { role: 'user', content: data.prompt ?? '' }]
         case AiStepAction.enum.SUMMARIZE_TEXT:
             return [{ role: 'user', content: `${data.prompt} Summarize the following text : ${data.text ?? ''}` }]
         case AiStepAction.enum.CLASSIFY_TEXT:
-            return [{ role: 'user', content: data.prompt }]
+            return [{ role: 'user', content: data.prompt ?? '' }]
+        case AiStepAction.enum.EXTRACT_STRUCTURED_DATA:
+        case AiStepAction.enum.GENERATE_IMAGE:
+            throw new Error(`${data.action} does not build plain messages`)
     }
 }
 
@@ -81,7 +93,7 @@ function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: s
         case AiStepAction.enum.ASK_AI: {
             const conversation = isNil(data.conversation) ? undefined : [
                 ...(data.conversation as ModelMessage[]),
-                { role: 'user' as const, content: data.prompt },
+                { role: 'user' as const, content: data.prompt ?? '' },
                 { role: 'assistant' as const, content: text },
             ]
             const answer = data.webSearch?.enabled === true && data.webSearch.options?.includeSources === true
@@ -98,6 +110,9 @@ function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: s
             }
             return { answer: label }
         }
+        case AiStepAction.enum.EXTRACT_STRUCTURED_DATA:
+        case AiStepAction.enum.GENERATE_IMAGE:
+            throw new Error(`${data.action} returns its own output shape`)
     }
 }
 
