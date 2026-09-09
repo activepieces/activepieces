@@ -47,6 +47,14 @@ function messageOf(error: unknown): string | undefined {
     return readErrorField(error, 'message');
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function asString(value: unknown): string | undefined {
+    return typeof value === 'string' ? value : undefined;
+}
+
 function describe(error: unknown, fallback: string): string {
     const message = messageOf(error);
     const code = codeOf(error);
@@ -61,15 +69,11 @@ function readErrorField(error: unknown, field: 'code' | 'message'): string | und
         return undefined;
     }
     const body = error.response.body;
-    if (body === null || typeof body !== 'object' || !('error' in body)) {
+    if (!isRecord(body)) {
         return undefined;
     }
-    const inner = (body as { error: unknown }).error;
-    if (inner === null || typeof inner !== 'object' || !(field in inner)) {
-        return undefined;
-    }
-    const value = (inner as Record<string, unknown>)[field];
-    return typeof value === 'string' ? value : undefined;
+    const nested = isRecord(body['error']) ? body['error'] : undefined;
+    return asString(nested?.[field]) ?? asString(body[field]);
 }
 
 export const floqerApi = {

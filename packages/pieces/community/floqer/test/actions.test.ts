@@ -1,4 +1,6 @@
+import { HttpError } from '@activepieces/pieces-common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { floqerApi } from '../src/lib/common/client';
 import { addRowsAction } from '../src/lib/actions/add-rows';
 import { runRowsAction } from '../src/lib/actions/run-rows';
 import { runShortcutAction } from '../src/lib/actions/run-shortcut';
@@ -167,5 +169,39 @@ describe('Run Shortcut', () => {
         expect(sendRequest.mock.calls[0][0].body).toEqual({
             input_data: { linkedin_url: 'https://x' },
         });
+    });
+});
+
+describe('error extraction', () => {
+    it('reads Floqer\'s documented {error:{code,message}} shape', () => {
+        const e = new HttpError({}, {
+            status: 400,
+            responseBody: { error: { code: 'UNKNOWN_QUERY_PARAM', message: 'bad param' } },
+        });
+
+        expect(floqerApi.codeOf(e)).toBe('UNKNOWN_QUERY_PARAM');
+        expect(floqerApi.messageOf(e)).toBe('bad param');
+        expect(floqerApi.describe(e, 'fallback')).toBe('bad param (UNKNOWN_QUERY_PARAM)');
+    });
+
+    it('reads the shape Floqer actually returns for 403, where error is a string', () => {
+        const e = new HttpError({}, {
+            status: 403,
+            responseBody: { status: 403, error: 'Forbidden', message: 'No ackDB connection found for the user' },
+        });
+
+        expect(floqerApi.messageOf(e)).toBe('No ackDB connection found for the user');
+        expect(floqerApi.describe(e, 'fallback')).toBe('No ackDB connection found for the user');
+    });
+
+    it('falls back only when the body carries no message at all', () => {
+        const e = new HttpError({}, { status: 500, responseBody: '' });
+
+        expect(floqerApi.describe(e, 'fallback')).toBe('fallback');
+    });
+
+    it('reports the status for branching', () => {
+        expect(floqerApi.statusOf(new HttpError({}, { status: 409, responseBody: {} }))).toBe(409);
+        expect(floqerApi.statusOf(new Error('network'))).toBeUndefined();
     });
 });

@@ -98,19 +98,15 @@ async function pollChanges({
         try {
             response = await fetchChanges({ apiKey, segmentId, since });
         } catch (error) {
-            if (floqerApi.statusOf(error) === 409) {
+            const status = floqerApi.statusOf(error);
+            if (status === 409) {
                 return collected;
             }
-            if (floqerApi.statusOf(error) === 410) {
+            if (status === 410) {
                 throw reconcileError({ segmentId, reason: 'cursor_expired' });
             }
-            if (floqerApi.statusOf(error) === 503) {
-                throw new Error(
-                    `Floqer has not enabled segment sync for this workspace yet, so "Segment Membership Changed" cannot run. Ask Floqer to provision segment sync for your tenant. (${floqerApi.describe(
-                        error,
-                        'SYNC_TABLES_UNAVAILABLE',
-                    )})`,
-                );
+            if (status === 403 || status === 503) {
+                throw segmentSyncUnavailableError(error);
             }
             throw error;
         }
@@ -172,6 +168,15 @@ function hasFilterChanged({
         return false;
     }
     return known !== current;
+}
+
+function segmentSyncUnavailableError(error: unknown): Error {
+    return new Error(
+        `Segments are not available on this Floqer workspace, so "Segment Membership Changed" cannot run. Ask Floqer to enable ackDB segment sync for your account. Floqer said: ${floqerApi.describe(
+            error,
+            'no detail returned',
+        )}`,
+    );
 }
 
 function reconcileError({ segmentId, reason }: { segmentId: string; reason: string }): Error {

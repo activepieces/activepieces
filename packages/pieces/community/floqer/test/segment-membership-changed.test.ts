@@ -234,12 +234,26 @@ describe('run', () => {
         expect(await store.get(SINCE_KEY)).toBe(10);
     });
 
-    it('throws an actionable error when segment sync is not provisioned', async () => {
+    it('throws an actionable error when segment sync is not provisioned (503)', async () => {
         sendRequest.mockRejectedValueOnce(httpError(503, 'SYNC_TABLES_UNAVAILABLE'));
         const store = createStore({ [SINCE_KEY]: 10, [FILTER_HASH_KEY]: 'hash-a' });
 
         await expect(runTrigger(context({ store }))).rejects.toThrow(
-            /has not enabled segment sync/,
+            /Segments are not available on this Floqer workspace/,
+        );
+    });
+
+    it('treats a 403 as segments-unavailable and relays what Floqer said', async () => {
+        sendRequest.mockRejectedValueOnce(
+            new HttpError({}, {
+                status: 403,
+                responseBody: { status: 403, error: 'Forbidden', message: 'No ackDB connection found for the user' },
+            }),
+        );
+        const store = createStore({ [SINCE_KEY]: 10, [FILTER_HASH_KEY]: 'hash-a' });
+
+        await expect(runTrigger(context({ store }))).rejects.toThrow(
+            /Segments are not available.*No ackDB connection found for the user/s,
         );
     });
 
