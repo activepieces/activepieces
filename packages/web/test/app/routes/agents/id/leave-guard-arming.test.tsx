@@ -81,7 +81,7 @@ vi.mock('@/features/agents/hooks/agents-hooks', () => ({
   agentsQueries: { useAgent: () => ({ data: undefined, isLoading: false }) },
 }));
 
-import { AgentEditScreen } from '@/app/routes/agents/id';
+import { AgentConfigurePanel } from '@/app/routes/agents/id';
 
 const agentWithoutModel = {
   id: 'agent_1',
@@ -110,10 +110,9 @@ const renderScreen = ({ onExit }: { onExit: () => void }) => {
       {
         path: '/',
         element: (
-          <AgentEditScreen
+          <AgentConfigurePanel
             agent={agentWithoutModel}
             onExit={onExit}
-            onEdited={vi.fn()}
           />
         ),
       },
@@ -128,7 +127,7 @@ const renderScreen = ({ onExit }: { onExit: () => void }) => {
 };
 
 const clickBack = () => {
-  const back = screen.getByLabelText('Back to the agent');
+  const back = screen.getByLabelText('Close');
   back.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 };
 

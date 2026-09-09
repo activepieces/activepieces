@@ -38,7 +38,7 @@ vi.mock('@/features/agents/hooks/agents-hooks', () => ({
   agentsQueries: { useAgent: () => ({ data: undefined, isLoading: false }) },
 }));
 
-import { AgentEditScreen } from '@/app/routes/agents/id';
+import { AgentConfigurePanel } from '@/app/routes/agents/id';
 
 const agent = {
   id: 'agent_1',
@@ -67,7 +67,7 @@ const renderScreen = () => {
       {
         path: '/',
         element: (
-          <AgentEditScreen agent={agent} onExit={vi.fn()} onEdited={vi.fn()} />
+          <AgentConfigurePanel agent={agent} onExit={vi.fn()} />
         ),
       },
     ],
@@ -80,17 +80,6 @@ const renderScreen = () => {
   );
 };
 
-const clickTestTab = () => {
-  const trigger = screen.getByText('Test').closest('[role="tab"]');
-  if (!trigger) throw new Error('Test tab not rendered');
-  // Radix activates a tab on pointerdown, not click, so a plain .click() is a no-op here.
-  for (const type of ['pointerdown', 'mousedown', 'click']) {
-    trigger.dispatchEvent(
-      new MouseEvent(type, { bubbles: true, cancelable: true, button: 0 }),
-    );
-  }
-  return trigger;
-};
 
 const typeInInstructions = (value: string) => {
   const box = document.querySelector('textarea');
@@ -108,44 +97,17 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-describe('the edit screen never lets two writes race', () => {
-  const armAndRace = async ({ saveFirst }: { saveFirst: boolean }) => {
+describe('the configure panel never lets two writes race', () => {
+  it('issues one write when the form is submitted twice before the first settles', async () => {
     renderScreen();
     typeInInstructions('Sort the inbox differently.');
     await new Promise((resolve) => setTimeout(resolve, 60));
 
-    if (saveFirst) {
-      document.querySelector('form')?.requestSubmit();
-      clickTestTab();
-    } else {
-      clickTestTab();
-      document.querySelector('form')?.requestSubmit();
-    }
+    document.querySelector('form')?.requestSubmit();
+    document.querySelector('form')?.requestSubmit();
     await new Promise((resolve) => setTimeout(resolve, 120));
-  };
-
-  it('issues one write when Test and Save are both triggered before either settles', async () => {
-    await armAndRace({ saveFirst: false });
-
-    // The stage having won is also the harness guard: if the tab intent had never
-    // fired there would be no race, and the surviving write would be the save.
-    expect(mutateCalls).toHaveLength(1);
-    expect(mutateCalls[0]?.goLive).toBe(false);
-  });
-
-  it('drops the save rather than queueing it behind the stage', async () => {
-    await armAndRace({ saveFirst: false });
-
-    expect(mutateCalls.filter((call) => call.goLive === undefined)).toHaveLength(
-      0,
-    );
-  });
-
-  it('lets the first intent win when the order is reversed', async () => {
-    await armAndRace({ saveFirst: true });
 
     expect(mutateCalls).toHaveLength(1);
-    expect(mutateCalls[0]?.goLive).toBeUndefined();
   });
 
   it('a lone save still goes live, so the lock does not block ordinary use', async () => {
@@ -158,27 +120,5 @@ describe('the edit screen never lets two writes race', () => {
 
     expect(mutateCalls).toHaveLength(1);
     expect(mutateCalls[0]?.goLive).toBeUndefined();
-  });
-
-  it('a lone Test stages without publishing', async () => {
-    renderScreen();
-    typeInInstructions('Sort the inbox differently.');
-    await new Promise((resolve) => setTimeout(resolve, 60));
-
-    clickTestTab();
-    await new Promise((resolve) => setTimeout(resolve, 120));
-
-    expect(mutateCalls).toHaveLength(1);
-    expect(mutateCalls[0]?.goLive).toBe(false);
-  });
-
-  it('does not write at all when Test is pressed with nothing unsaved', async () => {
-    renderScreen();
-    await new Promise((resolve) => setTimeout(resolve, 60));
-
-    clickTestTab();
-    await new Promise((resolve) => setTimeout(resolve, 120));
-
-    expect(mutateCalls).toHaveLength(0);
   });
 });

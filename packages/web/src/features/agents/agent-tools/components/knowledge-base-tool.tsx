@@ -110,7 +110,7 @@ export const KnowledgeBaseSection = ({
   return (
     <div className={cn(!asRows && 'mt-6')}>
       {!asRows && (
-        <h2 className="text-sm font-medium">{t('Knowledge Base')}</h2>
+        <h2 className="text-[13px] font-medium">{t('Knowledge Base')}</h2>
       )}
 
       <div className={cn(!asRows && 'mt-2')}>

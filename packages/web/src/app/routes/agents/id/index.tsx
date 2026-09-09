@@ -2,9 +2,7 @@ import { isNil, Permission, unique } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConfig,
-  ApFlagId,
   AgentIcon,
-  AgentKnowledgeBaseTool,
   agentUtils,
   AgentToolType,
   ColorName,
@@ -15,18 +13,14 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronLeft,
   ChevronRight,
-  FlaskConical,
-  Loader2,
-  Pencil,
   SearchX,
   Settings2,
-  Sparkles,
   Trash2,
+  X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -70,17 +64,12 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  KnowledgeBaseSection,
   AIModelSelector,
   AgentStructuredOutput,
   useAgentsAvailable,
@@ -99,12 +88,10 @@ import {
   projectCollectionUtils,
 } from '@/features/projects';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-import { agentEditState, HeaderStatus } from '../lib/agent-edit-state';
-import { agentTestGate } from '../lib/agent-test-gate';
+import { agentEditState } from '../lib/agent-edit-state';
 
 const ConfigureAgentSchema = z.object({
   displayName: z.string().min(1, formErrors.required),
@@ -153,12 +140,6 @@ const buildCapabilityNote = (agent: Agent): string => {
 };
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
-
-const HEADER_STATUS_COPY: Record<HeaderStatus, () => string> = {
-  'needs-model': () => t('Needs a model to run'),
-  live: () => t('Live'),
-  pending: () => t('Changes not live yet'),
-};
 
 type AgentRequirement = {
   label: string;
@@ -263,188 +244,72 @@ const AgentDangerZone = ({
   }
 
   return (
-    <div className="mt-2 flex flex-col gap-3 rounded-lg border border-destructive/30 p-4">
-      <div className="flex flex-col gap-1">
-        <span className="text-[13px] font-semibold leading-4">
-          {t('Delete this agent')}
-        </span>
+    <FormItem className="flex flex-col gap-[9px] border-t border-border pt-4">
+      <PanelSectionLabel label={t('Delete this agent')} />
+      <div className="flex items-start justify-between gap-3">
         <span className="text-[13px] leading-4 text-muted-foreground">
           {t(
             'Its instructions, its tools, and every conversation held with it go with it.',
           )}
         </span>
-      </div>
-      <DeleteAgentDialog
-        agent={agent}
-        open={deleting}
-        onOpenChange={setDeleting}
-        onDeleted={() => {
-          onDeleted();
-          navigate('/agents');
-        }}
-      >
-        <Button
-          type="button"
-          variant="destructive"
-          className="w-fit gap-2"
-          onClick={() => setDeleting(true)}
+        <DeleteAgentDialog
+          agent={agent}
+          open={deleting}
+          onOpenChange={setDeleting}
+          onDeleted={() => {
+            onDeleted();
+            navigate('/agents');
+          }}
         >
-          <Trash2 size={15} />
-          {t('Delete')}
-        </Button>
-      </DeleteAgentDialog>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-2 text-destructive hover:text-destructive"
+            onClick={() => setDeleting(true)}
+          >
+            <Trash2 size={14} />
+            {t('Delete')}
+          </Button>
+        </DeleteAgentDialog>
+      </div>
+    </FormItem>
+  );
+};
+
+const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-[9px] border-t border-border pt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex w-fit items-center gap-1.5 text-xs font-medium leading-4 text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ChevronRight
+          size={14}
+          className={cn('transition-transform', open && 'rotate-90')}
+        />
+        {t('Advanced')}
+      </button>
+      {open && <div className="flex flex-col gap-[20px]">{children}</div>}
     </div>
   );
 };
 
-const AgentIdentityPopover = ({
-  form,
-  focus,
-  children,
-}: {
-  form: ReturnType<
-    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
-  >;
-  focus?: 'description';
-  children: React.ReactNode;
-}) => (
-  <Popover>
-    <PopoverTrigger asChild>{children}</PopoverTrigger>
-    <PopoverContent
-      align="start"
-      className="w-[340px]"
-      onOpenAutoFocus={(event) => {
-        if (focus !== 'description') {
-          return;
-        }
-        event.preventDefault();
-        const field = event.currentTarget as HTMLElement | null;
-        field
-          ?.querySelector<HTMLTextAreaElement>('[name="description"]')
-          ?.focus();
-      }}
-    >
-      <div className="flex flex-col gap-4">
-        <FormField
-          control={form.control}
-          name="displayName"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
-              <FormLabel showRequiredIndicator>{t('Name')}</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
-              <FormLabel>{t('Description')}</FormLabel>
-              <FormControl>
-                <Textarea {...field} minRows={2} maxRows={4} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="icon"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
-              <FormLabel>{t('Shape')}</FormLabel>
-              <div className="grid grid-cols-6 gap-2">
-                {Object.values(AgentIcon).map((iconName) => (
-                  <button
-                    key={iconName}
-                    type="button"
-                    aria-label={iconName}
-                    onClick={() => field.onChange(iconName)}
-                    className={cn(
-                      'flex items-center justify-center rounded-[10px] p-[3px]',
-                      field.value === iconName && 'ring-2 ring-foreground',
-                    )}
-                  >
-                    <AgentMark
-                      icon={iconName}
-                      color={form.watch('color')}
-                      size="sm"
-                    />
-                  </button>
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="color"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
-              <FormLabel>{t('Color')}</FormLabel>
-              <div className="grid grid-cols-6 gap-2">
-                {Object.values(ColorName).map((colorName) => (
-                  <button
-                    key={colorName}
-                    type="button"
-                    aria-label={colorName}
-                    onClick={() => field.onChange(colorName)}
-                    className={cn(
-                      'flex items-center justify-center rounded-full p-[3px]',
-                      field.value === colorName && 'ring-2 ring-foreground',
-                    )}
-                  >
-                    <span
-                      className="size-6 rounded-full"
-                      style={{
-                        backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-    </PopoverContent>
-  </Popover>
-);
-
-const ConfigureFields = ({
-  agent,
+const ConfigureBehaviorTab = ({
   form,
   needsModel,
-  onDeleted,
 }: {
-  agent: Agent;
   form: ReturnType<
     typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
   >;
   needsModel: boolean;
-  onDeleted: () => void;
 }) => {
   const tools = form.watch('draft.tools') ?? [];
   const knowledgeCount = tools.filter(
     (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
-  ).length;
-  const { data: knowledgeAvailable } = flagsHooks.useFlag<boolean>(
-    ApFlagId.PGVECTOR_AVAILABLE,
-  );
-  const toolCount = unique(
-    tools
-      .filter((tool) => tool.type !== AgentToolType.KNOWLEDGE_BASE)
-      .map((tool) =>
-        tool.type === AgentToolType.PIECE
-          ? tool.pieceMetadata?.pieceName ?? tool.toolName
-          : tool.type,
-      ),
   ).length;
 
   return (
@@ -470,61 +335,6 @@ const ConfigureFields = ({
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name="draft.tools"
-        render={({ field }) => (
-          <FormItem className="flex flex-col gap-[9px]">
-            <PanelSectionLabel
-              label={t('Tools')}
-              meta={
-                toolCount > 0
-                  ? t('toolsAddedCount', { count: toolCount })
-                  : undefined
-              }
-            />
-            <AgentTools
-              layout="rows"
-              toolsField={field}
-              selectedProvider={form.watch('draft.provider') ?? undefined}
-            />
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      {knowledgeAvailable !== false && (
-        <FormField
-          control={form.control}
-          name="draft.tools"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
-              <PanelSectionLabel
-                label={t('Knowledge')}
-                meta={
-                  knowledgeCount > 0
-                    ? t('knowledgeSourcesCount', { count: knowledgeCount })
-                    : undefined
-                }
-              />
-              <KnowledgeBaseSection
-                layout="rows"
-                tools={tools.filter(
-                  (tool): tool is AgentKnowledgeBaseTool =>
-                    tool.type === AgentToolType.KNOWLEDGE_BASE,
-                )}
-                allTools={tools}
-                removeTool={(toolName: string) =>
-                  field.onChange(
-                    tools.filter((tool) => tool.toolName !== toolName),
-                  )
-                }
-                onToolsUpdate={field.onChange}
-                selectedProvider={form.watch('draft.provider') ?? undefined}
-              />
-            </FormItem>
-          )}
-        />
-      )}
       <FormItem className="flex flex-col gap-[9px]">
         <PanelSectionLabel label={t('Model')} />
         {needsModel && (
@@ -561,6 +371,19 @@ const ConfigureFields = ({
           }}
         />
       </FormItem>
+      <FormField
+        control={form.control}
+        name="draft.tools"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-[9px]">
+            <AgentTools
+              toolsField={field}
+              selectedProvider={form.watch('draft.provider') ?? undefined}
+            />
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <AdvancedSection>
         <FormField
           control={form.control}
@@ -598,17 +421,114 @@ const ConfigureFields = ({
             </FormItem>
           )}
         />
-        <AgentProjectRow agent={agent} />
-        <AgentDangerZone agent={agent} onDeleted={onDeleted} />
       </AdvancedSection>
     </>
   );
 };
 
-const describeAgent = (description?: string | null): string =>
-  isNil(description) || description.trim().length === 0
-    ? t('Add a description')
-    : description;
+const ConfigureSettingsTab = ({
+  agent,
+  form,
+  onDeleted,
+}: {
+  agent: Agent;
+  form: ReturnType<
+    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
+  >;
+  onDeleted: () => void;
+}) => (
+  <>
+    <FormField
+      control={form.control}
+      name="displayName"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <PanelSectionLabel label={t('Name')} required />
+          <FormControl>
+            <Input {...field} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="description"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <PanelSectionLabel label={t('Description')} />
+          <FormControl>
+            <Textarea {...field} minRows={2} maxRows={4} />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="icon"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <PanelSectionLabel label={t('Shape')} />
+          <div className="grid grid-cols-6 gap-2">
+            {Object.values(AgentIcon).map((iconName) => (
+              <button
+                key={iconName}
+                type="button"
+                aria-label={iconName}
+                onClick={() => field.onChange(iconName)}
+                className={cn(
+                  'flex items-center justify-center rounded-[10px] p-[3px]',
+                  field.value === iconName && 'ring-2 ring-foreground',
+                )}
+              >
+                <AgentMark
+                  icon={iconName}
+                  color={form.watch('color')}
+                  size="sm"
+                />
+              </button>
+            ))}
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <FormField
+      control={form.control}
+      name="color"
+      render={({ field }) => (
+        <FormItem className="flex flex-col gap-[9px]">
+          <PanelSectionLabel label={t('Color')} />
+          <div className="grid grid-cols-6 gap-2">
+            {Object.values(ColorName).map((colorName) => (
+              <button
+                key={colorName}
+                type="button"
+                aria-label={colorName}
+                onClick={() => field.onChange(colorName)}
+                className={cn(
+                  'flex items-center justify-center rounded-full p-[3px]',
+                  field.value === colorName && 'ring-2 ring-foreground',
+                )}
+              >
+                <span
+                  className="size-6 rounded-full"
+                  style={{
+                    backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
+                  }}
+                />
+              </button>
+            ))}
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+    <AgentProjectRow agent={agent} />
+    <AgentDangerZone agent={agent} onDeleted={onDeleted} />
+  </>
+);
 
 const PanelSectionLabel = ({
   label,
@@ -622,7 +542,7 @@ const PanelSectionLabel = ({
   <div className="flex items-baseline gap-2">
     <FormLabel
       showRequiredIndicator={required}
-      className="grow text-[13px] font-semibold"
+      className="grow text-[13px] font-medium"
     >
       {label}
     </FormLabel>
@@ -631,27 +551,6 @@ const PanelSectionLabel = ({
     )}
   </div>
 );
-
-const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="flex flex-col gap-[9px] border-t border-border pt-4">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-fit items-center gap-1.5 text-[13px] font-semibold leading-4 text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronRight
-          size={14}
-          className={cn('transition-transform', open && 'rotate-90')}
-        />
-        {t('Advanced')}
-      </button>
-      {open && <div className="flex flex-col gap-[20px]">{children}</div>}
-    </div>
-  );
-};
 
 const useWarnBeforeLosingChanges = ({
   hasChanges,
@@ -730,37 +629,29 @@ const liveValuesOf = (agent: Agent): ConfigureAgentInput | null =>
     ? null
     : { ...formValuesOf(agent), draft: agent.published };
 
-const AgentEditScreen = ({
+const CONFIGURE_TABS = [
+  { value: 'behavior', label: () => t('Behavior') },
+  { value: 'settings', label: () => t('Settings') },
+];
+
+const AgentConfigurePanel = ({
   agent,
   onExit,
-  onEdited,
 }: {
   agent: Agent;
   onExit: () => void;
-  onEdited: () => void;
 }) => {
-  const [mode, setMode] = useState('edit');
   const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
     resolver: zodResolver(ConfigureAgentSchema),
     defaultValues: formValuesOf(agent),
     mode: 'onChange',
   });
   const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
-  const stageDraft = agentsMutations.useUpdateAgent({ id: agent.id });
-  const [justLaunched, setJustLaunched] = useState(false);
-  const [testConversationId, setTestConversationId] = useState<string | null>(
-    null,
-  );
+  const [tab, setTab] = useState('behavior');
 
   const values = form.watch();
   const formNeedsModel =
     isNil(values.draft?.modelName) || isNil(values.draft?.provider);
-  const testGate = agentTestGate.blockedReason({ draft: values.draft });
-  const blockedFromTesting = isNil(testGate)
-    ? null
-    : testGate === 'model'
-    ? t('Pick a model before testing')
-    : t('Write instructions before testing');
   const live = liveValuesOf(agent);
   const hasChanges =
     isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
@@ -775,7 +666,6 @@ const AgentEditScreen = ({
     blockerState: leaveBlocker.state,
     exitRequested,
   });
-  const testRequested = useRef(false);
   const writeSeq = useRef(0);
   const writeLock = useRef(agentEditState.createWriteLock());
 
@@ -814,41 +704,6 @@ const AgentEditScreen = ({
   const releaseWrite = () => writeLock.current.release();
   const claimWrite = () => writeLock.current.claim();
 
-  const openTestWithLatestEdits = form.handleSubmit((values) => {
-    const seq = ++writeSeq.current;
-    return stageDraft.mutate(
-      { ...toUpdateRequest(values), goLive: false },
-      {
-        onSuccess: () => {
-          if (seq !== writeSeq.current) return;
-          markSavedUnlessEditedSince(values);
-          if (testRequested.current) setMode('test');
-        },
-        onError: (error) =>
-          setServerError(
-            error,
-            t("Your changes couldn't be staged for testing. Try again."),
-          ),
-        onSettled: releaseWrite,
-      },
-    );
-  }, releaseWrite);
-
-  const changeMode = (next: string) => {
-    testRequested.current = next === 'test';
-    const intent = agentEditState.modeIntent({
-      next,
-      unsavedTyping,
-      blockedReason: blockedFromTesting,
-    });
-    if (intent === 'switch') {
-      setMode(next);
-      return;
-    }
-    if (!claimWrite()) return;
-    void openTestWithLatestEdits();
-  };
-
   const handleSubmit = (values: ConfigureAgentValues) => {
     form.clearErrors('root.serverError');
     const seq = ++writeSeq.current;
@@ -856,8 +711,6 @@ const AgentEditScreen = ({
       onSuccess: () => {
         if (seq !== writeSeq.current) return;
         markSavedUnlessEditedSince(values);
-        setJustLaunched(true);
-        window.setTimeout(() => setJustLaunched(false), 1600);
         toast(t('Live — every flow using this agent just got the update'));
       },
       onError: (error) =>
@@ -874,6 +727,8 @@ const AgentEditScreen = ({
     }
     void saveAndGoLive(event);
   };
+
+  const requestExit = () => (unsavedTyping ? setExitRequested(true) : onExit());
 
   return (
     <Form {...form}>
@@ -894,245 +749,132 @@ const AgentEditScreen = ({
       />
       <form
         onSubmit={submitIfIdle}
-        className="flex h-full w-full min-h-0 flex-col"
+        className="flex h-full min-h-0 w-full shrink-0 flex-col"
       >
-        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+        <div className="flex h-[60px] shrink-0 items-center justify-between gap-2 border-b border-border px-[18px]">
+          <Tabs
+            value={tab}
+            onValueChange={setTab}
+            className="flex h-full min-w-0 items-stretch"
+          >
+            <TabsList variant="outline" className="h-full items-stretch gap-5">
+              {CONFIGURE_TABS.map(({ value, label }) => (
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  variant="outline"
+                  className="h-full items-center text-[13px]"
+                >
+                  {label()}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
           <button
             type="button"
-            aria-label={t('Back to the agent')}
-            onClick={() => (unsavedTyping ? setExitRequested(true) : onExit())}
-            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label={t('Close')}
+            onClick={requestExit}
+            className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <ChevronLeft size={16} />
+            <X size={16} />
           </button>
-          <AgentIdentityPopover form={form}>
-            <button
-              type="button"
-              aria-label={t('Edit name and appearance')}
-              className="group relative shrink-0 rounded-[14px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <AgentMark
-                size="sm"
-                icon={form.watch('icon')}
-                color={form.watch('color')}
-              />
-              <span className="absolute -bottom-[3px] -end-[3px] flex size-[16px] items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors group-hover:border-foreground/30 group-hover:bg-accent group-hover:text-foreground">
-                <Pencil size={9} strokeWidth={2.2} />
-              </span>
-            </button>
-          </AgentIdentityPopover>
-          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-            <AgentIdentityPopover form={form}>
-              <button
-                type="button"
-                aria-label={t('Edit name and appearance')}
-                className="min-w-0 truncate rounded-md text-start text-base font-semibold leading-5 tracking-[-0.01em] outline-none hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                {form.watch('displayName')}
-              </button>
-            </AgentIdentityPopover>
-            <span className="flex min-w-0 items-center gap-2 text-xs leading-4 text-muted-foreground">
-              <span className="truncate">
-                {HEADER_STATUS_COPY[
-                  agentEditState.headerStatus({
-                    needsModel: formNeedsModel,
-                    justLaunched,
-                    live,
-                    hasChanges,
-                  })
-                ]()}
-              </span>
-              <span aria-hidden className="shrink-0 text-border">
-                &middot;
-              </span>
-              <AgentIdentityPopover form={form} focus="description">
-                <button
-                  type="button"
-                  aria-label={t('Edit the description')}
-                  className="min-w-0 truncate rounded text-start outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  {describeAgent(form.watch('description'))}
-                </button>
-              </AgentIdentityPopover>
-            </span>
-          </div>
-          <Button
-            type="submit"
-            loading={updateAgent.isPending}
-            disabled={!hasChanges || stageDraft.isPending}
-            className="h-[38px] shrink-0 rounded-lg px-4"
-          >
-            {justLaunched ? t('Live') : t('Publish')}
-          </Button>
         </div>
-
-        <div className="flex min-h-0 grow">
-          <div className="flex min-w-0 grow basis-0 flex-col border-r border-border">
-            <div className="flex h-[52px] shrink-0 items-stretch gap-4 border-b border-border px-[18px]">
-              <Tabs
-                value={mode}
-                onValueChange={changeMode}
-                className="flex h-full shrink-0 items-stretch"
-              >
-                <TabsList
-                  variant="outline"
-                  className="h-full items-stretch gap-[22px]"
-                >
-                  <TabsTrigger
-                    value="edit"
-                    variant="outline"
-                    className="h-full items-center gap-2 text-[13px]"
-                  >
-                    <Sparkles size={14} />
-                    {t('Edit with AI')}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="test"
-                    variant="outline"
-                    className="h-full items-center gap-2 text-[13px]"
-                    disabled={stageDraft.isPending || updateAgent.isPending}
-                  >
-                    {stageDraft.isPending ? (
-                      <Loader2 size={14} className="animate-spin" />
-                    ) : (
-                      <FlaskConical size={14} />
-                    )}
-                    {t('Test')}
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-            {mode === 'test' ? (
-              <TestPane
+        <ScrollArea className="min-h-0 grow">
+          <div className="flex flex-col gap-5 p-[18px]">
+            {tab === 'behavior' && (
+              <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
+            )}
+            {tab === 'settings' && (
+              <ConfigureSettingsTab
                 agent={agent}
-                blockedReason={blockedFromTesting}
-                conversationId={testConversationId}
-                onConversationCreated={setTestConversationId}
-                onEdited={onEdited}
+                form={form}
+                onDeleted={() => {
+                  deletedRef.current = true;
+                }}
               />
-            ) : (
-              <EditWithAIPane agent={agent} onEdited={onEdited} />
+            )}
+            {form.formState.errors.root?.serverError && (
+              <p className="text-[13px] leading-4 text-destructive">
+                {form.formState.errors.root.serverError.message}
+              </p>
             )}
           </div>
-
-          <div className="flex w-[452px] shrink-0 flex-col">
-            <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-border px-[18px]">
-              <span className="text-[13px] font-semibold leading-4">
-                {t('Configure')}
+        </ScrollArea>
+        {(hasChanges || formNeedsModel) && (
+          <div className="flex shrink-0 items-center justify-between gap-3 border-t border-border bg-muted/40 px-[18px] py-3 animate-in fade-in slide-in-from-bottom-2 duration-200 ease-out">
+            {formNeedsModel ? (
+              <span className="flex items-center gap-1.5 text-xs leading-4 text-destructive">
+                <span className="size-[6px] rounded-full bg-destructive" />
+                {t('Needs a model')}
               </span>
-              {formNeedsModel && (
-                <span className="flex items-center gap-1.5 text-xs leading-4 text-destructive">
-                  <span className="size-[6px] rounded-full bg-destructive" />
-                  {t('Needs a model')}
-                </span>
-              )}
-            </div>
-            <ScrollArea className="min-h-0 grow">
-              <div className="flex flex-col gap-5 p-[18px]">
-                <ConfigureFields
-                  agent={agent}
-                  form={form}
-                  needsModel={formNeedsModel}
-                  onDeleted={() => {
-                    deletedRef.current = true;
-                  }}
-                />
-                {form.formState.errors.root?.serverError && (
-                  <p className="text-[13px] leading-4 text-destructive">
-                    {form.formState.errors.root.serverError.message}
-                  </p>
-                )}
-              </div>
-            </ScrollArea>
+            ) : (
+              <span className="truncate text-xs leading-4 text-muted-foreground">
+                {t('Not live yet')}
+              </span>
+            )}
+            <Button
+              type="submit"
+              loading={updateAgent.isPending}
+              disabled={!hasChanges}
+              className="h-[34px] shrink-0 rounded-lg px-4"
+            >
+              {t('Publish')}
+            </Button>
           </div>
-        </div>
+        )}
       </form>
     </Form>
   );
 };
 
-const AgentBuilderWelcome = () => (
-  <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-    <Sparkles size={22} className="text-primary" />
-    <span className="text-base font-semibold">{t('Describe a change')}</span>
-    <span className="max-w-[320px] text-[13px] leading-5 text-muted-foreground">
-      {t('Try “Only reply to paying customers” or “Add Slack and Notion”.')}
-    </span>
-  </div>
-);
+const useCollapsedAppSidebarWhileHere = () => {
+  const sidebar = useSidebar();
+  const sidebarRef = useRef(sidebar);
+  sidebarRef.current = sidebar;
 
-const TestPane = ({
-  agent,
-  blockedReason,
-  conversationId,
-  onConversationCreated,
-  onEdited,
+  useEffect(() => {
+    const wasOpen = sidebarRef.current.open;
+    if (!wasOpen) {
+      return;
+    }
+    sidebarRef.current.setOpen(false);
+    return () => sidebarRef.current.setOpen(true);
+  }, []);
+};
+
+const ConversationsToggle = ({
+  open,
+  onClick,
 }: {
-  agent: Agent;
-  blockedReason: string | null;
-  conversationId: string | null;
-  onConversationCreated: (id: string) => void;
-  onEdited: () => void;
-}) =>
-  !isNil(blockedReason) ? (
-    <div className="flex min-h-0 grow flex-col items-center justify-center px-6 text-center">
-      <span className="text-[13px] font-semibold leading-4">
-        {blockedReason}
-      </span>
-    </div>
-  ) : (
-    <div className="flex min-h-0 grow flex-col">
-      <AIChatBox
-        incognito={false}
-        agentId={agent.id}
-        conversationId={conversationId}
-        onConversationCreated={onConversationCreated}
-        onTurnEnd={onEdited}
-        placeholder={t('Try {name}...', { name: agent.displayName })}
-        footerNote={buildCapabilityNote(agent)}
-        emptyState={<AgentTestWelcome />}
-      />
-    </div>
-  );
-
-const AgentTestWelcome = () => (
-  <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-    <FlaskConical size={22} className="text-primary" />
-    <span className="text-base font-semibold">
-      {t('Try it before it goes live')}
-    </span>
-    <span className="max-w-[320px] text-[13px] leading-5 text-muted-foreground">
-      {t('Give it a real task. It runs on the settings beside you.')}
-    </span>
-  </div>
-);
-
-const EditWithAIPane = ({
-  agent,
-  onEdited,
-}: {
-  agent: Agent;
-  onEdited: () => void;
+  open: boolean;
+  onClick: () => void;
 }) => (
-  <div className="flex min-h-0 grow flex-col">
-    <AIChatBox
-      incognito={false}
-      agentId={agent.id}
-      builder
-      onTurnEnd={onEdited}
-      placeholder={t('Message the builder...')}
-      emptyState={<AgentBuilderWelcome />}
-    />
-  </div>
+  <button
+    type="button"
+    aria-label={open ? t('Collapse conversations') : t('Expand conversations')}
+    onClick={onClick}
+    className="flex size-[30px] shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+  >
+    {open ? <PanelLeftCloseIcon size={14} /> : <HistoryIcon size={14} />}
+  </button>
 );
 
 const AgentEditorContent = () => {
   const navigate = useNavigate();
   const { agentId } = useParams<{ agentId: string }>();
-  const queryClient = useQueryClient();
   const agentsAvailable = useAgentsAvailable();
   const [editing, setEditing] = useState<boolean>();
   const [conversationsOpen, setConversationsOpen] = useState(true);
+  const showConfigure = (open: boolean) => {
+    setEditing(open);
+    if (open) setConversationsOpen(false);
+  };
+  const showConversations = (open: boolean) => {
+    setConversationsOpen(open);
+    if (open) setEditing(false);
+  };
+  const [configureMounted, setConfigureMounted] = useState(false);
+  useCollapsedAppSidebarWhileHere();
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
@@ -1167,6 +909,20 @@ const AgentEditorContent = () => {
     enabled: agentId !== undefined && agentsAvailable,
   });
 
+  const needsModel =
+    agent !== undefined &&
+    requirementsFor(agent).some((requirement) => !requirement.met);
+  const configureOpen = editing ?? needsModel;
+
+  useEffect(() => {
+    if (configureOpen) {
+      setConfigureMounted(true);
+      return;
+    }
+    const timer = window.setTimeout(() => setConfigureMounted(false), 200);
+    return () => window.clearTimeout(timer);
+  }, [configureOpen]);
+
   if (isLoading) {
     return <AgentEditorSkeleton />;
   }
@@ -1196,108 +952,107 @@ const AgentEditorContent = () => {
     );
   }
 
-  const requirements = requirementsFor(agent);
-  const needsModel = requirements.some((requirement) => !requirement.met);
-  const isEditing = editing ?? needsModel;
-  const refetchAgent = () =>
-    queryClient.invalidateQueries({ queryKey: ['agents', 'one', agent.id] });
-
-  if (isEditing) {
-    return (
-      <AgentEditScreen
-        key={agent.id}
-        agent={agent}
-        onExit={() => setEditing(false)}
-        onEdited={refetchAgent}
-      />
-    );
-  }
-
   return (
-    <div className="flex h-full w-full flex-col">
-      <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
-        <button
-          type="button"
-          aria-label={t('Back to agents')}
-          onClick={() => navigate('/agents')}
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <ChevronLeft size={16} />
-        </button>
-        <span aria-hidden className="h-5 w-px shrink-0 bg-border" />
-        <button
-          type="button"
-          aria-label={
-            conversationsOpen
-              ? t('Collapse conversations')
-              : t('Expand conversations')
-          }
-          onClick={() => setConversationsOpen(!conversationsOpen)}
-          className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          {conversationsOpen ? (
-            <PanelLeftCloseIcon size={16} />
-          ) : (
-            <HistoryIcon size={16} />
-          )}
-        </button>
-        <AgentMark size="sm" icon={agent.icon} color={agent.color} />
-        <div className="flex min-w-0 grow basis-0 flex-col gap-px">
-          <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
-            {agent.displayName}
-          </span>
-          <span className="truncate text-xs leading-4 text-muted-foreground">
-            {agent.description ?? t('No description yet')}
-          </span>
-        </div>
-        <div className="flex min-w-0 shrink items-center gap-2">
-          <Button
+    <div className="flex h-full w-full">
+      <div className="flex min-w-0 grow flex-col">
+        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+          <button
             type="button"
-            variant="outline"
-            className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
-            onClick={() => setEditing(true)}
+            aria-label={t('Back to agents')}
+            onClick={() => navigate('/agents')}
+            className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            <Settings2 size={15} />
-            {t('Configure')}
-          </Button>
+            <ChevronLeft size={16} />
+          </button>
+          <AgentMark size="sm" icon={agent.icon} color={agent.color} />
+          <div className="flex min-w-0 grow basis-0 flex-col gap-px">
+            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
+              {agent.displayName}
+            </span>
+            <span className="truncate text-xs leading-4 text-muted-foreground">
+              {agent.description ?? t('No description yet')}
+            </span>
+          </div>
+          <div className="flex min-w-0 shrink items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px]"
+              onClick={() => showConfigure(!configureOpen)}
+            >
+              <Settings2 size={15} />
+              {t('Configure')}
+            </Button>
+          </div>
         </div>
-      </div>
-      <div className="flex min-h-0 grow">
-        <aside
-          className={cn(
-            'shrink-0 overflow-hidden border-r border-border transition-[width] duration-200 ease-out',
-            conversationsOpen ? 'w-[220px]' : 'w-0',
-          )}
-        >
-          <div className="flex h-full w-[220px] flex-col">
-            <ConversationList
+        <div className="flex min-h-0 grow">
+          <aside
+            className={cn(
+              'shrink-0 overflow-hidden border-r border-border transition-[width] duration-200 ease-out',
+              conversationsOpen ? 'w-[220px]' : 'w-[46px]',
+            )}
+          >
+            {conversationsOpen ? (
+              <div className="flex h-full w-[220px] flex-col">
+                <ConversationList
+                  agentId={agent.id}
+                  selectedId={openedConversationId ?? conversationId ?? null}
+                  onSelect={openConversation}
+                  onNewChat={startNewConversation}
+                  collapseAction={
+                    <ConversationsToggle
+                      open
+                      onClick={() => showConversations(false)}
+                    />
+                  }
+                />
+              </div>
+            ) : (
+              <div className="flex h-full w-[46px] shrink-0 flex-col items-center pt-3">
+                <ConversationsToggle
+                  open={false}
+                  onClick={() => showConversations(true)}
+                />
+              </div>
+            )}
+          </aside>
+          <div className="flex min-h-0 min-w-0 grow flex-col">
+            <AIChatBox
+              key={openedConversationId ?? `new-${freshConversations}`}
+              incognito={false}
               agentId={agent.id}
-              selectedId={openedConversationId ?? conversationId ?? null}
-              onSelect={openConversation}
-              onNewChat={startNewConversation}
+              conversationId={openedConversationId ?? null}
+              onConversationCreated={writeConversationParam}
+              placeholder={t('Ask {name}...', { name: agent.displayName })}
+              footerNote={buildCapabilityNote(agent)}
+              emptyState={
+                <AgentChatWelcome
+                  displayName={agent.displayName}
+                  description={agent.description ?? null}
+                  icon={agent.icon}
+                  color={agent.color}
+                />
+              }
             />
           </div>
-        </aside>
-        <div className="flex min-h-0 min-w-0 grow flex-col">
-          <AIChatBox
-            key={openedConversationId ?? `new-${freshConversations}`}
-            incognito={false}
-            agentId={agent.id}
-            conversationId={openedConversationId ?? null}
-            onConversationCreated={writeConversationParam}
-            placeholder={t('Ask {name}...', { name: agent.displayName })}
-            footerNote={buildCapabilityNote(agent)}
-            emptyState={
-              <AgentChatWelcome
-                displayName={agent.displayName}
-                description={agent.description ?? null}
-                icon={agent.icon}
-                color={agent.color}
-              />
-            }
-          />
         </div>
       </div>
+      <aside
+        className={cn(
+          'shrink-0 overflow-hidden border-l border-border transition-[width] duration-200 ease-out',
+          configureOpen ? 'w-[452px]' : 'w-0',
+        )}
+      >
+        <div className="flex h-full w-[452px] flex-col">
+          {configureMounted && (
+            <AgentConfigurePanel
+              key={agent.id}
+              agent={agent}
+              onExit={() => showConfigure(false)}
+            />
+          )}
+        </div>
+      </aside>
     </div>
   );
 };
@@ -1316,4 +1071,4 @@ const AgentEditorPage = () => {
   );
 };
 
-export { AgentEditorPage, AgentEditScreen, LeaveWithoutSavingDialog, TestPane };
+export { AgentConfigurePanel, AgentEditorPage, LeaveWithoutSavingDialog };

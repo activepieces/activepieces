@@ -284,6 +284,7 @@
   "File Input i.e a url or file passed from a previous step": "File Input i.e a url or file passed from a previous step",
   "Date Input must comply with ISO 8601 format": "Date Input must comply with ISO 8601 format",
   "After": "After",
+  "Behavior": "Behavior",
   "Before": "Before",
   "Select an option": "Select an option",
   "Unexpected error, please retry": "Unexpected error, please retry",
