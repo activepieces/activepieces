@@ -245,13 +245,14 @@ export const scrape = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
+    const shouldStoreInCache = propsValue.storeInCache ?? false;
     const body: Record<string, any> = {
       url: propsValue.url,
       timeout: propsValue.timeout,
-      storeInCache: propsValue.storeInCache,
+      storeInCache: shouldStoreInCache,
     };
 
-    if (!propsValue.storeInCache){
+    if (!shouldStoreInCache) {
       body['maxAge'] = 0;
     }
 
