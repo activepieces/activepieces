@@ -64,12 +64,20 @@ orphans `pointer-events: none` on `<body>` and the page behind stops taking clic
 **A feature you cannot act on shows itself filled with sample data.** `Audit logs` is a table, so there is
 no action to crown, and opening it freely would show an empty table with nothing to explain why. It renders
 its real filters, columns and pagination populated with believable sample rows, crisp rather than blurred,
-inside a **framed container** whose header carries the crown, the feature's name, its tier badge and the
-upgrade button. Two earlier attempts were dropped: blurring, chosen while the table was empty, hides the
-very rows the treatment exists to show; and a plain strip above the content said the right words but left
-the page reading as ordinary, so the boundary between real chrome and preview content has to be structural
-rather than a sentence. The container hugs its content, so a short form does not sit in a large empty
-frame.
+and the paid signal **merges into the header the page already has**: a crown-and-tier pill beside the
+title, an `Upgrade to <Tier>` button where the page's own actions sit, and a thin sample-data line directly
+above the rows. Three treatments were tried in order and the first two dropped: blurring, chosen while the
+table was empty, hides the very rows the treatment exists to show; a strip above the content said the right
+words but left the page reading as ordinary; and a framed container did read as locked but dominated the
+page it was meant to preview. The merged header is the least furniture that still lands.
+
+**The lock state travels by context, so no page had to be edited to carry the chrome.** `DashboardPageHeader`,
+`CenteredPage` and `DataTable` read it and render the pill, the button and the notice themselves. That
+forces the context into `components/custom`, because eslint's `import/no-restricted-paths` stops
+`src/components` importing `src/app` and `DataTable` needs the notice, and it is why `FeatureTier` and
+`TIER_LABELS` now live in `lib/feature-tier`, reachable from all three layers, replacing two copies that
+had already begun to drift. A page rendering neither shared header, `Embedding` being the only one, wires
+the three pieces into its own title row.
 
 The sample content is **inert and visibly so**: the region takes `pointer-events: none`, filters and
 pagination render disabled, and the only live control is the upgrade button. The alternative, making the
