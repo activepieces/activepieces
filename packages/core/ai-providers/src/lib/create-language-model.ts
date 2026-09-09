@@ -10,7 +10,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { LanguageModel } from 'ai'
+import { ImageModel, LanguageModel } from 'ai'
 
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
@@ -107,6 +107,43 @@ export function createLanguageModel({ provider, auth, config, modelId, options =
     }
 }
 
+export function createImageModel({ provider, auth, config, modelId, options = {} }: CreateImageModelParams): ImageModel | undefined {
+    const observed = spreadIfDefined('fetch', observedProviderFetch(options.onOutcome))
+    switch (provider) {
+        case AIProviderName.OPENAI: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            return createOpenAI({ apiKey, ...observed }).imageModel(modelId)
+        }
+        case AIProviderName.AZURE: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { resourceName, apiVersion } = config as AzureProviderConfig
+            return createAzure({ resourceName, apiKey, apiVersion, ...observed }).imageModel(modelId)
+        }
+        case AIProviderName.BEDROCK: {
+            const { accessKeyId, secretAccessKey } = auth as BedrockProviderAuthConfig
+            const { region } = config as BedrockProviderConfig
+            return createAmazonBedrock({ region, accessKeyId, secretAccessKey, ...observed }).imageModel(modelId)
+        }
+        case AIProviderName.VERTEX: {
+            const { serviceAccountJson } = auth as VertexProviderAuthConfig
+            const { project, region } = config as VertexProviderConfig
+            return createVertex({ project, location: region, googleAuthOptions: { credentials: parseServiceAccount(serviceAccountJson) }, ...observed }).imageModel(modelId)
+        }
+        case AIProviderName.CUSTOM: {
+            const { apiKey } = auth as BaseAIProviderAuthConfig
+            const { apiKeyHeader, baseUrl, defaultHeaders } = config as OpenAICompatibleProviderConfig
+            return createOpenAICompatible({
+                name: 'openai-compatible',
+                baseURL: baseUrl,
+                headers: buildOpenAICompatibleHeaders({ apiKeyHeader, apiKey, defaultHeaders, extraHeaders: options.extraHeaders }),
+                ...observed,
+            }).imageModel(modelId)
+        }
+        default:
+            return undefined
+    }
+}
+
 function vertexClientFor({ modelId }: { modelId: string }): typeof createVertex | typeof createVertexAnthropic | typeof createVertexMaas {
     if (modelId.includes('/') || modelId.endsWith(VERTEX_MAAS_SUFFIX)) {
         return createVertexMaas
@@ -173,6 +210,19 @@ export type LanguageModelOptions = {
     openaiResponsesModel?: boolean
     openRouterSettings?: OpenRouterChatSettings
     mistralViaOpenRouter?: boolean
+    extraHeaders?: Record<string, string>
+}
+
+export type CreateImageModelParams = {
+    provider: AIProviderName
+    auth: unknown
+    config: unknown
+    modelId: string
+    options?: ImageModelOptions
+}
+
+export type ImageModelOptions = {
+    onOutcome?: ProviderOutcomeReporter
     extraHeaders?: Record<string, string>
 }
 

@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
-import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createLanguageModel } from '@activepieces/ai-providers';
+import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, BaseAIProviderAuthConfig, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
@@ -7,7 +7,7 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { EmbeddingModel, LanguageModel, ToolSet } from 'ai'
+import { EmbeddingModel, ImageModel, LanguageModel, ToolSet } from 'ai'
 
 const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
@@ -174,6 +174,15 @@ function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, st
     }
 }
 
+function createModelForImages({ provider, auth, config, modelId }: {
+    provider: AIProviderName
+    auth: Record<string, unknown>
+    config: Record<string, unknown>
+    modelId: string
+}): ImageModel | undefined {
+    return createImageModel({ provider, auth, config, modelId })
+}
+
 function readStringField(source: Record<string, unknown>, key: string): string {
     const value = source[key]
     return typeof value === 'string' ? value : ''
@@ -237,6 +246,7 @@ function managedProviderMetadataHeaders({ provider, metadata }: {
 
 export const aiUtils = {
     createModel,
+    createModelForImages,
     createEmbeddingModel,
     toStorageEmbedding,
     supportsWebSearch,
