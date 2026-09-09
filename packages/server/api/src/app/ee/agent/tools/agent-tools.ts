@@ -465,13 +465,14 @@ async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
 }
 
-async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, confinedToProjectId, log }: {
+async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, confinedToProjectId, editsOwnAgentOnly, log }: {
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
     conversationId?: string
     confinedToProjectId?: string | null
+    editsOwnAgentOnly?: boolean
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const allProjects = await agentHelpers.getUserProjects({ platformId, userId, log })
@@ -581,9 +582,13 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (toolName === 'ap_create_agent') {
                 return createAgentFromChat({ toolInput, platformId, projectId, userId, log })
             }
-            const agentId = nonEmpty(toolInput.agentId)
+            const agentId = editsOwnAgentOnly === true
+                ? conversation?.agentId ?? undefined
+                : nonEmpty(toolInput.agentId)
             if (isNil(agentId)) {
-                return { error: 'Which agent? Call ap_list_agents first and pass its agentId.' }
+                return { error: editsOwnAgentOnly === true
+                    ? 'This conversation is not attached to a saved agent, so there is nothing to change.'
+                    : 'Which agent? Call ap_list_agents first and pass its agentId.' }
             }
             const { data: agent } = await tryCatch(() => agentService(log).getOneOrThrow({ id: agentId, projectId, userId }))
             if (isNil(agent)) {

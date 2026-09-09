@@ -2,6 +2,9 @@ import { AgentRunSource, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from '@ac
 import { ToolSet } from 'ai'
 
 const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
+// In its own conversation an agent may rewrite itself, and only itself: the server pins the
+// target to the conversation's agent, so the id the model passes cannot reach another one.
+const SELF_EDIT_TOOLS = ['ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 const BUILT_IN_TOOL_PREFIX = 'ap_'
 
 function withValidNames<T extends { toolName: string }>({ tools, reserved = [] }: { tools: T[], reserved?: string[] }): T[] {
@@ -62,6 +65,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
         return {
             ...configured,
             ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase', 'ap_show_connection_picker'] }),
+            ...pick({ tools: groups.agentSurface, names: SELF_EDIT_TOOLS }),
             ...groups.web,
             ...groups.thinking,
             ...groups.completion,
@@ -76,7 +80,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
 }
 
 export const agentToolPolicy = { selectToolsForSource, withValidNames }
-export { UNATTENDED_WEB_TOOLS }
+export { SELF_EDIT_TOOLS, UNATTENDED_WEB_TOOLS }
 
 export type AgentToolGroups = {
     local: ToolSet

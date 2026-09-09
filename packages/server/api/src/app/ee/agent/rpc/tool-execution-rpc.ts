@@ -114,9 +114,11 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         }
         const chatOnlyTool = !ATTENDED_STATE_TOOLS.includes(input.toolName)
             && (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName))
-        const allowedSources = AGENT_SURFACE_TOOLS.includes(input.toolName)
-            ? [AgentRunSource.CHAT, AgentRunSource.AGENT_BUILDER]
-            : [AgentRunSource.CHAT]
+        const allowedSources = SELF_EDIT_TOOLS.includes(input.toolName)
+            ? [AgentRunSource.CHAT, AgentRunSource.AGENT_BUILDER, AgentRunSource.AGENT]
+            : AGENT_SURFACE_TOOLS.includes(input.toolName)
+                ? [AgentRunSource.CHAT, AgentRunSource.AGENT_BUILDER]
+                : [AgentRunSource.CHAT]
         if (chatOnlyTool && !allowedSources.includes(input.source)) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
@@ -219,6 +221,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             userId: input.userId,
             conversationId: input.conversationId,
             confinedToProjectId: input.source === AgentRunSource.CHAT ? null : await confinedProjectFor({ conversationId: input.conversationId }),
+            editsOwnAgentOnly: input.source === AgentRunSource.AGENT,
             log,
         })
         log.debug({ tool: { name: input.toolName, durationMs: Date.now() - startedAt, output: result }, resultBytes: byteLengthOf(result) }, '[agentRpc#executeAgentTool] Tool finished')
@@ -232,7 +235,8 @@ const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
-const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+const SELF_EDIT_TOOLS = ['ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', ...SELF_EDIT_TOOLS]
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5

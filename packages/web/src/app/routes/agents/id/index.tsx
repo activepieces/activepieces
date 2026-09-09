@@ -13,6 +13,7 @@ import {
   formErrors,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   ChevronLeft,
@@ -888,6 +889,7 @@ const AgentEditorContent = () => {
     if (open) setEditing(false);
   };
   const [configureMounted, setConfigureMounted] = useState(false);
+  const queryClient = useQueryClient();
   useCollapsedAppSidebarWhileHere();
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
@@ -1039,6 +1041,11 @@ const AgentEditorContent = () => {
               agentId={agent.id}
               conversationId={openedConversationId ?? null}
               onConversationCreated={writeConversationParam}
+              onTurnEnd={() =>
+                queryClient.invalidateQueries({
+                  queryKey: ['agents', 'one', agent.id],
+                })
+              }
               placeholder={t('Ask {name}...', { name: agent.displayName })}
               footerNote={buildCapabilityNote(agent)}
               emptyState={
