@@ -6,8 +6,8 @@ import {
   blocks,
   iconEmoji,
   mentionOriginFlow,
+  getUsers,
   profilePicture,
-  userIds,
   username,
 } from '../common/props';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
@@ -78,8 +78,20 @@ export const slackSendMessageToMultipleUsersAction = createAction({
           };
         }
 
+        const auth = propsValue['auth'] as SlackAuthValue | undefined;
+        const users = auth ? await getUsers(getBotToken(auth)) : [];
+
         return {
-          userIds,
+          userIds: Property.StaticMultiSelectDropdown({
+            displayName: 'Users',
+            description: 'Everyone who should receive this message.',
+            required: true,
+            options: {
+              disabled: users.length === 0,
+              placeholder: users.length === 0 ? 'Connect Slack first' : 'Select Users',
+              options: users,
+            },
+          }),
           text: Property.LongText({
             displayName: 'Message',
             description:
