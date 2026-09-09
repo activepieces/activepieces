@@ -52,6 +52,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
                 resumePayload: null,
                 sealed: true,
                 policy: params.policy ?? null,
+                deadLetteredAt: null,
             }
             await repo.createQueryBuilder().insert().into('waitpoint').values(barrier).execute()
             const signals = buildPendingSignals({ barrierId: barrier.id, projectId: params.projectId, labels })
