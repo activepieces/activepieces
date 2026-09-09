@@ -43,9 +43,13 @@ import {
 import { auditLogQueries } from '@/features/platform-admin';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
+import { sampleData } from '../../sample-data';
+
 export default function AuditLogsPage() {
+  const { platform } = platformHooks.useCurrentPlatform();
   const [selectedEvent, setSelectedEvent] = useState<ApplicationEvent | null>(
     null,
   );
@@ -106,6 +110,8 @@ export default function AuditLogsPage() {
     isError,
     refetch,
   } = auditLogQueries.useAuditLogs();
+  const isSample = !platform.plan.auditLogEnabled;
+  const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
   return (
     <div className="flex flex-col w-full">
@@ -236,9 +242,9 @@ export default function AuditLogsPage() {
             ),
           },
         ]}
-        page={auditLogsData}
-        isLoading={isLoading}
-        isError={isError}
+        page={rows}
+        isLoading={isSample ? false : isLoading}
+        isError={isSample ? false : isError}
         errorStateEntity={t('audit logs')}
         onRetry={refetch}
       />

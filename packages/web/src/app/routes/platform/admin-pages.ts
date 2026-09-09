@@ -198,6 +198,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'Single sign on',
         component: SSOPage,
         isLocked: ({ plan }) => !plan.ssoEnabled,
+        sample: true,
         teaser: {
           title: 'Enable Single Sign On',
           description:
@@ -215,6 +216,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'Project roles',
         component: ProjectRolePage,
         isLocked: ({ plan }) => !plan.projectRolesEnabled,
+        sample: true,
         teaser: {
           title: 'Project Role Management',
           description:
@@ -247,6 +249,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'Global connections',
         component: GlobalConnectionsTable,
         isLocked: ({ plan }) => !plan.globalConnectionsEnabled,
+        sample: true,
         teaser: {
           title: 'Enable Global Connections',
           description: 'Manage platform-wide connections to external systems.',
@@ -270,6 +273,7 @@ export const ADMIN_PAGES: AdminPage[] = [
   },
   {
     id: 'branding',
+    sample: true,
     path: '/platform/setup/branding',
     title: 'Branding',
     description: 'Your name, logo and colors across the product.',
@@ -317,6 +321,7 @@ export const ADMIN_PAGES: AdminPage[] = [
   },
   {
     id: 'templates',
+    sample: true,
     path: '/platform/setup/templates',
     title: 'Templates',
     component: PlatformTemplatesPage,
@@ -329,6 +334,7 @@ export const ADMIN_PAGES: AdminPage[] = [
   },
   {
     id: 'embed',
+    sample: true,
     path: '/platform/security/embed',
     title: 'Embedding',
     component: EmbedPage,
@@ -356,6 +362,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'API keys',
         component: ApiKeysPage,
         isLocked: ({ plan }) => !plan.apiKeysEnabled,
+        sample: true,
         teaser: {
           title: 'Enable API Keys',
           description:
@@ -373,6 +380,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'Secret managers',
         component: SecretManagersPage,
         isLocked: ({ plan }) => !plan.secretManagersEnabled,
+        sample: true,
         teaser: {
           title: 'Enable Secret Managers',
           description: 'Manage your secrets from a single and secure place',
@@ -389,7 +397,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'Audit logs',
         component: AuditLogsPage,
         isLocked: ({ plan }) => !plan.auditLogEnabled,
-        overlay: true,
+        sample: true,
         teaser: {
           title: 'Unlock Audit Logs',
           description:
@@ -407,6 +415,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'Event streaming',
         component: EventDestinationsPage,
         isLocked: ({ plan }) => !plan.eventStreamingEnabled,
+        sample: true,
         teaser: {
           title: 'Unlock Event Streaming',
           description:
@@ -559,7 +568,7 @@ export type AdminPageTabSpec = {
   isLocked?: (context: AdminPageContext) => boolean;
   isHidden?: (context: AdminPageContext) => boolean;
   teaser?: FeatureTeaserProps;
-  overlay?: boolean;
+  sample?: boolean;
 };
 
 export type AdminPage = {
@@ -571,6 +580,8 @@ export type AdminPage = {
   overview?: ComponentType;
   tabs?: AdminPageTabSpec[];
   nav?: AdminPageNav;
+  sample?: boolean;
+  teaser?: FeatureTeaserProps;
 };
 
 export type AdminNavPage = AdminPage & { nav: AdminPageNav };

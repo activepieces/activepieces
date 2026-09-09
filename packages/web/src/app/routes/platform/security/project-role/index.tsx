@@ -11,6 +11,8 @@ import {
 import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { sampleData } from '../../sample-data';
+
 import { ProjectRoleDialog } from './project-role-dialog';
 import { ProjectRolesTable } from './project-roles-table';
 
@@ -20,6 +22,8 @@ const ProjectRolePage = () => {
   const { data, isLoading, refetch } = projectRoleQueries.useProjectRoles(
     platform.plan.projectRolesEnabled,
   );
+  const isSample = !platform.plan.projectRolesEnabled;
+  const roles = isSample ? sampleData.projectRolesPage() : data;
 
   const newRoleButton = !platform.plan.customRolesEnabled ? (
     <Tooltip>
@@ -53,8 +57,8 @@ const ProjectRolePage = () => {
       actions={newRoleButton}
     >
       <ProjectRolesTable
-        projectRoles={data}
-        isLoading={isLoading}
+        projectRoles={roles}
+        isLoading={isSample ? false : isLoading}
         refetch={refetch}
       />
     </CenteredPage>

@@ -26,12 +26,18 @@ import {
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
 
-const ApiKeysPage = () => {
-  const { data, isLoading, refetch } = apiKeyQueries.useApiKeys();
+import { sampleData } from '../../sample-data';
 
-  const keys: ApiKeyResponseWithoutValue[] = data?.data ?? [];
+const ApiKeysPage = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data, isLoading, refetch } = apiKeyQueries.useApiKeys();
+  const isSample = !platform.plan.apiKeysEnabled;
+  const keys: ApiKeyResponseWithoutValue[] = isSample
+    ? sampleData.apiKeysPage().data
+    : data?.data ?? [];
 
   return (
     <CenteredPage
@@ -45,7 +51,7 @@ const ApiKeysPage = () => {
         </NewApiKeyDialog>
       }
     >
-      {isLoading && (
+      {isLoading && !isSample && (
         <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
       )}
 

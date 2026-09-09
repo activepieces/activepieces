@@ -31,10 +31,14 @@ import {
 } from '@/components/ui/tooltip';
 import { PieceIcon } from '@/features/pieces';
 import { secretManagersHooks } from '@/features/secret-managers';
+import { platformHooks } from '@/hooks/platform-hooks';
+
+import { sampleData } from '../../sample-data';
 
 import AddEditSecretManagerConnectionDialog from './connect-secret-manager-dialog';
 
 const SecretManagersPage = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const {
     data: connections,
     isLoading: isLoadingConnections,
@@ -48,9 +52,9 @@ const SecretManagersPage = () => {
 
   const isLoading = isLoadingConnections;
 
-  const page = connections
-    ? { data: connections, next: null, previous: null }
-    : undefined;
+  const isSample = !platform.plan.secretManagersEnabled;
+  const rows = isSample ? sampleData.secretManagers() : connections;
+  const page = rows ? { data: rows, next: null, previous: null } : undefined;
 
   const columns: ColumnDef<
     RowDataWithActions<SecretManagerConnectionWithStatus>,
@@ -207,8 +211,8 @@ const SecretManagersPage = () => {
         emptyStateIcon={<KeyRound className="size-14" />}
         columns={columns}
         page={page}
-        isLoading={isLoading}
-        isError={isConnectionsError}
+        isLoading={isSample ? false : isLoading}
+        isError={isSample ? false : isConnectionsError}
         errorStateEntity={t('secret managers')}
         onRetry={refetchConnections}
         hidePagination={true}

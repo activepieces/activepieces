@@ -13,6 +13,8 @@ import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { sampleData } from '../../sample-data';
+
 import { EventDestinationDialog } from './components/event-destination-dialog';
 import { EventDestinationRow } from './components/event-destination-row';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
@@ -22,8 +24,12 @@ import { useEventLabels } from './lib/use-event-labels';
 const EventDestinationsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
-  const { data: destinations, isLoading } =
+  const { data: liveDestinations, isLoading } =
     eventDestinationsCollectionUtils.useAll(isEnabled);
+  const isSample = !isEnabled;
+  const destinations = isSample
+    ? sampleData.eventDestinations()
+    : liveDestinations;
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );

@@ -2984,5 +2984,7 @@
   "{credits} credits included": "{credits} credits included",
   "{included} included": "{included} included",
   "{provider} powers chat": "{provider} powers chat",
-  "{used} of {total} credits used this period": "{used} of {total} credits used this period"
+  "{used} of {total} credits used this period": "{used} of {total} credits used this period",
+  "Sample data. {feature} requires a paid plan.": "Sample data. {feature} requires a paid plan.",
+  "Sample data. {feature} requires the {tier} plan.": "Sample data. {feature} requires the {tier} plan."
 }

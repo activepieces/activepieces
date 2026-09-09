@@ -1,10 +1,8 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
-import { t } from 'i18next';
 import React, { Suspense } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
-import { FeatureOverlay } from '@/app/components/feature-overlay';
-import { FeatureTeaserProps } from '@/app/components/feature-teaser';
+import { FeatureSample } from '@/app/components/feature-sample';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -23,18 +21,6 @@ function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
-function translateFeature(feature: FeatureTeaserProps | undefined) {
-  if (feature === undefined) {
-    return { title: '', description: '' };
-  }
-  return {
-    ...feature,
-    title: t(feature.title),
-    description: t(feature.description),
-    bullets: feature.bullets?.map((bullet) => t(bullet)),
-  };
-}
-
 function AdminRoute({ page }: { page: AdminPageSpec }) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -44,9 +30,16 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
   const Page = page.component;
   if (Page !== undefined) {
     return (
-      <SuspenseWrapper>
-        <Page />
-      </SuspenseWrapper>
+      <FeatureSample
+        locked={page.sample === true && page.nav?.isLocked?.(context) === true}
+        label={page.nav?.label ?? page.title}
+        tier={page.teaser?.tier}
+        documentationUrl={page.teaser?.documentationUrl}
+      >
+        <SuspenseWrapper>
+          <Page />
+        </SuspenseWrapper>
+      </FeatureSample>
     );
   }
 
@@ -68,16 +61,18 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
 
   const TabContent = activeTab.component;
   return (
-    <FeatureOverlay
+    <FeatureSample
       locked={
-        activeTab.overlay === true && activeTab.isLocked?.(context) === true
+        activeTab.sample === true && activeTab.isLocked?.(context) === true
       }
-      feature={translateFeature(activeTab.teaser)}
+      label={activeTab.label}
+      tier={activeTab.teaser?.tier}
+      documentationUrl={activeTab.teaser?.documentationUrl}
     >
       <SuspenseWrapper>
         <TabContent />
       </SuspenseWrapper>
-    </FeatureOverlay>
+    </FeatureSample>
   );
 }
 

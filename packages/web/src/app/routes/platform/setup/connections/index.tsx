@@ -49,7 +49,10 @@ import {
 } from '@/features/connections';
 import { PieceIconWithPieceName } from '@/features/pieces';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
+
+import { sampleData } from '../../sample-data';
 
 const STATUS_QUERY_PARAM = 'status';
 const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
@@ -74,6 +77,7 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
 ];
 
 const GlobalConnectionsTable = () => {
+  const { platform } = platformHooks.useCurrentPlatform();
   const [refresh, setRefresh] = useState(0);
   const [selectedRows, setSelectedRows] = useState<
     Array<AppConnectionWithoutSensitiveData>
@@ -226,6 +230,7 @@ const GlobalConnectionsTable = () => {
     staleTime: 0,
     gcTime: 0,
   });
+  const isSample = !platform.plan.globalConnectionsEnabled;
 
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -316,8 +321,8 @@ const GlobalConnectionsTable = () => {
         )}
         emptyStateIcon={<Globe className="size-14" />}
         columns={columns}
-        page={globalConnections}
-        isLoading={isLoadingGlobalConnections}
+        page={isSample ? sampleData.globalConnectionsPage() : globalConnections}
+        isLoading={isSample ? false : isLoadingGlobalConnections}
         isError={isGlobalConnectionsError}
         errorStateEntity={t('connections')}
         onRetry={refetchGlobalConnections}

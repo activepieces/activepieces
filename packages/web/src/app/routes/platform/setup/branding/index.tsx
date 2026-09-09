@@ -10,7 +10,6 @@ import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { CenteredPage } from '@/app/components/centered-page';
-import { FeatureBanner } from '@/app/components/feature-banner';
 import { ColorPicker } from '@/components/custom/color-picker';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +24,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+
+import { sampleData } from '../../sample-data';
 
 const hexColor = z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor');
 
@@ -84,10 +85,18 @@ export default function BrandingPage() {
   const form = useForm<FromSchema>({
     defaultValues: {
       name: platform?.name,
-      logoUrl: platform?.fullLogoUrl,
-      iconUrl: platform?.logoIconUrl,
-      faviconUrl: platform?.favIconUrl,
-      color: platform?.primaryColor,
+      logoUrl: brandingLocked
+        ? sampleData.branding.logoUrl
+        : platform?.fullLogoUrl,
+      iconUrl: brandingLocked
+        ? sampleData.branding.iconUrl
+        : platform?.logoIconUrl,
+      faviconUrl: brandingLocked
+        ? sampleData.branding.faviconUrl
+        : platform?.favIconUrl,
+      color: brandingLocked
+        ? sampleData.branding.color
+        : platform?.primaryColor,
       customThemeColors: !isNil(platform?.themeColors),
       themeColors: {
         avatar: branding.colors.avatar,
@@ -159,14 +168,6 @@ export default function BrandingPage() {
             onSubmit={form.handleSubmit(() => updatePlatform())}
           >
             <div className="max-w-[600px] grid space-y-4">
-              {brandingLocked && (
-                <FeatureBanner
-                  message={t(
-                    'Your logo, icon, favicon and colors need a higher plan. Your platform name is yours to change on any plan.',
-                  )}
-                />
-              )}
-
               <FormField
                 name="logoUrl"
                 render={() => (
