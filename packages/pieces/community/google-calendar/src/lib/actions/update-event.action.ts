@@ -1,4 +1,4 @@
-import { ActionContext, Property, createAction } from '@activepieces/pieces-framework';
+import { ActionContext, MarkdownVariant, Property, createAction } from '@activepieces/pieces-framework';
 import { calendar as googleCalendar, calendar_v3 } from '@googleapis/calendar';
 import { googleCalendarCommon, googleCalendarAuth, createGoogleClient } from '../common';
 import dayjs from 'dayjs';
@@ -8,18 +8,23 @@ export const updateEventProps = {
   calendar_id: googleCalendarCommon.calendarDropdown('writer'),
   eventId: Property.ShortText({
     displayName: 'Event ID',
+    description: 'Paste the ID from the event URL or a previous step.',
     required: true,
   }),
+  hint: Property.MarkDown({
+    value: 'Only the fields you fill in are changed.',
+    variant: MarkdownVariant.INFO,
+  }),
   title: Property.ShortText({
-    displayName: 'Title of the event',
+    displayName: 'Title',
     required: false,
   }),
   start_date_time: Property.DateTime({
-    displayName: 'Start date time of the event',
+    displayName: 'Start Time',
     required: false,
   }),
   end_date_time: Property.DateTime({
-    displayName: 'End date time of the event',
+    displayName: 'End Time',
     required: false,
   }),
   location: Property.ShortText({
@@ -28,29 +33,32 @@ export const updateEventProps = {
   }),
   description: Property.LongText({
     displayName: 'Description',
-    description: 'Description of the event. You can use HTML tags here.',
+    description: 'HTML tags are allowed.',
     required: false,
   }),
   colorId: googleCalendarCommon.colorId,
   attendees: Property.Array({
     displayName: 'Attendees',
-    description: 'Emails of the attendees (guests)',
+    description: 'One guest email per item.',
     required: false,
   }),
   guests_can_modify: Property.Checkbox({
-    displayName: 'Guests can modify',
+    displayName: 'Guests Can Modify',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
   guests_can_invite_others: Property.Checkbox({
-    displayName: 'Guests can invite others',
+    displayName: 'Guests Can Invite Others',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
   guests_can_see_other_guests: Property.Checkbox({
-    displayName: 'Guests can see other guests',
+    displayName: 'Guests Can See Other Guests',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
 };
 
@@ -100,7 +108,7 @@ export async function runUpdateEvent(
       summary: title ?? currentEvent.data.summary,
       attendees: attendeeFormattedList,
       description: description ?? currentEvent.data.description,
-      colorId: colorId,
+      colorId: colorId ?? currentEvent.data.colorId,
       location: location ?? currentEvent.data.location,
       start: start_date_time
         ? {
@@ -130,7 +138,7 @@ export const updateEventAction = createAction({
   auth: googleCalendarAuth,
   name: 'update_event',
   classification: 'WRITE',
-  description: 'Updates an event in Google Calendar.',
+  description: 'Updates an existing event; empty fields keep their value.',
   audience: 'human',
   aiMetadata: { description: 'Updates the fields of an existing Google Calendar event identified by calendar and event ID (title, times, location, description, color, attendees, guest permissions); unset fields retain their current values. Use to modify or reschedule an event that already exists rather than creating a new one. Requires the event ID. Idempotent: applying the same field values repeatedly leaves the event in the same state.', idempotent: true },
   props: updateEventProps,

@@ -91,8 +91,7 @@ export const newCalendar = createTrigger({
   props: {
     access_role_filter: Property.StaticMultiSelectDropdown({
       displayName: 'Access Role Filter',
-      description:
-        'Only trigger for calendars with specific access roles (optional)',
+      description: 'Leave empty to fire for every access role.',
       required: false,
       options: {
         options: [
@@ -105,13 +104,12 @@ export const newCalendar = createTrigger({
     }),
     calendar_name_filter: Property.ShortText({
       displayName: 'Calendar Name Filter',
-      description:
-        'Only trigger for calendars containing this text in name or description (optional)',
+      description: 'Only calendars whose name or description contain this.',
       required: false,
     }),
     exclude_shared: Property.Checkbox({
       displayName: 'Exclude Shared Calendars',
-      description: 'Only trigger for calendars you own, not shared calendars',
+      description: 'Fires only for calendars you own.',
       required: false,
       defaultValue: false,
     }),

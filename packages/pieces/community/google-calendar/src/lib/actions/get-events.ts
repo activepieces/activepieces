@@ -12,10 +12,11 @@ import { getEventsActionOutputSchema } from '../output-schemas';
 export const getEventsProps = {
   calendar_id: googleCalendarCommon.calendarDropdown('writer'),
   event_types: Property.StaticMultiSelectDropdown({
-    displayName: 'Event types',
-    description: 'Select event types',
-    required: true,
+    displayName: 'Event Types',
+    description: 'Only events of these types are returned.',
+    required: false,
     defaultValue: ['default', 'focusTime', 'outOfOffice'],
+    advanced: true,
     options: {
       options: [
         {
@@ -23,7 +24,7 @@ export const getEventsProps = {
           value: 'default',
         },
         {
-          label: 'Out Of Office',
+          label: 'Out of Office',
           value: 'outOfOffice',
         },
         {
@@ -39,21 +40,23 @@ export const getEventsProps = {
   }),
   search: Property.ShortText({
     displayName: 'Search Term',
+    description: 'Matches title, description, location and guests.',
     required: false,
   }),
   start_date: Property.DateTime({
-    displayName: 'Date from',
+    displayName: 'Start Time',
+    description: 'Only events that end after this time.',
     required: false,
   }),
   end_date: Property.DateTime({
-    displayName: 'Date to',
+    displayName: 'End Time',
+    description: 'Only events starting before this. Requires Start Time.',
     required: false,
   }),
   singleEvents: Property.Checkbox({
-    displayName: 'Expand Recurring Event?',
-    description:
-      'Whether to expand recurring events into instances and only return single one-off events and instances of recurring events, but not the underlying recurring events themselves.',
-    required: true,
+    displayName: 'Expand Recurring Events',
+    description: 'Returns each occurrence of a recurring event separately.',
+    required: false,
     defaultValue: false,
   }),
 };
@@ -94,8 +97,9 @@ export async function runGetEvents(
     );
   }
   // filter by event type
-  if (event_types.length > 0) {
-    url += `?${event_types.map((type) => `eventTypes=${type}`).join('&')}`;
+  const eventTypes = event_types ?? [];
+  if (eventTypes.length > 0) {
+    url += `?${eventTypes.map((type) => `eventTypes=${type}`).join('&')}`;
   }
   const request: HttpRequest<Record<string, unknown>> = {
     method: HttpMethod.GET,
@@ -113,11 +117,12 @@ export const getEvents = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_get_events',
   classification: 'SEARCH',
-  description: 'Get Events',
+  description: 'Lists events in a calendar, with optional filters.',
   audience: 'human',
   aiMetadata: { description: 'Lists events from a Google Calendar, optionally filtered by a date range, search term, and event types, and can expand recurring events into individual instances. Use to look up or browse multiple events when you do not already have a specific event ID; use Get Event by ID for a single known event. Read-only and idempotent.', idempotent: true },
-  displayName: 'Get all Events',
+  displayName: 'Get Events',
   props: getEventsProps,
   outputSchema: getEventsActionOutputSchema,
   run: runGetEvents,
 });
+

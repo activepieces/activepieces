@@ -13,21 +13,20 @@ export const getEventByIdProps = {
   calendar_id: googleCalendarCommon.calendarDropdown(),
   event_id: Property.ShortText({
     displayName: 'Event ID',
-    description:
-      'The unique ID of the event (e.g., "abc123def456"). You can find this in the event URL or from other calendar actions.',
+    description: 'Paste the ID from the event URL or a previous step.',
     required: true,
   }),
   max_attendees: Property.Number({
     displayName: 'Max Attendees',
-    description:
-      'Maximum number of attendees to include in the response. If there are more attendees, only the participant is returned.',
+    description: 'If exceeded, only the organizer is returned.',
     required: false,
+    advanced: true,
   }),
   time_zone: Property.ShortText({
     displayName: 'Time Zone',
-    description:
-      'Time zone for the response (e.g., "America/New_York", "Europe/London"). Defaults to the calendar\'s time zone if not specified.',
+    description: 'IANA name, e.g. America/New_York. Defaults to the calendar zone.',
     required: false,
+    advanced: true,
   }),
 };
 
