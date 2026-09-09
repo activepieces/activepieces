@@ -15,7 +15,7 @@ vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    agentAiUtils: { createChatModel: (args: unknown) => args },
+    aiUtils: { createModel: (args: unknown) => args },
 }))
 
 const { agentHelpers } = await import('../../../../../src/app/ee/agent/agent-helpers')

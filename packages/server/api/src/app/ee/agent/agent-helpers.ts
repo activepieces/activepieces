@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
@@ -157,7 +157,7 @@ async function resolveTierModel({ platformId, tierId, provider, providerConfigId
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     const modelId = agentModelResolution.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
     return {
-        model: agentAiUtils.createChatModel({
+        model: aiUtils.createModel({
             provider: providerConfig.provider,
             auth: providerConfig.auth,
             config: providerConfig.config,
@@ -176,7 +176,7 @@ async function resolveFastModel({ platformId, provider, providerConfigId, scope,
 
 async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    return agentAiUtils.createEmbeddingModel({
+    return aiUtils.createEmbeddingModel({
         provider: providerConfig.provider,
         auth: providerConfig.auth,
         config: providerConfig.config,

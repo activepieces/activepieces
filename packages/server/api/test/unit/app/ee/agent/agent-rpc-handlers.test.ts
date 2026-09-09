@@ -95,7 +95,7 @@ vi.mock('../../../../../src/app/mcp/mcp-server-builder', async (importOriginal) 
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    agentAiUtils: { createChatModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
+    aiUtils: { createModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
 }))
 
 type QueryBuilderMock = {
