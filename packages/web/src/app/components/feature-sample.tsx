@@ -29,54 +29,55 @@ export function FeatureSample({
     <div className="relative flex flex-1 min-h-0 min-w-0 flex-col overflow-hidden">
       <div
         aria-hidden
-        className="flex flex-1 min-h-0 min-w-0 flex-col pointer-events-none select-none [mask-image:linear-gradient(to_bottom,black_0,black_24%,transparent_44%)] [-webkit-mask-image:linear-gradient(to_bottom,black_0,black_24%,transparent_44%)]"
+        className="flex flex-1 min-h-0 min-w-0 flex-col pointer-events-none select-none opacity-25"
       >
         {children}
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 top-[44%] flex flex-col items-center gap-3 px-6 pt-4 text-center">
-        <div className="grid size-11 place-items-center rounded-xl bg-primary/10">
-          <Lock className="size-5 text-primary" />
-        </div>
-        <div className="flex max-w-md flex-col gap-1.5">
-          <span className="font-semibold">{t(title)}</span>
-          {description !== undefined && description !== '' && (
-            <span className="text-sm text-muted-foreground">
+      <div className="absolute inset-0 grid place-items-center overflow-auto p-6">
+        <div className="pointer-events-auto flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border bg-background px-8 py-9 text-center shadow-xl">
+          <div className="grid size-12 place-items-center rounded-xl bg-primary/10">
+            <Lock className="size-5.5 text-primary" />
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-lg font-semibold">{t(title)}</h2>
+            {description !== undefined && description !== '' && (
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {t(description)}
+              </p>
+            )}
+          </div>
+          {isCommunity ? (
+            <a
+              href={documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              {t('Read the docs')}
+              <ExternalLink className="size-3.5" />
+            </a>
+          ) : (
+            <Button className="w-full" onClick={() => openManagePlanDialog()}>
               {tier === undefined
-                ? t(description)
-                : `${sentence(t(description))} ${t('Included with {tier}.', {
-                    tier: TIER_LABELS[tier],
-                  })}`}
-            </span>
+                ? t('Upgrade to unlock')
+                : t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
+            </Button>
+          )}
+          {tier !== undefined && !isCommunity && (
+            <>
+              <div className="h-px w-full bg-border" />
+              <span className="text-xs text-muted-foreground">
+                {t('Included with the {tier} plan and above.', {
+                  tier: TIER_LABELS[tier],
+                })}
+              </span>
+            </>
           )}
         </div>
-        {isCommunity ? (
-          <a
-            href={documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pointer-events-auto mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-          >
-            {t('Read the docs')}
-            <ExternalLink className="size-3.5" />
-          </a>
-        ) : (
-          <Button
-            className="pointer-events-auto mt-1"
-            onClick={() => openManagePlanDialog()}
-          >
-            {tier === undefined
-              ? t('Upgrade to unlock')
-              : t('Upgrade to {tier}', { tier: TIER_LABELS[tier] })}
-          </Button>
-        )}
       </div>
     </div>
   );
-}
-
-function sentence(text: string) {
-  return /[.!?]$/.test(text.trim()) ? text.trim() : `${text.trim()}.`;
 }
 
 const ENTERPRISE_DOCUMENTATION_URL =

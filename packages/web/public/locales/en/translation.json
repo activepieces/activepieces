@@ -2992,5 +2992,6 @@
   "Upgrade to {tier}": "Upgrade to {tier}",
   "What you're seeing is sample data": "What you're seeing is sample data",
   "Upgrade to unlock": "Upgrade to unlock",
-  "Included with {tier}.": "Included with {tier}."
+  "Included with {tier}.": "Included with {tier}.",
+  "Included with the {tier} plan and above.": "Included with the {tier} plan and above."
 }
