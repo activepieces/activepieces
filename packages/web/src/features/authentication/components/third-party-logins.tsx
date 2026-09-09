@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { authenticationApi } from '@/api/authentication-api';
 import GoogleIcon from '@/assets/img/custom/auth/google-icon.svg';
@@ -16,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { oauth2Utils } from '@/features/connections/utils/oauth2-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { federatedLoginRedirect } from '@/lib/federated-login-redirect';
+import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
 
 // Mirrors the render gates below so callers can hide surrounding chrome — an
 // "or" divider — or place each provider themselves. SAML is offered on cloud
@@ -63,6 +66,7 @@ const ThirdPartyLogin = React.memo(
     const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
     const isCloud = edition === ApEdition.CLOUD;
     const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
+    const [searchParams] = useSearchParams();
     const { capture } = useTelemetry();
     const availability = useThirdPartyAvailability();
     const showProviders =
@@ -139,6 +143,7 @@ const ThirdPartyLogin = React.memo(
                 name: TelemetryEventName.FEDERATED_LOGIN_STARTED,
                 payload: { provider: 'saml' },
               });
+              federatedLoginRedirect.save(searchParams.get(FROM_QUERY_PARAM));
               window.location.href = '/api/v1/authn/saml/login';
             }}
           >

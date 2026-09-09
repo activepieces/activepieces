@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
 import { CheckCircle, FolderKanban, Lock, Plug, Workflow } from 'lucide-react';
@@ -54,14 +55,19 @@ function McpAuthorizePage() {
     enabled: isLoggedIn && !!authRequestId && !isPlatformScoped,
   });
 
-  const approveMutation = useMutation({
-    mutationFn: (body: { authRequestId: string; projectId?: string }) =>
+  const approveMutation = useMutation<
+    { redirectUrl: string },
+    AxiosError,
+    { authRequestId: string; projectId?: string }
+  >({
+    mutationFn: (body) =>
       api.post<{ redirectUrl: string }>('/v1/mcp-oauth/approve', body),
     onSuccess: (data) => {
       window.location.href = data.redirectUrl;
       setAuthorized(true);
     },
   });
+  const isAuthRequestExpired = approveMutation.error?.response?.status === 400;
 
   const { projectsMap, options } = useMemo(() => {
     const list = projectsPage?.data ?? [];
@@ -192,7 +198,11 @@ function McpAuthorizePage() {
 
           {approveMutation.isError && (
             <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
-              {t('Authorization failed. Please try again.')}
+              {isAuthRequestExpired
+                ? t(
+                    'This authorization request has expired. Start the connection again from your application.',
+                  )
+                : t('Authorization failed. Please try again.')}
             </div>
           )}
 

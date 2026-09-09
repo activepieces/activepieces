@@ -203,6 +203,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.MCP_URL,
+                value: domainHelper.getMcpUrl({ path: '' }),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.FLOW_RUN_TIME_SECONDS,
                 value: system.getNumberOrThrow(AppSystemProp.FLOW_TIMEOUT_SECONDS),
                 created,

@@ -64,6 +64,7 @@ protect connections and tokens, and telemetry.
 | ❗ `AP_ENCRYPTION_KEY` | 32-character (16-byte) hexadecimal key used to encrypt connections. Generate one with `openssl rand -hex 16`. | `None` |
 | ❗ `AP_JWT_SECRET` | 32-character hexadecimal key used to sign JWT tokens. Generate one with `openssl rand -hex 32`. | `None` |
 | `AP_CONFIG_PATH` | Path where the PGLite database and local settings are stored. | `~/.activepieces` |
+| `AP_MCP_URL` | Public base URL for the MCP server, when you want MCP traffic on its own hostname (e.g. `https://mcp.example.com`). Defaults to `AP_FRONTEND_URL`. | `None` |
 | `AP_INTERNAL_URL` | (Beta) Internal URL used for SSO authentication, e.g. `https://demo.activepieces.com/api`. | `None` |
 | `AP_TELEMETRY_ENABLED` | Starting value for product analytics. Each platform's setting is created from it on first read; after that, change it at Platform → Infrastructure → Configurations. | `true` |
 
@@ -76,6 +77,27 @@ The default URL is the machine's IP address. If that address isn't reachable
 from the internet, set `AP_FRONTEND_URL` explicitly. For local development you
 can expose the frontend port (4200) with a tunneling service such as
 [ngrok](https://ngrok.com/).
+
+### Serving MCP from its own hostname
+
+Set `AP_MCP_URL` when you want MCP traffic separated from the main app — usually
+to apply distinct WAF rules or to observe it independently. Discovery, the
+`WWW-Authenticate` challenge and the token endpoint then advertise that hostname
+instead of `AP_FRONTEND_URL`.
+
+That hostname only needs to route `/mcp`, `/mcp/platform`, `/authorize`,
+`/token`, `/register`, `/revoke` and `/.well-known/*`. It does **not** need to
+serve the web app or `/api`: the consent screen is served from `AP_FRONTEND_URL`,
+so users sign in once, on the main host.
+
+`AP_MCP_URL` may carry a path prefix, on the same terms as `AP_FRONTEND_URL` —
+your proxy is expected to strip it before forwarding. It must use a different
+hostname from `AP_FRONTEND_URL`; sharing a hostname with a different path is
+rejected at startup, because once the proxy has stripped the prefix the server
+cannot tell the two apart.
+
+Setting `AP_MCP_URL` also changes the `mcpServerUrl` returned to embedded
+clients by the project MCP token endpoint.
 
 ---
 
