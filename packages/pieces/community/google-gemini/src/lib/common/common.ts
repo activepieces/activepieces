@@ -30,7 +30,15 @@ const isTtsModel = (model: GeminiModel): boolean =>
 const isVeoModel = (model: GeminiModel): boolean =>
   model.name.toLowerCase().includes('veo');
 
-const listAllModels = async ({
+const isImageModel = (model: GeminiModel): boolean =>
+  model.name.toLowerCase().includes('image') &&
+  !isTtsModel(model) &&
+  !isVeoModel(model);
+
+const isEmbeddingModel = (model: GeminiModel): boolean =>
+  model.name.toLowerCase().includes('embedding');
+
+export const listAllModels = async ({
   auth,
 }: {
   auth: GeminiAuth;
@@ -107,11 +115,27 @@ export const getGeminiVideoModelOptions = async ({
   auth?: GeminiAuth;
 }) => fetchModelOptions({ auth, filter: isVeoModel });
 
+export const getGeminiImageModelOptions = async ({
+  auth,
+}: {
+  auth?: GeminiAuth;
+}) => fetchModelOptions({ auth, filter: isImageModel });
+
+export const getGeminiEmbeddingModelOptions = async ({
+  auth,
+}: {
+  auth?: GeminiAuth;
+}) => fetchModelOptions({ auth, filter: isEmbeddingModel });
+
 type GeminiAuth = AppConnectionValueForAuthProperty<typeof googleGeminiAuth>;
 
-type GeminiModel = {
+export type GeminiModel = {
   name: string;
   displayName?: string;
+  description?: string;
+  version?: string;
+  inputTokenLimit?: number;
+  outputTokenLimit?: number;
   supportedGenerationMethods?: string[];
 };
 
