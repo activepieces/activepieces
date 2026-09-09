@@ -324,4 +324,10 @@ describe('tryParseFriendlyPieceError', () => {
         expect(tryParseFriendlyPieceError(null)).toBeNull()
         expect(tryParseFriendlyPieceError(undefined)).toBeNull()
     })
+
+    it('returns null safely for gateway timeout plain text strings without crashing', () => {
+        expect(tryParseFriendlyPieceError('504 Gateway Time-out')).toBeNull()
+        expect(tryParseFriendlyPieceError('ECONNRESET')).toBeNull()
+    })
 })
+
