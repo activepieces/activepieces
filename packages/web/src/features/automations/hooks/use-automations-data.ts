@@ -194,11 +194,20 @@ export function useAutomationsData({
     let folders = foldersQuery.data ?? [];
     let rootFlows = rootFlowsQuery.data?.data ?? [];
     let rootTables = rootTablesQuery.data?.data ?? [];
-    const folderContents = stripSkippedFolderContents({
+    const folderContents = filterFolderContents({
       folderContents: folderContentsQuery.data ?? new Map(),
       skipFlows,
       skipTables,
+      connectionFilter: filters.connectionFilter,
     });
+    const effectiveFolderCounts = hasConnectionFilter
+      ? new Map(
+          [...folderContents].map(([folderId, content]) => [
+            folderId,
+            content.flows.length + content.tables.length,
+          ]),
+        )
+      : folderCounts;
 
     const hasFolderFilter = filters.folderFilter.length > 0;
 
@@ -223,7 +232,7 @@ export function useAutomationsData({
         pinnedList,
         searchTerm: filters.searchTerm,
         folderContents,
-        folderCounts,
+        folderCounts: effectiveFolderCounts,
         sort,
       });
       return { treeItems: items, totalPageItems: totalItems };
@@ -262,6 +271,8 @@ export function useAutomationsData({
     isFiltered,
     filters.searchTerm,
     filters.folderFilter,
+    filters.connectionFilter,
+    hasConnectionFilter,
     pinnedList,
     sort,
     skipFlows,
@@ -373,23 +384,31 @@ function buildFolderContentsMap(
   return map;
 }
 
-function stripSkippedFolderContents({
+function filterFolderContents({
   folderContents,
   skipFlows,
   skipTables,
+  connectionFilter,
 }: {
   folderContents: FolderContentsMap;
   skipFlows: boolean;
   skipTables: boolean;
+  connectionFilter: string[];
 }): FolderContentsMap {
-  if (!skipFlows && !skipTables) {
+  if (!skipFlows && !skipTables && connectionFilter.length === 0) {
     return folderContents;
   }
+  const connectionSet = new Set(connectionFilter);
+  const keepFlow = (flow: PopulatedFlow) =>
+    connectionSet.size === 0 ||
+    flow.version.connectionIds.some((connectionId) =>
+      connectionSet.has(connectionId),
+    );
   return new Map(
     [...folderContents].map(([folderId, content]) => [
       folderId,
       {
-        flows: skipFlows ? [] : content.flows,
+        flows: skipFlows ? [] : content.flows.filter(keepFlow),
         tables: skipTables ? [] : content.tables,
       },
     ]),

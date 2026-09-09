@@ -59,6 +59,17 @@ const flowInFolder = {
   ...flow,
   id: 'flow_2',
   folderId: 'folder_1',
+  version: {
+    displayName: 'Linear sync flow',
+    connectionIds: ['conn_external_id'],
+  },
+} as unknown as PopulatedFlow;
+
+const unrelatedFlowInFolder = {
+  ...flow,
+  id: 'flow_3',
+  folderId: 'folder_1',
+  version: { displayName: 'Unrelated flow', connectionIds: [] },
 } as unknown as PopulatedFlow;
 
 const tableInFolder = {
@@ -129,7 +140,7 @@ describe('useAutomationsData', () => {
     listFolders.mockResolvedValue([folder]);
     listFlows.mockImplementation((request: { folderIds?: string[] }) =>
       Promise.resolve({
-        data: request.folderIds ? [flowInFolder] : [],
+        data: request.folderIds ? [flowInFolder, unrelatedFlowInFolder] : [],
         next: null,
         previous: null,
       }),
@@ -156,5 +167,10 @@ describe('useAutomationsData', () => {
     expect(
       result.current.treeItems.filter((item) => item.type === 'table'),
     ).toEqual([]);
+    const flowItems = result.current.treeItems.filter(
+      (item) => item.type === 'flow',
+    );
+    expect(flowItems).toHaveLength(1);
+    expect(flowItems[0].id).toBe('flow_2');
   });
 });
