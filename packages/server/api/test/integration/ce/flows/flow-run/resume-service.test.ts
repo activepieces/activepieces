@@ -185,7 +185,7 @@ describe('resume guards against a cancellation in flight', () => {
             projectId: ctx.project.id,
             flowRunStatus: FlowRunStatus.PAUSED,
         })
-        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+        await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
         await queueTerminalStatus({ flowRunId: flowRun.id, projectId: ctx.project.id })
 
         const { stale } = await resumeService(app.log).legacyResume({
@@ -201,7 +201,7 @@ describe('resume guards against a cancellation in flight', () => {
             projectId: ctx.project.id,
             flowRunStatus: FlowRunStatus.PAUSED,
         })
-        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+        await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
         await queueTerminalStatus({ flowRunId: flowRun.id, projectId: ctx.project.id })
 
         const response = await resumeService(app.log).legacySyncResume({
@@ -236,7 +236,7 @@ describe('resume guards against a cancellation in flight', () => {
             projectId: ctx.project.id,
             flowRunStatus: FlowRunStatus.PAUSED,
         })
-        await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+        await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
 
         const { stale } = await resumeService(app.log).legacyResume({
             flowRunId: flowRun.id,

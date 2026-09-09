@@ -16,7 +16,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         })) {
             return
         }
-        await waitpointService(log).deleteByFlowRunId(flowRun.id)
+        await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
         await flowRunHooks(log).onFinish(flowRun)
         applicationEvents(log).sendWorkerEvent({
             projectId: flowRun.projectId,
