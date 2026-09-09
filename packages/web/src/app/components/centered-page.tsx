@@ -1,8 +1,14 @@
 import React from 'react';
 
+import {
+  SampleDataNotice,
+  SampleTierPill,
+} from '@/components/custom/feature-sample';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+
+import { SampleUpgradeButton } from './feature-sample';
 
 export const CenteredPage = ({
   title,
@@ -24,16 +30,23 @@ export const CenteredPage = ({
       <>
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
-            {title !== undefined && (
-              <h1 className="text-xl font-medium">{title}</h1>
-            )}
+            <div className="flex items-center gap-2">
+              {title !== undefined && (
+                <h1 className="text-xl font-medium">{title}</h1>
+              )}
+              <SampleTierPill />
+            </div>
             {description && (
               <div className="text-sm text-muted-foreground">{description}</div>
             )}
           </div>
-          {actions && <div className="shrink-0">{actions}</div>}
+          <div className="flex shrink-0 items-center gap-2">
+            <SampleUpgradeButton />
+            {actions}
+          </div>
         </div>
         <Separator className="my-4" />
+        <SampleDataNotice className="mb-4 rounded-md border" />
       </>
     );
 
