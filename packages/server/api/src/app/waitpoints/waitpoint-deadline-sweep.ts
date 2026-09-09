@@ -4,8 +4,6 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
 import { systemJobIds, SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
@@ -37,14 +35,14 @@ export async function sweepOverdueDeadlines({ log, pageSize }: SweepOverdueDeadl
 }
 
 async function runSweepPages({ log, pageSize }: RunSweepPagesParams): Promise<SweepOutcome> {
-    const window = buildScanWindow()
+    const now = dayjs().toISOString()
     const armed: string[] = []
     const deadLettered: Waitpoint[] = []
     let scannedCount = 0
     let cursor: DeadlineCursor | undefined = undefined
 
     for (let page = 0; page < MAX_SCAN_PAGES_PER_TICK; page++) {
-        const overdue = await findOverdueWaitpoints({ window, cursor, pageSize })
+        const overdue = await findOverdueWaitpoints({ now, cursor, pageSize })
         if (overdue.length === 0) {
             return { armed, deadLettered, scannedCount, exhaustedPageBudget: false }
         }
@@ -66,23 +64,16 @@ async function runSweepPages({ log, pageSize }: RunSweepPagesParams): Promise<Sw
     return { armed, deadLettered, scannedCount, exhaustedPageBudget: true }
 }
 
-function buildScanWindow(): ScanWindow {
-    const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    const now = dayjs()
-    return { now: now.toISOString(), floor: now.subtract(maxDurationInDays, 'day').toISOString() }
-}
-
 function toCursor(waitpoint: Waitpoint): DeadlineCursor | undefined {
     return isNil(waitpoint.resumeDateTime) ? undefined : { resumeDateTime: waitpoint.resumeDateTime, id: waitpoint.id }
 }
 
-async function findOverdueWaitpoints({ window, cursor, pageSize }: FindOverdueWaitpointsParams): Promise<Waitpoint[]> {
+async function findOverdueWaitpoints({ now, cursor, pageSize }: FindOverdueWaitpointsParams): Promise<Waitpoint[]> {
     const query = waitpointRepo()
         .createQueryBuilder('waitpoint')
         .innerJoin('flow_run', 'flowRun', '"flowRun"."id" = "waitpoint"."flowRunId"')
         .where('"waitpoint"."status" = :status', { status: WaitpointStatus.PENDING })
-        .andWhere('"waitpoint"."resumeDateTime" < :now', { now: window.now })
-        .andWhere('"waitpoint"."resumeDateTime" > :floor', { floor: window.floor })
+        .andWhere('"waitpoint"."resumeDateTime" < :now', { now })
         .andWhere('"waitpoint"."deadLetteredAt" IS NULL')
         .andWhere('"flowRun"."status" = :runStatus', { runStatus: FlowRunStatus.PAUSED })
     if (!isNil(cursor)) {
@@ -171,11 +162,6 @@ type SweepOutcome = {
     exhaustedPageBudget: boolean
 }
 
-type ScanWindow = {
-    now: string
-    floor: string
-}
-
 type DeadlineCursor = {
     resumeDateTime: string
     id: string
@@ -187,7 +173,7 @@ type DeadlineProbe = {
 }
 
 type FindOverdueWaitpointsParams = {
-    window: ScanWindow
+    now: string
     cursor: DeadlineCursor | undefined
     pageSize: number
 }

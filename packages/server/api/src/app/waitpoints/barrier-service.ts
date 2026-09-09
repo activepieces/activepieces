@@ -6,6 +6,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
+import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
@@ -23,6 +24,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     async create(params: CreateBarrierParams): Promise<CreateBarrierResult> {
         const labels = params.signalLabels ?? []
         await assertSignalCountWithinLimit({ signalCount: labels.length, platformId: params.platformId, log })
+        const flowRun = await flowRunRepo().findOneByOrFail({ id: params.flowRunId, projectId: params.projectId })
 
         const creation = await transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
@@ -45,7 +47,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
                 type: PauseType.BARRIER,
                 version: params.version,
                 status: WaitpointStatus.PENDING,
-                resumeDateTime: defaultBarrierDeadline(),
+                resumeDateTime: defaultBarrierDeadline({ flowRunCreated: flowRun.created }),
                 responseToSend: params.responseToSend ?? null,
                 workerHandlerId: params.workerHandlerId ?? null,
                 httpRequestId: params.httpRequestId ?? null,
@@ -240,9 +242,9 @@ async function assertSignalCountWithinLimit({ signalCount, platformId, log }: As
     }
 }
 
-function defaultBarrierDeadline(): string {
+function defaultBarrierDeadline({ flowRunCreated }: DefaultBarrierDeadlineParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
-    return dayjs().add(maxDurationInDays, 'day').toISOString()
+    return dayjs(flowRunCreated).add(maxDurationInDays, 'day').toISOString()
 }
 
 function readStoredSummary(waitpoint: Waitpoint | null): BarrierSummary | null {
@@ -335,4 +337,8 @@ type AssertSignalCountWithinLimitParams = {
     signalCount: number
     platformId: string
     log: FastifyBaseLogger
+}
+
+type DefaultBarrierDeadlineParams = {
+    flowRunCreated: string
 }

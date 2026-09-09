@@ -93,7 +93,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 async function serveConfirmationPage({ flowRunId, waitpointId, url, queryParams, log, reply }: ConfirmationPageParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
     const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
-    const isOpen = !isNil(waitpoint) && waitpoint.type !== PauseType.BARRIER && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
+    const isOpen = !isNil(waitpoint) && waitpoint.type !== PauseType.BARRIER && waitpoint.status === WaitpointStatus.PENDING && isResumableRunStatus(flowRun.status)
     if (!isOpen) {
         await replyWithAlreadyResponded({ projectId: flowRun.projectId, log, reply })
         return
@@ -193,7 +193,7 @@ async function handleSignalDecision({ flowRunId, signalId, action, body, headers
 }
 
 async function resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus, log }: ResolveOpenSignalParams): Promise<OpenSignal | null> {
-    if (flowRunStatus !== FlowRunStatus.PAUSED) {
+    if (!isResumableRunStatus(flowRunStatus)) {
         return null
     }
     const signal = await barrierService(log).findSignalById({ signalId, projectId })
@@ -205,6 +205,10 @@ async function resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus
         return null
     }
     return { signal, barrier }
+}
+
+function isResumableRunStatus(status: FlowRunStatus): boolean {
+    return RESUMABLE_RUN_STATUSES.includes(status)
 }
 
 function isReasonMissing({ reasonRequiredOn, approved, reason }: IsReasonMissingParams): boolean {
@@ -353,6 +357,8 @@ const V0ResumeFlowRunRequest = {
         }),
     },
 }
+
+const RESUMABLE_RUN_STATUSES = [FlowRunStatus.PAUSED, FlowRunStatus.RUNNING, FlowRunStatus.QUEUED]
 
 const CONFIRM_TITLE = 'Confirm your response'
 const CONFIRM_MESSAGE = 'A flow is paused and waiting for your response. Please confirm to continue.'
