@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 
+import { LimitsSection } from './limits-section';
 import { TelemetrySection } from './telemetry-section';
 
 export const ConfigurationsPage = () => {
@@ -95,7 +96,10 @@ const ConfigurationsContent = ({
             </Button>
           }
         >
-          <TelemetrySection control={form.control} disabled={isPending} />
+          <div className="flex flex-col gap-6">
+            <TelemetrySection control={form.control} disabled={isPending} />
+            <LimitsSection control={form.control} disabled={isPending} />
+          </div>
         </CenteredPage>
       </form>
     </Form>
@@ -126,6 +130,7 @@ const toFormValues = (
 ): ConfigurationsFormValues => ({
   isProductTelemetryEnabled: configuration.isProductTelemetryEnabled,
   isInfraSetupTelemetryEnabled: configuration.isInfraSetupTelemetryEnabled,
+  maxBarrierSignals: configuration.maxBarrierSignals,
 });
 
 export const ConfigurationsFormValues =

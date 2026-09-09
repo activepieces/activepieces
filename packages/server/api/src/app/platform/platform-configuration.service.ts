@@ -41,6 +41,14 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         return configuration.isProductTelemetryEnabled
     },
 
+    async maxBarrierSignals({ platformId }: GetOrCreateParams): Promise<number> {
+        if (system.getEdition() === ApEdition.CLOUD) {
+            return system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS)
+        }
+        const configuration = await this.getOrCreateForPlatform({ platformId })
+        return configuration.maxBarrierSignals
+    },
+
     async filterProjectsWithProductTelemetryEnabled({ projectIds }: FilterProjectsParams): Promise<string[]> {
         if (projectIds.length === 0) {
             return []
@@ -83,11 +91,12 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
         return platformIds.filter((platformId) => !optedOutIds.has(platformId))
     },
 
-    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled }: UpdateParams): Promise<PlatformConfiguration> {
+    async update({ platformId, isProductTelemetryEnabled, isInfraSetupTelemetryEnabled, maxBarrierSignals }: UpdateParams): Promise<PlatformConfiguration> {
         await this.getOrCreateForPlatform({ platformId })
         const patch = {
             ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
             ...spreadIfNotUndefined('isInfraSetupTelemetryEnabled', isInfraSetupTelemetryEnabled),
+            ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
         }
         if (!isEmpty(patch)) {
             await platformConfigurationRepo().update({ platformId }, patch)
@@ -98,10 +107,12 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
 
 async function createInitialConfiguration({ platformId }: GetOrCreateParams): Promise<PlatformConfiguration> {
     const isProductTelemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
+    const maxBarrierSignals = system.getNumber(AppSystemProp.MAX_BARRIER_SIGNALS)
     return platformConfigurationRepo().save({
         id: apId(),
         platformId,
         ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
+        ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
     })
 }
 
