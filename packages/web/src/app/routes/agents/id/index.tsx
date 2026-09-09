@@ -50,7 +50,7 @@ const buildCapabilityNote = (agent: Agent): string => {
   });
 };
 
-type OpenPanel = 'conversations' | 'configure' | null;
+type OpenPanel = 'conversations' | 'configure' | 'none';
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
 const SLIDING_ASIDE =
@@ -131,7 +131,8 @@ const AgentEditorContent = () => {
   });
 
   const needsModel = agent !== undefined && needsAModel(agent);
-  const panel = openPanel ?? (needsModel ? 'configure' : 'conversations');
+  const panel: OpenPanel =
+    openPanel ?? (needsModel ? 'configure' : 'conversations');
   const configureOpen = panel === 'configure';
   const conversationsOpen = panel === 'conversations';
   if (configureOpen && !configureMounted) {
@@ -218,7 +219,7 @@ const AgentEditorContent = () => {
                   selectedId={openedConversationId ?? conversationId ?? null}
                   onSelect={openConversation}
                   onNewChat={startNewConversation}
-                  onCollapse={() => setOpenPanel(null)}
+                  onCollapse={() => setOpenPanel('none')}
                 />
               </div>
             ) : (
@@ -237,14 +238,11 @@ const AgentEditorContent = () => {
               agentId={agent.id}
               conversationId={openedConversationId ?? null}
               onConversationCreated={writeConversationParam}
-              onTurnEnd={() => {
-                if (!configureMounted) {
-                  return;
-                }
+              onTurnEnd={() =>
                 void queryClient.invalidateQueries({
                   queryKey: ['agents', 'one', agent.id],
-                });
-              }}
+                })
+              }
               placeholder={t('Ask {name}...', { name: agent.displayName })}
               footerNote={buildCapabilityNote(agent)}
               emptyState={
@@ -276,7 +274,7 @@ const AgentEditorContent = () => {
             <AgentConfigurePanel
               key={agent.id}
               agent={agent}
-              onExit={() => setOpenPanel(null)}
+              onExit={() => setOpenPanel('none')}
             />
           )}
         </div>

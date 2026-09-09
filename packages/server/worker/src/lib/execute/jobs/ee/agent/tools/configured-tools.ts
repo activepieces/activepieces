@@ -161,9 +161,10 @@ export function createConfiguredPieceTools({ tools, runPieceTool, taintState, ev
     ]))
 }
 
-export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, log }: {
+export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, taintState, log }: {
     tools: AgentKnowledgeBaseTool[]
     runKnowledgeBaseTool: (input: { toolName: string, knowledgeBaseFileId: string, query: string }) => Promise<{ result: unknown }>
+    taintState: TaintState
     log: FastifyBaseLogger
 }): ToolSet {
     let callsMade = 0
@@ -187,6 +188,7 @@ export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool
                         log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
                         return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
                     }
+                    taintState.tainted = true
                     return truncateLargeResult(data.result)
                 },
             }),
@@ -195,9 +197,10 @@ export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool
 
 const jsonSchema7Shape = z.custom<JSONSchema7>()
 
-export function createConfiguredFlowTools({ tools, runFlowTool, log }: {
+export function createConfiguredFlowTools({ tools, runFlowTool, taintState, log }: {
     tools: ResolvedAgentFlowTool[]
     runFlowTool: (input: { toolName: string, flowId: string, flowVersionId?: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
+    taintState: TaintState
     log: FastifyBaseLogger
 }): ToolSet {
     let callsMade = 0
@@ -224,6 +227,7 @@ export function createConfiguredFlowTools({ tools, runFlowTool, log }: {
                     log.warn({ tool: { name: configured.toolName }, flow: { id: configured.flowId } }, '[configuredFlowTool] Flow reported a failure')
                     return { content: [{ type: 'text', text: `That flow failed: ${extractUserFacingError({ result: data.result })}` }] }
                 }
+                taintState.tainted = true
                 return truncateLargeResult(data.result)
             },
         }),

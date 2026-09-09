@@ -24,6 +24,18 @@ function modelPickChanged({
   );
 }
 
+function serverMovedWhileTyping({
+  fromServer,
+  lastSeen,
+  unsavedTyping,
+}: {
+  fromServer: unknown;
+  lastSeen: unknown;
+  unsavedTyping: boolean;
+}): boolean {
+  return unsavedTyping && !sameConfig({ left: fromServer, right: lastSeen });
+}
+
 function leaveGuard({
   blockerState,
   exitRequested,
@@ -57,6 +69,7 @@ function createWriteLock(): WriteLock {
 
 export const agentEditState = {
   sameConfig,
+  serverMovedWhileTyping,
   modelPickChanged,
   leaveGuard,
   createWriteLock,

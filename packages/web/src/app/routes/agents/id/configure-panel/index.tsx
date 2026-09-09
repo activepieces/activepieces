@@ -583,9 +583,20 @@ const AgentConfigurePanel = ({
   const writeLock = useRef(agentEditState.createWriteLock());
 
   const lastFromServer = useRef(formValuesOf(agent));
+  const [movedUnderneath, setMovedUnderneath] = useState(false);
 
   useEffect(() => {
     const fromServer = formValuesOf(agent);
+    if (
+      agentEditState.serverMovedWhileTyping({
+        fromServer,
+        lastSeen: lastFromServer.current,
+        unsavedTyping,
+      })
+    ) {
+      setMovedUnderneath(true);
+      return;
+    }
     if (
       agentEditState.sameConfig({
         left: fromServer,
@@ -594,10 +605,17 @@ const AgentConfigurePanel = ({
     ) {
       return;
     }
-    if (unsavedTyping) return;
     lastFromServer.current = fromServer;
+    setMovedUnderneath(false);
     form.reset(fromServer);
   }, [agent, unsavedTyping, form]);
+
+  const takeTheirVersion = () => {
+    const fromServer = formValuesOf(agent);
+    lastFromServer.current = fromServer;
+    setMovedUnderneath(false);
+    form.reset(fromServer);
+  };
 
   const setServerError = (error: Error, fallback: string) =>
     form.setError('root.serverError', {
@@ -632,7 +650,7 @@ const AgentConfigurePanel = ({
 
   const saveAndGoLive = form.handleSubmit(handleSubmit, releaseWrite);
   const submitIfIdle = (event: React.FormEvent<HTMLFormElement>) => {
-    if (!claimWrite()) {
+    if (movedUnderneath || !claimWrite()) {
       event.preventDefault();
       return;
     }
@@ -679,14 +697,25 @@ const AgentConfigurePanel = ({
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              {hasChanges && (
+              {movedUnderneath ? (
                 <Button
-                  type="submit"
-                  loading={updateAgent.isPending}
-                  className="h-[34px] shrink-0 rounded-lg px-4 animate-in fade-in duration-200"
+                  type="button"
+                  variant="outline"
+                  onClick={takeTheirVersion}
+                  className="h-[34px] shrink-0 rounded-lg px-4"
                 >
-                  {t('Publish')}
+                  {t('Changed in chat — reload')}
                 </Button>
+              ) : (
+                hasChanges && (
+                  <Button
+                    type="submit"
+                    loading={updateAgent.isPending}
+                    className="h-[34px] shrink-0 rounded-lg px-4 animate-in fade-in duration-200"
+                  >
+                    {t('Publish')}
+                  </Button>
+                )
               )}
               <Button
                 type="button"

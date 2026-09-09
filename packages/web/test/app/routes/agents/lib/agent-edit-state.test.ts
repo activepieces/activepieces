@@ -198,3 +198,37 @@ describe('agentEditState.modelPickChanged', () => {
     ).toBe(true);
   });
 });
+
+describe('serverMovedWhileTyping', () => {
+  const config = (instructions: string) => ({ draft: { instructions } });
+
+  it('is true when the agent changed under a form someone is typing in', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('chat changed this'),
+        lastSeen: config('what was there'),
+        unsavedTyping: true,
+      }),
+    ).toBe(true);
+  });
+
+  it('is false when nothing moved, so a refetch of the same values is not a conflict', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('same'),
+        lastSeen: config('same'),
+        unsavedTyping: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('is false when nobody is typing, because the form can simply take the new values', () => {
+    expect(
+      agentEditState.serverMovedWhileTyping({
+        fromServer: config('chat changed this'),
+        lastSeen: config('what was there'),
+        unsavedTyping: false,
+      }),
+    ).toBe(false);
+  });
+});
