@@ -30,25 +30,29 @@ export const httpSendRequestAction = createAction({
   name: 'send_request',
   classification: 'WRITE',
   displayName: 'Send HTTP request',
-  description: 'Send HTTP request',
+  description: 'Call any URL with a chosen method, optional authentication and body.',
   aiMetadata: { description: 'Sends an HTTP request to any URL with a chosen method, optional Basic or Bearer auth, an optional JSON, raw or multipart body, and can retry or continue the flow on 4xx/5xx. Use it as the generic escape hatch for an API with no dedicated piece — prefer that app\'s own piece when one exists, and Parse URL to pull a URL apart without calling it. Requires an absolute URL and a method; not idempotent, since a call\'s effect follows the method and POST/PATCH-style calls mutate remote data.', idempotent: false },
   props: {
     method: httpMethodDropdown,
     url: Property.ShortText({
       displayName: 'URL',
+      description: 'The full URL to call, including https:// or http://',
       required: true,
+      placeholder: 'https://api.example.com/v1/users',
     }),
     headers: Property.Object({
       displayName: 'Headers',
-      required: true,
+      description: 'Sent with the request as key-value pairs.',
+      required: false,
     }),
     queryParams: Property.Object({
       displayName: 'Query params',
-      required: true,
+      description: 'Appended to the URL as a query string.',
+      required: false,
     }),
     authType: Property.StaticDropdown<AuthType>({
       displayName: 'Authentication',
-      required: true,
+      required: false,
       defaultValue: AuthType.NONE,
       options: {
         disabled: false,
@@ -64,68 +68,45 @@ export const httpSendRequestAction = createAction({
       required: false,
       auth: PieceAuth.None(),
       refreshers: ['authType'],
-      props: async ({ authType }) => {
-        if (!authType) {
-          return {};
+      props: async ({ authType }): Promise<DynamicPropsValue> => {
+        if (authType === AuthType.BASIC) {
+          return {
+            username: Property.ShortText({
+              displayName: 'Username',
+              description: 'The username for authentication.',
+              required: true,
+            }),
+            password: Property.ShortText({
+              displayName: 'Password',
+              description: 'Stored in the flow and visible in exports. Prefer HTTP (OAuth2).',
+              required: true,
+            }),
+          };
         }
-        const authTypeEnum = authType.toString() as AuthType;
-        let fields: DynamicPropsValue = {};
-        switch (authTypeEnum) {
-          case AuthType.NONE:
-            fields = {};
-            break;
-          case AuthType.BASIC:
-            fields = {
-              username: Property.ShortText({
-                displayName: 'Username',
-                description: 'The username to use for authentication.',
-                required: true,
-              }),
-              password: Property.ShortText({
-                displayName: 'Password',
-                description: 'The password to use for authentication.',
-                required: true,
-              }),
-            };
-            break;
-          case AuthType.BEARER_TOKEN:
-            fields = {
-              token: Property.ShortText({
-                displayName: 'Token',
-                description: 'The Bearer token to use for authentication.',
-                required: true,
-              }),
-            };
-            break;
-          default:
-            throw new Error('Invalid authentication type');
+        if (authType === AuthType.BEARER_TOKEN) {
+          return {
+            token: Property.ShortText({
+              displayName: 'Token',
+              description: 'Stored in the flow and visible in exports. Prefer HTTP (OAuth2).',
+              required: true,
+            }),
+          };
         }
-        return fields;
+        return {};
       },
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How to encode the request body. Leave as None for GET requests.',
       required: false,
       defaultValue: 'none',
       options: {
         disabled: false,
         options: [
-          {
-            label: 'None',
-            value: 'none',
-          },
-          {
-            label: 'Form Data',
-            value: 'form_data',
-          },
-          {
-            label: 'JSON',
-            value: 'json',
-          },
-          {
-            label: 'Raw',
-            value: 'raw',
-          },
+          { label: 'None', value: 'none' },
+          { label: 'JSON', value: 'json' },
+          { label: 'Form Data', value: 'form_data' },
+          { label: 'Raw', value: 'raw' },
         ],
       },
     }),
@@ -134,36 +115,32 @@ export const httpSendRequestAction = createAction({
       refreshers: ['body_type'],
       required: false,
       auth: PieceAuth.None(),
-      props: async ({ body_type }) => {
-        if (!body_type) return {};
-
-        const bodyTypeInput = body_type as unknown as string;
-
-        const fields: DynamicPropsValue = {};
-
-        switch (bodyTypeInput) {
-          case 'none':
-            break;
-          case 'json':
-            fields['data'] = Property.Json({
+      props: async ({ body_type }): Promise<DynamicPropsValue> => {
+        if (body_type === 'json') {
+          return {
+            data: Property.Json({
               displayName: 'JSON Body',
               required: true,
-            });
-            break;
-          case 'raw':
-            fields['data'] = Property.LongText({
+            }),
+          };
+        }
+        if (body_type === 'raw') {
+          return {
+            data: Property.LongText({
               displayName: 'Raw Body',
               required: true,
-            });
-            break;
-          case 'form_data':
-            fields['data'] = Property.Array({
+            }),
+          };
+        }
+        if (body_type === 'form_data') {
+          return {
+            data: Property.Array({
               displayName: 'Form Data',
               required: true,
               properties: {
                 fieldName: Property.ShortText({
                   displayName: 'Field Name',
-                  required: true
+                  required: true,
                 }),
                 fieldType: Property.StaticDropdown({
                   displayName: 'Field Type',
@@ -172,79 +149,83 @@ export const httpSendRequestAction = createAction({
                     disabled: false,
                     options: [
                       { label: 'Text', value: 'text' },
-                      { label: 'File', value: 'file' }
-                    ]
-                  }
+                      { label: 'File', value: 'file' },
+                    ],
+                  },
                 }),
                 textFieldValue: Property.LongText({
                   displayName: 'Text Field Value',
-                  required: false
+                  required: false,
                 }),
                 fileFieldValue: Property.File({
                   displayName: 'File Field Value',
-                  required: false
-                })
-              }
-            });
-            break;
+                  required: false,
+                }),
+              },
+            }),
+          };
         }
-        return fields;
+        return {};
       },
     }),
     response_is_binary: Property.Checkbox({
       displayName: 'Response is Binary',
-      description:
-        'Enable for files like PDFs, images, etc. A base64 body will be returned.',
+      description: 'Return the response as base64, for files like PDFs.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
     use_proxy: Property.Checkbox({
       displayName: 'Use Proxy',
       defaultValue: false,
-      description: 'Use a proxy for this request',
+      description: 'Route this request through an HTTP proxy.',
       required: false,
+      advanced: true,
     }),
     proxy_settings: Property.DynamicProperties({
       auth: PieceAuth.None(),
       displayName: 'Proxy Settings',
       refreshers: ['use_proxy'],
       required: false,
-      props: async ({ use_proxy }) => {
+      advanced: true,
+      props: async ({ use_proxy }): Promise<DynamicPropsValue> => {
         if (!use_proxy) return {};
 
-        const fields: DynamicPropsValue = {};
-
-        fields['proxy_host'] = Property.ShortText({
-          displayName: 'Proxy Host',
-          required: true,
-        });
-
-        fields['proxy_port'] = Property.Number({
-          displayName: 'Proxy Port',
-          required: true,
-        });
-
-        fields['proxy_username'] = Property.ShortText({
-          displayName: 'Proxy Username',
-          required: false,
-        });
-
-        fields['proxy_password'] = Property.ShortText({
-          displayName: 'Proxy Password',
-          required: false,
-        });
-
-        return fields;
+        return {
+          proxy_host: Property.ShortText({
+            displayName: 'Proxy Host',
+            required: true,
+            placeholder: 'proxy.example.com',
+          }),
+          proxy_port: Property.Number({
+            displayName: 'Proxy Port',
+            required: true,
+          }),
+          proxy_username: Property.ShortText({
+            displayName: 'Proxy Username',
+            required: false,
+          }),
+          proxy_password: Property.ShortText({
+            displayName: 'Proxy Password',
+            description: 'Stored in the flow and visible in exports.',
+            required: false,
+          }),
+        };
       },
     }),
     timeout: Property.Number({
-      displayName: 'Timeout(in seconds)',
+      displayName: 'Timeout',
+      description: 'Seconds to wait for a response. Empty: up to the flow limit (10 min).',
       required: false,
+      min: 1,
+      advanced: true,
     }),
     followRedirects: Property.Checkbox({
       displayName: 'Follow redirects',
+      description: 'Follow 3xx redirects instead of returning the response.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
     failureMode: Property.StaticDropdown({
       displayName: 'On Failure',
@@ -261,8 +242,18 @@ export const httpSendRequestAction = createAction({
           { label: 'Do not continue (stop the flow)', value: 'continue_none' },
         ],
       },
+      advanced: true,
     })
   },
+  propertyGroups: [
+    {
+      key: 'request',
+      display: 'section',
+      label: 'Request',
+      icon: 'send',
+      props: ['method', 'url', 'headers', 'queryParams'],
+    },
+  ],
   errorHandlingOptions: {
     continueOnFailure: { hide: true, defaultValue: false },
     retryOnFailure: { hide: true, defaultValue: false },
@@ -316,7 +307,6 @@ export const httpSendRequestAction = createAction({
         break;
     }
 
-    // Set response type to arraybuffer if binary response is expected
     if (response_is_binary) {
       request.responseType = 'arraybuffer';
     }

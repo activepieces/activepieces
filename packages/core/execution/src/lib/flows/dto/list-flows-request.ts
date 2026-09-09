@@ -16,6 +16,8 @@ export const ListFlowsRequest = z.object({
     versionState: z.nativeEnum(FlowVersionState).optional(),
     connectionExternalIds: OptionalArrayFromQuery(z.string()),
     externalIds: OptionalArrayFromQuery(z.string()),
+    sortBy: z.enum(['NAME']).optional(),
+    order: z.enum(['ASC', 'DESC']).optional(),
 })
 
 export type ListFlowsRequest = Omit<z.infer<typeof ListFlowsRequest>, 'cursor'> & { cursor: Cursor | undefined }

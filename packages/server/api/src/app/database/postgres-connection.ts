@@ -414,7 +414,6 @@ import { DropPieceTags1819000000000 } from './migration/postgres/1819000000000-D
 import { AddAuditEventPlatformIdCreatedIdIndex1820000000000 } from './migration/postgres/1820000000000-AddAuditEventPlatformIdCreatedIdIndex'
 import { AddAgentConversationFlowStepRetentionIndex1821000000000 } from './migration/postgres/1821000000000-AddAgentConversationFlowStepRetentionIndex'
 import { AddWaitpointSignals1821000000000 } from './migration/postgres/1821000000000-AddWaitpointSignals'
-import { AddBarrierChildAttribution1822000000000 } from './migration/postgres/1822000000000-AddBarrierChildAttribution'
 import { RenameChatTablesToAgent1822000000000 } from './migration/postgres/1822000000000-RenameChatTablesToAgent'
 import { AddRenamedChatTableCompatViews1823000000000 } from './migration/postgres/1823000000000-AddRenamedChatTableCompatViews'
 import { AddAttemptsToOtp1824000000000 } from './migration/postgres/1824000000000-AddAttemptsToOtp'
@@ -433,6 +432,10 @@ import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836
 import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
 import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
 import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
+import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
+import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841000000000-AddPlatformConfiguration'
+import { AddWaitpointDeadLetteredAt1842000000000 } from './migration/postgres/1842000000000-AddWaitpointDeadLetteredAt'
+import { AddBarrierChildAttribution1843000000000 } from './migration/postgres/1843000000000-AddBarrierChildAttribution'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -862,7 +865,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAuditEventPlatformIdCreatedIdIndex1820000000000,
         AddAgentConversationFlowStepRetentionIndex1821000000000,
         AddWaitpointSignals1821000000000,
-        AddBarrierChildAttribution1822000000000,
         RenameChatTablesToAgent1822000000000,
         AddRenamedChatTableCompatViews1823000000000,
         AddAttemptsToOtp1824000000000,
@@ -881,6 +883,10 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProviderStatus1837000000000,
         AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
         AddFlowProjectIdExternalIdUniqueIndex1839000000000,
+        AddFlowApprovalWorkflow1840000000000,
+        AddPlatformConfiguration1841000000000,
+        AddWaitpointDeadLetteredAt1842000000000,
+        AddBarrierChildAttribution1843000000000,
     ]
     return migrations
 }

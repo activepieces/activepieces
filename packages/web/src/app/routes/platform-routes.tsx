@@ -13,6 +13,9 @@ const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
+const PlatformConfigurationsPage = React.lazy(
+  () => import('./platform/infra/configurations'),
+);
 const TriggerHealthPage = React.lazy(() => import('./platform/infra/triggers'));
 const SettingsWorkersPage = React.lazy(
   () => import('./platform/infra/workers'),
@@ -382,6 +385,18 @@ export const platformRoutes = [
         <PageTitle title="Health">
           <SuspenseWrapper>
             <SettingsHealthPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/configurations',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Configurations">
+          <SuspenseWrapper>
+            <PlatformConfigurationsPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>

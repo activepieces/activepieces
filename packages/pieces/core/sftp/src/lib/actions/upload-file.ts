@@ -6,6 +6,7 @@ import { endClient, getClient, getProtocolBackwardCompatibility } from '../commo
 import { sftpAuth } from '../auth';
 import { Readable } from 'stream';
 import { getSftpError } from './common';
+import { uploadFileActionOutputSchema } from '../output-schemas';
 
 async function uploadFileToFTP(client: FTPClient, fileName: string, body: Readable) {
   const remoteDirectory = fileName.substring(0, fileName.lastIndexOf('/'));
@@ -44,6 +45,7 @@ export const uploadFileAction = createAction({
       streaming: true,
     }),
   },
+  outputSchema: uploadFileActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const fileName = context.propsValue['fileName'];

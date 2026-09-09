@@ -76,7 +76,12 @@ const generateLastXDays = (days: number): string[] => {
 };
 
 export default function TriggerHealthPage() {
-  const { data: report, isLoading } = triggerRunHooks.useStatusReport();
+  const {
+    data: report,
+    isLoading,
+    isError,
+    refetch,
+  } = triggerRunHooks.useStatusReport();
 
   const triggerHealthData: TriggerHealthRow[] = isLoading
     ? []
@@ -263,6 +268,9 @@ export default function TriggerHealthPage() {
         columns={columns}
         page={{ data: triggerHealthData, previous: '', next: '' }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('trigger status')}
+        onRetry={refetch}
       />
     </div>
   );

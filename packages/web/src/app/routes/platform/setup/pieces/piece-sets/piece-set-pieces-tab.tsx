@@ -152,7 +152,7 @@ const BulkPieceSetActions = ({
 };
 
 export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
-  const { pieces, isLoading } = piecesHooks.usePieces({
+  const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
     includeHidden: true,
     isTableQuery: true,
     skipProjectFilter: true,
@@ -374,6 +374,9 @@ export const PieceSetPiecesTab = ({ pieceSet }: PieceSetPiecesTabProps) => {
           previous: null,
         }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('pieces')}
+        onRetry={refetch}
         clientFiltering={true}
         bulkActions={[
           {

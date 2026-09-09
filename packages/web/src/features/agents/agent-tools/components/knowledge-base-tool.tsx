@@ -22,6 +22,7 @@ import { AgentKnowledgeBaseDialog } from '../knowledge-base-dialog';
 import { useKnowledgeBaseToolDialogStore } from '../stores/knowledge-base-tools';
 
 import { AddKnowledgeBaseDropdown } from './add-knowledge-base-dropdown';
+import { AddRow } from './add-row';
 
 function KnowledgeBaseToolPills({
   tools,
@@ -90,6 +91,7 @@ export const KnowledgeBaseSection = ({
   removeTool,
   onToolsUpdate,
   selectedProvider,
+  layout = 'card',
 }: KnowledgeBaseSectionProps) => {
   const embeddingModel = selectedProvider
     ? PROVIDER_EMBEDDING_MODELS[selectedProvider]
@@ -103,13 +105,22 @@ export const KnowledgeBaseSection = ({
     return null;
   }
 
-  return (
-    <div className="mt-6">
-      <h2 className="text-sm font-medium">{t('Knowledge Base')}</h2>
+  const asRows = layout === 'rows';
 
-      <div className="mt-2">
+  return (
+    <div className={cn(!asRows && 'mt-6')}>
+      {!asRows && (
+        <h2 className="text-sm font-medium">{t('Knowledge Base')}</h2>
+      )}
+
+      <div className={cn(!asRows && 'mt-2')}>
         {tools.length > 0 ? (
-          <div className="border rounded-md overflow-hidden p-4">
+          <div
+            className={cn(
+              'overflow-hidden',
+              asRows ? 'rounded-[10px] border p-3' : 'border rounded-md p-4',
+            )}
+          >
             <KnowledgeBaseToolPills
               tools={tools}
               disabled={disabled}
@@ -128,6 +139,18 @@ export const KnowledgeBaseSection = ({
               </p>
             )}
           </div>
+        ) : asRows ? (
+          supportsEmbeddings ? (
+            <AddKnowledgeBaseDropdown disabled={disabled}>
+              <AddRow label={t('Add knowledge')} disabled={disabled} />
+            </AddKnowledgeBaseDropdown>
+          ) : (
+            <p className="text-xs leading-4 text-muted-foreground">
+              {t(
+                'Knowledge base requires a provider that supports embeddings, such as OpenAI or Google.',
+              )}
+            </p>
+          )
         ) : (
           <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
             <div className="flex items-center justify-center h-10 w-10 rounded-full border bg-background">
@@ -163,6 +186,7 @@ export const KnowledgeBaseSection = ({
 
 type KnowledgeBaseSectionProps = {
   disabled?: boolean;
+  layout?: 'card' | 'rows';
   tools: AgentKnowledgeBaseTool[];
   allTools: AgentTool[];
   removeTool: (toolName: string) => void;

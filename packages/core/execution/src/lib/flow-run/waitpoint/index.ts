@@ -78,6 +78,7 @@ export const BarrierCreatedState = z.object({
         label: z.string().nullable(),
         confirmUrl: z.string(),
     })).optional(),
+    signalsTruncated: z.boolean().optional(),
 })
 export type BarrierCreatedState = z.infer<typeof BarrierCreatedState>
 

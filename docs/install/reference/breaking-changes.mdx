@@ -24,6 +24,26 @@ The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses`
 
 Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
 
+#### A custom AI provider is now checked when you save it
+
+The custom OpenAI-compatible provider accepted any text as its base URL and as its API key header name. A config that cannot be used saved without complaint and then failed on every run that used it, with a message from the HTTP layer rather than from Activepieces: a header name of `authorization: bearer` produced *"Headers.append: is an invalid header name"*, and a base URL that will not parse produced *"Invalid URL"*.
+
+Saving now fails with a message naming the field to fix. Nothing changes for a provider whose config already works, and no stored config is altered or re-checked in place.
+
+#### What you need to do
+
+Nothing, unless you have a custom AI provider whose base URL or API key header is malformed. Those already fail at run time. The next time you save that provider you will be told which field is wrong: enter the header name on its own, such as `Authorization`, with its value in the API key field, and give the base URL in full including the scheme, such as `https://api.example.com/v1`.
+
+#### Agent steps on Activepieces AI credits are limited to the models Activepieces offers
+
+The managed Activepieces AI provider used to accept any model id a flow named, because it serves the OpenRouter catalogue unfiltered and nothing checked the value server-side. The model picker only ever offered the three chat tiers, but the API took `modelName` as free text, so a flow, a saved agent, or a direct call to `POST /v1/agents/runs` could run any model OpenRouter publishes on Activepieces' own key.
+
+An agent step, saved agent, or agent run that names a model outside the offered list now fails with a `VALIDATION` error that lists the models available to it, instead of running a model nobody selected. Bring-your-own keys are unaffected: an OpenRouter, OpenAI, Anthropic, or custom provider key can still name any model it pays for.
+
+#### What you need to do
+
+Nothing, if your agent steps use the model picker. If a flow, a saved agent, or an API call names a model id directly while running on Activepieces AI credits, switch it to one of the offered models or to your own provider key. The error message lists the available ids.
+
 #### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
 
 An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
@@ -143,6 +163,72 @@ This affects the Tables piece's Find Records action and any direct API call that
 
 Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
 
+#### A failed run on a synchronous webhook answers with 500 instead of 408 after the full timeout
+
+A `/sync` webhook call whose flow run fails used to hold the connection open for the whole `AP_WEBHOOK_TIMEOUT_SECONDS` (30 seconds by default) and then answer `408 Request Timeout` with an empty body, no matter how quickly the run had actually failed. Nothing reported a terminal run status back to the waiting request, so the caller only ever saw the timeout fallback.
+
+A run that ends in `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED` or `LOG_SIZE_EXCEEDED` now answers immediately with `500` and a body of `{"message": "The flow has failed and there is no response returned"}`. For `FAILED`, `INTERNAL_ERROR` and `MEMORY_LIMIT_EXCEEDED` this restores the behaviour from before 0.80.0, where they answered `500` (`TIMEOUT` answered `504` then; it is `500` now, like the rest). `LOG_SIZE_EXCEEDED` never had a response of its own in any earlier release, so it gains one here.
+
+Between 0.80.0 and 0.85.x the same failures answered `204 No Content` rather than `408`, which many HTTP clients read as success. If you integrated against an Activepieces in that range and concluded a synchronous webhook "returns 204 when it fails", that is the behaviour being replaced.
+
+Two cases are deliberately unchanged. A run that succeeds without reaching a Return Response step still waits out the timeout and answers `408`, exactly as it did before 0.80.0. A run blocked on credits still answers `402` before it starts.
+
+#### What you need to do
+
+Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
+
+#### AWS connections using the IAM Role / OIDC method are now verified against AWS before they save
+
+Saving an AWS connection (Bedrock, S3, Secrets Manager) with the **IAM Role / OIDC** method previously only checked that the Role ARN was well formed, so any well-formed ARN saved with status "Connected" even when the role did not exist or could not be assumed. The connection now performs the same `sts:AssumeRoleWithWebIdentity` call the flow makes at runtime, and the save fails with the AWS error when the role cannot be assumed.
+
+Two consequences. A connection that was accepted before is now rejected if its IAM OIDC provider, trust policy, or `AP_FRONTEND_URL` issuer is not set up correctly. And because the save now calls AWS, an instance with no outbound access to `sts.<region>.amazonaws.com` cannot create these connections at all.
+
+The region on these connections is also validated against the AWS region format at both save time and every flow step (the region flows into the STS endpoint hostname, so the check is enforced everywhere it is used). The STS call now times out after 10 seconds instead of waiting for the job timeout.
+
+#### What you need to do
+
+Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it. Existing saved connections keep working and are not revalidated automatically — pressing **Recheck** on a connection whose trust policy is wrong will now move it to an error state, which reflects what already happens when a flow runs.
+
+## 0.91.0
+
+### What has changed?
+
+#### Telemetry moves from `AP_TELEMETRY_ENABLED` to the platform admin UI
+
+Product analytics used to be governed only by the `AP_TELEMETRY_ENABLED` environment variable, read once when the app started. It is now a per-platform setting stored in the database, editable at **Platform → Infrastructure → Configurations**.
+
+Upgrading does not change what you collect. Each platform's setting is created the first time it is read, taking `AP_TELEMETRY_ENABLED` as its value, so an instance running with `AP_TELEMETRY_ENABLED=false` stays opted out — on an existing install and on a brand-new one alike.
+
+After a platform's setting exists, the environment variable no longer governs it. Editing the variable has no effect on that platform, and switching the toggle on in the UI turns product analytics on even if the variable still reads `false`.
+
+The setting is per platform, so on an instance hosting several platforms each one is controlled separately. The page is hidden on Activepieces Cloud.
+
+#### What you need to do
+
+Nothing, if you want to keep collecting what you collect today, and nothing if you rely on `AP_TELEMETRY_ENABLED=false` — that value is carried into each platform's setting as it is created. What changes is that the variable becomes a starting value rather than a permanent lock: once a platform has a setting, an admin can switch product analytics on from the UI regardless of what the variable says. If that matters to you, restrict who holds platform-admin rights.
+
+## 0.88.2
+
+### What has changed?
+
+#### Sign-in and sign-up are one screen, and an emailed code signs people in wherever SMTP is configured
+
+`/sign-in` and `/sign-up` now render the same card, and `/sign-up` redirects to `/sign-in` carrying its query string, so existing links — invitation URLs included — keep working.
+
+The card's primary path is a six-digit code emailed to the address typed into it. It is offered whenever the instance has SMTP configured and email auth is enabled, on every edition including Community, so a self-hosted instance that already sends transactional email gains a way to sign in that needs no password. An instance with no SMTP is unaffected: the card opens directly on the classic password form, with Google and SAML above it exactly as before.
+
+Two things change on an instance that does have SMTP. Password sign-in moves behind a **Use password** link on the card, and password sign-*up* is offered only where the card is in sign-up mode — the first account on a fresh instance, or an invitation link (`/sign-up?email=…`) — so someone who simply opens `/sign-in` on an instance that already has accounts is given the emailed code and no way to switch to a password sign-up form. Existing passwords are untouched: a verified identity keeps its password, and signing in with a code does not discard it.
+
+Who may get in does not change, and the existing guards all run before a code is sent. Joining still requires `AP_ALLOW_OPEN_SIGN_UP=true`, an accepted invitation, or existing membership, and that refusal is silent — the response is identical to an accepted one and no code is sent, so the endpoint reveals nothing about who has an account. A platform's allowed-domains list still applies too, but it answers with an explicit domain-not-allowed error rather than silently, and like the platform's Email-auth setting it is inert on Community and on any platform whose plan does not include SSO. On a fresh install, before the first platform exists, there is no platform for either check to run against and both are skipped.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable: emailed-code sign-in turns itself on once SMTP is configured and Email is enabled as an authentication method.
+
+If you do not want emailed-code sign-in, turn off **Email** as an authentication method for the platform (Enterprise and Cloud, under SSO settings, and only where your plan includes SSO); that disables password sign-in along with it, since both are the same method. On Community that toggle is inert, so the only lever there is leaving SMTP unconfigured.
+
+If you script or end-to-end test the sign-in screen, re-check it: the same URL now renders a different form depending on whether SMTP is configured and whether any account exists yet. Password reset moved inside the card wherever the emailed-code path is active; an instance without SMTP still sends people to `/forget-password`, and Community shows no reset control at all.
+
 #### Emailed sign-in codes allow ten wrong guesses per account per hour
 
 The six-digit login code already allowed five wrong guesses, but that budget lived on the code itself, and the fifth wrong guess threw the code away — so asking for a new code handed out five fresh guesses immediately, with no ceiling on how often that could repeat. A six-digit code is only a million possibilities, so unlimited retries reduce it to a matter of hours.
@@ -166,6 +252,94 @@ A code found to be expired is thrown away when it is next presented, rather than
 Nothing, and no new configuration: the key is derived from a secret your instance already has. Codes written by an older build are recorded as such and keep working until they expire, so a sign-in already underway when you deploy still completes, an email verification link still opens, and a rolling deploy where both builds are serving at once behaves the same.
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
+
+#### WhatsScale media actions take a file input, capping media at the instance file-size limit
+
+The 17 WhatsScale actions that send media — image, video, document and audio sends across the contact, group, channel and CRM-contact variants, plus the image and video Status posts — used to take a plain text URL and hand it straight to WhatsScale, which fetched it itself. Those fields are now file inputs: the engine resolves whatever you pass (a URL, or a file from a previous step) into a file, stores it on your instance, and gives WhatsScale that copy to fetch.
+
+The field keys are unchanged (`imageUrl`, `videoUrl`, `documentUrl`, `audioUrl`), so existing flows keep their configured value and a stored URL still works. Two behaviour changes come with the new path:
+
+- **Media is now capped by `AP_MAX_FILE_SIZE_MB` — 10 MB on Cloud, 25 MB by default self-hosted.** The file travels through your instance instead of going vendor-to-vendor, so a URL pointing at something larger than that limit now fails where it previously sent. This mostly affects video and document sends. Streaming does not lift the ceiling: writing into storage is counted against the cap either way, and producing a URL for WhatsScale to fetch requires writing into storage. See [Limits](/install/reference/limits).
+- **The URL WhatsScale fetches is now one your instance serves.** It is a signed, expiring link on your public API URL. An instance that is not reachable from the internet cannot hand WhatsScale a URL it can fetch, so media sends need a publicly resolvable `AP_FRONTEND_URL` on self-hosted installs.
+
+#### What you need to do
+
+Nothing if your media is comfortably under the cap and your instance is reachable from the internet. On Cloud that cap is 10 MB, so check any flow that forwards video or large documents.
+
+If you send files larger than the cap on a self-hosted install, raise `AP_MAX_FILE_SIZE_MB` to cover the largest media you send and redeploy. On Cloud the 10 MB cap is not configurable. If your instance is not publicly reachable, keep media sends on a host that is, or leave these actions unused; there is no way for WhatsScale to fetch a file from a private address.
+
+#### WhatsScale "Add a Tag to a CRM Contact" now takes a list of tags
+
+The two add-tag actions ("Add Tags to a CRM Contact" and its By-ID twin) accepted a single tag in a text field named `tag`. They now accept a list, in a field named `tags`, and send one request per tag so existing tags are kept.
+
+Because the field was renamed, **a step configured before this release loses its tag value** and shows "Tags" as an empty required field. The field could not keep its old name: a stored single string does not validate as a list.
+
+Adding several tags is **not atomic** — each tag is its own request, so a failure part-way through leaves the earlier tags applied. Re-running is safe: adding a tag a contact already has converges on the same set.
+
+#### What you need to do
+
+Re-enter the tag on any flow that uses either add-tag action, as a list entry rather than free text. The removal actions are unchanged and still take one tag at a time.
+
+#### Front's Attachments field takes files instead of URLs
+
+The Front piece's Send Message, Send Reply, Create Draft and Create Draft Reply actions described `Attachments` as a list of attachment URLs and sent those strings inside a JSON body. Front only accepts attachments on a `multipart/form-data` request, as the bytes of the file, so it took the message and dropped the attachments — HTTP 202, no error, no attachment. The field is now a list of files, the same shape the Gmail and Discord pieces use, and the request is sent as multipart when a message carries attachments.
+
+A URL is still all you need to supply: the engine downloads it and hands the piece the resolved file. A step that already holds a file — an earlier download, a trigger's attachment — can be wired straight in. An entry whose file cannot be resolved is skipped rather than failing the send.
+
+#### What you need to do
+
+Re-pick the attachment in any Front step that used the field. The stored value is a plain string and the field now holds a file, so it does not carry across. A flow that never set Attachments is unaffected and keeps its JSON request path. Nothing to configure on the server, and no new environment variable.
+
+#### A file URL that fails to download is no longer treated as a file
+
+Any piece property that takes a file also accepts a URL, and the engine buffered whatever came back from that URL without checking the response status. A 4xx or 5xx produced a file named after the URL whose contents were the server's error page, and a piece could not tell that apart from the real thing — an expired signed link became an email with the storage provider's XML error attached. A failed download now fails the step, which is what the streaming path already did.
+
+#### What you need to do
+
+Nothing to configure. A flow that was silently passing on error pages will start failing at that step instead, and the fix is the URL itself — usually a link that has expired or that the instance is not authorized to read.
+
+#### Signing in with an emailed code is now offered on Activepieces Cloud only
+
+`POST /v1/authentication/otp/request` and `POST /v1/authentication/otp/verify` are no longer served on a self-hosted
+instance. They return `404`, and the sign-in card no longer offers the "email me a code" step — it opens on the
+password form instead. Versions 0.88.2 through 0.88.4 did serve them on any edition with SMTP configured.
+`POST /v1/authentication/complete-sign-up` is unaffected and still served everywhere.
+
+A six-digit code is a million possibilities, so what keeps guessing it expensive is the captcha in front of the
+request endpoint. Cloudflare Turnstile is opt-in and unset out of the box, so a self-hosted instance served both
+endpoints with nothing in front of them. Rather than require a Cloudflare account to make a sign-in method safe,
+that method is no longer served where the captcha is not there.
+
+On Cloud the same rule now applies: the routes exist only when both `AP_TURNSTILE_SITE_KEY` and
+`AP_TURNSTILE_SECRET_KEY` are set. Without them the instance starts normally and simply does not offer emailed
+codes. Activepieces Cloud has both configured, so nothing changes for it — the code step stays on the sign-in card
+and accounts that use it keep signing in exactly as before.
+
+#### What you need to do
+
+Nothing, if your users sign in with a password or with Google — those paths are unchanged, and so are `/sign-up`,
+`/sign-in` and `/switch-platform`.
+
+**If you ran 0.88.2–0.88.4 with SMTP configured, assume some accounts were created through the code flow.** Those
+accounts hold a random password nobody was ever shown, so removing the code flow removes the only way they could
+sign in. There is no reliable marker for them in the database — a verified code deletes its `otp` row — so treat any
+`EMAIL`-provider account whose owner cannot recall setting a password as one of them.
+
+On **Enterprise**, send those users through **Forgot password** once to set a password; that flow needs the same SMTP
+you already have configured.
+
+On **Community** there is no way back in the product. Password reset lives in the enterprise module, which Community
+does not register, so `POST /v1/authn/local/reset-password` is not served — and nothing else writes a password on any
+edition, as there is no change-password endpoint. Do not be misled by the first half of that flow appearing to work:
+`POST /v1/otp` **is** served on Community and answers `204`, but Community sends no OTP email of any type except a
+login code, so no reset mail ever arrives. Set a password for each affected account directly —
+`UPDATE user_identity SET password = '<bcrypt hash>' WHERE email = '…'` — and hand it to its owner over a channel you
+trust, since they cannot change it themselves afterwards. Do this **before** you upgrade if you can, so nobody is
+locked out in between.
+
+If you script or test the sign-in page, note that the emailed-code step is gone and the two endpoints above
+answer `404`.
+
 
 ## 0.87.0
 

@@ -171,7 +171,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await waitpointService(log).deleteByFlowRunId(oldFlowRun.id)
+                await waitpointService(log).deleteByFlowRunId({ flowRunId: oldFlowRun.id, projectId: oldFlowRun.projectId })
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
@@ -605,7 +605,7 @@ async function cancelSingleRun(log: FastifyBaseLogger, flowRun: FlowRun, platfor
         timeoutInSeconds: 30,
         fn: async () => {
             await jobQueue(log).removeAllFlowRunJobs({ flowRunId: flowRun.id, platformId, projectId: flowRun.projectId })
-            await waitpointService(log).deleteByFlowRunId(flowRun.id)
+            await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
             await runsMetadataQueue(log).add({
                 id: flowRun.id,
                 projectId: flowRun.projectId,

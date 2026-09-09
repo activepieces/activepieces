@@ -4,7 +4,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { McpServerEntity } from './mcp-entity'
-import { ProjectSelectionScope } from './mcp-project-selection'
 import { buildMcpServer } from './mcp-server-builder'
 
 export const mcpServerRepository = repoFactory(McpServerEntity)
@@ -63,11 +62,11 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    buildServer: async ({ mcp, userId, selectionScope }: { mcp: PopulatedMcpServer, userId?: string, selectionScope?: ProjectSelectionScope | null }) => {
+    buildServer: async ({ mcp, userId, clientId }: { mcp: PopulatedMcpServer, userId?: string, clientId: string }) => {
         return buildMcpServer({
             mcp,
             userId,
-            selectionScope: selectionScope ?? null,
+            clientId,
             log,
             resolveProjectMcp: (projectId: string) => mcpServerService(log).getPopulatedByProjectId(projectId),
         })
@@ -102,7 +101,7 @@ async function listMcpFlows(projectId: string, logger: FastifyBaseLogger): Promi
         projectIds: [projectId],
         limit: 1000000,
         cursorRequest: null,
-        versionState: FlowVersionState.DRAFT,
+        versionState: FlowVersionState.LOCKED,
         includeTriggerSource: false,
     })
     return flows.data.filter((flow) => flow.version.trigger.type === FlowTriggerType.PIECE && flow.version.trigger.settings.pieceName === MCP_TRIGGER_PIECE_NAME)

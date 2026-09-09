@@ -3,9 +3,13 @@ import { vi } from 'vitest'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
-import { EngineApiStub, startEngineApiStub } from '../helpers/engine-api-stub'
 import { buildCodeAction, buildPieceAction, buildRouterWithOneCondition, buildSimpleLoopAction, generateMockEngineConstants } from './test-helper'
 
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
+    waitpointClient: {
+        create: vi.fn().mockResolvedValue({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
+    },
+}))
 
 
 const simplePauseFlow = buildPieceAction({
@@ -61,23 +65,12 @@ const pauseFlowWithLoopAndBranch = buildSimpleLoopAction({
 })
 
 describe('flow with pause', () => {
-    let engineApi: EngineApiStub
-
-    beforeEach(async () => {
-        engineApi = await startEngineApiStub({
-            'POST /v1/waitpoints': { id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' },
-        })
-    })
-
-    afterEach(async () => {
-        await engineApi.close()
-    })
 
     it('should pause and resume successfully with loops and branch', async () => {
         const pauseResult = await flowExecutor.execute({
             action: pauseFlowWithLoopAndBranch,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url, stepNames: ['loop'] }),
+            constants: generateMockEngineConstants({ stepNames: ['loop'] }),
         })
         expect(pauseResult.verdict).toEqual({
             status: FlowRunStatus.PAUSED,
@@ -97,7 +90,6 @@ describe('flow with pause', () => {
                 status: FlowRunStatus.RUNNING,
             }),
             constants: generateMockEngineConstants({
-                internalApiUrl: engineApi.url,
                 stepNames: ['loop'],
                 resumePayload: {
                     queryParams: {
@@ -127,13 +119,12 @@ describe('flow with pause', () => {
         const pauseResult1 = await flowExecutor.execute({
             action: flawWithTwoPause,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
         const resumeResult1 = await flowExecutor.execute({
             action: flawWithTwoPause,
             executionState: pauseResult1,
             constants: generateMockEngineConstants({
-                internalApiUrl: engineApi.url,
                 resumePayload: {
                     queryParams: {
                         action: 'approve',
@@ -152,7 +143,6 @@ describe('flow with pause', () => {
                 status: FlowRunStatus.RUNNING,
             }),
             constants: generateMockEngineConstants({
-                internalApiUrl: engineApi.url,
                 resumePayload: {
                     queryParams: {
                         action: 'approve',
@@ -173,7 +163,7 @@ describe('flow with pause', () => {
         const pauseResult = await flowExecutor.execute({
             action: simplePauseFlow,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
         expect(pauseResult.verdict).toStrictEqual({
             status: FlowRunStatus.PAUSED,
@@ -185,7 +175,6 @@ describe('flow with pause', () => {
             action: simplePauseFlow,
             executionState: pauseResult,
             constants: generateMockEngineConstants({
-                internalApiUrl: engineApi.url,
                 resumePayload: {
                     queryParams: {
                         action: 'approve',
@@ -248,7 +237,7 @@ describe('flow with pause', () => {
         const result = await flowExecutor.execute({
             action: routerWithTwoPauseActions,
             executionState: FlowExecutorContext.empty(),
-            constants: generateMockEngineConstants({ internalApiUrl: engineApi.url }),
+            constants: generateMockEngineConstants(),
         })
 
         expect(result.verdict).toStrictEqual({

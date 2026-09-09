@@ -69,6 +69,10 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        deadLetteredAt: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
     },
     indices: [
         {
@@ -77,13 +81,9 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             unique: true,
         },
         {
-            name: 'idx_waitpoint_project_id',
-            columns: ['projectId'],
-        },
-        {
-            name: 'idx_waitpoint_pending_resume_date_time',
+            name: 'idx_waitpoint_live_deadline',
             columns: ['resumeDateTime'],
-            where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL',
+            where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL AND "deadLetteredAt" IS NULL',
         },
     ],
     relations: {

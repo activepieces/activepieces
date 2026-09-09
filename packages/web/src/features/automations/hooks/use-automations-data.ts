@@ -16,19 +16,29 @@ import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesApi } from '@/features/tables/api/tables-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { AutomationsFilters, FolderContent } from '../lib/types';
+import {
+  AutomationsFilters,
+  AutomationsSort,
+  FolderContent,
+} from '../lib/types';
 import {
   buildFilteredTreeItems,
   buildTreeItems,
   DEFAULT_PAGE_SIZE,
   FOLDER_PAGE_SIZE,
   hasNonFolderFilters,
+  ROOT_ITEMS_LIMIT,
 } from '../lib/utils';
 
-export function useAutomationsData(
-  filters: AutomationsFilters,
-  pinnedList?: string[],
-) {
+export function useAutomationsData({
+  filters,
+  pinnedList,
+  sort,
+}: {
+  filters: AutomationsFilters;
+  pinnedList?: string[];
+  sort: AutomationsSort;
+}) {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
   const queryClient = useQueryClient();
@@ -50,7 +60,6 @@ export function useAutomationsData(
     queryFn: () => foldersApi.list(),
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
@@ -93,7 +102,6 @@ export function useAutomationsData(
     enabled: !!foldersQuery.data && foldersQuery.data.length > 0,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const skipFlows =
@@ -102,12 +110,12 @@ export function useAutomationsData(
     filters.typeFilter.length > 0 && !filters.typeFilter.includes('table');
 
   const rootFlowsQuery = useQuery({
-    queryKey: ['root-flows', projectId, filters],
+    queryKey: ['root-flows', projectId, filters, sort],
     queryFn: () =>
       flowsApi.list({
         projectId,
         folderId: isFiltered ? undefined : UncategorizedFolderId,
-        limit: 1000,
+        limit: ROOT_ITEMS_LIMIT,
         cursor: undefined,
         name: filters.searchTerm || undefined,
         status:
@@ -118,27 +126,29 @@ export function useAutomationsData(
           filters.connectionFilter.length > 0
             ? filters.connectionFilter
             : undefined,
+        sortBy: sort === 'default' ? undefined : 'NAME',
+        order: sortOrder(sort),
       }),
     enabled: !skipFlows,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const rootTablesQuery = useQuery({
-    queryKey: ['root-tables', projectId, filters],
+    queryKey: ['root-tables', projectId, filters, sort],
     queryFn: () =>
       tablesApi.list({
         projectId,
         folderId: isFiltered ? undefined : UncategorizedFolderId,
-        limit: 1000,
+        limit: ROOT_ITEMS_LIMIT,
         cursor: undefined,
         name: filters.searchTerm || undefined,
+        sortBy: sort === 'default' ? undefined : 'NAME',
+        order: sortOrder(sort),
       }),
     enabled: !skipTables && !hideTables,
     staleTime: STALE_TIME,
     refetchOnMount: 'always',
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 
   const toggleFolder = useCallback((folderId: string) => {
@@ -199,18 +209,19 @@ export function useAutomationsData(
         );
       }
 
-      const { items, totalItems } = buildFilteredTreeItems(
-        rootFlows,
-        rootTables,
+      const { items, totalItems } = buildFilteredTreeItems({
+        flows: rootFlows,
+        tables: rootTables,
         folders,
         folderVisibleCounts,
-        rootPage,
+        page: rootPage,
         pageSize,
         pinnedList,
-        filters.searchTerm,
+        searchTerm: filters.searchTerm,
         folderContents,
         folderCounts,
-      );
+        sort,
+      });
       return { treeItems: items, totalPageItems: totalItems };
     }
 
@@ -221,7 +232,7 @@ export function useAutomationsData(
       rootTables = [];
     }
 
-    const { items, totalRootItems } = buildTreeItems(
+    const { items, totalRootItems } = buildTreeItems({
       folders,
       rootFlows,
       rootTables,
@@ -231,7 +242,8 @@ export function useAutomationsData(
       rootPage,
       pageSize,
       pinnedList,
-    );
+      sort,
+    });
 
     return { treeItems: items, totalPageItems: totalRootItems };
   }, [
@@ -247,6 +259,7 @@ export function useAutomationsData(
     filters.searchTerm,
     filters.folderFilter,
     pinnedList,
+    sort,
   ]);
 
   const hasFolderFilter = filters.folderFilter.length > 0;
@@ -268,11 +281,19 @@ export function useAutomationsData(
     (rootTablesQuery.isLoading && !skipTables && !hideTables) ||
     folderContentsQuery.isLoading;
 
+  const isError =
+    foldersQuery.isError ||
+    (rootFlowsQuery.isError && !skipFlows) ||
+    (rootTablesQuery.isError && !skipTables && !hideTables) ||
+    folderContentsQuery.isError;
+
   const invalidateAll = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['folders'] });
-    queryClient.invalidateQueries({ queryKey: ['root-flows'] });
-    queryClient.invalidateQueries({ queryKey: ['root-tables'] });
-    queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] });
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['folders'] }),
+      queryClient.invalidateQueries({ queryKey: ['root-flows'] }),
+      queryClient.invalidateQueries({ queryKey: ['root-tables'] }),
+      queryClient.invalidateQueries({ queryKey: ['all-folder-contents'] }),
+    ]);
   }, [queryClient]);
 
   const invalidateRoot = useCallback(() => {
@@ -294,6 +315,7 @@ export function useAutomationsData(
     rootFlows: rootFlowsQuery.data?.data ?? [],
     rootTables: rootTablesQuery.data?.data ?? [],
     isLoading,
+    isError,
     isFiltered,
     expandedFolders: effectiveExpandedFolders,
     toggleFolder,
@@ -309,6 +331,17 @@ export function useAutomationsData(
     invalidateRoot,
     invalidateFolder,
   };
+}
+
+function sortOrder(sort: AutomationsSort): 'ASC' | 'DESC' | undefined {
+  switch (sort) {
+    case 'name-asc':
+      return 'ASC';
+    case 'name-desc':
+      return 'DESC';
+    case 'default':
+      return undefined;
+  }
 }
 
 type FolderContentsMap = Map<string, FolderContent>;

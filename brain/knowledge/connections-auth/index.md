@@ -29,7 +29,7 @@ User identity, sign-in, JWT sessions. `UserIdentity` = canonical email+password+
 
 ### EE Authentication
 
-Extends CE with SSO + RBAC. SAML 2.0 (`/v1/authn/saml/login` → IdP → ACS `/acs`) and Google/GitHub federated OAuth both funnel into `authenticationService.federatedAuthn()`; gated by `ssoEnabled`. Per-project RBAC via `assertPrincipalAccessToProject()` and `assertUserHasPermissionToFlow()`. Config stored on `platform.federatedAuthProviders`. Authz hooks: `platformMustHaveFeatureEnabled` (402), `projectMustBeTeamType`, `platformMustBeOwnedByCurrentUser`. OTP (email verify, password reset, and the `EMAIL_LOGIN` sign-in code) lives here. Its entity is registered for every edition, but `otpModule` is only registered on Cloud/EE and `sendOtp` returns early off those editions, so CE can send nothing today except `EMAIL_LOGIN`, which is gated on `SMTP_CONFIGURED` instead.
+Extends CE with SSO + RBAC. SAML 2.0 (`/v1/authn/saml/login` → IdP → ACS `/acs`) and Google/GitHub federated OAuth both funnel into `authenticationService.federatedAuthn()`; gated by `ssoEnabled`. Per-project RBAC via `assertPrincipalAccessToProject()` and `assertUserHasPermissionToFlow()`. Config stored on `platform.federatedAuthProviders`. Authz hooks: `platformMustHaveFeatureEnabled` (402), `projectMustBeTeamType`, `platformMustBeOwnedByCurrentUser`. OTP (email verify, password reset, and the `EMAIL_LOGIN` sign-in code) lives here. Its entity is registered for every edition and `otpModule` now covers COMMUNITY too, but `sendOtp` returns early off Cloud/EE for the two link types and the `EMAIL_LOGIN` sign-in flow is served only on Cloud behind a configured captcha, so CE can send nothing today.
 
 ### Managed Auth / Embedding (EE)
 

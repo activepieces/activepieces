@@ -2,7 +2,6 @@ import { isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { ApplicationEventName, Flow, FlowAction, FlowActionType, FlowPiecesUpgradedEvent, flowStructureUtil, FlowTrigger, FlowTriggerType, FlowVersion } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
-import { redisConnections } from '../../database/redis-connections'
 import { AuditEventEntity } from '../../ee/audit-logs/audit-event-entity'
 import { applicationEvents } from '../../helper/application-events'
 import { projectService } from '../../project/project-service'
@@ -18,12 +17,6 @@ export const pieceUpgradeService = (log: FastifyBaseLogger) => ({
         return Promise.all(unique(flowIds).map((flowId) => revertFlow({ flowId, log })))
     },
     async migrateFlowVersion({ flowVersion, projectId, platformId }: MigrateFlowVersionParams): Promise<FlowVersionMigrationResult> {
-        if (isNil(projectId) || isNil(platformId)) {
-            return { migrated: false, flowVersion }
-        }
-        if (!await isPlatformMigrationEnabled(platformId)) {
-            return { migrated: false, flowVersion }
-        }
         const { newFlowVersion, decisions } = await resolveFlowVersionUpgrades({ flowVersion, log })
         if (decisions.length > 0) {
             await sendUpgradeAuditEvent({ platformId, projectId, flowId: flowVersion.flowId, flowVersionId: flowVersion.id, decisions, log })
@@ -34,16 +27,6 @@ export const pieceUpgradeService = (log: FastifyBaseLogger) => ({
 
 const auditEventRepo = repoFactory(AuditEventEntity)
 const flowVersionRepo = repoFactory(FlowVersionEntity)
-const PIECE_UPGRADE_ENABLED_PLATFORMS_KEY = 'piece_upgrade_enabled_platforms'
-
-async function isPlatformMigrationEnabled(platformId: string): Promise<boolean> {
-    const redis = await redisConnections.useExisting()
-    const gateExists = await redis.exists(PIECE_UPGRADE_ENABLED_PLATFORMS_KEY)
-    if (gateExists === 0) {
-        return true
-    }
-    return await redis.sismember(PIECE_UPGRADE_ENABLED_PLATFORMS_KEY, platformId) === 1
-}
 
 async function revertFlow({ flowId, log }: RevertFlowParams): Promise<FlowPieceUpgradeResult> {
     const flow = await flowRepo().findOneBy({ id: flowId })
@@ -225,6 +208,8 @@ async function resolveFlowVersionUpgrades({ flowVersion, log }: ResolveFlowVersi
 }
 
 async function sendUpgradeAuditEvent({ platformId, projectId, flowId, flowVersionId, decisions, log }: SendUpgradeAuditEventParams): Promise<void> {
+    projectId = projectId ?? await flowRepo().findOneByOrFail({ id: flowId }).then((flow) => flow.projectId)
+    platformId = platformId ?? await projectService(log).getPlatformId(projectId!)
     applicationEvents(log).sendUserEvent({ platformId, projectId }, {
         action: ApplicationEventName.FLOW_PIECES_UPGRADED,
         data: {
@@ -386,8 +371,8 @@ type FlowVersionUpgrades = {
 }
 
 type SendUpgradeAuditEventParams = {
-    platformId: string
-    projectId: string
+    platformId?: string
+    projectId?: string
     flowId: string
     flowVersionId: string
     decisions: StepUpgradeDecision[]

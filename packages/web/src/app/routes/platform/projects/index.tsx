@@ -345,6 +345,7 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
+                    sensitive: row.sensitive,
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);
@@ -437,6 +438,8 @@ export default function ProjectsPage() {
             previous: null,
           }}
           isLoading={false}
+          isError={false}
+          errorStateEntity={t('projects')}
           clientPagination={true}
           bulkActions={bulkActions}
           toolbarButtons={toolbarButtons}

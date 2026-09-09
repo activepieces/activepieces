@@ -10,6 +10,22 @@ function sameConfig({
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
+function modelPickChanged({
+  picked,
+  current,
+}: {
+  picked: ModelPick;
+  current: ModelPick;
+}): boolean {
+  const same = (left?: string | null, right?: string | null) =>
+    (left ?? null) === (right ?? null);
+  return !(
+    same(picked.provider, current.provider) &&
+    same(picked.modelName, current.modelName) &&
+    same(picked.providerConfigId, current.providerConfigId)
+  );
+}
+
 function headerStatus({
   needsModel,
   justLaunched,
@@ -78,12 +94,18 @@ function createWriteLock(): WriteLock {
 
 export const agentEditState = {
   sameConfig,
+  modelPickChanged,
   headerStatus,
   modeIntent,
   leaveGuard,
   createWriteLock,
 };
 
+export type ModelPick = {
+  provider?: string | null;
+  modelName?: string | null;
+  providerConfigId?: string | null;
+};
 export type HeaderStatus = 'needs-model' | 'live' | 'pending';
 export type ModeIntent = 'switch' | 'stage';
 export type LeaveGuard = {

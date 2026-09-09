@@ -114,6 +114,14 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             });
             break;
           }
+          case ErrorCode.USER_NOT_FOUND_ON_PLATFORM: {
+            form.setError('root.serverError', {
+              message: t(
+                'Your account is not set up on this platform, please contact your administrator',
+              ),
+            });
+            break;
+          }
           default: {
             form.setError('root.serverError', {
               message: t('Something went wrong, please try again later'),

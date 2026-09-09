@@ -5,7 +5,10 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { redisConnections } from '../../../../../src/app/database/redis-connections'
 import { flowRunService } from '../../../../../src/app/flows/flow-run/flow-run-service'
+import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
+import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { fanOutDispatchGaveUp, handleFanOutDispatch, handleFanOutDispatchGaveUp } from '../../../../../src/app/waitpoints/fan-out-dispatcher-job'
@@ -430,15 +433,36 @@ describe('resume guards', () => {
 })
 
 describe('barrier deadline', () => {
-    it('carries a deadline from creation, so a barrier nobody signals is still swept and released', async () => {
+    async function createOverdueBarrier({ overdueByMinutes = 5 }: { overdueByMinutes?: number } = {}) {
         const { flowRun } = await createParentRun()
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
+        await db.update('waitpoint', barrier.id, { resumeDateTime: dayjs().subtract(overdueByMinutes, 'minute').toISOString() })
+        return { flowRun, barrier }
+    }
 
+    async function dropDeadlineJob(waitpointId: string): Promise<void> {
+        await systemJobsSchedule(app.log).removeJob({ jobId: systemJobIds.resumeDelay({ waitpointId }) })
+    }
+
+    async function exhaustDeadlineJobAttempts(waitpointId: string): Promise<void> {
+        const redis = await redisConnections.useExisting()
+        const jobId = systemJobIds.resumeDelay({ waitpointId })
+        await redis.zrem('bull:system-job-queue:delayed', jobId)
+        await redis.zadd('bull:system-job-queue:failed', Date.now(), jobId)
+    }
+
+    async function readDeadLetteredAt(waitpointId: string): Promise<string | null> {
+        const waitpoint = await db.findOneByOrFail<{ deadLetteredAt: string | null }>('waitpoint', { id: waitpointId })
+        return waitpoint.deadLetteredAt
+    }
+
+    it('carries a deadline from creation, so a barrier nobody signals is still swept and released', async () => {
+        const { flowRun, barrier } = await createOverdueBarrier()
         expect(barrier.resumeDateTime).not.toBeNull()
+        await dropDeadlineJob(barrier.id)
 
-        await db.update('waitpoint', barrier.id, { resumeDateTime: dayjs().subtract(5, 'minute').toISOString() })
-        const rearmed = await sweepOverdueDeadlines({ log: app.log })
-        expect(rearmed).toContain(barrier.id)
+        const armed = await sweepOverdueDeadlines({ log: app.log })
+        expect(armed).toContain(barrier.id)
 
         await handleResumeDelayWaitpoint({
             data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
@@ -447,6 +471,86 @@ describe('barrier deadline', () => {
 
         expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
         expect(await listSignals(barrier.id)).toHaveLength(0)
+    })
+
+    it('does not report a barrier whose deadline job is still live as re-armed', async () => {
+        const { barrier } = await createOverdueBarrier()
+
+        const armed = await sweepOverdueDeadlines({ log: app.log })
+
+        expect(armed).not.toContain(barrier.id)
+    })
+
+    it('re-arms the oldest overdue deadlines first', async () => {
+        const oldest = await createOverdueBarrier({ overdueByMinutes: 30 })
+        const middle = await createOverdueBarrier({ overdueByMinutes: 20 })
+        const newest = await createOverdueBarrier({ overdueByMinutes: 10 })
+        for (const { barrier } of [oldest, middle, newest]) {
+            await dropDeadlineJob(barrier.id)
+        }
+
+        const armed = await sweepOverdueDeadlines({ log: app.log })
+
+        expect(armed).toEqual([oldest.barrier.id, middle.barrier.id, newest.barrier.id])
+    })
+
+    it('marks a deadline whose job exhausted its attempts, so the sweep stops reading it every tick', async () => {
+        const { barrier } = await createOverdueBarrier()
+        await exhaustDeadlineJobAttempts(barrier.id)
+
+        const armed = await sweepOverdueDeadlines({ log: app.log })
+
+        expect(armed).not.toContain(barrier.id)
+        expect(await readDeadLetteredAt(barrier.id)).not.toBeNull()
+    })
+
+    it('re-arms a newer deadline even when older dead-lettered ones would fill the scan ahead of it', async () => {
+        const stuck = await createOverdueBarrier({ overdueByMinutes: 30 })
+        const newer = await createOverdueBarrier({ overdueByMinutes: 10 })
+        await dropDeadlineJob(stuck.barrier.id)
+        await dropDeadlineJob(newer.barrier.id)
+        await db.update('waitpoint', stuck.barrier.id, { deadLetteredAt: dayjs().toISOString() })
+
+        const armed = await sweepOverdueDeadlines({ log: app.log })
+
+        expect(armed).toEqual([newer.barrier.id])
+    })
+
+    it('pages past deadlines that are already armed to reach a newer unarmed one', async () => {
+        const alreadyArmed = await createOverdueBarrier({ overdueByMinutes: 30 })
+        const newer = await createOverdueBarrier({ overdueByMinutes: 10 })
+        await dropDeadlineJob(newer.barrier.id)
+
+        const armed = await sweepOverdueDeadlines({ log: app.log, pageSize: 1 })
+
+        expect(armed).toEqual([newer.barrier.id])
+        expect(await readDeadLetteredAt(alreadyArmed.barrier.id)).toBeNull()
+    })
+
+    it('clears the mark when a fresh pause re-arms the same deadline', async () => {
+        const { flowRun } = await createParentRun()
+        const resumeDateTime = dayjs().add(1, 'hour').toISOString()
+        const { waitpoint } = await waitpointService(app.log).createForPause({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'delay',
+            type: PauseType.DELAY,
+            version: 'V1',
+            resumeDateTime,
+        })
+        await db.update('waitpoint', waitpoint.id, { deadLetteredAt: dayjs().toISOString() })
+
+        const { waitpoint: reArmed } = await waitpointService(app.log).createForPause({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'delay',
+            type: PauseType.DELAY,
+            version: 'V1',
+            resumeDateTime,
+        })
+
+        expect(reArmed.deadLetteredAt).toBeNull()
+        expect(await readDeadLetteredAt(waitpoint.id)).toBeNull()
     })
 
     it('counts the signals nobody answered as still running and marks the release as timed out', async () => {
