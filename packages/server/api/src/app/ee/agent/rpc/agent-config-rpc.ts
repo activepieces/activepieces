@@ -33,7 +33,6 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // A saved agent answers from its own instructions, so one person's remembered preferences
         // must not change how it behaves for everyone else who talks to it.
         const isBuilder = requestedSource === AgentRunSource.AGENT_BUILDER
-        const editsItself = requestedSource === AgentRunSource.AGENT
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
         const [conversation, userProjects, enabledAiTools] = await Promise.all([
@@ -42,12 +41,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult] = await Promise.all([
+        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult, agentsSurfaceOn] = await Promise.all([
             carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
             carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
             carriesChatContext ? userService(log).getMetaInformation({ id: userId }) : null,
             carriesChatContext ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
             carriesChatContext ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })) : null,
+            requestedSource === AgentRunSource.FLOW_STEP ? false : agentHelpers.agentsSurfaceAvailable({ platformId, log }),
         ])
         const runUserEmail = runUser?.email ?? ''
         const userIdentity: UserIdentity | null = isNil(runUser)
@@ -93,7 +93,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = actingRun && (carriesChatContext || isBuilder || editsItself) && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const agentsAvailable = actingRun && agentsSurfaceOn
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)

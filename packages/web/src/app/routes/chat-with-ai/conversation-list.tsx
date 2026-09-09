@@ -22,6 +22,7 @@ import { useConversationIndicators } from '@/features/chat/lib/use-conversation-
 import { cn } from '@/lib/utils';
 
 import { ConversationStatusDot } from './components/conversation-status-dot';
+import { ConversationsToggle } from './components/conversations-toggle';
 import { DelayedTooltip } from './components/delayed-tooltip';
 
 export function ConversationList({
@@ -31,7 +32,7 @@ export function ConversationList({
   className,
   mobile = false,
   agentId,
-  collapseAction,
+  onCollapse,
 }: {
   onSelect?: (id: string) => void;
   onNewChat?: () => void;
@@ -39,7 +40,7 @@ export function ConversationList({
   className?: string;
   mobile?: boolean;
   agentId?: string;
-  collapseAction?: React.ReactNode;
+  onCollapse?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -237,7 +238,9 @@ export function ConversationList({
             </span>
             {!mobile && <span className="text-[11px] opacity-50">⇧⌘O</span>}
           </button>
-          {collapseAction}
+          {onCollapse !== undefined && (
+            <ConversationsToggle open onClick={onCollapse} />
+          )}
         </div>
         {allConversations.length > 5 && (
           <div className="relative">

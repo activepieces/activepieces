@@ -1,42 +1,14 @@
-import { isNil, Permission, unique } from '@activepieces/core-utils';
-import {
-  Agent,
-  AgentConfig,
-  AgentIcon,
-  agentUtils,
-  AgentToolType,
-  ColorName,
-  DEFAULT_AGENT_MAX_STEPS,
-  MAX_AGENT_STEP_BUDGET,
-  PROJECT_COLOR_PALETTE,
-  UpdateAgentRequest,
-  formErrors,
-} from '@activepieces/shared';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { isNil, unique } from '@activepieces/core-utils';
+import { Agent, AgentToolType } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ChevronLeft,
-  ChevronRight,
-  SearchX,
-  Settings2,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, SearchX, Settings2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import {
-  unstable_useBlocker,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom';
-import { toast } from 'sonner';
-import { z } from 'zod';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
+import { ConversationsToggle } from '@/app/routes/chat-with-ai/components/conversations-toggle';
 import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import {
   Empty,
@@ -45,77 +17,16 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/custom/empty';
-import { HistoryIcon } from '@/components/icons/history';
-import { PanelLeftCloseIcon } from '@/components/icons/panel-left-close';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  AIModelSelector,
-  AgentStructuredOutput,
-  useAgentsAvailable,
-} from '@/features/agents';
+import { useAgentsAvailable } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
-import { DeleteAgentDialog } from '@/features/agents/delete-agent-dialog';
-import {
-  agentsMutations,
-  agentsQueries,
-} from '@/features/agents/hooks/agents-hooks';
-import { MoveAgentDialog } from '@/features/agents/move-agent-dialog';
-import {
-  ApProjectDisplay,
-  getProjectName,
-  projectCollectionUtils,
-} from '@/features/projects';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { api } from '@/lib/api';
+import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { cn } from '@/lib/utils';
 
-import { agentEditState } from '../lib/agent-edit-state';
-
-const ConfigureAgentSchema = z.object({
-  displayName: z.string().min(1, formErrors.required),
-  description: z.string(),
-  icon: z.enum(AgentIcon),
-  color: z.enum(ColorName),
-  draft: AgentConfig,
-});
-
-type ConfigureAgentInput = z.input<typeof ConfigureAgentSchema>;
-type ConfigureAgentValues = z.output<typeof ConfigureAgentSchema>;
-
-const toUpdateRequest = (values: ConfigureAgentValues): UpdateAgentRequest => ({
-  displayName: values.displayName,
-  description: values.description.length > 0 ? values.description : null,
-  icon: values.icon,
-  color: values.color,
-  draft: values.draft,
-});
-
-const parseProvider = (provider?: string) => {
-  const parsed = AgentConfig.shape.provider.safeParse(provider ?? null);
-  return parsed.success ? parsed.data : null;
-};
+import { AgentConfigurePanel } from './configure-panel';
 
 const pieceDisplayName = (pieceName: string): string =>
   pieceName.replace('@activepieces/piece-', '');
@@ -139,36 +50,20 @@ const buildCapabilityNote = (agent: Agent): string => {
   });
 };
 
+type OpenPanel = 'conversations' | 'configure' | null;
+
 const CONVERSATION_QUERY_PARAM = 'conversation';
+const SLIDING_ASIDE =
+  'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
-type AgentRequirement = {
-  label: string;
-  hint: string;
-  met: boolean;
-};
-
-// A run reads the published configuration and only falls back to the draft, so readiness has to
-// be judged on the same one. Otherwise clearing a published agent's draft would present a
-// perfectly runnable agent as unfinished.
-const requirementsFor = (agent: Agent): AgentRequirement[] => {
+const needsAModel = (agent: Agent): boolean => {
   const running = agent.published ?? agent.draft;
-  return [
-    {
-      label: t('Instructions'),
-      hint: t('What the agent should do, and how to decide.'),
-      met: agentUtils.isPublishable(running),
-    },
-    {
-      label: t('Model'),
-      hint: t('The model that answers, and the provider behind it.'),
-      met: !isNil(running.modelName) && !isNil(running.provider),
-    },
-  ];
+  return isNil(running.provider) || isNil(running.modelName);
 };
 
 const AgentEditorSkeleton = () => (
   <div className="flex h-full w-full flex-col">
-    <div className="flex h-[76px] shrink-0 items-center gap-[14px] border-b border-border px-6">
+    <div className="flex h-[60px] shrink-0 items-center gap-[14px] border-b border-border px-6">
       <Skeleton className="size-12 rounded-[14px]" />
       <Skeleton className="h-5 w-[220px]" />
     </div>
@@ -177,672 +72,7 @@ const AgentEditorSkeleton = () => (
     </div>
   </div>
 );
-
-const AgentProjectRow = ({ agent }: { agent: Agent }) => {
-  const [moving, setMoving] = useState(false);
-  const { checkAccess } = useAuthorization(agent.projectId);
-  const { data: allProjects } = projectCollectionUtils.useAll();
-  const home = (allProjects ?? []).find(
-    (project) => project.id === agent.projectId,
-  );
-
-  if (
-    !checkAccess(Permission.WRITE_AGENT) ||
-    (allProjects ?? []).length < 2 ||
-    home === undefined
-  ) {
-    return null;
-  }
-
-  return (
-    <FormItem className="flex flex-col gap-[9px]">
-      <PanelSectionLabel label={t('Project')} />
-      <div className="flex items-center justify-between gap-3">
-        <ApProjectDisplay
-          title={getProjectName(home)}
-          icon={home.icon}
-          projectType={home.type}
-          titleClassName="text-[13px] leading-4 text-muted-foreground"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setMoving(true)}
-        >
-          {t('Move')}
-        </Button>
-      </div>
-      <MoveAgentDialog
-        agent={agent}
-        open={moving}
-        onOpenChange={setMoving}
-        onMoved={(projectId) =>
-          projectCollectionUtils.setCurrentProject(
-            projectId,
-            `/projects/${agent.projectId}/agents/${agent.id}`,
-          )
-        }
-      />
-    </FormItem>
-  );
-};
-
-const AgentDangerZone = ({
-  agent,
-  onDeleted,
-}: {
-  agent: Agent;
-  onDeleted: () => void;
-}) => {
-  const [deleting, setDeleting] = useState(false);
-  const navigate = useNavigate();
-  const { checkAccess } = useAuthorization(agent.projectId);
-
-  if (!checkAccess(Permission.WRITE_AGENT)) {
-    return null;
-  }
-
-  return (
-    <FormItem className="flex flex-col gap-[9px] border-t border-border pt-4">
-      <PanelSectionLabel label={t('Delete this agent')} />
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-[13px] leading-4 text-muted-foreground">
-          {t(
-            'Its instructions, its tools, and every conversation held with it go with it.',
-          )}
-        </span>
-        <DeleteAgentDialog
-          agent={agent}
-          open={deleting}
-          onOpenChange={setDeleting}
-          onDeleted={() => {
-            onDeleted();
-            navigate('/agents');
-          }}
-        >
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="shrink-0 gap-2 text-destructive hover:text-destructive"
-            onClick={() => setDeleting(true)}
-          >
-            <Trash2 size={14} />
-            {t('Delete')}
-          </Button>
-        </DeleteAgentDialog>
-      </div>
-    </FormItem>
-  );
-};
-
-const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="flex flex-col gap-[9px] border-t border-border pt-4">
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        className="flex w-fit items-center gap-1.5 text-xs font-medium leading-4 text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ChevronRight
-          size={14}
-          className={cn('transition-transform', open && 'rotate-90')}
-        />
-        {t('Advanced')}
-      </button>
-      {open && <div className="flex flex-col gap-[20px]">{children}</div>}
-    </div>
-  );
-};
-
-const ConfigureBehaviorTab = ({
-  form,
-  needsModel,
-}: {
-  form: ReturnType<
-    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
-  >;
-  needsModel: boolean;
-}) => {
-  const tools = form.watch('draft.tools') ?? [];
-  const knowledgeCount = tools.filter(
-    (tool) => tool.type === AgentToolType.KNOWLEDGE_BASE,
-  ).length;
-
-  return (
-    <>
-      <FormField
-        control={form.control}
-        name="draft.instructions"
-        render={({ field }) => (
-          <FormItem className="flex flex-col gap-[9px]">
-            <PanelSectionLabel label={t('Instructions')} required />
-            <FormControl>
-              <Textarea
-                {...field}
-                minRows={4}
-                maxRows={12}
-                placeholder={t(
-                  'Reply to refund requests. Check the order in Stripe first, and escalate anything over $200.',
-                )}
-                className="rounded-[10px] px-[13px] py-3 text-[13px] leading-[155%]"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormItem className="flex flex-col gap-[9px]">
-        <PanelSectionLabel label={t('Model')} />
-        {needsModel && (
-          <p className="text-[13px] leading-4 text-destructive">
-            {t('Pick a model so this agent can answer.')}
-          </p>
-        )}
-        <AIModelSelector
-          hideLabel
-          showEmbeddingNote={knowledgeCount > 0}
-          defaultProvider={form.watch('draft.provider') ?? undefined}
-          defaultModel={form.watch('draft.modelName') ?? undefined}
-          defaultConfigId={form.watch('draft.providerConfigId') ?? undefined}
-          onChange={({ provider, model, configId, picked: pickedBy }) => {
-            const picked = {
-              provider: parseProvider(provider) ?? null,
-              modelName: model ?? null,
-              providerConfigId: configId ?? null,
-            };
-            if (
-              !agentEditState.modelPickChanged({
-                picked,
-                current: form.getValues('draft'),
-              })
-            ) {
-              return;
-            }
-            const shouldDirty = pickedBy !== 'default';
-            form.setValue('draft.provider', picked.provider, { shouldDirty });
-            form.setValue('draft.modelName', picked.modelName, { shouldDirty });
-            form.setValue('draft.providerConfigId', picked.providerConfigId, {
-              shouldDirty,
-            });
-          }}
-        />
-      </FormItem>
-      <FormField
-        control={form.control}
-        name="draft.tools"
-        render={({ field }) => (
-          <FormItem className="flex flex-col gap-[9px]">
-            <AgentTools
-              toolsField={field}
-              selectedProvider={form.watch('draft.provider') ?? undefined}
-            />
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <AdvancedSection>
-        <FormField
-          control={form.control}
-          name="draft.structuredOutput"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
-              <AgentStructuredOutput
-                disabled={false}
-                structuredOutputField={field}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="draft.maxSteps"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
-              <PanelSectionLabel label={t('Max steps')} />
-              <FormControl>
-                <Input
-                  type="number"
-                  min={1}
-                  max={MAX_AGENT_STEP_BUDGET}
-                  value={field.value}
-                  onChange={(event) =>
-                    field.onChange(
-                      Number(event.target.value) || DEFAULT_AGENT_MAX_STEPS,
-                    )
-                  }
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </AdvancedSection>
-    </>
-  );
-};
-
-const ConfigureSettingsTab = ({
-  agent,
-  form,
-  onDeleted,
-}: {
-  agent: Agent;
-  form: ReturnType<
-    typeof useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>
-  >;
-  onDeleted: () => void;
-}) => (
-  <>
-    <FormField
-      control={form.control}
-      name="displayName"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <PanelSectionLabel label={t('Name')} required />
-          <FormControl>
-            <Input {...field} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="description"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <PanelSectionLabel label={t('Description')} />
-          <FormControl>
-            <Textarea {...field} minRows={2} maxRows={4} />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="icon"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <PanelSectionLabel label={t('Shape')} />
-          <div className="grid grid-cols-6 gap-2">
-            {Object.values(AgentIcon).map((iconName) => (
-              <button
-                key={iconName}
-                type="button"
-                aria-label={iconName}
-                onClick={() => field.onChange(iconName)}
-                className={cn(
-                  'flex items-center justify-center rounded-[10px] p-[3px]',
-                  field.value === iconName && 'ring-2 ring-foreground',
-                )}
-              >
-                <AgentMark
-                  icon={iconName}
-                  color={form.watch('color')}
-                  size="sm"
-                />
-              </button>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <FormField
-      control={form.control}
-      name="color"
-      render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
-          <PanelSectionLabel label={t('Color')} />
-          <div className="grid grid-cols-6 gap-2">
-            {Object.values(ColorName).map((colorName) => (
-              <button
-                key={colorName}
-                type="button"
-                aria-label={colorName}
-                onClick={() => field.onChange(colorName)}
-                className={cn(
-                  'flex items-center justify-center rounded-full p-[3px]',
-                  field.value === colorName && 'ring-2 ring-foreground',
-                )}
-              >
-                <span
-                  className="size-6 rounded-full"
-                  style={{
-                    backgroundColor: PROJECT_COLOR_PALETTE[colorName].color,
-                  }}
-                />
-              </button>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-    <AgentProjectRow agent={agent} />
-    <AgentDangerZone agent={agent} onDeleted={onDeleted} />
-  </>
-);
-
-const PanelSectionLabel = ({
-  label,
-  meta,
-  required,
-}: {
-  label: string;
-  meta?: string;
-  required?: boolean;
-}) => (
-  <div className="flex items-baseline gap-2">
-    <FormLabel
-      showRequiredIndicator={required}
-      className="grow text-[13px] font-medium"
-    >
-      {label}
-    </FormLabel>
-    {meta !== undefined && (
-      <span className="text-xs leading-4 text-muted-foreground">{meta}</span>
-    )}
-  </div>
-);
-
-const useWarnBeforeLosingChanges = ({
-  hasChanges,
-  standDown,
-}: {
-  hasChanges: boolean;
-  standDown: React.RefObject<boolean>;
-}) => {
-  const blocker = unstable_useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasChanges &&
-      standDown.current !== true &&
-      currentLocation.pathname !== nextLocation.pathname,
-  );
-
-  useEffect(() => {
-    if (!hasChanges) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      if (standDown.current === true) return;
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [hasChanges]);
-
-  return blocker;
-};
-
-const LeaveWithoutSavingDialog = ({
-  open,
-  onKeepEditing,
-  onDiscard,
-}: {
-  open: boolean;
-  onKeepEditing: () => void;
-  onDiscard: () => void;
-}) => (
-  <Dialog
-    open={open}
-    onOpenChange={(next) => {
-      if (!next) onKeepEditing();
-    }}
-  >
-    <DialogContent className="max-w-[420px]">
-      <DialogHeader>
-        <DialogTitle>{t('Leave without saving?')}</DialogTitle>
-        <DialogDescription>
-          {t(
-            'These edits have not gone live yet. Leave now and they are discarded.',
-          )}
-        </DialogDescription>
-      </DialogHeader>
-      <DialogFooter>
-        <Button variant="outline" onClick={onKeepEditing}>
-          {t('Keep editing')}
-        </Button>
-        <Button variant="destructive" onClick={onDiscard}>
-          {t('Discard changes')}
-        </Button>
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-);
-
-const formValuesOf = (agent: Agent): ConfigureAgentInput => ({
-  displayName: agent.displayName,
-  description: agent.description ?? '',
-  icon: agent.icon,
-  color: agent.color,
-  draft: agent.draft,
-});
-
-const liveValuesOf = (agent: Agent): ConfigureAgentInput | null =>
-  isNil(agent.published)
-    ? null
-    : { ...formValuesOf(agent), draft: agent.published };
-
-const CONFIGURE_TABS = [
-  { value: 'behavior', label: () => t('Behavior') },
-  { value: 'settings', label: () => t('Settings') },
-];
-
-const AgentConfigurePanel = ({
-  agent,
-  onExit,
-}: {
-  agent: Agent;
-  onExit: () => void;
-}) => {
-  const form = useForm<ConfigureAgentInput, unknown, ConfigureAgentValues>({
-    resolver: zodResolver(ConfigureAgentSchema),
-    defaultValues: formValuesOf(agent),
-    mode: 'onChange',
-  });
-  const updateAgent = agentsMutations.useUpdateAgent({ id: agent.id });
-  const [tab, setTab] = useState('behavior');
-  const [scrolled, setScrolled] = useState(false);
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const checkScrolled = () =>
-    setScrolled((bodyRef.current?.scrollTop ?? 0) > 5);
-
-  const values = form.watch();
-  const formNeedsModel =
-    isNil(values.draft?.modelName) || isNil(values.draft?.provider);
-  const live = liveValuesOf(agent);
-  const hasChanges =
-    isNil(live) || !agentEditState.sameConfig({ left: values, right: live });
-  const unsavedTyping = form.formState.isDirty;
-  const deletedRef = useRef(false);
-  const leaveBlocker = useWarnBeforeLosingChanges({
-    hasChanges: unsavedTyping,
-    standDown: deletedRef,
-  });
-  const [exitRequested, setExitRequested] = useState(false);
-  const leaveDecision = agentEditState.leaveGuard({
-    blockerState: leaveBlocker.state,
-    exitRequested,
-  });
-  const writeSeq = useRef(0);
-  const writeLock = useRef(agentEditState.createWriteLock());
-
-  const lastFromServer = useRef(formValuesOf(agent));
-
-  useEffect(() => {
-    const fromServer = formValuesOf(agent);
-    if (
-      agentEditState.sameConfig({
-        left: fromServer,
-        right: lastFromServer.current,
-      })
-    ) {
-      return;
-    }
-    if (unsavedTyping) return;
-    lastFromServer.current = fromServer;
-    form.reset(fromServer);
-  }, [agent, unsavedTyping, form]);
-
-  const setServerError = (error: Error, fallback: string) =>
-    form.setError('root.serverError', {
-      type: 'manual',
-      message: api.extractServerErrorMessage(error, fallback),
-    });
-
-  const markSavedUnlessEditedSince = (written: ConfigureAgentInput) => {
-    if (
-      !agentEditState.sameConfig({ left: form.getValues(), right: written })
-    ) {
-      return;
-    }
-    form.reset(written);
-  };
-
-  const releaseWrite = () => writeLock.current.release();
-  const claimWrite = () => writeLock.current.claim();
-
-  const handleSubmit = (values: ConfigureAgentValues) => {
-    form.clearErrors('root.serverError');
-    const seq = ++writeSeq.current;
-    updateAgent.mutate(toUpdateRequest(values), {
-      onSuccess: () => {
-        if (seq !== writeSeq.current) return;
-        markSavedUnlessEditedSince(values);
-        toast(t('Live — every flow using this agent just got the update'));
-      },
-      onError: (error) =>
-        setServerError(error, t("Your changes weren't saved. Try again.")),
-      onSettled: releaseWrite,
-    });
-  };
-
-  const saveAndGoLive = form.handleSubmit(handleSubmit, releaseWrite);
-  const submitIfIdle = (event: React.FormEvent<HTMLFormElement>) => {
-    if (!claimWrite()) {
-      event.preventDefault();
-      return;
-    }
-    void saveAndGoLive(event);
-  };
-
-  const requestExit = () => (unsavedTyping ? setExitRequested(true) : onExit());
-
-  return (
-    <Form {...form}>
-      <LeaveWithoutSavingDialog
-        open={leaveDecision.open}
-        onKeepEditing={() => {
-          setExitRequested(false);
-          leaveBlocker.reset?.();
-        }}
-        onDiscard={() => {
-          setExitRequested(false);
-          if (leaveDecision.discardAction === 'proceed') {
-            leaveBlocker.proceed?.();
-            return;
-          }
-          onExit();
-        }}
-      />
-      <form
-        onSubmit={submitIfIdle}
-        className="flex h-full min-h-0 w-full shrink-0 flex-col"
-      >
-        <div className="flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-border px-[18px]">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-base font-semibold leading-5 tracking-[-0.01em]">
-              {t('Configure')}
-            </span>
-            {unsavedTyping && (
-              <span className="flex shrink-0 items-center gap-1.5 text-xs leading-4 text-muted-foreground animate-in fade-in duration-200">
-                <span className="size-[6px] rounded-full bg-primary" />
-                {t('Unsaved')}
-              </span>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {hasChanges && (
-              <Button
-                type="submit"
-                loading={updateAgent.isPending}
-                className="h-[34px] shrink-0 rounded-lg px-4 animate-in fade-in duration-200"
-              >
-                {t('Publish')}
-              </Button>
-            )}
-            <button
-              type="button"
-              aria-label={t('Close')}
-              onClick={requestExit}
-              className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <X size={16} />
-            </button>
-          </div>
-        </div>
-        <div className="flex h-[44px] shrink-0 items-stretch border-b border-border px-[18px]">
-          <Tabs
-            value={tab}
-            onValueChange={setTab}
-            className="flex h-full min-w-0 items-stretch"
-          >
-            <TabsList variant="outline" className="h-full items-stretch gap-5">
-              {CONFIGURE_TABS.map(({ value, label }) => (
-                <TabsTrigger
-                  key={value}
-                  value={value}
-                  variant="outline"
-                  className="h-full items-center text-[13px]"
-                >
-                  {label()}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-        <div className="relative min-h-0 grow">
-          {scrolled && (
-            <div className="pointer-events-none absolute left-0 right-0 top-0 z-[1] h-5 bg-gradient-to-b from-background to-transparent" />
-          )}
-          <div
-            ref={bodyRef}
-            onScroll={checkScrolled}
-            className="scrollbar-thin h-full overflow-y-auto"
-          >
-            <div className="flex flex-col gap-5 p-[18px]">
-              {tab === 'behavior' && (
-                <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
-              )}
-              {tab === 'settings' && (
-                <ConfigureSettingsTab
-                  agent={agent}
-                  form={form}
-                  onDeleted={() => {
-                    deletedRef.current = true;
-                  }}
-                />
-              )}
-              {form.formState.errors.root?.serverError && (
-                <p className="text-[13px] leading-4 text-destructive">
-                  {form.formState.errors.root.serverError.message}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </form>
-    </Form>
-  );
-};
-
-const useCollapsedAppSidebarWhileHere = () => {
+const CollapseAppSidebarWhileHere = () => {
   const sidebar = useSidebar();
   const sidebarRef = useRef(sidebar);
   sidebarRef.current = sidebar;
@@ -855,42 +85,17 @@ const useCollapsedAppSidebarWhileHere = () => {
     sidebarRef.current.setOpen(false);
     return () => sidebarRef.current.setOpen(true);
   }, []);
-};
 
-const ConversationsToggle = ({
-  open,
-  onClick,
-}: {
-  open: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    type="button"
-    aria-label={open ? t('Collapse conversations') : t('Expand conversations')}
-    onClick={onClick}
-    className="flex size-[30px] shrink-0 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-  >
-    {open ? <PanelLeftCloseIcon size={14} /> : <HistoryIcon size={14} />}
-  </button>
-);
+  return null;
+};
 
 const AgentEditorContent = () => {
   const navigate = useNavigate();
   const { agentId } = useParams<{ agentId: string }>();
   const agentsAvailable = useAgentsAvailable();
-  const [editing, setEditing] = useState<boolean>();
-  const [conversationsOpen, setConversationsOpen] = useState(true);
-  const showConfigure = (open: boolean) => {
-    setEditing(open);
-    if (open) setConversationsOpen(false);
-  };
-  const showConversations = (open: boolean) => {
-    setConversationsOpen(open);
-    if (open) setEditing(false);
-  };
+  const [openPanel, setOpenPanel] = useState<OpenPanel>();
   const [configureMounted, setConfigureMounted] = useState(false);
   const queryClient = useQueryClient();
-  useCollapsedAppSidebarWhileHere();
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
@@ -925,19 +130,13 @@ const AgentEditorContent = () => {
     enabled: agentId !== undefined && agentsAvailable,
   });
 
-  const needsModel =
-    agent !== undefined &&
-    requirementsFor(agent).some((requirement) => !requirement.met);
-  const configureOpen = editing ?? needsModel;
-
-  useEffect(() => {
-    if (configureOpen) {
-      setConfigureMounted(true);
-      return;
-    }
-    const timer = window.setTimeout(() => setConfigureMounted(false), 200);
-    return () => window.clearTimeout(timer);
-  }, [configureOpen]);
+  const needsModel = agent !== undefined && needsAModel(agent);
+  const panel = openPanel ?? (needsModel ? 'configure' : 'conversations');
+  const configureOpen = panel === 'configure';
+  const conversationsOpen = panel === 'conversations';
+  if (configureOpen && !configureMounted) {
+    setConfigureMounted(true);
+  }
 
   if (isLoading) {
     return <AgentEditorSkeleton />;
@@ -970,6 +169,7 @@ const AgentEditorContent = () => {
 
   return (
     <div className="flex h-full w-full">
+      <CollapseAppSidebarWhileHere />
       <div className="flex min-w-0 grow flex-col">
         <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
           <button
@@ -995,7 +195,7 @@ const AgentEditorContent = () => {
                 type="button"
                 variant="outline"
                 className="h-[34px] shrink-0 gap-2 rounded-lg px-[13px] animate-in fade-in duration-200"
-                onClick={() => showConfigure(true)}
+                onClick={() => setOpenPanel('configure')}
               >
                 <Settings2 size={15} />
                 {t('Configure')}
@@ -1006,7 +206,8 @@ const AgentEditorContent = () => {
         <div className="flex min-h-0 grow">
           <aside
             className={cn(
-              'shrink-0 overflow-hidden border-r border-border transition-[width] duration-200 ease-out',
+              SLIDING_ASIDE,
+              'border-r',
               conversationsOpen ? 'w-[220px]' : 'w-[46px]',
             )}
           >
@@ -1017,19 +218,14 @@ const AgentEditorContent = () => {
                   selectedId={openedConversationId ?? conversationId ?? null}
                   onSelect={openConversation}
                   onNewChat={startNewConversation}
-                  collapseAction={
-                    <ConversationsToggle
-                      open
-                      onClick={() => showConversations(false)}
-                    />
-                  }
+                  onCollapse={() => setOpenPanel(null)}
                 />
               </div>
             ) : (
               <div className="flex h-full w-[46px] shrink-0 flex-col items-center pt-3">
                 <ConversationsToggle
                   open={false}
-                  onClick={() => showConversations(true)}
+                  onClick={() => setOpenPanel('conversations')}
                 />
               </div>
             )}
@@ -1041,11 +237,14 @@ const AgentEditorContent = () => {
               agentId={agent.id}
               conversationId={openedConversationId ?? null}
               onConversationCreated={writeConversationParam}
-              onTurnEnd={() =>
-                queryClient.invalidateQueries({
+              onTurnEnd={() => {
+                if (!configureMounted) {
+                  return;
+                }
+                void queryClient.invalidateQueries({
                   queryKey: ['agents', 'one', agent.id],
-                })
-              }
+                });
+              }}
               placeholder={t('Ask {name}...', { name: agent.displayName })}
               footerNote={buildCapabilityNote(agent)}
               emptyState={
@@ -1061,8 +260,14 @@ const AgentEditorContent = () => {
         </div>
       </div>
       <aside
+        onTransitionEnd={(event) => {
+          if (event.propertyName === 'width' && !configureOpen) {
+            setConfigureMounted(false);
+          }
+        }}
         className={cn(
-          'shrink-0 overflow-hidden border-l border-border transition-[width] duration-200 ease-out',
+          SLIDING_ASIDE,
+          'border-l',
           configureOpen ? 'w-[452px]' : 'w-0',
         )}
       >
@@ -1071,7 +276,7 @@ const AgentEditorContent = () => {
             <AgentConfigurePanel
               key={agent.id}
               agent={agent}
-              onExit={() => showConfigure(false)}
+              onExit={() => setOpenPanel(null)}
             />
           )}
         </div>
@@ -1094,4 +299,4 @@ const AgentEditorPage = () => {
   );
 };
 
-export { AgentConfigurePanel, AgentEditorPage, LeaveWithoutSavingDialog };
+export { AgentEditorPage };

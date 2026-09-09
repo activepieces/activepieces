@@ -18,7 +18,7 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-async function refusalFor(source: AgentRunSource, toolName: string = AGENT_TOOL): Promise<string> {
+async function refusalFor({ source, toolName = AGENT_TOOL }: { source: AgentRunSource, toolName?: string }): Promise<string> {
     const ctx = await createTestContext(app, { plan: { agentsEnabled: true, chatEnabled: true } })
     try {
         await agentRpcHandlers(app.log).executeAgentTool({
@@ -41,26 +41,26 @@ describe('which surfaces the server will run an agent tool for', () => {
     // The worker lists these tools for the builder, so the server refusing them is the mistake this
     // feature has made four times: a surface handed tools its own backend then rejects.
     it('does not turn the builder away from the tools its policy lists', async () => {
-        const refusal = await refusalFor(AgentRunSource.AGENT_BUILDER)
+        const refusal = await refusalFor({ source: AgentRunSource.AGENT_BUILDER })
 
         expect(refusal).not.toContain('only available to chat runs')
     })
 
     it('does not turn an agent away from rewriting itself', async () => {
-        const refusal = await refusalFor(AgentRunSource.AGENT)
+        const refusal = await refusalFor({ source: AgentRunSource.AGENT })
 
         expect(refusal).not.toContain('only available to chat runs')
     })
 
     it('still turns a surface away from the tools that reach other agents', async () => {
-        const refusal = await refusalFor(AgentRunSource.AGENT, OTHER_AGENTS_TOOL)
+        const refusal = await refusalFor({ source: AgentRunSource.AGENT, toolName: OTHER_AGENTS_TOOL })
 
         expect(refusal).toContain(ErrorCode.AUTHORIZATION)
         expect(refusal).toContain('only available to chat runs')
     })
 
     it('still turns an unattended run away from every one of them', async () => {
-        const refusal = await refusalFor(AgentRunSource.FLOW_STEP)
+        const refusal = await refusalFor({ source: AgentRunSource.FLOW_STEP })
 
         expect(refusal).toContain(ErrorCode.AUTHORIZATION)
         expect(refusal).toContain('only available to chat runs')

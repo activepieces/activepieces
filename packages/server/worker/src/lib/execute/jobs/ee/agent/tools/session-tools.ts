@@ -2,7 +2,7 @@ import { spreadIfDefined } from '@activepieces/core-utils'
 import { AgentOutputField, AgentOutputFieldType, AgentPhase, apId, BuildPlanEvent, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { tool, ToolSet } from 'ai'
 import { z } from 'zod'
-import { AgentEventEmitter, QUESTION_ICON_NAMES } from './tool-primitives'
+import { AgentEventEmitter, QUESTION_ICON_NAMES, TaintState } from './tool-primitives'
 
 export function createLocalTools({ onSetProjectContext, projects }: {
     onSetProjectContext: (projectId: string | null) => Promise<{ success: boolean, error?: string }>
@@ -43,9 +43,16 @@ export function createLocalTools({ onSetProjectContext, projects }: {
     }
 }
 
-export function createAgentSurfaceTools({ executeTool }: {
+export function createAgentSurfaceTools({ executeTool, taintState }: {
     executeTool: (toolName: string, toolInput: Record<string, unknown>) => Promise<unknown>
+    taintState: TaintState
 }): ToolSet {
+    const runUnlessTainted = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => {
+        if (taintState.tainted) {
+            return { error: 'This turn has read content from outside Activepieces, so it cannot change a saved agent. Tell the user to make the change in the agent\'s Configure panel.' }
+        }
+        return executeTool(toolName, toolInput)
+    }
     return {
         ap_list_agents: tool({
             description: 'List the saved agents in the active project, with whether each one is published. Call it before offering to create an agent, so you build on what exists instead of adding a near-duplicate, and when the user asks what agents they have.',
@@ -65,7 +72,7 @@ export function createAgentSurfaceTools({ executeTool }: {
                 publish: z.boolean().optional().describe('Make the agent live with these tools in the same step'),
             }),
             execute: async (toolInput) => {
-                return executeTool('ap_add_agent_tool', toolInput)
+                return runUnlessTainted('ap_add_agent_tool', toolInput)
             },
         }),
 
@@ -78,7 +85,7 @@ export function createAgentSurfaceTools({ executeTool }: {
                 publish: z.boolean().optional().describe('Make the agent live without these tools in the same step'),
             }),
             execute: async (toolInput) => {
-                return executeTool('ap_remove_agent_tool', toolInput)
+                return runUnlessTainted('ap_remove_agent_tool', toolInput)
             },
         }),
 
@@ -92,7 +99,7 @@ export function createAgentSurfaceTools({ executeTool }: {
                 publish: z.boolean().optional().describe('Make the change live for flows and chats in the same step'),
             }),
             execute: async (toolInput) => {
-                return executeTool('ap_update_agent', toolInput)
+                return runUnlessTainted('ap_update_agent', toolInput)
             },
         }),
 

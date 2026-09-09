@@ -38,7 +38,7 @@ vi.mock('@/features/agents/hooks/agents-hooks', () => ({
   agentsQueries: { useAgent: () => ({ data: undefined, isLoading: false }) },
 }));
 
-import { AgentConfigurePanel } from '@/app/routes/agents/id';
+import { AgentConfigurePanel } from '@/app/routes/agents/id/configure-panel';
 
 const agent = {
   id: 'agent_1',

@@ -80,9 +80,7 @@ export const AgentTools = ({
 
   return (
     <div>
-      {!asRows && (
-        <h2 className="text-[13px] font-medium">{t('Agent Tools')}</h2>
-      )}
+      {!asRows && <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>}
 
       <div className={cn(!asRows && 'mt-2')}>
         {flowTools.length +

@@ -1,5 +1,3 @@
-import { isNil } from '@activepieces/core-utils';
-
 function sameConfig({
   left,
   right,
@@ -24,41 +22,6 @@ function modelPickChanged({
     same(picked.modelName, current.modelName) &&
     same(picked.providerConfigId, current.providerConfigId)
   );
-}
-
-function headerStatus({
-  needsModel,
-  justLaunched,
-  live,
-  hasChanges,
-}: {
-  needsModel: boolean;
-  justLaunched: boolean;
-  live: unknown;
-  hasChanges: boolean;
-}): HeaderStatus {
-  if (justLaunched) {
-    return 'live';
-  }
-  if (needsModel) {
-    return 'needs-model';
-  }
-  return !isNil(live) && !hasChanges ? 'live' : 'pending';
-}
-
-function modeIntent({
-  next,
-  unsavedTyping,
-  blockedReason,
-}: {
-  next: string;
-  unsavedTyping: boolean;
-  blockedReason: string | null;
-}): ModeIntent {
-  if (next !== 'test' || !unsavedTyping || !isNil(blockedReason)) {
-    return 'switch';
-  }
-  return 'stage';
 }
 
 function leaveGuard({
@@ -95,8 +58,6 @@ function createWriteLock(): WriteLock {
 export const agentEditState = {
   sameConfig,
   modelPickChanged,
-  headerStatus,
-  modeIntent,
   leaveGuard,
   createWriteLock,
 };
@@ -106,8 +67,6 @@ export type ModelPick = {
   modelName?: string | null;
   providerConfigId?: string | null;
 };
-export type HeaderStatus = 'needs-model' | 'live' | 'pending';
-export type ModeIntent = 'switch' | 'stage';
 export type LeaveGuard = {
   open: boolean;
   discardAction: 'proceed' | 'exit' | 'none';
