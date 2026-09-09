@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-common';
 import Ajv from 'ajv';
 import { randomUUID } from 'crypto';
+import mime from 'mime-types';
 
 export const FIRECRAWL_API_BASE_URL = 'https://api.firecrawl.dev/v2';
 export const POLLING_INTERVAL = 5000;
@@ -19,51 +20,33 @@ export const forSimpleOutputFormat = (format: string): string => {
   return format;
 }
 
-// Download and save screenshot(s) - works for both single scrape and crawl results
-export async function downloadAndSaveScreenshot(
-  screenshotTarget: any,
+export async function saveFirecrawlFile(
   context: any,
+  firecrawlFileUrl: string,
 ): Promise<{ fileName: string; fileUrl: string }> {
-  const screenshotUrl = screenshotTarget.screenshot;
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: screenshotUrl,
+    url: firecrawlFileUrl,
     responseType: 'arraybuffer'
   });
 
-  const fileName = `screenshot-${randomUUID()}.png`;
+  const contentTypeHeader = response.headers?.['content-type'];
+  const contentType = Array.isArray(contentTypeHeader) ? contentTypeHeader[0] : contentTypeHeader;
+  const extension = contentType ? mime.extension(contentType) : false;
+
+  if (!extension || extension === 'bin') {
+    throw new Error(
+      `Firecrawl returned a file with an unusable content type (${contentType ?? 'none'}), so its extension could not be determined: ${firecrawlFileUrl}`,
+    );
+  }
+
+  const fileName = `firecrawl-${randomUUID()}.${extension}`;
   const fileUrl = await context.files.write({
     fileName: fileName,
     data: Buffer.from(response.body),
   });
 
   return { fileName, fileUrl };
-}
-
-export async function downloadAndSavePdfs(
-  dataTarget: any,
-  context: any,
-): Promise<Array<{ fileName: string; fileUrl: string }>> {
-  const pdfUrls: string[] = dataTarget.actions?.pdfs || [];
-  const savedPdfs: { fileName: string; fileUrl: string }[] = [];
-
-  for (const pdfUrl of pdfUrls) {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: pdfUrl,
-      responseType: 'arraybuffer'
-    });
-
-    const fileName = `pdf-${randomUUID()}.pdf`;
-    const fileUrl = await context.files.write({
-      fileName: fileName,
-      data: Buffer.from(response.body),
-    });
-
-    savedPdfs.push({ fileName, fileUrl });
-  }
-
-  return savedPdfs;
 }
 
 export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<any[]> {
@@ -79,7 +62,7 @@ export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context:
       }
 
       try {
-        const savedScreenshot = await downloadAndSaveScreenshot(data, context);
+        const savedScreenshot = await saveFirecrawlFile(context, data.screenshot);
         return { ...data, screenshot: savedScreenshot };
       } catch (error) {
         console.error(`Failed to download screenshot for page: ${error}`);

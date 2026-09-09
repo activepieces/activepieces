@@ -1,7 +1,7 @@
 import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, downloadAndSavePdfs,forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, saveFirecrawlFile, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
 import { scrapeUrlActionOutputSchema } from '../output-schemas';
 
 function forDefaultScreenshot(): any {
@@ -302,12 +302,16 @@ export const scrape = createAction({
 
     const result = response.body;
     const savedScreenshot = result.data.screenshot
-      ? await downloadAndSaveScreenshot(result.data, context)
+      ? await saveFirecrawlFile(context, result.data.screenshot)
       : undefined;
-    const savedPdfs = await downloadAndSavePdfs(result.data, context);
+    const savedPdfs = await Promise.all(
+      (result.data.actions?.pdfs ?? []).map((pdfUrl: string) =>
+        saveFirecrawlFile(context, pdfUrl)
+      )
+    );
     const savedActionScreenshots = await Promise.all(
-      (result.data.actions?.screenshots ?? []).map((url: string) =>
-        downloadAndSaveScreenshot({ screenshot: url }, context)
+      (result.data.actions?.screenshots ?? []).map((screenshotUrl: string) =>
+        saveFirecrawlFile(context, screenshotUrl)
       )
     );
     const javascriptReturns = result.data.actions?.javascriptReturns ?? [];

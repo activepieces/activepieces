@@ -12,10 +12,12 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "ajv": "8.18.0",
+    "mime-types": "2.1.35",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
+    "@types/mime-types": "2.1.1",
     "tslib": "2.6.2"
   }
 }
