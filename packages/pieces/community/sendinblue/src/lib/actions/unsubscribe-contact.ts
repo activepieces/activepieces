@@ -10,7 +10,7 @@ export const unsubscribeContact = createAction({
 	classification: 'WRITE',
 	displayName: 'Unsubscribe Contact',
 	description: 'Blacklist a contact so it stops receiving email or SMS.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Opts a Brevo contact out by setting its email and optionally SMS blacklist flags, and can additionally remove it from specific lists. Use this to honour an unsubscribe request received elsewhere. Brevo answers with an empty body, so this returns a success flag. Idempotent — unsubscribing an already unsubscribed contact changes nothing.',

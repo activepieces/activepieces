@@ -12,7 +12,7 @@ export const createOrUpdateContact = createAction({
 	classification: 'WRITE',
 	displayName: 'Create or Update Contact',
 	description: 'Create or update an existing contact',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Upserts a Brevo (formerly Sendinblue) contact keyed on its email address, setting attributes, list membership, and email/SMS blacklist flags. Use to add a new subscriber or sync changes to an existing one; because it is keyed on email with update enabled, re-running with the same input is idempotent and does not create duplicates. Email is required, and any attributes referenced must already exist in the Brevo account. Blacklist flags are only sent when explicitly set, so leaving them untouched preserves the contact current subscription state.',
