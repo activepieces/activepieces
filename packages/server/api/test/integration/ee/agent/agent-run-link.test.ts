@@ -1,5 +1,5 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowActionType, FlowTriggerType, PauseType, WorkerJobType } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowActionType, FlowTriggerType, McpAuthType, McpProtocol, PauseType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -415,6 +415,28 @@ describe('what the linked run actually sends to the worker', () => {
         expect(job.data.maxSteps).toBe(7)
         expect(job.data.tools.map((tool: { toolName: string }) => tool.toolName)).toEqual(['read_inbox'])
         expect(job.data.source).toBe(AgentRunSource.FLOW_STEP)
+    })
+
+    it('still sends an MCP tool to the worker, which is the only thing that can run it', async () => {
+        const ctx = await context()
+
+        const response = await startRun(ctx, {
+            provider: AIProviderName.OPENAI,
+            modelName: 'gpt-5',
+            maxSteps: 10,
+            tools: [{
+                type: AgentToolType.MCP,
+                toolName: 'internal-api',
+                serverUrl: 'https://mcp.example.com/sse',
+                protocol: McpProtocol.SSE,
+                auth: { type: McpAuthType.NONE },
+            }],
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const job = addSpy.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
+        expect(job.data.tools).toHaveLength(1)
+        expect(job.data.tools[0].toolName).toBe('internal-api')
     })
 
     it('leaves an unlinked step running its own config, with no instructions of ours', async () => {

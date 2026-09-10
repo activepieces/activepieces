@@ -54,9 +54,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             : agentHelpers.jobFieldsFromConfig({ config: linked })
         const { tools, structuredOutput, provider } = runFields
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
-        const runnableToolTypes = [AgentToolType.PIECE, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
-        const supportedTools = (tools ?? []).filter((tool) => runnableToolTypes.includes(tool.type))
-        const droppedMcpTools = (tools ?? []).filter((tool) => tool.type === AgentToolType.MCP).map((tool) => tool.toolName)
+        const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
         const flowToolRequests = (tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
         const unsupported = unique((tools ?? []).map((tool) => tool.type)).filter((type) => !supportedToolTypes.includes(type))
         if (unsupported.length > 0) {
@@ -82,10 +80,6 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = apId()
         const runId = apId()
         const log = request.log.child({ conversation: { id: conversationId }, run: { id: runId } })
-        if (droppedMcpTools.length > 0) {
-            log.warn({ project: { id: projectId } }, `[agentRunController] An agent step cannot run MCP tools yet, so ${droppedMcpTools.length} were left out of this run`)
-        }
-
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,

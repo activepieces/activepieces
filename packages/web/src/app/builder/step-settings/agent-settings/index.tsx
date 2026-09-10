@@ -77,11 +77,12 @@ export const AgentSettings = (props: AgentSettingsProps) => {
     AgentPieceProps.AGENT_ID,
     ...(isNil(linkedAgentId) ? [] : comesFromTheAgent),
   ]);
+  const versionCanStoreALink = AgentPieceProps.AGENT_ID in selectedAction.props;
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-4 w-full">
-        <AgentLink disabled={props.readonly} />
+        {versionCanStoreALink && <AgentLink disabled={props.readonly} />}
         {Object.keys(properties).map((propertyName) => {
           return (
             <FormField

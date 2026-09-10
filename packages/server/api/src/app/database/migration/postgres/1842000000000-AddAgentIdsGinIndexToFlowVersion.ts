@@ -7,7 +7,7 @@ import { Migration } from '../../migration'
 export class AddAgentIdsGinIndexToFlowVersion1842000000000 implements Migration {
     name = 'AddAgentIdsGinIndexToFlowVersion1842000000000'
     breaking = false
-    release = '0.90.3'
+    release = '0.91.0'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {

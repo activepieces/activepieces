@@ -1,4 +1,4 @@
-import { isNil, omit } from '@activepieces/core-utils';
+import { isNil, spreadIfDefined } from '@activepieces/core-utils';
 import {
   AgentPieceProps,
   AgentSummary,
@@ -80,7 +80,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
     }
     form.setValue(
       `settings.input.${AgentPieceProps.AGENT_TOOLS}`,
-      config.tools.map((tool) => omit(tool, ['toolName'])),
+      config.tools,
       { shouldValidate: true },
     );
     form.setValue(
@@ -93,6 +93,18 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
       config.maxSteps,
       { shouldValidate: true },
     );
+    if (!isNil(config.provider) && !isNil(config.modelName)) {
+      form.setValue(
+        `settings.input.${AgentPieceProps.AI_PROVIDER_MODEL}`,
+        {
+          provider: config.provider,
+          model: config.modelName,
+          picked: 'user',
+          ...spreadIfDefined('configId', config.providerConfigId ?? undefined),
+        },
+        { shouldValidate: true },
+      );
+    }
   };
 
   return (
