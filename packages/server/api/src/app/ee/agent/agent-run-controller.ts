@@ -1,6 +1,6 @@
 import { flowStructureUtil } from '@activepieces/core-execution'
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
-import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, FlowVersionState, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
+import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, DEFAULT_AGENT_MAX_STEPS, FlowVersionState, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -38,15 +38,15 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         if (!isNil(agentId) && (inlineTools?.length ?? 0) > 0) {
             throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step both links an agent and carries its own tools, so which one to run is ambiguous' } })
         }
-        if (!isNil(agentId) && !await agentHelpers.agentsSurfaceAvailable({ platformId: platform.id, log: request.log })) {
-            throw new ActivepiecesError({ code: ErrorCode.FEATURE_DISABLED, params: { message: 'This step runs a saved agent, and agents are not available on this platform' } })
+        if (!isNil(agentId)) {
+            await agentHelpers.assertAgentsSurfaceAvailable({ platformId: platform.id, log: request.log })
         }
         const linked = isNil(agentId) ? null : await resolvePublishedAgent({ projectId, externalId: agentId, flowRunId, waitpointId, log: request.log })
         const runFields = isNil(linked)
             ? {
                 tools: request.body.tools,
                 structuredOutput: request.body.structuredOutput,
-                maxSteps: request.body.maxSteps,
+                maxSteps: request.body.maxSteps ?? DEFAULT_AGENT_MAX_STEPS,
                 modelName: request.body.modelName ?? null,
                 ...spreadIfDefined('provider', request.body.provider),
                 ...spreadIfDefined('providerConfigId', providerConfigId),

@@ -308,9 +308,20 @@ async function agentsSurfaceAvailable({ platformId, log }: { platformId: string,
     return plan.agentsEnabled
 }
 
+async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    if (!plan.agentsEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: { message: 'This step runs a saved agent, and agents are not available on this platform' },
+        })
+    }
+}
+
 export const agentHelpers = {
     jobFieldsFromConfig,
     agentsSurfaceAvailable,
+    assertAgentsSurfaceAvailable,
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,

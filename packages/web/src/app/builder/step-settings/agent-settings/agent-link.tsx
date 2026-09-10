@@ -2,6 +2,9 @@ import { isNil, spreadIfDefined } from '@activepieces/core-utils';
 import {
   AgentPieceProps,
   AgentSummary,
+  AgentToolType,
+  AgentVisibility,
+  McpAuthType,
   Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -9,7 +12,9 @@ import { BotIcon, Link2OffIcon, PlusIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -29,13 +34,18 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
   const mayReadAgents = checkAccess(Permission.READ_AGENT);
   const mayWriteAgents = checkAccess(Permission.WRITE_AGENT);
 
-  const { data, isLoading } = agentsQueries.useAgents({
+  const { data, isLoading, isError, refetch } = agentsQueries.useAgents({
     projectId,
     enabled: agentsAvailable && mayReadAgents,
   });
   const agents = useMemo(
     () => (data?.pages ?? []).flatMap((page): AgentSummary[] => page.data),
     [data],
+  );
+  const runnable = useMemo(
+    () =>
+      agents.filter((agent) => agent.visibility === AgentVisibility.PROJECT),
+    [agents],
   );
 
   const linkedExternalId = form.watch(
@@ -46,6 +56,8 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
     id: linked?.id ?? '',
     enabled: !isNil(linked),
   });
+  const stillFindingIt = isLoading && !isNil(linkedExternalId);
+  const linkedConfig = linkedAgent?.published ?? linkedAgent?.draft;
 
   if (!agentsAvailable || !mayReadAgents) {
     return null;
@@ -57,69 +69,83 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
       externalId ?? undefined,
       { shouldValidate: true },
     );
-    if (isNil(externalId)) {
-      return;
-    }
-    form.setValue(`settings.input.${AgentPieceProps.AGENT_TOOLS}`, [], {
-      shouldValidate: true,
-    });
-    form.setValue(
-      `settings.input.${AgentPieceProps.STRUCTURED_OUTPUT}`,
-      undefined,
-      { shouldValidate: true },
-    );
   };
 
   const detach = () => {
-    const config = linkedAgent?.published ?? linkedAgent?.draft;
-    form.setValue(`settings.input.${AgentPieceProps.AGENT_ID}`, undefined, {
-      shouldValidate: true,
-    });
-    if (isNil(config)) {
+    if (isNil(linkedConfig)) {
       return;
     }
+    const authedMcpTools = linkedConfig.tools.filter(
+      (tool) =>
+        tool.type === AgentToolType.MCP && tool.auth.type !== McpAuthType.NONE,
+    );
     form.setValue(
       `settings.input.${AgentPieceProps.AGENT_TOOLS}`,
-      config.tools,
+      linkedConfig.tools.filter((tool) => !authedMcpTools.includes(tool)),
       { shouldValidate: true },
     );
     form.setValue(
       `settings.input.${AgentPieceProps.STRUCTURED_OUTPUT}`,
-      config.structuredOutput,
+      linkedConfig.structuredOutput,
       { shouldValidate: true },
     );
     form.setValue(
       `settings.input.${AgentPieceProps.MAX_STEPS}`,
-      config.maxSteps,
+      linkedConfig.maxSteps,
       { shouldValidate: true },
     );
-    if (!isNil(config.provider) && !isNil(config.modelName)) {
+    if (!isNil(linkedConfig.provider) && !isNil(linkedConfig.modelName)) {
       form.setValue(
         `settings.input.${AgentPieceProps.AI_PROVIDER_MODEL}`,
         {
-          provider: config.provider,
-          model: config.modelName,
+          provider: linkedConfig.provider,
+          model: linkedConfig.modelName,
           picked: 'user',
-          ...spreadIfDefined('configId', config.providerConfigId ?? undefined),
+          ...spreadIfDefined(
+            'configId',
+            linkedConfig.providerConfigId ?? undefined,
+          ),
         },
         { shouldValidate: true },
       );
     }
+    form.setValue(`settings.input.${AgentPieceProps.AGENT_ID}`, undefined, {
+      shouldValidate: true,
+    });
+    if (authedMcpTools.length > 0) {
+      toast(
+        t(
+          'An MCP tool keeps its credentials on the agent, so this step could not take them. Add those tools again here.',
+        ),
+      );
+    }
   };
+
+  if (isError) {
+    return (
+      <FormItem className="flex flex-col gap-2">
+        <FormLabel>{t('Agent')}</FormLabel>
+        <DataFetchErrorState entity={t('agents')} onRetry={refetch} />
+      </FormItem>
+    );
+  }
 
   return (
     <FormItem className="flex flex-col gap-2">
       <FormLabel>{t('Agent')}</FormLabel>
       <SearchableSelect
-        options={agents.map((agent) => ({
+        options={runnable.map((agent) => ({
           value: agent.externalId,
           label: agent.displayName,
+          description: agent.isPublished
+            ? undefined
+            : t('Never published, so a flow cannot run it yet'),
         }))}
         value={linkedExternalId}
         loading={isLoading}
         disabled={disabled}
         showDeselect={!isNil(linkedExternalId)}
-        placeholder={t('Configure this step, or run a saved agent')}
+        placeholder={t('Pick a saved agent, or configure this step')}
         onChange={link}
       />
       {isNil(linkedExternalId) ? (
@@ -148,12 +174,25 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
         <div className="flex flex-col gap-2 rounded-lg border p-3">
           <div className="flex items-center gap-2 text-sm">
             <BotIcon className="size-4 shrink-0 text-muted-foreground" />
-            <span className="truncate">
-              {linked?.displayName ?? linkedExternalId}
-            </span>
+            {isNil(linked) ? (
+              <span className="text-muted-foreground">
+                {stillFindingIt ? t('Loading') : t('Agent')}
+              </span>
+            ) : (
+              <Link
+                to={`/agents/${linked.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="truncate hover:underline"
+              >
+                {linked.displayName}
+              </Link>
+            )}
           </div>
           <p className="text-xs text-muted-foreground">
-            {isNil(linked)
+            {stillFindingIt
+              ? t('Looking up the agent this step runs.')
+              : isNil(linked)
               ? t('This agent is not in this project, so the step cannot run.')
               : !linked.isPublished
               ? t(
@@ -167,12 +206,19 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
             variant="outline"
             size="sm"
             className="self-start"
-            disabled={disabled}
+            disabled={disabled || isNil(linkedConfig)}
             onClick={detach}
           >
             <Link2OffIcon className="size-4" />
             {t('Detach & customize')}
           </Button>
+          {!isNil(linkedConfig) && (
+            <p className="text-xs text-muted-foreground">
+              {t(
+                'Detaching copies its tools and model into this step. Its instructions stay with the agent.',
+              )}
+            </p>
+          )}
         </div>
       )}
     </FormItem>

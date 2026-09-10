@@ -77,7 +77,8 @@ export const AgentSettings = (props: AgentSettingsProps) => {
     AgentPieceProps.AGENT_ID,
     ...(isNil(linkedAgentId) ? [] : comesFromTheAgent),
   ]);
-  const versionCanStoreALink = AgentPieceProps.AGENT_ID in selectedAction.props;
+  const versionCanStoreALink =
+    AgentPieceProps.AGENT_ID in selectedAction.props || !isNil(linkedAgentId);
 
   return (
     <div className="w-full">

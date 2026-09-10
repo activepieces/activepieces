@@ -127,6 +127,9 @@ export const agentService = (log: FastifyBaseLogger) => ({
         }
         await transaction(async (entityManager) => {
             await lockedAgentInProjectOrThrow({ entityManager, id, projectId })
+            if (goingLive) {
+                await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
+            }
             await entityManager.getRepository(AgentEntity).save({ id, ...omit(request, ['goLive', 'draft', 'visibility', 'sharedWithUserIds']), draft, published, visibility, sharedWithUserIds })
         })
         return this.getOneOrThrow({ id, projectId, userId })
@@ -142,18 +145,29 @@ export const agentService = (log: FastifyBaseLogger) => ({
         }
         assertDraftIsCoherent(agent.draft)
         await assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log })
-        const published = await agentRepo()
+        const needsApproval = await publishingNeedsApprovalHere({ projectId, platformId, userId, log })
+        const blocking = publishedFlowVersionsUsingAgent({ projectId, agentExternalId: agent.externalId, alias: 'blocking_version' })
+        const publishQuery = agentRepo()
             .createQueryBuilder()
             .update()
             .set({ published: () => '"draft"' })
             .where('"id" = :id AND "projectId" = :projectId', { id, projectId })
             .andWhere('"draft" = CAST(:reviewedDraft AS jsonb)', { reviewedDraft: JSON.stringify(agent.draft) })
             .andWhere(visibleToUser({ userId, prefix: '', isProjectAdmin: await isProjectAdministrator({ projectId, userId, log }) }))
+        if (needsApproval) {
+            publishQuery
+                .andWhere(`NOT EXISTS (${blocking.getQuery()})`)
+                .setParameters(blocking.getParameters())
+        }
+        const published = await publishQuery
             .returning('id')
             .execute()
 
         const publishedRows: unknown[] = published.raw ?? []
         if (publishedRows.length === 0) {
+            if (needsApproval && (await agentService(log).publishedFlowsUsing({ agent, projectId, userId })).total > 0) {
+                throw refuseBecauseAnApprovedFlowRunsIt({ agent })
+            }
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: { message: 'The agent changed while it was being published, review it and publish again' },
@@ -313,6 +327,23 @@ function assertDraftIsCoherent(draft: AgentConfig): void {
     }
 }
 
+async function publishingNeedsApprovalHere({ projectId, platformId, userId, log }: {
+    projectId: ProjectId
+    platformId: PlatformId
+    userId: UserId
+    log: FastifyBaseLogger
+}): Promise<boolean> {
+    const route = await publishHooksFactory.get(log).routePublish({ projectId, platformId, userId })
+    return route !== 'PUBLISH_NOW'
+}
+
+function refuseBecauseAnApprovedFlowRunsIt({ agent }: { agent: Agent }): ActivepiecesError {
+    return new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: { message: `A published flow in this project runs "${agent.displayName}", and publishing a flow here needs approval, so its tools and instructions cannot be changed under an approved flow. Ask someone who can publish sensitive flows to publish this agent.` },
+    })
+}
+
 async function assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformId, userId, log }: {
     agent: Agent
     projectId: ProjectId
@@ -320,18 +351,14 @@ async function assertMayPublishWhatFlowsAlreadyRun({ agent, projectId, platformI
     userId: UserId
     log: FastifyBaseLogger
 }): Promise<void> {
-    const route = await publishHooksFactory.get(log).routePublish({ projectId, platformId, userId })
-    if (route === 'PUBLISH_NOW') {
+    if (!await publishingNeedsApprovalHere({ projectId, platformId, userId, log })) {
         return
     }
     const flowsInUse = await agentService(log).publishedFlowsUsing({ agent, projectId, userId })
     if (flowsInUse.total === 0) {
         return
     }
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: `A published flow in this project runs "${agent.displayName}", and publishing a flow here needs approval, so its tools and instructions cannot be changed under an approved flow. Ask someone who can publish sensitive flows to publish this agent.` },
-    })
+    throw refuseBecauseAnApprovedFlowRunsIt({ agent })
 }
 
 function refuseBecauseFlowsUseIt({ agent, flowsInUse }: {

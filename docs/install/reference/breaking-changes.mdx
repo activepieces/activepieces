@@ -8,6 +8,14 @@ icon: "hammer"
 
 ### What has changed?
 
+#### A Run Agent step's first turn now uses the model you configured, not the platform fast model
+
+Every Run Agent step used to make the first call of each turn on the platform's fast model, whatever model the step named, and only later steps used the configured one. Flow steps now use the configured model from the first call.
+
+Nothing to change: existing steps keep running with the model they already name. Expect the first call of each turn to cost and take what that model costs and takes, which for a larger model is more than the fast model it was quietly using before. If you were relying on the cheaper first call, set the step's model to the smaller one deliberately.
+
+Also in this release, saving or publishing a saved agent now refuses a configuration that pins an AI provider key without naming its provider. The agent editor always writes the two together, so this only affects agents created through the API with `providerConfigId` set and `provider` null.
+
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
 Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
