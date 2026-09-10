@@ -46,6 +46,13 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
 
         const { appWebhookUrl, webhookSecret } = getAppWebhookDetails(flowVersion, ctx.publicApiUrl, settings.APP_WEBHOOK_SECRETS)
 
+        const webhookLogFields = {
+            webhook: { requestId: data.requestId },
+            flow: { id: data.flowId },
+            flowVersion: { id: flowVersion.id },
+            project: { id: data.projectId },
+        }
+
         let realExecutionStarted = false
         const { data: execResult, error } = await tryCatch(async () => {
             if (data.saveSampleData) {
@@ -121,7 +128,12 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
             }
             if (isSandboxTimeout(error)) {
-                ctx.log.warn({ flowVersion: { id: data.flowVersionIdToRun } }, 'Webhook execution timed out in sandbox')
+                if (realExecutionStarted) {
+                    ctx.log.error(webhookLogFields, 'Webhook execution timed out in sandbox, no flow run created')
+                }
+                else {
+                    ctx.log.warn(webhookLogFields, 'Webhook execution timed out in sandbox')
+                }
                 return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
             }
             throw error
@@ -144,6 +156,18 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                     parentRunId: data.parentRunId,
                     failParentOnFailure: data.failParentOnFailure,
                 })
+            }
+            else {
+                ctx.log.info(webhookLogFields, 'Webhook trigger returned no payloads, skipping run creation')
+            }
+        }
+        else {
+            const failureFields = { ...webhookLogFields, engine: { status: execResult.status, error: execResult.error } }
+            if (execResult.status === EngineResponseStatus.USER_FAILURE) {
+                ctx.log.warn(failureFields, 'Webhook trigger hook failed, no flow run created')
+            }
+            else {
+                ctx.log.error(failureFields, 'Webhook trigger hook failed, no flow run created')
             }
         }
 

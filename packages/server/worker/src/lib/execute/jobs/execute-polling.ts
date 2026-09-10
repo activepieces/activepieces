@@ -60,6 +60,20 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                     })
                 }
             }
+            else {
+                const failureFields = {
+                    flow: { id: data.flowId },
+                    flowVersion: { id: data.flowVersionId },
+                    project: { id: data.projectId },
+                    engine: { status: result.status, error: result.error },
+                }
+                if (result.status === EngineResponseStatus.USER_FAILURE) {
+                    ctx.log.warn(failureFields, 'Polling trigger hook failed, no flow run created')
+                }
+                else {
+                    ctx.log.error(failureFields, 'Polling trigger hook failed, no flow run created')
+                }
+            }
 
             await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: result.status })
 
