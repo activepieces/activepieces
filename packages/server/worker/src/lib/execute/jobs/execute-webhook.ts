@@ -2,6 +2,7 @@ import { isNil, parseToJsonIfPossible, tryCatch } from '@activepieces/core-utils
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PieceTrigger, StreamStepProgress, TriggerHookType, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
+import { summarizeEngineError } from '../utils/engine-error-summary'
 import { isSandboxTimeout } from '../utils/sandbox-helpers'
 import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getAppWebhookUrl, getWebhookUrl } from '../utils/webhook-url'
@@ -128,7 +129,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
             }
             if (isSandboxTimeout(error)) {
-                if (realExecutionStarted) {
+                if (data.execute) {
                     ctx.log.error(webhookLogFields, 'Webhook execution timed out in sandbox, no flow run created')
                 }
                 else {
@@ -162,7 +163,7 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
             }
         }
         else {
-            const failureFields = { ...webhookLogFields, engine: { status: execResult.status, error: execResult.error } }
+            const failureFields = { ...webhookLogFields, engine: { status: execResult.status, error: summarizeEngineError({ error: execResult.error }) } }
             if (execResult.status === EngineResponseStatus.USER_FAILURE) {
                 ctx.log.warn(failureFields, 'Webhook trigger hook failed, no flow run created')
             }

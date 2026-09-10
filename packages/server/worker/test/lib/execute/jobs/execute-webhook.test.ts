@@ -177,6 +177,42 @@ describe('executeWebhookJob silent-drop visibility', () => {
         expect(result).toEqual({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK })
     })
 
+    it('logs a sanitized engine error without request bodies or raw inspect data', async () => {
+        const friendlyError = JSON.stringify({
+            __apErrorVersion: 1,
+            message: 'Auth failed',
+            errorName: 'HttpError',
+            requestBody: { apiKey: 'sk-super-secret' },
+            raw: 'HttpError: Auth failed at request body {"apiKey":"sk-super-secret"}',
+        })
+        const ctx = makeMockContext({ executeResult: { status: EngineResponseStatus.INTERNAL_ERROR, response: undefined, error: friendlyError } })
+
+        await executeWebhookJob.execute(ctx, makeWebhookJobData())
+
+        expect(ctx.log.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                engine: { status: EngineResponseStatus.INTERNAL_ERROR, error: 'HttpError: Auth failed' },
+            }),
+            expect.stringContaining('no flow run created'),
+        )
+    })
+
+    it('logs at error level when a sample-phase timeout also skips a required real run', async () => {
+        const timeoutError = new ActivepiecesError({
+            code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
+            params: { standardOutput: '', standardError: '' },
+        })
+        const ctx = makeMockContext({ executeError: timeoutError })
+
+        const result = await executeWebhookJob.execute(ctx, makeWebhookJobData({ saveSampleData: true, execute: true }))
+
+        expect(ctx.log.error).toHaveBeenCalledWith(
+            expect.objectContaining(expectedBaseFields),
+            expect.stringContaining('no flow run created'),
+        )
+        expect(result).toEqual({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK })
+    })
+
     it('keeps sandbox timeout at warn level for a sample-only capture where no run was expected', async () => {
         const timeoutError = new ActivepiecesError({
             code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
