@@ -70,14 +70,18 @@ const scrapeActionsField: OutputSchema['fields'][number] = {
   ],
 };
 
+const pageWarningField: OutputSchema['fields'][number] = { key: 'warning', label: 'Warning' };
+
 const pageResultFields: OutputSchema['fields'] = [
   ...pageContentFields,
+  pageWarningField,
   pageMetadataField,
 ];
 
 const scrapeResultFields: OutputSchema['fields'] = [
   ...pageContentFields,
   scrapeActionsField,
+  pageWarningField,
   pageMetadataField,
 ];
 

@@ -328,6 +328,7 @@ export const scrape = createAction({
           scrapes,
         },
         metadata: result.data.metadata,
+        warning: result.data.warning,
       },
     };
 
