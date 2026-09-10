@@ -26,6 +26,20 @@ Nothing for a self-hosted installation, and no environment variable or migration
 
 If you call one of the endpoints above against Activepieces Cloud, move to the current embedding flow, which provisions users and connections through a platform signing key. See [Embedding](/embedding/overview).
 
+#### Every AI step is moved to the piece version that reports what a call costs
+
+Flows were spread across several versions of the AI piece. Anything at or below 0.4.4 was moved to 0.4.5 by an earlier upgrade pass, Run Agent steps were pinned to 0.6.0 when that step became a thin client, and anything newer was whatever the flow was last saved with. None of those versions report what a managed AI call cost, so none of them can be billed on cost. Every `@activepieces/piece-ai` step below 0.11.0 is now moved to 0.11.0 the next time the flow is read, compared with semver so a step already ahead of that is left alone.
+
+Two consequences follow from the version move rather than from the migration itself.
+
+A Run Agent step pinned at 0.6.0 has been running the old behaviour where a dead agent turn reported success. It now raises instead, as described under *A Run Agent step whose turn dies now fails its flow run* below. That change shipped in 0.9.0, but a pinned step never received it until now.
+
+The model dropdown on an AI step lists only the models Activepieces offers on its own credits. A step saved earlier against a model outside that list keeps running on the model it stored; the dropdown simply shows nothing selected until someone picks again. Bring-your-own provider keys are unaffected and still list their vendor's full catalogue.
+
+#### What you need to do
+
+Nothing to configure or migrate. Review any flow with a Run Agent step that was relying on a dead agent turn reporting success — the *What you need to do* under that entry lists the two options. If an AI step's model dropdown looks empty when you next open it, the stored model is still in use; re-pick it only if you want to change it.
+
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
 Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.

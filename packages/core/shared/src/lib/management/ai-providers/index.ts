@@ -349,6 +349,8 @@ export const GetProviderConfigResponse = z.object({
 export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
 
 
+export const AI_PIECE_COST_BILLING_VERSION = '0.11.0'
+
 export const ReportAiUsageRequest = z.object({
     provider: z.enum(AIProviderName),
     model: z.string().min(1, formErrors.required),
