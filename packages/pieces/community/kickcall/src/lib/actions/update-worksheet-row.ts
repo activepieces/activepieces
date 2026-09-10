@@ -17,8 +17,8 @@ function toPartialRowValues(values: unknown): Record<string, string> {
     if (value === undefined || value === null) {
       continue;
     }
-    const text = String(value).trim();
-    if (text.length === 0) {
+    const text = String(value);
+    if (text.trim().length === 0) {
       continue;
     }
     typedValues[columnId] = text;

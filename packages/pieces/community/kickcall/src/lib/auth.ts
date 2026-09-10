@@ -2,6 +2,21 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { KICKCALL_BASE_URL } from './common/constants';
 
+function httpStatusFromError(error: unknown): number | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+  const response = error.response;
+  if (typeof response !== 'object' || response === null || !('status' in response)) {
+    return undefined;
+  }
+  const status = response.status;
+  if (typeof status !== 'number' || !Number.isFinite(status)) {
+    return undefined;
+  }
+  return status;
+}
+
 export const kickcallAuth = PieceAuth.CustomAuth({
   description: `Connect Kickcall using your business API key and email.
 
@@ -38,14 +53,34 @@ export const kickcallAuth = PieceAuth.CustomAuth({
       if (response.status === 200) {
         return { valid: true };
       }
+      if (response.status === 401 || response.status === 403 || response.status === 422) {
+        return {
+          valid: false,
+          error: 'Invalid API key or email. Check your Kickcall credentials.',
+        };
+      }
       return {
         valid: false,
-        error: `Kickcall returned status ${response.status}`,
+        error: `Kickcall returned status ${response.status}. Try again later.`,
       };
-    } catch {
+    } catch (error: unknown) {
+      const status = httpStatusFromError(error);
+      if (status === 401 || status === 403 || status === 422) {
+        return {
+          valid: false,
+          error: 'Invalid API key or email. Check your Kickcall credentials.',
+        };
+      }
+      if (status !== undefined && status >= 500) {
+        return {
+          valid: false,
+          error: 'Kickcall is temporarily unavailable. Try again later.',
+        };
+      }
       return {
         valid: false,
-        error: 'Invalid API key or email. Check your Kickcall credentials.',
+        error:
+          'Could not reach Kickcall. Check your network connection and try again.',
       };
     }
   },

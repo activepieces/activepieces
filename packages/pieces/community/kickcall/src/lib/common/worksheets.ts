@@ -254,27 +254,25 @@ async function addWorksheetRow({
   values,
 }: AddWorksheetRowParams): Promise<WorksheetRow> {
   const basePath = `${worksheetBasePath({ locationId, agentId })}/${encodeURIComponent(worksheetId)}`;
-  const [columns, created] = await Promise.all([
-    listWorksheetColumns({
-      auth,
-      locationId,
-      agentId,
-      worksheetId,
-    }),
-    kickcallClient.bearerRequest<Record<string, unknown>>({
-      auth,
-      method: HttpMethod.POST,
-      path: `${basePath}/rows`,
-      queryParams: {
-        include: 'cells',
+  const columns = await listWorksheetColumns({
+    auth,
+    locationId,
+    agentId,
+    worksheetId,
+  });
+  const created = await kickcallClient.bearerRequest<Record<string, unknown>>({
+    auth,
+    method: HttpMethod.POST,
+    path: `${basePath}/rows`,
+    queryParams: {
+      include: 'cells',
+    },
+    body: {
+      row: {
+        values,
       },
-      body: {
-        row: {
-          values,
-        },
-      },
-    }),
-  ]);
+    },
+  });
   const createdRow = mapWorksheetRow({ row: created, columns });
   if (createdRow === undefined) {
     throw new Error('Kickcall row create did not return a valid row');
@@ -291,27 +289,25 @@ async function updateWorksheetRow({
   values,
 }: UpdateWorksheetRowParams): Promise<WorksheetRow> {
   const basePath = `${worksheetBasePath({ locationId, agentId })}/${encodeURIComponent(worksheetId)}`;
-  const [columns, updated] = await Promise.all([
-    listWorksheetColumns({
-      auth,
-      locationId,
-      agentId,
-      worksheetId,
-    }),
-    kickcallClient.bearerRequest<Record<string, unknown>>({
-      auth,
-      method: HttpMethod.PUT,
-      path: `${basePath}/rows/${encodeURIComponent(rowId)}`,
-      queryParams: {
-        include: 'cells',
+  const columns = await listWorksheetColumns({
+    auth,
+    locationId,
+    agentId,
+    worksheetId,
+  });
+  const updated = await kickcallClient.bearerRequest<Record<string, unknown>>({
+    auth,
+    method: HttpMethod.PUT,
+    path: `${basePath}/rows/${encodeURIComponent(rowId)}`,
+    queryParams: {
+      include: 'cells',
+    },
+    body: {
+      row: {
+        values,
       },
-      body: {
-        row: {
-          values,
-        },
-      },
-    }),
-  ]);
+    },
+  });
   const updatedRow = mapWorksheetRow({ row: updated, columns });
   if (updatedRow === undefined) {
     throw new Error('Kickcall row update did not return a valid row');
