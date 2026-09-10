@@ -26,9 +26,9 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         })
         const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
 
-        const isManagedProvider = provider === AIProviderName.ACTIVEPIECES
+        const billsOwnCost = provider === AIProviderName.ACTIVEPIECES
         const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null })
-        const creditWeight = isManagedProvider ? tier.creditWeight : CHAT_BYOK_CREDIT_WEIGHT
+        const creditWeight = billsOwnCost ? 0 : CHAT_BYOK_CREDIT_WEIGHT
         const creditValue = creditWeight + billableToolCalls * CHAT_CREDITS_PER_TOOL_CALL
 
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)

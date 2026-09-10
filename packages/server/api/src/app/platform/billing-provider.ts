@@ -191,7 +191,9 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     breakdown: CreditEventBreakdownEntry[]
 }
 
-export type AiCallCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
+export type AiCallCreditConsumptionProperties = {
+    platformId: string
+    projectId: string | null
     provider: string
     model: string
     generationId: string

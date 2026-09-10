@@ -154,7 +154,7 @@ describe('AI Providers API', () => {
         })
     })
 
-    describe('managed provider refuses a caller that cannot be shown to report cost', () => {
+    describe('the Activepieces provider refuses a caller that cannot be shown to report cost', () => {
         const configRequest = async (query: string) => {
             const engineToken = await generateMockToken({
                 type: PrincipalType.ENGINE,

@@ -1,5 +1,5 @@
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderName, ActivepiecesAiBilling, ActivepiecesAiBillingScope } from '@activepieces/core-utils';
 import { generateText } from 'ai'
 
 const JUDGE_SYSTEM = 'You are a strict binary evaluator of an AI assistant transcript. You judge exactly ONE dimension against ONE pass criterion. Be conservative: if the criterion is not clearly met, answer FAIL. Respond with "PASS" or "FAIL" on the first line, then a single short sentence explaining why on the second line. Output nothing else.'
@@ -9,7 +9,7 @@ function createJudge({ provider, modelId, auth }: {
     modelId: string
     auth: Record<string, unknown>
 }): { judge: (params: { dimension: string, rubric: string, transcript: string }) => Promise<JudgeVerdict> } {
-    const model = agentAiUtils.createChatModel({ provider, auth, config: {}, modelId })
+    const model = agentAiUtils.createChatModel({ provider, auth, config: {}, modelId, billing: EVAL_BILLING })
 
     const judge = async ({ dimension, rubric, transcript }: { dimension: string, rubric: string, transcript: string }): Promise<JudgeVerdict> => {
         const { text } = await generateText({
@@ -35,3 +35,5 @@ type JudgeVerdict = {
     pass: boolean
     reason: string
 }
+
+const EVAL_BILLING: ActivepiecesAiBilling = { scope: ActivepiecesAiBillingScope.PLATFORM, platformId: 'agent-eval' }

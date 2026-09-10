@@ -162,7 +162,7 @@ export type AiUsagePerRunProperties = {
 
 export type AiUsagePerCallProperties = {
     platformId: string
-    projectId: string
+    projectId: string | null
     edition: ApEdition
     provider: string
     model: string

@@ -13,7 +13,7 @@ function assertReportsCost({ pieceVersion }: AssertReportsCostParams): void {
     })
 }
 
-export const managedAiCaller = { assertReportsCost }
+export const activepiecesAiCaller = { assertReportsCost }
 
 type AssertReportsCostParams = {
     pieceVersion?: string

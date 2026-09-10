@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBillingScope, ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
@@ -204,6 +204,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
                 auth: providerConfig.auth as Record<string, unknown>,
                 config: providerConfig.config as Record<string, unknown>,
                 modelId: resolvedModelId,
+                billing: { scope: ActivepiecesAiBillingScope.CONVERSATION, platformId, projectId: selectedProjectId, conversationId },
             })
             compactionState = await agentCompaction.compactMessages({
                 messages: llmHistory,

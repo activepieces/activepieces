@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
+import { AIProviderName, isNil, ActivepiecesAiBilling, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, aiProviderUtils, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -9,6 +9,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { agentProviderOptions } from './agent-provider-options'
+import { activepiecesAiCost } from './activepieces-ai-cost'
 import { EmbeddingModel, LanguageModel, ModelMessage, SystemModelMessage, TelemetryOptions, ToolSet } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { wideEvent } from './wide-event'
@@ -61,11 +62,12 @@ function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boo
     return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
 }
 
-function createChatModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false, onOutcome }: {
+function createChatModel({ provider, auth, config, modelId, billing, metadata, webSearchEnabled = false, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    billing: ActivepiecesAiBilling
     metadata?: ChatModelMetadata
     webSearchEnabled?: boolean
     onOutcome?: ProviderOutcomeReporter
@@ -81,7 +83,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
             ...spreadIfDefined('fetch', observedProviderFetch(onOutcome)),
         }).chatModel(actualModelId)
     }
-    return createLanguageModel({
+    const model = createLanguageModel({
         provider,
         auth,
         config,
@@ -93,6 +95,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
             ...spreadIfDefined('onOutcome', onOutcome),
         },
     })
+    return activepiecesAiCost.wrapActivepiecesLanguageModel({ model, provider, modelId, billing })
 }
 
 function readStringField(source: Record<string, unknown>, key: string): string {
@@ -109,10 +112,11 @@ function toStorageEmbedding(embedding: number[]): number[] {
     return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
 }
 
-function createEmbeddingModel({ provider, auth, config, onOutcome }: {
+function createEmbeddingModel({ provider, auth, config, billing, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
+    billing: ActivepiecesAiBilling
     onOutcome?: ProviderOutcomeReporter
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
     const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
@@ -120,7 +124,7 @@ function createEmbeddingModel({ provider, auth, config, onOutcome }: {
         throw new Error(`Provider ${provider} does not support knowledge base search`)
     }
     const apiKey = readStringField(auth, 'apiKey')
-    const fetch = observedProviderFetch(onOutcome)
+    const fetch = activepiecesAiCost.observedEmbeddingFetch({ provider, modelId: embeddingModelId, billing, inner: observedProviderFetch(onOutcome) })
     switch (provider) {
         case AIProviderName.OPENAI:
             return { model: createOpenAI({ apiKey, ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }

@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
@@ -144,6 +144,13 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     }
 }
 
+function toScopedBilling({ platformId, scope }: { platformId: string, scope: ProviderScope }): ActivepiecesAiBilling {
+    if (scope.type === 'project') {
+        return { scope: ActivepiecesAiBillingScope.PROJECT, platformId, projectId: scope.projectId }
+    }
+    return { scope: ActivepiecesAiBillingScope.PLATFORM, platformId }
+}
+
 function reportKeyOutcome({ platformId, providerId, log }: { platformId: string, providerId: string, log: FastifyBaseLogger }): ProviderOutcomeReporter {
     return async (signal) => {
         const { error } = await tryCatch(() => aiProviderService(log).recordKeyObservation({ platformId, providerId, signal }))
@@ -162,6 +169,7 @@ async function resolveTierModel({ platformId, tierId, provider, providerConfigId
             auth: providerConfig.auth,
             config: providerConfig.config,
             modelId,
+            billing: toScopedBilling({ platformId, scope }),
             onOutcome: reportKeyOutcome({ platformId, providerId: providerConfig.configId, log }),
         }),
         modelId,
@@ -180,6 +188,7 @@ async function resolveEmbeddingModel({ platformId, provider, providerConfigId, s
         provider: providerConfig.provider,
         auth: providerConfig.auth,
         config: providerConfig.config,
+        billing: toScopedBilling({ platformId, scope }),
         onOutcome: reportKeyOutcome({ platformId, providerId: providerConfig.configId, log }),
     })
 }

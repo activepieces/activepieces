@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -117,13 +117,16 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 && !tavilySearchActive
                 && !untrackedSearchWouldBeat
                 && agentAiUtils.supportsWebSearch(provider)
+            const billing: ActivepiecesAiBilling = { scope: ActivepiecesAiBillingScope.CONVERSATION, platformId, projectId: projectId ?? null, conversationId }
             const model = agentAiUtils.createChatModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
+                billing,
                 webSearchEnabled: webSearchActive,
             })
             const fastModel = agentAiUtils.createChatModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+                billing,
             })
 
             log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')

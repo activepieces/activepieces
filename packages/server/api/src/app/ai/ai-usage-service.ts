@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, ActivepiecesAiCostEvent, AIProviderName, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
 import { isAppSumoCreditedPlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -9,9 +9,24 @@ import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { AiCallCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
-    async reportManagedCall({ platformId, projectId, provider, model, generationId, costUsd, inputTokens, outputTokens, flowId, flowRunId, conversationId }: ReportManagedCallParams): Promise<void> {
+    async reportActivepiecesAiCost({ billing, provider, modelId, call }: ActivepiecesAiCostEvent): Promise<void> {
+        const { platformId, projectId, conversationId } = toBillingTarget(billing)
+        await aiUsageService(log).reportActivepiecesAiCall({
+            platformId,
+            projectId,
+            provider,
+            model: modelId,
+            generationId: call.generationId,
+            costUsd: call.costUsd,
+            ...spreadIfNotUndefined('inputTokens', call.inputTokens),
+            ...spreadIfNotUndefined('outputTokens', call.outputTokens),
+            ...spreadIfNotUndefined('conversationId', conversationId),
+        })
+    },
+
+    async reportActivepiecesAiCall({ platformId, projectId, provider, model, generationId, costUsd, inputTokens, outputTokens, flowId, flowRunId, conversationId }: ReportActivepiecesAiCallParams): Promise<void> {
         if (provider !== AIProviderName.ACTIVEPIECES) {
-            log.warn({ platform: { id: platformId }, project: { id: projectId }, provider }, '[aiUsageService#reportManagedCall] Refused a cost report for a provider we do not pay for')
+            log.warn({ platform: { id: platformId }, project: { id: projectId }, provider }, '[aiUsageService#reportActivepiecesAiCall] Refused a cost report for a provider we do not pay for')
             return
         }
         const credits = toCredits(costUsd)
@@ -29,7 +44,7 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
             ...spreadIfNotUndefined('conversationId', conversationId),
         }
         if (credits === 0) {
-            log.info({ platform: { id: platformId }, project: { id: projectId }, model, costUsd }, '[aiUsageService#reportManagedCall] Managed call cost nothing, so nothing was deducted')
+            log.info({ platform: { id: platformId }, project: { id: projectId }, model, costUsd }, '[aiUsageService#reportActivepiecesAiCall] The Activepieces provider call cost nothing, so nothing was deducted')
             return
         }
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
@@ -69,19 +84,28 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
     },
 })
 
+function toBillingTarget(billing: ActivepiecesAiBilling): { platformId: string, projectId: string | null, conversationId?: string } {
+    switch (billing.scope) {
+        case ActivepiecesAiBillingScope.PLATFORM:
+            return { platformId: billing.platformId, projectId: null }
+        case ActivepiecesAiBillingScope.PROJECT:
+            return { platformId: billing.platformId, projectId: billing.projectId }
+        case ActivepiecesAiBillingScope.CONVERSATION:
+            return { platformId: billing.platformId, projectId: billing.projectId, conversationId: billing.conversationId }
+    }
+}
+
 function toCredits(costUsd: number): number {
     if (isNil(costUsd) || costUsd <= 0) {
         return 0
     }
     const usdPerCredit = system.getNumberOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)
-    return Math.round(costUsd / usdPerCredit * CREDIT_ROUNDING) / CREDIT_ROUNDING
+    return costUsd / usdPerCredit
 }
 
-const CREDIT_ROUNDING = 1_000
-
-type ReportManagedCallParams = {
+type ReportActivepiecesAiCallParams = {
     platformId: string
-    projectId: string
+    projectId: string | null
     provider: AIProviderName
     model: string
     generationId: string

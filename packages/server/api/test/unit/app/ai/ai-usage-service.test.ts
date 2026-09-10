@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, ActivepiecesAiBilling, ActivepiecesAiBillingScope } from '@activepieces/core-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { aiUsageService } from '../../../../src/app/ai/ai-usage-service'
 
@@ -35,7 +35,7 @@ vi.mock('../../../../src/app/ee/platform/platform-plan/platform-plan.service', (
 const log = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
 
 function report(overrides: Record<string, unknown> = {}) {
-    return aiUsageService(log as never).reportManagedCall({
+    return aiUsageService(log as never).reportActivepiecesAiCall({
         platformId: 'platform-1',
         projectId: 'project-1',
         provider: AIProviderName.ACTIVEPIECES,
@@ -46,7 +46,7 @@ function report(overrides: Record<string, unknown> = {}) {
     })
 }
 
-describe('aiUsageService#reportManagedCall', () => {
+describe('aiUsageService#reportActivepiecesAiCall', () => {
     beforeEach(() => {
         vi.clearAllMocks()
         mockGetNumberOrThrow.mockReturnValue(0.0005)
@@ -65,6 +65,13 @@ describe('aiUsageService#reportManagedCall', () => {
 
         const { credits } = mockTrackBillingAndSendTelemetry.mock.calls[0][0]
         expect(credits.value).toBe(0.74)
+    })
+
+    it('does not round the credit value, so a sub-cent call is billed at full precision', async () => {
+        await report({ costUsd: 0.00000123 })
+
+        const { credits } = mockTrackBillingAndSendTelemetry.mock.calls[0][0]
+        expect(credits.value).toBe(0.00246)
     })
 
     it('keys the deduction on the OpenRouter generation id so a replay cannot double bill', async () => {
@@ -102,5 +109,56 @@ describe('aiUsageService#reportManagedCall', () => {
 
         const { appSumo } = mockTrackBillingAndSendTelemetry.mock.calls[0][0]
         expect(appSumo).toBeUndefined()
+    })
+})
+
+function reportCost(billing: ActivepiecesAiBilling) {
+    return aiUsageService(log as never).reportActivepiecesAiCost({
+        billing,
+        provider: AIProviderName.ACTIVEPIECES,
+        modelId: 'anthropic/claude-sonnet-4.5',
+        call: { generationId: 'gen-abc', costUsd: 0.27, inputTokens: 10, outputTokens: 20 },
+    })
+}
+
+function propertiesFromLastCall(): Record<string, unknown> {
+    return mockTrackBillingAndSendTelemetry.mock.calls[0][0].credits.properties
+}
+
+describe('aiUsageService#reportActivepiecesAiCost', () => {
+    beforeEach(() => {
+        vi.clearAllMocks()
+        mockGetNumberOrThrow.mockReturnValue(0.0005)
+        mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
+    })
+
+    it('bills a project-scoped call to that project', async () => {
+        await reportCost({ scope: ActivepiecesAiBillingScope.PROJECT, platformId: 'platform-1', projectId: 'project-1' })
+
+        expect(propertiesFromLastCall()).toMatchObject({ platformId: 'platform-1', projectId: 'project-1' })
+    })
+
+    it('bills a platform-scoped call with no project rather than inventing one', async () => {
+        await reportCost({ scope: ActivepiecesAiBillingScope.PLATFORM, platformId: 'platform-1' })
+
+        expect(propertiesFromLastCall()).toMatchObject({ platformId: 'platform-1', projectId: null })
+    })
+
+    it('carries the conversation id so chat spend is traceable to its thread', async () => {
+        await reportCost({ scope: ActivepiecesAiBillingScope.CONVERSATION, platformId: 'platform-1', projectId: 'project-1', conversationId: 'conv-1' })
+
+        expect(propertiesFromLastCall()).toMatchObject({ conversationId: 'conv-1', projectId: 'project-1' })
+    })
+
+    it('bills a project-less conversation without a project instead of a placeholder id', async () => {
+        await reportCost({ scope: ActivepiecesAiBillingScope.CONVERSATION, platformId: 'platform-1', projectId: null, conversationId: 'conv-1' })
+
+        expect(propertiesFromLastCall()).toMatchObject({ conversationId: 'conv-1', projectId: null })
+    })
+
+    it('passes the observed token counts through to the credit event', async () => {
+        await reportCost({ scope: ActivepiecesAiBillingScope.PROJECT, platformId: 'platform-1', projectId: 'project-1' })
+
+        expect(propertiesFromLastCall()).toMatchObject({ inputTokens: 10, outputTokens: 20 })
     })
 })

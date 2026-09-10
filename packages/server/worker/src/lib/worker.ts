@@ -2,7 +2,7 @@ import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
-import { apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
+import { activepiecesAiCost, apVersionUtil, createLogger, onCallService, systemUsage, UNKNOWN_VERSION, wideEvent } from '@activepieces/server-utils'
 import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -104,6 +104,13 @@ export const worker = {
         })
 
         const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
+        activepiecesAiCost.setReporter((event) => {
+            void tryCatch(() => apiClient.reportActivepiecesAiCost(event)).then(({ error }) => {
+                if (!isNil(error)) {
+                    logger.error({ error, platform: { id: event.billing.platformId } }, 'Could not report what an Activepieces AI provider call cost')
+                }
+            })
+        })
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
@@ -152,6 +159,7 @@ export const worker = {
         startSandboxInfoSampling()
         startPollWatchdog()
         startCacheSweeper()
+        activepiecesAiCost.assertReporterInstalled()
         logger.info({ apiUrl, socketUrl }, 'Worker started, polling for jobs...')
     },
 

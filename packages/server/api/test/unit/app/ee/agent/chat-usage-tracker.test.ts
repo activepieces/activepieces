@@ -1,12 +1,13 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { PersistedAgentRole } from '@activepieces/shared'
+import { CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, PersistedAgentRole } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockTrackBillableUsage, mockResolveMessages, mockCountBillableToolCalls, mockGetOrCreateForPlatform } = vi.hoisted(() => ({
+const { mockTrackBillableUsage, mockResolveMessages, mockCountBillableToolCalls, mockGetOrCreateForPlatform, mockResolveChatProviderName } = vi.hoisted(() => ({
     mockTrackBillableUsage: vi.fn().mockResolvedValue(undefined),
     mockResolveMessages: vi.fn(),
     mockCountBillableToolCalls: vi.fn().mockReturnValue(0),
     mockGetOrCreateForPlatform: vi.fn(),
+    mockResolveChatProviderName: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
@@ -28,7 +29,7 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
 
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
-        resolveChatProviderName: vi.fn().mockResolvedValue(AIProviderName.ACTIVEPIECES),
+        resolveChatProviderName: mockResolveChatProviderName,
         resolveModelIdForAnalytics: vi.fn().mockReturnValue('model-x'),
         resolveTier: vi.fn().mockReturnValue({ id: 'tier-1', creditWeight: 5 }),
         providerScopeFor: ({ projectId }: { projectId: string | null }) =>
@@ -70,6 +71,8 @@ function appSumoKeyFromLastCall(): string | undefined {
 describe('chatUsageTracker.track — idempotency key scoping', () => {
     beforeEach(() => {
         mockTrackBillableUsage.mockClear()
+        mockCountBillableToolCalls.mockReturnValue(0)
+        mockResolveChatProviderName.mockResolvedValue(AIProviderName.ACTIVEPIECES)
         mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
         mockResolveMessages.mockReturnValue([
             { role: PersistedAgentRole.USER },
@@ -106,5 +109,56 @@ describe('chatUsageTracker.track — idempotency key scoping', () => {
         await callTrack({ runId: 'run-9' })
 
         expect(appSumoKeyFromLastCall()).toBe('conv-1:appSumoAi:run-9')
+    })
+})
+
+function creditValueFromLastCall(): number {
+    return mockTrackBillableUsage.mock.calls[0][0].credits.value
+}
+
+describe('chatUsageTracker.track — who pays for the tokens of a chat turn', () => {
+    beforeEach(() => {
+        mockTrackBillableUsage.mockClear()
+        mockCountBillableToolCalls.mockReturnValue(0)
+        mockResolveChatProviderName.mockResolvedValue(AIProviderName.ACTIVEPIECES)
+        mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
+        mockResolveMessages.mockReturnValue([{ role: PersistedAgentRole.USER }, { role: PersistedAgentRole.ASSISTANT }])
+    })
+
+    it('charges no tier weight on the Activepieces provider, which reports its real cost per call', async () => {
+        await callTrack({ runId: 'run-9' })
+
+        expect(creditValueFromLastCall()).toBe(0)
+    })
+
+    it('still charges the Activepieces provider for its tool calls, which are our cost not the model provider\'s', async () => {
+        mockCountBillableToolCalls.mockReturnValue(3)
+
+        await callTrack({ runId: 'run-9' })
+
+        expect(creditValueFromLastCall()).toBe(3)
+    })
+
+    it('leaves a BYOK turn on the flat weight it has always paid', async () => {
+        mockResolveChatProviderName.mockResolvedValue(AIProviderName.OPENAI)
+
+        await callTrack({ runId: 'run-9' })
+
+        expect(creditValueFromLastCall()).toBe(CHAT_BYOK_CREDIT_WEIGHT)
+    })
+
+    it('adds the tool calls on top of the BYOK weight, exactly as before', async () => {
+        mockResolveChatProviderName.mockResolvedValue(AIProviderName.OPENAI)
+        mockCountBillableToolCalls.mockReturnValue(3)
+
+        await callTrack({ runId: 'run-9' })
+
+        expect(creditValueFromLastCall()).toBe(CHAT_BYOK_CREDIT_WEIGHT + 3 * CHAT_CREDITS_PER_TOOL_CALL)
+    })
+
+    it('still reports the tier and provider, so a zero-weight turn is not invisible to analytics', async () => {
+        await callTrack({ runId: 'run-9' })
+
+        expect(mockTrackBillableUsage.mock.calls[0][0].credits.properties).toMatchObject({ tier: 'tier-1', provider: AIProviderName.ACTIVEPIECES, messages: 1 })
     })
 })

@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderName, ActivepiecesAiCostEvent } from '@activepieces/core-utils'
 import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
@@ -104,6 +104,7 @@ export type WorkerToApiContract = {
     savePersonalizationResult(input: SavePersonalizationResultRequest): Promise<void>
     savePersonalizationPrefill(input: SavePersonalizationPrefillRequest): Promise<void>
     sendPersonalizationProgress(input: SendPersonalizationProgressRequest): Promise<void>
+    reportActivepiecesAiCost(input: ActivepiecesAiCostEvent): Promise<void>
 }
 
 export type SendAgentEventRequest = {

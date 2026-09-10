@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { EngineResponseStatus, ExecutePersonalizationResearchJobData, WorkerJobType } from '@activepieces/shared'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
@@ -75,8 +75,12 @@ async function runResearch({ data, config, progress, log }: {
     log: JobContext['log']
 }): Promise<ResearchOutput | null> {
     const provider = config.provider as AIProviderName
+    const billing: ActivepiecesAiBilling = isNil(data.projectId)
+        ? { scope: ActivepiecesAiBillingScope.PLATFORM, platformId: data.platformId }
+        : { scope: ActivepiecesAiBillingScope.PROJECT, platformId: data.platformId, projectId: data.projectId }
     const fastModel = agentAiUtils.createChatModel({
         provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+        billing,
     })
 
     if (data.scope === 'user') {
@@ -137,7 +141,7 @@ async function runResearch({ data, config, progress, log }: {
     const gathered = searchBlocks ?? []
     const digest = gathered.length > 0
         ? `${groundwork}\n\n${gathered.map((block) => block.block).join('\n\n')}`
-        : await fallbackResearch({ provider, auth: config.auth, providerConfig: config.providerConfig, fastModelId: config.fastModelId, companyRef, role, groundwork, log })
+        : await fallbackResearch({ provider, auth: config.auth, providerConfig: config.providerConfig, fastModelId: config.fastModelId, billing, companyRef, role, groundwork, log })
 
     await progress({ phase: 'understanding', message: `Studying how ${homepage?.siteName ?? companyLabel} runs behind the scenes…` })
     const profilePromise = generateProfile({ model: fastModel, domain, companyText, digest, role, user: config.user, log })

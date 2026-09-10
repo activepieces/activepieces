@@ -6,8 +6,8 @@ import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
+import { activepiecesAiCaller } from './activepieces-ai-caller'
 import { aiProviderService } from './ai-provider-service'
-import { managedAiCaller } from './managed-ai-caller'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     app.get('/', ListAIProvidersForProject, async (request) => {
@@ -29,7 +29,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const provider = request.params.provider
         if (provider === AIProviderName.ACTIVEPIECES) {
-            managedAiCaller.assertReportsCost({ ...spreadIfDefined('pieceVersion', request.query.pieceVersion) })
+            activepiecesAiCaller.assertReportsCost({ ...spreadIfDefined('pieceVersion', request.query.pieceVersion) })
             await assertCreditsAndAppSumoNotExceeded({ platformId, log: app.log })
         }
         return aiProviderService(app.log).getConfigOrThrow({

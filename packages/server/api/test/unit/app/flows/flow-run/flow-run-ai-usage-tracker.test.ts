@@ -141,7 +141,7 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
     })
 })
 
-describe('flowRunAiUsageTracker.track — the managed provider is billed on observed cost instead', () => {
+describe('flowRunAiUsageTracker.track — the Activepieces provider is billed on observed cost instead', () => {
     beforeEach(() => {
         mockTrackBillableUsage.mockClear()
         mockGetProject.mockResolvedValue({ platformId: 'plat-1' })
@@ -149,7 +149,19 @@ describe('flowRunAiUsageTracker.track — the managed provider is billed on obse
         mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
     })
 
-    it('bills nothing per message for a run whose AI steps are all managed', async () => {
+    it('charges no per-message weight for a run whose AI steps all use the Activepieces provider', async () => {
+        mockExtractAiUsage.mockResolvedValue({
+            messages: 3,
+            toolCalls: 0,
+            breakdown: [{ provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-haiku-4.5', messages: 3, toolCalls: 0 }],
+        })
+
+        await callTrack({ startTime: FIRST_ATTEMPT_START })
+
+        expect(mockTrackBillableUsage.mock.calls[0][0].credits.value).toBe(0)
+    })
+
+    it('still charges for the tool calls, which cost us to run whoever pays for the tokens', async () => {
         mockExtractAiUsage.mockResolvedValue({
             messages: 3,
             toolCalls: 2,
@@ -158,10 +170,10 @@ describe('flowRunAiUsageTracker.track — the managed provider is billed on obse
 
         await callTrack({ startTime: FIRST_ATTEMPT_START })
 
-        expect(mockTrackBillableUsage).not.toHaveBeenCalled()
+        expect(mockTrackBillableUsage.mock.calls[0][0].credits.value).toBe(2)
     })
 
-    it('still bills the BYOK steps of a run that mixes providers', async () => {
+    it('leaves the BYOK weight table untouched on a run that mixes providers', async () => {
         mockExtractAiUsage.mockResolvedValue({
             messages: 2,
             toolCalls: 0,
@@ -176,7 +188,7 @@ describe('flowRunAiUsageTracker.track — the managed provider is billed on obse
         expect(mockTrackBillableUsage.mock.calls[0][0].credits.value).toBe(1)
     })
 
-    it('keeps the managed steps in the reported breakdown, since telemetry is not billing', async () => {
+    it('keeps the Activepieces-provider steps in the reported breakdown, since telemetry is not billing', async () => {
         mockExtractAiUsage.mockResolvedValue({
             messages: 2,
             toolCalls: 0,

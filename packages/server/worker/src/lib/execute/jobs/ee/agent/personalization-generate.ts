@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
 import { generateObject, generateText, LanguageModel, stepCountIs } from 'ai'
 import { z } from 'zod'
@@ -7,11 +7,12 @@ import { CARDS_SCHEMA, MAX_DISPLAY_NAME_CHARS, MAX_USE_CASES, MIN_USE_CASES, Per
 import { aOrAn, cleanCards, cleanProfile } from './personalization-shaping'
 import { delayWithJitter } from './run-agent-turn'
 
-export async function fallbackResearch({ provider, auth, providerConfig, fastModelId, companyRef, role, groundwork, log }: {
+export async function fallbackResearch({ provider, auth, providerConfig, fastModelId, billing, companyRef, role, groundwork, log }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     providerConfig: Record<string, unknown>
     fastModelId: string
+    billing: ActivepiecesAiBilling
     companyRef: string
     role: string | null
     groundwork: string
@@ -21,7 +22,7 @@ export async function fallbackResearch({ provider, auth, providerConfig, fastMod
     if (!agentAiUtils.supportsWebSearch(provider)) {
         return groundworkBlock
     }
-    const model = agentAiUtils.createChatModel({ provider, auth, config: providerConfig, modelId: fastModelId, webSearchEnabled: true })
+    const model = agentAiUtils.createChatModel({ provider, auth, config: providerConfig, modelId: fastModelId, billing, webSearchEnabled: true })
     const nativeTools = agentAiUtils.buildWebSearchTools({ provider, auth })
     const { data, error } = await tryCatch(() => generateText({
         model,

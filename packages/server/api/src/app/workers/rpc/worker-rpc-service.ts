@@ -2,6 +2,7 @@ import { assertNotNullOrUndefined, isNil, spreadIfDefined } from '@activepieces/
 import { apVersionUtil, onCallService, UNKNOWN_VERSION } from '@activepieces/server-utils'
 import { ExecutionType, FileCompression, FileLocation, FileType, FlowOperationType, FlowStatus, WebsocketClientEvent, WorkerGroupScope, WorkerToApiContract } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { aiUsageService } from '../../ai/ai-usage-service'
 import { websocketService } from '../../core/websockets.service'
 import { distributedStore, redisConnections } from '../../database/redis-connections'
 import { agentRpcHandlers } from '../../ee/agent/agent-rpc-handlers'
@@ -319,6 +320,10 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
 
         async getAgentConfig(input) {
             return agentRpcHandlers(agentRpcLog(log, input)).getAgentConfig(input)
+        },
+
+        async reportActivepiecesAiCost(input) {
+            return aiUsageService(log).reportActivepiecesAiCost(input)
         },
 
         async saveAgentMessages(input) {

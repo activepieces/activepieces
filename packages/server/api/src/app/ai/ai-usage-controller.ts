@@ -7,7 +7,7 @@ import { aiUsageService } from './ai-usage-service'
 
 export const aiUsageController: FastifyPluginAsyncZod = async (app) => {
     app.post('/', ReportAiUsage, async (request, reply) => {
-        rejectedPromiseHandler(aiUsageService(app.log).reportManagedCall({
+        rejectedPromiseHandler(aiUsageService(app.log).reportActivepiecesAiCall({
             platformId: request.principal.platform.id,
             projectId: request.principal.projectId,
             ...request.body,

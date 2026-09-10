@@ -4,7 +4,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
-import { captureLicenseKeyEvent, LicenseKeyEventPayload, LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
+import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, CreditUsageSource, toFlowRunCreditProperties } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
@@ -33,9 +33,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         if (usage.messages === 0 && usage.toolCalls === 0) {
             return
         }
-        const creditValue = usage.breakdown
-            .filter((entry) => entry.provider !== AIProviderName.ACTIVEPIECES)
-            .reduce((sum, entry) => sum + entry.messages * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }) + entry.toolCalls, 0)
+        const creditValue = usage.breakdown.reduce((sum, entry) => sum + modelCredits(entry) + entry.toolCalls, 0)
         const attempt = flowRun.startTime ?? flowRun.created
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const isAppSumoPlan = isAppSumoCreditedPlan(platformPlan.plan)
@@ -44,27 +42,6 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
             messages: usage.messages,
             toolCalls: usage.toolCalls,
             breakdown: usage.breakdown,
-        }
-        const telemetry: LicenseKeyEventPayload = {
-            event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN,
-            properties: {
-                platformId: project.platformId,
-                projectId: flowRun.projectId,
-                edition: system.getEdition(),
-                flowRunId: flowRun.id,
-                flowId: flowRun.flowId,
-                status: flowRun.status,
-                environment: flowRun.environment,
-                messages: usage.messages,
-                toolCalls: usage.toolCalls,
-                breakdown: usage.breakdown,
-            },
-        }
-        if (creditValue === 0) {
-            if (!isNil(platformPlan.licenseKey) && platformPlan.licenseKey.length > 0) {
-                captureLicenseKeyEvent({ licenseKey: platformPlan.licenseKey, ...telemetry })
-            }
-            return
         }
         await trackBillingAndSendTelemetry({
             log,
@@ -76,17 +53,38 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
                 idempotencyKey: `${flowRun.id}:ai:${attempt}`,
                 properties: aiProperties,
             },
-            appSumo: isAppSumoPlan ? {
+            appSumo: creditValue > 0 && isAppSumoPlan ? {
                 platformId: project.platformId,
                 value: creditValue,
                 source: CreditUsageSource.AI,
                 idempotencyKey: `${flowRun.id}:appSumoAi:${attempt}`,
                 properties: aiProperties,
             } : undefined,
-            telemetry,
+            telemetry: {
+                event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN,
+                properties: {
+                    platformId: project.platformId,
+                    projectId: flowRun.projectId,
+                    edition: system.getEdition(),
+                    flowRunId: flowRun.id,
+                    flowId: flowRun.flowId,
+                    status: flowRun.status,
+                    environment: flowRun.environment,
+                    messages: usage.messages,
+                    toolCalls: usage.toolCalls,
+                    breakdown: usage.breakdown,
+                },
+            },
         })
     },
 })
+
+function modelCredits(entry: { provider: string, model: string, messages: number }): number {
+    if (entry.provider === AIProviderName.ACTIVEPIECES) {
+        return 0
+    }
+    return entry.messages * resolveAiCreditWeight({ provider: entry.provider, model: entry.model })
+}
 
 export function resolveAiCreditWeight({ provider, model }: { provider: string, model: string }): number {
     if (provider !== AIProviderName.ACTIVEPIECES) {
