@@ -72,39 +72,3 @@ export type FloqerAddRowsResult = {
 export type FloqerRunRowsResult = {
     rows_queued: number;
 };
-
-export type FloqerPaginationMeta = {
-    total: number;
-    limit: number;
-    offset: number;
-    totalIsLowerBound?: boolean;
-};
-
-export type FloqerSegmentSummary = {
-    id: string;
-    name: string;
-    description: string | null;
-    entityKind: string;
-    isDefault: boolean;
-    baseSegmentId: string | null;
-};
-
-export type FloqerSegmentChange = {
-    seq: number;
-    entityId: string;
-    kind: 'enter' | 'exit' | 'reenter';
-    at: string;
-};
-
-export type FloqerSegmentChanges = {
-    segmentId: string;
-    filterHash: string | null;
-    maxSeq: number;
-    minRetainedSeq: number;
-    changes: FloqerSegmentChange[];
-    hasMore: boolean;
-    nextSince: number;
-    bootstrapped?: boolean;
-    reconcile?: boolean;
-    reason?: string;
-};

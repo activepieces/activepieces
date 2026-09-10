@@ -33,44 +33,6 @@ test.skip(
 );
 
 test.describe('Floqer piece — builder', () => {
-  test('the trigger renders, takes a connection, and reports why segments are unavailable', async ({
-    page,
-    automationsPage,
-    builderPage,
-  }) => {
-    test.setTimeout(180000);
-
-    await automationsPage.waitFor();
-    await automationsPage.newFlowFromScratch();
-    await builderPage.waitFor();
-
-    await page.getByTestId('rf__node-trigger').click();
-    await pickFloqer(page, 'Segment Membership Changed');
-
-    // Both props render before any connection exists.
-    await expect(page.getByText('Connection', { exact: false }).first()).toBeVisible();
-    await expect(page.getByText('Segment', { exact: false }).first()).toBeVisible();
-
-    // The pre-connection placeholder is deliberately not asserted here. The
-    // piece returns {disabled:true, placeholder:"Connect your Floqer account
-    // first."} for every unset-auth shape, but selecting a trigger fires two
-    // /pieces/options requests and the first can answer 200 with an empty body;
-    // dynamic-dropdown-piece-property.tsx then reads response.options unguarded
-    // and the error boundary swallows the prop. That race is in the platform,
-    // not in this piece, so pinning it here would test the platform's timing.
-
-    await selectConnection(page);
-
-    // With a connection it surfaces what Floqer actually said. This account has
-    // no ackDB, so the API answers 403 with that message and the piece must
-    // relay it rather than fall back to a generic "could not load segments".
-    await expect(
-      page.getByText('No ackDB connection found for the user'),
-    ).toBeVisible({ timeout: 30000 });
-
-    await expect(page.getByTestId('test-trigger-button')).toBeVisible();
-  });
-
   test('Add Rows renders its props, gates Sheet on Workflow, and defaults to not running', async ({
     page,
     automationsPage,
@@ -82,11 +44,9 @@ test.describe('Floqer piece — builder', () => {
     await automationsPage.newFlowFromScratch();
     await builderPage.waitFor();
 
-    // Any trigger will do. The Floqer trigger is the one guaranteed to exist
-    // under AP_DEV_PIECES, so it scaffolds the action under test.
-    await page.getByTestId('rf__node-trigger').click();
-    await pickFloqer(page, 'Segment Membership Changed');
-    await selectConnection(page);
+    // Any trigger will do — the piece ships none. Webhook is always loaded, so
+    // it scaffolds the flow that holds the action under test.
+    await builderPage.selectInitialTrigger({ piece: 'Webhook', trigger: 'Catch Webhook' });
 
     await page.getByTestId('add-action-button').click();
     await pickFloqer(page, 'Add Rows');

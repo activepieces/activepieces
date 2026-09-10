@@ -28,10 +28,6 @@ async function enveloped<T>(params: FloqerRequest): Promise<FloqerEnvelope<T>> {
     return request<FloqerEnvelope<T>>(params);
 }
 
-async function bare<T>(params: FloqerRequest): Promise<T> {
-    return request<T>(params);
-}
-
 function statusOf(error: unknown): number | undefined {
     if (error instanceof HttpError) {
         return error.response.status;
@@ -78,7 +74,6 @@ function readErrorField(error: unknown, field: 'code' | 'message'): string | und
 
 export const floqerApi = {
     enveloped,
-    bare,
     statusOf,
     codeOf,
     messageOf,

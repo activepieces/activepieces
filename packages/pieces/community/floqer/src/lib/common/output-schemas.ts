@@ -65,38 +65,3 @@ export const runRowsOutputSchema: OutputSchema = {
         },
     ],
 };
-
-export const segmentChangeOutputSchema: OutputSchema = {
-    fields: [
-        {
-            key: 'seq',
-            label: 'Sequence',
-            format: 'number',
-            description:
-                'Position in the segment\'s change log. Increases over time and is unique per change.',
-        },
-        {
-            key: 'entityId',
-            label: 'Member ID',
-            description:
-                'The member that changed — a company ID for a company segment, a contact ID for a contact segment.',
-        },
-        {
-            key: 'kind',
-            label: 'Change',
-            description:
-                'enter when the member joined the segment, exit when it left, reenter when it rejoined after leaving.',
-        },
-        {
-            key: 'at',
-            label: 'Changed At',
-            format: 'datetime',
-            description: 'When Floqer recorded the change.',
-        },
-        {
-            key: 'segmentId',
-            label: 'Segment ID',
-            description: 'The segment this change belongs to.',
-        },
-    ],
-};

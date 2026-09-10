@@ -5,12 +5,11 @@ import { runRowsAction } from './lib/actions/run-rows';
 import { runShortcutAction } from './lib/actions/run-shortcut';
 import { floqerAuth } from './lib/auth';
 import { FLOQER_BASE_URL } from './lib/common/client';
-import { segmentMembershipChangedTrigger } from './lib/triggers/segment-membership-changed';
 
 export const floqer = createPiece({
     displayName: 'Floqer',
     description:
-        'Run Floqer shortcuts, push rows into workflow sheets, and react to segment membership changes.',
+        'Run Floqer shortcuts and push rows into workflow sheets.',
     minimumSupportedRelease: '0.82.0',
     logoUrl: 'https://cdn.activepieces.com/pieces/floqer.png',
     categories: [PieceCategory.SALES_AND_CRM],
@@ -28,5 +27,5 @@ export const floqer = createPiece({
             }),
         }),
     ],
-    triggers: [segmentMembershipChangedTrigger],
+    triggers: [],
 });

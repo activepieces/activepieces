@@ -3,8 +3,6 @@ import { Property } from '@activepieces/pieces-framework';
 import { floqerAuth } from '../auth';
 import { floqerApi } from './client';
 import {
-    FloqerPaginationMeta,
-    FloqerSegmentSummary,
     FloqerShortcut,
     FloqerWorkflowOverview,
     FloqerWorkflowSummary,
@@ -111,55 +109,6 @@ function shortcutIdProp() {
     });
 }
 
-function segmentIdProp() {
-    return Property.Dropdown({
-        auth: floqerAuth,
-        displayName: 'Segment',
-        description: 'The segment to watch for membership changes.',
-        required: true,
-        refreshers: [],
-        options: async ({ auth }) => {
-            if (!auth) {
-                return disabled('Connect your Floqer account first.');
-            }
-            try {
-                const segments = await fetchAllSegments(auth.secret_text);
-                return {
-                    disabled: false,
-                    options: segments.map((segment) => ({
-                        label: `${segment.name} (${segment.entityKind})`,
-                        value: segment.id,
-                    })),
-                };
-            } catch (error) {
-                return disabled(floqerApi.describe(error, 'Could not load segments.'));
-            }
-        },
-    });
-}
-
-async function fetchAllSegments(apiKey: string): Promise<FloqerSegmentSummary[]> {
-    const collected: FloqerSegmentSummary[] = [];
-    let offset = 0;
-    for (let page = 0; page < SEGMENT_MAX_PAGES; page++) {
-        const response = await floqerApi.bare<{
-            data: FloqerSegmentSummary[];
-            pagination: FloqerPaginationMeta;
-        }>({
-            apiKey,
-            method: HttpMethod.GET,
-            path: '/api/v1/ackdb/observe/segments',
-            queryParams: { limit: String(SEGMENT_PAGE_SIZE), offset: String(offset) },
-        });
-        collected.push(...response.data);
-        offset += response.data.length;
-        if (response.data.length === 0 || collected.length >= response.pagination.total) {
-            break;
-        }
-    }
-    return collected;
-}
-
 function disabled(placeholder: string) {
     return {
         disabled: true,
@@ -172,8 +121,4 @@ export const floqerProps = {
     workflowId: workflowIdProp,
     sheetId: sheetIdProp,
     shortcutId: shortcutIdProp,
-    segmentId: segmentIdProp,
 };
-
-const SEGMENT_PAGE_SIZE = 100;
-const SEGMENT_MAX_PAGES = 20;
