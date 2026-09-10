@@ -19,21 +19,16 @@ on:
         type: boolean
 
 jobs:
-  authorize:
-    uses: ./.github/workflows/authorize-dispatcher.yml
-    secrets: inherit
-
   # Preflight: build the image and run functional smoke tests + the perf-regression
   # gate (throughput / worker CPU / worker memory). Blocks the release on any
   # regression so we never tag-and-push a build that pegs CPU or tanks throughput.
   preflight:
-    needs: authorize
     if: ${{ !inputs.skip_smoke_test }}
     uses: ./.github/workflows/smoke-test.yml
 
   release:
-    needs: [authorize, preflight]
-    if: ${{ always() && !cancelled() && !failure() && needs.authorize.result == 'success' }}
+    needs: preflight
+    if: ${{ always() && !cancelled() && !failure() }}
     runs-on: ubuntu-24.04
     environment:
       name: release

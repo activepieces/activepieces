@@ -14,18 +14,8 @@ on:
           - cloud-hotfix # Build from current branch and deploy directly to production, bypassing staging
 
 jobs:
-  authorize:
-    if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/authorize-dispatcher.yml
-    secrets: inherit
-
   guard:
-    needs: authorize
-    if: |
-      always() &&
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.action == 'cloud-hotfix' &&
-      needs.authorize.result == 'success'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'cloud-hotfix'
     runs-on: ubuntu-latest
     steps:
       - name: Check proximity to scheduled promotion

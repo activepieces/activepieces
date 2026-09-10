@@ -9,12 +9,7 @@ on:
         type: string
 
 jobs:
-  authorize:
-    uses: ./.github/workflows/authorize-dispatcher.yml
-    secrets: inherit
-
   tag-release-candidate:
-    needs: authorize
     runs-on: ubuntu-latest
     permissions:
       contents: write

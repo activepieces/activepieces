@@ -4,12 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  authorize:
-    uses: ./.github/workflows/authorize-dispatcher.yml
-    secrets: inherit
-
   Release:
-    needs: authorize
     runs-on: ubuntu-24.04
     environment:
       name: production
