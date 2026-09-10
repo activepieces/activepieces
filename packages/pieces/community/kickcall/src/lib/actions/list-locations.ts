@@ -2,6 +2,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kickcallAuth } from '../auth';
 import { kickcallClient } from '../common/client';
+import { kickcallNumbers } from '../common/numbers';
 
 export const listLocationsAction = createAction({
   auth: kickcallAuth,
@@ -23,10 +24,11 @@ export const listLocationsAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const page =
-      typeof propsValue.page === 'number' && propsValue.page >= 1
-        ? Math.floor(propsValue.page)
-        : 1;
+    const page = kickcallNumbers.parsePositiveInteger({
+      value: propsValue.page,
+      fallback: 1,
+      fieldName: 'Page',
+    });
     return kickcallClient.bearerRequest({
       auth,
       method: HttpMethod.GET,

@@ -1,5 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { kickcallAuth } from '../auth';
+import { kickcallNumbers } from '../common/numbers';
 import {
   agentIdDropdown,
   locationIdDropdown,
@@ -50,13 +51,12 @@ export const findWorksheetRowsAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const limit = propsValue.limit ?? 1;
-    if (typeof limit !== 'number' || !Number.isFinite(limit) || limit < 1) {
-      throw new Error('Limit must be a number between 1 and 1000');
-    }
-    if (limit > 1000) {
-      throw new Error('Limit must be at most 1000');
-    }
+    const limit = kickcallNumbers.parsePositiveInteger({
+      value: propsValue.limit,
+      fallback: 1,
+      fieldName: 'Limit',
+      maximum: 1000,
+    });
     const matchType = propsValue.match_type;
     if (matchType !== 'cont' && matchType !== 'eq') {
       throw new Error('Match type must be Contains or Exact');
