@@ -43,7 +43,7 @@ const SELF_EDIT_NOTE = [
     '## You can change yourself',
     'The person you are talking to owns you, and asking you to change how you work is a normal request rather than one to deflect. "Change your instructions to X", "stop doing Y", "add a Gmail tool": do it with `ap_update_agent`, `ap_add_agent_tool` or `ap_remove_agent_tool`, then say in one line what is different now.',
     '',
-    'Send the whole new brief to `ap_update_agent`, never a diff, because it replaces what is there. Read your current instructions above first so a small change does not drop the rest of them. Leave `agentId` out: it is you, and it is fixed, so you cannot change another agent even if asked to.',
+    'Send the whole new brief to `ap_update_agent`, never a diff, because it replaces what is there. Your brief is only the text at the very top of this message, above the first `##` heading; everything from that heading down is added fresh on every run and is not yours to send back. Read your brief first so a small change does not drop the rest of it, and send that plus your edit and nothing else. Leave `agentId` out: it is you, and it is fixed, so you cannot change another agent even if asked to.',
     '',
     'Reading anything — a search, a knowledge base, a flow, an action — refuses the change for the rest of that reply. So when one message asks you both to look something up and to change yourself, make the change FIRST and look it up after. If you are already past that point, say what you would have changed and offer to do it if they send that request on its own.',
     '',
@@ -74,7 +74,7 @@ function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, s
     emailAvailable: boolean
     userEmail: string
 }): string {
-    const lines: string[] = ['\n\n## Capabilities (current session)']
+    const lines: string[] = [`\n\n${CAPABILITIES_HEADING}`]
 
     lines.push(`- **Today's date**: ${currentDate}. Use this for anything time-relative — and when you add a year to a search query to get recent results, take it from here. Never assume the year from memory; your training is stale and will be wrong.`)
 
@@ -107,7 +107,7 @@ function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, s
 }
 
 function buildConnectionInventoryNote({ connections, truncated }: ConnectionInventory): string {
-    const lines: string[] = ['\n\n## Your connected apps (this project)']
+    const lines: string[] = [`\n\n${CONNECTED_APPS_HEADING}`]
     lines.push('This is the authoritative, complete list of the apps the user already has connected here. Use it as ground truth: resolve vague references ("my CRM", "my contacts", "my deals", "my pipeline") to an app in THIS list instead of guessing; never claim a listed app is unavailable, and never ask "which app?" when the answer is here. (Per-piece `ap_discover_action_auth` is still how you fetch the connection\'s auth/externalId once you\'ve picked it — not how you find out *whether* an app is connected.)')
 
     if (connections.length === 0) {
@@ -129,7 +129,7 @@ function buildConnectionInventoryNote({ connections, truncated }: ConnectionInve
 function buildMemoryNote({ instructions, memories }: RunMemory): string {
     const trimmedInstructions = instructions?.trim()
     const lines: string[] = [
-        '\n\n## Memory about this user (persists across every conversation)',
+        `\n\n${MEMORY_HEADING}`,
         'Honor anything below by default without re-asking. Save to memory with `ap_remember` (silent) whenever it would spare the user from repeating themselves next time:',
         '- The user asks you to remember or forget something ("remember I love cheese", "don\'t forget X", "forget that") — ALWAYS act on this immediately.',
         '- The user volunteers a durable fact, preference, or default about themselves ("I love cheese", "I prefer TypeScript", "my main channel is #ops", "I only hire EU-based") — save it proactively.',
@@ -146,7 +146,21 @@ function buildMemoryNote({ instructions, memories }: RunMemory): string {
     return lines.join('\n')
 }
 
-export const agentSurfaceNotes = { buildRunNotes }
+function headingOf(note: string): string {
+    return note.split('\n').find((line) => line.startsWith('## ')) ?? ''
+}
+
+function stripRunNotes(instructions: string): string {
+    const boundaries = RUN_NOTE_HEADINGS
+        .map((heading) => instructions.indexOf(heading))
+        .filter((index) => index > 0)
+    if (boundaries.length === 0) {
+        return instructions
+    }
+    return instructions.slice(0, Math.min(...boundaries)).trim()
+}
+
+export const agentSurfaceNotes = { buildRunNotes, stripRunNotes }
 
 const RECONNECT_NOTE = [
     '\n\n## When one of your tools cannot sign in',
@@ -172,3 +186,18 @@ type RunMemory = {
     instructions: string | null
     memories: string[]
 }
+
+const CAPABILITIES_HEADING = '## Capabilities (current session)'
+const CONNECTED_APPS_HEADING = '## Your connected apps (this project)'
+const MEMORY_HEADING = '## Memory about this user (persists across every conversation)'
+
+const RUN_NOTE_HEADINGS: readonly string[] = [
+    agentUserIdentity.heading,
+    CAPABILITIES_HEADING,
+    CONNECTED_APPS_HEADING,
+    MEMORY_HEADING,
+    headingOf(AGENTS_NOTE),
+    headingOf(ONBOARDING_FIRST_MESSAGE_NOTE),
+    headingOf(RECONNECT_NOTE),
+    headingOf(SELF_EDIT_NOTE),
+]

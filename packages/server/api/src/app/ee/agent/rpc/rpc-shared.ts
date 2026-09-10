@@ -6,6 +6,7 @@ import { agentHelpers } from '.././agent-helpers'
 import { agentService } from '.././agent-service'
 import { agentToolPinning } from '.././agent-tool-pinning'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { redisConnections } from '../../../database/redis-connections'
 import { applicationEvents } from '../../../helper/application-events'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
@@ -173,6 +174,8 @@ export function byteLengthOf(value: unknown): number {
 }
 
 export const CONNECTION_INVENTORY_LIMIT = 200
+const TURN_READ_TTL_SECONDS = 60 * 60
+
 export const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
 
 export type ConfinedRun = {
@@ -223,6 +226,22 @@ export function recordAgentAction({ run, conversationId, flow, piece, resolvedIn
     })
 }
 
+export async function markTurnAsHavingRead({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<void> {
+    if (isNil(runId)) {
+        return
+    }
+    const redis = await redisConnections.useExisting()
+    await redis.set(turnReadKey({ conversationId, runId }), '1', 'EX', TURN_READ_TTL_SECONDS)
+}
+
+export async function turnHasRead({ conversationId, runId }: { conversationId: string, runId?: string }): Promise<boolean> {
+    if (isNil(runId)) {
+        return true
+    }
+    const redis = await redisConnections.useExisting()
+    return await redis.exists(turnReadKey({ conversationId, runId })) === 1
+}
+
 export function outcomeOfToolResult(result: unknown): AgentActionOutcome {
     if (!isObject(result)) {
         return AgentActionOutcome.SUCCEEDED
@@ -261,6 +280,10 @@ export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcom
         connection: {},
         log,
     })
+}
+
+function turnReadKey({ conversationId, runId }: { conversationId: string, runId: string }): string {
+    return `agent-turn-read:${conversationId}:${runId}`
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {

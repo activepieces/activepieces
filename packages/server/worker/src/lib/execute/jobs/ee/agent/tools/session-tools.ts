@@ -111,7 +111,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
                 description: z.string().optional().describe('One line on what it is for'),
             }),
             execute: async (toolInput) => {
-                return executeTool('ap_create_agent', toolInput)
+                return runUnlessTainted('ap_create_agent', toolInput)
             },
         }),
     }

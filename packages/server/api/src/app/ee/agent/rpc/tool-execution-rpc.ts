@@ -12,7 +12,7 @@ import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
-import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedRunFor, connectionForConfiguredTool, outcomeOfToolResult, pinConnectionToAgent, recordAgentAction, recordAgentFlowToolUse } from './rpc-shared'
+import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedRunFor, connectionForConfiguredTool, markTurnAsHavingRead, outcomeOfToolResult, pinConnectionToAgent, recordAgentAction, recordAgentFlowToolUse, turnHasRead } from './rpc-shared'
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
@@ -35,6 +35,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             log.error({ error: resolveError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not be prepared, so nothing was called')
             throw resolveError
         }
+        await markTurnAsHavingRead({ conversationId: input.conversationId, ...spreadIfDefined('runId', input.runId) })
         const resolvedInput = pieceToolRunner.withoutCredential(resolved.resolvedInput)
         const flow = isNil(input.flowRunId) ? undefined : await flowOfRun({ flowRunId: input.flowRunId, projectId, log })
         const record = (outcome: AgentActionOutcome): void => recordAgentAction({
@@ -66,6 +67,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to search a knowledge base' } })
         }
+        await markTurnAsHavingRead({ conversationId: input.conversationId, ...spreadIfDefined('runId', input.runId) })
         const { projectId, platformId } = conversation
         const file = await knowledgeBaseService(log).getFileOrThrow({ projectId, id: input.knowledgeBaseFileId })
         const searchable = await knowledgeBaseService(log).isSearchable({ projectId, knowledgeBaseFileId: input.knowledgeBaseFileId })
@@ -102,6 +104,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         if (isNil(flow)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That flow is not in this run\'s project' } })
         }
+        await markTurnAsHavingRead({ conversationId: input.conversationId, ...spreadIfDefined('runId', input.runId) })
         const advertised = isNil(input.flowVersionId) ? await resolveRunnableFlow({ flow, projectId: configuredRun.projectId, log }) : flow
         const record = (outcome?: AgentActionOutcome): void => recordAgentFlowToolUse({
             run: configuredRun,
@@ -141,6 +144,16 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                 code: ErrorCode.AUTHORIZATION,
                 params: { message: `Tool "${input.toolName}" is only available to chat runs` },
             })
+        }
+        if (AGENT_SELF_EDIT_TOOLS.includes(input.toolName) || input.toolName === 'ap_create_agent') {
+            const readAlready = await turnHasRead({ conversationId: input.conversationId ?? '', ...spreadIfDefined('runId', input.runId) })
+            if (readAlready) {
+                log.warn({ tool: { name: input.toolName }, source: input.source, conversation: { id: input.conversationId } }, '[agentRpc#executeAgentTool] Refused a saved-agent change for a turn that already read something')
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: { message: `Tool "${input.toolName}" cannot change a saved agent on a turn that has already read data` },
+                })
+            }
         }
         if (input.toolName === '__cancel_check') {
             const conversationId = input.toolInput.conversationId

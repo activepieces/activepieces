@@ -21,6 +21,7 @@ import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
 import { agentAudit, agentService } from '../agent-service'
 import { agentPrompt } from '../prompt/agent-prompt'
+import { agentSurfaceNotes } from '../prompt/agent-surface-notes'
 import { outcomeOfToolResult, recordAgentAction } from '../rpc/rpc-shared'
 
 const AGENT_LIST_LIMIT = 50
@@ -222,6 +223,11 @@ function nonEmpty(value: unknown): string | undefined {
     return isString(value) && value.trim().length > 0 ? value.trim() : undefined
 }
 
+function briefOnly(value: unknown): string | undefined {
+    const text = nonEmpty(value)
+    return isNil(text) ? undefined : nonEmpty(agentSurfaceNotes.stripRunNotes(text))
+}
+
 async function createAgentFromChat({ toolInput, platformId, projectId, userId, log }: {
     toolInput: Record<string, unknown>
     platformId: string
@@ -230,7 +236,7 @@ async function createAgentFromChat({ toolInput, platformId, projectId, userId, l
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const displayName = nonEmpty(toolInput.displayName)
-    const instructions = nonEmpty(toolInput.instructions)
+    const instructions = briefOnly(toolInput.instructions)
     if (isNil(displayName) || isNil(instructions)) {
         return { error: 'An agent needs a name and instructions.' }
     }
@@ -261,7 +267,7 @@ async function updateAgentFromChat({ toolInput, agent, editedItself, platformId,
 }): Promise<unknown> {
     const displayName = nonEmpty(toolInput.displayName)
     const description = nonEmpty(toolInput.description)
-    const instructions = nonEmpty(toolInput.instructions)
+    const instructions = briefOnly(toolInput.instructions)
     const publish = toolInput.publish === true
     if (isNil(displayName) && isNil(description) && isNil(instructions) && !publish) {
         return { error: 'Nothing to change. Pass a new displayName, description or instructions, and none of them may be blank.' }
