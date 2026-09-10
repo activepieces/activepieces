@@ -61,13 +61,8 @@ export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context:
         return data;
       }
 
-      try {
-        const savedScreenshot = await saveFirecrawlFile(context, data.screenshot);
-        return { ...data, screenshot: savedScreenshot };
-      } catch (error) {
-        console.error(`Failed to download screenshot for page: ${error}`);
-        return data;
-      }
+      const savedScreenshot = await saveFirecrawlFile(context, data.screenshot);
+      return { ...data, screenshot: savedScreenshot };
     }),
   );
 }
