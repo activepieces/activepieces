@@ -61,8 +61,8 @@ import {
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import {
-  railIsCollapsed,
   useRailCollapsed,
+  useRailIsCollapsed,
 } from '@/features/workspace/lib/rail-collapsed';
 import {
   useAuthorization,
@@ -83,13 +83,8 @@ export function PrimaryRail() {
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const {
-    preference,
-    heldClosed,
-    setCollapsed,
-    toggle: toggleCollapsed,
-  } = useRailCollapsed();
-  const collapsed = railIsCollapsed({ preference, heldClosed });
+  const { setCollapsed, toggle: toggleCollapsed } = useRailCollapsed();
+  const collapsed = useRailIsCollapsed();
   const showAgents = useAgentsNavVisible();
   const { checkAccess } = useAuthorization();
 
@@ -105,7 +100,7 @@ export function PrimaryRail() {
         onClick={collapsed ? openSidebar : undefined}
         title={collapsed ? t('Open sidebar') : undefined}
         className={cn(
-          'flex h-svh shrink-0 flex-col bg-sidebar py-3 transition-[width] duration-150',
+          'flex h-svh shrink-0 flex-col overflow-hidden whitespace-nowrap bg-sidebar py-3 transition-[width] duration-200 ease-out motion-reduce:transition-none',
           collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-62',
         )}
       >
