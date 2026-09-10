@@ -1,5 +1,5 @@
 import { apId, chunk, isEmpty, isNil, spreadIfNotUndefined } from '@activepieces/core-utils'
-import { ApEdition, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
+import { ApEdition, maxBarrierSignalsBounds, PlatformConfiguration, UpdatePlatformConfigurationRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
@@ -43,7 +43,7 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
 
     async maxBarrierSignals({ platformId }: GetOrCreateParams): Promise<number> {
         if (system.getEdition() === ApEdition.CLOUD) {
-            return system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS)
+            return clampBarrierSignalCap(system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS))
         }
         const configuration = await this.getOrCreateForPlatform({ platformId })
         return configuration.maxBarrierSignals
@@ -107,13 +107,18 @@ export const platformConfigurationService = (log: FastifyBaseLogger) => ({
 
 async function createInitialConfiguration({ platformId }: GetOrCreateParams): Promise<PlatformConfiguration> {
     const isProductTelemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
-    const maxBarrierSignals = system.getNumber(AppSystemProp.MAX_BARRIER_SIGNALS)
+    const configuredMaxBarrierSignals = system.getNumber(AppSystemProp.MAX_BARRIER_SIGNALS)
+    const maxBarrierSignals = isNil(configuredMaxBarrierSignals) ? undefined : clampBarrierSignalCap(configuredMaxBarrierSignals)
     return platformConfigurationRepo().save({
         id: apId(),
         platformId,
         ...spreadIfNotUndefined('isProductTelemetryEnabled', isProductTelemetryEnabled),
         ...spreadIfNotUndefined('maxBarrierSignals', maxBarrierSignals),
     })
+}
+
+function clampBarrierSignalCap(configured: number): number {
+    return Math.min(Math.max(configured, maxBarrierSignalsBounds.min), maxBarrierSignalsBounds.max)
 }
 
 type GetOrCreateParams = {
