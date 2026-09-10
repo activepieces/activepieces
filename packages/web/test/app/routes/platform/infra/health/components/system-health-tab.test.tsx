@@ -2,11 +2,11 @@
  * @vitest-environment jsdom
  */
 /* eslint-disable testing-library/no-unnecessary-act */
-import { GetSystemHealthChecksResponse } from '@activepieces/shared';
+import { ApEdition, GetSystemHealthChecksResponse } from '@activepieces/shared';
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const versions = vi.hoisted(() => ({
   running: '0.88.1',
@@ -42,9 +42,13 @@ vi.mock('@/features/platform-admin', () => ({
   },
 }));
 
+const editionMock = vi.hoisted(() => ({ value: '' }));
+
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
-    useFlag: () => ({ data: versions.staleFlag }),
+    useFlag: (flagId: string) => ({
+      data: flagId === 'EDITION' ? editionMock.value : versions.staleFlag,
+    }),
   },
 }));
 
@@ -73,6 +77,10 @@ describe('SystemHealthTab version row', () => {
     return container.textContent ?? '';
   };
 
+  beforeEach(() => {
+    editionMock.value = ApEdition.COMMUNITY;
+  });
+
   afterEach(() => {
     act(() => root?.unmount());
     container?.remove();
@@ -94,6 +102,25 @@ describe('SystemHealthTab version row', () => {
   });
 
   it('needs attention when the payload release is behind the latest release', () => {
+    const text = readTabText(versions.staleFlag);
+
+    expect(text).toContain(`Current ${versions.staleFlag}`);
+    expect(text).toContain('Needs attention');
+  });
+
+  it('hides the version row on cloud edition even when behind the latest release', () => {
+    editionMock.value = ApEdition.CLOUD;
+
+    const text = readTabText(versions.staleFlag);
+
+    expect(text).not.toContain('Current');
+    expect(text).not.toContain('Needs attention');
+    expect(text).toContain('Release Integrity');
+  });
+
+  it('keeps the version row on enterprise edition', () => {
+    editionMock.value = ApEdition.ENTERPRISE;
+
     const text = readTabText(versions.staleFlag);
 
     expect(text).toContain(`Current ${versions.staleFlag}`);
