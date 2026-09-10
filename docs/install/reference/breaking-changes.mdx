@@ -8,6 +8,24 @@ icon: "hammer"
 
 ### What has changed?
 
+#### The legacy product-embed connection-key and app-credential endpoints are removed
+
+The original product-embed flow is gone. It let a host application store per-project OAuth client credentials and a public key, then mint an app connection by presenting a token signed with the matching private key. These endpoints are removed:
+
+- `GET`, `POST` and `DELETE` `/v1/connection-keys/app-connections`
+- `GET`, `POST` and `DELETE` `/v1/connection-keys`
+- `GET`, `POST` and `DELETE` `/v1/app-credentials`
+
+They were registered on the Cloud edition only, so a self-hosted installation never served them, on either Community or Enterprise. The user interface that drove them was removed several releases ago and no SDK or documented flow referenced them. They now return `404`.
+
+The current embedding stack is unaffected: signing keys, managed authentication, JWT user provisioning and the embed SDK are a separate feature and continue to work unchanged.
+
+#### What you need to do
+
+Nothing for a self-hosted installation, and no environment variable or migration. The `app_credential` and `connection_key` tables are left in place by this release and are simply no longer read; a later release drops them.
+
+If you call one of the endpoints above against Activepieces Cloud, move to the current embedding flow, which provisions users and connections through a platform signing key. See [Embedding](/embedding/overview).
+
 #### A Run Agent step's first turn now uses the model you configured, not the platform fast model
 
 Every Run Agent step used to make the first call of each turn on the platform's fast model, whatever model the step named, and only later steps used the configured one. Flow steps now use the configured model from the first call.
@@ -15,6 +33,7 @@ Every Run Agent step used to make the first call of each turn on the platform's 
 Nothing to change: existing steps keep running with the model they already name. Expect the first call of each turn to cost and take what that model costs and takes, which for a larger model is more than the fast model it was quietly using before. If you were relying on the cheaper first call, set the step's model to the smaller one deliberately.
 
 Also in this release, saving or publishing a saved agent now refuses a configuration that pins an AI provider key without naming its provider. The agent editor always writes the two together, so this only affects agents created through the API with `providerConfigId` set and `provider` null.
+
 
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
