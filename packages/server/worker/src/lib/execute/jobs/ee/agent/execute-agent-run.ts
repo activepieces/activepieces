@@ -630,6 +630,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         mcpTools: agentMcpClient.withToolTimeouts({
             mcpToolSet,
             brokenConnectors,
+            taintState,
             getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
             saveLargeResult: async ({ json, fileName }) => {
                 const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({

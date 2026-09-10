@@ -152,9 +152,9 @@ function headingOf(note: string): string {
 
 function stripRunNotes(instructions: string): string {
     const boundaries = RUN_NOTE_HEADINGS
-        .map((heading) => instructions.indexOf(heading))
+        .map((heading) => instructions.indexOf(`\n${heading}\n`))
         .filter((index) => index > 0)
-    if (boundaries.length === 0) {
+    if (boundaries.length < RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY) {
         return instructions
     }
     return instructions.slice(0, Math.min(...boundaries)).trim()
@@ -201,3 +201,5 @@ const RUN_NOTE_HEADINGS: readonly string[] = [
     headingOf(RECONNECT_NOTE),
     headingOf(SELF_EDIT_NOTE),
 ]
+
+const RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY = 2

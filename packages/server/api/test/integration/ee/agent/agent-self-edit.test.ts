@@ -120,6 +120,9 @@ describe('an agent asked to change its own instructions', () => {
                 '## Capabilities (current session)',
                 "- **Today's date**: Thursday, September 10, 2026.",
                 '',
+                '## When one of your tools cannot sign in',
+                'A tool failing with unauthorized means the account needs reconnecting.',
+                '',
                 '## You can change yourself',
                 'The person you are talking to owns you.',
             ].join('\n') },
@@ -131,6 +134,30 @@ describe('an agent asked to change its own instructions', () => {
         })
 
         expect(await instructionsOf(agentId)).toBe('Escalate anything over $200.')
+    })
+
+    it('leaves a brief alone when it only happens to use one of our headings', async () => {
+        const ctx = await contextWithAgents()
+        const agentId = await createAgent({ ctx, displayName: 'Ops agent' })
+        const conversationId = await conversationFor({ ctx, agentId })
+        const brief = [
+            'Escalate anything over $200.',
+            '',
+            '## Capabilities (current session)',
+            'You read the ledger and you write to Slack.',
+        ].join('\n')
+
+        await agentRpcHandlers(app.log).executeAgentTool({
+            toolName: 'ap_update_agent',
+            toolInput: { instructions: brief },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            source: AgentRunSource.AGENT,
+            conversationId,
+            runId: apId(),
+        })
+
+        expect(await instructionsOf(agentId)).toBe(brief)
     })
 
     it('cannot rewrite a different agent by naming its id', async () => {
