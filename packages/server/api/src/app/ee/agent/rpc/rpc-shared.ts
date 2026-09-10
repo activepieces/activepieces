@@ -1,10 +1,12 @@
 import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, Permission, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource } from '@activepieces/shared'
+import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
+import { AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ApplicationEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { agentHelpers } from '.././agent-helpers'
 import { agentService } from '.././agent-service'
 import { agentToolPinning } from '.././agent-tool-pinning'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
+import { applicationEvents } from '../../../helper/application-events'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 
@@ -45,12 +47,21 @@ export async function connectionForConfiguredTool({ piece, projectId, platformId
     return { externalId: pinned, ...spreadIfDefined('label', connection?.displayName) }
 }
 
-export async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<{ projectId: string, platformId: string }> {
-    const conversation = await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
+export async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<ConfiguredToolRun> {
+    const conversation = await agentHelpers.conversationRepo().findOne({ where: { id: conversationId }, relations: { agent: true } })
     if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run is not allowed to run a configured piece tool' } })
     }
-    return { projectId: conversation.projectId, platformId: conversation.platformId }
+    return {
+        projectId: conversation.projectId,
+        platformId: conversation.platformId,
+        userId: conversation.userId,
+        source: conversation.source,
+        ...spreadIfDefined('agent', isNil(conversation.agentId) ? undefined : {
+            id: conversation.agentId,
+            ...spreadIfDefined('displayName', conversation.agent?.displayName),
+        }),
+    }
 }
 
 export async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {
@@ -84,12 +95,15 @@ export async function loadOrStartConversation({ conversationId, platformId, user
     })
 }
 
-export async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string> {
+export async function confinedRunFor({ conversationId }: { conversationId?: string }): Promise<ConfinedRun> {
     const conversation = isNil(conversationId) ? null : await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
     if (isNil(conversation?.projectId)) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run must be confined to a project' } })
     }
-    return conversation.projectId
+    return {
+        projectId: conversation.projectId,
+        ...spreadIfDefined('editableAgentId', conversation.source === AgentRunSource.AGENT ? conversation.agentId ?? undefined : undefined),
+    }
 }
 
 export async function pinConnectionToAgent({ conversationId, pieceName, externalId, platformId, userId, log }: {
@@ -160,3 +174,55 @@ export function byteLengthOf(value: unknown): number {
 
 export const CONNECTION_INVENTORY_LIMIT = 200
 export const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
+
+export type ConfinedRun = {
+    projectId: string
+    editableAgentId?: string
+}
+
+export type ConfiguredToolRun = {
+    projectId: string
+    platformId: string
+    userId: string
+    source: AgentRunSource
+    agent?: { id: string, displayName?: string }
+}
+
+export function recordAgentAction({ run, conversationId, flow, piece, resolvedInput, names, classification, connection, log }: {
+    run: { projectId: string, platformId: string, userId: string, source: AgentRunSource, agent?: { id: string, displayName?: string } }
+    conversationId?: string
+    flow?: { id: string, runId: string }
+    piece: { pieceName: string, actionName: string }
+    resolvedInput: Record<string, unknown>
+    names: { action: string, piece: string }
+    classification?: ActionClassification
+    connection: { externalId?: string, label?: string }
+    log: FastifyBaseLogger
+}): void {
+    const readOnly = isNil(classification)
+        ? agentToolClassification.isReadOnlyActionCall({ actionName: piece.actionName, input: resolvedInput })
+        : isReadOnlyClassification(classification)
+    if (readOnly) {
+        return
+    }
+    const { projectId, platformId, userId, source, agent } = run
+    applicationEvents(log).sendUserEvent({ platformId, projectId, userId }, {
+        action: ApplicationEventName.AGENT_ACTION_EXECUTED,
+        data: {
+            ...spreadIfDefined('conversation', isNil(conversationId) ? undefined : { id: conversationId, source }),
+            ...spreadIfDefined('flow', flow),
+            source,
+            ...spreadIfDefined('agent', agent),
+            action: {
+                pieceName: piece.pieceName,
+                pieceDisplayName: names.piece,
+                actionName: piece.actionName,
+                displayName: names.action,
+            },
+            ...spreadIfDefined('connection', isNil(connection.externalId) ? undefined : {
+                externalId: connection.externalId,
+                ...spreadIfDefined('label', connection.label),
+            }),
+        },
+    })
+}

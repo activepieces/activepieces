@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
+import { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
 import { embed } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -8,19 +8,21 @@ import { agentHelpers } from '.././agent-helpers'
 import { executeCrossProjectTool } from '.././tools/agent-tools'
 import { pieceToolRunner } from '.././tools/piece-tool-runner'
 import { flowService } from '../../../flows/flow/flow.service'
+import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { knowledgeBaseService } from '../../../knowledge-base/knowledge-base.service'
 import { extractMcpTriggerInput, resolveRunnableFlow, runFlowAsTool } from '../../../mcp/mcp-server-builder'
 
-import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedProjectFor, connectionForConfiguredTool, pinConnectionToAgent } from './rpc-shared'
+import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThrow, confinedRunFor, connectionForConfiguredTool, pinConnectionToAgent, recordAgentAction } from './rpc-shared'
 
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
-        const { projectId, platformId } = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const { projectId, platformId } = configuredRun
         const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: run, error: runError } = await tryCatch(async () => {
-            const { resolvedInput, actionDisplayName } = await pieceToolRunner.resolveInput({
+            const { resolvedInput, actionDisplayName, pieceDisplayName, classification } = await pieceToolRunner.resolveInput({
                 model,
                 piece,
                 instruction: input.instruction,
@@ -31,13 +33,25 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
                 ...spreadIfDefined('connectionExternalId', connection.externalId),
             })
             const { result } = await pieceToolRunner.runResolved({ piece, resolvedInput, projectId, log })
-            return { result, resolvedInput: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName }
+            return { result, resolvedInput: pieceToolRunner.withoutCredential(resolvedInput), actionDisplayName, pieceDisplayName, classification }
         })
         if (!isNil(runError) || isNil(run)) {
             log.error({ error: runError, tool: { name: input.toolName }, piece: { name: input.piece.pieceName, version: input.piece.pieceVersion ?? null }, action: { name: input.piece.actionName } }, '[agentRpc#executePieceTool] Configured action could not run')
             throw runError
         }
         log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName, input: run.resolvedInput }, connection: { externalId: connection.externalId ?? null }, piece: { name: input.piece.pieceName } }, '[agentRpc#executePieceTool] Ran a configured piece action')
+        const flow = isNil(input.flowRunId) ? undefined : await flowOfRun({ flowRunId: input.flowRunId, projectId, log })
+        recordAgentAction({
+            run: configuredRun,
+            conversationId: input.conversationId,
+            ...spreadIfDefined('flow', flow),
+            piece,
+            resolvedInput: run.resolvedInput,
+            names: { action: run.actionDisplayName, piece: run.pieceDisplayName },
+            ...spreadIfDefined('classification', run.classification),
+            connection,
+            log,
+        })
         return { result: run.result, resolvedInput: run.resolvedInput, actionDisplayName: run.actionDisplayName, ...spreadIfDefined('connectionLabel', connection.label) }
     },
 
@@ -100,10 +114,9 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         }
         const chatOnlyTool = !ATTENDED_STATE_TOOLS.includes(input.toolName)
             && (input.toolName.startsWith(CHAT_ONLY_TOOL_PREFIX) || OWNER_SCOPED_TOOLS.includes(input.toolName) || UNATTENDED_FORBIDDEN_TOOLS.includes(input.toolName))
-        const allowedSources = AGENT_SURFACE_TOOLS.includes(input.toolName)
-            ? [AgentRunSource.CHAT, AgentRunSource.AGENT_BUILDER]
-            : [AgentRunSource.CHAT]
-        if (chatOnlyTool && !allowedSources.includes(input.source)) {
+        const sourceAllowed = input.source === AgentRunSource.CHAT
+            || (SOURCE_EXTRA_TOOLS[input.source]?.includes(input.toolName) ?? false)
+        if (chatOnlyTool && !sourceAllowed) {
             log.error({ tool: { name: input.toolName }, source: input.source }, '[agentRpc#executeAgentTool] Rejected a chat-only tool for a non-chat run — the worker should not have called it')
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -198,13 +211,17 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
 
         log.debug({ tool: { name: input.toolName, input: input.toolInput } }, '[agentRpc#executeAgentTool] Tool invoke')
         const startedAt = Date.now()
+        const confined = input.source === AgentRunSource.CHAT
+            ? null
+            : await confinedRunFor({ conversationId: input.conversationId })
         const result = await executeCrossProjectTool({
             toolName: input.toolName,
             toolInput: input.toolInput,
             platformId: input.platformId,
             userId: input.userId,
             conversationId: input.conversationId,
-            confinedToProjectId: input.source === AgentRunSource.CHAT ? null : await confinedProjectFor({ conversationId: input.conversationId }),
+            confinedToProjectId: confined?.projectId ?? null,
+            ...spreadIfDefined('editableAgentId', confined?.editableAgentId),
             log,
         })
         log.debug({ tool: { name: input.toolName, durationMs: Date.now() - startedAt, output: result }, resultBytes: byteLengthOf(result) }, '[agentRpc#executeAgentTool] Tool finished')
@@ -218,7 +235,19 @@ const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
 const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
-const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+const SOURCE_EXTRA_TOOLS: Partial<Record<AgentRunSource, readonly string[]>> = {
+    [AgentRunSource.AGENT_BUILDER]: AGENT_SURFACE_TOOLS,
+    [AgentRunSource.AGENT]: AGENT_SELF_EDIT_TOOLS,
+}
 const UNATTENDED_FORBIDDEN_TOOLS = ['ap_run_code', 'ap_execute_action', 'ap_explore_data', 'ap_list_across_projects', ...AGENT_SURFACE_TOOLS]
 const KNOWLEDGE_BASE_SEARCH_LIMIT = 5
 const KNOWLEDGE_BASE_SIMILARITY_THRESHOLD = 0.5
+
+async function flowOfRun({ flowRunId, projectId, log }: { flowRunId: string, projectId: string, log: FastifyBaseLogger }): Promise<{ id: string, runId: string } | undefined> {
+    const { data: flowRun, error } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
+    if (isNil(flowRun)) {
+        log.warn({ error, flowRun: { id: flowRunId }, project: { id: projectId } }, '[agentRpc#executePieceTool] Could not name the flow run behind this action; the audit event ships without it and every webhook-flow destination is dropped')
+        return undefined
+    }
+    return { id: flowRun.flowId, runId: flowRun.id }
+}

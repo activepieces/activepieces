@@ -404,7 +404,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
     async function runPieceTool(conversation: unknown) {
         mockRunResolved.mockClear()
         mockResolveInput.mockClear()
-        mockFindOneBy.mockResolvedValue(conversation)
+        mockFindOne.mockResolvedValue(conversation)
         mockGetOneWithoutValue.mockResolvedValue({ id: 'ac-1', externalId: 'conn-1', displayName: 'Sales Inbox' })
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executePieceTool({
@@ -416,7 +416,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
     }
 
     it('runs the action in the conversation\'s own project', async () => {
-        await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1' })
+        await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1' })
 
         expect(mockRunResolved).toHaveBeenCalledTimes(1)
         expect(mockRunResolved.mock.calls[0][0].projectId).toBe('proj-1')
@@ -748,13 +748,13 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding i
 })
 
 describe('agentRpcHandlers.executePieceTool — which account a configured action runs as', () => {
-    const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1' }
+    const AGENT_CHAT = { id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1' }
     const PINNED = 'conn-author-pinned'
 
     async function run({ pinnedExists, pinnedAuth = PINNED }: { pinnedExists: boolean, pinnedAuth?: string }) {
         mockResolveInput.mockClear()
         mockGetOneWithoutValue.mockClear()
-        mockFindOneBy.mockResolvedValue(AGENT_CHAT)
+        mockFindOne.mockResolvedValue(AGENT_CHAT)
         mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         const response = await agentRpcHandlers(noopLogger as never).executePieceTool({
