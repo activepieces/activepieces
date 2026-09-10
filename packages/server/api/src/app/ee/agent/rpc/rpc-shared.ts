@@ -95,12 +95,15 @@ export async function loadOrStartConversation({ conversationId, platformId, user
     })
 }
 
-export async function confinedProjectFor({ conversationId }: { conversationId?: string }): Promise<string> {
+export async function confinedRunFor({ conversationId }: { conversationId?: string }): Promise<ConfinedRun> {
     const conversation = isNil(conversationId) ? null : await agentHelpers.conversationRepo().findOneBy({ id: conversationId })
     if (isNil(conversation?.projectId)) {
         throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'This run must be confined to a project' } })
     }
-    return conversation.projectId
+    return {
+        projectId: conversation.projectId,
+        ...spreadIfDefined('editableAgentId', conversation.source === AgentRunSource.AGENT ? conversation.agentId ?? undefined : undefined),
+    }
 }
 
 export async function pinConnectionToAgent({ conversationId, pieceName, externalId, platformId, userId, log }: {
@@ -171,6 +174,11 @@ export function byteLengthOf(value: unknown): number {
 
 export const CONNECTION_INVENTORY_LIMIT = 200
 export const CONFIGURED_TOOL_SOURCES: AgentRunSource[] = [AgentRunSource.FLOW_STEP, AgentRunSource.AGENT]
+
+export type ConfinedRun = {
+    projectId: string
+    editableAgentId?: string
+}
 
 export type ConfiguredToolRun = {
     projectId: string

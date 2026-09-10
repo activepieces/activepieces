@@ -608,7 +608,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
     const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
-        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool })
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
@@ -660,11 +660,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
+        taintState,
         tools: dryRun || discoveryOnly ? [] : configuredFlowTools,
         runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse }),
         log,
     })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+        taintState,
         tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
         runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider, providerConfigId }),
         log,
