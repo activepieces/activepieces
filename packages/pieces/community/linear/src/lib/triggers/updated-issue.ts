@@ -1,4 +1,8 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import {
+  createTrigger,
+  Property,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
 import { linearAuth } from '../..';
 import { makeClient } from '../common/client';
 import { props } from '../common/props';
@@ -15,6 +19,27 @@ export const linearUpdatedIssue = createTrigger({
   },
   props: {
     team_id: props.team_id(false),
+    changed_fields: Property.StaticMultiSelectDropdown({
+      displayName: 'Only when these fields change',
+      description:
+        'Trigger only when at least one of the selected fields changed. Leave empty to trigger on every update.',
+      required: false,
+      options: {
+        options: [
+          { label: 'Status', value: 'stateId' },
+          { label: 'Assignee', value: 'assigneeId' },
+          { label: 'Priority', value: 'priority' },
+          { label: 'Title', value: 'title' },
+          { label: 'Description', value: 'description' },
+          { label: 'Labels', value: 'labelIds' },
+          { label: 'Estimate', value: 'estimate' },
+          { label: 'Due date', value: 'dueDate' },
+          { label: 'Project', value: 'projectId' },
+          { label: 'Cycle', value: 'cycleId' },
+          { label: 'Parent', value: 'parentId' },
+        ],
+      },
+    }),
   },
   sampleData: {
     // Sample data structure based on Linear's webhook payload for issues
@@ -124,11 +149,22 @@ export const linearUpdatedIssue = createTrigger({
     }
   },
   async run(context) {
-    const body = context.payload.body as { action: string; data: unknown };
-    if (body.action === 'update') {
-      return [body];
+    const body = context.payload.body as {
+      action: string;
+      data: unknown;
+      updatedFrom?: Record<string, unknown>;
+    };
+    if (body.action !== 'update') {
+      return [];
     }
-    return [];
+    const selected = context.propsValue.changed_fields ?? [];
+    if (selected.length > 0) {
+      const changed = Object.keys(body.updatedFrom ?? {});
+      if (!selected.some((field) => changed.includes(field))) {
+        return [];
+      }
+    }
+    return [body];
   },
 });
 
