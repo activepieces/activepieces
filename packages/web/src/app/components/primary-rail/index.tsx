@@ -83,13 +83,10 @@ export function PrimaryRail() {
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const {
-    preference,
-    heldClosed,
-    setCollapsed,
-    toggle: toggleCollapsed,
-  } = useRailCollapsed();
-  const collapsed = railIsCollapsed({ preference, heldClosed });
+  const { preference, setCollapsed, toggle } = useRailCollapsed();
+  const { pathname } = useLocation();
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
   const { checkAccess } = useAuthorization();
 
@@ -97,7 +94,14 @@ export function PrimaryRail() {
     return null;
   }
 
-  const openSidebar = () => setCollapsed(false);
+  const openSidebar = () => {
+    setOpenedOn(pathname);
+    setCollapsed(false);
+  };
+  const toggleCollapsed = () => {
+    setOpenedOn(pathname);
+    toggle();
+  };
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -105,7 +109,7 @@ export function PrimaryRail() {
         onClick={collapsed ? openSidebar : undefined}
         title={collapsed ? t('Open sidebar') : undefined}
         className={cn(
-          'flex h-svh shrink-0 flex-col bg-sidebar py-3 transition-[width] duration-150',
+          'flex h-svh shrink-0 flex-col overflow-hidden whitespace-nowrap bg-sidebar py-3 transition-[width] duration-200 ease-out motion-reduce:transition-none',
           collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-62',
         )}
       >

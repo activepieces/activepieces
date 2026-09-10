@@ -3,7 +3,7 @@ import { Agent, AgentToolType } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronLeft, SearchX, Settings2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
@@ -23,7 +23,6 @@ import { useAgentsAvailable } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
-import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
 import { cn } from '@/lib/utils';
 
 import { AgentConfigurePanel } from './configure-panel';
@@ -72,17 +71,6 @@ const AgentEditorSkeleton = () => (
     </div>
   </div>
 );
-const HoldTheRailClosedWhileHere = () => {
-  const holdClosed = useRailCollapsed((state) => state.holdClosed);
-
-  useEffect(() => {
-    holdClosed(true);
-    return () => holdClosed(false);
-  }, [holdClosed]);
-
-  return null;
-};
-
 const AgentEditorContent = () => {
   const navigate = useNavigate();
   const { agentId } = useParams<{ agentId: string }>();
@@ -164,7 +152,6 @@ const AgentEditorContent = () => {
 
   return (
     <div className="flex h-full w-full">
-      <HoldTheRailClosedWhileHere />
       <div className="flex min-w-0 grow flex-col">
         <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
           <button
