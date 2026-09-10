@@ -414,6 +414,10 @@
                         },
                         "admin-guide/guides/event-streaming"
                       ]
+                    },
+                    {
+                      "group": "Infrastructure",
+                      "pages": []
                     }
                   ]
               },
