@@ -118,7 +118,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.20.0",
+      "version": "0.21.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -163,7 +163,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.162.0",
+      "version": "0.165.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -214,7 +214,7 @@
     },
     "packages/pieces/common": {
       "name": "@activepieces/pieces-common",
-      "version": "0.13.2",
+      "version": "0.13.3",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
@@ -7857,6 +7857,16 @@
         "tslib": "2.6.2",
       },
     },
+    "packages/pieces/community/sage-accounting": {
+      "name": "@activepieces/piece-sage-accounting",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "@activepieces/shared": "workspace:*",
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/saleor": {
       "name": "@activepieces/piece-saleor",
       "version": "0.1.6",
@@ -10418,7 +10428,7 @@
     },
     "packages/pieces/core/http": {
       "name": "@activepieces/piece-http",
-      "version": "0.11.21",
+      "version": "0.11.22",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -12286,6 +12296,8 @@
     "@activepieces/piece-runway": ["@activepieces/piece-runway@workspace:packages/pieces/community/runway"],
 
     "@activepieces/piece-saastic": ["@activepieces/piece-saastic@workspace:packages/pieces/community/saastic"],
+
+    "@activepieces/piece-sage-accounting": ["@activepieces/piece-sage-accounting@workspace:packages/pieces/community/sage-accounting"],
 
     "@activepieces/piece-saleor": ["@activepieces/piece-saleor@workspace:packages/pieces/community/saleor"],
 
