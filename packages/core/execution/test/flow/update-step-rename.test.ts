@@ -9,6 +9,8 @@ import {
     PieceAction,
     PieceTrigger,
     PropertyExecutionType,
+    UpdateActionRequest,
+    UpdateTriggerRequest,
 } from '../../src'
 
 const TRIGGER_LAST_UPDATED = '2026-01-01T00:00:00.000Z'
@@ -39,18 +41,9 @@ function createFlowVersion(): FlowVersion {
                 pieceName: 'schedule',
                 pieceVersion: '0.0.2',
                 triggerName: 'cron_expression',
-                input: {
-                    cronExpression: '25 10 * * 0,1,2,3,4',
-                },
-                propertySettings: {
-                    cronExpression: {
-                        type: PropertyExecutionType.MANUAL,
-                    },
-                },
-                sampleData: {
-                    sampleDataFileId: TRIGGER_SAMPLE_FILE_ID,
-                    lastTestDate: '2026-01-03T00:00:00.000Z',
-                },
+                input: { cronExpression: '25 10 * * 0,1,2,3,4' },
+                propertySettings: { cronExpression: { type: PropertyExecutionType.MANUAL } },
+                sampleData: { sampleDataFileId: TRIGGER_SAMPLE_FILE_ID, lastTestDate: '2026-01-03T00:00:00.000Z' },
             },
             nextAction: {
                 name: 'step_1',
@@ -62,18 +55,9 @@ function createFlowVersion(): FlowVersion {
                     pieceName: 'store',
                     pieceVersion: '0.2.6',
                     actionName: 'get',
-                    input: {
-                        key: '1',
-                    },
-                    propertySettings: {
-                        key: {
-                            type: PropertyExecutionType.MANUAL,
-                        },
-                    },
-                    sampleData: {
-                        sampleDataFileId: ACTION_SAMPLE_FILE_ID,
-                        lastTestDate: '2026-01-03T00:00:00.000Z',
-                    },
+                    input: { key: '1' },
+                    propertySettings: { key: { type: PropertyExecutionType.MANUAL } },
+                    sampleData: { sampleDataFileId: ACTION_SAMPLE_FILE_ID, lastTestDate: '2026-01-03T00:00:00.000Z' },
                 },
             },
         },
@@ -95,21 +79,41 @@ function getTrigger(flowVersion: FlowVersion): PieceTrigger {
     return flowVersion.trigger
 }
 
+function applyActionUpdate(flowVersion: FlowVersion, overrides: Partial<UpdateActionRequest>): PieceAction {
+    const action = getAction(flowVersion)
+    const result = flowOperations.apply(flowVersion, {
+        type: FlowOperationType.UPDATE_ACTION,
+        request: {
+            type: FlowActionType.PIECE,
+            name: action.name,
+            displayName: action.displayName,
+            valid: action.valid,
+            settings: action.settings,
+            ...overrides,
+        },
+    })
+    return getAction(result)
+}
+
+function applyTriggerUpdate(flowVersion: FlowVersion, overrides: Partial<UpdateTriggerRequest>): PieceTrigger {
+    const trigger = getTrigger(flowVersion)
+    const result = flowOperations.apply(flowVersion, {
+        type: FlowOperationType.UPDATE_TRIGGER,
+        request: {
+            type: FlowTriggerType.PIECE,
+            name: trigger.name,
+            displayName: trigger.displayName,
+            valid: trigger.valid,
+            settings: trigger.settings,
+            ...overrides,
+        },
+    })
+    return getTrigger(result)
+}
+
 describe('rename-only updates keep the tested status (GIT-1873)', () => {
     it('CLAIM 1: UPDATE_ACTION changing only displayName keeps lastUpdatedDate and sample data', () => {
-        const flowVersion = createFlowVersion()
-        const action = getAction(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-                type: FlowActionType.PIECE,
-                name: action.name,
-                displayName: 'Get Renamed',
-                valid: action.valid,
-                settings: action.settings,
-            },
-        })
-        const updated = getAction(result)
+        const updated = applyActionUpdate(createFlowVersion(), { displayName: 'Get Renamed' })
         expect(updated.displayName).toBe('Get Renamed')
         expect(updated.lastUpdatedDate).toBe(ACTION_LAST_UPDATED)
         expect(updated.settings.sampleData?.sampleDataFileId).toBe(ACTION_SAMPLE_FILE_ID)
@@ -117,83 +121,34 @@ describe('rename-only updates keep the tested status (GIT-1873)', () => {
 
     it('CLAIM 2: UPDATE_ACTION changing input still bumps lastUpdatedDate', () => {
         const flowVersion = createFlowVersion()
-        const action = getAction(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-                type: FlowActionType.PIECE,
-                name: action.name,
-                displayName: action.displayName,
-                valid: action.valid,
-                settings: {
-                    ...action.settings,
-                    input: {
-                        key: '2',
-                    },
-                },
-            },
+        const updated = applyActionUpdate(flowVersion, {
+            settings: { ...getAction(flowVersion).settings, input: { key: '2' } },
         })
-        const updated = getAction(result)
         expect(updated.lastUpdatedDate).not.toBe(ACTION_LAST_UPDATED)
         expect(updated.settings.sampleData?.sampleDataFileId).toBe(ACTION_SAMPLE_FILE_ID)
     })
 
     it('CLAIM 3: UPDATE_ACTION renaming and changing input together bumps lastUpdatedDate', () => {
         const flowVersion = createFlowVersion()
-        const action = getAction(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-                type: FlowActionType.PIECE,
-                name: action.name,
-                displayName: 'Get Renamed',
-                valid: action.valid,
-                settings: {
-                    ...action.settings,
-                    input: {
-                        key: '2',
-                    },
-                },
-            },
+        const updated = applyActionUpdate(flowVersion, {
+            displayName: 'Get Renamed',
+            settings: { ...getAction(flowVersion).settings, input: { key: '2' } },
         })
-        expect(getAction(result).lastUpdatedDate).not.toBe(ACTION_LAST_UPDATED)
+        expect(updated.lastUpdatedDate).not.toBe(ACTION_LAST_UPDATED)
     })
 
     it('CLAIM 4: UPDATE_ACTION rename with stale sampleData in the request is still rename-only', () => {
         const flowVersion = createFlowVersion()
-        const action = getAction(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-                type: FlowActionType.PIECE,
-                name: action.name,
-                displayName: 'Get Renamed',
-                valid: action.valid,
-                settings: {
-                    ...action.settings,
-                    sampleData: undefined,
-                },
-            },
+        const updated = applyActionUpdate(flowVersion, {
+            displayName: 'Get Renamed',
+            settings: { ...getAction(flowVersion).settings, sampleData: undefined },
         })
-        const updated = getAction(result)
         expect(updated.lastUpdatedDate).toBe(ACTION_LAST_UPDATED)
         expect(updated.settings.sampleData?.sampleDataFileId).toBe(ACTION_SAMPLE_FILE_ID)
     })
 
     it('CLAIM 5: UPDATE_TRIGGER changing only displayName keeps lastUpdatedDate and sample data', () => {
-        const flowVersion = createFlowVersion()
-        const trigger = getTrigger(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: {
-                type: FlowTriggerType.PIECE,
-                name: trigger.name,
-                displayName: 'Every Hour Renamed',
-                valid: trigger.valid,
-                settings: trigger.settings,
-            },
-        })
-        const updated = getTrigger(result)
+        const updated = applyTriggerUpdate(createFlowVersion(), { displayName: 'Every Hour Renamed' })
         expect(updated.displayName).toBe('Every Hour Renamed')
         expect(updated.lastUpdatedDate).toBe(TRIGGER_LAST_UPDATED)
         expect(updated.settings.sampleData?.sampleDataFileId).toBe(TRIGGER_SAMPLE_FILE_ID)
@@ -202,67 +157,39 @@ describe('rename-only updates keep the tested status (GIT-1873)', () => {
 
     it('CLAIM 6: UPDATE_TRIGGER changing input still bumps lastUpdatedDate', () => {
         const flowVersion = createFlowVersion()
-        const trigger = getTrigger(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: {
-                type: FlowTriggerType.PIECE,
-                name: trigger.name,
-                displayName: trigger.displayName,
-                valid: trigger.valid,
-                settings: {
-                    ...trigger.settings,
-                    input: {
-                        cronExpression: '0 * * * *',
-                    },
-                },
-            },
+        const updated = applyTriggerUpdate(flowVersion, {
+            settings: { ...getTrigger(flowVersion).settings, input: { cronExpression: '0 * * * *' } },
         })
-        const updated = getTrigger(result)
         expect(updated.lastUpdatedDate).not.toBe(TRIGGER_LAST_UPDATED)
     })
 
     it('CLAIM 7: UPDATE_TRIGGER replacing the piece bumps lastUpdatedDate', () => {
         const flowVersion = createFlowVersion()
-        const trigger = getTrigger(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_TRIGGER,
-            request: {
-                type: FlowTriggerType.PIECE,
-                name: trigger.name,
-                displayName: trigger.displayName,
-                valid: trigger.valid,
-                settings: {
-                    ...trigger.settings,
-                    pieceName: 'webhook',
-                    triggerName: 'catch_webhook',
-                },
-            },
+        const updated = applyTriggerUpdate(flowVersion, {
+            settings: { ...getTrigger(flowVersion).settings, pieceName: 'webhook', triggerName: 'catch_webhook' },
         })
-        const updated = getTrigger(result)
         expect(updated.lastUpdatedDate).not.toBe(TRIGGER_LAST_UPDATED)
     })
+
     it('CLAIM 8: UPDATE_ACTION rename with form-normalized empty option objects is still rename-only', () => {
         const flowVersion = createFlowVersion()
-        const action = getAction(flowVersion)
-        const result = flowOperations.apply(flowVersion, {
-            type: FlowOperationType.UPDATE_ACTION,
-            request: {
-                type: FlowActionType.PIECE,
-                name: action.name,
-                displayName: 'Get Renamed',
-                valid: action.valid,
-                settings: {
-                    ...action.settings,
-                    errorHandlingOptions: {
-                        continueOnFailure: {},
-                        retryOnFailure: {},
-                    },
-                },
+        const updated = applyActionUpdate(flowVersion, {
+            displayName: 'Get Renamed',
+            settings: {
+                ...getAction(flowVersion).settings,
+                errorHandlingOptions: { continueOnFailure: {}, retryOnFailure: {} },
             },
         })
-        const updated = getAction(result)
         expect(updated.lastUpdatedDate).toBe(ACTION_LAST_UPDATED)
         expect(updated.settings.sampleData?.sampleDataFileId).toBe(ACTION_SAMPLE_FILE_ID)
+    })
+
+    it('CLAIM 9: UPDATE_ACTION adding an empty-object input value bumps lastUpdatedDate', () => {
+        const flowVersion = createFlowVersion()
+        const action = getAction(flowVersion)
+        const updated = applyActionUpdate(flowVersion, {
+            settings: { ...action.settings, input: { ...action.settings.input, filters: {} } },
+        })
+        expect(updated.lastUpdatedDate).not.toBe(ACTION_LAST_UPDATED)
     })
 })

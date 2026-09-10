@@ -34,14 +34,17 @@ function deepEquals({ a, b }: DeepEqualsParams): boolean {
     return aKeys.length === bKeys.length && aKeys.every((key) => deepEquals({ a: aRecord[key], b: bRecord[key] }))
 }
 
-function contentOf(step: FlowAction | FlowTrigger): unknown {
+function contentOf(step: FlowAction | FlowTrigger): Record<string, unknown> {
     const settings: Record<string, unknown> = { ...(step.settings ?? {}) }
+    const input = settings['input']
+    delete settings['input']
     delete settings['sampleData']
     delete settings['customLogoUrl']
-    return prune({
+    return {
         type: step.type,
-        settings,
-    })
+        input: input ?? {},
+        optionSettings: prune(settings),
+    }
 }
 
 function preserveLastUpdatedDate<T extends FlowAction | FlowTrigger>({ existingStep, updatedStep }: PreserveLastUpdatedDateParams<T>): T {
