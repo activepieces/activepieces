@@ -46,12 +46,11 @@ An AI step running on Activepieces AI credits was charged a fixed number of cred
 
 Managed AI calls are now charged on the cost the provider reports for each request, converted to credits at a fixed rate. The credit cost of a step therefore scales with the size of the call: a short prompt costs less than it did, and a long one costs proportionally more. A model that is genuinely free costs nothing. Bring-your-own provider keys are not affected and keep their existing per-message charge.
 
-Two smaller changes come with it. The Activepieces AI provider now refuses a flow whose AI step predates the version that reports cost, with a message asking you to republish — the migration above moves existing flows for you, so this is only reachable by a step that was pinned back deliberately. And a request for that provider is refused outright if it does not come from the AI piece.
+One smaller change comes with it. The Activepieces AI provider now refuses a call from a version of the AI piece that cannot report what it cost, with a message asking you to republish. The migration above moves existing flows onto a version that can, so this is only reachable by a step pinned back deliberately or a worker still serving an older copy of the piece.
 
 #### What you need to do
 
 Nothing to configure or migrate, and no new environment variable — the conversion rate has a default. Expect your credit usage graph to change shape on the day this ships: flows that send large prompts or long documents to Activepieces AI credits will consume noticeably more credits than before, and flows sending short prompts slightly fewer. If a flow processes large inputs on managed credits, check its credit consumption after the first few runs and switch it to your own provider key if the new cost does not suit you.
-
 
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
