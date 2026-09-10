@@ -3,7 +3,7 @@ import { FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@act
 import { FastifyInstance } from 'fastify'
 import * as systemJobModule from '../../../../../src/app/helper/system-jobs/system-job'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
-import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
+import { resumeDelayJobId, waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -174,6 +174,40 @@ describe('Waitpoint service', () => {
             expect(retried.waitpoint.id).toBe(first.waitpoint.id)
             expect(upsertJobSpy).toHaveBeenCalledTimes(2)
             expect(upsertJobSpy.mock.calls[1][0].job.data.waitpointId).toBe(first.waitpoint.id)
+            expect(upsertJobSpy.mock.calls[1][0].job.jobId).toBe(upsertJobSpy.mock.calls[0][0].job.jobId)
+        })
+
+        it('should give each waitpoint of one run its own resume job id', async () => {
+            const { flowRun } = await createFlowRun()
+            const upsertJobSpy = vi.fn()
+            vi.spyOn(systemJobModule, 'systemJobsSchedule').mockImplementation((log) => ({
+                ...originalSystemJobsSchedule(log),
+                upsertJob: upsertJobSpy,
+            }))
+
+            const approval = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval_link',
+                type: PauseType.WEBHOOK,
+            })
+            const delay = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'delay_step',
+                type: PauseType.DELAY,
+                resumeDateTime: new Date(Date.now() + 45000).toISOString(),
+            })
+
+            const scheduled = upsertJobSpy.mock.calls.map(([params]) => ({
+                jobId: params.job.jobId,
+                waitpointId: params.job.data.waitpointId,
+            }))
+            expect(scheduled).toEqual([
+                { jobId: resumeDelayJobId(approval.waitpoint.id), waitpointId: approval.waitpoint.id },
+                { jobId: resumeDelayJobId(delay.waitpoint.id), waitpointId: delay.waitpoint.id },
+            ])
+            expect(scheduled[0].jobId).not.toBe(scheduled[1].jobId)
         })
 
         it('should reject a resumeDateTime past flowRun.created + AP_PAUSED_FLOW_TIMEOUT_DAYS (cumulative check)', async () => {
