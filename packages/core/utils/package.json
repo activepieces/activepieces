@@ -9,7 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "deepmerge-ts": "7.1.0",
+    "deepmerge-ts": "8.0.0",
     "ipaddr.js": "2.3.0",
     "nanoid": "3.3.17",
     "tslib": "2.6.2",
