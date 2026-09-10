@@ -2,6 +2,7 @@ export * from './engine-operation'
 export * from './engine-contract'
 export * from './requests'
 export * from './engine-constants'
+export * from './engine-exit-codes'
 export * from './execution-errors'
 
 export enum ExecutionMode {

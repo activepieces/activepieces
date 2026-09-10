@@ -1,4 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
+import { EngineExitCode } from '@activepieces/shared'
 import { flowRunProgressReporter } from './lib/helper/flow-run-progress-reporter'
 import { ssrfGuard } from './lib/network/ssrf-guard'
 import { workerSocket } from './lib/worker-socket'
@@ -15,10 +16,10 @@ if (!isNil(SANDBOX_ID)) {
 
 process.on('uncaughtException', (error) => {
     workerSocket.sendError(error)
-    process.exit(3)
+    process.exit(EngineExitCode.UNCAUGHT_EXCEPTION)
 })
 
 process.on('unhandledRejection', (reason) => {
     workerSocket.sendError(reason)
-    process.exit(4)
+    process.exit(EngineExitCode.UNHANDLED_REJECTION)
 })
