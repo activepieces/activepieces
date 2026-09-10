@@ -1221,6 +1221,9 @@
       "@activepieces/piece-senja": [
         "packages/pieces/community/senja/src/index.ts"
       ],
+      "@activepieces/piece-sent": [
+        "packages/pieces/community/sent/src/index.ts"
+      ],
       "@activepieces/piece-serp-api": [
         "packages/pieces/community/serp-api/src/index.ts"
       ],
