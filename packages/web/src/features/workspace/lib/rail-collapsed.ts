@@ -6,22 +6,38 @@ function readInitial(): boolean {
   return localStorage.getItem(STORAGE_KEY) === 'true';
 }
 
-type RailCollapsedState = {
-  collapsed: boolean;
-  setCollapsed: (value: boolean) => void;
-  toggle: () => void;
-};
+function persist(value: boolean): boolean {
+  localStorage.setItem(STORAGE_KEY, String(value));
+  return value;
+}
 
 export const useRailCollapsed = create<RailCollapsedState>((set) => ({
-  collapsed: readInitial(),
-  setCollapsed: (value) => {
-    localStorage.setItem(STORAGE_KEY, String(value));
-    set({ collapsed: value });
-  },
+  preference: readInitial(),
+  heldClosed: false,
+  setCollapsed: (value) =>
+    set({ preference: persist(value), heldClosed: false }),
   toggle: () =>
-    set((state) => {
-      const next = !state.collapsed;
-      localStorage.setItem(STORAGE_KEY, String(next));
-      return { collapsed: next };
-    }),
+    set((state) => ({
+      preference: persist(!railIsCollapsed(state)),
+      heldClosed: false,
+    })),
+  holdClosed: (value) => set({ heldClosed: value }),
 }));
+
+export function railIsCollapsed({
+  preference,
+  heldClosed,
+}: {
+  preference: boolean;
+  heldClosed: boolean;
+}): boolean {
+  return preference || heldClosed;
+}
+
+type RailCollapsedState = {
+  preference: boolean;
+  heldClosed: boolean;
+  setCollapsed: (value: boolean) => void;
+  toggle: () => void;
+  holdClosed: (value: boolean) => void;
+};

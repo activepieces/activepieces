@@ -99,14 +99,14 @@ const AgentProjectRow = ({ agent }: { agent: Agent }) => {
   }
 
   return (
-    <FormItem className="flex flex-col gap-[9px]">
+    <FormItem className="flex flex-col gap-2">
       <PanelSectionLabel label={t('Project')} />
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 rounded-[10px] border border-border px-3 py-2.5">
         <ApProjectDisplay
           title={getProjectName(home)}
           icon={home.icon}
           projectType={home.type}
-          titleClassName="text-[13px] leading-4 text-muted-foreground"
+          titleClassName="text-sm leading-5"
         />
         <Button
           type="button"
@@ -148,10 +148,10 @@ const AgentDangerZone = ({
   }
 
   return (
-    <div className="flex flex-col gap-[9px] border-t border-border pt-4">
+    <div className="flex flex-col gap-2 border-t border-border pt-5">
       <PanelSectionLabel label={t('Delete this agent')} />
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-[13px] leading-4 text-muted-foreground">
+      <div className="flex items-start justify-between gap-4">
+        <span className="text-sm leading-5 text-muted-foreground">
           {t(
             'Its instructions, its tools, and every conversation held with it go with it.',
           )}
@@ -185,7 +185,7 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="flex flex-col gap-[9px] border-t border-border pt-4">
+    <div className="flex flex-col gap-2 border-t border-border pt-5">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
@@ -197,7 +197,7 @@ const AdvancedSection = ({ children }: { children: React.ReactNode }) => {
         />
         {t('Advanced')}
       </button>
-      {open && <div className="flex flex-col gap-[20px]">{children}</div>}
+      {open && <div className="flex flex-col gap-6 pt-1">{children}</div>}
     </div>
   );
 };
@@ -222,7 +222,7 @@ const ConfigureBehaviorTab = ({
         control={form.control}
         name="draft.instructions"
         render={({ field }) => (
-          <FormItem className="flex flex-col gap-[9px]">
+          <FormItem className="flex flex-col gap-2">
             <PanelSectionLabel label={t('Instructions')} required />
             <FormControl>
               <Textarea
@@ -232,14 +232,14 @@ const ConfigureBehaviorTab = ({
                 placeholder={t(
                   'Reply to refund requests. Check the order in Stripe first, and escalate anything over $200.',
                 )}
-                className="rounded-[10px] px-[13px] py-3 text-[13px] leading-[155%]"
+                className="rounded-[10px] px-3 py-3 text-sm leading-relaxed"
               />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-      <FormItem className="flex flex-col gap-[9px]">
+      <FormItem className="flex flex-col gap-2">
         <PanelSectionLabel label={t('Model')} />
         {needsModel && (
           <p className="text-[13px] leading-4 text-destructive">
@@ -279,7 +279,7 @@ const ConfigureBehaviorTab = ({
         control={form.control}
         name="draft.tools"
         render={({ field }) => (
-          <FormItem className="flex flex-col gap-[9px]">
+          <FormItem className="flex flex-col gap-2">
             <AgentTools
               toolsField={field}
               selectedProvider={form.watch('draft.provider') ?? undefined}
@@ -293,7 +293,7 @@ const ConfigureBehaviorTab = ({
           control={form.control}
           name="draft.structuredOutput"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
+            <FormItem className="flex flex-col gap-2">
               <AgentStructuredOutput
                 disabled={false}
                 structuredOutputField={field}
@@ -306,7 +306,7 @@ const ConfigureBehaviorTab = ({
           control={form.control}
           name="draft.maxSteps"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-[9px]">
+            <FormItem className="flex flex-col gap-2">
               <PanelSectionLabel label={t('Max steps')} />
               <FormControl>
                 <Input
@@ -346,7 +346,7 @@ const ConfigureSettingsTab = ({
       control={form.control}
       name="displayName"
       render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
+        <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Name')} required />
           <FormControl>
             <Input {...field} />
@@ -359,7 +359,7 @@ const ConfigureSettingsTab = ({
       control={form.control}
       name="description"
       render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
+        <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Description')} />
           <FormControl>
             <Textarea {...field} minRows={2} maxRows={4} />
@@ -372,9 +372,9 @@ const ConfigureSettingsTab = ({
       control={form.control}
       name="icon"
       render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
+        <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Shape')} />
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-border p-3">
             {Object.values(AgentIcon).map((iconName) => (
               <button
                 key={iconName}
@@ -402,9 +402,9 @@ const ConfigureSettingsTab = ({
       control={form.control}
       name="color"
       render={({ field }) => (
-        <FormItem className="flex flex-col gap-[9px]">
+        <FormItem className="flex flex-col gap-2">
           <PanelSectionLabel label={t('Color')} />
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-6 gap-2.5 rounded-[10px] border border-border p-3">
             {Object.values(ColorName).map((colorName) => (
               <button
                 key={colorName}
@@ -748,11 +748,17 @@ const AgentConfigurePanel = ({
             </TabsList>
           </div>
           <ScrollFade className="min-h-0 grow">
-            <div className="flex flex-col gap-5 p-[18px]">
-              <TabsContent value="behavior" className="mt-0">
+            <div className="p-[18px]">
+              <TabsContent
+                value="behavior"
+                className="mt-0 flex flex-col gap-6"
+              >
                 <ConfigureBehaviorTab form={form} needsModel={formNeedsModel} />
               </TabsContent>
-              <TabsContent value="settings" className="mt-0">
+              <TabsContent
+                value="settings"
+                className="mt-0 flex flex-col gap-6"
+              >
                 <ConfigureSettingsTab
                   agent={agent}
                   form={form}
@@ -762,7 +768,7 @@ const AgentConfigurePanel = ({
                 />
               </TabsContent>
               {form.formState.errors.root?.serverError && (
-                <p className="text-sm leading-4 text-destructive">
+                <p className="mt-5 text-sm leading-4 text-destructive">
                   {form.formState.errors.root.serverError.message}
                 </p>
               )}
