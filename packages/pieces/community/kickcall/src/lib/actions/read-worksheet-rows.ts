@@ -12,11 +12,11 @@ export const readWorksheetRowsAction = createAction({
   name: 'read_worksheet_rows',
   displayName: 'Read Worksheet Rows',
   description:
-    'Returns worksheet rows as an array of id, position, and column values.',
+    'Returns worksheet rows as id, position, values keyed by column id, and column_names.',
   audience: 'both',
   aiMetadata: {
     description:
-      'Lists all rows in a Kickcall worksheet with column values keyed by column name. Read-only and idempotent.',
+      'Lists all rows in a Kickcall worksheet. values is keyed by stable column id; column_names maps those ids to display names. Read-only and idempotent.',
     idempotent: true,
   },
   props: {

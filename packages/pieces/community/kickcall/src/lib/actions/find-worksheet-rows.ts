@@ -17,7 +17,7 @@ export const findWorksheetRowsAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Searches Kickcall worksheet rows by column value with contains or exact match. Read-only and idempotent.',
+      'Searches Kickcall worksheet rows by column value. Output values are keyed by stable column id with column_names for labels. Read-only and idempotent.',
     idempotent: true,
   },
   props: {

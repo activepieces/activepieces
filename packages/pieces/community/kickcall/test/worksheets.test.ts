@@ -48,10 +48,15 @@ const columnsPayload = {
   ],
 };
 
+const columnNames = {
+  '10': 'Phone',
+  '11': 'Note',
+};
+
 describe('kickcallWorksheets mutations', () => {
   beforeEach(() => sendRequest.mockReset());
 
-  test('addWorksheetRow loads columns before POST and maps cells by column name', async () => {
+  test('addWorksheetRow loads columns before POST and maps cells by column id', async () => {
     reply(columnsPayload);
     reply({
       id: 99,
@@ -74,9 +79,10 @@ describe('kickcallWorksheets mutations', () => {
       id: '99',
       position: 1,
       values: {
-        Phone: '+15551234567',
-        Note: 'hello',
+        '10': '+15551234567',
+        '11': 'hello',
       },
+      column_names: columnNames,
     });
 
     expect(sendRequest.mock.calls[0]?.[0].method).toBe('GET');
@@ -130,9 +136,10 @@ describe('kickcallWorksheets mutations', () => {
       id: '99',
       position: 1,
       values: {
-        Phone: 'kept',
-        Note: '',
+        '10': 'kept',
+        '11': '',
       },
+      column_names: columnNames,
     });
 
     expect(sendRequest.mock.calls[1]?.[0]).toMatchObject({
@@ -149,7 +156,7 @@ describe('kickcallWorksheets mutations', () => {
 describe('kickcallWorksheets lists', () => {
   beforeEach(() => sendRequest.mockReset());
 
-  test('listWorksheetRows maps paginated rows and ignores unknown cells', async () => {
+  test('listWorksheetRows maps paginated rows by column id and ignores unknown cells', async () => {
     reply(columnsPayload);
     reply({
       data: [
@@ -177,7 +184,64 @@ describe('kickcallWorksheets lists', () => {
         id: '1',
         position: 0,
         values: {
-          Phone: 'a',
+          '10': 'a',
+        },
+        column_names: columnNames,
+      },
+    ]);
+  });
+
+  test('keeps both values when two columns share the same display name', async () => {
+    reply({
+      data: [
+        {
+          id: 10,
+          name: 'Label',
+          data_type: 'text',
+          hidden: false,
+          required: false,
+        },
+        {
+          id: 11,
+          name: 'Label',
+          data_type: 'text',
+          hidden: false,
+          required: false,
+        },
+      ],
+    });
+    reply({
+      data: [
+        {
+          id: 1,
+          position: 0,
+          cells: [
+            { column_id: 10, value: 'first' },
+            { column_id: 11, value: 'second' },
+          ],
+        },
+      ],
+      meta: { total_pages: 1 },
+    });
+
+    await expect(
+      kickcallWorksheets.listWorksheetRows({
+        auth,
+        locationId: '1',
+        agentId: '2',
+        worksheetId: '3',
+      }),
+    ).resolves.toEqual([
+      {
+        id: '1',
+        position: 0,
+        values: {
+          '10': 'first',
+          '11': 'second',
+        },
+        column_names: {
+          '10': 'Label',
+          '11': 'Label',
         },
       },
     ]);
@@ -216,8 +280,9 @@ describe('kickcallWorksheets lists', () => {
         id: '1',
         position: 0,
         values: {
-          Phone: 'Ada',
+          '10': 'Ada',
         },
+        column_names: columnNames,
       },
     ]);
     expect(sendRequest.mock.calls[1]?.[0].queryParams).toMatchObject({

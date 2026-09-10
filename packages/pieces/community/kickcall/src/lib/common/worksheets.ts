@@ -91,20 +91,22 @@ function mapWorksheetRow({
   if (!isWorksheetRowRow(row)) {
     return undefined;
   }
-  const columnNameById = new Map(
-    columns.map((column) => [column.id, column.name]),
-  );
+  const knownColumnIds = new Set(columns.map((column) => column.id));
+  const columnNames: Record<string, string> = {};
+  for (const column of columns) {
+    columnNames[column.id] = column.name;
+  }
   const values: Record<string, string> = {};
   const cells = Array.isArray(row.cells) ? row.cells : [];
   for (const cell of cells) {
     if (!isWorksheetCellRow(cell)) {
       continue;
     }
-    const columnName = columnNameById.get(String(cell.column_id));
-    if (columnName === undefined) {
+    const columnId = String(cell.column_id);
+    if (!knownColumnIds.has(columnId)) {
       continue;
     }
-    values[columnName] =
+    values[columnId] =
       cell.value === null || cell.value === undefined
         ? ''
         : String(cell.value);
@@ -116,6 +118,7 @@ function mapWorksheetRow({
         ? null
         : Number(row.position),
     values,
+    column_names: columnNames,
   };
 }
 
@@ -369,4 +372,5 @@ type WorksheetRow = {
   id: string;
   position: number | null;
   values: Record<string, string>;
+  column_names: Record<string, string>;
 };
