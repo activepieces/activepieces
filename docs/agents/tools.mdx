@@ -66,11 +66,17 @@ A row says whether the action succeeded or failed, so an attempt that errored is
 | Tool | Audit event |
 | --- | --- |
 | Piece action | Yes, when it is not a read |
-| Flow tool | Yes, naming the flow the agent chose |
+| Flow tool | Yes, naming the flow the agent chose. A flow that runs in the background is recorded without an outcome, because the row is written when it starts |
 | MCP server tool | No |
 | Knowledge base search | No, it is a read |
+| Code the agent wrote and ran | No |
+| Email the agent sent | No |
 
-MCP server tools are the remaining gap. They carry no read-or-write marking, so recording them would fill the log with lookups; if you need a trail for a step, use a piece action or a flow.
+<Note>
+An agent will not change itself in a reply where it already read something. Ask it to update its instructions and it does; ask it to check a sheet **and** update its instructions in one message and it declines the change, because anything it just read could have told it to. Send the change on its own and it goes through, or make it in the Configure panel.
+</Note>
+
+MCP server tools, code and email are the gaps. MCP tools carry no read-or-write marking, so recording them would fill the log with lookups. If you need a trail for a step, use a piece action or a flow.
 
 See [Agent action executed](/admin-guide/security/audit-logs/agent-action-executed) for the event itself, and [Event Streaming](/admin-guide/guides/event-streaming) to send it somewhere in real time.
 

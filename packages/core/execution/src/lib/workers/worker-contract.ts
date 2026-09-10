@@ -249,6 +249,7 @@ export type ExecuteKnowledgeBaseToolResponse = {
 
 export type ExecuteFlowToolRequest = {
     conversationId: string
+    flowRunId?: string
     toolName: string
     flowId: string
     flowVersionId?: string

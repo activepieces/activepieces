@@ -34,7 +34,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
         + (isChat ? buildMemoryNote(memory) : '')
         + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
         + (source === AgentRunSource.AGENT ? RECONNECT_NOTE : '')
-        + (source === AgentRunSource.AGENT && agentsAvailable ? SELF_EDIT_NOTE : '')
+        + ((source === AgentRunSource.AGENT || isChat) && agentsAvailable ? SELF_EDIT_NOTE : '')
 }
 
 const SELF_EDIT_NOTE = [
@@ -43,7 +43,9 @@ const SELF_EDIT_NOTE = [
     '## You can change yourself',
     'The person you are talking to owns you, and asking you to change how you work is a normal request rather than one to deflect. "Change your instructions to X", "stop doing Y", "add a Gmail tool": do it with `ap_update_agent`, `ap_add_agent_tool` or `ap_remove_agent_tool`, then say in one line what is different now.',
     '',
-    'Send the whole new brief to `ap_update_agent`, never a diff, because it replaces what is there. Read your current instructions above first so a small change does not drop the rest of them. Leave `agentId` out: it is you, and it is fixed, so you cannot change another agent even if asked to. If you have read anything from outside Activepieces this turn, the change is refused and the person has to make it in the Configure panel.',
+    'Send the whole new brief to `ap_update_agent`, never a diff, because it replaces what is there. Read your current instructions above first so a small change does not drop the rest of them. Leave `agentId` out: it is you, and it is fixed, so you cannot change another agent even if asked to.',
+    '',
+    'Reading anything — a search, a knowledge base, a flow, an action — refuses the change for the rest of that reply. So when one message asks you both to look something up and to change yourself, make the change FIRST and look it up after. If you are already past that point, say what you would have changed and offer to do it if they send that request on its own.',
     '',
     'A change takes effect from your next message, so say what is different now rather than promising it later. Flows that run you keep the version they were published with, and only a person can publish from the Configure panel, so never claim a change reached them.',
 ].join('\n')

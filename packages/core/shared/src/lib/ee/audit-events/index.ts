@@ -158,7 +158,7 @@ const AgentActionEventData = z.object({
             displayName: z.string(),
         }),
     ]),
-    outcome: z.enum(AgentActionOutcome),
+    outcome: z.enum(AgentActionOutcome).optional(),
     connection: z.object({
         externalId: z.string(),
         label: z.string().optional(),
@@ -697,9 +697,9 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is taken offline`
         case ApplicationEventName.AGENT_ACTION_EXECUTED: {
             const who = event.data.agent?.displayName ?? 'An agent'
-            const what = event.data.action.kind === AgentActionKind.PIECE
-                ? `${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
-                : `the flow ${event.data.action.displayName}`
+            const what = event.data.action.kind === AgentActionKind.FLOW
+                ? `the flow ${event.data.action.displayName}`
+                : `${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
             const verb = event.data.outcome === AgentActionOutcome.FAILED ? 'tried to run' : 'ran'
             return `${who} ${verb} ${what}`
         }

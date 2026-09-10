@@ -565,13 +565,15 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         ...(agent
           ? [{ label: t('Agent'), value: agent.displayName ?? agent.id }]
           : []),
-        ...(action.kind === AgentActionKind.PIECE
-          ? [
+        ...(action.kind === AgentActionKind.FLOW
+          ? [{ label: t('Flow'), value: action.displayName }]
+          : [
               { label: t('Action'), value: action.displayName },
               { label: t('App'), value: action.pieceDisplayName },
-            ]
-          : [{ label: t('Flow'), value: action.displayName }]),
-        { label: t('Result'), value: OUTCOME_LABEL[outcome]() },
+            ]),
+        ...(outcome === undefined
+          ? []
+          : [{ label: t('Result'), value: OUTCOME_LABEL[outcome]() }]),
         { label: t('Ran from'), value: RAN_FROM_LABEL[source]() },
         ...(flow ? [{ label: t('Flow run'), value: flow.runId }] : []),
         ...(connection

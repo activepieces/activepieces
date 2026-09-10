@@ -227,12 +227,21 @@ export function outcomeOfToolResult(result: unknown): AgentActionOutcome {
     if (!isObject(result)) {
         return AgentActionOutcome.SUCCEEDED
     }
-    if (result.isError === true) {
+    if (result.isError === true || result.success === false) {
         return AgentActionOutcome.FAILED
     }
     const structured = result.structuredContent
-    const failed = isObject(structured) && typeof structured.errorSummary === 'string'
-    return failed ? AgentActionOutcome.FAILED : AgentActionOutcome.SUCCEEDED
+    if (isObject(structured) && typeof structured.errorSummary === 'string') {
+        return AgentActionOutcome.FAILED
+    }
+    // A piece with no structured success flag says so with a leading glyph, which is the
+    // convention the worker and the action receipt already read.
+    const firstText = Array.isArray(result.content) && isObject(result.content[0]) && typeof result.content[0].text === 'string'
+        ? result.content[0].text
+        : ''
+    return agentToolClassification.hasFailureTextPrefix(firstText)
+        ? AgentActionOutcome.FAILED
+        : AgentActionOutcome.SUCCEEDED
 }
 
 export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcome, log }: {
@@ -240,7 +249,7 @@ export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcom
     conversationId?: string
     flow?: { id: string, runId: string }
     tool: { flowId: string, displayName: string }
-    outcome: AgentActionOutcome
+    outcome?: AgentActionOutcome
     log: FastifyBaseLogger
 }): void {
     recordAgentToolUse({
@@ -248,7 +257,7 @@ export function recordAgentFlowToolUse({ run, conversationId, flow, tool, outcom
         ...spreadIfDefined('conversationId', conversationId),
         ...spreadIfDefined('flow', flow),
         action: { kind: AgentActionKind.FLOW, flowId: tool.flowId, displayName: tool.displayName },
-        outcome,
+        ...spreadIfDefined('outcome', outcome),
         connection: {},
         log,
     })
@@ -263,7 +272,7 @@ function recordAgentToolUse({ run, conversationId, flow, action, outcome, connec
     conversationId?: string
     flow?: { id: string, runId: string }
     action: AgentActionRef
-    outcome: AgentActionOutcome
+    outcome?: AgentActionOutcome
     connection: { externalId?: string, label?: string }
     log: FastifyBaseLogger
 }): void {
@@ -276,7 +285,7 @@ function recordAgentToolUse({ run, conversationId, flow, action, outcome, connec
             source,
             ...spreadIfDefined('agent', agent),
             action,
-            outcome,
+            ...spreadIfDefined('outcome', outcome),
             ...spreadIfDefined('connection', isNil(connection.externalId) ? undefined : { externalId: connection.externalId, ...spreadIfDefined('label', connection.label) }),
         },
     })

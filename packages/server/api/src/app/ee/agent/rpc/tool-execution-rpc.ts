@@ -97,14 +97,16 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
 
     async executeFlowTool(input: ExecuteFlowToolRequest): Promise<ExecuteFlowToolResponse> {
         const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
+        const ranInside = isNil(input.flowRunId) ? undefined : await flowOfRun({ flowRunId: input.flowRunId, projectId: configuredRun.projectId, log })
         const flow = await flowService(log).getOnePopulated({ id: input.flowId, projectId: configuredRun.projectId, ...spreadIfDefined('versionId', input.flowVersionId) })
         if (isNil(flow)) {
             throw new ActivepiecesError({ code: ErrorCode.AUTHORIZATION, params: { message: 'That flow is not in this run\'s project' } })
         }
         const advertised = isNil(input.flowVersionId) ? await resolveRunnableFlow({ flow, projectId: configuredRun.projectId, log }) : flow
-        const record = (outcome: AgentActionOutcome): void => recordAgentFlowToolUse({
+        const record = (outcome?: AgentActionOutcome): void => recordAgentFlowToolUse({
             run: configuredRun,
             conversationId: input.conversationId,
+            ...spreadIfDefined('flow', ranInside),
             tool: { flowId: flow.id, displayName: advertised.version.displayName },
             outcome,
             log,
@@ -115,8 +117,8 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             record(AgentActionOutcome.FAILED)
             throw runError
         }
-        const outcome = outcomeOfToolResult(result)
-        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id }, outcome }, '[agentRpc#executeFlowTool] Ran a flow tool')
+        const outcome = input.returnsResponse ? outcomeOfToolResult(result) : undefined
+        log.info({ conversation: { id: input.conversationId }, tool: { name: input.toolName }, flow: { id: flow.id }, outcome: outcome ?? 'unknown, the flow was queued' }, '[agentRpc#executeFlowTool] Ran a flow tool')
         record(outcome)
         return { result }
     },

@@ -49,7 +49,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
 }): ToolSet {
     const runUnlessTainted = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => {
         if (taintState.tainted) {
-            return { error: 'This turn has read content from outside Activepieces, so it cannot change a saved agent. Tell the user to make the change in the agent\'s Configure panel.' }
+            return { error: 'You read data earlier in this reply, so you cannot change a saved agent in the same reply. Say what you would have changed, and offer to do it if they send that request on its own. The Configure panel is the other way.' }
         }
         return executeTool(toolName, toolInput)
     }
