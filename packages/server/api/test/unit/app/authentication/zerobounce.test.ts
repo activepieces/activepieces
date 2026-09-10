@@ -75,6 +75,7 @@ describe('zerobounce', () => {
             { status: 'do_not_mail', sub_status: 'toxic' },
             { status: 'do_not_mail', sub_status: 'possible_trap' },
             { status: 'do_not_mail', sub_status: 'global_suppression' },
+            { status: 'do_not_mail', sub_status: 'mx_forward' },
             { status: 'spamtrap', sub_status: '' },
             { status: 'abuse', sub_status: '' },
         ])('refuses $status/$sub_status', async (verdict) => {
@@ -90,7 +91,7 @@ describe('zerobounce', () => {
             { status: 'invalid', sub_status: 'possible_typo' },
             { status: 'do_not_mail', sub_status: 'role_based' },
             { status: 'do_not_mail', sub_status: 'role_based_catch_all' },
-            { status: 'do_not_mail', sub_status: 'mx_forward' },
+            { status: 'do_not_mail', sub_status: '' },
         ])('lets $status/$sub_status through', async (verdict) => {
             answers(verdict)
             expect(await maySignUp()).toBe(true)
@@ -138,6 +139,13 @@ describe('zerobounce', () => {
                 'zerobounce:disposable-domains:v1',
                 ['already-known.com', 'mailinator.com'],
             )
+        })
+
+        it('caches an mx_forward domain too, since forwarding is a property of the domain', async () => {
+            answers({ status: 'do_not_mail', sub_status: 'mx_forward' })
+
+            expect(await maySignUp('y4ze3ebtt0@zkqjdkd.com')).toBe(false)
+            expect(mockStorePut).toHaveBeenCalledWith('zerobounce:disposable-domains:v1', ['zkqjdkd.com'])
         })
 
         it('drops the oldest entry once the list is full, keeping it at 500', async () => {

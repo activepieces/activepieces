@@ -207,6 +207,14 @@ The region on these connections is also validated against the AWS region format 
 
 Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it. Existing saved connections keep working and are not revalidated automatically — pressing **Recheck** on a connection whose trust policy is wrong will now move it to an error state, which reflects what already happens when a flow runs.
 
+#### Addresses on mail-forwarding domains are refused at sign-up when ZeroBounce is configured
+
+With `AP_ZEROBOUNCE_API_KEY` set, a new address is checked against ZeroBounce before an account is created. ZeroBounce's `mx_forward` verdict, a domain whose MX records forward into another mailbox, is now refused alongside disposable, toxic, possible-trap and globally suppressed addresses. Throwaway-domain farms look exactly like this (many cheap domains routed into one inbox), but so can a custom domain forwarded to a personal mailbox through a service such as Cloudflare Email Routing. Role addresses such as `info@` are still accepted. Nothing changes for an installation without the key.
+
+#### What you need to do
+
+Nothing if `AP_ZEROBOUNCE_API_KEY` is not set. If it is, a member whose domain forwards its mail is now silently refused like any other refused address. Invite them to the platform or a project first: an address that holds an accepted invitation is never refused. To keep the previous behaviour, unset the key.
+
 ## 0.91.0
 
 ### What has changed?
