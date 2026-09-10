@@ -61,8 +61,8 @@ import {
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
 import {
+  railIsCollapsed,
   useRailCollapsed,
-  useRailIsCollapsed,
 } from '@/features/workspace/lib/rail-collapsed';
 import {
   useAuthorization,
@@ -83,8 +83,10 @@ export function PrimaryRail() {
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const { setCollapsed, toggle: toggleCollapsed } = useRailCollapsed();
-  const collapsed = useRailIsCollapsed();
+  const { preference, setCollapsed, toggle } = useRailCollapsed();
+  const { pathname } = useLocation();
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
   const { checkAccess } = useAuthorization();
 
@@ -92,7 +94,14 @@ export function PrimaryRail() {
     return null;
   }
 
-  const openSidebar = () => setCollapsed(false);
+  const openSidebar = () => {
+    setOpenedOn(pathname);
+    setCollapsed(false);
+  };
+  const toggleCollapsed = () => {
+    setOpenedOn(pathname);
+    toggle();
+  };
 
   return (
     <TooltipProvider delayDuration={300}>

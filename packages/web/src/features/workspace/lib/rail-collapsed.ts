@@ -1,4 +1,4 @@
-import { matchPath, useLocation } from 'react-router-dom';
+import { matchPath } from 'react-router-dom';
 import { create } from 'zustand';
 
 import { routesThatRequireProjectId } from '@/lib/route-utils';
@@ -6,7 +6,8 @@ import { routesThatRequireProjectId } from '@/lib/route-utils';
 const STORAGE_KEY = 'primary-rail-collapsed';
 
 // Inside one agent the rail is furniture: the page has its own header, its own
-// conversation list and its own panel, and there is nowhere left for it to go.
+// conversation list and its own panel. The route only asks for it closed, so an
+// explicit click on that page still wins until you navigate on.
 const ROUTES_THAT_HOLD_THE_RAIL_CLOSED = [
   routesThatRequireProjectId.singleAgent,
   `/projects/:projectId${routesThatRequireProjectId.singleAgent}`,
@@ -27,13 +28,21 @@ export const useRailCollapsed = create<RailCollapsedState>((set) => ({
   toggle: () => set((state) => ({ preference: persist(!state.preference) })),
 }));
 
-export function useRailIsCollapsed(): boolean {
-  const { pathname } = useLocation();
-  const preference = useRailCollapsed((state) => state.preference);
-  const heldClosed = ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
-    (route) => matchPath(route, pathname) !== null,
-  );
-  return preference || heldClosed;
+export function railIsCollapsed({
+  preference,
+  pathname,
+  openedOn,
+}: {
+  preference: boolean;
+  pathname: string;
+  openedOn: string | null;
+}): boolean {
+  const routeHoldsItClosed =
+    openedOn !== pathname &&
+    ROUTES_THAT_HOLD_THE_RAIL_CLOSED.some(
+      (route) => matchPath(route, pathname) !== null,
+    );
+  return preference || routeHoldsItClosed;
 }
 
 type RailCollapsedState = {
