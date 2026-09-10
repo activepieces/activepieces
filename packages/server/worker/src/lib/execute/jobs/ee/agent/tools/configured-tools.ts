@@ -161,9 +161,10 @@ export function createConfiguredPieceTools({ tools, runPieceTool, taintState, ev
     ]))
 }
 
-export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, log }: {
+export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool, taintState, log }: {
     tools: AgentKnowledgeBaseTool[]
     runKnowledgeBaseTool: (input: { toolName: string, knowledgeBaseFileId: string, query: string }) => Promise<{ result: unknown }>
+    taintState: TaintState
     log: FastifyBaseLogger
 }): ToolSet {
     let callsMade = 0
@@ -183,6 +184,7 @@ export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool
                         return { content: [{ type: 'text', text: `This run has already searched knowledge bases ${MAX_CONFIGURED_TOOL_CALLS} times, which is the limit. Do not try again; say what is left undone.` }] }
                     }
                     const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
+                    taintState.tainted = true
                     if (error) {
                         log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
                         return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
@@ -195,9 +197,10 @@ export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool
 
 const jsonSchema7Shape = z.custom<JSONSchema7>()
 
-export function createConfiguredFlowTools({ tools, runFlowTool, log }: {
+export function createConfiguredFlowTools({ tools, runFlowTool, taintState, log }: {
     tools: ResolvedAgentFlowTool[]
     runFlowTool: (input: { toolName: string, flowId: string, flowVersionId?: string, returnsResponse: boolean, toolInput: Record<string, unknown> }) => Promise<{ result: unknown }>
+    taintState: TaintState
     log: FastifyBaseLogger
 }): ToolSet {
     let callsMade = 0
@@ -213,6 +216,7 @@ export function createConfiguredFlowTools({ tools, runFlowTool, log }: {
                     return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
                 }
                 const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, ...spreadIfDefined('flowVersionId', configured.flowVersionId), returnsResponse: configured.returnsResponse, toolInput }))
+                taintState.tainted = true
                 if (error) {
                     const reachedTheServer = String(error).includes('handler threw')
                     log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')

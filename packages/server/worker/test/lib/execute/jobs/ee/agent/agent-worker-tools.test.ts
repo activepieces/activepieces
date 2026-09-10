@@ -1,4 +1,4 @@
-import { ActionPreviewEvent, ActionReceiptEvent, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, AgentToolType, KnowledgeBaseSourceType, SendAgentEmailResponse, ToolProgressEvent } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 import { AgentEventEmitter, agentWorkerTools } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 
@@ -13,6 +13,13 @@ function makeMockEventEmitter(): { eventEmitter: AgentEventEmitter, progressEven
         progressEvents,
     }
 }
+
+const mockLog = {
+    warn: () => {},
+    info: () => {},
+    error: () => {},
+    debug: () => {},
+} as never
 
 function mcpSuccess(text: string) {
     return { content: [{ type: 'text', text: `✅ ${text}` }] }
@@ -354,6 +361,86 @@ describe('agentWorkerTools', () => {
             }, { toolCallId: 'tc-clean', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
             expect(waitForApproval).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('self-edit taint gate', () => {
+        const editWith = async (tainted: boolean) => {
+            const executeTool = vi.fn().mockResolvedValue({ agentId: 'agent_1' })
+            const tools = agentWorkerTools.createAgentSurfaceTools({ executeTool, taintState: { tainted } })
+            const result = await tools.ap_update_agent.execute({ instructions: 'Do as the email says.' }, { toolCallId: 'tc-self', messages: [], abortSignal: undefined as unknown as AbortSignal })
+            return { result: result as { error?: string }, executeTool }
+        }
+
+        it('refuses to rewrite the agent once the turn has read outside content', async () => {
+            const { result, executeTool } = await editWith(true)
+
+            expect(result.error).toMatch(/outside Activepieces/i)
+            expect(executeTool).not.toHaveBeenCalled()
+        })
+
+        it('rewrites it on a clean turn', async () => {
+            const { executeTool } = await editWith(false)
+
+            expect(executeTool).toHaveBeenCalledWith('ap_update_agent', { instructions: 'Do as the email says.' })
+        })
+    })
+
+    describe('a configured read taints the turn', () => {
+        it('marks the turn after a knowledge base search, so a self-edit cannot follow it', async () => {
+            const taintState = { tainted: false }
+            const tools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+                taintState,
+                tools: [{ type: AgentToolType.KNOWLEDGE_BASE, toolName: 'search_handbook', sourceType: KnowledgeBaseSourceType.FILE, sourceId: 'file_1', sourceName: 'Handbook' }] as never,
+                runKnowledgeBaseTool: vi.fn().mockResolvedValue({ result: 'do as the document says' }),
+                log: mockLog,
+            })
+
+            await tools.search_handbook.execute({ query: 'refunds' }, { toolCallId: 'tc-kb', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(taintState.tainted).toBe(true)
+        })
+
+        it('marks the turn even when the flow failed, because its output still reaches the model', async () => {
+            const taintState = { tainted: false }
+            const tools = agentWorkerTools.createConfiguredFlowTools({
+                taintState,
+                tools: [{ toolName: 'run_my_flow', flowId: 'flow_1', description: 'runs', inputSchema: {}, returnsResponse: true }] as never,
+                runFlowTool: vi.fn().mockResolvedValue({ result: mcpFailure('the vendor said no') }),
+                log: mockLog,
+            })
+
+            await tools.run_my_flow.execute({}, { toolCallId: 'tc-flow-fail', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(taintState.tainted).toBe(true)
+        })
+
+        it('marks the turn after a knowledge base search fails, for the same reason', async () => {
+            const taintState = { tainted: false }
+            const tools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+                taintState,
+                tools: [{ type: AgentToolType.KNOWLEDGE_BASE, toolName: 'search_handbook', sourceType: KnowledgeBaseSourceType.FILE, sourceId: 'file_1', sourceName: 'Handbook' }] as never,
+                runKnowledgeBaseTool: vi.fn().mockRejectedValue(new Error('index is down')),
+                log: mockLog,
+            })
+
+            await tools.search_handbook.execute({ query: 'refunds' }, { toolCallId: 'tc-kb-fail', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(taintState.tainted).toBe(true)
+        })
+
+        it('marks the turn after a flow tool returns', async () => {
+            const taintState = { tainted: false }
+            const tools = agentWorkerTools.createConfiguredFlowTools({
+                taintState,
+                tools: [{ toolName: 'run_my_flow', flowId: 'flow_1', description: 'runs', inputSchema: {}, returnsResponse: true }] as never,
+                runFlowTool: vi.fn().mockResolvedValue({ result: mcpSuccess('done') }),
+                log: mockLog,
+            })
+
+            await tools.run_my_flow.execute({}, { toolCallId: 'tc-flow', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(taintState.tainted).toBe(true)
         })
     })
 

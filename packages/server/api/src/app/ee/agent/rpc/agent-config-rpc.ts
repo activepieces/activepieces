@@ -41,12 +41,13 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult] = await Promise.all([
+        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult, agentsSurfaceOn] = await Promise.all([
             carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
             carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
             carriesChatContext ? userService(log).getMetaInformation({ id: userId }) : null,
             carriesChatContext ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
             carriesChatContext ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })) : null,
+            requestedSource === AgentRunSource.FLOW_STEP ? false : agentHelpers.agentsSurfaceAvailable({ platformId, log }),
         ])
         const runUserEmail = runUser?.email ?? ''
         const userIdentity: UserIdentity | null = isNil(runUser)
@@ -92,7 +93,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = actingRun && (carriesChatContext || isBuilder) && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const agentsAvailable = actingRun && agentsSurfaceOn
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)

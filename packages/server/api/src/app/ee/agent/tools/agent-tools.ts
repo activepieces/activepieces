@@ -1,12 +1,13 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { Agent, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
+import { applicationEvents } from '../../../helper/application-events'
 import { domainHelper } from '../../../helper/domain-helper'
 import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
@@ -18,7 +19,7 @@ import { tableService } from '../../../tables/table/table.service'
 import { agentApprovalGate } from '../agent-approval-gate'
 import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
-import { agentService } from '../agent-service'
+import { agentAudit, agentService } from '../agent-service'
 import { agentPrompt } from '../prompt/agent-prompt'
 import { recordAgentAction } from '../rpc/rpc-shared'
 
@@ -246,12 +247,14 @@ async function createAgentFromChat({ toolInput, platformId, projectId, userId, l
             draft: { instructions, maxSteps: DEFAULT_AGENT_MAX_STEPS, tools: [], structuredOutput: [] },
         },
     })
-    return afterDraftChange({ agent, publish: false, projectId, userId, log })
+    return afterDraftChange({ agent, publish: false, editedItself: false, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
 }
 
-async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }: {
+async function updateAgentFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
+    editedItself: boolean
+    platformId?: string
     projectId: string
     userId: string
     log: FastifyBaseLogger
@@ -273,7 +276,7 @@ async function updateAgentFromChat({ toolInput, agent, projectId, userId, log }:
             ...(isNil(instructions) ? {} : { draft: { ...agent.draft, instructions } }),
         },
     })
-    return afterDraftChange({ agent: updated, publish, projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish, editedItself, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
 }
 
 async function resolveConnectionToPin({ piece, pieceName, projectId, platformId, log }: {
@@ -307,9 +310,10 @@ async function resolveConnectionToPin({ piece, pieceName, projectId, platformId,
     }
 }
 
-async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log }: {
+async function addAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
+    editedItself: boolean
     projectId: string
     platformId: string
     userId: string
@@ -367,12 +371,14 @@ async function addAgentToolFromChat({ toolInput, agent, projectId, platformId, u
     if (isNil(updated)) {
         return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
 }
 
-async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, log }: {
+async function removeAgentToolFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
+    editedItself: boolean
+    platformId?: string
     projectId: string
     userId: string
     log: FastifyBaseLogger
@@ -416,7 +422,7 @@ async function removeAgentToolFromChat({ toolInput, agent, projectId, userId, lo
     if (isNil(updated)) {
         return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
 }
 
 function pieceActionOf(tool: AgentTool): { pieceName: string, actionName: string } | undefined {
@@ -429,16 +435,25 @@ function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
     return Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
 }
 
-async function afterDraftChange({ agent, publish, projectId, userId, log }: {
+async function afterDraftChange({ agent, publish, editedItself, platformId, projectId, userId, log }: {
     agent: Agent
     publish: boolean
+    editedItself: boolean
+    platformId?: string
     projectId: string
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
-    const { data: published } = publish
+    const mayPublish = publish && !editedItself
+    const { data: published } = mayPublish
         ? await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, userId }))
         : { data: undefined }
+    if (!isNil(platformId)) {
+        applicationEvents(log).sendUserEvent({ platformId, projectId, userId }, {
+            action: isNil(published) ? ApplicationEventName.AGENT_UPDATED : ApplicationEventName.AGENT_PUBLISHED,
+            data: { agent: { id: agent.id, displayName: agent.displayName, ...(isNil(published) ? {} : agentAudit.describePublished({ published: agent.draft })) } },
+        })
+    }
     return {
         agentId: agent.id,
         displayName: agent.displayName,
@@ -446,11 +461,13 @@ async function afterDraftChange({ agent, publish, projectId, userId, log }: {
         url: await domainHelper.getPublicUrl({ path: `/projects/${projectId}/agents/${agent.id}` }),
         note: !isNil(published)
             ? `"${agent.displayName}" is live: new runs use this version.`
-            : publish
-                ? 'Publishing failed, so nothing is live yet — the draft may still need instructions. Send the user to the url above.'
-                : isNil(agent.published)
-                    ? 'Saved to the draft. Nothing runs this agent until it is published.'
-                    : 'Saved to the draft, so do not tell the user the change is live. The published version keeps running until this is published.',
+            : editedItself
+                ? 'Saved. This is how you work from your next message on. Flows that run you keep the published version until someone publishes this from the Configure panel.'
+                : publish
+                    ? 'Publishing failed, so nothing is live yet — the draft may still need instructions. Send the user to the url above.'
+                    : isNil(agent.published)
+                        ? 'Saved to the draft. Nothing runs this agent until it is published.'
+                        : 'Saved to the draft, so do not tell the user the change is live. The published version keeps running until this is published.',
     }
 }
 
@@ -465,13 +482,14 @@ async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
 }
 
-async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, confinedToProjectId, log }: {
+async function executeCrossProjectTool({ toolName, toolInput, platformId, userId, conversationId, confinedToProjectId, editableAgentId, log }: {
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
     userId: string
     conversationId?: string
     confinedToProjectId?: string | null
+    editableAgentId?: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const allProjects = await agentHelpers.getUserProjects({ platformId, userId, log })
@@ -581,7 +599,8 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (toolName === 'ap_create_agent') {
                 return createAgentFromChat({ toolInput, platformId, projectId, userId, log })
             }
-            const agentId = nonEmpty(toolInput.agentId)
+            const editedItself = !isNil(editableAgentId)
+            const agentId = editableAgentId ?? nonEmpty(toolInput.agentId)
             if (isNil(agentId)) {
                 return { error: 'Which agent? Call ap_list_agents first and pass its agentId.' }
             }
@@ -590,12 +609,12 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
             }
             if (toolName === 'ap_update_agent') {
-                return updateAgentFromChat({ toolInput, agent, projectId, userId, log })
+                return updateAgentFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log })
             }
             if (toolName === 'ap_remove_agent_tool') {
-                return removeAgentToolFromChat({ toolInput, agent, projectId, userId, log })
+                return removeAgentToolFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log })
             }
-            return addAgentToolFromChat({ toolInput, agent, projectId, platformId, userId, log })
+            return addAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log })
         }
         case 'ap_execute_action': {
             return runAgentAction({ toolInput, projects, availableProjectIds, conversationId, platformId, userId, requireWritePermission: true, log })
