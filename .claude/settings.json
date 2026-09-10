@@ -7,7 +7,7 @@
   "enabledPlugins": {
     "frontend-design@claude-plugins-official": true,
     "ponytail@ponytail": true,
-    "craftspace@craftspace": true
+    "brain@brain": true
   },
   "extraKnownMarketplaces": {
     "ponytail": {
@@ -17,10 +17,10 @@
         "ref": "v4.8.4"
       }
     },
-    "craftspace": {
+    "brain": {
       "source": {
         "source": "github",
-        "repo": "abuaboud/craftspace-plugin"
+        "repo": "abuaboud/brain-plugin"
       }
     }
   },

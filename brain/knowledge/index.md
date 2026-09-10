@@ -12,11 +12,19 @@ as Decisions, not here.
 
 ## Areas
 
-Add one folder per Area that fits what this project actually holds — an engineering project grows different
-ones than a sales project does. `decisions/` is the only one every repo starts with. Replace these examples
-with your own and keep the shape: **bold name**, then the one line that says what a reader will find there.
+One line per Area, pointing at the page that holds it. Start at **context** if you are new here.
 
-- **Example Area** — what this Area covers, and the one gotcha that bites people in it
+- **[context](context.md)** — the vocabulary, where things live, and the traps. The two-minute entry page.
+- **[flows-execution](flows-execution/index.md)** — how flows are authored, triggered, executed and organised
+- **[pieces-engine](pieces-engine/index.md)** — the piece catalog, visibility, formulas and how the engine runs a step
+- **[execution-runtime](execution-runtime/index.md)** — where a job runs: the worker is the sandbox, concurrency 1 plus replicas
+- **[connections-auth](connections-auth/index.md)** — credential storage and user auth. Connections filter on `projectIds[]`, never a scalar
+- **[platform-editions-ee](platform-editions-ee/index.md)** — Platform → Project tenancy, and the CE/EE seam CE must never import across
+- **[ai-intelligence](ai-intelligence/index.md)** — model backends, AI credit metering, and the Agent, MCP and copilot surfaces
+- **[eventing-webhooks](eventing-webhooks/index.md)** — HTTP in and out, plus the internal bus carrying domain events
+- **[data-storage-observability](data-storage-observability/index.md)** — tables, secrets, files, and how platform activity surfaces
+- **[engineering](engineering/index.md)** — the engineering brain: how the system works and why it was built that way
+- **[decisions](decisions/)** — every hard-to-reverse call, one file per decision
 
 ## How a page is shaped
 

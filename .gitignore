@@ -16,6 +16,7 @@ pieces-cache-db-*.sqlite
 .claude/launch.json
 CONTEXT.md
 !.agents/contexts/**/CONTEXT.md
+!brain/knowledge/context.md
 packages/server/worker/test/lib/chat-eval/live/results/
 
 # compiled output
