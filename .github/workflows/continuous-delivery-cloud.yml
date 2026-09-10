@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/authorize-dispatcher.yml
     with:
-      team: ${{ vars.RUNNERS_TEAM }}
+      team: ${{ vars.SHIP_TEAM }}
     secrets: inherit
 
   guard:
