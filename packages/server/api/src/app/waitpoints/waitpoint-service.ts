@@ -67,7 +67,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 job: {
                     name: SystemJobName.RESUME_DELAY_WAITPOINT,
                     data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: waitpoint.id },
-                    jobId: `resume-delay-${params.flowRunId}`,
+                    jobId: resumeDelayJobId(waitpoint.id),
                 },
                 schedule: {
                     type: 'one-time',
@@ -209,6 +209,10 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
+
+export function resumeDelayJobId(waitpointId: string): string {
+    return `resume-delay-${waitpointId}`
+}
 
 function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRunId }: ClampWaitpointResumeDeadlineParams): string | undefined {
     const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
