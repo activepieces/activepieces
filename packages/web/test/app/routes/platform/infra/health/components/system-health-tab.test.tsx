@@ -108,14 +108,15 @@ describe('SystemHealthTab version row', () => {
     expect(text).toContain('Needs attention');
   });
 
-  it('hides the version row on cloud edition even when behind the latest release', () => {
+  it('hides the version and release integrity rows on cloud edition', () => {
     editionMock.value = ApEdition.CLOUD;
 
     const text = readTabText(versions.staleFlag);
 
     expect(text).not.toContain('Current');
     expect(text).not.toContain('Needs attention');
-    expect(text).toContain('Release Integrity');
+    expect(text).not.toContain('Release Integrity');
+    expect(text).toContain('Disk');
   });
 
   it('keeps the version row on enterprise edition', () => {

@@ -33,6 +33,8 @@ const PRODUCTION_SETUP_LINK =
 // it could not read its release from package.json. Not importable here (server-only package).
 const UNREADABLE_RELEASE_VERSION = '0.0.0';
 
+const CLOUD_HIDDEN_ROW_IDS = ['version', 'release-integrity'];
+
 type SystemHealthTabProps = {
   onSeeRuns: () => void;
 };
@@ -132,7 +134,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     },
   ];
   const appRows = isCloud
-    ? allAppRows.filter((row) => row.id !== 'version')
+    ? allAppRows.filter((row) => !CLOUD_HIDDEN_ROW_IDS.includes(row.id))
     : allAppRows;
 
   const workersConnected = !isNil(systemHealth?.workerRam);
