@@ -31,16 +31,8 @@ export async function saveFirecrawlFile(
   });
 
   const contentTypeHeader = response.headers?.['content-type'];
-  const contentType = Array.isArray(contentTypeHeader) ? contentTypeHeader[0] : contentTypeHeader;
-  const extension = contentType ? mime.extension(contentType) : false;
-
-  if (!extension || extension === 'bin') {
-    throw new Error(
-      `Firecrawl returned a file with an unusable content type (${contentType ?? 'none'}), so its extension could not be determined: ${firecrawlFileUrl}`,
-    );
-  }
-
-  const fileName = `firecrawl-${randomUUID()}.${extension}`;
+  const fileMimetype = typeof contentTypeHeader === 'string' ? contentTypeHeader : 'application/octet-stream';
+  const fileName = `firecrawl-${randomUUID()}.${mime.extension(fileMimetype) || 'bin'}`;
   const fileUrl = await context.files.write({
     fileName: fileName,
     data: Buffer.from(response.body),
