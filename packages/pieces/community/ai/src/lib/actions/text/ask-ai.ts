@@ -2,6 +2,7 @@ import { ModelMessage, generateText, stepCountIs } from 'ai';
 import { AIProviderName, createAction, getEffectiveProviderAndModel, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { aiProps, aiProviderSelection } from '../../common/props';
 import { createAIModel } from '../../common/ai-sdk';
+import { reportManagedAiUsage } from '../../common/managed-ai-usage';
 import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
 
 export const askAI = createAction({
@@ -108,6 +109,16 @@ export const askAI = createAction({
       tools: webSearchTools,
       stopWhen,
       providerOptions,
+    });
+
+    await reportManagedAiUsage({
+      provider,
+      model: modelId,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
+      flowId: context.flows.current.id,
+      flowRunId: context.run.id,
+      result: response,
     });
 
     conversation?.push({

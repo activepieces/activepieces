@@ -196,7 +196,7 @@ function buildLanguageModel({ provider, auth, config, modelId, openaiResponsesMo
         }
         case AIProviderName.ACTIVEPIECES: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
-            return createOpenRouter({ apiKey, headers: metadataHeaders }).chat(modelId) as LanguageModel
+            return createOpenRouter({ apiKey, headers: metadataHeaders }).chat(modelId, MANAGED_USAGE_ACCOUNTING) as LanguageModel
         }
         case AIProviderName.OPENROUTER: {
             const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -398,6 +398,8 @@ const handleDefaultAiGatewayProvider = ({accountId, gatewayId, headers, isImage,
     }
     return provider.chatModel(modelId)
 }
+
+const MANAGED_USAGE_ACCOUNTING = { usage: { include: true } }
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;

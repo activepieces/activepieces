@@ -19,6 +19,7 @@ import mime from 'mime-types';
 import { isNil } from '@activepieces/pieces-framework';
 import { getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
+import { reportManagedAiUsage } from '../../common/managed-ai-usage';
 import { AIProviderName } from '@activepieces/pieces-framework';
 import { aiProps, aiProviderSelection } from '../../common/props';
 
@@ -258,6 +259,14 @@ const getGeneratedImage = async ({
           model: model as unknown as LanguageModel,
           prompt,
           inputImages,
+          usage: {
+            provider: resolvedProvider,
+            model: modelId,
+            engineToken,
+            apiUrl,
+            flowId,
+            flowRunId: runId,
+          },
         });
       default: {
         const sanitizedAdvancedOptions = stripLegacyImageField(advancedOptions);
@@ -303,10 +312,12 @@ const generateImageUsingGenerateText = async ({
   model,
   prompt,
   inputImages,
+  usage,
 }: {
   model: LanguageModel;
   prompt: string;
   inputImages: ApFile[];
+  usage: ManagedUsageTarget;
 }): Promise<GeneratedFile> => {
   const imageFiles = inputImages.map<ImagePart>((file) => {
     const detected = file.extension ? mime.lookup(file.extension) : false;
@@ -335,6 +346,8 @@ const generateImageUsingGenerateText = async ({
     ],
   });
 
+  await reportManagedAiUsage({ ...usage, result });
+
   assertImageGenerationSuccess(result);
 
   return result.files[0];
@@ -348,6 +361,15 @@ const stripLegacyImageField = (
   }
   const { image: _legacy, ...rest } = advancedOptions as Record<string, unknown>;
   return rest as DynamicPropsValue;
+};
+
+type ManagedUsageTarget = {
+  provider: AIProviderName;
+  model: string;
+  engineToken: string;
+  apiUrl: string;
+  flowId: string;
+  flowRunId: string;
 };
 
 const ALLOWED_IMAGE_MIME_TYPES: ReadonlySet<string> = new Set([

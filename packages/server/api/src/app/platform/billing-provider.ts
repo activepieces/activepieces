@@ -191,6 +191,18 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     breakdown: CreditEventBreakdownEntry[]
 }
 
+export type AiCallCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
+    provider: string
+    model: string
+    generationId: string
+    costUsd: number
+    inputTokens?: number
+    outputTokens?: number
+    flowId?: string
+    flowRunId?: string
+    conversationId?: string
+}
+
 export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
     userId: string
     conversationId: string
@@ -216,13 +228,13 @@ type TrackUsageParamsBase = {
 
 export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.FLOW_RUN, properties: FlowRunCreditConsumptionProperties })
-    | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties | AiCallCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties })
 
 export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
     { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties } |
-    { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties } |
+    { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties | AiCallCreditConsumptionProperties } |
     { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties }
 )
 

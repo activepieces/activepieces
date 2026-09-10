@@ -141,6 +141,7 @@ async function getMetadata() {
 
 export enum LicenseKeyPostHogEvents {
     AI_USAGE_PER_RUN = 'ai_usage_per_run',
+    AI_USAGE_PER_CALL = 'ai_usage_per_call',
     CHAT_MESSAGE = 'chat_message',
     PLATFORM_SETUP_REPORT = 'platform_setup_report',
     TOTAL_RUNS_PER_DAY = 'total_runs_per_day',
@@ -157,6 +158,18 @@ export type AiUsagePerRunProperties = {
     messages: number
     toolCalls: number
     breakdown: Array<{ provider: string, model: string, messages: number, toolCalls: number }>
+}
+
+export type AiUsagePerCallProperties = {
+    platformId: string
+    projectId: string
+    edition: ApEdition
+    provider: string
+    model: string
+    costUsd: number
+    credits: number
+    inputTokens?: number
+    outputTokens?: number
 }
 
 export type TotalRunsPerDayProperties = {
@@ -208,6 +221,7 @@ export type SetupReportProperties = {
 
 export type LicenseKeyEventPayload =
     | { event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
+    | { event: LicenseKeyPostHogEvents.AI_USAGE_PER_CALL, properties: AiUsagePerCallProperties }
     | { event: LicenseKeyPostHogEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
     | { event: LicenseKeyPostHogEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
     | { event: LicenseKeyPostHogEvents.PLATFORM_SETUP_REPORT, properties: SetupReportProperties }

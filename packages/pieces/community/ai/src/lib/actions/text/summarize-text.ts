@@ -1,5 +1,6 @@
 import { AIProviderName, spreadIfDefined } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
+import { reportManagedAiUsage } from '../../common/managed-ai-usage';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { aiProps, aiProviderSelection } from '../../common/props';
@@ -59,6 +60,16 @@ export const summarizeText = createAction({
           ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
         }
       }
+    });
+
+    await reportManagedAiUsage({
+      provider,
+      model: modelId,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
+      flowId: context.flows.current.id,
+      flowRunId: context.run.id,
+      result: response,
     });
 
     return response.text ?? '';

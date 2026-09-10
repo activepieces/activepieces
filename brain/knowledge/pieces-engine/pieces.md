@@ -19,6 +19,8 @@ The metadata catalog of automation integrations ("pieces") — each a named inte
 - **OutputSchema** — optional per-action/trigger structured render hint (`fields`, `itemLabel`); set by the piece author, consumed by the builder's Smart Output Viewer and data selector. Opt-in and non-breaking.
 
 ### Gotchas
+- **A piece cannot read its own version from its run context.** `ServerContext` is `{ apiUrl, publicUrl, token }`, and `context.flows.current.version.id` is the *flow* version, not the piece's. When a piece has to tell the server which version of itself is calling, import it at build time — `import packageJson from '../../package.json'` works (`resolveJsonModule` is on repo-wide, and the assemblyai piece already does it), which keeps it in step with the real version instead of a hand-bumped constant someone forgets.
+- **Every piece step of a run shares one engine token**, and piece code runs in the engine process with full network access. So any credential an endpoint hands back to a piece is reusable by any other piece in that run, and a caller identity the piece *sends* is one the piece chooses. Access control that depends on which piece is asking cannot be enforced from the piece side.
 - Available all editions; base listing + install is Community-level.
 - EE/Cloud per-piece and per-action/trigger visibility flows through `resolveVisibility` (`ee/pieces/filters/piece-filtering-utils.ts`), which returns a `VisibilityPolicy` or `null` on CE / when `platformId`/`projectId` is nil (callers treat `null` as no filtering). The policy is derived from the project's **piece set** (via `project.pieceSetId`, falling back to the platform Default).
 - Install and sync also enqueue a tool-search reindex, but only when `isToolSearchEnabled()`; no-op otherwise.

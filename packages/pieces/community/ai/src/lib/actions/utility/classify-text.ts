@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { createAIModel } from '../../common/ai-sdk';
+import { reportManagedAiUsage } from '../../common/managed-ai-usage';
 import { aiProps, aiProviderSelection } from '../../common/props';
 import { spreadIfDefined } from '@activepieces/pieces-framework';
 
@@ -48,6 +49,16 @@ export const classifyText = createAction({
       )}. Please respond with only the selected category as a single word, and nothing else.
       Text to classify: "${context.propsValue.text}"`,
     });
+    await reportManagedAiUsage({
+      provider,
+      model: modelId,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
+      flowId: context.flows.current.id,
+      flowRunId: context.run.id,
+      result: response,
+    });
+
     const result = response.text.trim();
 
     if (!categories.includes(result)) {

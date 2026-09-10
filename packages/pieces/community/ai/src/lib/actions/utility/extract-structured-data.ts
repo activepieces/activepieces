@@ -1,5 +1,6 @@
 import { ApFile, createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createAIModel } from '../../common/ai-sdk';
+import { reportManagedAiUsage } from '../../common/managed-ai-usage';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import mime from 'mime-types';
 import Ajv from 'ajv';
@@ -263,6 +264,16 @@ export const extractStructuredData = createAction({
 				},
 				toolChoice: 'required',
 				messages,
+			});
+
+			await reportManagedAiUsage({
+				provider,
+				model: modelId,
+				engineToken: context.server.token,
+				apiUrl: context.server.apiUrl,
+				flowId: context.flows.current.id,
+				flowRunId: context.run.id,
+				result,
 			});
 
 			const toolCalls = result.toolCalls;

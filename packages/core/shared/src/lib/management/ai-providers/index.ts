@@ -349,6 +349,19 @@ export const GetProviderConfigResponse = z.object({
 export type GetProviderConfigResponse = z.infer<typeof GetProviderConfigResponse>
 
 
+export const ReportAiUsageRequest = z.object({
+    provider: z.enum(AIProviderName),
+    model: z.string().min(1, formErrors.required),
+    generationId: z.string().min(1, formErrors.required),
+    costUsd: z.number().min(0),
+    inputTokens: z.number().int().min(0).optional(),
+    outputTokens: z.number().int().min(0).optional(),
+    flowId: z.string().optional(),
+    flowRunId: z.string().optional(),
+})
+export type ReportAiUsageRequest = z.infer<typeof ReportAiUsageRequest>
+
+
 export const AIErrorResponse = z.object({
     error: z.object({
         message: z.string(),
