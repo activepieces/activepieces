@@ -7,81 +7,9 @@ import {
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { kickcallAuth } from '../auth';
 import { KICKCALL_BASE_URL } from './constants';
+import { kickcallResponse } from './response';
 
 const MAX_PAGINATION_PAGES = 1000;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
-
-function collectionRows(payload: unknown): unknown[] {
-  if (Array.isArray(payload)) {
-    return payload;
-  }
-  if (!isRecord(payload)) {
-    return [];
-  }
-  const nestedKeys = ['data', 'locations', 'agents', 'items', 'results'];
-  for (const key of nestedKeys) {
-    const nested = payload[key];
-    if (Array.isArray(nested)) {
-      return nested;
-    }
-  }
-  return [];
-}
-
-function totalPages(payload: unknown): number | undefined {
-  if (!isRecord(payload)) {
-    return undefined;
-  }
-  const meta = payload['meta'];
-  if (!isRecord(meta)) {
-    return undefined;
-  }
-  const value = meta['total_pages'];
-  if (typeof value === 'number' && Number.isFinite(value) && value >= 1) {
-    return value;
-  }
-  if (typeof value === 'string' && value.trim().length > 0) {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed) && parsed >= 1) {
-      return parsed;
-    }
-  }
-  return undefined;
-}
-
-function namedOptionsFromCollection(payload: unknown): {
-  label: string;
-  value: string;
-}[] {
-  return collectionRows(payload).flatMap((row) => {
-    if (!isRecord(row)) {
-      return [];
-    }
-    const id =
-      row['id'] ??
-      row['location_id'] ??
-      row['agent_id'] ??
-      row['kickcall_agent_id'];
-    if (id === null || id === undefined) {
-      return [];
-    }
-    const name =
-      row['name'] ??
-      row['label'] ??
-      row['agent_name'] ??
-      row['location_name'] ??
-      String(id);
-    return [
-      {
-        label: String(name),
-        value: String(id),
-      },
-    ];
-  });
-}
 
 async function bearerRequest<T extends HttpMessageBody>({
   auth,
@@ -113,18 +41,6 @@ async function bearerRequest<T extends HttpMessageBody>({
   return response.body;
 }
 
-function requestedPerPage(queryParams: Record<string, string> | undefined): number {
-  const raw = queryParams?.['per_page'];
-  if (raw === undefined) {
-    return 100;
-  }
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed) || parsed < 1) {
-    return 100;
-  }
-  return Math.floor(parsed);
-}
-
 async function bearerRequestAllPages({
   auth,
   path,
@@ -136,7 +52,7 @@ async function bearerRequestAllPages({
 }): Promise<{ data: unknown[] }> {
   const rows: unknown[] = [];
   let page = 1;
-  const perPage = requestedPerPage(queryParams);
+  const perPage = kickcallResponse.requestedPerPage(queryParams);
   while (page <= MAX_PAGINATION_PAGES) {
     const payload = await bearerRequest({
       auth,
@@ -148,14 +64,16 @@ async function bearerRequestAllPages({
         page: String(page),
       },
     });
-    const pageRows = collectionRows(payload);
+    const pageRows = kickcallResponse.collectionRows(payload);
     rows.push(...pageRows);
-    const pages = totalPages(payload);
-    if (pages !== undefined) {
-      if (page >= pages) {
-        return { data: rows };
-      }
-    } else if (pageRows.length === 0 || pageRows.length < perPage) {
+    if (
+      kickcallResponse.isLastCollectionPage({
+        page,
+        pageRowsLength: pageRows.length,
+        perPage,
+        totalPagesFromMeta: kickcallResponse.totalPages(payload),
+      })
+    ) {
       return { data: rows };
     }
     page += 1;
@@ -193,7 +111,7 @@ export const kickcallClient = {
   bearerRequest,
   bearerRequestAllPages,
   marketplaceRequest,
-  namedOptionsFromCollection,
+  namedOptionsFromCollection: kickcallResponse.namedOptionsFromCollection,
 };
 
 export type KickcallAuth = AppConnectionValueForAuthProperty<typeof kickcallAuth>;
