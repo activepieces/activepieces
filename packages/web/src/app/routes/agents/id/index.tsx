@@ -3,7 +3,7 @@ import { Agent, AgentToolType } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronLeft, SearchX, Settings2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
@@ -18,12 +18,12 @@ import {
   EmptyTitle,
 } from '@/components/custom/empty';
 import { Button } from '@/components/ui/button';
-import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAgentsAvailable } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
+import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
 import { cn } from '@/lib/utils';
 
 import { AgentConfigurePanel } from './configure-panel';
@@ -72,19 +72,13 @@ const AgentEditorSkeleton = () => (
     </div>
   </div>
 );
-const CollapseAppSidebarWhileHere = () => {
-  const sidebar = useSidebar();
-  const sidebarRef = useRef(sidebar);
-  sidebarRef.current = sidebar;
+const HoldTheRailClosedWhileHere = () => {
+  const holdClosed = useRailCollapsed((state) => state.holdClosed);
 
   useEffect(() => {
-    const wasOpen = sidebarRef.current.open;
-    if (!wasOpen) {
-      return;
-    }
-    sidebarRef.current.setOpen(false);
-    return () => sidebarRef.current.setOpen(true);
-  }, []);
+    holdClosed(true);
+    return () => holdClosed(false);
+  }, [holdClosed]);
 
   return null;
 };
@@ -170,7 +164,7 @@ const AgentEditorContent = () => {
 
   return (
     <div className="flex h-full w-full">
-      <CollapseAppSidebarWhileHere />
+      <HoldTheRailClosedWhileHere />
       <div className="flex min-w-0 grow flex-col">
         <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
           <button

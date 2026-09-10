@@ -60,7 +60,10 @@ import {
   projectCollectionUtils,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
-import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
+import {
+  railIsCollapsed,
+  useRailCollapsed,
+} from '@/features/workspace/lib/rail-collapsed';
 import {
   useAuthorization,
   useIsPlatformAdmin,
@@ -81,10 +84,12 @@ export function PrimaryRail() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
   const {
-    collapsed,
+    preference,
+    heldClosed,
     setCollapsed,
     toggle: toggleCollapsed,
   } = useRailCollapsed();
+  const collapsed = railIsCollapsed({ preference, heldClosed });
   const showAgents = useAgentsNavVisible();
   const { checkAccess } = useAuthorization();
 
