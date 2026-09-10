@@ -2,7 +2,7 @@ import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-f
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
 import { forScreenshotOutputFormat, forSimpleOutputFormat, saveFirecrawlFile, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
-import { scrapeUrlActionOutputSchema } from '../output-schemas';
+import { scrapeActionOutputSchema } from '../output-schemas';
 
 function forDefaultScreenshot(): any {
   return {
@@ -18,7 +18,7 @@ export const scrape = createAction({
   displayName: 'Scrape Website',
   description: 'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
   audience: 'human',
-  outputSchema: scrapeUrlActionOutputSchema,
+  outputSchema: scrapeActionOutputSchema,
   aiMetadata: { description: 'Fetches the content of a single web page and returns it in a chosen format (markdown, HTML, links, summary, screenshot, or AI-extracted JSON). Choose this to read one specific URL; for many pages use Crawl, and for a structured data pull across several known URLs use Extract Structured Data. Optionally runs browser actions (click, type, wait, screenshot) before scraping. Read-only against the target, so repeating the same call is safe.', idempotent: true },
   props: {
     url: Property.ShortText({

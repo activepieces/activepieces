@@ -1,6 +1,6 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-const scrapeResultFields: OutputSchema['fields'] = [
+const pageContentFields: OutputSchema['fields'] = [
   { key: 'markdown', label: 'Markdown' },
   { key: 'html', label: 'HTML', format: 'html' },
   { key: 'rawHtml', label: 'Raw HTML', format: 'html' },
@@ -14,64 +14,84 @@ const scrapeResultFields: OutputSchema['fields'] = [
       { key: 'fileUrl', label: 'File URL', format: 'url' },
     ],
   },
-  {
-    key: 'actions',
-    label: 'Actions',
-    children: [
-      {
-        key: 'pdfs',
-        label: 'PDF',
-        listItems: [
-          { key: 'fileName', label: 'File Name' },
-          { key: 'fileUrl', label: 'File URL', format: 'url' },
-        ],
-      },
-      {
-        key: 'screenshots',
-        label: 'Screenshots',
-        listItems: [
-          { key: 'fileName', label: 'File Name' },
-          { key: 'fileUrl', label: 'File URL', format: 'url' },
-        ],
-      },
-      {
-        key: 'javascriptReturns',
-        label: 'JavaScript Returns',
-        listItems: [
-          { key: 'type', label: 'Type' },
-          { key: 'value', label: 'Value' },
-        ],
-      },
-      {
-        key: 'scrapes',
-        label: 'Scrapes',
-        labelKey: 'url',
-        listItems: [
-          { key: 'url', label: 'URL', format: 'url' },
-          { key: 'html', label: 'HTML', format: 'html' },
-        ],
-      },
-    ],
-  },
-  {
-    key: 'metadata',
-    label: 'Metadata',
-    children: [
-      { key: 'title', label: 'Title' },
-      { key: 'language', label: 'Language' },
-      { key: 'sourceURL', label: 'Source URL', format: 'url' },
-      { key: 'url', label: 'Final URL', format: 'url' },
-      { key: 'statusCode', label: 'Status Code', format: 'number' },
-      { key: 'favicon', label: 'Favicon', format: 'image' },
-      { key: 'creditsUsed', label: 'Credits Used', format: 'number' },
-    ],
-  },
 ];
+
+const pageMetadataField: OutputSchema['fields'][number] = {
+  key: 'metadata',
+  label: 'Metadata',
+  children: [
+    { key: 'title', label: 'Title' },
+    { key: 'language', label: 'Language' },
+    { key: 'sourceURL', label: 'Source URL', format: 'url' },
+    { key: 'url', label: 'Final URL', format: 'url' },
+    { key: 'statusCode', label: 'Status Code', format: 'number' },
+    { key: 'favicon', label: 'Favicon', format: 'image' },
+    { key: 'creditsUsed', label: 'Credits Used', format: 'number' },
+  ],
+};
+
+const scrapeActionsField: OutputSchema['fields'][number] = {
+  key: 'actions',
+  label: 'Actions',
+  children: [
+    {
+      key: 'pdfs',
+      label: 'PDF',
+      listItems: [
+        { key: 'fileName', label: 'File Name' },
+        { key: 'fileUrl', label: 'File URL', format: 'url' },
+      ],
+    },
+    {
+      key: 'screenshots',
+      label: 'Screenshots',
+      listItems: [
+        { key: 'fileName', label: 'File Name' },
+        { key: 'fileUrl', label: 'File URL', format: 'url' },
+      ],
+    },
+    {
+      key: 'javascriptReturns',
+      label: 'JavaScript Returns',
+      listItems: [
+        { key: 'type', label: 'Type' },
+        { key: 'value', label: 'Value' },
+      ],
+    },
+    {
+      key: 'scrapes',
+      label: 'Scrapes',
+      labelKey: 'url',
+      listItems: [
+        { key: 'url', label: 'URL', format: 'url' },
+        { key: 'html', label: 'HTML', format: 'html' },
+      ],
+    },
+  ],
+};
+
+const pageResultFields: OutputSchema['fields'] = [
+  ...pageContentFields,
+  pageMetadataField,
+];
+
+const scrapeResultFields: OutputSchema['fields'] = [
+  ...pageContentFields,
+  scrapeActionsField,
+  pageMetadataField,
+];
+
+export const scrapeActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'data', label: 'Data', children: scrapeResultFields },
+  ],
+};
 
 export const scrapeUrlActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
-    { key: 'data', label: 'Data', children: scrapeResultFields },
+    { key: 'data', label: 'Data', children: pageResultFields },
   ],
 };
 
@@ -83,7 +103,7 @@ const jobResultFields: OutputSchema['fields'] = [
   { key: 'creditsUsed', label: 'Credits Used', format: 'number' },
   { key: 'expiresAt', label: 'Expires At', format: 'datetime' },
   { key: 'next', label: 'Next Page URL', format: 'url' },
-  { key: 'data', label: 'Pages', listItems: scrapeResultFields },
+  { key: 'data', label: 'Pages', listItems: pageResultFields },
 ];
 
 export const crawlWebsiteActionOutputSchema: OutputSchema = {
