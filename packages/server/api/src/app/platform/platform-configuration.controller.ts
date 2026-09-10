@@ -16,6 +16,7 @@ export const platformConfigurationController: FastifyPluginAsyncZod = async (app
             platformId: request.principal.platform.id,
             isProductTelemetryEnabled: request.body.isProductTelemetryEnabled,
             isInfraSetupTelemetryEnabled: request.body.isInfraSetupTelemetryEnabled,
+            maxBarrierSignals: request.body.maxBarrierSignals,
         })
     })
 }

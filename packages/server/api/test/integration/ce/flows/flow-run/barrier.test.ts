@@ -1,8 +1,9 @@
 import { apId } from '@activepieces/core-utils'
-import { BarrierSignalStatus, BarrierSummary, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
@@ -53,6 +54,7 @@ async function createBarrier({ flowRunId, signalLabels, policy, stepName }: {
     return barrierService(app.log).create({
         flowRunId,
         projectId: ctx.project.id,
+        platformId: ctx.platform.id,
         stepName: stepName ?? 'approval',
         version: 'V1',
         policy,
@@ -365,5 +367,28 @@ describe('resume guards', () => {
         })
 
         expect(stale).toBe(false)
+    })
+})
+
+describe('signal count limit', () => {
+    it('refuses a barrier that waits on more than the platform allows', async () => {
+        const { flowRun } = await createParentRun()
+        await platformConfigurationService(app.log).update({ platformId: ctx.platform.id, maxBarrierSignals: 2 })
+
+        await expect(createBarrier({ flowRunId: flowRun.id, signalLabels: ['a', 'b', 'c'] })).rejects.toMatchObject({
+            error: {
+                code: ErrorCode.VALIDATION,
+                params: { message: expect.stringContaining('exceeds the maximum of 2') },
+            },
+        })
+    })
+
+    it('allows a barrier at exactly the platform limit', async () => {
+        const { flowRun } = await createParentRun()
+        await platformConfigurationService(app.log).update({ platformId: ctx.platform.id, maxBarrierSignals: 2 })
+
+        const { signalCount } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a', 'b'] })
+
+        expect(signalCount).toBe(2)
     })
 })

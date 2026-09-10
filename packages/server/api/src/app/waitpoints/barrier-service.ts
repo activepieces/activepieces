@@ -8,6 +8,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { barrierQueue } from './barrier-queue'
 import { resumeService } from './resume-service'
 import { WaitpointEntity } from './waitpoint-entity'
@@ -20,7 +21,7 @@ const signalRepo = repoFactory(WaitpointSignalEntity)
 export const barrierService = (log: FastifyBaseLogger) => ({
     async create(params: CreateBarrierParams): Promise<CreateBarrierResult> {
         const labels = params.signalLabels ?? []
-        assertSignalCountWithinLimit({ signalCount: labels.length })
+        await assertSignalCountWithinLimit({ signalCount: labels.length, platformId: params.platformId, log })
 
         const creation = await transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
@@ -221,12 +222,12 @@ async function buildSummary({ barrierId, projectId, timedOut, entityManager }: B
     }
 }
 
-function assertSignalCountWithinLimit({ signalCount }: { signalCount: number }): void {
-    const maxSignals = system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS)
+async function assertSignalCountWithinLimit({ signalCount, platformId, log }: AssertSignalCountWithinLimitParams): Promise<void> {
+    const maxSignals = await platformConfigurationService(log).maxBarrierSignals({ platformId })
     if (signalCount > maxSignals) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
-            params: { message: `This step waits on ${signalCount} things, which exceeds the maximum of ${maxSignals}. Wait on fewer, or raise AP_MAX_BARRIER_SIGNALS.` },
+            params: { message: `This step waits on ${signalCount} things, which exceeds the maximum of ${maxSignals}. Wait on fewer, or ask a platform admin to raise the limit in Settings, Infrastructure, Configurations.` },
         })
     }
 }
@@ -251,6 +252,7 @@ export type BarrierReleaseReason = 'predicate' | 'timeout'
 export type CreateBarrierParams = {
     flowRunId: string
     projectId: string
+    platformId: string
     stepName: string
     version: WaitpointVersion
     responseToSend?: RespondResponse
@@ -319,4 +321,10 @@ type BuildPendingSignalsParams = {
     barrierId: string
     projectId: string
     labels: (string | null)[]
+}
+
+type AssertSignalCountWithinLimitParams = {
+    signalCount: number
+    platformId: string
+    log: FastifyBaseLogger
 }
