@@ -4,6 +4,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { EntityManager, In, IsNull } from 'typeorm'
+import { signUpSideEffects } from '../authentication/attribution/sign-up-side-effects'
+import { SignUpContext } from '../authentication/attribution/user-attribution.service'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
@@ -33,7 +35,7 @@ export const userService = (log: FastifyBaseLogger) => ({
         }
         return userRepo().save(user)
     },
-    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<User> {
+    async getOrCreateWithProject({ identity, platformId, signUp }: GetOrCreateWithProjectParams): Promise<User> {
         const user = await this.getOneByIdentityAndPlatform({
             identityId: identity.id,
             platformId,
@@ -46,14 +48,21 @@ export const userService = (log: FastifyBaseLogger) => ({
             })
 
             const platform = await platformService(log).getOneOrThrow(platformId)
-            if (platform.autoCreatePersonalProjects) {
-                await projectService(log).create({
+            const personalProject = platform.autoCreatePersonalProjects
+                ? await projectService(log).create({
                     displayName: identity.firstName + '\'s Project',
                     ownerId: newUser.id,
                     platformId,
                     type: ProjectType.PERSONAL,
                 })
-            }
+                : null
+            signUpSideEffects(log).onUserCreated({
+                user: newUser,
+                identity,
+                platformId,
+                projectId: personalProject?.id ?? null,
+                signUp,
+            })
             return newUser
         }
         return user
@@ -393,4 +402,5 @@ type UpdatePlatformIdParams = {
 type GetOrCreateWithProjectParams = {
     identity: UserIdentity
     platformId: string
+    signUp: SignUpContext
 }

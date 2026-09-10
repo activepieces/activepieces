@@ -1,11 +1,14 @@
-import { isNil } from '@activepieces/core-utils';
+import { isNil, tryCatchSync } from '@activepieces/core-utils';
 import {
   ApEdition,
+  ApEnvironment,
   ApFlagId,
+  DeploymentKind,
   isCloudOnlyTelemetryEvent,
   pickTelemetryPii,
   TelemetryEvent,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
 import posthog from 'posthog-js';
 import React, { useEffect, useRef } from 'react';
 import { useDeepCompareEffect } from 'react-use';
@@ -17,6 +20,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { CLOUD_HOSTNAME, isRunningCloudInDevMode } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
+import { telemetryUtils } from '@/lib/telemetry-utils';
 
 interface TelemetryProviderProps {
   children: React.ReactNode;
@@ -31,13 +35,14 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: flagCurrentVersion } = flagsHooks.useFlag<string>(
     ApFlagId.CURRENT_VERSION,
   );
-  const { data: flagEnvironment } = flagsHooks.useFlag<string>(
+  const { data: flagEnvironment } = flagsHooks.useFlag<ApEnvironment>(
     ApFlagId.ENVIRONMENT,
   );
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
 
   const isCloud = edition === ApEdition.CLOUD;
+  const isDevEnvironment = flagEnvironment === ApEnvironment.DEVELOPMENT;
   const isPreLoginCloudFunnel =
     isNil(currentUser) &&
     isCloud &&
@@ -47,7 +52,12 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     (isCloud || configuration?.isProductTelemetryEnabled === true);
   const telemetryEnabled =
     (isPreLoginCloudFunnel || isSignedInWithAnalyticsOn) &&
-    !isRunningCloudInDevMode;
+    !isRunningCloudInDevMode &&
+    (!isDevEnvironment || isPosthogDevOptIn());
+  const deployment = resolveDeploymentKind({
+    edition,
+    environment: flagEnvironment,
+  });
 
   const posthogInitialized = useRef(false);
 
@@ -63,12 +73,9 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     posthogInitialized.current = true;
 
     posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
-      // Same-origin reverse proxy (/ingest) so ad blockers don't drop ingestion.
       api_host: '/ingest',
       ui_host: 'https://us.posthog.com',
-      // Adopt the identity cookie the marketing site sets on `.activepieces.com`.
       cross_subdomain_cookie: true,
-      // Limit autocapture to the auth funnel; the rest of the app doesn't need it.
       autocapture: isCloud
         ? {
             url_allowlist: [
@@ -96,15 +103,12 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       },
     });
 
-    // Tag events so the shared project separates product from marketing traffic.
-    posthog.register({ source_site: 'product' });
-
-    acquisitionUtils.stashAcquisitionParams();
+    posthog.register({ source_site: 'product', deployment });
 
     if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
       posthog.startSessionRecording();
     }
-  }, [telemetryEnabled, embedState.isEmbedded, edition, isCloud]);
+  }, [telemetryEnabled, embedState.isEmbedded, edition, isCloud, deployment]);
 
   useEffect(() => {
     if (!posthogInitialized.current) {
@@ -114,6 +118,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       activepiecesEdition: edition ?? ApEdition.COMMUNITY,
       activepiecesVersion: flagCurrentVersion ?? UNKNOWN_FLAG_VALUE,
       activepiecesEnvironment: flagEnvironment ?? UNKNOWN_FLAG_VALUE,
+      deployment,
     });
   }, [
     telemetryEnabled,
@@ -121,6 +126,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     embedState.isEmbedded,
     flagCurrentVersion,
     flagEnvironment,
+    deployment,
   ]);
 
   useEffect(() => {
@@ -158,6 +164,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
         }),
         activepiecesVersion: currentVersion,
         activepiecesEnvironment: environment,
+        deployment,
       },
       acquisitionUtils.getAcquisitionParams(),
     );
@@ -165,10 +172,14 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (currentUser.platformId) {
       posthog.group('platform', currentUser.platformId);
     }
+
+    if (isRecentlyCreated({ created: currentUser.created })) {
+      acquisitionUtils.clearAcquisitionParams();
+    }
   };
 
   const reset = () => {
-    posthog.reset();
+    telemetryUtils.resetIdentity();
     identifiedKey.current = null;
   };
 
@@ -193,12 +204,44 @@ const UNKNOWN_FLAG_VALUE = '0.0.0';
 
 const RECORDING_SAMPLE_RATE = 0.1;
 
+const POSTHOG_DEV_OPT_IN_KEY = 'ap_posthog_dev';
+
+const NEW_ACCOUNT_WINDOW_MS = 10 * 60 * 1000;
+
 function isInRecordingSample(distinctId: string): boolean {
   let hash = 5381;
   for (let i = 0; i < distinctId.length; i++) {
     hash = (hash * 33) ^ distinctId.charCodeAt(i);
   }
   return (hash >>> 0) / 0xffffffff < RECORDING_SAMPLE_RATE;
+}
+
+function isPosthogDevOptIn(): boolean {
+  const { data } = tryCatchSync(
+    () => localStorage.getItem(POSTHOG_DEV_OPT_IN_KEY) === '1',
+  );
+  return data === true;
+}
+
+function resolveDeploymentKind({
+  edition,
+  environment,
+}: {
+  edition: ApEdition | null | undefined;
+  environment: ApEnvironment | null | undefined;
+}): DeploymentKind {
+  if (edition === ApEdition.CLOUD) {
+    return DeploymentKind.CLOUD;
+  }
+  if (environment === ApEnvironment.DEVELOPMENT) {
+    return DeploymentKind.DEV;
+  }
+  return DeploymentKind.SELF_HOSTED;
+}
+
+function isRecentlyCreated({ created }: { created: string }): boolean {
+  const createdAt = dayjs(created);
+  return createdAt.isValid() && dayjs().diff(createdAt) < NEW_ACCOUNT_WINDOW_MS;
 }
 
 interface TelemetryContextType {

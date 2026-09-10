@@ -1,9 +1,9 @@
 import { resolveTxt } from 'dns/promises'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformId, tryCatch } from '@activepieces/core-utils'
-import { ApEdition, AuthenticationResponse, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
+import { ApEdition, SAMLAuthnProviderConfig, SsoDomainVerification, SsoDomainVerificationRecordType, SsoDomainVerificationStatus, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { authenticationService } from '../../../authentication/authentication.service'
+import { authenticationService, FederatedAuthnResult } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { platformRepo, platformService } from '../../../platform/platform.service'
@@ -41,7 +41,7 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
                 redirectUrl,
             }
         },
-        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse> {
+        async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<FederatedAuthnResult> {
             const acsUrl = await this.getAcsUrl(platformId)
             const client = await createSamlClient({ platformId, samlProvider, acsUrl })
             const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)

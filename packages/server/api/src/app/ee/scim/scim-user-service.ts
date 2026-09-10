@@ -1,6 +1,6 @@
 import { isEnumValue, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { CreateScimUserRequest, parseScimFilter, PlatformRole, ReplaceScimUserRequest, SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA, SCIM_LIST_RESPONSE_SCHEMA, SCIM_USER_SCHEMA, ScimError, ScimListResponse, ScimPatchRequest, ScimUserResource, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { CreateScimUserRequest, parseScimFilter, PlatformRole, ReplaceScimUserRequest, SCIM_CUSTOM_USER_ATTRIBUTES_SCHEMA, SCIM_LIST_RESPONSE_SCHEMA, SCIM_USER_SCHEMA, ScimError, ScimListResponse, ScimPatchRequest, ScimUserResource, SignUpMethod, User, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
@@ -62,6 +62,7 @@ export const scimUserService = (log: FastifyBaseLogger) => ({
         const user = await userService(log).getOrCreateWithProject({
             identity,
             platformId,
+            signUp: { method: SignUpMethod.MANAGED },
         })
 
         await userService(log).update({

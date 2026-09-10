@@ -7,9 +7,11 @@ import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { getEntitlementsForceRefreshKey } from '../../../database/redis/keys'
 import { distributedStore } from '../../../database/redis-connections'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
 import { billingProvider } from '../../../platform/billing-provider'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
+import { platformPlanTelemetry } from './platform-plan-telemetry'
 import { platformPlanService } from './platform-plan.service'
 
 const FORCE_REFRESH_DEDUP_SECONDS = 60
@@ -54,6 +56,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
             planId: request.body.planId,
             successUrl: request.body.successUrl,
         })
+        rejectedPromiseHandler(platformPlanTelemetry(request.log).onCheckoutStarted({ platformId, planId: request.body.planId, actorUserId: request.principal.id }), request.log)
         await refreshWhenAppliedImmediately({ log: request.log, platformId, checkoutUrl: result.checkoutUrl })
         return result
     })
@@ -69,6 +72,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
                 canceledByEmail: await resolveActorEmail(request.log, request.principal.id),
             },
         })
+        rejectedPromiseHandler(platformPlanTelemetry(request.log).onCancelled({ platformId, actorUserId: request.principal.id }), request.log)
         await provider.refreshEntitlements(platformId)
     })
 
@@ -76,6 +80,7 @@ export const platformPlanController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const provider = billingProvider.get(request.log)
         await provider.reactivateSubscription({ platformId })
+        rejectedPromiseHandler(platformPlanTelemetry(request.log).onReactivated({ platformId, actorUserId: request.principal.id }), request.log)
         await provider.refreshEntitlements(platformId)
     })
 

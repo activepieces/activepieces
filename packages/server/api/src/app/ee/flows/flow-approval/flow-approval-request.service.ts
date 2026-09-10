@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, UserId } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, ApplicationEventName, Cursor, ErrorCode, Flow, FlowApprovalRequest, FlowApprovalRequestState, FlowOperationType, FlowStatus, FlowVersionState, isNil, PlatformId, PopulatedFlowApprovalRequest, Principal, PrincipalType, ProjectId, SeekPage, TelemetryEventName, UserId } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { transaction } from '../../../core/db/transaction'
@@ -9,6 +9,8 @@ import { applicationEvents } from '../../../helper/application-events'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { Order } from '../../../helper/pagination/paginator'
+import { rejectedPromiseHandler } from '../../../helper/promise-handler'
+import { telemetry } from '../../../helper/telemetry.utils'
 import { triggerSourceService } from '../../../trigger/trigger-source/trigger-source-service'
 import { FlowApprovalRequestEntity } from './flow-approval-request.entity'
 
@@ -124,6 +126,14 @@ export const flowApprovalRequestService = (log: FastifyBaseLogger) => ({
             projectId: approval.projectId,
             newStatus: approval.requestedStatus,
         })
+        rejectedPromiseHandler(telemetry(log).trackProject({
+            projectId: approval.projectId,
+            actorUserId: approverId ?? undefined,
+            event: {
+                name: TelemetryEventName.FLOW_PUBLISHED,
+                payload: { flowId: flow.id },
+            },
+        }), log)
         applicationEvents(log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_APPROVAL_GRANTED,
             data: {

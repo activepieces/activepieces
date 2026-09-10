@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, TelemetryEventName, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -11,8 +11,10 @@ import { fileService, getEffectiveExecutionDataRetentionDays } from '../../file/
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
+import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
+import { telemetry } from '../../helper/telemetry.utils'
 import { assertRunCreditsNotExceeded, shouldBlockRunOnCredits } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
@@ -745,6 +747,36 @@ async function persistQuotaExceededTriggerLog({ log, flowVersion, projectId, pay
 }
 
 async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
+    const isFirstRun = await isFirstRunForProject({ projectId: params.projectId })
+    const flowRun = await persistNewRun(params, log)
+    if (isFirstRun) {
+        rejectedPromiseHandler(telemetry(log).trackProject({
+            projectId: params.projectId,
+            event: {
+                name: TelemetryEventName.FLOW_RUN_FIRST,
+                payload: { projectId: params.projectId, flowId: params.flowId },
+            },
+        }), log)
+    }
+    return flowRun
+}
+
+async function isFirstRunForProject({ projectId }: { projectId: ProjectId }): Promise<boolean> {
+    if (projectsWithRuns.has(projectId)) {
+        return false
+    }
+    const hasRuns = await flowRunRepo().existsBy({ projectId })
+    if (projectsWithRuns.size >= PROJECTS_WITH_RUNS_MAX_ENTRIES) {
+        projectsWithRuns.clear()
+    }
+    projectsWithRuns.add(projectId)
+    return !hasRuns
+}
+
+const PROJECTS_WITH_RUNS_MAX_ENTRIES = 50_000
+const projectsWithRuns = new Set<ProjectId>()
+
+async function persistNewRun(params: CreateParams, log: FastifyBaseLogger): Promise<FlowRun> {
     const now = new Date().toISOString()
     const flowRun: FlowRun = {
         id: apId(),

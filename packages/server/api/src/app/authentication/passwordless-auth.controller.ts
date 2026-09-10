@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, RequestEmailCodeRequest, TelemetryEventName, VerifyEmailCodeRequest } from '@activepieces/shared'
+import { ApplicationEventName, RequestEmailCodeRequest, SignUpMethod, TelemetryEventName, VerifyEmailCodeRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -27,33 +27,44 @@ export const passwordlessAuthController: FastifyPluginAsyncZod = async (
 
     app.post('/otp/verify', VerifyEmailCodeRequestOptions, async (request) => {
         const platformId = await platformUtils.getPlatformIdForRequest(request)
-        const response = await passwordlessAuthService(request.log).verifyCode({
+        const { response, isNewUser } = await passwordlessAuthService(request.log).verifyCode({
             email: request.body.email,
             code: request.body.code,
             platformId: platformId ?? null,
+            attribution: request.body.attribution,
         })
 
         if (!isNil(response.platformId)) {
-            applicationEvents(request.log).sendUserEvent({
+            const requestInfo = {
                 platformId: response.platformId,
                 userId: response.id,
                 projectId: response.projectId ?? undefined,
                 ip: networkUtils.clientIp(request),
-            }, {
-                action: ApplicationEventName.USER_SIGNED_IN,
-                data: {},
-            })
-            rejectedPromiseHandler(telemetry(request.log).trackUser({
-                userId: response.id,
-                platformId: response.platformId,
-                event: {
-                    name: TelemetryEventName.SIGNED_IN,
-                    payload: {
-                        userId: response.id,
-                        platformId: response.platformId,
+            }
+            if (isNewUser) {
+                applicationEvents(request.log).sendUserEvent(requestInfo, {
+                    action: ApplicationEventName.USER_SIGNED_UP,
+                    data: { source: 'credentials' },
+                })
+            }
+            else {
+                applicationEvents(request.log).sendUserEvent(requestInfo, {
+                    action: ApplicationEventName.USER_SIGNED_IN,
+                    data: {},
+                })
+                rejectedPromiseHandler(telemetry(request.log).trackUser({
+                    userId: response.id,
+                    platformId: response.platformId,
+                    event: {
+                        name: TelemetryEventName.SIGNED_IN,
+                        payload: {
+                            userId: response.id,
+                            platformId: response.platformId,
+                            method: SignUpMethod.EMAIL_CODE,
+                        },
                     },
-                },
-            }), request.log)
+                }), request.log)
+            }
         }
 
         return response

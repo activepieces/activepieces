@@ -1,9 +1,76 @@
+import { isNil } from '@activepieces/core-utils';
+import {
+  TelemetryEventName,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { SendIcon } from '@/components/icons/send';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { userHooks } from '@/hooks/user-hooks';
+import { telemetryUtils } from '@/lib/telemetry-utils';
+
+export const RequestTrial = ({
+  featureKey,
+  plan,
+  buttonVariant = 'default',
+  buttonSize = 'default',
+}: RequestTrialProps) => {
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { capture } = useTelemetry();
+
+  const handleClick = () => {
+    capture({
+      name: TelemetryEventName.SALES_HANDOFF_CLICKED,
+      payload: { featureKey, plan, surface: 'locked_feature' },
+    });
+    window.open(
+      buildSalesUrl({ currentUser, featureKey, plan }),
+      '_blank',
+      'noopener noreferrer',
+    );
+  };
+
+  return (
+    <AnimatedIconButton
+      variant={buttonVariant}
+      size={buttonSize}
+      onClick={handleClick}
+      icon={SendIcon}
+      iconSize={14}
+    >
+      {t('Contact Sales')}
+    </AnimatedIconButton>
+  );
+};
+
+function buildSalesUrl({
+  currentUser,
+  featureKey,
+  plan,
+}: {
+  currentUser: UserWithMetaInformation | null | undefined;
+  featureKey: FeatureKey;
+  plan: string | undefined;
+}): string {
+  const url = new URL(SALES_URL);
+  url.searchParams.set('email', currentUser?.email ?? '');
+  url.searchParams.set('firstName', currentUser?.firstName ?? '');
+  url.searchParams.set('lastName', currentUser?.lastName ?? '');
+  url.searchParams.set('featureKey', featureKey);
+  if (!isNil(plan)) {
+    url.searchParams.set('plan', plan);
+  }
+  url.searchParams.set('ap_cta', `app_${featureKey.toLowerCase()}`);
+  const sessionId = telemetryUtils.getSessionId();
+  if (!isNil(sessionId)) {
+    url.searchParams.set('ap_sid', sessionId);
+  }
+  return url.toString();
+}
+
+const SALES_URL = 'https://www.activepieces.com/sales';
 
 export type FeatureKey =
   | 'PROJECTS'
@@ -35,60 +102,8 @@ export type FeatureKey =
 
 type RequestTrialProps = {
   featureKey: FeatureKey;
+  plan?: string;
   customButton?: React.ReactNode;
   buttonVariant?: 'default' | 'basic';
   buttonSize?: 'default' | 'sm' | 'xs';
 };
-
-export const RequestTrial = ({
-  featureKey,
-  buttonVariant = 'default',
-  buttonSize = 'default',
-}: RequestTrialProps) => {
-  const { data: currentUser } = userHooks.useCurrentUser();
-  const { data: flags } = flagsHooks.useFlags();
-
-  const createQueryParams = () => {
-    const params = {
-      firstName: currentUser?.firstName || '',
-      lastName: currentUser?.lastName || '',
-      email: currentUser?.email || '',
-      featureKey,
-      flags: toLatin1SafeBase64(JSON.stringify(flags ?? {})),
-    };
-
-    return Object.entries(params)
-      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-      .join('&');
-  };
-
-  const handleClick = () =>
-    window.open(
-      `https://www.activepieces.com/sales?${createQueryParams()}`,
-      '_blank',
-      'noopener noreferrer',
-    );
-
-  return (
-    <AnimatedIconButton
-      variant={buttonVariant}
-      size={buttonSize}
-      onClick={handleClick}
-      icon={SendIcon}
-      iconSize={14}
-    >
-      {t('Contact Sales')}
-    </AnimatedIconButton>
-  );
-};
-
-function toLatin1SafeBase64(value: string): string {
-  const latin1Safe = value
-    .split('')
-    .map((char) => {
-      const code = char.charCodeAt(0);
-      return code > 0xff ? `\\u${code.toString(16).padStart(4, '0')}` : char;
-    })
-    .join('');
-  return btoa(latin1Safe);
-}

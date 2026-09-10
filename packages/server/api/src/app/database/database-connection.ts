@@ -7,6 +7,7 @@ import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { AiToolConfigEntity } from '../ai/ai-tool-config-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
+import { UserAttributionEntity } from '../authentication/attribution/user-attribution.entity'
 import { OtpEntity } from '../authentication/otp/otp-entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AgentConversationEntity } from '../ee/agent/agent-conversation-entity'
@@ -90,6 +91,7 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceMetadataEntity,
         PlatformEntity,
         PlatformConfigurationEntity,
+        UserAttributionEntity,
         SecretManagerEntity,
         AlertEntity,
         UserInvitationEntity,

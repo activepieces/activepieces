@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -77,6 +77,7 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                     payload: {
                         userId: response.id,
                         platformId: response.platformId,
+                        method: SignUpMethod.PASSWORD,
                     },
                 },
             }), request.log)
@@ -89,6 +90,7 @@ export const authenticationController: FastifyPluginAsyncZod = async (
         const { response, signedUp } = await passwordlessAuthService(request.log).completeSignUp({
             identityId: request.principal.id,
             fullName: request.body.fullName,
+            attribution: request.body.attribution,
         })
 
         if (signedUp && !isNil(response.platformId)) {
@@ -101,6 +103,17 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                 action: ApplicationEventName.USER_SIGNED_UP,
                 data: {},
             })
+            rejectedPromiseHandler(telemetry(request.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.ONBOARDING_COMPLETED,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
+                },
+            }), request.log)
         }
 
         return response

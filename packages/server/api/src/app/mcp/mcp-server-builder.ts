@@ -68,7 +68,7 @@ export async function buildMcpServer({ mcp, userId, clientId, log, resolveProjec
         const permissionChecker = userId
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
-        registerFlowTools({ server, mcp, projectId, permissionChecker, log })
+        registerFlowTools({ server, mcp, projectId, userId, permissionChecker, log })
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
@@ -131,7 +131,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
     })
 }
 
-function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
+function registerFlowTools({ server, mcp, projectId, userId, permissionChecker, log }: RegisterToolsParams): void {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
@@ -150,6 +150,7 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
 
             rejectedPromiseHandler(telemetry(log).trackProject({
                 projectId,
+                actorUserId: userId,
                 event: {
                     name: TelemetryEventName.MCP_TOOL_CALLED,
                     payload: { mcpId: projectId, toolName },

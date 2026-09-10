@@ -1,10 +1,10 @@
 import {
-    AuthenticationResponse,
+    AttributionParams,
     FederatedAuthnLoginResponse,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { authenticationService } from '../../../authentication/authentication.service'
+import { authenticationService, FederatedAuthnResult } from '../../../authentication/authentication.service'
 import { domainHelper } from '../../../helper/domain-helper'
 import { system } from '../../../helper/system/system'
 import { AppSystemProp } from '../../../helper/system/system-props'
@@ -28,7 +28,8 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
     async claim({
         platformId,
         code,
-    }: ClaimParams): Promise<AuthenticationResponse> {
+        attribution,
+    }: ClaimParams): Promise<FederatedAuthnResult> {
         const { clientId, clientSecret } = getClientIdAndSecret()
         const idToken = await googleAuthnProvider(log).authenticate({
             clientId,
@@ -46,6 +47,7 @@ export const federatedAuthnService = (log: FastifyBaseLogger) => ({
             provider: UserIdentityProvider.GOOGLE,
             predefinedPlatformId: platformId ?? null,
             imageUrl: idToken.imageUrl,
+            attribution,
         })
     },
     async getThirdPartyRedirectUrl(): Promise<string> {
@@ -69,4 +71,5 @@ type LoginParams = {
 type ClaimParams = {
     platformId: string | undefined
     code: string
+    attribution: AttributionParams | undefined
 }

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { authenticationApi } from '@/api/authentication-api';
 import { LoadingScreen } from '@/components/custom/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -37,6 +38,7 @@ const RedirectPage: React.FC = React.memo(() => {
           const data = await authenticationApi.claimThirdPartyRequest({
             providerName,
             code,
+            attribution: acquisitionUtils.getAcquisitionParams(),
           });
           authenticationSession.saveResponse(data, false);
           if (isNil(data.platformId)) {

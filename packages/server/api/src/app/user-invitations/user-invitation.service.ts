@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, isNil, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, PlatformRole, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, PlatformRole, SignUpMethod, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, IsNull, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -13,6 +13,8 @@ import { domainHelper } from '../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../helper/jwt-utils'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -61,6 +63,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             const user = await userService(log).getOrCreateWithProject({
                 identity,
                 platformId: invitation.platformId,
+                signUp: { method: SignUpMethod.INVITATION },
             })
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
@@ -240,11 +243,21 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         })
         const identity = await userIdentityService(log).getIdentityByEmail(invitation.email)
         if (isNil(identity)) {
+            rejectedPromiseHandler(telemetry(log).trackPlatform({
+                platformId,
+                event: inviteAcceptedEvent(invitation),
+            }), log)
             return { registered: false }
         }
         await this.provisionUserInvitation({
             email: invitation.email,
         })
+        const acceptedBy = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
+        rejectedPromiseHandler(telemetry(log).trackPlatform({
+            platformId,
+            actorUserId: acceptedBy?.id,
+            event: inviteAcceptedEvent(invitation),
+        }), log)
         return { registered: true }
     },
     async hasAnyAcceptedInvitationsForEmail({ email }: { email: string }): Promise<boolean> {
@@ -282,6 +295,16 @@ export const INVITATION_EXPIRY_SECONDS = dayjs.duration(7, 'days').asSeconds()
 
 export function getInvitationExpiryCutoff(): string {
     return dayjs().subtract(INVITATION_EXPIRY_SECONDS, 'seconds').toISOString()
+}
+
+function inviteAcceptedEvent(invitation: UserInvitation): TelemetryEvent {
+    return {
+        name: TelemetryEventName.INVITE_ACCEPTED,
+        payload: {
+            platformId: invitation.platformId,
+            type: invitation.type === InvitationType.PLATFORM ? 'platform' : 'project',
+        },
+    }
 }
 
 function withinReservationWindow<T extends ObjectLiteral>(query: SelectQueryBuilder<T>, platformId: string): SelectQueryBuilder<T> {

@@ -133,6 +133,7 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
             if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
                 rejectedPromiseHandler(telemetry(log).trackPlatform({
                     platformId: identity.platformId,
+                    actorUserId: identity.userId,
                     event: {
                         name: TelemetryEventName.MCP_SERVER_CONNECTED,
                         payload: {
@@ -148,6 +149,7 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
         if (telemetryDedupe.onceToday(`mcp-server-connected:project:${identity.projectId}:${identity.userId}`)) {
             rejectedPromiseHandler(telemetry(log).trackProject({
                 projectId: identity.projectId,
+                actorUserId: identity.userId,
                 event: {
                     name: TelemetryEventName.MCP_SERVER_CONNECTED,
                     payload: {

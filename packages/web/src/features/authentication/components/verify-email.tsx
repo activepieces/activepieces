@@ -10,7 +10,6 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Card } from '@/components/ui/card';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { usePartnerStack } from '@/hooks/use-partner-stack';
 import { api } from '@/lib/api';
 
 import { authMutations } from '../hooks/auth-hooks';
@@ -22,16 +21,14 @@ const VerifyEmail = () => {
   const otp = searchParams.get('otpcode');
   const identityId = searchParams.get('identityId');
   const hasMutated = useRef(false);
-  const { reportSignup } = usePartnerStack();
   const { capture } = useTelemetry();
 
   const { mutate, isPending } = authMutations.useVerifyEmail({
-    onSuccess: ({ email, firstName }) => {
+    onSuccess: () => {
       capture({
         name: TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
         payload: {},
       });
-      reportSignup(email, firstName);
       setTimeout(() => navigate('/sign-in'), 5000);
     },
     onError: (error) => {

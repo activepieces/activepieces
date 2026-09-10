@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ApFlagId, AuthenticationResponse, OtpType, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ApFlagId, AttributionParams, AuthenticationResponse, OtpType, SignUpMethod, TelemetryEvent, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -10,6 +10,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
+import { SignUpContext } from './attribution/user-attribution.service'
 import { authenticationUtils } from './authentication-utils'
 import { authenticationService } from './authentication.service'
 import { signupNames } from './lib/signup-names'
@@ -63,7 +64,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async verifyCode({ email, code, platformId }: VerifyCodeParams): Promise<AuthenticationResponse> {
+    async verifyCode({ email, code, platformId, attribution }: VerifyCodeParams): Promise<VerifyCodeResult> {
         const identity = await userIdentityService(log).getIdentityByEmail(email)
         if (isNil(identity)) {
             throw new ActivepiecesError({ code: ErrorCode.INVALID_OTP, params: {} })
@@ -85,14 +86,16 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         const preferredPlatformId = isNil(platformId)
             ? await authenticationService(log).selectCloudSignInPlatformId({ identityId: verifiedIdentity.id })
             : platformId
-        rejectedPromiseHandler(telemetry(log).trackIdentity({
+        rejectedPromiseHandler(trackForIdentity({
             identityId: verifiedIdentity.id,
             platformId: preferredPlatformId,
             event: {
                 name: TelemetryEventName.EMAIL_CODE_VERIFIED,
                 payload: { needsNameStep: isNil(preferredPlatformId) },
             },
+            log,
         }), log)
+        const signUp: SignUpContext = { method: SignUpMethod.EMAIL_CODE, attribution }
 
         if (!isNil(platformId)) {
             const mayJoin = await mayJoinPlatform({ email, platformId, identity: verifiedIdentity, log })
@@ -102,34 +105,18 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
                     params: { message: 'User is not invited to the platform' },
                 })
             }
-            const user = await userService(log).getOrCreateWithProject({
-                identity: verifiedIdentity,
-                platformId,
-            })
-            await userInvitationsService(log).provisionUserInvitation({ email })
-            return authenticationUtils(log).getProjectAndToken({
-                userId: user.id,
-                platformId,
-                projectId: null,
-            })
+            return joinPlatform({ identity: verifiedIdentity, platformId, signUp, log })
         }
 
         if (!isNil(preferredPlatformId)) {
             await assertPlatformAuthIsOpenTo({ email, platformId: preferredPlatformId, log })
-            const user = await userService(log).getOrCreateWithProject({
-                identity: verifiedIdentity,
-                platformId: preferredPlatformId,
-            })
-            return authenticationUtils(log).getProjectAndToken({
-                userId: user.id,
-                platformId: preferredPlatformId,
-                projectId: null,
-            })
+            return joinPlatform({ identity: verifiedIdentity, platformId: preferredPlatformId, signUp, log })
         }
-        return authenticationUtils(log).provisionOrOnboard({ identityId: verifiedIdentity.id })
+        const response = await authenticationUtils(log).provisionOrOnboard({ identityId: verifiedIdentity.id, signUp })
+        return { response, isNewUser: true }
     },
 
-    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
+    async completeSignUp({ identityId, fullName, attribution }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
         const writeNames = async (): Promise<void> => {
@@ -142,23 +129,50 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
             isFirstPlatform: true,
             callerTokenVersion: undefined,
             beforeProvision: writeNames,
+            signUp: { method: SignUpMethod.EMAIL_CODE, attribution },
         })
         return { response, signedUp: provisioned }
     },
 })
 
+async function joinPlatform({ identity, platformId, signUp, log }: JoinPlatformParams): Promise<VerifyCodeResult> {
+    const existingUser = await userService(log).getOneByIdentityAndPlatform({ identityId: identity.id, platformId })
+    const user = await userService(log).getOrCreateWithProject({
+        identity,
+        platformId,
+        signUp,
+    })
+    await userInvitationsService(log).provisionUserInvitation({ email: identity.email })
+    const response = await authenticationUtils(log).getProjectAndToken({
+        userId: user.id,
+        platformId,
+        projectId: null,
+    })
+    return { response, isNewUser: isNil(existingUser) }
+}
+
 async function trackEmailCodeRequested({ identityId, platformId, isNewIdentity, log }: TrackEmailCodeRequestedParams): Promise<void> {
     const preferredPlatformId = isNil(platformId)
         ? await authenticationService(log).selectCloudSignInPlatformId({ identityId })
         : platformId
-    await telemetry(log).trackIdentity({
+    await trackForIdentity({
         identityId,
         platformId: preferredPlatformId,
         event: {
             name: TelemetryEventName.EMAIL_CODE_REQUESTED,
             payload: { isNewIdentity },
         },
+        log,
     })
+}
+
+async function trackForIdentity({ identityId, platformId, event, log }: TrackForIdentityParams): Promise<void> {
+    const user = isNil(platformId) ? null : await userService(log).getOneByIdentityAndPlatform({ identityId, platformId })
+    if (!isNil(user) && !isNil(platformId)) {
+        await telemetry(log).trackUser({ userId: user.id, platformId, event })
+        return
+    }
+    await telemetry(log).trackIdentity({ identityId, platformId, event })
 }
 
 async function assertPlatformAuthIsOpenTo({ email, platformId, log }: PlatformGateParams): Promise<void> {
@@ -188,6 +202,25 @@ type TrackEmailCodeRequestedParams = {
     log: FastifyBaseLogger
 }
 
+type TrackForIdentityParams = {
+    identityId: string
+    platformId: string | null
+    event: TelemetryEvent
+    log: FastifyBaseLogger
+}
+
+type JoinPlatformParams = {
+    identity: UserIdentity
+    platformId: string
+    signUp: SignUpContext
+    log: FastifyBaseLogger
+}
+
+type VerifyCodeResult = {
+    response: AuthenticationResponse
+    isNewUser: boolean
+}
+
 type RequestCodeParams = {
     email: string
     platformId: string | null
@@ -203,12 +236,14 @@ type CompleteSignUpResult = {
 type CompleteSignUpParams = {
     identityId: string
     fullName: string
+    attribution: AttributionParams | undefined
 }
 
 type VerifyCodeParams = {
     email: string
     code: string
     platformId: string | null
+    attribution: AttributionParams | undefined
 }
 
 type PlatformGateParams = {

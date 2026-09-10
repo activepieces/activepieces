@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, pickTelemetryPii, PlatformRole, PrincipalType, Project, ProjectType, SsoDomainVerificationStatus, TelemetryEvent, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyRequest } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -8,6 +8,8 @@ import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
+import { signUpSideEffects } from './attribution/sign-up-side-effects'
+import { SignUpContext } from './attribution/user-attribution.service'
 import { accessTokenManager } from './lib/access-token-manager'
 import { signupNames } from './lib/signup-names'
 import { userIdentityService } from './user-identity/user-identity-service'
@@ -113,9 +115,10 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async provisionOrOnboard({ identityId }: ProvisionOrOnboardParams): Promise<AuthenticationResponse> {
+    async provisionOrOnboard({ identityId, signUp }: ProvisionOrOnboardParams): Promise<AuthenticationResponse> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         if (!identity.verified || signupNames.isPlaceholderName(identity)) {
+            signUpSideEffects(log).onOnboardingDeferred({ identityId, signUp })
             return this.getOnboardingResponse({ identityId })
         }
         const { response } = await platformService(log).createPlatformWithProject({
@@ -124,6 +127,7 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
             invalidatePreviousTokens: false,
             isFirstPlatform: true,
             callerTokenVersion: undefined,
+            signUp,
         })
         return response
     },
@@ -208,27 +212,33 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         user,
         identity,
         projectId,
+        signUp,
     }: SendTelemetryParams): Promise<void> {
         try {
-            if (!isNil(user.platformId)) {
-                await telemetry(log).identify({ identity, platformId: user.platformId, user })
+            if (isNil(user.platformId)) {
+                return
             }
-            await telemetry(log).trackProject({
-                projectId,
-                event: {
-                    name: TelemetryEventName.SIGNED_UP,
-                    payload: {
-                        userId: user.id,
-                        projectId,
-                        ...pickTelemetryPii({
-                            edition: system.getEdition(),
-                            email: identity.email,
-                            firstName: identity.firstName,
-                            lastName: identity.lastName,
-                        }),
-                    },
+            await telemetry(log).identify({ identity, platformId: user.platformId, user, projectId: projectId ?? undefined, attribution: signUp.attribution })
+            const event: TelemetryEvent = {
+                name: TelemetryEventName.SIGNED_UP,
+                payload: {
+                    userId: user.id,
+                    projectId: projectId ?? '',
+                    method: signUp.method,
+                    ...signUp.attribution,
+                    ...pickTelemetryPii({
+                        edition: system.getEdition(),
+                        email: identity.email,
+                        firstName: identity.firstName,
+                        lastName: identity.lastName,
+                    }),
                 },
-            })
+            }
+            if (isNil(projectId)) {
+                await telemetry(log).trackUser({ userId: user.id, platformId: user.platformId, event })
+                return
+            }
+            await telemetry(log).trackProject({ projectId, event, actorUserId: user.id })
         }
         catch (e) {
             log.warn({ error: e }, '[authenticationUtils#sendTelemetry] Failed to send telemetry')
@@ -276,7 +286,8 @@ function findPersonalProject(projects: Project[], userId: string): Project | und
 type SendTelemetryParams = {
     identity: UserIdentity
     user: User
-    projectId: string
+    projectId: string | null
+    signUp: SignUpContext
 }
 
 type AssertDomainIsAllowedParams = {
@@ -301,6 +312,7 @@ type AssertUserIsInvitedToPlatformOrProjectParams = {
 
 type ProvisionOrOnboardParams = {
     identityId: string
+    signUp: SignUpContext
 }
 
 type GetOnboardingResponseParams = {

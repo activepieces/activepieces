@@ -3,7 +3,14 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Layers, LucideIcon, Mail, User, Workflow } from 'lucide-react';
+import {
+  CreditCard,
+  Layers,
+  LucideIcon,
+  Mail,
+  User,
+  Workflow,
+} from 'lucide-react';
 
 const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   [TelemetryEventName.SIGNED_UP]: {
@@ -86,6 +93,46 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'mcp',
     label: t('MCP tool called'),
   },
+  [TelemetryEventName.ONBOARDING_COMPLETED]: {
+    group: 'accounts',
+    label: t('Onboarding completed'),
+  },
+  [TelemetryEventName.INVITE_SENT]: {
+    group: 'accounts',
+    label: t('Invitation sent'),
+  },
+  [TelemetryEventName.INVITE_ACCEPTED]: {
+    group: 'accounts',
+    label: t('Invitation accepted'),
+  },
+  [TelemetryEventName.FLOW_RUN_FIRST]: {
+    group: 'flows',
+    label: t('First flow run'),
+  },
+  [TelemetryEventName.CHECKOUT_STARTED]: {
+    group: 'billing',
+    label: t('Checkout started'),
+  },
+  [TelemetryEventName.PLAN_UPGRADED]: {
+    group: 'billing',
+    label: t('Plan upgraded'),
+  },
+  [TelemetryEventName.PLAN_CANCELLED]: {
+    group: 'billing',
+    label: t('Plan cancelled'),
+  },
+  [TelemetryEventName.PLAN_REACTIVATED]: {
+    group: 'billing',
+    label: t('Plan reactivated'),
+  },
+  [TelemetryEventName.TRIAL_STARTED]: {
+    group: 'billing',
+    label: t('Trial started'),
+  },
+  [TelemetryEventName.SALES_HANDOFF_CLICKED]: {
+    group: 'billing',
+    label: t('Contacted sales'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {
@@ -95,6 +142,7 @@ const buildGroups = (): TrackedEventGroup[] => {
     { id: 'emailCodes', title: t('Emailed sign-in codes'), icon: Mail },
     { id: 'flows', title: t('Flows and the builder'), icon: Workflow },
     { id: 'mcp', title: t('MCP'), icon: Layers },
+    { id: 'billing', title: t('Billing'), icon: CreditCard },
   ];
   return definitions
     .map((definition) => ({
@@ -112,7 +160,12 @@ const buildGroups = (): TrackedEventGroup[] => {
 
 export const trackedEventsCatalog = { buildEventLabels, buildGroups };
 
-export type TrackedEventGroupId = 'accounts' | 'emailCodes' | 'flows' | 'mcp';
+export type TrackedEventGroupId =
+  | 'accounts'
+  | 'emailCodes'
+  | 'flows'
+  | 'mcp'
+  | 'billing';
 
 export type TrackedEvent = {
   group: TrackedEventGroupId;

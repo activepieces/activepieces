@@ -1,8 +1,9 @@
 import { createHash } from 'crypto'
 import { isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, Project, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { AuthenticationResponse, PiecesFilterType, PlatformRole, PrincipalType, Project, ProjectType, SignUpMethod, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { signUpSideEffects } from '../../authentication/attribution/sign-up-side-effects'
 import { accessTokenManager } from '../../authentication/lib/access-token-manager'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { platformService } from '../../platform/platform.service'
@@ -140,6 +141,13 @@ const getOrCreateUser = async (
         platformId: params.platformId,
         identityId: identity.id,
         platformRole: PlatformRole.MEMBER,
+    })
+    signUpSideEffects(log).onUserCreated({
+        user,
+        identity,
+        platformId: params.platformId,
+        projectId: null,
+        signUp: { method: SignUpMethod.MANAGED },
     })
     return user
 }

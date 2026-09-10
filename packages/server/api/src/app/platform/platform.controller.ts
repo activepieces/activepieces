@@ -1,9 +1,11 @@
 import { ActivepiecesError, ApId, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
-import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdatePlatformRequestBody } from '@activepieces/shared'
+import { ApEdition, AuthenticationResponse, CreatePlatformRequest, FileType, hasActiveSubscription, PLATFORM_PURGE_DELAY_DAYS, PlatformWithoutSensitiveData, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEventName, UpdatePlatformRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { signUpMethodUtils } from '../authentication/attribution/sign-up-method'
+import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { chatVisibilityHelper } from '../ee/agent/chat-visibility-helper'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
@@ -12,9 +14,11 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { beginPlatformTeardown } from '../ee/platform/platform-teardown-jobs'
 import { fileService } from '../file/file.service'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { telemetry } from '../helper/telemetry.utils'
 import { userIdentityHelper } from '../helper/user-identity-helper'
 import { userService } from '../user/user-service'
 import { platformService } from './platform.service'
@@ -35,13 +39,25 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
         const identityId = isOnboarding
             ? req.principal.id
             : (await userService(req.log).getOneOrFail({ id: req.principal.id })).identityId
-        const { response } = await platformService(req.log).createPlatformWithProject({
+        const identity = await userIdentityService(req.log).getOneOrFail({ id: identityId })
+        const { response, provisioned } = await platformService(req.log).createPlatformWithProject({
             identityId,
             name: req.body.name,
             invalidatePreviousTokens: isOnboarding,
             isFirstPlatform: isOnboarding,
             callerTokenVersion: req.principal.type === PrincipalType.ONBOARDING ? req.principal.tokenVersion : undefined,
+            signUp: isOnboarding ? { method: signUpMethodUtils.fromProvider({ provider: identity.provider }) } : undefined,
         })
+        if (isOnboarding && provisioned && !isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(req.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.ONBOARDING_COMPLETED,
+                    payload: { userId: response.id, platformId: response.platformId },
+                },
+            }), req.log)
+        }
         return response
     })
 

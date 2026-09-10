@@ -1,13 +1,12 @@
 import { apId, RoleType } from '@activepieces/core-utils'
-import { PlatformRole, PrincipalType, ProjectType } from '@activepieces/shared'
+import { PlatformRole, PrincipalType, ProjectType, SignUpMethod } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { authenticationUtils } from '../../../../src/app/authentication/authentication-utils'
+import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { userService } from '../../../../src/app/user/user-service'
 import { generateMockToken } from '../../../helpers/auth'
 import {
-    createMockPlatform,
     createMockProject,
     createMockProjectMember,
     createMockProjectRole,
@@ -43,6 +42,7 @@ describe('Auto-create personal projects toggle', () => {
         await userService(mockLog).getOrCreateWithProject({
             identity,
             platformId: mockPlatform.id,
+            signUp: { method: SignUpMethod.PASSWORD },
         })
 
         const projectsAfter = await databaseConnection().getRepository('project').count({ where: { platformId: mockPlatform.id, type: ProjectType.PERSONAL } })
@@ -62,6 +62,7 @@ describe('Auto-create personal projects toggle', () => {
         const user = await userService(mockLog).getOrCreateWithProject({
             identity,
             platformId: mockPlatform.id,
+            signUp: { method: SignUpMethod.PASSWORD },
         })
 
         const projectsAfter = await databaseConnection().getRepository('project').count({ where: { platformId: mockPlatform.id, type: ProjectType.PERSONAL } })
