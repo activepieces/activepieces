@@ -1,6 +1,9 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { kickcallClient, KickcallAuth } from './client';
 
+const FIND_WORKSHEET_ROWS_MAX_LIMIT = 1000;
+const FIND_WORKSHEET_ROWS_MAX_PAGES = 100;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -189,7 +192,10 @@ async function findWorksheetRows({
   matchType,
   limit,
 }: FindWorksheetRowsParams): Promise<WorksheetRow[]> {
-  const safeLimit = Math.max(1, Math.floor(limit));
+  const safeLimit = Math.min(
+    FIND_WORKSHEET_ROWS_MAX_LIMIT,
+    Math.max(1, Math.floor(limit)),
+  );
   const pageSize = Math.min(100, safeLimit);
   const columns = await listWorksheetColumns({
     auth,
@@ -199,8 +205,12 @@ async function findWorksheetRows({
   });
   const rows: WorksheetRow[] = [];
   let page = 1;
-  const maxPages = 100;
-  while (rows.length < safeLimit && page <= maxPages) {
+  while (rows.length < safeLimit) {
+    if (page > FIND_WORKSHEET_ROWS_MAX_PAGES) {
+      throw new Error(
+        `Kickcall find worksheet rows stopped after ${FIND_WORKSHEET_ROWS_MAX_PAGES} pages (${rows.length} rows). Results are incomplete.`,
+      );
+    }
     const queryParams: Record<string, string> = {
       include: 'cells',
       per_page: String(pageSize),

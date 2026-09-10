@@ -43,13 +43,20 @@ export const findWorksheetRowsAction = createAction({
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Maximum number of matching rows to return.',
+      description:
+        'Maximum number of matching rows to return (1-1000). Defaults to 1.',
       required: false,
       defaultValue: 1,
     }),
   },
   async run({ auth, propsValue }) {
     const limit = propsValue.limit ?? 1;
+    if (typeof limit !== 'number' || !Number.isFinite(limit) || limit < 1) {
+      throw new Error('Limit must be a number between 1 and 1000');
+    }
+    if (limit > 1000) {
+      throw new Error('Limit must be at most 1000');
+    }
     const matchType = propsValue.match_type;
     if (matchType !== 'cont' && matchType !== 'eq') {
       throw new Error('Match type must be Contains or Exact');

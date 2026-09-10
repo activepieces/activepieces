@@ -8,6 +8,8 @@ import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framewor
 import { kickcallAuth } from '../auth';
 import { KICKCALL_BASE_URL } from './constants';
 
+const MAX_PAGINATION_PAGES = 1000;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -134,9 +136,8 @@ async function bearerRequestAllPages({
 }): Promise<{ data: unknown[] }> {
   const rows: unknown[] = [];
   let page = 1;
-  const maxPages = 100;
   const perPage = requestedPerPage(queryParams);
-  while (page <= maxPages) {
+  while (page <= MAX_PAGINATION_PAGES) {
     const payload = await bearerRequest({
       auth,
       method: HttpMethod.GET,
@@ -152,14 +153,16 @@ async function bearerRequestAllPages({
     const pages = totalPages(payload);
     if (pages !== undefined) {
       if (page >= pages) {
-        break;
+        return { data: rows };
       }
     } else if (pageRows.length === 0 || pageRows.length < perPage) {
-      break;
+      return { data: rows };
     }
     page += 1;
   }
-  return { data: rows };
+  throw new Error(
+    `Kickcall list stopped after ${MAX_PAGINATION_PAGES} pages (${rows.length} items). Results are incomplete.`,
+  );
 }
 
 async function marketplaceRequest<T extends HttpMessageBody>({
