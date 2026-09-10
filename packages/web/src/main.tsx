@@ -14,7 +14,10 @@ window.addEventListener('vite:preloadError', (event) => {
 });
 
 window.addEventListener('error', (event) => {
-  if (errorReporting.isOpaqueCrossOriginScriptError(event)) {
+  if (
+    window.location.pathname.startsWith('/embed') &&
+    errorReporting.isOpaqueCrossOriginScriptError(event)
+  ) {
     return;
   }
   if (errorReporting.isChunkLoadError(event.error ?? event.message)) {

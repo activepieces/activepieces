@@ -93,6 +93,27 @@ describe('EmbeddingAnalyticsLoader', () => {
     ]);
   });
 
+  it('removes a script that fails to load so a later attempt is not blocked', () => {
+    const warnSpy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    mocks.embedState.clarityProjectId = 'abc123xyz';
+
+    render({ root });
+    const script = document.head.querySelector('script');
+    expect(script).not.toBeNull();
+    act(() => {
+      script?.dispatchEvent(new Event('error'));
+    });
+
+    expect(scriptSources()).toEqual([]);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Microsoft Clarity failed to load'),
+      'https://www.clarity.ms/tag/abc123xyz',
+    );
+    warnSpy.mockRestore();
+  });
+
   it('ignores ids that do not match the provider format', () => {
     const warnSpy = vi
       .spyOn(console, 'warn')

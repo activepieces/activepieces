@@ -61,7 +61,7 @@ function loadGoogleTagManager({ id }: { id: string }) {
   }
   window.dataLayer = window.dataLayer ?? [];
   window.dataLayer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
-  appendScript({ src });
+  appendScript({ src, name: 'Google Tag Manager' });
 }
 
 function loadClarity({ id }: { id: string }) {
@@ -70,7 +70,7 @@ function loadClarity({ id }: { id: string }) {
     return;
   }
   window.clarity = window.clarity ?? createClarityQueue();
-  appendScript({ src });
+  appendScript({ src, name: 'Microsoft Clarity' });
 }
 
 function createClarityQueue(): ClarityQueue {
@@ -85,10 +85,14 @@ function isScriptLoaded({ src }: { src: string }) {
   return !isNil(document.querySelector(`script[src="${src}"]`));
 }
 
-function appendScript({ src }: { src: string }) {
+function appendScript({ src, name }: { src: string; name: string }) {
   const script = document.createElement('script');
   script.async = true;
   script.src = src;
+  script.addEventListener('error', () => {
+    script.remove();
+    console.warn(`Activepieces embed: ${name} failed to load`, src);
+  });
   document.head.appendChild(script);
 }
 
