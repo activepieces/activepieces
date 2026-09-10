@@ -14,7 +14,8 @@ const DISPOSABLE_DOMAIN_CACHE_KEY = 'zerobounce:disposable-domains:v1'
 const DISPOSABLE_DOMAIN_CACHE_SIZE = 500
 
 const REFUSED_STATUSES = new Set(['spamtrap', 'abuse'])
-const REFUSED_DO_NOT_MAIL_SUB_STATUSES = new Set(['disposable', 'toxic', 'possible_trap', 'global_suppression'])
+const REFUSED_DO_NOT_MAIL_SUB_STATUSES = new Set(['disposable', 'toxic', 'possible_trap', 'global_suppression', 'mx_forward'])
+const DOMAIN_LEVEL_SUB_STATUSES = new Set(['disposable', 'mx_forward'])
 
 function apiKey(): string | undefined {
     const raw = system.get(AppSystemProp.ZEROBOUNCE_API_KEY)?.trim()
@@ -38,8 +39,8 @@ function refusedBy(verdict: ValidateResponse): boolean {
     return status === 'do_not_mail' && REFUSED_DO_NOT_MAIL_SUB_STATUSES.has(verdict.sub_status?.toLowerCase() ?? '')
 }
 
-function isDisposableVerdict(verdict: ValidateResponse): boolean {
-    return verdict.status?.toLowerCase() === 'do_not_mail' && verdict.sub_status?.toLowerCase() === 'disposable'
+function isDomainLevelVerdict(verdict: ValidateResponse): boolean {
+    return verdict.status?.toLowerCase() === 'do_not_mail' && DOMAIN_LEVEL_SUB_STATUSES.has(verdict.sub_status?.toLowerCase() ?? '')
 }
 
 async function cachedDisposableDomains({ log }: CachedDisposableDomainsParams): Promise<string[]> {
@@ -93,7 +94,7 @@ async function refuses({ email, log }: RefusesParams): Promise<boolean> {
         log.error({ error: response.data.error }, '[zerobounce#refuses] zerobounce answered with an error, letting the address through: check the api key and the credit balance')
         return false
     }
-    if (isDisposableVerdict(response.data)) {
+    if (isDomainLevelVerdict(response.data)) {
         await rememberDisposableDomain({ domain, log })
     }
     const refused = refusedBy(response.data)

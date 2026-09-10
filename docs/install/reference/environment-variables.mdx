@@ -212,10 +212,11 @@ self-hosted instance needs neither a Cloudflare nor a ZeroBounce account.
 | `AP_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key, used to verify a solved challenge. | `None` |
 
 With `AP_ZEROBOUNCE_API_KEY` set, a sign-up is refused when ZeroBounce reports
-the address as disposable, toxic, a spam trap, an abuse address or globally
-suppressed. Role addresses such as `info@` and `sales@` are accepted, and so is
-an address whose mailbox ZeroBounce cannot confirm. A member who already holds an
-accepted invitation is never refused. One credit is spent per address, and only
+the address as disposable, toxic, a spam trap, an abuse address, globally
+suppressed, or on a domain whose mail is forwarded elsewhere (`mx_forward`, the
+shape of a throwaway-domain farm). Role addresses such as `info@` and `sales@`
+are accepted, and so is an address whose mailbox ZeroBounce cannot confirm. A
+member who already holds an accepted invitation is never refused. One credit is spent per address, and only
 for an address that has no account yet. If ZeroBounce cannot be reached, or
 answers that the key is invalid or out of credits, the sign-up is allowed through
 and the reason is logged — a validation outage never blocks sign-up.
