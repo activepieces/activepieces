@@ -90,7 +90,7 @@ jobs:
       - name: Create git tag
         run: |
           git tag -f ${{ inputs.tag }}
-          git push origin ${{ inputs.tag }} --force
+          git push origin refs/tags/${{ inputs.tag }}:refs/tags/${{ inputs.tag }} --force
 
       - name: Create or update changelog via release-drafter
         if: ${{ !contains(inputs.tag, '-rc') || inputs.publish_rc_release }}
