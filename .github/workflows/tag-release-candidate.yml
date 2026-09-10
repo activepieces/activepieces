@@ -12,7 +12,7 @@ jobs:
   authorize:
     uses: ./.github/workflows/authorize-dispatcher.yml
     with:
-      team: ${{ vars.RELEASE_RUNNERS_TEAM }}
+      team: ${{ vars.RUNNERS_TEAM }}
     secrets: inherit
 
   tag-release-candidate:

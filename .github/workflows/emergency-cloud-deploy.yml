@@ -7,7 +7,7 @@ jobs:
   authorize:
     uses: ./.github/workflows/authorize-dispatcher.yml
     with:
-      team: ${{ vars.DEPLOY_RUNNERS_TEAM }}
+      team: ${{ vars.RUNNERS_TEAM }}
     secrets: inherit
 
   Release:
