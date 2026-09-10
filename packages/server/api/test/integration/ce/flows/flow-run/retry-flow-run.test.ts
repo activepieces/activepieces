@@ -1,3 +1,4 @@
+import { apId } from '@activepieces/core-utils'
 import { FileCompression, FileType, FlowRetryStrategy, FlowRunStatus, FlowTriggerType, FlowVersionState, RunEnvironment, StepOutputStatus, StepOutputType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { fileService } from '../../../../../src/app/file/file.service'
@@ -103,6 +104,48 @@ describe('Retry flow run', () => {
         const body = response.json()
         expect(body.id).not.toBe(flowRun.id)
         expect(body.flowId).toBe(flowRun.flowId)
+    })
+
+    it('should keep parentRunId but drop parentWaitpointId when retrying on latest version', async () => {
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+        })
+        const parentRunId = apId()
+        await db.update('flow_run', flowRun.id, { parentRunId, parentWaitpointId: apId() })
+
+        const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            projectId: ctx.project.id,
+        })
+
+        expect(response.statusCode).toBe(200)
+        const retried = response.json()
+        expect(retried.id).not.toBe(flowRun.id)
+        expect(retried.parentRunId).toBe(parentRunId)
+        expect(retried.parentWaitpointId).toBeUndefined()
+    })
+
+    it('should refuse to retry a run that started mid-graph', async () => {
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+        })
+        await db.update('flow_run', flowRun.id, { dispatchIndex: 3 })
+
+        const fromFailedStep = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            projectId: ctx.project.id,
+        })
+        expect(fromFailedStep.statusCode).toBe(409)
+        expect(fromFailedStep.json().params.message).toContain('started from a step inside its flow')
+
+        const onLatestVersion = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            projectId: ctx.project.id,
+        })
+        expect(onLatestVersion.statusCode).toBe(409)
+
+        const notRetried = await db.findOneByOrFail<{ id: string, status: string }>('flow_run', { id: flowRun.id })
+        expect(notRetried.status).toBe(FlowRunStatus.FAILED)
     })
 
     it('should return 400 for invalid flow run id', async () => {
