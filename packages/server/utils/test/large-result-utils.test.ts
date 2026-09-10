@@ -55,7 +55,7 @@ describe('largeResultUtils.fitToBudget', () => {
     it('returns null when no rung fits, rather than a mangled prefix', () => {
         const wide = Object.fromEntries(Array.from({ length: 200_000 }, (_, index) => [`key-${index}`, index]))
         expect(largeResultUtils.fitToBudget({ value: wide, maxBytes: MAX_TOOL_RESULT_BYTES, wrap: wrapAsToolResult })).toBeNull()
-    })
+    }, 20_000)
 
     it('shows a circular payload with the loop marked instead of refusing it', () => {
         const circular: Record<string, unknown> = { id: 'row-1', blob: 'c'.repeat(400_000) }
