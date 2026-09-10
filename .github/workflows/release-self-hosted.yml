@@ -21,8 +21,6 @@ on:
 jobs:
   authorize:
     uses: ./.github/workflows/authorize-dispatcher.yml
-    with:
-      team: ${{ vars.SHIP_TEAM }}
     secrets: inherit
 
   # Preflight: build the image and run functional smoke tests + the perf-regression

@@ -11,8 +11,6 @@ on:
 jobs:
   authorize:
     uses: ./.github/workflows/authorize-dispatcher.yml
-    with:
-      team: ${{ vars.SHIP_TEAM }}
     secrets: inherit
 
   tag-release-candidate:

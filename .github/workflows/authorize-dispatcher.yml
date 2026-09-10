@@ -2,16 +2,6 @@ name: Authorize Dispatcher
 
 on:
   workflow_call:
-    inputs:
-      team:
-        description: 'GitHub team slug allowed to run the caller workflow'
-        required: true
-        type: string
-      org:
-        description: 'GitHub org owning the team'
-        required: false
-        type: string
-        default: activepieces
     secrets:
       ORG_READ_TOKEN:
         description: 'Fine-grained PAT or GitHub App token with read:org scope'
@@ -23,17 +13,13 @@ jobs:
     steps:
       - uses: actions/github-script@v7
         env:
-          ORG: ${{ inputs.org }}
-          TEAM: ${{ inputs.team }}
+          ORG: activepieces
+          TEAM: ship-team
           ACTOR: ${{ github.triggering_actor }}
         with:
           github-token: ${{ secrets.ORG_READ_TOKEN }}
           script: |
             const { ORG, TEAM, ACTOR } = process.env;
-            if (!TEAM) {
-              core.setFailed(`No team configured — set the caller workflow's 'team' input (usually via a repo variable).`);
-              return;
-            }
             try {
               const res = await github.rest.teams.getMembershipForUserInOrg({
                 org: ORG,
