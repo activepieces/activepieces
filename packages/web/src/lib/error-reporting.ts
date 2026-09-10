@@ -133,11 +133,16 @@ function flushBuffered(): void {
   pending.forEach(dispatch);
 }
 
+function isOpaqueCrossOriginScriptError(event: ErrorEvent): boolean {
+  return isNil(event.error) && event.message === 'Script error.';
+}
+
 export const errorReporting = {
   init,
   report,
   flushBuffered,
   isChunkLoadError,
+  isOpaqueCrossOriginScriptError,
 };
 
 export type FrontendErrorReport = {

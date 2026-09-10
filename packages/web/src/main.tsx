@@ -14,6 +14,9 @@ window.addEventListener('vite:preloadError', (event) => {
 });
 
 window.addEventListener('error', (event) => {
+  if (errorReporting.isOpaqueCrossOriginScriptError(event)) {
+    return;
+  }
   if (errorReporting.isChunkLoadError(event.error ?? event.message)) {
     if (reloadOnceForStaleChunk('window-chunk')) {
       return;
