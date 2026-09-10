@@ -209,6 +209,7 @@ export type UpdateProjectContextRequest = {
 }
 
 export type ExecuteAgentToolRequest = {
+    runId?: string
     toolName: string
     toolInput: Record<string, unknown>
     platformId: string
@@ -219,6 +220,7 @@ export type ExecuteAgentToolRequest = {
 
 export type ExecutePieceToolRequest = {
     conversationId: string
+    runId?: string
     flowRunId?: string
     toolName: string
     instruction: string
@@ -236,6 +238,7 @@ export type ExecutePieceToolResponse = {
 
 export type ExecuteKnowledgeBaseToolRequest = {
     conversationId: string
+    runId?: string
     toolName: string
     provider?: AIProviderName
     providerConfigId?: string
@@ -249,6 +252,8 @@ export type ExecuteKnowledgeBaseToolResponse = {
 
 export type ExecuteFlowToolRequest = {
     conversationId: string
+    runId?: string
+    flowRunId?: string
     toolName: string
     flowId: string
     flowVersionId?: string

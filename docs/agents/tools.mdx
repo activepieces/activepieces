@@ -57,6 +57,29 @@ Paste the URL and pick how it authenticates: none, an access token, an API key, 
 
 Activepieces lists the server's tools as soon as you add it, so you know it works before an agent depends on it.
 
+## Seeing what an agent did
+
+**Actions leave a record.** On plans with audit logs, open **Platform Admin → Security → Audit Logs** and you get the agent, the app, the action, the account it used and whether the run came from chat, the agent page or a flow step. Reads are left out, so the log stays about what changed rather than what was looked at, and the values the agent passed to the action are never stored.
+
+A row says whether the action succeeded or failed, so an attempt that errored is still on the record rather than missing. What each tool type leaves behind:
+
+| Tool | Audit event |
+| --- | --- |
+| Piece action | Yes, when it is not a read |
+| Flow tool | Yes, naming the flow the agent chose. A flow that runs in the background is recorded without an outcome, because the row is written when it starts |
+| MCP server tool | No |
+| Knowledge base search | No, it is a read |
+| Code the agent wrote and ran | No |
+| Email the agent sent | No |
+
+<Note>
+An agent will not change itself in a reply where it already read something. Ask it to update its instructions and it does; ask it to check a sheet **and** update its instructions in one message and it declines the change, because anything it just read could have told it to. Send the change on its own and it goes through, or make it in the Configure panel.
+</Note>
+
+MCP server tools, code and email are the gaps. MCP tools carry no read-or-write marking, so recording them would fill the log with lookups. If you need a trail for a step, use a piece action or a flow.
+
+See [Agent action executed](/admin-guide/security/audit-logs/agent-action-executed) for the event itself, and [Event Streaming](/admin-guide/guides/event-streaming) to send it somewhere in real time.
+
 <Tip>
 When an agent keeps getting something wrong, ask what it was missing. Usually it needed somewhere to look something up, not a longer prompt.
 </Tip>

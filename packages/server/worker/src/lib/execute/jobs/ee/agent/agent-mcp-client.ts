@@ -5,6 +5,7 @@ import { createMCPClient } from '@ai-sdk/mcp'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentWorkerTools } from './agent-worker-tools'
+import { TaintState } from './tools/tool-primitives'
 
 const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 const MCP_OFFLOAD_BYTES = 64 * 1024
@@ -279,9 +280,10 @@ async function maybeOffloadMcpResult({ result, toolName, saveLargeResult }: {
     return { content: [{ type: 'text', text: agentAiUtils.buildLargeResultPreview({ payload: result, byteSize, fileId, label: toolName }) }] }
 }
 
-function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveLargeResult }: {
+function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelectedAuth, saveLargeResult }: {
     mcpToolSet: Record<string, unknown>
     brokenConnectors: Set<string>
+    taintState: TaintState
     getSelectedAuth?: (params: { pieceName: string }) => string | undefined
     saveLargeResult?: (args: { json: string, fileName: string }) => Promise<string | null>
 }): Record<string, unknown> {
@@ -302,6 +304,7 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, getSelectedAuth, saveL
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
+                taintState.tainted = true
                 const { data: toolResult, error } = await tryCatch(() => agentWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
                     timeoutMs: agentWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,

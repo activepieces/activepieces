@@ -1155,6 +1155,9 @@
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
       ],
+      "@activepieces/piece-sage-accounting": [
+        "packages/pieces/community/sage-accounting/src/index.ts"
+      ],
       "@activepieces/piece-saleor": [
         "packages/pieces/community/saleor/src/index.ts"
       ],
