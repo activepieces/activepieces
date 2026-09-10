@@ -10,7 +10,7 @@ import { formId } from '../common/forms';
 import { subscriberEmail, subscriberFirstName } from '../common/subscribers';
 import { allFields } from '../common/custom-fields';
 import { FORMS_API_ENDPOINT } from '../common/constants';
-import { fetchForms } from '../common/service';
+import { buildQueryParams, fetchForms } from '../common/service';
 import { tags } from '../common/tags';
 
 export const listForms = createAction({
@@ -102,13 +102,9 @@ export const listFormSubscriptions = createAction({
   async run(context) {
     const url = `${FORMS_API_ENDPOINT}/${context.propsValue.formId}/subscriptions`;
 
-    const body = {
-      api_secret: context.auth.secret_text,
-    };
-
     const request: HttpRequest = {
       url,
-      body,
+      queryParams: buildQueryParams(context.auth.secret_text),
       method: HttpMethod.GET,
     };
 
