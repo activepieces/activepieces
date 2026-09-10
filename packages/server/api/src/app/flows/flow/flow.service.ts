@@ -404,10 +404,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
 
             case FlowOperationType.CHANGE_FOLDER: {
-                await flowRepo().update(id, {
-                    folderId: operation.request.folderId,
+                const folderId = operation.request.folderId === UncategorizedFolderId ? null : operation.request.folderId
+                if (!isNil(folderId)) {
+                    await flowFolderService(log).getOneOrThrow({ projectId, folderId })
+                }
+                await flowRepo().update({ id, projectId }, {
+                    folderId,
                 })
-                log.info({ flow: { id }, folderId: operation.request.folderId }, 'Flow moved to folder')
+                log.info({ flow: { id }, folderId }, 'Flow moved to folder')
                 break
             }
 
@@ -823,6 +827,7 @@ async function applyStatusChange(params: {
 
 export const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
     if (folderId) {
+        await flowFolderService(log).getOneOrThrow({ projectId, folderId })
         return folderId
     }
     if (folderName) {
