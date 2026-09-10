@@ -39,10 +39,11 @@ const trigger = (): FlowVersion['trigger'] => ({
     },
 })
 
-const withAiStep = ({ pieceVersion, actionName = 'askAi', pieceName = AI_PIECE_NAME }: {
+const withAiStep = ({ pieceVersion, actionName = 'askAi', pieceName = AI_PIECE_NAME, input = {} }: {
     pieceVersion: string
     actionName?: string
     pieceName?: string
+    input?: Record<string, unknown>
 }): FlowVersion => baseVersion({
     ...trigger(),
     nextAction: {
@@ -56,7 +57,7 @@ const withAiStep = ({ pieceVersion, actionName = 'askAi', pieceName = AI_PIECE_N
             pieceName,
             pieceVersion,
             actionName,
-            input: {},
+            input,
             propertySettings: {},
         },
     },
@@ -65,6 +66,12 @@ const withAiStep = ({ pieceVersion, actionName = 'askAi', pieceName = AI_PIECE_N
 async function migratedVersionOf(version: FlowVersion): Promise<string | undefined> {
     const result = await migrateV26AiPieceCostBilling.migrate(version)
     return result.trigger.nextAction?.settings.pieceVersion
+}
+
+async function migratedInputOf(version: FlowVersion): Promise<Record<string, unknown> | undefined> {
+    const result = await migrateV26AiPieceCostBilling.migrate(version)
+    const step = result.trigger.nextAction
+    return step?.type === FlowActionType.PIECE ? step.settings.input : undefined
 }
 
 describe('migrateV26AiPieceCostBilling', () => {
@@ -94,6 +101,26 @@ describe('migrateV26AiPieceCostBilling', () => {
 
     it('leaves every other piece untouched', async () => {
         expect(await migratedVersionOf(withAiStep({ pieceVersion: '0.1.0', pieceName: '@activepieces/piece-openai' }))).toBe('0.1.0')
+    })
+
+    it('fills in the max steps an agent step needs, since the new version requires it and the engine applies no default', async () => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.0.5', actionName: 'run_agent', input: { prompt: 'hi' } }))
+        expect(input).toEqual({ prompt: 'hi', maxSteps: 20 })
+    })
+
+    it('keeps the max steps an agent step already chose', async () => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.6.0', actionName: 'run_agent', input: { maxSteps: 5 } }))
+        expect(input).toEqual({ maxSteps: 5 })
+    })
+
+    it('leaves the input of a non-agent AI action untouched', async () => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.4.5', actionName: 'askAi', input: { prompt: 'hi' } }))
+        expect(input).toEqual({ prompt: 'hi' })
+    })
+
+    it('leaves the input alone when the step is not being moved at all', async () => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.12.3', actionName: 'run_agent', input: { prompt: 'hi' } }))
+        expect(input).toEqual({ prompt: 'hi' })
     })
 
     it('advances the schema version so the migration runs once', async () => {
