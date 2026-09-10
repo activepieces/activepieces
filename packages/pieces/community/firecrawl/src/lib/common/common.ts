@@ -41,24 +41,6 @@ export async function saveFirecrawlFile(
   return { fileName, fileUrl };
 }
 
-export async function downloadAndSaveCrawlScreenshots(crawlResult: any, context: any): Promise<any[]> {
-
-  if (!crawlResult.data || !Array.isArray(crawlResult.data)) {
-    return crawlResult.data;
-  }
-
-  return Promise.all(
-    crawlResult.data.map(async (data: any) => {
-      if (!data.screenshot) {
-        return data;
-      }
-
-      const savedScreenshot = await saveFirecrawlFile(context, data.screenshot);
-      return { ...data, screenshot: savedScreenshot };
-    }),
-  );
-}
-
 // scrape, extract and crawl uses this function
 export function forJsonOutputFormat(jsonExtractionConfig: any): any {
 
