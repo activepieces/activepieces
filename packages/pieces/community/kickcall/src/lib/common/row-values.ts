@@ -1,3 +1,8 @@
+export const kickcallRowValues = {
+  toPartialRowValues,
+  applyClearedColumns,
+};
+
 function toPartialRowValues(values: unknown): Record<string, string> {
   if (typeof values !== 'object' || values === null || Array.isArray(values)) {
     throw new Error('Values must be an object of column fields');
@@ -35,8 +40,3 @@ function applyClearedColumns({
   }
   return nextValues;
 }
-
-export const kickcallRowValues = {
-  toPartialRowValues,
-  applyClearedColumns,
-};

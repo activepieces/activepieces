@@ -1,3 +1,7 @@
+export const kickcallNumbers = {
+  parsePositiveInteger,
+};
+
 function parsePositiveInteger({
   value,
   fallback,
@@ -30,7 +34,3 @@ function parsePositiveInteger({
   }
   return normalized;
 }
-
-export const kickcallNumbers = {
-  parsePositiveInteger,
-};

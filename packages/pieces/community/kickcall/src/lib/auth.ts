@@ -2,21 +2,6 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { KICKCALL_BASE_URL } from './common/constants';
 
-function httpStatusFromError(error: unknown): number | undefined {
-  if (typeof error !== 'object' || error === null || !('response' in error)) {
-    return undefined;
-  }
-  const response = error.response;
-  if (typeof response !== 'object' || response === null || !('status' in response)) {
-    return undefined;
-  }
-  const status = response.status;
-  if (typeof status !== 'number' || !Number.isFinite(status)) {
-    return undefined;
-  }
-  return status;
-}
-
 export const kickcallAuth = PieceAuth.CustomAuth({
   description: `Connect Kickcall using your business API key and email.
 
@@ -85,3 +70,18 @@ export const kickcallAuth = PieceAuth.CustomAuth({
     }
   },
 });
+
+function httpStatusFromError(error: unknown): number | undefined {
+  if (typeof error !== 'object' || error === null || !('response' in error)) {
+    return undefined;
+  }
+  const response = error.response;
+  if (typeof response !== 'object' || response === null || !('status' in response)) {
+    return undefined;
+  }
+  const status = response.status;
+  if (typeof status !== 'number' || !Number.isFinite(status)) {
+    return undefined;
+  }
+  return status;
+}

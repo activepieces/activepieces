@@ -1,3 +1,11 @@
+export const kickcallResponse = {
+  collectionRows,
+  totalPages,
+  namedOptionsFromCollection,
+  requestedPerPage,
+  isLastCollectionPage,
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -99,11 +107,3 @@ function isLastCollectionPage({
   }
   return pageRowsLength === 0 || pageRowsLength < perPage;
 }
-
-export const kickcallResponse = {
-  collectionRows,
-  totalPages,
-  namedOptionsFromCollection,
-  requestedPerPage,
-  isLastCollectionPage,
-};

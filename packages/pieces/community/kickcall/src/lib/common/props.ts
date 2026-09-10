@@ -3,55 +3,6 @@ import { kickcallAuth } from '../auth';
 import { kickcallClient, KickcallAuth } from './client';
 import { kickcallWorksheets } from './worksheets';
 
-function dropdownErrorPlaceholder(error: unknown): string {
-  const message = error instanceof Error ? error.message : 'Unknown error';
-  return `Error loading options: ${message}`;
-}
-
-function propId(value: unknown): string {
-  if (typeof value === 'string') {
-    return value.trim();
-  }
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return String(value);
-  }
-  return '';
-}
-
-async function locationOptions(auth: KickcallAuth | undefined) {
-  if (!auth) {
-    return {
-      disabled: true,
-      options: [],
-      placeholder: 'Connect your Kickcall account first',
-    };
-  }
-  try {
-    const payload = await kickcallClient.bearerRequestAllPages({
-      auth,
-      path: '/api/v1/business/locations',
-    });
-    const options = kickcallClient.namedOptionsFromCollection(payload);
-    if (options.length === 0) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'No locations found for this account',
-      };
-    }
-    return {
-      disabled: false,
-      options,
-    };
-  } catch (error: unknown) {
-    return {
-      disabled: true,
-      options: [],
-      placeholder: dropdownErrorPlaceholder(error),
-    };
-  }
-}
-
 export const locationIdDropdown = Property.Dropdown({
   auth: kickcallAuth,
   displayName: 'Location',
@@ -196,6 +147,88 @@ export const worksheetColumnsToClearProp = Property.MultiSelectDropdown({
     }),
 });
 
+export const worksheetRowValuesProp = Property.DynamicProperties({
+  auth: kickcallAuth,
+  displayName: 'Values',
+  description: 'Column values for the worksheet row.',
+  required: true,
+  refreshers: ['location_id', 'agent_id', 'worksheet_id'],
+  props: async ({ auth, location_id, agent_id, worksheet_id }) =>
+    worksheetTextColumnFields({
+      auth,
+      location_id,
+      agent_id,
+      worksheet_id,
+      requireProviderRequiredColumns: true,
+    }),
+});
+
+export const worksheetRowUpdateValuesProp = Property.DynamicProperties({
+  auth: kickcallAuth,
+  displayName: 'Values',
+  description:
+    'Column values to change. Leave fields empty to keep their current values.',
+  required: true,
+  refreshers: ['location_id', 'agent_id', 'worksheet_id'],
+  props: async ({ auth, location_id, agent_id, worksheet_id }) =>
+    worksheetTextColumnFields({
+      auth,
+      location_id,
+      agent_id,
+      worksheet_id,
+      requireProviderRequiredColumns: false,
+    }),
+});
+
+function dropdownErrorPlaceholder(error: unknown): string {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  return `Error loading options: ${message}`;
+}
+
+function propId(value: unknown): string {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return '';
+}
+
+async function locationOptions(auth: KickcallAuth | undefined) {
+  if (!auth) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Connect your Kickcall account first',
+    };
+  }
+  try {
+    const payload = await kickcallClient.bearerRequestAllPages({
+      auth,
+      path: '/api/v1/business/locations',
+    });
+    const options = kickcallClient.namedOptionsFromCollection(payload);
+    if (options.length === 0) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: 'No locations found for this account',
+      };
+    }
+    return {
+      disabled: false,
+      options,
+    };
+  } catch (error: unknown) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: dropdownErrorPlaceholder(error),
+    };
+  }
+}
+
 async function worksheetTextColumnOptions({
   auth,
   location_id,
@@ -307,36 +340,3 @@ async function worksheetTextColumnFields({
   }
   return fields;
 }
-
-export const worksheetRowValuesProp = Property.DynamicProperties({
-  auth: kickcallAuth,
-  displayName: 'Values',
-  description: 'Column values for the worksheet row.',
-  required: true,
-  refreshers: ['location_id', 'agent_id', 'worksheet_id'],
-  props: async ({ auth, location_id, agent_id, worksheet_id }) =>
-    worksheetTextColumnFields({
-      auth,
-      location_id,
-      agent_id,
-      worksheet_id,
-      requireProviderRequiredColumns: true,
-    }),
-});
-
-export const worksheetRowUpdateValuesProp = Property.DynamicProperties({
-  auth: kickcallAuth,
-  displayName: 'Values',
-  description:
-    'Column values to change. Leave fields empty to keep their current values.',
-  required: true,
-  refreshers: ['location_id', 'agent_id', 'worksheet_id'],
-  props: async ({ auth, location_id, agent_id, worksheet_id }) =>
-    worksheetTextColumnFields({
-      auth,
-      location_id,
-      agent_id,
-      worksheet_id,
-      requireProviderRequiredColumns: false,
-    }),
-});

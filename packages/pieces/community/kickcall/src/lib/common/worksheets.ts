@@ -4,6 +4,15 @@ import { kickcallClient, KickcallAuth } from './client';
 const FIND_WORKSHEET_ROWS_MAX_LIMIT = 1000;
 const FIND_WORKSHEET_ROWS_MAX_PAGES = 100;
 
+export const kickcallWorksheets = {
+  listWorksheets,
+  listWorksheetColumns,
+  listWorksheetRows,
+  findWorksheetRows,
+  addWorksheetRow,
+  updateWorksheetRow,
+};
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -314,15 +323,6 @@ async function updateWorksheetRow({
   }
   return updatedRow;
 }
-
-export const kickcallWorksheets = {
-  listWorksheets,
-  listWorksheetColumns,
-  listWorksheetRows,
-  findWorksheetRows,
-  addWorksheetRow,
-  updateWorksheetRow,
-};
 
 type WorksheetScopeParams = {
   auth: KickcallAuth;

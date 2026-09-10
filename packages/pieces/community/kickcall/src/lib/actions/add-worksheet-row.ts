@@ -8,20 +8,6 @@ import {
 } from '../common/props';
 import { kickcallWorksheets } from '../common/worksheets';
 
-function toRowValues(values: unknown): Record<string, string> {
-  if (typeof values !== 'object' || values === null || Array.isArray(values)) {
-    throw new Error('Values must be an object of column fields');
-  }
-  const typedValues: Record<string, string> = {};
-  for (const [columnId, value] of Object.entries(values)) {
-    if (value === undefined || value === null) {
-      continue;
-    }
-    typedValues[columnId] = String(value);
-  }
-  return typedValues;
-}
-
 export const addWorksheetRowAction = createAction({
   auth: kickcallAuth,
   name: 'add_worksheet_row',
@@ -49,3 +35,17 @@ export const addWorksheetRowAction = createAction({
     });
   },
 });
+
+function toRowValues(values: unknown): Record<string, string> {
+  if (typeof values !== 'object' || values === null || Array.isArray(values)) {
+    throw new Error('Values must be an object of column fields');
+  }
+  const typedValues: Record<string, string> = {};
+  for (const [columnId, value] of Object.entries(values)) {
+    if (value === undefined || value === null) {
+      continue;
+    }
+    typedValues[columnId] = String(value);
+  }
+  return typedValues;
+}

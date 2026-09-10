@@ -11,6 +11,13 @@ import { kickcallResponse } from './response';
 
 const MAX_PAGINATION_PAGES = 1000;
 
+export const kickcallClient = {
+  bearerRequest,
+  bearerRequestAllPages,
+  marketplaceRequest,
+  namedOptionsFromCollection: kickcallResponse.namedOptionsFromCollection,
+};
+
 async function bearerRequest<T extends HttpMessageBody>({
   auth,
   method,
@@ -106,12 +113,5 @@ async function marketplaceRequest<T extends HttpMessageBody>({
   });
   return response.body;
 }
-
-export const kickcallClient = {
-  bearerRequest,
-  bearerRequestAllPages,
-  marketplaceRequest,
-  namedOptionsFromCollection: kickcallResponse.namedOptionsFromCollection,
-};
 
 export type KickcallAuth = AppConnectionValueForAuthProperty<typeof kickcallAuth>;
