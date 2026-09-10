@@ -169,61 +169,99 @@ export const worksheetColumnDropdown = Property.Dropdown({
   description: 'Worksheet column to search.',
   required: true,
   refreshers: ['location_id', 'agent_id', 'worksheet_id'],
-  options: async ({ auth, location_id, agent_id, worksheet_id }) => {
-    if (!auth) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Connect your Kickcall account first',
-      };
-    }
-    const locationId = propId(location_id);
-    const agentId = propId(agent_id);
-    const worksheetId = propId(worksheet_id);
-    if (
-      locationId.length === 0 ||
-      agentId.length === 0 ||
-      worksheetId.length === 0
-    ) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: 'Select a worksheet first',
-      };
-    }
-    try {
-      const columns = await kickcallWorksheets.listWorksheetColumns({
-        auth,
-        locationId,
-        agentId,
-        worksheetId,
-      });
-      const options = columns
-        .filter((column) => !column.hidden && column.dataType === 'text')
-        .map((column) => ({
-          label: column.name,
-          value: column.id,
-        }));
-      if (options.length === 0) {
-        return {
-          disabled: true,
-          options: [],
-          placeholder: 'No searchable text columns found',
-        };
-      }
-      return {
-        disabled: false,
-        options,
-      };
-    } catch (error: unknown) {
-      return {
-        disabled: true,
-        options: [],
-        placeholder: dropdownErrorPlaceholder(error),
-      };
-    }
-  },
+  options: async ({ auth, location_id, agent_id, worksheet_id }) =>
+    worksheetTextColumnOptions({
+      auth,
+      location_id,
+      agent_id,
+      worksheet_id,
+      emptyPlaceholder: 'No searchable text columns found',
+    }),
 });
+
+export const worksheetColumnsToClearProp = Property.MultiSelectDropdown({
+  auth: kickcallAuth,
+  displayName: 'Columns to Clear',
+  description:
+    'Optional. Set these columns to empty on the row. Use this to clear cells; leaving Values blank keeps existing data.',
+  required: false,
+  refreshers: ['location_id', 'agent_id', 'worksheet_id'],
+  options: async ({ auth, location_id, agent_id, worksheet_id }) =>
+    worksheetTextColumnOptions({
+      auth,
+      location_id,
+      agent_id,
+      worksheet_id,
+      emptyPlaceholder: 'No clearable text columns found',
+    }),
+});
+
+async function worksheetTextColumnOptions({
+  auth,
+  location_id,
+  agent_id,
+  worksheet_id,
+  emptyPlaceholder,
+}: {
+  auth: KickcallAuth | undefined;
+  location_id: unknown;
+  agent_id: unknown;
+  worksheet_id: unknown;
+  emptyPlaceholder: string;
+}) {
+  if (!auth) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Connect your Kickcall account first',
+    };
+  }
+  const locationId = propId(location_id);
+  const agentId = propId(agent_id);
+  const worksheetId = propId(worksheet_id);
+  if (
+    locationId.length === 0 ||
+    agentId.length === 0 ||
+    worksheetId.length === 0
+  ) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: 'Select a worksheet first',
+    };
+  }
+  try {
+    const columns = await kickcallWorksheets.listWorksheetColumns({
+      auth,
+      locationId,
+      agentId,
+      worksheetId,
+    });
+    const options = columns
+      .filter((column) => !column.hidden && column.dataType === 'text')
+      .map((column) => ({
+        label: column.name,
+        value: column.id,
+      }));
+    if (options.length === 0) {
+      return {
+        disabled: true,
+        options: [],
+        placeholder: emptyPlaceholder,
+      };
+    }
+    return {
+      disabled: false,
+      options,
+    };
+  } catch (error: unknown) {
+    return {
+      disabled: true,
+      options: [],
+      placeholder: dropdownErrorPlaceholder(error),
+    };
+  }
+}
 
 async function worksheetTextColumnFields({
   auth,

@@ -3,6 +3,7 @@ import { kickcallAuth } from '../auth';
 import {
   agentIdDropdown,
   locationIdDropdown,
+  worksheetColumnsToClearProp,
   worksheetIdDropdown,
   worksheetRowUpdateValuesProp,
 } from '../common/props';
@@ -26,6 +27,26 @@ function toPartialRowValues(values: unknown): Record<string, string> {
   return typedValues;
 }
 
+function applyClearedColumns({
+  values,
+  columnIds,
+}: {
+  values: Record<string, string>;
+  columnIds: unknown;
+}): Record<string, string> {
+  if (!Array.isArray(columnIds) || columnIds.length === 0) {
+    return values;
+  }
+  const nextValues = { ...values };
+  for (const columnId of columnIds) {
+    if (typeof columnId !== 'string' && typeof columnId !== 'number') {
+      continue;
+    }
+    nextValues[String(columnId)] = '';
+  }
+  return nextValues;
+}
+
 export const updateWorksheetRowAction = createAction({
   auth: kickcallAuth,
   name: 'update_worksheet_row',
@@ -34,7 +55,7 @@ export const updateWorksheetRowAction = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Updates column values on an existing Kickcall worksheet row by row id. Only provided fields are changed. Safe to retry with the same values.',
+      'Updates column values on an existing Kickcall worksheet row by row id. Only provided values change; use Columns to Clear to empty cells. Safe to retry with the same values.',
     idempotent: true,
   },
   props: {
@@ -48,6 +69,7 @@ export const updateWorksheetRowAction = createAction({
       required: true,
     }),
     values: worksheetRowUpdateValuesProp,
+    clear_column_ids: worksheetColumnsToClearProp,
   },
   async run({ auth, propsValue }) {
     return kickcallWorksheets.updateWorksheetRow({
@@ -56,7 +78,10 @@ export const updateWorksheetRowAction = createAction({
       agentId: propsValue.agent_id,
       worksheetId: propsValue.worksheet_id,
       rowId: propsValue.row_id,
-      values: toPartialRowValues(propsValue.values),
+      values: applyClearedColumns({
+        values: toPartialRowValues(propsValue.values),
+        columnIds: propsValue.clear_column_ids,
+      }),
     });
   },
 });
