@@ -3,7 +3,7 @@ import {
   ApEdition,
   ApFlagId,
   PlatformConfiguration,
-  UpdatePlatformConfigurationRequestBody,
+  PlatformConfigurationSettings,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +11,6 @@ import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
 import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 import { platformConfigurationApi } from '@/api/platform-configuration-api';
 import { CenteredPage } from '@/app/components/centered-page';
@@ -50,14 +49,14 @@ const ConfigurationsContent = ({
 }: ConfigurationsContentProps) => {
   const queryClient = useQueryClient();
 
-  const form = useForm<ConfigurationsFormValues>({
+  const form = useForm<PlatformConfigurationSettings>({
     defaultValues: toFormValues(configuration),
-    resolver: zodResolver(ConfigurationsFormValues),
+    resolver: zodResolver(PlatformConfigurationSettings),
     mode: 'onChange',
   });
 
   const { mutate: saveConfiguration, isPending } = useMutation({
-    mutationFn: (values: ConfigurationsFormValues) =>
+    mutationFn: (values: PlatformConfigurationSettings) =>
       platformConfigurationApi.update(values),
     onSuccess: async (saved) => {
       const productAnalyticsChanged =
@@ -127,16 +126,11 @@ const ConfigurationsSkeleton = () => {
 
 const toFormValues = (
   configuration: PlatformConfiguration,
-): ConfigurationsFormValues => ({
+): PlatformConfigurationSettings => ({
   isProductTelemetryEnabled: configuration.isProductTelemetryEnabled,
   isInfraSetupTelemetryEnabled: configuration.isInfraSetupTelemetryEnabled,
   maxBarrierSignals: configuration.maxBarrierSignals,
 });
-
-export const ConfigurationsFormValues =
-  UpdatePlatformConfigurationRequestBody.required();
-
-export type ConfigurationsFormValues = z.infer<typeof ConfigurationsFormValues>;
 
 type ConfigurationsContentProps = {
   configuration: PlatformConfiguration;

@@ -9,4 +9,6 @@ export const formErrors = {
     agentConfigTooLarge: 'agentConfigTooLarge',
     invalidGcpResourceId: 'invalidGcpResourceId',
     atLeastOne: 'atLeastOne',
+    wholeNumber: 'wholeNumber',
+    atMostTenThousand: 'atMostTenThousand',
 } as const
