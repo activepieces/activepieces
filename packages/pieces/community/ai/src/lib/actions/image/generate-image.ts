@@ -161,6 +161,8 @@ export const generateImageAction = createAction({
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
+      flowVersionId: context.flows.current.version.id,
+      stepName: context.step.name,
       advancedOptions: context.propsValue.advancedOptions,
     });
 
@@ -218,6 +220,8 @@ const getGeneratedImage = async ({
   projectId,
   flowId,
   runId,
+  flowVersionId,
+  stepName,
   advancedOptions,
 }: {
   provider: AIProviderName;
@@ -230,6 +234,8 @@ const getGeneratedImage = async ({
   projectId: string;
   flowId: string;
   runId: string;
+  flowVersionId: string;
+  stepName: string;
   advancedOptions?: DynamicPropsValue;
 }): Promise<GeneratedFile> => {
   const model = await createAIModel({
@@ -241,6 +247,8 @@ const getGeneratedImage = async ({
     projectId,
     flowId,
     runId,
+    flowVersionId,
+    stepName,
     isImage: true,
   });
 

@@ -13,6 +13,7 @@ import { ProviderOptions } from '@ai-sdk/provider-utils'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AI_PROVIDER_CAPABILITIES, AIProviderName, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OPENAI_COMPATIBLE_VENDOR_BASE_URLS, OpenAICompatibleProviderConfig, splitCloudflareGatewayModelId, spreadIfDefined, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/pieces-framework'
 import { createAiGateway } from 'ai-gateway-provider';
+import packageJson from '../../../package.json';
 import { createAnthropic as createAnthropicGateway } from 'ai-gateway-provider/providers/anthropic';
 import { createGoogleGenerativeAI as createGoogleGateway } from 'ai-gateway-provider/providers/google';
 
@@ -20,14 +21,19 @@ const AUTHORIZATION_HEADER = 'authorization'
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
 
-async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string }) {
+async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string, flowVersionId?: string, stepName?: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${params.apiUrl}v1/ai-providers/${params.provider}/config`,
         headers: {
             Authorization: `Bearer ${params.engineToken}`,
         },
-        ...(params.configId === undefined ? {} : { queryParams: { configId: params.configId } }),
+        queryParams: {
+            pieceVersion: packageJson.version,
+            ...spreadIfDefined('configId', params.configId),
+            ...spreadIfDefined('flowVersionId', params.flowVersionId),
+            ...spreadIfDefined('stepName', params.stepName),
+        },
     })
     return body
 }
@@ -43,10 +49,12 @@ export async function createAIModel({
     flowId,
     runId,
     apiUrl,
+    flowVersionId,
+    stepName,
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
-    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl, configId });
+    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl, configId, flowVersionId, stepName });
 
     if (isImage && !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration) {
         throw new Error(`Provider ${provider} does not support image models`)
@@ -410,6 +418,8 @@ type CreateAIModelParams<IsImage extends boolean = false> = {
     flowId: string;
     runId: string;
     apiUrl: string;
+    flowVersionId?: string;
+    stepName?: string;
     openaiResponsesModel?: boolean;
     isImage?: IsImage;
 }

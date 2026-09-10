@@ -96,7 +96,7 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
         mockExtractAiUsage.mockResolvedValue({
             messages: 1,
             toolCalls: 0,
-            breakdown: [{ provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-haiku-4.5', messages: 1, toolCalls: 0 }],
+            breakdown: [{ provider: AIProviderName.OPENAI, model: 'gpt-5.5', messages: 1, toolCalls: 0 }],
         })
     })
 
@@ -138,6 +138,57 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
         await callTrack({ startTime: FIRST_ATTEMPT_START })
 
         expect(appSumoKeyFromLastCall()).toBe(`run-1:appSumoAi:${FIRST_ATTEMPT_START}`)
+    })
+})
+
+describe('flowRunAiUsageTracker.track — the managed provider is billed on observed cost instead', () => {
+    beforeEach(() => {
+        mockTrackBillableUsage.mockClear()
+        mockGetProject.mockResolvedValue({ platformId: 'plat-1' })
+        mockGetStepsOrNull.mockResolvedValue({})
+        mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
+    })
+
+    it('bills nothing per message for a run whose AI steps are all managed', async () => {
+        mockExtractAiUsage.mockResolvedValue({
+            messages: 3,
+            toolCalls: 2,
+            breakdown: [{ provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-haiku-4.5', messages: 3, toolCalls: 2 }],
+        })
+
+        await callTrack({ startTime: FIRST_ATTEMPT_START })
+
+        expect(mockTrackBillableUsage).not.toHaveBeenCalled()
+    })
+
+    it('still bills the BYOK steps of a run that mixes providers', async () => {
+        mockExtractAiUsage.mockResolvedValue({
+            messages: 2,
+            toolCalls: 0,
+            breakdown: [
+                { provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-haiku-4.5', messages: 1, toolCalls: 0 },
+                { provider: AIProviderName.OPENAI, model: 'gpt-5.5', messages: 1, toolCalls: 0 },
+            ],
+        })
+
+        await callTrack({ startTime: FIRST_ATTEMPT_START })
+
+        expect(mockTrackBillableUsage.mock.calls[0][0].credits.value).toBe(1)
+    })
+
+    it('keeps the managed steps in the reported breakdown, since telemetry is not billing', async () => {
+        mockExtractAiUsage.mockResolvedValue({
+            messages: 2,
+            toolCalls: 0,
+            breakdown: [
+                { provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-haiku-4.5', messages: 1, toolCalls: 0 },
+                { provider: AIProviderName.OPENAI, model: 'gpt-5.5', messages: 1, toolCalls: 0 },
+            ],
+        })
+
+        await callTrack({ startTime: FIRST_ATTEMPT_START })
+
+        expect(mockTrackBillableUsage.mock.calls[0][0].telemetry.properties.breakdown).toHaveLength(2)
     })
 })
 

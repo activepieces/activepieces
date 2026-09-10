@@ -1,5 +1,5 @@
 import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AIProviderModelType, DefaultProjectRole, PrincipalType, ProviderModelConfig } from '@activepieces/shared'
+import { AI_PIECE_COST_BILLING_VERSION, AIProviderModelType, DefaultProjectRole, PrincipalType, ProviderModelConfig } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
@@ -151,6 +151,75 @@ describe('AI Providers API', () => {
 
             expect(body.platformId).toBe(ctx.platform.id)
             expect(body.config.defaultHeaders).toBeUndefined()
+        })
+    })
+
+    describe('managed provider refuses a caller that cannot be shown to report cost', () => {
+        const configRequest = async (query: string) => {
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId: ctx.project.id,
+                platform: { id: ctx.platform.id },
+            })
+            return app!.inject({
+                method: 'GET',
+                url: `/api/v1/ai-providers/${AIProviderName.ACTIVEPIECES}/config${query}`,
+                headers: { authorization: `Bearer ${engineToken}` },
+            })
+        }
+
+        it('refuses a caller that sends no piece version', async () => {
+            const response = await configRequest('')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('refuses a piece version that predates cost reporting', async () => {
+            const response = await configRequest('?pieceVersion=0.10.1')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('refuses a piece version that cannot be parsed', async () => {
+            const response = await configRequest('?pieceVersion=not-a-version')
+
+            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('lets a cost-reporting piece version past the gate', async () => {
+            const response = await configRequest(`?pieceVersion=${AI_PIECE_COST_BILLING_VERSION}`)
+
+            expect(response?.statusCode).not.toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('lets a newer piece version past the gate', async () => {
+            const response = await configRequest('?pieceVersion=0.99.0')
+
+            expect(response?.statusCode).not.toBe(StatusCodes.BAD_REQUEST)
+        })
+
+        it('does not gate a BYOK provider, which keeps its own metering', async () => {
+            await mockAndSaveAIProvider({
+                platformId: ctx.platform.id,
+                provider: AIProviderName.CUSTOM,
+                displayName: 'Byok',
+                config: { baseUrl: 'https://byok.example.com', apiKeyHeader: 'Authorization', models: [] },
+            })
+            const engineToken = await generateMockToken({
+                type: PrincipalType.ENGINE,
+                id: apId(),
+                projectId: ctx.project.id,
+                platform: { id: ctx.platform.id },
+            })
+
+            const response = await app!.inject({
+                method: 'GET',
+                url: `/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`,
+                headers: { authorization: `Bearer ${engineToken}` },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 
