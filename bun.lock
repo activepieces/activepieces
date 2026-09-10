@@ -4783,6 +4783,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/kickcall": {
+      "name": "@activepieces/piece-kickcall",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/kimai": {
       "name": "@activepieces/piece-kimai",
       "version": "0.2.7",
@@ -11828,6 +11841,8 @@
     "@activepieces/piece-kapso": ["@activepieces/piece-kapso@workspace:packages/pieces/community/kapso"],
 
     "@activepieces/piece-katana": ["@activepieces/piece-katana@workspace:packages/pieces/community/katana"],
+
+    "@activepieces/piece-kickcall": ["@activepieces/piece-kickcall@workspace:packages/pieces/community/kickcall"],
 
     "@activepieces/piece-kimai": ["@activepieces/piece-kimai@workspace:packages/pieces/community/kimai"],
 
