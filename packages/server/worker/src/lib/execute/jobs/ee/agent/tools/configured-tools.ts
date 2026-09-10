@@ -130,6 +130,7 @@ export function createConfiguredPieceTools({ tools, runPieceTool, taintState, ev
                     log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredPieceTool] Refused, this run has already run enough actions')
                     return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
                 }
+                taintState.tainted = true
                 const { data, error } = await tryCatch(() => runPieceTool({ toolName: configured.toolName, instruction, piece: configured.pieceMetadata }))
                 if (error) {
                     const reachedTheServer = String(error).includes('handler threw')
@@ -139,7 +140,6 @@ export function createConfiguredPieceTools({ tools, runPieceTool, taintState, ev
                         : `That action was sent but did not report back in time, so it may already have run. Do not call it again. Tell the user it needs checking. (${String(error)})` }] }
                 }
                 const succeeded = isSuccessResult(data.result)
-                taintState.tainted = true
                 if (!agentToolClassification.isReadOnlyActionCall({ actionName: configured.pieceMetadata.actionName, input: data.resolvedInput ?? {} })) {
                     eventEmitter.emitActionReceipt({
                         toolCallId: options.toolCallId,
@@ -183,8 +183,8 @@ export function createConfiguredKnowledgeBaseTools({ tools, runKnowledgeBaseTool
                         log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredKnowledgeBaseTool] Refused, this run has already searched enough')
                         return { content: [{ type: 'text', text: `This run has already searched knowledge bases ${MAX_CONFIGURED_TOOL_CALLS} times, which is the limit. Do not try again; say what is left undone.` }] }
                     }
-                    const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
                     taintState.tainted = true
+                    const { data, error } = await tryCatch(() => runKnowledgeBaseTool({ toolName: configured.toolName, knowledgeBaseFileId: configured.sourceId, query }))
                     if (error) {
                         log.warn({ error, tool: { name: configured.toolName } }, '[configuredKnowledgeBaseTool] Search did not return a result')
                         return { content: [{ type: 'text', text: `That search failed: ${String(error)}` }] }
@@ -215,8 +215,8 @@ export function createConfiguredFlowTools({ tools, runFlowTool, taintState, log 
                     log.warn({ tool: { name: configured.toolName }, callsMade }, '[configuredFlowTool] Refused, this run has already run enough actions')
                     return { content: [{ type: 'text', text: `This run has already performed ${MAX_CONFIGURED_TOOL_CALLS} actions, which is the limit. Do not try again; say what is left undone.` }] }
                 }
-                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, ...spreadIfDefined('flowVersionId', configured.flowVersionId), returnsResponse: configured.returnsResponse, toolInput }))
                 taintState.tainted = true
+                const { data, error } = await tryCatch(() => runFlowTool({ toolName: configured.toolName, flowId: configured.flowId, ...spreadIfDefined('flowVersionId', configured.flowVersionId), returnsResponse: configured.returnsResponse, toolInput }))
                 if (error) {
                     const reachedTheServer = String(error).includes('handler threw')
                     log.warn({ error, tool: { name: configured.toolName }, flow: { id: configured.flowId }, reachedTheServer }, '[configuredFlowTool] Flow did not return a result')

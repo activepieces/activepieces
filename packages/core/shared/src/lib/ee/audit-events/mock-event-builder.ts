@@ -2,6 +2,8 @@ import { AgentRunSource, FlowOperationType, FlowStatus } from '@activepieces/cor
 import { apId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import {
     AgentActionExecutedEvent,
+    AgentActionKind,
+    AgentActionOutcome,
     AgentAuditEvent,
     ApplicationEvent,
     ApplicationEventName,
@@ -228,7 +230,8 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
                     flow: { id: apId(), runId: apId() },
                     conversation: { id: apId(), source: AgentRunSource.FLOW_STEP },
                     agent: { id: apId(), displayName: 'Marketing agent' },
-                    action: { pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
+                    action: { kind: AgentActionKind.PIECE, pieceName: '@activepieces/piece-gmail', pieceDisplayName: 'Gmail', actionName: 'send_email', displayName: 'Send Email' },
+                    outcome: AgentActionOutcome.SUCCEEDED,
                     connection: { externalId: apId(), label: 'marketing@acme.com' },
                 },
             }

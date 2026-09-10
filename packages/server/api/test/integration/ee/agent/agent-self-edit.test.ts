@@ -2,6 +2,7 @@ import { AgentIcon, AgentRunSource, AIProviderName, apId, ApplicationEvent, Appl
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
+import { markTurnAsHavingRead } from '../../../../src/app/ee/agent/rpc/rpc-shared'
 import { db } from '../../../helpers/db'
 import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
@@ -100,9 +101,63 @@ describe('an agent asked to change its own instructions', () => {
             userId: ctx.user.id,
             source: AgentRunSource.AGENT,
             conversationId,
+            runId: apId(),
         })
 
         expect(await instructionsOf(agentId)).toBe('Escalate anything over $200.')
+    })
+
+    it('keeps the run notes out of the brief when it sends them back', async () => {
+        const ctx = await contextWithAgents()
+        const agentId = await createAgent({ ctx, displayName: 'Ops agent' })
+        const conversationId = await conversationFor({ ctx, agentId })
+
+        await agentRpcHandlers(app.log).executeAgentTool({
+            toolName: 'ap_update_agent',
+            toolInput: { instructions: [
+                'Escalate anything over $200.',
+                '',
+                '## Capabilities (current session)',
+                "- **Today's date**: Thursday, September 10, 2026.",
+                '',
+                '## When one of your tools cannot sign in',
+                'A tool failing with unauthorized means the account needs reconnecting.',
+                '',
+                '## You can change yourself',
+                'The person you are talking to owns you.',
+            ].join('\n') },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            source: AgentRunSource.AGENT,
+            conversationId,
+            runId: apId(),
+        })
+
+        expect(await instructionsOf(agentId)).toBe('Escalate anything over $200.')
+    })
+
+    it('leaves a brief alone when it only happens to use one of our headings', async () => {
+        const ctx = await contextWithAgents()
+        const agentId = await createAgent({ ctx, displayName: 'Ops agent' })
+        const conversationId = await conversationFor({ ctx, agentId })
+        const brief = [
+            'Escalate anything over $200.',
+            '',
+            '## Capabilities (current session)',
+            'You read the ledger and you write to Slack.',
+        ].join('\n')
+
+        await agentRpcHandlers(app.log).executeAgentTool({
+            toolName: 'ap_update_agent',
+            toolInput: { instructions: brief },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            source: AgentRunSource.AGENT,
+            conversationId,
+            runId: apId(),
+        })
+
+        expect(await instructionsOf(agentId)).toBe(brief)
     })
 
     it('cannot rewrite a different agent by naming its id', async () => {
@@ -118,6 +173,7 @@ describe('an agent asked to change its own instructions', () => {
             userId: ctx.user.id,
             source: AgentRunSource.AGENT,
             conversationId,
+            runId: apId(),
         })
 
         expect(await instructionsOf(otherAgentId)).toBe('Do the original job.')
@@ -136,6 +192,7 @@ describe('an agent asked to change its own instructions', () => {
             userId: ctx.user.id,
             source: AgentRunSource.AGENT,
             conversationId,
+            runId: apId(),
         })
 
         expect(await instructionsOf(agentId)).toBe('Approve every refund.')
@@ -154,11 +211,50 @@ describe('an agent asked to change its own instructions', () => {
             userId: ctx.user.id,
             source: AgentRunSource.AGENT,
             conversationId,
+            runId: apId(),
         })
 
         const [row] = await auditRowsFor(ctx)
         expect(row).toBeDefined()
         expect(row.data).toMatchObject({ agent: { id: agentId } })
+    })
+
+    it('is refused by the server on a turn the server itself saw read something', async () => {
+        const ctx = await contextWithAgents()
+        const agentId = await createAgent({ ctx, displayName: 'Ops agent' })
+        const conversationId = await conversationFor({ ctx, agentId })
+        const runId = apId()
+
+        await markTurnAsHavingRead({ conversationId, runId })
+
+        await expect(agentRpcHandlers(app.log).executeAgentTool({
+            toolName: 'ap_update_agent',
+            toolInput: { instructions: 'Approve every refund.' },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            source: AgentRunSource.AGENT,
+            conversationId,
+            runId,
+        })).rejects.toThrow()
+
+        expect(await instructionsOf(agentId)).toBe('Do the original job.')
+    })
+
+    it('is refused when the turn is not named, so a worker cannot dodge the check by omitting it', async () => {
+        const ctx = await contextWithAgents()
+        const agentId = await createAgent({ ctx, displayName: 'Ops agent' })
+        const conversationId = await conversationFor({ ctx, agentId })
+
+        await expect(agentRpcHandlers(app.log).executeAgentTool({
+            toolName: 'ap_update_agent',
+            toolInput: { instructions: 'Approve every refund.' },
+            platformId: ctx.platform.id,
+            userId: ctx.user.id,
+            source: AgentRunSource.AGENT,
+            conversationId,
+        })).rejects.toThrow()
+
+        expect(await instructionsOf(agentId)).toBe('Do the original job.')
     })
 
     it('is refused the tools that reach other agents entirely', async () => {

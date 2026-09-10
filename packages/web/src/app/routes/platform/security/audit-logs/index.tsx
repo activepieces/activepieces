@@ -1,5 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  AgentActionKind,
+  AgentActionOutcome,
   AgentRunSource,
   ApplicationEvent,
   ApplicationEventName,
@@ -558,13 +560,20 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
       ];
     }
     case ApplicationEventName.AGENT_ACTION_EXECUTED: {
-      const { agent, action, connection, source, flow } = event.data;
+      const { agent, action, connection, source, flow, outcome } = event.data;
       return [
         ...(agent
           ? [{ label: t('Agent'), value: agent.displayName ?? agent.id }]
           : []),
-        { label: t('Action'), value: action.displayName },
-        { label: t('App'), value: action.pieceDisplayName },
+        ...(action.kind === AgentActionKind.FLOW
+          ? [{ label: t('Flow'), value: action.displayName }]
+          : [
+              { label: t('Action'), value: action.displayName },
+              { label: t('App'), value: action.pieceDisplayName },
+            ]),
+        ...(outcome === undefined
+          ? []
+          : [{ label: t('Result'), value: OUTCOME_LABEL[outcome]() }]),
         { label: t('Ran from'), value: RAN_FROM_LABEL[source]() },
         ...(flow ? [{ label: t('Flow run'), value: flow.runId }] : []),
         ...(connection
@@ -676,6 +685,11 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
 type EventDetailRow = {
   label: string;
   value: string;
+};
+
+const OUTCOME_LABEL: Record<AgentActionOutcome, () => string> = {
+  [AgentActionOutcome.SUCCEEDED]: () => t('Succeeded'),
+  [AgentActionOutcome.FAILED]: () => t('Failed'),
 };
 
 const RAN_FROM_LABEL: Record<AgentRunSource, () => string> = {
