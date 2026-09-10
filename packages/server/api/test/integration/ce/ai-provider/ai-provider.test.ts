@@ -175,16 +175,16 @@ describe('AI Providers API', () => {
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
-        it('refuses a piece version that predates cost reporting', async () => {
-            const response = await configRequest('?pieceVersion=0.10.1')
+        it('refuses an empty piece version, which carries no more than sending none', async () => {
+            const response = await configRequest('?pieceVersion=')
 
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
         })
 
-        it('refuses a piece version that cannot be parsed', async () => {
-            const response = await configRequest('?pieceVersion=not-a-version')
+        it('lets any reported version past, because only releases that cannot report cost send none', async () => {
+            const response = await configRequest('?pieceVersion=0.10.1')
 
-            expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(response?.statusCode).not.toBe(StatusCodes.BAD_REQUEST)
         })
 
         it('lets a cost-reporting piece version past the gate', async () => {

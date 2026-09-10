@@ -29,13 +29,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         const platformId = request.principal.platform.id
         const provider = request.params.provider
         if (provider === AIProviderName.ACTIVEPIECES) {
-            await managedAiCaller.assertReportsCost({
-                projectId: request.principal.projectId,
-                log: app.log,
-                ...spreadIfDefined('flowVersionId', request.query.flowVersionId),
-                ...spreadIfDefined('stepName', request.query.stepName),
-                ...spreadIfDefined('pieceVersion', request.query.pieceVersion),
-            })
+            managedAiCaller.assertReportsCost({ ...spreadIfDefined('pieceVersion', request.query.pieceVersion) })
             await assertCreditsAndAppSumoNotExceeded({ platformId, log: app.log })
         }
         return aiProviderService(app.log).getConfigOrThrow({
@@ -117,8 +111,6 @@ const GetAIProviderConfig = {
         querystring: z.object({
             configId: z.string().optional(),
             pieceVersion: z.string().optional(),
-            flowVersionId: z.string().optional(),
-            stepName: z.string().optional(),
         }),
     },
 }

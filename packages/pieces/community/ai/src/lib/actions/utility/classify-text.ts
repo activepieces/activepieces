@@ -40,8 +40,6 @@ export const classifyText = createAction({
       projectId: context.project.id,
       flowId: context.flows.current.id,
       runId: context.run.id,
-      flowVersionId: context.flows.current.version.id,
-      stepName: context.step.name,
     });
 
     const response = await generateText({

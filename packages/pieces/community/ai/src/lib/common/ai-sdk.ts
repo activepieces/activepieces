@@ -21,7 +21,7 @@ const AUTHORIZATION_HEADER = 'authorization'
 const VERTEX_MAAS_SUFFIX = '-maas'
 const VERTEX_ANTHROPIC_PREFIX = 'claude'
 
-async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string, flowVersionId?: string, stepName?: string }) {
+async function fetchProviderConfig(params: { provider: AIProviderName, engineToken: string, apiUrl: string, configId?: string }) {
     const { body } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${params.apiUrl}v1/ai-providers/${params.provider}/config`,
@@ -31,8 +31,6 @@ async function fetchProviderConfig(params: { provider: AIProviderName, engineTok
         queryParams: {
             pieceVersion: packageJson.version,
             ...spreadIfDefined('configId', params.configId),
-            ...spreadIfDefined('flowVersionId', params.flowVersionId),
-            ...spreadIfDefined('stepName', params.stepName),
         },
     })
     return body
@@ -49,12 +47,10 @@ export async function createAIModel({
     flowId,
     runId,
     apiUrl,
-    flowVersionId,
-    stepName,
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModel> {
-    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl, configId, flowVersionId, stepName });
+    const { config, auth, platformId } = await fetchProviderConfig({ provider, engineToken, apiUrl, configId });
 
     if (isImage && !AI_PROVIDER_CAPABILITIES[provider].supportsImageGeneration) {
         throw new Error(`Provider ${provider} does not support image models`)
@@ -418,8 +414,6 @@ type CreateAIModelParams<IsImage extends boolean = false> = {
     flowId: string;
     runId: string;
     apiUrl: string;
-    flowVersionId?: string;
-    stepName?: string;
     openaiResponsesModel?: boolean;
     isImage?: IsImage;
 }
