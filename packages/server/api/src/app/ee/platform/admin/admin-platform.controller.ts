@@ -202,6 +202,7 @@ const CreatePieceRequest = {
             categories: z.array(z.nativeEnum(PieceCategory)).optional(),
             minimumSupportedRelease: ExactVersionType,
             maximumSupportedRelease: ExactVersionType,
+            deprecated: z.boolean().optional(),
             actions: z.record(z.string(), Action),
             triggers: z.record(z.string(), Trigger),
             i18n: z.record(z.string(), z.record(z.string(), z.string())).optional(),
