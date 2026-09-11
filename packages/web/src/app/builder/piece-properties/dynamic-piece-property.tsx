@@ -244,7 +244,7 @@ type DynamicPropertiesProps = {
   pieceVersion: string;
   actionOrTriggerName: string;
   disabled: boolean;
-  markdownVariables: Record<string, string>;
+  markdownVariables?: Record<string, string>;
   placedInside: 'stepSettings' | 'predefinedAgentInputs';
   updateFormSchema:
     | ((key: string, newFieldSchema: PiecePropertyMap) => void)

@@ -214,10 +214,10 @@ export const baserowCommon = {
         }
         const client = await makeClient(auth);
         const [tableFields, response] = await Promise.all([
-          client.listTableFields(table_id),
+          tryCatch(() => client.listTableFields(table_id)),
           client.listRows(table_id, undefined, 200),
         ]);
-        const primaryFieldName = tableFields.find((field) => field.primary)?.name;
+        const primaryFieldName = tableFields.data?.find((field) => field.primary)?.name;
         return {
           disabled: false,
           options: response.results.map((row) => ({
