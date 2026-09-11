@@ -90,6 +90,10 @@ vi.mock('@/features/pieces', () => ({
   pieceSelectorUtils: { isManualTrigger: () => false },
 }));
 
+const toastMock = vi.hoisted(() => ({ error: vi.fn() }));
+
+vi.mock('sonner', () => ({ toast: toastMock }));
+
 import { TestStepCTAButton } from '@/app/builder/test-step/test-step-cta-button';
 
 const idleRunner = (): RunnerMock => ({
@@ -178,6 +182,42 @@ describe('TestStepCTAButton while an action test is running', () => {
 
     expect(button.matches(':disabled')).toBe(false);
     fireEvent.click(button);
+
+    expect(builderMock.setStepDataPanelOpen).toHaveBeenCalledWith(true);
+    expect(runnerMock.action.fireTest).not.toHaveBeenCalled();
+  });
+});
+
+describe('TestStepCTAButton keyboard shortcut while a test is running', () => {
+  it('Ctrl+G reopens the drawer for a busy trigger without firing a test', () => {
+    selectTriggerStep();
+    runnerMock.trigger = busyRunner();
+
+    render(<TestStepCTAButton />);
+    fireEvent.keyDown(document, { key: 'g', ctrlKey: true });
+
+    expect(builderMock.setStepDataPanelOpen).toHaveBeenCalledWith(true);
+    expect(runnerMock.trigger.fireTest).not.toHaveBeenCalled();
+  });
+
+  it('Ctrl+G on an invalid busy trigger reopens the drawer without the configure-step toast', () => {
+    selectTriggerStep();
+    builderMock.trigger = { ...triggerStep, valid: false };
+    runnerMock.trigger = busyRunner();
+
+    render(<TestStepCTAButton />);
+    fireEvent.keyDown(document, { key: 'g', ctrlKey: true });
+
+    expect(builderMock.setStepDataPanelOpen).toHaveBeenCalledWith(true);
+    expect(toastMock.error).not.toHaveBeenCalled();
+  });
+
+  it('Ctrl+G reopens the drawer for a busy action without firing a test', () => {
+    selectCodeStep();
+    runnerMock.action = busyRunner();
+
+    render(<TestStepCTAButton />);
+    fireEvent.keyDown(document, { key: 'g', ctrlKey: true });
 
     expect(builderMock.setStepDataPanelOpen).toHaveBeenCalledWith(true);
     expect(runnerMock.action.fireTest).not.toHaveBeenCalled();
