@@ -248,11 +248,25 @@ function buildMediaSource({
     return { source_type: mediaSourceType, url: mediaUrl };
   }
 
-  const dataUri = /^data:([^;,]*)((?:;[^;,]*)*),/.exec(mediaUrl.trim());
-  const data = dataUri
-    ? mediaUrl.trim().slice(dataUri[0].length)
-    : mediaUrl.trim();
-  const declaredType = dataUri && dataUri[1].length > 0 ? dataUri[1] : undefined;
+  const trimmed = mediaUrl.trim();
+  const dataUri = /^data:([^;,]*)((?:;[^;,]*)*),/.exec(trimmed);
+  const isBase64Uri =
+    dataUri !== null &&
+    dataUri[2].split(';').some((param) => param.toLowerCase() === 'base64');
+
+  if (dataUri && !isBase64Uri) {
+    throw new Error(
+      'Media data URI must be base64 encoded (data:image/png;base64,...)'
+    );
+  }
+
+  const data = dataUri ? trimmed.slice(dataUri[0].length) : trimmed;
+  if (!BASE64_PATTERN.test(data)) {
+    throw new Error('Media must be valid base64 when the type is Base64 Image');
+  }
+
+  const declaredType =
+    dataUri && dataUri[1].length > 0 ? dataUri[1].toLowerCase() : undefined;
   const contentType = declaredType ?? detectImageContentType(data);
 
   if (!contentType || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
@@ -276,3 +290,4 @@ function detectImageContentType(base64: string): string | undefined {
 }
 
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
+const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;

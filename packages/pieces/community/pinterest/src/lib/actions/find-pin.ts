@@ -36,7 +36,7 @@ export const findPin = createAction({
     max_results: Property.Number({
       displayName: 'Max Results',
       required: false,
-      description: 'How many matching Pins to return.',
+      description: 'Stops fetching pages once at least this many Pins are found.',
       defaultValue: 25,
       display: 'stepper',
       min: 1,
@@ -82,15 +82,12 @@ export const findPin = createAction({
       }
     }
 
-    const limitedItems = items.slice(0, limit);
-    const hasMore = !!nextBookmark || items.length > limit;
-
     return {
-      items: limitedItems,
+      items,
       bookmark: nextBookmark,
-      total_results: limitedItems.length,
+      total_results: items.length,
       query_used: query,
-      has_more: hasMore,
+      has_more: !!nextBookmark,
     };
   },
 });
