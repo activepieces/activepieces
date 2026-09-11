@@ -36,7 +36,7 @@ export const findPin = createAction({
     max_results: Property.Number({
       displayName: 'Max Results',
       required: false,
-      description: 'Stops fetching pages once at least this many Pins are found.',
+      description: 'Never returns more than this many Pins.',
       defaultValue: 25,
       display: 'stepper',
       min: 1,
@@ -50,13 +50,14 @@ export const findPin = createAction({
     const accessToken = getAccessTokenOrThrow(auth);
 
     let items: unknown[] = [];
-    let nextBookmark: string | undefined = bookmark || undefined;
+    let pageBookmark: string | undefined = bookmark || undefined;
+    let nextBookmark: string | undefined = undefined;
 
     for (let page = 0; page < MAX_SEARCH_PAGES; page++) {
       const params = new URLSearchParams();
       params.append('query', query);
-      if (nextBookmark) {
-        params.append('bookmark', nextBookmark);
+      if (pageBookmark) {
+        params.append('bookmark', pageBookmark);
       }
       if (ad_account_id) {
         params.append('ad_account_id', ad_account_id);
@@ -80,14 +81,19 @@ export const findPin = createAction({
       if (!nextBookmark || items.length >= limit || pageItems.length === 0) {
         break;
       }
+      pageBookmark = nextBookmark;
     }
 
+    const cutInsidePage = items.length > limit;
+    const limitedItems = cutInsidePage ? items.slice(0, limit) : items;
+
     return {
-      items,
-      bookmark: nextBookmark,
-      total_results: items.length,
+      items: limitedItems,
+      bookmark: cutInsidePage ? pageBookmark : nextBookmark,
+      total_results: limitedItems.length,
       query_used: query,
-      has_more: !!nextBookmark,
+      has_more: cutInsidePage || !!nextBookmark,
+      bookmark_repeats_last_page: cutInsidePage,
     };
   },
 });
