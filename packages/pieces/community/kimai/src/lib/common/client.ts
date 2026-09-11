@@ -3,7 +3,9 @@ import {
   HttpMessageBody,
   httpClient,
   HttpResponse,
+  QueryParams,
 } from '@activepieces/pieces-common';
+import { spreadIfDefined } from '@activepieces/pieces-framework';
 
 type PingResponse = {
   message: string;
@@ -40,21 +42,27 @@ type TimesheetResponse = {
 export class KimaiClient {
   constructor(
     private baseUrl: string,
-    private user: string,
-    private apiPassword: string
+    private apiToken: string
   ) {
     // Remove trailing slash from base URL
     this.baseUrl = baseUrl.replace(/\/$/, '');
   }
 
   async ping(): Promise<PingResponse> {
-    return (await this.makeRequest<PingResponse>(HttpMethod.GET, '/api/ping'))
-      .body;
+    return (
+      await this.makeRequest<PingResponse>({
+        method: HttpMethod.GET,
+        resourceUri: '/api/ping',
+      })
+    ).body;
   }
 
   async getProjects(): Promise<ProjectResponse[]> {
     return (
-      await this.makeRequest<ProjectResponse[]>(HttpMethod.GET, '/api/projects')
+      await this.makeRequest<ProjectResponse[]>({
+        method: HttpMethod.GET,
+        resourceUri: '/api/projects',
+      })
     ).body;
   }
 
@@ -62,13 +70,11 @@ export class KimaiClient {
     project: number | undefined = undefined
   ): Promise<ActivityResponse[]> {
     return (
-      await this.makeRequest<ActivityResponse[]>(
-        HttpMethod.GET,
-        '/api/activities',
-        {
-          project: project,
-        }
-      )
+      await this.makeRequest<ActivityResponse[]>({
+        method: HttpMethod.GET,
+        resourceUri: '/api/activities',
+        queryParams: spreadIfDefined('project', project?.toString()),
+      })
     ).body;
   }
 
@@ -76,27 +82,33 @@ export class KimaiClient {
     createData: TimesheetCreateRequest
   ): Promise<TimesheetResponse> {
     return (
-      await this.makeRequest<TimesheetResponse>(
-        HttpMethod.POST,
-        '/api/timesheets',
-        createData
-      )
+      await this.makeRequest<TimesheetResponse>({
+        method: HttpMethod.POST,
+        resourceUri: '/api/timesheets',
+        body: createData,
+      })
     ).body;
   }
 
-  async makeRequest<T extends HttpMessageBody>(
-    method: HttpMethod,
-    resourceUri: string,
-    body: any | undefined = undefined
-  ): Promise<HttpResponse<T>> {
+  async makeRequest<T extends HttpMessageBody>({
+    method,
+    resourceUri,
+    body = undefined,
+    queryParams = undefined,
+  }: {
+    method: HttpMethod;
+    resourceUri: string;
+    body?: HttpMessageBody;
+    queryParams?: QueryParams;
+  }): Promise<HttpResponse<T>> {
     return await httpClient.sendRequest<T>({
       method: method,
       url: `${this.baseUrl}${resourceUri}`,
       headers: {
-        'X-AUTH-USER': this.user,
-        'X-AUTH-TOKEN': this.apiPassword,
+        Authorization: `Bearer ${this.apiToken}`,
       },
       body: body,
+      queryParams: queryParams,
     });
   }
 }
