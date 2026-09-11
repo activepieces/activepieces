@@ -1,7 +1,7 @@
 import { googleDriveAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { common } from '../common';
-import { getFilesByLevel } from '../common/list-drive-files';
+import { listDriveFilesRecursive } from '../common/list-drive-files';
 import { downloadFileFromDrive } from '../common/get-file-content';
 import { listFilesActionOutputSchema } from '../output-schemas';
 
@@ -60,7 +60,7 @@ export const googleDriveListFiles = createAction({
     const depthLevel = context.propsValue.depthLevel || 1;
     
     // Get files level-by-level, batching all folders at a level into as few queries as possible
-    const filesWithLevel = await getFilesByLevel({
+    const filesWithLevel = await listDriveFilesRecursive({
       auth: context.auth,
       rootFolderId: context.propsValue.folderId,
       maxLevel: depthLevel,

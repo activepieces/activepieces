@@ -35,7 +35,7 @@ export async function listDriveFiles<T = any>({
 
 const PARENT_IDS_PER_QUERY = 50;
 
-export async function getFilesByLevel({
+export async function listDriveFilesRecursive({
   auth,
   rootFolderId,
   maxLevel,
@@ -52,62 +52,41 @@ export async function getFilesByLevel({
   let currentLevelParentIds = [rootFolderId];
 
   for (let level = 0; level < maxLevel && currentLevelParentIds.length > 0; level++) {
-    const files = await fetchFilesForParents({
-      auth,
-      parentIds: currentLevelParentIds,
-      includeTrashed,
-      includeTeamDrives,
-    });
+    const nextLevelParentIds: string[] = [];
 
-    for (const file of files) {
-      filesWithLevel.push({
-        file,
-        level,
-        parentFolder: file.parents?.find((id: string) => currentLevelParentIds.includes(id)) ?? currentLevelParentIds[0],
+    for (const parentIdsChunk of chunk(currentLevelParentIds, PARENT_IDS_PER_QUERY)) {
+      const parentsClause = parentIdsChunk.map(id => `'${id}' in parents`).join(' or ');
+      const q = parentIdsChunk.length > 1 ? `(${parentsClause})` : parentsClause;
+
+      const pageFiles = await listDriveFiles({
+        auth,
+        params: {
+          q: includeTrashed ? q : `${q} and trashed=false`,
+          fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
+          supportsAllDrives: 'true',
+          includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+          corpora: includeTeamDrives ? 'allDrives' : 'user',
+          pageSize: '1000',
+        },
       });
+
+      for (const file of pageFiles) {
+        filesWithLevel.push({
+          file,
+          level,
+          parentFolder: file.parents?.find((id: string) => currentLevelParentIds.includes(id)) ?? currentLevelParentIds[0],
+        });
+
+        if (file.mimeType === 'application/vnd.google-apps.folder') {
+          nextLevelParentIds.push(file.id);
+        }
+      }
     }
 
-    currentLevelParentIds = files
-      .filter(file => file.mimeType === 'application/vnd.google-apps.folder')
-      .map(file => file.id);
+    currentLevelParentIds = nextLevelParentIds;
   }
 
   return filesWithLevel;
-}
-
-async function fetchFilesForParents({
-  auth,
-  parentIds,
-  includeTrashed,
-  includeTeamDrives,
-}: {
-  auth: GoogleDriveAuthValue;
-  parentIds: string[];
-  includeTrashed: boolean;
-  includeTeamDrives: boolean;
-}): Promise<any[]> {
-  const files: any[] = [];
-
-  for (const parentIdsChunk of chunk(parentIds, PARENT_IDS_PER_QUERY)) {
-    const parentsClause = parentIdsChunk.map(id => `'${id}' in parents`).join(' or ');
-    const q = parentIdsChunk.length > 1 ? `(${parentsClause})` : parentsClause;
-
-    const pageFiles = await listDriveFiles({
-      auth,
-      params: {
-        q: includeTrashed ? q : `${q} and trashed=false`,
-        fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
-        supportsAllDrives: 'true',
-        includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
-        corpora: includeTeamDrives ? 'allDrives' : 'user',
-        pageSize: '1000',
-      },
-    });
-
-    files.push(...pageFiles);
-  }
-
-  return files;
 }
 
 export interface FileWithLevel {
