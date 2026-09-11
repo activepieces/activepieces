@@ -248,11 +248,31 @@ function buildMediaSource({
     return { source_type: mediaSourceType, url: mediaUrl };
   }
 
-  const dataUriPrefix = /^data:([^;,]+);base64,/.exec(mediaUrl);
+  const dataUri = /^data:([^;,]*)((?:;[^;,]*)*),/.exec(mediaUrl.trim());
+  const data = dataUri
+    ? mediaUrl.trim().slice(dataUri[0].length)
+    : mediaUrl.trim();
+  const declaredType = dataUri && dataUri[1].length > 0 ? dataUri[1] : undefined;
+  const contentType = declaredType ?? detectImageContentType(data);
+
+  if (!contentType || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
+    throw new Error(
+      'Media must be a JPEG or PNG image, as a data URI or raw base64'
+    );
+  }
 
   return {
     source_type: 'image_base64',
-    content_type: dataUriPrefix ? dataUriPrefix[1] : 'image/jpeg',
-    data: dataUriPrefix ? mediaUrl.slice(dataUriPrefix[0].length) : mediaUrl,
+    content_type: contentType,
+    data,
   };
 }
+
+function detectImageContentType(base64: string): string | undefined {
+  const signature = base64.slice(0, 8);
+  if (signature.startsWith('/9j/')) return 'image/jpeg';
+  if (signature.startsWith('iVBORw0K')) return 'image/png';
+  return undefined;
+}
+
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);

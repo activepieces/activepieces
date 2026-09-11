@@ -36,7 +36,7 @@ export const findPin = createAction({
     max_results: Property.Number({
       displayName: 'Max Results',
       required: false,
-      description: 'Pins to return from the first page of results.',
+      description: 'How many matching Pins to return.',
       defaultValue: 25,
       display: 'stepper',
       min: 1,
@@ -46,37 +46,54 @@ export const findPin = createAction({
   },
   async run({ auth, propsValue }) {
     const { query, bookmark, ad_account_id, max_results } = propsValue;
+    const limit = max_results ?? DEFAULT_MAX_RESULTS;
+    const accessToken = getAccessTokenOrThrow(auth);
 
-    const params = new URLSearchParams();
-    params.append('query', query);
+    let items: unknown[] = [];
+    let nextBookmark: string | undefined = bookmark || undefined;
 
-    if (bookmark) {
-      params.append('bookmark', bookmark);
+    for (let page = 0; page < MAX_SEARCH_PAGES; page++) {
+      const params = new URLSearchParams();
+      params.append('query', query);
+      if (nextBookmark) {
+        params.append('bookmark', nextBookmark);
+      }
+      if (ad_account_id) {
+        params.append('ad_account_id', ad_account_id);
+      }
+
+      const response = await makeRequest(
+        accessToken,
+        HttpMethod.GET,
+        `/search/pins?${params.toString()}`
+      );
+
+      const pageItems: unknown[] = Array.isArray(response?.items)
+        ? response.items
+        : [];
+      items = [...items, ...pageItems];
+      nextBookmark =
+        typeof response?.bookmark === 'string' && response.bookmark.length > 0
+          ? response.bookmark
+          : undefined;
+
+      if (!nextBookmark || items.length >= limit || pageItems.length === 0) {
+        break;
+      }
     }
 
-    if (ad_account_id) {
-      params.append('ad_account_id', ad_account_id);
-    }
-
-    const path = `/search/pins?${params.toString()}`;
-
-    const response = await makeRequest(
-      getAccessTokenOrThrow(auth),
-      HttpMethod.GET,
-      path
-    );
-
-    let items = response.items || [];
-    if (max_results && items.length > max_results) {
-      items = items.slice(0, max_results);
-    }
+    const limitedItems = items.slice(0, limit);
+    const hasMore = !!nextBookmark || items.length > limit;
 
     return {
-      items,
-      bookmark: response.bookmark,
-      total_results: items.length,
+      items: limitedItems,
+      bookmark: nextBookmark,
+      total_results: limitedItems.length,
       query_used: query,
-      has_more: !!response.bookmark,
+      has_more: hasMore,
     };
   },
 });
+
+const DEFAULT_MAX_RESULTS = 25;
+const MAX_SEARCH_PAGES = 10;
