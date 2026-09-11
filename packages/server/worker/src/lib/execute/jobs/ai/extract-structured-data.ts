@@ -1,14 +1,15 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { AiStepFile, ExtractStructuredDataJobData, ResolveAiProviderResponse } from '@activepieces/shared'
+import { ExtractStructuredDataJobData, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateText, jsonSchema, ModelMessage, tool, UserModelMessage } from 'ai'
+import { ResolvedAiFile } from './ai-files'
 
-export async function extractStructuredData({ data, resolved, flowStep }: {
+export async function extractStructuredData({ data, resolved, flowStep, files }: {
     data: ExtractStructuredDataJobData
     resolved: ResolveAiProviderResponse
     flowStep: FlowStepMetadata
+    files: ResolvedAiFile[]
 }): Promise<unknown> {
-    const files = data.files ?? []
     if (isNil(data.text) && files.length === 0) {
         throw new Error('Please provide text or image/PDF to extract data from.')
     }
@@ -65,7 +66,7 @@ function buildSchema(data: ExtractStructuredDataJobData): { schemaDefinition: Re
     return { schemaDefinition: jsonSchema({ type: 'object', properties, required } as Parameters<typeof jsonSchema>[0]), sanitizedNameMap }
 }
 
-function buildMessages({ data, files }: { data: ExtractStructuredDataJobData, files: AiStepFile[] }): ModelMessage[] {
+function buildMessages({ data, files }: { data: ExtractStructuredDataJobData, files: ResolvedAiFile[] }): ModelMessage[] {
     let textContent = data.prompt ?? 'Extract the following data from the provided data.'
     if (data.text) {
         textContent += `\n\nText to analyze:\n${data.text}`
