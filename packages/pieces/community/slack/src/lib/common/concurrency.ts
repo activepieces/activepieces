@@ -4,10 +4,15 @@ async function mapWithConcurrency<TItem, TResult>({
   items,
   limit,
   handler,
+  deadline,
 }: {
   items: TItem[];
   limit: number;
   handler: (params: { item: TItem; index: number }) => Promise<TResult>;
+  deadline?: {
+    at: number;
+    onExceeded: (params: { item: TItem; index: number }) => TResult;
+  };
 }): Promise<TResult[]> {
   const results: TResult[] = new Array(items.length);
   const workerCount = Math.min(limit, items.length);
@@ -17,7 +22,12 @@ async function mapWithConcurrency<TItem, TResult>({
     while (cursor < items.length) {
       const index = cursor;
       cursor += 1;
-      results[index] = await handler({ item: items[index], index });
+      const item = items[index];
+
+      results[index] =
+        deadline !== undefined && Date.now() >= deadline.at
+          ? deadline.onExceeded({ item, index })
+          : await handler({ item, index });
     }
   });
 
@@ -76,10 +86,12 @@ function worstCaseMsPerRecipient(): number {
   return SLACK_REQUEST_TIMEOUT_MS * (SLACK_RETRY_ATTEMPTS + 1) + backoffMs;
 }
 
+function sendBudgetMs(): number {
+  return FLOW_TIMEOUT_DEFAULT_MS - FLOW_BUDGET_HEADROOM_MS;
+}
+
 function roundsWithinFlowBudget(): number {
-  return Math.floor(
-    (FLOW_TIMEOUT_DEFAULT_MS - FLOW_BUDGET_HEADROOM_MS) / worstCaseMsPerRecipient(),
-  );
+  return Math.floor(sendBudgetMs() / worstCaseMsPerRecipient());
 }
 
 export const slackConcurrency = {
@@ -87,6 +99,7 @@ export const slackConcurrency = {
   clampConcurrencyLimit,
   boundedClientOptions,
   worstCaseMsPerRecipient,
+  sendBudgetMs,
   roundsWithinFlowBudget,
 };
 

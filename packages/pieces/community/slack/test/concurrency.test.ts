@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   slackConcurrency,
   DEFAULT_ACTION_CONCURRENCY_LIMIT,
@@ -260,5 +260,87 @@ describe('clampConcurrencyLimit', () => {
     expect(clampConcurrencyLimit(1)).toBe(1);
     expect(clampConcurrencyLimit(5)).toBe(5);
     expect(clampConcurrencyLimit(20)).toBe(20);
+  });
+});
+
+describe('mapWithConcurrency — the send deadline', () => {
+  it('runs every item when the deadline is never reached', async () => {
+    const handled: number[] = [];
+
+    const results = await mapWithConcurrency({
+      items: [1, 2, 3, 4],
+      limit: 2,
+      handler: async ({ item }) => {
+        handled.push(item);
+        return `sent-${item}`;
+      },
+      deadline: { at: Date.now() + 60_000, onExceeded: () => 'skipped' },
+    });
+
+    expect(handled).toHaveLength(4);
+    expect(results).toEqual(['sent-1', 'sent-2', 'sent-3', 'sent-4']);
+  });
+
+  it('issues no request at all when the deadline has already passed', async () => {
+    const handled: number[] = [];
+
+    const results = await mapWithConcurrency({
+      items: [1, 2, 3],
+      limit: 2,
+      handler: async ({ item }) => {
+        handled.push(item);
+        return `sent-${item}`;
+      },
+      deadline: { at: Date.now() - 1, onExceeded: () => 'skipped' },
+    });
+
+    expect(handled).toEqual([]);
+    expect(results).toEqual(['skipped', 'skipped', 'skipped']);
+  });
+
+  it('keeps what it already did and stops starting more once the deadline passes', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    let clock = 0;
+    nowSpy.mockImplementation(() => clock);
+
+    const handled: number[] = [];
+
+    const results = await mapWithConcurrency({
+      items: [1, 2, 3, 4, 5, 6],
+      limit: 1,
+      handler: async ({ item }) => {
+        handled.push(item);
+        clock += 100;
+        return `sent-${item}`;
+      },
+      deadline: { at: 250, onExceeded: ({ item }) => `skipped-${item}` },
+    });
+
+    nowSpy.mockRestore();
+
+    expect(handled).toEqual([1, 2, 3]);
+    expect(results).toEqual(['sent-1', 'sent-2', 'sent-3', 'skipped-4', 'skipped-5', 'skipped-6']);
+  });
+
+  it('reports every item in order, whether it ran or was skipped', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    let clock = 0;
+    nowSpy.mockImplementation(() => clock);
+
+    const results = await mapWithConcurrency({
+      items: ['a', 'b', 'c', 'd'],
+      limit: 2,
+      handler: async ({ item, index }) => {
+        clock += 500;
+        return { item, index, ran: true };
+      },
+      deadline: { at: 600, onExceeded: ({ item, index }) => ({ item, index, ran: false }) },
+    });
+
+    expect(results.map((result) => result.index)).toEqual([0, 1, 2, 3]);
+    expect(results.filter((result) => result.ran).length).toBeGreaterThan(0);
+    expect(results.filter((result) => !result.ran).length).toBeGreaterThan(0);
+
+    nowSpy.mockRestore();
   });
 });

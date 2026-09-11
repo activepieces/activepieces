@@ -125,6 +125,7 @@ export const slackSendMessageToMultipleUsersAction = createAction({
     }),
   },
   async run(context) {
+    const startedAt = Date.now();
     const token = getBotToken(context.auth as SlackAuthValue);
     const { mode, recipients, blocks: extraBlocks, unfurlLinks, mentionOriginFlow: mentionFlow } = context.propsValue;
 
@@ -163,6 +164,15 @@ export const slackSendMessageToMultipleUsersAction = createAction({
       items: payloads,
       limit,
       handler: async ({ item }) => sendOne({ ...item, token, unfurlLinks, sender }),
+      deadline: {
+        at: startedAt + slackConcurrency.sendBudgetMs(),
+        onExceeded: ({ item }): SendOutcome => ({
+          status: 'failed',
+          userId: item.recipient.userId,
+          error: 'flow_time_budget_exceeded',
+          isAuthFailure: false,
+        }),
+      },
     });
 
     const sent = outcomes.filter((outcome): outcome is SentOutcome => outcome.status === 'sent');

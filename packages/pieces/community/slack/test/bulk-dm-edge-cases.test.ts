@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 type PostArgs = { channel?: unknown };
 
 const calls: PostArgs[] = [];
-const behaviours = new Map<string, () => never>();
+const behaviours = new Map<string, () => void>();
 let concurrentNow = 0;
 let concurrentPeak = 0;
 let latencyMs = 0;
@@ -73,9 +73,8 @@ const { slackSendMessageToMultipleUsersAction } = await import(
   '../src/lib/actions/send-message-to-multiple-users'
 );
 const { DEFAULT_MAX_RECIPIENTS, slackBulkDm } = await import('../src/lib/common/bulk-dm');
-const { MAX_ACTION_CONCURRENCY_LIMIT, MIN_ACTION_CONCURRENCY_LIMIT } = await import(
-  '../src/lib/common/concurrency'
-);
+const { slackConcurrency, MAX_ACTION_CONCURRENCY_LIMIT, MIN_ACTION_CONCURRENCY_LIMIT } =
+  await import('../src/lib/common/concurrency');
 
 function userIdsFor(count: number): string[] {
   return Array.from({ length: count }, (_unused, index) => `U${String(index).padStart(8, '0')}`);
@@ -351,5 +350,57 @@ describe('duplicate recipients', () => {
     const output = await run(sameMessage(['U00000000', 'U00000000']));
 
     expect(output.failed).toEqual([{ userId: 'U00000000', error: 'channel_not_found' }]);
+  });
+});
+
+describe('the flow time budget', () => {
+  it('returns the DMs it already sent instead of running past the flow timeout', async () => {
+    const perSendMs = 40_000;
+    const budgetMs = slackConcurrency.sendBudgetMs();
+    const count = slackBulkDm.maxRecipientsForLimit({ limit: MIN_ACTION_CONCURRENCY_LIMIT });
+
+    const nowSpy = vi.spyOn(Date, 'now');
+    let clock = 0;
+    nowSpy.mockImplementation(() => clock);
+
+    for (const id of userIdsFor(count)) {
+      behaviours.set(id, () => {
+        clock += perSendMs;
+      });
+    }
+
+    const output = await run(sameMessage(userIdsFor(count), MIN_ACTION_CONCURRENCY_LIMIT));
+
+    nowSpy.mockRestore();
+
+    const expectedSent = Math.ceil(budgetMs / perSendMs);
+
+    expect(output.summary.total).toBe(count);
+    expect(output.summary.sentCount).toBe(expectedSent);
+    expect(output.sent).toHaveLength(expectedSent);
+    expect(calls).toHaveLength(expectedSent);
+
+    expect(output.failed).toHaveLength(count - expectedSent);
+    for (const failure of output.failed) {
+      expect(failure.error).toBe('flow_time_budget_exceeded');
+    }
+  });
+
+  it('sends to everyone when the work fits the budget', async () => {
+    const nowSpy = vi.spyOn(Date, 'now');
+    let clock = 0;
+    nowSpy.mockImplementation(() => clock);
+
+    for (const id of userIdsFor(4)) {
+      behaviours.set(id, () => {
+        clock += 100;
+      });
+    }
+
+    const output = await run(sameMessage(userIdsFor(4)));
+
+    nowSpy.mockRestore();
+
+    expect(output.summary).toEqual({ total: 4, sentCount: 4, failedCount: 0 });
   });
 });
