@@ -106,6 +106,7 @@ export enum FileType {
     WEBHOOK_PAYLOAD = 'WEBHOOK_PAYLOAD',
     KNOWLEDGE_BASE = 'KNOWLEDGE_BASE',
     FLOW_BUNDLE = 'FLOW_BUNDLE',
+    PREWARM_SCOPE = 'PREWARM_SCOPE',
 }
 
 export enum FileCompression {
