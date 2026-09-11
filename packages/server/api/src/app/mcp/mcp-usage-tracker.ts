@@ -1,24 +1,27 @@
-import { apId, isNil, tryCatch } from '@activepieces/core-utils'
-import { isAppSumoCreditedPlan, PopulatedMcpServer } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { isAppSumoCreditedPlan, McpToolResult, PopulatedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
-import { CreditUsageSource, McpCallCreditConsumptionProperties } from '../platform/billing-provider'
+import { assertCreditsAndAppSumoNotExceeded, CreditUsageSource, McpCallCreditConsumptionProperties } from '../platform/billing-provider'
 import { projectService } from '../project/project-service'
 import { mcpClients } from './mcp-clients'
 
 export const mcpUsageTracker = (log: FastifyBaseLogger) => ({
-    async resolveCallCharger({ mcp, clientId }: ResolveCallChargerParams): Promise<McpCallCharger> {
+    async resolveCallBilling({ mcp, clientId }: ResolveCallBillingParams): Promise<McpCallBilling> {
         if (!mcpClients.isExternalClient({ clientId })) {
-            return () => undefined
+            return EXEMPT_FROM_BILLING
         }
         const platformId = await resolvePlatformId({ mcp, log })
         if (isNil(platformId)) {
-            log.warn({ mcp: { id: mcp.id } }, '[mcpUsageTracker] Could not tell which platform an MCP server belongs to, so its calls are not billed')
-            return () => undefined
+            log.warn({ mcp: { id: mcp.id } }, '[mcpUsageTracker] Could not tell which platform an MCP server belongs to, so its calls are neither gated nor billed')
+            return EXEMPT_FROM_BILLING
         }
-        return ({ toolName, projectId }) => {
-            void chargeCall({ platformId, projectId, toolName, clientId, log })
+        return {
+            refusalWhenOutOfCredits: ({ toolName }) => refusalWhenOutOfCredits({ platformId, toolName, log }),
+            charge: ({ toolName, projectId }) => {
+                void chargeCall({ platformId, projectId, toolName, clientId, log })
+            },
         }
     },
 })
@@ -33,6 +36,24 @@ async function resolvePlatformId({ mcp, log }: { mcp: PopulatedMcpServer, log: F
     }
     const { data: project } = await tryCatch(() => projectService(log).getOneOrThrow(projectId))
     return project?.platformId ?? null
+}
+
+// A credits lookup that fails for its own reasons must not take the tool down with it, so anything
+// that is not a definite "out of credits" lets the call through, as the chat personalization path does.
+async function refusalWhenOutOfCredits({ platformId, toolName, log }: RefusalParams): Promise<McpToolResult | null> {
+    const { error } = await tryCatch(() => assertCreditsAndAppSumoNotExceeded({ platformId, log }))
+    if (isNil(error)) {
+        return null
+    }
+    const exhausted = error instanceof ActivepiecesError && error.error.code === ErrorCode.QUOTA_EXCEEDED
+    if (!exhausted) {
+        log.warn({ error, platform: { id: platformId }, tool: { name: toolName } }, '[mcpUsageTracker] Credits check failed, allowing the call')
+        return null
+    }
+    return {
+        content: [{ type: 'text', text: `❌ Out of credits: this platform has used all of its Activepieces credits, so "${toolName}" cannot run. Add credits or upgrade the plan, then try again.` }],
+        isError: true,
+    }
 }
 
 async function chargeCall({ platformId, projectId, toolName, clientId, log }: ChargeCallParams): Promise<void> {
@@ -58,13 +79,27 @@ async function chargeCall({ platformId, projectId, toolName, clientId, log }: Ch
     }
 }
 
+const EXEMPT_FROM_BILLING: McpCallBilling = {
+    refusalWhenOutOfCredits: async () => null,
+    charge: () => undefined,
+}
+
 export const MCP_CALL_CREDITS = 1
 
-export type McpCallCharger = (params: { toolName: string, projectId: string | null }) => void
+export type McpCallBilling = {
+    refusalWhenOutOfCredits: (params: { toolName: string }) => Promise<McpToolResult | null>
+    charge: (params: { toolName: string, projectId: string | null }) => void
+}
 
-type ResolveCallChargerParams = {
+type ResolveCallBillingParams = {
     mcp: PopulatedMcpServer
     clientId: string
+}
+
+type RefusalParams = {
+    platformId: string
+    toolName: string
+    log: FastifyBaseLogger
 }
 
 type ChargeCallParams = {
