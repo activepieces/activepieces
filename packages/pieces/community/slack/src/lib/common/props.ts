@@ -2,24 +2,16 @@ import { MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
 import { slackAuth } from '../auth';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
-const slackChannelBotInstruction = `
-	Please make sure add the bot to the channel by following these steps:
-	  1. Type /invite in the channel's chat.
-	  2. Click on Add apps to this channel.
-	  3. Search for and add the bot.
-  `;
-
 export const multiSelectChannelInfo = Property.MarkDown({
   value:
-    slackChannelBotInstruction +
-    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly in an array like this: \`{\`{ ['your_channel_id_1', 'your_channel_id_2', ...] \`}\`}`,
+    "Can't find the channel? Invite the bot: type **/invite** in the channel, choose **Add apps** and pick the bot. Or click **ƒ** and paste IDs as `{`{ ['C012AB3CD', 'C045EF6GH'] `}`}.",
+  variant: MarkdownVariant.INFO,
 });
 
 export const singleSelectChannelInfo = Property.MarkDown({
   value:
-    slackChannelBotInstruction +
-    `\n**Note**: If you can't find the channel in the dropdown list (which fetches up to 2000 channels), please click on the **(F)** and type the channel ID directly.
-  `,
+    "Can't find the channel? Invite the bot: type **/invite** in the channel, choose **Add apps** and pick the bot. Or click **ƒ** and paste the channel ID.",
+  variant: MarkdownVariant.INFO,
 });
 
 export const appWebhookSetupInfo = Property.MarkDown({
@@ -38,8 +30,7 @@ export const slackChannel = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R,typeof slackAuth>({
     auth: slackAuth,
     displayName: 'Channel',
-    description:
-      "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'",
+    description: 'Private channels appear only after the bot is added to them.',
     required,
     refreshers: [],
     async options({ auth }) {
@@ -64,48 +55,55 @@ export const slackChannel = <R extends boolean>(required: R) =>
 
 export const username = Property.ShortText({
   displayName: 'Username',
-  description: 'The username of the bot',
+  description: "Overrides the bot's display name for this message.",
   required: false,
+  advanced: true,
 });
 
 export const profilePicture = Property.ShortText({
   displayName: 'Profile Picture',
-  description: 'The profile picture of the bot',
+  description: "Image URL used as the sender's avatar.",
+  placeholder: 'https://example.com/avatar.png',
   required: false,
+  advanced: true,
 });
 
 export const iconEmoji = Property.ShortText({
   displayName: 'Icon Emoji',
-  description: 'The icon emoji of the bot',
+  description: "Emoji used as the sender's avatar.",
+  placeholder: ':robot_face:',
   required: false,
+  advanced: true,
 });
 
 export const threadTs = Property.ShortText({
-  displayName: 'Reply to Thread (Thread Message Link/Timestamp)',
-  description:
-    'Provide the ts (timestamp) or link value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
+  displayName: 'Reply to Thread',
+  description: 'Timestamp or link of the parent message to reply under.',
+  placeholder: '1710304378.475129',
   required: false,
 });
 
 export const mentionOriginFlow = Property.Checkbox({
-  displayName: 'Mention flow of origin?',
-  description:
-    'If checked, adds a mention at the end of the Slack message to indicate which flow sent the notification, with a link to said flow.',
+  displayName: 'Mention Origin Flow',
+  description: 'Append a link to this flow at the end of the message.',
   required: false,
   defaultValue: false,
+  advanced: true,
 });
 
 export const blocks = Property.Json({
-  displayName: 'Block Kit blocks',
-  description: 'See https://api.slack.com/block-kit for specs',
+  displayName: 'Block Kit Blocks',
+  description: 'JSON array of blocks from the Block Kit Builder.',
   required: false,
-  defaultValue: []
+  defaultValue: [],
+  advanced: true,
 });
 
 export const userId = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R, typeof slackAuth>({
     auth: slackAuth,
     displayName: 'User',
+    description: 'Search by name or handle.',
     required,
     refreshers: [],
     async options({ auth }) {
@@ -129,6 +127,7 @@ export const userId = <R extends boolean>(required: R) =>
 export const userIds = Property.MultiSelectDropdown({
   auth: slackAuth,
   displayName: 'Users',
+  description: 'Pick one or more members.',
   required: false,
   refreshers: [],
   async options({ auth }) {
@@ -152,6 +151,7 @@ export const userIds = Property.MultiSelectDropdown({
 export const usergroupIds = Property.MultiSelectDropdown({
   auth: slackAuth,
   displayName: 'User Groups',
+  description: 'Pick one or more user groups.',
   required: false,
   refreshers: [],
   async options({ auth }) {
@@ -181,19 +181,24 @@ export const usergroupIds = Property.MultiSelectDropdown({
 
 export const text = Property.LongText({
   displayName: 'Message',
+  description: 'Slack mrkdwn formatting is supported.',
   required: true,
 });
 
 export const actions = Property.Array({
   displayName: 'Action Buttons',
+  description: 'Each button becomes a choice the recipient can click.',
   required: true,
   properties: {
     label: Property.ShortText({
       displayName: 'Label',
+      description: 'Text shown on the button.',
+      placeholder: 'Approve',
       required: true,
     }),
     style: Property.StaticDropdown({
       displayName: 'Style',
+      description: 'Primary is green, Danger is red.',
       required: false,
       defaultValue: null,
       options: {
@@ -218,10 +223,14 @@ async function getUsers(accessToken: string) {
       users.push(
         ...response.members
           .filter((member) => !member.deleted)
-          .map((member) => ({
-            label: member.name || '',
-            value: member.id || '',
-          }))
+          .map((member) => {
+            const handle = member.name ?? '';
+            const realName = member.real_name ?? member.profile?.real_name;
+            return {
+              label: realName ? `${realName} (@${handle})` : `@${handle}`,
+              value: member.id ?? '',
+            };
+          })
       );
     }
   }
