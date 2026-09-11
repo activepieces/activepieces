@@ -79,9 +79,8 @@ export const driveListFiles = createAction({
     // Extract just the file objects for backward compatibility
     result.files = filesWithLevel.map((f) => f.file);
 
-    // If downloadFiles is enabled, download each file and add URLs to array
+    // If downloadFiles is enabled, download each file and attach the URL onto the file itself
     if (context.propsValue.download_files) {
-      const downloadedFiles: string[] = [];
       const extensionMap: Record<string, string> = {
         'application/pdf': '.pdf',
         'image/jpeg': '.jpg',
@@ -120,13 +119,12 @@ export const driveListFiles = createAction({
         }
 
         try {
-          const fileUrl = await downloadFileFromDrive(
+          file.downloadedFile = await downloadFileFromDrive(
             context.auth,
             context.files,
             file.id,
             safeName
           );
-          downloadedFiles.push(fileUrl);
         } catch (error) {
           console.warn(
             `Failed to download file ${file.name}: ${
@@ -135,7 +133,11 @@ export const driveListFiles = createAction({
           );
         }
       }
-      result.downloadedFiles = downloadedFiles;
+
+      // Kept for backward compatibility; each URL now also lives on its file's `downloadedFile`
+      result.downloadedFiles = filesWithLevel
+        .map((f) => f.file.downloadedFile)
+        .filter((url): url is string => url !== undefined);
     }
 
     return result;
