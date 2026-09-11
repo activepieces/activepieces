@@ -1,10 +1,10 @@
 import { apId, Permission, RoleType } from '@activepieces/core-utils'
-import { DefaultProjectRole } from '@activepieces/shared'
+import { DefaultProjectRole, PlatformRole, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { mcpAccess } from '../../../../src/app/mcp/mcp-access'
 import { db } from '../../../helpers/db'
-import { createMockProjectRole } from '../../../helpers/mocks'
+import { createMockProject, createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -36,6 +36,25 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
         const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
 
         expect(projects.map(p => p.id)).toContain(ctx.project.id)
+    })
+
+    it('gives an operator team projects but not other users\' personal projects', async () => {
+        const ctx = await createTestContext(app)
+        const { mockUser: operator } = await mockBasicUser({
+            user: { platformId: ctx.platform.id, platformRole: PlatformRole.OPERATOR },
+        })
+        const otherPersonalProject = createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: ctx.user.id,
+            type: ProjectType.PERSONAL,
+        })
+        await db.save('project', otherPersonalProject)
+
+        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: operator.id, log: mockLog })
+        const ids = projects.map(p => p.id)
+
+        expect(ids).toContain(ctx.project.id)
+        expect(ids).not.toContain(otherPersonalProject.id)
     })
 
     it('excludes a project whose member role lacks READ_MCP', async () => {

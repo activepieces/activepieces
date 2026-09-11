@@ -1,5 +1,5 @@
 import { Permission } from '@activepieces/core-utils'
-import { ApEdition, Project } from '@activepieces/shared'
+import { ApEdition, PlatformRole, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
@@ -16,11 +16,15 @@ async function listMcpAccessibleProjects({ platformId, userId, log }: {
     const user = await userService(log).getOneOrFail({ id: userId })
     const isPrivileged = userService(log).isUserPrivileged(user)
     const projects = await projectService(log).getAllForUser({ platformId, userId, isPrivileged })
-    if (isPrivileged || !EDITION_REQUIRES_RBAC) {
+
+    if (!EDITION_REQUIRES_RBAC || user.platformRole === PlatformRole.ADMIN) {
         return projects
     }
-    const roles = await Promise.all(projects.map((project) => projectMemberService(log).getRole({ projectId: project.id, userId })))
-    return projects.filter((_project, index) => roles[index]?.permissions?.includes(Permission.READ_MCP))
+    if (isPrivileged) {
+        return projects.filter((project) => project.type !== ProjectType.PERSONAL || project.ownerId === userId)
+    }
+    const mcpProjectIds = new Set(await projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_MCP }))
+    return projects.filter((project) => mcpProjectIds.has(project.id) || (project.type === ProjectType.PERSONAL && project.ownerId === userId))
 }
 
 export const mcpAccess = {
