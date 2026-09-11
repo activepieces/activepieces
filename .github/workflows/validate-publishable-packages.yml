@@ -67,4 +67,6 @@ jobs:
         if: steps.changed.outputs.has_changes == 'true' && !contains(github.event.pull_request.labels.*.name, 'skip-heap-check')
         env:
           CHANGED_PIECES: ${{ steps.changed.outputs.changed_dirs }}
+          PIECE_HEAP_ABSOLUTE_MB: ${{ vars.PIECE_HEAP_ABSOLUTE_MB }}
+          PIECE_HEAP_DELTA_MB: ${{ vars.PIECE_HEAP_DELTA_MB }}
         run: npx ts-node -r tsconfig-paths/register -P packages/server/engine/tsconfig.lib.json tools/scripts/pieces/check-pieces-heap.ts
