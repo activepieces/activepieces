@@ -397,8 +397,8 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async resolveAiProvider(input) {
             return aiRpcHandlers(log).resolveAiProvider(input)
         },
-        async saveAiFile(input) {
-            return aiRpcHandlers(log).saveAiFile(input)
+        async saveFlowStepFile(input) {
+            return aiRpcHandlers(log).saveFlowStepFile(input)
         },
         async resumeAiStep(input) {
             return aiRpcHandlers(log).resumeAiStep(input)

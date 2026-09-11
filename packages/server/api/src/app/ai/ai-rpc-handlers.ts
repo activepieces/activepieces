@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
-import { FileCompression, FileType, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveAiFileRequest, SaveAiFileResponse, spreadIfDefined } from '@activepieces/shared'
+import { FileCompression, FileType, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
@@ -27,7 +27,7 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async saveAiFile(input: SaveAiFileRequest): Promise<SaveAiFileResponse> {
+    async saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse> {
         await assertProjectBelongsToPlatform({ ...input, log })
         const maxFileSizeInBytes = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB) * 1024 * 1024
         if (input.data.length > maxFileSizeInBytes) {
