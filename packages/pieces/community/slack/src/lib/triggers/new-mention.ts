@@ -1,4 +1,5 @@
 import {
+  MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -23,11 +24,15 @@ export const newMention = createTrigger({
     info: multiSelectChannelInfo,
     users: userIds,
     usergroups: usergroupIds,
+    targetInfo: Property.MarkDown({
+      value:
+        'Pick at least one user or user group, or the trigger never fires.',
+      variant: MarkdownVariant.WARNING,
+    }),
     channels: Property.MultiSelectDropdown({
       auth: slackAuth,
       displayName: 'Channels',
-      description:
-        'If no channel is selected, the flow will be triggered for username mentions in all channels',
+      description: 'Empty means every channel the bot is in.',
       required: false,
       refreshers: [],
       async options({ auth }) {
@@ -48,15 +53,17 @@ export const newMention = createTrigger({
       },
     }),
     ignoreBots: Property.Checkbox({
-      displayName: 'Ignore Bot Messages ?',
-      required: true,
+      displayName: 'Ignore Bot Messages',
+      description: 'Skip messages posted by bots and apps.',
+      required: false,
       defaultValue: false,
     }),
     removeMention: Property.Checkbox({
       displayName: 'Remove Mention from Message',
-      description: 'If enabled, provides a clean_text field with the user and user group mentions removed from the message.',
-      required: true,
+      description: 'Adds clean_text with the mentions stripped out.',
+      required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
