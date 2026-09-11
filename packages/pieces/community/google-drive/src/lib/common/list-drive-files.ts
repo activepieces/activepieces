@@ -3,6 +3,36 @@ import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { chunk } from '@activepieces/pieces-framework';
 import { GoogleDriveAuthValue, getAccessToken } from '../auth';
 
+export async function listDriveFiles<T = any>({
+  auth,
+  params,
+}: {
+  auth: GoogleDriveAuthValue;
+  params: Record<string, string>;
+}): Promise<T[]> {
+  const accessToken = await getAccessToken(auth);
+  const files: T[] = [];
+
+  let pageToken: string | undefined;
+  do {
+    const pageParams = pageToken ? { ...params, pageToken } : params;
+    const response = await httpClient.sendRequest<{
+      files: T[];
+      nextPageToken?: string;
+    }>({
+      method: HttpMethod.GET,
+      url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(pageParams)}`,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    files.push(...(response.body.files ?? []));
+    pageToken = response.body.nextPageToken;
+  } while (pageToken);
+
+  return files;
+}
+
 const PARENT_IDS_PER_QUERY = 50;
 
 export async function getFilesByLevel({
@@ -56,44 +86,25 @@ async function fetchFilesForParents({
   includeTrashed: boolean;
   includeTeamDrives: boolean;
 }): Promise<any[]> {
-  const accessToken = await getAccessToken(auth);
   const files: any[] = [];
 
   for (const parentIdsChunk of chunk(parentIds, PARENT_IDS_PER_QUERY)) {
     const parentsClause = parentIdsChunk.map(id => `'${id}' in parents`).join(' or ');
     const q = parentIdsChunk.length > 1 ? `(${parentsClause})` : parentsClause;
 
-    const params: Record<string, string> = {
-      q: includeTrashed ? q : `${q} and trashed=false`,
-      fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
-      supportsAllDrives: 'true',
-      includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
-      corpora: includeTeamDrives ? 'allDrives' : 'user',
-      pageSize: '1000',
-    };
-
-    let response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(params)}`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
+    const pageFiles = await listDriveFiles({
+      auth,
+      params: {
+        q: includeTrashed ? q : `${q} and trashed=false`,
+        fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
+        supportsAllDrives: 'true',
+        includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+        corpora: includeTeamDrives ? 'allDrives' : 'user',
+        pageSize: '1000',
       },
     });
 
-    files.push(...response.body.files);
-
-    while (response.body.nextPageToken) {
-      params.pageToken = response.body.nextPageToken;
-      response = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(params)}`,
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      files.push(...response.body.files);
-    }
+    files.push(...pageFiles);
   }
 
   return files;

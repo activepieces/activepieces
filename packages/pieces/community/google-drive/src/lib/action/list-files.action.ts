@@ -1,7 +1,7 @@
 import { googleDriveAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { common } from '../common';
-import { getFilesByLevel } from '../common/list-files-recursive';
+import { getFilesByLevel } from '../common/list-drive-files';
 import { downloadFileFromDrive } from '../common/get-file-content';
 import { listFilesActionOutputSchema } from '../output-schemas';
 
