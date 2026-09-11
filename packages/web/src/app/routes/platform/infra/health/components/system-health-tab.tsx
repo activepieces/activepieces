@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/shared';
+import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   Boxes,
@@ -18,6 +18,7 @@ import { LoadingSpinner } from '@/components/custom/spinner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent } from '@/components/ui/card';
 import { healthQueries } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import { DailyHealthStrip } from './daily-health-strip';
@@ -32,11 +33,15 @@ const PRODUCTION_SETUP_LINK =
 // it could not read its release from package.json. Not importable here (server-only package).
 const UNREADABLE_RELEASE_VERSION = '0.0.0';
 
+const CLOUD_HIDDEN_ROW_IDS = ['version', 'release-integrity'];
+
 type SystemHealthTabProps = {
   onSeeRuns: () => void;
 };
 
 export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCloud = edition === ApEdition.CLOUD;
   const { data: systemHealth, isPending } = healthQueries.useSystemHealth();
   const latestVersion = systemHealth?.latestVersion;
   const release = systemHealth?.release;
@@ -76,7 +81,7 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
     );
   })();
 
-  const appRows: HealthRow[] = [
+  const allAppRows: HealthRow[] = [
     {
       id: 'version',
       title: t('Version'),
@@ -128,6 +133,9 @@ export function SystemHealthTab({ onSeeRuns }: SystemHealthTabProps) {
       message: t('At least 1 CPU core is required.'),
     },
   ];
+  const appRows = isCloud
+    ? allAppRows.filter((row) => !CLOUD_HIDDEN_ROW_IDS.includes(row.id))
+    : allAppRows;
 
   const workersConnected = !isNil(systemHealth?.workerRam);
 

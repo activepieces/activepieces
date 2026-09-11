@@ -53,7 +53,7 @@ describe('largeResultUtils.fitToBudget', () => {
     })
 
     it('returns null when no rung fits, rather than a mangled prefix', () => {
-        const wide = Object.fromEntries(Array.from({ length: 200_000 }, (_, index) => [`key-${index}`, index]))
+        const wide = Object.fromEntries(Array.from({ length: 50_000 }, (_, index) => [`key-${index}`, index]))
         expect(largeResultUtils.fitToBudget({ value: wide, maxBytes: MAX_TOOL_RESULT_BYTES, wrap: wrapAsToolResult })).toBeNull()
     })
 

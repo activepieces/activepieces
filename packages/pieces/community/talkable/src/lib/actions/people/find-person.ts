@@ -1,9 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
+import { TALKABLE_API_URL } from '../../common/constants';
 
 export const findPerson = createAction({
-  name: 'find_person', // Must be a unique across the piece, this shouldn't be changed.
+  name: 'find_person',
   auth: talkableAuth,
   displayName: 'Find person',
   description: 'Find person by email',
@@ -50,7 +51,6 @@ export const findPerson = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth.props;
     const personInfoResponse = await httpClient
       .sendRequest<string[]>({
@@ -60,7 +60,7 @@ export const findPerson = createAction({
           Authorization: `Bearer ${api_key}`,
           'Content-Type': 'application/json',
         },
-        body: {
+        queryParams: {
           site_slug: site,
         },
       });

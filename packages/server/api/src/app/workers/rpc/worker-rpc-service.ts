@@ -14,7 +14,7 @@ import { flowService } from '../../flows/flow/flow.service'
 import { engineRunCallbackService } from '../../flows/flow-run/engine-run-callback-service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
-import { preWarmWorkersService } from '../../flows/pre-warm-workers'
+import { EMPTY_PREWARM_RESPONSE, preWarmWorkersService } from '../../flows/pre-warm-workers'
 import { rejectedPromiseHandler } from '../../helper/promise-handler'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
@@ -54,8 +54,27 @@ function pageOnceForUnreadableAppVersion(log: FastifyBaseLogger, appVersion: str
         message: 'App could not read its release version from package.json (reported as 0.0.0); worker dispatch is gated and will NOT self-heal until the deployment is fixed (check cwd/packaging)',
         params: { appVersion },
     }).catch((pageError) => {
-        log.error({ pageError }, '[workerRpc#poll] Failed to send on-call page for unreadable app version')
+        log.error({ pageError }, '[workerRpc] Failed to send on-call page for unreadable app version')
     })
+}
+
+function workerVersionIsCompatible({ log, workerVersion, workerId, rpcMethod }: WorkerVersionGateParams): boolean {
+    const appVersion = apVersionUtil.getCurrentRelease()
+    if (apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
+        return true
+    }
+    const versionUnreadable = workerVersion === UNKNOWN_VERSION || appVersion === UNKNOWN_VERSION
+    const logFields = { ...spreadIfDefined('worker', isNil(workerId) ? undefined : { id: workerId }), workerVersion, appVersion }
+    if (versionUnreadable) {
+        log.error(logFields, `[workerRpc#${rpcMethod}] Withholding work — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)`)
+    }
+    else {
+        log.warn(logFields, `[workerRpc#${rpcMethod}] Withholding work — worker version does not match app; worker will idle until upgraded`)
+    }
+    if (appVersion === UNKNOWN_VERSION) {
+        pageOnceForUnreadableAppVersion(log, appVersion)
+    }
+    return false
 }
 
 export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAssignment | null = null, connectionId?: string): WorkerToApiContract {
@@ -63,19 +82,7 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async poll(input) {
             log.info({ worker: { id: input.workerId }, workerGroup: assignment ?? undefined }, '[workerRpc#poll] Poll request received')
             await machineService(log).onConnection(input, assignment)
-            const workerVersion = input.workerProps.version
-            const appVersion = apVersionUtil.getCurrentRelease()
-            if (!apVersionUtil.versionsAreCompatible({ versionA: workerVersion, versionB: appVersion })) {
-                const versionUnreadable = workerVersion === UNKNOWN_VERSION || appVersion === UNKNOWN_VERSION
-                if (versionUnreadable) {
-                    log.error({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — a release version could not be read from package.json (reported as 0.0.0); this will NOT self-heal on deploy completion, check the worker/app deployment (cwd/packaging)')
-                }
-                else {
-                    log.warn({ worker: { id: input.workerId }, workerVersion, appVersion }, '[workerRpc#poll] Withholding job — worker version does not match app; worker will idle until upgraded')
-                }
-                if (appVersion === UNKNOWN_VERSION) {
-                    pageOnceForUnreadableAppVersion(log, appVersion)
-                }
+            if (!workerVersionIsCompatible({ log, workerVersion: input.workerProps.version, workerId: input.workerId, rpcMethod: 'poll' })) {
                 return null
             }
             const pollQueueName = getPollQueueName(assignment)
@@ -194,7 +201,30 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         },
 
         async getPrewarmData(input) {
+            if (!workerVersionIsCompatible({ log, workerVersion: input.workerVersion, rpcMethod: 'getPrewarmData' })) {
+                return EMPTY_PREWARM_RESPONSE
+            }
             return preWarmWorkersService(log).getPrewarmData(input)
+        },
+
+        async getPrewarmScopeFile(input) {
+            const file = await fileService(log).getFile({
+                fileId: input.fileId,
+                type: FileType.PREWARM_SCOPE,
+            })
+            if (isNil(file)) {
+                return null
+            }
+            if (signedFileTransport.isEnabled(file)) {
+                assertNotNullOrUndefined(file.s3Key, 's3Key')
+                const url = await s3Helper(log).getS3SignedUrl(file.s3Key, file.fileName ?? file.id)
+                return { kind: 'url', url }
+            }
+            const { data } = await fileService(log).getDataOrThrow({
+                fileId: input.fileId,
+                type: FileType.PREWARM_SCOPE,
+            })
+            return { kind: 'inline', data }
         },
 
         async extendLock(input) {
@@ -402,4 +432,11 @@ function agentRpcLog(log: FastifyBaseLogger, ids: { conversationId?: string, run
         ...spreadIfDefined('platform', isNil(ids.platformId) ? undefined : { id: ids.platformId }),
         ...spreadIfDefined('user', isNil(ids.userId) ? undefined : { id: ids.userId }),
     })
+}
+
+type WorkerVersionGateParams = {
+    log: FastifyBaseLogger
+    workerVersion: string | undefined
+    workerId?: string
+    rpcMethod: string
 }

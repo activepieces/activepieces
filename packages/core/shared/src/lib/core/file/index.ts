@@ -82,6 +82,13 @@ export enum FileType {
      * Stored at the configured location (S3 when available). Kept indefinitely.
      */
     FLOW_BUNDLE = 'FLOW_BUNDLE',
+    /**
+     * Platform-wide prewarm scope (distinct piece packages + code-step sources for every
+     * enabled flow), addressed by a deterministic per-scope id and overwritten on each
+     * recompute. Downloaded by workers instead of shipping the scope over the RPC socket.
+     * Stored at the configured location (S3 when available).
+     */
+    PREWARM_SCOPE = 'PREWARM_SCOPE',
 }
 export enum FileCompression {
     NONE = 'NONE',
