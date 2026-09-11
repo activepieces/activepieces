@@ -69,9 +69,10 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
         }
     }
     // Nobody is reading, and an agent that asks an empty room reads the silence as a refusal.
+    const configuredNothing = Object.keys(configured).length === 0
     return {
         ...configured,
-        ...pick({ tools: groups.web, names: UNATTENDED_WEB_TOOLS }),
+        ...(configuredNothing ? {} : pick({ tools: groups.web, names: UNATTENDED_WEB_TOOLS })),
         ...groups.completion,
     }
 }

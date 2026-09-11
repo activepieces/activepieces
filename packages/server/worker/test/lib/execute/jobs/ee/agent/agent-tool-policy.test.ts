@@ -168,6 +168,21 @@ describe('what an unattended flow step may reach', () => {
         expect(names).not.toContain('ap_execute_action')
         expect(names).not.toContain('ap_create_flow')
     })
+
+    it('keeps the web reads out when the step configured no tools of its own', () => {
+        const withoutConfiguredTools: AgentToolGroups = {
+            ...GROUPS,
+            configuredPiece: {},
+            configuredFlow: {},
+            knowledgeBase: {},
+        }
+        const names = Object.keys(agentToolPolicy.selectToolsForSource({ source: AgentRunSource.FLOW_STEP, groups: withoutConfiguredTools }))
+
+        expect(names).not.toContain('ap_fetch_url')
+        expect(names).not.toContain('ap_web_search')
+        expect(names).not.toContain('ap_scrape_url')
+        expect(names).toContain('ap_return_output')
+    })
 })
 
 describe('the shape of the policy itself', () => {
