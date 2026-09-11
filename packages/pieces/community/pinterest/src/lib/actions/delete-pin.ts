@@ -1,7 +1,5 @@
 import {
   createAction,
-  Property,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
@@ -31,7 +29,9 @@ export const deletePin = createAction({
 
     let path = `/pins/${pin_id}`;
     if (ad_account_id) {
-      path = `/pins/${pin_id}?ad_account_id=${ad_account_id}`;
+      path = `/pins/${pin_id}?ad_account_id=${encodeURIComponent(
+        ad_account_id
+      )}`;
     }
 
     await makeRequest(getAccessTokenOrThrow(auth), HttpMethod.DELETE, path);

@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
@@ -14,7 +10,7 @@ export const findPin = createAction({
   name: 'findPin',
   classification: 'SEARCH',
   outputSchema: findPinActionOutputSchema,
-  displayName: 'Find Pin by Title/Keyword',
+  displayName: 'Find Pin by Keyword',
   description: 'Search for Pins using title, description, or keywords.',
   audience: 'both',
   aiMetadata: {
@@ -28,26 +24,29 @@ export const findPin = createAction({
       displayName: 'Search Query',
       required: true,
       description:
-        'Search terms for pin titles, descriptions, or tags. You can also search using comma-separated pin IDs.',
+        'Words in the title, description or tags, or comma-separated Pin IDs.',
+      placeholder: 'e.g. summer salad',
     }),
     bookmark: Property.ShortText({
-      displayName: 'Pagination Bookmark',
+      displayName: 'Bookmark',
       required: false,
-      description:
-        'Bookmark token from previous search results for pagination.',
+      description: 'Bookmark from a previous run to fetch the next page.',
+      advanced: true,
     }),
     max_results: Property.Number({
-      displayName: 'Maximum Results',
+      displayName: 'Max Results',
       required: false,
-      description:
-        'Maximum number of pins to return (useful for large result sets).',
+      description: 'Pins to return from the first page of results.',
       defaultValue: 25,
+      display: 'stepper',
+      min: 1,
+      max: 250,
+      step: 1,
     }),
   },
   async run({ auth, propsValue }) {
     const { query, bookmark, ad_account_id, max_results } = propsValue;
 
-    // Build query parameters
     const params = new URLSearchParams();
     params.append('query', query);
 
@@ -61,33 +60,23 @@ export const findPin = createAction({
 
     const path = `/search/pins?${params.toString()}`;
 
-    try {
-      const response = await makeRequest(
-        getAccessTokenOrThrow(auth),
-        HttpMethod.GET,
-        path
-      );
+    const response = await makeRequest(
+      getAccessTokenOrThrow(auth),
+      HttpMethod.GET,
+      path
+    );
 
-      // Apply max_results limit if specified
-      let items = response.items || [];
-      if (max_results && items.length > max_results) {
-        items = items.slice(0, max_results);
-      }
-
-      return {
-        items,
-        bookmark: response.bookmark,
-        total_results: items.length,
-        query_used: query,
-        has_more: !!response.bookmark,
-      };
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error('No pins found matching your search criteria.');
-      }
-      throw new Error(
-        `Failed to search pins: ${error.message || 'Unknown error'}`
-      );
+    let items = response.items || [];
+    if (max_results && items.length > max_results) {
+      items = items.slice(0, max_results);
     }
+
+    return {
+      items,
+      bookmark: response.bookmark,
+      total_results: items.length,
+      query_used: query,
+      has_more: !!response.bookmark,
+    };
   },
 });
