@@ -96,7 +96,7 @@ export type WorkerToApiContract = {
     executeAgentTool(input: ExecuteAgentToolRequest): Promise<ExecuteAgentToolResponse>
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse>
-    saveAiFile(input: SaveAiFileRequest): Promise<SaveAiFileResponse>
+    saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse>
     resumeAiStep(input: ResumeAiStepRequest): Promise<void>
     updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
@@ -428,7 +428,7 @@ export type ResolveAiProviderResponse = {
     config: Record<string, unknown>
 }
 
-export type SaveAiFileRequest = {
+export type SaveFlowStepFileRequest = {
     projectId: string
     platformId: string
     flowRunId: string
@@ -437,7 +437,7 @@ export type SaveAiFileRequest = {
     fileName?: string
 }
 
-export type SaveAiFileResponse = {
+export type SaveFlowStepFileResponse = {
     fileId: string
     url: string
 }
