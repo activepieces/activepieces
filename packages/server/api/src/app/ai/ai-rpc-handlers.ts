@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
-import { FileCompression, FileSizeError, FileType, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
+import { FileCompression, FileSizeError, FileType, ReadFlowStepFileRequest, ReadFlowStepFileResponse, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
@@ -49,6 +49,20 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
             platformId: input.platformId,
         })
         return { fileId: file.id, url }
+    },
+
+    async readFlowStepFile(input: ReadFlowStepFileRequest): Promise<ReadFlowStepFileResponse> {
+        await assertProjectBelongsToPlatform({ ...input, log })
+        const file = await fileService(log).getDataOrThrow({
+            projectId: input.projectId,
+            fileId: input.fileId,
+            type: FileType.FLOW_STEP_FILE,
+        })
+        return {
+            data: file.data,
+            ...spreadIfDefined('mimeType', file.metadata?.['mimeType']),
+            ...spreadIfDefined('fileName', file.fileName),
+        }
     },
 
     async resumeAiStep(input: ResumeAiStepRequest): Promise<void> {
