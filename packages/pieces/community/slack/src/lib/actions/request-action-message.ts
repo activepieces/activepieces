@@ -37,10 +37,11 @@ export const requestActionMessageAction = createAction({
     username,
     profilePicture,
     replyBroadcast: Property.Checkbox({
-      displayName: 'Broadcast reply to channel',
-      description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
+      displayName: 'Also Post to Channel',
+      description: 'When replying in a thread, also show the reply in the channel.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
     mentionOriginFlow,
   },

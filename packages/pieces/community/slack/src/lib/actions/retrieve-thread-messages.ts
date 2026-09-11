@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
-import { slackChannel } from '../common/props';
+import { singleSelectChannelInfo, slackChannel } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { threadRepliesActionOutputSchema } from '../output-schemas';
@@ -16,23 +16,44 @@ export const retrieveThreadMessages = createAction({
   auth: slackAuth,
   outputSchema: threadRepliesActionOutputSchema,
   props: {
+    info: singleSelectChannelInfo,
     channel: slackChannel(true),
     threadTs: Property.ShortText({
-      displayName: 'Thread ts',
-      description:
-        'Provide the ts (timestamp) value of the **parent** message to retrieve replies of this message. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
+      displayName: 'Thread Timestamp',
+      description: "Timestamp or link of the thread's parent message.",
+      placeholder: '1710304378.475129',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
     const client = new WebClient(getBotToken(auth as SlackAuthValue));
-      const messageTimestamp = processMessageTimestamp(propsValue.threadTs);
-        if (!messageTimestamp) {
-          throw new Error('Invalid Timestamp Value.');
-        }
-    return await client.conversations.replies({
+    const messageTimestamp = processMessageTimestamp(propsValue.threadTs);
+    if (!messageTimestamp) {
+      throw new Error('Invalid Timestamp Value.');
+    }
+
+    const firstPage = await client.conversations.replies({
       channel: propsValue.channel,
       ts: messageTimestamp,
+      limit: 200,
     });
+
+    const messages = [...(firstPage.messages ?? [])];
+    let cursor = firstPage.response_metadata?.next_cursor;
+
+    while (cursor) {
+      const page = await client.conversations.replies({
+        channel: propsValue.channel,
+        ts: messageTimestamp,
+        limit: 200,
+        cursor,
+      });
+      if (page.messages) {
+        messages.push(...page.messages);
+      }
+      cursor = page.response_metadata?.next_cursor;
+    }
+
+    return { ...firstPage, messages, has_more: false };
   },
 });

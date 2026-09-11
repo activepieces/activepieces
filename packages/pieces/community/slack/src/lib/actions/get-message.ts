@@ -21,7 +21,8 @@ export const getMessageAction = createAction({
 		ts: Property.ShortText({
 			displayName: 'Message Timestamp',
 			description:
-				'Please provide the timestamp of the message you wish to retrieve, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
+				'Timestamp of the target message, from its link or a trigger output.',
+			placeholder: '1710304378.475129',
 			required: true,
 		}),
 	},
