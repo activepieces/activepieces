@@ -9164,7 +9164,7 @@
     },
     "packages/pieces/community/truelayer": {
       "name": "@activepieces/piece-truelayer",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
