@@ -50,6 +50,7 @@ vi.mock('@slack/web-api', () => ({
 const { slackSendMessageToMultipleUsersAction } = await import(
   '../src/lib/actions/send-message-to-multiple-users'
 );
+const { slackConcurrency, FLOW_TIMEOUT_DEFAULT_MS } = await import('../src/lib/common/concurrency');
 
 const auth = {
   type: AppConnectionType.CUSTOM_AUTH,
@@ -275,18 +276,30 @@ describe('the SDK client is bounded, not left on its defaults', () => {
     expect(retryConfig['maxTimeout']).toBeGreaterThan(0);
   });
 
-  it('keeps the worst case per recipient well inside the 600s flow budget', async () => {
+  it('accounts for the randomized backoff when costing a recipient', async () => {
     await runAction(sameMessageProps(['U00000000A']));
 
     const options = clientOptions.at(-1);
     const retryConfig = options?.['retryConfig'] as Record<string, unknown>;
     const timeoutMs = Number(options?.['timeout']);
     const retries = Number(retryConfig['retries']);
+    const minTimeoutMs = Number(retryConfig['minTimeout']);
     const maxTimeoutMs = Number(retryConfig['maxTimeout']);
+    const factor = Number(retryConfig['factor']);
 
-    const worstCaseMs = timeoutMs * (retries + 1) + maxTimeoutMs * retries;
+    const randomizedBackoffMs = Array.from({ length: retries }, (_unused, attempt) =>
+      Math.min(2 * minTimeoutMs * factor ** attempt, maxTimeoutMs),
+    ).reduce((total, backoff) => total + backoff, 0);
 
-    expect(worstCaseMs).toBeLessThan(60_000);
+    expect(slackConcurrency.worstCaseMsPerRecipient()).toBe(
+      timeoutMs * (retries + 1) + randomizedBackoffMs,
+    );
+  });
+
+  it('leaves headroom under the flow timeout for a full round of sends', async () => {
+    expect(
+      slackConcurrency.roundsWithinFlowBudget() * slackConcurrency.worstCaseMsPerRecipient(),
+    ).toBeLessThanOrEqual(FLOW_TIMEOUT_DEFAULT_MS);
   });
 });
 

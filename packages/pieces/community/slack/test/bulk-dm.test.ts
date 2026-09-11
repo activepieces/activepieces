@@ -4,21 +4,37 @@ import {
   SLACK_MAX_BLOCKS_PER_MESSAGE,
   DEFAULT_MAX_RECIPIENTS,
 } from '../src/lib/common/bulk-dm';
+import {
+  slackConcurrency,
+  DEFAULT_ACTION_CONCURRENCY_LIMIT,
+  FLOW_TIMEOUT_DEFAULT_MS,
+  MAX_ACTION_CONCURRENCY_LIMIT,
+  MIN_ACTION_CONCURRENCY_LIMIT,
+} from '../src/lib/common/concurrency';
 import { Block, KnownBlock } from '@slack/web-api';
 
 const {
   buildSendPlan,
+  maxRecipientsForLimit,
   validateSendPlan,
   validateMessagePayload,
   assertBlockCountWithinLimit,
   summarize,
 } = slackBulkDm;
 
+const { roundsWithinFlowBudget, worstCaseMsPerRecipient } = slackConcurrency;
+
 function sections(count: number): (KnownBlock | Block)[] {
   return Array.from({ length: count }, () => ({
     type: 'section',
     text: { type: 'mrkdwn', text: 'x' },
   })) as (KnownBlock | Block)[];
+}
+
+function recipientsFor(count: number): { userId: string }[] {
+  return Array.from({ length: count }, (_unused, index) => ({
+    userId: `U${String(index).padStart(8, '0')}`,
+  }));
 }
 
 describe('buildSendPlan — same-message mode', () => {
@@ -144,26 +160,31 @@ describe('buildSendPlan — mode', () => {
 
 describe('validateSendPlan', () => {
   it('rejects an empty plan', () => {
-    expect(() => validateSendPlan({ recipients: [], maxRecipients: DEFAULT_MAX_RECIPIENTS })).toThrow(
+    expect(() => validateSendPlan({ recipients: [], limit: DEFAULT_ACTION_CONCURRENCY_LIMIT })).toThrow(
       'at least one user',
     );
   });
 
   it('rejects a plan over the recipient cap and names the limit', () => {
-    const recipients = Array.from({ length: 4 }, (_unused, index) => ({ userId: `U${index}00` }));
+    const cap = maxRecipientsForLimit({ limit: DEFAULT_ACTION_CONCURRENCY_LIMIT });
+    const recipients = recipientsFor(cap + 1);
 
-    expect(() => validateSendPlan({ recipients, maxRecipients: 3 })).toThrow('at most 3 users');
+    expect(() => validateSendPlan({ recipients, limit: DEFAULT_ACTION_CONCURRENCY_LIMIT })).toThrow(
+      `at most ${cap} users`,
+    );
   });
 
   it('accepts a plan exactly at the cap', () => {
-    const recipients = Array.from({ length: 3 }, (_unused, index) => ({ userId: `U${index}00` }));
+    const recipients = recipientsFor(maxRecipientsForLimit({ limit: DEFAULT_ACTION_CONCURRENCY_LIMIT }));
 
-    expect(() => validateSendPlan({ recipients, maxRecipients: 3 })).not.toThrow();
+    expect(() =>
+      validateSendPlan({ recipients, limit: DEFAULT_ACTION_CONCURRENCY_LIMIT }),
+    ).not.toThrow();
   });
 
   it('rejects a channel ID pasted where a user ID belongs', () => {
     expect(() =>
-      validateSendPlan({ recipients: [{ userId: 'C0123ABCD' }], maxRecipients: DEFAULT_MAX_RECIPIENTS }),
+      validateSendPlan({ recipients: [{ userId: 'C0123ABCD' }], limit: DEFAULT_ACTION_CONCURRENCY_LIMIT }),
     ).toThrow('valid Slack user ID');
   });
 
@@ -171,7 +192,7 @@ describe('validateSendPlan', () => {
     expect(() =>
       validateSendPlan({
         recipients: [{ userId: 'someone@example.com' }],
-        maxRecipients: DEFAULT_MAX_RECIPIENTS,
+        limit: DEFAULT_ACTION_CONCURRENCY_LIMIT,
       }),
     ).toThrow('valid Slack user ID');
   });
@@ -180,9 +201,43 @@ describe('validateSendPlan', () => {
     expect(() =>
       validateSendPlan({
         recipients: [{ userId: 'U012AB3CD' }, { userId: 'W012AB3CD' }],
-        maxRecipients: DEFAULT_MAX_RECIPIENTS,
+        limit: DEFAULT_ACTION_CONCURRENCY_LIMIT,
       }),
     ).not.toThrow();
+  });
+});
+
+describe('the recipient cap is tied to the concurrency', () => {
+  it('gives every parallel send a fixed share of the flow budget', () => {
+    for (const limit of [1, 2, 3, 4, 5]) {
+      expect(maxRecipientsForLimit({ limit })).toBe(
+        Math.min(DEFAULT_MAX_RECIPIENTS, roundsWithinFlowBudget() * limit),
+      );
+    }
+  });
+
+  it('still allows the full cap at the default concurrency', () => {
+    expect(maxRecipientsForLimit({ limit: DEFAULT_ACTION_CONCURRENCY_LIMIT })).toBe(
+      DEFAULT_MAX_RECIPIENTS,
+    );
+  });
+
+  it('never exceeds the hard cap however high the concurrency goes', () => {
+    expect(maxRecipientsForLimit({ limit: MAX_ACTION_CONCURRENCY_LIMIT })).toBe(DEFAULT_MAX_RECIPIENTS);
+  });
+
+  it('keeps the worst case inside the flow budget at every concurrency', () => {
+    for (let limit = MIN_ACTION_CONCURRENCY_LIMIT; limit <= MAX_ACTION_CONCURRENCY_LIMIT; limit += 1) {
+      const rounds = Math.ceil(maxRecipientsForLimit({ limit }) / limit);
+
+      expect(rounds * worstCaseMsPerRecipient()).toBeLessThanOrEqual(FLOW_TIMEOUT_DEFAULT_MS);
+    }
+  });
+
+  it('tells the user to raise Parallel Sends when the concurrency is what binds', () => {
+    const recipients = recipientsFor(maxRecipientsForLimit({ limit: 1 }) + 1);
+
+    expect(() => validateSendPlan({ recipients, limit: 1 })).toThrow('Raise Parallel Sends');
   });
 });
 

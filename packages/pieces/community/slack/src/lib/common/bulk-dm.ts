@@ -1,4 +1,5 @@
 import { Block, KnownBlock } from '@slack/web-api';
+import { slackConcurrency } from './concurrency';
 
 function buildSendPlan({ mode, userIds, text, personalMessages }: BuildSendPlanParams): BulkDmRecipient[] {
   const entries =
@@ -9,14 +10,22 @@ function buildSendPlan({ mode, userIds, text, personalMessages }: BuildSendPlanP
   return dedupeByUserId(entries);
 }
 
-function validateSendPlan({ recipients, maxRecipients }: { recipients: BulkDmRecipient[]; maxRecipients: number }): void {
+function maxRecipientsForLimit({ limit }: { limit: number }): number {
+  return Math.min(DEFAULT_MAX_RECIPIENTS, slackConcurrency.roundsWithinFlowBudget() * limit);
+}
+
+function validateSendPlan({ recipients, limit }: { recipients: BulkDmRecipient[]; limit: number }): void {
   if (recipients.length === 0) {
     throw new Error('Select at least one user to send a message to.');
   }
 
+  const maxRecipients = maxRecipientsForLimit({ limit });
+
   if (recipients.length > maxRecipients) {
     throw new Error(
-      `This action sends to at most ${maxRecipients} users at a time, but ${recipients.length} were provided. Split the list across multiple steps.`,
+      maxRecipients < DEFAULT_MAX_RECIPIENTS
+        ? `At Parallel Sends ${limit} this action sends to at most ${maxRecipients} users at a time, but ${recipients.length} were provided. Raise Parallel Sends or split the list across multiple steps.`
+        : `This action sends to at most ${maxRecipients} users at a time, but ${recipients.length} were provided. Split the list across multiple steps.`,
     );
   }
 
@@ -113,6 +122,7 @@ function dedupeByUserId(entries: BulkDmRecipient[]): BulkDmRecipient[] {
 
 export const slackBulkDm = {
   buildSendPlan,
+  maxRecipientsForLimit,
   validateSendPlan,
   validateMessagePayload,
   assertBlockCountWithinLimit,

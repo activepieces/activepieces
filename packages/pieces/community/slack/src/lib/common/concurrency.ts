@@ -57,7 +57,7 @@ function boundedClientOptions(): WebClientOptions {
     timeout: SLACK_REQUEST_TIMEOUT_MS,
     retryConfig: {
       retries: SLACK_RETRY_ATTEMPTS,
-      factor: 2,
+      factor: SLACK_RETRY_FACTOR,
       minTimeout: SLACK_RETRY_MIN_TIMEOUT_MS,
       maxTimeout: SLACK_RETRY_MAX_TIMEOUT_MS,
       randomize: true,
@@ -65,17 +65,42 @@ function boundedClientOptions(): WebClientOptions {
   };
 }
 
+function worstCaseMsPerRecipient(): number {
+  const backoffMs = Array.from({ length: SLACK_RETRY_ATTEMPTS }, (_unused, attempt) =>
+    Math.min(
+      RETRY_RANDOMIZE_CEILING * SLACK_RETRY_MIN_TIMEOUT_MS * SLACK_RETRY_FACTOR ** attempt,
+      SLACK_RETRY_MAX_TIMEOUT_MS,
+    ),
+  ).reduce((total, backoff) => total + backoff, 0);
+
+  return SLACK_REQUEST_TIMEOUT_MS * (SLACK_RETRY_ATTEMPTS + 1) + backoffMs;
+}
+
+function roundsWithinFlowBudget(): number {
+  return Math.floor(
+    (FLOW_TIMEOUT_DEFAULT_MS - FLOW_BUDGET_HEADROOM_MS) / worstCaseMsPerRecipient(),
+  );
+}
+
 export const slackConcurrency = {
   mapWithConcurrency,
   clampConcurrencyLimit,
   boundedClientOptions,
+  worstCaseMsPerRecipient,
+  roundsWithinFlowBudget,
 };
 
 export const SLACK_REQUEST_TIMEOUT_MS = 10_000;
 export const SLACK_RETRY_ATTEMPTS = 2;
+export const SLACK_RETRY_FACTOR = 2;
 export const SLACK_RETRY_MIN_TIMEOUT_MS = 1_000;
 export const SLACK_RETRY_MAX_TIMEOUT_MS = 4_000;
+
+export const FLOW_TIMEOUT_DEFAULT_MS = 600_000;
+export const FLOW_BUDGET_HEADROOM_MS = 24_000;
 
 export const MIN_ACTION_CONCURRENCY_LIMIT = 1;
 export const DEFAULT_ACTION_CONCURRENCY_LIMIT = 5;
 export const MAX_ACTION_CONCURRENCY_LIMIT = 20;
+
+const RETRY_RANDOMIZE_CEILING = 2;

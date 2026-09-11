@@ -11,7 +11,12 @@ import {
   username,
 } from '../common/props';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
-import { DEFAULT_ACTION_CONCURRENCY_LIMIT, slackConcurrency } from '../common/concurrency';
+import {
+  DEFAULT_ACTION_CONCURRENCY_LIMIT,
+  MAX_ACTION_CONCURRENCY_LIMIT,
+  MIN_ACTION_CONCURRENCY_LIMIT,
+  slackConcurrency,
+} from '../common/concurrency';
 import {
   BulkDmFailure,
   BulkDmMode,
@@ -114,7 +119,7 @@ export const slackSendMessageToMultipleUsersAction = createAction({
     }),
     concurrency: Property.Number({
       displayName: 'Parallel Sends',
-      description: 'How many direct messages to send at the same time, between 1 and 20. Raise it only if the default is too slow.',
+      description: `How many direct messages to send at the same time, between ${MIN_ACTION_CONCURRENCY_LIMIT} and ${MAX_ACTION_CONCURRENCY_LIMIT}. It also sets how many recipients one step accepts, because every send has to fit the flow time budget: ${slackConcurrency.roundsWithinFlowBudget()} recipients per parallel send, up to ${DEFAULT_MAX_RECIPIENTS}.`,
       required: false,
       defaultValue: DEFAULT_ACTION_CONCURRENCY_LIMIT,
     }),
@@ -133,9 +138,10 @@ export const slackSendMessageToMultipleUsersAction = createAction({
       personalMessages: recipients?.['personalMessages'],
     });
 
-    slackBulkDm.validateSendPlan({ recipients: plan, maxRecipients: DEFAULT_MAX_RECIPIENTS });
-
     const limit = slackConcurrency.clampConcurrencyLimit(context.propsValue.concurrency);
+
+    slackBulkDm.validateSendPlan({ recipients: plan, limit });
+
     const originBlock = mentionFlow ? buildFlowOriginContextBlock(context) : undefined;
 
     const payloads = plan.map((recipient) => {
@@ -261,6 +267,10 @@ function toSlackErrorCode(error: unknown): string {
     }
   }
 
+  if (fields['code'] === SLACK_REQUEST_ERROR_CODE && isTimeout(fields['original'])) {
+    return 'timeout';
+  }
+
   if (typeof fields['code'] === 'string') {
     return fields['code'];
   }
@@ -271,6 +281,20 @@ function toSlackErrorCode(error: unknown): string {
 
   return 'unknown_error';
 }
+
+function isTimeout(original: unknown): boolean {
+  if (original === null || typeof original !== 'object') {
+    return false;
+  }
+
+  const fields: Record<string, unknown> = { ...original };
+
+  return typeof fields['code'] === 'string' && AXIOS_TIMEOUT_CODES.includes(fields['code']);
+}
+
+const SLACK_REQUEST_ERROR_CODE = 'slack_webapi_request_error';
+
+const AXIOS_TIMEOUT_CODES = ['ECONNABORTED', 'ETIMEDOUT'];
 
 const AUTH_FAILURE_CODES = [
   'invalid_auth',

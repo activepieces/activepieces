@@ -25,6 +25,7 @@ vi.mock('@slack/web-api', () => ({
 const { slackSendMessageToMultipleUsersAction } = await import(
   '../src/lib/actions/send-message-to-multiple-users'
 );
+const { slackBulkDm } = await import('../src/lib/common/bulk-dm');
 
 function userIdsFor(count: number): string[] {
   return Array.from({ length: count }, (_unused, index) =>
@@ -56,7 +57,7 @@ beforeEach(() => {
 
 describe(`bounded parallelism at a simulated ${SIMULATED_SLACK_LATENCY_MS}ms per DM`, () => {
   it('reports the loop baseline against the default and maximum limits', async () => {
-    const count = 20;
+    const count = slackBulkDm.maxRecipientsForLimit({ limit: 1 });
 
     const serial = await timeRun({ count, concurrency: 1 });
     const atFive = await timeRun({ count, concurrency: 5 });
@@ -83,7 +84,7 @@ describe(`bounded parallelism at a simulated ${SIMULATED_SLACK_LATENCY_MS}ms per
 
     expect(serial.peak).toBe(1);
     expect(atFive.peak).toBe(5);
-    expect(atTwenty.peak).toBe(20);
+    expect(atTwenty.peak).toBe(Math.min(20, count));
   });
 
   it('never finishes faster than the theoretical floor of ceil(count / limit) rounds', async () => {

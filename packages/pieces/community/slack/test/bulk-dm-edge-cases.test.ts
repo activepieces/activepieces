@@ -19,8 +19,30 @@ function slackError(code: string): never {
 }
 
 function timeoutError(): never {
-  const error: Error & { code?: string } = new Error('A request timed out');
+  const original: Error & { code?: string; request?: unknown } = new Error(
+    'timeout of 10000ms exceeded',
+  );
+  original.code = 'ECONNABORTED';
+  original.request = {};
+
+  const error: Error & { code?: string; original?: unknown } = new Error(
+    `A request error occurred: ${original.message}`,
+  );
   error.code = 'slack_webapi_request_error';
+  error.original = original;
+  throw error;
+}
+
+function connectionResetError(): never {
+  const original: Error & { code?: string; request?: unknown } = new Error('socket hang up');
+  original.code = 'ECONNRESET';
+  original.request = {};
+
+  const error: Error & { code?: string; original?: unknown } = new Error(
+    `A request error occurred: ${original.message}`,
+  );
+  error.code = 'slack_webapi_request_error';
+  error.original = original;
   throw error;
 }
 
@@ -50,7 +72,7 @@ vi.mock('@slack/web-api', () => ({
 const { slackSendMessageToMultipleUsersAction } = await import(
   '../src/lib/actions/send-message-to-multiple-users'
 );
-const { DEFAULT_MAX_RECIPIENTS } = await import('../src/lib/common/bulk-dm');
+const { DEFAULT_MAX_RECIPIENTS, slackBulkDm } = await import('../src/lib/common/bulk-dm');
 const { MAX_ACTION_CONCURRENCY_LIMIT, MIN_ACTION_CONCURRENCY_LIMIT } = await import(
   '../src/lib/common/concurrency'
 );
@@ -103,6 +125,25 @@ describe('recipient count boundaries', () => {
       `at most ${DEFAULT_MAX_RECIPIENTS} users`,
     );
     expect(calls).toHaveLength(0);
+  });
+
+  it('lowers the cap with the concurrency and issues no request when it is exceeded', async () => {
+    const capAtOne = slackBulkDm.maxRecipientsForLimit({ limit: MIN_ACTION_CONCURRENCY_LIMIT });
+
+    expect(capAtOne).toBeLessThan(DEFAULT_MAX_RECIPIENTS);
+
+    await expect(
+      run(sameMessage(userIdsFor(capAtOne + 1), MIN_ACTION_CONCURRENCY_LIMIT)),
+    ).rejects.toThrow('Raise Parallel Sends');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('accepts exactly the cap the chosen concurrency allows', async () => {
+    const capAtOne = slackBulkDm.maxRecipientsForLimit({ limit: MIN_ACTION_CONCURRENCY_LIMIT });
+
+    const output = await run(sameMessage(userIdsFor(capAtOne), MIN_ACTION_CONCURRENCY_LIMIT));
+
+    expect(output.summary.sentCount).toBe(capAtOne);
   });
 
   it('counts the cap after dedupe, so duplicates do not consume the budget', async () => {
@@ -244,6 +285,14 @@ describe('timeout behaviour', () => {
 
     expect(output.summary).toEqual({ total: 4, sentCount: 3, failedCount: 1 });
     expect(output.failed[0].userId).toBe('U00000001');
+    expect(output.failed[0].error).toBe('timeout');
+  });
+
+  it('leaves other request errors under their original code', async () => {
+    behaviours.set('U00000001', () => connectionResetError());
+
+    const output = await run(sameMessage(userIdsFor(2)));
+
     expect(output.failed[0].error).toBe('slack_webapi_request_error');
   });
 
