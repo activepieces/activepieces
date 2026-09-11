@@ -127,7 +127,7 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
                         engineToken,
                         log,
                     })
-                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken })
+                await localExecutionCache(log, basePath, getSettings).provision({ pieces, codeSteps, publicApiUrl, engineToken, bestEffort: true })
                 log.info({ pieceCount: pieces.length, codeStepCount: codeSteps.length, durationMs: Date.now() - startedAt }, 'Prewarmed sandbox cache')
             })
             if (error) {

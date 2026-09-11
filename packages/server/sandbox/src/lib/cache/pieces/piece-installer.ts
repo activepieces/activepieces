@@ -16,10 +16,10 @@ const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
-    async install({ pieces, includeFilters, publicApiUrl, engineToken }: InstallParams): Promise<void> {
+    async install({ pieces, includeFilters, publicApiUrl, engineToken, bestEffort }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings, bestEffort ?? false)
         })
         await Promise.all(installPromises)
     },
@@ -43,7 +43,7 @@ function getCustomPiecesPath(basePath: string, platformId: string, getSettings: 
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxSettings): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxSettings, bestEffort: boolean): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
@@ -140,7 +140,7 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 })
             }
 
-            if (!isEmpty(failures)) {
+            if (!bestEffort && !isEmpty(failures)) {
                 throw failures[0].error
             }
         },
@@ -376,6 +376,7 @@ type InstallParams = {
     includeFilters: boolean
     publicApiUrl: string
     engineToken: string
+    bestEffort?: boolean
 }
 
 type BundleSource = {
