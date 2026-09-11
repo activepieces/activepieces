@@ -70,6 +70,7 @@ const systemPropValidators: {
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
+    [AppSystemProp.AI_CREDIT_USD_VALUE]: numberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
     [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: positiveIntegerValidator,
     [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: positiveIntegerValidator,

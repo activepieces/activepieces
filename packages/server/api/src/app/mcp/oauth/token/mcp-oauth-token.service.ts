@@ -7,6 +7,7 @@ import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { INTERNAL_CHAT_CLIENT_ID } from '../../mcp-clients'
 import { mcpListingUtils } from '../../mcp-listing-utils'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
@@ -18,7 +19,6 @@ import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 const repo = repoFactory(McpOAuthTokenEntity)
 const clientRepo = repoFactory(McpOAuthClientEntity)
 
-const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 const DEFAULT_GRANT_PAGE_SIZE = 20
 const TOKEN_ALIAS = 'mcp_oauth_token'
 const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'
