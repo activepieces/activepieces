@@ -3,6 +3,7 @@ import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
+import { resolveAiFiles } from './ai-files'
 import { extractStructuredData } from './extract-structured-data'
 import { generateImageStep } from './generate-image'
 
@@ -56,9 +57,9 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
     const flowStep = flowStepMetadata(data)
     switch (data.action) {
         case AiStepAction.EXTRACT_STRUCTURED_DATA:
-            return { answer: await extractStructuredData({ data, resolved, flowStep }) }
+            return { answer: await extractStructuredData({ data, resolved, flowStep, files: await resolveAiFiles({ ctx, data }) }) }
         case AiStepAction.GENERATE_IMAGE:
-            return { answer: await generateImageStep({ ctx, data, resolved, flowStep }) }
+            return { answer: await generateImageStep({ ctx, data, resolved, flowStep, inputImages: await resolveAiFiles({ ctx, data }) }) }
         case AiStepAction.ASK_AI:
         case AiStepAction.SUMMARIZE_TEXT:
         case AiStepAction.CLASSIFY_TEXT:
