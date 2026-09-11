@@ -9,6 +9,7 @@ import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { projectRepo } from '../../../project/project-repo'
 import { mapToUserWithMetaInformation, userRepo } from '../../../user/user-service'
+import { INTERNAL_CHAT_CLIENT_ID } from '../../mcp-clients'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
@@ -19,7 +20,6 @@ const clientRepo = repoFactory(McpOAuthClientEntity)
 
 const ACCESS_TOKEN_TTL_15_MINUTES_SECONDS = 15 * 60
 const REFRESH_TOKEN_TTL_30_DAYS_MS = 30 * 24 * 60 * 60 * 1000
-const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 const DEFAULT_GRANT_PAGE_SIZE = 20
 const TOKEN_ALIAS = 'mcp_oauth_token'
 const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'

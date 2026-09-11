@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
-import { FileCompression, FileSizeError, FileType, ReadFlowStepFileRequest, ReadFlowStepFileResponse, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
+import { FileCompression, FileSizeError, FileType, ReadFlowStepFileRequest, ReadFlowStepFileResponse, ReportAiUsageRequest, ResolveAiProviderRequest, ResolveAiProviderResponse, ResumeAiStepRequest, SaveFlowStepFileRequest, SaveFlowStepFileResponse, spreadIfDefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { fileService } from '../file/file.service'
 import { filesService } from '../file/files-service'
@@ -9,6 +9,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
 import { resumeService } from '../waitpoints/resume-service'
 import { aiProviderService } from './ai-provider-service'
+import { aiUsageService } from './ai-usage-service'
 
 export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
     async resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse> {
@@ -63,6 +64,10 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('mimeType', file.metadata?.['mimeType']),
             ...spreadIfDefined('fileName', file.fileName),
         }
+    },
+
+    async reportAiUsage(input: ReportAiUsageRequest): Promise<void> {
+        await aiUsageService(log).report(input)
     },
 
     async resumeAiStep(input: ResumeAiStepRequest): Promise<void> {

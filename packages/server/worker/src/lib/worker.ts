@@ -11,6 +11,7 @@ import { getApiUrl, system, WorkerSystemProp } from './config/configs'
 import { logger } from './config/logger'
 import { workerSettings } from './config/worker-settings'
 import { getHandler } from './execute/job-registry'
+import { installAiCostReporter } from './execute/jobs/ai/ai-cost-reporter'
 import { JobContext, JobResult, JobResultKind } from './execute/types'
 import { sandboxConfig } from './runtime/sandbox-config'
 import { VERSION_MISMATCH_POLL_PAUSE_MS, versionChecker } from './utils/version-checker'
@@ -71,6 +72,7 @@ export const worker = {
         })
 
         const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
+        installAiCostReporter({ apiClient, log: logger })
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')

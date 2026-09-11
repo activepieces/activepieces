@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, AIProviderName } from '@activepieces/core-utils'
 import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
@@ -98,6 +98,7 @@ export type WorkerToApiContract = {
     resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse>
     saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse>
     readFlowStepFile(input: ReadFlowStepFileRequest): Promise<ReadFlowStepFileResponse>
+    reportAiUsage(input: ReportAiUsageRequest): Promise<void>
     resumeAiStep(input: ResumeAiStepRequest): Promise<void>
     updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
@@ -432,6 +433,35 @@ export type SaveFlowStepFileRequest = {
     data: Buffer
     fileName: string
 }
+
+export type ReportAiUsageRequest = {
+    billing: ActivepiecesAiBilling
+    provider: AIProviderName
+    modelId: string
+    idempotencyKey: string
+    usage: AiUsageCharge
+    toolCalls?: number
+    generationId?: string
+    requestId?: string
+    flowRun?: AiUsageFlowRunContext
+    chat?: AiUsageChatContext
+}
+
+export type AiUsageFlowRunContext = {
+    flowId: string
+    flowRunId: string
+    environment: string
+}
+
+export type AiUsageChatContext = {
+    userId: string
+    turnIndex: number
+    tier: string
+}
+
+export type AiUsageCharge =
+    | { type: 'observed-cost', costUsd: number }
+    | { type: 'flat-credits', credits: number }
 
 export type ReadFlowStepFileRequest = {
     projectId: string
