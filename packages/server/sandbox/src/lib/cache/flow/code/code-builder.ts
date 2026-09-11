@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import fs, { rm } from 'node:fs/promises'
 import path from 'node:path'
-import { tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { type ApLogger, cryptoUtils, fileSystemUtils, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode } from '@activepieces/shared'
 import { CodeArtifact, SandboxSettings } from '../../../types'
@@ -55,10 +55,10 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         const compiledStepPath = codeCache(codesFolderPath).compiledStepPath({ flowVersionId, stepName: name })
         const cache = cacheState(codePath)
         let buildStatus: CodeBuildStatus = 'success'
-        const { cacheHit } = await cache.getOrSetCache({
+        const { cacheHit, state } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
-                return value !== currentHash || !existsSync(compiledStepPath)
+                return parseBuildState(value).hash !== currentHash || !existsSync(compiledStepPath)
             },
             installFn: async () => {
                 const { code, packageJson } = sourceCode
@@ -91,7 +91,7 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     await handleInstallError({ codePath, error: installError })
                     await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                     buildStatus = 'install-failed'
-                    return currentHash
+                    return serializeBuildState({ hash: currentHash, status: buildStatus })
                 }
 
                 const compileError = await wideEvent.timed({
@@ -117,15 +117,17 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
 
                 // node_modules is no longer needed after esbuild bundles everything into index.js
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
-                return currentHash
+                return serializeBuildState({ hash: currentHash, status: buildStatus })
             },
-            // A transient bun install failure must self-heal: never cache the throwing stub, so the
-            // next build re-runs install. Deterministic compile errors stay cached. See GIT-1608.
-            skipSave: () => buildStatus === 'install-failed',
+            skipSave: () => buildStatus !== 'success',
         })
-        return cacheHit ? 'success' : buildStatus
+        return cacheHit ? parseBuildState(state).status : buildStatus
     },
 })
+
+const CACHE_STATUS_SEPARATOR = '::'
+
+const BUILD_STATUSES = ['success', 'install-failed', 'compile-failed'] as const
 
 function isPackagesAllowed(getSettings: () => SandboxSettings): boolean {
     switch (getSettings().EXECUTION_MODE) {
@@ -188,6 +190,26 @@ async function handleInstallError({ codePath, error }: HandleInstallErrorParams)
     await writeInvalidArtifact({ codePath, errorMessage })
 }
 
+function serializeBuildState({ hash, status }: SerializeBuildStateParams): string {
+    return `${status}${CACHE_STATUS_SEPARATOR}${hash}`
+}
+
+function parseBuildState(value: string | null): ParsedBuildState {
+    if (isNil(value)) {
+        return { hash: null, status: 'success' }
+    }
+    const separatorIndex = value.indexOf(CACHE_STATUS_SEPARATOR)
+    const status = separatorIndex === -1 ? null : toBuildStatus(value.slice(0, separatorIndex))
+    if (isNil(status)) {
+        return { hash: value, status: 'success' }
+    }
+    return { hash: value.slice(separatorIndex + CACHE_STATUS_SEPARATOR.length), status }
+}
+
+function toBuildStatus(value: string): CodeBuildStatus | null {
+    return BUILD_STATUSES.find((status) => status === value) ?? null
+}
+
 async function writeInvalidArtifact({ codePath, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
     const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
@@ -221,9 +243,19 @@ type HandleInstallErrorParams = {
     error: unknown
 }
 
+type SerializeBuildStateParams = {
+    hash: string
+    status: CodeBuildStatus
+}
+
+type ParsedBuildState = {
+    hash: string | null
+    status: CodeBuildStatus
+}
+
 type WriteInvalidArtifactParams = {
     codePath: string
     errorMessage: string
 }
 
-export type CodeBuildStatus = 'success' | 'install-failed' | 'compile-failed'
+export type CodeBuildStatus = typeof BUILD_STATUSES[number]
