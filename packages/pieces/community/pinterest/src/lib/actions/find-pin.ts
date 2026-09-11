@@ -33,6 +33,12 @@ export const findPin = createAction({
       description: 'Bookmark from a previous run to fetch the next page.',
       advanced: true,
     }),
+    skip: Property.Number({
+      displayName: 'Skip',
+      required: false,
+      description: 'Pins already returned from the bookmark page. Copy from the last run.',
+      advanced: true,
+    }),
     max_results: Property.Number({
       displayName: 'Max Results',
       required: false,
@@ -45,13 +51,16 @@ export const findPin = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { query, bookmark, ad_account_id, max_results } = propsValue;
+    const { query, bookmark, ad_account_id, max_results, skip } = propsValue;
     const limit = max_results ?? DEFAULT_MAX_RESULTS;
+    const skipOnFirstPage = Math.max(0, Math.floor(skip ?? 0));
     const accessToken = getAccessTokenOrThrow(auth);
 
     let items: unknown[] = [];
     let pageBookmark: string | undefined = bookmark || undefined;
     let nextBookmark: string | undefined = undefined;
+    let lastPageStart = 0;
+    let lastPageSkipped = 0;
 
     for (let page = 0; page < MAX_SEARCH_PAGES; page++) {
       const params = new URLSearchParams();
@@ -69,16 +78,20 @@ export const findPin = createAction({
         `/search/pins?${params.toString()}`
       );
 
-      const pageItems: unknown[] = Array.isArray(response?.items)
+      const rawItems: unknown[] = Array.isArray(response?.items)
         ? response.items
         : [];
+      const skipped = page === 0 ? Math.min(skipOnFirstPage, rawItems.length) : 0;
+      const pageItems = rawItems.slice(skipped);
+      lastPageStart = items.length;
+      lastPageSkipped = skipped;
       items = [...items, ...pageItems];
       nextBookmark =
         typeof response?.bookmark === 'string' && response.bookmark.length > 0
           ? response.bookmark
           : undefined;
 
-      if (!nextBookmark || items.length >= limit || pageItems.length === 0) {
+      if (!nextBookmark || items.length >= limit || rawItems.length === 0) {
         break;
       }
       pageBookmark = nextBookmark;
@@ -90,10 +103,10 @@ export const findPin = createAction({
     return {
       items: limitedItems,
       bookmark: cutInsidePage ? pageBookmark : nextBookmark,
+      skip: cutInsidePage ? lastPageSkipped + (limit - lastPageStart) : 0,
       total_results: limitedItems.length,
       query_used: query,
       has_more: cutInsidePage || !!nextBookmark,
-      bookmark_repeats_last_page: cutInsidePage,
     };
   },
 });

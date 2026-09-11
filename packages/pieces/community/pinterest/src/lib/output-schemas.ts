@@ -114,11 +114,10 @@ export const findPinActionOutputSchema: OutputSchema = {
       description: 'Pass back as "Bookmark" to continue where these results end.',
     },
     {
-      key: 'bookmark_repeats_last_page',
-      label: 'Bookmark Repeats Last Page',
-      format: 'boolean',
-      description:
-        'True when Max Results cut a page short; continuing repeats that page.',
+      key: 'skip',
+      label: 'Skip',
+      format: 'number',
+      description: 'Pass back as "Skip" with the bookmark so no Pin repeats.',
     },
   ],
 };
