@@ -38,8 +38,10 @@ jobs:
       # checked-out source. The `tag` input is free-text, so a mistyped tag would publish an
       # image whose real version disagrees with its tag/git-tag/GitHub-release — invisible until
       # it is mixed with a correctly-built peer and the worker↔app version gate silently
-      # withholds jobs. Fail closed here. Hotfix/rc suffixes (0.79.2-hotfix.1, 0.79.2-rc.1) are
-      # deploy-only and are not in package.json, so compare against the base X.Y.Z only.
+      # withholds jobs. Fail closed here. A hotfix/rc suffix (0.79.2-hotfix.1, 0.79.2-rc.1) is
+      # accepted two ways: an exact match when package.json carries the full suffixed version
+      # (needed when a hotfix must be version-gate-distinguishable from its predecessor), or a
+      # deploy-only suffix where package.json carries just the base X.Y.Z.
       - name: Verify tag matches package.json
         # TAG is passed via env (not inlined as ${{ inputs.tag }} in the script) to avoid shell
         # expression injection — a crafted tag would otherwise run as shell in the run block.
@@ -48,11 +50,11 @@ jobs:
         run: |
           PACKAGE_VERSION="$(jq -r .version package.json)"
           TAG_BASE="${TAG%%-*}"
-          if [ "$TAG_BASE" != "$PACKAGE_VERSION" ]; then
-            echo "::error::Release tag '$TAG' (base '$TAG_BASE') does not match package.json version '$PACKAGE_VERSION'. Bump package.json or fix the tag before releasing."
+          if [ "$TAG" != "$PACKAGE_VERSION" ] && [ "$TAG_BASE" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Release tag '$TAG' matches package.json version '$PACKAGE_VERSION' neither exactly nor by its base '$TAG_BASE'. Bump package.json or fix the tag before releasing."
             exit 1
           fi
-          echo "Release tag base '$TAG_BASE' matches package.json version '$PACKAGE_VERSION'."
+          echo "Release tag '$TAG' matches package.json version '$PACKAGE_VERSION'."
 
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
