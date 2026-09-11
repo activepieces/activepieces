@@ -61,7 +61,7 @@ export const googleDriveListFiles = createAction({
     const depthLevel = context.propsValue.depthLevel || 1;
     
     // Get files level-by-level, batching all folders at a level into as few queries as possible
-    const filesWithLevel = await listDriveFilesRecursive({
+    const files = await listDriveFilesRecursive({
       auth: context.auth,
       rootFolderId: context.propsValue.folderId,
       maxLevel: depthLevel,
@@ -73,8 +73,7 @@ export const googleDriveListFiles = createAction({
     if (context.propsValue.downloadFiles) {
       const processedFiles: any[] = [];
 
-      for (const fileWithLevel of filesWithLevel) {
-        const file = fileWithLevel.file;
+      for (const file of files) {
         // Skip folders when downloading
         if (file.mimeType === 'application/vnd.google-apps.folder') {
           processedFiles.push(file);
@@ -110,7 +109,7 @@ export const googleDriveListFiles = createAction({
         .map(f => f.downloadedFile)
         .filter((url): url is string => url !== undefined);
     } else {
-      result.files = filesWithLevel.map(f => f.file);
+      result.files = files;
     }
 
     return result;

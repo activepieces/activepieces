@@ -47,8 +47,8 @@ export async function listDriveFilesRecursive({
   maxLevel: number;
   includeTrashed: boolean;
   includeTeamDrives: boolean;
-}): Promise<FileWithLevel[]> {
-  const filesWithLevel: FileWithLevel[] = [];
+}): Promise<any[]> {
+  const files: any[] = [];
   let currentLevelParentIds = [rootFolderId];
 
   for (let level = 0; level < maxLevel && currentLevelParentIds.length > 0; level++) {
@@ -71,11 +71,7 @@ export async function listDriveFilesRecursive({
       });
 
       for (const file of pageFiles) {
-        filesWithLevel.push({
-          file,
-          level,
-          parentFolder: file.parents?.find((id: string) => currentLevelParentIds.includes(id)) ?? currentLevelParentIds[0],
-        });
+        files.push(file);
 
         if (file.mimeType === 'application/vnd.google-apps.folder') {
           nextLevelParentIds.push(file.id);
@@ -86,11 +82,5 @@ export async function listDriveFilesRecursive({
     currentLevelParentIds = nextLevelParentIds;
   }
 
-  return filesWithLevel;
-}
-
-export interface FileWithLevel {
-  file: any;
-  level: number;
-  parentFolder?: string;
+  return files;
 }
