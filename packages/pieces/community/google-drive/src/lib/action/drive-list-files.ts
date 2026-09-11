@@ -1,7 +1,7 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { googleDriveAuth, getAccessToken } from '../auth';
+import { extension } from 'mime-types';
+import { googleDriveAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
-import querystring from 'querystring';
+import { listDriveFilesRecursive } from '../common/list-drive-files';
 import { downloadFileFromDrive } from '../common/get-file-content';
 import { driveListFilesOutputSchema } from '../output-schemas';
 
@@ -10,101 +10,6 @@ interface ListFilesResult {
   incompleteSearch: boolean;
   files: unknown[];
   downloadedFiles?: string[];
-}
-
-interface FileWithLevel {
-  file: any;
-  level: number;
-  parentFolder?: string;
-}
-
-async function getFilesRecursively(
-  auth: any,
-  folderId: string,
-  maxLevel: number,
-  includeTrashed: boolean,
-  includeTeamDrives: boolean,
-  currentLevel = 0
-): Promise<FileWithLevel[]> {
-  const files: FileWithLevel[] = [];
-
-  if (currentLevel > maxLevel) {
-    return files;
-  }
-
-  const accessToken = await getAccessToken(auth);
-
-  let q = `'${folderId}' in parents`;
-  if (!includeTrashed) {
-    q += ' and trashed=false';
-  }
-
-  const params: Record<string, string> = {
-    q: q,
-    fields: 'nextPageToken,files(id,kind,mimeType,name,trashed,parents)',
-    supportsAllDrives: 'true',
-    includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
-    corpora: includeTeamDrives ? 'allDrives' : 'user',
-    pageSize: '1000',
-  };
-
-  let response = await httpClient.sendRequest({
-    method: HttpMethod.GET,
-    url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(params)}`,
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  // Add files from current level
-  for (const file of response.body.files) {
-    files.push({
-      file,
-      level: currentLevel,
-      parentFolder: folderId,
-    });
-  }
-
-  // Handle pagination for current level
-  while (response.body.nextPageToken) {
-    params.pageToken = response.body.nextPageToken;
-    response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(params)}`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    for (const file of response.body.files) {
-      files.push({
-        file,
-        level: currentLevel,
-        parentFolder: folderId,
-      });
-    }
-  }
-
-  // If we haven't reached max level, recursively get files from subfolders
-  if (currentLevel + 1 < maxLevel) {
-    const subfolders = files.filter(
-      (f) => f.file.mimeType === 'application/vnd.google-apps.folder'
-    );
-
-    for (const subfolder of subfolders) {
-      const subfolderFiles = await getFilesRecursively(
-        auth,
-        subfolder.file.id,
-        maxLevel,
-        includeTrashed,
-        includeTeamDrives,
-        currentLevel + 1
-      );
-      files.push(...subfolderFiles);
-    }
-  }
-
-  return files;
 }
 
 export const driveListFiles = createAction({
@@ -163,46 +68,31 @@ export const driveListFiles = createAction({
 
     const depthLevel = context.propsValue.depth_level || 1;
 
-    // Get files recursively based on depth level
-    const filesWithLevel = await getFilesRecursively(
-      context.auth,
-      context.propsValue.folder_id,
-      depthLevel,
-      context.propsValue.include_trashed ?? false,
-      context.propsValue.include_team_drives ?? false
-    );
+    // Get files level-by-level, batching all folders at a level into as few queries as possible
+    const files = await listDriveFilesRecursive({
+      auth: context.auth,
+      rootFolderId: context.propsValue.folder_id,
+      maxLevel: depthLevel,
+      includeTrashed: context.propsValue.include_trashed ?? false,
+      includeTeamDrives: context.propsValue.include_team_drives ?? false,
+    });
 
-    // Extract just the file objects for backward compatibility
-    result.files = filesWithLevel.map((f) => f.file);
-
-    // If downloadFiles is enabled, download each file and add URLs to array
+    // If downloadFiles is enabled, download each file and return a new file object carrying the URL
     if (context.propsValue.download_files) {
-      const downloadedFiles: string[] = [];
-      const extensionMap: Record<string, string> = {
-        'application/pdf': '.pdf',
-        'image/jpeg': '.jpg',
-        'image/png': '.png',
-        'image/tiff': '.tiff',
-        'text/plain': '.txt',
-        'text/csv': '.csv',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-          '.docx',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-          '.xlsx',
-      };
+      const processedFiles: any[] = [];
 
-      for (const fileWithLevel of filesWithLevel) {
-        const file = fileWithLevel.file;
+      for (const file of files) {
         // Skip folders when downloading
         if (file.mimeType === 'application/vnd.google-apps.folder') {
+          processedFiles.push(file);
           continue;
         }
 
         let safeName = file.name;
-        const correctExtension = extensionMap[file.mimeType];
+        const correctExtension = extension(file.mimeType);
         if (
           correctExtension &&
-          !safeName.toLowerCase().endsWith(correctExtension)
+          !safeName.toLowerCase().endsWith(`.${correctExtension}`)
         ) {
           // Check for the .jpeg edge case before appending .jpg
           if (
@@ -211,27 +101,35 @@ export const driveListFiles = createAction({
               safeName.toLowerCase().endsWith('.jpeg')
             )
           ) {
-            safeName = safeName + correctExtension;
+            safeName = `${safeName}.${correctExtension}`;
           }
         }
 
         try {
-          const fileUrl = await downloadFileFromDrive(
+          const downloadedFile = await downloadFileFromDrive(
             context.auth,
             context.files,
             file.id,
             safeName
           );
-          downloadedFiles.push(fileUrl);
+          processedFiles.push({ ...file, downloadedFile });
         } catch (error) {
           console.warn(
             `Failed to download file ${file.name}: ${
               error instanceof Error ? error.message : 'Download failed'
             }`
           );
+          processedFiles.push(file);
         }
       }
-      result.downloadedFiles = downloadedFiles;
+
+      result.files = processedFiles;
+      // Kept for backward compatibility; each URL now also lives on its file's `downloadedFile`
+      result.downloadedFiles = processedFiles
+        .map((f) => f.downloadedFile)
+        .filter((url): url is string => url !== undefined);
+    } else {
+      result.files = files;
     }
 
     return result;

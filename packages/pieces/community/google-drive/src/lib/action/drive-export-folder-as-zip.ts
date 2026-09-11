@@ -4,13 +4,12 @@ import {
   PieceAuth,
   MarkdownVariant,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Readable } from 'node:stream';
 import { ZipWriter, ZipWriterAddDataOptions } from '@zip.js/zip.js';
 import { extension } from 'mime-types';
-import querystring from 'querystring';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken } from '../auth';
 import { common } from '../common';
+import { listDriveFiles } from '../common/list-drive-files';
 
 // A zip is a sequential format. Only the entry holding the writer lock streams straight into the
 // archive -- that one is paced by backpressure and costs almost nothing. Every *other* in-flight
@@ -103,40 +102,17 @@ async function listFolderChildren({
   folderId: string;
   includeTeamDrives: boolean;
 }): Promise<DriveListItem[]> {
-  const accessToken = await getAccessToken(auth);
-  const items: DriveListItem[] = [];
-
-  const params: Record<string, string> = {
-    q: `'${folderId}' in parents and trashed=false`,
-    fields: 'nextPageToken,files(id,name,mimeType,size)',
-    supportsAllDrives: 'true',
-    includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
-    corpora: includeTeamDrives ? 'allDrives' : 'user',
-    pageSize: '1000',
-  };
-
-  let nextPageToken: string | undefined;
-  do {
-    if (nextPageToken) {
-      params.pageToken = nextPageToken;
-    }
-    const response = await httpClient.sendRequest<{
-      files: DriveListItem[];
-      nextPageToken?: string;
-    }>({
-      method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(
-        params
-      )}`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    items.push(...(response.body.files ?? []));
-    nextPageToken = response.body.nextPageToken;
-  } while (nextPageToken);
-
-  return items;
+  return listDriveFiles<DriveListItem>({
+    auth,
+    params: {
+      q: `'${folderId}' in parents and trashed=false`,
+      fields: 'nextPageToken,files(id,name,mimeType,size)',
+      supportsAllDrives: 'true',
+      includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+      corpora: includeTeamDrives ? 'allDrives' : 'user',
+      pageSize: '1000',
+    },
+  });
 }
 
 interface ExportError {
