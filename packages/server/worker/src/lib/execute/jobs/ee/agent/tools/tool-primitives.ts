@@ -1,7 +1,7 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
 import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, ToolProgressEvent } from '@activepieces/shared'
-import { ToolExecutionOptions } from 'ai'
+import { ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
 export const TOOL_EXECUTION_TIMEOUT_MS = 5 * 60 * 1_000
@@ -179,6 +179,22 @@ export type TaintState = { tainted: boolean }
 
 type GateOutcome = 'approved' | 'declined' | 'timeout' | 'aborted'
 export type GateDecision = { outcome: GateOutcome, payload?: Record<string, unknown> }
+
+export function wrapToolsWithTaint({ tools, taintState }: { tools: ToolSet, taintState: TaintState }): ToolSet {
+    return Object.fromEntries(Object.entries(tools).map(([name, toolDef]) => {
+        const run = toolDef.execute
+        if (typeof run !== 'function') {
+            return [name, toolDef]
+        }
+        return [name, {
+            ...toolDef,
+            execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
+                taintState.tainted = true
+                return run(input, options)
+            },
+        }]
+    }))
+}
 
 export type ResolvedToolConfig = { provider: string, apiKey: string, config?: Record<string, unknown> }
 export type ImageStyle = 'realistic' | 'graphic_text' | 'brand_vector' | 'abstract'
