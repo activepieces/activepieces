@@ -31,11 +31,12 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
     const { provider, auth, config } = resolved
+    const flowStep = flowStepMetadata(data)
     if (data.action === AiStepAction.enum.EXTRACT_STRUCTURED_DATA) {
-        return { answer: await extractStructuredData({ data, resolved }) }
+        return { answer: await extractStructuredData({ data, resolved, flowStep }) }
     }
     if (data.action === AiStepAction.enum.GENERATE_IMAGE) {
-        return { answer: await generateImageStep({ ctx, data, resolved }) }
+        return { answer: await generateImageStep({ ctx, data, resolved, flowStep }) }
     }
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
@@ -46,7 +47,7 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
         auth,
         config,
         modelId: data.modelId,
-        flowStep: flowStepMetadata(data),
+        flowStep,
         openaiResponsesModel: webSearchEnabled && (effectiveProvider ?? provider) === AIProviderName.OPENAI,
         webSearchEnabled,
         webSearchOptions,

@@ -1,16 +1,17 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { aiUtils } from '@activepieces/server-utils'
+import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AI_PROVIDER_CAPABILITIES, AiStepFile, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateImage, generateText, ImageModel, ImagePart, LanguageModel } from 'ai'
 import { JobContext } from '../../types'
 
-export async function generateImageStep({ ctx, data, resolved }: {
+export async function generateImageStep({ ctx, data, resolved, flowStep }: {
     ctx: JobContext
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
+    flowStep: FlowStepMetadata
 }): Promise<string> {
     const inputImages = data.files ?? []
-    const image = await getGeneratedImage({ data, resolved, inputImages })
+    const image = await getGeneratedImage({ data, resolved, inputImages, flowStep })
     const imageData = !isNil(image.base64) && image.base64.length > 0
         ? Buffer.from(image.base64, 'base64')
         : Buffer.from(image.uint8Array)
@@ -24,12 +25,13 @@ export async function generateImageStep({ ctx, data, resolved }: {
     return url
 }
 
-async function getGeneratedImage({ data, resolved, inputImages }: {
+async function getGeneratedImage({ data, resolved, inputImages, flowStep }: {
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
     inputImages: AiStepFile[]
+    flowStep: FlowStepMetadata
 }): Promise<GeneratedImage> {
-    const model = createImageCapableModel({ resolved, modelId: data.modelId })
+    const model = createImageCapableModel({ resolved, modelId: data.modelId, flowStep })
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider: resolved.provider, model: data.modelId })
     const resolvedProvider = effectiveProvider ?? resolved.provider
     const prompt = data.prompt ?? ''
@@ -56,9 +58,10 @@ async function getGeneratedImage({ data, resolved, inputImages }: {
     })
 }
 
-function createImageCapableModel({ resolved, modelId }: {
+function createImageCapableModel({ resolved, modelId, flowStep }: {
     resolved: ResolveAiProviderResponse
     modelId: string
+    flowStep: FlowStepMetadata
 }): ImageCapableModel {
     if (!AI_PROVIDER_CAPABILITIES[resolved.provider].supportsImageGeneration) {
         throw new Error(`Provider ${resolved.provider} does not support image models`)
@@ -68,7 +71,7 @@ function createImageCapableModel({ resolved, modelId }: {
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
-    return { kind: 'language', model: aiUtils.createModel({ provider, auth, config, modelId }) }
+    return { kind: 'language', model: aiUtils.createModel({ provider, auth, config, modelId, flowStep }) }
 }
 
 async function generateImageUsingGenerateText({ model, prompt, inputImages }: {

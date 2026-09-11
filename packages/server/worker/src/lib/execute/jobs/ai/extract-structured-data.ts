@@ -1,11 +1,12 @@
 import { isNil, spreadIfDefined } from '@activepieces/core-utils'
-import { aiUtils } from '@activepieces/server-utils'
+import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepFile, ExecuteAiJobData, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateText, jsonSchema, ModelMessage, tool, UserModelMessage } from 'ai'
 
-export async function extractStructuredData({ data, resolved }: {
+export async function extractStructuredData({ data, resolved, flowStep }: {
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
+    flowStep: FlowStepMetadata
 }): Promise<unknown> {
     const files = data.files ?? []
     if (isNil(data.text) && files.length === 0) {
@@ -16,6 +17,7 @@ export async function extractStructuredData({ data, resolved }: {
         auth: resolved.auth,
         config: resolved.config,
         modelId: data.modelId,
+        flowStep,
     })
     const { schemaDefinition, sanitizedNameMap } = buildSchema(data)
     const extractionTool = tool({
