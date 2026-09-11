@@ -3,6 +3,7 @@ import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
+import { resolveAiFiles } from './ai-files'
 import { extractStructuredData } from './extract-structured-data'
 import { generateImageStep } from './generate-image'
 
@@ -33,10 +34,10 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
     const { provider, auth, config } = resolved
     const flowStep = flowStepMetadata(data)
     if (data.action === AiStepAction.enum.EXTRACT_STRUCTURED_DATA) {
-        return { answer: await extractStructuredData({ data, resolved, flowStep }) }
+        return { answer: await extractStructuredData({ data, resolved, flowStep, files: await resolveAiFiles({ ctx, data }) }) }
     }
     if (data.action === AiStepAction.enum.GENERATE_IMAGE) {
-        return { answer: await generateImageStep({ ctx, data, resolved, flowStep }) }
+        return { answer: await generateImageStep({ ctx, data, resolved, flowStep, inputImages: await resolveAiFiles({ ctx, data }) }) }
     }
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options

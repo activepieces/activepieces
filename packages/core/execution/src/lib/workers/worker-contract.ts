@@ -97,6 +97,7 @@ export type WorkerToApiContract = {
     resumeFlowStep(input: ResumeFlowStepRequest): Promise<void>
     resolveAiProvider(input: ResolveAiProviderRequest): Promise<ResolveAiProviderResponse>
     saveFlowStepFile(input: SaveFlowStepFileRequest): Promise<SaveFlowStepFileResponse>
+    readFlowStepFile(input: ReadFlowStepFileRequest): Promise<ReadFlowStepFileResponse>
     resumeAiStep(input: ResumeAiStepRequest): Promise<void>
     updateFlowStepProgress(input: UpdateFlowStepProgressRequest): Promise<void>
     executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse>
@@ -430,6 +431,18 @@ export type SaveFlowStepFileRequest = {
     flowRunId: string
     data: Buffer
     fileName: string
+}
+
+export type ReadFlowStepFileRequest = {
+    projectId: string
+    platformId: string
+    fileId: string
+}
+
+export type ReadFlowStepFileResponse = {
+    data: Buffer
+    mimeType?: string
+    fileName?: string
 }
 
 export type SaveFlowStepFileResponse = {

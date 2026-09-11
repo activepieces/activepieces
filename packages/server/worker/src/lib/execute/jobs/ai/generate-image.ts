@@ -1,16 +1,17 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { AI_PROVIDER_CAPABILITIES, AiStepFile, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse } from '@activepieces/shared'
+import { AI_PROVIDER_CAPABILITIES, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateImage, generateText, ImageModel, ImagePart, LanguageModel } from 'ai'
 import { JobContext } from '../../types'
+import { ResolvedAiFile } from './ai-files'
 
-export async function generateImageStep({ ctx, data, resolved, flowStep }: {
+export async function generateImageStep({ ctx, data, resolved, flowStep, inputImages }: {
     ctx: JobContext
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
     flowStep: FlowStepMetadata
+    inputImages: ResolvedAiFile[]
 }): Promise<string> {
-    const inputImages = data.files ?? []
     const image = await getGeneratedImage({ data, resolved, inputImages, flowStep })
     const imageData = !isNil(image.base64) && image.base64.length > 0
         ? Buffer.from(image.base64, 'base64')
@@ -28,7 +29,7 @@ export async function generateImageStep({ ctx, data, resolved, flowStep }: {
 async function getGeneratedImage({ data, resolved, inputImages, flowStep }: {
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
-    inputImages: AiStepFile[]
+    inputImages: ResolvedAiFile[]
     flowStep: FlowStepMetadata
 }): Promise<GeneratedImage> {
     const model = createImageCapableModel({ resolved, modelId: data.modelId, flowStep })
@@ -77,7 +78,7 @@ function createImageCapableModel({ resolved, modelId, flowStep }: {
 async function generateImageUsingGenerateText({ model, prompt, inputImages }: {
     model: LanguageModel
     prompt: string
-    inputImages: AiStepFile[]
+    inputImages: ResolvedAiFile[]
 }): Promise<GeneratedImage> {
     const imageParts = inputImages.map<ImagePart>((file) => ({
         type: 'image',

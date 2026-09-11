@@ -400,6 +400,9 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async saveFlowStepFile(input) {
             return aiRpcHandlers(log).saveFlowStepFile(input)
         },
+        async readFlowStepFile(input) {
+            return aiRpcHandlers(log).readFlowStepFile(input)
+        },
         async resumeAiStep(input) {
             return aiRpcHandlers(log).resumeAiStep(input)
         },

@@ -392,8 +392,8 @@ export const AiStepWebSearch = z.object({
 export type AiStepWebSearch = z.infer<typeof AiStepWebSearch>
 
 export const AiStepFile = z.object({
-    mimeType: z.string(),
-    base64: z.string(),
+    fileId: z.string(),
+    mimeType: z.string().optional(),
     filename: z.string().optional(),
 })
 export type AiStepFile = z.infer<typeof AiStepFile>

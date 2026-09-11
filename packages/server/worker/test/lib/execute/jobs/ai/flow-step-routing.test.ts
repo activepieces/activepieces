@@ -70,6 +70,7 @@ describe('flowStep reaches every model built on the worker', () => {
             }),
             resolved: RESOLVED,
             flowStep: FLOW_STEP,
+            files: [],
         })
 
         expect(createModelCalls).toHaveLength(1)
@@ -88,6 +89,7 @@ describe('flowStep reaches every model built on the worker', () => {
             }),
             resolved: { ...RESOLVED, provider: AIProviderName.GOOGLE },
             flowStep: FLOW_STEP,
+            inputImages: [],
         })
 
         expect(createModelCalls).toHaveLength(1)
