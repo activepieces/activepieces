@@ -1,3 +1,4 @@
+import { extension } from 'mime-types';
 import { googleDriveAuth } from '../auth';
 import { Property, createAction } from "@activepieces/pieces-framework";
 import { common } from '../common';
@@ -68,54 +69,48 @@ export const googleDriveListFiles = createAction({
       includeTeamDrives: context.propsValue.include_team_drives ?? false,
     });
 
-    // Extract just the file objects for backward compatibility
-    result.files = filesWithLevel.map(f => f.file);
-
-    // If downloadFiles is enabled, download each file and attach the URL onto the file itself
+    // If downloadFiles is enabled, download each file and return a new file object carrying the URL
     if (context.propsValue.downloadFiles) {
-      const extensionMap: Record<string, string> = {
-        'application/pdf': '.pdf',
-        'image/jpeg': '.jpg',
-        'image/png': '.png',
-        'image/tiff': '.tiff',
-        'text/plain': '.txt',
-        'text/csv': '.csv',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx'
-      };
+      const processedFiles: any[] = [];
 
       for (const fileWithLevel of filesWithLevel) {
         const file = fileWithLevel.file;
         // Skip folders when downloading
         if (file.mimeType === 'application/vnd.google-apps.folder') {
+          processedFiles.push(file);
           continue;
         }
 
         let safeName = file.name;
-        const correctExtension = extensionMap[file.mimeType];
-        if (correctExtension && !safeName.toLowerCase().endsWith(correctExtension)) {
+        const correctExtension = extension(file.mimeType);
+        if (correctExtension && !safeName.toLowerCase().endsWith(`.${correctExtension}`)) {
             // Check for the .jpeg edge case before appending .jpg
             if (!(file.mimeType === 'image/jpeg' && safeName.toLowerCase().endsWith('.jpeg'))) {
-                safeName = safeName + correctExtension;
+                safeName = `${safeName}.${correctExtension}`;
             }
         }
 
         try {
-          file.downloadedFile = await downloadFileFromDrive(
+          const downloadedFile = await downloadFileFromDrive(
             context.auth,
             context.files,
             file.id,
             safeName
           );
+          processedFiles.push({ ...file, downloadedFile });
         } catch (error) {
           console.warn(`Failed to download file ${file.name}: ${error instanceof Error ? error.message : 'Download failed'}`);
+          processedFiles.push(file);
         }
       }
 
+      result.files = processedFiles;
       // Kept for backward compatibility; each URL now also lives on its file's `downloadedFile`
-      result.downloadedFiles = filesWithLevel
-        .map(f => f.file.downloadedFile)
+      result.downloadedFiles = processedFiles
+        .map(f => f.downloadedFile)
         .filter((url): url is string => url !== undefined);
+    } else {
+      result.files = filesWithLevel.map(f => f.file);
     }
 
     return result;
