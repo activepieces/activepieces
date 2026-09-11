@@ -11,6 +11,7 @@ import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.ser
 import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { mcpToolInput } from './mcp-tool-input'
+import { McpCallBilling, mcpUsageTracker } from './mcp-usage-tracker'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
 import { apSetProjectContextTool } from './tools/ap-set-project-context'
 
@@ -64,15 +65,17 @@ export async function buildMcpServer({ mcp, userId, clientId, log, resolveProjec
         instructions: MCP_SERVER_INSTRUCTIONS,
     })
 
+    const billing = await mcpUsageTracker(log).resolveCallBilling({ mcp, clientId })
+
     if (projectId) {
         const permissionChecker = userId
             ? await resolvePermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
-        registerFlowTools({ server, mcp, projectId, permissionChecker, log })
-        registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
+        registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log })
+        registerStaticTools({ server, mcp, projectId, userId, permissionChecker, billing, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
-        registerPlatformTools({ server, mcp, userId, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, log })
+        registerPlatformTools({ server, mcp, userId, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, billing, log })
     }
     else {
         registerPlaceholderTools(server)
@@ -82,17 +85,18 @@ export async function buildMcpServer({ mcp, userId, clientId, log, resolveProjec
     return server
 }
 
-function registerPlatformTools({ server, mcp, userId, selectionScope, resolveProjectMcp, log }: {
+function registerPlatformTools({ server, mcp, userId, selectionScope, resolveProjectMcp, billing, log }: {
     server: McpServer
     mcp: PopulatedMcpServer
     userId: string
     selectionScope: ProjectSelectionScope
     resolveProjectMcp: (projectId: string) => Promise<PopulatedMcpServer>
+    billing: McpCallBilling
     log: FastifyBaseLogger
 }): void {
     const platformId = mcp.platformId!
     const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
-    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => contextTool.execute(args))
+    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing })(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
     const allTools = activepiecesTools(templateMcp, userId, log)
@@ -101,7 +105,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
 
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
-            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => tool.execute(args))
+            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => charged({ execute: tool.execute, toolName: tool.title, projectId: null, billing })(args))
             return
         }
 
@@ -125,13 +129,17 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
                     content: [{ type: 'text' as const, text: `Tool "${tool.title}" is not available for this project.` }],
                 }
             }
-            const execute = permissionChecker.wrapExecute({ execute: realTool.execute, permission: realTool.permission, toolTitle: realTool.title })
+            const execute = permissionChecker.wrapExecute({
+                execute: charged({ execute: realTool.execute, toolName: realTool.title, projectId: selectedProjectId, billing }),
+                permission: realTool.permission,
+                toolTitle: realTool.title,
+            })
             return execute(args)
         })
     })
 }
 
-function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: RegisterToolsParams): void {
+function registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log }: RegisterToolsParams): void {
     const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
     for (const flow of enabledFlows) {
         const { toolName: mcpToolNameInput, toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
@@ -145,6 +153,11 @@ function registerFlowTools({ server, mcp, projectId, permissionChecker, log }: R
             if (flowPermissionError) {
                 return flowPermissionError
             }
+            const refusal = await billing.refusalWhenOutOfCredits({ toolName })
+            if (!isNil(refusal)) {
+                return refusal
+            }
+            billing.charge({ toolName, projectId })
 
             const result = await runFlowAsTool({ flow, properties: mcpInputs, payload: args, returnsResponse, log })
 
@@ -217,15 +230,35 @@ export async function runFlowAsTool({ flow, properties, payload, returnsResponse
     return { content: [{ type: 'text', text }], ...(isOkay ? {} : { isError: true }) }
 }
 
-function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log }: RegisterToolsParams): void {
+function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, billing, log }: RegisterToolsParams): void {
     const allTools = activepiecesTools({ ...mcp, projectId }, userId, log)
     const disabledToolSet = new Set(mcp.disabledTools ?? [])
     const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
 
     tools.forEach((tool) => {
-        const execute = permissionChecker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
+        const execute = permissionChecker.wrapExecute({
+            execute: charged({ execute: tool.execute, toolName: tool.title, projectId, billing }),
+            permission: tool.permission,
+            toolTitle: tool.title,
+        })
         server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => execute(args))
     })
+}
+
+function charged({ execute, toolName, projectId, billing }: {
+    execute: McpToolDefinition['execute']
+    toolName: string
+    projectId: string | null
+    billing: McpCallBilling
+}): McpToolDefinition['execute'] {
+    return async (args) => {
+        const refusal = await billing.refusalWhenOutOfCredits({ toolName })
+        if (!isNil(refusal)) {
+            return refusal
+        }
+        billing.charge({ toolName, projectId })
+        return execute(args)
+    }
 }
 
 function registerPlaceholderTools(server: McpServer): void {
@@ -273,5 +306,6 @@ type RegisterToolsParams = {
     projectId: string
     userId?: string
     permissionChecker: PermissionChecker
+    billing: McpCallBilling
     log: FastifyBaseLogger
 }

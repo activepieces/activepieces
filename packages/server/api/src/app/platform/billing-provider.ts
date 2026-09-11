@@ -144,6 +144,7 @@ export enum CreditUsageSource {
     AI = 'ai',
     CHAT = 'chat',
     AGENT_DRAFT = 'agent_draft',
+    MCP = 'mcp',
 }
 
 type ToFlowRunCreditPropertiesParams = {
@@ -191,6 +192,13 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     breakdown: CreditEventBreakdownEntry[]
 }
 
+export type McpCallCreditConsumptionProperties = {
+    platformId: string
+    projectId: string | null
+    toolName: string
+    clientId: string
+}
+
 export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & {
     userId: string
     conversationId: string
@@ -219,11 +227,13 @@ export type TrackCreditsParams =
     | (TrackUsageParamsBase & { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.CHAT, properties: ChatCreditConsumptionProperties })
     | (TrackUsageParamsBase & { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties })
+    | (TrackUsageParamsBase & { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties })
 
 export type TrackAppSumoAiUsageParams = TrackUsageParamsBase & (
     { source: CreditUsageSource.AGENT_DRAFT, properties: AgentDraftCreditConsumptionProperties } |
     { source: CreditUsageSource.AI, properties: AiCreditConsumptionProperties } |
-    { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties }
+    { source: CreditUsageSource.CHAT, properties: ChatAppSumoConsumptionProperties } |
+    { source: CreditUsageSource.MCP, properties: McpCallCreditConsumptionProperties }
 )
 
 export type TrackFeatureParams =
