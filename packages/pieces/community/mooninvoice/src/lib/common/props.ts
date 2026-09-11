@@ -21,12 +21,12 @@ export const companyIdProp = Property.Dropdown({
         auth?.props.email as string,
         auth?.props.secret_text as string
       );
-      const response = await makeRequest(
+      const response = await makeRequest({
         accessToken,
-        HttpMethod.GET,
-        '/company_list',
-        { CompanySort: 'asc' }
-      );
+        method: HttpMethod.GET,
+        path: '/company_list',
+        queryParams: { CompanySort: 'asc' },
+      });
       return {
         disabled: false,
         options: response.data.map((company: any) => ({
@@ -61,12 +61,17 @@ export const contactIdProp = Property.Dropdown({
         auth?.props.email as string,
         auth?.props.secret_text as string
       );
-      const response = await makeRequest(
+      const response = await makeRequest({
         accessToken,
-        HttpMethod.GET,
-        '/contact_list',
-        { CompanyId: companyId, PageSize: 25, page: 1, ContactSort: 'asc' }
-      );
+        method: HttpMethod.GET,
+        path: '/contact_list',
+        queryParams: {
+          CompanyID: companyId as string,
+          PageSize: '25',
+          page: '1',
+          ContactSort: 'asc',
+        },
+      });
       return {
         disabled: false,
         options: response.data.contacts.map((contact: any) => ({
@@ -101,12 +106,17 @@ export const projectIdProp = Property.Dropdown({
         auth?.props.email as string,
         auth?.props.secret_text as string
       );
-      const response = await makeRequest(
+      const response = await makeRequest({
         accessToken,
-        HttpMethod.GET,
-        '/project_list',
-        { CompanyID: companyId, PageSize: 25, page: 1, ProjectSort: 'asc' }
-      );
+        method: HttpMethod.GET,
+        path: '/project_list',
+        queryParams: {
+          CompanyID: companyId as string,
+          PageSize: '25',
+          page: '1',
+          ProjectSort: 'asc',
+        },
+      });
       return {
         disabled: false,
         options: response.data.projects.map((project: any) => ({

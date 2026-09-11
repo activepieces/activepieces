@@ -4,6 +4,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { talkableAuth } from '../../..';
+import { TALKABLE_API_URL } from '../../common/constants';
 
 export const createPurchase = createAction({
   name: 'create_purchase', // Must be a unique across the piece, this shouldn't be changed.
@@ -124,7 +125,6 @@ export const createPurchase = createAction({
     }),
   },
   async run(context) {
-    const TALKABLE_API_URL = 'https://www.talkable.com/api/v2';
     const { site, api_key } = context.auth.props;
     const createPurchaseResponse = await httpClient
       .sendRequest<string[]>({

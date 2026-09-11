@@ -6,6 +6,8 @@ import { colorsUtils } from '@/lib/color-utils';
 
 type Theme = 'dark' | 'light' | 'system';
 
+type ResolvedTheme = 'dark' | 'light';
+
 type ThemeProviderProps = {
   children: React.ReactNode;
   defaultTheme?: Theme;
@@ -36,6 +38,11 @@ const setFavicon = (url: string) => {
   document.head.appendChild(link);
 };
 
+const systemThemeQuery = '(prefers-color-scheme: dark)';
+
+const getSystemTheme = (): ResolvedTheme =>
+  window.matchMedia(systemThemeQuery).matches ? 'dark' : 'light';
+
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
@@ -46,7 +53,16 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
   );
   const [forceLightMode, setForceLightMode] = useState(false);
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
   const branding = flagsHooks.useWebsiteBranding();
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(systemThemeQuery);
+    const handleChange = (event: MediaQueryListEvent) => {
+      setSystemTheme(event.matches ? 'dark' : 'light');
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
   useEffect(() => {
     if (!branding) {
       console.warn('Website brand is not defined');
@@ -54,10 +70,10 @@ export function ThemeProvider({
     }
     const root = window.document.documentElement;
 
-    const resolvedTheme = forceLightMode
+    const resolvedTheme: ResolvedTheme = forceLightMode
       ? 'light'
       : theme === 'system'
-      ? 'light'
+      ? systemTheme
       : theme;
     root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
@@ -95,7 +111,7 @@ export function ThemeProvider({
     }
 
     root.classList.add(resolvedTheme);
-  }, [theme, branding, forceLightMode]);
+  }, [theme, branding, forceLightMode, systemTheme]);
 
   const value = {
     theme,

@@ -82,6 +82,6 @@ export const kimaiCommon = {
 export async function makeClient(
   auth: AppConnectionValueForAuthProperty<typeof kimaiAuth>
 ): Promise<KimaiClient> {
-  const client = new KimaiClient(auth.props.base_url, auth.props.user, auth.props.api_password);
+  const client = new KimaiClient(auth.props.base_url, auth.props.api_token);
   return client;
 }
