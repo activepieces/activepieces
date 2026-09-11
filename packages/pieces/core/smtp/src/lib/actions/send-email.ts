@@ -1,5 +1,5 @@
 import { ApFile, Property, createAction } from '@activepieces/pieces-framework';
-import { smtpAuth } from '../..';
+import { smtpAuth } from '../auth';
 import { smtpCommon } from '../common';
 import { Attachment, Headers } from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
@@ -107,7 +107,7 @@ export const sendEmail = createAction({
       from: getFrom(propsValue.senderName, propsValue.from),
       to: propsValue.to.join(','),
       cc: propsValue.cc?.join(','),
-      inReplyTo: propsValue.replyTo,
+      replyTo: propsValue.replyTo,
       bcc: propsValue.bcc?.join(','),
       subject: propsValue.subject,
       text: propsValue.body_type === 'plain_text' ? propsValue.body : undefined,
