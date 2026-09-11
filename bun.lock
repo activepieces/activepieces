@@ -4785,7 +4785,7 @@
     },
     "packages/pieces/community/kimai": {
       "name": "@activepieces/piece-kimai",
-      "version": "0.2.7",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6102,7 +6102,7 @@
     },
     "packages/pieces/community/mooninvoice": {
       "name": "@activepieces/piece-mooninvoice",
-      "version": "0.0.8",
+      "version": "0.0.9",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6419,7 +6419,7 @@
     },
     "packages/pieces/community/okta": {
       "name": "@activepieces/piece-okta",
-      "version": "0.1.7",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
