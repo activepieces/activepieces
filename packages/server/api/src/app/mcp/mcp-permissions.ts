@@ -30,15 +30,10 @@ export async function resolvePermissionChecker({ userId, projectId, log }: {
     }
     catch (err) {
         if (err instanceof ActivepiecesError && err.error.code === ErrorCode.AUTHORIZATION) {
-            return buildChecker((permission, toolTitle) => {
-                if (isNil(permission)) {
-                    return null
-                }
-                return {
-                    content: [{ type: 'text' as const, text: `❌ Permission denied: no role found for this user in the project. Cannot execute "${toolTitle}".` }],
-                    isError: true,
-                }
-            })
+            return buildChecker((_permission, toolTitle) => ({
+                content: [{ type: 'text' as const, text: `❌ Permission denied: no role found for this user in the project. Cannot execute "${toolTitle}".` }],
+                isError: true,
+            }))
         }
         throw err
     }

@@ -1,10 +1,10 @@
-import { FlowStatus, FlowVersionState, Project } from '@activepieces/shared'
+import { DefaultProjectRole, FlowStatus, FlowVersionState, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../../../helpers/db'
 import { MCP_OAUTH_REDIRECT_URI, mcpOAuthTestHelpers } from '../../../helpers/mcp-oauth'
 import { createMockFlow, createMockFlowVersion, createMockProject } from '../../../helpers/mocks'
-import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -126,6 +126,29 @@ describe('platform MCP project selection', () => {
         expect(listedByFirst).not.toContain(FLOW_IN_SECOND_PROJECT)
         expect(listedBySecond).toContain(FLOW_IN_SECOND_PROJECT)
         expect(listedBySecond).not.toContain(FLOW_IN_FIRST_PROJECT)
+    })
+
+    it('lets a platform MEMBER authorize platform-wide MCP', async () => {
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
+        const { challenge } = mcpOAuthTestHelpers.generatePkce()
+
+        const consent = await app.inject({
+            method: 'GET',
+            url: '/authorize?' + new URLSearchParams({
+                client_id: client.client_id,
+                redirect_uri: MCP_OAUTH_REDIRECT_URI,
+                response_type: 'code',
+                code_challenge: challenge,
+                code_challenge_method: 'S256',
+                scope: 'mcp',
+                resource: PLATFORM_RESOURCE,
+            }).toString(),
+        })
+        const authRequestId = new URL(String(consent.headers.location), MCP_OAUTH_REDIRECT_URI).searchParams.get('authRequestId') ?? ''
+
+        const approved = await member.post('/v1/mcp-oauth/approve', { authRequestId })
+        expect(approved.statusCode).toBe(200)
     })
 
     it('asks a client with no selection of its own to pick a project', async () => {

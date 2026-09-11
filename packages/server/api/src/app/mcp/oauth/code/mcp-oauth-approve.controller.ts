@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { PlatformRole, PrincipalType } from '@activepieces/shared'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
@@ -15,13 +15,7 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
         const userId = req.principal.id
         const platformId = req.principal.platform.id
 
-        if (isNil(projectId)) {
-            const user = await userService(req.log).getOneOrFail({ id: userId })
-            if (user.platformRole !== PlatformRole.ADMIN) {
-                return reply.status(403).send({ error: 'access_denied', error_description: 'Only platform administrators can authorize platform-wide MCP access' })
-            }
-        }
-        else {
+        if (!isNil(projectId)) {
             const user = await userService(req.log).getOneOrFail({ id: userId })
             const accessibleProjects = await projectService(req.log).getAllForUser({
                 platformId,
