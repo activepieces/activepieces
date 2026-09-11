@@ -63,7 +63,9 @@ const Container = ({
           )}
         </>
       )}
-      <AlertDescription className="grow w-full">{children}</AlertDescription>
+      <AlertDescription className="grow w-full min-w-0">
+        {children}
+      </AlertDescription>
     </Alert>
   );
 };
@@ -155,7 +157,7 @@ const ApMarkdown = React.memo(
             ),
             p: ({ node: _node, ref: _ref, ...props }) => (
               <p
-                className="leading-5 first-of-type:mt-1 not-first-of-type:mt-2 w-full mb-2"
+                className="leading-5 first-of-type:mt-1 not-first-of-type:mt-2 w-full mb-2 break-words"
                 {...props}
               />
             ),
@@ -168,7 +170,7 @@ const ApMarkdown = React.memo(
             li: ({ node: _node, ref: _ref, ...props }) => <li {...props} />,
             a: ({ node: _node, ref: _ref, ...props }) => (
               <a
-                className="font-medium text-primary underline underline-offset-4"
+                className="font-medium text-primary underline underline-offset-4 break-words"
                 target="_blank"
                 rel="noreferrer noopener"
                 {...props}
