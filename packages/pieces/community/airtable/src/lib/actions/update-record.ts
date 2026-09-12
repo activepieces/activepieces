@@ -12,7 +12,7 @@ export const airtableUpdateRecordAction = createAction({
   name: 'airtable_update_record',
   classification: 'WRITE',
   displayName: 'Update Airtable Record',
-  description: 'Update a record in airtable',
+  description: 'Changes the fields you fill in on an existing record.',
   audience: 'human',
   outputSchema: updateRecordActionOutputSchema,
   aiMetadata: {
