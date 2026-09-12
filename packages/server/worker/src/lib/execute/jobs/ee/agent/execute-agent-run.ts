@@ -129,10 +129,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 metadata: { platformId, conversationId, runId },
                 webSearchEnabled: webSearchActive,
                 billing,
+                ownKeyCredit: 'charged-with-the-turn',
             })
             const fastModel = aiUtils.createModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
                 billing,
+                ownKeyCredit: 'charged-with-the-turn',
             })
 
             log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
