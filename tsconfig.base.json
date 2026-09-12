@@ -467,6 +467,9 @@
       "@activepieces/piece-feedhive": [
         "packages/pieces/community/feedhive/src/index.ts"
       ],
+      "@activepieces/piece-feedjolt": [
+        "packages/pieces/community/feedjolt/src/index.ts"
+      ],
       "@activepieces/piece-figma": [
         "packages/pieces/community/figma/src/index.ts"
       ],
