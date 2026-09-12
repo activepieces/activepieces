@@ -9,7 +9,7 @@ export const airtableFindRecordAction = createAction({
   name: 'airtable_find_record',
   classification: 'SEARCH',
   displayName: 'Find Airtable Record',
-  description: 'Returns every record whose field contains a value.',
+  description: 'Returns up to 1000 records whose field contains a value.',
   audience: 'human',
   outputSchema: findRecordActionOutputSchema,
   aiMetadata: {

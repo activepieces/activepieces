@@ -26,6 +26,8 @@ import {
 import { isNil } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 
+const MAX_FIND_RECORDS = 1000;
+
 
 interface Params {
   personalToken: string;
@@ -132,12 +134,11 @@ async function listRecords({
       offset?: string;
     }>(request);
 
-    if (response.status === 200) {
-      allRecords.push(...response.body.records);
-      offset = response.body.offset;
-    } else {
-      offset = undefined;
+    if (response.status !== 200) {
+      throw new Error(`Airtable returned ${response.status} while listing records`);
     }
+    allRecords.push(...response.body.records);
+    offset = response.body.offset;
   } while (offset && allRecords.length < maxRecords);
 
   return allRecords.slice(0, maxRecords);
@@ -257,15 +258,14 @@ async function findRecord({
       offset?: string;
     }>(request);
 
-    if (response.status === 200) {
-      allRecords.push(...response.body.records);
-      offset = response.body.offset;
-    } else {
-      offset = undefined;
+    if (response.status !== 200) {
+      throw new Error(`Airtable returned ${response.status} while listing records`);
     }
-  } while (offset);
+    allRecords.push(...response.body.records);
+    offset = response.body.offset;
+  } while (offset && allRecords.length < MAX_FIND_RECORDS);
 
-  return allRecords;
+  return allRecords.slice(0, MAX_FIND_RECORDS);
 }
 async function updateRecord({
   personalToken: token,
