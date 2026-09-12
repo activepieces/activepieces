@@ -10,8 +10,8 @@ The AI layer: which model backends a platform may use, how usage is metered, and
 A configured LLM backend (OpenAI, Anthropic, Google, Azure, OpenRouter, Cloudflare, Custom, or Activepieces-hosted) with encrypted credentials, resolved per platform.
 
 ### 🪙 AI Credits
-The metered currency for AI usage — 1000 credits = $1 — backed by per-key OpenRouter limits. A quota, not a wallet.
-- *Avoid:* "tokens" for the billing unit; tokens are the model's unit, credits are ours.
+The metered currency for AI usage — one credit is `AP_AI_CREDIT_USD_VALUE` of model spend, $0.0005 by default — backed by per-key OpenRouter limits. A quota, not a wallet. A managed call is billed on the dollar cost the provider reports; a call on a customer's own key is billed one flat credit. See [decision 000037](../decisions/000037-ai-is-billed-on-what-the-call-cost-observed-at-the-worker.md).
+- *Avoid:* "tokens" for the billing unit; tokens are the model's unit, credits are ours. *Avoid:* "credit weight" — the per-model weight table is gone.
 
 ### 🤖 Agent
 A flow step that runs an autonomous LLM loop rather than a single call. Its **AgentTool**s are Piece, Flow, MCP, or Knowledge Base handles.
