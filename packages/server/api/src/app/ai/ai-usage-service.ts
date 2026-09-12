@@ -66,7 +66,7 @@ function billingProperties(input: ReportAiUsageRequest, toolCalls: number): AiCr
         projectId: projectIdOf(input),
         flowId: input.flowRun?.flowId ?? OUTSIDE_A_FLOW,
         flowRunId: input.flowRun?.flowRunId ?? input.requestId ?? OUTSIDE_A_FLOW,
-        environment: input.flowRun?.environment ?? OUTSIDE_A_FLOW,
+        environment: input.flowRun?.environment ?? UNKNOWN_ENVIRONMENT,
         messages: MESSAGES_PER_MODEL_CALL,
         toolCalls,
         breakdown: [{
@@ -88,3 +88,4 @@ function projectIdOf(input: ReportAiUsageRequest): string {
 const MESSAGES_PER_MODEL_CALL = 1
 const PROJECTLESS_CHAT = 'chat'
 const OUTSIDE_A_FLOW = 'none'
+const UNKNOWN_ENVIRONMENT = 'unknown'

@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
@@ -58,19 +58,20 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
     const flowStep = flowStepMetadata(data)
+    const billing = billingFor(data)
     switch (data.action) {
         case AiStepAction.EXTRACT_STRUCTURED_DATA:
-            return { answer: await extractStructuredData({ data, resolved, flowStep, files: await resolveAiFiles({ ctx, data }) }) }
+            return { answer: await extractStructuredData({ data, resolved, flowStep, billing, files: await resolveAiFiles({ ctx, data }) }) }
         case AiStepAction.GENERATE_IMAGE:
-            return { answer: await generateImageStep({ ctx, data, resolved, flowStep, inputImages: await resolveAiFiles({ ctx, data }) }) }
+            return { answer: await generateImageStep({ ctx, data, resolved, flowStep, billing, inputImages: await resolveAiFiles({ ctx, data }) }) }
         case AiStepAction.ASK_AI:
         case AiStepAction.SUMMARIZE_TEXT:
         case AiStepAction.CLASSIFY_TEXT:
-            return runTextStep({ data, resolved, flowStep })
+            return runTextStep({ data, resolved, flowStep, billing })
     }
 }
 
-async function runTextStep({ data, resolved, flowStep }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse, flowStep: FlowStepMetadata }): Promise<unknown> {
+async function runTextStep({ data, resolved, flowStep, billing }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse, flowStep: FlowStepMetadata, billing: ActivepiecesAiBilling }): Promise<unknown> {
     const { provider, auth, config } = resolved
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
@@ -82,6 +83,7 @@ async function runTextStep({ data, resolved, flowStep }: { data: ExecuteAiJobDat
         config,
         modelId: data.modelId,
         flowStep,
+        billing,
         openaiResponsesModel: webSearchEnabled && (effectiveProvider ?? provider) === AIProviderName.OPENAI,
         webSearchEnabled,
         webSearchOptions,
@@ -98,6 +100,15 @@ async function runTextStep({ data, resolved, flowStep }: { data: ExecuteAiJobDat
     })
 
     return toStepOutput({ data, text: response.text ?? '', sources: response.sources })
+}
+
+function billingFor(data: ExecuteAiJobData): ActivepiecesAiBilling {
+    return {
+        scope: ActivepiecesAiBillingScope.PROJECT,
+        platformId: data.platformId,
+        projectId: data.projectId,
+        flowRun: { flowId: data.flowId, flowRunId: data.flowRunId },
+    }
 }
 
 function flowStepMetadata(data: ExecuteAiJobData): FlowStepMetadata {
