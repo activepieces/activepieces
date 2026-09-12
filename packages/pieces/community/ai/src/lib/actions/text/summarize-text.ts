@@ -1,7 +1,5 @@
-import { AIProviderName, spreadIfDefined } from '@activepieces/pieces-framework';
-import { createAIModel } from '../../common/ai-sdk';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateText } from 'ai';
+import { createAction, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { runOnWorker } from '../../common/ai-step';
 import { aiProps, aiProviderSelection } from '../../common/props';
 
 export const summarizeText = createAction({
@@ -32,35 +30,24 @@ export const summarizeText = createAction({
   },
   async run(context) {
     const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
-    const modelId = context.propsValue.model;
 
-    const model = await createAIModel({
-      provider,
-      ...spreadIfDefined('configId', configId),
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
+    const result = await runOnWorker({
+      context,
+      request: {
+        action: 'SUMMARIZE_TEXT',
+        provider,
+        ...spreadIfDefined('providerConfigId', configId),
+        modelId: context.propsValue.model,
+        prompt: context.propsValue.prompt,
+        text: context.propsValue.text,
+        ...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
+      },
     });
 
-    const response = await generateText({
-      model,
-      messages: [
-        {
-          role: 'user',
-          content: `${context.propsValue.prompt} Summarize the following text : ${context.propsValue.text}`
-        },
-      ],
-      maxOutputTokens: context.propsValue.maxOutputTokens,
-      providerOptions: {
-        [provider]: {
-          ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
-        }
-      }
-    });
+    if (result.status === 'paused') {
+      return {};
+    }
 
-    return response.text ?? '';
+    return result.output.answer;
   },
 });
