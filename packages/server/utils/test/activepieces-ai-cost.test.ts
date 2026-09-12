@@ -108,6 +108,41 @@ describe('what a model call reports back for billing', () => {
         expect(reported).toHaveLength(0)
     })
 
+    it('leaves a customer own-key call unbilled when its credit is charged once for the whole turn', async () => {
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'resp-2' } }),
+            provider: AIProviderName.OPENAI,
+            modelId: 'gpt-5',
+            billing: BILLING,
+            ownKeyCredit: 'charged-with-the-turn',
+        })
+
+        await generateWith(model)
+
+        expect(reported).toHaveLength(0)
+    })
+
+    it('still bills a managed call on cost when the turn carries the own-key credit, since we pay per call either way', async () => {
+        const model = activepiecesAiCost.billedLanguageModel({
+            model: modelReturning({
+                content: [],
+                finishReason: 'stop',
+                usage: {},
+                response: { id: 'gen-def' },
+                providerMetadata: { openrouter: { usage: { cost: 0.001 } } },
+            }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'anthropic/claude-sonnet-5',
+            billing: BILLING,
+            ownKeyCredit: 'charged-with-the-turn',
+        })
+
+        await generateWith(model)
+
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toEqual({ charge: 'observed-cost', generationId: 'gen-def', costUsd: 0.001 })
+    })
+
     it('bills an image model call that cannot be wrapped at the same flat credit', () => {
         activepiecesAiCost.reportFlatCredits({ billing: BILLING, provider: AIProviderName.OPENAI, modelId: 'dall-e-3' })
 
