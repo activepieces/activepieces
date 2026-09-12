@@ -11,8 +11,7 @@ export const airtableCleanRecordAction = createAction({
   name: 'airtable_clean_record',
   classification: 'DESTRUCTIVE',
   displayName: 'Clean Record',
-  description:
-    'Clears fields in a record. Empty values will clear the corresponding fields.',
+  description: 'Updates a record and empties every field you leave blank.',
   audience: 'both',
   outputSchema: cleanRecordActionOutputSchema,
   aiMetadata: {

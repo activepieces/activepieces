@@ -9,7 +9,7 @@ export const airtableFindRecordAction = createAction({
   name: 'airtable_find_record',
   classification: 'SEARCH',
   displayName: 'Find Airtable Record',
-  description: 'Find a record in airtable',
+  description: 'Returns up to 1000 records whose field contains a value.',
   audience: 'human',
   outputSchema: findRecordActionOutputSchema,
   aiMetadata: {
@@ -24,6 +24,8 @@ export const airtableFindRecordAction = createAction({
     searchValue: Property.ShortText({
       displayName: 'Search Value',
       required: true,
+      description: 'Records whose search field contains this text are returned.',
+      placeholder: 'e.g. jane@example.com',
     }),
     limitToView: airtableCommon.views,
   },
