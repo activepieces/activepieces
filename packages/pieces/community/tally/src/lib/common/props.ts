@@ -3,6 +3,7 @@ import { tryCatch } from '@activepieces/pieces-framework';
 
 import { tallyAuth } from '../auth';
 import { tallyApiClient } from './client';
+import type { TallyForm } from './types';
 
 export const ANALYTICS_PERIOD_OPTIONS = [
 	{ label: 'Today', value: 'today' },
@@ -19,6 +20,7 @@ export const ANALYTICS_PERIOD_OPTIONS = [
 export const formsDropdown = Property.Dropdown<string, true, typeof tallyAuth>({
 	auth: tallyAuth,
 	displayName: 'Form',
+	description: 'Only forms this API key can access are listed.',
 	required: true,
 	refreshers: [],
 	async options({ auth }) {
@@ -40,10 +42,20 @@ export const formsDropdown = Property.Dropdown<string, true, typeof tallyAuth>({
 			};
 		}
 
-		const options: DropdownOption<string>[] = forms.map((form) => ({
-			label: form.name,
-			value: form.id,
-		}));
+		if (forms.length === 0) {
+			return {
+				disabled: false,
+				options: [],
+				placeholder: 'No forms found. Create one in Tally first.',
+			};
+		}
+
+		const options: DropdownOption<string>[] = forms
+			.map((form) => ({
+				label: formOptionLabel({ form }),
+				value: form.id,
+			}))
+			.sort((a, b) => a.label.localeCompare(b.label));
 
 		return { disabled: false, placeholder: 'Select a form', options };
 	},
@@ -203,3 +215,19 @@ export const requiredFoldersDropdown = Property.Dropdown<string, true, typeof ta
 		return { disabled: false, placeholder: 'Select a folder', options };
 	},
 });
+
+function formOptionLabel({ form }: { form: TallyForm }): string {
+	const name = form.name?.trim() ?? '';
+	const label = name.length === 0 ? 'Untitled form' : name;
+
+	switch (form.status) {
+		case 'PUBLISHED':
+			return label;
+		case 'DRAFT':
+			return `${label} (Draft)`;
+		case 'BLANK':
+			return `${label} (Blank)`;
+		default:
+			return label;
+	}
+}
