@@ -9,7 +9,7 @@ export const updateProfileAction = createAction({
   name: 'slack-update-profile',
   classification: 'WRITE',
   displayName: 'Update Profile',
-  description: 'Update basic profile field such as name or title.',
+  description: 'Updates name, email or title. Needs a user token.',
   audience: 'human',
   aiMetadata: { description: "Update basic profile fields (first name, last name, email) for the authenticated user, or for another user when an admin specifies a user ID; requires a user token. Setting the same values again is idempotent. Note that changing the email triggers Slack notification emails to both addresses, and editing another user is admin-only on paid teams.", idempotent: true },
   outputSchema: updateProfileActionOutputSchema,
@@ -24,13 +24,13 @@ export const updateProfileAction = createAction({
     }),
     email: Property.ShortText({
       displayName: 'Email',
-      description: `Changing a user's email address will send an email to both the old and new addresses, and also post a slackbot message to the user informing them of the change.`,
+      description: 'Slack notifies both the old and new address.',
       required: false,
     }),
     userId: Property.ShortText({
-      displayName: 'User',
-      description:
-        'ID of user to change. This argument may only be specified by admins on paid teams.You can use **Find User by Email** action to retrieve ID.',
+      displayName: 'User ID',
+      description: 'Admins on paid plans only. Empty updates the connected user.',
+      placeholder: 'U012AB3CD',
       required: false,
     }),
   },

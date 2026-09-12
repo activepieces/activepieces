@@ -28,8 +28,7 @@ export const slackSendDirectMessageAction = createAction({
     userId: userId(true),
     text: Property.LongText({
       displayName: 'Message',
-      description:
-        'The text of your message. Renders as a section above any Block Kit blocks, and is used as the notification fallback. Leave empty to send blocks only.',
+      description: 'Slack mrkdwn is supported. Empty sends blocks only.',
       required: false,
     }),
     username,
@@ -39,9 +38,10 @@ export const slackSendDirectMessageAction = createAction({
     blocks,
     unfurlLinks: Property.Checkbox({
       displayName: 'Unfurl Links',
-      description: 'Enable link unfurling for this message',
+      description: 'Show link previews in the message.',
       required: false,
       defaultValue: true,
+      advanced: true,
     }),
   },
   async run(context) {

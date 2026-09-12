@@ -17,8 +17,9 @@ export const newMessageTrigger = createTrigger({
 	props: {
 		info: appWebhookSetupInfo,
 		ignoreBots: Property.Checkbox({
-			displayName: 'Ignore Bot Messages ?',
-			required: true,
+			displayName: 'Ignore Bot Messages',
+			description: 'Skip messages posted by bots and apps.',
+			required: false,
 			defaultValue: false,
 		}),
 	},

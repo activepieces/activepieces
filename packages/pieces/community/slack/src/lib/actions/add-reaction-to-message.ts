@@ -26,19 +26,21 @@ export const addRectionToMessageAction = createAction({
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
-        'Please provide the timestamp of the message you wish to react, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
+        'Timestamp of the target message, from its link or a trigger output.',
+      placeholder: '1710304378.475129',
       required: true,
     }),
     reaction: Property.ShortText({
-      displayName: 'Reaction (emoji) name',
+      displayName: 'Emoji',
+      description: 'Emoji name without colons.',
+      placeholder: 'thumbsup',
       required: true,
-      description: 'e.g.`thumbsup`',
     }),
     reactAsUser: Property.Checkbox({
-      displayName: 'React as user?',
+      displayName: 'React as User',
       description:
-        'If enabled, the reaction will be added as the authenticated user instead of the bot.',
-      required: true,
+        'Add the reaction as the connected user instead of the bot.',
+      required: false,
       defaultValue: false,
     }),
   },

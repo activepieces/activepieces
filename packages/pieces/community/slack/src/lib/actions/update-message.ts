@@ -7,10 +7,9 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { chatUpdateOutputSchema } from '../output-schemas';
 
 export const updateMessage = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateMessage',
   classification: 'WRITE',
-  displayName: 'Update message',
+  displayName: 'Update Message',
   description: 'Update an existing message',
   audience: 'human',
   aiMetadata: {
@@ -26,13 +25,13 @@ export const updateMessage = createAction({
     ts: Property.ShortText({
       displayName: 'Message Timestamp',
       description:
-        'Please provide the timestamp of the message you wish to update, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
+        'Timestamp of the target message, from its link or a trigger output.',
+      placeholder: '1710304378.475129',
       required: true,
     }),
     text: Property.LongText({
       displayName: 'Message',
-      description:
-        'The updated text of your message. Renders as a section above any Block Kit blocks, and is used as the notification fallback. Leave empty for a blocks-only update.',
+      description: 'Slack mrkdwn is supported. Empty updates blocks only.',
       required: false,
     }),
     mentionOriginFlow,

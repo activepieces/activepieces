@@ -20,18 +20,19 @@ export const updateGroupUsersAction = createAction({
   props: {
     handle: Property.ShortText({
       displayName: 'Group Handle',
-      description: 'Group handle without the leading @',
+      description: 'Handle without the leading @.',
+      placeholder: 'engineering',
       required: true,
     }),
     userIds: Property.Array({
       displayName: 'User IDs',
-      description: 'The list of Slack User IDs to update this group with. Leave empty to clear the group (if not appending).',
+      description: 'Slack user IDs to add. Empty with append off clears the group.',
       required: false,
     }),
     appendUsers: Property.Checkbox({
-      displayName: 'Append to existing members?',
-      description: 'If checked, these users will be added to the current group. If unchecked, the current group members will be completely replaced by these users.',
-      required: true,
+      displayName: 'Append to Existing Members',
+      description: 'Off replaces the member list with the users above.',
+      required: false,
       defaultValue: true,
     }),
   },
