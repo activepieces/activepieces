@@ -170,6 +170,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`, and should be at least 1 day smaller than it (see above). Measured cumulatively from `flow_run.created`, not per-pause — a flow with stacked delays whose sum exceeds this fails at waitpoint creation. Webhook waitpoints without an explicit expiry default to this deadline. | `30` |
 | `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
 | `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
+| `AP_AI_CREDIT_USD_VALUE` | Dollar value of one AI credit. A call on the Activepieces AI provider is billed the dollar cost the provider reports for it, divided by this. A call on your own API key is billed one flat credit and ignores this. | `0.0005` |
 | `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` | Maximum size (KB) of a single value written by the Store piece or `context.store`. Larger writes are rejected with HTTP 413. | `512` |
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
 | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |
