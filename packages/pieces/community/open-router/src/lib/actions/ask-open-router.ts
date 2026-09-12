@@ -100,7 +100,7 @@ export const askOpenRouterAction = createAction({
   outputSchema: askLmmActionOutputSchema,
   async run(context) {
     await propsValidation.validateZod(context.propsValue, {
-      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
+      temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),
       topP: z.optional(z.number().check(z.minimum(0), z.maximum(1.0))),
     });
 
