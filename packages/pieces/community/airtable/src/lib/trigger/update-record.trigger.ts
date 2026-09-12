@@ -5,6 +5,7 @@ import {
 } from '@activepieces/pieces-common';
 import {
   AppConnectionValueForAuthProperty,
+  DropdownState,
   Property,
   StaticPropsValue,
   TriggerStrategy,
@@ -20,49 +21,70 @@ import { updatedRecordTriggerOutputSchema } from '../output-schemas';
 const props = {
   base: airtableCommon.base,
   tableId: airtableCommon.tableId,
-  sortFields: Property.Dropdown({
+  sortFields: Property.Dropdown<string, true, typeof airtableAuth>({
     auth: airtableAuth,
-    displayName: 'Trigger field',
-    description: `**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.`,
+    displayName: 'Trigger Field',
+    description:
+      'A Last Modified Time field of the table. Add one if none exists.',
     required: true,
     refreshers: ['base', 'tableId'],
-    options: async ({ auth, base, tableId }) => {
+    options: async ({ auth, base, tableId }): Promise<DropdownState<string>> => {
       if (!auth) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a base first',
+          placeholder: 'Select a base first',
         };
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a table first',
+          placeholder: 'Select a table first',
         };
       }
-      const airtable: AirtableTable = await airtableCommon.fetchTable({
-        token: auth as unknown as string,
-        baseId: base as unknown as string,
-        tableId: tableId as unknown as string,
-      });
 
-      return {
-        disabled: false,
-        options: airtable.fields
-          .filter((field: AirtableField) => field.type == 'lastModifiedTime')
+      try {
+        const airtable: AirtableTable = await airtableCommon.fetchTable({
+          token: auth.secret_text,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
+
+        const options = airtable.fields
+          .filter((field: AirtableField) => field.type === 'lastModifiedTime')
           .map((field: AirtableField) => ({
             label: field.name,
             value: field.name,
-          })),
-      };
+          }));
+
+        if (options.length === 0) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'This table has no Last Modified Time field',
+          };
+        }
+
+        return {
+          disabled: false,
+          options,
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Could not load. Check the token's scopes.",
+        };
+      }
     },
   }),
   viewId: airtableCommon.views,
@@ -108,7 +130,7 @@ export const airtableUpdatedRecordTrigger = createTrigger({
   classification: 'READ',
   displayName: 'New or Updated Record',
   description:
-    'Triggers when a record is created or updated in selected table.',
+    'Triggers when a record is created or changed in the selected table.',
   outputSchema: updatedRecordTriggerOutputSchema,
   aiMetadata: {
     description:

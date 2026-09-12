@@ -15,7 +15,7 @@ export const airtableUploadFileToColumnAction = createAction({
   name: 'airtable_upload_file_to_column',
   classification: 'WRITE',
   displayName: 'Upload File to Column',
-  description: 'Uploads a file to attachment type column.',
+  description: 'Uploads a file to an attachment field of a record.',
   audience: 'human',
   outputSchema: uploadFileToColumnActionOutputSchema,
   aiMetadata: {
@@ -26,60 +26,83 @@ export const airtableUploadFileToColumnAction = createAction({
   props: {
     base: airtableCommon.base,
     tableId: airtableCommon.tableId,
-    attachment_column: Property.Dropdown({
+    attachment_column: Property.Dropdown<string, true, typeof airtableAuth>({
       auth: airtableAuth,
       displayName: 'Attachment Column',
+      description: 'Only attachment-type fields are listed.',
       required: true,
       refreshers: ['base', 'tableId'],
       options: async ({ auth, base, tableId }) => {
-        if (!auth || !base || !tableId) {
+        if (!auth) {
           return {
-            placeholder: 'Please select a base and table first',
-            options: [],
             disabled: true,
+            options: [],
+            placeholder: 'Connect your Airtable account first',
+          };
+        }
+        if (!base) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a base first',
+          };
+        }
+        if (!tableId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a table first',
           };
         }
 
-        const airtable: AirtableTable = await airtableCommon.fetchTable({
-          token: auth as unknown as string,
-          baseId: base as unknown as string,
-          tableId: tableId as unknown as string,
-        });
+        try {
+          const airtable: AirtableTable = await airtableCommon.fetchTable({
+            token: auth.secret_text,
+            baseId: base as string,
+            tableId: tableId as string,
+          });
 
-        return {
-          disabled: false,
-
-          options: airtable.fields
-            .filter((field) => field.type === 'multipleAttachments')
-            .map((field) => {
-              return {
+          return {
+            disabled: false,
+            options: airtable.fields
+              .filter((field) => field.type === 'multipleAttachments')
+              .map((field) => ({
                 label: field.name,
                 value: field.id,
-              };
-            }),
-        };
+              })),
+          };
+        } catch {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: `Could not load. Check the token's scopes.`,
+          };
+        }
       },
     }),
     recordId: Property.ShortText({
       displayName: 'Record ID',
       required: true,
-      description: 'The ID of the record to which you want to upload the file.',
+      description:
+        'Starts with rec. Copy it from the record URL or an earlier step.',
+      placeholder: 'recXXXXXXXXXXXXXX',
     }),
     file: Property.File({
       displayName: 'File',
       required: true,
-      description:
-        'The file to be uploaded, which can be provided either as a public file URL or in Base64 encoded format.',
+      description: 'A file from an earlier step or a public URL.',
     }),
     file_content_type: Property.ShortText({
       displayName: 'File Content Type',
       required: true,
-      description: `Specifies the MIME type of the file being uploaded (e.g., 'image/png', 'application/pdf').`,
+      description: 'MIME type of the file.',
+      placeholder: 'image/png',
     }),
     filename: Property.ShortText({
       displayName: 'File Name',
-      description: 'The name of the file as it should appear after upload.',
+      description: `Name shown in Airtable. Empty: the uploaded file's own name.`,
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {
