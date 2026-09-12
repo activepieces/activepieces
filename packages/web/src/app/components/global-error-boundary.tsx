@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Check, Copy, RefreshCcw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { Button } from '@/components/ui/button';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -29,6 +28,41 @@ function buildDiagnosticsText(
     componentStack ?? '(no component stack)',
   ].join('\n');
 }
+
+const SimpleCopyButton = ({
+  textToCopy,
+  className,
+}: {
+  textToCopy: string;
+  className?: string;
+}) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback in environments without clipboard permissions
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className={className}
+      aria-label="Copy diagnostics"
+    >
+      {copied ? (
+        <Check className="size-3.5 text-green-500" />
+      ) : (
+        <Copy className="size-3.5" />
+      )}
+    </button>
+  );
+};
 
 const ErrorFallbackContent = ({
   error,
@@ -86,11 +120,9 @@ const ErrorFallbackContent = ({
           </button>
           {showDetails && (
             <div className="relative w-full text-left">
-              <CopyButton
+              <SimpleCopyButton
                 textToCopy={buildDiagnosticsText(error, componentStack)}
-                variant="ghost"
-                withoutTooltip
-                className="absolute right-2 top-2 size-7 text-muted-foreground"
+                className="absolute right-2 top-2 inline-flex items-center justify-center rounded-md size-7 text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
               />
               <pre className="max-h-56 overflow-auto rounded-lg border bg-muted/40 p-4 pr-12 font-mono text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
                 {buildDiagnosticsText(error, componentStack)}
