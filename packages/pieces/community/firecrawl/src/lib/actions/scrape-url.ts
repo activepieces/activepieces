@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { downloadAndSaveScreenshot, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { saveFirecrawlFile, FIRECRAWL_API_BASE_URL } from '../common/common';
 import { scrapeUrlActionOutputSchema } from '../output-schemas';
 
 export const scrapeUrl = createAction({
@@ -86,7 +86,7 @@ export const scrapeUrl = createAction({
 
       const result = response.body;
       if (format === 'screenshot' && result?.data?.screenshot) {
-        await downloadAndSaveScreenshot(result.data, context);
+        result.data.screenshot = await saveFirecrawlFile(context, result.data.screenshot);
       }
       return result;
     } catch (error: any) {
