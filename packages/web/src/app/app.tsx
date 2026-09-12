@@ -10,6 +10,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin';
 
+import { EmbeddingAnalyticsLoader } from './components/embedding-analytics-loader';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { GlobalErrorBoundary } from './components/global-error-boundary';
 import { InitialDataGuard } from './components/initial-data-guard';
@@ -25,6 +26,7 @@ export function App() {
           <EmbeddingProvider>
             <InitialDataGuard>
               <EmbeddingFontLoader>
+                <EmbeddingAnalyticsLoader />
                 <TelemetryProvider>
                   <TooltipProvider>
                     <React.Fragment key={i18n.language}>

@@ -18,6 +18,10 @@ Change log format: MM/DD/YYYY (version)
 
 
 
+### 09/10/2026 (0.16.0)
+- SDK URL: https://cdn.activepieces.com/sdk/embed/0.16.0.js
+- Added `embedding.analytics.gtmContainerId` and `embedding.analytics.clarityProjectId` parameters to the [configure](./embed-builder#configure-parameters) method **(value: string)**. Loads Google Tag Manager and/or Microsoft Clarity inside the embedded app so you get user-behaviour analytics on the builder; scripts on your own page cannot see into the iframe. Only ids are accepted, never script code, and the ids are validated before anything loads. Both are off when unset. This version requires an Activepieces release that includes [#15442](https://github.com/activepieces/activepieces/pull/15442).
+
 ### 08/01/2026 (0.15.0)
 - SDK URL: https://cdn.activepieces.com/sdk/embed/0.15.0.js
 - Added `embedding.formulasDocsUrl` parameter to the [configure](./embed-builder#configure-parameters) method **(value: string)**. Sets where the "See All" link in the formula editor points. When unset the link stays hidden, so embedded users are never sent to the Activepieces docs; set it to your own formula reference to show the link pointing there.
