@@ -70,6 +70,7 @@ export enum ToolCallType {
 }
 
 export enum AgentPieceProps {
+    AGENT_ID = 'agentId',
     AGENT_TOOLS = 'agentTools',
     STRUCTURED_OUTPUT = 'structuredOutput',
     PROMPT = 'prompt',

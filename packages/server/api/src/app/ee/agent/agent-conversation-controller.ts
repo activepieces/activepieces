@@ -197,19 +197,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 platformId,
                 userId,
                 userMessage: content,
-                modelName: conversation.source === AgentRunSource.AGENT ? agentConfig?.modelName ?? null : conversation.modelName ?? null,
+                modelName: conversation.modelName ?? null,
                 files,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
-                ...(isNil(agentConfig) || isBuilder ? {} : {
-                    tools: agentConfig.tools,
-                    structuredOutput: agentConfig.structuredOutput,
-                    maxSteps: agentConfig.maxSteps,
-                    ...spreadIfDefined('provider', agentConfig.provider ?? undefined),
-                    ...spreadIfDefined('providerConfigId', agentConfig.providerConfigId ?? undefined),
-                    promptOverride: { system: agentConfig.instructions },
-                }),
+                ...(isNil(agentConfig) || isBuilder ? {} : agentHelpers.jobFieldsFromConfig({ config: agentConfig })),
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentConversationController] Enqueued chat agent job')

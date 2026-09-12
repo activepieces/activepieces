@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { AgentPhase, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
+import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
@@ -467,3 +467,7 @@ export type AgentTurnResult = {
 }
 
 type AgentRunErrorClass = 'credit' | 'user' | 'internal'
+
+export function firstStepUsesFastModel({ source, dryRun }: { source: AgentRunSource, dryRun?: boolean }): boolean {
+    return dryRun !== true && source !== AgentRunSource.FLOW_STEP
+}

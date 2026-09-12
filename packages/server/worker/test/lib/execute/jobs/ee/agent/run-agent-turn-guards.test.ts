@@ -1,7 +1,9 @@
 import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { AgentRunSource } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
-import { classifyAgentRunError, isTransientFailureText, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+
+import { classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 function apiError({ statusCode, message, responseBody }: { statusCode: number, message: string, responseBody?: string }): APICallError {
     return new APICallError({ message, url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode, responseBody })
@@ -33,6 +35,20 @@ describe('looksEmptyResultText', () => {
     })
 })
 
+describe('firstStepUsesFastModel', () => {
+    it('buys time to first token on the surfaces someone is watching', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT })).toBe(true)
+        expect(firstStepUsesFastModel({ source: AgentRunSource.AGENT })).toBe(true)
+    })
+
+    it('leaves a flow step on the model it was configured with, since nobody is waiting', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.FLOW_STEP })).toBe(false)
+    })
+
+    it('stays off in the playground, which executes nothing', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, dryRun: true })).toBe(false)
+    })
+})
 
 describe('classifyAgentRunError', () => {
     const classify = (error: unknown, provider?: string): string => classifyAgentRunError({ error, ...(provider === undefined ? {} : { provider }) })

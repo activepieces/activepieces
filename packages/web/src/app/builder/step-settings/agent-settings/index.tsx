@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils';
+import { AIProviderName, isNil, omit } from '@activepieces/core-utils';
 import {
   AgentPieceProps,
   AgentProviderModel,
@@ -7,6 +7,7 @@ import {
 } from '@activepieces/shared';
 import { useFormContext } from 'react-hook-form';
 
+import { AgentLink } from '@/app/builder/step-settings/agent-settings/agent-link';
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -62,11 +63,27 @@ export const AgentSettings = (props: AgentSettingsProps) => {
   const actionName = (props.step.settings as PieceActionSettings)
     .actionName as string;
   const selectedAction = pieceModel.actions[actionName];
-  const properties = (({ auth: _auth, ...rest }) => rest)(selectedAction.props);
+  const linkedAgentId = form.watch(
+    `settings.input.${AgentPieceProps.AGENT_ID}`,
+  ) as string | undefined;
+  const comesFromTheAgent = [
+    AgentPieceProps.AGENT_TOOLS,
+    AgentPieceProps.STRUCTURED_OUTPUT,
+    AgentPieceProps.AI_PROVIDER_MODEL,
+    AgentPieceProps.MAX_STEPS,
+  ];
+  const properties = omit(selectedAction.props, [
+    'auth',
+    AgentPieceProps.AGENT_ID,
+    ...(isNil(linkedAgentId) ? [] : comesFromTheAgent),
+  ]);
+  const versionCanStoreALink =
+    AgentPieceProps.AGENT_ID in selectedAction.props || !isNil(linkedAgentId);
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-4 w-full">
+        {versionCanStoreALink && <AgentLink disabled={props.readonly} />}
         {Object.keys(properties).map((propertyName) => {
           return (
             <FormField
@@ -135,9 +152,10 @@ const selectAgentFormComponentForProperty = (
       );
     }
     case AgentPieceProps.AI_PROVIDER_MODEL: {
-      const provider = (field.value as AgentProviderModel).provider;
-      const model = (field.value as AgentProviderModel).model;
-      const configId = (field.value as AgentProviderModel).configId;
+      const providerModel = field.value as AgentProviderModel | undefined;
+      const provider = providerModel?.provider;
+      const model = providerModel?.model;
+      const configId = providerModel?.configId;
       return (
         <AIModelSelector
           defaultModel={model}

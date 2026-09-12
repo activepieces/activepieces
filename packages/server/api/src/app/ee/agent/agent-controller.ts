@@ -82,6 +82,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
             userId: await resolveUserId(request),
             request: request.body,
+            platformId: request.principal.platform.id,
             goLive: request.body.goLive ?? true,
         })
         applicationEvents(request.log).sendUserEvent(request, {
@@ -95,6 +96,7 @@ export const agentController: FastifyPluginAsyncZod = async (app) => {
         const agent = await agentService(request.log).publish({
             id: request.params.id,
             projectId: request.projectId,
+            platformId: request.principal.platform.id,
             userId: await resolveUserId(request),
         })
         applicationEvents(request.log).sendUserEvent(request, {

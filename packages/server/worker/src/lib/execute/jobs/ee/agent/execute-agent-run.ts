@@ -7,7 +7,7 @@ import { agentMcpClient, McpConnection } from './agent-mcp-client'
 import { stepResultFrom } from './agent-step-result'
 import { agentToolPolicy } from './agent-tool-policy'
 import { agentWorkerTools, GateDecision, TaintState } from './agent-worker-tools'
-import { classifyAgentRunError, delayWithJitter, isTransientFailureText, runAgentTurn } from './run-agent-turn'
+import { classifyAgentRunError, delayWithJitter, firstStepUsesFastModel, isTransientFailureText, runAgentTurn } from './run-agent-turn'
 
 const BATCH_SIZE = 10
 const BATCH_FLUSH_MS = 50
@@ -234,7 +234,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     return runAgentTurn({
                         ...spreadIfDefined('stepCeiling', data.maxSteps),
                         model,
-                        fastModel: dryRun ? undefined : fastModel,
+                        fastModel: firstStepUsesFastModel({ source, dryRun }) ? fastModel : undefined,
                         provider,
                         systemPrompt: config.systemPrompt,
                         messages: config.messages as ModelMessage[],
