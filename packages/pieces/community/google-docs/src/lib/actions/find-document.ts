@@ -14,7 +14,7 @@ export const findDocumentAction = createAction({
 	name: 'google-docs-find-document',
 	classification: 'SEARCH',
 	displayName: 'Find Document',
-	description: 'Search for document by name.',
+	description: 'Find a document by name, optionally creating it.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -24,11 +24,13 @@ export const findDocumentAction = createAction({
 	props: {
 		name: Property.ShortText({
 			displayName: 'Document Name',
+			description: 'Matches any document whose name contains this text.',
+			placeholder: 'Q3 report',
 			required: true,
 		}),
 		folderId: folderIdProp,
 		createIfNotFound: Property.Checkbox({
-			displayName: 'Create a new document if not found?',
+			displayName: 'Create If Not Found',
 			defaultValue: false,
 			required: false,
 		}),
@@ -37,7 +39,7 @@ export const findDocumentAction = createAction({
 			displayName: 'New Document Properties',
 			required: false,
 			refreshers: ['createIfNotFound'],
-			props: async ({ auth, createIfNotFound }) => {
+			props: async ({ auth, createIfNotFound }): Promise<DynamicPropsValue> => {
 				if (!auth) return {};
 				if (!createIfNotFound) return {};
 
@@ -46,6 +48,7 @@ export const findDocumentAction = createAction({
 				if (createIfNotFound) {
 					props['content'] = Property.LongText({
 						displayName: 'Document Content',
+						placeholder: 'Agenda, decisions, action items',
 						required: true,
 					});
 				}
