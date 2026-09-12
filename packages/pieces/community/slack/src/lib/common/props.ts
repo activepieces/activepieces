@@ -207,7 +207,7 @@ export const actions = Property.Array({
   },
 });
 
-async function getUsers(accessToken: string) {
+export async function getUsers(accessToken: string) {
   const client = new WebClient(accessToken);
   const users: { label: string; value: string }[] = [];
   for await (const page of client.paginate('users.list', {

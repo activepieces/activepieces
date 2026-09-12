@@ -374,5 +374,18 @@
   "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).": "This trigger needs Slack's Interactivity & Shortcuts Request URL manually configured on self-hosted instances before it will receive events, see the [setup guide](https://www.activepieces.com/docs/install/configure-operate/setup-app-webhooks#slack).",
   "Select the type of modal interaction to trigger on.": "Select the type of modal interaction to trigger on.",
   "View Submission": "View Submission",
-  "View Closed": "View Closed"
+  "View Closed": "View Closed",
+  "Send Message To Multiple Users": "Send Message To Multiple Users",
+  "Send a direct message to many users at once, in parallel.": "Send a direct message to many users at once, in parallel.",
+  "Message Mode": "Message Mode",
+  "Send everyone the same message, or give each user their own.": "Send everyone the same message, or give each user their own.",
+  "Same message for everyone": "Same message for everyone",
+  "Personal message per user": "Personal message per user",
+  "Recipients": "Recipients",
+  "Users And Messages": "Users And Messages",
+  "One entry per user. A user listed twice keeps only the last message.": "One entry per user. A user listed twice keeps only the last message.",
+  "The Slack user ID to send to, for example U012AB3CD.": "The Slack user ID to send to, for example U012AB3CD.",
+  "Enable link unfurling for these messages": "Enable link unfurling for these messages",
+  "Parallel Sends": "Parallel Sends",
+  "How many direct messages to send at the same time, between 1 and 20. Raise it only if the default is too slow.": "How many direct messages to send at the same time, between 1 and 20. Raise it only if the default is too slow."
 }

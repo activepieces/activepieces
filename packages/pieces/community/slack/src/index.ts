@@ -11,6 +11,7 @@ import { requestActionMessageAction } from './lib/actions/request-action-message
 import { requestApprovalDirectMessageAction } from './lib/actions/request-approval-direct-message';
 import { requestSendApprovalMessageAction } from './lib/actions/request-approval-message';
 import { slackSendDirectMessageAction } from './lib/actions/send-direct-message-action';
+import { slackSendMessageToMultipleUsersAction } from './lib/actions/send-message-to-multiple-users';
 import { slackSendMessageAction } from './lib/actions/send-message-action';
 import { newReactionAdded } from './lib/triggers/new-reaction-added';
 import { newReactionRemoved } from './lib/triggers/new-reaction-removed';
@@ -191,6 +192,7 @@ export const slack = createPiece({
   actions: [
     addRectionToMessageAction,
     slackSendDirectMessageAction,
+    slackSendMessageToMultipleUsersAction,
     slackSendMessageAction,
     requestApprovalDirectMessageAction,
     requestSendApprovalMessageAction,
