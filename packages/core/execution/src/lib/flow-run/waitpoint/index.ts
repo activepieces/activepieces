@@ -101,6 +101,10 @@ export const BarrierSummary = z.object({
 })
 export type BarrierSummary = z.infer<typeof BarrierSummary>
 
+export const MAX_INLINE_BARRIER_SIGNALS = 100
+
+export const MAX_SIGNAL_REASON_LENGTH = 2000
+
 export const UNFAVOURABLE_SIGNAL_STATUSES = [
     BarrierSignalStatus.FAILED,
     BarrierSignalStatus.REJECTED,

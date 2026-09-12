@@ -130,7 +130,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 id: constants.flowRunId,
                 stop: createStopHook(params),
                 respond: createRespondHook(params),
-                createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),
+                createWaitpoint: createWaitpointHook({ constants, waitpointKey: executionState.currentPath.waitpointKeyFor({ stepName: action.name }), hookParams: params }),
                 waitForWaitpoint: createWaitForWaitpointHook({ constants, hookParams: params }),
             },
             project: {
@@ -257,14 +257,14 @@ type CreateRespondHookParams = {
     hookResponse: HookResponse
 }
 
-function createWaitpointHook({ constants, stepName, hookParams }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
+function createWaitpointHook({ constants, waitpointKey, hookParams }: { constants: EngineConstants, waitpointKey: string, hookParams: { hookResponse: HookResponse } }): CreateWaitpointHook {
     return (req: CreateWaitpointParams): Promise<CreateWaitpointResult> => {
         assertActionRunCannotSuspend(constants)
-        return submitWaitpoint({ constants, stepName, hookParams, req })
+        return submitWaitpoint({ constants, waitpointKey, hookParams, req })
     }
 }
 
-async function submitWaitpoint({ constants, stepName, hookParams, req }: { constants: EngineConstants, stepName: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
+async function submitWaitpoint({ constants, waitpointKey, hookParams, req }: { constants: EngineConstants, waitpointKey: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
     assertDelayWithinTimeout(req.resumeDateTime)
     if (!isNil(req.responseToSend)) {
         hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
@@ -274,7 +274,7 @@ async function submitWaitpoint({ constants, stepName, hookParams, req }: { const
         engineToken: constants.engineToken,
         flowRunId: constants.flowRunId,
         projectId: constants.projectId,
-        stepName,
+        stepName: waitpointKey,
         type: req.type,
         version: req.version ?? 'V1',
         resumeDateTime: req.resumeDateTime,
