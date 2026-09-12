@@ -9,10 +9,11 @@ status: accepted
 ## Decision
 
 Managed AI is billed on the dollar cost the provider reports for each model call, converted at
-`AP_AI_CREDIT_USD_VALUE`. A call on a customer's own key is billed one flat credit per model call.
-Tool calls stay at one credit each. The cost is observed by a middleware the **worker** wraps around
-every language model, and the charge is written by the API over the worker-to-API RPC. The per-model
-weight tables are deleted, not kept as a fallback.
+`AP_AI_CREDIT_USD_VALUE`. Work on a customer's own key is billed one flat credit per billable unit —
+per model call for a direct AI step, per turn for an agent. Tool calls stay at one credit each. The
+cost is observed by a middleware the **worker** wraps around every language model, and the charge is
+written by the API over the worker-to-API RPC. The per-model weight tables are deleted, not kept as a
+fallback.
 
 ## Context
 
@@ -34,11 +35,12 @@ boundary: the RPC is worker-to-API and engine-token authenticated, so piece code
 caller identity cannot be forged. That is what makes version gating unnecessary rather than merely
 inconvenient — so the piece-side approach was rejected.
 
-Billing one flat credit for a customer's own key, rather than nothing, keeps a single rule for what a
-model call costs and keeps the credits gate meaningful for platforms that bring their own key. It
-does make an agent turn on a customer's key dearer than the old one-credit-per-turn charge, since
-each tool-use step is its own model call; that was accepted deliberately and documented as a breaking
-change.
+Billing one flat credit for a customer's own key, rather than nothing, keeps the credits gate
+meaningful for platforms that bring their own key. That credit is charged per *turn* for an agent, not
+per model call: an agent turn is one model round-trip per tool-use step, so a per-call charge would
+have quietly multiplied the price of every own-key agent. For managed AI the per-call charge tracks
+money we actually spend, so it stays per call; for an own key we spend nothing and the credit is a
+flat platform fee, which the turn is the honest unit for.
 
 A missing cost bills zero, is counted, and pages on-call. There is no fallback to the old table: a
 silent fallback would mask the one regression that matters — an SDK bump moving where the cost is
