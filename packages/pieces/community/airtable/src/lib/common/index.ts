@@ -102,28 +102,45 @@ async function listRecords({
   token,
   baseId,
   tableId,
-  pageSize = 50, 
+  pageSize = 100,
+  maxRecords = 500,
 }: {
   token: string;
   baseId: string;
   tableId: string;
   pageSize?: number;
+  maxRecords?: number;
 }): Promise<AirtableRecord[]> {
-  const response = await httpClient.sendRequest<{ records: AirtableRecord[] }>({
-    method: HttpMethod.GET,
-    url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token,
-    },
-    queryParams: {
-      pageSize: pageSize.toString(),
-    },
-  });
-  if (response.status === 200) {
-    return response.body.records;
-  }
-  return [];
+  const allRecords: AirtableRecord[] = [];
+  let offset: string | undefined = undefined;
+
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      queryParams: {
+        pageSize: pageSize.toString(),
+        ...(offset ? { offset } : {}),
+      },
+    };
+    const response = await httpClient.sendRequest<{
+      records: AirtableRecord[];
+      offset?: string;
+    }>(request);
+
+    if (response.status === 200) {
+      allRecords.push(...response.body.records);
+      offset = response.body.offset;
+    } else {
+      offset = undefined;
+    }
+  } while (offset && allRecords.length < maxRecords);
+
+  return allRecords.slice(0, maxRecords);
 }
 
 async function fetchTableList({
@@ -214,28 +231,41 @@ async function findRecord({
   baseId,
   limitToView,
 }: Params) {
-  const request: HttpRequest = {
-    method: HttpMethod.GET,
-    url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
-    authentication: {
-      type: AuthenticationType.BEARER_TOKEN,
-      token,
-    },
-    queryParams: {
-      filterByFormula: `FIND("${searchValue}",{${searchField}})`,
-      view: limitToView ?? '',
-    },
-  };
+  const escapedSearchValue = (searchValue ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"');
+  const allRecords: AirtableRecord[] = [];
+  let offset: string | undefined = undefined;
 
-  const response = await httpClient.sendRequest<{
-    records: AirtableRecord[];
-  }>(request);
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://api.airtable.com/v0/${baseId}/${tableId}`,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token,
+      },
+      queryParams: {
+        filterByFormula: `FIND("${escapedSearchValue}",{${searchField}})`,
+        ...(limitToView ? { view: limitToView } : {}),
+        ...(offset ? { offset } : {}),
+      },
+    };
 
-  if (response.status === 200) {
-    return response.body.records;
-  }
+    const response = await httpClient.sendRequest<{
+      records: AirtableRecord[];
+      offset?: string;
+    }>(request);
 
-  return [];
+    if (response.status === 200) {
+      allRecords.push(...response.body.records);
+      offset = response.body.offset;
+    } else {
+      offset = undefined;
+    }
+  } while (offset);
+
+  return allRecords;
 }
 async function updateRecord({
   personalToken: token,
@@ -432,7 +462,7 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
 
@@ -451,7 +481,7 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please check your permission scope',
+          placeholder: "Could not load. Check the token's scopes.",
         };
       }
     },
@@ -460,6 +490,8 @@ export const airtableCommon = {
   workspaceId: Property.Dropdown<string,true,typeof airtableAuth>({
     auth: airtableAuth,
     displayName: 'Workspace',
+    description:
+      'Listed by ID because Airtable has no workspace name API.',
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
@@ -467,35 +499,42 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
-      // Although there is no direct way to get a list of workspaces,
-      // we can get a list of bases and then fetch each base to get the workspace id.
-      const bases = await fetchAllBases({
-        token: auth.secret_text,
-      });
 
-      const workspacePromises = bases.map((base) =>
-        fetchBase({ token: auth.secret_text, baseId: base.id })
-      );
-      const basesWithWorkspaces = await Promise.all(workspacePromises);
+      try {
+        const bases = await fetchAllBases({
+          token: auth.secret_text,
+        });
 
-      const workspaces = basesWithWorkspaces.reduce((acc, base) => {
-        if (base.workspaceId) {
-          // Since we don't have the workspace name, we will use the ID as the name.
-          acc[base.workspaceId] = base.workspaceId;
-        }
-        return acc;
-      }, {} as Record<string, string>);
+        const workspacePromises = bases.map((base) =>
+          fetchBase({ token: auth.secret_text, baseId: base.id })
+        );
+        const basesWithWorkspaces = await Promise.all(workspacePromises);
 
-      return {
-        disabled: false,
-        options: Object.entries(workspaces).map(([id, name]) => ({
-          label: name,
-          value: id,
-        })),
-      };
+        const workspaces = basesWithWorkspaces.reduce((acc, base) => {
+          if (base.workspaceId) {
+            acc[base.workspaceId] = base.workspaceId;
+          }
+          return acc;
+        }, {} as Record<string, string>);
+
+        return {
+          disabled: false,
+          options: Object.entries(workspaces).map(([id, name]) => ({
+            label: name,
+            value: id,
+          })),
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Could not load. Check the token's scopes.",
+        };
+      }
     },
   }),
 
@@ -509,14 +548,14 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a base first',
+          placeholder: 'Select a base first',
         };
       }
 
@@ -538,7 +577,7 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please check your permission scope',
+          placeholder: "Could not load. Check the token's scopes.",
         };
       }
     },
@@ -547,6 +586,7 @@ export const airtableCommon = {
   views: Property.Dropdown<string,false,typeof airtableAuth>({
     auth: airtableAuth,
     displayName: 'View',
+    description: 'Only records in this view are used. Empty: the whole table.',
     required: false,
     refreshers: ['base', 'tableId'],
     options: async ({ auth, base, tableId }): Promise<DropdownState<string>> => {
@@ -554,49 +594,60 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a base first',
+          placeholder: 'Select a base first',
         };
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a table first',
+          placeholder: 'Select a table first',
         };
       }
 
-      const views: AirtableView[] = await fetchViews({
-        token: auth.secret_text,
-        baseId: base as string,
-        tableId: tableId as string,
-      });
+      try {
+        const views: AirtableView[] = await fetchViews({
+          token: auth.secret_text,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
 
-      return {
-        disabled: false,
-        options: views.map((view) => ({
-          value: view.id,
-          label: view.name,
-        })),
-      };
+        return {
+          disabled: false,
+          options: views.map((view) => ({
+            value: view.id,
+            label: view.name,
+          })),
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Could not load. Check the token's scopes.",
+        };
+      }
     },
   }),
 
   recordId: Property.ShortText({
     displayName: 'Record ID',
     required: true,
-    description: 'The ID of the record.',
+    description:
+      'Starts with rec. Copy it from the record URL or an earlier step.',
+    placeholder: 'recXXXXXXXXXXXXXX',
   }),
 
   fields: Property.DynamicProperties({
     auth: airtableAuth,
-    displayName: 'Table',
+    displayName: 'Fields',
     required: true,
     refreshers: ['base', 'tableId'],
 
@@ -614,12 +665,14 @@ export const airtableCommon = {
         if (!AirtableEnterpriseFields.includes(field.type)) {
           const params = {
             displayName: field.name,
-            description: ['date', 'dateTime'].includes(field.type)
-              ? `${
-                  field.description ? field.description : ''
-                }Expected format: mmmm d,yyyy`
-              : field.description,
+            description: field.description,
             required: false,
+            ...(field.type === 'date'
+              ? { placeholder: 'March 5, 2024' }
+              : {}),
+            ...(field.type === 'dateTime'
+              ? { placeholder: 'March 5, 2024 10:30' }
+              : {}),
           };
 
           if (isNil(AirtableFieldMapping[field.type])) {
@@ -658,51 +711,73 @@ export const airtableCommon = {
   recordIdDropdown: Property.Dropdown<string,true,typeof airtableAuth>({
       auth: airtableAuth,
       displayName: 'Record',
+      description:
+        'Lists the first 500 records by their primary field.',
       required: true,
       refreshers: ['base', 'tableId'],
       options: async ({ auth, base, tableId }) => {
-        if (!auth || !base || !tableId) {
+        if (!auth) {
           return {
             disabled: true,
             options: [],
-            placeholder: 'Please select a base and table first',
+            placeholder: 'Connect your Airtable account first',
+          };
+        }
+        if (!base) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a base first',
+          };
+        }
+        if (!tableId) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Select a table first',
           };
         }
 
+        try {
+          const table = await fetchTable({
+            token: auth.secret_text,
+            baseId: base as string,
+            tableId: tableId as string,
+          });
+          const primaryField = table.fields.find(
+            (f) => f.id === table.primaryFieldId
+          );
+          const primaryFieldName = primaryField?.name;
 
-        const table = await fetchTable({
-          token: auth.secret_text,
-          baseId: base as string,
-          tableId: tableId as string,
-        });
-        const primaryField = table.fields.find(
-          (f) => f.id === table.primaryFieldId
-        );
-        const primaryFieldName = primaryField?.name;
+          const records = await listRecords({
+            token: auth.secret_text,
+            baseId: base as string,
+            tableId: tableId as string,
+          });
 
+          const options = records.map((record) => {
+            let label = record.id;
+            if (primaryFieldName && record.fields[primaryFieldName]) {
+              label = record.fields[primaryFieldName] as string;
+            }
+            return {
+              label: label,
+              value: record.id,
+            };
+          });
 
-        const records = await listRecords({
-          token: auth.secret_text,
-          baseId: base as string,
-          tableId: tableId as string,
-        });
-
-
-        const options = records.map((record) => {
-          let label = record.id; 
-          if (primaryFieldName && record.fields[primaryFieldName]) {
-            label = record.fields[primaryFieldName] as string;
-          }
           return {
-            label: label,
-            value: record.id,
+            disabled: false,
+            options: options,
           };
-        });
-
-        return {
-          disabled: false,
-          options: options,
-        };
+        } catch (e) {
+          console.debug(e);
+          return {
+            disabled: true,
+            options: [],
+            placeholder: "Could not load. Check the token's scopes.",
+          };
+        }
       },
   }),
 
@@ -716,35 +791,45 @@ export const airtableCommon = {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please connect your account',
+          placeholder: 'Connect your Airtable account first',
         };
       }
       if (!base) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a base first',
+          placeholder: 'Select a base first',
         };
       }
       if (!tableId) {
         return {
           disabled: true,
           options: [],
-          placeholder: 'Please select a table first',
+          placeholder: 'Select a table first',
         };
       }
-      const airtable: AirtableTable = await fetchTable({
-        token: auth.secret_text,
-        baseId: base as string,
-        tableId: tableId as string,
-      });
-      return {
-        disabled: false,
-        options: airtable.fields.map((field: AirtableField) => ({
-          label: field.name,
-          value: field.name,
-        })),
-      };
+
+      try {
+        const airtable: AirtableTable = await fetchTable({
+          token: auth.secret_text,
+          baseId: base as string,
+          tableId: tableId as string,
+        });
+        return {
+          disabled: false,
+          options: airtable.fields.map((field: AirtableField) => ({
+            label: field.name,
+            value: field.name,
+          })),
+        };
+      } catch (e) {
+        console.debug(e);
+        return {
+          disabled: true,
+          options: [],
+          placeholder: "Could not load. Check the token's scopes.",
+        };
+      }
     },
   }),
   
