@@ -38,7 +38,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         resolveTierModel: mockResolveTierModel,
         runScopeOrThrow: ({ projectId }: { projectId: string }) => ({ type: 'project', projectId }),
         resolveChatProviderName: vi.fn().mockResolvedValue(AIProviderName.ACTIVEPIECES),
-        resolveTier: vi.fn().mockReturnValue({ id: 'fast', creditWeight: 3 }),
+        resolveTier: vi.fn().mockReturnValue({ id: 'fast' }),
         resolveModelIdForProvider: vi.fn().mockReturnValue('model-x'),
         defaultModelIdForProvider: vi.fn().mockReturnValue('model-x'),
     },
