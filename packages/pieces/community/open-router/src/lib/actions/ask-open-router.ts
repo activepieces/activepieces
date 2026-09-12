@@ -19,15 +19,14 @@ export const askOpenRouterAction = createAction({
   name: 'ask-lmm',
   classification: 'READ',
   displayName: 'Ask LLM',
-  description: 'Ask any model supported by Open Router.',
+  description: 'Send a prompt to any model on OpenRouter and get the reply.',
   aiMetadata: { description: 'Sends a single prompt to any model in the OpenRouter catalog through one unified completions endpoint and returns the generated text, with optional temperature, top-p, and max-token controls. It is the only first-class action in the piece and is single-turn - no conversation memory, no system-role array, and no image or audio input - so use the sibling Custom API Call for any other OpenRouter endpoint, and prefer a vendor-specific piece such as OpenAI, Anthropic, or Groq when the model must come from one provider. Requires a model id from the OpenRouter model list and a prompt; not idempotent: each call bills a fresh generation and may return different text for the same input.', idempotent: false },
   auth: openRouterAuth,
   props: {
     model: Property.Dropdown({
       auth: openRouterAuth,
       displayName: 'Model',
-      description:
-        'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
+      description: 'The model that writes the reply. Type to search by name.',
       required: true,
       refreshers: [],
       defaultValue: 'pygmalionai/mythalion-13b',
@@ -54,7 +53,7 @@ export const askOpenRouterAction = createAction({
 
           const options = response.body.data.map((model) => {
             return {
-              label: model.id,
+              label: model.name || model.id,
               value: model.id,
             };
           });
@@ -62,11 +61,11 @@ export const askOpenRouterAction = createAction({
             options: options,
             disabled: false,
           };
-        } catch (error) {
+        } catch {
           return {
             options: [],
             disabled: true,
-            placeholder: `Couldn't Load Models:\n${error}`,
+            placeholder: 'Could not load models. Check your API key and try again.',
           };
         }
       },
@@ -74,25 +73,28 @@ export const askOpenRouterAction = createAction({
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
-      description: 'The prompt to send to the model.',
+      placeholder: 'e.g. Summarize the text below in three bullet points',
     }),
     temperature: Property.Number({
       displayName: 'Temperature',
       required: false,
+      advanced: true,
       description:
-        'Controls randomness: Lowering results in less random completions. As the temperature approaches zero, the model will become deterministic and repetitive.',
+        'Randomness from 0 to 2. Lower is focused, higher is creative.',
     }),
     maxTokens: Property.Number({
       displayName: 'Maximum Tokens',
       required: false,
+      advanced: true,
       description:
-        "The maximum number of tokens to generate. Requests can use up to 2,048 or 4,096 tokens shared between prompt and completion, don't set the value to maximum and leave some tokens for the input. The exact limit varies by model. (One token is roughly 4 characters for normal English text)",
+        'Longest reply allowed, in tokens. Empty lets the model decide.',
     }),
     topP: Property.Number({
       displayName: 'Top P',
       required: false,
+      advanced: true,
       description:
-        'An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.',
+        'Nucleus sampling from 0 to 1. Lower keeps only the likeliest words.',
     }),
   },
   outputSchema: askLmmActionOutputSchema,
