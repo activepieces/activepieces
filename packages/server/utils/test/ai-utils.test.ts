@@ -112,3 +112,25 @@ describe('aiUtils.buildWebSearchToolsOrThrow', () => {
         expect(aiUtils.buildWebSearchToolsOrThrow({ provider: AIProviderName.AZURE, auth: { apiKey: 'key' }, webSearchEnabled: false })).toEqual({})
     })
 })
+
+describe('what the managed provider is asked to send back', () => {
+    function settingsFor({ provider, webSearchEnabled = false }: { provider: AIProviderName, webSearchEnabled?: boolean }): Record<string, unknown> | undefined {
+        const model = aiUtils.createModel({ provider, auth: { apiKey: 'key' }, config: {}, modelId: 'anthropic/claude-sonnet-5', webSearchEnabled })
+        return (model as unknown as { settings?: Record<string, unknown> }).settings
+    }
+
+    it('asks OpenRouter to report what a managed call cost, which is the whole basis of the bill', () => {
+        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES })).toMatchObject({ usage: { include: true } })
+    })
+
+    it('keeps asking for the cost when web search is on, rather than letting the plugin setting replace it', () => {
+        expect(settingsFor({ provider: AIProviderName.ACTIVEPIECES, webSearchEnabled: true })).toMatchObject({
+            usage: { include: true },
+            plugins: [{ id: 'web', max_results: 5 }],
+        })
+    })
+
+    it('does not ask for cost accounting on a customer own OpenRouter key, which we never pay for', () => {
+        expect(settingsFor({ provider: AIProviderName.OPENROUTER })).toEqual({})
+    })
+})

@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
@@ -59,11 +59,12 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
     })
     const { provider, auth, config } = resolved
     const flowStep = flowStepMetadata(data)
+    const billing = billingFor(data)
     if (data.action === AiStepAction.enum.EXTRACT_STRUCTURED_DATA) {
-        return { answer: await extractStructuredData({ data, resolved, flowStep, files: await resolveAiFiles({ ctx, data }) }) }
+        return { answer: await extractStructuredData({ data, resolved, flowStep, billing, files: await resolveAiFiles({ ctx, data }) }) }
     }
     if (data.action === AiStepAction.enum.GENERATE_IMAGE) {
-        return { answer: await generateImageStep({ ctx, data, resolved, flowStep, inputImages: await resolveAiFiles({ ctx, data }) }) }
+        return { answer: await generateImageStep({ ctx, data, resolved, flowStep, billing, inputImages: await resolveAiFiles({ ctx, data }) }) }
     }
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
@@ -75,6 +76,7 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
         config,
         modelId: data.modelId,
         flowStep,
+        billing,
         openaiResponsesModel: webSearchEnabled && (effectiveProvider ?? provider) === AIProviderName.OPENAI,
         webSearchEnabled,
         webSearchOptions,
@@ -91,6 +93,15 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
     })
 
     return toStepOutput({ data, text: response.text ?? '', sources: response.sources })
+}
+
+function billingFor(data: ExecuteAiJobData): ActivepiecesAiBilling {
+    return {
+        scope: ActivepiecesAiBillingScope.PROJECT,
+        platformId: data.platformId,
+        projectId: data.projectId,
+        flowRun: { flowId: data.flowId, flowRunId: data.flowRunId },
+    }
 }
 
 function flowStepMetadata(data: ExecuteAiJobData): FlowStepMetadata {

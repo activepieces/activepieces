@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
+import { ActivepiecesAiBilling, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, BaseAIProviderAuthConfig, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
@@ -8,6 +8,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel, ToolSet } from 'ai'
+import { billedLanguageModel } from './activepieces-ai-cost'
 
 const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
@@ -16,6 +17,8 @@ export const EMBEDDING_DIMENSIONS = 768
 const OPENAI_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
     openai: { dimensions: EMBEDDING_DIMENSIONS },
 }
+
+const REPORT_WHAT_THE_CALL_COST = { usage: { include: true } } as const
 
 const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
     openrouter: { dimensions: EMBEDDING_DIMENSIONS },
@@ -107,25 +110,48 @@ function openRouterModelSettings({ provider, webSearchEnabled, options }: {
     webSearchEnabled: boolean
     options?: WebSearchOptions
 }): OpenRouterChatSettings | undefined {
-    if (!webSearchEnabled || AI_PROVIDER_CAPABILITIES[provider].webSearch !== 'plugin') {
-        return undefined
+    const settings: OpenRouterChatSettings = {
+        ...(provider === AIProviderName.ACTIVEPIECES ? REPORT_WHAT_THE_CALL_COST : {}),
+        ...(webSearchEnabled && AI_PROVIDER_CAPABILITIES[provider].webSearch === 'plugin'
+            ? { plugins: [{ id: 'web' as const, max_results: openRouterWebSearchResults(options) }] }
+            : {}),
     }
-    const maxResults = Math.min(
+    return Object.keys(settings).length === 0 ? undefined : settings
+}
+
+function openRouterWebSearchResults(options?: WebSearchOptions): number {
+    return Math.min(
         Math.max(options?.maxUses ?? DEFAULT_WEB_SEARCH_RESULTS, MIN_OPENROUTER_WEB_SEARCH_RESULTS),
         MAX_OPENROUTER_WEB_SEARCH_RESULTS,
     )
-    return { plugins: [{ id: 'web', max_results: maxResults }] }
 }
 
-function createModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, onOutcome }: {
+function createModel({ provider, auth, config, modelId, metadata, flowStep, billing, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
+    billing?: ActivepiecesAiBilling
     openaiResponsesModel?: boolean
     webSearchEnabled?: boolean
+    webSearchOptions?: WebSearchOptions
+    onOutcome?: ProviderOutcomeReporter
+}): LanguageModel {
+    const model = buildModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome })
+    return billedLanguageModel({ model, provider, modelId, billing })
+}
+
+function buildModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome }: {
+    provider: AIProviderName
+    auth: Record<string, unknown>
+    config: Record<string, unknown>
+    modelId: string
+    metadata?: ChatModelMetadata
+    flowStep?: FlowStepMetadata
+    openaiResponsesModel: boolean
+    webSearchEnabled: boolean
     webSearchOptions?: WebSearchOptions
     onOutcome?: ProviderOutcomeReporter
 }): LanguageModel {

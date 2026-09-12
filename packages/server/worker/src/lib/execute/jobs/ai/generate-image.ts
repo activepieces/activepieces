@@ -1,18 +1,19 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
+import { ActivepiecesAiBilling, AIProviderName, isNil } from '@activepieces/core-utils'
+import { activepiecesAiCost, aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AI_PROVIDER_CAPABILITIES, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateImage, generateText, ImageModel, ImagePart, LanguageModel } from 'ai'
 import { JobContext } from '../../types'
 import { ResolvedAiFile } from './ai-files'
 
-export async function generateImageStep({ ctx, data, resolved, flowStep, inputImages }: {
+export async function generateImageStep({ ctx, data, resolved, flowStep, billing, inputImages }: {
     ctx: JobContext
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
     flowStep: FlowStepMetadata
+    billing: ActivepiecesAiBilling
     inputImages: ResolvedAiFile[]
 }): Promise<string> {
-    const image = await getGeneratedImage({ data, resolved, inputImages, flowStep })
+    const image = await getGeneratedImage({ data, resolved, inputImages, flowStep, billing })
     const imageData = !isNil(image.base64) && image.base64.length > 0
         ? Buffer.from(image.base64, 'base64')
         : Buffer.from(image.uint8Array)
@@ -26,13 +27,14 @@ export async function generateImageStep({ ctx, data, resolved, flowStep, inputIm
     return url
 }
 
-async function getGeneratedImage({ data, resolved, inputImages, flowStep }: {
+async function getGeneratedImage({ data, resolved, inputImages, flowStep, billing }: {
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
     inputImages: ResolvedAiFile[]
     flowStep: FlowStepMetadata
+    billing: ActivepiecesAiBilling
 }): Promise<GeneratedImage> {
-    const model = createImageCapableModel({ resolved, modelId: data.modelId, flowStep })
+    const model = createImageCapableModel({ resolved, modelId: data.modelId, flowStep, billing })
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider: resolved.provider, model: data.modelId })
     const resolvedProvider = effectiveProvider ?? resolved.provider
     const prompt = data.prompt ?? ''
@@ -55,14 +57,16 @@ async function getGeneratedImage({ data, resolved, inputImages, flowStep }: {
                 : prompt,
             providerOptions: { [resolvedProvider]: { ...stripLegacyImageField(data.advancedOptions) } } as Parameters<typeof generateImage>[0]['providerOptions'],
         })
+        activepiecesAiCost.reportFlatCredits({ billing, provider: resolved.provider, modelId: data.modelId })
         return image
     })
 }
 
-function createImageCapableModel({ resolved, modelId, flowStep }: {
+function createImageCapableModel({ resolved, modelId, flowStep, billing }: {
     resolved: ResolveAiProviderResponse
     modelId: string
     flowStep: FlowStepMetadata
+    billing: ActivepiecesAiBilling
 }): ImageCapableModel {
     if (!AI_PROVIDER_CAPABILITIES[resolved.provider].supportsImageGeneration) {
         throw new Error(`Provider ${resolved.provider} does not support image models`)
@@ -72,7 +76,7 @@ function createImageCapableModel({ resolved, modelId, flowStep }: {
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
-    return { kind: 'language', model: aiUtils.createModel({ provider, auth, config, modelId, flowStep }) }
+    return { kind: 'language', model: aiUtils.createModel({ provider, auth, config, modelId, flowStep, billing }) }
 }
 
 async function generateImageUsingGenerateText({ model, prompt, inputImages }: {

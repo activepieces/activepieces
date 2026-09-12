@@ -1,13 +1,14 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { ExecuteAiJobData, ResolveAiProviderResponse } from '@activepieces/shared'
 import { generateText, jsonSchema, ModelMessage, tool, UserModelMessage } from 'ai'
 import { ResolvedAiFile } from './ai-files'
 
-export async function extractStructuredData({ data, resolved, flowStep, files }: {
+export async function extractStructuredData({ data, resolved, flowStep, billing, files }: {
     data: ExecuteAiJobData
     resolved: ResolveAiProviderResponse
     flowStep: FlowStepMetadata
+    billing: ActivepiecesAiBilling
     files: ResolvedAiFile[]
 }): Promise<unknown> {
     const model = aiUtils.createModel({
@@ -16,6 +17,7 @@ export async function extractStructuredData({ data, resolved, flowStep, files }:
         config: resolved.config,
         modelId: data.modelId,
         flowStep,
+        billing,
     })
     const { schemaDefinition, sanitizedNameMap } = buildSchema(data)
     const extractionTool = tool({
