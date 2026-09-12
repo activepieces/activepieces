@@ -10,9 +10,6 @@ export async function extractStructuredData({ data, resolved, flowStep, files }:
     flowStep: FlowStepMetadata
     files: ResolvedAiFile[]
 }): Promise<unknown> {
-    if (isNil(data.text) && files.length === 0) {
-        throw new Error('Please provide text or image/PDF to extract data from.')
-    }
     const model = aiUtils.createModel({
         provider: resolved.provider,
         auth: resolved.auth,
@@ -67,11 +64,11 @@ function buildSchema(data: ExecuteAiJobData): { schemaDefinition: ReturnType<typ
 }
 
 function buildMessages({ data, files }: { data: ExecuteAiJobData, files: ResolvedAiFile[] }): ModelMessage[] {
-    let textContent = data.prompt ?? 'Extract the following data from the provided data.'
-    if (data.text) {
-        textContent += `\n\nText to analyze:\n${data.text}`
-    }
-    const contentParts: UserModelMessage['content'] = [{ type: 'text', text: textContent }]
+    const prompt = data.prompt ?? ''
+    const guide = prompt.length === 0 ? 'Extract the following data from the provided data.' : prompt
+    const text = data.text ?? ''
+    const textContent = text.length === 0 ? guide : `${guide}\n\nText to analyze:\n${text}`
+    const contentParts: Exclude<UserModelMessage['content'], string> = [{ type: 'text', text: textContent }]
     for (const file of files) {
         if (file.base64.length === 0) {
             continue

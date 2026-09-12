@@ -1,8 +1,6 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { generateText } from 'ai';
-import { createAIModel } from '../../common/ai-sdk';
+import { createAction, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { runOnWorker } from '../../common/ai-step';
 import { aiProps, aiProviderSelection } from '../../common/props';
-import { spreadIfDefined } from '@activepieces/pieces-framework';
 
 export const classifyText = createAction({
   audience: 'both',
@@ -25,37 +23,25 @@ export const classifyText = createAction({
     }),
   },
   async run(context) {
-    const categories = (context.propsValue.categories as string[]) ?? [];
-
     const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
-    const modelId = context.propsValue.model;
+    const categories = ((context.propsValue.categories as unknown[]) ?? []).map((category) => String(category));
 
-    const model = await createAIModel({
-      provider,
-      ...spreadIfDefined('configId', configId),
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
+    const result = await runOnWorker({
+      context,
+      request: {
+        action: 'CLASSIFY_TEXT',
+        provider,
+        ...spreadIfDefined('providerConfigId', configId),
+        modelId: context.propsValue.model,
+        text: context.propsValue.text,
+        categories,
+      },
     });
 
-    const response = await generateText({
-      model,
-      prompt: `As a text classifier, your task is to assign one of the following categories to the provided text: ${categories.join(
-        ', '
-      )}. Please respond with only the selected category as a single word, and nothing else.
-      Text to classify: "${context.propsValue.text}"`,
-    });
-    const result = response.text.trim();
-
-    if (!categories.includes(result)) {
-      throw new Error(
-        'Unable to classify the text into the provided categories.'
-      );
+    if (result.status === 'paused') {
+      return {};
     }
 
-    return result;
+    return result.output.answer;
   },
 });

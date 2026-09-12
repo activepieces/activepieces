@@ -207,6 +207,16 @@ export function isUserInteractionJobData(jobData: JobData): jobData is UserInter
     return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
+export function callerWaitingForResponse(jobData: JobData): { webserverId: string, requestId: string } | null {
+    if (isUserInteractionJobData(jobData)) {
+        return { webserverId: jobData.webserverId, requestId: jobData.requestId }
+    }
+    if (jobData.jobType === WorkerJobType.EXECUTE_AI && !isNil(jobData.webserverId)) {
+        return { webserverId: jobData.webserverId, requestId: jobData.requestId }
+    }
+    return null
+}
+
 const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
     WorkerJobType.EXECUTE_FLOW,
     WorkerJobType.EXECUTE_WEBHOOK,

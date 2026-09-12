@@ -128,6 +128,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             }),
             run: {
                 id: constants.flowRunId,
+                canPause: !constants.actionRunMode,
                 stop: createStopHook(params),
                 respond: createRespondHook(params),
                 createWaitpoint: createWaitpointHook({ constants, stepName: action.name, hookParams: params }),

@@ -209,6 +209,7 @@ export type WaitForWaitpointHook = (waitpointId: string) => void;
 
 export type RunContext = {
   id: FlowRunId;
+  canPause: boolean;
   stop: StopHook;
   /** @deprecated Use createWaitpoint + waitForWaitpoint instead */
   pause?: PauseHook;
@@ -282,7 +283,19 @@ export interface FilesService {
     fileName: string;
     data: Buffer | Readable;
   }): Promise<string>;
+  upload({
+    fileName,
+    data,
+  }: {
+    fileName: string;
+    data: Buffer | Readable;
+  }): Promise<UploadedFile>;
 }
+
+export type UploadedFile = {
+  id: string;
+  url: string;
+};
 
 export interface ConnectionsManager {
   get(
