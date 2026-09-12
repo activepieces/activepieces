@@ -13,6 +13,7 @@ import { agentsModule } from './agents/agents-module'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { aiToolConfigModule } from './ai/ai-tool-config.module'
+import { aiUsageHooks } from './ai/ai-usage-hooks'
 import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -27,6 +28,7 @@ import { rateLimitModule } from './core/security/rate-limit'
 import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
 import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
 import { distributedLock, redisConnections } from './database/redis-connections'
+import { agentConversationCreditsHooks } from './ee/agent/agent-conversation-credits'
 import { agentEvalModule } from './ee/agent/agent-eval-controller'
 import { agentHelpers } from './ee/agent/agent-helpers'
 import { assertAgentsResolveInProject } from './ee/agent/agent-service'
@@ -358,6 +360,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
+            aiUsageHooks.set(agentConversationCreditsHooks)
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PLATFORM, (data) => platformTeardownJobs(app.log).hardDeletePlatformHandler(data))
             break
@@ -397,6 +400,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             billingProvider.set(autumnBillingProvider)
             resumePageHooks.set((log) => ({ getTheme: (params) => appearanceHelper.getTheme({ ...params, log }) }))
             flowPublishHooks.set(() => ({ assertReferencesResolve: assertAgentsResolveInProject }))
+            aiUsageHooks.set(agentConversationCreditsHooks)
             break
         case ApEdition.COMMUNITY:
             await app.register(platformProjectModule)

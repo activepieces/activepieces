@@ -1,11 +1,14 @@
-import { AIProviderName, isNil, ActivepiecesAiBilling, ActivepiecesAiCall, ActivepiecesAiCostReporter } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiCall, ActivepiecesAiCostReporter, AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { isJSONObject, LanguageModelV4GenerateResult, LanguageModelV4StreamPart, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { LanguageModel, wrapLanguageModel } from 'ai'
 import { z } from 'zod'
 
-export function wrapActivepiecesLanguageModel({ model, provider, modelId, billing }: WrapActivepiecesLanguageModelParams): LanguageModel {
-    if (provider !== AIProviderName.ACTIVEPIECES || typeof model === 'string') {
+export function billedLanguageModel({ model, provider, modelId, billing }: BilledLanguageModelParams): LanguageModel {
+    if (isNil(billing) || typeof model === 'string') {
         return model
+    }
+    if (provider !== AIProviderName.ACTIVEPIECES) {
+        return billedAtAFlatRate({ model, provider, modelId, billing })
     }
     return wrapLanguageModel({
         model,
@@ -23,8 +26,33 @@ export function wrapActivepiecesLanguageModel({ model, provider, modelId, billin
     })
 }
 
+function billedAtAFlatRate({ model, provider, modelId, billing }: BilledAtAFlatRateParams): LanguageModel {
+    return wrapLanguageModel({
+        model,
+        middleware: {
+            wrapGenerate: async ({ doGenerate }) => {
+                const result = await doGenerate()
+                reportFlatCredits({ billing, provider, modelId, generationId: result.response?.id })
+                return result
+            },
+            wrapStream: async ({ doStream }) => {
+                const { stream, ...rest } = await doStream()
+                return { ...rest, stream: stream.pipeThrough(flatCreditObserver({ billing, provider, modelId })) }
+            },
+        },
+    })
+}
+
+export function reportFlatCredits({ billing, provider, modelId, generationId }: ReportFlatCreditsParams): void {
+    if (isNil(reporter)) {
+        unreportedCalls += 1
+        return
+    }
+    reporter({ billing, provider, modelId, call: { charge: 'flat-credits', credits: FLAT_CREDITS_PER_MODEL_CALL, ...spreadIfDefined('generationId', generationId) } })
+}
+
 export function observedEmbeddingFetch({ provider, modelId, billing, wrapped }: ObservedEmbeddingFetchParams): typeof globalThis.fetch | undefined {
-    if (provider !== AIProviderName.ACTIVEPIECES) {
+    if (provider !== AIProviderName.ACTIVEPIECES || isNil(billing)) {
         return wrapped
     }
     const send = wrapped ?? fetch
@@ -43,13 +71,32 @@ function toGeneratedCall(result: LanguageModelV4GenerateResult): ActivepiecesAiC
 
 function streamCostObserver({ billing, provider, modelId }: ObserverParams): TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart> {
     let generationId: string | undefined
+    let reported = false
     return new TransformStream({
         transform: (chunk, controller) => {
             if (chunk.type === 'response-metadata') {
                 generationId = chunk.id ?? generationId
             }
-            if (chunk.type === 'finish') {
+            if (chunk.type === 'finish' && !reported) {
+                reported = true
                 reportUsage({ billing, provider, modelId, call: toCall({ generationId, providerMetadata: chunk.providerMetadata }) })
+            }
+            controller.enqueue(chunk)
+        },
+    })
+}
+
+function flatCreditObserver({ billing, provider, modelId }: ObserverParams): TransformStream<LanguageModelV4StreamPart, LanguageModelV4StreamPart> {
+    let generationId: string | undefined
+    let reported = false
+    return new TransformStream({
+        transform: (chunk, controller) => {
+            if (chunk.type === 'response-metadata') {
+                generationId = chunk.id ?? generationId
+            }
+            if (chunk.type === 'finish' && !reported) {
+                reported = true
+                reportFlatCredits({ billing, provider, modelId, generationId })
             }
             controller.enqueue(chunk)
         },
@@ -62,6 +109,7 @@ function toCall({ generationId, providerMetadata }: { generationId: string | und
         return undefined
     }
     return {
+        charge: 'observed-cost',
         generationId,
         costUsd: usage.cost,
         ...(isNil(usage.promptTokens) ? {} : { inputTokens: usage.promptTokens }),
@@ -90,6 +138,7 @@ async function readEmbeddingCall(response: Response): Promise<ActivepiecesAiCall
         return undefined
     }
     return {
+        charge: 'observed-cost',
         generationId: body.id,
         costUsd: body.usage.cost,
         ...(isNil(body.usage.prompt_tokens) ? {} : { inputTokens: body.usage.prompt_tokens }),
@@ -103,6 +152,7 @@ function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.inf
 
 function reportUsage({ billing, provider, modelId, call }: ReportUsageParams): void {
     if (isNil(call)) {
+        unreportedCalls += 1
         return
     }
     if (isNil(reporter)) {
@@ -129,35 +179,46 @@ const EmbeddingCostResponse = z.object({
 let reporter: ActivepiecesAiCostReporter | undefined
 let unreportedCalls = 0
 
+const FLAT_CREDITS_PER_MODEL_CALL = 1
+
 export const activepiecesAiCost = {
     setReporter: (next: ActivepiecesAiCostReporter): void => {
         reporter = next
     },
-    hasReporter: (): boolean => !isNil(reporter),
-    assertReporterInstalled: (): void => {
-        if (isNil(reporter)) {
-            throw new Error('No Activepieces AI cost reporter was installed, so every call on the Activepieces AI provider would run unbilled')
-        }
-    },
     unreportedCallCount: (): number => unreportedCalls,
-    wrapActivepiecesLanguageModel,
+    billedLanguageModel,
     observedEmbeddingFetch,
+    reportFlatCredits,
 }
 
 type OpenRouterUsage = z.infer<typeof OpenRouterUsage>
 
-type WrapActivepiecesLanguageModelParams = {
+type BilledLanguageModelParams = {
     model: LanguageModel
     provider: AIProviderName
     modelId: string
-    billing: ActivepiecesAiBilling
+    billing: ActivepiecesAiBilling | undefined
 }
 
 type ObservedEmbeddingFetchParams = {
     provider: AIProviderName
     modelId: string
-    billing: ActivepiecesAiBilling
+    billing: ActivepiecesAiBilling | undefined
     wrapped: typeof globalThis.fetch | undefined
+}
+
+type BilledAtAFlatRateParams = {
+    model: Exclude<LanguageModel, string>
+    provider: AIProviderName
+    modelId: string
+    billing: ActivepiecesAiBilling
+}
+
+type ReportFlatCreditsParams = {
+    billing: ActivepiecesAiBilling
+    provider: AIProviderName
+    modelId: string
+    generationId?: string
 }
 
 type ObserverParams = {
