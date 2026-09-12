@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
+import { summarizeEngineError } from '../utils/engine-error-summary'
 import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getWebhookUrl } from '../utils/webhook-url'
 
@@ -58,6 +59,20 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                         environment: RunEnvironment.PRODUCTION,
                         streamStepProgress: StreamStepProgress.NONE,
                     })
+                }
+            }
+            else {
+                const failureFields = {
+                    flow: { id: data.flowId },
+                    flowVersion: { id: data.flowVersionId },
+                    project: { id: data.projectId },
+                    engine: { status: result.status, error: summarizeEngineError({ error: result.error }) },
+                }
+                if (result.status === EngineResponseStatus.USER_FAILURE) {
+                    ctx.log.warn(failureFields, 'Polling trigger hook failed, no flow run created')
+                }
+                else {
+                    ctx.log.error(failureFields, 'Polling trigger hook failed, no flow run created')
                 }
             }
 
