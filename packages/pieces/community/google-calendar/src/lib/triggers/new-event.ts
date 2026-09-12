@@ -80,14 +80,14 @@ export const newEvent = createTrigger({
   props: {
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     event_types: Property.StaticMultiSelectDropdown({
-      displayName: 'Event Types to Monitor',
-      description:
-        'Filter by specific event types (leave empty to monitor all event types)',
+      displayName: 'Event Types',
+      description: 'Leave empty to include every type.',
       required: false,
+      advanced: true,
       options: {
         options: [
-          { label: 'Default Events', value: 'default' },
-          { label: 'Birthday Events', value: 'birthday' },
+          { label: 'Default', value: 'default' },
+          { label: 'Birthday', value: 'birthday' },
           { label: 'Focus Time', value: 'focusTime' },
           { label: 'Out of Office', value: 'outOfOffice' },
           { label: 'Working Location', value: 'workingLocation' },
@@ -98,13 +98,15 @@ export const newEvent = createTrigger({
     search_filter: Property.ShortText({
       displayName: 'Search Filter',
       description:
-        'Only trigger for events containing this text in title, description, or location (optional)',
+        'Only events whose title, description or location contain this.',
       required: false,
+      advanced: true,
     }),
     exclude_all_day: Property.Checkbox({
       displayName: 'Exclude All-Day Events',
-      description: 'Skip triggering for all-day events',
+      description: 'Skips all-day events.',
       required: false,
+      advanced: true,
       defaultValue: false,
     }),
   },
@@ -272,7 +274,7 @@ export const newEvent = createTrigger({
       auth
     );
 
-    if (!matchesFilters(latestEvent, filters)) {
+    if (isNil(latestEvent) || !matchesFilters(latestEvent, filters)) {
       return [];
     }
 

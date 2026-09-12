@@ -8,16 +8,16 @@ import { eventOutputSchema } from '../output-schemas';
 export const createEventProps = {
   calendar_id: googleCalendarCommon.calendarDropdown('writer'),
   title: Property.ShortText({
-    displayName: 'Title of the event',
+    displayName: 'Title',
     required: true,
   }),
   start_date_time: Property.DateTime({
-    displayName: 'Start date time of the event',
+    displayName: 'Start Time',
     required: true,
   }),
   end_date_time: Property.DateTime({
-    displayName: 'End date time of the event',
-    description: "By default it'll be 30 min post start time",
+    displayName: 'End Time',
+    description: 'Defaults to 30 minutes after the start.',
     required: false,
   }),
   location: Property.ShortText({
@@ -31,48 +31,52 @@ export const createEventProps = {
   }),*/
   description: Property.LongText({
     displayName: 'Description',
-    description: 'Description of the event. You can use HTML tags here.',
+    description: 'HTML tags are allowed.',
     required: false,
   }),
   colorId: googleCalendarCommon.colorId,
   attendees: Property.Array({
     displayName: 'Attendees',
-    description: 'Emails of the attendees (guests)',
+    description: 'One guest email per item.',
     required: false,
   }),
   guests_can_modify: Property.Checkbox({
-    displayName: 'Guests can modify',
+    displayName: 'Guests Can Modify',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
   guests_can_invite_others: Property.Checkbox({
-    displayName: 'Guests can invite others',
+    displayName: 'Guests Can Invite Others',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
   guests_can_see_other_guests: Property.Checkbox({
-    displayName: 'Guests can see other guests',
+    displayName: 'Guests Can See Other Guests',
     defaultValue: false,
     required: false,
+    advanced: true,
   }),
   send_notifications: Property.StaticDropdown({
     displayName: 'Send Notifications',
+    description: 'Who gets an email invitation for the new event.',
     defaultValue: 'all',
     options: {
       options: [
-        { label: 'Yes, to everyone', value: 'all' },
+        { label: 'All guests', value: 'all' },
         {
-          label: 'To non-Google Calendar guests only',
+          label: 'External guests only',
           value: 'externalOnly',
         },
-        { label: 'To no one', value: 'none' },
+        { label: 'No one', value: 'none' },
       ],
     },
     required: true,
   }),
   create_meet_link: Property.Checkbox({
     displayName: 'Create Google Meet Link',
-    description: 'Automatically create a Google Meet video conference link for this event',
+    description: 'Adds a Google Meet link to the event.',
     defaultValue: false,
     required: false,
   }),
@@ -164,7 +168,7 @@ export const createEvent = createAction({
   auth: googleCalendarAuth,
   name: 'create_google_calendar_event',
   classification: 'WRITE',
-  description: 'Add Event',
+  description: 'Creates an event with a title, time, guests and options.',
   audience: 'human',
   aiMetadata: { description: 'Creates a Google Calendar event with structured fields (title, start/end times, location, description, attendees, color, guest permissions) and can optionally attach a Google Meet link. Use this when you have explicit event details; choose Create Quick Event instead when working from a single natural-language phrase. Requires a title and start time (end defaults to 30 minutes after start). Not idempotent: each call creates a new event.', idempotent: false },
   displayName: 'Create Event',

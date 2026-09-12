@@ -240,10 +240,9 @@ export async function getEvents(
 export async function getLatestEvent(
   calendarId: string,
   authProp: GoogleCalendarAuthValue
-): Promise<GoogleCalendarEvent> {
+): Promise<GoogleCalendarEvent | null> {
   const eventList = await getEvents(calendarId, false, authProp);
-  const lastUpdatedEvent = eventList.pop()!; // You can retrieve the last updated event.
-  return lastUpdatedEvent;
+  return eventList.length > 0 ? eventList[eventList.length - 1] : null;
 }
 
 export async function getEventsForDropdown(

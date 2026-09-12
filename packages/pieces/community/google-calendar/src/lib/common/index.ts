@@ -16,7 +16,7 @@ export const googleCalendarCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'Please connect your account first',
+            placeholder: 'Connect your Google account first',
             options: [],
           };
         }
@@ -37,6 +37,7 @@ export const googleCalendarCommon = {
   eventDropdown: (required = false) => {
     return Property.Dropdown<string,boolean,typeof googleCalendarAuth>({
       displayName: 'Event',
+      description: 'Upcoming events in the selected calendar.',
       refreshers: ['calendar_id'],
       required: required,
       auth: googleCalendarAuth,
@@ -44,14 +45,14 @@ export const googleCalendarCommon = {
         if (!auth) {
           return {
             disabled: true,
-            placeholder: 'Please connect your account first',
+            placeholder: 'Connect your Google account first',
             options: [],
           };
         }
         if (!calendar_id) {
           return {
             disabled: true,
-            placeholder: 'Please select a calendar first',
+            placeholder: 'Select a calendar first',
             options: [],
           };
         }
@@ -70,13 +71,14 @@ export const googleCalendarCommon = {
   colorId: Property.Dropdown({
     auth: googleCalendarAuth,
     displayName: 'Color',
+    description: 'Leave empty for the calendar default.',
     refreshers: [],
     required: false,
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Please connect your account first',
+          placeholder: 'Connect your Google account first',
           options: [],
         };
       }
