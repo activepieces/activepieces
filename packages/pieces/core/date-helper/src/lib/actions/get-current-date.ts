@@ -2,7 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   optionalTimeFormats,
   timeFormat,
-  timeFormatDescription,
+  outputFormatDescription,
   timeZoneOptions,
   getCorrectedFormat,
   apDayjs
@@ -26,8 +26,8 @@ export const getCurrentDate = createAction({
   },
   props: {
     timeFormat: Property.StaticDropdown({
-      displayName: 'To Time Format',
-      description: timeFormatDescription,
+      displayName: 'Output Format',
+      description: outputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -36,6 +36,7 @@ export const getCurrentDate = createAction({
     }),
     timeZone: Property.StaticDropdown<string>({
       displayName: 'Time Zone',
+      description: 'Time zone the current date and time are reported in.',
       options: {
         options: timeZoneOptions,
       },
