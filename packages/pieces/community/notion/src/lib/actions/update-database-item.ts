@@ -14,7 +14,7 @@ export const updateDatabaseItem = createAction({
   classification: 'WRITE',
   displayName: 'Update Database Item',
   description:
-    'Update specific fields in a Notion database item. Perfect for maintaining data, tracking changes, or syncing information across systems.',
+    'Change field values on an existing database item.',
   audience: 'human',
   aiMetadata: {
     description:

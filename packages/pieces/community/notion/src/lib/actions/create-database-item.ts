@@ -15,7 +15,7 @@ export const createDatabaseItem = createAction({
   classification: 'WRITE',
   displayName: 'Create Database Item',
   description:
-    'Add a new item to a Notion database with custom field values and optional content. Ideal for creating tasks, records, or entries in structured databases.',
+    'Add an item to a database and set its fields.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -27,7 +27,7 @@ export const createDatabaseItem = createAction({
     databaseFields: notionCommon.databaseFields,
     content: Property.LongText({
       displayName: 'Content',
-      description: 'The content you want to append to your item.',
+      description: "Plain text added to the item's page body.",
       required: false,
     }),
   },

@@ -19,7 +19,7 @@ export const updatedPage = createTrigger({
   classification: 'READ',
   displayName: 'Updated Page',
   description:
-    'Triggers whenever any page in your Notion workspace is modified or updated. Ideal for syncing content changes, backup processes, or notifying teams about documentation updates.',
+    'Triggers when any page shared with the integration is edited.',
   aiMetadata: {
     description:
       'Fires whenever any page shared with the integration in the Notion workspace is modified, emitting the updated page. Use to track content changes workspace-wide rather than within a single database or page.',

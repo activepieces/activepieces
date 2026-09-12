@@ -26,14 +26,13 @@ export const notionCommon = {
     auth: notionAuth,
     displayName: 'Database',
     required: true,
-    description:
-      'Choose the Notion database you want to work with from your workspace',
+    description: 'Only databases shared with your integration are listed.',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Please connect your Notion account first',
+          placeholder: 'Connect your Notion account first',
           options: [],
         };
       }
@@ -61,15 +60,21 @@ export const notionCommon = {
   database_item_id: Property.Dropdown({
     auth: notionAuth,
     displayName: 'Database Item',
-    description: 'Select the item you want to update',
+    description: 'Items in the selected database, listed by title.',
     required: true,
     refreshers: ['database_id'],
     options: async ({ auth, database_id }) => {
-      if (!auth || !database_id) {
+      if (!auth) {
         return {
           disabled: true,
-          placeholder:
-            'Please connect your Notion account first and select database',
+          placeholder: 'Connect your Notion account first',
+          options: [],
+        };
+      }
+      if (!database_id) {
+        return {
+          disabled: true,
+          placeholder: 'Select a database first',
           options: [],
         };
       }
@@ -96,16 +101,21 @@ export const notionCommon = {
   archived_database_item_id: Property.Dropdown({
     auth: notionAuth,
     displayName: 'Archived Item',
-    description:
-      'Choose which archived item to restore from the selected database',
+    description: 'Archived items in the selected database.',
     required: true,
     refreshers: ['database_id'],
     options: async ({ auth, database_id }) => {
-      if (!auth || !database_id) {
+      if (!auth) {
         return {
           disabled: true,
-          placeholder:
-            'Please connect your Notion account first and select a database',
+          placeholder: 'Connect your Notion account first',
+          options: [],
+        };
+      }
+      if (!database_id) {
+        return {
+          disabled: true,
+          placeholder: 'Select a database first',
           options: [],
         };
       }
@@ -126,7 +136,7 @@ export const notionCommon = {
           return {
             disabled: false,
             options: [],
-            placeholder: 'No archived items found in this database',
+            placeholder: 'No archived items in this database',
           };
         }
 
@@ -145,8 +155,7 @@ export const notionCommon = {
       } catch (error: any) {
         return {
           disabled: true,
-          placeholder:
-            'Error loading archived items. Please check your database permissions.',
+          placeholder: 'Could not load items. Check the integration has access.',
           options: [],
         };
       }
@@ -159,12 +168,7 @@ export const notionCommon = {
     refreshers: ['database_id'],
     props: async ({ auth, database_id }) => {
       if (!auth || !database_id) {
-        return {
-          disabled: true,
-          placeholder:
-            'Please connect your Notion account first and select database',
-          options: [],
-        };
+        return {};
       }
       const fields: DynamicPropsValue = {};
       try {
@@ -240,12 +244,7 @@ export const notionCommon = {
     refreshers: ['database_id'],
     props: async ({ auth, database_id }) => {
       if (!auth || !database_id) {
-        return {
-          disabled: true,
-          placeholder:
-            'Please connect your Notion account first and select database',
-          options: [],
-        };
+        return {};
       }
       const fields: DynamicPropsValue = {};
       try {
@@ -318,13 +317,13 @@ export const notionCommon = {
     displayName: 'Page',
     required: true,
     description:
-      'Choose the Notion page you want to work with. This list shows your 100 most recently edited pages for easy selection.',
+      'Your 100 most recently edited pages shared with the integration.',
     refreshers: [],
     options: async ({ auth }) => {
       if (!auth) {
         return {
           disabled: true,
-          placeholder: 'Please connect your Notion account first',
+          placeholder: 'Connect your Notion account first',
           options: [],
         };
       }

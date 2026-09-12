@@ -23,8 +23,7 @@ export const appendToPage = createAction({
     pageId: notionCommon.page,
     content: Property.LongText({
       displayName: 'Content',
-      description:
-        'The content you want to append. You can use markdown formatting.',
+      description: 'Markdown is rendered into Notion blocks.',
       required: true,
     }),
   },
