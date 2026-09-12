@@ -20,6 +20,7 @@ const updateStepInput = z.object({
     packageJson: z.string().optional(),
     continueOnFailure: z.boolean().optional(),
     retryOnFailure: z.boolean().optional(),
+    pieceVersion: z.string().optional(),
 })
 
 export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBaseLogger): McpToolDefinition => {
@@ -40,10 +41,11 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
             packageJson: z.string().optional().describe('For CODE steps only: package.json content as a JSON string for npm dependencies. Defaults to "{}".'),
             continueOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: set true on the step that can fail (the one whose failure you want to react to), NOT on the recovery step. The flow keeps running on failure and the step gains On success / On failure branches — add handler steps into them with ap_add_step using stepLocationRelativeToParent INSIDE_ON_SUCCESS_BRANCH / INSIDE_ON_FAILURE_BRANCH and parentStepName = this step.'),
             retryOnFailure: z.boolean().optional().describe('For CODE/PIECE steps: whether to retry this step on failure.'),
+            pieceVersion: z.string().optional().describe('For PIECE steps: change the piece version this step runs on. Pass "latest" to upgrade to the newest version, or an exact version like "1.2.3". The action schema may change between versions — inspect the new schema with ap_get_piece_props and pass any adjusted `input` in the same call to fix removed/renamed/new properties.'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
-            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, sourceCode, packageJson, continueOnFailure, retryOnFailure } = updateStepInput.parse(args)
+            const { flowId, stepName, displayName, input, auth, actionName, loopItems, skip, sourceCode, packageJson, continueOnFailure, retryOnFailure, pieceVersion } = updateStepInput.parse(args)
 
             const [flow, project] = await Promise.all([
                 flowService(log).getOnePopulated({ id: flowId, projectId: mcp.projectId }),
@@ -112,6 +114,30 @@ export const apUpdateStepTool = ({ mcp, userId }: McpToolContext, log: FastifyBa
                 updatedSettings.sourceCode = {
                     code: sourceCode ?? existingCode,
                     packageJson: packageJson ?? existingPkg,
+                }
+            }
+
+            if (pieceVersion !== undefined) {
+                if (step.type !== FlowActionType.PIECE) {
+                    return { content: [{ type: 'text', text: `❌ pieceVersion can only be set on PIECE steps, but "${stepName}" is type ${step.type}.` }] }
+                }
+                const pieceName = String(currentSettings.pieceName)
+                if (pieceVersion === 'latest') {
+                    const versionResult = await mcpUtils.resolveLatestPieceVersion({ pieceName, projectId: mcp.projectId, platformId: project.platformId, log })
+                    if (versionResult.error) {
+                        return versionResult.error
+                    }
+                    updatedSettings.pieceVersion = versionResult.pieceVersion
+                }
+                else {
+                    const cleanVersion = pieceVersion.replace(/^[~^]/, '')
+                    try {
+                        await pieceMetadataService(log).getOrThrow({ platformId: project.platformId, name: pieceName, version: cleanVersion })
+                    }
+                    catch {
+                        return { content: [{ type: 'text', text: `❌ Version "${cleanVersion}" of piece "${pieceName}" not found. Use ap_research_pieces to see available versions, or pass "latest".` }] }
+                    }
+                    updatedSettings.pieceVersion = cleanVersion
                 }
             }
 
