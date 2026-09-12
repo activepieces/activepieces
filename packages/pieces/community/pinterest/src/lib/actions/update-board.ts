@@ -1,8 +1,4 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
@@ -28,40 +24,47 @@ export const updateBoard = createAction({
     name: Property.ShortText({
       displayName: 'Board Name',
       required: false,
-      description:
-        'The new name of the board (max 180 characters). Leave empty to keep current name.',
+      description: 'Leave empty to keep the current name.',
+      placeholder: 'e.g. Summer Recipes',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description:
-        'The new description of the board (max 500 characters). Leave empty to keep current description.',
+      description: 'Leave empty to keep the current description.',
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Public', value: 'PUBLIC' },
-          { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
+          {
+            label: 'Public',
+            value: 'PUBLIC',
+            description: 'Visible to all',
+          },
+          {
+            label: 'Secret',
+            value: 'SECRET',
+            description: 'Only you',
+          },
         ],
       },
-      description:
-        'Update board privacy setting. Leave empty to keep current setting.',
+      description: 'Leave empty to keep the current setting.',
     }),
   },
   async run({ auth, propsValue }) {
     const { board_id, name, description, privacy, ad_account_id } = propsValue;
 
-    // Validation - at least one field must be provided for update
-    if (!name && description === undefined && !privacy) {
+    const trimmedName = name?.trim();
+    const trimmedDescription = description?.trim();
+
+    if (!trimmedName && !trimmedDescription && !privacy) {
       throw new Error(
         'At least one field (name, description, or privacy) must be provided to update the board.'
       );
     }
 
-    // Validation for field lengths
     if (name && name.length > 180) {
       throw new Error('Board name must be 180 characters or less');
     }
@@ -70,19 +73,17 @@ export const updateBoard = createAction({
       throw new Error('Board description must be 500 characters or less');
     }
 
-    // Build request body with only the fields being updated
     const body: any = {};
-    if (name && name.trim()) {
-      body.name = name.trim();
+    if (trimmedName) {
+      body.name = trimmedName;
     }
-    if (description !== undefined) {
-      body.description = description;
+    if (trimmedDescription) {
+      body.description = trimmedDescription;
     }
     if (privacy) {
       body.privacy = privacy;
     }
 
-    // Build path with query parameter if ad_account_id is provided
     let path = `/boards/${board_id}`;
     if (ad_account_id) {
       path = `/boards/${board_id}?ad_account_id=${encodeURIComponent(

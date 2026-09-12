@@ -102,3 +102,52 @@ export async function makeRequest(
     );
   }
 }
+
+export async function fetchAllPages({
+  accessToken,
+  path,
+  maxPages = 10,
+}: {
+  accessToken: string;
+  path: string;
+  maxPages?: number;
+}): Promise<unknown[]> {
+  const separator = path.includes('?') ? '&' : '?';
+  let items: unknown[] = [];
+  let bookmark: string | undefined = undefined;
+
+  for (let page = 0; page < maxPages; page++) {
+    const bookmarkQuery = isNonEmptyString(bookmark)
+      ? `&bookmark=${encodeURIComponent(bookmark)}`
+      : '';
+    const response: unknown = await makeRequest(
+      accessToken,
+      HttpMethod.GET,
+      `${path}${separator}page_size=250${bookmarkQuery}`
+    );
+
+    if (!isRecord(response)) {
+      break;
+    }
+
+    const pageItems = response['items'];
+    items = Array.isArray(pageItems) ? [...items, ...pageItems] : items;
+
+    const nextBookmark = response['bookmark'];
+    bookmark = isNonEmptyString(nextBookmark) ? nextBookmark : undefined;
+
+    if (!isNonEmptyString(bookmark)) {
+      break;
+    }
+  }
+
+  return items;
+}
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+export function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
