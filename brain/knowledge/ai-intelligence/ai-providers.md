@@ -103,8 +103,12 @@ renders and preserves every real price; the cheapest in the set is 0.01.
   were a static pricing ladder calibrated at about a thousand tokens per call, so a long call billed
   the same as a short one. Every language model is now built through `billedLanguageModel`
   (`packages/server/utils/src/activepieces-ai-cost.ts`): the managed provider bills the dollar cost
-  OpenRouter reports divided by `AP_AI_CREDIT_USD_VALUE`, and any other provider bills one flat credit
-  per model call. Tool calls stay at one credit each.
+  OpenRouter reports divided by `AP_AI_CREDIT_USD_VALUE`, and any other provider bills one flat credit.
+  Tool calls stay at one credit each. **The own-key credit is per model call for a direct AI step and
+  per turn for an agent** — an agent turn is many model round-trips, so charging it per call would have
+  silently raised the price of every agent on a customer's own key. The caller says which it wants with
+  `ownKeyCredit`, and the agent's turn credit is charged in `chatToolBilling.chargeForLatestTurn`
+  alongside its tool calls.
 - **OpenRouter only reports `usage.cost` when the request asks for it.** The provider sends
   `usage: this.settings.usage` in the request body and copies `cost` into `providerMetadata` only when
   the response carries one, so without `usage: { include: true }` every managed call reports no cost,
@@ -124,8 +128,8 @@ renders and preserves every real price; the cheapest in the set is 0.01.
 - **`conversation.modelName` carries either a tier id or a real model id** — it is a free string with no discriminator. A legacy tier id resolves to the tier's equivalent model when the provider ships it, else the provider's first curated model, so old conversations keep working after a provider switch. Note `premium` maps to opus 4.8, which the native anthropic list does not carry, so a legacy `premium` on anthropic lands on Sonnet.
 - Chat-provider resolution is **first `enabledForChat` row wins**, *not* "prefer ACTIVEPIECES". All three branches of `findAvailableChatProviderRow` reduce to that: when the managed provider is visible the function returns `chatProviders[0]` whatever it is, so a platform with `[openai, activepieces]` both chat-enabled resolves to **openai**. The client mirror is `aiProviderQueries.useChatProvider()` (`providers.find((p) => p.enabledForChat)`) — always read the resolved chat provider through it rather than re-deriving the rule inline. **`enabledForChat` on a deduped project entry must be an OR across that provider's keys, never the top-ranked key's flag** — ranking (`selected` > `except` > `all`, newest first) and chat selection answer different questions, so reading `rows[0].enabledForChat` makes the client report "no provider configured" whenever the chat-enabled key is not the ranking winner, while the server (`findAvailableChatProviderRow`, which queries `enabledForChat: true` directly) happily serves the turn. Invisible with one key per provider. Both sides lean on an unordered `findBy()`: there is no `ORDER BY`, so "first" is not guaranteed stable when several providers are chat-enabled.
 - Listing providers is **not a pure read**: both `listConfigs` and `listForProject` go through `listVisibleRows`, which inserts the ACTIVEPIECES provider row when `aiCreditsEnabled && !activepiecesExists`. A `GET /v1/ai-providers` can therefore create a row. It also applies the hidden-provider filter (`plan.embeddingEnabled` hides the managed provider), which is why the client can trust its output without re-checking flags.
-- **A chat turn is charged in two events, not one.** The model cost arrives per model call from the
-  billing wrapper, and the turn's tool calls are charged separately by `chatToolBilling.chargeForLatestTurn`
+- **A managed chat turn is charged in two events, not one.** The model cost arrives per model call from
+  the billing wrapper, and the turn's own-key credit and tool calls are charged by `chatToolBilling.chargeForLatestTurn`
   — which also owns the rule for which tool calls count (`mcp__*` plus a short allow-list, completed only).
   Both land on `CreditUsageSource.CHAT`, so the total is unchanged, but no single event holds a turn's
   whole cost. There is no fixed per-model price left to show a user: the model picker and the Credits FAQ
