@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Check, Copy, RefreshCcw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { Button } from '@/components/ui/button';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -38,7 +37,16 @@ const ErrorFallbackContent = ({
   componentStack?: string | null;
 }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const [copied, setCopied] = useState(false);
   const isChunkError = errorReporting.isChunkLoadError(error);
+
+  const handleCopy = () => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(buildDiagnosticsText(error, componentStack));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center p-6">
@@ -86,12 +94,19 @@ const ErrorFallbackContent = ({
           </button>
           {showDetails && (
             <div className="relative w-full text-left">
-              <CopyButton
-                textToCopy={buildDiagnosticsText(error, componentStack)}
+              <Button
                 variant="ghost"
-                withoutTooltip
-                className="absolute right-2 top-2 size-7 text-muted-foreground"
-              />
+                size="icon"
+                onClick={handleCopy}
+                className="absolute right-2 top-2 size-7 text-muted-foreground hover:text-foreground"
+                aria-label={copied ? t('Copied') : t('Copy technical details')}
+              >
+                {copied ? (
+                  <Check className="size-4 text-emerald-500" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+              </Button>
               <pre className="max-h-56 overflow-auto rounded-lg border bg-muted/40 p-4 pr-12 font-mono text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
                 {buildDiagnosticsText(error, componentStack)}
               </pre>
