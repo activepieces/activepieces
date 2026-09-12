@@ -272,6 +272,7 @@
   "Info": "Info",
   "File Input i.e a url or file passed from a previous step": "File Input i.e a url or file passed from a previous step",
   "Date Input must comply with ISO 8601 format": "Date Input must comply with ISO 8601 format",
+  "Pick a date and time": "Pick a date and time",
   "After": "After",
   "Behavior": "Behavior",
   "Changed in chat — reload": "Changed in chat — reload",

@@ -25,6 +25,7 @@ import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
 import CustomProperty from './custom-property';
 import { DateRangeProperty } from './date-range-property';
+import { DateTimeInput } from './date-time-input';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { NumberStepper } from './number-stepper';
@@ -335,6 +336,41 @@ export const selectGenericFormComponentForProperty = ({
         </AutoFormFieldWrapper>
       );
     case PropertyType.DATE_TIME:
+      return (
+        <AutoFormFieldWrapper
+          property={property}
+          inputName={inputName}
+          field={field}
+          hideLabel={hideLabel}
+          hideDescription={hideDescription}
+          propertyName={propertyName}
+          disabled={disabled}
+          allowDynamicValues={false}
+          dynamicInputModeToggled={dynamicInputModeToggled}
+        >
+          {useMentionTextInput ? (
+            <DateTimeInput
+              value={field.value}
+              onChange={field.onChange}
+              disabled={disabled}
+              placeholder={
+                'placeholder' in property ? property.placeholder : undefined
+              }
+            ></DateTimeInput>
+          ) : (
+            <SecretInput
+              ref={field.ref}
+              value={field.value}
+              onChange={field.onChange}
+              disabled={disabled}
+              placeholder={
+                'placeholder' in property ? property.placeholder : undefined
+              }
+              type="text"
+            ></SecretInput>
+          )}
+        </AutoFormFieldWrapper>
+      );
     case PropertyType.SHORT_TEXT:
     case PropertyType.LONG_TEXT:
     case PropertyType.FILE:
