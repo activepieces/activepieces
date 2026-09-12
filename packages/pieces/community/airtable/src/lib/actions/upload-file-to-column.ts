@@ -71,7 +71,8 @@ export const airtableUploadFileToColumnAction = createAction({
                 value: field.id,
               })),
           };
-        } catch {
+        } catch (e) {
+          console.debug(e);
           return {
             disabled: true,
             options: [],
