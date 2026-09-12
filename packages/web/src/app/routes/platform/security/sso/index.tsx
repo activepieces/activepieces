@@ -1,6 +1,16 @@
-import { SsoDomainVerificationStatus } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  SsoDomainVerificationStatus,
+} from '@activepieces/shared';
 import { t } from 'i18next';
-import { CheckCircle, LockIcon, MailIcon, Earth } from 'lucide-react';
+import {
+  CheckCircle,
+  LockIcon,
+  MailIcon,
+  Earth,
+  TriangleAlert,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
@@ -17,13 +27,23 @@ import {
 } from '@/components/custom/item';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ssoMutations } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import GoogleIcon from '../../../../../assets/img/custom/auth/google-icon.svg';
 
+import { SignInMethod, useSignInMethods } from './use-sign-in-methods';
+
 const SSOPage = () => {
   const { platform, refetch } = platformHooks.useCurrentPlatform();
+  const { googleEnabledButNotConfigured } = useSignInMethods();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const samlConnected = !!platform.federatedAuthProviders?.saml;
   const ssoDomainVerified =
@@ -98,16 +118,25 @@ const SSOPage = () => {
                   "Allow logins through google's single sign-on functionality.",
                 )}
               </ItemDescription>
+              {googleEnabledButNotConfigured && edition !== ApEdition.CLOUD && (
+                <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <TriangleAlert className="size-3 shrink-0" />
+                  {t(
+                    'Set AP_GOOGLE_CLIENT_ID and AP_GOOGLE_CLIENT_SECRET on your server to make Google sign-in work.',
+                  )}
+                </div>
+              )}
             </ItemContent>
             <ItemActions>
-              <Switch
+              <SignInMethodSwitch
+                method="google"
                 checked={platform.googleAuthEnabled}
                 onCheckedChange={() =>
                   toggleGoogleAuth({
                     googleAuthEnabled: !platform.googleAuthEnabled,
                   })
                 }
-                disabled={isGoogleAuthPending}
+                isPending={isGoogleAuthPending}
               />
             </ItemActions>
           </Item>
@@ -159,20 +188,55 @@ const SSOPage = () => {
               </ItemDescription>
             </ItemContent>
             <ItemActions>
-              <Switch
+              <SignInMethodSwitch
+                method="email"
                 checked={emailAuthEnabled}
                 onCheckedChange={() =>
                   toggleEmailAuthentication({
                     emailAuthEnabled: !platform.emailAuthEnabled,
                   })
                 }
-                disabled={isEmailAuthPending}
+                isPending={isEmailAuthPending}
               />
             </ItemActions>
           </Item>
         </div>
       </CenteredPage>
     </LockedFeatureGuard>
+  );
+};
+
+const SignInMethodSwitch = ({
+  method,
+  checked,
+  onCheckedChange,
+  isPending,
+}: {
+  method: SignInMethod;
+  checked: boolean;
+  onCheckedChange: () => void;
+  isPending: boolean;
+}) => {
+  const { isLastMethod } = useSignInMethods();
+  const blocked = isLastMethod(method);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>
+          <Switch
+            checked={checked}
+            onCheckedChange={onCheckedChange}
+            disabled={isPending || blocked}
+          />
+        </span>
+      </TooltipTrigger>
+      {blocked && (
+        <TooltipContent side="bottom">
+          {t('Enable another sign-in method before turning this one off.')}
+        </TooltipContent>
+      )}
+    </Tooltip>
   );
 };
 

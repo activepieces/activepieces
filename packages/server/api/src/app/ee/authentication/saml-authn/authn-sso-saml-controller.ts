@@ -110,7 +110,7 @@ const UpdateSsoDomainRequest = {
     preHandler: platformMustHaveFeatureEnabled((platform) => platform.plan.ssoEnabled),
     schema: {
         body: z.object({
-            ssoDomain: z.string().max(253).nullable(),
+            ssoDomain: z.string().max(253).regex(z.regexes.domain).nullable(),
         }),
     },
 }

@@ -1,5 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { ApEdition, ApFlagId, PrincipalType, ThirdPartyAuthnProviderEnum } from '@activepieces/shared'
+import { signInMethodUtils } from '../../authentication/sign-in-methods'
 import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { domainHelper } from '../../helper/domain-helper'
 import { system } from '../../helper/system/system'
@@ -22,7 +23,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             : request.principal.platform.id
         const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
         const edition = system.getEdition()
-        const googleAuthEnabled = !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_ID)) && !isNil(system.get(AppSystemProp.GOOGLE_CLIENT_SECRET))
+        const googleAuthEnabled = signInMethodUtils.isGoogleConfigured()
         modifiedFlags[ApFlagId.ALLOWED_EMBED_ORIGINS] = system.getList(AppSystemProp.ALLOWED_EMBED_ORIGINS)
         if (isNil(platformId)) {
             if (edition === ApEdition.CLOUD) {

@@ -7,7 +7,7 @@ import {
   UpdatePlatformRequestBody,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CheckCircle, Loader2, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
@@ -17,6 +17,7 @@ import { z } from 'zod';
 
 import { platformApi } from '@/api/platforms-api';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
+import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -38,10 +39,17 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { samlSsoApi } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
+
+import { useSignInMethods } from './use-sign-in-methods';
 
 export const ConfigureSamlDialog = ({
   platform,
@@ -90,22 +98,15 @@ const SamlWizard = ({
     connected || !domainVerified ? 'domain' : 'saml',
   );
 
-  const { mutate: disableSaml, isPending: isDisabling } = useMutation({
-    mutationFn: async () => {
-      await platformApi.update(
-        { federatedAuthProviders: { saml: null } },
-        platform.id,
-      );
-      await refetch();
-    },
-    onSuccess: () => {
-      toast.success(t('Single sign-on settings updated'), { duration: 3000 });
-      onClose();
-    },
-  });
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false);
+  const queryClient = useQueryClient();
+  const { isLastMethod } = useSignInMethods();
 
   const disableAction = connected
-    ? { onDisable: () => disableSaml(), isDisabling }
+    ? {
+        onDisable: () => setShowDisableConfirm(true),
+        blocked: isLastMethod('saml'),
+      }
     : null;
 
   return (
@@ -133,6 +134,44 @@ const SamlWizard = ({
           disableAction={disableAction}
         />
       </div>
+      <ConfirmationDeleteDialog
+        open={showDisableConfirm}
+        onOpenChange={setShowDisableConfirm}
+        title={t('Disable SAML SSO?')}
+        message={
+          platform.ssoDomain
+            ? t(
+                "Your IdP metadata and certificate will be deleted — you'll need to get them from your identity provider again to turn SSO back on. {ssoDomain} stays verified.",
+                { ssoDomain: platform.ssoDomain },
+              )
+            : t(
+                "Your IdP metadata and certificate will be deleted — you'll need to get them from your identity provider again to turn SSO back on.",
+              )
+        }
+        buttonText={t('Disable SSO')}
+        entityName={t('SAML 2.0')}
+        mutationFn={async () => {
+          await platformApi.update(
+            { federatedAuthProviders: { saml: null } },
+            platform.id,
+          );
+          await refetch();
+          await queryClient.invalidateQueries({
+            queryKey: flagsHooks.queryKey,
+          });
+        }}
+        onSuccess={() => {
+          toast.success(t('Single sign-on settings updated'), {
+            duration: 3000,
+          });
+          onClose();
+        }}
+        onError={(error) =>
+          toast.error(
+            api.extractServerErrorMessage(error, t("Couldn't disable SSO")),
+          )
+        }
+      />
     </>
   );
 };
@@ -268,7 +307,7 @@ const DomainStep = ({
       >
         <FormField
           name="ssoDomain"
-          render={({ field }) => (
+          render={({ field, fieldState, formState }) => (
             <FormItem className="grid space-y-2">
               <Label htmlFor="ssoDomain">{t('Domain')}</Label>
               <Input
@@ -282,7 +321,9 @@ const DomainStep = ({
                   'When a user enters this domain on the sign-in page, they will be redirected to your SAML identity provider.',
                 )}
               </FormDescription>
-              <FormMessage />
+              {(fieldState.isTouched || formState.submitCount > 0) && (
+                <FormMessage />
+              )}
             </FormItem>
           )}
         />
@@ -302,17 +343,7 @@ const DomainStep = ({
         )}
 
         <DialogFooter>
-          {disableAction && (
-            <Button
-              type="button"
-              variant="basic"
-              className="text-destructive"
-              loading={disableAction.isDisabling}
-              onClick={disableAction.onDisable}
-            >
-              {t('Disable')}
-            </Button>
-          )}
+          <DisableSamlButton disableAction={disableAction} />
           {isDirty ? (
             <Button
               type="submit"
@@ -387,10 +418,13 @@ const SamlStep = ({
     ApFlagId.SAML_AUTH_ACS_URL,
   );
 
+  const queryClient = useQueryClient();
+
   const { mutate, isPending } = useMutation({
     mutationFn: async (request: UpdatePlatformRequestBody) => {
       await platformApi.update(request, platform.id);
       await refetch();
+      await queryClient.invalidateQueries({ queryKey: flagsHooks.queryKey });
     },
     onSuccess: () => {
       toast.success(t('Single sign-on settings updated'), { duration: 3000 });
@@ -473,17 +507,10 @@ Activepieces
           )}
 
           <DialogFooter>
-            {disableAction && (
-              <Button
-                type="button"
-                variant="basic"
-                className="text-destructive mr-auto"
-                loading={disableAction.isDisabling}
-                onClick={disableAction.onDisable}
-              >
-                {t('Disable')}
-              </Button>
-            )}
+            <DisableSamlButton
+              disableAction={disableAction}
+              className="mr-auto"
+            />
             <Button variant="outline" type="button" onClick={onBack}>
               {t('Back')}
             </Button>
@@ -498,6 +525,40 @@ Activepieces
         </form>
       </Form>
     </>
+  );
+};
+
+const DisableSamlButton = ({
+  disableAction,
+  className,
+}: {
+  disableAction: DisableAction;
+  className?: string;
+}) => {
+  if (!disableAction) {
+    return null;
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={className}>
+          <Button
+            type="button"
+            variant="basic"
+            className="text-destructive"
+            disabled={disableAction.blocked}
+            onClick={disableAction.onDisable}
+          >
+            {t('Disable')}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      {disableAction.blocked && (
+        <TooltipContent side="bottom">
+          {t('Enable another sign-in method before turning this one off.')}
+        </TooltipContent>
+      )}
+    </Tooltip>
   );
 };
 
@@ -586,9 +647,9 @@ const VerificationRecordRow = ({
 
 const SsoDomainFormValues = z.object({
   ssoDomain: z
-    .hostname('invalidSsoDomain')
+    .string()
     .max(253, 'invalidSsoDomain')
-    .refine((v) => v.includes('.'), 'invalidSsoDomain'),
+    .regex(z.regexes.domain, 'invalidSsoDomain'),
 });
 type SsoDomainFormValues = z.infer<typeof SsoDomainFormValues>;
 
@@ -602,7 +663,7 @@ type WizardStep = 'domain' | 'saml';
 
 type DisableAction = {
   onDisable: () => void;
-  isDisabling: boolean;
+  blocked: boolean;
 } | null;
 
 type ConfigureSamlDialogProps = {
