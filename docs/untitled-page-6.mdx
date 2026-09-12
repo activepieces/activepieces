@@ -1,0 +1,34 @@
+---
+title: "Health"
+icon: "heartbeat"
+---
+
+The Health page brings together system, run, and queue health so you can determine whether a problem is coming from your infrastructure, or individual flows.
+
+## **System Health**
+
+Use System Health to check whether the app and workers running Activepieces are healthy.
+
+Activepieces checks areas such as version, release integrity, disk, RAM, and CPU and highlights anything that needs attention.
+
+It also shows Daily job health for the last 30 days, so you can see whether platform jobs have been operating consistently over time.
+
+If a system check needs attention, use the details shown for that check to determine which part of your deployment needs investigation.
+
+## **Runs Health**
+
+Use Runs Health to understand how reliably jobs are completing across your platform.
+
+You can review job volume and success rate for a selected period and distinguish between successful, failed, cancelled, and internal-error jobs.
+
+Internal errors are particularly useful when troubleshooting because they represent failures inside Activepieces, such as the engine or worker, rather than failures caused by your flow logic. Activepieces groups these errors by the projects and flows they affected so you can understand their impact.
+
+## **Queue Health**
+
+Use Queue Health to check whether jobs are moving through your execution queue normally.
+
+It shows how many jobs are currently running or queued and highlights stuck jobs.
+
+A growing queue or stuck jobs can help you identify execution problems that may require further investigation.
+
+<br />
