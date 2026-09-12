@@ -1,8 +1,8 @@
 {
   "Manage your business on Google": "Googleでビジネスを管理する",
-  "Create or Update Reply": "返信を作成または更新",
-  "Custom API Call": "カスタムAPI通話",
-  "Create or update a reply to a review if it already exists": "すでに存在する場合は、レビューに返信を作成または更新",
+  "Create or Update Reply": "レビューへの返信作成・更新",
+  "Custom API Call": "カスタムAPI呼び出し",
+  "Create or update a reply to a review if it already exists": "すでに存在する場合は、レビューへの返信作成・更新",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "Review Name": "レビュー名",
   "Comment": "コメント",
@@ -32,5 +32,5 @@
   "New Review": "新しいレビュー",
   "Triggers when there is new review": "新しいレビューがある場合にトリガー",
   "Account": "アカウント",
-  "Location": "場所"
+  "Location": "ロケーション"
 }

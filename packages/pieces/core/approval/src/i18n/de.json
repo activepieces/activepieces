@@ -4,5 +4,7 @@
   "Create Approval Links": "Links zur Genehmigung erstellen",
   "Pauses the flow and wait for the approval from the user": "Pausiert den Fluss und wartet auf die Genehmigung des Benutzers",
   "Create links only without pausing the flow, use wait for approval to pause": "Erstelle Links nur ohne den Fluss zu pausieren, benutze Wartezeit um zu pausieren",
-  "Markdown": "Markdown"
+  "Markdown": "Markdown",
+  "This piece is legacy but still supported. For a new flow, prefer the approval actions in the Approvals tab, which deliver the request and wait for the answer in one step.": "This piece is legacy but still supported. For a new flow, prefer the approval actions in the Approvals tab, which deliver the request and wait for the answer in one step.",
+  "This piece is legacy but still supported. Unlike the approval actions in the Approvals tab, it hands out a link without pausing the flow.": "This piece is legacy but still supported. Unlike the approval actions in the Approvals tab, it hands out a link without pausing the flow."
 }

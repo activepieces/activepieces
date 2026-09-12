@@ -39,7 +39,7 @@
   "Prompt to guide the AI.": "AIを導くように促します。",
   "For complex schema, you can use advanced mode.": "複雑なスキーマでは、高度なモードを使用できます。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする。",
   "Simple": "単純な",
   "Advanced": "高度な設定",
   "GET": "取得",

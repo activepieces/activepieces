@@ -117,7 +117,7 @@
   "List of BCC recipient handles.": "BCC受信者ハンドルのリスト。",
   "The subject of the draft.": "草案の件名。",
   "The body of the draft message.": "下書きメッセージの本文。",
-  "List of attachment URLs.": "添付ファイル URL の一覧です。",
+  "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.": "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.",
   "Mode of the draft reply": "下書き返信のモード",
   "The ID of the signature to use for the draft reply (if applicable).": "ドラフト返信に使用する署名の ID (該当する場合)。",
   "Whether to append the default signature to the draft reply (if applicable).": "デフォルトの署名をドラフト返信に追加するかどうか(該当する場合)。",

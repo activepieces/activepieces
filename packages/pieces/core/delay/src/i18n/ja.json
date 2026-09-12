@@ -1,7 +1,7 @@
 {
   "Use it to delay the execution of the next action": "次のアクションの実行を遅らせるために使用する",
-  "Delay For": "遅延",
-  "Delay Until": "までの遅延",
+  "Delay For": "特定の時間待機する",
+  "Delay Until": "特定の時間まで待機する",
   "Delays the execution of the next action for a given duration": "指定された期間の次のアクションの実行を遅らせます。",
   "Delays the execution of the next action until a given timestamp": "指定したタイムスタンプまで次のアクションの実行を遅らせます。",
   "Markdown": "Markdown",

@@ -117,7 +117,7 @@
   "List of BCC recipient handles.": "Lijst van BCC ontvangerhandleidingen.",
   "The subject of the draft.": "Het onderwerp van het voorstel.",
   "The body of the draft message.": "De inhoud van het ontwerpbericht.",
-  "List of attachment URLs.": "Lijst van bijlage-URL's.",
+  "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.": "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.",
   "Mode of the draft reply": "Modus van het ontwerpantwoord",
   "The ID of the signature to use for the draft reply (if applicable).": "Het ID van de handtekening die wordt gebruikt voor het conceptantwoord (indien van toepassing).",
   "Whether to append the default signature to the draft reply (if applicable).": "Of de standaard handtekening moet worden toegevoegd aan het ontwerpantwoord (indien van toepassing).",

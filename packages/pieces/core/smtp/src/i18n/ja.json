@@ -14,7 +14,7 @@
   "Send an email using a custom SMTP server.": "カスタムSMTPサーバーを使用してメールを送信します。",
   "From Email": "差出人メールアドレス",
   "Sender Name": "送信者名",
-  "To": "終了日",
+  "To": "宛先（TO）",
   "CC": "CC",
   "Reply To": "返信先",
   "BCC": "BCC",

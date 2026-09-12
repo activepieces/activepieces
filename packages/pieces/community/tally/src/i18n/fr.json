@@ -1,6 +1,6 @@
 {
-  "Receive form submissions from Tally forms": "Recevoir des soumissions de formulaires à partir de formulaires de consignation",
-  "You can obtain API key from [Settings page](https://tally.so/settings/api-keys)": "Vous pouvez obtenir la clé API depuis [la page des paramètres](https://tally.so/settings/api-keys)",
+  "Receive form submissions from Tally forms": "Recevez les soumissions de vos formulaires Tally",
+  "You can obtain API key from [Settings page](https://tally.so/settings/api-keys)": "Vous pouvez obtenir votre clé API depuis [la page des paramètres](https://tally.so/settings/api-keys)",
   "Custom API Call": "Appel d'API personnalisé",
   "Make a custom API call to a specific endpoint": "Passer un appel API personnalisé à un endpoint spécifique",
   "Method": "Méthode",
@@ -25,6 +25,6 @@
   "Form Data": "Données du formulaire",
   "Raw": "Brut",
   "New Submission": "Nouvelle soumission",
-  "Triggers when a form receives a new submission": "Déclenche lorsqu'un formulaire reçoit une nouvelle soumission",
+  "Triggers when a form receives a new submission": "Se déclenche lorsqu'un formulaire reçoit une nouvelle soumission",
   "Form": "Formulaire"
 }
