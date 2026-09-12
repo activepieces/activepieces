@@ -1,4 +1,4 @@
-import { createAction, MarkdownVariant, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createAction, DynamicPropsValue, MarkdownVariant, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { CreateRecordsRequest } from '@activepieces/pieces-framework';
 import { tablesCommon } from '../common';
@@ -9,21 +9,26 @@ export const createRecords = createAction({
   name: 'tables-create-records',
   classification: 'WRITE',
   displayName: 'Create Record(s)',
-  description: 'Insert one or more new records to a table.',
+  description: 'Insert one or more new records into a table.',
   aiMetadata: { description: 'Inserts one or more new rows into an Activepieces Table via either a per-field form built from the columns of the selected table, or a raw JSON array of objects keyed by column name that overrides the form, for when the table is chosen dynamically at runtime. Use Update Record instead to change a row that already exists. Requires a table ID, and any value whose key does not match a real column is silently dropped; not idempotent, since every call appends new records with new IDs.', idempotent: false },
   auth: PieceAuth.None(),
   props: {
     table_id: tablesCommon.table_id,
     values: Property.DynamicProperties({
       auth: PieceAuth.None(),
-      displayName: 'Records',
-      description: 'The records to create.',
+      displayName: 'Values',
+      description: 'One entry per record to insert.',
       required: true,
       refreshers: ['table_id'],
-      props: async ({ table_id }, context) => {
+      props: async ({ table_id }, context): Promise<DynamicPropsValue> => {
         const tableExternalId = table_id as unknown as string;
         if ((tableExternalId ?? '').toString().length === 0) {
-          return {};
+          return {
+            markdown: Property.MarkDown({
+              value: 'Select a table to load its fields.',
+              variant: MarkdownVariant.INFO,
+            }),
+          };
         }
         try {
           const tableId = await tablesCommon.convertTableExternalIdToId(tableExternalId, context);
@@ -36,7 +41,7 @@ export const createRecords = createAction({
           return {
             values: Property.Array({
               displayName: 'Records',
-              description: 'Add one or more records to insert',
+              description: 'Add one or more records to insert.',
               required: true,
               properties: fields,
             }),
@@ -45,7 +50,7 @@ export const createRecords = createAction({
           return {
             markdown: Property.MarkDown({
               value:
-                "Couldn't load the fields for this table. If it's selected dynamically (e.g. from a previous step), use the \"Records (Raw)\" field below to provide records as JSON.",
+                "Couldn't load the fields for this table. If the table is chosen dynamically (e.g. from a previous step), open Advanced and fill in Records as JSON.",
               variant: MarkdownVariant.INFO,
             }),
           };
@@ -53,10 +58,10 @@ export const createRecords = createAction({
       },
     }),
     records: Property.Json({
-      displayName: 'Records (Raw)',
-      description:
-        'Advanced: provide records as a JSON array of objects keyed by field name, e.g. [{"Name":"John","Age":30}]. Use this when the table is selected dynamically (its columns are unknown at build time). When set, this overrides the Records form above.',
+      displayName: 'Records as JSON',
+      description: 'Array of objects keyed by field name. Overrides the form above.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: createRecordsActionOutputSchema,
