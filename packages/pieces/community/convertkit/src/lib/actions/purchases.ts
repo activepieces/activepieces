@@ -28,7 +28,7 @@ import { subscriberId } from '../common/subscribers';
 import { formId } from '../common/forms';
 import { sequenceId } from '../common/sequences';
 import { PURCHASES_API_ENDPOINT } from '../common/constants';
-import { fetchPurchases } from '../common/service';
+import { buildQueryParams, fetchPurchases } from '../common/service';
 
 export const listPurchases = createAction({
   auth: convertkitAuth,
@@ -68,14 +68,10 @@ export const getPurchaseById = createAction({
     const { purchaseId } = context.propsValue;
     const url = `${PURCHASES_API_ENDPOINT}/${purchaseId}`;
 
-    const body = {
-      api_secret: context.auth.secret_text,
-    };
-
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
-      body,
+      queryParams: buildQueryParams(context.auth.secret_text),
     };
 
     const response = await httpClient.sendRequest<{
@@ -274,15 +270,12 @@ export const listPurchasesForSubscriber = createAction({
     const { subscriberId } = context.propsValue;
     const url = PURCHASES_API_ENDPOINT;
 
-    const body = {
-      api_secret: context.auth.secret_text,
-      subscriber_id: subscriberId,
-    };
-
     const request: HttpRequest = {
       url,
       method: HttpMethod.GET,
-      body,
+      queryParams: buildQueryParams(context.auth.secret_text, {
+        subscriber_id: subscriberId,
+      }),
     };
 
     const response = await httpClient.sendRequest<{
