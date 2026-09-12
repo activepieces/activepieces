@@ -1,4 +1,3 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import React, { forwardRef, useState } from 'react';
@@ -33,18 +32,29 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
   ) => {
     const [isCopied, setIsCopied] = useState(false);
 
-    const { mutate: copyToClipboard } = useMutation({
-      mutationFn: async () => {
-        await navigator.clipboard.writeText(textToCopy);
+    const copyToClipboard = async () => {
+      try {
+        if (navigator?.clipboard?.writeText) {
+          await navigator.clipboard.writeText(textToCopy);
+        } else {
+          const textArea = document.createElement('textarea');
+          textArea.value = textToCopy;
+          textArea.style.position = 'fixed';
+          textArea.style.opacity = '0';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+        }
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 3000);
-      },
-      onError: () => {
+      } catch {
         toast.error(t('Failed to copy to clipboard'), {
           duration: 3000,
         });
-      },
-    });
+      }
+    };
 
     const content = (
       <>
