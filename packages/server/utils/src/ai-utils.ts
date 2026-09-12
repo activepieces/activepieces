@@ -8,7 +8,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel, ToolSet } from 'ai'
-import { billedLanguageModel } from './activepieces-ai-cost'
+import { billedLanguageModel, OwnKeyCredit } from './activepieces-ai-cost'
 
 const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
@@ -126,7 +126,7 @@ function openRouterWebSearchResults(options?: WebSearchOptions): number {
     )
 }
 
-function createModel({ provider, auth, config, modelId, metadata, flowStep, billing, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, onOutcome }: {
+function createModel({ provider, auth, config, modelId, metadata, flowStep, billing, ownKeyCredit, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
@@ -134,13 +134,14 @@ function createModel({ provider, auth, config, modelId, metadata, flowStep, bill
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
     billing?: ActivepiecesAiBilling
+    ownKeyCredit?: OwnKeyCredit
     openaiResponsesModel?: boolean
     webSearchEnabled?: boolean
     webSearchOptions?: WebSearchOptions
     onOutcome?: ProviderOutcomeReporter
 }): LanguageModel {
     const model = buildModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome })
-    return billedLanguageModel({ model, provider, modelId, billing })
+    return billedLanguageModel({ model, provider, modelId, billing, ...spreadIfDefined('ownKeyCredit', ownKeyCredit) })
 }
 
 function buildModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome }: {

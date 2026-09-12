@@ -1,4 +1,4 @@
-import { isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { AgentConversation, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
@@ -45,18 +45,20 @@ async function chargeForLatestTurn({ conversation, runId, log }: ChargeForLatest
     const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null })
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
 
-    const charge = billableToolCalls === 0 ? undefined : {
+    const turnCredits = provider === AIProviderName.ACTIVEPIECES ? 0 : CREDITS_PER_OWN_KEY_TURN
+    const creditValue = turnCredits + billableToolCalls * CHAT_CREDITS_PER_TOOL_CALL
+    const charge = creditValue === 0 ? undefined : {
         platformId: conversation.platformId,
-        value: billableToolCalls * CHAT_CREDITS_PER_TOOL_CALL,
+        value: creditValue,
         source: CreditUsageSource.CHAT,
-        idempotencyKey: `${conversation.id}:chatTools:${idempotencyScope}`,
+        idempotencyKey: `${conversation.id}:chatTurn:${idempotencyScope}`,
         properties: {
             platformId: conversation.platformId,
             projectId: conversation.projectId ?? PROJECTLESS_CHAT,
             userId: conversation.userId,
             conversationId: conversation.id,
             turnIndex,
-            messages: MESSAGES_A_TOOL_CALL_CHARGE_COVERS,
+            messages: turnCredits,
             toolCalls: billableToolCalls,
             provider,
             model,
@@ -65,7 +67,7 @@ async function chargeForLatestTurn({ conversation, runId, log }: ChargeForLatest
     }
     const appSumoCharge = isNil(charge) || !isAppSumoCreditedPlan(platformPlan.plan) ? undefined : {
         ...charge,
-        idempotencyKey: `${conversation.id}:appSumoChatTools:${idempotencyScope}`,
+        idempotencyKey: `${conversation.id}:appSumoChatTurn:${idempotencyScope}`,
         properties: {
             platformId: conversation.platformId,
             projectId: conversation.projectId ?? PROJECTLESS_CHAT,
@@ -98,7 +100,7 @@ export const chatToolBilling = {
 }
 
 const PROJECTLESS_CHAT = 'chat'
-const MESSAGES_A_TOOL_CALL_CHARGE_COVERS = 0
+const CREDITS_PER_OWN_KEY_TURN = 1
 
 type ChargeForLatestTurnParams = {
     conversation: AgentConversation

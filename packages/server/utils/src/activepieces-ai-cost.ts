@@ -3,12 +3,12 @@ import { isJSONObject, LanguageModelV4GenerateResult, LanguageModelV4StreamPart,
 import { LanguageModel, wrapLanguageModel } from 'ai'
 import { z } from 'zod'
 
-export function billedLanguageModel({ model, provider, modelId, billing }: BilledLanguageModelParams): LanguageModel {
+export function billedLanguageModel({ model, provider, modelId, billing, ownKeyCredit = 'per-call' }: BilledLanguageModelParams): LanguageModel {
     if (isNil(billing) || typeof model === 'string') {
         return model
     }
     if (provider !== AIProviderName.ACTIVEPIECES) {
-        return billedAtAFlatRate({ model, provider, modelId, billing })
+        return ownKeyCredit === 'per-call' ? billedAtAFlatRate({ model, provider, modelId, billing }) : model
     }
     return wrapLanguageModel({
         model,
@@ -198,7 +198,10 @@ type BilledLanguageModelParams = {
     provider: AIProviderName
     modelId: string
     billing: ActivepiecesAiBilling | undefined
+    ownKeyCredit?: OwnKeyCredit
 }
+
+export type OwnKeyCredit = 'per-call' | 'charged-with-the-turn'
 
 type ObservedEmbeddingFetchParams = {
     provider: AIProviderName
