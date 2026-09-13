@@ -4343,7 +4343,7 @@
     },
     "packages/pieces/community/hubspot": {
       "name": "@activepieces/piece-hubspot",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10971,6 +10971,7 @@
         "dotenv": "16.4.7",
         "env-var": "7.5.0",
         "nanoid": "3.3.18",
+        "p-limit": "2.3.0",
         "proxy-chain": "2.7.1",
         "socket.io": "4.7.5",
         "socket.io-client": "4.8.1",
