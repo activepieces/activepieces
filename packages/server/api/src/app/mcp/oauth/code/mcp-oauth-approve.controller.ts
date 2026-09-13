@@ -4,6 +4,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
+import { userIdentityHelper } from '../../../helper/user-identity-helper'
 import { mcpAccess } from '../../mcp-access'
 import { mcpOAuthCodeService } from './mcp-oauth-code.service'
 
@@ -17,6 +18,9 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
         const mcpAccessibleProjects = await mcpAccess.listMcpAccessibleProjects({ platformId, userId, log: req.log })
 
         if (isNil(projectId)) {
+            if (await userIdentityHelper(req.log).isUserEmbedded(userId)) {
+                return reply.status(403).send({ error: 'access_denied', error_description: 'Embedded users must authorize MCP for a specific project' })
+            }
             if (mcpAccessibleProjects.length === 0) {
                 return reply.status(403).send({ error: 'access_denied', error_description: 'You do not have MCP access in any project' })
             }

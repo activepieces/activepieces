@@ -1,7 +1,8 @@
 import { Permission } from '@activepieces/core-utils'
-import { ApEdition, Project } from '@activepieces/shared'
+import { ApEdition, DefaultProjectRole, Project } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
+import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
@@ -15,16 +16,27 @@ async function listMcpAccessibleProjects({ platformId, userId, log }: {
     const isPrivileged = userService(log).isUserPrivileged(user)
     const projects = await projectService(log).getAllForUser({ platformId, userId, isPrivileged })
 
-    if (!editionRequiresRbac() || isPrivileged) {
+    if (!editionRequiresRbac() || isPrivileged || projects.length === 0) {
         return projects
     }
 
-    const projectIdsGrantingMcp = new Set(await projectMemberService(log).listProjectIdsWithPermission({
-        userId,
-        platformId,
-        permission: Permission.READ_MCP,
-    }))
-    return projects.filter((project) => project.ownerId === userId || projectIdsGrantingMcp.has(project.id))
+    const [ownedProjectRoleGrantsMcp, projectIdsGrantingMcp] = await Promise.all([
+        defaultRoleGrantsMcp({ platformId, roleName: DefaultProjectRole.ADMIN }),
+        projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_MCP }),
+    ])
+
+    const memberProjectIdsGrantingMcp = new Set(projectIdsGrantingMcp)
+    return projects.filter((project) => project.ownerId === userId
+        ? ownedProjectRoleGrantsMcp
+        : memberProjectIdsGrantingMcp.has(project.id))
+}
+
+async function defaultRoleGrantsMcp({ platformId, roleName }: {
+    platformId: string
+    roleName: DefaultProjectRole
+}): Promise<boolean> {
+    const role = await projectRoleService.getOne({ name: roleName, platformId })
+    return role?.permissions?.includes(Permission.READ_MCP) ?? false
 }
 
 function editionRequiresRbac(): boolean {

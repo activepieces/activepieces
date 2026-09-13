@@ -51,7 +51,23 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
 
         const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
 
-        expect(projects.map(p => p.id)).not.toContain(ctx.project.id)
+        expect(projects).toHaveLength(0)
+    })
+
+    it('grants no MCP reach to a member without a personal project, as when autoCreatePersonalProjects is off', async () => {
+        const ctx = await createTestContext(app, { platform: { autoCreatePersonalProjects: false } })
+        const roleWithoutMcp = createMockProjectRole({
+            platformId: ctx.platform.id,
+            name: `no-mcp-${apId()}`,
+            permissions: [Permission.READ_FLOW, Permission.WRITE_FLOW],
+            type: RoleType.CUSTOM,
+        })
+        await db.save('project_role', roleWithoutMcp)
+        const member = await createMemberContext(app, ctx, { projectRole: roleWithoutMcp.name })
+
+        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
+
+        expect(projects).toHaveLength(0)
     })
 
     it('returns nothing for a member who has no project at all', async () => {
