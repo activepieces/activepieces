@@ -36,16 +36,24 @@ export const getImportProcess = createAction({
 		return {
 			id: process.id ?? process_id,
 			status: process.status,
-			finished: process.status === 'completed' || process.status === 'failed',
+			finished: isTerminalStatus(process.status),
 			name: process.name,
 			export_url: process.export_url,
+			info: process.info,
 		};
 	},
 });
+
+function isTerminalStatus(status: string | undefined): boolean {
+	return status !== undefined && TERMINAL_PROCESS_STATUSES.includes(status);
+}
+
+const TERMINAL_PROCESS_STATUSES: readonly string[] = ['completed', 'failed', 'cancelled'];
 
 type ProcessResponse = {
 	id?: number;
 	status?: string;
 	name?: string;
 	export_url?: string;
+	info?: { import?: Record<string, string | null> };
 };

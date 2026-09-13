@@ -82,8 +82,14 @@ export const createContact = createAction({
 			return { created: true, id: created?.id, email };
 		} catch (error) {
 			if (error instanceof HttpError && error.response.status === 400) {
+				const detail = brevoCommon.errorDetail(error.response.body);
+				if (detail.code === 'duplicate_parameter') {
+					throw new Error(
+						`Brevo rejected the contact "${email}". A contact with this email or external id already exists — use Update Contact to change it.`,
+					);
+				}
 				throw new Error(
-					`Brevo rejected the contact "${email}". A contact with this email or external id already exists — use Update Contact to change it.`,
+					`Brevo rejected the contact "${email}": ${detail.message ?? 'bad request'}.`,
 				);
 			}
 			throw error;
