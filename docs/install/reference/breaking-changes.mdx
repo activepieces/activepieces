@@ -8,23 +8,13 @@ icon: "hammer"
 
 ### What has changed?
 
-#### The legacy product-embed connection-key and app-credential endpoints are removed
+#### Airtable's Find Record returns up to 1000 matches and the Record picker lists up to 500 records
 
-The original product-embed flow is gone. It let a host application store per-project OAuth client credentials and a public key, then mint an app connection by presenting a token signed with the matching private key. These endpoints are removed:
-
-- `GET`, `POST` and `DELETE` `/v1/connection-keys/app-connections`
-- `GET`, `POST` and `DELETE` `/v1/connection-keys`
-- `GET`, `POST` and `DELETE` `/v1/app-credentials`
-
-They were registered on the Cloud edition only, so a self-hosted installation never served them, on either Community or Enterprise. The user interface that drove them was removed several releases ago and no SDK or documented flow referenced them. They now return `404`.
-
-The current embedding stack is unaffected: signing keys, managed authentication, JWT user provisioning and the embed SDK are a separate feature and continue to work unchanged.
+Find Record used to return only the first page Airtable sent back, 100 records, and silently dropped the rest. It now follows Airtable's paging and returns up to 1000 matching records. The Record dropdown on Get Record by ID listed the first 50 records of a table; it now lists up to 500.
 
 #### What you need to do
 
-Nothing for a self-hosted installation, and no environment variable or migration. The `app_credential` and `connection_key` tables are left in place by this release and are simply no longer read; a later release drops them.
-
-If you call one of the endpoints above against Activepieces Cloud, move to the current embedding flow, which provisions users and connections through a platform signing key. See [Embedding](/embedding/overview).
+Nothing to configure or migrate. Review flows that loop over Find Record's output or count its rows: a search that matched more than 100 records now returns more rows than before, and each extra page is one more request against Airtable's limit of 5 requests per second per base.
 
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
@@ -206,16 +196,6 @@ The region on these connections is also validated against the AWS region format 
 #### What you need to do
 
 Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it. Existing saved connections keep working and are not revalidated automatically — pressing **Recheck** on a connection whose trust policy is wrong will now move it to an error state, which reflects what already happens when a flow runs.
-
-#### Kimai connections now authenticate with an API token instead of a username and API password
-
-Kimai is deprecating its legacy `X-AUTH-USER` / `X-AUTH-TOKEN` authentication (API passwords), with removal planned no later than July 2026 — see [Kimai's announcement](https://www.kimai.org/en/blog/2026/removing-api-passwords). The Kimai piece's connection now sends `Authorization: Bearer <token>` instead, matching Kimai's current API. This also fixes the Activity dropdown on the Create Timesheet action, which ignored the selected project because it tried to filter on a GET request body that the piece's HTTP client cannot send.
-
-The connection's `Username` and `API Password` fields are removed and replaced with a single `API Token` field.
-
-#### What you need to do
-
-Only if you have an existing Kimai connection. Reconnect it: in your Kimai instance, generate an API token from your user profile's "API Access" page, then re-enter your Kimai connection in Activepieces with the Server URL and that token. Existing connections using the old username/API-password fields will fail to authenticate until reconnected.
 
 ## 0.91.0
 
