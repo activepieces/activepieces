@@ -12,6 +12,7 @@ import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-too
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AIModelSelector, AgentStructuredOutput } from '@/features/agents';
+import { useAgentsAvailable } from '@/features/agents/hooks/agents-hooks';
 
 import {
   selectGenericFormComponentForProperty,
@@ -34,6 +35,7 @@ export const AgentSettings = (props: AgentSettingsProps) => {
     updatePropertySettingsSchema,
   } = useStepSettingsContext();
   const form = useFormContext();
+  const agentsAvailable = useAgentsAvailable();
 
   if (isNil(pieceModel) && pieceModelNotFound) {
     return (
@@ -72,18 +74,20 @@ export const AgentSettings = (props: AgentSettingsProps) => {
     AgentPieceProps.AI_PROVIDER_MODEL,
     AgentPieceProps.MAX_STEPS,
   ];
+  const linkIsInEffect = !isNil(linkedAgentId) && agentsAvailable;
   const properties = omit(selectedAction.props, [
     'auth',
     AgentPieceProps.AGENT_ID,
-    ...(isNil(linkedAgentId) ? [] : comesFromTheAgent),
+    ...(linkIsInEffect ? comesFromTheAgent : []),
   ]);
-  const versionCanStoreALink =
-    AgentPieceProps.AGENT_ID in selectedAction.props || !isNil(linkedAgentId);
+  const showAgentPicker =
+    agentsAvailable &&
+    (AgentPieceProps.AGENT_ID in selectedAction.props || !isNil(linkedAgentId));
 
   return (
     <div className="w-full">
       <div className="flex flex-col gap-4 w-full">
-        {versionCanStoreALink && <AgentLink disabled={props.readonly} />}
+        {showAgentPicker && <AgentLink disabled={props.readonly} />}
         {Object.keys(properties).map((propertyName) => {
           return (
             <FormField
