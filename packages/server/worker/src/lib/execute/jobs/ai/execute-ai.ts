@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
+import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
 import { extractStructuredData } from './extract-structured-data'
@@ -53,13 +53,20 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
         provider: data.provider,
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
+    switch (data.action) {
+        case AiStepAction.EXTRACT_STRUCTURED_DATA:
+            return { answer: await extractStructuredData({ data, resolved }) }
+        case AiStepAction.GENERATE_IMAGE:
+            return { answer: await generateImageStep({ ctx, data, resolved }) }
+        case AiStepAction.ASK_AI:
+        case AiStepAction.SUMMARIZE_TEXT:
+        case AiStepAction.CLASSIFY_TEXT:
+            return runTextStep({ data, resolved })
+    }
+}
+
+async function runTextStep({ data, resolved }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse }): Promise<unknown> {
     const { provider, auth, config } = resolved
-    if (data.action === AiStepAction.EXTRACT_STRUCTURED_DATA) {
-        return { answer: await extractStructuredData({ data, resolved }) }
-    }
-    if (data.action === AiStepAction.GENERATE_IMAGE) {
-        return { answer: await generateImageStep({ ctx, data, resolved }) }
-    }
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: data.modelId })
