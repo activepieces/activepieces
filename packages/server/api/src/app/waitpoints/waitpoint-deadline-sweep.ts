@@ -2,9 +2,10 @@ import { chunk, isNil } from '@activepieces/core-utils'
 import { FlowRunStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
+import { In, LessThanOrEqual } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { systemJobIds, SystemJobName } from '../helper/system-jobs/common'
+import { distributedStore } from '../database/redis-connections'
+import { systemJobIds } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
 import { waitpointTimeoutJob } from './waitpoint-timeout-job'
@@ -12,8 +13,12 @@ import { Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
-export async function sweepOverdueDeadlines({ log, pageSize }: SweepOverdueDeadlinesParams): Promise<string[]> {
-    const sweep = await runSweepPages({ log, pageSize: pageSize ?? SCAN_PAGE_SIZE })
+export async function sweepOverdueDeadlines({ log, pageSize, maxPages }: SweepOverdueDeadlinesParams): Promise<string[]> {
+    const sweep = await runSweepPages({
+        log,
+        pageSize: pageSize ?? SCAN_PAGE_SIZE,
+        maxPages: maxPages ?? MAX_SCAN_PAGES_PER_TICK,
+    })
 
     if (sweep.armed.length > 0) {
         log.info({ armedCount: sweep.armed.length, scannedCount: sweep.scannedCount }, '[sweepOverdueDeadlines] Re-armed overdue waitpoint deadlines')
@@ -25,43 +30,74 @@ export async function sweepOverdueDeadlines({ log, pageSize }: SweepOverdueDeadl
             sample: sweep.deadLettered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((waitpoint) => waitpoint.id),
         }, '[sweepOverdueDeadlines] Deadlines exhausted their attempts and leave the scan for good rather than spending its budget every tick; their runs stay paused until someone intervenes')
     }
-    if (sweep.armed.length >= MAX_ARMED_PER_TICK) {
-        log.warn({ armedCount: sweep.armed.length, scannedCount: sweep.scannedCount }, '[sweepOverdueDeadlines] Hit the per-tick arm quota; the oldest deadlines went first and the rest follow next tick')
-    }
-    if (sweep.exhaustedPageBudget) {
-        log.warn({ scannedCount: sweep.scannedCount, armedCount: sweep.armed.length }, '[sweepOverdueDeadlines] Spent the per-tick scan budget without reaching the end of the overdue backlog; deadlines already armed elsewhere are holding the window and the remainder waits for the next tick')
+    if (!isNil(sweep.resumeFrom)) {
+        log.warn({
+            stopReason: sweep.stopReason,
+            scannedCount: sweep.scannedCount,
+            armedCount: sweep.armed.length,
+            resumeFrom: sweep.resumeFrom,
+        }, '[sweepOverdueDeadlines] Spent the per-tick budget without reaching the end of the overdue backlog; the next tick carries on from where this one stopped rather than re-reading the rows it already classified')
     }
     return sweep.armed
 }
 
-async function runSweepPages({ log, pageSize }: RunSweepPagesParams): Promise<SweepOutcome> {
-    const now = dayjs().toISOString()
+async function runSweepPages({ log, pageSize, maxPages }: RunSweepPagesParams): Promise<SweepOutcome> {
+    const scanStartedAt = await readDatabaseTime()
     const armed: string[] = []
     const deadLettered: Waitpoint[] = []
     let scannedCount = 0
-    let cursor: DeadlineCursor | undefined = undefined
+    let cursor = await readStoredCursor()
 
-    for (let page = 0; page < MAX_SCAN_PAGES_PER_TICK; page++) {
-        const overdue = await findOverdueWaitpoints({ now, cursor, pageSize })
+    for (let page = 0; page < maxPages; page++) {
+        const overdue = await findOverdueWaitpoints({ now: scanStartedAt, cursor, pageSize })
         if (overdue.length === 0) {
-            return { armed, deadLettered, scannedCount, exhaustedPageBudget: false }
+            return finishSweep({ armed, deadLettered, scannedCount, resumeFrom: undefined, stopReason: 'drained' })
         }
         scannedCount += overdue.length
-        cursor = toCursor(overdue[overdue.length - 1])
 
         const probes = await probeDeadlineJobs({ overdue, log })
         const pageDeadLettered = probes.filter((probe) => probe.state === 'dead-lettered').map((probe) => probe.waitpoint)
-        await stampDeadLettered({ deadLettered: pageDeadLettered })
+        await stampDeadLettered({ deadLettered: pageDeadLettered, scanStartedAt })
         deadLettered.push(...pageDeadLettered)
 
         const unarmed = probes.filter((probe) => probe.state === 'unarmed').map((probe) => probe.waitpoint)
-        armed.push(...await armDeadlines({ unarmed, remainingQuota: MAX_ARMED_PER_TICK - armed.length, log }))
+        const arming = await armDeadlines({ unarmed, remainingQuota: MAX_ARMED_PER_TICK - armed.length, log })
+        armed.push(...arming.armed)
 
-        if (armed.length >= MAX_ARMED_PER_TICK || overdue.length < pageSize) {
-            return { armed, deadLettered, scannedCount, exhaustedPageBudget: false }
+        if (arming.quotaExhausted) {
+            const resumeFrom = isNil(arming.lastHandled) ? cursor : toCursor(arming.lastHandled)
+            return finishSweep({ armed, deadLettered, scannedCount, resumeFrom, stopReason: 'arm-quota' })
+        }
+
+        cursor = toCursor(overdue[overdue.length - 1])
+        if (overdue.length < pageSize) {
+            return finishSweep({ armed, deadLettered, scannedCount, resumeFrom: undefined, stopReason: 'drained' })
         }
     }
-    return { armed, deadLettered, scannedCount, exhaustedPageBudget: true }
+    return finishSweep({ armed, deadLettered, scannedCount, resumeFrom: cursor, stopReason: 'page-budget' })
+}
+
+async function finishSweep({ armed, deadLettered, scannedCount, resumeFrom, stopReason }: SweepOutcome): Promise<SweepOutcome> {
+    await rememberCursor(resumeFrom)
+    return { armed, deadLettered, scannedCount, resumeFrom, stopReason }
+}
+
+async function readStoredCursor(): Promise<DeadlineCursor | undefined> {
+    const stored = await distributedStore.get<DeadlineCursor>(DEADLINE_SWEEP_CURSOR_KEY)
+    return stored ?? undefined
+}
+
+async function rememberCursor(cursor: DeadlineCursor | undefined): Promise<void> {
+    if (isNil(cursor)) {
+        await distributedStore.delete(DEADLINE_SWEEP_CURSOR_KEY)
+        return
+    }
+    await distributedStore.put(DEADLINE_SWEEP_CURSOR_KEY, cursor, DEADLINE_SWEEP_CURSOR_TTL_SECONDS)
+}
+
+async function readDatabaseTime(): Promise<string> {
+    const rows = await waitpointRepo().query<{ now: Date }[]>('SELECT now() AS now')
+    return dayjs(rows[0].now).toISOString()
 }
 
 function toCursor(waitpoint: Waitpoint): DeadlineCursor | undefined {
@@ -98,30 +134,32 @@ async function probeDeadlineJobs({ overdue, log }: ProbeDeadlineJobsParams): Pro
 }
 
 async function probeDeadlineJob({ waitpoint, log }: ProbeDeadlineJobParams): Promise<DeadlineProbe> {
-    const existingJob = await systemJobsSchedule(log).getJob<SystemJobName.RESUME_DELAY_WAITPOINT>(systemJobIds.resumeDelay({ waitpointId: waitpoint.id }))
-    if (isNil(existingJob)) {
+    const jobState = await systemJobsSchedule(log).getJobState(systemJobIds.resumeDelay({ waitpointId: waitpoint.id }))
+    if (jobState === 'unknown') {
         return { waitpoint, state: 'unarmed' }
     }
-    return { waitpoint, state: await existingJob.isFailed() ? 'dead-lettered' : 'armed' }
+    return { waitpoint, state: jobState === 'failed' ? 'dead-lettered' : 'armed' }
 }
 
-async function stampDeadLettered({ deadLettered }: StampDeadLetteredParams): Promise<void> {
+async function stampDeadLettered({ deadLettered, scanStartedAt }: StampDeadLetteredParams): Promise<void> {
     const stampedAt = dayjs().toISOString()
     const idsByProject = deadLettered.reduce<Record<string, string[]>>((grouped, waitpoint) => ({
         ...grouped,
         [waitpoint.projectId]: [...grouped[waitpoint.projectId] ?? [], waitpoint.id],
     }), {})
     await Promise.all(Object.entries(idsByProject).map(([projectId, ids]) =>
-        waitpointRepo().update({ id: In(ids), projectId }, { deadLetteredAt: stampedAt }),
+        waitpointRepo().update({ id: In(ids), projectId, updated: LessThanOrEqual(scanStartedAt) }, { deadLetteredAt: stampedAt }),
     ))
 }
 
-async function armDeadlines({ unarmed, remainingQuota, log }: ArmDeadlinesParams): Promise<string[]> {
+async function armDeadlines({ unarmed, remainingQuota, log }: ArmDeadlinesParams): Promise<ArmOutcome> {
     const armed: string[] = []
+    let lastHandled: Waitpoint | undefined = undefined
     for (const waitpoint of unarmed) {
         if (armed.length >= remainingQuota) {
-            break
+            return { armed, quotaExhausted: true, lastHandled }
         }
+        lastHandled = waitpoint
         if (isNil(waitpoint.resumeDateTime)) {
             continue
         }
@@ -136,7 +174,7 @@ async function armDeadlines({ unarmed, remainingQuota, log }: ArmDeadlinesParams
             armed.push(waitpoint.id)
         }
     }
-    return armed
+    return { armed, quotaExhausted: false, lastHandled }
 }
 
 const SCAN_PAGE_SIZE = 500
@@ -144,22 +182,28 @@ const MAX_SCAN_PAGES_PER_TICK = 8
 const MAX_ARMED_PER_TICK = 500
 const DEADLINE_PROBE_CHUNK_SIZE = 50
 const DEAD_LETTER_SAMPLE_SIZE = 10
+const DEADLINE_SWEEP_CURSOR_TTL_SECONDS = 600
+
+export const DEADLINE_SWEEP_CURSOR_KEY = 'waitpoint:deadline-sweep:cursor'
 
 type SweepOverdueDeadlinesParams = {
     log: FastifyBaseLogger
     pageSize?: number
+    maxPages?: number
 }
 
 type RunSweepPagesParams = {
     log: FastifyBaseLogger
     pageSize: number
+    maxPages: number
 }
 
 type SweepOutcome = {
     armed: string[]
     deadLettered: Waitpoint[]
     scannedCount: number
-    exhaustedPageBudget: boolean
+    resumeFrom: DeadlineCursor | undefined
+    stopReason: 'drained' | 'arm-quota' | 'page-budget'
 }
 
 type DeadlineCursor = {
@@ -190,10 +234,17 @@ type ProbeDeadlineJobParams = {
 
 type StampDeadLetteredParams = {
     deadLettered: Waitpoint[]
+    scanStartedAt: string
 }
 
 type ArmDeadlinesParams = {
     unarmed: Waitpoint[]
     remainingQuota: number
     log: FastifyBaseLogger
+}
+
+type ArmOutcome = {
+    armed: string[]
+    quotaExhausted: boolean
+    lastHandled: Waitpoint | undefined
 }
