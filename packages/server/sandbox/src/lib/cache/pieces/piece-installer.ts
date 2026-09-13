@@ -1,6 +1,6 @@
-import { rm, writeFile } from 'node:fs/promises'
+import { readFile, rm, stat, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { ensureTrailingSlash, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ensureTrailingSlash, ErrorCode, groupBy, isEmpty, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, fileSystemUtils, memoryLock, wideEvent } from '@activepieces/server-utils'
 import { ExecutionMode, getPieceNameFromAlias, PackageType, PiecePackage, PieceType } from '@activepieces/shared'
 import writeFileAtomic from 'write-file-atomic'
@@ -8,17 +8,17 @@ import { SandboxSettings } from '../../types'
 import { bunRunner } from '../../utils/bun-runner'
 import { cacheUtils } from '../cache-paths'
 
-const usedPiecesMemoryCache: Record<string, boolean> = {}
+const BUNDLE_DOWNLOAD_ATTEMPTS = 3
 const VALID_SCOPED_NAME_REGEX = /^@[^/]+\/[^/]+$/
 const VALID_UNSCOPED_NAME_REGEX = /^[^/]+$/
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 const piecePath = (rootWorkspace: string, piece: PiecePackage) => join(rootWorkspace, 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
 
 export const pieceInstaller = (log: ApLogger, basePath: string, getSettings: () => SandboxSettings) => ({
-    async install({ pieces, includeFilters, publicApiUrl, engineToken }: InstallParams): Promise<void> {
+    async install({ pieces, includeFilters, publicApiUrl, engineToken, bestEffort }: InstallParams): Promise<void> {
         const groupedPieces = groupPiecesByPackagePath(pieces, basePath, getSettings)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {
-            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings)
+            await installPieces(packagePath, piecesInGroup, includeFilters, log, { publicApiUrl, engineToken }, getSettings, bestEffort ?? false)
         })
         await Promise.all(installPromises)
     },
@@ -42,7 +42,7 @@ function getCustomPiecesPath(basePath: string, platformId: string, getSettings: 
     }
 }
 
-async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxSettings): Promise<void> {
+async function installPieces(rootWorkspace: string, pieces: PiecePackage[], includeFilters: boolean, log: ApLogger, bundleSource: BundleSource, getSettings: () => SandboxSettings, bestEffort: boolean): Promise<void> {
     const devPieces = getSettings().DEV_PIECES
     const nonDevPieces = pieces.filter(piece => !devPieces.includes(getPieceNameFromAlias(piece.pieceName)))
     const { validPieces, invalidPieces } = partitionValidPieceNames(nonDevPieces)
@@ -76,59 +76,72 @@ async function installPieces(rootWorkspace: string, pieces: PiecePackage[], incl
                 pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
             }, '[pieceInstaller] acquired lock and starting to install pieces')
 
-            await createRootPackageJson({
+            await createRootWorkspaceFiles({
                 path: rootWorkspace,
             })
 
-            await saveBundlesToDiskIfNotCached(rootWorkspace, piecesToInstall, bundleSource)
+            const { downloaded, failures } = await saveBundlesToDiskIfNotCached(rootWorkspace, piecesToInstall, bundleSource)
 
-            await Promise.all(piecesToInstall.map(piece => createPiecePackageJson({
-                rootWorkspace,
-                piecePackage: piece,
-            })))
+            if (!isEmpty(failures)) {
+                log.error({
+                    rootWorkspace,
+                    failedPieces: failures.map(({ piece }) => `${piece.pieceName}@${piece.pieceVersion}`),
+                }, '[pieceInstaller] Skipping pieces whose bundle download failed after retries')
+            }
 
-            await wideEvent.timed({
-                name: 'bunInstall',
-                fn: async () => {
-                    const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
-                        path: rootWorkspace,
-                        filtersPath: includeFilters ? piecesToInstall.map(relativePiecePath) : [],
-                    }))
+            if (!isEmpty(downloaded)) {
+                await Promise.all(downloaded.map(piece => createPiecePackageJson({
+                    rootWorkspace,
+                    piecePackage: piece,
+                })))
 
-                    if (isNil(batchError)) {
-                        await markPiecesAsUsed(rootWorkspace, piecesToInstall)
+                await wideEvent.timed({
+                    name: 'bunInstall',
+                    fn: async () => {
+                        const { error: batchError } = await tryCatch(async () => bunRunner(log).install({
+                            path: rootWorkspace,
+                            filtersPath: includeFilters ? downloaded.map(relativePiecePath) : [],
+                        }))
+
+                        if (isNil(batchError)) {
+                            await markPiecesAsUsed(rootWorkspace, downloaded)
+                            log.info({
+                                rootWorkspace,
+                                piecesCount: downloaded.length,
+                            }, '[pieceInstaller] Installed registry pieces using bun')
+                            return
+                        }
+
+                        if (downloaded.length === 1) {
+                            log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
+                            await rollbackInstallation(rootWorkspace, downloaded)
+                            throw batchError
+                        }
+
+                        log.warn({
+                            rootWorkspace,
+                            pieces: downloaded.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
+                            error: batchError,
+                        }, '[pieceInstaller] Batch install failed, retrying pieces individually')
+
+                        const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, downloaded, log)
+
+                        if (failedPieces.length > 0) {
+                            const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
+                            throw new Error(`[pieceInstaller] Failed to install: ${names}`)
+                        }
+
                         log.info({
                             rootWorkspace,
-                            piecesCount: piecesToInstall.length,
-                        }, '[pieceInstaller] Installed registry pieces using bun')
-                        return
-                    }
+                            piecesCount: downloaded.length,
+                        }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
+                    },
+                })
+            }
 
-                    if (piecesToInstall.length === 1) {
-                        log.error({ rootWorkspace, error: batchError }, '[pieceInstaller] Piece installation failed, rolling back')
-                        await rollbackInstallation(rootWorkspace, piecesToInstall)
-                        throw batchError
-                    }
-
-                    log.warn({
-                        rootWorkspace,
-                        pieces: piecesToInstall.map(piece => `${piece.pieceName}-${piece.pieceVersion}`),
-                        error: batchError,
-                    }, '[pieceInstaller] Batch install failed, retrying pieces individually')
-
-                    const failedPieces = await tryInstallPiecesIndividually(rootWorkspace, piecesToInstall, log)
-
-                    if (failedPieces.length > 0) {
-                        const names = failedPieces.map(p => `${p.pieceName}@${p.pieceVersion}`).join(', ')
-                        throw new Error(`[pieceInstaller] Failed to install: ${names}`)
-                    }
-
-                    log.info({
-                        rootWorkspace,
-                        piecesCount: piecesToInstall.length,
-                    }, '[pieceInstaller] Installed registry pieces using bun (individual fallback)')
-                },
-            })
+            if (!bestEffort && !isEmpty(failures)) {
+                throw failures[0].error
+            }
         },
     })
 }
@@ -207,7 +220,9 @@ function groupPiecesByPackagePath(pieces: PiecePackage[], basePath: string, getS
     })
 }
 
-async function createRootPackageJson({ path }: { path: string }): Promise<void> {
+const WORKSPACE_BUNFIG = '[install]\nlinker = "isolated"\nminimumReleaseAge = 259200\n'
+
+async function createRootWorkspaceFiles({ path }: { path: string }): Promise<void> {
     const packageJsonPath = join(path, 'package.json')
     await fileSystemUtils.threadSafeMkdir(dirname(packageJsonPath))
     await writeFileAtomic(packageJsonPath, JSON.stringify({
@@ -217,6 +232,7 @@ async function createRootPackageJson({ path }: { path: string }): Promise<void> 
             'pieces/**',
         ],
     }, null, 2), 'utf8')
+    await writeFileAtomic(join(path, 'bunfig.toml'), WORKSPACE_BUNFIG, 'utf8')
 }
 
 async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
@@ -247,20 +263,57 @@ function bundleTgzPath(rootWorkspace: string, piece: PiecePackage): string {
 // `fetch` follows the redirect and carries the engine token in the Authorization header.
 // ARCHIVE pieces are fetched by archiveId (they may not be registered in metadata yet, e.g. during
 // EXTRACT_PIECE_METADATA); REGISTRY pieces by name@version.
-async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: PiecePackage[], { publicApiUrl, engineToken }: BundleSource): Promise<void> {
-    await Promise.all(pieces.map(async (piece) => {
-        const bundlePath = bundleTgzPath(rootWorkspace, piece)
-        if (await fileSystemUtils.fileExists(bundlePath)) {
+async function saveBundlesToDiskIfNotCached(rootWorkspace: string, pieces: PiecePackage[], bundleSource: BundleSource): Promise<BundleDownloadResult> {
+    const results = await Promise.all(pieces.map(async (piece) => {
+        const { error } = await tryCatch(() => downloadBundleWithRetry({ rootWorkspace, piece, bundleSource }))
+        return { piece, error }
+    }))
+    const downloaded: PiecePackage[] = []
+    const failures: BundleDownloadFailure[] = []
+    for (const { piece, error } of results) {
+        if (isNil(error)) {
+            downloaded.push(piece)
+        }
+        else {
+            failures.push({ piece, error })
+        }
+    }
+    return { downloaded, failures }
+}
+
+async function downloadBundleWithRetry({ rootWorkspace, piece, bundleSource }: DownloadBundleParams): Promise<void> {
+    let lastError: Error | undefined
+    for (let attempt = 1; attempt <= BUNDLE_DOWNLOAD_ATTEMPTS; attempt++) {
+        const { error } = await tryCatch(() => downloadBundleIfNotCached({ rootWorkspace, piece, bundleSource }))
+        if (isNil(error)) {
             return
         }
-        const url = pieceBundleEndpointUrl(publicApiUrl, piece)
-        const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
-        if (!response.ok) {
-            throw new Error(`Failed to fetch piece bundle ${piece.pieceName}@${piece.pieceVersion}: ${response.status} ${response.statusText}`)
+        lastError = error
+        if (error instanceof ActivepiecesError && error.error.code === ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE) {
+            break
         }
-        await fileSystemUtils.threadSafeMkdir(dirname(bundlePath))
-        await writeFile(bundlePath, Buffer.from(await response.arrayBuffer()))
-    }))
+    }
+    throw lastError
+}
+
+async function downloadBundleIfNotCached({ rootWorkspace, piece, bundleSource: { publicApiUrl, engineToken } }: DownloadBundleParams): Promise<void> {
+    const bundlePath = bundleTgzPath(rootWorkspace, piece)
+    if (await fileSystemUtils.fileExists(bundlePath)) {
+        return
+    }
+    const url = pieceBundleEndpointUrl(publicApiUrl, piece)
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${engineToken}` } })
+    if (!response.ok) {
+        if (response.status === 404 || response.status === 410) {
+            throw new ActivepiecesError({
+                code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                params: { pieceName: piece.pieceName, pieceVersion: piece.pieceVersion, status: response.status },
+            })
+        }
+        throw new Error(`Failed to fetch piece bundle ${piece.pieceName}@${piece.pieceVersion}: ${response.status} ${response.statusText}`)
+    }
+    await fileSystemUtils.threadSafeMkdir(dirname(bundlePath))
+    await writeFile(bundlePath, Buffer.from(await response.arrayBuffer()))
 }
 
 function pieceBundleEndpointUrl(publicApiUrl: string, piece: PiecePackage): string {
@@ -288,20 +341,47 @@ async function partitionPiecesToInstall(rootWorkspace: string, pieces: PiecePack
 
 async function pieceCheckIfAlreadyInstalled(rootWorkspace: string, piece: PiecePackage): Promise<boolean> {
     const pieceFolder = piecePath(rootWorkspace, piece)
-    if (usedPiecesMemoryCache[pieceFolder]) {
-        return true
-    }
     const readyExists = await fileSystemUtils.fileExists(join(pieceFolder, 'ready'))
     if (!readyExists) {
         return false
     }
-    const nodeModulesExist = await fileSystemUtils.fileExists(join(pieceFolder, 'node_modules'))
-    if (!nodeModulesExist) {
+    const engineCanResolve = await pieceEntryFileExists({ pieceFolder, pieceName: piece.pieceName })
+    if (!engineCanResolve) {
         await rm(join(pieceFolder, 'ready'), { force: true })
         return false
     }
-    usedPiecesMemoryCache[pieceFolder] = true
     return true
+}
+
+async function pieceEntryFileExists({ pieceFolder, pieceName }: PieceEntryFileExistsParams): Promise<boolean> {
+    const packageDir = join(pieceFolder, 'node_modules', pieceName)
+    const { data: declaredMain } = await tryCatch(async () => {
+        const manifest: unknown = JSON.parse(await readFile(join(packageDir, 'package.json'), 'utf8'))
+        if (typeof manifest !== 'object' || isNil(manifest) || !('main' in manifest)) {
+            return null
+        }
+        const { main } = manifest
+        return typeof main === 'string' ? main : null
+    })
+    if (!isNil(declaredMain)) {
+        const mainPath = join(packageDir, declaredMain)
+        if (await fileSystemUtils.fileExists(mainPath)) {
+            return isLoadableEntry(mainPath)
+        }
+    }
+    return isLoadableEntry(join(packageDir, 'src', 'index.js'))
+}
+
+async function isLoadableEntry(entryPath: string): Promise<boolean> {
+    if (await isLoadableFile(entryPath)) {
+        return true
+    }
+    return isLoadableFile(join(entryPath, 'index.js'))
+}
+
+async function isLoadableFile(entryPath: string): Promise<boolean> {
+    const { data: stats } = await tryCatch(async () => stat(entryPath))
+    return stats?.isFile() ?? false
 }
 
 async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): Promise<void> {
@@ -316,11 +396,17 @@ async function markPiecesAsUsed(rootWorkspace: string, pieces: PiecePackage[]): 
     await Promise.all(writeToDiskJobs)
 }
 
+type PieceEntryFileExistsParams = {
+    pieceFolder: string
+    pieceName: string
+}
+
 type InstallParams = {
     pieces: PiecePackage[]
     includeFilters: boolean
     publicApiUrl: string
     engineToken: string
+    bestEffort?: boolean
 }
 
 type BundleSource = {
@@ -330,4 +416,20 @@ type BundleSource = {
 
 type PieceInstallationResult = {
     piecesToInstall: PiecePackage[]
+}
+
+type BundleDownloadResult = {
+    downloaded: PiecePackage[]
+    failures: BundleDownloadFailure[]
+}
+
+type BundleDownloadFailure = {
+    piece: PiecePackage
+    error: Error
+}
+
+type DownloadBundleParams = {
+    rootWorkspace: string
+    piece: PiecePackage
+    bundleSource: BundleSource
 }

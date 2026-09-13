@@ -3,7 +3,7 @@ import { randomBytes, timingSafeEqual } from 'crypto'
 import { createServer, Server as HttpServer } from 'http'
 import path from 'path'
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, WorkerNotifyContract } from '@activepieces/shared'
+import { createNotifyServer, createRpcClient, EngineContract, EngineOperation, EngineOperationType, EngineResponse, EngineStderr, EngineStdout, RpcTimeoutError, WorkerNotifyContract } from '@activepieces/shared'
 import { Socket, Server as SocketIOServer } from 'socket.io'
 import treeKill from 'tree-kill'
 import { cacheUtils } from '../cache/cache-paths'
@@ -290,7 +290,12 @@ export function createSandbox(
                     resolve({ ...engineResponse, logs: buildLogs(stdOut, stdError) })
                 }).catch((error: unknown) => {
                     log.error({ sandbox: { id: sandboxId }, error: String(error) }, '[Sandbox] RPC call failed')
-                    reject(error)
+                    reject(error instanceof RpcTimeoutError
+                        ? new ActivepiecesError({
+                            code: ErrorCode.SANDBOX_EXECUTION_TIMEOUT,
+                            params: { standardOutput: stdOut + nativeStdOut, standardError: stdError + nativeStdError },
+                        })
+                        : error)
                 })
             })
 

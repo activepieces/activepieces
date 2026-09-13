@@ -1,3 +1,5 @@
+import { AIProviderName } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { agentAiUtils } from '../src/agent-ai-utils'
@@ -376,5 +378,56 @@ describe('buildLargeResultPreview', () => {
         const text = agentAiUtils.buildLargeResultPreview({ payload, byteSize: 200_000 })
         expect(text.toLowerCase()).toMatch(/paginate|filter|narrow/)
         expect(text).not.toContain('undefined')
+    })
+})
+
+describe('buildProviderOptions', () => {
+    const TIER = { id: 'fast', thinkingBudget: 5_000 }
+    const REASONING_OPTIONAL = 'anthropic/claude-haiku-4.5'
+    const REASONING_NATIVE = 'google/gemini-3.8-flash'
+
+    const reasoningFor = ({ provider, modelId, disableThinking }: { provider: AIProviderName, modelId: string, disableThinking: boolean }) =>
+        agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking }).openrouter?.reasoning
+
+    for (const provider of [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER]) {
+        it(`switches reasoning off on ${provider} for a model documented to allow it`, () => {
+            expect(reasoningFor({ provider, modelId: REASONING_OPTIONAL, disableThinking: true })).toEqual({ enabled: false })
+        })
+
+        it(`never asks ${provider} to switch reasoning off on a reasoning-native model`, () => {
+            const reasoning = reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: true })
+            expect(reasoning).not.toHaveProperty('enabled')
+            expect(reasoning).not.toMatchObject({ effort: 'none' })
+            expect(reasoning).toEqual({ effort: 'minimal' })
+        })
+
+        it(`spends the tier's thinking budget on ${provider} when thinking is on`, () => {
+            expect(reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: false })).toEqual({ max_tokens: TIER.thinkingBudget })
+        })
+    }
+
+    it('leaves every default tier model on the zero-reasoning path it runs on today', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(reasoningFor({ provider: AIProviderName.ACTIVEPIECES, modelId: tier.modelId, disableThinking: true }), tier.modelId).toEqual({ enabled: false })
+        }
+    })
+
+    it('turns thinking off on Anthropic, where disabling it is legal', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
+    })
+
+    it('turns thinking off on Bedrock, where disabling it is legal', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.BEDROCK, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
+    })
+
+    it('leaves the ephemeral prompt cache in place beside the reasoning directive', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ACTIVEPIECES, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.openrouter?.cache_control).toEqual({ type: 'ephemeral' })
+    })
+
+    it('sends nothing for a provider that does not take a reasoning directive', () => {
+        expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, tier: TIER, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
     })
 })

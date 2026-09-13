@@ -1,32 +1,31 @@
-import { AIProviderName, ProjectId, UserId } from '@activepieces/core-utils'
+import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, FlowRunStatus, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, AppInstance, DeploymentConfig, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
+import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { platformService } from '../platform/platform.service'
 import { projectService } from '../project/project-service'
 import { system } from './system/system'
 import { AppSystemProp } from './system/system-props'
-
-const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
 
 let posthogInstance: PostHog | null = null
 function getPostHog(): PostHog {
     if (!posthogInstance) {
         posthogInstance = new PostHog('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
             host: 'https://us.i.posthog.com',
-            maxQueueSize: BILLING_EVENTS_MAX_QUEUE_SIZE,
+            maxQueueSize: POSTHOG_MAX_QUEUE_SIZE,
         })
     }
     return posthogInstance
 }
 
-export const BILLING_EVENTS_FLUSH_BATCH_SIZE = 10_000
-const BILLING_EVENTS_MAX_QUEUE_SIZE = 20_000
+export const LICENSE_KEY_EVENTS_FLUSH_BATCH_SIZE = 5_000
+const POSTHOG_MAX_QUEUE_SIZE = 20_000
 
 export const telemetry = (log: FastifyBaseLogger) => ({
-    async identify(identity: UserIdentity, user?: User, projectId?: ProjectId): Promise<void> {
-        if (!telemetryEnabled) {
+    async identify({ identity, platformId, user, projectId }: IdentifyParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
         getPostHog().identify({
@@ -44,54 +43,45 @@ export const telemetry = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
-        if (!telemetryEnabled) {
+    async trackPlatform({ platformId, event }: TrackPlatformParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
             return
         }
         const platform = await platformService(log).getOneOrThrow(platformId)
-        await this.trackUser(platform.ownerId, event, { platform: platformId })
+        await captureUserEvent({ userId: platform.ownerId, platformId, event, log })
     },
-    async trackProject(
-        projectId: ProjectId,
-        event: TelemetryEvent,
-    ): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
+    async trackProject({ projectId, event }: TrackProjectParams): Promise<void> {
         const project = await projectService(log).getOne(projectId)
-        return this.trackUser(project!.ownerId, event, { platform: project!.platformId })
-    },
-    async trackIdentity(identityId: string, event: TelemetryEvent): Promise<void> {
-        return this.trackUser(identityId, event)
-    },
-    isEnabled: () => telemetryEnabled,
-    async trackUser(userId: UserId, event: TelemetryEvent, groups?: Record<string, string>): Promise<void> {
-        if (!telemetryEnabled) {
+        if (isNil(project)) {
             return
         }
-        const payloadEvent = {
-            distinctId: userId,
-            event: event.name,
-            properties: {
-                ...event.payload,
-                ...(await getMetadata()),
-                datetime: new Date().toISOString(),
-            },
-            groups,
+        return this.trackUser({ userId: project.ownerId, platformId: project.platformId, event })
+    },
+    async trackIdentity({ identityId, platformId, event }: TrackIdentityParams): Promise<void> {
+        if (!isNil(platformId)) {
+            return this.trackUser({ userId: identityId, platformId, event })
         }
-        log.info(payloadEvent, '[Telemetry#trackUser] sending event')
-        getPostHog().capture(payloadEvent)
+        if (system.getEdition() !== ApEdition.CLOUD) {
+            return
+        }
+        await captureUserEvent({ userId: identityId, platformId, event, log })
+    },
+    async trackUser({ userId, platformId, event }: TrackUserParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
+            return
+        }
+        await captureUserEvent({ userId, platformId, event, log })
     },
 })
 
-export function captureBillingEvent({ licenseKey, event, properties }: CaptureBillingEventParams): void {
+export function captureLicenseKeyEvent({ licenseKey, event, properties }: CaptureLicenseKeyEventParams): void {
     getPostHog().capture({
         distinctId: licenseKey,
         event,
         properties,
     })
 }
-export async function flushBillingEvents(): Promise<void> {
+export async function flushLicenseKeyPostHogEvents(): Promise<void> {
     if (posthogInstance !== null) {
         await posthogInstance.flush()
     }
@@ -120,6 +110,24 @@ function onceToday(key: string): boolean {
 
 export const telemetryDedupe = { onceToday }
 
+async function captureUserEvent({ userId, platformId, event, log }: CaptureUserEventParams): Promise<void> {
+    if (isCloudOnlyTelemetryEvent(event.name) && system.getEdition() !== ApEdition.CLOUD) {
+        return
+    }
+    const payloadEvent = {
+        distinctId: userId,
+        event: event.name,
+        properties: {
+            ...event.payload,
+            ...(await getMetadata()),
+            datetime: new Date().toISOString(),
+        },
+        ...spreadIfDefined('groups', isNil(platformId) ? null : { platform: platformId }),
+    }
+    log.info(payloadEvent, '[Telemetry#captureUserEvent] sending event')
+    getPostHog().capture(payloadEvent)
+}
+
 async function getMetadata() {
     const currentVersion = apVersionUtil.getCurrentRelease()
     const edition = system.getEdition()
@@ -131,9 +139,10 @@ async function getMetadata() {
     }
 }
 
-export enum BillingEvents {
+export enum LicenseKeyPostHogEvents {
     AI_USAGE_PER_RUN = 'ai_usage_per_run',
     CHAT_MESSAGE = 'chat_message',
+    PLATFORM_SETUP_REPORT = 'platform_setup_report',
     TOTAL_RUNS_PER_DAY = 'total_runs_per_day',
 }
 
@@ -165,9 +174,78 @@ export type ChatMessageProperties = {
     toolsUsed: number
 }
 
-export type BillingEventPayload =
-    | { event: BillingEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
-    | { event: BillingEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
-    | { event: BillingEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
+/**
+ * The setup report carries only what helps us diagnose a customer's problem and anticipate the
+ * blast radius of a change we are about to ship — the shape of a deployment (how many app replicas
+ * and workers, how big, how configured, what release) rather than anything about the people using
+ * it or the work it runs. Host identifiers are deliberately excluded: hostname and worker IP
+ * identify a machine without telling us anything we would act on.
+ *
+ * Before adding a field, check it against both halves of that test. "Would this let us answer a
+ * support question, or tell us who a change is about to break?" If neither, it does not belong here.
+ */
+export type SetupReportApp = Pick<AppInstance, 'cpuCores' | 'ramTotalBytes' | 'diskTotalBytes' | 'diskPercentage' | 'version' | 'eventLoopDelayMs'>
 
-type CaptureBillingEventParams = { licenseKey: string } & BillingEventPayload
+export type SetupReportWorker = Pick<MachineInformation, 'totalCpuCores' | 'totalAvailableRamInBytes' | 'diskInfo' | 'workerProps'>
+
+export type SetupReportHealth = Pick<GetSystemHealthChecksResponse, 'database' | 'release'>
+
+export type SetupReportInfra = Pick<GetDiagnosticsResponse, 'database' | 'redis' | 'storage'>
+
+export type SetupReportConfig = Omit<DeploymentConfig, 's3Endpoint'>
+
+export type SetupReportProperties = {
+    platformId: string
+    edition: ApEdition
+    reportedAt: string
+    apps?: SetupReportApp[]
+    workers?: SetupReportWorker[]
+    workersTotal?: number
+    infra?: SetupReportInfra
+    config?: SetupReportConfig
+    health?: SetupReportHealth
+}
+
+export type LicenseKeyEventPayload =
+    | { event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN, properties: AiUsagePerRunProperties }
+    | { event: LicenseKeyPostHogEvents.TOTAL_RUNS_PER_DAY, properties: TotalRunsPerDayProperties }
+    | { event: LicenseKeyPostHogEvents.CHAT_MESSAGE, properties: ChatMessageProperties }
+    | { event: LicenseKeyPostHogEvents.PLATFORM_SETUP_REPORT, properties: SetupReportProperties }
+
+type CaptureLicenseKeyEventParams = { licenseKey: string } & LicenseKeyEventPayload
+
+type IdentifyParams = {
+    identity: UserIdentity
+    platformId: string
+    user?: User
+    projectId?: ProjectId
+}
+
+type TrackPlatformParams = {
+    platformId: string
+    event: TelemetryEvent
+}
+
+type TrackProjectParams = {
+    projectId: ProjectId
+    event: TelemetryEvent
+}
+
+type TrackIdentityParams = {
+    identityId: string
+    platformId: string | null
+    event: TelemetryEvent
+}
+
+type TrackUserParams = {
+    userId: UserId
+    platformId: string
+    event: TelemetryEvent
+}
+
+type CaptureUserEventParams = {
+    userId: UserId
+    platformId: string | null
+    event: TelemetryEvent
+    log: FastifyBaseLogger
+}

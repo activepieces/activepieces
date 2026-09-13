@@ -108,7 +108,15 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const aiTools = config.aiTools
             // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
             const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
-            const webSearchActive = !dryRun && !tavilySearchActive && agentAiUtils.supportsWebSearch(provider)
+            // A provider plugin folds search results into the reply with no tool call, so there is
+            // nowhere to mark the turn. A run that can rewrite a saved agent does without it and
+            // reads through ap_fetch_url or Tavily instead, both of which mark.
+            const untrackedSearchWouldBeat = config.agentsAvailable
+                && agentAiUtils.webSearchModeOf(provider) === 'plugin'
+            const webSearchActive = !dryRun
+                && !tavilySearchActive
+                && !untrackedSearchWouldBeat
+                && agentAiUtils.supportsWebSearch(provider)
             const model = agentAiUtils.createChatModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
@@ -179,7 +187,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
-                ...(webSearchActive ? agentAiUtils.buildWebSearchTools({ provider, auth: config.auth }) : {}),
+                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: agentAiUtils.buildWebSearchTools({ provider, auth: config.auth }), taintState }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
@@ -192,7 +200,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 provider,
                 providerConfigId: config.providerConfigId,
                 ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools,
-                projects: config.projects, projectId, conversationId, runId, platformId, userId, userEmail: config.userEmail,
+                projects: config.projects, projectId, conversationId, runId, ...spreadIfDefined('flowRunId', flowRunId), platformId, userId, userEmail: config.userEmail,
                 guides: config.guides, dryRun: dryRun ?? false, discoveryOnly: discoveryOnly ?? false,
                 emailEnabled: config.emailEnabled,
                 agentsAvailable: config.agentsAvailable,
@@ -218,7 +226,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 skip: (dryRun ?? false) || (discoveryOnly ?? false),
                 log,
                 run: (stepMcpToolSet) => {
-                    const mergedTools = { ...allTools, ...stepMcpToolSet }
+                    const mergedTools = { ...allTools, ...agentWorkerTools.wrapToolsWithTaint({ tools: stepMcpToolSet, taintState }) }
                     const allToolNames = Object.keys(mergedTools)
                     log.info({ toolCount: allToolNames.length, mcpToolCount: Object.keys(mcpToolSet).length, phase: phaseState.phase }, '[executeAgentRun] Tool set assembled')
                     log.debug({ toolNames: allToolNames }, '[executeAgentRun] Tool set details')
@@ -233,6 +241,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                         tools: mergedTools,
                         allToolNames,
                         tier: config.tier,
+                        modelId: config.modelId,
+                        ...spreadIfDefined('fastModelId', dryRun ? undefined : config.fastModelId),
                         phaseState,
                         abortSignal: abortController.signal,
                         log,
@@ -464,7 +474,7 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
-function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
+function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     provider: AIProviderName
     providerConfigId: string
@@ -477,6 +487,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     projects: Array<{ id: string, displayName: string, type: string }>
     projectId: string | null
     conversationId: string
+    flowRunId?: string
     runId?: string
     platformId: string
     userId: string
@@ -505,7 +516,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         if (discoveryOnly && DISCOVERY_ONLY_NEUTRALIZED_TOOLS.has(toolName)) {
             return { content: [{ type: 'text', text: `🧪 Discovery-only run — ${toolName} was not executed. The agent reached a runnable call.` }] }
         }
-        const response = await ctx.apiClient.executeAgentTool({ toolName, toolInput, platformId, userId, source, conversationId })
+        const response = await ctx.apiClient.executeAgentTool({ toolName, toolInput, platformId, userId, source, conversationId, ...spreadIfDefined('runId', runId) })
         return response.result
     }
 
@@ -585,9 +596,13 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         }))
     }
 
+    const piecesTheAuthorGaveAnAccount = new Set(source !== AgentRunSource.AGENT ? [] : configuredPieceTools
+        .filter((tool) => !isNil(tool.pieceMetadata.predefinedInput?.auth))
+        .map((tool) => tool.pieceMetadata.pieceName))
     const displayTools = agentWorkerTools.createDisplayTools({
         waitForApproval,
         displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
+        accountAlreadyChosenFor: (pieceName) => piecesTheAuthorGaveAnAccount.has(pieceName),
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
             await tryCatch(() => ctx.apiClient.executeAgentTool({
@@ -601,7 +616,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     })
     const crossProjectTools = agentWorkerTools.createCrossProjectTools({ executeTool: executeCrossProjectTool, eventEmitter, waitForApproval, onGateOpened: storePendingGate, guides, taintState })
     const agentSurfaceTools = agentsAvailable && !dryRun && !discoveryOnly
-        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool })
+        ? agentWorkerTools.createAgentSurfaceTools({ executeTool: executeCrossProjectTool, taintState })
         : {}
     const thinkingTools = agentWorkerTools.createThinkingTools()
     const phaseTools = agentWorkerTools.createPhaseTools({ onPhaseChange: (phase) => {
@@ -615,6 +630,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         mcpTools: agentMcpClient.withToolTimeouts({
             mcpToolSet,
             brokenConnectors,
+            taintState,
             getSelectedAuth: ({ pieceName }) => selectedConnectionByPiece.get(pieceName),
             saveLargeResult: async ({ json, fileName }) => {
                 const { data: saved } = await tryCatch(() => ctx.apiClient.saveAgentFile({
@@ -647,17 +663,21 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
     // answer, and an agent that asks an empty room reads the silence as a refusal and stops.
     const configuredTools = agentWorkerTools.createConfiguredPieceTools({
         tools: dryRun || discoveryOnly ? [] : configuredPieceTools,
-        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, toolName, instruction, piece, provider, providerConfigId }),
+        runPieceTool: ({ toolName, instruction, piece }) => ctx.apiClient.executePieceTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, instruction, piece, provider, providerConfigId, ...spreadIfDefined('flowRunId', flowRunId) }),
+        taintState,
+        eventEmitter,
         log,
     })
     const configuredFlowToolSet = agentWorkerTools.createConfiguredFlowTools({
+        taintState,
         tools: dryRun || discoveryOnly ? [] : configuredFlowTools,
-        runFlowTool: ({ toolName, flowId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, toolName, flowId, toolInput, returnsResponse }),
+        runFlowTool: ({ toolName, flowId, flowVersionId, returnsResponse, toolInput }) => ctx.apiClient.executeFlowTool({ conversationId, ...spreadIfDefined('runId', runId), ...spreadIfDefined('flowRunId', flowRunId), toolName, flowId, ...spreadIfDefined('flowVersionId', flowVersionId), toolInput, returnsResponse }),
         log,
     })
     const knowledgeBaseTools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+        taintState,
         tools: dryRun || discoveryOnly ? [] : configuredKnowledgeBaseTools,
-        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, toolName, knowledgeBaseFileId, query, provider, providerConfigId }),
+        runKnowledgeBaseTool: ({ toolName, knowledgeBaseFileId, query }) => ctx.apiClient.executeKnowledgeBaseTool({ conversationId, ...spreadIfDefined('runId', runId), toolName, knowledgeBaseFileId, query, provider, providerConfigId }),
         log,
     })
     const completionTool = structuredOutput.length === 0

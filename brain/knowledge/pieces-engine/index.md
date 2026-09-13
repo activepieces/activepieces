@@ -76,3 +76,4 @@ A flow step type (the `run_agent` action of `@activepieces/piece-ai`) running a 
 - **Pieces** — the catalog, metadata registry, versions
 - **Piece Sets** — per-project include/exclude visibility, the undeletable Default set
 - **Building Pieces** — authoring, testing and publishing a piece
+- **Force a Piece Error in the Builder** — aim a piece at a mock instance to reproduce a real failure dialog

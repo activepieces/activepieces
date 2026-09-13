@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { recordAccess } from '@/app/components/global-search/access-history';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { AutomationsEmptyState } from '@/features/automations/components/automations-empty-state';
 import { AutomationsFilters as AutomationsFiltersComponent } from '@/features/automations/components/automations-filters';
@@ -25,7 +26,8 @@ import {
   hasMovableOrExportableItems,
 } from '@/features/automations/hooks/use-automations-selection';
 import { usePinnedItems } from '@/features/automations/hooks/use-pinned-items';
-import { TreeItem } from '@/features/automations/lib/types';
+import { AutomationsSort, TreeItem } from '@/features/automations/lib/types';
+import { ROOT_ITEMS_LIMIT } from '@/features/automations/lib/utils';
 import { appConnectionsQueries } from '@/features/connections';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { projectMembersHooks } from '@/features/members';
@@ -71,6 +73,8 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     setOwnerFilter,
     folderFilter,
     setFolderFilter,
+    sort,
+    setSort,
     filters,
     filtersActive,
     clearAllFilters,
@@ -84,6 +88,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     rootFlows,
     rootTables,
     isLoading,
+    isError,
     expandedFolders,
     toggleFolder,
     loadMoreInFolder,
@@ -97,7 +102,7 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     invalidateAll,
     invalidateRoot,
     invalidateFolder,
-  } = useAutomationsData(filters, pinnedList);
+  } = useAutomationsData({ filters, pinnedList, sort });
 
   const expandFolderIfCollapsed = useCallback(
     (folderId: string) => {
@@ -144,6 +149,14 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
     clearSelection();
     resetPagination();
   }, [clearSelection, resetPagination]);
+
+  const handleSortChange = useCallback(
+    (next: AutomationsSort) => {
+      setSort(next);
+      handleFiltersChange();
+    },
+    [setSort, handleFiltersChange],
+  );
 
   const handleNextPage = useCallback(() => {
     clearSelection();
@@ -267,9 +280,15 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
 
   const hasAnyItems =
     rootFlows.length > 0 || rootTables.length > 0 || folders.length > 0;
-  const isEmptyState = !hasAnyItems && !isLoading && !filtersActive;
+  const isSortTruncated =
+    sort !== 'default' &&
+    (rootFlows.length >= ROOT_ITEMS_LIMIT ||
+      rootTables.length >= ROOT_ITEMS_LIMIT);
+  const isErrorState = isError && !hasAnyItems && !isLoading;
+  const isEmptyState =
+    !hasAnyItems && !isLoading && !filtersActive && !isErrorState;
   const isNoResultsState =
-    treeItems.length === 0 && filtersActive && !isLoading;
+    treeItems.length === 0 && filtersActive && !isLoading && !isErrorState;
 
   if (isEmptyState) {
     return <AutomationsEmptyState onRefresh={() => invalidateAll()} />;
@@ -314,7 +333,13 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
         isCreatingTable={mutations.isCreatingTable}
       />
 
-      {isNoResultsState ? (
+      {isErrorState ? (
+        <DataFetchErrorState
+          entity={t('automations')}
+          onRetry={invalidateAll}
+          className="py-16"
+        />
+      ) : isNoResultsState ? (
         <AutomationsNoResultsState onClearFilters={clearAllFilters} />
       ) : (
         <>
@@ -346,16 +371,27 @@ const AutomationsPageContent = ({ projectId }: { projectId: string }) => {
             isDuplicating={mutations.isDuplicating}
             onLoadMoreInFolder={loadMoreInFolder}
             isItemSelected={isItemSelected}
+            sort={sort}
+            onSortChange={handleSortChange}
           />
 
-          <AutomationsPagination
-            currentPage={rootPage}
-            totalPages={totalPages}
-            pageSize={pageSize}
-            onPageSizeChange={handlePageSizeChange}
-            onPrevPage={handlePrevPage}
-            onNextPage={handleNextPage}
-          />
+          <div className="flex items-center justify-end gap-4">
+            {isSortTruncated && (
+              <span className="text-xs text-muted-foreground">
+                {t('Showing the first {count}', {
+                  count: rootFlows.length + rootTables.length,
+                })}
+              </span>
+            )}
+            <AutomationsPagination
+              currentPage={rootPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              onPageSizeChange={handlePageSizeChange}
+              onPrevPage={handlePrevPage}
+              onNextPage={handleNextPage}
+            />
+          </div>
         </>
       )}
 

@@ -135,7 +135,11 @@ function Button({
 }: ButtonProps) {
   const Comp = asChild ? Slot.Root : 'button';
 
-  useKeyboardShortcut(keyboardShortcut, disabled, onKeyboardShortcut);
+  useKeyboardShortcut(
+    keyboardShortcut,
+    disabled || loading,
+    onKeyboardShortcut,
+  );
 
   return (
     <Comp

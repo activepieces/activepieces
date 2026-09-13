@@ -66,6 +66,7 @@
     "fast-average-color": "9.5.0",
     "fuse.js": "7.0.0",
     "html-to-image": "1.11.13",
+    "http-status-codes": "2.2.0",
     "i18next": "23.13.0",
     "i18next-browser-languagedetector": "8.0.0",
     "i18next-http-backend": "3.0.5",

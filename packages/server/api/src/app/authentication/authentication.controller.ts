@@ -69,13 +69,17 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                 action: ApplicationEventName.USER_SIGNED_IN,
                 data: {},
             })
-            rejectedPromiseHandler(telemetry(request.log).trackUser(response.id, {
-                name: TelemetryEventName.SIGNED_IN,
-                payload: {
-                    userId: response.id,
-                    platformId: response.platformId,
+            rejectedPromiseHandler(telemetry(request.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.SIGNED_IN,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
                 },
-            }, { platform: response.platformId }), request.log)
+            }), request.log)
         }
 
         return response

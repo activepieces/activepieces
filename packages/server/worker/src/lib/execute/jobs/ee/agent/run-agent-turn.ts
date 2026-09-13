@@ -42,7 +42,7 @@ export function shouldRetryStream({ producedVisibleOutput, streamRetries }: {
     return !producedVisibleOutput && streamRetries < MAX_STREAM_RETRIES
 }
 
-export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling }: RunAgentTurnParams): Promise<AgentTurnResult> {
+export async function runAgentTurn({ model, fastModel, provider, systemPrompt, messages, tools, allToolNames, tier, modelId, fastModelId, phaseState, abortSignal, log, sinks, stopWhen, stepCeiling }: RunAgentTurnParams): Promise<AgentTurnResult> {
     const drainStream = sinks?.drainStream ?? (async () => {})
     const onProgress = sinks?.onProgress ?? (() => {})
     const baseStopCondition = stopWhen ?? isLoopFinished()
@@ -68,6 +68,7 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     let continuations = 0
     let emptyContinuations = 0
     let streamRetries = 0
+    let lastStepModelId = modelId
     let truncatedAfterRetries = false
     let usage: LanguageModelUsage | undefined
     let totalInputTokens = 0
@@ -105,10 +106,12 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             // read-only lookups that should run as one parallel burst. Once a build-only tool
             // flips the phase to 'build', thinking comes back on for planning depth.
             const disableThinking = isFirstStep || phaseState.phase === 'discovery'
+            const usesFastModel = isFirstStep && !isNil(fastModel)
+            lastStepModelId = usesFastModel ? fastModelId ?? modelId : modelId
             return {
-                ...(isFirstStep && fastModel ? { model: fastModel } : {}),
+                ...(usesFastModel ? { model: fastModel } : {}),
                 activeTools: agentToolPhases.activeToolsForPhase({ phase: phaseState.phase, allToolNames }),
-                providerOptions: agentAiUtils.buildProviderOptions({ provider, tier, disableThinking }),
+                providerOptions: agentAiUtils.buildProviderOptions({ provider, tier, modelId: lastStepModelId, disableThinking }),
                 ...boundContextForStep({ baseMessages: attemptMessages, steps, systemPrompt, provider }),
             }
         },
@@ -439,6 +442,8 @@ export type RunAgentTurnParams = {
     tools: ToolSet
     allToolNames: string[]
     tier: { id: string, thinkingBudget: number, modelId: string }
+    modelId: string
+    fastModelId?: string
     phaseState: { phase: AgentPhase }
     abortSignal: AbortSignal
     log: AgentTurnLogger

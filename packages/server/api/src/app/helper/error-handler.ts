@@ -44,6 +44,7 @@ export const enrichWideEventWithError = (error: unknown): void => {
         if (statusCode >= StatusCodes.INTERNAL_SERVER_ERROR) {
             wideErrorFields.stack = error.stack
         }
+        attachStatusToError(error, statusCode)
         wideEvent.set({ status: statusCode, error: wideErrorFields })
         return
     }
@@ -66,6 +67,13 @@ export const enrichWideEventWithError = (error: unknown): void => {
         wideErrorFields.stack = error.stack
     }
     wideEvent.set({ status: statusCode, error: wideErrorFields })
+}
+
+function attachStatusToError(error: ActivepiecesError, statusCode: number): void {
+    Object.defineProperty(error, 'status', {
+        value: statusCode,
+        configurable: true,
+    })
 }
 
 function hasStatusCode(error: unknown): error is { statusCode: number } {
@@ -114,6 +122,7 @@ const statusCodeMap: Partial<Record<ErrorCode, StatusCodes>> = {
     [ErrorCode.FLOW_RUN_RETRY_OUTSIDE_RETENTION]: StatusCodes.GONE,
     [ErrorCode.SANDBOX_CAPACITY_EXCEEDED]: StatusCodes.TOO_MANY_REQUESTS,
     [ErrorCode.CHAT_CONTEXT_LIMIT_EXCEEDED]: StatusCodes.BAD_REQUEST,
+    [ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED]: StatusCodes.UNPROCESSABLE_ENTITY,
 }
 
 type WideErrorFields = {

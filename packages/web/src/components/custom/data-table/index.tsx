@@ -37,6 +37,8 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
+import { DataFetchErrorState } from '../data-fetch-error-state';
+
 import { DataTableBulkActions } from './data-table-bulk-actions';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFilter, DataTableFilterProps } from './data-table-filter';
@@ -75,6 +77,9 @@ interface DataTableProps<
     e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
   ) => void;
   isLoading: boolean;
+  isError: boolean;
+  errorStateEntity: string;
+  onRetry?: () => void;
   filters?: DataTableFilters<Keys>[];
   customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
@@ -117,6 +122,9 @@ export function DataTable<
   filters = [],
   actions = [],
   isLoading,
+  isError,
+  errorStateEntity,
+  onRetry,
   onSelectedRowsChange,
   hidePagination,
   bulkActions = [],
@@ -610,6 +618,18 @@ export function DataTable<
                   </TableRow>
                 ))
               )
+            ) : isError ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-[350px] text-center"
+                >
+                  <DataFetchErrorState
+                    entity={errorStateEntity}
+                    onRetry={onRetry}
+                  />
+                </TableCell>
+              </TableRow>
             ) : (
               <TableRow className="hover:bg-background">
                 <TableCell

@@ -109,6 +109,8 @@ export function ModelSelectionPanel({
           columns={columns}
           page={{ data: rows, next: null, previous: null }}
           isLoading={isLoading}
+          isError={false}
+          errorStateEntity={t('models')}
           hidePagination={true}
           onRowClick={(row) => toggleModel(row.id)}
           emptyStateTextTitle={t('No models found')}

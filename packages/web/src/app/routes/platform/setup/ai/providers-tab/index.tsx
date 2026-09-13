@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -55,6 +56,7 @@ export function ProvidersTab() {
   const {
     data: providers,
     isLoading,
+    isError: isProvidersError,
     refetch,
   } = aiProviderQueries.useAiProviderConfigs();
   const { platform } = platformHooks.useCurrentPlatform();
@@ -90,7 +92,7 @@ export function ProvidersTab() {
         toast.error(label ?? t('Could not reach this provider'));
       },
     });
-  const { mutate: updateProvider, isPending: isSaving } =
+  const { mutateAsync: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
       onSuccess: () => {
         refetch();
@@ -172,7 +174,9 @@ export function ProvidersTab() {
           projects={projects}
           isSaving={isSaving}
           onSave={(request) =>
-            updateProvider({ providerId: activeConfig.id, request })
+            tryCatch(() =>
+              updateProvider({ providerId: activeConfig.id, request }),
+            )
           }
           onDelete={async () => {
             await deleteProvider(activeConfig.id);
@@ -221,7 +225,9 @@ export function ProvidersTab() {
           )}
         </div>
 
-        {configs.length === 0 ? (
+        {isProvidersError ? (
+          <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
+        ) : configs.length === 0 ? (
           <EmptyProviders onConnect={openConnect} allowWrite={allowWrite} />
         ) : (
           <>

@@ -60,7 +60,7 @@ export function ConfigDetail({
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
-  onSave: (request: UpdateAIProviderRequest) => void;
+  onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
   onDelete: () => void;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
@@ -70,6 +70,7 @@ export function ConfigDetail({
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
   const [deleteOpen, setDeleteOpen] = useState(false);
   const leavingOnPurpose = useRef(false);
+  const saveInFlight = useRef(false);
 
   const manualModels = providerCredentials.usesManualModels({
     provider: config.provider,
@@ -116,40 +117,45 @@ export function ConfigDetail({
       ? projects.length - draft.projectIds.length
       : draft.projectIds.length;
 
-  const save = () => {
+  const save = async () => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
     const manualConfig = manualConfigParse?.success
       ? manualConfigParse.data
       : undefined;
-    if (nameMissing) {
+    if (nameMissing || saveInFlight.current) {
       return;
     }
-    onSave({
-      displayName: draft.name.trim(),
-      modelScope: draft.modelScope,
-      modelIds: draft.modelIds,
-      projectScope: draft.projectScope,
-      projectIds: draft.projectIds,
-      ...(manualConfig
-        ? {
-            config: {
-              ...manualConfig,
-              models: draft.modelIds.map(
-                (modelId) =>
-                  manualConfig.models.find(
-                    (model) => model.modelId === modelId,
-                  ) ?? {
-                    modelId,
-                    modelName: modelId,
-                    modelType: AIProviderModelType.TEXT,
-                  },
-              ),
-            },
-          }
-        : {}),
-    });
+    saveInFlight.current = true;
+    try {
+      await onSave({
+        displayName: draft.name.trim(),
+        modelScope: draft.modelScope,
+        modelIds: draft.modelIds,
+        projectScope: draft.projectScope,
+        projectIds: draft.projectIds,
+        ...(manualConfig
+          ? {
+              config: {
+                ...manualConfig,
+                models: draft.modelIds.map(
+                  (modelId) =>
+                    manualConfig.models.find(
+                      (model) => model.modelId === modelId,
+                    ) ?? {
+                      modelId,
+                      modelName: modelId,
+                      modelType: AIProviderModelType.TEXT,
+                    },
+                ),
+              },
+            }
+          : {}),
+      });
+    } finally {
+      saveInFlight.current = false;
+    }
   };
 
   return (

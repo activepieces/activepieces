@@ -54,9 +54,11 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         })
         const identity = await userIdentityService(log).getIdentityByEmail(email)
         if (!isNil(identity)) {
-            rejectedPromiseHandler(telemetry(log).trackIdentity(identity.id, {
-                name: TelemetryEventName.EMAIL_CODE_REQUESTED,
-                payload: { isNewIdentity: isNil(existingIdentity) },
+            rejectedPromiseHandler(trackEmailCodeRequested({
+                identityId: identity.id,
+                platformId,
+                isNewIdentity: isNil(existingIdentity),
+                log,
             }), log)
         }
     },
@@ -81,11 +83,15 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         await flagService(log).save({ id: ApFlagId.USER_CREATED, value: true })
 
         const preferredPlatformId = isNil(platformId)
-            ? await authenticationService(log).resolvePreferredPlatformId({ identityId: verifiedIdentity.id })
+            ? await authenticationService(log).selectCloudSignInPlatformId({ identityId: verifiedIdentity.id })
             : platformId
-        rejectedPromiseHandler(telemetry(log).trackIdentity(verifiedIdentity.id, {
-            name: TelemetryEventName.EMAIL_CODE_VERIFIED,
-            payload: { needsNameStep: isNil(preferredPlatformId) },
+        rejectedPromiseHandler(telemetry(log).trackIdentity({
+            identityId: verifiedIdentity.id,
+            platformId: preferredPlatformId,
+            event: {
+                name: TelemetryEventName.EMAIL_CODE_VERIFIED,
+                payload: { needsNameStep: isNil(preferredPlatformId) },
+            },
         }), log)
 
         if (!isNil(platformId)) {
@@ -141,6 +147,20 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function trackEmailCodeRequested({ identityId, platformId, isNewIdentity, log }: TrackEmailCodeRequestedParams): Promise<void> {
+    const preferredPlatformId = isNil(platformId)
+        ? await authenticationService(log).selectCloudSignInPlatformId({ identityId })
+        : platformId
+    await telemetry(log).trackIdentity({
+        identityId,
+        platformId: preferredPlatformId,
+        event: {
+            name: TelemetryEventName.EMAIL_CODE_REQUESTED,
+            payload: { isNewIdentity },
+        },
+    })
+}
+
 async function assertPlatformAuthIsOpenTo({ email, platformId, log }: PlatformGateParams): Promise<void> {
     await authenticationUtils(log).assertEmailAuthIsEnabled({
         platformId,
@@ -159,6 +179,13 @@ async function mayJoinPlatform({ email, platformId, identity, log }: MayJoinPlat
         return true
     }
     return userInvitationsService(log).hasAnyAcceptedInvitations({ platformId, email })
+}
+
+type TrackEmailCodeRequestedParams = {
+    identityId: string
+    platformId: string | null
+    isNewIdentity: boolean
+    log: FastifyBaseLogger
 }
 
 type RequestCodeParams = {

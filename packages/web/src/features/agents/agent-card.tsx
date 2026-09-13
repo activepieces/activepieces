@@ -59,7 +59,7 @@ export const AgentCard = ({
         />
         <div className="relative flex items-center gap-[14px]">
           <AgentMark icon={agent.icon} color={agent.color} />
-          <div className="flex min-w-0 grow basis-0 flex-col gap-[3px]">
+          <div className="flex min-w-0 grow basis-0 flex-col gap-[3px] pe-7">
             <span className="flex min-w-0 items-center gap-[6px]">
               <span className="truncate text-base font-semibold leading-5">
                 {agent.displayName}

@@ -82,7 +82,7 @@ const PiecesSettings = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { project } = projectCollectionUtils.useCurrentProject();
   const [searchQuery, setSearchQuery] = useState('');
-  const { pieces, isLoading } = piecesHooks.usePieces({
+  const { pieces, isLoading, isError, refetch } = piecesHooks.usePieces({
     searchQuery,
     isTableQuery: true,
   });
@@ -148,6 +148,9 @@ const PiecesSettings = () => {
           previous: null,
         }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('pieces')}
+        onRetry={refetch}
         hidePagination={true}
       />
     </div>
