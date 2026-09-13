@@ -206,7 +206,7 @@ export function isUserInteractionJobData(jobData: JobData): jobData is UserInter
     return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
-const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
+export const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
     WorkerJobType.EXECUTE_FLOW,
     WorkerJobType.EXECUTE_WEBHOOK,
 ])
