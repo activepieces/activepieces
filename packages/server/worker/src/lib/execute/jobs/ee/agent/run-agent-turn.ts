@@ -336,9 +336,18 @@ function fingerprintInput(input: unknown): string {
 }
 
 export function jsonInputFrom(text: string): string | undefined {
-    const candidate = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)
-    const { error } = tryCatchSync(() => JSON.parse(candidate))
-    return isNil(error) ? candidate : undefined
+    const start = text.indexOf('{')
+    if (start === -1) {
+        return undefined
+    }
+    for (let end = text.indexOf('}', start); end !== -1; end = text.indexOf('}', end + 1)) {
+        const candidate = text.slice(start, end + 1)
+        const { error } = tryCatchSync(() => JSON.parse(candidate))
+        if (isNil(error)) {
+            return candidate
+        }
+    }
+    return undefined
 }
 
 export function classifyAgentRunError({ error, provider }: { error: unknown, provider?: string }): AgentRunErrorClass {

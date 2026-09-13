@@ -148,11 +148,20 @@ describe('jsonInputFrom', () => {
             '```\n{"query":"pricing"}\n```',
             'Sure, here you go:\n```json\n{"query":"pricing"}\n```\nHope that helps!',
             '{"query":"pricing"}\n\nLet me know.',
+            '{"query":"pricing"}\n\nOr if you prefer: {"query":"plans"}',
         ]
 
         for (const wrapping of wrappings) {
             expect(jsonInputFrom(wrapping), wrapping).toBe('{"query":"pricing"}')
         }
+    })
+
+    it('keeps a brace that lives inside a string value', () => {
+        expect(jsonInputFrom('{"query":"a } b"}')).toBe('{"query":"a } b"}')
+    })
+
+    it('reaches past a nested object to the end of the real one', () => {
+        expect(jsonInputFrom('{"filter":{"tier":"pro"}}')).toBe('{"filter":{"tier":"pro"}}')
     })
 
     it('rejects anything that is not an object, so prose never reaches a tool', () => {
