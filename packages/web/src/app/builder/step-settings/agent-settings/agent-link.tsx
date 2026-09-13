@@ -8,7 +8,12 @@ import {
   Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { BotIcon, Link2OffIcon, PlusIcon } from 'lucide-react';
+import {
+  BotIcon,
+  ExternalLinkIcon,
+  Link2OffIcon,
+  PlusIcon,
+} from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
@@ -18,6 +23,7 @@ import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
 import {
@@ -59,6 +65,16 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
   });
   const stillFindingIt = isLoading && !isNil(linkedExternalId);
   const linkedConfig = linkedAgent?.published ?? linkedAgent?.draft;
+
+  const instructionsPreview = linkedConfig?.instructions?.trim();
+  const modelLabel = linkedConfig?.modelName ?? undefined;
+  const toolChips = (linked?.toolPieceNames ?? [])
+    .slice(0, MAX_TOOL_CHIPS)
+    .map((pieceName) => pieceName.replace('@activepieces/piece-', ''));
+  const hiddenToolCount = Math.max(
+    (linked?.toolCount ?? 0) - toolChips.length,
+    0,
+  );
 
   if (!agentsAvailable || !mayReadAgents) {
     return null;
@@ -172,24 +188,63 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           </Button>
         </PermissionNeededTooltip>
       ) : (
-        <div className="flex flex-col gap-2 rounded-lg border p-3">
-          <div className="flex items-center gap-2 text-sm">
-            <BotIcon className="size-4 shrink-0 text-muted-foreground" />
-            {isNil(linked) ? (
-              <span className="text-muted-foreground">
-                {stillFindingIt ? t('Loading') : t('Agent')}
+        <div className="flex flex-col gap-3 rounded-lg border p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <BotIcon className="size-4 shrink-0 text-muted-foreground" />
+              <span className="truncate text-sm font-medium">
+                {isNil(linked)
+                  ? stillFindingIt
+                    ? t('Loading')
+                    : t('Agent')
+                  : linked.displayName}
               </span>
-            ) : (
-              <Link
-                to={`/agents/${linked.id}`}
-                target="_blank"
-                rel="noreferrer"
-                className="truncate hover:underline"
+            </div>
+            {!isNil(linked) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto shrink-0 px-2 py-1"
+                asChild
               >
-                {linked.displayName}
-              </Link>
+                <Link
+                  to={`/agents/${linked.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('Edit agent')}
+                  <ExternalLinkIcon className="size-3.5" />
+                </Link>
+              </Button>
             )}
           </div>
+
+          {!isNil(instructionsPreview) && (
+            <p className="line-clamp-2 text-xs text-muted-foreground">
+              {instructionsPreview}
+            </p>
+          )}
+
+          {(!isNil(modelLabel) || toolChips.length > 0) && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {!isNil(modelLabel) && (
+                <Badge variant="accent" className="font-normal">
+                  {modelLabel}
+                </Badge>
+              )}
+              {toolChips.map((chip) => (
+                <Badge key={chip} variant="outline" className="font-normal">
+                  {chip}
+                </Badge>
+              ))}
+              {hiddenToolCount > 0 && (
+                <Badge variant="outline" className="font-normal">
+                  {t('+{count}', { count: hiddenToolCount })}
+                </Badge>
+              )}
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground">
             {stillFindingIt
               ? t('Looking up the agent this step runs.')
@@ -200,9 +255,10 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
                   'This agent has never been published, and a flow runs the published version.',
                 )
               : t(
-                  'Instructions, tools and model come from the agent. Editing the agent changes what this step runs.',
+                  'Runs the published version, shared with every flow using it.',
                 )}
           </p>
+
           <Button
             variant="outline"
             size="sm"
@@ -216,7 +272,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           {!isNil(linkedConfig) && (
             <p className="text-xs text-muted-foreground">
               {t(
-                'Detaching copies its tools and model into this step. Its instructions stay with the agent.',
+                'Detaching copies the tools and model here, not the instructions.',
               )}
             </p>
           )}
@@ -229,3 +285,5 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
 type AgentLinkProps = {
   disabled: boolean;
 };
+
+const MAX_TOOL_CHIPS = 3;
