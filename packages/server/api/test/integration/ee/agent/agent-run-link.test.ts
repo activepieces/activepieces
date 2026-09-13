@@ -417,6 +417,21 @@ describe('what the linked run actually sends to the worker', () => {
         expect(job.data.source).toBe(AgentRunSource.FLOW_STEP)
     })
 
+    it('starts one agent run per waitpoint, so a repeated start cannot run the tools twice', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId] })
+
+        const first = await startRun(ctx, { agentId: agent.externalId }, bound)
+        const second = await startRun(ctx, { agentId: agent.externalId }, bound)
+
+        expect(first.statusCode).toBe(StatusCodes.OK)
+        expect(JSON.stringify(second.json())).toContain('already starting')
+        const runs = addSpy.mock.calls.map(([call]) => call).filter((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
+        expect(runs).toHaveLength(1)
+    })
+
     it('still sends an MCP tool to the worker, which is the only thing that can run it', async () => {
         const ctx = await context()
 

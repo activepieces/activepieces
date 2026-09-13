@@ -6,6 +6,7 @@ import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { redisConnections } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowRunService } from '../../flows/flow-run/flow-run-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -121,6 +122,7 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     if (waitpoint.status !== WaitpointStatus.PENDING) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That step has already had its agent run. A finished waitpoint cannot start another one.' } })
     }
+    await claimWaitpointOrThrow({ waitpointId })
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowRun.flowVersionId)
     const named = flowStructureUtil.getAllSteps(flowVersion.trigger).filter((candidate) => candidate.name === waitpoint.stepName)
     if (named.length > 1) {
@@ -138,6 +140,17 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Publish "${agent.displayName}" before a flow can run it: a flow runs the published version, so there is nothing to run yet.` } })
     }
     return agent.published
+}
+
+async function claimWaitpointOrThrow({ waitpointId }: { waitpointId: string }): Promise<void> {
+    const redis = await redisConnections.useExisting()
+    const claimed = await redis.set(`agent-run-claim:${waitpointId}`, '1', 'EX', AGENT_RUN_CLAIM_TTL_SECONDS, 'NX')
+    if (isNil(claimed)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'An agent run for that step is already starting. A step runs its agent once, so this request was not started again.' },
+        })
+    }
 }
 
 async function resolveFlowTools({ projectId, flowToolRequests, log }: {
@@ -181,6 +194,8 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
         }
     })
 }
+
+const AGENT_RUN_CLAIM_TTL_SECONDS = 60 * 60
 
 const RUNS_PER_MINUTE = 60
 const BUILT_IN_TOOL_PREFIX = 'ap_'
