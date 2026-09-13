@@ -439,7 +439,6 @@ import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres
 import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
 import { AddMaxBarrierSignalsToPlatformConfiguration1845000000000 } from './migration/postgres/1845000000000-AddMaxBarrierSignalsToPlatformConfiguration'
 import { AddWaitpointDeadLetteredAt1846000000000 } from './migration/postgres/1846000000000-AddWaitpointDeadLetteredAt'
-import { NarrowWaitpointSignalRefIdIndex1847000000000 } from './migration/postgres/1847000000000-NarrowWaitpointSignalRefIdIndex'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -894,7 +893,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddMcpActivity1844000000000,
         AddMaxBarrierSignalsToPlatformConfiguration1845000000000,
         AddWaitpointDeadLetteredAt1846000000000,
-        NarrowWaitpointSignalRefIdIndex1847000000000,
     ]
     return migrations
 }
