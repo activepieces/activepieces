@@ -8,7 +8,7 @@ status: accepted
 ## Decision
 
 Model tiers and credit weights move out of the code and into
-`cdn.activepieces.com/ai/pricing.json`. A **new repo**, `activepieces/config-console`, is where
+`cdn.activepieces.com/ai/pricing.json`. A **new repo**, `activepieces/ap-analytics`, is where
 marketing edits them and presses Publish. Activepieces fetches that file (1h TTL), keeps the last
 good copy, and falls back to the constants shipped with the release. The existing billing console
 is not touched.
@@ -50,7 +50,7 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
 ## Consequences
 
 - **The pricing schema now lives in two repos** and they must match. `packages/shared/src/lib/ai-pricing/`
-  in config-console, `packages/server/utils/src/ai-pricing-catalog.ts` here. Change one without the
+  in ap-analytics, `packages/server/utils/src/ai-pricing-catalog.ts` here. Change one without the
   other and Activepieces rejects the file and silently keeps serving the old prices.
 - A price change is no longer visible in `git log` of this repo. The audit trail is the CDN history
   prefix.
@@ -59,5 +59,15 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
   good file, then to the release's own constants. CE and self-hosted keep working with zero setup.
 - Publishing is blocked whenever the live file cannot be read, so a CDN outage can never overwrite
   prices nobody can see.
-- Config features from now on go in `config-console`, not the billing console.
-- **Internal tools run on DigitalOcean, but not all the same way.** `activepieces/discover` uses a **droplet** driven by Actions over SSH (`.github/workflows/deploy.yml` — build, rsync, `pm2 reload`), with nginx and certbot in front. `config-console` uses **App Platform** instead: DO builds the Dockerfile, redeploys on push by itself, and issues TLS, so there is no server to log into and the repo carries no deploy workflow at all. Neither repo says which it is, so check the DO dashboard before assuming. Runbook: `DEPLOYMENT.md` in config-console.
+- **The two guards on publishing are not equally strict, which is easy to misread.** Reading the live
+  `pricing.json` before a write fails *closed* (above). The separate check that every priced model id
+  exists in `ai/model-catalog.json` fails *open*: when the catalog cannot be loaded,
+  `ai-pricing-service.ts` logs 'The model catalog is unavailable, so model ids were not checked before
+  publishing' and publishes anyway. So a typo in a model id can reach the CDN and then match nothing in
+  production, which shows up as a model that is simply never priced rather than as an error.
+- Config features from now on go in `ap-analytics`, not the billing console.
+- **The repo is named `ap-analytics` on GitHub, but calls itself "config console" inside** — README,
+  `CLAUDE.md` and the package names all say config-console. It was created as `config-console` and
+  renamed on 2026-09-02. A clone made before the rename pushes into a 404; fix it with
+  `git remote set-url origin git@github.com:activepieces/ap-analytics.git`.
+- **Internal tools run on DigitalOcean, but not all the same way.** `activepieces/discover` uses a **droplet** driven by Actions over SSH (`.github/workflows/deploy.yml` — build, rsync, `pm2 reload`), with nginx and certbot in front. `ap-analytics` uses **App Platform** instead: DO builds the Dockerfile, redeploys on push by itself, and issues TLS, so there is no server to log into and the repo carries no deploy workflow at all. Neither repo says which it is, so check the DO dashboard before assuming. Runbook: `DEPLOYMENT.md` in ap-analytics.
