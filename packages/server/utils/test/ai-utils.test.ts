@@ -112,3 +112,38 @@ describe('aiUtils.buildWebSearchToolsOrThrow', () => {
         expect(aiUtils.buildWebSearchToolsOrThrow({ provider: AIProviderName.AZURE, auth: { apiKey: 'key' }, webSearchEnabled: false })).toEqual({})
     })
 })
+
+describe('aiUtils.createModelForImages', () => {
+    const gatewayConfig = { accountId: 'account', gatewayId: 'gateway' }
+
+    it('builds an image model for a Cloudflare Gateway model, as the piece does', () => {
+        const model = aiUtils.createModelForImages({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            auth: { apiKey: 'key' },
+            config: gatewayConfig,
+            modelId: 'openai/dall-e-3',
+        })
+
+        expect(model).toBeDefined()
+    })
+
+    it('builds an image model for a gateway submodel it has no dedicated branch for', () => {
+        const model = aiUtils.createModelForImages({
+            provider: AIProviderName.CLOUDFLARE_GATEWAY,
+            auth: { apiKey: 'key' },
+            config: gatewayConfig,
+            modelId: 'workers-ai/flux',
+        })
+
+        expect(model).toBeDefined()
+    })
+
+    it('returns nothing for a provider with no image model, so the caller can fall back to text', () => {
+        expect(aiUtils.createModelForImages({
+            provider: AIProviderName.GOOGLE,
+            auth: { apiKey: 'key' },
+            config: {},
+            modelId: 'gemini-2.5-flash',
+        })).toBeUndefined()
+    })
+})
