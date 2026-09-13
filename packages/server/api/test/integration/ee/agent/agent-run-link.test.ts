@@ -314,6 +314,17 @@ describe('a flow step that links a saved agent', () => {
         expect(JSON.stringify(replay.json())).toContain('already had its agent run')
     })
 
+    it('runs when two steps share the paused name but name the same agent, since nothing is ambiguous', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId], siblingAgentId: agent.externalId, siblingSharesName: true })
+
+        const response = await startRun(ctx, { agentId: agent.externalId }, bound)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('refuses a flow where two steps share the paused step name', async () => {
         const ctx = await context()
         const mine = await createAgent(ctx)

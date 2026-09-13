@@ -131,12 +131,12 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     }
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowRun.flowVersionId)
     const named = flowStructureUtil.getAllSteps(flowVersion.trigger).filter((candidate) => candidate.name === waitpoint.stepName)
-    if (named.length > 1) {
-        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `More than one step in this flow is called "${waitpoint.stepName}", so which one paused is ambiguous. Rename one of them.` } })
-    }
-    const [step] = named
-    if (isNil(step) || !flowStructureUtil.isAgentPiece(step) || step.settings.input?.[AgentPieceProps.AGENT_ID] !== externalId) {
+    const namingThisAgent = named.filter((candidate) => flowStructureUtil.isAgentPiece(candidate) && candidate.settings.input?.[AgentPieceProps.AGENT_ID] === externalId)
+    if (namingThisAgent.length === 0) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'This step did not name that agent when the flow was saved. An agent has to be picked on the step, not supplied while the flow runs.' } })
+    }
+    if (namingThisAgent.length !== named.length) {
+        throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `More than one step in this flow is called "${waitpoint.stepName}" and they do not run the same agent, so which one paused is ambiguous. Rename one of them.` } })
     }
     const agent = await agentService(log).getProjectVisibleByExternalId({ projectId, externalId })
     if (isNil(agent)) {
