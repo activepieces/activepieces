@@ -88,15 +88,31 @@ export async function runUpdateEvent(
     eventId: eventId,
   });
 
-  let attendeeFormattedList: calendar_v3.Schema$EventAttendee[] = [];
-  if (Array.isArray(attendees) && attendees.length > 0) {
-    attendeeFormattedList = attendees.map((email) => ({ email }));
-  } else if (
-    currentEvent.data.attendees &&
-    Array.isArray(currentEvent.data.attendees)
-  ) {
-    attendeeFormattedList = currentEvent.data.attendees;
-  }
+  const overrides: calendar_v3.Schema$Event = {
+    ...(title !== undefined && { summary: title }),
+    ...(description !== undefined && { description }),
+    ...(location !== undefined && { location }),
+    ...(colorId !== undefined && { colorId }),
+    ...(Array.isArray(attendees) &&
+      attendees.length > 0 && {
+        attendees: attendees.map((email) => ({ email })),
+      }),
+    ...(start_date_time !== undefined && {
+      start: toEventDateTime({ value: start_date_time, current: currentEvent.data.start }),
+    }),
+    ...(end_date_time !== undefined && {
+      end: toEventDateTime({ value: end_date_time, current: currentEvent.data.end }),
+    }),
+    ...(guests_can_invite_others !== undefined && {
+      guestsCanInviteOthers: guests_can_invite_others,
+    }),
+    ...(guests_can_modify !== undefined && {
+      guestsCanModify: guests_can_modify,
+    }),
+    ...(guests_can_see_other_guests !== undefined && {
+      guestsCanSeeOtherGuests: guests_can_see_other_guests,
+    }),
+  };
 
   const response = await calendar.events.update({
     calendarId: calendar_id,
@@ -104,28 +120,7 @@ export async function runUpdateEvent(
     conferenceDataVersion: 1,
     requestBody: {
       ...currentEvent.data,
-      summary: title ?? currentEvent.data.summary,
-      attendees: attendeeFormattedList,
-      description: description ?? currentEvent.data.description,
-      colorId: colorId ?? currentEvent.data.colorId,
-      location: location ?? currentEvent.data.location,
-      start: start_date_time
-        ? {
-            dateTime: dayjs(start_date_time).format(
-              'YYYY-MM-DDTHH:mm:ss.sssZ'
-            ),
-          }
-        : currentEvent.data.start,
-      end: end_date_time
-        ? {
-            dateTime: dayjs(end_date_time).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
-          }
-        : currentEvent.data.end,
-      guestsCanInviteOthers:
-        guests_can_invite_others ?? currentEvent.data.guestsCanInviteOthers,
-      guestsCanModify: guests_can_modify ?? currentEvent.data.guestsCanModify,
-      guestsCanSeeOtherGuests:
-        guests_can_see_other_guests ?? currentEvent.data.guestsCanSeeOtherGuests,
+      ...overrides,
     },
   });
 
@@ -144,3 +139,16 @@ export const updateEventAction = createAction({
   outputSchema: eventOutputSchema,
   run: runUpdateEvent,
 });
+
+function toEventDateTime({
+  value,
+  current,
+}: {
+  value: string;
+  current: calendar_v3.Schema$EventDateTime | undefined;
+}): calendar_v3.Schema$EventDateTime {
+  return {
+    dateTime: dayjs(value).format('YYYY-MM-DDTHH:mm:ss.sssZ'),
+    ...(current?.timeZone && { timeZone: current.timeZone }),
+  };
+}
