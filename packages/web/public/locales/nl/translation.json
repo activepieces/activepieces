@@ -711,7 +711,7 @@
   "Voice input": "Spraak-invoer",
   "Drop files here": "Sleep bestanden hier naartoe",
   "Release to add files to your message": "Loslaten om bestanden aan je bericht toe te voegen",
-  "Credits are charged on what each message actually costs, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.": "",
+  "Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.": "",
   "Expired": "Verlopen",
   "Using this {name} account": "Dit {name} account wordt gebruikt",
   "Which {name} account should I use?": "Welk {name} account moet ik gebruiken?",
