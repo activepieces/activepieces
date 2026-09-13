@@ -11,7 +11,7 @@ const TIER = { id: 'fast', thinkingBudget: 5_000, modelId: 'anthropic/claude-hai
 
 const MALFORMED_INPUT = '{ query: "activepieces pricing", }'
 
-async function turnWhereTheModelRepairsWith(repairText: string): Promise<{ ranWith: unknown[] }> {
+async function turnWhereTheModelRepairsWith(repairText: string): Promise<unknown[]> {
     const ranWith: unknown[] = []
     let streamed = 0
     const model = new MockLanguageModelV3({
@@ -62,24 +62,38 @@ async function turnWhereTheModelRepairsWith(repairText: string): Promise<{ ranWi
         abortSignal: new AbortController().signal,
         log: silentLog,
     })
-    return { ranWith }
+    return ranWith
 }
 
 describe('repairing a tool call the model got wrong', () => {
     it('runs the tool when the model fences its corrected JSON, which is how models actually answer', async () => {
-        const { ranWith } = await turnWhereTheModelRepairsWith('```json\n{"query":"activepieces pricing"}\n```')
+        const ranWith = await turnWhereTheModelRepairsWith('```json\n{"query":"activepieces pricing"}\n```')
 
         expect(ranWith).toEqual([{ query: 'activepieces pricing' }])
     })
 
     it('runs the tool when the model answers with bare JSON', async () => {
-        const { ranWith } = await turnWhereTheModelRepairsWith('{"query":"activepieces pricing"}')
+        const ranWith = await turnWhereTheModelRepairsWith('{"query":"activepieces pricing"}')
+
+        expect(ranWith).toEqual([{ query: 'activepieces pricing' }])
+    })
+
+    it('runs the tool when the model tags the fence in caps or not at all', async () => {
+        const upper = await turnWhereTheModelRepairsWith('```JSON\n{"query":"activepieces pricing"}\n```')
+        const untagged = await turnWhereTheModelRepairsWith('```\n{"query":"activepieces pricing"}\n```')
+
+        expect(upper).toEqual([{ query: 'activepieces pricing' }])
+        expect(untagged).toEqual([{ query: 'activepieces pricing' }])
+    })
+
+    it('runs the tool when the model adds a sentence after the JSON', async () => {
+        const ranWith = await turnWhereTheModelRepairsWith('{"query":"activepieces pricing"}\n\nLet me know if that helps!')
 
         expect(ranWith).toEqual([{ query: 'activepieces pricing' }])
     })
 
     it('does not run the tool on text that is not JSON at all, rather than feeding it prose', async () => {
-        const { ranWith } = await turnWhereTheModelRepairsWith('Sure! Here is the corrected call.')
+        const ranWith = await turnWhereTheModelRepairsWith('Sure! Here is the corrected call.')
 
         expect(ranWith).toEqual([])
     })

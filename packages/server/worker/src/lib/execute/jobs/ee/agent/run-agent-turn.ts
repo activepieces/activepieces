@@ -1,7 +1,7 @@
-import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
-import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
+import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
@@ -116,6 +116,10 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             }
         },
         repairToolCall: async ({ toolCall, error }) => {
+            if (NoSuchToolError.isInstance(error)) {
+                log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
+                return null
+            }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
@@ -331,9 +335,8 @@ function fingerprintInput(input: unknown): string {
     return data ?? ''
 }
 
-function jsonInputFrom(text: string): string | undefined {
-    const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(text)
-    const candidate = (fenced?.[1] ?? text).trim()
+export function jsonInputFrom(text: string): string | undefined {
+    const candidate = text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)
     const { error } = tryCatchSync(() => JSON.parse(candidate))
     return isNil(error) ? candidate : undefined
 }
@@ -342,7 +345,7 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
     const cause = RetryError.isInstance(error) ? error.lastError : error
     const apiError = APICallError.isInstance(cause) ? cause : undefined
     const apError = apErrorOf(cause)
-    const message = cause instanceof Error ? cause.message : String(cause)
+    const message = formatPieceError(cause).message
     if (apError?.code === ErrorCode.QUOTA_EXCEEDED
         || apiError?.statusCode === 402
         || CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))

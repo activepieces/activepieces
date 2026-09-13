@@ -3,7 +3,7 @@ import { AgentRunSource } from '@activepieces/shared'
 import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
 
-import { classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+import { classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
 
 function apiError({ statusCode, message, responseBody }: { statusCode: number, message: string, responseBody?: string }): APICallError {
     return new APICallError({ message, url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode, responseBody })
@@ -135,6 +135,31 @@ describe('classifyAgentRunError', () => {
     it('keeps an unrecognised error internal', () => {
         for (const input of [new Error('Cannot read properties of undefined'), undefined, null, 'a string', {}]) {
             expect(classify(input)).toBe('internal')
+        }
+    })
+})
+
+describe('jsonInputFrom', () => {
+    it('takes the object out of whatever wrapping the model put around it', () => {
+        const wrappings = [
+            '{"query":"pricing"}',
+            '```json\n{"query":"pricing"}\n```',
+            '```JSON\n{"query":"pricing"}\n```',
+            '```\n{"query":"pricing"}\n```',
+            'Sure, here you go:\n```json\n{"query":"pricing"}\n```\nHope that helps!',
+            '{"query":"pricing"}\n\nLet me know.',
+        ]
+
+        for (const wrapping of wrappings) {
+            expect(jsonInputFrom(wrapping), wrapping).toBe('{"query":"pricing"}')
+        }
+    })
+
+    it('rejects anything that is not an object, so prose never reaches a tool', () => {
+        const rejected = ['Sure! Here is the corrected call.', '', '42', 'null', '{"query":', 'not json at all']
+
+        for (const text of rejected) {
+            expect(jsonInputFrom(text), text).toBeUndefined()
         }
     })
 })
