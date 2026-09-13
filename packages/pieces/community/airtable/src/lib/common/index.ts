@@ -233,9 +233,11 @@ async function findRecord({
   const escapedSearchValue = (searchValue ?? '')
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"');
-  const escapedSearchField = (searchField ?? '')
-    .replace(/\\/g, '\\\\')
-    .replace(/}/g, '\\}');
+  if (/[{}]/.test(searchField ?? '')) {
+    throw new Error(
+      'Search Field must not contain "{" or "}" because Airtable cannot escape braces inside a field reference.'
+    );
+  }
   const allRecords: AirtableRecord[] = [];
   let offset: string | undefined = undefined;
 
@@ -248,7 +250,7 @@ async function findRecord({
         token,
       },
       queryParams: {
-        filterByFormula: `FIND("${escapedSearchValue}",{${escapedSearchField}})`,
+        filterByFormula: `FIND("${escapedSearchValue}",{${searchField}})`,
         pageSize: '100',
         ...(limitToView ? { view: limitToView } : {}),
         ...(offset ? { offset } : {}),
