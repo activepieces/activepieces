@@ -8,6 +8,7 @@ import {
 import { useFormContext } from 'react-hook-form';
 
 import { AgentLink } from '@/app/builder/step-settings/agent-settings/agent-link';
+import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent-link-utils';
 import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,9 +66,9 @@ export const AgentSettings = (props: AgentSettingsProps) => {
   const actionName = (props.step.settings as PieceActionSettings)
     .actionName as string;
   const selectedAction = pieceModel.actions[actionName];
-  const linkedAgentId = form.watch(
-    `settings.input.${AgentPieceProps.AGENT_ID}`,
-  ) as string | undefined;
+  const linkedAgentId = agentLinkUtils.externalIdOf(
+    form.watch(`settings.input.${AgentPieceProps.AGENT_ID}`),
+  );
   const comesFromTheAgent = [
     AgentPieceProps.AGENT_TOOLS,
     AgentPieceProps.STRUCTURED_OUTPUT,

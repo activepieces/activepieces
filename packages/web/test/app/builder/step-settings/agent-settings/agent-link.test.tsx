@@ -104,8 +104,8 @@ function agent({
   };
 }
 
-const Harness = () => {
-  const form = useForm({ defaultValues: { settings: { input: {} } } });
+const Harness = ({ agentId }: { agentId?: string }) => {
+  const form = useForm({ defaultValues: { settings: { input: { agentId } } } });
   return (
     <FormProvider {...form}>
       <AgentLink disabled={false} />
@@ -116,12 +116,12 @@ const Harness = () => {
 let container: HTMLDivElement;
 let root: Root;
 
-function render() {
+function render(agentId?: string) {
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
   act(() => {
-    root.render(<Harness />);
+    root.render(<Harness agentId={agentId} />);
   });
 }
 
@@ -169,6 +169,15 @@ describe('the agent picker on a Run Agent step', () => {
 
     expect(container.textContent).toContain('Ops');
     expect(container.textContent).not.toContain('Mine');
+  });
+
+  it('treats a blank id as nothing linked, so a fresh step is not told its agent is missing', () => {
+    render('');
+
+    expect(container.querySelector('[data-testid="agent-picker"]')).not.toBe(
+      null,
+    );
+    expect(container.textContent).not.toContain('not in this project');
   });
 
   it('says the list failed instead of looking like an empty account', () => {

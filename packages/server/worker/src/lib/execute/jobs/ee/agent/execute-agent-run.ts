@@ -1,6 +1,6 @@
 import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
@@ -29,7 +29,6 @@ const STREAM_IDLE_REPORT_MS = 90_000
 // heartbeat (client + DB `updated`) and the worker's 30s BullMQ lock extension; set generously,
 // well beyond any real chat turn, since its sole job is rescuing a stuck turn that lock-renewal
 // would otherwise pin to a slot forever.
-const MAX_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
 // Discovery-only eval must not touch the environment: neutralize every side-effecting execute
 // tool (raw action runs AND sandboxed code), not just ap_execute_action — otherwise a non-live
 // `agent-evals` run could still execute ap_run_code against the developer's project.
@@ -148,9 +147,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // signal misses. Routes through the same abortController as user-cancel and the
             // idle watchdog, so it lands in the existing cancel-save branch (status → IDLE).
             turnWallClockTimer = setTimeout(() => {
-                log.error({ conversation: { id: conversationId }, maxTurnMs: MAX_TURN_WALL_CLOCK_MS }, 'Chat turn exceeded max wall-clock — aborting')
+                log.error({ conversation: { id: conversationId }, maxTurnMs: MAX_AGENT_TURN_WALL_CLOCK_MS }, 'Chat turn exceeded max wall-clock — aborting')
                 abortController.abort()
-            }, MAX_TURN_WALL_CLOCK_MS)
+            }, MAX_AGENT_TURN_WALL_CLOCK_MS)
 
             const checkCancelled = async () => {
                 const { data: response } = await tryCatch(() => ctx.apiClient.executeAgentTool({

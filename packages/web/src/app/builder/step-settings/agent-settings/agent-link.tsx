@@ -14,6 +14,7 @@ import { useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent-link-utils';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
@@ -48,9 +49,9 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
     [agents],
   );
 
-  const linkedExternalId = form.watch(
-    `settings.input.${AgentPieceProps.AGENT_ID}`,
-  ) as string | undefined;
+  const linkedExternalId = agentLinkUtils.externalIdOf(
+    form.watch(`settings.input.${AgentPieceProps.AGENT_ID}`),
+  );
   const linked = agents.find((agent) => agent.externalId === linkedExternalId);
   const { data: linkedAgent } = agentsQueries.useAgent({
     id: linked?.id ?? '',
