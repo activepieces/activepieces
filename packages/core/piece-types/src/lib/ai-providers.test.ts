@@ -165,3 +165,85 @@ describe('every managed model we offer has a credit weight somebody chose', () =
         }
     })
 })
+
+describe('aiProviderUtils.isChatModelId', () => {
+    const isChat = (modelId: string) => aiProviderUtils.isChatModelId({ modelId })
+
+    it.each([
+        'whisper-1',
+        'canary-whisper',
+        'tts-1',
+        'tts-1-hd-1106',
+        'gpt-4o-mini-tts',
+        'gpt-4o-transcribe',
+        'qwen-tts',
+    ])('rejects %s, which speaks audio rather than chat', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'text-embedding-3-small',
+        'text-embedding-3-large',
+        'text-embedding-v3',
+        'gemini-embedding-001',
+        'embedding-3',
+        'bge-reranker-v2-m3',
+    ])('rejects %s, which returns vectors the chat actions cannot read', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'omni-moderation-latest',
+        'text-moderation-stable',
+        'sora-2',
+        'codex-mini-latest',
+        'computer-use-preview',
+        'babbage-002',
+        'davinci-002',
+        'gpt-4o-realtime-preview',
+        'gpt-4o-audio-preview',
+        'glm-4-voice',
+        'speech-01-turbo',
+    ])('rejects %s, which needs an endpoint other than chat completion', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'gpt-image-1',
+        'gpt-image-2',
+        'dall-e-3',
+        'dall-e-2',
+    ])('rejects %s, so an image model never lands in a text dropdown', (modelId) => {
+        expect(isChat(modelId)).toBe(false)
+    })
+
+    it.each([
+        'gpt-4o',
+        'gpt-4.1-mini',
+        'o3',
+        'claude-sonnet-4-6',
+        'gemini-2.5-pro',
+        'deepseek-chat',
+        'kimi-k2',
+    ])('accepts %s', (modelId) => {
+        expect(isChat(modelId)).toBe(true)
+    })
+
+    it('accepts a fine-tune, which is chat-callable however its id is shaped', () => {
+        expect(isChat('ft:gpt-4o-2024-08-06:acme:support:9xYz')).toBe(true)
+    })
+
+    it('accepts a model id nobody has seen, so a self-hoster keeps their own model', () => {
+        expect(isChat('my-company-llm-v2')).toBe(true)
+    })
+
+    it('accepts an image-reading chat model, which the bare image rule used to eat', () => {
+        expect(isChat('gpt-4o-image-input')).toBe(true)
+        expect(isChat('chatgpt-image-describer')).toBe(true)
+    })
+
+    it('ignores case and surrounding space, so a provider echoing an odd id still filters', () => {
+        expect(isChat(' WHISPER-1 ')).toBe(false)
+        expect(isChat(' GPT-4O ')).toBe(true)
+    })
+})

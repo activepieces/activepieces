@@ -1,6 +1,6 @@
 import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { modelCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderModelType, AiProviderProjectScope, aiProviderUtils, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
@@ -439,7 +439,8 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             throw error
         }
         const catalog = await modelCatalog.load()
-        modelsCache.set(cacheKey, data.map(model => ({
+        const offerableModels = 'models' in config ? data : data.filter(model => model.type !== AIProviderModelType.TEXT || aiProviderUtils.isChatModelId({ modelId: model.id }))
+        modelsCache.set(cacheKey, offerableModels.map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,

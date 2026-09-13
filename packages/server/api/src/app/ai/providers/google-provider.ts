@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, GoogleProviderAuthConfig, GoogleProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, GoogleProviderAuthConfig, GoogleProviderConfig, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { AIProviderStrategy } from './ai-provider'
 
@@ -17,21 +17,30 @@ export const googleProvider: AIProviderStrategy<GoogleProviderAuthConfig, Google
                 'Content-Type': 'application/json',
             },
         })
-        return res.body.models.map((model: GoogleModel) => ({
-            id: stripModelsPrefix(model.name),
-            name: model.displayName,
-            type: model.name.includes('image') ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
-        }))
+        return res.body.models
+            .filter((model: GoogleModel) => supportsGenerateContent(model))
+            .map((model: GoogleModel) => ({
+                id: stripModelsPrefix(model.name),
+                name: model.displayName,
+                type: model.name.includes('image') ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
+            }))
     },
 }
 
 const GOOGLE_MODEL_PREFIX = 'models/'
 
+const GENERATE_CONTENT_METHOD = 'generateContent'
+
 function stripModelsPrefix(modelName: string): string {
     return modelName.startsWith(GOOGLE_MODEL_PREFIX) ? modelName.slice(GOOGLE_MODEL_PREFIX.length) : modelName
+}
+
+function supportsGenerateContent(model: GoogleModel): boolean {
+    return isNil(model.supportedGenerationMethods) || model.supportedGenerationMethods.includes(GENERATE_CONTENT_METHOD)
 }
 
 type GoogleModel = {
     name: string
     displayName: string
+    supportedGenerationMethods?: string[]
 }

@@ -106,6 +106,7 @@ export {
   FAIL_PARENT_ON_FAILURE_HEADER,
   ACTIVEPIECES_CHAT_TIERS,
   DEFAULT_CHAT_TIER_ID,
+  aiProviderUtils,
 } from '@activepieces/core-piece-types';
 export type {
   McpAuthConfig,

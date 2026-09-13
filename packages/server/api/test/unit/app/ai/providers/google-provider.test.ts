@@ -54,6 +54,51 @@ describe('googleProvider.listModels', () => {
         )
     })
 
+    it('drops a model that cannot generate content, so aqa and embeddings leave the picker', async () => {
+        mockSendRequest.mockResolvedValue({
+            body: {
+                models: [
+                    { name: 'models/gemini-2.5-flash', displayName: 'Gemini 2.5 Flash', supportedGenerationMethods: ['generateContent'] },
+                    { name: 'models/gemini-embedding-001', displayName: 'Gemini Embedding', supportedGenerationMethods: ['embedContent'] },
+                    { name: 'models/aqa', displayName: 'Attributed Question Answering', supportedGenerationMethods: ['generateAnswer'] },
+                ],
+            },
+        })
+
+        const models = await googleProvider.listModels({ apiKey: 'test-key' }, {})
+
+        expect(models.map((model) => model.id)).toEqual(['gemini-2.5-flash'])
+    })
+
+    it('drops imagen, which the image action reaches through generateContent and imagen never answers', async () => {
+        mockSendRequest.mockResolvedValue({
+            body: {
+                models: [
+                    { name: 'models/imagen-3.0-generate-002', displayName: 'Imagen 3', supportedGenerationMethods: ['predict'] },
+                    { name: 'models/gemini-2.5-flash-image', displayName: 'Nano Banana', supportedGenerationMethods: ['generateContent'] },
+                ],
+            },
+        })
+
+        const models = await googleProvider.listModels({ apiKey: 'test-key' }, {})
+
+        expect(models).toEqual([
+            { id: 'gemini-2.5-flash-image', name: 'Nano Banana', type: AIProviderModelType.IMAGE },
+        ])
+    })
+
+    it('keeps a model that declares no methods at all, so an unfamiliar response is not emptied', async () => {
+        mockSendRequest.mockResolvedValue({
+            body: {
+                models: [{ name: 'models/gemini-4-pro', displayName: 'Gemini 4 Pro' }],
+            },
+        })
+
+        const models = await googleProvider.listModels({ apiKey: 'test-key' }, {})
+
+        expect(models.map((model) => model.id)).toEqual(['gemini-4-pro'])
+    })
+
     it('still classifies image models by their name', async () => {
         mockSendRequest.mockResolvedValue({
             body: {
