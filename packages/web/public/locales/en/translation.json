@@ -1128,6 +1128,8 @@
   "Concurrency limit must be a positive number": "Concurrency limit must be a positive number",
   "Check the health of your workers": "Check the health of your workers",
   "Worker groups": "Worker groups",
+  "Unlock Worker Groups": "Unlock Worker Groups",
+  "Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest": "Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest",
   "Upgrade to Dedicated Workers": "Upgrade to Dedicated Workers",
   "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.": "Your automations run on shared workers where strict sandboxing adds overhead to every execution. Dedicated workers give you your own execution pool that stays warm and ready, so your automations start much faster.",
   "Dedicated Workers Active": "Dedicated Workers Active",
