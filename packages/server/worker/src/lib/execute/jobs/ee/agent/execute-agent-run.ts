@@ -233,7 +233,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                     return runAgentTurn({
                         ...spreadIfDefined('stepCeiling', data.maxSteps),
                         model,
-                        fastModel: firstStepUsesFastModel({ source, dryRun }) ? fastModel : undefined,
+                        fastModel: firstStepUsesFastModel({ source, dryRun, runsASavedAgent: !isNil(data.promptOverride) }) ? fastModel : undefined,
                         provider,
                         systemPrompt: config.systemPrompt,
                         messages: config.messages as ModelMessage[],

@@ -468,6 +468,6 @@ export type AgentTurnResult = {
 
 type AgentRunErrorClass = 'credit' | 'user' | 'internal'
 
-export function firstStepUsesFastModel({ source, dryRun }: { source: AgentRunSource, dryRun?: boolean }): boolean {
-    return dryRun !== true && source !== AgentRunSource.FLOW_STEP
+export function firstStepUsesFastModel({ source, dryRun, runsASavedAgent }: { source: AgentRunSource, dryRun?: boolean, runsASavedAgent: boolean }): boolean {
+    return dryRun !== true && !(source === AgentRunSource.FLOW_STEP && runsASavedAgent)
 }
