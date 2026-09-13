@@ -67,7 +67,7 @@ function createImageCapableModel({ resolved, modelId, flowStep }: {
         throw new Error(`Provider ${resolved.provider} does not support image models`)
     }
     const { provider, auth, config } = resolved
-    const imageModel = aiUtils.createModelForImages({ provider, auth, config, modelId })
+    const imageModel = aiUtils.createModelForImages({ provider, auth, config, modelId, flowStep })
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
