@@ -66,5 +66,11 @@
   "Authors": "著者",
   "Filter by teams": "チームでフィルター",
   "Filter by authors": "著者でフィルター",
-  "Filter by project status (leave empty to include all)": "プロジェクトの状態でフィルター (空のままにするとすべてを含みます)"
+  "Filter by project status (leave empty to include all)": "プロジェクトの状態でフィルター (空のままにするとすべてを含みます)",
+  "Estimate": "Estimate",
+  "Due date": "期限",
+  "Cycle": "Cycle",
+  "Parent": "Parent",
+  "Only when these fields change": "Only when these fields change",
+  "Trigger only when at least one of the selected fields changed. Leave empty to trigger on every update.": "Trigger only when at least one of the selected fields changed. Leave empty to trigger on every update."
 }
