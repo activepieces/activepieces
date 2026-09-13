@@ -186,7 +186,7 @@ export function ChatModelSelector({
           {showCredits && (
             <div className="border-t px-3 py-2 text-xs text-muted-foreground">
               {t(
-                'Credits are charged on what each message actually costs, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
+                'Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
                 { count: CHAT_CREDITS_PER_TOOL_CALL },
               )}
             </div>
