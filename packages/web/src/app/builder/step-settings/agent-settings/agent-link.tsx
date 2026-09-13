@@ -8,12 +8,7 @@ import {
   Permission,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import {
-  BotIcon,
-  ExternalLinkIcon,
-  Link2OffIcon,
-  PlusIcon,
-} from 'lucide-react';
+import { ExternalLinkIcon, Link2OffIcon, PlusIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Link } from 'react-router-dom';
@@ -26,6 +21,11 @@ import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   agentsQueries,
   useAgentsAvailable,
@@ -186,37 +186,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           </Button>
         </PermissionNeededTooltip>
       ) : (
-        <div className="flex flex-col gap-3 rounded-lg border p-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 items-center gap-2">
-              <BotIcon className="size-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm font-medium">
-                {isNil(linked)
-                  ? stillFindingIt
-                    ? t('Loading')
-                    : t('Agent')
-                  : linked.displayName}
-              </span>
-            </div>
-            {!isNil(linked) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto shrink-0 px-2 py-1"
-                asChild
-              >
-                <Link
-                  to={`/agents/${linked.id}`}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {t('Edit agent')}
-                  <ExternalLinkIcon className="size-3.5" />
-                </Link>
-              </Button>
-            )}
-          </div>
-
+        <div className="flex flex-col gap-2.5 rounded-lg border p-3">
           {!isNil(instructionsPreview) && (
             <p className="line-clamp-2 text-xs text-muted-foreground">
               {instructionsPreview}
@@ -250,28 +220,41 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
               ? t('Not in this project, so this step cannot run.')
               : !linked.isPublished
               ? t('Not published yet, so a flow has nothing to run.')
-              : t(
-                  'Runs the published version. Editing it changes every flow using it.',
-                )}
+              : t('Shared with every flow that uses it.')}
           </p>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="self-start"
-            disabled={disabled || isNil(linkedConfig)}
-            onClick={detach}
-          >
-            <Link2OffIcon className="size-4" />
-            {t('Detach & customize')}
-          </Button>
-          {!isNil(linkedConfig) && (
-            <p className="text-xs text-muted-foreground">
-              {t(
-                'Copies the tools and model. Instructions stay with the agent.',
-              )}
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {!isNil(linked) && (
+              <Button variant="outline" size="sm" asChild>
+                <Link
+                  to={`/agents/${linked.id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {t('Edit agent')}
+                  <ExternalLinkIcon className="size-3.5" />
+                </Link>
+              </Button>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={disabled || isNil(linkedConfig)}
+                  onClick={detach}
+                >
+                  <Link2OffIcon className="size-4" />
+                  {t('Detach')}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {t(
+                  'Copies the tools and model. Instructions stay with the agent.',
+                )}
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       )}
     </FormItem>
