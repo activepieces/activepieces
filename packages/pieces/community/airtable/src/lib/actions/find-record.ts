@@ -24,7 +24,7 @@ export const airtableFindRecordAction = createAction({
     searchValue: Property.ShortText({
       displayName: 'Search Value',
       required: true,
-      description: 'Records whose search field contains this text are returned.',
+      description: 'Case-sensitive. Records whose field contains this text are returned.',
       placeholder: 'e.g. jane@example.com',
     }),
     limitToView: airtableCommon.views,

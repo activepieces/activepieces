@@ -128,15 +128,13 @@ async function listRecords({
         pageSize: pageSize.toString(),
         ...(offset ? { offset } : {}),
       },
+      retries: 3,
     };
     const response = await httpClient.sendRequest<{
       records: AirtableRecord[];
       offset?: string;
     }>(request);
 
-    if (response.status !== 200) {
-      throw new Error(`Airtable returned ${response.status} while listing records`);
-    }
     allRecords.push(...response.body.records);
     offset = response.body.offset;
   } while (offset && allRecords.length < maxRecords);
@@ -235,6 +233,9 @@ async function findRecord({
   const escapedSearchValue = (searchValue ?? '')
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"');
+  const escapedSearchField = (searchField ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/}/g, '\\}');
   const allRecords: AirtableRecord[] = [];
   let offset: string | undefined = undefined;
 
@@ -247,10 +248,12 @@ async function findRecord({
         token,
       },
       queryParams: {
-        filterByFormula: `FIND("${escapedSearchValue}",{${searchField}})`,
+        filterByFormula: `FIND("${escapedSearchValue}",{${escapedSearchField}})`,
+        pageSize: '100',
         ...(limitToView ? { view: limitToView } : {}),
         ...(offset ? { offset } : {}),
       },
+      retries: 3,
     };
 
     const response = await httpClient.sendRequest<{
@@ -258,9 +261,6 @@ async function findRecord({
       offset?: string;
     }>(request);
 
-    if (response.status !== 200) {
-      throw new Error(`Airtable returned ${response.status} while listing records`);
-    }
     allRecords.push(...response.body.records);
     offset = response.body.offset;
   } while (offset && allRecords.length < MAX_FIND_RECORDS);
@@ -668,10 +668,10 @@ export const airtableCommon = {
             description: field.description,
             required: false,
             ...(field.type === 'date'
-              ? { placeholder: 'March 5, 2024' }
+              ? { placeholder: '2024-03-05' }
               : {}),
             ...(field.type === 'dateTime'
-              ? { placeholder: 'March 5, 2024 10:30' }
+              ? { placeholder: '2024-03-05T10:30:00Z' }
               : {}),
           };
 
