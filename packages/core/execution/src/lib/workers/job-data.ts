@@ -370,8 +370,11 @@ export const EventDestinationJobData = z.object({
 
 export type EventDestinationJobData = z.infer<typeof EventDestinationJobData>
 
-export const AiStepAction = z.enum(['ASK_AI', 'SUMMARIZE_TEXT', 'CLASSIFY_TEXT'])
-export type AiStepAction = z.infer<typeof AiStepAction>
+export enum AiStepAction {
+    ASK_AI = 'ASK_AI',
+    SUMMARIZE_TEXT = 'SUMMARIZE_TEXT',
+    CLASSIFY_TEXT = 'CLASSIFY_TEXT',
+}
 
 export const AiStepWebSearchOptions = z.object({
     maxUses: z.number().optional(),
@@ -392,7 +395,7 @@ export const AiStepWebSearch = z.object({
 })
 export type AiStepWebSearch = z.infer<typeof AiStepWebSearch>
 
-export const ExecuteAiJobData = z.object({
+const AiStepJobBase = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_AI),
     requestId: z.string(),
@@ -401,18 +404,39 @@ export const ExecuteAiJobData = z.object({
     flowId: z.string(),
     flowRunId: z.string(),
     waitpointId: z.string(),
-    action: AiStepAction,
     provider: z.enum(AIProviderName),
     providerConfigId: z.string().optional(),
     modelId: z.string(),
     prompt: z.string(),
-    text: z.string().optional(),
-    categories: z.array(z.string()).optional(),
-    conversation: z.array(z.record(z.string(), z.unknown())).optional(),
     maxOutputTokens: z.number().optional(),
     temperature: z.number().optional(),
     webSearch: AiStepWebSearch.optional(),
 })
+
+export const AskAiJobData = AiStepJobBase.extend({
+    action: z.literal(AiStepAction.ASK_AI),
+    conversation: z.array(z.record(z.string(), z.unknown())).optional(),
+})
+export type AskAiJobData = z.infer<typeof AskAiJobData>
+
+export const SummarizeTextJobData = AiStepJobBase.extend({
+    action: z.literal(AiStepAction.SUMMARIZE_TEXT),
+    text: z.string().optional(),
+})
+export type SummarizeTextJobData = z.infer<typeof SummarizeTextJobData>
+
+export const ClassifyTextJobData = AiStepJobBase.extend({
+    action: z.literal(AiStepAction.CLASSIFY_TEXT),
+    text: z.string().optional(),
+    categories: z.array(z.string()).optional(),
+})
+export type ClassifyTextJobData = z.infer<typeof ClassifyTextJobData>
+
+export const ExecuteAiJobData = z.discriminatedUnion('action', [
+    AskAiJobData,
+    SummarizeTextJobData,
+    ClassifyTextJobData,
+])
 export type ExecuteAiJobData = z.infer<typeof ExecuteAiJobData>
 
 export const JobData = z.union([
