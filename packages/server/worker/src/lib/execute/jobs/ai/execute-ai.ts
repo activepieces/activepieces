@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
-import { AiStepAction, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
+import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
 
@@ -88,25 +88,26 @@ function flowStepMetadata(data: ExecuteAiJobData): FlowStepMetadata {
 }
 
 function buildMessages(data: ExecuteAiJobData): ModelMessage[] {
-    const history = (data.conversation ?? []) as ModelMessage[]
     switch (data.action) {
-        case AiStepAction.enum.ASK_AI:
+        case AiStepAction.ASK_AI: {
+            const history = (data.conversation ?? []) as ModelMessage[]
             return [...history, { role: 'user', content: data.prompt }]
-        case AiStepAction.enum.SUMMARIZE_TEXT:
+        }
+        case AiStepAction.SUMMARIZE_TEXT:
             return [{ role: 'user', content: `${data.prompt} Summarize the following text : ${data.text ?? ''}` }]
-        case AiStepAction.enum.CLASSIFY_TEXT:
+        case AiStepAction.CLASSIFY_TEXT:
             return [{ role: 'user', content: classificationPrompt(data) }]
     }
 }
 
-function classificationPrompt(data: ExecuteAiJobData): string {
+function classificationPrompt(data: ClassifyTextJobData): string {
     return `As a text classifier, your task is to assign one of the following categories to the provided text: ${(data.categories ?? []).join(', ')}. Please respond with only the selected category as a single word, and nothing else.
       Text to classify: "${data.text ?? ''}"`
 }
 
 function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: string, sources: unknown }): unknown {
     switch (data.action) {
-        case AiStepAction.enum.ASK_AI: {
+        case AiStepAction.ASK_AI: {
             const conversation = isNil(data.conversation) ? undefined : [
                 ...(data.conversation as ModelMessage[]),
                 { role: 'user' as const, content: data.prompt },
@@ -117,9 +118,9 @@ function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: s
                 : text
             return { answer, ...spreadIfDefined('conversation', conversation) }
         }
-        case AiStepAction.enum.SUMMARIZE_TEXT:
+        case AiStepAction.SUMMARIZE_TEXT:
             return { answer: text }
-        case AiStepAction.enum.CLASSIFY_TEXT: {
+        case AiStepAction.CLASSIFY_TEXT: {
             const label = text.trim()
             if (!(data.categories ?? []).includes(label)) {
                 throw new Error('Unable to classify the text into the provided categories.')
