@@ -31,6 +31,10 @@ import { gmailGetLabelAction } from './lib/actions/get-label-action';
 import { gmailGetProfileAction } from './lib/actions/get-profile-action';
 import { gmailListHistoryAction } from './lib/actions/list-history-action';
 import { gmailStopWatchAction } from './lib/actions/stop-watch-action';
+import { gmailCreateLabelAction } from './lib/actions/create-label-action';
+import { gmailAddLabelToEmailAction } from './lib/actions/add-label-to-email-action';
+import { gmailRemoveLabelFromEmailAction } from './lib/actions/remove-label-from-email-action';
+import { gmailArchiveEmailAction } from './lib/actions/archive-email-action';
 
 export {
   gmailAuth,
@@ -72,6 +76,10 @@ export const gmail = createPiece({
     gmailGetProfileAction,
     gmailListHistoryAction,
     gmailStopWatchAction,
+    gmailCreateLabelAction,
+    gmailAddLabelToEmailAction,
+    gmailRemoveLabelFromEmailAction,
+    gmailArchiveEmailAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,

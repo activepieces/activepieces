@@ -8,6 +8,13 @@
 ### STAGE 1: Build (toolchain lives here only, never in the final image) ###
 FROM node:24.14.0-bullseye-slim AS build
 
+# bullseye LTS ended 2026-08-31: deb.debian.org's index and pool now drift (404s on fetch), and
+# archive.debian.org has not picked bullseye up yet. Pin apt to a dated snapshot.debian.org
+# mirror (frozen, so Release files expire — hence Check-Valid-Until off) until the base image
+# moves to bookworm.
+RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bullseye main\ndeb http://snapshot.debian.org/archive/debian-security/20260825T000000Z bullseye-security main\n' > /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
+
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python3 g++ build-essential curl ca-certificates unzip git
 
@@ -39,10 +46,13 @@ RUN npx turbo run build --filter=@activepieces/engine && \
         --outfile=/out/worker.js
 
 # Prebuilt isolated-vm (the engine child resolves it at runtime via NODE_PATH).
-RUN --mount=type=cache,target=/root/.bun/install/cache cd /usr/src && bun install isolated-vm@6.0.2
+RUN --mount=type=cache,target=/root/.bun/install/cache cd /usr/src && bun install isolated-vm@6.2.0
 
 ### STAGE 2: Run (minimal) ###
 FROM node:24.14.0-bullseye-slim AS run
+
+RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bullseye main\ndeb http://snapshot.debian.org/archive/debian-security/20260825T000000Z bullseye-security main\n' > /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
 
 # ca-certificates: TLS for piece downloads. procps: `ps`, which tree-kill spawns to reap the engine.
 RUN apt-get update && \

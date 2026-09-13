@@ -27,7 +27,6 @@ export const aiProviderQueries = {
     useQuery({
       queryKey: aiProviderKeys.configs,
       queryFn: () => aiProviderApi.listConfigs(),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
   useProjectAiProviders: (forProjectId?: string) => {
     const projectId = forProjectId ?? authenticationSession.getProjectId();

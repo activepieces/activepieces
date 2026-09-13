@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil, unique } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -234,9 +234,11 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
+
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
@@ -273,6 +275,21 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
         return undefined
     }
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
+}
+
+function canDisableReasoning({ modelId }: { modelId: string }): boolean {
+    return REASONING_OPTIONAL_CHAT_MODELS.includes(modelId)
+}
+
+function managedChatModelIds(): string[] {
+    return unique([
+        ...ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? [],
+        ...ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.modelId),
+    ])
+}
+
+function isManagedChatModelId({ modelId }: { modelId: string }): boolean {
+    return managedChatModelIds().includes(modelId)
 }
 
 function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
@@ -348,10 +365,96 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000, creditWeight: 2 },
-    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000, creditWeight: 10 },
-    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000, creditWeight: 20 },
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', nativeModelId: 'claude-haiku-4-5', thinkingBudget: 5_000, creditWeight: 2 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', nativeModelId: 'claude-sonnet-4-6', thinkingBudget: 10_000, creditWeight: 10 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', nativeModelId: 'claude-opus-4-7', thinkingBudget: 20_000, creditWeight: 20 },
 ] as const
+
+export const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
+    'ai21/jamba-large-1.7': 6,
+    'amazon/nova-premier-v1': 6,
+    'anthropic/claude-fable-5': 45,
+    'anthropic/claude-opus-4': 45,
+    'anthropic/claude-opus-4.1': 45,
+    'anthropic/claude-opus-4.5': 20,
+    'anthropic/claude-opus-4.6': 20,
+    'anthropic/claude-opus-4.7': 20,
+    'anthropic/claude-opus-4.7-fast': 200,
+    'anthropic/claude-opus-4.8-fast': 45,
+    'anthropic/claude-opus-5': 20,
+    'anthropic/claude-opus-5-fast': 45,
+    'anthropic/claude-sonnet-4': 10,
+    'anthropic/claude-sonnet-4.5': 10,
+    'anthropic/claude-sonnet-5': 6,
+    'cohere/command-a': 6,
+    'cohere/command-r-plus-08-2024': 6,
+    'google/gemini-2.5-flash': 2,
+    'google/gemini-2.5-pro': 6,
+    'google/gemini-2.5-pro-preview': 6,
+    'google/gemini-2.5-pro-preview-05-06': 6,
+    'google/gemini-3-flash-preview': 2,
+    'google/gemini-3-pro-image': 6,
+    'google/gemini-3-pro-image-preview': 6,
+    'google/gemini-3.1-pro-preview': 6,
+    'google/gemini-3.1-pro-preview-customtools': 6,
+    'google/gemini-3.5-flash': 6,
+    'google/gemini-3.6-flash': 6,
+    'google/gemini-3.7-flash': 6,
+    'mistralai/mistral-medium-3-5': 6,
+    'moonshotai/kimi-k3': 10,
+    'openai/gpt-4.1-mini': 2,
+    'openai/gpt-5.4-mini': 2,
+    'openai/gpt-5.4-nano': 2,
+    'openai/gpt-4': 45,
+    'openai/gpt-4-turbo': 20,
+    'openai/gpt-4-turbo-preview': 20,
+    'openai/gpt-4.1': 6,
+    'openai/gpt-4o': 6,
+    'openai/gpt-4o-2024-05-13': 10,
+    'openai/gpt-4o-2024-08-06': 6,
+    'openai/gpt-4o-2024-11-20': 6,
+    'openai/gpt-5': 6,
+    'openai/gpt-5-image': 6,
+    'openai/gpt-5-pro': 90,
+    'openai/gpt-5.1': 6,
+    'openai/gpt-5.1-codex': 6,
+    'openai/gpt-5.1-codex-max': 6,
+    'openai/gpt-5.2': 10,
+    'openai/gpt-5.2-chat': 10,
+    'openai/gpt-5.2-codex': 10,
+    'openai/gpt-5.2-pro': 200,
+    'openai/gpt-5.3-chat': 10,
+    'openai/gpt-5.3-codex': 10,
+    'openai/gpt-5.4': 10,
+    'openai/gpt-5.4-image-2': 10,
+    'openai/gpt-5.4-pro': 200,
+    'openai/gpt-5.5': 20,
+    'openai/gpt-5.5-pro': 200,
+    'openai/gpt-5.6-sol': 20,
+    'openai/gpt-5.6-sol-pro': 20,
+    'openai/gpt-audio': 6,
+    'openai/gpt-chat-latest': 20,
+    'openai/o1': 45,
+    'openai/o1-pro': 500,
+    'openai/o3': 6,
+    'openai/o3-pro': 90,
+    'perplexity/sonar-deep-research': 6,
+    'perplexity/sonar-pro': 10,
+    'perplexity/sonar-pro-search': 10,
+    'perplexity/sonar-reasoning-pro': 6,
+    'sakana/fugu-ultra': 20,
+    '~anthropic/claude-fable-latest': 45,
+    '~anthropic/claude-opus-latest': 20,
+    '~anthropic/claude-sonnet-latest': 6,
+    '~google/gemini-flash-latest': 6,
+    '~google/gemini-pro-latest': 6,
+    '~moonshotai/kimi-latest': 10,
+    '~openai/gpt-latest': 20,
+}
+
+export const MODELS_AWAITING_A_CREDIT_WEIGHT = ['x-ai/grok-4.20']
+
+export const DEFAULT_MANAGED_MODEL_WEIGHT = 2
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const
 
@@ -381,6 +484,9 @@ export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
     isCuratedChatModelId,
+    managedChatModelIds,
+    isManagedChatModelId,
+    canDisableReasoning,
 }
 
 export const AI_PROVIDER_ENTITY_TYPES = {

@@ -1,4 +1,5 @@
 import { PassThrough, Readable } from 'node:stream';
+import { tryCatchSync } from '@activepieces/core-utils';
 import { BaseHttpClient } from './base-http-client';
 import { DelegatingAuthenticationConverter } from './delegating-authentication-converter';
 import { HttpError } from './http-error';
@@ -104,6 +105,14 @@ function serializeBody(
     return { body: undefined, extraHeaders: {}, isStream: false };
   }
   if (isNodeFormData(body)) {
+    // A buffered multipart body lets undici send Content-Length; a streamed one is sent
+    // chunked without a length, which strict multipart parsers reject with a 500. Streaming
+    // with an explicit content-length header is not an option: undici stalls or throws
+    // RequestContentLengthMismatchError on stream bodies that carry one.
+    const buffered = bufferFormDataIfSafe(body);
+    if (buffered !== null) {
+      return { body: buffered, extraHeaders: body.getHeaders(), isStream: false };
+    }
     const stream = new PassThrough();
     body.on('error', (error) => stream.destroy(error));
     body.pipe(stream);
@@ -184,14 +193,14 @@ function backoff(attempt: number): Promise<void> {
 }
 
 function normalizeHeaders(headers: HttpHeaders): Record<string, string> {
-  const result: Record<string, string> = {};
+  const entriesByLowerCaseKey = new Map<string, [string, string]>();
   for (const [key, value] of Object.entries(headers)) {
     if (value === undefined) {
       continue;
     }
-    result[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : value;
+    entriesByLowerCaseKey.set(key.toLowerCase(), [key, Array.isArray(value) ? value.join(', ') : value]);
   }
-  return result;
+  return Object.fromEntries(entriesByLowerCaseKey.values());
 }
 
 function toHttpHeaders(headers: Headers): HttpHeaders {
@@ -200,6 +209,15 @@ function toHttpHeaders(headers: Headers): HttpHeaders {
     result[key] = value;
   });
   return result;
+}
+
+function bufferFormDataIfSafe(body: NodeFormData): Buffer | null {
+  if (!body.hasKnownLength() || body.getLengthSync() > MAX_BUFFERED_FORM_DATA_BYTES) {
+    return null;
+  }
+  // getBuffer throws on stream parts appended with an explicit knownLength; fall back to streaming.
+  const { data } = tryCatchSync(() => body.getBuffer());
+  return data;
 }
 
 function isNodeFormData(body: unknown): body is NodeFormData {
@@ -220,7 +238,12 @@ type NodeFormData = {
   getHeaders: () => Record<string, string>;
   pipe: (...args: unknown[]) => unknown;
   on: (event: 'error', listener: (error: Error) => void) => unknown;
+  hasKnownLength: () => boolean;
+  getLengthSync: () => number;
+  getBuffer: () => Buffer;
 };
+
+const MAX_BUFFERED_FORM_DATA_BYTES = 100 * 1024 * 1024;
 
 type ResponseType = NonNullable<HttpRequest['responseType']>;
 

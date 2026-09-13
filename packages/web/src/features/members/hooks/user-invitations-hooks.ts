@@ -23,6 +23,7 @@ export const userInvitationsHooks = {
     return {
       invitations: query.data,
       isLoading: query.isLoading,
+      isError: query.isError,
       refetch: query.refetch,
     };
   },
