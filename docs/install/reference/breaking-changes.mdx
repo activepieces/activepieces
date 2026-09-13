@@ -8,6 +8,14 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Worker group runs no longer fall back to shared workers
+
+Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
+
+#### What you need to do
+
+If you assign projects to worker groups, keep at least one worker online per assigned group, or unassign the project (set its `workerGroupId` to `null`) to return it to the shared queue. Otherwise runs for that project will wait in the group queue instead of executing on shared workers.
+
 #### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
 
 Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
