@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, aiProviderUtils, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
+import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, aiProviderUtils, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -48,6 +48,10 @@ function buildWebSearchTools({ provider, auth }: {
     auth: Record<string, unknown>
 }): ToolSet {
     return NATIVE_WEB_SEARCH_TOOLS[provider]?.(auth as BaseAIProviderAuthConfig) ?? {}
+}
+
+function webSearchModeOf(provider: AIProviderName): AIWebSearchMode | undefined {
+    return AI_PROVIDER_CAPABILITIES[provider].webSearch
 }
 
 function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
@@ -521,6 +525,7 @@ export const agentAiUtils = {
     toStorageEmbedding,
     supportsWebSearch,
     buildWebSearchTools,
+    webSearchModeOf,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
