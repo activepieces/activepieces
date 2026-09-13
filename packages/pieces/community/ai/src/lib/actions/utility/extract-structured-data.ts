@@ -139,7 +139,7 @@ export const extractStructuredData = createAction({
 
 		const result = await runOnWorker({
 			context,
-			request: {
+			buildRequest: async () => ({
 				action: 'EXTRACT_STRUCTURED_DATA',
 				provider,
 				...spreadIfDefined('providerConfigId', configId),
@@ -149,7 +149,7 @@ export const extractStructuredData = createAction({
 				files: await uploadAiFiles({ context, files: attachments, mimeTypeOf: documentMimeType }),
 				schema: { mode: context.propsValue.mode ?? 'simple', fields: context.propsValue.schema['fields'] },
 				...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
-			},
+			}),
 		});
 
 		if (result.status === 'paused') {

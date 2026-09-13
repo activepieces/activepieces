@@ -28,14 +28,14 @@ export const classifyText = createAction({
 
     const result = await runOnWorker({
       context,
-      request: {
+      buildRequest: async () => ({
         action: 'CLASSIFY_TEXT',
         provider,
         ...spreadIfDefined('providerConfigId', configId),
         modelId: context.propsValue.model,
         text: context.propsValue.text,
         categories,
-      },
+      }),
     });
 
     if (result.status === 'paused') {

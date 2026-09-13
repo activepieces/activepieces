@@ -3,13 +3,15 @@ import { ActionContext, ApFile, ExecutionType, InputPropertyMap, isNil, spreadIf
 
 export async function runOnWorker(params: {
   context: AiStepContext;
-  request: AiStepRequest;
+  buildRequest: () => Promise<AiStepRequest>;
 }): Promise<AiStepResult> {
-  const { context, request } = params;
+  const { context } = params;
 
   if (context.executionType === ExecutionType.RESUME) {
     return readAnswer(context.resumePayload?.body);
   }
+
+  const request = await params.buildRequest();
 
   if (!context.run.canPause) {
     const { body } = await sendToServer({ context, request });

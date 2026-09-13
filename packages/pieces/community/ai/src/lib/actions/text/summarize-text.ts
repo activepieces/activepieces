@@ -33,7 +33,7 @@ export const summarizeText = createAction({
 
     const result = await runOnWorker({
       context,
-      request: {
+      buildRequest: async () => ({
         action: 'SUMMARIZE_TEXT',
         provider,
         ...spreadIfDefined('providerConfigId', configId),
@@ -41,7 +41,7 @@ export const summarizeText = createAction({
         prompt: context.propsValue.prompt,
         text: context.propsValue.text,
         ...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
-      },
+      }),
     });
 
     if (result.status === 'paused') {
