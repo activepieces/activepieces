@@ -440,6 +440,7 @@ import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-
 import { AddMaxBarrierSignalsToPlatformConfiguration1845000000000 } from './migration/postgres/1845000000000-AddMaxBarrierSignalsToPlatformConfiguration'
 import { AddWaitpointDeadLetteredAt1846000000000 } from './migration/postgres/1846000000000-AddWaitpointDeadLetteredAt'
 import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
+import { NarrowWaitpointSignalRefIdIndex1847000000000 } from './migration/postgres/1847000000000-NarrowWaitpointSignalRefIdIndex'
 import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -896,6 +897,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddMaxBarrierSignalsToPlatformConfiguration1845000000000,
         AddWaitpointDeadLetteredAt1846000000000,
         NullOrphanFolderReferences1846000000000,
+        NarrowWaitpointSignalRefIdIndex1847000000000,
         AddAgentConversationAiCredits1850000000000,
     ]
     return migrations
