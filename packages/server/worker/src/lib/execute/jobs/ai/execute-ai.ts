@@ -8,17 +8,40 @@ export const executeAiJob: JobHandler<ExecuteAiJobData, FireAndForgetJobResult> 
     jobType: WorkerJobType.EXECUTE_AI,
     async execute(ctx: JobContext, data: ExecuteAiJobData): Promise<FireAndForgetJobResult> {
         const { data: output, error } = await tryCatch(() => runAiStep(ctx, data))
-        await ctx.apiClient.resumeAiStep({
-            projectId: data.projectId,
-            flowRunId: data.flowRunId,
-            waitpointId: data.waitpointId,
-            output: isNil(error) ? { output } : { failure: toFailureMessage(error) },
-        })
+        const stepOutput = isNil(error) ? { output } : { failure: toFailureMessage(error) }
+        const handedBack = await handBackToTheFlow({ ctx, data, waitpointId: data.waitpointId, output: stepOutput })
         if (!isNil(error)) {
             ctx.log.warn({ flowRun: { id: data.flowRunId }, requestId: data.requestId, error }, '[executeAiJob] Handed the failure back to the flow')
         }
-        return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+        return { kind: JobResultKind.FIRE_AND_FORGET, status: handedBack ? EngineResponseStatus.OK : EngineResponseStatus.INTERNAL_ERROR }
     },
+}
+
+async function handBackToTheFlow({ ctx, data, waitpointId, output }: {
+    ctx: JobContext
+    data: ExecuteAiJobData
+    waitpointId: string
+    output: unknown
+}): Promise<boolean> {
+    for (let attempt = 1; attempt <= RESUME_ATTEMPTS; attempt++) {
+        const { error } = await tryCatch(() => ctx.apiClient.resumeAiStep({
+            projectId: data.projectId,
+            flowRunId: data.flowRunId,
+            waitpointId,
+            output,
+        }))
+        if (isNil(error)) {
+            return true
+        }
+        ctx.log.warn({ flowRun: { id: data.flowRunId }, requestId: data.requestId, attempt, error }, '[executeAiJob] Could not hand the answer back to the flow')
+        await waitBeforeRetry(attempt)
+    }
+    ctx.log.error({ flowRun: { id: data.flowRunId }, requestId: data.requestId }, '[executeAiJob] Gave up handing the answer back, so the step stays paused until its backstop fires')
+    return false
+}
+
+async function waitBeforeRetry(attempt: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, attempt * RETRY_DELAY_MS))
 }
 
 async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unknown> {
@@ -72,8 +95,13 @@ function buildMessages(data: ExecuteAiJobData): ModelMessage[] {
         case AiStepAction.enum.SUMMARIZE_TEXT:
             return [{ role: 'user', content: `${data.prompt} Summarize the following text : ${data.text ?? ''}` }]
         case AiStepAction.enum.CLASSIFY_TEXT:
-            return [{ role: 'user', content: data.prompt }]
+            return [{ role: 'user', content: classificationPrompt(data) }]
     }
+}
+
+function classificationPrompt(data: ExecuteAiJobData): string {
+    return `As a text classifier, your task is to assign one of the following categories to the provided text: ${(data.categories ?? []).join(', ')}. Please respond with only the selected category as a single word, and nothing else.
+      Text to classify: "${data.text ?? ''}"`
 }
 
 function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: string, sources: unknown }): unknown {
@@ -106,3 +134,5 @@ function toFailureMessage(error: unknown): string {
 }
 
 const DEFAULT_WEB_SEARCH_STEPS = 5
+const RESUME_ATTEMPTS = 3
+const RETRY_DELAY_MS = 1_000
