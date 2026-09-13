@@ -711,7 +711,7 @@
   "Voice input": "Entrada de voz",
   "Drop files here": "Soltar archivos aquí",
   "Release to add files to your message": "Suelta para añadir archivos a tu mensaje",
-  "Credits are charged on what each message actually costs, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.": "",
+  "Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.": "",
   "Expired": "Caducó",
   "Using this {name} account": "Usando esta cuenta {name}",
   "Which {name} account should I use?": "¿Qué cuenta de {name} debo usar?",
