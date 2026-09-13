@@ -66,6 +66,7 @@ const buildReplyMarkupProp = () =>
     displayName: 'Reply Markup',
     description:
       'Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove reply keyboard or to force a reply from the user.',
+    advanced: true,
   });
 
 const buildDisableNotificationProp = () =>
@@ -74,6 +75,7 @@ const buildDisableNotificationProp = () =>
     description: 'Send the message silently. Users will receive a notification with no sound.',
     required: false,
     defaultValue: false,
+    advanced: true,
   });
 
 const buildProtectContentProp = () =>
@@ -82,6 +84,7 @@ const buildProtectContentProp = () =>
     description: 'Protects the contents of the sent message from forwarding and saving.',
     required: false,
     defaultValue: false,
+    advanced: true,
   });
 
 const buildReplyToMessageIdProp = () =>
@@ -89,6 +92,7 @@ const buildReplyToMessageIdProp = () =>
     displayName: 'Reply To Message Id',
     description: 'If the message is a reply, ID of the original message.',
     required: false,
+    advanced: true,
   });
 
 const resolveParseMode = (value: string | undefined): string | undefined => {

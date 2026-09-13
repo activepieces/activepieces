@@ -23,6 +23,11 @@ export const telegramSendMediaAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Sends a single photo, video, sticker, or animated GIF to a Telegram chat, supplied either as an uploaded file or a previously uploaded Telegram file_id. Use when delivering one rich-media item with an optional caption; for multiple items in one album use Send Media Group. Not idempotent: each call posts a new message.', idempotent: false },
   displayName: 'Send Media',
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id', 'message_thread_id'] },
+    { key: 'media', display: 'section', label: 'Media', icon: 'file', props: ['media_type', 'media'] },
+    { key: 'caption', display: 'section', label: 'Caption', icon: 'text', props: ['format', 'instructions_format', 'message'] },
+  ],
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
@@ -30,14 +35,15 @@ export const telegramSendMediaAction = createAction({
     media_type: Property.StaticDropdown({
       displayName: 'Media Type',
       required: true,
+      display: 'cards',
       options: {
         disabled: false,
         placeholder: 'Select media type',
         options: [
-          { label: 'Image', value: 'photo' },
-          { label: 'Video', value: 'video' },
-          { label: 'Sticker', value: 'sticker' },
-          { label: 'GIF', value: 'animation' },
+          { label: 'Image', value: 'photo', icon: 'file' },
+          { label: 'Video', value: 'video', icon: 'file' },
+          { label: 'Sticker', value: 'sticker', icon: 'tag' },
+          { label: 'GIF', value: 'animation', icon: 'file' },
         ],
       },
     }),

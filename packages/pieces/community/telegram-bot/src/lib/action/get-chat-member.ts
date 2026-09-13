@@ -17,7 +17,8 @@ export const telegramGetChatMemberAction = createAction({
     chat_id: telegramCommons.chatIdProp(),
     user_id: Property.ShortText({
       displayName: 'User Id',
-      description: 'Unique identifier for the user',
+      description:
+        'Unique identifier for the user. Find it on `from.id` in the New Update trigger payload, or in the Get Chat Administrators output.',
       required: true,
     }),
   },
