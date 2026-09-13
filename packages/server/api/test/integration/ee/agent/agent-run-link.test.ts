@@ -417,6 +417,20 @@ describe('what the linked run actually sends to the worker', () => {
         expect(job.data.source).toBe(AgentRunSource.FLOW_STEP)
     })
 
+    it('holds nothing back when the start was refused, so the corrected retry still runs', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId] })
+
+        const refused = await startRun(ctx, { agentId: agent.externalId }, bound)
+        expect(refused.statusCode).not.toBe(StatusCodes.OK)
+
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const retried = await startRun(ctx, { agentId: agent.externalId }, bound)
+
+        expect(retried.statusCode).toBe(StatusCodes.OK)
+    })
+
     it('starts one agent run per waitpoint, so a repeated start cannot run the tools twice', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)

@@ -1,5 +1,5 @@
 import { flowStructureUtil } from '@activepieces/core-execution'
-import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, DEFAULT_AGENT_MAX_STEPS, FlowVersionState, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -81,7 +81,10 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
         const conversationId = apId()
         const runId = apId()
         const log = request.log.child({ conversation: { id: conversationId }, run: { id: runId } })
-        await jobQueue(log).add({
+        if (!isNil(agentId)) {
+            await claimWaitpointOrThrow({ waitpointId })
+        }
+        const { error: enqueueError } = await tryCatch(() => jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,
             data: {
@@ -100,7 +103,11 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 ...runFields,
                 tools: supportedTools,
             },
-        })
+        }))
+        if (!isNil(enqueueError)) {
+            await releaseWaitpointClaim({ waitpointId })
+            throw enqueueError
+        }
 
         log.info({ project: { id: projectId } }, '[agentRunController] Enqueued flow-step agent run')
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
@@ -122,7 +129,6 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     if (waitpoint.status !== WaitpointStatus.PENDING) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That step has already had its agent run. A finished waitpoint cannot start another one.' } })
     }
-    await claimWaitpointOrThrow({ waitpointId })
     const flowVersion = await flowVersionService(log).getOneOrThrow(flowRun.flowVersionId)
     const named = flowStructureUtil.getAllSteps(flowVersion.trigger).filter((candidate) => candidate.name === waitpoint.stepName)
     if (named.length > 1) {
@@ -142,9 +148,18 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     return agent.published
 }
 
+async function releaseWaitpointClaim({ waitpointId }: { waitpointId: string }): Promise<void> {
+    const redis = await redisConnections.useExisting()
+    await redis.del(waitpointClaimKey({ waitpointId }))
+}
+
+function waitpointClaimKey({ waitpointId }: { waitpointId: string }): string {
+    return `agent-run-claim:${waitpointId}`
+}
+
 async function claimWaitpointOrThrow({ waitpointId }: { waitpointId: string }): Promise<void> {
     const redis = await redisConnections.useExisting()
-    const claimed = await redis.set(`agent-run-claim:${waitpointId}`, '1', 'EX', AGENT_RUN_CLAIM_TTL_SECONDS, 'NX')
+    const claimed = await redis.set(waitpointClaimKey({ waitpointId }), '1', 'EX', AGENT_RUN_CLAIM_TTL_SECONDS, 'NX')
     if (isNil(claimed)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
