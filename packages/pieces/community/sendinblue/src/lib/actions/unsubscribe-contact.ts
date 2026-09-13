@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
+import { unsubscribeContactActionOutputSchema } from '../output-schemas';
 
 export const unsubscribeContact = createAction({
 	auth: sendinblueAuth,
 	name: 'unsubscribe_contact',
+	outputSchema: unsubscribeContactActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Unsubscribe Contact',
 	description: 'Blacklist a contact so it stops receiving email or SMS.',

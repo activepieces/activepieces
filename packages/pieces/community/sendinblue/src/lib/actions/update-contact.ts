@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
+import { updateContactActionOutputSchema } from '../output-schemas';
 
 export const updateContact = createAction({
 	auth: sendinblueAuth,
 	name: 'update_contact',
+	outputSchema: updateContactActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Update Contact',
 	description: 'Update an existing contact, leaving untouched fields alone.',

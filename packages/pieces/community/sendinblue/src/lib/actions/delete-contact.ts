@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
+import { deleteContactActionOutputSchema } from '../output-schemas';
 
 export const deleteContact = createAction({
 	auth: sendinblueAuth,
 	name: 'delete_contact',
+	outputSchema: deleteContactActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Delete Contact',
 	description: 'Permanently delete a contact and its history.',

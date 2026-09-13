@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { createContactListActionOutputSchema } from '../output-schemas';
 
 export const createContactList = createAction({
 	auth: sendinblueAuth,
 	name: 'create_contact_list',
+	outputSchema: createContactListActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Contact List',
 	description: 'Create a contact list inside a folder.',

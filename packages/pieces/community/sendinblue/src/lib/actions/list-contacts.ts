@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { listContactsActionOutputSchema } from '../output-schemas';
 
 export const listContacts = createAction({
 	auth: sendinblueAuth,
 	name: 'list_contacts',
+	outputSchema: listContactsActionOutputSchema,
 	classification: 'READ',
 	displayName: 'List Contacts',
 	description: 'List contacts, one page at a time.',

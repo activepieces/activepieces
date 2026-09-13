@@ -3,10 +3,12 @@ import { createAction } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
+import { getContactActionOutputSchema } from '../output-schemas';
 
 export const getContact = createAction({
 	auth: sendinblueAuth,
 	name: 'get_contact',
+	outputSchema: getContactActionOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Contact',
 	description: 'Fetch one contact by email, phone, contact id or external id.',

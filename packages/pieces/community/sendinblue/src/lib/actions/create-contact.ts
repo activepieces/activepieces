@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
+import { createContactActionOutputSchema } from '../output-schemas';
 
 export const createContact = createAction({
 	auth: sendinblueAuth,
 	name: 'create_contact',
+	outputSchema: createContactActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Contact',
 	description: 'Create a new contact, failing if one already exists.',

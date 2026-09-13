@@ -8073,7 +8073,7 @@
     },
     "packages/pieces/community/sendinblue": {
       "name": "@activepieces/piece-sendinblue",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

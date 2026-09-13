@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { getImportProcessActionOutputSchema } from '../output-schemas';
 
 export const getImportProcess = createAction({
 	auth: sendinblueAuth,
 	name: 'get_import_process',
+	outputSchema: getImportProcessActionOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Import Process',
 	description: 'Check the status of a background process such as an import.',

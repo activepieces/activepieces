@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { getContactListActionOutputSchema } from '../output-schemas';
 
 export const getContactList = createAction({
 	auth: sendinblueAuth,
 	name: 'get_contact_list',
+	outputSchema: getContactListActionOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Contact List',
 	description: 'Fetch one contact list by id.',

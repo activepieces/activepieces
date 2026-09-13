@@ -3,10 +3,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
+import { importContactsActionOutputSchema } from '../output-schemas';
 
 export const importContacts = createAction({
 	auth: sendinblueAuth,
 	name: 'import_contacts',
+	outputSchema: importContactsActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Import Contacts',
 	description: 'Start a bulk contact import and return its process id.',

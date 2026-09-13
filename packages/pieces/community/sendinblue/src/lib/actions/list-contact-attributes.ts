@@ -2,10 +2,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { listContactAttributesActionOutputSchema } from '../output-schemas';
 
 export const listContactAttributes = createAction({
 	auth: sendinblueAuth,
 	name: 'list_contact_attributes',
+	outputSchema: listContactAttributesActionOutputSchema,
 	classification: 'READ',
 	displayName: 'List Contact Attributes',
 	description: 'List the contact attributes configured on the account.',
