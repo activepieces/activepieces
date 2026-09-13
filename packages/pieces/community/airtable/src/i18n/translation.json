@@ -120,7 +120,7 @@
   "Return Error as Output": "Return Error as Output",
   "Timeout": "Timeout",
   "Follow redirects": "Follow redirects",
-  "Records whose search field contains this text are returned.": "Records whose search field contains this text are returned.",
+  "Case-sensitive. Records whose field contains this text are returned.": "Case-sensitive. Records whose field contains this text are returned.",
   "Only records in this view are used. Empty: the whole table.": "Only records in this view are used. Empty: the whole table.",
   "Starts with rec. Copy it from the record URL or an earlier step.": "Starts with rec. Copy it from the record URL or an earlier step.",
   "Only attachment-type fields are listed.": "Only attachment-type fields are listed.",
