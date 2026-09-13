@@ -66,5 +66,11 @@
   "Authors": "Auteurs",
   "Filter by teams": "Filtrer par équipes",
   "Filter by authors": "Filtrer par auteurs",
-  "Filter by project status (leave empty to include all)": "Filtrer par statut de projet (laisser vide pour inclure tous)"
+  "Filter by project status (leave empty to include all)": "Filtrer par statut de projet (laisser vide pour inclure tous)",
+  "Estimate": "Estimate",
+  "Due date": "Date d'échéance",
+  "Cycle": "Cycle",
+  "Parent": "Parent",
+  "Only when these fields change": "Only when these fields change",
+  "Trigger only when at least one of the selected fields changed. Leave empty to trigger on every update.": "Trigger only when at least one of the selected fields changed. Leave empty to trigger on every update."
 }
