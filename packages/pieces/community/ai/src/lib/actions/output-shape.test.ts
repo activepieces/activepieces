@@ -257,3 +257,70 @@ describe('what a saved flow sends over the wire', () => {
     expect(requestBody()['temperature']).toBe(0.5);
   });
 });
+
+describe('what a resumed step does before it reads its answer', () => {
+  function fileProp() {
+    return { file: { filename: 'invoice.pdf', extension: 'pdf', base64: 'eA==', data: Buffer.from('x') } };
+  }
+
+  function countingUploads<T extends { files: { upload: unknown } }>(context: T): { context: T, uploads: () => number } {
+    let uploads = 0;
+    context.files.upload = async () => {
+      uploads += 1;
+      return { id: 'test-file-id', url: 'test-file-url' };
+    };
+    return { context, uploads: () => uploads };
+  }
+
+  it('Extract Structured Data does not upload its attachments a second time', async () => {
+    const { context, uploads } = countingUploads(createMockActionContext({
+      propsValue: {
+        provider,
+        model: 'gpt-test',
+        text: 'an invoice totalling 42',
+        files: [fileProp()],
+        mode: 'simple',
+        schema: { fields: [{ name: 'total', type: 'number', isRequired: true }] },
+        maxOutputTokens: 2000,
+      },
+      resumePayload: answered({ total: 42 }),
+    }));
+
+    const output = await extractStructuredData.run(context);
+
+    expect(output).toEqual({ total: 42 });
+    expect(uploads()).toBe(0);
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
+
+  it('Generate Image does not upload its input images a second time', async () => {
+    const { context, uploads } = countingUploads(createMockActionContext({
+      propsValue: { provider, model: 'dall-e-3', prompt: 'a cat', inputImages: [fileProp()], advancedOptions: {} },
+      resumePayload: answered('test-file-url'),
+    }));
+
+    const output = await generateImageAction.run(context);
+
+    expect(output).toBe('test-file-url');
+    expect(uploads()).toBe(0);
+    expect(sendRequest).not.toHaveBeenCalled();
+  });
+
+  it('still uploads on the first run, so the worker has something to read', async () => {
+    const { context, uploads } = countingUploads(createMockActionContext({
+      propsValue: {
+        provider,
+        model: 'gpt-test',
+        text: 'an invoice totalling 42',
+        files: [fileProp()],
+        mode: 'simple',
+        schema: { fields: [{ name: 'total', type: 'number', isRequired: true }] },
+        maxOutputTokens: 2000,
+      },
+    }));
+
+    await extractStructuredData.run(context);
+
+    expect(uploads()).toBe(1);
+  });
+});
