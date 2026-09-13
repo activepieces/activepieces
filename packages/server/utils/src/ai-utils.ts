@@ -165,12 +165,23 @@ function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, st
     }
 }
 
-function createModelForImages({ provider, auth, config, modelId }: {
+function createModelForImages({ provider, auth, config, modelId, flowStep }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
+    flowStep?: FlowStepMetadata
 }): ImageModel | undefined {
+    if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+        return createCloudflareGatewayModel({
+            auth,
+            config,
+            modelId,
+            isImage: true,
+            routing: isNil(flowStep) ? 'compat' : 'submodel',
+            ...spreadIfDefined('metadata', cloudflareGatewayMetadata(flowStep)),
+        })
+    }
     return createImageModel({ provider, auth, config, modelId })
 }
 
