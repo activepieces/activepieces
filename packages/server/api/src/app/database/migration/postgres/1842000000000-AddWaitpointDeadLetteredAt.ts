@@ -7,7 +7,7 @@ import { Migration } from '../../migration'
 export class AddWaitpointDeadLetteredAt1842000000000 implements Migration {
     name = 'AddWaitpointDeadLetteredAt1842000000000'
     breaking = false
-    release = '0.89.0'
+    release = '0.91.0'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
@@ -20,7 +20,7 @@ export class AddWaitpointDeadLetteredAt1842000000000 implements Migration {
 
         await queryRunner.query(`
             CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_live_deadline"
-            ON "waitpoint" ("resumeDateTime")
+            ON "waitpoint" ("resumeDateTime", "id")
             WHERE "status" = 'PENDING' AND "resumeDateTime" IS NOT NULL AND "deadLetteredAt" IS NULL
         `)
 
