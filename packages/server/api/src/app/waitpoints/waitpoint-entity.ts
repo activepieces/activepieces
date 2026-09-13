@@ -86,7 +86,7 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
         },
         {
             name: 'idx_waitpoint_live_deadline',
-            columns: ['resumeDateTime'],
+            columns: ['resumeDateTime', 'id'],
             where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL AND "deadLetteredAt" IS NULL',
         },
     ],
