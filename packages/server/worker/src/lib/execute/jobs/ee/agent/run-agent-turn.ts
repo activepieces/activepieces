@@ -124,9 +124,13 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
                     telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
                     prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
-                return { ...toolCall, input: text }
+                return jsonInputFrom(text)
             })
-            return repaired ?? null
+            if (isNil(repaired)) {
+                log.warn({ toolName: toolCall.toolName }, 'Could not repair the tool call into valid JSON')
+                return null
+            }
+            return { ...toolCall, input: repaired }
         },
         onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
             toolCalls.push({
@@ -325,6 +329,13 @@ function wrapToolsWithFailureGuard({ tools, log }: { tools: ToolSet, log: AgentT
 function fingerprintInput(input: unknown): string {
     const { data } = tryCatchSync(() => JSON.stringify(input))
     return data ?? ''
+}
+
+function jsonInputFrom(text: string): string | undefined {
+    const fenced = /```(?:json)?\s*([\s\S]*?)```/.exec(text)
+    const candidate = (fenced?.[1] ?? text).trim()
+    const { error } = tryCatchSync(() => JSON.parse(candidate))
+    return isNil(error) ? candidate : undefined
 }
 
 export function classifyAgentRunError({ error, provider }: { error: unknown, provider?: string }): AgentRunErrorClass {
