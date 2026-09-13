@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, ErrorCode, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, PauseType, RunEnvironment } from '@activepieces/shared'
+import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
@@ -27,7 +27,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         }
 
         const flowRun = await flowRunRepo().findOneByOrFail({ id: params.flowRunId, projectId: params.projectId })
-        const resumeDateTime = clampWaitpointResumeDeadline({ requested: params.resumeDateTime, type: params.type, flowRunCreated: flowRun.created, flowRunEnvironment: flowRun.environment, flowRunId: flowRun.id })
+        const resumeDateTime = clampWaitpointResumeDeadline({ requested: params.resumeDateTime, type: params.type, flowRunCreated: flowRun.created, flowRunId: flowRun.id })
 
         const id = apId()
         await waitpointRepo()
@@ -73,26 +73,6 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             })
         }
         return { inserted, waitpoint }
-    },
-
-    async shortenDeadline({ waitpointId, flowRunId, projectId, notAfter }: ShortenDeadlineParams): Promise<void> {
-        const waitpoint = await waitpointRepo().findOneBy({ id: waitpointId, flowRunId, projectId, status: WaitpointStatus.PENDING })
-        if (isNil(waitpoint) || isNil(waitpoint.resumeDateTime) || !dayjs(waitpoint.resumeDateTime).isAfter(notAfter)) {
-            return
-        }
-        await waitpointRepo().update({ id: waitpointId, flowRunId, status: WaitpointStatus.PENDING }, { resumeDateTime: notAfter.toISOString() })
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                data: { flowRunId, projectId, waitpointId },
-                jobId: `resume-delay-${flowRunId}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: notAfter,
-            },
-        })
-        log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#shortenDeadline] Test run will stop waiting early')
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -188,11 +168,11 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRunEnvironment, flowRunId }: ClampWaitpointResumeDeadlineParams): string | undefined {
+function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRunId }: ClampWaitpointResumeDeadlineParams): string | undefined {
     const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
     const runDeadline = dayjs(flowRunCreated).add(pauseTimeoutDays, 'day')
     if (isNil(requested)) {
-        return type === PauseType.WEBHOOK ? clampToTestRunCeiling({ deadline: runDeadline, flowRunEnvironment }) : undefined
+        return type === PauseType.WEBHOOK ? runDeadline.toISOString() : undefined
     }
     if (dayjs(requested).isAfter(runDeadline)) {
         throw new ActivepiecesError({
@@ -200,38 +180,12 @@ function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRun
             params: { pauseTimeoutDays, flowRunId },
         })
     }
-    if (type !== PauseType.WEBHOOK) {
-        return requested
-    }
-    return clampToTestRunCeiling({ deadline: dayjs(requested), flowRunEnvironment })
-}
-
-function clampToTestRunCeiling({ deadline, flowRunEnvironment }: ClampToTestRunCeilingParams): string {
-    if (flowRunEnvironment !== RunEnvironment.TESTING) {
-        return deadline.toISOString()
-    }
-    const testCeiling = dayjs().add(TEST_RUN_PAUSE_CEILING_MINUTES, 'minute')
-    return (deadline.isBefore(testCeiling) ? deadline : testCeiling).toISOString()
-}
-
-const TEST_RUN_PAUSE_CEILING_MINUTES = 15
-
-type ShortenDeadlineParams = {
-    waitpointId: string
-    flowRunId: string
-    projectId: string
-    notAfter: dayjs.Dayjs
+    return requested
 }
 
 type ClampWaitpointResumeDeadlineParams = {
     requested: string | undefined
     type: `${PauseType}`
     flowRunCreated: string
-    flowRunEnvironment: RunEnvironment
     flowRunId: string
-}
-
-type ClampToTestRunCeilingParams = {
-    deadline: dayjs.Dayjs
-    flowRunEnvironment: RunEnvironment
 }

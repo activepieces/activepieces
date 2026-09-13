@@ -1,8 +1,7 @@
 import { flowStructureUtil } from '@activepieces/core-execution'
 import { AGENT_STEP_TIMEOUT_MS } from '@activepieces/core-piece-types'
 import { ActivepiecesError, apId, ApId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
-import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, DEFAULT_AGENT_MAX_STEPS, FlowVersionState, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, RunEnvironment, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { AgentConfig, AgentFlowTool, AgentOutputField, AgentPieceProps, AgentRunSource, AgentTool, AgentToolType, AIProviderName, DEFAULT_AGENT_MAX_STEPS, FlowVersionState, LATEST_JOB_DATA_SCHEMA_VERSION, MAX_AGENT_OUTPUT_FIELDS, MAX_AGENT_STEP_BUDGET, MAX_AGENT_TEXT_LENGTH, MAX_AGENT_TOOLS, PrincipalType, ResolvedAgentFlowTool, TASK_COMPLETION_TOOL_NAME, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -111,29 +110,9 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             throw enqueueError
         }
 
-        await stopWaitingEarlyOnATestRun({ flowRunId, waitpointId, projectId, log })
-
         log.info({ project: { id: projectId } }, '[agentRunController] Enqueued flow-step agent run')
         return reply.status(StatusCodes.OK).send({ conversationId, runId })
     })
-}
-
-async function stopWaitingEarlyOnATestRun({ flowRunId, waitpointId, projectId, log }: {
-    flowRunId: string
-    waitpointId: string
-    projectId: string
-    log: FastifyBaseLogger
-}): Promise<void> {
-    const { data: flowRun } = await tryCatch(() => flowRunService(log).getOneOrThrow({ id: flowRunId, projectId }))
-    if (isNil(flowRun) || flowRun.environment !== RunEnvironment.TESTING) {
-        return
-    }
-    await tryCatch(() => waitpointService(log).shortenDeadline({
-        waitpointId,
-        flowRunId,
-        projectId,
-        notAfter: dayjs().add(TEST_RUN_AGENT_WAIT_MINUTES, 'minute'),
-    }))
 }
 
 async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpointId, log }: {
@@ -235,8 +214,6 @@ async function resolveFlowTools({ projectId, flowToolRequests, log }: {
 const WAITPOINT_RESUME_LAG_ALLOWANCE_SECONDS = 60 * 60
 
 const AGENT_RUN_CLAIM_TTL_SECONDS = AGENT_STEP_TIMEOUT_MS / 1_000 + WAITPOINT_RESUME_LAG_ALLOWANCE_SECONDS
-
-const TEST_RUN_AGENT_WAIT_MINUTES = 15
 
 const RUNS_PER_MINUTE = 60
 const BUILT_IN_TOOL_PREFIX = 'ap_'
