@@ -1,5 +1,6 @@
 import { spreadIfDefined } from '@activepieces/core-utils'
 import { AiStepFile, ExtractStructuredDataJobData, GenerateImageJobData } from '@activepieces/shared'
+import pLimit from 'p-limit'
 import { JobContext } from '../../types'
 
 export async function resolveAiFiles({ ctx, data }: {
@@ -7,7 +8,8 @@ export async function resolveAiFiles({ ctx, data }: {
     data: AiStepWithFiles
 }): Promise<ResolvedAiFile[]> {
     const files = data.files ?? []
-    return Promise.all(files.map((file) => resolveAiFile({ ctx, data, file })))
+    const readAtOnce = pLimit(FILES_READ_AT_ONCE)
+    return Promise.all(files.map((file) => readAtOnce(() => resolveAiFile({ ctx, data, file }))))
 }
 
 async function resolveAiFile({ ctx, data, file }: {
@@ -28,6 +30,7 @@ async function resolveAiFile({ ctx, data, file }: {
 }
 
 const UNKNOWN_MIME_TYPE = 'application/octet-stream'
+const FILES_READ_AT_ONCE = 5
 
 export type AiStepWithFiles = ExtractStructuredDataJobData | GenerateImageJobData
 
