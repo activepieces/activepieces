@@ -106,3 +106,39 @@ describe('resolveAiFiles', () => {
         expect(await resolveAiFiles({ ctx, data: jobData(undefined) })).toEqual([])
     })
 })
+
+describe('how many files resolveAiFiles reads at once', () => {
+    it('paces the reads instead of opening one call per attachment', async () => {
+        let inFlight = 0
+        let mostAtOnce = 0
+        const ctx = {
+            apiClient: {
+                readFlowStepFile: async () => {
+                    inFlight += 1
+                    mostAtOnce = Math.max(mostAtOnce, inFlight)
+                    await new Promise((resolve) => setTimeout(resolve, 1))
+                    inFlight -= 1
+                    return { data: PDF_BYTES, mimeType: 'application/pdf' }
+                },
+            },
+        } as unknown as Parameters<typeof resolveAiFiles>[0]['ctx']
+        const files = Array.from({ length: 40 }, (_, index) => ({ fileId: `file-${index}` }))
+
+        const resolved = await resolveAiFiles({ ctx, data: jobData(files) })
+
+        expect(resolved).toHaveLength(40)
+        expect(mostAtOnce).toBeLessThanOrEqual(5)
+    })
+
+    it('still returns every attachment, in the order they were given', async () => {
+        const ctx = contextReading(Object.fromEntries(
+            Array.from({ length: 12 }, (_, index) => [`file-${index}`, { data: Buffer.from(`file ${index}`), mimeType: 'application/pdf' }]),
+        ))
+        const files = Array.from({ length: 12 }, (_, index) => ({ fileId: `file-${index}` }))
+
+        const resolved = await resolveAiFiles({ ctx, data: jobData(files) })
+
+        expect(resolved.map((file) => Buffer.from(file.base64, 'base64').toString()))
+            .toEqual(files.map((_, index) => `file ${index}`))
+    })
+})
