@@ -44,13 +44,13 @@ describe('what an AI step job accepts', () => {
             ...base,
             action: AiStepAction.EXTRACT_STRUCTURED_DATA,
             text: 'an invoice',
-            files: [{ mimeType: 'application/pdf', base64: 'eA==' }],
+            files: [{ fileId: 'file-1', mimeType: 'application/pdf' }],
             schema: { mode: 'simple', fields: [{ name: 'total' }] },
         }).success).toBe(true)
         expect(ExecuteAiJobData.safeParse({
             ...base,
             action: AiStepAction.GENERATE_IMAGE,
-            files: [{ mimeType: 'image/png', base64: 'eA==' }],
+            files: [{ fileId: 'file-2', mimeType: 'image/png' }],
             advancedOptions: { size: '1024x1024' },
         }).success).toBe(true)
     })
