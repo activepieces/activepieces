@@ -1,6 +1,6 @@
 import { FlowId, FlowRunId, PlatformId, ProjectId } from '@activepieces/core-utils'
 import { Flow } from '@activepieces/shared'
-import { Job, JobsOptions } from 'bullmq'
+import { Job, JobsOptions, JobState } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -93,6 +93,7 @@ export type SystemJobSchedule = {
     startWorker(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<UpsertJobResult>
     getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
+    getJobState(jobId: string): Promise<JobState | 'unknown'>
     removeJob(params: { jobId: string }): Promise<void>
     close(): Promise<void>
 }

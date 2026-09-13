@@ -1,6 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration, createLogger, wideEvent } from '@activepieces/server-utils'
-import { Job, JobsOptions, Queue, Worker } from 'bullmq'
+import { Job, JobsOptions, JobState, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -109,6 +109,10 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
 
     async getJob<T extends SystemJobName>(jobId: string) {
         return await systemJobsQueue.getJob(jobId) as Job<SystemJobData<T>> | undefined
+    },
+
+    async getJobState(jobId: string): Promise<JobState | 'unknown'> {
+        return systemJobsQueue.getJobState(jobId)
     },
 
     async removeJob({ jobId }): Promise<void> {
