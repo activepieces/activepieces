@@ -101,6 +101,7 @@ export async function runUpdateEvent(
   const response = await calendar.events.update({
     calendarId: calendar_id,
     eventId: eventId,
+    conferenceDataVersion: 1,
     requestBody: {
       ...currentEvent.data,
       summary: title ?? currentEvent.data.summary,
