@@ -428,17 +428,19 @@ describe('what the linked run actually sends to the worker', () => {
         expect(job.data.source).toBe(AgentRunSource.FLOW_STEP)
     })
 
-    it('names the job after the waitpoint, so a second enqueue collapses onto the first', async () => {
+    it('gives each start its own job id, so a step retry is never swallowed by the queue', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)
         await ctx.post(`/v1/agents/${agent.id}/publish`)
-        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId] })
+        const first = await flowRunNaming({ ctx, agentIds: [agent.externalId] })
+        const second = await flowRunNaming({ ctx, agentIds: [agent.externalId] })
 
-        const response = await startRun(ctx, { agentId: agent.externalId }, bound)
+        await startRun(ctx, { agentId: agent.externalId }, first)
+        await startRun(ctx, { agentId: agent.externalId }, second)
 
-        expect(response.statusCode).toBe(StatusCodes.OK)
-        const job = addSpy.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
-        expect(job.id).toBe(`agent-run-${bound.waitpointId}`)
+        const ids = addSpy.mock.calls.map(([call]) => call).filter((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN).map((call) => call.id)
+        expect(ids).toHaveLength(2)
+        expect(new Set(ids).size).toBe(2)
     })
 
     it('holds nothing back when the start was refused, so the corrected retry still runs', async () => {

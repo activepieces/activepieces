@@ -85,7 +85,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
             await claimWaitpointOrThrow({ waitpointId })
         }
         const { error: enqueueError } = await tryCatch(() => jobQueue(log).add({
-            id: isNil(agentId) ? apId() : agentRunJobId({ waitpointId }),
+            id: apId(),
             type: JobType.ONE_TIME,
             data: {
                 schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
@@ -151,10 +151,6 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
 async function releaseWaitpointClaim({ waitpointId }: { waitpointId: string }): Promise<void> {
     const redis = await redisConnections.useExisting()
     await redis.del(waitpointClaimKey({ waitpointId }))
-}
-
-function agentRunJobId({ waitpointId }: { waitpointId: string }): string {
-    return `agent-run-${waitpointId}`
 }
 
 function waitpointClaimKey({ waitpointId }: { waitpointId: string }): string {
