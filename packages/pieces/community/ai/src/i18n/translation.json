@@ -28,6 +28,7 @@
   "Guide Prompt": "Guide Prompt",
   "Data Schema Type": "Data Schema Type",
   "Data Definition": "Data Definition",
+  "Agent": "Agent",
   "AI Model": "AI Model",
   "Agent Tools": "Agent Tools",
   "Max steps": "Max steps",
@@ -39,8 +40,10 @@
   "Text to extract structured data from.": "Text to extract structured data from.",
   "Prompt to guide the AI.": "Prompt to guide the AI.",
   "For complex schema, you can use advanced mode.": "For complex schema, you can use advanced mode.",
+  "Run a saved agent. Its instructions, tools and model come from the agent itself, so improving it improves every flow that uses it.": "Run a saved agent. Its instructions, tools and model come from the agent itself, so improving it improves every flow that uses it.",
   "Describe what you want the assistant to do.": "Describe what you want the assistant to do.",
-  "The number of iterations the agent can do": "The number of iterations the agent can do",
+  "Leave empty when the step runs a saved agent: the model comes from the agent.": "Leave empty when the step runs a saved agent: the model comes from the agent.",
+  "The number of iterations the agent can do. Comes from the agent when the step runs a saved one.": "The number of iterations the agent can do. Comes from the agent when the step runs a saved one.",
   "Simple": "Simple",
   "Advanced": "Advanced"
 }
