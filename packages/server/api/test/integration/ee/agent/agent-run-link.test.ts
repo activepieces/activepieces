@@ -1,9 +1,11 @@
+import { AGENT_STEP_TIMEOUT_MS } from '@activepieces/core-piece-types'
 import { AIProviderName, apId } from '@activepieces/core-utils'
 import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowActionType, FlowTriggerType, McpAuthType, McpProtocol, PauseType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { accessTokenManager } from '../../../../src/app/authentication/lib/access-token-manager'
+import { redisConnections } from '../../../../src/app/database/redis-connections'
 import { WaitpointStatus } from '../../../../src/app/waitpoints/waitpoint-types'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
@@ -470,6 +472,21 @@ describe('what the linked run actually sends to the worker', () => {
         expect(JSON.stringify(second.json())).toContain('already starting')
         const runs = addSpy.mock.calls.map(([call]) => call).filter((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
         expect(runs).toHaveLength(1)
+    })
+
+    it('holds the claim past the moment the waitpoint gives up, so a late retry cannot start a second run', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId] })
+
+        const started = await startRun(ctx, { agentId: agent.externalId }, bound)
+        expect(started.statusCode).toBe(StatusCodes.OK)
+
+        const redis = await redisConnections.useExisting()
+        const ttlSeconds = await redis.ttl(`agent-run-claim:${bound.waitpointId}`)
+
+        expect(ttlSeconds).toBeGreaterThan(AGENT_STEP_TIMEOUT_MS / 1_000)
     })
 
     it('still sends an MCP tool to the worker, which is the only thing that can run it', async () => {

@@ -334,3 +334,5 @@ export type AgentResult = {
     structuredOutput?: unknown
     failure?: string
 }
+
+export const AGENT_STEP_TIMEOUT_MS = 3 * 60 * 60 * 1_000

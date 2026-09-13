@@ -7,11 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
-
-// Backstop for a worker that dies with nothing to report. It has to outlive the server's own turn
-// budget, or it fires mid-run and throws away an answer that was still coming.
-const AGENT_STEP_TIMEOUT_MS = 3 * 60 * 60 * 1_000;
+import { AGENT_STEP_TIMEOUT_MS, AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
