@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
-import { redisConnections } from '../../../../../src/app/database/redis-connections'
+import { distributedStore, redisConnections } from '../../../../../src/app/database/redis-connections'
 import { systemJobIds } from '../../../../../src/app/helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/system-job'
 import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
@@ -14,7 +14,7 @@ import { BarrierJobData } from '../../../../../src/app/waitpoints/barrier-queue-
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
-import { sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
+import { DEADLINE_SWEEP_CURSOR_KEY, sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { Waitpoint, WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
@@ -418,6 +418,11 @@ describe('signal count limit', () => {
 })
 
 describe('barrier deadline', () => {
+    beforeEach(async () => {
+        await distributedStore.delete(DEADLINE_SWEEP_CURSOR_KEY)
+        await databaseConnection().query('DELETE FROM "waitpoint"')
+    })
+
     async function createOverdueBarrier({ overdueByMinutes = 5 }: { overdueByMinutes?: number } = {}) {
         const { flowRun } = await createParentRun()
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
@@ -510,6 +515,40 @@ describe('barrier deadline', () => {
 
         expect(armed).toEqual([newer.barrier.id])
         expect(await readDeadLetteredAt(alreadyArmed.barrier.id)).toBeNull()
+    })
+
+    it('carries its cursor to the next tick, so an armed prefix cannot starve a newer deadline', async () => {
+        for (const overdueByMinutes of [40, 30, 20]) {
+            await createOverdueBarrier({ overdueByMinutes })
+        }
+        const newest = await createOverdueBarrier({ overdueByMinutes: 10 })
+        await dropDeadlineJob(newest.barrier.id)
+
+        const firstTick = await sweepOverdueDeadlines({ log: app.log, pageSize: 1, maxPages: 2 })
+        const secondTick = await sweepOverdueDeadlines({ log: app.log, pageSize: 1, maxPages: 2 })
+
+        expect(firstTick).toEqual([])
+        expect(secondTick).toEqual([newest.barrier.id])
+    })
+
+    it('starts over from the oldest once a tick reaches the end of the backlog', async () => {
+        const oldest = await createOverdueBarrier({ overdueByMinutes: 40 })
+        await dropDeadlineJob(oldest.barrier.id)
+
+        await sweepOverdueDeadlines({ log: app.log })
+
+        expect(await distributedStore.get(DEADLINE_SWEEP_CURSOR_KEY)).toBeNull()
+    })
+
+    it('leaves a deadline unmarked when it was re-armed after the scan began', async () => {
+        const { barrier } = await createOverdueBarrier()
+        await exhaustDeadlineJobAttempts(barrier.id)
+        await db.update('waitpoint', barrier.id, { updated: dayjs().add(1, 'minute').toISOString() })
+
+        const armed = await sweepOverdueDeadlines({ log: app.log })
+
+        expect(armed).not.toContain(barrier.id)
+        expect(await readDeadLetteredAt(barrier.id)).toBeNull()
     })
 
     it('clears the mark when a fresh pause re-arms the same deadline', async () => {
@@ -641,6 +680,63 @@ describe('multi-approval confirm page', () => {
         expect(response.statusCode).toBe(200)
         const stored = (await listSignals(created.barrier.id)).find((signal) => signal.id === signals[0].id)
         expect(stored?.status).toBe(BarrierSignalStatus.SUCCEEDED)
+    })
+
+    it('keeps the first decision when the same link is posted twice', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier({ requiredSuccesses: 3 })
+
+        const approve = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=approve`,
+            payload: { reason: 'yes' },
+        })
+        const flip = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=disapprove`,
+            payload: { reason: 'changed my mind' },
+        })
+
+        expect(approve.statusCode).toBe(200)
+        expect(flip.statusCode).toBe(200)
+        const stored = (await listSignals(created.barrier.id)).find((signal) => signal.id === signals[0].id)
+        expect(stored?.status).toBe(BarrierSignalStatus.SUCCEEDED)
+        expect(stored?.result.reason).toBe('yes')
+    })
+
+    it('does not resurrect a signal the release already deleted', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier()
+
+        for (const signal of signals.slice(0, 2)) {
+            await app.inject({
+                method: 'POST',
+                url: `/api/v1/flow-runs/${flowRun.id}/signals/${signal.id}/confirm?action=approve`,
+                payload: { reason: 'ok' },
+            })
+        }
+        await waitFor(async () => await readStatus(created.barrier.id) === WaitpointStatus.CONSUMED)
+
+        const late = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[2].id}/confirm?action=approve`,
+            payload: { reason: 'late to the party' },
+        })
+
+        expect(late.statusCode).toBe(200)
+        expect(await listSignals(created.barrier.id)).toHaveLength(0)
+    })
+
+    it('records a disapprove with no reason when the policy never asked for one', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier()
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=disapprove`,
+            payload: {},
+        })
+
+        expect(response.statusCode).toBe(200)
+        const stored = (await listSignals(created.barrier.id)).find((signal) => signal.id === signals[0].id)
+        expect(stored?.status).toBe(BarrierSignalStatus.REJECTED)
     })
 
     it('rejects a reject with no reason when reasonRequiredOn is reject', async () => {
