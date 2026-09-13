@@ -61,7 +61,7 @@ export function ConfigDetail({
   projects: Project[];
   isSaving: boolean;
   onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
-  onDelete: () => void;
+  onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
   onRecheck: () => void;
@@ -374,12 +374,9 @@ export function ConfigDetail({
           entityName={config.name}
           showToast={true}
           mutationFn={async () => {
+            await onDelete();
             leavingOnPurpose.current = true;
-            try {
-              await onDelete();
-            } finally {
-              leavingOnPurpose.current = false;
-            }
+            onBack();
           }}
         />
       </section>

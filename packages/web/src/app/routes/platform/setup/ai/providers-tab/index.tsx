@@ -178,10 +178,7 @@ export function ProvidersTab() {
               updateProvider({ providerId: activeConfig.id, request }),
             )
           }
-          onDelete={async () => {
-            await deleteProvider(activeConfig.id);
-            closeConfig();
-          }}
+          onDelete={() => deleteProvider(activeConfig.id)}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
