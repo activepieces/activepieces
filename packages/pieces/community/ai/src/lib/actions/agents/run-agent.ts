@@ -7,7 +7,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
-import { AGENT_STEP_TIMEOUT_MS, AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AGENT_STEP_TEST_TIMEOUT_MS, AGENT_STEP_TIMEOUT_MS, AgentPieceProps, AgentProviderModel, AgentResult, spreadIfDefined } from '@activepieces/pieces-framework';
 
 const agentToolArrayItems: ArraySubProps<boolean> = {
   type: Property.ShortText({
@@ -129,6 +129,7 @@ export const runAgent = createAction({
     const waitpoint = await context.run.createWaitpoint({
       type: 'WEBHOOK',
       resumeDateTime: new Date(Date.now() + AGENT_STEP_TIMEOUT_MS).toUTCString(),
+      maxTestWaitMs: AGENT_STEP_TEST_TIMEOUT_MS,
     });
 
     await httpClient.sendRequest({

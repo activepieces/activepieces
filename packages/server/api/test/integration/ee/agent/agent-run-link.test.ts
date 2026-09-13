@@ -1,6 +1,7 @@
 import { AGENT_STEP_TIMEOUT_MS } from '@activepieces/core-piece-types'
-import { AIProviderName, apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowActionType, FlowTriggerType, McpAuthType, McpProtocol, PauseType, WorkerJobType } from '@activepieces/shared'
+import { AIProviderName, apId, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { AgentIcon, AgentRunSource, AgentToolType, AgentVisibility, ColorName, DefaultProjectRole, FlowActionType, FlowTriggerType, McpAuthType, McpProtocol, PauseType, RunEnvironment, WorkerJobType } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -72,7 +73,7 @@ function agentStep({ name, agentId, nextAction }: { name: string, agentId?: stri
     }
 }
 
-async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece = true, publish = false, siblingSharesName = false }: { ctx: TestContext, agentIds: string[], siblingAgentId?: string, stepIsAgentPiece?: boolean, publish?: boolean, siblingSharesName?: boolean }): Promise<{ flowRunId: string, waitpointId: string }> {
+async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece = true, publish = false, siblingSharesName = false, environment, resumeInHours }: { ctx: TestContext, agentIds: string[], siblingAgentId?: string, stepIsAgentPiece?: boolean, publish?: boolean, siblingSharesName?: boolean, environment?: RunEnvironment, resumeInHours?: number }): Promise<{ flowRunId: string, waitpointId: string }> {
     const flow = createMockFlow({ projectId: ctx.project.id })
     await db.save('flow', flow)
     const version = createMockFlowVersion({
@@ -104,7 +105,7 @@ async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece =
     if (publish) {
         await db.update('flow', flow.id, { publishedVersionId: version.id })
     }
-    const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: version.id })
+    const flowRun = createMockFlowRun({ projectId: ctx.project.id, flowId: flow.id, flowVersionId: version.id, ...spreadIfDefined('environment', environment) })
     await db.save('flow_run', flowRun)
     const waitpoint = {
         id: apId(),
@@ -116,6 +117,7 @@ async function flowRunNaming({ ctx, agentIds, siblingAgentId, stepIsAgentPiece =
         status: WaitpointStatus.PENDING,
         version: 'V1',
         stepName: AGENT_STEP_NAME,
+        ...(isNil(resumeInHours) ? {} : { resumeDateTime: dayjs().add(resumeInHours, 'hour').toISOString() }),
     }
     await db.save('waitpoint', waitpoint)
     return { flowRunId: flowRun.id, waitpointId: waitpoint.id }
@@ -487,6 +489,32 @@ describe('what the linked run actually sends to the worker', () => {
         const ttlSeconds = await redis.ttl(`agent-run-claim:${bound.waitpointId}`)
 
         expect(ttlSeconds).toBeGreaterThan(AGENT_STEP_TIMEOUT_MS / 1_000)
+    })
+
+    it('stops waiting in minutes when the step is being tested, rather than the hours a real run allows', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId], environment: RunEnvironment.TESTING, resumeInHours: 3 })
+
+        const started = await startRun(ctx, { agentId: agent.externalId }, bound)
+        expect(started.statusCode).toBe(StatusCodes.OK)
+
+        const waitpoint = await db.findOneByOrFail<{ resumeDateTime: string }>('waitpoint', { id: bound.waitpointId })
+        expect(dayjs(waitpoint.resumeDateTime).diff(dayjs(), 'minute')).toBeLessThanOrEqual(15)
+    })
+
+    it('keeps the full wait when the flow is running for real, since nobody is watching it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const bound = await flowRunNaming({ ctx, agentIds: [agent.externalId], environment: RunEnvironment.PRODUCTION, resumeInHours: 3 })
+
+        const started = await startRun(ctx, { agentId: agent.externalId }, bound)
+        expect(started.statusCode).toBe(StatusCodes.OK)
+
+        const waitpoint = await db.findOneByOrFail<{ resumeDateTime: string }>('waitpoint', { id: bound.waitpointId })
+        expect(dayjs(waitpoint.resumeDateTime).diff(dayjs(), 'minute')).toBeGreaterThan(150)
     })
 
     it('still sends an MCP tool to the worker, which is the only thing that can run it', async () => {
