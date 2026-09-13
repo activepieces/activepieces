@@ -1,3 +1,4 @@
+import { AiUsageCharge } from '@activepieces/shared'
 import { describe, expect, it, vi } from 'vitest'
 
 const rate = { value: 0.0005 }
@@ -6,7 +7,7 @@ vi.mock('../../../../src/app/helper/system/system', () => ({
     system: { getDecimalOrThrow: () => rate.value },
 }))
 
-const { chargeFor } = await import('../../../../src/app/ai/ai-credits')
+const { chargeFor, costBasisOf } = await import('../../../../src/app/ai/ai-credits')
 
 describe('chargeFor', () => {
     it('converts an observed dollar cost at the configured rate', () => {
@@ -52,5 +53,27 @@ describe('chargeFor', () => {
         rate.value = 0
         expect(() => chargeFor({ usage: { type: 'observed-cost', costUsd: 0.0042 } })).toThrow(/greater than zero/)
         rate.value = 0.0005
+    })
+})
+
+describe('costBasisOf', () => {
+    it('records the dollars the call cost and the rate they were converted at', () => {
+        expect(costBasisOf({ type: 'observed-cost', costUsd: 0.005 })).toEqual({ costUsd: 0.005, creditUsdValue: 0.0005 })
+    })
+
+    it('records the rate in force at the time, so a later rate change cannot rewrite what was charged', () => {
+        rate.value = 0.001
+        expect(costBasisOf({ type: 'observed-cost', costUsd: 0.005 })).toEqual({ costUsd: 0.005, creditUsdValue: 0.001 })
+        rate.value = 0.0005
+    })
+
+    it('reports a basis a reader can divide back into the credits that were billed', () => {
+        const usage: AiUsageCharge = { type: 'observed-cost', costUsd: 0.0037 }
+        const basis = costBasisOf(usage)
+        expect(basis!.costUsd / basis!.creditUsdValue).toBeCloseTo(chargeFor({ usage }), 6)
+    })
+
+    it('records nothing for a flat charge, which never went through a dollar rate', () => {
+        expect(costBasisOf({ type: 'flat-credits', credits: 1 })).toBeUndefined()
     })
 })
