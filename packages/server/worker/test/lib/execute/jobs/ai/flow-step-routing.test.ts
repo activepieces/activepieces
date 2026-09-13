@@ -132,3 +132,29 @@ function jobContext({ provider = AIProviderName.MISTRAL }: { provider?: AIProvid
         log: { warn: () => undefined, error: () => undefined },
     } as unknown as Parameters<typeof executeAiJob.execute>[0]
 }
+
+describe('the image model gets the flow step too, so gateway routing is not silently compat', () => {
+    it('hands the flow step to the image model builder, not just the language fallback', async () => {
+        const forImages: Record<string, unknown>[] = []
+        const serverUtils = await import('@activepieces/server-utils')
+        const original = serverUtils.aiUtils.createModelForImages
+        serverUtils.aiUtils.createModelForImages = (args: Record<string, unknown>) => {
+            forImages.push(args)
+            return undefined
+        }
+
+        try {
+            await executeAiJob.execute(jobContext({ provider: AIProviderName.GOOGLE }), jobData(AiStepAction.enum.GENERATE_IMAGE, {
+                prompt: 'a cat',
+                provider: AIProviderName.GOOGLE,
+                modelId: 'gemini-2.5-flash-image',
+            }))
+        }
+        finally {
+            serverUtils.aiUtils.createModelForImages = original
+        }
+
+        expect(forImages).toHaveLength(1)
+        expect(forImages[0]['flowStep']).toEqual(FLOW_STEP)
+    })
+})
