@@ -290,7 +290,7 @@ export const getImportProcessActionOutputSchema: OutputSchema = {
 		{
 			key: 'status',
 			label: 'Status',
-			description: 'queued, processing, completed, failed or cancelled.',
+			description: 'queued, in_process, processing, completed, failed or cancelled.',
 		},
 		{
 			key: 'finished',
