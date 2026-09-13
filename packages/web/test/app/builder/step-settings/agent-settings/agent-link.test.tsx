@@ -177,7 +177,7 @@ describe('the agent picker on a Run Agent step', () => {
     expect(container.querySelector('[data-testid="agent-picker"]')).not.toBe(
       null,
     );
-    expect(container.textContent).not.toContain('not in this project');
+    expect(container.textContent).not.toContain('cannot run');
   });
 
   it('says the list failed instead of looking like an empty account', () => {

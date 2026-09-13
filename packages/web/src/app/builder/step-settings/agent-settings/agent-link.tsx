@@ -132,7 +132,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
     if (authedMcpTools.length > 0) {
       toast(
         t(
-          'An MCP tool keeps its credentials on the agent, so this step could not take them. Add those tools again here.',
+          'MCP tools were left behind. Their credentials stay with the agent, so add them again here.',
         ),
       );
     }
@@ -154,15 +154,13 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
         options={runnable.map((agent) => ({
           value: agent.externalId,
           label: agent.displayName,
-          description: agent.isPublished
-            ? undefined
-            : t('Never published, so a flow cannot run it yet'),
+          description: agent.isPublished ? undefined : t('Not published yet'),
         }))}
         value={linkedExternalId}
         loading={isLoading}
         disabled={disabled}
         showDeselect={!isNil(linkedExternalId)}
-        placeholder={t('Pick a saved agent, or configure this step')}
+        placeholder={t('Pick a saved agent')}
         onChange={link}
       />
       {isNil(linkedExternalId) ? (
@@ -247,15 +245,13 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
 
           <p className="text-xs text-muted-foreground">
             {stillFindingIt
-              ? t('Looking up the agent this step runs.')
+              ? t('Looking it up.')
               : isNil(linked)
-              ? t('This agent is not in this project, so the step cannot run.')
+              ? t('Not in this project, so this step cannot run.')
               : !linked.isPublished
-              ? t(
-                  'This agent has never been published, and a flow runs the published version.',
-                )
+              ? t('Not published yet, so a flow has nothing to run.')
               : t(
-                  'Runs the published version, shared with every flow using it.',
+                  'Runs the published version. Editing it changes every flow using it.',
                 )}
           </p>
 
@@ -272,7 +268,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           {!isNil(linkedConfig) && (
             <p className="text-xs text-muted-foreground">
               {t(
-                'Detaching copies the tools and model here, not the instructions.',
+                'Copies the tools and model. Instructions stay with the agent.',
               )}
             </p>
           )}
