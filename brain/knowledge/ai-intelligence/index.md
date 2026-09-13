@@ -17,7 +17,7 @@ The metered currency for AI usage — 1000 credits = $1 — backed by per-key Op
 A flow step that runs an autonomous LLM loop rather than a single call. Its **AgentTool**s are Piece, Flow, MCP, or Knowledge Base handles.
 
 ### ⚡ Direct AI step
-A flow step that makes one model call and returns: Ask AI, Summarize Text, Classify Text, Extract Structured Data, Generate Image. The counterpart to an **Agent**, which loops — and the distinction decides how each reaches a model, see [decision 000035](../decisions/000035-ai-steps-call-the-worker-in-band-only-agents-suspend.md).
+A flow step that makes one model call and returns: Ask AI, Summarize Text, Classify Text, Extract Structured Data, Generate Image. The counterpart to an **Agent**, which loops — and the distinction decides how each reaches a model, see [decision 000035](../decisions/000035-direct-ai-steps-reuse-the-agents-suspend-and-resume-path.md).
 - *Avoid:* "simple AI action" and "AI action" — both name the piece rather than the behaviour, and would wrongly include the Agent step, which also lives in the AI piece.
 
 ### 🔗 MCP Server
