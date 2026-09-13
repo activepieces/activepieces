@@ -12,6 +12,7 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => ({
             return { modelId: args['modelId'] }
         },
         createModelForImages: () => undefined,
+        buildWebSearchToolsOrThrow: () => ({}),
     },
 }))
 
@@ -27,6 +28,7 @@ vi.mock('ai', async (importOriginal) => ({
 
 const { extractStructuredData } = await import('../../../../../src/lib/execute/jobs/ai/extract-structured-data')
 const { generateImageStep } = await import('../../../../../src/lib/execute/jobs/ai/generate-image')
+const { executeAiJob } = await import('../../../../../src/lib/execute/jobs/ai/execute-ai')
 
 const FLOW_STEP = {
     projectId: 'project-1',
@@ -93,4 +95,40 @@ describe('flowStep reaches every model built on the worker', () => {
         expect(createModelCalls).toHaveLength(1)
         expect(createModelCalls[0]['flowStep']).toEqual(FLOW_STEP)
     })
+
+    it('builds the flow step inside the job itself, so extract keeps it without the caller supplying one', async () => {
+        const ctx = jobContext()
+
+        await executeAiJob.execute(ctx, jobData(AiStepAction.enum.EXTRACT_STRUCTURED_DATA, {
+            text: 'an invoice total of 42',
+            schema: { mode: 'simple', fields: [{ name: 'total', type: 'number', isRequired: true }] },
+        }))
+
+        expect(createModelCalls).toHaveLength(1)
+        expect(createModelCalls[0]['flowStep']).toEqual(FLOW_STEP)
+    })
+
+    it('builds the flow step inside the job itself for generate image too', async () => {
+        const ctx = jobContext({ provider: AIProviderName.GOOGLE })
+
+        await executeAiJob.execute(ctx, jobData(AiStepAction.enum.GENERATE_IMAGE, {
+            prompt: 'a cat',
+            provider: AIProviderName.GOOGLE,
+            modelId: 'gemini-2.5-flash-image',
+        }))
+
+        expect(createModelCalls).toHaveLength(1)
+        expect(createModelCalls[0]['flowStep']).toEqual(FLOW_STEP)
+    })
 })
+
+function jobContext({ provider = AIProviderName.MISTRAL }: { provider?: AIProviderName } = {}): Parameters<typeof executeAiJob.execute>[0] {
+    return {
+        apiClient: {
+            resolveAiProvider: async () => ({ ...RESOLVED, provider }),
+            resumeAiStep: async () => undefined,
+            saveFlowStepFile: async () => ({ fileId: 'file-1', url: 'https://files.example/file-1' }),
+        },
+        log: { warn: () => undefined, error: () => undefined },
+    } as unknown as Parameters<typeof executeAiJob.execute>[0]
+}
