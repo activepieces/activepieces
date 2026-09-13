@@ -8,7 +8,7 @@ import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
-import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
+import { ALLOW_ALL, PermissionChecker, resolveMcpPermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { mcpToolInput } from './mcp-tool-input'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
@@ -66,7 +66,7 @@ export async function buildMcpServer({ mcp, userId, clientId, log, resolveProjec
 
     if (projectId) {
         const permissionChecker = userId
-            ? await resolvePermissionChecker({ userId, projectId, log })
+            ? await resolveMcpPermissionChecker({ userId, projectId, log })
             : ALLOW_ALL
         registerFlowTools({ server, mcp, projectId, permissionChecker, log })
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, log })
@@ -117,7 +117,7 @@ function registerPlatformTools({ server, mcp, userId, selectionScope, resolvePro
             }
             const projectMcp = await resolveProjectMcp(selectedProjectId)
             const projectScopedMcp: ProjectScopedMcpServer = { ...projectMcp, projectId: selectedProjectId }
-            const permissionChecker = await resolvePermissionChecker({ userId, projectId: selectedProjectId, log })
+            const permissionChecker = await resolveMcpPermissionChecker({ userId, projectId: selectedProjectId, log })
             const realTools = activepiecesTools(projectScopedMcp, userId, log)
             const realTool = realTools.find(t => t.title === tool.title)
             if (isNil(realTool)) {
