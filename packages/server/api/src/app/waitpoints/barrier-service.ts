@@ -90,22 +90,11 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     },
 
     async receiveSignal(params: ReceiveSignalParams): Promise<WaitpointSignal | null> {
-        if (isNil(params.signalId) && isNil(params.refId)) {
-            return null
-        }
-        const signal = isNil(params.signalId)
-            ? await signalRepo().findOneBy({ refId: params.refId, projectId: params.projectId })
-            : await signalRepo().findOneBy({ id: params.signalId, projectId: params.projectId })
-        if (isNil(signal)) {
-            return null
-        }
-        await signalRepo().save({
-            ...signal,
-            status: params.status,
-            result: isNil(params.result) ? null : sanitizeObjectForPostgresql(params.result),
-        })
-        await barrierQueue(log).enqueueEvaluation({ barrierId: signal.waitpointId, projectId: signal.projectId })
-        return signal
+        return applySignalOutcome({ ...params, requirePending: false, log })
+    },
+
+    async recordDecision(params: RecordDecisionParams): Promise<WaitpointSignal | null> {
+        return applySignalOutcome({ ...params, requirePending: true, log })
     },
 
     async releaseIfReady({ barrierId, projectId }: ReleaseIfReadyParams): Promise<void> {
@@ -143,6 +132,38 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         return finalSummary
     },
 })
+
+async function applySignalOutcome({ signalId, refId, projectId, status, result, requirePending, log }: ApplySignalOutcomeParams): Promise<WaitpointSignal | null> {
+    if (isNil(signalId) && isNil(refId)) {
+        return null
+    }
+    const identity: SignalIdentity = isNil(signalId) ? { refId } : { id: signalId }
+    const updateResult = await signalRepo()
+        .createQueryBuilder()
+        .update()
+        .set({
+            status,
+            result: isNil(result) ? null : sanitizeObjectForPostgresql(result),
+        })
+        .where({
+            ...identity,
+            projectId,
+            ...(requirePending ? { status: BarrierSignalStatus.PENDING } : {}),
+        })
+        .returning(['id'])
+        .execute()
+
+    const decidedRows: unknown[] = updateResult.raw ?? []
+    if (decidedRows.length === 0) {
+        return null
+    }
+    const signal = await signalRepo().findOneBy({ ...identity, projectId })
+    if (isNil(signal)) {
+        return null
+    }
+    await barrierQueue(log).enqueueEvaluation({ barrierId: signal.waitpointId, projectId: signal.projectId })
+    return signal
+}
 
 function buildPendingSignals({ barrierId, projectId, labels }: BuildPendingSignalsParams): WaitpointSignal[] {
     const now = new Date().toISOString()
@@ -284,6 +305,23 @@ export type ReceiveSignalParams = {
     projectId: string
     status: BarrierSignalStatus
     result?: Record<string, unknown>
+}
+
+export type RecordDecisionParams = {
+    signalId: string
+    projectId: string
+    status: BarrierSignalStatus
+    result?: Record<string, unknown>
+}
+
+type SignalIdentity = {
+    id?: string
+    refId?: string
+}
+
+type ApplySignalOutcomeParams = ReceiveSignalParams & {
+    requirePending: boolean
+    log: FastifyBaseLogger
 }
 
 type FindSignalByIdParams = {

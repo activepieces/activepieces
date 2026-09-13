@@ -179,7 +179,7 @@ async function handleSignalDecision({ flowRunId, signalId, action, body, headers
         return
     }
 
-    const recorded = await barrierService(log).receiveSignal({
+    const recorded = await barrierService(log).recordDecision({
         signalId,
         projectId,
         status: approved ? BarrierSignalStatus.SUCCEEDED : BarrierSignalStatus.REJECTED,
@@ -212,7 +212,7 @@ function isResumableRunStatus(status: FlowRunStatus): boolean {
 }
 
 function isReasonMissing({ reasonRequiredOn, approved, reason }: IsReasonMissingParams): boolean {
-    const required = reasonRequiredOn ?? 'reject'
+    const required = reasonRequiredOn ?? 'none'
     if (required === 'none') {
         return false
     }
