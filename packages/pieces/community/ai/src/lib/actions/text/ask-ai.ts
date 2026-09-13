@@ -59,7 +59,7 @@ export const askAI = createAction({
 
     const result = await runOnWorker({
       context,
-      request: {
+      buildRequest: async () => ({
         action: 'ASK_AI',
         provider,
         ...spreadIfDefined('providerConfigId', configId),
@@ -69,7 +69,7 @@ export const askAI = createAction({
         ...spreadIfDefined('temperature', isNil(context.propsValue.creativity) ? undefined : context.propsValue.creativity / 100),
         ...spreadIfDefined('conversation', isNil(storageKey) ? undefined : await readConversation(context.store, storageKey)),
         webSearch: { enabled: webSearchEnabled, options: webSearchOptions },
-      },
+      }),
     });
 
     if (result.status === 'paused') {

@@ -142,7 +142,7 @@ export const generateImageAction = createAction({
 
     const result = await runOnWorker({
       context,
-      request: {
+      buildRequest: async () => ({
         action: 'GENERATE_IMAGE',
         provider,
         ...spreadIfDefined('providerConfigId', configId),
@@ -150,7 +150,7 @@ export const generateImageAction = createAction({
         prompt: context.propsValue.prompt,
         files: await uploadAiFiles({ context, files: inputImages, mimeTypeOf: inputImageMimeType }),
         ...spreadIfDefined('advancedOptions', withoutInputImages(context.propsValue.advancedOptions)),
-      },
+      }),
     });
 
     if (result.status === 'paused') {
