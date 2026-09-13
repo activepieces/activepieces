@@ -274,7 +274,7 @@ function WorkerGroupCell({
       </Select>
       {isOffline && (
         <p className="text-xs text-destructive">
-          {t('{group} has no workers online. Fallback to Shared', {
+          {t('{group} has no workers online. Runs will wait in its queue', {
             group: row.workerGroupId!.replaceAll('_', ' '),
           })}
         </p>

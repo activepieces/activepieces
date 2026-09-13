@@ -1123,7 +1123,7 @@
   "Saved": "Saved",
   "Failed to save": "Failed to save",
   "Shared": "Shared",
-  "{group} has no workers online. Fallback to Shared": "{group} has no workers online. Fallback to Shared",
+  "{group} has no workers online. Runs will wait in its queue": "{group} has no workers online. Runs will wait in its queue",
   "Default {count}": "Default {count}",
   "Concurrency limit must be a positive number": "Concurrency limit must be a positive number",
   "Check the health of your workers": "Check the health of your workers",
