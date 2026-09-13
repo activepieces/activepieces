@@ -1,3 +1,4 @@
+import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { PageHeader } from '@/components/custom/page-header';
@@ -12,7 +13,9 @@ import { PageBand } from './page-band';
 import { PiecesTab } from './pieces/pieces-tab';
 
 export default function McpServerPage() {
-  const { serverUrl, isReachableFromInternet } = useMcpServerUrl();
+  const { serverUrl, isReachableFromInternet } = useMcpServerUrl({
+    scope: McpServerType.PLATFORM,
+  });
   const nav = useMcpNav();
   piecesHooks.usePrefetchPieces({ skipProjectFilter: true });
 

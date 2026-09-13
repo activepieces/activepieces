@@ -6,7 +6,6 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { ProjectSettingsDialog } from '@/app/components/project-settings';
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { RequestTrial } from '@/app/components/request-trial';
 import { LockedAlert } from '@/components/custom/locked-alert';
@@ -21,7 +20,6 @@ import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 
 import { PageBand } from '../page-band';
 
@@ -86,7 +84,7 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
 
       {projectId !== null &&
         mcpServer?.disabledTools?.includes(RUN_ACTION_TOOL_NAME) && (
-          <RunActionDisabledAlert projectId={projectId} />
+          <RunActionDisabledAlert />
         )}
 
       <div className="flex flex-wrap items-center gap-3">
@@ -181,37 +179,17 @@ function PiecesUnavailableAlert({
   );
 }
 
-function RunActionDisabledAlert({ projectId }: { projectId: string }) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const isCurrentProject = authenticationSession.getProjectId() === projectId;
-
+function RunActionDisabledAlert() {
   return (
-    <>
-      <Alert variant="warning">
-        <TriangleAlert />
-        <AlertTitle>{t('Nothing below can run right now')}</AlertTitle>
-        <AlertDescription>
-          {t(
-            'Running piece actions is switched off for this project. Clients can still see the list, but every call fails.',
-          )}
-        </AlertDescription>
-        {isCurrentProject && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 w-fit"
-            onClick={() => setSettingsOpen(true)}
-          >
-            {t('Turn it on in project settings')}
-          </Button>
+    <Alert variant="warning">
+      <TriangleAlert />
+      <AlertTitle>{t('Nothing below can run right now')}</AlertTitle>
+      <AlertDescription>
+        {t(
+          'Running piece actions is switched off for this project. Clients can still see the list, but every call fails.',
         )}
-      </Alert>
-      <ProjectSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        initialTab="mcp"
-      />
-    </>
+      </AlertDescription>
+    </Alert>
   );
 }
 
