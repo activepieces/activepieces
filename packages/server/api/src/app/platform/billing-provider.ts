@@ -190,6 +190,8 @@ export type AiCreditConsumptionProperties = FlowRunCreditConsumptionProperties &
     messages: number
     toolCalls: number
     breakdown: CreditEventBreakdownEntry[]
+    costUsd?: number
+    creditUsdValue?: number
 }
 
 export type McpCallCreditConsumptionProperties = {
@@ -208,6 +210,8 @@ export type ChatCreditConsumptionProperties = CreditConsumptionPropertiesBase & 
     provider: string | null
     model: string | null
     tier: string
+    costUsd?: number
+    creditUsdValue?: number
 }
 
 export type ChatAppSumoConsumptionProperties = CreditConsumptionPropertiesBase & {
