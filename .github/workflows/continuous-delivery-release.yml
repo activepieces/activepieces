@@ -9,7 +9,7 @@ jobs:
   weekly-release:
     runs-on: ubuntu-24.04
     environment:
-      name: production
+      name: release
     steps:
       - uses: actions/checkout@v5
         with:

@@ -15,7 +15,7 @@ jobs:
       contents: write
       packages: write
     environment:
-      name: production
+      name: release
     steps:
       - uses: actions/checkout@v5
         with:
