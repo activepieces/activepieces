@@ -8,6 +8,13 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Worker group runs no longer fall back to shared workers
+
+Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
+
+#### What you need to do
+
+If you assign projects to worker groups, keep at least one worker online per assigned group. If a group is down, reassign the project to another group or unassign it (set its `workerGroupId` to `null`) — any assignment change moves the project's waiting runs to the new queue.
 #### The legacy product-embed connection-key and app-credential endpoints are removed
 
 The original product-embed flow is gone. It let a host application store per-project OAuth client credentials and a public key, then mint an app connection by presenting a token signed with the matching private key. These endpoints are removed:
