@@ -68,11 +68,15 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
 
   const instructionsPreview = linkedConfig?.instructions?.trim();
   const modelLabel = linkedConfig?.modelName ?? undefined;
-  const toolChips = (linked?.toolPieceNames ?? [])
-    .slice(0, MAX_TOOL_CHIPS)
-    .map((pieceName) => pieceName.replace('@activepieces/piece-', ''));
+  const toolChips = [
+    ...new Set(
+      (linked?.toolPieceNames ?? []).map((pieceName) =>
+        pieceName.replace('@activepieces/piece-', ''),
+      ),
+    ),
+  ].slice(0, MAX_TOOL_CHIPS);
   const hiddenToolCount = Math.max(
-    (linked?.toolCount ?? 0) - toolChips.length,
+    new Set(linked?.toolPieceNames ?? []).size - toolChips.length,
     0,
   );
 
