@@ -336,3 +336,5 @@ export type AgentResult = {
 }
 
 export const AGENT_STEP_TIMEOUT_MS = 3 * 60 * 60 * 1_000
+
+export const AGENT_STEP_TEST_TIMEOUT_MS = 15 * 60 * 1_000
