@@ -31,4 +31,16 @@ describe('system.getDecimalOrThrow', () => {
 
         expect(() => system.getDecimalOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)).toThrow()
     })
+
+    it('throws on an infinite rate, which would divide every observed cost down to a free call', () => {
+        process.env[ENV_KEY] = 'Infinity'
+
+        expect(() => system.getDecimalOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)).toThrow()
+    })
+
+    it('throws on a value that overflows to infinity rather than reading as the huge number it looks like', () => {
+        process.env[ENV_KEY] = '1e999'
+
+        expect(() => system.getDecimalOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)).toThrow()
+    })
 })
