@@ -224,7 +224,7 @@ async function assertSignalCountWithinLimit({ signalCount, platformId, log }: As
     if (signalCount > maxSignals) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
-            params: { message: `This step waits on ${signalCount} things, which exceeds the maximum of ${maxSignals}. Wait on fewer, or ask a platform admin to raise the limit in Settings, Infrastructure, Configurations.` },
+            params: { message: `This step waits on ${signalCount} things, which exceeds the maximum of ${maxSignals}. Wait on fewer things.` },
         })
     }
 }

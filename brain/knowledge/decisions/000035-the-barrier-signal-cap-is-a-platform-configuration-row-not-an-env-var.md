@@ -7,7 +7,7 @@ status: accepted
 ## Decision
 
 `AP_MAX_BARRIER_SIGNALS` becomes `maxBarrierSignals`, an `integer NOT NULL DEFAULT 10000` column on
-`platform_configuration`, edited from a new `Limits` section on the Configurations page. The row is
+`platform_configuration`, with a `Limits` section on the Configurations page to edit it. The row is
 authoritative and born from the env var, exactly as [000033](000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md)
 does it. The env var survives only as the birth default for a platform that has no row yet.
 
@@ -69,4 +69,10 @@ This is the variant to revisit if multi-platform installs start mattering here.
   `barrierService.create`.** Postgres down kills the transaction and the signal inserts, Redis down kills
   `enqueueEvaluation`, and the `distributedLock` is taken only on the create path, once per platform for
   the life of the install. Fail-closed is also the do-nothing option, so there is no code to write.
+- **The `Limits` section is written but not rendered.** `limits-section.tsx` exists and is wired to the
+  same form schema, but `configurations/index.tsx` does not mount it, so no edition shows the field yet.
+  The row, the API and the cap are all live regardless: the value every platform runs on is the one
+  `AP_MAX_BARRIER_SIGNALS` seeded, and an existing platform's row can only be changed through
+  `POST /v1/platform-configurations` until the section is mounted. Rendering it is one import and one
+  line.
 - Postgres only. There is no sqlite migration for `platform_configuration`.
