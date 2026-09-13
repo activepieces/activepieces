@@ -18,6 +18,8 @@ const MAX_AGENT_CONFIG_BYTES = 128_000
 const MAX_DRAFT_PROMPT_LENGTH = 2_000
 const DEFAULT_AGENT_MAX_STEPS = 20
 
+const MAX_AGENT_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
+
 enum AgentVisibility {
     PROJECT = 'PROJECT',
     RESTRICTED = 'RESTRICTED',
@@ -181,6 +183,7 @@ export {
     AgentVisibility,
     CreateAgentRequest,
     DEFAULT_AGENT_MAX_STEPS,
+    MAX_AGENT_TURN_WALL_CLOCK_MS,
     DraftAgentRequest,
     AgentDraftFields,
     DraftAgentResponse,
