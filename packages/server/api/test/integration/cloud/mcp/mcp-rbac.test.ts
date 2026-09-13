@@ -143,13 +143,13 @@ describe('MCP Tool RBAC', () => {
             expect(checker.check(Permission.READ_FLOW, 'ap_list_flows')).toBeNull()
         })
 
-        it('still allows piece-catalog tools when the role lacks READ_MCP', async () => {
+        it('denies piece-catalog tools too, since they read project connections and providers', async () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW])
 
             const checker = await resolveMcpPermissionChecker({ userId: member.user.id, projectId: ctx.project.id, log: mockLog })
 
-            expect(checker.check(undefined, 'ap_research_pieces')).toBeNull()
-            expect(checker.check(undefined, 'ap_get_piece_props')).toBeNull()
+            expect(text(checker.check(undefined, 'ap_research_pieces')!)).toContain(Permission.READ_MCP)
+            expect(text(checker.check(undefined, 'ap_get_piece_props')!)).toContain(Permission.READ_MCP)
         })
 
         it('leaves the non-MCP checker alone, so agent permissions do not require READ_MCP', async () => {
@@ -192,11 +192,11 @@ describe('MCP Tool RBAC', () => {
             expect(text(error!)).toContain('no role')
         })
 
-        it('still allows piece-catalog tools, which read no project data', async () => {
+        it('denies piece-catalog tools too, since they read project connections and providers', async () => {
             const { checker } = await createStrangerChecker()
 
-            expect(checker.check(undefined, 'ap_research_pieces')).toBeNull()
-            expect(checker.check(undefined, 'ap_list_ai_models')).toBeNull()
+            expect(text(checker.check(undefined, 'ap_research_pieces')!)).toContain('no role')
+            expect(text(checker.check(undefined, 'ap_list_ai_models')!)).toContain('no role')
         })
     })
 

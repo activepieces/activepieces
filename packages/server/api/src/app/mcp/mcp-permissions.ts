@@ -3,9 +3,6 @@ import { McpToolDefinition, ProjectRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { getPrincipalRoleOrThrow } from '../ee/authentication/project-role/rbac-middleware'
 import { mcpAccess } from './mcp-access'
-import { PLATFORM_LEVEL_TOOL_NAMES } from './tools'
-
-const PROJECT_DATA_FREE_TOOL_NAMES = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
 
 export async function resolvePermissionChecker({ userId, projectId, log }: ResolveCheckerParams): Promise<PermissionChecker> {
     return buildPermissionChecker({ userId, projectId, log })
@@ -30,13 +27,13 @@ async function buildPermissionChecker({ userId, projectId, log, surfacePermissio
     const role = await resolveProjectRole({ userId, projectId, log })
 
     if (isNil(role)) {
-        return denyProjectTools((toolTitle) => `❌ Permission denied: no role found for this user in the project. Cannot execute "${toolTitle}".`)
+        return denyAllTools((toolTitle) => `❌ Permission denied: no role found for this user in the project. Cannot execute "${toolTitle}".`)
     }
 
     const permissionSet = new Set(role.permissions ?? [])
 
     if (!isNil(surfacePermission) && !permissionSet.has(surfacePermission)) {
-        return denyProjectTools((toolTitle) => `❌ Permission denied: your role does not have the "${surfacePermission}" permission required to use MCP in this project. Cannot execute "${toolTitle}".`)
+        return denyAllTools((toolTitle) => `❌ Permission denied: your role does not have the "${surfacePermission}" permission required to use MCP in this project. Cannot execute "${toolTitle}".`)
     }
 
     return buildChecker((permission, toolTitle) => {
@@ -61,16 +58,11 @@ async function resolveProjectRole({ userId, projectId, log }: ResolveCheckerPara
     throw error
 }
 
-function denyProjectTools(buildMessage: (toolTitle: string) => string): PermissionChecker {
-    return buildChecker((_permission, toolTitle) => {
-        if (PROJECT_DATA_FREE_TOOL_NAMES.has(toolTitle)) {
-            return null
-        }
-        return {
-            content: [{ type: 'text' as const, text: buildMessage(toolTitle) }],
-            isError: true,
-        }
-    })
+function denyAllTools(buildMessage: (toolTitle: string) => string): PermissionChecker {
+    return buildChecker((_permission, toolTitle) => ({
+        content: [{ type: 'text' as const, text: buildMessage(toolTitle) }],
+        isError: true,
+    }))
 }
 
 function buildChecker(check: PermissionChecker['check']): PermissionChecker {
