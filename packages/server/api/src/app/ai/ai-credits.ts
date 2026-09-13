@@ -10,7 +10,15 @@ function creditsForModelCall(usage: AiUsageCharge): number {
     if (usage.type === 'flat-credits') {
         return usage.credits
     }
-    return usage.costUsd / system.getNumberOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)
+    return usage.costUsd / dollarsPerCredit()
+}
+
+function dollarsPerCredit(): number {
+    const value = system.getDecimalOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)
+    if (value <= 0) {
+        throw new Error(`AP_${AppSystemProp.AI_CREDIT_USD_VALUE} must be greater than zero, so a call cannot bill an unbounded number of credits`)
+    }
+    return value
 }
 
 const CREDITS_PER_TOOL_CALL = 1

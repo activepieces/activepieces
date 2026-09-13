@@ -96,6 +96,23 @@ export const system = {
         return value
 
     },
+    getDecimalOrThrow(prop: SystemProp): number {
+        const stringNumber = getEnvVarOrReturnDefaultValue(prop)
+        const parsedNumber = isNil(stringNumber) || stringNumber === '' ? Number.NaN : Number(stringNumber)
+
+        if (Number.isNaN(parsedNumber)) {
+            throw new ActivepiecesError(
+                {
+                    code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+                    params: {
+                        prop,
+                    },
+                },
+                `System property AP_${prop} is not a number, please check the documentation`,
+            )
+        }
+        return parsedNumber
+    },
     getNumber(prop: SystemProp): number | null {
         const stringNumber = getEnvVarOrReturnDefaultValue(prop)
 

@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 
+const rate = { value: 0.0005 }
+
 vi.mock('../../../../src/app/helper/system/system', () => ({
-    system: { getNumberOrThrow: () => 0.0005 },
+    system: { getDecimalOrThrow: () => rate.value },
 }))
 
 const { chargeFor } = await import('../../../../src/app/ai/ai-credits')
@@ -44,5 +46,11 @@ describe('chargeFor', () => {
 
     it('charges for tool calls even when the model call itself cost nothing', () => {
         expect(chargeFor({ usage: { type: 'observed-cost', costUsd: 0 }, toolCalls: 2 })).toBe(2)
+    })
+
+    it('refuses a rate of zero rather than billing an unbounded number of credits', () => {
+        rate.value = 0
+        expect(() => chargeFor({ usage: { type: 'observed-cost', costUsd: 0.0042 } })).toThrow(/greater than zero/)
+        rate.value = 0.0005
     })
 })
