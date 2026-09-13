@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
-import { AiStepAction, AiStepWebSearch, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
+import { AiStepAction, AiStepWebSearch, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -16,36 +16,16 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
             })
         }
         const { projectId, platform } = request.principal
-        const { action, provider, providerConfigId, modelId, prompt, text, categories, conversation, maxOutputTokens, temperature, webSearch, flowId, flowRunId, waitpointId } = request.body
+        const body = request.body
         await assertCreditsAndAppSumoNotExceeded({ platformId: platform.id, log: request.log })
 
         const requestId = apId()
-        const log = request.log.child({ flowRun: { id: flowRunId }, requestId })
+        const log = request.log.child({ flowRun: { id: body.flowRunId }, requestId })
 
         await jobQueue(log).add({
             id: apId(),
             type: JobType.ONE_TIME,
-            data: {
-                schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                jobType: WorkerJobType.EXECUTE_AI,
-                requestId,
-                projectId,
-                platformId: platform.id,
-                flowId,
-                flowRunId,
-                waitpointId,
-                action,
-                provider,
-                modelId,
-                prompt,
-                ...spreadIfDefined('providerConfigId', providerConfigId),
-                ...spreadIfDefined('text', text),
-                ...spreadIfDefined('categories', categories),
-                ...spreadIfDefined('conversation', conversation),
-                ...spreadIfDefined('maxOutputTokens', maxOutputTokens),
-                ...spreadIfDefined('temperature', temperature),
-                ...spreadIfDefined('webSearch', webSearch),
-            },
+            data: aiJobFor({ body, requestId, projectId, platformId: platform.id }),
         })
 
         log.info({ project: { id: projectId } }, '[aiExecuteController] Enqueued AI step')
@@ -53,10 +33,49 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
+function aiJobFor({ body, requestId, projectId, platformId }: {
+    body: z.infer<typeof ExecuteAiRequest>
+    requestId: string
+    projectId: string
+    platformId: string
+}): ExecuteAiJobData {
+    const shared = {
+        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+        jobType: WorkerJobType.EXECUTE_AI,
+        requestId,
+        projectId,
+        platformId,
+        flowId: body.flowId,
+        flowRunId: body.flowRunId,
+        waitpointId: body.waitpointId,
+        provider: body.provider,
+        modelId: body.modelId,
+        prompt: body.prompt,
+        ...spreadIfDefined('providerConfigId', body.providerConfigId),
+        ...spreadIfDefined('maxOutputTokens', body.maxOutputTokens),
+        ...spreadIfDefined('temperature', body.temperature),
+        ...spreadIfDefined('webSearch', body.webSearch),
+    } as const
+
+    switch (body.action) {
+        case AiStepAction.ASK_AI:
+            return { ...shared, action: AiStepAction.ASK_AI, ...spreadIfDefined('conversation', body.conversation) }
+        case AiStepAction.SUMMARIZE_TEXT:
+            return { ...shared, action: AiStepAction.SUMMARIZE_TEXT, ...spreadIfDefined('text', body.text) }
+        case AiStepAction.CLASSIFY_TEXT:
+            return {
+                ...shared,
+                action: AiStepAction.CLASSIFY_TEXT,
+                ...spreadIfDefined('text', body.text),
+                ...spreadIfDefined('categories', body.categories),
+            }
+    }
+}
+
 const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 const ExecuteAiRequest = z.object({
-    action: AiStepAction,
+    action: z.enum(AiStepAction),
     flowId: z.string(),
     flowRunId: z.string(),
     waitpointId: z.string(),
