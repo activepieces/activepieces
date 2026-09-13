@@ -66,7 +66,7 @@ describe('flowStep reaches every model built on the worker', () => {
 
     it('extract structured data builds its model with the flow step, so Mistral is not re-routed through OpenRouter', async () => {
         await extractStructuredData({
-            data: jobData(AiStepAction.enum.EXTRACT_STRUCTURED_DATA, {
+            data: jobData(AiStepAction.EXTRACT_STRUCTURED_DATA, {
                 text: 'an invoice total of 42',
                 schema: { mode: 'simple', fields: [{ name: 'total', type: 'number', isRequired: true }] },
             }),
@@ -83,7 +83,7 @@ describe('flowStep reaches every model built on the worker', () => {
 
         await generateImageStep({
             ctx: ctx as unknown as Parameters<typeof generateImageStep>[0]['ctx'],
-            data: jobData(AiStepAction.enum.GENERATE_IMAGE, {
+            data: jobData(AiStepAction.GENERATE_IMAGE, {
                 prompt: 'a cat',
                 provider: AIProviderName.GOOGLE,
                 modelId: 'gemini-2.5-flash-image',
@@ -99,7 +99,7 @@ describe('flowStep reaches every model built on the worker', () => {
     it('builds the flow step inside the job itself, so extract keeps it without the caller supplying one', async () => {
         const ctx = jobContext()
 
-        await executeAiJob.execute(ctx, jobData(AiStepAction.enum.EXTRACT_STRUCTURED_DATA, {
+        await executeAiJob.execute(ctx, jobData(AiStepAction.EXTRACT_STRUCTURED_DATA, {
             text: 'an invoice total of 42',
             schema: { mode: 'simple', fields: [{ name: 'total', type: 'number', isRequired: true }] },
         }))
@@ -111,7 +111,7 @@ describe('flowStep reaches every model built on the worker', () => {
     it('builds the flow step inside the job itself for generate image too', async () => {
         const ctx = jobContext({ provider: AIProviderName.GOOGLE })
 
-        await executeAiJob.execute(ctx, jobData(AiStepAction.enum.GENERATE_IMAGE, {
+        await executeAiJob.execute(ctx, jobData(AiStepAction.GENERATE_IMAGE, {
             prompt: 'a cat',
             provider: AIProviderName.GOOGLE,
             modelId: 'gemini-2.5-flash-image',
@@ -144,7 +144,7 @@ describe('the image model gets the flow step too, so gateway routing is not sile
         }
 
         try {
-            await executeAiJob.execute(jobContext({ provider: AIProviderName.GOOGLE }), jobData(AiStepAction.enum.GENERATE_IMAGE, {
+            await executeAiJob.execute(jobContext({ provider: AIProviderName.GOOGLE }), jobData(AiStepAction.GENERATE_IMAGE, {
                 prompt: 'a cat',
                 provider: AIProviderName.GOOGLE,
                 modelId: 'gemini-2.5-flash-image',
