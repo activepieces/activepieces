@@ -34,7 +34,7 @@ export const createEventProps = {
     description: 'HTML tags are allowed.',
     required: false,
   }),
-  colorId: googleCalendarCommon.colorId,
+  colorId: googleCalendarCommon.colorId('Leave empty for the calendar default.'),
   attendees: Property.Array({
     displayName: 'Attendees',
     description: 'One guest email per item.',

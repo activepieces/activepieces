@@ -27,6 +27,7 @@ export const createQuickCalendarEvent = createAction({
       displayName: 'Send Updates',
       description: 'Who gets an email invitation for the new event.',
       required: false,
+      defaultValue: 'all',
       options: {
         disabled: false,
         options: [

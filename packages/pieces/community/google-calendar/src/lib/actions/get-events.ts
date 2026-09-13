@@ -14,9 +14,8 @@ export const getEventsProps = {
   event_types: Property.StaticMultiSelectDropdown({
     displayName: 'Event Types',
     description: 'Only events of these types are returned.',
-    required: false,
+    required: true,
     defaultValue: ['default', 'focusTime', 'outOfOffice'],
-    advanced: true,
     options: {
       options: [
         {
@@ -40,7 +39,7 @@ export const getEventsProps = {
   }),
   search: Property.ShortText({
     displayName: 'Search Term',
-    description: 'Matches title, description, location and guests.',
+    description: 'Exact phrase matched against title, description, location and guests.',
     required: false,
   }),
   start_date: Property.DateTime({
@@ -97,9 +96,8 @@ export async function runGetEvents(
     );
   }
   // filter by event type
-  const eventTypes = event_types ?? [];
-  if (eventTypes.length > 0) {
-    url += `?${eventTypes.map((type) => `eventTypes=${type}`).join('&')}`;
+  if (event_types.length > 0) {
+    url += `?${event_types.map((type) => `eventTypes=${type}`).join('&')}`;
   }
   const request: HttpRequest<Record<string, unknown>> = {
     method: HttpMethod.GET,

@@ -36,10 +36,10 @@ export const updateEventProps = {
     description: 'HTML tags are allowed.',
     required: false,
   }),
-  colorId: googleCalendarCommon.colorId,
+  colorId: googleCalendarCommon.colorId(),
   attendees: Property.Array({
     displayName: 'Attendees',
-    description: 'One guest email per item.',
+    description: 'Replaces the current guest list. One email per item.',
     required: false,
   }),
   guests_can_modify: Property.Checkbox({
@@ -102,6 +102,7 @@ export async function runUpdateEvent(
     calendarId: calendar_id,
     eventId: eventId,
     requestBody: {
+      ...currentEvent.data,
       summary: title ?? currentEvent.data.summary,
       attendees: attendeeFormattedList,
       description: description ?? currentEvent.data.description,

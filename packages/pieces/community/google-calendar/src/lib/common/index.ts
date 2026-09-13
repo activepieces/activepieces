@@ -68,30 +68,31 @@ export const googleCalendarCommon = {
       },
     });
   },
-  colorId: Property.Dropdown({
-    auth: googleCalendarAuth,
-    displayName: 'Color',
-    description: 'Leave empty for the calendar default.',
-    refreshers: [],
-    required: false,
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          placeholder: 'Connect your Google account first',
-          options: [],
-        };
-      }
-      const response = await getColors(auth as GoogleCalendarAuthValue);
-      return {
-        disabled: false,
-        options: Object.entries(response.event).map(([key, value]) => {
+  colorId: (description?: string) =>
+    Property.Dropdown({
+      auth: googleCalendarAuth,
+      displayName: 'Color',
+      description,
+      refreshers: [],
+      required: false,
+      options: async ({ auth }) => {
+        if (!auth) {
           return {
-            label: value.background,
-            value: key,
+            disabled: true,
+            placeholder: 'Connect your Google account first',
+            options: [],
           };
-        }),
-      };
-    },
-  }),
+        }
+        const response = await getColors(auth as GoogleCalendarAuthValue);
+        return {
+          disabled: false,
+          options: Object.entries(response.event).map(([key, value]) => {
+            return {
+              label: value.background,
+              value: key,
+            };
+          }),
+        };
+      },
+    }),
 };

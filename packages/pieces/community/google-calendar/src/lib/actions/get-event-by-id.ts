@@ -18,7 +18,7 @@ export const getEventByIdProps = {
   }),
   max_attendees: Property.Number({
     displayName: 'Max Attendees',
-    description: 'If exceeded, only the organizer is returned.',
+    description: 'Above this count, only you are returned.',
     required: false,
     advanced: true,
   }),
