@@ -100,7 +100,7 @@ export const system = {
         const stringNumber = getEnvVarOrReturnDefaultValue(prop)
         const parsedNumber = isNil(stringNumber) || stringNumber === '' ? Number.NaN : Number(stringNumber)
 
-        if (Number.isNaN(parsedNumber)) {
+        if (!Number.isFinite(parsedNumber)) {
             throw new ActivepiecesError(
                 {
                     code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
@@ -108,7 +108,7 @@ export const system = {
                         prop,
                     },
                 },
-                `System property AP_${prop} is not a number, please check the documentation`,
+                `System property AP_${prop} is not a finite number, please check the documentation`,
             )
         }
         return parsedNumber
