@@ -5,21 +5,15 @@ import { describe, expect, it } from 'vitest';
 
 import { AppConnectionType } from '@activepieces/shared';
 
-import {
-  OAuth2App,
-  oauth2Utils,
-  RedirectContract,
-} from '@/features/connections';
+import { OAuth2App, oauth2Utils } from '@/features/connections';
 
 const PENDING = 'pending';
 
 const DECODING_PAGE: RedirectPageFixture = {
   name: 'redirect.tsx, which decodes once via URLSearchParams',
   origin: 'http://localhost',
-  redirect: {
-    redirectUrl: 'http://localhost/redirect',
-    postsPercentEncodedCode: false,
-  },
+  redirectUrl: 'http://localhost/redirect',
+  oauth2Type: AppConnectionType.PLATFORM_OAUTH2,
   post: (issuedCode) => {
     const posted = new URLSearchParams(
       `?code=${encodeURIComponent(issuedCode)}`,
@@ -34,10 +28,8 @@ const DECODING_PAGE: RedirectPageFixture = {
 const RAW_PAGE: RedirectPageFixture = {
   name: 'secrets.activepieces.com, which posts the raw query value (verified 2026-09-08)',
   origin: 'https://secrets.activepieces.com',
-  redirect: {
-    redirectUrl: 'https://secrets.activepieces.com/redirect',
-    postsPercentEncodedCode: true,
-  },
+  redirectUrl: 'https://secrets.activepieces.com/redirect',
+  oauth2Type: AppConnectionType.CLOUD_OAUTH2,
   post: (issuedCode) => encodeURIComponent(issuedCode),
 };
 
@@ -47,11 +39,12 @@ function dispatchCodeMessage({ code, origin }: DispatchParams): void {
   );
 }
 
-function openPopupAwaitingCode(redirect: RedirectContract): Promise<string> {
+function openPopupAwaitingCode(page: RedirectPageFixture): Promise<string> {
   return oauth2Utils
     .openOAuth2Popup({
       authorizationUrl: 'https://provider.example/authorize',
-      redirect,
+      redirectUrl: page.redirectUrl,
+      oauth2Type: page.oauth2Type,
     })
     .then((response) => response.code);
 }
@@ -67,7 +60,7 @@ async function codeReachingTokenExchange({
   issuedCode,
   page,
 }: CodeReachingTokenExchangeParams): Promise<string> {
-  const pending = openPopupAwaitingCode(page.redirect);
+  const pending = openPopupAwaitingCode(page);
   dispatchCodeMessage({ code: page.post(issuedCode), origin: page.origin });
   return settleOrPending(pending);
 }
@@ -88,7 +81,7 @@ describe.each([DECODING_PAGE, RAW_PAGE])(
   },
 );
 
-describe('resolveRedirectContract', () => {
+describe('resolveRedirectUrl', () => {
   const platformRedirectUrl = 'https://self-hosted.example/redirect';
   const selfHostedTypes: OAuth2App['oauth2Type'][] = [
     AppConnectionType.PLATFORM_OAUTH2,
@@ -97,36 +90,33 @@ describe('resolveRedirectContract', () => {
 
   it('sends managed apps to the secrets page, which posts a percent-encoded code', () => {
     expect(
-      oauth2Utils.resolveRedirectContract({
+      oauth2Utils.resolveRedirectUrl({
         oauth2Type: AppConnectionType.CLOUD_OAUTH2,
         platformRedirectUrl,
       }),
-    ).toEqual({
-      redirectUrl: 'https://secrets.activepieces.com/redirect',
-      postsPercentEncodedCode: true,
-    });
+    ).toBe('https://secrets.activepieces.com/redirect');
   });
 
   it.each(selfHostedTypes)(
     'sends %s to the platform redirect page, which posts an already-decoded code',
     (oauth2Type) => {
       expect(
-        oauth2Utils.resolveRedirectContract({ oauth2Type, platformRedirectUrl }),
-      ).toEqual({ redirectUrl: platformRedirectUrl, postsPercentEncodedCode: false });
+        oauth2Utils.resolveRedirectUrl({ oauth2Type, platformRedirectUrl }),
+      ).toBe(platformRedirectUrl);
     },
   );
 });
 
 describe('authorization code edge cases', () => {
   it('falls back to the raw value when a raw-posting page sends an undecodable code', async () => {
-    const pending = openPopupAwaitingCode(RAW_PAGE.redirect);
+    const pending = openPopupAwaitingCode(RAW_PAGE);
     dispatchCodeMessage({ code: 'abc%zzdef', origin: RAW_PAGE.origin });
 
     expect(await settleOrPending(pending)).toBe('abc%zzdef');
   });
 
   it('ignores a message whose origin is only a prefix of the redirect origin', async () => {
-    const pending = openPopupAwaitingCode(RAW_PAGE.redirect);
+    const pending = openPopupAwaitingCode(RAW_PAGE);
     dispatchCodeMessage({
       code: 'attacker-code',
       origin: 'https://secrets.activepieces.co',
@@ -139,7 +129,7 @@ describe('authorization code edge cases', () => {
   });
 
   it('ignores a message from an unrelated origin', async () => {
-    const pending = openPopupAwaitingCode(DECODING_PAGE.redirect);
+    const pending = openPopupAwaitingCode(DECODING_PAGE);
     dispatchCodeMessage({ code: 'attacker-code', origin: 'https://evil.test' });
 
     expect(await settleOrPending(pending)).toBe(PENDING);
@@ -152,7 +142,8 @@ describe('authorization code edge cases', () => {
 type RedirectPageFixture = {
   name: string;
   origin: string;
-  redirect: RedirectContract;
+  redirectUrl: string;
+  oauth2Type: OAuth2App['oauth2Type'];
   post: (issuedCode: string) => string;
 };
 

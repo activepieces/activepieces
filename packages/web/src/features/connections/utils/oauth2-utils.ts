@@ -19,20 +19,14 @@ const CLOUD_OAUTH2_REDIRECT_URL = 'https://secrets.activepieces.com/redirect';
 
 let currentPopup: Window | null = null;
 
-function resolveRedirectContract({
+function resolveRedirectUrl({
   oauth2Type,
   platformRedirectUrl,
-}: ResolveRedirectContractParams): RedirectContract {
+}: ResolveRedirectUrlParams): string {
   if (oauth2Type === AppConnectionType.CLOUD_OAUTH2) {
-    return {
-      redirectUrl: CLOUD_OAUTH2_REDIRECT_URL,
-      postsPercentEncodedCode: true,
-    };
+    return CLOUD_OAUTH2_REDIRECT_URL;
   }
-  return {
-    redirectUrl: platformRedirectUrl,
-    postsPercentEncodedCode: false,
-  };
+  return platformRedirectUrl;
 }
 
 function useThirdPartyLogin() {
@@ -60,7 +54,10 @@ async function openOAuth2Popup(
   closeOAuth2Popup();
   currentPopup = openWindow(params.authorizationUrl);
   return {
-    code: await getCode(params.redirect),
+    code: await getCode({
+      redirectUrl: params.redirectUrl,
+      oauth2Type: params.oauth2Type,
+    }),
     codeVerifier: params.codeVerifier,
   };
 }
@@ -86,9 +83,9 @@ function closeOAuth2Popup() {
   currentPopup?.close();
 }
 
-function getCode(redirect: RedirectContract): Promise<string> {
+function getCode({ redirectUrl, oauth2Type }: GetCodeParams): Promise<string> {
   const { data: expectedOrigin } = tryCatchSync(
-    () => new URL(redirect.redirectUrl).origin,
+    () => new URL(redirectUrl).origin,
   );
   return new Promise<string>((resolve) => {
     window.addEventListener('message', function handler(event) {
@@ -101,10 +98,9 @@ function getCode(redirect: RedirectContract): Promise<string> {
         return;
       }
       resolve(
-        readPostedCode({
-          postedCode: event.data.code,
-          postsPercentEncodedCode: redirect.postsPercentEncodedCode,
-        }),
+        oauth2Type === AppConnectionType.CLOUD_OAUTH2
+          ? decodePostedCode(event.data.code)
+          : event.data.code,
       );
       closeOAuth2Popup();
       window.removeEventListener('message', handler);
@@ -112,13 +108,7 @@ function getCode(redirect: RedirectContract): Promise<string> {
   });
 }
 
-function readPostedCode({
-  postedCode,
-  postsPercentEncodedCode,
-}: ReadPostedCodeParams): string {
-  if (!postsPercentEncodedCode) {
-    return postedCode;
-  }
+function decodePostedCode(postedCode: string): string {
   const { data, error } = tryCatchSync(() => decodeURIComponent(postedCode));
   if (error !== null) {
     return postedCode;
@@ -158,12 +148,7 @@ export const oauth2Utils = {
   useThirdPartyLogin,
   getGrantType,
   getPredefinedOAuth2App,
-  resolveRedirectContract,
-};
-
-export type RedirectContract = {
-  redirectUrl: string;
-  postsPercentEncodedCode: boolean;
+  resolveRedirectUrl,
 };
 
 export type OAuth2App =
@@ -187,19 +172,20 @@ export type PiecesOAuth2AppsMap = Record<
   | undefined
 >;
 
-type ResolveRedirectContractParams = {
+type ResolveRedirectUrlParams = {
   oauth2Type: OAuth2App['oauth2Type'];
   platformRedirectUrl: string;
 };
 
-type ReadPostedCodeParams = {
-  postedCode: string;
-  postsPercentEncodedCode: boolean;
+type GetCodeParams = {
+  redirectUrl: string;
+  oauth2Type: OAuth2App['oauth2Type'];
 };
 
 type OAuth2PopupParams = {
   authorizationUrl: string;
-  redirect: RedirectContract;
+  redirectUrl: string;
+  oauth2Type: OAuth2App['oauth2Type'];
   codeVerifier?: string;
 };
 

@@ -38,11 +38,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  OAuth2App,
-  oauth2Utils,
-  RedirectContract,
-} from '@/features/connections';
+import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
@@ -81,7 +77,7 @@ function OAuth2ConnectionSettings({
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
-  const redirect = oauth2Utils.resolveRedirectContract({
+  const redirectUrl = oauth2Utils.resolveRedirectUrl({
     oauth2Type: oauth2App.oauth2Type,
     platformRedirectUrl: thirdPartyUrl ?? 'no_redirect_url_found',
   });
@@ -98,7 +94,7 @@ function OAuth2ConnectionSettings({
         <div className="flex flex-col gap-2">
           <FormLabel>{t('Redirect URL')}</FormLabel>
           <FormControl>
-            <Input disabled type="text" value={redirect.redirectUrl} />
+            <Input disabled type="text" value={redirectUrl} />
           </FormControl>
           <FormMessage />
         </div>
@@ -269,7 +265,8 @@ function OAuth2ConnectionSettings({
                           form.getValues().request.value.scope,
                         );
                         openPopup({
-                          redirect,
+                          redirectUrl,
+                          oauth2Type: oauth2App.oauth2Type,
                           clientId: form.getValues().request.value.client_id,
                           props: form.getValues().request.value.props,
                           pieceName: piece.name,
@@ -311,7 +308,8 @@ function parseScopeString(value: string | undefined): string[] {
 }
 
 async function openPopup({
-  redirect,
+  redirectUrl,
+  oauth2Type,
   clientId,
   props,
   pieceName,
@@ -327,7 +325,7 @@ async function openPopup({
     const result = await appConnectionsApi.getOAuth2AuthorizationUrl({
       pieceName,
       clientId,
-      redirectUrl: redirect.redirectUrl,
+      redirectUrl,
       pieceVersion,
       props,
       projectId: formProjectId,
@@ -357,7 +355,8 @@ async function openPopup({
   setLoading(false);
   const { code } = await oauth2Utils.openOAuth2Popup({
     authorizationUrl,
-    redirect,
+    redirectUrl,
+    oauth2Type,
     codeVerifier,
   });
   form.setValue('request.value.code', code, { shouldValidate: true });
@@ -374,7 +373,8 @@ type OAuth2ConnectionSettingsProps = {
 };
 
 type OpenPopupParams = {
-  redirect: RedirectContract;
+  redirectUrl: string;
+  oauth2Type: OAuth2App['oauth2Type'];
   clientId: string;
   props: Record<string, unknown> | undefined;
   pieceName: string;
