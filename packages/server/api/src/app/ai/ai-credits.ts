@@ -13,6 +13,13 @@ function creditsForModelCall(usage: AiUsageCharge): number {
     return usage.costUsd / dollarsPerCredit()
 }
 
+export function costBasisOf(usage: AiUsageCharge): CostBasis | undefined {
+    if (usage.type !== 'observed-cost') {
+        return undefined
+    }
+    return { costUsd: usage.costUsd, creditUsdValue: dollarsPerCredit() }
+}
+
 function dollarsPerCredit(): number {
     const value = system.getDecimalOrThrow(AppSystemProp.AI_CREDIT_USD_VALUE)
     if (value <= 0) {
@@ -22,3 +29,8 @@ function dollarsPerCredit(): number {
 }
 
 const CREDITS_PER_TOOL_CALL = 1
+
+export type CostBasis = {
+    costUsd: number
+    creditUsdValue: number
+}
