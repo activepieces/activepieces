@@ -33,7 +33,7 @@ export function AdminOverview({
 
 export function OverviewCards({ children }: { children: ReactNode }) {
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-3 [&>*:only-child]:max-w-60">
       {children}
     </div>
   );
