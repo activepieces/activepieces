@@ -8,6 +8,13 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Worker group runs no longer fall back to shared workers
+
+Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
+
+#### What you need to do
+
+If you assign projects to worker groups, keep at least one worker online per assigned group. If a group is down, reassign the project to another group or unassign it (set its `workerGroupId` to `null`) — any assignment change moves the project's waiting runs to the new queue.
 #### The legacy product-embed connection-key and app-credential endpoints are removed
 
 The original product-embed flow is gone. It let a host application store per-project OAuth client credentials and a public key, then mint an app connection by presenting a token signed with the matching private key. These endpoints are removed:
@@ -206,6 +213,16 @@ The region on these connections is also validated against the AWS region format 
 #### What you need to do
 
 Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it. Existing saved connections keep working and are not revalidated automatically — pressing **Recheck** on a connection whose trust policy is wrong will now move it to an error state, which reflects what already happens when a flow runs.
+
+#### Kimai connections now authenticate with an API token instead of a username and API password
+
+Kimai is deprecating its legacy `X-AUTH-USER` / `X-AUTH-TOKEN` authentication (API passwords), with removal planned no later than July 2026 — see [Kimai's announcement](https://www.kimai.org/en/blog/2026/removing-api-passwords). The Kimai piece's connection now sends `Authorization: Bearer <token>` instead, matching Kimai's current API. This also fixes the Activity dropdown on the Create Timesheet action, which ignored the selected project because it tried to filter on a GET request body that the piece's HTTP client cannot send.
+
+The connection's `Username` and `API Password` fields are removed and replaced with a single `API Token` field.
+
+#### What you need to do
+
+Only if you have an existing Kimai connection. Reconnect it: in your Kimai instance, generate an API token from your user profile's "API Access" page, then re-enter your Kimai connection in Activepieces with the Server URL and that token. Existing connections using the old username/API-password fields will fail to authenticate until reconnected.
 
 ## 0.91.0
 

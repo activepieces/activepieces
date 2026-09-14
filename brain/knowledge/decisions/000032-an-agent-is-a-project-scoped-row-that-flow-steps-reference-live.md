@@ -1,7 +1,7 @@
 ---
 title: An agent is a project-scoped row that flow steps reference live
 icon: 🎯
-status: proposed
+status: accepted
 ---
 
 ## Decision
