@@ -13,7 +13,7 @@ export const searchObjectsAction = createAction({
 	outputSchema: searchObjectsOutputSchema,
 	aiMetadata: {
 		description:
-			'Searches any CRM object type using HubSpot\'s full filter syntax, which the Find actions cannot express. Filter Groups are OR-ed together and the filters inside one group are AND-ed, so "deals over 10000 OR closing this month" is two groups while "over 10000 AND closing this month" is one group with two filters. HubSpot allows at most 5 groups, 6 filters per group and 18 filters overall. Operators include EQ, NEQ, LT, LTE, GT, GTE, BETWEEN, IN, NOT_IN, HAS_PROPERTY, NOT_HAS_PROPERTY and CONTAINS_TOKEN; EQ alone is what the Find actions already do, so prefer them for a simple lookup. Results are paged with a cursor returned as paging.next.after and capped at 200 per page, dates are ISO 8601 or epoch milliseconds, and only the properties asked for come back. Read-only and idempotent.',
+			'Searches any CRM object type using HubSpot\'s full filter syntax, which the Find actions cannot express. Filter Groups are OR-ed together and the filters inside one group are AND-ed, so "deals over 10000 OR closing this month" is two groups while "over 10000 AND closing this month" is one group with two filters. HubSpot allows at most 5 groups, 6 filters per group and 18 filters overall. Each operator takes a specific key and sending the wrong one is rejected: EQ, NEQ, LT, LTE, GT, GTE and CONTAINS_TOKEN take a single "value"; IN and NOT_IN take an array called "values"; BETWEEN takes "value" as the lower bound together with "highValue" as the upper bound; HAS_PROPERTY and NOT_HAS_PROPERTY take neither. EQ alone is what the Find actions already do, so prefer them for a simple lookup. Results are paged with a cursor returned as paging.next.after and capped at 200 per page, dates are ISO 8601 or epoch milliseconds, and only the properties asked for come back. Read-only and idempotent.',
 		idempotent: true,
 	},
 	props: {
@@ -25,7 +25,7 @@ export const searchObjectsAction = createAction({
 		filterGroups: Property.Json({
 			displayName: 'Filter Groups',
 			description:
-				'HubSpot filterGroups array. Groups are OR-ed, filters within a group are AND-ed. Example: [{"filters":[{"propertyName":"amount","operator":"GT","value":"10000"}]}]. Max 5 groups, 6 filters per group.',
+				'HubSpot filterGroups array. Groups are OR-ed, filters within a group are AND-ed. Max 5 groups, 6 filters per group, 18 filters overall. Each operator takes a different key: EQ, NEQ, LT, LTE, GT, GTE and CONTAINS_TOKEN use "value", for example {"propertyName":"amount","operator":"GT","value":"10000"}; IN and NOT_IN use "values" as an array, for example {"propertyName":"firstname","operator":"IN","values":["Ada","Grace"]}; BETWEEN uses "value" for the lower bound and "highValue" for the upper, for example {"propertyName":"createdate","operator":"BETWEEN","value":"1700000000000","highValue":"1800000000000"}; HAS_PROPERTY and NOT_HAS_PROPERTY take no value at all.',
 			required: false,
 		}),
 		query: Property.ShortText({
