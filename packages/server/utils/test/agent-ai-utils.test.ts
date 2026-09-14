@@ -431,3 +431,33 @@ describe('buildProviderOptions', () => {
         expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, tier: TIER, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
     })
 })
+
+describe('a message transform never hands the provider an empty history', () => {
+    const onlyThinking: ModelMessage[] = [
+        { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+    ]
+
+    it('keeps the turn when stripping reasoning would leave nothing, since no messages is a hard 400', () => {
+        const stripped = agentAiUtils.stripThinkingBlocks(onlyThinking, AIProviderName.ANTHROPIC)
+
+        expect(stripped.length).toBeGreaterThan(0)
+    })
+
+    it('keeps the turn when the truncated tail is the only message there is', () => {
+        const sanitized = sanitizeTruncatedAssistantTail(onlyThinking)
+
+        expect(sanitized.length).toBeGreaterThan(0)
+    })
+
+    it('still drops a spent reasoning message when a real one survives beside it', () => {
+        const withRealContent: ModelMessage[] = [
+            { role: 'user', content: 'do the thing' },
+            { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+        ]
+
+        const stripped = agentAiUtils.stripThinkingBlocks(withRealContent, AIProviderName.ANTHROPIC)
+
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
+    })
+})
