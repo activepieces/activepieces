@@ -204,16 +204,8 @@ function signingKeys(): SigningKey[] {
   }));
 }
 
-const branding = {
-  logoUrl: 'https://cdn.activepieces.com/brand/sample-full-logo.png',
-  iconUrl: 'https://cdn.activepieces.com/brand/sample-icon.png',
-  faviconUrl: 'https://cdn.activepieces.com/brand/sample-favicon.png',
-  color: '#6e41e2',
-};
-
 export const sampleData = {
   signingKeys,
-  branding,
   templatesPage: () => toPage(templates()),
   apiKeysPage: () => toPage(apiKeys()),
   auditEventsPage: () => toPage(auditEvents()),

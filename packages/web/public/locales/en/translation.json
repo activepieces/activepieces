@@ -2993,5 +2993,10 @@
   "What you're seeing is sample data": "What you're seeing is sample data",
   "Upgrade to unlock": "Upgrade to unlock",
   "Included with {tier}.": "Included with {tier}.",
-  "Included with the {tier} plan and above.": "Included with the {tier} plan and above."
+  "Included with the {tier} plan and above.": "Included with the {tier} plan and above.",
+  "Favicon": "Favicon",
+  "Your platform name, branding and general settings.": "Your platform name, branding and general settings.",
+  "Your logo, colors and favicon are part of custom branding.": "Your logo, colors and favicon are part of custom branding.",
+  "Group pieces into sets and choose which projects can use each one": "Group pieces into sets and choose which projects can use each one",
+  "Piece sets need a higher plan.": "Piece sets need a higher plan."
 }

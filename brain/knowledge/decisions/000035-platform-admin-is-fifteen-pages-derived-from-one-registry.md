@@ -11,33 +11,85 @@ and every page, route and gate derives from **one declarative registry** rather 
 places that held them. Six of the fifteen pages have sections: Users & access, Connections, Security,
 AI Center & MCP, Pieces, and Billing & usage.
 
-**A section parent is a page, not an alias for its first child.** Each of the six parents — Users & access,
-Connections, AI Center & MCP, Security, Billing & usage, Infrastructure — owns an overview at its bare
-path: a card per child carrying that child's live count and plan tier, then the few sections that only make
-sense across the whole section (sign-in policy, connection health, AI credits, a security checklist,
-infrastructure status). Children therefore all address an explicit `?tab=`, where the first one used to sit
-on the bare path. The overview is what makes a parent worth clicking; without it the parent row was a lie,
-navigating somewhere its label did not name. This also retires the rule below that a page with its own tabs
-never becomes a tab: `Workers`, `Health`, `Triggers` and `Configurations` are now tabs of `Infrastructure`,
-which is what let the group labels come back over a nav short enough to read.
+**A section parent is a page, not an alias for its first child.** Users & access, Connections, AI Center &
+MCP, Security, Billing & usage and Infrastructure each own an overview at their bare path: a card per child
+carrying that child's live count and plan tier, then the few sections that only make sense across the whole
+section (sign-in policy, connection health, AI credits, a security checklist, infrastructure status).
+Children therefore all address an explicit `?tab=`, where the first one used to sit on the bare path. The
+overview is what makes a parent worth clicking; without it the parent row was a lie, navigating somewhere
+its label did not name. This also retires the rule below that a page with its own tabs never becomes a tab:
+`Workers`, `Health`, `Triggers` and `Configurations` are now tabs of `Infrastructure`, which is what let the
+group labels come back over a nav short enough to read.
+
+**`Pieces` takes the other way out: the parent row IS the first tab.** It has tabs and no overview, and
+rather than invent a landing page over two children, its `pieces` tab carries `hideInNav: true`. The tab
+stays routable and still owns the bare path, but the sidebar does not draw it as a sub-item, so the nav
+reads `Pieces` with one child `Piece Sets`, and clicking the parent opens the pieces table. This satisfies
+the rule above rather than breaking it: the parent row goes where its label says. Reach for it whenever a
+section's first tab is the obvious thing the parent name already promises, and reach for an overview when
+the parent name covers several children equally.
 
 **Those sections live in the sidebar, not in the page.** Each one is an indented sub-item under its parent,
-with a connector line, so the nav is fifteen parents and fourteen children. An in-page tab row was built
+with a connector line. The counts in this decision's title and first paragraphs were the plan; the registry
+is the truth and has moved since, currently eleven nav parents and twenty children. An in-page tab row was built
 first and rejected: it left the sidebar reading as fifteen flat items with nothing under them, while the
 structure that mattered was hidden inside whichever page you had opened. Sub-items address the same
 `?tab=` the tabs used, so the first section stays on the bare path and every redirect kept working.
 
-One rule decided most of the shape: **a page that already has its own tabs does not become a tab**. That
-keeps `Pieces` (two tabs plus a child route), `Workers` and `Health` as their own items, so Infrastructure
-stays four separate items rather than becoming one page. `Templates`, `Branding` and `Embedding` also stay
-separate, so the embed wizard keeps a page of its own. `MCP Server` is the deliberate exception: it folds
-into `AI Center & MCP` as a third tab, because its own two tabs are a light pill control that reads as a
-different level rather than a second tab row.
+**A page that already has its own tabs does not become a tab** was the rule that decided most of the
+shape, and it is now fully retired. It went first for Infrastructure, which absorbed `Workers`, `Health`,
+`Triggers` and `Configurations`, and then for `Pieces`, whose own two tabs became the registry tabs
+`Pieces` and `Piece Sets` while its `:id` child route stayed where it was. What survives of the rule is
+its opposite: an in-page tab row is a **candidate** for promotion, because the sidebar is where sections
+belong. `Templates` and `Embedding` stay separate for their own reasons, so the embed wizard keeps a page
+of its own. `MCP Server` folds into `AI Center & MCP` as a third tab, because its own two tabs are a light
+pill control that reads as a different level rather than a second tab row.
 
-The old `General` page is renamed **Platform Settings** and holds what is not branding: the platform name,
-the auto-create-personal-projects default, and the Cloud owner's danger zone. The five plan-gated branding
-assets move to `Branding`. The platform name stays behind because it is ungated on every edition, which is
-what makes each of the two pages wholly gated or not gated at all.
+**Promoting an in-page tab row costs no URL change**, which is what makes it cheap. Both conventions are
+the same one: first tab on the bare path, the rest on `?tab=<id>`. `Pieces` was already hand-rolling
+exactly that, deleting a `useSearchParams` handler and a `TabsList` per page promoted.
+
+**Ask the registry which tab is active; never recompute it in the sidebar.** `adminPagesUtils.activeTabId`
+resolves the `?tab=` param, or `null` when the page has an overview, or the first tab otherwise, and the
+nav highlights the parent whenever no visible sub-item owns that answer. That one rule replaced three
+hand-written special cases (`tabs.length === 0`, `hasOverview && tab === null`, `index === 0`), which had
+all silently assumed every routable tab was also a visible sub-item. `hideInNav` broke that assumption, and
+anything else that makes the routable set differ from the nav set will break it again.
+
+**Sample mode mounts the real page, so its plan-gated queries must be `enabled`-guarded.** `FeatureSample` renders the
+locked page ghosted underneath the upgrade card, which means every `useQuery` inside it fires for platforms that lack
+the feature; an endpoint behind `platformMustHaveFeatureEnabled` then answers 402 on every visit (seen 2026-09-14 on
+`/platform/security/embed`: `GET /v1/signing-keys` → 402 until `useSigningKeys` got `enabled: platform.plan.embeddingEnabled`).
+`LockedFeatureGuard` used to hide this by not mounting the page at all. A 31-page smoke run also surfaced three
+pre-existing console warnings the ghosted rows now expose on every plan: a bare `<TooltipTrigger>` around a `<Checkbox>`
+(nested buttons, on projects / templates / project roles), `<DialogTrigger asChild>` wrapping a `<>` fragment in
+`edit-global-connection-dialog.tsx` ("Invalid prop `type` supplied to React.Fragment"), and DataTable filters whose
+`accessorKey` names no column (`pieceName`/`projectIds`/`ownerIds` on connections, `name` on pieces). None are regressions.
+The populated states were verified separately against a 0.90.4 EE backend with seeded data (two pending platform
+invitations, six connections with one in `ERROR`): "Pending invitations" lists the emails, "Needs attention" lists the
+failing connection, "Most used pieces" ranks by count. One nit surfaced there: both connection overview sections label rows
+with the raw package name (`@activepieces/piece-apollo`) instead of the piece display name. Seeding notes: the invitation
+endpoint enforces the seat quota (402 `QUOTA_EXCEEDED`) so `platform_plan.usersLimit` has to be lifted first; a personal
+project refuses project invitations ("Project must be a team project"); connections cannot be inserted by hand because the
+list endpoint decrypts every `value` (`ERR_CRYPTO_INVALID_IV` → 500), and a dev backend with `AP_PIECES_SOURCE` on files
+returns `piece_metadata_not_found` for anything not in `AP_DEV_PIECES`, so seed through `POST /v1/app-connections` with
+`type: NO_AUTH` (skips engine validation) against a backend that knows the piece.
+
+**Groups never collapse.** Every page with sub-items draws them all the time; there is no chevron and no
+collapse state. A per-page `collapsed` boolean was tried first and left `/platform/users?tab=members` with
+nothing lit up whenever the group had been closed earlier; a per-navigation version fixed that but bought
+little for its state, so it was dropped for always-expanded on 2026-09-13.
+
+**`General` keeps its name and keeps branding inside it.** It holds the platform name, the five plan-gated
+branding assets, the auto-create-personal-projects default, and the Cloud owner's danger zone, as one form
+with one Save. A `Branding` page was split out first and has been folded back: the split was there so each
+of the two pages was wholly gated or not gated at all, but it cost a second nav item and a second form for
+five inputs, and the page it left behind was three fields.
+
+The gated half is marked in place instead, with a `FeatureBanner` above the branding inputs carrying the
+upgrade link while the platform name stays editable. That is the same treatment `Pieces` already uses for a
+partly gated page. `General` therefore wears no crown and is the one admin page where part of the body is
+gated and part is not.
 
 **A paid feature is gated at the action, not at the door.** The page opens, the data loads, the forms
 fill in, and the crown sits on the primary action: on `New Project`, again on `Create Project` inside the
@@ -61,27 +113,40 @@ since a footer button calling `setOpen(false)` skips `onOpenChange` and the next
 instead of the form; and check any two-dialog interaction in the browser, because that is where Radix
 orphans `pointer-events: none` on `<body>` and the page behind stops taking clicks.
 
-**A feature you cannot act on shows itself filled with sample data, behind a floating upgrade card.**
+**A feature you cannot act on renders as the real page, and the gate moves to the write.**
 `Audit logs` is a table, so there is no action to crown, and opening it freely would show an empty table
-with nothing to explain why. The page renders its real header, filters and rows populated with believable
-sample data, drops to a quarter opacity, and an elevated card sits centred over it carrying the lock, the
-feature's name, its description, a full-width CTA and the plan line. It borrows the shape of the sign-in
-screen, and unlike a fade it keeps the whole page visible rather than only its top third.
+with nothing to explain why. So the page renders at full opacity with nothing over it: real header, real
+toolbar, real rows filled with the sample fixtures. Reads all work against those fixtures, meaning search,
+filters, sorting, pagination and opening a row for its payload. A write, meaning Save, New, Delete, Export
+or a config switch, opens an upgrade popover anchored to the control that was pressed. There is no overlay
+and no scrim anywhere in the flow.
 
-**The presentation was iterated six times, and the rejected five are the useful record**, because each
-failed for a reason worth not rediscovering. **Blur** hides the very rows the treatment exists to show. A
-**strip** above the content said the right words but left the page reading as ordinary. A **framed
-container** read as locked but dominated the page it was previewing. **Chrome merged into the page's own
+Three non-blocking marks say whose data this is: a `Sample data` pill beside the page title carrying the
+tier, the table header tinted `#f6f3fe` over the data region only, and a rail pinned to the bottom of the
+page holding the one-line pitch and the link out to what the plan adds. On a form page that rail merges
+with the form's own action row, so Discard and Save sit inside it.
+
+Designed in Paper, not yet built: the branch still ships the centred sign-in card described below.
+
+**The presentation was iterated seven times, and the rejected six are the useful record**, because each
+failed for a reason worth not rediscovering. The seventh, the centred **sign-in card** over a quarter
+opacity page, is the one this supersedes: it keeps the whole page visible where a fade shows only its top
+third, but it still puts a wall between the person and the thing they came to look at. **Blur** hides the
+very rows the treatment exists to show. A **strip** above the content said the right words but left the
+page reading as ordinary. A **framed container** read as locked but dominated the page it was previewing. **Chrome merged into the page's own
 header** was too quiet, and needed a React context plus edits to both shared headers and `DataTable` to
 deliver. A **full-bleed banner** announced the paywall before the page had shown anything. A **gradient
 fade** read as one surface but revealed only the top of a page and cut a form mid-field. A Mobbin survey
 found products split between crisp-and-labelled and fade-an-empty-shell, and none sampling a form, so
 there is no direct precedent to defer to here.
 
-The sample content is **inert and visibly so**: the region takes `pointer-events: none`, filters and
-pagination render disabled, and the only live control is the banner's CTA. The alternative, making the
-controls work against the fixtures, means a second implementation of every filter that exists only for
-customers who have not paid.
+**The sample content is live, not inert.** The earlier call here was the opposite: `pointer-events: none`
+on the region, filters and pagination disabled, one live CTA, on the grounds that wiring the controls to
+the fixtures means a second implementation of every filter for customers who have not paid. That is
+reversed. The fixtures already live in the browser, so client-side filtering and sorting of eight rows is
+the cheap half, and a disabled toolbar teaches nobody what the feature does. The cost accepted is that a
+locked write control looks completely ordinary until it is pressed: a person will occasionally press Save
+expecting it to save. A visibly disabled Save was the alternative and it cannot show what the plan buys.
 
 Sample data is **generated in the browser and never crosses the API**. A locked page skips its plan-gated
 query outright rather than letting it answer 402, and the endpoints keep refusing. Serving fabricated rows
@@ -185,17 +250,33 @@ PR #15028 tuned the admin nav's widths and spacing to line up with the primary r
 imports none of the sidebar primitives. Any change to admin nav metrics needs re-checking against the rail,
 and nothing will fail if it drifts.
 
-**Splitting Branding out costs two crowns on Community.** Keeping the ungated platform name in the same
-page as the gated assets would have left that page unmarked; separating them makes `Branding` wholly gated,
-and `Embedding` too now that it is not sharing a page. Five markers on Community rather than three. Taken
-anyway, because the alternative is the per-field `brandingLocked` split the brain already records as a
-gotcha, where five inputs grey out with no explanation beside a sixth that works.
+**Folding Branding back into `General` reopens the per-field `brandingLocked` gotcha**, where five inputs
+grey out beside a sixth that works. The banner above them is what keeps it from being the silent version
+the brain records: it names the feature and carries the upgrade link, so the disabled inputs are explained
+rather than merely dead. Whether that is enough on Community, which now sees an uncrowned `General` with a
+banner inside it instead of a crowned `Branding` item, has not been reviewed yet. Revisit before the gating
+PR ships.
+
+Two dead things went with the split: the three file inputs were bound to `logoUrl` / `iconUrl` /
+`faviconUrl` form fields whose values nothing ever read, since the inputs are ref-driven and render
+`platform.fullLogoUrl` directly, and `sampleData.branding` was their only consumer so it never rendered
+either. Both are gone.
 
 **A tab promoted to a section inherits nothing from its old page wrapper.** The AI Center page supplied
 `max-w-6xl px-8 py-6` and the scroll container for its tabs, so `providers-tab` and `capabilities-tab`
 carried no padding of their own; once the route rendered them directly they sat flush against the edge.
 Each section now supplies its own padding, and the layout's `#dashboard-content-container` already
 scrolls, so none of them needs `overflow-auto`. Check the old wrapper before promoting the next tab.
+
+The same bite has a second shape: whatever the old wrapper rendered **above** the tab row now renders on
+no tab at all. The Pieces page held one `DashboardPageHeader` and one `FeatureBanner` for both tabs, so
+promoting them meant giving each tab its own header and extracting the banner into `PiecesLockedBanner`
+for both to call. A banner is the easy one to miss, because losing it leaves the locked tab silently empty
+rather than visibly broken.
+
+**A parent crown is the AND of its tabs**, since `isCrowned` returns true only when every visible tab is
+locked. A page whose tabs share one plan flag therefore has to repeat that flag on each tab to keep the
+crown it had as a single item: `Pieces` carries `managePiecesEnabled` on both of its.
 
 **Do not give a section a page header when it already opens with a `SectionHeader`.** Providers and
 Capabilities each led with one, so adding a header above it printed the title twice.
@@ -221,8 +302,10 @@ product still avoids a sales button on a dozen pages.
 `FeatureTeaser` lose their last callers in platform admin, and `overlay: true` in the registry is replaced
 by the sample opt-in. `FeatureTeaserContent` survives inside the upgrade dialog.
 
-**Splitting one form in two.** `appearance-section.tsx` is a single react-hook-form whose submit handler
-deliberately skips the branding fields when locked. Platform Settings and Branding each need their own form.
+**One form, not two.** `appearance-section.tsx` is a single react-hook-form whose submit handler
+deliberately skips the branding fields when locked, and both halves post to the same
+`platformApi.updateWithFormData`. Splitting it was tried and undone; keeping it whole is what gives the page
+one Save.
 
 `Configurations`, added to the nav on 2026-09-07 after the proposal was drawn, becomes Infrastructure's
 fourth tab and carries its Cloud exclusion into its registry entry. It already routed under
@@ -244,6 +327,6 @@ blur: every product found picks one side or the other, never both. Later and Chu
 realistic figures under a labelled band ("just a glimpse", "ANALYTICS PREVIEW"), while Juicebox, Asana
 Admin and Hex fade an essentially empty shell behind a card and teach the reader nothing about the
 feature. Churnkey's one-word "preview" also reads better than a sentence explaining that the data is not
-real. No product in the survey samples a *form*, so our Single sign on, Branding and Embedding treatment
+real. No product in the survey samples a *form*, so our Single sign on, General and Embedding treatment
 has no precedent to lean on, which is worth remembering given it is the same part that costs two working
 controls.

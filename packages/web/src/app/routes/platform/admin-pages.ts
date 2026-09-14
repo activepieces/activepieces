@@ -4,7 +4,6 @@ import React, { ComponentType } from 'react';
 import { FeatureTeaserProps } from '@/app/components/feature-teaser';
 import { FrameIcon } from '@/components/icons/frame';
 import { LayoutGridIcon } from '@/components/icons/layout-grid';
-import { PaletteIcon } from '@/components/icons/palette';
 import { PuzzleIcon } from '@/components/icons/puzzle';
 import { ReceiptIcon } from '@/components/icons/receipt';
 import { ServerIcon } from '@/components/icons/server';
@@ -46,7 +45,6 @@ const InfrastructureOverview = React.lazy(() =>
 const ProjectsPage = React.lazy(() => import('./projects'));
 const UsersPage = React.lazy(() => import('./users'));
 const PlatformConnectionsPage = React.lazy(() => import('./connections'));
-const BrandingPage = React.lazy(() => import('./setup/branding'));
 const GeneralPage = React.lazy(() =>
   import('./setup/general').then((m) => ({ default: m.GeneralPage })),
 );
@@ -64,8 +62,13 @@ const GlobalConnectionsTable = React.lazy(() =>
     default: m.GlobalConnectionsTable,
   })),
 );
-const PlatformPiecesPage = React.lazy(() =>
-  import('./setup/pieces').then((m) => ({ default: m.PlatformPiecesPage })),
+const PiecesListTab = React.lazy(() =>
+  import('./setup/pieces').then((m) => ({ default: m.PiecesListTab })),
+);
+const PieceSetsTab = React.lazy(() =>
+  import('./setup/pieces/piece-sets/piece-sets-tab').then((m) => ({
+    default: m.PieceSetsTab,
+  })),
 );
 const PieceSetDetailsPage = React.lazy(() =>
   import('./setup/pieces/piece-sets/piece-set-details-page').then((m) => ({
@@ -127,6 +130,24 @@ function visibleTabs(page: AdminPage, context: AdminPageContext) {
   return (page.tabs ?? []).filter((tab) => tab.isHidden?.(context) !== true);
 }
 
+function navTabs(page: AdminPage, context: AdminPageContext) {
+  return visibleTabs(page, context).filter((tab) => tab.hideInNav !== true);
+}
+
+function activeTabId(
+  page: AdminPage,
+  context: AdminPageContext,
+  requested: string | null,
+) {
+  if (requested !== null) {
+    return requested;
+  }
+  if (page.overview !== undefined) {
+    return null;
+  }
+  return visibleTabs(page, context)[0]?.id ?? null;
+}
+
 function isCrowned(page: AdminNavPage, context: AdminPageContext) {
   const tabs = visibleTabs(page, context);
   if (tabs.length === 0) {
@@ -161,6 +182,8 @@ export const adminPagesUtils = {
   navGroups,
   visibleNavPages,
   visibleTabs,
+  navTabs,
+  activeTabId,
   isCrowned,
   activePageId,
 };
@@ -266,29 +289,10 @@ export const ADMIN_PAGES: AdminPage[] = [
   {
     id: 'general',
     path: '/platform/setup/general',
-    title: 'Platform Settings',
-    description: 'Platform defaults and general configuration.',
+    title: 'General',
+    description: 'Your platform name, branding and general settings.',
     component: GeneralPage,
-    nav: { group: 'platform', label: 'Platform Settings', icon: SettingsIcon },
-  },
-  {
-    id: 'branding',
-    sample: true,
-    teaser: {
-      title: 'Unlock Branding',
-      description: 'Your name, logo and colors across the entire experience.',
-      tier: 'ultimate',
-    },
-    path: '/platform/setup/branding',
-    title: 'Branding',
-    description: 'Your name, logo and colors across the product.',
-    component: BrandingPage,
-    nav: {
-      group: 'platform',
-      label: 'Branding',
-      icon: PaletteIcon,
-      isLocked: ({ plan }) => !plan.customAppearanceEnabled,
-    },
+    nav: { group: 'platform', label: 'General', icon: SettingsIcon },
   },
   {
     id: 'ai',
@@ -316,13 +320,27 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'pieces',
     path: '/platform/setup/pieces',
     title: 'Pieces',
-    component: PlatformPiecesPage,
+    description: 'The pieces your users can build with.',
     nav: {
       group: 'build',
       label: 'Pieces',
       icon: PuzzleIcon,
-      isLocked: ({ plan }) => !plan.managePiecesEnabled,
     },
+    tabs: [
+      {
+        id: 'pieces',
+        label: 'Pieces',
+        component: PiecesListTab,
+        hideInNav: true,
+        isLocked: ({ plan }) => !plan.managePiecesEnabled,
+      },
+      {
+        id: 'piece-sets',
+        label: 'Piece Sets',
+        component: PieceSetsTab,
+        isLocked: ({ plan }) => !plan.managePiecesEnabled,
+      },
+    ],
   },
   {
     id: 'templates',
@@ -524,6 +542,10 @@ export const ADMIN_REDIRECTS: AdminRedirect[] = [
     from: '/platform/setup/usage',
     to: '/platform/setup/billing?tab=usage',
   },
+  {
+    from: '/platform/setup/branding',
+    to: '/platform/setup/general',
+  },
   { from: '/platform/setup/mcp', to: '/platform/setup/ai?tab=mcp' },
   {
     from: '/platform/security/api-keys',
@@ -583,6 +605,7 @@ export type AdminPageTabSpec = {
   component: ComponentType;
   isLocked?: (context: AdminPageContext) => boolean;
   isHidden?: (context: AdminPageContext) => boolean;
+  hideInNav?: boolean;
   teaser?: FeatureTeaserProps;
   sample?: boolean;
 };
