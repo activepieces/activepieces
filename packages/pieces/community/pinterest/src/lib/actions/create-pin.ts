@@ -1,11 +1,7 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { makeRequest } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
-import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { createPinOperation } from '../common/operations';
 import {
   adAccountIdDropdown,
   boardIdDropdown,
@@ -21,7 +17,7 @@ export const createPin = createAction({
   outputSchema: createPinActionOutputSchema,
   displayName: 'Create Pin',
   description: 'Upload an image or video to create a new Pin on a board.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a Pin on a Pinterest board by uploading media from a hosted image/video URL (or base64 image). Use to publish visual content to a board the user owns. Requires a valid board_id and a media source; each call creates a new Pin, so it is not idempotent.',
@@ -104,104 +100,9 @@ export const createPin = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const {
-      board_id,
-      board_section_id,
-      title,
-      description,
-      media_source_type,
-      media_url,
-      link,
-      dominant_color,
-      alt_text,
-      parent_pin_id,
-      is_removable,
-      product_tags,
-      ad_account_id,
-      note,
-      sponsor_id,
-    } = propsValue;
-
-    // Validation
-    if (title && title.length > 100) {
-      throw new Error('Title must be 100 characters or less');
-    }
-
-    if (description && description.length > 800) {
-      throw new Error('Description must be 800 characters or less');
-    }
-
-    if (alt_text && alt_text.length > 500) {
-      throw new Error('Alt text must be 500 characters or less');
-    }
-
-    // URL validation for media_url
-    try {
-      new URL(media_url);
-    } catch {
-      throw new Error('Please enter a valid URL for Image/Video URL');
-    }
-
-    // URL validation for link (if provided)
-    if (link) {
-      try {
-        new URL(link);
-      } catch {
-        throw new Error('Please enter a valid URL for Destination Link');
-      }
-    }
-
-    // Hex color validation for dominant_color (if provided)
-    if (dominant_color) {
-      const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
-      if (!hexColorRegex.test(dominant_color)) {
-        throw new Error(
-          'Pin Color must be a valid hex color format (e.g., #6E7874)'
-        );
-      }
-    }
-
-    // Build request body according to Pinterest API spec
-    const body: any = {
-      board_id,
-      title,
-      media_source: {
-        source_type: media_source_type,
-        url: media_url,
-      },
-    };
-
-    // Add optional fields only if they have values
-    if (board_section_id) body.board_section_id = board_section_id;
-    if (description) body.description = description;
-    if (link) body.link = link;
-    if (dominant_color) body.dominant_color = dominant_color;
-    if (alt_text) body.alt_text = alt_text;
-    if (parent_pin_id) body.parent_pin_id = parent_pin_id;
-    if (note) body.note = note;
-    if (sponsor_id) body.sponsor_id = sponsor_id;
-    if (typeof is_removable === 'boolean') body.is_removable = is_removable;
-
-    // Handle product_tags array
-    if (
-      product_tags &&
-      Array.isArray(product_tags) &&
-      product_tags.length > 0
-    ) {
-      body.product_tags = product_tags;
-    }
-
-    // Build API path
-    let path = '/pins';
-    if (ad_account_id) {
-      path = `/pins?ad_account_id=${encodeURIComponent(ad_account_id)}`;
-    }
-
-    return await makeRequest(
-      getAccessTokenOrThrow(auth),
-      HttpMethod.POST,
-      path,
-      body
-    );
+    return await createPinOperation({
+      accessToken: getAccessTokenOrThrow(auth),
+      ...propsValue,
+    });
   },
 });
