@@ -7,9 +7,9 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, env = {} }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
-        const { child, denoPath } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb })
+        const { child, denoPath } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, env })
         child.stdin.end(buildRunProgram({ body, marker }))
 
         return new Promise((resolve, reject) => {
@@ -91,7 +91,7 @@ function newResultMarker(): string {
     return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
 }
 
-async function spawnDeno({ entry, permissions, cwd, memoryLimitMb }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string }> {
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, env }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string }> {
     const { childProcess, os } = await getNodeApis()
     const denoPath = resolveDenoPath()
     const child = childProcess.spawn(denoPath, [
@@ -111,6 +111,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb }: SpawnDenoPa
         cwd,
         env: {
             PATH: process.env['PATH'] ?? '',
+            ...env,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
     })
@@ -202,6 +203,7 @@ type DenoProgramParams = {
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb?: number
+    env?: Record<string, string>
 }
 
 type SpawnDenoParams = {
@@ -209,6 +211,7 @@ type SpawnDenoParams = {
     permissions: DenoPermission[]
     cwd?: string
     memoryLimitMb: number
+    env: Record<string, string>
 }
 
 type NodeApis = {

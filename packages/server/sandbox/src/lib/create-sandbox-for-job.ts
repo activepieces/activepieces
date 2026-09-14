@@ -111,6 +111,9 @@ function ssrfEnv(settings: SandboxSettings): Record<string, string> {
 
 function propagatedEnv(settings: SandboxSettings): Record<string, string> {
     const env: Record<string, string> = {}
+    if (settings.SANDBOX_PROPAGATED_ENV_VARS.length > 0) {
+        env['AP_SANDBOX_PROPAGATED_ENV_VARS'] = settings.SANDBOX_PROPAGATED_ENV_VARS.join(',')
+    }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {
             env[key] = process.env[key]!
