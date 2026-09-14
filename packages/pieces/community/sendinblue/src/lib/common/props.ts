@@ -57,7 +57,30 @@ function connectFirst() {
 	};
 }
 
+const CONTACT_IDENTIFIER_TYPES = [
+	{ label: 'Email', value: 'email_id' },
+	{ label: 'Phone (SMS)', value: 'phone_id' },
+	{ label: 'Contact ID', value: 'contact_id' },
+	{ label: 'External ID', value: 'ext_id' },
+	{ label: 'WhatsApp', value: 'whatsapp_id' },
+	{ label: 'Landline Number', value: 'landline_number_id' },
+];
+
 export const brevoProps = {
+	contactIdentifier: Property.ShortText({
+		displayName: 'Contact Identifier',
+		description:
+			'The value identifying the contact, most often its email address.',
+		required: true,
+	}),
+	contactIdentifierType: Property.StaticDropdown({
+		displayName: 'Identifier Type',
+		description:
+			'How to interpret the identifier. Required for External ID, WhatsApp and Landline Number; optional for email, phone and contact ID.',
+		required: false,
+		defaultValue: 'email_id',
+		options: { options: CONTACT_IDENTIFIER_TYPES },
+	}),
 	listIds: ({ displayName, description }: ListIdsPropParams) =>
 		Property.MultiSelectDropdown({
 			displayName,
