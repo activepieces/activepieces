@@ -46,6 +46,11 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
     })
 
     app.get('/conversations/runs', ListAgentRunsRoute, async (request) => {
+        await agentService(request.log).getOneOrThrow({
+            id: request.query.agentId,
+            projectId: request.projectId,
+            userId: request.principal.id,
+        })
         return agentConversationService(request.log).listAgentRuns({
             projectId: request.projectId,
             agentId: request.query.agentId,

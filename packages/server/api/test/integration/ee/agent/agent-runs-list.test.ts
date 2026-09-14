@@ -1,10 +1,10 @@
 import { apId } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentVisibility, ColorName } from '@activepieces/shared'
+import { AgentIcon, AgentRunSource, AgentVisibility, ColorName, DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../../../helpers/db'
-import { createTestContext, TestContext } from '../../../helpers/test-context'
+import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -116,6 +116,31 @@ describe('the runs a flow step made with an agent', () => {
         const response = await listRuns(ctx, agent.id, stranger.project.id)
 
         expect(response.statusCode).not.toBe(StatusCodes.OK)
+    })
+
+    it('hides the runs of an agent the caller cannot read, since restricting an agent does not delete its history', async () => {
+        const ctx = await context()
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(ctx)
+        await seedRun({ ctx, agentId: agent.id, source: AgentRunSource.FLOW_STEP, title: 'Swept the inbox' })
+        await ctx.post(`/v1/agents/${agent.id}`, { visibility: AgentVisibility.RESTRICTED })
+
+        const response = await member.get(`/v1/agents/conversations/runs?projectId=${ctx.project.id}&agentId=${agent.id}`)
+
+        expect(response.statusCode).not.toBe(StatusCodes.OK)
+        expect(JSON.stringify(response.json())).not.toContain('Swept the inbox')
+    })
+
+    it('still shows them to someone who can read the agent', async () => {
+        const ctx = await context()
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const agent = await createAgent(ctx)
+        const runId = await seedRun({ ctx, agentId: agent.id, source: AgentRunSource.FLOW_STEP })
+
+        const response = await member.get(`/v1/agents/conversations/runs?projectId=${ctx.project.id}&agentId=${agent.id}`)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().data.map((run: { id: string }) => run.id)).toEqual([runId])
     })
 
     it('is not swallowed by the conversation-by-id route, which shares its prefix', async () => {
