@@ -120,6 +120,20 @@ describe('thread replies are fetched across every page', () => {
     expect(result.response_metadata?.next_cursor).toBe('c50');
   });
 
+  it.each([
+    ['Retrieve Thread Messages', () => retrieveThreadMessages],
+    ['Get Thread Replies (AI)', () => slackGetThreadRepliesAiAction],
+  ])('%s continues from a cursor handed back by a capped run', async (_name, action) => {
+    repliesPages = {
+      c50: { messages: [{ ts: '50.0', text: 'reply 50' }], response_metadata: { next_cursor: 'c51' } },
+      c51: { messages: [{ ts: '51.0', text: 'reply 51' }], response_metadata: { next_cursor: '' } },
+    };
+    const result = await action().run(actionContext({ channel: 'C0123ABCD', threadTs: parent.ts, cursor: 'c50' }) as never);
+    expect(repliesCalls.map((call) => call.cursor)).toEqual(['c50', 'c51']);
+    expect(result.messages?.map((message) => message.ts)).toEqual(['50.0', '51.0']);
+    expect(result.has_more).toBe(false);
+  });
+
   it('accepts a message link as the thread timestamp', async () => {
     repliesPages = { first: { messages: [parent], response_metadata: { next_cursor: '' } } };
     await retrieveThreadMessages.run(actionContext({ channel: 'C0123ABCD', threadTs: 'https://acme.slack.com/archives/C0123ABCD/p1710304378475129' }) as never);

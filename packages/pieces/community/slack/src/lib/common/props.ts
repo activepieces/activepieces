@@ -286,3 +286,10 @@ export async function getChannels(accessToken: string) {
 
   return channels;
 }
+
+export const threadCursor = Property.ShortText({
+  displayName: 'Continue From Cursor',
+  description: 'Next Cursor from a previous run whose Has More was true.',
+  required: false,
+  advanced: true,
+});
