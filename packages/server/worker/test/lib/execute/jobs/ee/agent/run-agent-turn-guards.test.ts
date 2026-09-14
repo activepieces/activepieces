@@ -87,11 +87,15 @@ describe('classifyAgentRunError', () => {
     })
 
     it('never blames the user for the managed key, which is ours and fails everyone at once', () => {
-        for (const statusCode of [401, 403]) {
-            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
-            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.OPENAI)).toBe('user')
+        for (const statusCode of [401, 403, 404]) {
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES), String(statusCode)).toBe('internal')
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.OPENAI), String(statusCode)).toBe('user')
         }
-        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.ACTIVEPIECES)).toBe('user')
+    })
+
+    it('calls a model missing from our own catalog our problem, since the customer never chose that key', () => {
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.OPENAI)).toBe('user')
     })
 
     it('reads billing exhaustion out of a 429 body, which the provider marks retryable', () => {
