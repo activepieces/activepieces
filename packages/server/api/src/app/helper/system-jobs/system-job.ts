@@ -4,6 +4,7 @@ import { Job, JobsOptions, Queue, Worker } from 'bullmq'
 import { Dayjs } from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
+import { jobFailureLogger } from '../../workers/job-queue/job-failure-logger'
 import { exceptionHandler } from '../exception-handler'
 import { SystemJobData, SystemJobName, SystemJobSchedule } from './common'
 import { systemJobHandlers } from './job-handlers'
@@ -60,6 +61,13 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             const attemptsUsed = job?.attemptsMade ?? 0
             const maxAttempts = job?.opts?.attempts ?? Infinity
             if (attemptsUsed >= maxAttempts) {
+                jobFailureLogger.logJobFailed({
+                    queueName: SYSTEM_JOB_QUEUE,
+                    jobId: job?.id,
+                    jobType: job?.name ?? 'unknown',
+                    error: err,
+                    log,
+                })
                 exceptionHandler.handle(err, log)
             }
         })
