@@ -31,12 +31,41 @@ describe('federatedLoginRedirect', () => {
     vi.unstubAllGlobals();
   });
 
-  it('round-trips a same-site path', () => {
+  it('round-trips the MCP consent path', () => {
     federatedLoginRedirect.save('/mcp-authorize?authRequestId=abc');
 
     expect(federatedLoginRedirect.consume()).toBe(
       '/mcp-authorize?authRequestId=abc',
     );
+  });
+
+  it.each([
+    ['flows', '/flows'],
+    ['a run deep link', '/projects/abc/runs/def'],
+    ['settings', '/settings/general'],
+    ['the app root', '/'],
+  ])(
+    'leaves an ordinary in-app destination alone, so SSO still lands on the default page (%s)',
+    (_name, value) => {
+      federatedLoginRedirect.save(value);
+
+      expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull();
+      expect(federatedLoginRedirect.consume()).toBeNull();
+    },
+  );
+
+  it.each([
+    ['prefix look-alike', '/mcp-authorized'],
+    ['userinfo look-alike', '/mcp-authorize@evil.com'],
+    ['nested path', '/mcp-authorize/sub'],
+  ])('refuses a path that merely starts like the consent route (%s)', (
+    _name,
+    value,
+  ) => {
+    federatedLoginRedirect.save(value);
+
+    expect(sessionStorage.getItem(STORAGE_KEY)).toBeNull();
+    expect(federatedLoginRedirect.consume()).toBeNull();
   });
 
   it('clears the value once consumed, so a later login is not hijacked', () => {
@@ -103,7 +132,9 @@ describe('federatedLoginRedirect', () => {
       },
     });
 
-    expect(() => federatedLoginRedirect.save('/flows')).not.toThrow();
+    expect(() =>
+      federatedLoginRedirect.save('/mcp-authorize?authRequestId=abc'),
+    ).not.toThrow();
     expect(federatedLoginRedirect.consume()).toBeNull();
   });
 

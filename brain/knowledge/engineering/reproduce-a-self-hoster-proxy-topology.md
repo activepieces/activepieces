@@ -66,6 +66,14 @@ the URL AP hands it. Everything below runs on one machine with no `/etc/hosts` e
 - **The harness lives in a scratch directory, so treat it as disposable and commit code changes early.** A
   `/tmp` wipe or host restart takes the worktree, the Kong and IdP configs, and any generated SP keypair with
   it; only the Postgres volume survives.
+- **Turn assertion encryption OFF at the test IdP.** `createSp` sets `isAssertionEncrypted: true`, but samlify reads
+  `decryptRequired` from the *IdP* entity, and `createIdp` sets it to `false` — so AP expects a signed, unencrypted
+  assertion. With SimpleSAMLphp encrypting, you get `ERR_UNMATCH_ISSUER` (samlify skips decryption, then looks for
+  `Assertion/Issuer` in a document that only holds `EncryptedAssertion`), and turning on response signing to fix it
+  only moves you to `FAILED_TO_VERIFY_SIGNATURE`. `'assertion.encryption' => false` with `saml20.sign.assertion`
+  is the combination that parses.
+- **`createSamlClient` caches by `platformId` alone**, ignoring the `acsUrl` it was passed. Anything that varies the
+  ACS per request needs the cache key widened, or the first caller's ACS is served to every later one.
 - **The SPA cannot be tested under a path prefix**, because it is anchored to the origin root three ways — see
   [[web-feature-anatomy]]. Opening a prefixed URL makes the app relocate itself to the root. If you are testing
   a browser landing route, the prefix is the variable, so run the configuration both ways.

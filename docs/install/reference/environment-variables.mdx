@@ -80,8 +80,9 @@ can expose the frontend port (4200) with a tunneling service such as
 
 ### Serving MCP from its own hostname
 
-Set `AP_MCP_URL` when you want MCP traffic separated from the main app — usually
-to apply distinct WAF rules or to observe it independently. Discovery, the
+Set `AP_MCP_URL` when you want MCP traffic separated from the main app — to
+apply distinct WAF rules, to observe it independently, or because your MCP
+clients live on the internet while Activepieces itself does not. Discovery, the
 `WWW-Authenticate` challenge and the token endpoint then advertise that hostname
 instead of `AP_FRONTEND_URL`.
 
@@ -90,11 +91,27 @@ That hostname only needs to route `/mcp`, `/mcp/platform`, `/authorize`,
 serve the web app or `/api`: the consent screen is served from `AP_FRONTEND_URL`,
 so users sign in once, on the main host.
 
+<Warning>
+  The two hostnames are reached by two different parties, and both must work.
+  The **MCP client** — often a cloud service — only ever talks to `AP_MCP_URL`,
+  so that hostname is the one that has to be publicly reachable. The **user's
+  browser** is sent to `AP_FRONTEND_URL` to sign in and approve the connection,
+  so whoever authorizes a client must be able to reach the main host at that
+  moment. If your main host is restricted — to a VPN, an IP allow-list, or an
+  internal network — then only users inside that boundary can authorize an MCP
+  client. Everything after approval is client-to-`AP_MCP_URL` and works from
+  anywhere.
+
+  This also means single sign-on keeps working unchanged: the browser signs in
+  on the main host, against your existing SAML ACS URL. Serving MCP from its own
+  hostname does not require a second ACS URL at your identity provider.
+</Warning>
+
 `AP_MCP_URL` may carry a path prefix, on the same terms as `AP_FRONTEND_URL` —
-your proxy is expected to strip it before forwarding. It must use a different
-hostname from `AP_FRONTEND_URL`; sharing a hostname with a different path is
-rejected at startup, because once the proxy has stripped the prefix the server
-cannot tell the two apart.
+your proxy is expected to strip it before forwarding. It may also share a
+hostname with `AP_FRONTEND_URL` and differ only by path, for example
+`https://example.com/mcp`; requests arriving on a shared hostname are resolved
+against `AP_MCP_URL` first.
 
 Setting `AP_MCP_URL` also changes the `mcpServerUrl` returned to embedded
 clients by the project MCP token endpoint.
