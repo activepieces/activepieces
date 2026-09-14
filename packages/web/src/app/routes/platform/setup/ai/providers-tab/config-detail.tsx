@@ -7,6 +7,7 @@ import {
   formErrors,
   OpenAICompatibleProviderConfig,
   Project,
+  ProviderModelConfig,
   UpdateAIProviderRequest,
   VertexProviderConfig,
 } from '@activepieces/shared';
@@ -95,10 +96,11 @@ export function ConfigDetail({
     .filter(Boolean)
     .join(' · ');
   const nameMissing = draft.name.trim().length === 0;
-  const enabledModelCount =
-    !manualModels && draft.modelScope === 'all'
-      ? models.length
-      : draft.modelIds.length;
+  const enabledModelCount = manualModels
+    ? draft.models.length
+    : draft.modelScope === 'all'
+    ? models.length
+    : draft.modelIds.length;
   const allowedProjectCount =
     draft.projectScope === 'all'
       ? projects.length
@@ -119,24 +121,14 @@ export function ConfigDetail({
     onSave({
       displayName: draft.name.trim(),
       modelScope: draft.modelScope,
-      modelIds: draft.modelIds,
+      modelIds: manualModels
+        ? draft.models.map((model) => model.modelId)
+        : draft.modelIds,
       projectScope: draft.projectScope,
       projectIds: draft.projectIds,
       ...(manualConfig
         ? {
-            config: {
-              ...manualConfig,
-              models: draft.modelIds.map(
-                (modelId) =>
-                  manualConfig.models.find(
-                    (model) => model.modelId === modelId,
-                  ) ?? {
-                    modelId,
-                    modelName: modelId,
-                    modelType: AIProviderModelType.TEXT,
-                  },
-              ),
-            },
+            config: { ...manualConfig, models: draft.models },
           }
         : {}),
     });
@@ -266,8 +258,8 @@ export function ConfigDetail({
         </div>
         {manualModels ? (
           <ManualModelList
-            modelIds={draft.modelIds}
-            onChange={(modelIds) => setDraft({ ...draft, modelIds })}
+            models={draft.models}
+            onChange={(models) => setDraft({ ...draft, models })}
           />
         ) : (
           draft.modelScope === 'selected' && (
@@ -417,10 +409,9 @@ function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {
   return {
     name: config.name,
     modelScope: config.modelScope,
-    modelIds:
-      manualModels && 'models' in config.config
-        ? config.config.models.map((model) => model.modelId)
-        : config.modelIds,
+    modelIds: config.modelIds,
+    models:
+      manualModels && 'models' in config.config ? config.config.models : [],
     projectScope: config.projectScope,
     projectIds: config.projectIds,
   };
@@ -436,6 +427,7 @@ type ConfigDraft = {
   name: string;
   modelScope: AiProviderModelScope;
   modelIds: string[];
+  models: ProviderModelConfig[];
   projectScope: AiProviderProjectScope;
   projectIds: string[];
 };
