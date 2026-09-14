@@ -2426,7 +2426,7 @@
     },
     "packages/pieces/community/datadog": {
       "name": "@activepieces/piece-datadog",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -2434,6 +2434,8 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@datadog/datadog-api-client": "^1.43.0",
         "deepmerge-ts": "7.1.0",
+        "form-data": "4.0.6",
+        "ipaddr.js": "2.3.0",
         "nanoid": "3.3.17",
         "zod": "4.3.6",
       },
@@ -7978,7 +7980,7 @@
     },
     "packages/pieces/community/scrapeless": {
       "name": "@activepieces/piece-scrapeless",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7986,6 +7988,9 @@
         "@activepieces/pieces-framework": "workspace:*",
         "@scrapeless-ai/sdk": "1.5.1",
         "deepmerge-ts": "7.1.0",
+        "form-data": "4.0.6",
+        "ipaddr.js": "2.3.0",
+        "nanoid": "3.3.17",
         "zod": "4.3.6",
       },
       "devDependencies": {
