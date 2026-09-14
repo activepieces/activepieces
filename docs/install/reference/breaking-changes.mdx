@@ -8,6 +8,14 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Worker group runs no longer fall back to shared workers
+
+Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
+
+#### What you need to do
+
+If you assign projects to worker groups, keep at least one worker online per assigned group. If a group is down, reassign the project to another group or unassign it (set its `workerGroupId` to `null`) — any assignment change moves the project's waiting runs to the new queue.
+
 #### Airtable's Find Record returns up to 1000 matches and the Record picker lists up to 500 records
 
 Find Record used to return only the first page Airtable sent back, 100 records, and silently dropped the rest. It now follows Airtable's paging and returns up to 1000 matching records. The Record dropdown on Get Record by ID listed the first 50 records of a table; it now lists up to 500.
