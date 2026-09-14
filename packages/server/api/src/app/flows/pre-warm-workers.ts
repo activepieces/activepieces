@@ -148,7 +148,7 @@ function extractCodeSteps(flowVersion: FlowVersion): PrewarmCodeStep[] {
             sourceCode: step.settings.sourceCode,
             flowVersionId: flowVersion.id,
             flowVersionState: flowVersion.state,
-            useDeno: step.settings.useDeno ?? false
+            useDeno: step.settings.useDeno ?? false,
         }))
 }
 
