@@ -119,9 +119,13 @@ export const slackSendMessageToMultipleUsersAction = createAction({
     }),
     concurrency: Property.Number({
       displayName: 'Parallel Sends',
-      description: `How many direct messages to send at the same time, between ${MIN_ACTION_CONCURRENCY_LIMIT} and ${MAX_ACTION_CONCURRENCY_LIMIT}. It also sets how many recipients one step accepts, because every send has to fit the flow time budget: ${slackConcurrency.roundsWithinFlowBudget()} recipients per parallel send, up to ${DEFAULT_MAX_RECIPIENTS}.`,
+      description: `Messages sent at once. Allows ${slackConcurrency.roundsWithinFlowBudget()} recipients per send, up to ${DEFAULT_MAX_RECIPIENTS}.`,
       required: false,
       defaultValue: DEFAULT_ACTION_CONCURRENCY_LIMIT,
+      display: 'stepper',
+      min: MIN_ACTION_CONCURRENCY_LIMIT,
+      max: MAX_ACTION_CONCURRENCY_LIMIT,
+      step: 1,
     }),
   },
   async run(context) {
