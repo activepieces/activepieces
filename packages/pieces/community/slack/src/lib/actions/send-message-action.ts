@@ -1,14 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  slackChannel,
-  username,
-  blocks,
-  threadTs,
-  singleSelectChannelInfo,
-  mentionOriginFlow,
-  iconEmoji,
-} from '../common/props';
+import { profilePicture, slackChannel, username, blocks, threadTs, singleSelectChannelInfo, mentionOriginFlow, iconEmoji, replyBroadcast, unfurlLinks } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
 import { Block,KnownBlock } from '@slack/web-api';
@@ -48,21 +39,9 @@ export const slackSendMessageAction = createAction({
     username,
     profilePicture,
     iconEmoji,
-    replyBroadcast: Property.Checkbox({
-      displayName: 'Also Post to Channel',
-      description: 'When replying in a thread, also show the reply in the channel.',
-      required: false,
-      defaultValue: false,
-      advanced: true,
-    }),
+    replyBroadcast,
     mentionOriginFlow,
-    unfurlLinks: Property.Checkbox({
-      displayName: 'Unfurl Links',
-      description: 'Show link previews in the message.',
-      required: false,
-      defaultValue: true,
-      advanced: true,
-    }),
+    unfurlLinks,
     blocks,
   },
   async run(context) {

@@ -4,13 +4,13 @@ import { slackAuth } from '../auth';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const multiSelectChannelInfo = Property.MarkDown({
   value:
-    "Can't find the channel? Invite the bot: type **/invite** in the channel, choose **Add apps** and pick the bot. Or click **ƒ** and paste IDs as `{`{ ['C012AB3CD', 'C045EF6GH'] `}`}.",
+    "The list shows the first 2000 channels. Can't find yours? Invite the bot: type **/invite** in the channel, choose **Add apps** and pick the bot. Or click **ƒ** and paste IDs as `{`{ ['C012AB3CD', 'C045EF6GH'] `}`}.",
   variant: MarkdownVariant.INFO,
 });
 
 export const singleSelectChannelInfo = Property.MarkDown({
   value:
-    "Can't find the channel? Invite the bot: type **/invite** in the channel, choose **Add apps** and pick the bot. Or click **ƒ** and paste the channel ID.",
+    "The list shows the first 2000 channels. Can't find yours? Invite the bot: type **/invite** in the channel, choose **Add apps** and pick the bot. Or click **ƒ** and paste the channel ID.",
   variant: MarkdownVariant.INFO,
 });
 
@@ -96,6 +96,28 @@ export const blocks = Property.Json({
   description: 'JSON array of blocks from the Block Kit Builder.',
   required: false,
   defaultValue: [],
+});
+
+export const messageTs = Property.ShortText({
+  displayName: 'Message Timestamp',
+  description: 'Timestamp of the target message, from its link or a trigger output.',
+  placeholder: '1710304378.475129',
+  required: true,
+});
+
+export const replyBroadcast = Property.Checkbox({
+  displayName: 'Also Post to Channel',
+  description: 'When replying in a thread, also show the reply in the channel.',
+  required: false,
+  defaultValue: false,
+  advanced: true,
+});
+
+export const unfurlLinks = Property.Checkbox({
+  displayName: 'Unfurl Links',
+  description: 'Show link previews in the message.',
+  required: false,
+  defaultValue: true,
   advanced: true,
 });
 

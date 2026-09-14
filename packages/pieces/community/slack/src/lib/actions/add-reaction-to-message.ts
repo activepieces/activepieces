@@ -1,6 +1,6 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, messageTs } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
@@ -23,13 +23,7 @@ export const addRectionToMessageAction = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
-    ts: Property.ShortText({
-      displayName: 'Message Timestamp',
-      description:
-        'Timestamp of the target message, from its link or a trigger output.',
-      placeholder: '1710304378.475129',
-      required: true,
-    }),
+    ts: messageTs,
     reaction: Property.ShortText({
       displayName: 'Emoji',
       description: 'Emoji name without colons.',

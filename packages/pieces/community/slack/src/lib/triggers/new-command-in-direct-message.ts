@@ -37,7 +37,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
     }),
     ignoreSelfMessages: Property.Checkbox({
       displayName: 'Ignore My Own Messages',
-      description: 'Skip messages sent by the connected user.',
+      description: 'Skip messages sent by the connected user. Needs a user token.',
       required: false,
       defaultValue: false,
     }),

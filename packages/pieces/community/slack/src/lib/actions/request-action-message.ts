@@ -1,16 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  text,
-  slackChannel,
-  username,
-  actions,
-  singleSelectChannelInfo,
-  threadTs,
-  mentionOriginFlow,
-} from '../common/props';
+import { profilePicture, text, slackChannel, username, actions, singleSelectChannelInfo, threadTs, mentionOriginFlow, replyBroadcast } from '../common/props';
 import { requestAction } from '../common/request-action';
 import { requestActionActionOutputSchema } from '../output-schemas';
 
@@ -36,13 +27,7 @@ export const requestActionMessageAction = createAction({
     threadTs,
     username,
     profilePicture,
-    replyBroadcast: Property.Checkbox({
-      displayName: 'Also Post to Channel',
-      description: 'When replying in a thread, also show the reply in the channel.',
-      required: false,
-      defaultValue: false,
-      advanced: true,
-    }),
+    replyBroadcast,
     mentionOriginFlow,
   },
   async run(context) {

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
+import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow, messageTs } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
@@ -22,13 +22,7 @@ export const updateMessage = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
-    ts: Property.ShortText({
-      displayName: 'Message Timestamp',
-      description:
-        'Timestamp of the target message, from its link or a trigger output.',
-      placeholder: '1710304378.475129',
-      required: true,
-    }),
+    ts: messageTs,
     text: Property.LongText({
       displayName: 'Message',
       description: 'Slack mrkdwn is supported. Empty updates blocks only.',
