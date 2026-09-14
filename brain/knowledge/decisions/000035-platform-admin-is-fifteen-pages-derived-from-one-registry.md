@@ -113,6 +113,12 @@ so a plain button is `{gate.crown ?? <Plus className="size-4" />}` and only ever
 exception is `AnimatedIconButton`, whose icon is a prop rather than a child because it animates on hover:
 a crown has no animation to drive, so the locked case renders a plain `Button` instead.
 
+`gate.crown` carries `text-primary-foreground/90`, which is white, so it only reads on the purple primary
+button it was written for and disappears on an `outline` one. `Customize Selector` is outline and renders
+its own `<Crown className="size-3.5 shrink-0 text-primary" />` instead, matching the sidebar crowns, while
+still taking `open` and `dialog` from the hook. Take the behaviour from the gate and the colour from the
+button until the helper learns to inherit `currentColor`.
+
 **A refused submit swaps its dialog's content, it does not trade one dialog for another.** Closing the form
 and opening a second dialog was tried and rejected: each Radix `Dialog` owns an overlay, so the first
 animates out while the second animates in, the backdrop undims between them and the screen visibly

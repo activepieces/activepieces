@@ -58,7 +58,11 @@ export function ConnectionsOverview() {
     isError || hasGlobalError
       ? {
           entity: t('connections'),
-          onRetry: () => Promise.all([refetch(), refetchGlobal()]),
+          onRetry: () =>
+            Promise.all([
+              ...(isError ? [refetch()] : []),
+              ...(hasGlobalError ? [refetchGlobal()] : []),
+            ]),
         }
       : undefined;
   const usageError = isError
