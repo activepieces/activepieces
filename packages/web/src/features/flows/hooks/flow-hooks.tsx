@@ -187,8 +187,7 @@ export const flowHooks = {
             duration: 5000,
           });
         } else {
-          const serverMessage =
-            'message' in apError.params ? apError.params.message : undefined;
+          const serverMessage = api.serverErrorMessage(error);
           if (isNil(serverMessage)) {
             internalErrorToast();
             return;
