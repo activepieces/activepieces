@@ -3,6 +3,7 @@ import {
     createNotifyClient,
     createRpcServer,
     EngineContract,
+    EngineExitCode,
     EngineResponse,
     ERROR_MESSAGES_TO_REDACT,
     WorkerNotifyContract,
@@ -37,7 +38,7 @@ export const workerSocket = {
             initialConnectWatchdog = undefined
             // eslint-disable-next-line no-console
             console.error('[engine] Failed to connect to worker within 60s, exiting')
-            process.exit(5)
+            process.exit(EngineExitCode.WORKER_HANDSHAKE_TIMEOUT)
         }, INITIAL_CONNECT_TIMEOUT_MS)
 
         notifyClient = createNotifyClient<WorkerNotifyContract>(socket)
@@ -57,7 +58,7 @@ export const workerSocket = {
             }
             // eslint-disable-next-line no-console
             console.error(`[engine] Worker socket disconnected (${reason}), exiting`)
-            process.exit(6)
+            process.exit(EngineExitCode.WORKER_SOCKET_DISCONNECTED)
         })
 
         const originalLog = console.log
