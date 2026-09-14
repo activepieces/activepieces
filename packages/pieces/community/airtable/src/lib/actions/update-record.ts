@@ -56,6 +56,7 @@ export const airtableUpdateRecordAction = createAction({
       tableId: tableId as string,
       recordId: recordId as string,
       fields: updatedFields as Record<string, unknown>,
+      typecast: true,
     });
   },
 });

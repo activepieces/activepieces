@@ -31,7 +31,7 @@ const MAX_FIND_RECORDS = 1000;
 const RATE_LIMIT_STATUS = 429;
 const RATE_LIMIT_PAUSE_MS = 30000;
 const RATE_LIMIT_RETRIES = 2;
-const DROPDOWN_RATE_LIMIT_RETRIES = 1;
+const DROPDOWN_RATE_LIMIT_RETRIES = 0;
 
 function isRateLimited(error: unknown): boolean {
   return (
@@ -75,6 +75,7 @@ interface Params {
   workspaceId?: string; 
   name?: string; 
   tables?: AirtableTableConfig[];
+  typecast?: boolean;
 }
 
 async function fetchAllBases({
@@ -305,6 +306,7 @@ async function updateRecord({
   recordId,
   tableId,
   baseId,
+  typecast,
 }: Params) {
   const request: HttpRequest = {
     method: HttpMethod.PATCH,
@@ -315,7 +317,7 @@ async function updateRecord({
     },
     body: {
       fields,
-      typecast: true,
+      ...(typecast ? { typecast: true } : {}),
     },
   };
 
