@@ -2,6 +2,7 @@ import {
   AuthenticationType,
   HttpMethod,
   HttpRequest,
+  HttpResponse,
   httpClient,
 } from '@activepieces/pieces-common';
 import {
@@ -27,6 +28,35 @@ import { isNil } from '@activepieces/pieces-framework';
 import { airtableAuth } from '../auth';
 
 const MAX_FIND_RECORDS = 1000;
+const RATE_LIMIT_STATUS = 429;
+const RATE_LIMIT_PAUSE_MS = 30000;
+const RATE_LIMIT_RETRIES = 2;
+const DROPDOWN_RATE_LIMIT_RETRIES = 1;
+
+function isRateLimited(error: unknown): boolean {
+  return (
+    (error as { response?: { status?: number } })?.response?.status ===
+    RATE_LIMIT_STATUS
+  );
+}
+
+async function sendPage<T>(
+  request: HttpRequest,
+  rateLimitRetries: number
+): Promise<HttpResponse<T>> {
+  for (let attempt = 0; ; attempt++) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_PAUSE_MS));
+    }
+    try {
+      return await httpClient.sendRequest<T>(request);
+    } catch (error) {
+      if (!isRateLimited(error) || attempt >= rateLimitRetries) {
+        throw error;
+      }
+    }
+  }
+}
 
 
 interface Params {
@@ -130,10 +160,10 @@ async function listRecords({
       },
       retries: 3,
     };
-    const response = await httpClient.sendRequest<{
+    const response = await sendPage<{
       records: AirtableRecord[];
       offset?: string;
-    }>(request);
+    }>(request, DROPDOWN_RATE_LIMIT_RETRIES);
 
     allRecords.push(...response.body.records);
     offset = response.body.offset;
@@ -258,10 +288,10 @@ async function findRecord({
       retries: 3,
     };
 
-    const response = await httpClient.sendRequest<{
+    const response = await sendPage<{
       records: AirtableRecord[];
       offset?: string;
-    }>(request);
+    }>(request, RATE_LIMIT_RETRIES);
 
     allRecords.push(...response.body.records);
     offset = response.body.offset;
