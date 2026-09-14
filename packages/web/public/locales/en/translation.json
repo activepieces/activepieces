@@ -2998,5 +2998,12 @@
   "Your platform name, branding and general settings.": "Your platform name, branding and general settings.",
   "Your logo, colors and favicon are part of custom branding.": "Your logo, colors and favicon are part of custom branding.",
   "Group pieces into sets and choose which projects can use each one": "Group pieces into sets and choose which projects can use each one",
-  "Piece sets need a higher plan.": "Piece sets need a higher plan."
+  "Piece sets need a higher plan.": "Piece sets need a higher plan.",
+  "invitations": "invitations",
+  "workers": "workers",
+  "health checks": "health checks",
+  "billing": "billing",
+  "project roles": "project roles",
+  "infrastructure status": "infrastructure status",
+  "Plans, credits and usage tracking are part of the Enterprise and Cloud editions.": "Plans, credits and usage tracking are part of the Enterprise and Cloud editions."
 }

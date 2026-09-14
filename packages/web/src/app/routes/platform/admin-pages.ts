@@ -466,6 +466,12 @@ export const ADMIN_PAGES: AdminPage[] = [
   },
   {
     id: 'billing',
+    sample: true,
+    teaser: {
+      title: 'Billing & usage',
+      description:
+        'Plans, credits and usage tracking are part of the Enterprise and Cloud editions.',
+    },
     path: '/platform/setup/billing',
     title: 'Billing & usage',
     description:

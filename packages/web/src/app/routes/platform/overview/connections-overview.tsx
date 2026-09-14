@@ -1,4 +1,4 @@
-import { AppConnectionStatus } from '@activepieces/shared';
+import { AppConnectionScope, AppConnectionStatus } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
@@ -19,21 +19,51 @@ import {
 
 export function ConnectionsOverview() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: connections, isLoading } = useQuery({
+  const {
+    data: connections,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['platform-app-connections', 'overview'],
-    queryFn: () => platformAppConnectionsApi.list({ limit: 1000 }),
+    queryFn: () =>
+      platformAppConnectionsApi.list({
+        limit: 1000,
+        scope: AppConnectionScope.PROJECT,
+      }),
   });
-  const { data: globalConnections, isLoading: isLoadingGlobal } =
-    globalConnectionsQueries.useGlobalConnections({
-      request: { limit: 1000 },
-      extraKeys: ['overview'],
-    });
+  const {
+    data: globalConnections,
+    isLoading: isLoadingGlobal,
+    isError: isGlobalError,
+    refetch: refetchGlobal,
+  } = globalConnectionsQueries.useGlobalConnections({
+    request: { limit: 1000 },
+    extraKeys: ['overview'],
+  });
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
 
   const rows = connections?.data ?? [];
-  const unhealthy = rows.filter(
+  const globalRows = platform.plan.globalConnectionsEnabled
+    ? globalConnections?.data ?? []
+    : [];
+  const unhealthy = [...rows, ...globalRows].filter(
     (connection) => connection.status === AppConnectionStatus.ERROR,
   );
+  const hasGlobalError =
+    platform.plan.globalConnectionsEnabled && isGlobalError;
+  const isLoadingHealth =
+    isLoading || (platform.plan.globalConnectionsEnabled && isLoadingGlobal);
+  const healthError =
+    isError || hasGlobalError
+      ? {
+          entity: t('connections'),
+          onRetry: () => Promise.all([refetch(), refetchGlobal()]),
+        }
+      : undefined;
+  const usageError = isError
+    ? { entity: t('connections'), onRetry: refetch }
+    : undefined;
   const byPiece = rows.reduce<Record<string, number>>(
     (counts, connection) => ({
       ...counts,
@@ -58,6 +88,8 @@ export function ConnectionsOverview() {
           title={t('Project connections')}
           value={rows.length}
           isLoading={isLoading}
+          isError={isError}
+          errorEntity={t('connections')}
           description={t(
             'Across {count, plural, =1 {# project} other {# projects}}',
             { count: projects?.length ?? 0 },
@@ -73,6 +105,8 @@ export function ConnectionsOverview() {
               : t('Locked')
           }
           isLoading={isLoadingGlobal}
+          isError={hasGlobalError}
+          errorEntity={t('connections')}
           description={t('Shared credentials available to multiple projects')}
         />
       </OverviewCards>
@@ -82,6 +116,8 @@ export function ConnectionsOverview() {
         description={t(
           'Connections across every project that are expired, revoked or failing.',
         )}
+        isLoading={isLoadingHealth}
+        error={healthError}
       >
         {unhealthy.length === 0 ? (
           <OverviewEmpty>{t('All connections are healthy')}</OverviewEmpty>
@@ -103,6 +139,8 @@ export function ConnectionsOverview() {
       <OverviewSection
         title={t('Most used pieces')}
         description={t('Which apps your projects connect to most.')}
+        isLoading={isLoading}
+        error={usageError}
       >
         {topPieces.length === 0 ? (
           <OverviewEmpty>{t('No connections yet')}</OverviewEmpty>

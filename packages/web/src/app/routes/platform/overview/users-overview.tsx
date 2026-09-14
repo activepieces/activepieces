@@ -20,12 +20,25 @@ import {
 
 export function UsersOverview() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: users, isLoading: isLoadingUsers } =
-    platformUserHooks.useUsers();
-  const { data: invitations, isLoading: isLoadingInvitations } =
-    platformUserHooks.usePlatformInvitations();
-  const { data: roles, isLoading: isLoadingRoles } =
-    projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+  const {
+    data: users,
+    isLoading: isLoadingUsers,
+    isError: isUsersError,
+  } = platformUserHooks.useUsers();
+  const {
+    data: invitations,
+    isLoading: isLoadingInvitations,
+    isError: isInvitationsError,
+    refetch: refetchInvitations,
+  } = platformUserHooks.usePlatformInvitations();
+  const {
+    data: roles,
+    isLoading: isLoadingRoles,
+    isError: isRolesError,
+  } = projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+  const invitationsError = isInvitationsError
+    ? { entity: t('invitations'), onRetry: refetchInvitations }
+    : undefined;
 
   const allUsers = users?.data ?? [];
   const admins = allUsers.filter(
@@ -63,6 +76,8 @@ export function UsersOverview() {
           title={t('Members')}
           value={allUsers.length}
           isLoading={isLoadingUsers}
+          isError={isUsersError}
+          errorEntity={t('members')}
           description={t(
             '{admins, plural, =1 {# admin} other {# admins}} · {members, plural, =1 {# member} other {# members}} · {deactivated} deactivated',
             { admins, members, deactivated },
@@ -83,6 +98,8 @@ export function UsersOverview() {
           tier="team"
           value={platform.plan.projectRolesEnabled ? customRoles : t('Locked')}
           isLoading={isLoadingRoles}
+          isError={platform.plan.projectRolesEnabled && isRolesError}
+          errorEntity={t('project roles')}
           description={
             customRoles === 0
               ? t('No custom roles. Built-in roles in use.')
@@ -131,8 +148,10 @@ export function UsersOverview() {
         description={t(
           'Invites sent from any project that have not been accepted yet.',
         )}
+        isLoading={isLoadingInvitations}
+        error={invitationsError}
       >
-        {isLoadingInvitations || pending.length === 0 ? (
+        {pending.length === 0 ? (
           <OverviewEmpty>{t('No pending invitations')}</OverviewEmpty>
         ) : (
           <OverviewRows>

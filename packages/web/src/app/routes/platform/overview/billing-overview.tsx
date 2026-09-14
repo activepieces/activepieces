@@ -1,14 +1,21 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { billingQueries } from '@/features/billing';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { AdminOverview, OverviewCard, OverviewCards } from './overview-shell';
 
 export function BillingOverview() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: subscription, isLoading } =
-    billingQueries.usePlatformSubscription(platform.id);
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const isCommunity = edition === ApEdition.COMMUNITY;
+  const {
+    data: subscription,
+    isLoading,
+    isError,
+  } = billingQueries.usePlatformSubscription(platform.id, !isCommunity);
 
   const creditsUsed = subscription?.usage.creditsUsed ?? 0;
   const creditsLimit = subscription?.plan.includedCredits ?? 0;
@@ -28,6 +35,8 @@ export function BillingOverview() {
           title={t('Plan')}
           value={subscription?.autumnPlanName ?? subscription?.plan.plan ?? '—'}
           isLoading={isLoading}
+          isError={isError}
+          errorEntity={t('billing')}
           description={t('{credits} credits included', {
             credits: creditsLimit.toLocaleString(),
           })}
@@ -37,6 +46,8 @@ export function BillingOverview() {
           title={t('Usage')}
           value={`${usedPercent}%`}
           isLoading={isLoading}
+          isError={isError}
+          errorEntity={t('billing')}
           description={t('{used} of {total} credits used this period', {
             used: creditsUsed.toLocaleString(),
             total: creditsLimit.toLocaleString(),

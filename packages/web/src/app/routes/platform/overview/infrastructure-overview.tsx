@@ -1,8 +1,13 @@
 import { isNil } from '@activepieces/core-utils';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import semver from 'semver';
 
 import { healthQueries, workersQueries } from '@/features/platform-admin';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+
+import { ADMIN_PAGES, adminPagesUtils } from '../admin-pages';
 
 import {
   AdminOverview,
@@ -14,10 +19,35 @@ import {
 } from './overview-shell';
 
 export function InfrastructureOverview() {
-  const { data: health, isLoading: isLoadingHealth } =
-    healthQueries.useSystemHealth();
-  const { data: workers, isLoading: isLoadingWorkers } =
-    workersQueries.useWorkerMachines();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const {
+    data: health,
+    isLoading: isLoadingHealth,
+    isError: isHealthError,
+    refetch: refetchHealth,
+  } = healthQueries.useSystemHealth();
+  const {
+    data: workers,
+    isLoading: isLoadingWorkers,
+    isError: isWorkersError,
+    refetch: refetchWorkers,
+  } = workersQueries.useWorkerMachines();
+  const infrastructurePage = ADMIN_PAGES.find(
+    (page) => page.id === 'infrastructure',
+  );
+  const showConfigurations =
+    infrastructurePage !== undefined &&
+    adminPagesUtils
+      .visibleTabs(infrastructurePage, { plan: platform.plan, edition })
+      .some((tab) => tab.id === 'configurations');
+  const statusError =
+    isHealthError || isWorkersError
+      ? {
+          entity: t('infrastructure status'),
+          onRetry: () => Promise.all([refetchHealth(), refetchWorkers()]),
+        }
+      : undefined;
 
   const currentVersion = health?.release?.current;
   const latestVersion = health?.latestVersion;
@@ -45,8 +75,12 @@ export function InfrastructureOverview() {
           title={t('Health')}
           value={needsAttention ? t('Attention') : t('Healthy')}
           isLoading={isLoadingHealth}
+          isError={isHealthError}
+          errorEntity={t('health checks')}
           description={
-            isUpToDate
+            health === undefined
+              ? ''
+              : isUpToDate
               ? t('All checks passed')
               : t('Version behind latest; see release notes')
           }
@@ -56,6 +90,8 @@ export function InfrastructureOverview() {
           title={t('Workers')}
           value={workerCount}
           isLoading={isLoadingWorkers}
+          isError={isWorkersError}
+          errorEntity={t('workers')}
           description={
             workerCount === 0
               ? t('No workers connected')
@@ -73,15 +109,21 @@ export function InfrastructureOverview() {
           value="—"
           description={t('Trigger health across the last 14 days')}
         />
-        <OverviewCard
-          to="/platform/infrastructure?tab=configurations"
-          title={t('Configurations')}
-          value={t('Runtime')}
-          description={t('Runtime settings for this instance')}
-        />
+        {showConfigurations && (
+          <OverviewCard
+            to="/platform/infrastructure?tab=configurations"
+            title={t('Configurations')}
+            value={t('Runtime')}
+            description={t('Runtime settings for this instance')}
+          />
+        )}
       </OverviewCards>
 
-      <OverviewSection title={t('Status')}>
+      <OverviewSection
+        title={t('Status')}
+        isLoading={isLoadingHealth || isLoadingWorkers}
+        error={statusError}
+      >
         <OverviewRows>
           <OverviewRow
             tone={isUpToDate ? 'ok' : 'error'}

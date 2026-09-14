@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FeatureTier } from '@/features/billing';
@@ -45,6 +46,8 @@ export function OverviewCard({
   value,
   description,
   isLoading = false,
+  isError = false,
+  errorEntity,
 }: OverviewCardProps) {
   return (
     <Link
@@ -62,10 +65,14 @@ export function OverviewCard({
         <Skeleton className="h-7 w-16" />
       ) : (
         <div className="text-2xl font-semibold leading-none tracking-tight">
-          {value}
+          {isError ? '—' : value}
         </div>
       )}
-      <div className="text-sm text-muted-foreground">{description}</div>
+      <div className="text-sm text-muted-foreground">
+        {isError
+          ? t('Trouble loading {entity}', { entity: errorEntity ?? title })
+          : description}
+      </div>
     </Link>
   );
 }
@@ -73,6 +80,8 @@ export function OverviewCard({
 export function OverviewSection({
   title,
   description,
+  isLoading = false,
+  error,
   children,
 }: OverviewSectionProps) {
   return (
@@ -83,7 +92,19 @@ export function OverviewSection({
           <p className="text-sm text-muted-foreground">{description}</p>
         )}
       </div>
-      {children}
+      {error !== undefined ? (
+        <div className="rounded-lg border">
+          <DataFetchErrorState
+            entity={error.entity}
+            onRetry={error.onRetry}
+            className="py-8"
+          />
+        </div>
+      ) : isLoading ? (
+        <Skeleton className="h-24 w-full rounded-lg" />
+      ) : (
+        children
+      )}
     </section>
   );
 }
@@ -158,11 +179,20 @@ export type OverviewCardProps = {
   value: ReactNode;
   description: ReactNode;
   isLoading?: boolean;
+  isError?: boolean;
+  errorEntity?: string;
+};
+
+export type OverviewSectionError = {
+  entity: string;
+  onRetry?: () => unknown;
 };
 
 export type OverviewSectionProps = {
   title: string;
   description?: string;
+  isLoading?: boolean;
+  error?: OverviewSectionError;
   children: ReactNode;
 };
 

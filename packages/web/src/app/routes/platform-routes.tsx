@@ -49,13 +49,25 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
   const Overview = page.overview;
   if (Overview !== undefined && requested === null) {
     return (
-      <SuspenseWrapper>
-        <Overview />
-      </SuspenseWrapper>
+      <FeatureSample
+        locked={page.sample === true && page.nav?.isLocked?.(context) === true}
+        title={page.teaser?.title ?? page.nav?.label ?? page.title}
+        description={page.teaser?.description}
+        tier={page.teaser?.tier}
+        documentationUrl={page.teaser?.documentationUrl}
+      >
+        <SuspenseWrapper>
+          <Overview />
+        </SuspenseWrapper>
+      </FeatureSample>
     );
   }
 
-  const activeTab = tabs.find((tab) => tab.id === requested) ?? tabs[0];
+  const requestedTab = tabs.find((tab) => tab.id === requested);
+  if (requested !== null && requestedTab === undefined) {
+    return <Navigate to={page.path} replace />;
+  }
+  const activeTab = requestedTab ?? tabs[0];
   if (activeTab === undefined) {
     return null;
   }

@@ -75,6 +75,16 @@ list endpoint decrypts every `value` (`ERR_CRYPTO_INVALID_IV` → 500), and a de
 returns `piece_metadata_not_found` for anything not in `AP_DEV_PIECES`, so seed through `POST /v1/app-connections` with
 `type: NO_AUTH` (skips engine validation) against a backend that knows the piece.
 
+**An overview is gated like any other page, an unknown tab redirects, and a failed query says so.** The overview
+branch of the route resolver wraps in the same `FeatureSample` as component pages, so a locked section (Billing on
+Community, declared with `sample: true` and a teaser in the registry) shows the upgrade card instead of empty values.
+A `?tab=` that is hidden or unknown redirects to the page's bare path rather than silently rendering the first tab,
+and overview cards derive their tab links from `visibleTabs`, never a hardcoded list. `OverviewCard` and
+`OverviewSection` take `isError`/`error` and `isLoading`: a failed fetch renders `DataFetchErrorState`, a pending one a
+skeleton, and only real data can claim "healthy" or "none". The connections overview counts project-scoped
+connections only, so global ones are not counted twice, while "Needs attention" still lists failing global ones.
+Greptile caught all four on the first review of #15526 (2026-09-14).
+
 **Groups never collapse.** Every page with sub-items draws them all the time; there is no chevron and no
 collapse state. A per-page `collapsed` boolean was tried first and left `/platform/users?tab=members` with
 nothing lit up whenever the group had been closed earlier; a per-navigation version fixed that but bought
