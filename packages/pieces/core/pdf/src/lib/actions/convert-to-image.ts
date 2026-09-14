@@ -37,7 +37,7 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
 
         const files = await fs.readdir(outputDir);
         const imageBuffers = [];
-        for (const file of files) {
+        for (const file of [...files].sort()) {
             const filePath = join(outputDir, file);
             const imageBuffer = await fs.readFile(filePath);
             await fs.unlink(filePath);
