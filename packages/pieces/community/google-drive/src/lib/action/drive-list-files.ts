@@ -1,4 +1,4 @@
-import { extension } from 'mime-types';
+import { extension, extensions } from 'mime-types';
 import { googleDriveAuth } from '../auth';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { listDriveFilesRecursive } from '../common/list-drive-files';
@@ -90,19 +90,13 @@ export const driveListFiles = createAction({
 
         let safeName = file.name;
         const correctExtension = extension(file.mimeType);
-        if (
-          correctExtension &&
-          !safeName.toLowerCase().endsWith(`.${correctExtension}`)
-        ) {
-          // Check for the .jpeg edge case before appending .jpg
-          if (
-            !(
-              file.mimeType === 'image/jpeg' &&
-              safeName.toLowerCase().endsWith('.jpeg')
-            )
-          ) {
-            safeName = `${safeName}.${correctExtension}`;
-          }
+        const knownExtensions =
+          extensions[file.mimeType] ?? (correctExtension ? [correctExtension] : []);
+        const hasKnownExtension = knownExtensions.some((knownExtension) =>
+          safeName.toLowerCase().endsWith(`.${knownExtension}`)
+        );
+        if (correctExtension && !hasKnownExtension) {
+          safeName = `${safeName}.${correctExtension}`;
         }
 
         try {
