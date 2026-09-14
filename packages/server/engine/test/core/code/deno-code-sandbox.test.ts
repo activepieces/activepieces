@@ -54,8 +54,8 @@ describe('denoCodeSandbox permission boundary', () => {
 
         it('with the ENV permission exposes only PATH, never the engine env', async () => {
             const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
-            const codeFilePath = path.join(stepDir, 'index.js')
-            await writeFile(codeFilePath, `exports.code = async () => ({ keys: Object.keys(Deno.env.toObject()), missing: process.env.AP_EXECUTION_MODE ?? null })`)
+            const codeFilePath = path.join(stepDir, 'index.ts')
+            await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()), missing: process.env.AP_EXECUTION_MODE ?? null })`)
             const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
             expect(result).toEqual({ keys: ['PATH'], missing: null })
         })
