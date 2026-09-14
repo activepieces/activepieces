@@ -37,6 +37,8 @@ export const pendingRedirect = {
   remember(from: string | null) {
     if (from) {
       ApStorage.getInstance().setItem(PENDING_REDIRECT_KEY, from);
+    } else {
+      ApStorage.getInstance().removeItem(PENDING_REDIRECT_KEY);
     }
   },
   takeSignInPath(): string {
