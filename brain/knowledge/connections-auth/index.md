@@ -62,3 +62,4 @@ IdP-driven provisioning (Okta/Azure AD/Google). SCIM User → AP User+UserIdenti
 - **EE Authentication (SSO/RBAC)** — SAML 2.0, roles, enforcement
 - **SCIM** — user provisioning (Okta, Microsoft Entra ID)
 - **API Keys** — platform-scoped, hashed, `sk-` prefixed
+- **Testing OAuth2 Connects Locally** — driving a real connect on a dev box, and forcing awkward code shapes

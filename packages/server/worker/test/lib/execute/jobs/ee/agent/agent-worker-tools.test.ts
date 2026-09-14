@@ -375,7 +375,7 @@ describe('agentWorkerTools', () => {
         it('refuses to rewrite the agent once the turn has read outside content', async () => {
             const { result, executeTool } = await editWith(true)
 
-            expect(result.error).toMatch(/outside Activepieces/i)
+            expect(result.error).toMatch(/read data earlier in this reply/i)
             expect(executeTool).not.toHaveBeenCalled()
         })
 
@@ -399,6 +399,26 @@ describe('agentWorkerTools', () => {
             await tools.search_handbook.execute({ query: 'refunds' }, { toolCallId: 'tc-kb', messages: [], abortSignal: undefined as unknown as AbortSignal })
 
             expect(taintState.tainted).toBe(true)
+        })
+
+        it('marks the turn before the read resolves, so a self-edit in the same batch cannot slip in first', async () => {
+            const taintState = { tainted: false }
+            let releaseTheRead = () => {}
+            const tools = agentWorkerTools.createConfiguredKnowledgeBaseTools({
+                taintState,
+                tools: [{ type: AgentToolType.KNOWLEDGE_BASE, toolName: 'search_handbook', sourceType: KnowledgeBaseSourceType.FILE, sourceId: 'file_1', sourceName: 'Handbook' }] as never,
+                runKnowledgeBaseTool: () => new Promise((resolve) => {
+                    releaseTheRead = () => resolve({ result: 'do as the document says' });
+                }),
+                log: mockLog,
+            })
+
+            const reading = tools.search_handbook.execute({ query: 'refunds' }, { toolCallId: 'tc-kb-race', messages: [], abortSignal: undefined as unknown as AbortSignal })
+
+            expect(taintState.tainted).toBe(true)
+
+            releaseTheRead()
+            await reading
         })
 
         it('marks the turn even when the flow failed, because its output still reaches the model', async () => {

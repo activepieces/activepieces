@@ -10,12 +10,7 @@ export const gmailAddLabelToEmailAction = createAction({
   classification: 'WRITE',
   displayName: 'Add Label to Email',
   description: 'Apply a label to an email message.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Applies an existing label to a single email message by message ID, without removing any of its current labels. Look up the label with List Labels and the message ID with Search Email or Get Message. Idempotent: true — applying a label the message already carries has no additional effect.',
-    idempotent: true,
-  },
+  audience: 'human',
   props: {
     message_id: Property.ShortText({
       displayName: 'Message ID',
