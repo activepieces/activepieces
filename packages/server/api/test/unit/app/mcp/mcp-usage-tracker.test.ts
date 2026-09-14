@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
 import { McpServerType, PopulatedMcpServer } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { INTERNAL_CHAT_CLIENT_ID } from '../../../../src/app/mcp/mcp-clients'
+import { INTERNAL_CHAT_CLIENT_ID } from '../../../../src/app/mcp/oauth/token/mcp-oauth-token.service'
 import { MCP_CALL_CREDITS, mcpUsageTracker } from '../../../../src/app/mcp/mcp-usage-tracker'
 
 const { mockTrackBillingAndSendTelemetry, mockGetOrCreateForPlatform, mockGetProject, mockAssertCredits } = vi.hoisted(() => ({
