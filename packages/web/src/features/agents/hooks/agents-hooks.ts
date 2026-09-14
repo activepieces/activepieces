@@ -13,7 +13,12 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -94,6 +99,31 @@ export const agentsQueries = {
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
     }),
+  useAgentRuns: ({
+    agentId,
+    projectId,
+    enabled = true,
+  }: {
+    agentId: string;
+    projectId: string;
+    enabled?: boolean;
+  }) => {
+    const [searchParams] = useSearchParams();
+    return useQuery({
+      queryKey: [AGENTS_KEY, 'runs', agentId, searchParams.toString()],
+      enabled,
+      staleTime: 0,
+      queryFn: () => {
+        const limit = searchParams.get(LIMIT_QUERY_PARAM);
+        return agentsApi.listRuns({
+          agentId,
+          projectId,
+          cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+          limit: limit === null ? undefined : parseInt(limit),
+        });
+      },
+    });
+  },
 };
 
 export const agentsMutations = {

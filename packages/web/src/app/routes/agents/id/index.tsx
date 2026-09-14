@@ -19,6 +19,7 @@ import {
 } from '@/components/custom/empty';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgentsAvailable } from '@/features/agents';
 import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
@@ -26,6 +27,7 @@ import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { cn } from '@/lib/utils';
 
 import { AgentConfigurePanel } from './configure-panel';
+import { AgentRuns } from './runs';
 
 const pieceDisplayName = (pieceName: string): string =>
   pieceName.replace('@activepieces/piece-', '');
@@ -52,6 +54,8 @@ const buildCapabilityNote = (agent: Agent): string => {
 type OpenPanel = 'conversations' | 'configure' | 'none';
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
+const VIEW_QUERY_PARAM = 'view';
+const RUNS_VIEW = 'runs';
 const SLIDING_ASIDE =
   'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
@@ -97,6 +101,27 @@ const AgentEditorContent = () => {
   const openConversation = (nextConversationId: string) => {
     setOpenedConversationId(nextConversationId);
     writeConversationParam(nextConversationId);
+  };
+  const runsOpen = searchParams.get(VIEW_QUERY_PARAM) === RUNS_VIEW;
+  const showRuns = (show: boolean) => {
+    const next = new URLSearchParams(searchParams);
+    if (show) {
+      next.set(VIEW_QUERY_PARAM, RUNS_VIEW);
+    } else {
+      next.delete(VIEW_QUERY_PARAM);
+    }
+    next.delete('cursor');
+    next.delete('limit');
+    setSearchParams(next, { replace: true });
+  };
+  const openRunInChat = (runConversationId: string) => {
+    setOpenedConversationId(runConversationId);
+    const next = new URLSearchParams(searchParams);
+    next.set(CONVERSATION_QUERY_PARAM, runConversationId);
+    next.delete(VIEW_QUERY_PARAM);
+    next.delete('cursor');
+    next.delete('limit');
+    setSearchParams(next, { replace: true });
   };
   const startNewConversation = () => {
     setOpenedConversationId(undefined);
@@ -171,6 +196,15 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
+          <Tabs
+            value={runsOpen ? RUNS_VIEW : 'chat'}
+            onValueChange={(next) => showRuns(next === RUNS_VIEW)}
+          >
+            <TabsList>
+              <TabsTrigger value="chat">{t('Chat')}</TabsTrigger>
+              <TabsTrigger value={RUNS_VIEW}>{t('Runs')}</TabsTrigger>
+            </TabsList>
+          </Tabs>
           {!configureOpen && (
             <div className="flex min-w-0 shrink items-center gap-2">
               <Button
@@ -186,56 +220,64 @@ const AgentEditorContent = () => {
           )}
         </div>
         <div className="flex min-h-0 grow">
-          <aside
-            className={cn(
-              SLIDING_ASIDE,
-              'border-r',
-              conversationsOpen ? 'w-[220px]' : 'w-[46px]',
-            )}
-          >
-            {conversationsOpen ? (
-              <div className="flex h-full w-[220px] flex-col">
-                <ConversationList
+          {runsOpen ? (
+            <AgentRuns agentId={agent.id} onOpenRun={openRunInChat} />
+          ) : (
+            <>
+              <aside
+                className={cn(
+                  SLIDING_ASIDE,
+                  'border-r',
+                  conversationsOpen ? 'w-[220px]' : 'w-[46px]',
+                )}
+              >
+                {conversationsOpen ? (
+                  <div className="flex h-full w-[220px] flex-col">
+                    <ConversationList
+                      agentId={agent.id}
+                      selectedId={
+                        openedConversationId ?? conversationId ?? null
+                      }
+                      onSelect={openConversation}
+                      onNewChat={startNewConversation}
+                      onCollapse={() => setOpenPanel('none')}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-full w-[46px] shrink-0 flex-col items-center pt-3">
+                    <ConversationsToggle
+                      open={false}
+                      onClick={() => setOpenPanel('conversations')}
+                    />
+                  </div>
+                )}
+              </aside>
+              <div className="flex min-h-0 min-w-0 grow flex-col">
+                <AIChatBox
+                  key={openedConversationId ?? `new-${freshConversations}`}
+                  incognito={false}
                   agentId={agent.id}
-                  selectedId={openedConversationId ?? conversationId ?? null}
-                  onSelect={openConversation}
-                  onNewChat={startNewConversation}
-                  onCollapse={() => setOpenPanel('none')}
+                  conversationId={openedConversationId ?? null}
+                  onConversationCreated={writeConversationParam}
+                  onTurnEnd={() =>
+                    void queryClient.invalidateQueries({
+                      queryKey: ['agents', 'one', agent.id],
+                    })
+                  }
+                  placeholder={t('Ask {name}...', { name: agent.displayName })}
+                  footerNote={buildCapabilityNote(agent)}
+                  emptyState={
+                    <AgentChatWelcome
+                      displayName={agent.displayName}
+                      description={agent.description ?? null}
+                      icon={agent.icon}
+                      color={agent.color}
+                    />
+                  }
                 />
               </div>
-            ) : (
-              <div className="flex h-full w-[46px] shrink-0 flex-col items-center pt-3">
-                <ConversationsToggle
-                  open={false}
-                  onClick={() => setOpenPanel('conversations')}
-                />
-              </div>
-            )}
-          </aside>
-          <div className="flex min-h-0 min-w-0 grow flex-col">
-            <AIChatBox
-              key={openedConversationId ?? `new-${freshConversations}`}
-              incognito={false}
-              agentId={agent.id}
-              conversationId={openedConversationId ?? null}
-              onConversationCreated={writeConversationParam}
-              onTurnEnd={() =>
-                void queryClient.invalidateQueries({
-                  queryKey: ['agents', 'one', agent.id],
-                })
-              }
-              placeholder={t('Ask {name}...', { name: agent.displayName })}
-              footerNote={buildCapabilityNote(agent)}
-              emptyState={
-                <AgentChatWelcome
-                  displayName={agent.displayName}
-                  description={agent.description ?? null}
-                  icon={agent.icon}
-                  color={agent.color}
-                />
-              }
-            />
-          </div>
+            </>
+          )}
         </div>
       </div>
       <aside

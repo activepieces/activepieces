@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import {
   Agent,
+  AgentConversation,
   AgentWithUsage,
   GetAgentRequest,
   AgentMovePreview,
@@ -44,4 +45,19 @@ export const agentsApi = {
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/agents/${id}`);
   },
+  listRuns(
+    request: ListAgentRunsRequest,
+  ): Promise<SeekPage<AgentConversation>> {
+    return api.get<SeekPage<AgentConversation>>(
+      '/v1/agents/conversations/runs',
+      request,
+    );
+  },
+};
+
+export type ListAgentRunsRequest = {
+  agentId: string;
+  projectId: string;
+  cursor?: string;
+  limit?: number;
 };
