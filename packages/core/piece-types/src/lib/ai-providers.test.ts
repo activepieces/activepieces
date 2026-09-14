@@ -74,6 +74,12 @@ describe('isCuratedChatModelId', () => {
         }
     })
 
+    it('accepts the model every tier actually runs on, so bumping a tier cannot strand it outside the vocabulary', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(aiProviderUtils.isCuratedChatModelId({ modelId: tier.modelId }), tier.modelId).toBe(true)
+        }
+    })
+
     it('rejects anything outside that vocabulary', () => {
         expect(aiProviderUtils.isCuratedChatModelId({ modelId: 'gpt-9' })).toBe(false)
         expect(aiProviderUtils.isCuratedChatModelId({ modelId: '' })).toBe(false)

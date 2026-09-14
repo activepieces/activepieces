@@ -548,6 +548,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 
     async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
+        await flowPublishHooks.get(log).assertReferencesResolve({
+            projectId: flow.projectId,
+            agentExternalIds: lockedVersion.agentIds ?? [],
+            entityManager,
+        })
         await flowRepo(entityManager).update({ id: flow.id }, {
             publishedVersionId: lockedVersion.id,
             status: FlowStatus.DISABLED,
@@ -945,7 +950,7 @@ type UpdatePublishedVersionIdParams = {
 type SetPublishedVersionParams = {
     flow: Flow
     lockedVersion: FlowVersion
-    entityManager?: EntityManager
+    entityManager: EntityManager
 }
 
 type DeleteParams = EventEmissionParams & {

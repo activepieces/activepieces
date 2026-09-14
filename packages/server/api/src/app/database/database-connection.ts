@@ -16,10 +16,8 @@ import { ChatPersonalizationEntity } from '../ee/agent/personalization/chat-pers
 import { UserMemoryEntity } from '../ee/agent/user-memory-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
-import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
 import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
-import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { EmbedSubdomainEntity } from '../ee/embed-subdomain/embed-subdomain.entity'
 import { FlowApprovalRequestEntity } from '../ee/flows/flow-approval/flow-approval-request.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
@@ -137,8 +135,6 @@ function getEntities(): EntitySchema<unknown>[] {
         FlowApprovalRequestEntity,
         // CLOUD
         AppSumoEntity,
-        ConnectionKeyEntity,
-        AppCredentialEntity,
         PlatformPlanEntity,
         EventDestinationEntity,
 
