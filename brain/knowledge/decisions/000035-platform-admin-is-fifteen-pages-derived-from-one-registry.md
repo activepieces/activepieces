@@ -235,6 +235,14 @@ Four pages now hand-roll the same searchParams dance, three with an unsafe cast.
 
 ## Consequences
 
+**An overview's card row fits three, and the fourth wraps.** The cards sit in a
+`repeat(auto-fit, minmax(15rem, 1fr))` grid inside a column capped at 1024px, so three tracks plus gaps
+are all that fit and Security and Infrastructure render three cards plus an orphan. Narrowing the track
+until four fit truncates the longer titles (`Secret mana...`, `Event strea...`), which is worse than the
+wrap, so the wrap stands. Treat four as the point where a section has outgrown a single card row rather
+than something to squeeze. Use `auto-fit`, never `auto-fill`: `auto-fill` keeps the empty tracks alive, so
+a two-card overview renders both at a fifth of the width with dead space beside them.
+
 **A gated query with no `enabled:` puts an error state behind the blur.** The overlay works only because
 the query underneath already carries `enabled: platform.plan.<flag>`, the repo rule for any endpoint behind
 `platformMustHaveFeatureEnabled`. Without it the request fires, answers 402, and `DataFetchErrorState`
