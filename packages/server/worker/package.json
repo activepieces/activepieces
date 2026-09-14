@@ -49,6 +49,6 @@
     "cli-table3": "0.6.3",
     "commander": "11.1.0",
     "fastify": "5.8.5",
-    "vitest": "3.2.6"
+    "vitest": "4.1.11"
   }
 }
