@@ -49,7 +49,7 @@ export function SecurityOverview() {
         <OverviewCard
           to="/platform/security?tab=secrets"
           title={t('Secret managers')}
-          tier="ultimate"
+          tier="enterprise"
           value={
             platform.plan.secretManagersEnabled ? secretCount : t('Locked')
           }
@@ -63,14 +63,14 @@ export function SecurityOverview() {
         <OverviewCard
           to="/platform/security?tab=audit"
           title={t('Audit logs')}
-          tier="ultimate"
+          tier="enterprise"
           value={platform.plan.auditLogEnabled ? t('On') : t('Locked')}
           description={t('Every user and system action, recorded')}
         />
         <OverviewCard
           to="/platform/security?tab=events"
           title={t('Event streaming')}
-          tier="ultimate"
+          tier="enterprise"
           value={platform.plan.eventStreamingEnabled ? t('On') : t('Locked')}
           description={t('Forward audit events to your own webhook')}
         />

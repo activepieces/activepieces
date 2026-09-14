@@ -160,7 +160,7 @@ const TONE_CLASS: Record<OverviewRowTone, string> = {
 
 const TIER_LABELS: Record<FeatureTier, string> = {
   team: 'Team',
-  ultimate: 'Ultimate',
+  enterprise: 'Enterprise',
 };
 
 export type OverviewRowTone = 'ok' | 'warn' | 'error' | 'off';

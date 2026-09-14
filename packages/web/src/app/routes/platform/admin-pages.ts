@@ -349,7 +349,7 @@ export const ADMIN_PAGES: AdminPage[] = [
       title: 'Unlock Templates',
       description:
         'Convert the most common automations into reusable templates 1 click away from your users',
-      tier: 'ultimate',
+      tier: 'enterprise',
     },
     path: '/platform/setup/templates',
     title: 'Templates',
@@ -367,7 +367,7 @@ export const ADMIN_PAGES: AdminPage[] = [
     teaser: {
       title: 'Unlock Embedding Through JS SDK',
       description: 'Enable signing keys to access embedding functionalities.',
-      tier: 'ultimate',
+      tier: 'enterprise',
     },
     path: '/platform/security/embed',
     title: 'Embedding',
@@ -418,7 +418,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         teaser: {
           title: 'Enable Secret Managers',
           description: 'Manage your secrets from a single and secure place',
-          tier: 'ultimate',
+          tier: 'enterprise',
           bullets: [
             'AWS, Azure, GCP and HashiCorp Vault',
             'Secrets never leave your infrastructure',
@@ -436,7 +436,7 @@ export const ADMIN_PAGES: AdminPage[] = [
           title: 'Unlock Audit Logs',
           description:
             'Comply with internal and external security policies by tracking activities done within your account',
-          tier: 'ultimate',
+          tier: 'enterprise',
           bullets: [
             'Every user and system action, recorded',
             'Filter by user, project and event type',
@@ -454,7 +454,7 @@ export const ADMIN_PAGES: AdminPage[] = [
           title: 'Unlock Event Streaming',
           description:
             'Forward every audit event we emit to a webhook, then handle it in a flow.',
-          tier: 'ultimate',
+          tier: 'enterprise',
           bullets: [
             'Stream events to any endpoint',
             'Wire alerts into Slack, PagerDuty or email',

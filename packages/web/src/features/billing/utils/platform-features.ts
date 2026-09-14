@@ -57,7 +57,7 @@ export const PLATFORM_FEATURES = {
   secretManagers: {
     title: 'Enable Secret Managers',
     description: 'Manage your secrets from a single and secure place',
-    tier: 'ultimate',
+    tier: 'enterprise',
     bullets: [
       'AWS, Azure, GCP and HashiCorp Vault',
       'Secrets never leave your infrastructure',
@@ -68,7 +68,7 @@ export const PLATFORM_FEATURES = {
     title: 'Unlock Audit Logs',
     description:
       'Comply with internal and external security policies by tracking activities done within your account',
-    tier: 'ultimate',
+    tier: 'enterprise',
     bullets: [
       'Every user and system action, recorded',
       'Filter by user, project and event type',
@@ -79,7 +79,7 @@ export const PLATFORM_FEATURES = {
     title: 'Unlock Event Streaming',
     description:
       'Forward every audit event we emit to a webhook, then handle it in a flow.',
-    tier: 'ultimate',
+    tier: 'enterprise',
     bullets: [
       'Stream events to any endpoint',
       'Wire alerts into Slack, PagerDuty or email',
@@ -90,7 +90,7 @@ export const PLATFORM_FEATURES = {
     title: 'Unlock Templates',
     description:
       'Convert the most common automations into reusable templates 1 click away from your users',
-    tier: 'ultimate',
+    tier: 'enterprise',
     bullets: [
       'Publish reusable templates to every project',
       'One click from template to running flow',
@@ -100,7 +100,7 @@ export const PLATFORM_FEATURES = {
   embedding: {
     title: 'Unlock Embedding Through JS SDK',
     description: 'Enable signing keys to access embedding functionalities.',
-    tier: 'ultimate',
+    tier: 'enterprise',
     bullets: [
       'Drop the builder into your app with the JS SDK',
       'Authenticate users with signing keys',
@@ -110,7 +110,7 @@ export const PLATFORM_FEATURES = {
   branding: {
     title: 'Unlock Branding',
     description: 'Your name, logo and colors across the entire experience.',
-    tier: 'ultimate',
+    tier: 'enterprise',
     bullets: [
       'Custom logo, icon, favicon and colors',
       'Branded emails and sign-in pages',
@@ -121,7 +121,7 @@ export const PLATFORM_FEATURES = {
     title: 'Unlock Piece Management',
     description:
       'Curate which pieces your users see, hide the rest, and add your own private pieces.',
-    tier: 'ultimate',
+    tier: 'enterprise',
     bullets: [
       'Show only the pieces that matter to your users',
       'Ship private pieces for internal systems',

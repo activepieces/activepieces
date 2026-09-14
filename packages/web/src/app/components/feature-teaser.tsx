@@ -109,10 +109,10 @@ const ENTERPRISE_DOCUMENTATION_URL =
 
 const TIER_LABELS: Record<FeatureTier, string> = {
   team: 'Team',
-  ultimate: 'Ultimate',
+  enterprise: 'Enterprise',
 };
 
-export type FeatureTier = 'team' | 'ultimate';
+export type FeatureTier = 'team' | 'enterprise';
 
 export type FeatureTeaserProps = {
   title: string;

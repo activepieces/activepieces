@@ -235,6 +235,16 @@ Four pages now hand-roll the same searchParams dance, three with an unsafe cast.
 
 ## Consequences
 
+**A tier label has to name a plan somebody can buy.** The gating UI carries its own two-value vocabulary,
+`FeatureTier = 'team' | 'enterprise'`, entirely separate from `PlanName` in shared. It shipped as
+`'team' | 'ultimate'`, and there is no Ultimate plan: billing sells Free, Plus, Team and Enterprise. So a
+locked page told a Plus admin to "Upgrade to Ultimate", and the Explore plans dialog it opened offered no
+such thing. Renamed to `enterprise` on 2026-09-14. The tier is decorative, meaning nothing maps it to a
+plan id or preselects a plan at checkout, which is exactly why the drift went unnoticed; keep the two
+vocabularies spelled the same so the next drift is visible. `FeatureTier` and `TIER_LABELS` are still
+declared in four places (`lib/feature-tier.ts`, `feature-teaser.tsx`, `use-feature-gate.tsx`, and a fourth
+label map inline in `overview-shell.tsx`), so any future rename has to touch all four.
+
 **An overview's card row fits three, and the fourth wraps.** The cards sit in a
 `repeat(auto-fit, minmax(15rem, 1fr))` grid inside a column capped at 1024px, so three tracks plus gaps
 are all that fit and Security and Infrastructure render three cards plus an orphan. Narrowing the track
