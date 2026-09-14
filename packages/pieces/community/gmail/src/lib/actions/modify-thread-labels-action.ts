@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { gmailModifyThreadLabelsActionOutputSchema } from '../output-schemas';
+import { gmailValidation } from '../common/validation';
 
 export const gmailModifyThreadLabelsAction = createAction({
   auth: gmailAuth,
@@ -41,9 +42,14 @@ export const gmailModifyThreadLabelsAction = createAction({
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
     const threadId = context.propsValue.thread_id;
-    const addLabelIds = (context.propsValue.add_label_ids ?? []) as string[];
-    const removeLabelIds = (context.propsValue.remove_label_ids ??
-      []) as string[];
+    const addLabelIds = gmailValidation.toStringArray(
+      context.propsValue.add_label_ids ?? [],
+      'Label IDs to Add'
+    );
+    const removeLabelIds = gmailValidation.toStringArray(
+      context.propsValue.remove_label_ids ?? [],
+      'Label IDs to Remove'
+    );
 
     if (addLabelIds.length === 0 && removeLabelIds.length === 0) {
       throw new Error(

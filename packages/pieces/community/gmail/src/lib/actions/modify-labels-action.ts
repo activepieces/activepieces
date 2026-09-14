@@ -2,6 +2,9 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { gmailModifyLabelsActionOutputSchema } from '../output-schemas';
+import { gmailValidation } from '../common/validation';
+
+const GMAIL_BATCH_MODIFY_LIMIT = 1000;
 
 export const gmailModifyLabelsAction = createAction({
   auth: gmailAuth,
@@ -40,13 +43,26 @@ export const gmailModifyLabelsAction = createAction({
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
-    const messageIds = context.propsValue.message_ids as string[];
-    const addLabelIds = (context.propsValue.add_label_ids ?? []) as string[];
-    const removeLabelIds = (context.propsValue.remove_label_ids ??
-      []) as string[];
+    const messageIds = gmailValidation.toStringArray(
+      context.propsValue.message_ids,
+      'Message IDs'
+    );
+    const addLabelIds = gmailValidation.toStringArray(
+      context.propsValue.add_label_ids ?? [],
+      'Label IDs to Add'
+    );
+    const removeLabelIds = gmailValidation.toStringArray(
+      context.propsValue.remove_label_ids ?? [],
+      'Label IDs to Remove'
+    );
 
     if (messageIds.length === 0) {
       throw new Error('At least one message ID is required.');
+    }
+    if (messageIds.length > GMAIL_BATCH_MODIFY_LIMIT) {
+      throw new Error(
+        `Gmail's batch modify accepts at most ${GMAIL_BATCH_MODIFY_LIMIT} message IDs per call; received ${messageIds.length}.`
+      );
     }
     if (addLabelIds.length === 0 && removeLabelIds.length === 0) {
       throw new Error(

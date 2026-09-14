@@ -39,11 +39,24 @@ export const gmailGetOrCreateLabelAction = createAction({
         return { ...match, created: false };
       }
 
-      const created = await gmail.users.labels.create({
-        userId: 'me',
-        requestBody: { name },
-      });
-      return { ...created.data, created: true };
+      try {
+        const created = await gmail.users.labels.create({
+          userId: 'me',
+          requestBody: { name },
+        });
+        return { ...created.data, created: true };
+      } catch (createError: any) {
+        if (createError.code === 400 || createError.code === 409) {
+          const afterRace = await gmail.users.labels.list({ userId: 'me' });
+          const raceMatch = (afterRace.data.labels ?? []).find(
+            (label) => label.name === name
+          );
+          if (raceMatch) {
+            return { ...raceMatch, created: false };
+          }
+        }
+        throw createError;
+      }
     } catch (error: any) {
       if (error.code === 403) {
         throw new Error(

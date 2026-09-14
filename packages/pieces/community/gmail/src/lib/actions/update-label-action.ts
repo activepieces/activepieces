@@ -3,6 +3,10 @@ import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { gmailUpdateLabelActionOutputSchema } from '../output-schemas';
 
+function blankToUndefined(value: string | undefined): string | undefined {
+  return value === undefined || value.trim() === '' ? undefined : value;
+}
+
 export const gmailUpdateLabelAction = createAction({
   auth: gmailAuth,
   name: 'gmail_update_label',
@@ -65,10 +69,13 @@ export const gmailUpdateLabelAction = createAction({
   async run(context) {
     const authClient = await createGoogleClient(context.auth);
     const gmail = googleGmail({ version: 'v1', auth: authClient });
-    const { label_id, name, label_list_visibility, message_list_visibility } =
+    const { label_id, label_list_visibility, message_list_visibility } =
       context.propsValue;
-    const backgroundColor = context.propsValue.background_color;
-    const textColor = context.propsValue.text_color;
+    const name = blankToUndefined(context.propsValue.name);
+    const backgroundColor = blankToUndefined(
+      context.propsValue.background_color
+    );
+    const textColor = blankToUndefined(context.propsValue.text_color);
 
     try {
       let color: { textColor?: string; backgroundColor?: string } | undefined;
