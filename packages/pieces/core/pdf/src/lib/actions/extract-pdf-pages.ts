@@ -17,7 +17,7 @@ export function pageRangeToIndexes(
     throw Error('Range start/end has to be a non-zero number');
   }
 
-  if (startPage > totalPages || endPage > totalPages) {
+  if (Math.abs(startPage) > totalPages || Math.abs(endPage) > totalPages) {
     throw Error(
       'Range start/end has to be less or equal to the total number of pages'
     );
