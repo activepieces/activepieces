@@ -47,21 +47,6 @@ export const updateEventProps = {
   guests_can_see_other_guests: guestPermission('Guests Can See Other Guests'),
 };
 
-function guestPermission(displayName: string) {
-  return Property.StaticDropdown<boolean>({
-    displayName,
-    required: false,
-    options: {
-      disabled: false,
-      placeholder: 'Keep current setting',
-      options: [
-        { label: 'Yes', value: true },
-        { label: 'No', value: false },
-      ],
-    },
-  });
-}
-
 export async function runUpdateEvent(
   context: ActionContext<typeof googleCalendarAuth, typeof updateEventProps>
 ) {
@@ -142,6 +127,21 @@ export const updateEventAction = createAction({
   outputSchema: eventOutputSchema,
   run: runUpdateEvent,
 });
+
+function guestPermission(displayName: string) {
+  return Property.StaticDropdown<boolean>({
+    displayName,
+    required: false,
+    options: {
+      disabled: false,
+      placeholder: 'Keep current setting',
+      options: [
+        { label: 'Yes', value: true },
+        { label: 'No', value: false },
+      ],
+    },
+  });
+}
 
 function toEventDateTime({
   value,
