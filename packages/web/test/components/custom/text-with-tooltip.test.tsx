@@ -1,10 +1,5 @@
 /**
  * @vitest-environment jsdom
- *
- * The component injects `truncate` so a single line can overflow horizontally. A caller that
- * clamps its own lines needs the opposite: keep the clamp, and measure the vertical overflow
- * that a clamp actually produces. Getting this wrong silently shows less text than the caller
- * asked for, which is how it was found.
  */
 /* eslint-disable testing-library/no-unnecessary-act */
 import { act } from 'react';

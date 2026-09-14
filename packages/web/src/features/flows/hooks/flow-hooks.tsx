@@ -186,18 +186,22 @@ export const flowHooks = {
             ),
             duration: 5000,
           });
-        } else if (apError.code === ErrorCode.VALIDATION) {
+        } else {
+          const serverMessage =
+            'message' in apError.params ? apError.params.message : undefined;
+          if (isNil(serverMessage)) {
+            internalErrorToast();
+            return;
+          }
           toast.error(
             change === 'publish'
               ? t('Publish failed')
               : t('Status update failed'),
             {
-              description: apError.params.message,
+              description: serverMessage,
               duration: 8000,
             },
           );
-        } else {
-          internalErrorToast();
         }
       },
     });
