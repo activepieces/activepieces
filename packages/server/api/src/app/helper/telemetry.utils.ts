@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, ProjectId, spreadIfDefined, UserId } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { ApEdition, AppInstance, DeploymentConfig, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
+import { ApEdition, AppInstance, AttributionParams, attributionUtils, DeploymentConfig, FlowRunStatus, GetDiagnosticsResponse, GetSystemHealthChecksResponse, isCloudOnlyTelemetryEvent, MachineInformation, pickTelemetryPii, RunEnvironment, SignUpMethod, TelemetryEvent, User, UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { PostHog } from 'posthog-node'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
@@ -40,6 +40,20 @@ export const telemetry = (log: FastifyBaseLogger) => ({
                 projectId,
                 firstSeenAt: user?.created ?? identity.created,
                 ...(await getMetadata()),
+            },
+        })
+    },
+    async identifySignUp({ userId, platformId, method, attribution }: IdentifySignUpParams): Promise<void> {
+        if (!await platformConfigurationService(log).isProductTelemetryEnabled({ platformId })) {
+            return
+        }
+        getPostHog().identify({
+            distinctId: userId,
+            properties: {
+                $set_once: {
+                    signup_method: method,
+                    ...(attributionUtils.isEmptyAttribution({ attribution }) ? {} : attribution),
+                },
             },
         })
     },
@@ -219,6 +233,13 @@ type IdentifyParams = {
     platformId: string
     user?: User
     projectId?: ProjectId
+}
+
+type IdentifySignUpParams = {
+    userId: UserId
+    platformId: string
+    method: SignUpMethod
+    attribution: AttributionParams | undefined
 }
 
 type TrackPlatformParams = {
