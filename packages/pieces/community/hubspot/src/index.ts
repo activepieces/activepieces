@@ -35,6 +35,15 @@ import { updateCustomObjectAction } from './lib/actions/update-custom-object';
 import { getCustomObjectAction } from './lib/actions/get-custom-object';
 import { findCustomObjectAction } from './lib/actions/find-custom-object';
 import { getOwnerByEmailAction } from './lib/actions/get-owner-by-email';
+import { listPipelinesAction } from './lib/actions/list-pipelines';
+import { listPipelineStagesAction } from './lib/actions/list-pipeline-stages';
+import { listStaticListsAction } from './lib/actions/list-static-lists';
+import { listAssociationTypesAction } from './lib/actions/list-association-types';
+import { listOwnersAction } from './lib/actions/list-owners';
+import { listObjectPropertiesAction } from './lib/actions/list-object-properties';
+import { createNoteAction } from './lib/actions/create-note';
+import { createTaskAction } from './lib/actions/create-task';
+import { searchObjectsAction } from './lib/actions/search-objects';
 import { getOwnerByIdAction } from './lib/actions/get-owner-by-id';
 import { findDealAction } from './lib/actions/find-deal';
 import { createLineItemAction } from './lib/actions/create-line-item';
@@ -122,6 +131,15 @@ export const hubspot = createPiece({
 		findProductAction,
 		findTicketAction,
 		getOwnerByEmailAction,
+		listPipelinesAction,
+		listPipelineStagesAction,
+		listStaticListsAction,
+		listAssociationTypesAction,
+		listOwnersAction,
+		listObjectPropertiesAction,
+		createNoteAction,
+		createTaskAction,
+		searchObjectsAction,
 		getOwnerByIdAction,
 		getPipelineStageDetailsAction,
 		createCustomApiCallAction({
