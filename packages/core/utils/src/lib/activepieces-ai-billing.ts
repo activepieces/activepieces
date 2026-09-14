@@ -1,9 +1,8 @@
 import { AIProviderName } from './permission'
 
-export enum ActivepiecesAiBillingScope {
-    PLATFORM = 'platform',
-    PROJECT = 'project',
-    CONVERSATION = 'conversation',
+export enum ActivepiecesAiConsumerSource {
+    AI_STEP_IN_FLOW = 'ai-step-in-flow',
+    CHAT = 'chat',
 }
 
 export enum AiChargeBasis {
@@ -17,14 +16,12 @@ export enum BYOKBilling {
 }
 
 export type ActivepiecesAiBilling =
-    | { scope: ActivepiecesAiBillingScope.PLATFORM, platformId: string }
-    | { scope: ActivepiecesAiBillingScope.PROJECT, platformId: string, projectId: string, flowRun?: ActivepiecesAiFlowRun }
-    | { scope: ActivepiecesAiBillingScope.CONVERSATION, platformId: string, projectId: string | null, conversationId: string, chat?: ActivepiecesAiChat }
+    | { source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW, platformId: string, projectId: string, flowRun: ActivepiecesAiFlowRun }
+    | { source: ActivepiecesAiConsumerSource.CHAT, platformId: string, projectId: string | null, conversationId: string, chat?: ActivepiecesAiChat }
 
 export type ActivepiecesAiFlowRun = {
     flowId: string
     flowRunId: string
-    environment?: string
 }
 
 export type ActivepiecesAiChat = {

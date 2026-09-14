@@ -145,7 +145,7 @@ export const ProjectAIProviderKey = z.object({
 export type ProjectAIProviderKey = z.infer<typeof ProjectAIProviderKey>
 
 export const ProjectAIProvider = z.object({
-    provider: z.nativeEnum(AIProviderName),
+    provider: z.enum(AIProviderName),
     name: z.string(),
     enabledForChat: z.boolean(),
     keys: z.array(ProjectAIProviderKey),

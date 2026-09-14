@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, ActivepiecesAiCostEvent, AiChargeBasis, AIProviderName, BYOKBilling } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, AiChargeBasis, AIProviderName, BYOKBilling } from '@activepieces/core-utils'
 import { EmbeddingModelV4, LanguageModelV4 } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -14,9 +14,10 @@ vi.mock('../src/openrouter-generation', () => ({
 }))
 
 const BILLING: ActivepiecesAiBilling = {
-    scope: ActivepiecesAiBillingScope.PROJECT,
+    source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
     platformId: 'platform-1',
     projectId: 'project-1',
+    flowRun: { flowId: 'flow-1', flowRunId: 'run-1' },
 }
 
 const MANAGED_KEY = 'sk-or-managed'
@@ -173,7 +174,7 @@ describe('what a model call reports back for billing', () => {
     })
 
     it('counts a managed call whose cost never arrived, instead of quietly billing nothing', async () => {
-        activepiecesAiCost.takeUnbilledCalls()
+        activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
             model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
             provider: AIProviderName.ACTIVEPIECES,
@@ -184,25 +185,25 @@ describe('what a model call reports back for billing', () => {
         await generateWith(model)
 
         expect(reported).toHaveLength(0)
-        expect(activepiecesAiCost.takeUnbilledCalls()).toHaveLength(1)
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
     it('says which project and model lost the charge, so the page names something to chase', async () => {
-        activepiecesAiCost.takeUnbilledCalls()
+        activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedLanguageModel({
             model: modelReturning({ content: [], finishReason: 'stop', usage: {}, response: { id: 'gen-xyz' } }),
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
-            billing: { ...BILLING, flowRun: { flowId: 'flow-1', flowRunId: 'run-1' } },
+            billing: BILLING,
         })
 
         await generateWith(model)
 
-        expect(activepiecesAiCost.takeUnbilledCalls()).toEqual([{
+        expect(activepiecesAiCost.drainUnbilledCalls()).toEqual([{
             reason: UnbilledCallReason.PROVIDER_REPORTED_NO_COST,
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
-            scope: ActivepiecesAiBillingScope.PROJECT,
+            source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
             platformId: 'platform-1',
             projectId: 'project-1',
             flowRunId: 'run-1',
@@ -314,7 +315,7 @@ describe('an embedding call on the managed provider', () => {
     })
 
     it('counts the call as unbilled when the provider did not say what it cost', async () => {
-        activepiecesAiCost.takeUnbilledCalls()
+        activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedEmbeddingModel({
             model: embeddingModelReturning({
                 embeddings: [[0.1]],
@@ -330,7 +331,7 @@ describe('an embedding call on the managed provider', () => {
         await embedWith(model)
 
         expect(reported).toHaveLength(0)
-        expect(activepiecesAiCost.takeUnbilledCalls()).toHaveLength(1)
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
     it('hands the embeddings back untouched, so billing cannot change what search sees', async () => {
@@ -386,18 +387,18 @@ describe('a stream that never reaches its finish chunk', () => {
     })
 
     it('counts the call as unbilled when the provider cannot tell us what it cost, so the alarm fires', async () => {
-        activepiecesAiCost.takeUnbilledCalls()
+        activepiecesAiCost.drainUnbilledCalls()
         const model = streamingModel({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY })
 
         await streamThen(model, ({ reader }) => reader.cancel(new Error('client went away')))
         await settled()
 
         expect(reported).toHaveLength(0)
-        expect(activepiecesAiCost.takeUnbilledCalls()).toHaveLength(1)
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
     it('counts the call as unbilled when the stream died before naming a generation to ask about', async () => {
-        activepiecesAiCost.takeUnbilledCalls()
+        activepiecesAiCost.drainUnbilledCalls()
         generationLookup.answer = async () => ({ costUsd: 0.5 })
         const model = streamingModel({ provider: AIProviderName.ACTIVEPIECES, apiKey: MANAGED_KEY, chunks: [] })
 
@@ -405,11 +406,11 @@ describe('a stream that never reaches its finish chunk', () => {
         await settled()
 
         expect(reported).toHaveLength(0)
-        expect(activepiecesAiCost.takeUnbilledCalls()).toHaveLength(1)
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
     it('counts the call as unbilled when there is no managed key to ask with', async () => {
-        activepiecesAiCost.takeUnbilledCalls()
+        activepiecesAiCost.drainUnbilledCalls()
         generationLookup.answer = async () => ({ costUsd: 0.5 })
         const model = streamingModel({ provider: AIProviderName.ACTIVEPIECES })
 
@@ -417,7 +418,7 @@ describe('a stream that never reaches its finish chunk', () => {
         await settled()
 
         expect(reported).toHaveLength(0)
-        expect(activepiecesAiCost.takeUnbilledCalls()).toHaveLength(1)
+        expect(activepiecesAiCost.drainUnbilledCalls()).toHaveLength(1)
     })
 
     it('still charges a customer own-key stream its fixed credit, the call was made either way', async () => {
