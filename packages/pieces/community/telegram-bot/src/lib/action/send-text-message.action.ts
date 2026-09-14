@@ -12,12 +12,21 @@ export const telegramSendMessageAction = createAction({
   audience: 'human',
   aiMetadata: { description: 'Posts a text message to a Telegram chat, group, or channel via the bot, addressed by chat_id (numeric id or @channelusername the bot can reach). Use to deliver notifications, replies, or alerts; supports Markdown/HTML formatting and inline keyboards. Not idempotent: each call sends a new message.', idempotent: false },
   displayName: 'Send Text Message',
+  propertyGroups: [
+    { key: 'destination', display: 'section', label: 'Send to', icon: 'send', props: ['instructions', 'chat_id', 'message_thread_id'] },
+    { key: 'message', display: 'section', label: 'Message', icon: 'text', props: ['format', 'instructions_format', 'message', 'web_page_preview'] },
+  ],
   props: {
     instructions: telegramCommons.chatIdInstructions(),
     chat_id: telegramCommons.chatIdProp(),
     message_thread_id: telegramCommons.messageThreadIdProp(),
     format: telegramCommons.parseModeProp(),
     instructions_format: telegramCommons.formatLinkInstructions(),
+    message: Property.LongText({
+      displayName: 'Message',
+      description: 'The message to be sent',
+      required: true,
+    }),
     web_page_preview: Property.Checkbox({
       displayName: 'Disable Web Page Preview',
       description: 'Disable link previews for links in this message.',
@@ -27,11 +36,6 @@ export const telegramSendMessageAction = createAction({
     disable_notification: telegramCommons.disableNotificationProp(),
     protect_content: telegramCommons.protectContentProp(),
     reply_to_message_id: telegramCommons.replyToMessageIdProp(),
-    message: Property.LongText({
-      displayName: 'Message',
-      description: 'The message to be sent',
-      required: true,
-    }),
     reply_markup: telegramCommons.replyMarkupProp(),
   },
   outputSchema: sendTextMessageActionOutputSchema,

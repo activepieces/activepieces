@@ -30,17 +30,20 @@ export const telegramAnswerCallbackQueryAction = createAction({
       description: 'If True, an alert dialog is shown instead of a notification at the top of the screen.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
     url: Property.ShortText({
       displayName: 'URL',
       description: 'URL that will be opened by the user.',
       required: false,
+      advanced: true,
     }),
     cache_time: Property.Number({
       displayName: 'Cache Time (seconds)',
       description:
         'The maximum amount of time in seconds the result of the callback query may be cached client-side.',
       required: false,
+      advanced: true,
     }),
   },
   async run(ctx) {

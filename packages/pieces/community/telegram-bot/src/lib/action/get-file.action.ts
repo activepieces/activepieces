@@ -27,7 +27,8 @@ export const telegramGetFileAction = createAction({
   props: {
     file_id: Property.ShortText({
       displayName: 'File ID',
-      description: 'File identifier to get information about',
+      description:
+        'File identifier to get information about. Find it on a message\'s `photo`/`document`/`audio`/etc. field in the New Update trigger payload.',
       required: true,
     }),
     download: Property.Checkbox({
