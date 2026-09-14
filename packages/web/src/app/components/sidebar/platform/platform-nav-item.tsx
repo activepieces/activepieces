@@ -1,4 +1,4 @@
-import { ChevronRight, Crown } from 'lucide-react';
+import { Crown } from 'lucide-react';
 import React, { ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,9 +14,6 @@ export function PlatformNavItem({
   icon,
   active,
   crowned,
-  expandable = false,
-  expanded = false,
-  onToggle,
 }: PlatformNavItemProps) {
   const navigate = useNavigate();
 
@@ -40,24 +37,6 @@ export function PlatformNavItem({
           {label}
         </span>
         {crowned && <Crown className="size-3.5! shrink-0 text-primary" />}
-        {expandable && (
-          <span
-            role="button"
-            tabIndex={-1}
-            aria-expanded={expanded}
-            className="flex size-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground hover:bg-sidebar-border hover:text-foreground"
-            onClick={(event) => {
-              event.stopPropagation();
-              onToggle?.();
-            }}
-          >
-            <ChevronRight
-              className={cn('size-3! transition-transform', {
-                'rotate-90': expanded,
-              })}
-            />
-          </span>
-        )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -101,9 +80,6 @@ export type PlatformNavItemProps = {
   icon?: ComponentType<{ className?: string }>;
   active: boolean;
   crowned: boolean;
-  expandable?: boolean;
-  expanded?: boolean;
-  onToggle?: () => void;
 };
 
 export type PlatformNavSubItemProps = {

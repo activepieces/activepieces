@@ -1,6 +1,6 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useRef } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 
 import { adminPagesUtils } from '@/app/routes/platform/admin-pages';
@@ -44,8 +44,7 @@ export function PlatformSidebar() {
   const groups = adminPagesUtils.navGroups(context);
   const activeId = adminPagesUtils.activePageId(location.pathname);
   const [searchParams] = useSearchParams();
-  const activeTabId = searchParams.get('tab');
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const requestedTabId = searchParams.get('tab');
 
   return (
     <Sidebar className="border-r-0!">
@@ -73,11 +72,13 @@ export function PlatformSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.pages.map((page) => {
-                    const tabs = adminPagesUtils.visibleTabs(page, context);
+                    const tabs = adminPagesUtils.navTabs(page, context);
                     const isActivePage = page.id === activeId;
-                    const hasOverview = page.overview !== undefined;
-                    const isExpanded =
-                      tabs.length > 0 && collapsed[page.id] !== true;
+                    const activeTabId = adminPagesUtils.activeTabId(
+                      page,
+                      context,
+                      requestedTabId,
+                    );
                     return (
                       <Fragment key={page.id}>
                         <PlatformNavItem
@@ -86,34 +87,19 @@ export function PlatformSidebar() {
                           icon={page.nav.icon}
                           active={
                             isActivePage &&
-                            (tabs.length === 0 ||
-                              (hasOverview && activeTabId === null))
+                            !tabs.some((tab) => tab.id === activeTabId)
                           }
                           crowned={adminPagesUtils.isCrowned(page, context)}
-                          expandable={tabs.length > 0}
-                          expanded={isExpanded}
-                          onToggle={() =>
-                            setCollapsed((current) => ({
-                              ...current,
-                              [page.id]: current[page.id] !== true,
-                            }))
-                          }
                         />
-                        {isExpanded &&
-                          tabs.map((tab, index) => (
-                            <PlatformNavSubItem
-                              key={tab.id}
-                              to={`${page.path}?tab=${tab.id}`}
-                              label={t(tab.label)}
-                              active={
-                                isActivePage &&
-                                (activeTabId === null
-                                  ? !hasOverview && index === 0
-                                  : activeTabId === tab.id)
-                              }
-                              crowned={tab.isLocked?.(context) === true}
-                            />
-                          ))}
+                        {tabs.map((tab) => (
+                          <PlatformNavSubItem
+                            key={tab.id}
+                            to={`${page.path}?tab=${tab.id}`}
+                            label={t(tab.label)}
+                            active={isActivePage && activeTabId === tab.id}
+                            crowned={tab.isLocked?.(context) === true}
+                          />
+                        ))}
                       </Fragment>
                     );
                   })}
