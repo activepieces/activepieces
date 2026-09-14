@@ -1,4 +1,4 @@
-import { ActivepiecesAiBillingScope, AiCallTokens, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, AiCallTokens, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -35,7 +35,7 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
 })
 
 function chatEventOf({ input, toolCalls, costBasis }: PropertiesParams): { credits: ChatCreditConsumptionProperties, appSumo: ChatAppSumoConsumptionProperties } | undefined {
-    if (input.billing.scope !== ActivepiecesAiBillingScope.CONVERSATION || isNil(input.chat)) {
+    if (input.billing.source !== ActivepiecesAiConsumerSource.CHAT || isNil(input.chat)) {
         return undefined
     }
     const { conversationId } = input.billing
@@ -66,7 +66,7 @@ function billingProperties({ input, toolCalls, costBasis }: PropertiesParams): A
         projectId: projectIdOf(input),
         flowId: input.flowRun?.flowId ?? OUTSIDE_A_FLOW,
         flowRunId: input.flowRun?.flowRunId ?? input.requestId ?? OUTSIDE_A_FLOW,
-        environment: input.flowRun?.environment ?? UNKNOWN_ENVIRONMENT,
+        environment: UNKNOWN_ENVIRONMENT,
         messages: MESSAGES_PER_MODEL_CALL,
         toolCalls,
         breakdown: [{
@@ -88,9 +88,6 @@ function tokensOf(input: ReportAiUsageRequest): AiCallTokens {
 }
 
 function projectIdOf(input: ReportAiUsageRequest): string {
-    if (input.billing.scope === ActivepiecesAiBillingScope.PLATFORM) {
-        return PROJECTLESS_CHAT
-    }
     return input.billing.projectId ?? PROJECTLESS_CHAT
 }
 

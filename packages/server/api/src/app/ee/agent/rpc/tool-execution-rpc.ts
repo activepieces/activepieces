@@ -1,4 +1,4 @@
-import { ActivepiecesAiBillingScope, ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
 import { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, AgentActionOutcome, AgentRunSource, agentToolClassification, ExecuteAgentToolRequest, ExecuteAgentToolResponse, ExecuteFlowToolRequest, ExecuteFlowToolResponse, ExecuteKnowledgeBaseToolRequest, ExecuteKnowledgeBaseToolResponse, ExecutePieceToolRequest, ExecutePieceToolResponse, FlowActionType, flowStructureUtil } from '@activepieces/shared'
 import { embed } from 'ai'
@@ -78,7 +78,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
         const { model, providerOptions } = await agentHelpers.resolveEmbeddingModel({
             platformId,
             scope: { type: 'project', projectId },
-            billing: { scope: ActivepiecesAiBillingScope.CONVERSATION, platformId, projectId, conversationId: input.conversationId },
+            billing: { source: ActivepiecesAiConsumerSource.CHAT, platformId, projectId, conversationId: input.conversationId },
             log,
             ...spreadIfDefined('provider', input.provider),
             ...spreadIfDefined('providerConfigId', input.providerConfigId),

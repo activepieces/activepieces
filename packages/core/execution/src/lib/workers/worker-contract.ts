@@ -447,7 +447,6 @@ export type ReportAiUsageRequest = {
 export type AiUsageFlowRunContext = {
     flowId: string
     flowRunId: string
-    environment?: string
 }
 
 export type AiUsageChatContext = {

@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, ActivepiecesAiCall, ActivepiecesAiCostReporter, AiCallTokens, AiChargeBasis, AIProviderName, BYOKBilling, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCall, ActivepiecesAiCostReporter, AiCallTokens, AiChargeBasis, AIProviderName, BYOKBilling, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { EmbeddingModelV4Result, isJSONObject, LanguageModelV4GenerateResult, LanguageModelV4StreamPart, LanguageModelV4StreamResult, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel, wrapEmbeddingModel, wrapLanguageModel } from 'ai'
 import { z } from 'zod'
@@ -43,7 +43,7 @@ function billingContextOf({ provider, modelId, billing, byokBilling, apiKey }: B
         return undefined
     }
     if (provider === AIProviderName.ACTIVEPIECES) {
-        return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId, ...spreadIfDefined('apiKey', apiKey) }
+        return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId, apiKey }
     }
     if (byokBilling === BYOKBilling.ALREADY_CHARGED_FOR_THE_TURN) {
         return undefined
@@ -121,8 +121,8 @@ async function recoverCostAndReport({ state, context }: SettleStreamParams): Pro
             charge: AiChargeBasis.PROVIDER_REPORTED_COST,
             generationId,
             costUsd: generation.costUsd,
-            ...spreadIfDefined('inputTokens', generation.inputTokens),
-            ...spreadIfDefined('outputTokens', generation.outputTokens),
+            inputTokens: generation.inputTokens,
+            outputTokens: generation.outputTokens,
         },
     })
 }
@@ -144,17 +144,17 @@ function createEmbeddingBillingInfo({ result, generationId }: CreateEmbeddingBil
     if (isNil(generationId) || isNil(costUsd)) {
         return undefined
     }
-    return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, ...spreadIfDefined('inputTokens', result.usage?.tokens) }
+    return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens: result.usage?.tokens }
 }
 
 function createFixedCreditChargeInfo({ generationId }: { generationId?: string }): ActivepiecesAiCall {
-    return { charge: AiChargeBasis.FIXED_CREDITS, credits: FIXED_CREDITS_PER_MODEL_CALL, ...spreadIfDefined('generationId', generationId) }
+    return { charge: AiChargeBasis.FIXED_CREDITS, credits: FIXED_CREDITS_PER_MODEL_CALL, generationId }
 }
 
 function tokensOf(usage: LanguageModelV4Usage | undefined): AiCallTokens {
     return {
-        ...spreadIfDefined('inputTokens', usage?.inputTokens?.total),
-        ...spreadIfDefined('outputTokens', usage?.outputTokens?.total),
+        inputTokens: usage?.inputTokens?.total,
+        outputTokens: usage?.outputTokens?.total,
     }
 }
 
@@ -192,26 +192,24 @@ function recordUnbilledCall({ context, generationId, reason }: RecordUnbilledCal
         reason,
         provider: context.provider,
         modelId: context.modelId,
-        scope: context.billing.scope,
+        source: context.billing.source,
         platformId: context.billing.platformId,
         ...billingIdsOf(context.billing),
-        ...spreadIfDefined('generationId', generationId),
+        generationId,
     }
     unbilledCalls = [...unbilledCalls, unbilled]
 }
 
 function billingIdsOf(billing: ActivepiecesAiBilling): UnbilledCallOwner {
-    switch (billing.scope) {
-        case ActivepiecesAiBillingScope.PLATFORM:
-            return {}
-        case ActivepiecesAiBillingScope.PROJECT:
-            return { projectId: billing.projectId, ...spreadIfDefined('flowRunId', billing.flowRun?.flowRunId) }
-        case ActivepiecesAiBillingScope.CONVERSATION:
+    switch (billing.source) {
+        case ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW:
+            return { projectId: billing.projectId, flowRunId: billing.flowRun.flowRunId }
+        case ActivepiecesAiConsumerSource.CHAT:
             return { conversationId: billing.conversationId, ...spreadIfDefined('projectId', billing.projectId) }
     }
 }
 
-function takeUnbilledCalls(): UnbilledCall[] {
+function drainUnbilledCalls(): UnbilledCall[] {
     const drained = unbilledCalls
     unbilledCalls = []
     return drained
@@ -234,7 +232,7 @@ export const activepiecesAiCost = {
     setReporter: (next: ActivepiecesAiCostReporter): void => {
         reporter = next
     },
-    takeUnbilledCalls,
+    drainUnbilledCalls,
     billedLanguageModel,
     billedEmbeddingModel,
     reportFixedCredits,
@@ -350,7 +348,7 @@ export type UnbilledCall = UnbilledCallOwner & {
     reason: UnbilledCallReason
     provider: AIProviderName
     modelId: string
-    scope: ActivepiecesAiBillingScope
+    source: ActivepiecesAiConsumerSource
     platformId: string
     generationId?: string
 }

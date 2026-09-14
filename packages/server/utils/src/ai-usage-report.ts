@@ -1,4 +1,4 @@
-import { ActivepiecesAiBillingScope, ActivepiecesAiCall, ActivepiecesAiCostEvent, AiChargeBasis, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesAiCall, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, AiChargeBasis } from '@activepieces/core-utils'
 import { AiUsageCharge, ReportAiUsageRequest } from '@activepieces/shared'
 
 export function aiUsageReportOf({ event, idempotencyKey }: AiUsageReportParams): ReportAiUsageRequest {
@@ -9,17 +9,15 @@ export function aiUsageReportOf({ event, idempotencyKey }: AiUsageReportParams):
         modelId,
         idempotencyKey,
         usage: chargeOf(call),
-        ...spreadIfDefined('generationId', call.generationId),
-        ...spreadIfDefined('inputTokens', call.inputTokens),
-        ...spreadIfDefined('outputTokens', call.outputTokens),
+        generationId: call.generationId,
+        inputTokens: call.inputTokens,
+        outputTokens: call.outputTokens,
     }
-    switch (billing.scope) {
-        case ActivepiecesAiBillingScope.PROJECT:
-            return { ...baseProps, ...spreadIfDefined('flowRun', billing.flowRun) }
-        case ActivepiecesAiBillingScope.CONVERSATION:
-            return { ...baseProps, ...spreadIfDefined('chat', billing.chat) }
-        case ActivepiecesAiBillingScope.PLATFORM:
-            return baseProps
+    switch (billing.source) {
+        case ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW:
+            return { ...baseProps, flowRun: billing.flowRun }
+        case ActivepiecesAiConsumerSource.CHAT:
+            return { ...baseProps, chat: billing.chat }
     }
 }
 
