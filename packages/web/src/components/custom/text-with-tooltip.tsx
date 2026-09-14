@@ -21,11 +21,19 @@ export const TextWithTooltip = ({
   const textRef = useRef<HTMLDivElement>(null);
   const [isTruncated, setIsTruncated] = useState(false);
 
+  const clampsItsOwnLines = clampedLines(children.props.className);
+
   const checkTruncation = useCallback(() => {
-    if (textRef.current) {
-      setIsTruncated(textRef.current.scrollWidth > textRef.current.clientWidth);
+    const element = textRef.current;
+    if (!element) {
+      return;
     }
-  }, []);
+    setIsTruncated(
+      clampsItsOwnLines
+        ? element.scrollHeight > element.clientHeight
+        : element.scrollWidth > element.clientWidth,
+    );
+  }, [clampsItsOwnLines]);
 
   useEffect(() => {
     checkTruncation();
@@ -35,7 +43,10 @@ export const TextWithTooltip = ({
 
   const childWithRef = React.cloneElement(children, {
     ref: textRef,
-    className: cn('truncate', children.props.className),
+    className: cn(
+      clampsItsOwnLines ? undefined : 'truncate',
+      children.props.className,
+    ),
   });
 
   if (!isTruncated) {
@@ -53,3 +64,7 @@ export const TextWithTooltip = ({
     </TooltipProvider>
   );
 };
+
+function clampedLines(className: string | undefined): boolean {
+  return /\bline-clamp-\d+\b/.test(className ?? '');
+}
