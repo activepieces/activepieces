@@ -5,8 +5,6 @@ import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
 const INDEX_NAME = 'idx_agent_conversation_agent_runs_created_id'
-const INDEX_COLUMNS = '("projectId", "agentId", "created", "id")'
-const INDEX_PREDICATE = `WHERE "source" = 'FLOW_STEP' AND "agentId" IS NOT NULL`
 
 export class AddAgentRunsIndex1842000000000 implements Migration {
     name = 'AddAgentRunsIndex1842000000000'
@@ -18,8 +16,8 @@ export class AddAgentRunsIndex1842000000000 implements Migration {
         if (isPGlite()) {
             await queryRunner.query(`
                 CREATE INDEX IF NOT EXISTS "${INDEX_NAME}"
-                ON "agent_conversation" ${INDEX_COLUMNS}
-                ${INDEX_PREDICATE}
+                ON "agent_conversation" ("projectId", "agentId", "created", "id")
+                WHERE "source" = 'FLOW_STEP' AND "agentId" IS NOT NULL
             `)
             return
         }
@@ -33,8 +31,8 @@ export class AddAgentRunsIndex1842000000000 implements Migration {
         }
         await queryRunner.query(`
             CREATE INDEX CONCURRENTLY IF NOT EXISTS "${INDEX_NAME}"
-            ON "agent_conversation" ${INDEX_COLUMNS}
-            ${INDEX_PREDICATE}
+            ON "agent_conversation" ("projectId", "agentId", "created", "id")
+            WHERE "source" = 'FLOW_STEP' AND "agentId" IS NOT NULL
         `)
     }
 
