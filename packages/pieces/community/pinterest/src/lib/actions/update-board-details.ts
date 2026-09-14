@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { updateBoardOperation } from '../common/operations';
+import { pinterestOperations } from '../common/operations';
 import { updateBoardActionOutputSchema } from '../output-schemas';
 
 export const updateBoardDetails = createAction({
@@ -48,7 +48,7 @@ export const updateBoardDetails = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return await updateBoardOperation({
+    return await pinterestOperations.updateBoard({
       accessToken: getAccessTokenOrThrow(auth),
       ...propsValue,
     });

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { searchBoardsOperation } from '../common/operations';
+import { pinterestOperations } from '../common/operations';
 import { findBoardByNameActionOutputSchema } from '../output-schemas';
 
 export const searchBoards = createAction({
@@ -31,7 +31,7 @@ export const searchBoards = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return await searchBoardsOperation({
+    return await pinterestOperations.searchBoards({
       accessToken: getAccessTokenOrThrow(auth),
       query: propsValue.query,
       bookmark: propsValue.bookmark,

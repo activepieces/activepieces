@@ -68,7 +68,7 @@ function assertUrl(value: string | undefined, label: string) {
   }
 }
 
-export async function createPinOperation(params: CreatePinParams) {
+async function createPinOperation(params: CreatePinParams) {
   assertMaxLength(params.title, 100, 'Title');
   assertMaxLength(params.description, 800, 'Description');
   assertMaxLength(params.alt_text, 500, 'Alt text');
@@ -115,7 +115,7 @@ export async function createPinOperation(params: CreatePinParams) {
   );
 }
 
-export async function createBoardOperation(params: CreateBoardParams) {
+async function createBoardOperation(params: CreateBoardParams) {
   assertMaxLength(params.name, 180, 'Board name');
   assertMaxLength(params.description, 500, 'Board description');
 
@@ -134,7 +134,7 @@ export async function createBoardOperation(params: CreateBoardParams) {
   );
 }
 
-export async function updateBoardOperation(params: UpdateBoardParams) {
+async function updateBoardOperation(params: UpdateBoardParams) {
   if (
     !params.name &&
     params.description === undefined &&
@@ -177,7 +177,7 @@ export async function updateBoardOperation(params: UpdateBoardParams) {
   }
 }
 
-export async function deletePinOperation(params: DeletePinParams) {
+async function deletePinOperation(params: DeletePinParams) {
   await makeRequest(
     params.accessToken,
     HttpMethod.DELETE,
@@ -193,7 +193,7 @@ export async function deletePinOperation(params: DeletePinParams) {
   };
 }
 
-export async function searchBoardsOperation(params: SearchParams) {
+async function searchBoardsOperation(params: SearchParams) {
   try {
     return await makeRequest(
       params.accessToken,
@@ -213,7 +213,7 @@ export async function searchBoardsOperation(params: SearchParams) {
   }
 }
 
-export async function searchPinsOperation(
+async function searchPinsOperation(
   params: SearchParams & { max_results?: number }
 ) {
   try {
@@ -251,3 +251,12 @@ export async function searchPinsOperation(
     );
   }
 }
+
+export const pinterestOperations = {
+  createPin: createPinOperation,
+  createBoard: createBoardOperation,
+  updateBoard: updateBoardOperation,
+  deletePin: deletePinOperation,
+  searchBoards: searchBoardsOperation,
+  searchPins: searchPinsOperation,
+};

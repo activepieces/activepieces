@@ -16,7 +16,6 @@ function buildValueBody(
     case 'text':
       return { value: { text: value } };
     case 'number':
-      // Trello types this as a string even though the field holds a number.
       return { value: { number: value } };
     case 'date':
       return { value: { date: value } };

@@ -21,12 +21,15 @@ export const listBoards = createAction({
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
-      description: 'Return only boards with this privacy setting.',
+      description:
+        'Return only boards with this privacy setting. Omit to return all of them.',
       options: {
         options: [
+          { label: 'All', value: 'ALL' },
           { label: 'Public', value: 'PUBLIC' },
           { label: 'Protected', value: 'PROTECTED' },
           { label: 'Secret', value: 'SECRET' },
+          { label: 'Public and Secret', value: 'PUBLIC_AND_SECRET' },
         ],
       },
     }),

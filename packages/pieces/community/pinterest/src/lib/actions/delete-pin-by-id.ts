@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { deletePinOperation } from '../common/operations';
+import { pinterestOperations } from '../common/operations';
 import { deletePinActionOutputSchema } from '../output-schemas';
 
 export const deletePinById = createAction({
@@ -25,7 +25,7 @@ export const deletePinById = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return await deletePinOperation({
+    return await pinterestOperations.deletePin({
       accessToken: getAccessTokenOrThrow(auth),
       pin_id: propsValue.pin_id,
     });

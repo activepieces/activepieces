@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { createPinOperation } from '../common/operations';
+import { pinterestOperations } from '../common/operations';
 import { createPinActionOutputSchema } from '../output-schemas';
 
 export const createPinFromMedia = createAction({
@@ -73,7 +73,7 @@ export const createPinFromMedia = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return await createPinOperation({
+    return await pinterestOperations.createPin({
       accessToken: getAccessTokenOrThrow(auth),
       ...propsValue,
     });

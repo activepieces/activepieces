@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { searchPinsOperation } from '../common/operations';
+import { pinterestOperations } from '../common/operations';
 import { findPinActionOutputSchema } from '../output-schemas';
 
 export const searchPins = createAction({
@@ -38,7 +38,7 @@ export const searchPins = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    return await searchPinsOperation({
+    return await pinterestOperations.searchPins({
       accessToken: getAccessTokenOrThrow(auth),
       query: propsValue.query,
       bookmark: propsValue.bookmark,

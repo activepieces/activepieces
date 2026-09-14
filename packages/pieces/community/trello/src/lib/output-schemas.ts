@@ -404,9 +404,6 @@ export const listBoardMembershipsActionOutputSchema: OutputSchema = {
   ],
 };
 
-// The verification account's cards had no activity and no votes, so only the
-// envelope is described; the builder drills the entries generically rather than
-// showing a field list captured from nothing.
 export const listCardActivityActionOutputSchema: OutputSchema = {
   fields: [
     {
