@@ -1,31 +1,51 @@
+import { isNil } from '@activepieces/core-utils'
 import { LockResourceRequest, PrincipalType, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { Socket } from 'socket.io'
 import { userService } from '../../../user/user-service'
 import { websocketService } from '../../websockets.service'
+import { collaborativeResource } from '../collaborative-resource'
 import { lockService } from './lock.service'
 
 export const lockModule: FastifyPluginAsyncZod = async (app) => {
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.LOCK_RESOURCE, (socket) => {
-        return async (data: LockResourceRequest, principal, projectId, callback) => {
-            app.log.info({ resourceId: data.resourceId }, '[Lock] LOCK_RESOURCE event received')
+        return async (data: unknown, principal, projectId, callback) => {
+            const request = LockResourceRequest.safeParse(data)
+            if (!request.success) {
+                callback?.({ acquired: false, lock: null })
+                return
+            }
+            const { resourceId, force } = request.data
+            app.log.info({ resourceId }, '[Lock] LOCK_RESOURCE event received')
             try {
+                const resource = await collaborativeResource.resolve({ resourceId, projectId })
+                if (isNil(resource)) {
+                    app.log.warn({ resourceId, user: { id: principal.id }, project: { id: projectId } }, '[LOCK_RESOURCE] Denied: resource does not belong to this project')
+                    callback?.({ acquired: false, lock: null })
+                    return
+                }
+                if (!websocketService.socketHasPermission({ socket, permission: resource.writePermission })) {
+                    app.log.debug({ resourceId, user: { id: principal.id }, project: { id: projectId } }, '[LOCK_RESOURCE] Denied: missing write permission')
+                    callback?.({ acquired: false, lock: null })
+                    return
+                }
+
                 const user = await userService(app.log).getMetaInformation({ id: principal.id })
                 const displayName = `${user.firstName} ${user.lastName}`
 
                 const result = await lockService(app.log).acquire({
-                    resourceId: data.resourceId,
+                    resourceId,
+                    projectId,
                     userId: principal.id,
                     userDisplayName: displayName,
-                    force: data.force,
+                    force,
                 })
 
                 if (result.acquired) {
-                    if (!data.force) {
-                        socket.data.lockedResourceId = data.resourceId
-                    }
+                    trackLockedResource({ socket, resourceId })
                     socket.to(projectId).emit(WebsocketClientEvent.RESOURCE_LOCKED, {
-                        resourceId: data.resourceId,
+                        resourceId,
                         userId: principal.id,
                         userDisplayName: displayName,
                     })
@@ -42,16 +62,22 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
         }
     })
     websocketService.addListener(PrincipalType.USER, WebsocketServerEvent.UNLOCK_RESOURCE, (socket) => {
-        return async (data: { resourceId: string }, principal, projectId) => {
+        return async (data: unknown, principal, projectId) => {
+            const request = LockResourceRequest.safeParse(data)
+            if (!request.success) {
+                return
+            }
+            const { resourceId } = request.data
             try {
                 const released = await lockService(app.log).release({
-                    resourceId: data.resourceId,
+                    resourceId,
+                    projectId,
                     userId: principal.id,
                 })
-                socket.data.lockedResourceId = null
+                untrackLockedResource({ socket, resourceId })
                 if (released) {
                     websocketService.to(projectId).emit(WebsocketClientEvent.RESOURCE_UNLOCKED, {
-                        resourceId: data.resourceId,
+                        resourceId,
                     })
                 }
             }
@@ -62,29 +88,51 @@ export const lockModule: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-function registerLockDisconnectHandler({ socket, userId, projectId, app }: RegisterDisconnectHandlerParams): void {
-    if (socket.data.lockDisconnectRegistered) {
+const lockedResourceIdsBySocket = new WeakMap<Socket, ReadonlySet<string>>()
+const socketsWithLockDisconnectHandler = new WeakSet<Socket>()
+
+function trackLockedResource({ socket, resourceId }: TrackParams): void {
+    const held = lockedResourceIdsBySocket.get(socket) ?? new Set<string>()
+    lockedResourceIdsBySocket.set(socket, new Set([...held, resourceId]))
+}
+
+function untrackLockedResource({ socket, resourceId }: TrackParams): void {
+    const held = lockedResourceIdsBySocket.get(socket)
+    if (isNil(held)) {
         return
     }
-    socket.data.lockDisconnectRegistered = true
+    lockedResourceIdsBySocket.set(socket, new Set([...held].filter(id => id !== resourceId)))
+}
+
+function registerLockDisconnectHandler({ socket, userId, projectId, app }: RegisterDisconnectHandlerParams): void {
+    if (socketsWithLockDisconnectHandler.has(socket)) {
+        return
+    }
+    socketsWithLockDisconnectHandler.add(socket)
     socket.once('disconnect', async () => {
-        const lockedResourceId = socket.data.lockedResourceId
-        if (typeof lockedResourceId === 'string') {
+        const held = lockedResourceIdsBySocket.get(socket) ?? new Set<string>()
+        for (const resourceId of held) {
             const released = await lockService(app.log).release({
-                resourceId: lockedResourceId,
+                resourceId,
+                projectId,
                 userId,
             })
             if (released) {
                 websocketService.to(projectId).emit(WebsocketClientEvent.RESOURCE_UNLOCKED, {
-                    resourceId: lockedResourceId,
+                    resourceId,
                 })
             }
         }
     })
 }
 
+type TrackParams = {
+    socket: Socket
+    resourceId: string
+}
+
 type RegisterDisconnectHandlerParams = {
-    socket: { data: Record<string, unknown>, once: (event: string, handler: () => void) => void, id: string }
+    socket: Socket
     userId: string
     projectId: string
     app: FastifyInstance
