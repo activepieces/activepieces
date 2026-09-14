@@ -126,7 +126,7 @@ export const imageToPdf = createAction({
 				fileName: `${image.filename}.pdf`,
 			});
 		} catch (error) {
-			throw new Error(`Failed to convert text to PDF: ${(error as Error).message}`);
+			throw new Error(`Failed to convert image to PDF: ${(error as Error).message}`);
 		}
 	},
 });
