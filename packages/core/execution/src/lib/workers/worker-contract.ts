@@ -123,6 +123,7 @@ export type GetAgentConfigRequest = {
     userId: string
     source?: AgentRunSource
     messageSource?: 'onboarding'
+    agentId?: string
     projectId?: string | null
     userMessage: string
     modelName: string | null
@@ -318,6 +319,7 @@ export type PrewarmCodeStep = {
     sourceCode: SourceCode
     flowVersionId: string
     flowVersionState: FlowVersionState
+    useDeno: boolean
 }
 
 export type PrewarmDataResponse = {

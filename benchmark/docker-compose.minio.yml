@@ -8,7 +8,7 @@
 # bucket must already exist — minio-init creates it before app/worker start.
 services:
   minio:
-    image: minio/minio:RELEASE.2024-09-22T00-33-43Z
+    image: quay.io/minio/minio:RELEASE.2024-09-22T00-33-43Z
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -24,7 +24,7 @@ services:
       - bench
 
   minio-init:
-    image: minio/mc:RELEASE.2024-09-16T17-43-14Z
+    image: quay.io/minio/mc:RELEASE.2024-09-16T17-43-14Z
     depends_on:
       minio:
         condition: service_healthy

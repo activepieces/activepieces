@@ -1,3 +1,4 @@
+import { spreadIfDefined } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
@@ -87,6 +88,7 @@ function buildSandboxEnv({ settings }: {
 function baseEnv({ settings, networkMode }: { settings: SandboxSettings, networkMode: NetworkMode }): Record<string, string> {
     return {
         HOME: '/tmp/',
+        ...spreadIfDefined('AP_DENO_PATH', process.env['AP_DENO_PATH']),
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
@@ -109,6 +111,9 @@ function ssrfEnv(settings: SandboxSettings): Record<string, string> {
 
 function propagatedEnv(settings: SandboxSettings): Record<string, string> {
     const env: Record<string, string> = {}
+    if (settings.SANDBOX_PROPAGATED_ENV_VARS.length > 0) {
+        env['AP_SANDBOX_PROPAGATED_ENV_VARS'] = settings.SANDBOX_PROPAGATED_ENV_VARS.join(',')
+    }
     for (const key of settings.SANDBOX_PROPAGATED_ENV_VARS) {
         if (process.env[key]) {
             env[key] = process.env[key]!
