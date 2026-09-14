@@ -51,7 +51,11 @@ export const listBoards = createAction({
     const response = await makeRequest(
       getAccessTokenOrThrow(auth),
       HttpMethod.GET,
-      buildPath('/boards', { privacy, page_size, bookmark })
+      buildPath('/boards', {
+        privacy: privacy === 'ALL' ? undefined : privacy,
+        page_size,
+        bookmark,
+      })
     );
 
     return paginatedResult(response);
