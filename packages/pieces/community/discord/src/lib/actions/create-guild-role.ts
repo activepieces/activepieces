@@ -93,7 +93,11 @@ function toColorInteger({
   }
 
   if (/^\d+$/.test(trimmed)) {
-    return Number(trimmed);
+    const decimal = Number(trimmed);
+    if (decimal > MAX_COLOR_VALUE) {
+      throw new Error(`Color must be between 0 and ${MAX_COLOR_VALUE}, received "${trimmed}".`);
+    }
+    return decimal;
   }
 
   const hex = trimmed.startsWith('#') ? trimmed.slice(1) : trimmed;
@@ -101,5 +105,7 @@ function toColorInteger({
     return parseInt(hex, 16);
   }
 
-  return undefined;
+  throw new Error(`Color must be a hex value like #5865F2 or a decimal RGB number, received "${trimmed}".`);
 }
+
+const MAX_COLOR_VALUE = 0xffffff;

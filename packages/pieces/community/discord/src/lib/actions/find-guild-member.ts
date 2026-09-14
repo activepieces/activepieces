@@ -29,24 +29,18 @@ export const discordFindGuildMemberByUsername = createAction({
   },
 
   async run(configValue) {
-    const request: HttpRequest = {
-      method: HttpMethod.GET,
-      url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members?limit=1000`,
-      headers: {
-        authorization: `Bot ${configValue.auth.secret_text}`,
-        'Content-Type': 'application/json',
-      },
-    };
-
-    const res = await httpClient.sendRequest<GuildMember[]>(request);
+    const members = await fetchAllMembers({
+      guildId: configValue.propsValue.guild_id,
+      token: configValue.auth.secret_text,
+    });
 
     const search = configValue.propsValue.shortText?.trim().toLowerCase() ?? '';
-    const members =
+    const matching =
       search.length === 0
-        ? res.body
-        : res.body.filter((member) => matchesSearch({ member, search }));
+        ? members
+        : members.filter((member) => matchesSearch({ member, search }));
 
-    if (members.length === 0)
+    if (matching.length === 0)
       return {
         disabled: true,
         options: [],
@@ -54,13 +48,47 @@ export const discordFindGuildMemberByUsername = createAction({
       };
 
     return {
-      options: members.map((member) => ({
+      options: matching.map((member) => ({
         value: member.user.id,
         label: member.user.username,
       })),
     };
   },
 });
+
+async function fetchAllMembers({
+  guildId,
+  token,
+}: {
+  guildId: string;
+  token: string;
+}): Promise<GuildMember[]> {
+  const pages: GuildMember[][] = [];
+  let after: string | undefined = undefined;
+
+  do {
+    const request: HttpRequest = {
+      method: HttpMethod.GET,
+      url: `https://discord.com/api/v9/guilds/${guildId}/members`,
+      queryParams: {
+        limit: `${MEMBERS_PAGE_SIZE}`,
+        ...(after ? { after } : {}),
+      },
+      headers: {
+        authorization: `Bot ${token}`,
+        'Content-Type': 'application/json',
+      },
+    };
+    const res = await httpClient.sendRequest<GuildMember[]>(request);
+    pages.push(res.body);
+    after =
+      res.body.length === MEMBERS_PAGE_SIZE
+        ? res.body[res.body.length - 1].user.id
+        : undefined;
+  } while (after !== undefined);
+
+  return pages.flat();
+}
 
 function matchesSearch({
   member,
@@ -83,3 +111,5 @@ interface GuildMember {
   };
   nick?: string | null;
 }
+
+const MEMBERS_PAGE_SIZE = 1000;
