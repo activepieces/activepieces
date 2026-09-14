@@ -1408,7 +1408,7 @@
     },
     "packages/pieces/community/bubble": {
       "name": "@activepieces/piece-bubble",
-      "version": "0.1.7",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3711,7 +3711,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.15.0",
+      "version": "0.15.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
