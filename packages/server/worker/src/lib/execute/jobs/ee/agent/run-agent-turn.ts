@@ -1,7 +1,7 @@
-import { AIProviderName, ErrorCode, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
-import { AgentPhase, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
-import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
+import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
+import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
 
 const MAX_RESPONSE_OUTPUT_TOKENS = 32_000
 const MAX_AUTO_CONTINUATIONS = 3
@@ -116,6 +116,10 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
             }
         },
         repairToolCall: async ({ toolCall, error }) => {
+            if (NoSuchToolError.isInstance(error)) {
+                log.warn({ toolName: toolCall.toolName }, 'Model called a tool that is not active in this phase')
+                return null
+            }
             log.warn({ toolName: toolCall.toolName, error }, 'Repairing malformed tool call')
             const { data: repaired } = await tryCatch(async () => {
                 const { text } = await generateText({
@@ -124,9 +128,13 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
                     telemetry: agentAiUtils.buildTelemetry({ functionId: 'agent-tool-repair' }),
                     prompt: `Fix this malformed JSON tool call for "${toolCall.toolName}". The error was: ${error.message}\n\nOriginal input:\n${toolCall.input}\n\nReturn ONLY the corrected JSON input, nothing else.`,
                 })
-                return { ...toolCall, input: text }
+                return jsonInputFrom(text)
             })
-            return repaired ?? null
+            if (isNil(repaired)) {
+                log.warn({ toolName: toolCall.toolName }, 'Could not repair the tool call into valid JSON')
+                return null
+            }
+            return { ...toolCall, input: repaired }
         },
         onToolExecutionEnd: ({ toolCall, toolOutput, toolExecutionMs }) => {
             toolCalls.push({
@@ -327,11 +335,26 @@ function fingerprintInput(input: unknown): string {
     return data ?? ''
 }
 
+export function jsonInputFrom(text: string): string | undefined {
+    const start = text.indexOf('{')
+    if (start === -1) {
+        return undefined
+    }
+    for (let end = text.indexOf('}', start); end !== -1; end = text.indexOf('}', end + 1)) {
+        const candidate = text.slice(start, end + 1)
+        const { error } = tryCatchSync(() => JSON.parse(candidate))
+        if (isNil(error)) {
+            return candidate
+        }
+    }
+    return undefined
+}
+
 export function classifyAgentRunError({ error, provider }: { error: unknown, provider?: string }): AgentRunErrorClass {
     const cause = RetryError.isInstance(error) ? error.lastError : error
     const apiError = APICallError.isInstance(cause) ? cause : undefined
     const apError = apErrorOf(cause)
-    const message = cause instanceof Error ? cause.message : String(cause)
+    const message = formatPieceError(cause).message
     if (apError?.code === ErrorCode.QUOTA_EXCEEDED
         || apiError?.statusCode === 402
         || CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
@@ -467,3 +490,7 @@ export type AgentTurnResult = {
 }
 
 type AgentRunErrorClass = 'credit' | 'user' | 'internal'
+
+export function firstStepUsesFastModel({ source, dryRun, runsASavedAgent }: { source: AgentRunSource, dryRun?: boolean, runsASavedAgent: boolean }): boolean {
+    return dryRun !== true && !(source === AgentRunSource.FLOW_STEP && runsASavedAgent)
+}

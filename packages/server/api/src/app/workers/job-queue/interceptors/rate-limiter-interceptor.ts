@@ -81,7 +81,7 @@ async function getMaxConcurrentJobs({ poolId, platformId, projectId, log }: { po
     }
     const planLimit = await getMaxConcurrentJobsForPlatformPlan({ platformId, log })
     // When worker groups are enabled, an unassigned-limit project is capped by the physical capacity
-    // of the pool its runs actually route to (group pool if it has live workers, else shared).
+    // of the pool its runs route to (the group pool if the project has one, else shared).
     const { data: workerGroupsEnabled } = await tryCatch(() => workerGroupService(log).isWorkerGroupsEnabled({ platformId }))
     if (workerGroupsEnabled !== true) {
         return planLimit
@@ -94,10 +94,7 @@ async function resolveRoutedPoolSlots({ platformId, projectId, log }: { platform
     const { projectGroups, shared } = await workerCapacity.get()
     const { data: projectGroupId } = await tryCatch(() => projectWorkerGroupService(log).getProjectWorkerGroup({ projectId, platformId }))
     if (!isNil(projectGroupId)) {
-        const groupCapacity = projectGroups.get(projectGroupId)
-        if (!isNil(groupCapacity) && groupCapacity.online > 0) {
-            return groupCapacity.slots
-        }
+        return projectGroups.get(projectGroupId)?.slots ?? 0
     }
     return shared.slots
 }
