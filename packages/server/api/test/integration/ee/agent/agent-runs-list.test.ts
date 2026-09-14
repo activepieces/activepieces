@@ -1,9 +1,11 @@
-import { apId } from '@activepieces/core-utils'
+import { AIProviderName, apId } from '@activepieces/core-utils'
 import { AgentIcon, AgentRunSource, AgentVisibility, ColorName, DefaultProjectRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { agentRpcHandlers } from '../../../../src/app/ee/agent/agent-rpc-handlers'
 import { db } from '../../../helpers/db'
+import { mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -73,6 +75,32 @@ describe('the runs a flow step made with an agent', () => {
 
         expect(response.statusCode).toBe(StatusCodes.OK)
         expect(response.json().data.map((run: { id: string }) => run.id)).toEqual([runId])
+    })
+
+
+    it('returns a run created the way a flow step actually creates one, not one a test seeded', async () => {
+        const ctx = await context()
+        const provider = await mockAndSaveAIProvider({ platformId: ctx.platform.id, provider: AIProviderName.OPENROUTER })
+        await db.update('ai_provider', provider.id, { enabledForChat: true })
+        const agent = await createAgent(ctx)
+        await ctx.post(`/v1/agents/${agent.id}/publish`)
+        const conversationId = apId()
+
+        await agentRpcHandlers(app.log).getAgentConfig({
+            conversationId,
+            platformId: ctx.platform.id,
+            projectId: ctx.project.id,
+            userId: ctx.user.id,
+            userMessage: 'sweep the inbox',
+            modelName: null,
+            source: AgentRunSource.FLOW_STEP,
+            agentId: agent.id,
+        })
+
+        const response = await listRuns(ctx, agent.id)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().data.map((run: { id: string }) => run.id)).toEqual([conversationId])
     })
 
     it('leaves out the conversations someone had with the agent, which already have their own list', async () => {
