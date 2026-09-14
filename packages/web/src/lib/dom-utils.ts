@@ -69,15 +69,6 @@ export const wait = (ms: number) => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-export const scrollToElementAndClickIt = (elementId: string) => {
-  const element = document.getElementById(elementId);
-  element?.scrollIntoView({
-    behavior: 'instant',
-    block: 'start',
-  });
-  element?.click();
-};
-
 export const isMac = () => {
   return /(Mac)/i.test(navigator.userAgent);
 };

@@ -100,6 +100,42 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage(data, paginationCursor)
     },
 
+    async listAgentRuns({ projectId, agentId, cursor, limit }: ListAgentRunsParams): Promise<SeekPage<AgentConversation>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const paginator = buildPaginator({
+            entity: AgentConversationEntity,
+            query: {
+                limit,
+                orderBy: [
+                    { field: 'created', order: Order.DESC },
+                    { field: 'id', order: Order.DESC },
+                ],
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+
+        const queryBuilder = agentHelpers.conversationRepo()
+            .createQueryBuilder('agent_conversation')
+            .select([
+                'agent_conversation.id',
+                'agent_conversation.created',
+                'agent_conversation.updated',
+                'agent_conversation.platformId',
+                'agent_conversation.projectId',
+                'agent_conversation.agentId',
+                'agent_conversation.title',
+                'agent_conversation.modelName',
+                'agent_conversation.status',
+            ])
+            .where('agent_conversation."projectId" = :projectId', { projectId })
+            .andWhere('agent_conversation."agentId" = :agentId', { agentId })
+            .andWhere('agent_conversation.source = :flowStepSource', { flowStepSource: AgentRunSource.FLOW_STEP })
+
+        const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
+        return paginationHelper.createPage(data, paginationCursor)
+    },
+
     async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<AgentConversation> {
         // Eval conversations must never be opened or messaged through the regular (non-dry-run) chat
         // path — that would run real tools against a conversation meant to be side-effect-free.
@@ -181,6 +217,13 @@ type CreateConversationParams = {
     userId: string
     request: CreateAgentConversationRequest
     id?: string
+}
+
+type ListAgentRunsParams = {
+    projectId: string
+    agentId: string
+    cursor?: string
+    limit: number
 }
 
 type ListConversationsParams = {

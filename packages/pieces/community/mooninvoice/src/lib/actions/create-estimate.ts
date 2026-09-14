@@ -280,12 +280,12 @@ export const createEstimate = createAction({
       context.auth.props.secret_text
     );
 
-    const response = await makeRequest(
+    const response = await makeRequest({
       accessToken,
-      HttpMethod.POST,
-      '/create_estimate',
-      body
-    );
+      method: HttpMethod.POST,
+      path: '/create_estimate',
+      body,
+    });
 
     return response;
   },

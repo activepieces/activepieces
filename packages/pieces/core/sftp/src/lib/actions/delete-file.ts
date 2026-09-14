@@ -4,6 +4,7 @@ import { sftpAuth } from '../auth';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import Client from 'ssh2-sftp-client';
 import { getSftpError } from './common';
+import { deleteFileActionOutputSchema } from '../output-schemas';
 
 async function deleteFileFromFTP(client: FTPClient, filePath: string) {
   await client.remove(filePath);
@@ -28,6 +29,7 @@ export const deleteFileAction = createAction({
       description: 'The path of the file to delete e.g. `./myfolder/test.mp3`',
     }),
   },
+  outputSchema: deleteFileActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const filePath = context.propsValue.filePath;
