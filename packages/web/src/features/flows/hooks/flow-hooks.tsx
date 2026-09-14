@@ -186,6 +186,16 @@ export const flowHooks = {
             ),
             duration: 5000,
           });
+        } else if (apError.code === ErrorCode.VALIDATION) {
+          toast.error(
+            change === 'publish'
+              ? t('Publish failed')
+              : t('Status update failed'),
+            {
+              description: (apError.params as { message?: string }).message,
+              duration: 8000,
+            },
+          );
         } else {
           internalErrorToast();
         }

@@ -18,6 +18,7 @@ import { agentLinkUtils } from '@/app/builder/step-settings/agent-settings/agent
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -32,6 +33,7 @@ import {
 } from '@/features/agents/hooks/agents-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 
 export const AgentLink = ({ disabled }: AgentLinkProps) => {
   const form = useFormContext();
@@ -67,6 +69,8 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
   const linkedConfig = linkedAgent?.published ?? linkedAgent?.draft;
 
   const instructionsPreview = linkedConfig?.instructions?.trim();
+  const summaryText = linkedAgent?.description?.trim() || instructionsPreview;
+  const cannotRun = !stillFindingIt && (isNil(linked) || !linked.isPublished);
   const modelLabel = linkedConfig?.modelName ?? undefined;
   const toolChips = [
     ...new Set(
@@ -191,10 +195,12 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
         </PermissionNeededTooltip>
       ) : (
         <div className="flex flex-col gap-2.5 rounded-lg border p-3">
-          {!isNil(instructionsPreview) && (
-            <p className="line-clamp-2 text-xs text-muted-foreground">
-              {instructionsPreview}
-            </p>
+          {!isNil(summaryText) && (
+            <TextWithTooltip tooltipMessage={summaryText}>
+              <p className="line-clamp-2 text-xs text-muted-foreground">
+                {summaryText}
+              </p>
+            </TextWithTooltip>
           )}
 
           {(!isNil(modelLabel) || toolChips.length > 0) && (
@@ -217,13 +223,20 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground">
+          <p
+            className={cn(
+              'text-xs',
+              cannotRun
+                ? 'text-warning-700 dark:text-warning-300'
+                : 'text-muted-foreground',
+            )}
+          >
             {stillFindingIt
               ? t('Looking it up.')
               : isNil(linked)
               ? t('Not in this project, so this step cannot run.')
               : !linked.isPublished
-              ? t('Not published yet, so a flow has nothing to run.')
+              ? t('Not published yet. Publish it before this flow can run.')
               : t('Shared with every flow that uses it.')}
           </p>
 
