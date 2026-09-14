@@ -367,6 +367,83 @@ export const getCardAttachmentsActionOutputSchema: OutputSchema = {
 
 export const addCardAttachmentActionOutputSchema: OutputSchema = { fields: attachmentFields };
 
+export const copyCardActionOutputSchema: OutputSchema = { fields: cardFields };
+
+export const addCardAttachmentFromUrlActionOutputSchema: OutputSchema = {
+  fields: attachmentFields,
+};
+
+export const updateChecklistActionOutputSchema: OutputSchema = {
+  fields: checklistFields,
+};
+
+export const updateChecklistItemActionOutputSchema: OutputSchema = {
+  fields: checkItemFields,
+};
+
+export const moveListToBoardActionOutputSchema: OutputSchema = {
+  fields: listFields,
+};
+
+export const listBoardMembershipsActionOutputSchema: OutputSchema = {
+  itemLabel: '{memberType}',
+  fields: [
+    {
+      key: 'memberships',
+      label: 'Memberships',
+      listItems: [
+        { key: 'id', label: 'Membership ID' },
+        { key: 'idMember', label: 'Member ID' },
+        { key: 'memberType', label: 'Role' },
+        { key: 'unconfirmed', label: 'Invite Pending', format: 'boolean' },
+        { key: 'deactivated', label: 'Deactivated', format: 'boolean' },
+        { key: 'member', label: 'Member', children: boardMemberFields },
+      ],
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
+// The verification account's cards had no activity and no votes, so only the
+// envelope is described; the builder drills the entries generically rather than
+// showing a field list captured from nothing.
+export const listCardActivityActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'activity',
+      label: 'Activity',
+      description:
+        'Activity entries, newest first, of the requested type. Each carries its type, date and the member who caused it.',
+    },
+    { key: 'count', label: 'Count on This Page', format: 'number' },
+  ],
+};
+
+export const listCardVotesActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'voters',
+      label: 'Voters',
+      description: 'The members who voted on this card.',
+    },
+    { key: 'count', label: 'Vote Count', format: 'number' },
+  ],
+};
+
+export const deleteBoardActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'board_id', label: 'Board ID' },
+  ],
+};
+
+export const deleteLabelActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'label_id', label: 'Label ID' },
+  ],
+};
+
 export const cardMovedTriggerOutputSchema: OutputSchema = { fields: cardFields };
 
 export const newCardTriggerOutputSchema: OutputSchema = { fields: cardFields };
