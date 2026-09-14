@@ -623,8 +623,3 @@ export const formUtils = {
   getDefaultPropertyValue,
   parseDynamicValue,
 };
-
-export type BuildConnectionSchemaOptions = {
-  isGlobalConnection: boolean;
-  showConnectionNameField: boolean;
-};

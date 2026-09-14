@@ -1,7 +1,6 @@
 import {
   Agent,
   AgentListSort,
-  ApFlagId,
   CreateAgentRequest,
   DraftAgentRequest,
   MoveAgentRequest,
@@ -17,24 +16,15 @@ import {
 
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { agentsApi } from '../api/agents';
 
 const AGENTS_KEY = 'agents';
 
-export const useAgentsEnabled = (): boolean => {
-  const { data: agentsEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_ENABLED,
-  );
-  return agentsEnabled === true;
-};
-
 export const useAgentsAvailable = (): boolean => {
-  const releaseEnabled = useAgentsEnabled();
   const { platform } = platformHooks.useCurrentPlatform();
-  return releaseEnabled && platform.plan.agentsEnabled;
+  return platform.plan.agentsEnabled;
 };
 
 export const useAgentsNavVisible = (): boolean => {

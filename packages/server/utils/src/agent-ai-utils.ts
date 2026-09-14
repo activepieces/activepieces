@@ -1,6 +1,6 @@
 import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
+import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, aiProviderUtils, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -8,6 +8,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
+import { agentProviderOptions } from './agent-provider-options'
 import { EmbeddingModel, LanguageModel, ModelMessage, SystemModelMessage, TelemetryOptions, ToolSet } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { wideEvent } from './wide-event'
@@ -47,6 +48,10 @@ function buildWebSearchTools({ provider, auth }: {
     auth: Record<string, unknown>
 }): ToolSet {
     return NATIVE_WEB_SEARCH_TOOLS[provider]?.(auth as BaseAIProviderAuthConfig) ?? {}
+}
+
+function webSearchModeOf(provider: AIProviderName): AIWebSearchMode | undefined {
+    return AI_PROVIDER_CAPABILITIES[provider].webSearch
 }
 
 function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
@@ -168,7 +173,7 @@ function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName
     )
     if (!hasThinking) return messages
 
-    return messages
+    const stripped = messages
         .map((msg) => {
             if (msg.role !== 'assistant' || !Array.isArray(msg.content)) return msg
             const filtered = (msg.content as Array<Record<string, unknown>>).filter(
@@ -179,6 +184,13 @@ function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName
             return { ...msg, content: filtered }
         })
         .filter((msg): msg is ModelMessage => msg !== null)
+    return keepAtLeastOne({ transformed: stripped })
+}
+
+const CONTINUATION_NUDGE: ModelMessage = { role: 'user', content: 'Continue.' }
+
+function keepAtLeastOne({ transformed }: { transformed: ModelMessage[] }): ModelMessage[] {
+    return transformed.length === 0 ? [CONTINUATION_NUDGE] : transformed
 }
 
 function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
@@ -205,7 +217,7 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
 
     const head = messages.slice(0, -1)
     if (sanitizedParts.length === 0) {
-        return head
+        return keepAtLeastOne({ transformed: head })
     }
     if (sanitizedParts.length === last.content.length) {
         return messages
@@ -264,29 +276,6 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
         })
         return { ...message, content }
     })
-}
-
-function buildProviderOptions({ provider, tier, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, disableThinking?: boolean }): SharedV3ProviderOptions {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: disableThinking ? { type: 'disabled' } : { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
-        case AIProviderName.ACTIVEPIECES:
-        case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: disableThinking ? { enabled: false } : { max_tokens: tier.thinkingBudget } } }
-        default:
-            return {}
-    }
-}
-
-function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt: string, provider: AIProviderName }): string | SystemModelMessage {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { role: 'system', content: systemPrompt, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } }
-        default:
-            return systemPrompt
-    }
 }
 
 function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
@@ -543,13 +532,13 @@ export const agentAiUtils = {
     toStorageEmbedding,
     supportsWebSearch,
     buildWebSearchTools,
+    webSearchModeOf,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
     estimateTokenCount,
     collapseStaleToolOutputs,
-    buildProviderOptions,
-    buildSystemPromptWithCaching,
+    ...agentProviderOptions,
     buildTelemetry,
     buildStepParts,
     findDataArray,

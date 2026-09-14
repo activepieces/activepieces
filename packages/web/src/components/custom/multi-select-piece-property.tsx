@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { useState } from 'react';
@@ -50,6 +51,7 @@ const MultiSelectPieceProperty = ({
   itemExtraContent,
 }: MultiSelectPiecePropertyProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const allOptions = [...options, ...cachedOptions];
   const filteredOptions = options
     .map((option, index) => ({
       ...option,
@@ -66,24 +68,18 @@ const MultiSelectPieceProperty = ({
     initialValues && Array.isArray(initialValues)
       ? initialValues
           .map((value) =>
-            [...cachedOptions, ...options].findIndex((option) =>
-              deepEqual(option.value, value),
-            ),
+            allOptions.findIndex((option) => deepEqual(option.value, value)),
           )
           .filter((index) => index > -1)
           .map((index) => String(index))
       : [];
-  const sendChanges = (indicides: string[]) => {
-    const newSelectedIndicies = indicides.filter(
-      (index) => index !== undefined,
+  const sendChanges = (selectedKeys: string[]) => {
+    onChange(
+      selectedKeys.flatMap((key) => {
+        const option = allOptions[Number(key)];
+        return isNil(option) ? [] : [option.value];
+      }),
     );
-    if (newSelectedIndicies.length === 0) {
-      onChange([]);
-    } else {
-      onChange(
-        newSelectedIndicies.map((index) => options[Number(index)].value),
-      );
-    }
   };
 
   return (
@@ -92,7 +88,7 @@ const MultiSelectPieceProperty = ({
       value={selectedIndicies}
       onValueChange={sendChanges}
       disabled={disabled}
-      items={options.map((opt, index) => ({
+      items={allOptions.map((opt, index) => ({
         value: String(index),
         label: opt.label,
       }))}

@@ -309,8 +309,6 @@
   "Client Secret": "كلمة سر العميل",
   "Connect": "توصيل",
   "Disconnect": "قطع الاتصال",
-  "I would like to use my own App Credentials": "أرغب في استخدام بيانات اعتماد التطبيق الخاصة بي",
-  "I would like to use predefined App Credentials": "أرغب في استخدام بيانات اعتماد التطبيق المحددة مسبقًا",
   "Permission needed": "Permission needed",
   "Connections replaced successfully": "Connections replaced successfully",
   "Error": "خطأ",

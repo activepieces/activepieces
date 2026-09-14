@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, FlowId, FlowVersionId, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, FlowId, FlowVersionId, formatPieceError, isNil, tryCatch, tryParseFriendlyPieceError } from '@activepieces/core-utils'
 import {
     TriggerBase,
     TriggerStrategy,
@@ -38,6 +38,9 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
             }, log)
 
             assertEngineResponseIsOk(engineHelperResponse, flowId, flowVersionId)
+            if (isNil(engineHelperResponse.response)) {
+                throwTriggerUpdateFailed({ flowId, flowVersionId, standardError: 'The worker skipped the trigger enable hook' })
+            }
 
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK: {
@@ -89,10 +92,13 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
                 if (!params.ignoreError) {
                     throw error
                 }
-                log.warn({ flow: { id: flowId }, error: error.message }, '[flowTriggerSideEffect#disable] Ignored error during trigger disable')
+                log.warn({ flow: { id: flowId }, error: error.message }, IGNORED_DISABLE_ERROR)
             }
             else if (!params.ignoreError) {
                 assertEngineResponseIsOk(engineHelperResponse!, flowId, flowVersionId)
+            }
+            else if (engineHelperResponse?.status !== EngineResponseStatus.OK) {
+                log.warn({ flow: { id: flowId }, error: sanitizeIgnoredError(engineHelperResponse?.error) }, IGNORED_DISABLE_ERROR)
             }
             switch (pieceTrigger.type) {
                 case TriggerStrategy.APP_WEBHOOK:
@@ -121,6 +127,10 @@ export const flowTriggerSideEffect = (log: FastifyBaseLogger) => {
         },
 
     }
+}
+
+function sanitizeIgnoredError(error: string | undefined): string {
+    return tryParseFriendlyPieceError(error)?.message ?? formatPieceError(error).message
 }
 
 async function handleAppWebhookTrigger({ engineHelperResponse, flowId, projectId, pieceName }: ActiveTriggerParams): Promise<ActiveTriggerReturn> {
@@ -197,20 +207,25 @@ async function handlePollingTrigger({ engineHelperResponse, flowId, flowVersionI
     }
 }
 
+const IGNORED_DISABLE_ERROR = '[flowTriggerSideEffect#disable] Ignored error during trigger disable'
+
 function assertEngineResponseIsOk(engineHelperResponse: EngineResponse<ExecuteTriggerResponse<TriggerHookType.ON_ENABLE | TriggerHookType.ON_DISABLE>>, flowId: FlowId, flowVersionId: FlowVersionId) {
     if (isNil(engineHelperResponse) || engineHelperResponse.status !== EngineResponseStatus.OK) {
-        throw new ActivepiecesError({
-            code: ErrorCode.TRIGGER_UPDATE_STATUS,
-            params: {
-                flowId,
-                flowVersionId,
-                standardOutput: '',
-                standardError: engineHelperResponse?.error ?? 'Engine response is undefined',
-            },
-        }, `flowId=${flowId} standardError=${engineHelperResponse?.error ?? 'Engine response is undefined'}`)
+        throwTriggerUpdateFailed({ flowId, flowVersionId, standardError: engineHelperResponse?.error ?? 'Engine response is undefined' })
     }
 }
 
+function throwTriggerUpdateFailed({ flowId, flowVersionId, standardError }: ThrowTriggerUpdateFailedParams): never {
+    throw new ActivepiecesError({
+        code: ErrorCode.TRIGGER_UPDATE_STATUS,
+        params: {
+            flowId,
+            flowVersionId,
+            standardOutput: '',
+            standardError,
+        },
+    }, `flowId=${flowId} standardError=${standardError}`)
+}
 
 
 type EnableFlowTriggerParams = {
@@ -234,4 +249,10 @@ type ActiveTriggerParams = EnableFlowTriggerParams & {
 
 type ActiveTriggerReturn = {
     scheduleOptions?: ScheduleOptions
+}
+
+type ThrowTriggerUpdateFailedParams = {
+    flowId: FlowId
+    flowVersionId: FlowVersionId
+    standardError: string
 }

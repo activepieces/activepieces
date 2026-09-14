@@ -4,6 +4,7 @@ import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { endClient, getClient, getProtocolBackwardCompatibility } from '../common';
 import { sftpAuth } from '../auth';
 import { getSftpError } from './common';
+import { deleteFolderActionOutputSchema } from '../output-schemas';
 
 async function deleteFolderFTP(client: FTPClient, directoryPath: string, recursive: boolean) {
   if (recursive) {
@@ -39,6 +40,7 @@ export const deleteFolderAction = createAction({
         'Enable this option to delete the folder and all its contents, including subfolders and files.',
     }),
   },
+  outputSchema: deleteFolderActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const directoryPath = context.propsValue.folderPath;

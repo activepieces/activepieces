@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { apErrorOf, createRpcClient, createRpcServer } from '../../../src/lib/engine/rpc'
+import { apErrorOf, createRpcClient, createRpcServer, RpcTimeoutError } from '../../../src/lib/engine/rpc'
 
 type TestContract = {
     boom: (input: unknown) => Promise<unknown>
@@ -42,6 +42,8 @@ describe('rpc timeout', () => {
 
         expect(String(quick)).toContain('failed (timeout: 1000ms)')
         expect(String(long)).toContain('failed (timeout: 600000ms)')
+        expect(quick).toBeInstanceOf(RpcTimeoutError)
+        expect(long).toBeInstanceOf(RpcTimeoutError)
     })
 })
 
