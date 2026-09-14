@@ -224,6 +224,7 @@ describe('createSandboxForJob', () => {
                 const env = createSandboxMock.mock.calls[0][2].env
                 expect(env.PROPAGATED_YES).toBe('forwarded')
                 expect('PROPAGATED_NO' in env).toBe(false)
+                expect(env.AP_SANDBOX_PROPAGATED_ENV_VARS).toBe('PROPAGATED_YES,PROPAGATED_NO')
             }
             finally {
                 process.env = originalProcessEnv

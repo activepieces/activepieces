@@ -30,6 +30,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 cwd: stepDir,
                 allowReadPaths: [stepDir],
                 resolveNodeModules: true,
+                env: buildPropagatedEnv(permissions),
             })
         },
 
@@ -69,4 +70,20 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
         },
     }
     return sandbox
+}
+
+function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, string> {
+    const envAllowed = permissions.includes(DenoPermission.ENV) || permissions.includes(DenoPermission.ALL)
+    if (!envAllowed) {
+        return {}
+    }
+    const propagatedNames = (process.env['AP_SANDBOX_PROPAGATED_ENV_VARS'] ?? '').split(',').map((name) => name.trim()).filter((name) => name.length > 0)
+    const env: Record<string, string> = {}
+    for (const name of propagatedNames) {
+        const value = process.env[name]
+        if (value !== undefined) {
+            env[name] = value
+        }
+    }
+    return env
 }

@@ -60,6 +60,28 @@ describe('denoCodeSandbox permission boundary', () => {
             expect(result).toEqual({ keys: ['PATH'], missing: null })
         })
 
+        it('forwards exactly the vars listed in AP_SANDBOX_PROPAGATED_ENV_VARS when ENV is granted, and none without it', async () => {
+            const originalEnv = { ...process.env }
+            try {
+                process.env.AP_SANDBOX_PROPAGATED_ENV_VARS = 'MY_PROPAGATED_SECRET,MY_MISSING_VAR'
+                process.env.MY_PROPAGATED_SECRET = 'propagated-value'
+                process.env.MY_UNLISTED_SECRET = 'must-not-leak'
+                const codeFilePath = path.join(stepDir, 'index.js')
+                await writeFile(codeFilePath, `exports.code = async () => ({ secret: process.env.MY_PROPAGATED_SECRET ?? null, unlisted: process.env.MY_UNLISTED_SECRET ?? null, keys: Object.keys(Deno.env.toObject()).sort() })`)
+
+                const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+                const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['MY_PROPAGATED_SECRET', 'PATH'] })
+
+                await writeFile(codeFilePath, `exports.code = async () => { try { Deno.env.toObject(); return 'readable' } catch { return 'blocked' } }`)
+                const lockedResult = await denoCodeSandbox.runCodeModule({ codeFilePath, inputs: {} })
+                expect(lockedResult).toBe('blocked')
+            }
+            finally {
+                process.env = originalEnv
+            }
+        })
+
         it('rejects the symlink escape (link inside dir -> outside, read through it)', async () => {
             await expect(runModule(`export const code = async () => {
                 await Deno.symlink('/etc/passwd', './escape')
