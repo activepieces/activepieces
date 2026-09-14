@@ -1,5 +1,6 @@
 import { Nullable } from '@activepieces/core-utils'
 import { z } from 'zod'
+import { AttributionParams } from '../common/attribution'
 import { ThirdPartyAuthnProviderEnum } from './authn-provider-name'
 
 export * from './authn-provider-name'
@@ -13,6 +14,7 @@ export type FederatedAuthnLoginResponse = z.infer<typeof federatedAuthnLoginResp
 export const ClaimTokenRequest = z.object({
     providerName: z.nativeEnum(ThirdPartyAuthnProviderEnum),
     code: z.string(),
+    attribution: AttributionParams.optional(),
 })
 
 export type ClaimTokenRequest = z.infer<typeof ClaimTokenRequest>

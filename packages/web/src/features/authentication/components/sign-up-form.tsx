@@ -197,13 +197,17 @@ const SignUpForm = ({
     });
     capture({
       name: TelemetryEventName.SIGN_UP_SUBMITTED,
-      payload: { method: 'email', ...acquisitionUtils.getAcquisitionParams() },
+      payload: {
+        method: 'password',
+        ...acquisitionUtils.getAcquisitionParams(),
+      },
     });
     mutate({
       ...data,
       email: data.email.trim().toLowerCase(),
       trackEvents: true,
       captchaToken,
+      attribution: acquisitionUtils.getAcquisitionParams(),
     });
   };
 
