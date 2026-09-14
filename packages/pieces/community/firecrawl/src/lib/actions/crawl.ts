@@ -1,7 +1,7 @@
 import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, downloadAndSaveCrawlScreenshots, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, forJsonOutputFormat, polling, saveFirecrawlFile, FIRECRAWL_API_BASE_URL } from '../common/common';
 import { crawlWebsiteActionOutputSchema } from '../output-schemas';
 
 function webhookConfig(useWebhook: boolean, webhookProperties: any): any {
@@ -314,8 +314,14 @@ export const crawl = createAction({
     const timeoutSeconds = propsValue.timeout || 300;
     const result = await polling(jobId, auth.secret_text, timeoutSeconds, 'crawl');
 
-    if (propsValue.formats === 'screenshot') {
-      await downloadAndSaveCrawlScreenshots(result, context);
+    if (propsValue.formats === 'screenshot' && Array.isArray(result.data)) {
+      result.data = await Promise.all(
+        result.data.map(async (page: any) =>
+          page.screenshot
+            ? { ...page, screenshot: await saveFirecrawlFile(context, page.screenshot) }
+            : page
+        )
+      );
     }
 
     return result;

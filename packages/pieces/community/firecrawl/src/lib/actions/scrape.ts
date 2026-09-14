@@ -1,8 +1,8 @@
 import { createAction, Property, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../auth';
-import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
-import { scrapeUrlActionOutputSchema } from '../output-schemas';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, saveFirecrawlFile, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
+import { scrapeActionOutputSchema } from '../output-schemas';
 
 function forDefaultScreenshot(): any {
   return {
@@ -18,7 +18,7 @@ export const scrape = createAction({
   displayName: 'Scrape Website',
   description: 'Scrape a website by performing a series of actions like clicking, typing, taking screenshots, and extracting data.',
   audience: 'human',
-  outputSchema: scrapeUrlActionOutputSchema,
+  outputSchema: scrapeActionOutputSchema,
   aiMetadata: { description: 'Fetches the content of a single web page and returns it in a chosen format (markdown, HTML, links, summary, screenshot, or AI-extracted JSON). Choose this to read one specific URL; for many pages use Crawl, and for a structured data pull across several known URLs use Extract Structured Data. Optionally runs browser actions (click, type, wait, screenshot) before scraping. Read-only against the target, so repeating the same call is safe.', idempotent: true },
   props: {
     url: Property.ShortText({
@@ -31,6 +31,12 @@ export const scrape = createAction({
       description: 'Maximum time to wait for the page to load (in milliseconds).',
       required: false,
       defaultValue: 60000,
+    }),
+    storeInCache: Property.Checkbox({
+      displayName: 'Store In Cache',
+      description: 'If enabled, the page will be stored in the Firecrawl index and cache. Disabling this is useful if your scraping activity may have data protection concerns.',
+      required: false,
+      defaultValue: false,
     }),
     useActions: Property.Checkbox({
       displayName: 'Perform Actions Before Scraping',
@@ -73,6 +79,10 @@ export const scrape = createAction({
               {
                 type: 'screenshot',
               },
+              {
+                type: 'pdf',
+                format: 'A4',
+              },
             ],
           }),
         };
@@ -95,7 +105,7 @@ export const scrape = createAction({
             { label: 'Links', value: 'links' },
             { label: 'Images', value: 'images' },
             { label: 'Screenshot', value: 'screenshot' },
-            { label: 'JSON', value: 'json' }
+            { label: 'JSON', value: 'json' },
           ]
         };
       },
@@ -235,17 +245,23 @@ export const scrape = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
+    const shouldStoreInCache = propsValue.storeInCache ?? false;
     const body: Record<string, any> = {
       url: propsValue.url,
       timeout: propsValue.timeout,
+      storeInCache: shouldStoreInCache,
     };
-    
+
+    if (!shouldStoreInCache) {
+      body['maxAge'] = 0;
+    }
+
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
-    
+
     const format = propsValue.formats as string;
-    const formatsArray: any[] = []; 
+    const formatsArray: any[] = [];
 
     // user selection
     if (format === 'screenshot') {
@@ -285,15 +301,41 @@ export const scrape = createAction({
     });
 
     const result = response.body;
-    await downloadAndSaveScreenshot(result.data, context);
+    const savedScreenshot = result.data.screenshot
+      ? await saveFirecrawlFile(context, result.data.screenshot)
+      : undefined;
+    const savedPdfs = await Promise.all(
+      (result.data.actions?.pdfs ?? []).map((pdfUrl: string) =>
+        saveFirecrawlFile(context, pdfUrl)
+      )
+    );
+    const savedActionScreenshots = await Promise.all(
+      (result.data.actions?.screenshots ?? []).map((screenshotUrl: string) =>
+        saveFirecrawlFile(context, screenshotUrl)
+      )
+    );
+    const javascriptReturns = result.data.actions?.javascriptReturns ?? [];
+    const scrapes = result.data.actions?.scrapes ?? [];
 
-    // reorder the data object to put screenshot first, then user's selected format only
-    result.data = {
-      screenshot: result.data.screenshot,
-      [format]: result.data[format],
-      metadata: result.data.metadata
+    const output: { success: boolean; data: Record<string, unknown> } = {
+      success: result.success,
+      data: {
+        screenshot: savedScreenshot,
+        actions: {
+          pdfs: savedPdfs,
+          screenshots: savedActionScreenshots,
+          javascriptReturns,
+          scrapes,
+        },
+        metadata: result.data.metadata,
+        warning: result.data.warning,
+      },
     };
 
-    return result;
+    if (format !== 'screenshot') {
+      output.data[format] = result.data[format];
+    }
+
+    return output;
   },
 }); 
