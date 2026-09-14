@@ -24,6 +24,6 @@
   "devDependencies": {
     "@types/mime-types": "2.1.1",
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "4.1.11"
   }
 }
