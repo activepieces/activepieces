@@ -98,8 +98,12 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
 
 function capturingContext() {
     const captured: Record<string, unknown>[] = []
+    const logged: { fields: unknown, message: unknown }[] = []
+    const record = (fields: unknown, message: unknown) => {
+        logged.push({ fields, message })
+    }
     const logger: Record<string, unknown> = {
-        info: () => undefined, warn: () => undefined, error: () => undefined,
+        info: record, warn: record, error: record,
         debug: () => undefined, trace: () => undefined, fatal: () => undefined,
     }
     logger.child = (fields: Record<string, unknown>) => {
@@ -115,7 +119,7 @@ function capturingContext() {
         saveAgentMessages: () => Promise.resolve(),
         sendAgentEvent: () => Promise.resolve(),
     }
-    return { ctx: { apiClient, log: logger } as unknown as JobContext, captured }
+    return { ctx: { apiClient, log: logger } as unknown as JobContext, captured, logged }
 }
 
 describe('every line an agent job logs says which surface started it', () => {
@@ -131,11 +135,20 @@ describe('every line an agent job logs says which surface started it', () => {
         expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.FLOW_STEP } })
     })
 
-    it('says CHAT just as plainly, so the two can be told apart in one query', async () => {
+    it('says CHAT for a real chat job, which omits the field entirely', async () => {
         const { ctx, captured } = capturingContext()
 
-        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
+        await executeAgentRunJob.execute(ctx, buildJobData({}))
 
         expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.CHAT } })
+    })
+
+    it('keeps the source on the failure line, which is the one worth filtering', async () => {
+        const { ctx, logged } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'f1', waitpointId: 'w1' }))
+
+        const failure = logged.find((entry) => String(entry.message).includes('Agent job failed'))
+        expect(failure?.fields).toMatchObject({ agentRun: { source: AgentRunSource.FLOW_STEP } })
     })
 })
