@@ -107,6 +107,19 @@ describe('thread replies are fetched across every page', () => {
     expect(result.response_metadata?.next_cursor).toBe('loop');
   });
 
+  it('stops after 50 pages and hands back the cursor to continue from', async () => {
+    const pages: typeof repliesPages = { first: { messages: [parent], response_metadata: { next_cursor: 'c1' } } };
+    for (let index = 1; index <= 60; index += 1) {
+      pages[`c${index}`] = { messages: [{ ts: `${index}.0`, text: `reply ${index}` }], response_metadata: { next_cursor: `c${index + 1}` } };
+    }
+    repliesPages = pages;
+    const result = await retrieveThreadMessages.run(actionContext({ channel: 'C0123ABCD', threadTs: parent.ts }) as never);
+    expect(repliesCalls).toHaveLength(50);
+    expect(result.messages).toHaveLength(50);
+    expect(result.has_more).toBe(true);
+    expect(result.response_metadata?.next_cursor).toBe('c50');
+  });
+
   it('accepts a message link as the thread timestamp', async () => {
     repliesPages = { first: { messages: [parent], response_metadata: { next_cursor: '' } } };
     await retrieveThreadMessages.run(actionContext({ channel: 'C0123ABCD', threadTs: 'https://acme.slack.com/archives/C0123ABCD/p1710304378475129' }) as never);
