@@ -12,6 +12,7 @@ import { useContext, useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { LoadingSpinner } from '@/components/custom/spinner';
 import { Button } from '@/components/ui/button';
 import { pieceSelectorUtils } from '@/features/pieces';
 
@@ -27,21 +28,14 @@ const SOFT_PRIMARY_CTA_CLASSES =
   'w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20';
 
 const TestStepCTAButton = () => {
-  const [
-    selectedStep,
-    flowVersion,
-    isStepBeingTested,
-    setStepDataPanelOpen,
-    run,
-    saving,
-  ] = useBuilderStateContext((state) => [
-    state.selectedStep,
-    state.flowVersion,
-    state.isStepBeingTested,
-    state.setStepDataPanelOpen,
-    state.run,
-    state.saving,
-  ]);
+  const [selectedStep, flowVersion, setStepDataPanelOpen, run, saving] =
+    useBuilderStateContext((state) => [
+      state.selectedStep,
+      state.flowVersion,
+      state.setStepDataPanelOpen,
+      state.run,
+      state.saving,
+    ]);
 
   const currentStep = selectedStep
     ? flowStructureUtil.getStep(selectedStep, flowVersion.trigger)
@@ -54,7 +48,6 @@ const TestStepCTAButton = () => {
   const sampleDataExists = !isNil(
     currentStep.settings?.sampleData?.lastTestDate,
   );
-  const stepIsRunning = isStepBeingTested(currentStep.name);
   const onOpenPanel = () => setStepDataPanelOpen(true);
 
   if (isFlowAction(currentStep)) {
@@ -81,7 +74,6 @@ const TestStepCTAButton = () => {
     return (
       <TriggerCTAButton
         sampleDataExists={sampleDataExists}
-        stepIsRunning={stepIsRunning}
         stepIsValid={currentStep.valid !== false}
         onOpenPanel={onOpenPanel}
         saving={saving}
@@ -119,7 +111,8 @@ const ActionCTAButton = ({
   const stepIsValid = currentStep.valid !== false;
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   const runner = useActionTestRunner();
-  useConfigureStepShortcutToast(stepIsValid);
+  const runnerBusy = runner?.isTesting ?? false;
+  useConfigureStepShortcutToast(stepIsValid || runnerBusy);
 
   const fireTest = () => {
     onOpenPanel();
@@ -144,10 +137,10 @@ const ActionCTAButton = ({
     );
   }
 
-  if (sampleDataExists) {
-    const retestDisabled = saving || !stepIsValid || isLoadingDynamicProperties;
-    return (
-      <CTAShell>
+  const testDisabled = saving || !stepIsValid || isLoadingDynamicProperties;
+  return (
+    <CTAShell>
+      {sampleDataExists && (
         <Button
           variant="outline"
           onClick={onOpenPanel}
@@ -157,48 +150,36 @@ const ActionCTAButton = ({
         >
           {t('Show Data')}
         </Button>
+      )}
+      {runnerBusy ? (
+        <TestInProgressButton
+          label={t('Testing...')}
+          onOpenPanel={onOpenPanel}
+          testId="test-step-button"
+        />
+      ) : (
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
           <Button
             variant="outline"
             onClick={fireTest}
-            disabled={retestDisabled}
+            disabled={testDisabled}
             keyboardShortcut="G"
             onKeyboardShortcut={fireTest}
             className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
+            data-testid="test-step-button"
           >
             <Play className="size-4 fill-current" />
-            {t('Retest Step')}
+            {sampleDataExists ? t('Retest Step') : t('Test Step')}
           </Button>
         </TestButtonTooltip>
-      </CTAShell>
-    );
-  }
-
-  const testDisabled = !stepIsValid || saving || isLoadingDynamicProperties;
-  return (
-    <CTAShell>
-      <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
-        <Button
-          variant="outline"
-          onClick={fireTest}
-          disabled={testDisabled}
-          keyboardShortcut="G"
-          onKeyboardShortcut={fireTest}
-          className={SOFT_PRIMARY_CTA_CLASSES}
-          size="sm"
-        >
-          <Play className="size-4 fill-current" />
-          {t('Test Step')}
-        </Button>
-      </TestButtonTooltip>
+      )}
     </CTAShell>
   );
 };
 
 type TriggerCTAButtonProps = {
   sampleDataExists: boolean;
-  stepIsRunning: boolean;
   stepIsValid: boolean;
   onOpenPanel: () => void;
   saving: boolean;
@@ -207,30 +188,19 @@ type TriggerCTAButtonProps = {
 
 const TriggerCTAButton = ({
   sampleDataExists,
-  stepIsRunning,
   stepIsValid,
   onOpenPanel,
   saving,
   hasRun,
 }: TriggerCTAButtonProps) => {
-  const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   const runner = useTriggerTestRunner();
-  useConfigureStepShortcutToast(stepIsValid);
+  const runnerBusy = runner?.isTesting ?? false;
+  useConfigureStepShortcutToast(stepIsValid || runnerBusy);
 
   const fireTest = () => {
     onOpenPanel();
     runner?.fireTest();
   };
-
-  const runnerBusy = runner?.isTesting ?? false;
-  const runnerReady = runner?.canFireTest ?? false;
-  const testDisabled =
-    !stepIsValid ||
-    saving ||
-    isLoadingDynamicProperties ||
-    stepIsRunning ||
-    runnerBusy ||
-    !runnerReady;
 
   if (hasRun) {
     return (
@@ -248,9 +218,11 @@ const TriggerCTAButton = ({
     );
   }
 
-  if (sampleDataExists) {
-    return (
-      <CTAShell>
+  const runnerReady = runner?.canFireTest ?? false;
+  const testDisabled = saving || !runnerReady;
+  return (
+    <CTAShell>
+      {sampleDataExists && (
         <Button
           variant="outline"
           onClick={onOpenPanel}
@@ -260,6 +232,14 @@ const TriggerCTAButton = ({
         >
           {t('Show Data')}
         </Button>
+      )}
+      {runnerBusy ? (
+        <TestInProgressButton
+          label={t('Testing Trigger')}
+          onOpenPanel={onOpenPanel}
+          testId="test-trigger-button"
+        />
+      ) : (
         <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
           <Button
             variant="outline"
@@ -269,32 +249,13 @@ const TriggerCTAButton = ({
             onKeyboardShortcut={fireTest}
             className={SOFT_PRIMARY_CTA_CLASSES}
             size="sm"
+            data-testid="test-trigger-button"
           >
             <Play className="size-4 fill-current" />
-            {t('Retest Trigger')}
+            {sampleDataExists ? t('Retest Trigger') : t('Test Trigger')}
           </Button>
         </TestButtonTooltip>
-      </CTAShell>
-    );
-  }
-
-  return (
-    <CTAShell>
-      <TestButtonTooltip saving={saving} invalid={!stepIsValid}>
-        <Button
-          variant="outline"
-          onClick={fireTest}
-          disabled={testDisabled}
-          keyboardShortcut="G"
-          onKeyboardShortcut={fireTest}
-          className={SOFT_PRIMARY_CTA_CLASSES}
-          size="sm"
-          data-testid="test-trigger-button"
-        >
-          <Play className="size-4 fill-current" />
-          {t('Test Trigger')}
-        </Button>
-      </TestButtonTooltip>
+      )}
     </CTAShell>
   );
 };
@@ -313,6 +274,31 @@ const useConfigureStepShortcutToast = (stepIsValid: boolean) => {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [stepIsValid]);
 };
+
+type TestInProgressButtonProps = {
+  label: string;
+  onOpenPanel: () => void;
+  testId: string;
+};
+
+const TestInProgressButton = ({
+  label,
+  onOpenPanel,
+  testId,
+}: TestInProgressButtonProps) => (
+  <Button
+    variant="outline"
+    onClick={onOpenPanel}
+    keyboardShortcut="G"
+    onKeyboardShortcut={onOpenPanel}
+    className={SOFT_PRIMARY_CTA_CLASSES}
+    size="sm"
+    data-testid={testId}
+  >
+    <LoadingSpinner className="size-4 stroke-current" />
+    {label}
+  </Button>
+);
 
 const CTAShell = ({ children }: { children: React.ReactNode }) => (
   <div
