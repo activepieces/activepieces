@@ -78,6 +78,17 @@ function McpAuthorizePage() {
   });
 
   useEffect(() => {
+    if (expiresAt === null || requestExpired) {
+      return;
+    }
+    const timer = setTimeout(
+      () => setRequestExpired(true),
+      Math.max(expiresAt * 1000 - Date.now(), 0),
+    );
+    return () => clearTimeout(timer);
+  }, [expiresAt, requestExpired]);
+
+  useEffect(() => {
     const projects = projectsPage?.data ?? [];
     if (!selectedProjectId && projects.length === 1 && !searchValue) {
       setSelectedProjectId(projects[0].id);
@@ -265,6 +276,7 @@ function McpAuthorizePage() {
               variant="outline"
               className="flex-1"
               loading={denyMutation.isPending}
+              disabled={requestExpired}
               onClick={() => denyMutation.mutate({ authRequestId })}
             >
               {t('Deny')}
