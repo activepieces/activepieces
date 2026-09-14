@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/piece-scrapeless",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "type": "commonjs",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
@@ -8,6 +8,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@scrapeless-ai/sdk": "1.5.1",
+    "zod": "4.3.6",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },
