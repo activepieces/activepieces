@@ -1,4 +1,4 @@
-import { isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { safeHttp } from './safe-http'
 
@@ -18,8 +18,8 @@ export async function lookupGeneration({ apiKey, generationId }: LookupGeneratio
 function generationOf(data: GenerationData): Generation {
     return {
         costUsd: data.total_cost,
-        ...spreadIfDefined('inputTokens', data.native_tokens_prompt ?? data.tokens_prompt ?? undefined),
-        ...spreadIfDefined('outputTokens', data.native_tokens_completion ?? data.tokens_completion ?? undefined),
+        inputTokens: data.native_tokens_prompt ?? data.tokens_prompt ?? undefined,
+        outputTokens: data.native_tokens_completion ?? data.tokens_completion ?? undefined,
     }
 }
 

@@ -29,6 +29,7 @@ export { DEFAULT_MCP_MAX_RESPONSE_BYTES, DEFAULT_MCP_TIMEOUT_MS, mcpTransport } 
 export { systemUsage } from './system-usage'
 export { activepiecesAiCost } from './activepieces-ai-cost'
 export { aiUsageReportOf } from './ai-usage-report'
+export { aiCostReporter } from './ai-cost-reporter'
 export { aiProviderKeyHealth } from './ai-provider-key-health'
 export type { KeyHealthObservation } from './ai-provider-key-health'
 export { agentAiUtils } from './agent-ai-utils'

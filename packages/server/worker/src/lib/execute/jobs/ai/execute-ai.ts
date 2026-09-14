@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
@@ -103,7 +103,7 @@ async function runTextStep({ data, resolved, flowStep, billing }: { data: Execut
 
 function billingFor(data: ExecuteAiJobData): ActivepiecesAiBilling {
     return {
-        scope: ActivepiecesAiBillingScope.PROJECT,
+        source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
         platformId: data.platformId,
         projectId: data.projectId,
         flowRun: { flowId: data.flowId, flowRunId: data.flowRunId },

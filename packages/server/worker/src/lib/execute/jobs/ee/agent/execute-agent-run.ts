@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, BYOKBilling, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, BYOKBilling, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -120,7 +120,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 && !untrackedSearchWouldBeat
                 && aiUtils.supportsWebSearch(provider)
             const billing: ActivepiecesAiBilling = {
-                scope: ActivepiecesAiBillingScope.CONVERSATION,
+                source: ActivepiecesAiConsumerSource.CHAT,
                 platformId,
                 projectId: projectId ?? null,
                 conversationId,
