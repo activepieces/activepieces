@@ -28,6 +28,11 @@ function numberValidator(value: string | undefined) {
     return isValid ? true : 'Value must be a valid number'
 }
 
+function positiveNumberValidator(value: string | undefined) {
+    const parsed = Number.parseInt(value ?? '', 10)
+    return !Number.isNaN(parsed) && parsed > 0 ? true : 'Value must be a positive number'
+}
+
 function stringValidator(value: string) {
     const isValid = typeof value === 'string' && value.length > 0
     return isValid ? true : 'Value must be a non-empty string'
@@ -66,6 +71,8 @@ const systemPropValidators: {
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
+    [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: positiveNumberValidator,
+    [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: positiveNumberValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,

@@ -108,6 +108,8 @@ export type SandboxSettings = {
     FLOW_TIMEOUT_SECONDS: number
     MAX_FILE_SIZE_MB: number
     MAX_FLOW_RUN_LOG_SIZE_MB: number
+    FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?: number | undefined
+    FLOW_RUN_LOG_SLICE_THRESHOLD_KB?: number | undefined
     NETWORK_MODE: NetworkMode
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]

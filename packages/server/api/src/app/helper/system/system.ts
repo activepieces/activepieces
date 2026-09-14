@@ -38,6 +38,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '50',
+    [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: '2',
+    [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: '32',
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: '25',
     [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: '512',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
