@@ -9,7 +9,6 @@ import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { projectRepo } from '../../../project/project-repo'
 import { mapToUserWithMetaInformation, userRepo } from '../../../user/user-service'
-import { INTERNAL_CHAT_CLIENT_ID } from '../../mcp-clients'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
@@ -332,6 +331,8 @@ type TokenResponse = {
     expires_in: number
     refresh_token?: string
 }
+
+export const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 
 export type McpOAuthAccessTokenPayload = {
     sub: string

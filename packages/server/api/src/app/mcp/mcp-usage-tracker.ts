@@ -5,11 +5,11 @@ import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.
 import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { assertCreditsAndAppSumoNotExceeded, CreditUsageSource, McpCallCreditConsumptionProperties } from '../platform/billing-provider'
 import { projectService } from '../project/project-service'
-import { mcpClients } from './mcp-clients'
+import { INTERNAL_CHAT_CLIENT_ID } from './oauth/token/mcp-oauth-token.service'
 
 export const mcpUsageTracker = (log: FastifyBaseLogger) => ({
     async resolveCallBilling({ mcp, clientId }: ResolveCallBillingParams): Promise<McpCallBilling> {
-        if (!mcpClients.isExternalClient({ clientId })) {
+        if (clientId === INTERNAL_CHAT_CLIENT_ID) {
             return EXEMPT_FROM_BILLING
         }
         const platformId = await resolvePlatformId({ mcp, log })
