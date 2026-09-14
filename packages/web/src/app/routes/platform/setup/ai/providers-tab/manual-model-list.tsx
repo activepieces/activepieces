@@ -100,7 +100,7 @@ export function ManualModelList({
                     ),
                   )
                 }
-                className="rounded bg-background px-1 py-px font-sans text-[10px] uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded bg-background px-1 py-px font-sans text-xss uppercase tracking-wide text-muted-foreground transition-colors hover:text-foreground"
               >
                 {modelTypeLabel(model.modelType)}
               </button>
