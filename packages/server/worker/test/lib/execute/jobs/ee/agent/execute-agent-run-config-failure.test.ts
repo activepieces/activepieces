@@ -95,3 +95,47 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 })
+
+function capturingContext() {
+    const captured: Record<string, unknown>[] = []
+    const logger: Record<string, unknown> = {
+        info: () => undefined, warn: () => undefined, error: () => undefined,
+        debug: () => undefined, trace: () => undefined, fatal: () => undefined,
+    }
+    logger.child = (fields: Record<string, unknown>) => {
+        captured.push(fields)
+        return logger
+    }
+    const apiClient = {
+        getAgentConfig: () => Promise.reject(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: 'OPENAI', entityType: 'AIProvider' },
+        })),
+        resumeFlowStep: () => Promise.resolve(),
+        saveAgentMessages: () => Promise.resolve(),
+        sendAgentEvent: () => Promise.resolve(),
+    }
+    return { ctx: { apiClient, log: logger } as unknown as JobContext, captured }
+}
+
+describe('every line an agent job logs says which surface started it', () => {
+    it('carries the source, so a flow-step failure is not inferred from whether flowRun is present', async () => {
+        const { ctx, captured } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({
+            source: AgentRunSource.FLOW_STEP,
+            flowRunId: 'flow-run-1',
+            waitpointId: 'waitpoint-1',
+        }))
+
+        expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.FLOW_STEP } })
+    })
+
+    it('says CHAT just as plainly, so the two can be told apart in one query', async () => {
+        const { ctx, captured } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
+
+        expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.CHAT } })
+    })
+})
