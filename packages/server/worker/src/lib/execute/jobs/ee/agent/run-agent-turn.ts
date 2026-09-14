@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
@@ -12,8 +12,6 @@ const MAX_IDENTICAL_TOOL_FAILURES = 2
 const IN_LOOP_COMPACTION_THRESHOLD = 0.6
 const RUNAWAY_TURN_CONTEXT_MULTIPLE = 90
 const STREAM_RETRY_BASE_DELAY_MS = 1_000
-const QUOTA_MARKER = /insufficient_quota/i
-const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i, QUOTA_MARKER]
 const USER_FAULT_STATUS_CODES = new Set([401, 403, 404])
 const MODEL_UNAVAILABLE_PATTERNS = [/\bis deprecated\b/i, /no longer (available|supported)/i, /\bmodel_not_found\b/i, /\bunknown model\b/i, /\bdecommissioned\b/i]
 const USER_CONFIG_ENTITY_TYPES = new Set(['AIProvider', 'ChatAiProvider'])
@@ -355,10 +353,12 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
     const apiError = APICallError.isInstance(cause) ? cause : undefined
     const apError = apErrorOf(cause)
     const message = formatPieceError(cause).message
-    if (apError?.code === ErrorCode.QUOTA_EXCEEDED
+    const serverSideFault = (apiError?.statusCode ?? 0) >= 500
+    const providerText = serverSideFault ? '' : `${apiError?.responseBody ?? ''} ${message}`
+    const saysOutOfMoney = apError?.code === ErrorCode.QUOTA_EXCEEDED
         || apiError?.statusCode === 402
-        || CREDIT_ERROR_PATTERNS.some((pattern) => pattern.test(message))
-        || QUOTA_MARKER.test(apiError?.responseBody ?? '')) {
+        || isProviderBillingError(providerText)
+    if (saysOutOfMoney) {
         return 'credit'
     }
     if (isNil(apiError)) {
@@ -376,7 +376,7 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
 // Transient = worth retrying (rate limit, 5xx, timeout, dropped socket); these are exempt from the
 // repeat-breaker so the agent isn't blocked from re-trying a call that can legitimately recover.
 export function isTransientFailureText(text: string): boolean {
-    return /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|try again|econnreset|etimedout|socket hang up|service unavailable/i.test(text)
+    return isTransientProviderError(text)
 }
 
 // A "successful" but empty read — the result the agent kept re-fetching in the Attio thrash. Matched
