@@ -2,6 +2,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 
+import { ApStorage } from './ap-browser-storage';
+
 export const useNewWindow = () => {
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
@@ -31,6 +33,21 @@ export const useDefaultRedirectPath = () => {
   return '/';
 };
 
+export const pendingRedirect = {
+  remember(from: string | null) {
+    if (from) {
+      ApStorage.getInstance().setItem(PENDING_REDIRECT_KEY, from);
+    }
+  },
+  takeSignInPath(): string {
+    const from = ApStorage.getInstance().getItem(PENDING_REDIRECT_KEY);
+    ApStorage.getInstance().removeItem(PENDING_REDIRECT_KEY);
+    return from
+      ? `/sign-in?${FROM_QUERY_PARAM}=${encodeURIComponent(from)}`
+      : '/sign-in';
+  },
+};
+
 export const useRedirectAfterLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -38,3 +55,5 @@ export const useRedirectAfterLogin = () => {
   const from = searchParams.get(FROM_QUERY_PARAM) ?? defaultRedirectPath;
   return () => navigate(from);
 };
+
+const PENDING_REDIRECT_KEY = 'redirectAfterEmailVerification';
