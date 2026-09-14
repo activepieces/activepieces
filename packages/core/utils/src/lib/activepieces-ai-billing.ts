@@ -6,6 +6,16 @@ export enum ActivepiecesAiBillingScope {
     CONVERSATION = 'conversation',
 }
 
+export enum AiChargeBasis {
+    PROVIDER_REPORTED_COST = 'provider-reported-cost',
+    FIXED_CREDITS = 'fixed-credits',
+}
+
+export enum BYOKBilling {
+    ONE_CREDIT_PER_MODEL_CALL = 'one-credit-per-model-call',
+    ALREADY_CHARGED_FOR_THE_TURN = 'already-charged-for-the-turn',
+}
+
 export type ActivepiecesAiBilling =
     | { scope: ActivepiecesAiBillingScope.PLATFORM, platformId: string }
     | { scope: ActivepiecesAiBillingScope.PROJECT, platformId: string, projectId: string, flowRun?: ActivepiecesAiFlowRun }
@@ -23,9 +33,15 @@ export type ActivepiecesAiChat = {
     tier: string
 }
 
-export type ActivepiecesAiCall =
-    | { charge: 'observed-cost', generationId: string, costUsd: number, inputTokens?: number, outputTokens?: number }
-    | { charge: 'flat-credits', credits: number, generationId?: string }
+export type AiCallTokens = {
+    inputTokens?: number
+    outputTokens?: number
+}
+
+export type ActivepiecesAiCall = AiCallTokens & (
+    | { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: string, costUsd: number }
+    | { charge: AiChargeBasis.FIXED_CREDITS, credits: number, generationId?: string }
+)
 
 export type ActivepiecesAiCostEvent = {
     billing: ActivepiecesAiBilling

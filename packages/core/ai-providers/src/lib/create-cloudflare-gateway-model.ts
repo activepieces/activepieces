@@ -1,5 +1,5 @@
-import { isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
-import { BaseAIProviderAuthConfig, CloudflareGatewayProviderConfig, splitCloudflareGatewayModelId } from '@activepieces/core-piece-types'
+import { AiProviderCredentials, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils'
+import { splitCloudflareGatewayModelId } from '@activepieces/core-piece-types'
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { createOpenAI } from '@ai-sdk/openai'
@@ -9,9 +9,11 @@ import { createAiGateway } from 'ai-gateway-provider'
 
 export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage: true }): ImageModel
 export function createCloudflareGatewayModel(params: CreateCloudflareGatewayModelParams & { isImage?: false }): LanguageModel
-export function createCloudflareGatewayModel({ auth, config, modelId, isImage = false, openaiResponsesModel = false, routing = 'compat', metadata, onOutcome }: CreateCloudflareGatewayModelParams): ImageModel | LanguageModel {
-    const { apiKey } = auth as BaseAIProviderAuthConfig
-    const { accountId, gatewayId, vertexProject, vertexRegion } = config as CloudflareGatewayProviderConfig
+export function createCloudflareGatewayModel({ credentials, modelId, isImage = false, openaiResponsesModel = false, routing = 'compat', metadata, onOutcome }: CreateCloudflareGatewayModelParams): ImageModel | LanguageModel {
+    const { apiKey } = credentials.auth
+    const { vertexProject, vertexRegion } = credentials.config
+    const accountId = credentials.config.accountId ?? ''
+    const gatewayId = credentials.config.gatewayId ?? ''
     const { provider: providerPrefix, model: actualModelId, publisher } = splitCloudflareGatewayModelId(modelId)
     const headers = {
         'cf-aig-authorization': `Bearer ${apiKey}`,
@@ -90,8 +92,7 @@ export type CloudflareGatewayMetadata = {
 }
 
 export type CreateCloudflareGatewayModelParams = {
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
+    credentials: Extract<AiProviderCredentials, { provider: AIProviderName.CLOUDFLARE_GATEWAY }>
     modelId: string
     isImage?: boolean
     openaiResponsesModel?: boolean
