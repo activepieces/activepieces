@@ -33,7 +33,7 @@
   "Not published yet": "Not published yet",
   "Looking it up.": "Looking it up.",
   "Not in this project, so this step cannot run.": "Not in this project, so this step cannot run.",
-  "Not published yet, so a flow has nothing to run.": "Not published yet, so a flow has nothing to run.",
+  "Not published yet. Publish it before this flow can run.": "Not published yet. Publish it before this flow can run.",
   "Runs the published version. Editing it changes every flow using it.": "Runs the published version. Editing it changes every flow using it.",
   "Copies the tools and model. Instructions stay with the agent.": "Copies the tools and model. Instructions stay with the agent.",
   "MCP tools were left behind. Their credentials stay with the agent, so add them again here.": "MCP tools were left behind. Their credentials stay with the agent, so add them again here.",
