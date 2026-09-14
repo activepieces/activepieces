@@ -27,6 +27,7 @@ export const mergePdfs = createAction({
       description: 'File name for the merged PDF, without the extension.',
       required: false,
       defaultValue: 'merged-document',
+      advanced: true,
     }),
   },
   async run(context) {
