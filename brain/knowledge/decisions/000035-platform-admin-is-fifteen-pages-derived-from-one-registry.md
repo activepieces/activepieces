@@ -284,6 +284,27 @@ promoting them meant giving each tab its own header and extracting the banner in
 for both to call. A banner is the easy one to miss, because losing it leaves the locked tab silently empty
 rather than visibly broken.
 
+**The third shape is the dangerous one: `?tab=` is a single namespace, and a promoted page that keeps its
+own inner tab row in the URL collides with the registry.** `infra/health` reads
+`searchParams.get('tab')` for its `system | runs | queue` row and `infra/workers` for its
+`health | worker-groups` row. Once Infrastructure became a tabbed registry page the router started writing
+`?tab=health`, the page read that same param, matched none of its own panels, and rendered a tab row with
+nothing under it. Worse, clicking an inner tab writes `?tab=runs`, which is not an Infrastructure tab id,
+so the route's unknown-tab guard redirects to the bare path and ejects you to the overview. Triggers and
+Configurations survived only because they have no inner tabs.
+
+Grep the page for `searchParams.get('tab')` before promoting it. **The registry owns `?tab=`; a promoted
+page's own row moves to `?view=`**, exported as `VIEW_QUERY_PARAM` from `admin-pages.ts` so the contract
+sits beside the thing that claims the other half. Promoting the inner tabs instead was the alternative and
+was rejected: it puts six children under one parent, which is what the collapse existed to avoid. Fixed for
+Health and Workers on 2026-09-14; old inner-tab deep links like `?tab=runs` now land on the parent overview
+rather than a blank page.
+
+Both pages had reached for the param with `searchParams.get('tab') as TabValue`, and that cast is what let
+`'health'` through as a legal value of a `system | runs | queue` union. A `parseTabValue` guard that falls
+back to the default is what makes an unknown param render the first panel instead of nothing, which is the
+difference between a wrong link looking wrong and looking broken. The repo bans `as` casts for exactly this.
+
 **A parent crown is the AND of its tabs**, since `isCrowned` returns true only when every visible tab is
 locked. A page whose tabs share one plan flag therefore has to repeat that flag on each tab to keep the
 crown it had as a single item: `Pieces` carries `managePiecesEnabled` on both of its.

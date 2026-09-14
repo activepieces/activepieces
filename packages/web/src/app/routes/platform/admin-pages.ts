@@ -629,6 +629,8 @@ export type AdminPage = {
   teaser?: FeatureTeaserProps;
 };
 
+export const VIEW_QUERY_PARAM = 'view';
+
 export type AdminNavPage = AdminPage & { nav: AdminPageNav };
 
 export type AdminRedirect = {
