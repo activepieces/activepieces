@@ -196,6 +196,7 @@ export type CreateWaitpointParams = {
   version?: 'V0' | 'V1';
   resumeDateTime?: string;
   responseToSend?: RespondResponse;
+  maxTestWaitMs?: number;
 };
 
 export type CreateWaitpointResult = {
