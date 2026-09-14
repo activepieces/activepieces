@@ -7,6 +7,8 @@ import { describeWithAuth } from '../../../helpers/describe-with-auth'
 import {
     createMockCell,
     createMockField,
+    createMockFolder,
+    createMockProject,
     createMockRecord,
     createMockTable,
 } from '../../../helpers/mocks'
@@ -40,6 +42,23 @@ describe('Table API', () => {
             expect(body.projectId).toBe(ctx.project.id)
             expect(body.id).toBeDefined()
             expect(body.externalId).toBeDefined()
+        })
+
+        it('should reject creating a table in a folder from another project', async () => {
+            const ctx = await setup()
+
+            const otherProject = createMockProject({ platformId: ctx.platform.id, ownerId: ctx.user.id })
+            await db.save('project', otherProject)
+            const foreignFolder = createMockFolder({ projectId: otherProject.id })
+            await db.save('folder', foreignFolder)
+
+            const response = await ctx.post('/v1/tables', {
+                projectId: ctx.project.id,
+                name: 'My Table',
+                folderId: foreignFolder.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
 
         it('should create a table with initial fields', async () => {
