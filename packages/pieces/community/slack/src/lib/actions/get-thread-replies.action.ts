@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
-import { processMessageTimestamp } from '../common/utils';
+import { fetchAllThreadReplies, processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { threadRepliesActionOutputSchema } from '../output-schemas';
 
@@ -38,9 +38,6 @@ export const slackGetThreadRepliesAiAction = createAction({
     if (!messageTimestamp) {
       throw new Error('Invalid Timestamp Value.');
     }
-    return await client.conversations.replies({
-      channel: propsValue.channel,
-      ts: messageTimestamp,
-    });
+    return await fetchAllThreadReplies({ client, channel: propsValue.channel, ts: messageTimestamp });
   },
 });

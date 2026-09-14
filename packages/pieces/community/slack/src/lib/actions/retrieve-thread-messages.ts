@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
 import { WebClient } from '@slack/web-api';
 import { singleSelectChannelInfo, slackChannel } from '../common/props';
-import { processMessageTimestamp } from '../common/utils';
+import { fetchAllThreadReplies, processMessageTimestamp } from '../common/utils';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { threadRepliesActionOutputSchema } from '../output-schemas';
 
@@ -32,28 +32,6 @@ export const retrieveThreadMessages = createAction({
       throw new Error('Invalid Timestamp Value.');
     }
 
-    const firstPage = await client.conversations.replies({
-      channel: propsValue.channel,
-      ts: messageTimestamp,
-      limit: 200,
-    });
-
-    const messages = [...(firstPage.messages ?? [])];
-    let cursor = firstPage.response_metadata?.next_cursor;
-
-    while (cursor) {
-      const page = await client.conversations.replies({
-        channel: propsValue.channel,
-        ts: messageTimestamp,
-        limit: 200,
-        cursor,
-      });
-      if (page.messages) {
-        messages.push(...page.messages);
-      }
-      cursor = page.response_metadata?.next_cursor;
-    }
-
-    return { ...firstPage, messages, has_more: false };
+    return await fetchAllThreadReplies({ client, channel: propsValue.channel, ts: messageTimestamp });
   },
 });

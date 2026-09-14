@@ -1,5 +1,4 @@
 import {
-  MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -24,11 +23,6 @@ export const newMention = createTrigger({
     info: multiSelectChannelInfo,
     users: userIds,
     usergroups: usergroupIds,
-    targetInfo: Property.MarkDown({
-      value:
-        'Pick at least one user or user group, or the trigger never fires.',
-      variant: MarkdownVariant.WARNING,
-    }),
     channels: Property.MultiSelectDropdown({
       auth: slackAuth,
       displayName: 'Channels',
@@ -70,6 +64,11 @@ export const newMention = createTrigger({
   sampleData: undefined,
   outputSchema: newMentionTriggerOutputSchema,
   onEnable: async (context) => {
+    const users = context.propsValue.users ?? [];
+    const usergroups = context.propsValue.usergroups ?? [];
+    if (users.length === 0 && usergroups.length === 0) {
+      throw new Error('Pick at least one user or user group; with both empty this trigger never fires.');
+    }
     const teamId = await getTeamId(context.auth as SlackAuthValue);
     context.app.createListeners({
       events: ['message'],
