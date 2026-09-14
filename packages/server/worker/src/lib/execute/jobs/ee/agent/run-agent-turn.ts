@@ -369,10 +369,8 @@ export function classifyAgentRunError({ error, provider }: { error: unknown, pro
     if (apiError.statusCode === 400 && provider !== AIProviderName.ACTIVEPIECES && MODEL_UNAVAILABLE_PATTERNS.some((pattern) => pattern.test(message))) {
         return 'user'
     }
-    return USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0)
-        && (apiError.statusCode === 404 || provider !== AIProviderName.ACTIVEPIECES)
-        ? 'user'
-        : 'internal'
+    const blamesTheUser = USER_FAULT_STATUS_CODES.has(apiError.statusCode ?? 0) && provider !== AIProviderName.ACTIVEPIECES
+    return blamesTheUser ? 'user' : 'internal'
 }
 
 // Transient = worth retrying (rate limit, 5xx, timeout, dropped socket); these are exempt from the
