@@ -123,6 +123,7 @@ export type GetAgentConfigRequest = {
     userId: string
     source?: AgentRunSource
     messageSource?: 'onboarding'
+    agentId?: string
     projectId?: string | null
     userMessage: string
     modelName: string | null

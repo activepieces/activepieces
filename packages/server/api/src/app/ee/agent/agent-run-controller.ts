@@ -53,7 +53,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 ...spreadIfDefined('provider', request.body.provider),
                 ...spreadIfDefined('providerConfigId', providerConfigId),
             }
-            : agentHelpers.jobFieldsFromConfig({ config: linked })
+            : agentHelpers.jobFieldsFromConfig({ config: linked.config })
         const { tools, structuredOutput, provider } = runFields
         const supportedToolTypes = [AgentToolType.PIECE, AgentToolType.MCP, AgentToolType.FLOW, AgentToolType.KNOWLEDGE_BASE]
         const supportedTools = (tools ?? []).filter((tool) => supportedToolTypes.includes(tool.type))
@@ -101,6 +101,7 @@ export const agentRunController: FastifyPluginAsyncZod = async (app) => {
                 flowRunId,
                 waitpointId,
                 flowTools,
+                ...spreadIfDefined('agentId', linked?.id),
                 ...runFields,
                 tools: supportedTools,
             },
@@ -121,7 +122,7 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     flowRunId: string
     waitpointId: string
     log: FastifyBaseLogger
-}): Promise<AgentConfig> {
+}): Promise<{ id: string, config: AgentConfig }> {
     const flowRun = await flowRunService(log).getOneOrThrow({ id: flowRunId, projectId })
     const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
     if (isNil(waitpoint)) {
@@ -146,7 +147,7 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     if (isNil(agent.published)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: `Publish "${agent.displayName}" before a flow can run it: a flow runs the published version, so there is nothing to run yet.` } })
     }
-    return agent.published
+    return { id: agent.id, config: agent.published }
 }
 
 async function releaseWaitpointClaim({ waitpointId }: { waitpointId: string }): Promise<void> {
