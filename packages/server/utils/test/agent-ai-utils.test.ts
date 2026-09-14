@@ -437,16 +437,30 @@ describe('a message transform never hands the provider an empty history', () => 
         { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
     ]
 
-    it('keeps the turn when stripping reasoning would leave nothing, since no messages is a hard 400', () => {
+    it('sends a plain nudge rather than nothing when stripping reasoning empties the turn', () => {
         const stripped = agentAiUtils.stripThinkingBlocks(onlyThinking, AIProviderName.ANTHROPIC)
 
-        expect(stripped.length).toBeGreaterThan(0)
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
+        expect(JSON.stringify(stripped)).not.toContain('reasoning')
     })
 
-    it('keeps the turn when the truncated tail is the only message there is', () => {
+    it('does the same for a truncated tail, rather than replaying a message that cannot be replayed', () => {
         const sanitized = sanitizeTruncatedAssistantTail(onlyThinking)
 
-        expect(sanitized.length).toBeGreaterThan(0)
+        expect(sanitized).toHaveLength(1)
+        expect(sanitized[0].role).toBe('user')
+        expect(JSON.stringify(sanitized)).not.toContain('reasoning')
+    })
+
+    it('never replays an unresolved tool call as the last thing the model sees', () => {
+        const danglingCall: ModelMessage[] = [
+            { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'never-answered', toolName: 'ap_web_search', input: {} }] } as unknown as ModelMessage,
+        ]
+
+        const sanitized = sanitizeTruncatedAssistantTail(danglingCall)
+
+        expect(JSON.stringify(sanitized)).not.toContain('never-answered')
     })
 
     it('still drops a spent reasoning message when a real one survives beside it', () => {

@@ -184,11 +184,13 @@ function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName
             return { ...msg, content: filtered }
         })
         .filter((msg): msg is ModelMessage => msg !== null)
-    return keepAtLeastOne({ transformed: stripped, original: messages })
+    return keepAtLeastOne({ transformed: stripped })
 }
 
-function keepAtLeastOne({ transformed, original }: { transformed: ModelMessage[], original: ModelMessage[] }): ModelMessage[] {
-    return transformed.length === 0 ? original : transformed
+const CONTINUATION_NUDGE: ModelMessage = { role: 'user', content: 'Continue.' }
+
+function keepAtLeastOne({ transformed }: { transformed: ModelMessage[] }): ModelMessage[] {
+    return transformed.length === 0 ? [CONTINUATION_NUDGE] : transformed
 }
 
 function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
@@ -215,7 +217,7 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
 
     const head = messages.slice(0, -1)
     if (sanitizedParts.length === 0) {
-        return keepAtLeastOne({ transformed: head, original: messages })
+        return keepAtLeastOne({ transformed: head })
     }
     if (sanitizedParts.length === last.content.length) {
         return messages
