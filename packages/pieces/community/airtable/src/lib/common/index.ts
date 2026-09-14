@@ -315,6 +315,7 @@ async function updateRecord({
     },
     body: {
       fields,
+      typecast: true,
     },
   };
 

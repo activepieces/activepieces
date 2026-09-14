@@ -20,9 +20,11 @@ If you assign projects to worker groups, keep at least one worker online per ass
 
 Find Record used to return only the first page Airtable sent back, 100 records, and silently dropped the rest. It now follows Airtable's paging and returns up to 1000 matching records. The Record dropdown on Get Record by ID listed the first 50 records of a table; it now lists up to 500.
 
+Update Record and Clean Record now send `typecast: true`, as Create Record always has. Airtable then converts text into the field's type instead of rejecting it: a date typed as text is parsed, a select value that does not exist yet is created as a new option, and a linked-record name is resolved to the record. Before, those requests failed with `INVALID_VALUE_FOR_COLUMN`.
+
 #### What you need to do
 
-Nothing to configure or migrate. Review flows that loop over Find Record's output or count its rows: a search that matched more than 100 records now returns more rows than before, and each extra page is one more request against Airtable's limit of 5 requests per second per base.
+Nothing to configure or migrate. Check any Update Record or Clean Record step that writes to a single-select or multiple-select field: a value that used to fail because the option did not exist now creates that option in Airtable. Review flows that loop over Find Record's output or count its rows: a search that matched more than 100 records now returns more rows than before, and each extra page is one more request against Airtable's limit of 5 requests per second per base.
 
 #### The legacy product-embed connection-key and app-credential endpoints are removed
 
