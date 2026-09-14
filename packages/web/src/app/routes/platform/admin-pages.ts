@@ -204,7 +204,6 @@ export const ADMIN_PAGES: AdminPage[] = [
       group: 'workspace',
       label: 'Projects',
       icon: LayoutGridIcon,
-      isLocked: ({ plan }) => plan.billedTeamProjectsLimit === 0,
     },
   },
   {
@@ -332,7 +331,6 @@ export const ADMIN_PAGES: AdminPage[] = [
         label: 'Pieces',
         component: PiecesListTab,
         hideInNav: true,
-        isLocked: ({ plan }) => !plan.managePiecesEnabled,
       },
       {
         id: 'piece-sets',

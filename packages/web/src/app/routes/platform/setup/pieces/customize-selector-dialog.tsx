@@ -8,6 +8,7 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   ChevronDownIcon,
+  Crown,
   EyeIcon,
   EyeOffIcon,
   GripVerticalIcon,
@@ -74,7 +75,11 @@ export const CustomizeSelectorDialog = ({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="outline" size="sm" disabled={!isEnabled}>
-          <Settings2Icon className="size-4 mr-2" />
+          {isEnabled ? (
+            <Settings2Icon className="size-4 mr-2" />
+          ) : (
+            <Crown className="size-4 mr-2 shrink-0 text-primary" />
+          )}
           {t('Customize Selector')}
         </Button>
       </SheetTrigger>

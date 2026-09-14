@@ -222,6 +222,10 @@ Four pages now hand-roll the same searchParams dance, three with an unsafe cast.
   leave an empty greyed table reading as broken.
 - **Crown only when the whole page is gated.** A crown on `Users & access` when only SCIM is paid would be a
   lie, because Members works. Bundling gated tabs beside free ones is what drops thirteen markers to three.
+  `Projects` and `Pieces` shipped breaking this and were corrected on 2026-09-14: both pages load and read
+  fine unpaid, and only one control on each is gated, so the page-level `isLocked` came off and the crown
+  moved onto `New Project` and `Customize Selector`. The test is whether a person who cannot pay still has
+  a reason to open the page. If yes, the sidebar stays clean and the control carries the mark.
 - **Four PRs, each reviewing one idea.** PR #14330 reverted the last big navigation rework, but that revert
   touched **zero** platform-admin files: 106 files across global search, the builder canvas and the dashboard
   sidebar. Its real lesson is that it bundled a navigation model change with unrelated surfaces, so nothing
