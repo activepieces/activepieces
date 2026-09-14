@@ -98,6 +98,26 @@ describe('classifyAgentRunError', () => {
         expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.OPENAI)).toBe('user')
     })
 
+    it('reads a billing exhaustion out of a 429 even when the provider only has one word for it', () => {
+        const googleBilling = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Billing has not been enabled for this project","details":[{"quotaValue":"0"}]}}',
+        })
+
+        expect(classify(googleBilling, AIProviderName.GOOGLE)).toBe('credit')
+    })
+
+    it('still treats an ordinary per-minute 429 as something to retry, not a bill to pay', () => {
+        const googleThrottle = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Quota exceeded for quota metric Generate Content API requests per minute"}}',
+        })
+
+        expect(classify(googleThrottle, AIProviderName.GOOGLE)).not.toBe('credit')
+    })
+
     it('reads billing exhaustion out of a 429 body, which the provider marks retryable', () => {
         expect(classify(apiError({ statusCode: 429, message: 'quota', responseBody: '{"code":"insufficient_quota"}' }))).toBe('credit')
     })
