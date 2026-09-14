@@ -68,21 +68,23 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
   const stillFindingIt = isLoading && !isNil(linkedExternalId);
   const linkedConfig = linkedAgent?.published ?? linkedAgent?.draft;
 
-  const instructionsPreview = linkedConfig?.instructions?.trim();
-  const summaryText = linkedAgent?.description?.trim() || instructionsPreview;
-  const cannotRun = !stillFindingIt && (isNil(linked) || !linked.isPublished);
+  const summaryText =
+    linkedAgent?.description?.trim() || linkedConfig?.instructions?.trim();
+  const blockedReason = stillFindingIt
+    ? undefined
+    : isNil(linked)
+    ? t('Not in this project, so this step cannot run.')
+    : !linked.isPublished
+    ? t('Not published yet. Publish it before this flow can run.')
+    : undefined;
   const modelLabel = linkedConfig?.modelName ?? undefined;
-  const toolChips = [
-    ...new Set(
-      (linked?.toolPieceNames ?? []).map((pieceName) =>
-        pieceName.replace('@activepieces/piece-', ''),
-      ),
+  const toolPieces = new Set(
+    (linked?.toolPieceNames ?? []).map((pieceName) =>
+      pieceName.replace('@activepieces/piece-', ''),
     ),
-  ].slice(0, MAX_TOOL_CHIPS);
-  const hiddenToolCount = Math.max(
-    new Set(linked?.toolPieceNames ?? []).size - toolChips.length,
-    0,
   );
+  const toolChips = [...toolPieces].slice(0, MAX_TOOL_CHIPS);
+  const hiddenToolCount = toolPieces.size - toolChips.length;
 
   if (!agentsAvailable || !mayReadAgents) {
     return null;
@@ -195,7 +197,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
         </PermissionNeededTooltip>
       ) : (
         <div className="flex flex-col gap-2.5 rounded-lg border p-3">
-          {!isNil(summaryText) && (
+          {summaryText && (
             <TextWithTooltip tooltipMessage={summaryText}>
               <p className="line-clamp-2 text-xs text-muted-foreground">
                 {summaryText}
@@ -226,18 +228,15 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
           <p
             className={cn(
               'text-xs',
-              cannotRun
-                ? 'text-warning-700 dark:text-warning-300'
-                : 'text-muted-foreground',
+              isNil(blockedReason)
+                ? 'text-muted-foreground'
+                : 'text-warning-700 dark:text-warning-300',
             )}
           >
-            {stillFindingIt
-              ? t('Looking it up.')
-              : isNil(linked)
-              ? t('Not in this project, so this step cannot run.')
-              : !linked.isPublished
-              ? t('Not published yet. Publish it before this flow can run.')
-              : t('Shared with every flow that uses it.')}
+            {blockedReason ??
+              (stillFindingIt
+                ? t('Looking it up.')
+                : t('Shared with every flow that uses it.'))}
           </p>
 
           <div className="flex flex-wrap items-center gap-2">

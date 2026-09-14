@@ -21,7 +21,9 @@ export const TextWithTooltip = ({
   const textRef = useRef<HTMLDivElement>(null);
   const [isTruncated, setIsTruncated] = useState(false);
 
-  const clampsItsOwnLines = clampedLines(children.props.className);
+  const clampsItsOwnLines = /\bline-clamp-\d+\b/.test(
+    children.props.className ?? '',
+  );
 
   const checkTruncation = useCallback(() => {
     const element = textRef.current;
@@ -64,7 +66,3 @@ export const TextWithTooltip = ({
     </TooltipProvider>
   );
 };
-
-function clampedLines(className: string | undefined): boolean {
-  return /\bline-clamp-\d+\b/.test(className ?? '');
-}

@@ -143,7 +143,7 @@ export const flowHooks = {
         }
         const apError = error.response.data as ApErrorParams;
         if (apError.code === ErrorCode.TRIGGER_UPDATE_STATUS) {
-          const params = apError.params as Record<string, string>;
+          const params = apError.params;
           const reportedError = triggerStatusErrorUtils.describeStandardError(
             params.standardError,
           );
@@ -192,7 +192,7 @@ export const flowHooks = {
               ? t('Publish failed')
               : t('Status update failed'),
             {
-              description: (apError.params as { message?: string }).message,
+              description: apError.params.message,
               duration: 8000,
             },
           );
