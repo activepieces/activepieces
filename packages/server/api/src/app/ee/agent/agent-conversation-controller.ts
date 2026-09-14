@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -6,6 +6,7 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { securityHelper } from '../../helper/security-helper'
 import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -46,10 +47,12 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
     })
 
     app.get('/conversations/runs', ListAgentRunsRoute, async (request) => {
+        const readerId = await securityHelper.getUserIdFromRequest(request)
+        assertNotNullOrUndefined(readerId, 'userId')
         await agentService(request.log).getOneOrThrow({
             id: request.query.agentId,
             projectId: request.projectId,
-            userId: request.principal.id,
+            userId: readerId,
         })
         return agentConversationService(request.log).listAgentRuns({
             projectId: request.projectId,
@@ -437,7 +440,7 @@ const ListConversationsRoute = {
 const ListAgentRunsRoute = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE],
+            CHAT_PRINCIPALS,
             Permission.READ_AGENT,
             { type: ProjectResourceType.QUERY },
         ),
