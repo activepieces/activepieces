@@ -1,7 +1,9 @@
+import { TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { SendIcon } from '@/components/icons/send';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 
@@ -47,6 +49,7 @@ export const RequestTrial = ({
 }: RequestTrialProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
   const { data: flags } = flagsHooks.useFlags();
+  const { capture } = useTelemetry();
 
   const createQueryParams = () => {
     const params = {
@@ -62,12 +65,17 @@ export const RequestTrial = ({
       .join('&');
   };
 
-  const handleClick = () =>
+  const handleClick = () => {
+    capture({
+      name: TelemetryEventName.SALES_HANDOFF_CLICKED,
+      payload: { featureKey, surface: 'locked_feature' },
+    });
     window.open(
       `https://www.activepieces.com/sales?${createQueryParams()}`,
       '_blank',
       'noopener noreferrer',
     );
+  };
 
   return (
     <AnimatedIconButton

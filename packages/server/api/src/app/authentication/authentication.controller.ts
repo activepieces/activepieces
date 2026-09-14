@@ -101,6 +101,17 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                 action: ApplicationEventName.USER_SIGNED_UP,
                 data: {},
             })
+            rejectedPromiseHandler(telemetry(request.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.ONBOARDING_COMPLETED,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
+                },
+            }), request.log)
         }
 
         return response
