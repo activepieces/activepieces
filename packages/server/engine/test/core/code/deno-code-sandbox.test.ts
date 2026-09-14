@@ -52,6 +52,14 @@ describe('denoCodeSandbox permission boundary', () => {
                 .rejects.toThrow(PERMISSION_DENIED)
         })
 
+        it('with the ENV permission exposes only PATH, never the engine env', async () => {
+            const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+            const codeFilePath = path.join(stepDir, 'index.js')
+            await writeFile(codeFilePath, `exports.code = async () => ({ keys: Object.keys(Deno.env.toObject()), missing: process.env.AP_EXECUTION_MODE ?? null })`)
+            const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+            expect(result).toEqual({ keys: ['PATH'], missing: null })
+        })
+
         it('rejects the symlink escape (link inside dir -> outside, read through it)', async () => {
             await expect(runModule(`export const code = async () => {
                 await Deno.symlink('/etc/passwd', './escape')
