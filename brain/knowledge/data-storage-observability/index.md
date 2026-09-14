@@ -60,6 +60,14 @@ The web stashes the marketing params a visitor arrived with (`utm_*`, `gclid`, `
 Gotchas:
 - The Google `USER_SIGNED_UP` audit event is gated on `signedUp` too; before that it fired on every login.
 - SAML users are never stamped: they are provisioned by their platform admin, not by a campaign link.
+### Product Lifecycle Telemetry
+
+Server-side PostHog events for the moments between sign-up and payment: `onboarding.completed` (name step done), `invite.sent` / `invite.accepted`, `checkout.started`, `plan.upgraded`, `plan.cancelled`, `plan.reactivated`, `trial.started`, plus `flow.published` from the service so API and approval publishes count too. Billing events are emitted by `platform-plan-telemetry.ts`; the entitlement refresh in `autumn-utils.ts` compares the plan before and after and emits `trial.started` or `plan.upgraded` when it changed, skipping free plans (`FREE`, `FREE_LEGACY`, `APPSUMO`). Platforms are PostHog groups (`groupIdentify`, type `platform`) set on creation and refreshed on plan change. Every event, person and group carries `deployment` (`DeploymentKind`: cloud, self_hosted, dev) because self-hosted instances report into the same project.
+
+Gotchas:
+- Pre-login email-code events are keyed by the identity id; `aliasIdentity` merges that person into the user once the user exists, and `trackForIdentity` in `passwordless-auth.service.ts` switches to the user id as soon as one exists for identity+platform.
+- Billing and onboarding events are in `CLOUD_ONLY_TELEMETRY_EVENTS`; the tracked-events catalog on the platform settings page hides groups whose events are all cloud-only, so `billing` never shows on self-hosted.
+- In a development environment the web sends nothing to PostHog unless `localStorage.ap_posthog_dev` is `'1'`.
 
 ### Flow Failure Alerts (EE)
 
