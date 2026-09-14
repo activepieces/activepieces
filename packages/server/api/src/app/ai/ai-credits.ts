@@ -1,3 +1,4 @@
+import { AiChargeBasis } from '@activepieces/core-utils'
 import { AiUsageCharge } from '@activepieces/shared'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -7,14 +8,14 @@ export function chargeFor({ usage, toolCalls = 0 }: { usage: AiUsageCharge, tool
 }
 
 function creditsForModelCall(usage: AiUsageCharge): number {
-    if (usage.type === 'flat-credits') {
+    if (usage.type === AiChargeBasis.FIXED_CREDITS) {
         return usage.credits
     }
     return usage.costUsd / dollarsPerCredit()
 }
 
 export function costBasisOf(usage: AiUsageCharge): CostBasis | undefined {
-    if (usage.type !== 'observed-cost') {
+    if (usage.type !== AiChargeBasis.PROVIDER_REPORTED_COST) {
         return undefined
     }
     return { costUsd: usage.costUsd, creditUsdValue: dollarsPerCredit() }

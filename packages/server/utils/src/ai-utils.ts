@@ -1,14 +1,15 @@
-import { ActivepiecesAiBilling, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
+import { ActivepiecesAiBilling, AIProviderName, BYOKBilling, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, BaseAIProviderAuthConfig, getEffectiveProviderAndModel } from '@activepieces/shared';
-import { createAnthropic } from '@ai-sdk/anthropic'
+import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, AIWebSearchMode, getEffectiveProviderAndModel } from '@activepieces/shared';
+import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { createOpenAI } from '@ai-sdk/openai'
+import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
+import { createOpenAI, openai } from '@ai-sdk/openai'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
 import { EmbeddingModel, ImageModel, LanguageModel, ToolSet } from 'ai'
-import { billedLanguageModel, OwnKeyCredit } from './activepieces-ai-cost'
+import { billedEmbeddingModel, billedLanguageModel } from './activepieces-ai-cost'
+import { keyHealthReporterFor } from './ai-provider-key-health'
 
 const DEFAULT_WEB_SEARCH_RESULTS = 5
 const MIN_OPENROUTER_WEB_SEARCH_RESULTS = 1
@@ -19,6 +20,7 @@ const OPENAI_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
 }
 
 const REPORT_WHAT_THE_CALL_COST = { usage: { include: true } } as const
+const EMBEDDING_REPORTS_WHAT_IT_COST = { extraBody: { usage: { include: true } } } as const
 
 const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
     openrouter: { dimensions: EMBEDDING_DIMENSIONS },
@@ -26,45 +28,43 @@ const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
 }
 
 const NATIVE_WEB_SEARCH_TOOLS: Record<string, (params: NativeWebSearchToolParams) => ToolSet> = {
-    [AIProviderName.ANTHROPIC]: ({ auth: { apiKey }, options }) => ({
-        web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({
+    [AIProviderName.ANTHROPIC]: ({ options }) => ({
+        web_search: anthropic.tools.webSearch_20250305({
             maxUses: options.maxUses ?? DEFAULT_WEB_SEARCH_RESULTS,
             ...spreadIfDefined('userLocation', buildUserLocation(options)),
             ...spreadIfDefined('allowedDomains', allowedSearchDomains(options)),
             ...spreadIfDefined('blockedDomains', blockedSearchDomains(options)),
         }),
     }),
-    [AIProviderName.OPENAI]: ({ auth: { apiKey }, options }) => ({
-        web_search_preview: createOpenAI({ apiKey }).tools.webSearchPreview({
+    [AIProviderName.OPENAI]: ({ options }) => ({
+        web_search_preview: openai.tools.webSearchPreview({
             ...spreadIfDefined('searchContextSize', options.searchContextSize),
             ...spreadIfDefined('userLocation', buildUserLocation(options)),
         }),
     }),
-    [AIProviderName.GOOGLE]: ({ auth: { apiKey } }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
+    [AIProviderName.GOOGLE]: () => ({ google_search: google.tools.googleSearch({}) }),
 }
 
 function supportsWebSearch(provider: AIProviderName): boolean {
     return AI_PROVIDER_CAPABILITIES[provider].webSearch !== undefined
 }
 
-function buildWebSearchTools({ provider, model, auth, options = {} }: {
+function buildWebSearchTools({ provider, model, options = {} }: {
     provider: AIProviderName
     model?: string
-    auth: Record<string, unknown>
     options?: WebSearchOptions
 }): ToolSet {
     const { provider: searchProvider } = getEffectiveProviderAndModel({ provider, model })
-    return NATIVE_WEB_SEARCH_TOOLS[searchProvider ?? provider]?.({ auth: auth as BaseAIProviderAuthConfig, options }) ?? {}
+    return NATIVE_WEB_SEARCH_TOOLS[searchProvider ?? provider]?.({ options }) ?? {}
 }
 
 function webSearchModeOf(provider: AIProviderName): AIWebSearchMode | undefined {
     return AI_PROVIDER_CAPABILITIES[provider].webSearch
 }
 
-function buildWebSearchToolsOrThrow({ provider, model, auth, webSearchEnabled, options = {} }: {
+function buildWebSearchToolsOrThrow({ provider, model, webSearchEnabled, options = {} }: {
     provider: AIProviderName
     model?: string
-    auth: Record<string, unknown>
     webSearchEnabled: boolean
     options?: WebSearchOptions
 }): ToolSet {
@@ -79,7 +79,7 @@ function buildWebSearchToolsOrThrow({ provider, model, auth, webSearchEnabled, o
     if (isNil(NATIVE_WEB_SEARCH_TOOLS[resolvedProvider])) {
         throw new Error(`Provider ${resolvedProvider} is not supported for web search`)
     }
-    return buildWebSearchTools({ provider, model, auth, options })
+    return buildWebSearchTools({ provider, model, options })
 }
 
 function buildUserLocation(options: WebSearchOptions): UserLocation | undefined {
@@ -126,28 +126,40 @@ function openRouterWebSearchResults(options?: WebSearchOptions): number {
     )
 }
 
-function createModel({ provider, auth, config, modelId, metadata, flowStep, billing, ownKeyCredit, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, onOutcome }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
+function createModel({ credentials, modelId, metadata, flowStep, billing, byokBilling, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId }: {
+    credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
     billing?: ActivepiecesAiBilling
-    ownKeyCredit?: OwnKeyCredit
+    byokBilling?: BYOKBilling
     openaiResponsesModel?: boolean
     webSearchEnabled?: boolean
     webSearchOptions?: WebSearchOptions
-    onOutcome?: ProviderOutcomeReporter
+    platformId?: string
+    providerConfigId?: string
 }): LanguageModel {
-    const model = buildModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome })
-    return billedLanguageModel({ model, provider, modelId, billing, ...spreadIfDefined('ownKeyCredit', ownKeyCredit) })
+    const model = buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome: keyHealthReporterFor({ platformId, providerConfigId }) })
+    return billedLanguageModel({
+        model,
+        provider: credentials.provider,
+        modelId,
+        billing,
+        ...spreadIfDefined('byokBilling', byokBilling),
+        ...spreadIfDefined('apiKey', managedApiKey(credentials)),
+    })
 }
 
-function buildModel({ provider, auth, config, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
+function managedApiKey(credentials: AiProviderCredentials): string | undefined {
+    if (credentials.provider !== AIProviderName.ACTIVEPIECES) {
+        return undefined
+    }
+    const { apiKey } = credentials.auth
+    return isNil(apiKey) || apiKey.length === 0 ? undefined : apiKey
+}
+
+function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome }: {
+    credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
@@ -156,10 +168,10 @@ function buildModel({ provider, auth, config, modelId, metadata, flowStep, opena
     webSearchOptions?: WebSearchOptions
     onOutcome?: ProviderOutcomeReporter
 }): LanguageModel {
-    if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+    const { provider } = credentials
+    if (credentials.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         return createCloudflareGatewayModel({
-            auth,
-            config,
+            credentials,
             modelId,
             openaiResponsesModel,
             routing: isNil(flowStep) ? 'compat' : 'submodel',
@@ -168,9 +180,7 @@ function buildModel({ provider, auth, config, modelId, metadata, flowStep, opena
         })
     }
     return createLanguageModel({
-        provider,
-        auth,
-        config,
+        credentials,
         modelId,
         options: {
             openRouterSettings: openRouterModelSettings({ provider, webSearchEnabled, options: webSearchOptions }),
@@ -201,29 +211,21 @@ function flowStepMetadataHeaders(flowStep?: FlowStepMetadata): Record<string, st
     }
 }
 
-function createModelForImages({ provider, auth, config, modelId, flowStep }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
+function createModelForImages({ credentials, modelId, flowStep }: {
+    credentials: AiProviderCredentials
     modelId: string
     flowStep?: FlowStepMetadata
 }): ImageModel | undefined {
-    if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+    if (credentials.provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         return createCloudflareGatewayModel({
-            auth,
-            config,
+            credentials,
             modelId,
             isImage: true,
             routing: isNil(flowStep) ? 'compat' : 'submodel',
             ...spreadIfDefined('metadata', cloudflareGatewayMetadata(flowStep)),
         })
     }
-    return createImageModel({ provider, auth, config, modelId })
-}
-
-function readStringField(source: Record<string, unknown>, key: string): string {
-    const value = source[key]
-    return typeof value === 'string' ? value : ''
+    return createImageModel({ credentials, modelId })
 }
 
 function toStorageEmbedding(embedding: number[]): number[] {
@@ -235,36 +237,49 @@ function toStorageEmbedding(embedding: number[]): number[] {
     return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
 }
 
-function createEmbeddingModel({ provider, auth, config, onOutcome }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
-    onOutcome?: ProviderOutcomeReporter
+function createEmbeddingModel({ credentials, billing, platformId, providerConfigId }: {
+    credentials: AiProviderCredentials
+    billing?: ActivepiecesAiBilling
+    platformId?: string
+    providerConfigId?: string
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
-    const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
+    const embeddingModelId = AI_PROVIDER_CAPABILITIES[credentials.provider].defaultEmbeddingModel
     if (isNil(embeddingModelId)) {
-        throw new Error(`Provider ${provider} does not support knowledge base search`)
+        throw new Error(`Provider ${credentials.provider} does not support knowledge base search`)
     }
-    const apiKey = readStringField(auth, 'apiKey')
-    const fetch = observedProviderFetch(onOutcome)
-    switch (provider) {
+    const built = buildEmbeddingModel({ credentials, embeddingModelId, fetch: observedProviderFetch(keyHealthReporterFor({ platformId, providerConfigId })) })
+    return {
+        model: billedEmbeddingModel({ model: built.model, provider: credentials.provider, modelId: embeddingModelId, billing }),
+        providerOptions: built.providerOptions,
+    }
+}
+
+function buildEmbeddingModel({ credentials, embeddingModelId, fetch }: {
+    credentials: AiProviderCredentials
+    embeddingModelId: string
+    fetch: typeof globalThis.fetch | undefined
+}): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
+    switch (credentials.provider) {
         case AIProviderName.OPENAI:
-            return { model: createOpenAI({ apiKey, ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+            return { model: createOpenAI({ apiKey: credentials.auth.apiKey, ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         case AIProviderName.GOOGLE:
-            return { model: createGoogleGenerativeAI({ apiKey, ...spreadIfDefined('fetch', fetch) }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
+            return { model: createGoogleGenerativeAI({ apiKey: credentials.auth.apiKey, ...spreadIfDefined('fetch', fetch) }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
         case AIProviderName.AZURE: {
-            const resourceName = readStringField(config, 'resourceName')
-            const apiVersion = readStringField(config, 'apiVersion')
+            const { resourceName, apiVersion } = credentials.config
             return {
-                model: createAzure({ resourceName, apiKey, ...spreadIfDefined('apiVersion', apiVersion || undefined), ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId),
+                model: createAzure({ resourceName: resourceName ?? '', apiKey: credentials.auth.apiKey, ...spreadIfDefined('apiVersion', apiVersion), ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId),
                 providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS,
             }
         }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { model: createOpenRouter({ apiKey, ...spreadIfDefined('fetch', fetch) }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
+            return {
+                model: createOpenRouter({ apiKey: credentials.auth.apiKey, ...spreadIfDefined('fetch', fetch) })
+                    .textEmbeddingModel(embeddingModelId, credentials.provider === AIProviderName.ACTIVEPIECES ? EMBEDDING_REPORTS_WHAT_IT_COST : undefined),
+                providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS,
+            }
         default:
-            throw new Error(`Provider ${provider} does not support knowledge base search`)
+            throw new Error(`Provider ${credentials.provider} does not support knowledge base search`)
     }
 }
 
@@ -294,7 +309,6 @@ export const aiUtils = {
 }
 
 type NativeWebSearchToolParams = {
-    auth: BaseAIProviderAuthConfig
     options: WebSearchOptions
 }
 

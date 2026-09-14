@@ -1,4 +1,4 @@
-import { ActivepiecesAiBillingScope, isNil } from '@activepieces/core-utils'
+import { ActivepiecesAiBillingScope, AiCallTokens, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -57,6 +57,7 @@ function chatEventOf({ input, toolCalls, costBasis }: PropertiesParams): { credi
             model: input.modelId,
             tier,
             ...costBasis,
+            ...tokensOf(input),
         },
         appSumo: { platformId: input.billing.platformId, projectId, conversationId, turnIndex, tier },
     }
@@ -78,6 +79,14 @@ function billingProperties({ input, toolCalls, costBasis }: PropertiesParams): A
             toolCalls,
         }],
         ...costBasis,
+        ...tokensOf(input),
+    }
+}
+
+function tokensOf(input: ReportAiUsageRequest): AiCallTokens {
+    return {
+        ...spreadIfDefined('inputTokens', input.inputTokens),
+        ...spreadIfDefined('outputTokens', input.outputTokens),
     }
 }
 

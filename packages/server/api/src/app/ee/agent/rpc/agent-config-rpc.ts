@@ -200,9 +200,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
             const model = aiUtils.createModel({
-                provider: providerConfig.provider,
-                auth: providerConfig.auth as Record<string, unknown>,
-                config: providerConfig.config as Record<string, unknown>,
+                credentials: providerConfig,
                 modelId: resolvedModelId,
             })
             compactionState = await agentCompaction.compactMessages({
@@ -239,10 +237,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         log.debug({ systemPrompt: systemPromptText, guideNames: Object.keys(guides) }, '[agentRpc#getAgentConfig] System prompt assembled')
 
         return {
-            provider: providerConfig.provider,
+            credentials: providerConfig,
             providerConfigId: providerConfig.configId,
-            auth: providerConfig.auth as Record<string, unknown>,
-            providerConfig: providerConfig.config as Record<string, unknown>,
             modelId: resolvedModelId,
             fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds }),
             systemPrompt: systemPromptText,

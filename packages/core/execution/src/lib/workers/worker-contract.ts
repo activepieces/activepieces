@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, AIProviderName } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, AiChargeBasis, AIProviderName, AiProviderCredentials } from '@activepieces/core-utils'
 import { AgentPieceToolMetadata, PiecePackage } from '@activepieces/core-piece-types'
 import { StreamStepProgress } from '../engine/engine-operation'
 import { GetFlowVersionForWorkerRequest, UploadRunLogsRequest } from '../engine/requests'
@@ -151,10 +151,8 @@ export type AgentAiToolsConfig = {
 }
 
 export type AgentConfigResponse = {
-    provider: string
+    credentials: AiProviderCredentials
     providerConfigId: string
-    auth: Record<string, unknown>
-    providerConfig: Record<string, unknown>
     modelId: string
     fastModelId: string
     systemPrompt: string
@@ -364,9 +362,7 @@ export type PersonalizationConfigResponse =
     | { claimed: false }
     | {
         claimed: true
-        provider: string
-        auth: Record<string, unknown>
-        providerConfig: Record<string, unknown>
+        credentials: AiProviderCredentials
         modelId: string
         fastModelId: string
         user: { firstName: string, lastName: string, email: string }
@@ -421,11 +417,8 @@ export type ResolveAiProviderRequest = {
     providerConfigId?: string
 }
 
-export type ResolveAiProviderResponse = {
-    provider: AIProviderName
+export type ResolveAiProviderResponse = AiProviderCredentials & {
     providerConfigId: string
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
 }
 
 export type SaveFlowStepFileRequest = {
@@ -444,6 +437,8 @@ export type ReportAiUsageRequest = {
     usage: AiUsageCharge
     toolCalls?: number
     generationId?: string
+    inputTokens?: number
+    outputTokens?: number
     requestId?: string
     flowRun?: AiUsageFlowRunContext
     chat?: AiUsageChatContext
@@ -462,8 +457,8 @@ export type AiUsageChatContext = {
 }
 
 export type AiUsageCharge =
-    | { type: 'observed-cost', costUsd: number }
-    | { type: 'flat-credits', credits: number }
+    | { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: number }
+    | { type: AiChargeBasis.FIXED_CREDITS, credits: number }
 
 export type ReadFlowStepFileRequest = {
     projectId: string
