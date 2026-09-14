@@ -7,14 +7,14 @@ export const imageToPdf = createAction({
 	name: 'imageToPdf',
 	classification: 'READ',
 	displayName: 'Image to PDF',
-	description: 'Convert image to PDF',
+	description: 'Wrap a PNG or JPEG image in a one-page A4 PDF.',
 	aiMetadata: { description: 'Wraps a single PNG or JPEG image into a new one-page A4 PDF, scaling it to fit inside the margins and correcting the EXIF orientation. Use it to make an image attachable or printable as a document; use Add Image to PDF to stamp an image onto an existing PDF, and Merge PDFs to combine several single-image results. Accepts one image per call and only the png/jpg/jpeg extensions; layout and page size are fixed and repeating the call produces the same document content, so idempotent.', idempotent: true },
 	outputSchema: imageToPdfActionOutputSchema,
 	props: {
 		image: Property.File({
-			displayName: 'image',
-			description:
-				'Image has to be png, jpeg or jpg and it will be scaled down to fit the page when image is larger than an A4 page',
+			displayName: 'Image File or URL',
+			description: 'PNG or JPEG. Large images are scaled down to fit the page.',
+			placeholder: 'https://example.com/photo.png',
 			required: true,
 		}),
 	},
@@ -126,7 +126,7 @@ export const imageToPdf = createAction({
 				fileName: `${image.filename}.pdf`,
 			});
 		} catch (error) {
-			throw new Error(`Failed to convert text to PDF: ${(error as Error).message}`);
+			throw new Error(`Failed to convert image to PDF: ${(error as Error).message}`);
 		}
 	},
 });
