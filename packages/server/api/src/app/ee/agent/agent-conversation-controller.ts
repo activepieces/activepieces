@@ -1,9 +1,10 @@
 import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
@@ -41,6 +42,15 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
             ...spreadIfDefined('agentId', request.query.agentId),
+        })
+    })
+
+    app.get('/conversations/runs', ListAgentRunsRoute, async (request) => {
+        return agentConversationService(request.log).listAgentRuns({
+            projectId: request.projectId,
+            agentId: request.query.agentId,
+            cursor: request.query.cursor,
+            limit: request.query.limit ?? 20,
         })
     })
 
@@ -415,6 +425,27 @@ const ListConversationsRoute = {
             cursor: z.string().optional(),
             limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
             agentId: z.string().optional(),
+        }),
+    },
+}
+
+const ListAgentRunsRoute = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_AGENT,
+            { type: ProjectResourceType.QUERY },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List the unattended runs a flow step made with this agent',
+        querystring: z.object({
+            projectId: z.string(),
+            agentId: z.string(),
+            cursor: z.string().optional(),
+            limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
         }),
     },
 }
