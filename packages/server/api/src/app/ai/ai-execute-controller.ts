@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil } from '@activepieces/core-utils'
-import { AiStepAction, AiStepFile, AiStepSchema, AiStepWebSearch, EngineResponseStatus, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, maxSocketHttpBufferSizeBytes, PrincipalType, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
+import { AiStepAction, AiStepFile, AiStepSchema, AiStepWebSearch, EngineResponseStatus, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, maxSocketHttpBufferSizeBytes, PrincipalType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -38,7 +38,7 @@ export const aiExecuteController: FastifyPluginAsyncZod = async (app) => {
                 requestId,
                 projectId,
                 platformId: platform.id,
-                ...spreadIfDefined('webserverId', answerInThisRequest ? engineResponseWatcher(log).getServerId() : undefined),
+                webserverId: answerInThisRequest ? engineResponseWatcher(log).getServerId() : undefined,
             }),
         })
 
@@ -66,43 +66,43 @@ function aiJobFor({ body, requestId, projectId, platformId, webserverId }: {
         platformId,
         flowId: body.flowId,
         flowRunId: body.flowRunId,
-        ...spreadIfDefined('waitpointId', body.waitpointId),
-        ...spreadIfDefined('webserverId', webserverId),
+        waitpointId: body.waitpointId,
+        webserverId,
         provider: body.provider,
         modelId: body.modelId,
-        ...spreadIfDefined('prompt', body.prompt),
-        ...spreadIfDefined('providerConfigId', body.providerConfigId),
-        ...spreadIfDefined('maxOutputTokens', body.maxOutputTokens),
-        ...spreadIfDefined('temperature', body.temperature),
-        ...spreadIfDefined('webSearch', body.webSearch),
+        prompt: body.prompt,
+        providerConfigId: body.providerConfigId,
+        maxOutputTokens: body.maxOutputTokens,
+        temperature: body.temperature,
+        webSearch: body.webSearch,
     } as const
 
     switch (body.action) {
         case AiStepAction.ASK_AI:
-            return { ...shared, action: AiStepAction.ASK_AI, ...spreadIfDefined('conversation', body.conversation) }
+            return { ...shared, action: AiStepAction.ASK_AI, conversation: body.conversation }
         case AiStepAction.SUMMARIZE_TEXT:
-            return { ...shared, action: AiStepAction.SUMMARIZE_TEXT, ...spreadIfDefined('text', body.text) }
+            return { ...shared, action: AiStepAction.SUMMARIZE_TEXT, text: body.text }
         case AiStepAction.CLASSIFY_TEXT:
             return {
                 ...shared,
                 action: AiStepAction.CLASSIFY_TEXT,
-                ...spreadIfDefined('text', body.text),
-                ...spreadIfDefined('categories', body.categories),
+                text: body.text,
+                categories: body.categories,
             }
         case AiStepAction.EXTRACT_STRUCTURED_DATA:
             return {
                 ...shared,
                 action: AiStepAction.EXTRACT_STRUCTURED_DATA,
-                ...spreadIfDefined('text', body.text),
-                ...spreadIfDefined('files', body.files),
-                ...spreadIfDefined('schema', body.schema),
+                text: body.text,
+                files: body.files,
+                schema: body.schema,
             }
         case AiStepAction.GENERATE_IMAGE:
             return {
                 ...shared,
                 action: AiStepAction.GENERATE_IMAGE,
-                ...spreadIfDefined('files', body.files),
-                ...spreadIfDefined('advancedOptions', body.advancedOptions),
+                files: body.files,
+                advancedOptions: body.advancedOptions,
             }
     }
 }
