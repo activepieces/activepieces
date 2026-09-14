@@ -54,11 +54,7 @@ async function createFreshEnvironment(): Promise<FastifyInstance> {
 
 function giveInjectedRequestsASocketThatCanBeClosed(app: FastifyInstance): void {
     app.addHook('onRequest', async (request) => {
-        const socket = request.raw.socket
-        if (typeof socket?.destroySoon === 'function') {
-            return
-        }
-        socket.destroySoon = () => undefined
+        request.raw.socket.destroySoon ??= () => undefined
     })
 }
 
