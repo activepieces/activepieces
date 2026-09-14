@@ -14,7 +14,7 @@ export const createPinFromMedia = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Publishes a new Pin to a board from a hosted image URL, hosted video URL or base64 image, and returns the new pin id. Use it to put new content on Pinterest; use Save Pin to repin content that already exists, and Update Pin to edit a Pin already published. Requires a board id from List Boards, a title, and a reachable media URL Pinterest can fetch; each call publishes another Pin, so it is not idempotent.',
+      'Publishes a new Pin to a board from a hosted image or video URL and returns the new pin id. Use it to put new content on Pinterest, and Save Pin to repin content that already exists. The media must be a URL Pinterest can fetch without authentication; raw image data is not accepted here. Requires a board id from List Boards and a title, and each call publishes another Pin, so it is not idempotent.',
     idempotent: false,
   },
   props: {
@@ -31,11 +31,10 @@ export const createPinFromMedia = createAction({
     media_source_type: Property.StaticDropdown({
       displayName: 'Media Source Type',
       required: true,
-      description: 'How the media is supplied.',
+      description: 'Whether the URL points at an image or a video.',
       options: {
         options: [
           { label: 'Image URL', value: 'image_url' },
-          { label: 'Base64 Image', value: 'image_base64' },
           { label: 'Video URL', value: 'video_url' },
         ],
       },
@@ -43,7 +42,8 @@ export const createPinFromMedia = createAction({
     media_url: Property.ShortText({
       displayName: 'Media URL',
       required: true,
-      description: 'Publicly reachable URL of the image or video.',
+      description:
+        'Publicly reachable URL of the image or video. Pinterest fetches it, so it must be reachable without authentication.',
     }),
     board_section_id: Property.ShortText({
       displayName: 'Board Section ID',

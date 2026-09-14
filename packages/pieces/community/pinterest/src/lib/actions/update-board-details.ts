@@ -37,12 +37,12 @@ export const updateBoardDetails = createAction({
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
-      description: 'New privacy setting. Leave empty to keep it.',
+      description:
+        'New privacy setting. Leave empty to keep it. A board cannot be switched to secret through this connection.',
       options: {
         options: [
           { label: 'Public', value: 'PUBLIC' },
           { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
         ],
       },
     }),

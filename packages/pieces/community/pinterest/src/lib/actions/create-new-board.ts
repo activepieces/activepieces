@@ -14,7 +14,7 @@ export const createNewBoard = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a board and returns its new board id, optionally with a description and a privacy level of public, protected or secret. Use it when no suitable board exists yet; check List Boards or Search Boards first, because Pinterest allows two boards with the same name and each call creates another one, which makes this not idempotent.',
+      'Creates a board and returns its new board id, optionally with a description and a privacy level of public or protected. Use it when no suitable board exists yet; check List Boards or Search Boards first, because Pinterest allows two boards with the same name and each call creates another one, which makes this not idempotent. Secret boards are not offered because this connection does not hold the scope Pinterest requires to write them.',
     idempotent: false,
   },
   props: {
@@ -32,12 +32,12 @@ export const createNewBoard = createAction({
       displayName: 'Privacy',
       required: false,
       defaultValue: 'PUBLIC',
-      description: 'Who can see the board. Defaults to public.',
+      description:
+        'Who can see the board. Defaults to public. Secret boards cannot be created through this connection.',
       options: {
         options: [
           { label: 'Public', value: 'PUBLIC' },
           { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
         ],
       },
     }),

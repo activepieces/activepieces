@@ -20,13 +20,13 @@ function buildValueBody(
       return { value: { number: value } };
     case 'date':
       return { value: { date: value } };
-    case 'checked':
+    case 'checkbox':
       return { value: { checked: value === 'true' } };
     case 'list':
       return { idValue: value };
     default:
       throw new Error(
-        `Unsupported field type "${fieldType}". Use text, number, date, checked or list.`
+        `Unsupported field type "${fieldType}". Use text, number, date, checkbox or list.`
       );
   }
 }
@@ -65,7 +65,7 @@ export const setCardCustomFieldValue = createAction({
           { label: 'Text', value: 'text' },
           { label: 'Number', value: 'number' },
           { label: 'Date', value: 'date' },
-          { label: 'Checkbox', value: 'checked' },
+          { label: 'Checkbox', value: 'checkbox' },
           { label: 'Dropdown (list)', value: 'list' },
         ],
       },
