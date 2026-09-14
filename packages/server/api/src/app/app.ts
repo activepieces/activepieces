@@ -10,6 +10,8 @@ import { jsonSchemaTransform, jsonSchemaTransformObject } from 'fastify-type-pro
 import Mustache from 'mustache'
 import { globalRegistry } from 'zod/v4/core'
 import { agentsModule } from './agents/agents-module'
+import { installAiCostReporter } from './ai/ai-cost-reporter'
+import { installAiKeyHealthReporter } from './ai/ai-key-health-reporter'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
 import { aiToolConfigModule } from './ai/ai-tool-config.module'
@@ -451,6 +453,8 @@ The application started on ${await domainHelper.getPublicApiUrl({ path: '' })}, 
     const pieces = process.env.AP_DEV_PIECES
 
     assertReleaseReadable(app.log)
+    installAiCostReporter(app.log)
+    installAiKeyHealthReporter(app.log)
     systemSnapshot.start({ log: app.log })
     await migrateQueuesAndRunConsumers(app)
     app.log.info('Queues migrated and consumers run')

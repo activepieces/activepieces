@@ -57,7 +57,7 @@ async function getGeneratedImage({ data, resolved, inputImages, flowStep, billin
                 : prompt,
             providerOptions: { [resolvedProvider]: { ...stripLegacyImageField(data.advancedOptions) } } as Parameters<typeof generateImage>[0]['providerOptions'],
         })
-        activepiecesAiCost.reportFlatCredits({ billing, provider: resolved.provider, modelId: data.modelId })
+        activepiecesAiCost.reportFixedCredits({ billing, provider: resolved.provider, modelId: data.modelId })
         return image
     })
 }
@@ -71,12 +71,12 @@ function createImageCapableModel({ resolved, modelId, flowStep, billing }: {
     if (!AI_PROVIDER_CAPABILITIES[resolved.provider].supportsImageGeneration) {
         throw new Error(`Provider ${resolved.provider} does not support image models`)
     }
-    const { provider, auth, config } = resolved
-    const imageModel = aiUtils.createModelForImages({ provider, auth, config, modelId, flowStep })
+    const credentials = resolved
+    const imageModel = aiUtils.createModelForImages({ credentials, modelId, flowStep })
     if (!isNil(imageModel)) {
         return { kind: 'image', model: imageModel }
     }
-    return { kind: 'language', model: aiUtils.createModel({ provider, auth, config, modelId, flowStep, billing }) }
+    return { kind: 'language', model: aiUtils.createModel({ credentials, modelId, flowStep, billing }) }
 }
 
 async function generateImageUsingGenerateText({ model, prompt, inputImages }: {

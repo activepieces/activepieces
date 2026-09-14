@@ -21,10 +21,8 @@ export const aiRpcHandlers = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('configId', input.providerConfigId),
         })
         return {
-            provider: config.provider,
+            ...config,
             providerConfigId: config.configId,
-            auth: config.auth as Record<string, unknown>,
-            config: config.config as Record<string, unknown>,
         }
     },
 

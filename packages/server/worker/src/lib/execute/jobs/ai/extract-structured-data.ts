@@ -12,9 +12,7 @@ export async function extractStructuredData({ data, resolved, flowStep, billing,
     files: ResolvedAiFile[]
 }): Promise<unknown> {
     const model = aiUtils.createModel({
-        provider: resolved.provider,
-        auth: resolved.auth,
-        config: resolved.config,
+        credentials: resolved,
         modelId: data.modelId,
         flowStep,
         billing,

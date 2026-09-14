@@ -72,15 +72,14 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
 }
 
 async function runTextStep({ data, resolved, flowStep, billing }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse, flowStep: FlowStepMetadata, billing: ActivepiecesAiBilling }): Promise<unknown> {
-    const { provider, auth, config } = resolved
+    const credentials = resolved
+    const { provider } = credentials
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: data.modelId })
-    const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: data.modelId, auth, webSearchEnabled, options: webSearchOptions })
+    const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: data.modelId, webSearchEnabled, options: webSearchOptions })
     const model = aiUtils.createModel({
-        provider,
-        auth,
-        config,
+        credentials,
         modelId: data.modelId,
         flowStep,
         billing,
