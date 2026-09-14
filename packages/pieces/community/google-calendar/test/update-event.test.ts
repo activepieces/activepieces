@@ -236,6 +236,21 @@ describe('runUpdateEvent request body', () => {
     expect(kept.attendees).toEqual(timedEvent.attendees);
   });
 
+  test('guest permissions left empty in the builder are kept', async () => {
+    const body = await updateWith({
+      currentEvent: timedEvent,
+      propsValue: {
+        title: 'Renamed',
+        guests_can_modify: null,
+        guests_can_invite_others: null,
+        guests_can_see_other_guests: null,
+      },
+    });
+    expect(body.guestsCanModify).toBe(true);
+    expect(body.guestsCanInviteOthers).toBe(true);
+    expect(body.guestsCanSeeOtherGuests).toBe(true);
+  });
+
   test('guest permissions are kept when unset and applied when given', async () => {
     const unset = await updateWith({
       currentEvent: timedEvent,

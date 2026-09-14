@@ -12,7 +12,7 @@ export const updateEventProps = {
     required: true,
   }),
   hint: Property.MarkDown({
-    value: 'Empty fields keep their current value. The guest toggles below are always applied.',
+    value: 'Empty fields keep their current value.',
     variant: MarkdownVariant.INFO,
   }),
   title: Property.ShortText({
@@ -42,22 +42,25 @@ export const updateEventProps = {
     description: 'Replaces the current guest list. One email per item.',
     required: false,
   }),
-  guests_can_modify: Property.Checkbox({
-    displayName: 'Guests Can Modify',
-    defaultValue: false,
-    required: false,
-  }),
-  guests_can_invite_others: Property.Checkbox({
-    displayName: 'Guests Can Invite Others',
-    defaultValue: false,
-    required: false,
-  }),
-  guests_can_see_other_guests: Property.Checkbox({
-    displayName: 'Guests Can See Other Guests',
-    defaultValue: false,
-    required: false,
-  }),
+  guests_can_modify: guestPermission('Guests Can Modify'),
+  guests_can_invite_others: guestPermission('Guests Can Invite Others'),
+  guests_can_see_other_guests: guestPermission('Guests Can See Other Guests'),
 };
+
+function guestPermission(displayName: string) {
+  return Property.StaticDropdown<boolean>({
+    displayName,
+    required: false,
+    options: {
+      disabled: false,
+      placeholder: 'Keep current setting',
+      options: [
+        { label: 'Yes', value: true },
+        { label: 'No', value: false },
+      ],
+    },
+  });
+}
 
 export async function runUpdateEvent(
   context: ActionContext<typeof googleCalendarAuth, typeof updateEventProps>
@@ -103,13 +106,13 @@ export async function runUpdateEvent(
     ...(end_date_time !== undefined && {
       end: toEventDateTime({ value: end_date_time, current: currentEvent.data.end }),
     }),
-    ...(guests_can_invite_others !== undefined && {
+    ...(typeof guests_can_invite_others === 'boolean' && {
       guestsCanInviteOthers: guests_can_invite_others,
     }),
-    ...(guests_can_modify !== undefined && {
+    ...(typeof guests_can_modify === 'boolean' && {
       guestsCanModify: guests_can_modify,
     }),
-    ...(guests_can_see_other_guests !== undefined && {
+    ...(typeof guests_can_see_other_guests === 'boolean' && {
       guestsCanSeeOtherGuests: guests_can_see_other_guests,
     }),
   };
