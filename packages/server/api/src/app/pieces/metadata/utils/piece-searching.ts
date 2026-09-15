@@ -92,12 +92,16 @@ const pieceNameHaystack = ({ displayName, name }: PieceIdentity): string => {
     return `${displayName} ${name}`.toLowerCase()
 }
 
+const lowerCaseOrEmpty = (text: string | null | undefined): string => {
+    return text?.toLowerCase() ?? ''
+}
+
 const pieceDescriptions = ({ description, actions, triggers }: DescribedPiece): string[] => {
     return [
         description,
         ...actions.map((action) => action.description),
         ...triggers.map((trigger) => trigger.description),
-    ].map((text) => text.toLowerCase())
+    ].map(lowerCaseOrEmpty)
 }
 
 const isPrefixOfEitherWay = (token: string, word: string): boolean => {
@@ -152,7 +156,7 @@ function searchForSuggestion<T extends ActionBase | TriggerBase>({
     const suggestions = actionsOrTriggers
         .filter((actionOrTrigger) =>
             rankByName.has(actionOrTrigger.name) ||
-            containsEveryToken({ tokens: remainingTokens, haystack: actionOrTrigger.description.toLowerCase() }),
+            containsEveryToken({ tokens: remainingTokens, haystack: lowerCaseOrEmpty(actionOrTrigger.description) }),
         )
         .sort((a, b) => (rankByName.get(a.name) ?? Number.MAX_SAFE_INTEGER) - (rankByName.get(b.name) ?? Number.MAX_SAFE_INTEGER))
 
@@ -175,9 +179,9 @@ type PieceIdentity = {
 }
 
 type DescribedPiece = {
-    description: string
-    actions: { description: string }[]
-    triggers: { description: string }[]
+    description: string | null | undefined
+    actions: { description: string | null | undefined }[]
+    triggers: { description: string | null | undefined }[]
 }
 
 type TokenMatchParams = {

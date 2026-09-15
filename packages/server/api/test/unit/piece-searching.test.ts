@@ -232,3 +232,63 @@ describe('pieceSearching.search', () => {
         expect(results).toEqual(allPieces)
     })
 })
+
+const nullDescription = null as unknown as string
+
+const legacyPiece = buildPiece({
+    name: '@activepieces/piece-legacy',
+    displayName: 'Legacy',
+    description: nullDescription,
+    actions: [
+        buildAction({ name: 'upload_file', displayName: 'Upload File', description: 'Upload a file' }),
+        buildAction({ name: 'archive_record', displayName: 'Archive Record', description: nullDescription }),
+    ],
+    triggers: [
+        buildTrigger({ name: 'new_record', displayName: 'New Record', description: nullDescription }),
+    ],
+})
+
+function searchWithLegacyPiece(searchQuery: string): PieceMetadataSchema[] {
+    return pieceSearching.search({
+        categories: undefined,
+        searchQuery,
+        pieces: [...allPieces, legacyPiece],
+        suggestionType: SuggestionType.ACTION_AND_TRIGGER,
+    })
+}
+
+describe('pieceSearching.search with null descriptions', () => {
+    it('treats a null piece description as nonmatching instead of throwing', () => {
+        expect(searchWithLegacyPiece('append').map((piece) => piece.displayName)).toEqual(['Google Sheets'])
+    })
+
+    it('keeps matching other pieces when a stored piece has null descriptions', () => {
+        expect(searchWithLegacyPiece('slack message').map((piece) => piece.displayName)).toEqual(['Slack'])
+    })
+
+    it('still matches the piece by name when its description is null', () => {
+        const results = searchWithLegacyPiece('legacy')
+
+        expect(results.map((piece) => piece.displayName)).toEqual(['Legacy'])
+        expect(suggestedActionNames(results[0]).sort()).toEqual(['Archive Record', 'Upload File'])
+    })
+
+    it('treats a null action description as nonmatching while ranking its siblings', () => {
+        const results = searchWithLegacyPiece('upload file')
+
+        expect(results.map((piece) => piece.displayName)).toEqual(['Legacy'])
+        expect(suggestedActionNames(results[0])).toEqual(['Upload File'])
+    })
+
+    it('treats a null trigger description as nonmatching instead of throwing', () => {
+        const results = pieceSearching.search({
+            categories: undefined,
+            searchQuery: 'submission',
+            pieces: [...allPieces, legacyPiece],
+            suggestionType: SuggestionType.TRIGGER,
+        })
+
+        expect(results.map((piece) => piece.displayName)).toEqual(['Formstack'])
+        expect(suggestedTriggerNames(results[0])).toEqual(['New Submission'])
+    })
+})
