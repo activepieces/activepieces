@@ -283,6 +283,74 @@ export function buildWebSearchConfig(params: {
   };
 }
 
+export function usesNativeWebSearchTools({ provider, model }: { provider: string; model: string | undefined }): boolean {
+  const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
+  return NATIVE_WEB_SEARCH_PROVIDERS.has(effectiveProvider ?? provider);
+}
+
+export function sanitizeWebSearchOptions(saved: unknown): Record<string, unknown> {
+  if (saved === null || typeof saved !== 'object') {
+    return {};
+  }
+  const options = saved as Record<string, unknown>;
+  return {
+    ...spreadIfDefined('maxUses', asNumber(options['maxUses'])),
+    ...spreadIfDefined('includeSources', asBoolean(options['includeSources'])),
+    ...spreadIfDefined('userLocationCity', asText(options['userLocationCity'])),
+    ...spreadIfDefined('userLocationRegion', asText(options['userLocationRegion'])),
+    ...spreadIfDefined('userLocationCountry', asText(options['userLocationCountry'])),
+    ...spreadIfDefined('userLocationTimezone', asText(options['userLocationTimezone'])),
+    ...spreadIfDefined('allowedDomains', asDomainList(options['allowedDomains'])),
+    ...spreadIfDefined('blockedDomains', asDomainList(options['blockedDomains'])),
+    ...spreadIfDefined('searchContextSize', asSearchContextSize(options['searchContextSize'])),
+  };
+}
+
+function asNumber(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return typeof value === 'boolean' || value === null || value === '' || value === undefined || Number.isNaN(parsed)
+    ? undefined
+    : parsed;
+}
+
+function asBoolean(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (value === 'true' || value === 'false') {
+    return value === 'true';
+  }
+  return undefined;
+}
+
+function asText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function asDomainList(value: unknown): { domain: string }[] | undefined {
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
+  const domains = value.flatMap((entry) => {
+    if (typeof entry === 'string') {
+      return [{ domain: entry }];
+    }
+    const domain = entry && typeof entry === 'object' ? (entry as Record<string, unknown>)['domain'] : undefined;
+    return typeof domain === 'string' ? [{ domain }] : [];
+  });
+  return domains.length === 0 ? undefined : domains;
+}
+
+function asSearchContextSize(value: unknown): 'low' | 'medium' | 'high' | undefined {
+  return value === 'low' || value === 'medium' || value === 'high' ? value : undefined;
+}
+
+const NATIVE_WEB_SEARCH_PROVIDERS: ReadonlySet<string> = new Set([
+  AIProviderName.OPENAI,
+  AIProviderName.ANTHROPIC,
+  AIProviderName.GOOGLE,
+]);
+
 type BaseWebSearchOptions = {
   maxUses?: number
   includeSources?: boolean

@@ -2,16 +2,19 @@ import { AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
-import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../types'
+import { JobContext, JobHandler, JobResult, JobResultKind } from '../../types'
 import { resolveAiFiles } from './ai-files'
 import { extractStructuredData } from './extract-structured-data'
 import { generateImageStep } from './generate-image'
 
-export const executeAiJob: JobHandler<ExecuteAiJobData, FireAndForgetJobResult> = {
+export const executeAiJob: JobHandler<ExecuteAiJobData, JobResult> = {
     jobType: WorkerJobType.EXECUTE_AI,
-    async execute(ctx: JobContext, data: ExecuteAiJobData): Promise<FireAndForgetJobResult> {
-        const { data: output, error } = await tryCatch(() => runAiStep(ctx, data))
+    async execute(ctx: JobContext, data: ExecuteAiJobData): Promise<JobResult> {
+        const { data: output, error } = await tryCatch(() => callTheModel({ ctx, data }))
         const stepOutput = isNil(error) ? { output } : { failure: toFailureMessage(error) }
+        if (isNil(data.waitpointId)) {
+            return { kind: JobResultKind.SYNCHRONOUS, status: EngineResponseStatus.OK, response: stepOutput }
+        }
         const handedBack = await handBackToTheFlow({ ctx, data, waitpointId: data.waitpointId, output: stepOutput })
         if (!isNil(error)) {
             ctx.log.warn({ flowRun: { id: data.flowRunId }, requestId: data.requestId, error }, '[executeAiJob] Handed the failure back to the flow')
@@ -47,7 +50,7 @@ async function waitBeforeRetry(attempt: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, attempt * RETRY_DELAY_MS))
 }
 
-async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unknown> {
+async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJobData }): Promise<unknown> {
     const resolved = await ctx.apiClient.resolveAiProvider({
         projectId: data.projectId,
         platformId: data.platformId,
@@ -90,6 +93,7 @@ async function runTextStep({ data, resolved, flowStep }: { data: ExecuteAiJobDat
         tools,
         ...spreadIfDefined('maxOutputTokens', data.maxOutputTokens),
         ...spreadIfDefined('temperature', data.temperature),
+        ...spreadIfDefined('providerOptions', reasoningEffortFor({ action: data.action, provider })),
         ...spreadIfDefined('stopWhen', Object.keys(tools).length === 0 ? undefined : stepCountIs(webSearchOptions?.maxUses ?? DEFAULT_WEB_SEARCH_STEPS)),
     })
 
@@ -124,6 +128,13 @@ function buildMessages(data: ExecuteAiJobData): ModelMessage[] {
 function classificationPrompt(data: ClassifyTextJobData): string {
     return `As a text classifier, your task is to assign one of the following categories to the provided text: ${(data.categories ?? []).join(', ')}. Please respond with only the selected category as a single word, and nothing else.
       Text to classify: "${data.text ?? ''}"`
+}
+
+function reasoningEffortFor({ action, provider }: { action: AiStepAction, provider: AIProviderName }): Record<string, Record<string, string>> | undefined {
+    if (action !== AiStepAction.SUMMARIZE_TEXT || provider !== AIProviderName.OPENAI) {
+        return undefined
+    }
+    return { [AIProviderName.OPENAI]: { reasoning_effort: 'minimal' } }
 }
 
 function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: string, sources: unknown }): unknown {
