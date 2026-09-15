@@ -22,6 +22,7 @@ import { MCP_ACTIVITY_ALIAS, McpActivityEntity } from './mcp-activity-entity'
 const repo = repoFactory(McpActivityEntity)
 
 const DEFAULT_PAGE_SIZE = 20
+const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'
 
 export const mcpActivityService = (log: FastifyBaseLogger) => ({
     async list({ platformId, userId, projectIds, memberIds, clientKeys, statuses, createdAfter, createdBefore, cursor, limit }: ListParams): Promise<SeekPage<PopulatedMcpActivity>> {
@@ -44,7 +45,7 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
             queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
         }
         if (!isNil(clientKeys)) {
-            queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."clientKey" IN (:...clientKeys)`, { clientKeys })
+            queryBuilder.andWhere(`COALESCE(${MCP_ACTIVITY_ALIAS}."clientKey", :unknownClientKey) IN (:...clientKeys)`, { clientKeys, unknownClientKey: UNKNOWN_CLIENT_KEY })
         }
         if (!isNil(statuses)) {
             queryBuilder.andWhere(`${MCP_ACTIVITY_ALIAS}."status" IN (:...statuses)`, { statuses })
@@ -81,17 +82,20 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
                 params: { entityType: 'mcp_activity', entityId: id, message: 'No payload stored for this activity' },
             })
         }
-        const file = await fileService(log).getDataOrThrow({
-            fileId: activity.payloadFileId,
-            type: FileType.MCP_CALL_PAYLOAD,
-            ...spreadIfDefined('projectId', activity.projectId),
+        const { payloadFileId, projectId, payloadTruncated } = activity
+        const { data: payload, error } = await tryCatch(async () => {
+            const file = await fileService(log).getDataOrThrow({
+                fileId: payloadFileId,
+                type: FileType.MCP_CALL_PAYLOAD,
+                ...spreadIfDefined('projectId', projectId),
+            })
+            return McpActivityPayload.parse({
+                ...JSON.parse(file.data.toString('utf-8')),
+                truncated: payloadTruncated,
+            })
         })
-        const { data: payload, error } = await tryCatch(async () => McpActivityPayload.parse({
-            ...JSON.parse(file.data.toString('utf-8')),
-            truncated: activity.payloadTruncated,
-        }))
-        if (!isNil(error)) {
-            log.error({ err: error, activityId: id, fileId: activity.payloadFileId }, '[mcpActivityService#getPayload] unreadable payload')
+        if (!isNil(error) || isNil(payload)) {
+            log.error({ err: error, activityId: id, fileId: payloadFileId }, '[mcpActivityService#getPayload] unreadable payload')
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'mcp_activity', entityId: id, message: 'Stored payload could not be read' },
