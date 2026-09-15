@@ -30,7 +30,6 @@ import { Fragment, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { DataTable, DataTableFilters } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/custom/formatted-date';
@@ -48,6 +47,8 @@ import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user
 import { projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
+
+import { sampleData } from '../../sample-data';
 
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -111,244 +112,229 @@ export default function AuditLogsPage() {
     isError,
     refetch,
   } = auditLogQueries.useAuditLogs();
+  const isSample = !platform.plan.auditLogEnabled;
+  const rows = isSample ? sampleData.auditEventsPage() : auditLogsData;
 
-  const isEnabled = platform.plan.auditLogEnabled;
   return (
-    <LockedFeatureGuard
-      featureKey="AUDIT_LOGS"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Audit Logs')}
-      lockDescription={t(
-        'Comply with internal and external security policies by tracking activities done within your account',
-      )}
-    >
-      <div className="flex flex-col  w-full">
-        <DashboardPageHeader
-          description={t('Track activities done within your platform')}
-          title={t('Audit Logs')}
-        />
-        <DataTable
-          emptyStateTextTitle={t('No audit logs found')}
-          emptyStateTextDescription={t(
-            'Come back later when you have some activity to audit',
-          )}
-          emptyStateIcon={<History className="size-14" />}
-          filters={filters}
-          columns={[
-            {
-              accessorKey: 'action',
-              size: 180,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Action')}
-                  icon={Wand}
-                />
-              ),
-              cell: ({ row }) => {
-                const icon = convertToIcon(row.original);
-                return (
-                  <div className="text-left flex items-center gap-2">
-                    {!isNil(icon?.icon) && (
-                      <span className="text-muted-foreground shrink-0">
-                        {icon.icon}
-                      </span>
-                    )}
-                    {formatUtils.convertEnumToHumanReadable(
-                      row.original.action,
-                    )}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'details',
-              size: 320,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Details')}
-                  icon={FileText}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    {convertToDetails(row.original)}
-                  </div>
-                );
-              },
-            },
-            {
-              accessorKey: 'userId',
-              size: 200,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Performed By')}
-                  icon={User}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">{row.original.userEmail}</div>
-                );
-              },
-            },
-            {
-              accessorKey: 'projectId',
-              size: 130,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Project')}
-                  icon={Folder}
-                />
-              ),
-              cell: ({ row }) => {
-                return row.original.projectId &&
-                  'project' in row.original.data ? (
-                  <Link to={`/projects/${row.original.projectId}`}>
-                    <div className="text-left text-primary hover:underline">
-                      {row.original.data.project?.displayName}
-                    </div>
-                  </Link>
-                ) : (
-                  <div className="text-left">{t('N/A')}</div>
-                );
-              },
-            },
-            {
-              accessorKey: 'created',
-              size: 110,
-              header: ({ column }) => (
-                <DataTableColumnHeader
-                  column={column}
-                  title={t('Created')}
-                  icon={Clock}
-                />
-              ),
-              cell: ({ row }) => {
-                return (
-                  <div className="text-left">
-                    <FormattedDate date={new Date(row.original.created)} />
-                  </div>
-                );
-              },
-            },
-            {
-              id: 'view',
-              size: 50,
-              cell: ({ row }) => (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  onClick={() => {
-                    setSelectedEvent(row.original);
-                    setIsSheetOpen(true);
-                  }}
-                >
-                  <Eye className="size-4 text-muted-foreground" />
-                </Button>
-              ),
-            },
-          ]}
-          page={auditLogsData}
-          isLoading={isLoading}
-          isError={isError}
-          errorStateEntity={t('audit logs')}
-          onRetry={refetch}
-        />
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
-            <SheetHeader className="px-6 py-4 border-b shrink-0">
-              <SheetTitle className="text-base">
-                {formatUtils.convertEnumToHumanReadable(
-                  selectedEvent?.action ?? '',
-                )}
-              </SheetTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {selectedEvent && convertToDetails(selectedEvent)}
-              </p>
-            </SheetHeader>
-            <div className="flex-1 overflow-y-auto">
-              <div className="px-6 py-5 flex flex-col gap-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t('Who & When')}
-                </p>
-                <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
-                  {selectedEvent?.userEmail && (
-                    <>
-                      <span className="text-muted-foreground">
-                        {t('Performed By')}
-                      </span>
-                      <span className="font-medium">
-                        {selectedEvent.userEmail}
-                      </span>
-                    </>
+    <div className="flex flex-col w-full">
+      <DashboardPageHeader
+        description={t('Track activities done within your platform')}
+        title={t('Audit Logs')}
+      />
+      <DataTable
+        emptyStateTextTitle={t('No audit logs found')}
+        emptyStateTextDescription={t(
+          'Come back later when you have some activity to audit',
+        )}
+        emptyStateIcon={<History className="size-14" />}
+        filters={filters}
+        columns={[
+          {
+            accessorKey: 'action',
+            size: 180,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Action')}
+                icon={Wand}
+              />
+            ),
+            cell: ({ row }) => {
+              const icon = convertToIcon(row.original);
+              return (
+                <div className="text-left flex items-center gap-2">
+                  {!isNil(icon?.icon) && (
+                    <span className="text-muted-foreground shrink-0">
+                      {icon.icon}
+                    </span>
                   )}
-                  {selectedEvent?.projectDisplayName && (
-                    <>
-                      <span className="text-muted-foreground">
-                        {t('Project')}
-                      </span>
-                      <span className="font-medium">
-                        {selectedEvent.projectDisplayName}
-                      </span>
-                    </>
-                  )}
-                  {selectedEvent?.ip && (
-                    <>
-                      <span className="text-muted-foreground">
-                        {t('IP Address')}
-                      </span>
-                      <span className="font-medium">{selectedEvent.ip}</span>
-                    </>
-                  )}
-                  <span className="text-muted-foreground">{t('Created')}</span>
-                  <span className="font-medium">
-                    {selectedEvent && (
-                      <FormattedDate date={new Date(selectedEvent.created)} />
-                    )}
-                  </span>
+                  {formatUtils.convertEnumToHumanReadable(row.original.action)}
                 </div>
-              </div>
-              {selectedEvent &&
-                extractEventDetails(selectedEvent).length > 0 && (
+              );
+            },
+          },
+          {
+            accessorKey: 'details',
+            size: 320,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Details')}
+                icon={FileText}
+              />
+            ),
+            cell: ({ row }) => {
+              return (
+                <div className="text-left">
+                  {convertToDetails(row.original)}
+                </div>
+              );
+            },
+          },
+          {
+            accessorKey: 'userId',
+            size: 200,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Performed By')}
+                icon={User}
+              />
+            ),
+            cell: ({ row }) => {
+              return <div className="text-left">{row.original.userEmail}</div>;
+            },
+          },
+          {
+            accessorKey: 'projectId',
+            size: 130,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Project')}
+                icon={Folder}
+              />
+            ),
+            cell: ({ row }) => {
+              return row.original.projectId &&
+                'project' in row.original.data ? (
+                <Link to={`/projects/${row.original.projectId}`}>
+                  <div className="text-left text-primary hover:underline">
+                    {row.original.data.project?.displayName}
+                  </div>
+                </Link>
+              ) : (
+                <div className="text-left">{t('N/A')}</div>
+              );
+            },
+          },
+          {
+            accessorKey: 'created',
+            size: 110,
+            header: ({ column }) => (
+              <DataTableColumnHeader
+                column={column}
+                title={t('Created')}
+                icon={Clock}
+              />
+            ),
+            cell: ({ row }) => {
+              return (
+                <div className="text-left">
+                  <FormattedDate date={new Date(row.original.created)} />
+                </div>
+              );
+            },
+          },
+          {
+            id: 'view',
+            size: 50,
+            cell: ({ row }) => (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={() => {
+                  setSelectedEvent(row.original);
+                  setIsSheetOpen(true);
+                }}
+              >
+                <Eye className="size-4 text-muted-foreground" />
+              </Button>
+            ),
+          },
+        ]}
+        page={rows}
+        isLoading={isSample ? false : isLoading}
+        isError={isSample ? false : isError}
+        errorStateEntity={t('audit logs')}
+        onRetry={refetch}
+      />
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
+          <SheetHeader className="px-6 py-4 border-b shrink-0">
+            <SheetTitle className="text-base">
+              {formatUtils.convertEnumToHumanReadable(
+                selectedEvent?.action ?? '',
+              )}
+            </SheetTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {selectedEvent && convertToDetails(selectedEvent)}
+            </p>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {t('Who & When')}
+              </p>
+              <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+                {selectedEvent?.userEmail && (
                   <>
-                    <Separator />
-                    <div className="px-6 py-5 flex flex-col gap-4">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                        {t('Event Details')}
-                      </p>
-                      <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
-                        {extractEventDetails(selectedEvent).map(
-                          ({ label, value }) => (
-                            <Fragment key={label}>
-                              <span className="text-muted-foreground">
-                                {label}
-                              </span>
-                              <span className="font-medium">{value}</span>
-                            </Fragment>
-                          ),
-                        )}
-                      </div>
-                    </div>
+                    <span className="text-muted-foreground">
+                      {t('Performed By')}
+                    </span>
+                    <span className="font-medium">
+                      {selectedEvent.userEmail}
+                    </span>
                   </>
                 )}
-              <Separator />
-              <div className="px-6 py-5 flex flex-col gap-4">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  {t('Full Payload')}
-                </p>
-                <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
+                {selectedEvent?.projectDisplayName && (
+                  <>
+                    <span className="text-muted-foreground">
+                      {t('Project')}
+                    </span>
+                    <span className="font-medium">
+                      {selectedEvent.projectDisplayName}
+                    </span>
+                  </>
+                )}
+                {selectedEvent?.ip && (
+                  <>
+                    <span className="text-muted-foreground">
+                      {t('IP Address')}
+                    </span>
+                    <span className="font-medium">{selectedEvent.ip}</span>
+                  </>
+                )}
+                <span className="text-muted-foreground">{t('Created')}</span>
+                <span className="font-medium">
+                  {selectedEvent && (
+                    <FormattedDate date={new Date(selectedEvent.created)} />
+                  )}
+                </span>
               </div>
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    </LockedFeatureGuard>
+            {selectedEvent && extractEventDetails(selectedEvent).length > 0 && (
+              <>
+                <Separator />
+                <div className="px-6 py-5 flex flex-col gap-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {t('Event Details')}
+                  </p>
+                  <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
+                    {extractEventDetails(selectedEvent).map(
+                      ({ label, value }) => (
+                        <Fragment key={label}>
+                          <span className="text-muted-foreground">{label}</span>
+                          <span className="font-medium">{value}</span>
+                        </Fragment>
+                      ),
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+            <Separator />
+            <div className="px-6 py-5 flex flex-col gap-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                {t('Full Payload')}
+              </p>
+              <SimpleJsonViewer data={selectedEvent?.data ?? {}} />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }
 
