@@ -2,15 +2,11 @@ import {
   Property,
   TriggerStrategy,
   createTrigger,
+  isNil,
 } from '@activepieces/pieces-framework';
-import {
-  DedupeStrategy,
-  Polling,
-  pollingHelper,
-} from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
-import { JiraAuth, jiraCloudAuth } from '../../auth';
-import { searchIssuesByJql } from '../common';
+import { jiraCloudAuth } from '../../auth';
+import { JiraPollingItem, createJiraPolling } from '../common/polling';
+import { ChangelogHistory } from '../common/types';
 
 type JiraAttachment = {
   id: string;
@@ -23,22 +19,6 @@ type JiraAttachment = {
   author?: { accountId: string; displayName: string; emailAddress?: string };
 };
 
-type ChangelogItem = {
-  field: string;
-  fieldId?: string;
-  from: string | null;
-  fromString: string | null;
-  to: string | null;
-  toString: string | null;
-};
-
-type ChangelogHistory = {
-  id: string;
-  author?: { accountId: string; displayName: string; emailAddress?: string };
-  created: string;
-  items: ChangelogItem[];
-};
-
 type IssueWithAttachments = {
   id: string;
   key: string;
@@ -49,71 +29,45 @@ type IssueWithAttachments = {
   changelog?: { histories: ChangelogHistory[] };
 };
 
-const polling: Polling<JiraAuth, { jql?: string; sanitizeJql?: boolean }> = {
-  strategy: DedupeStrategy.TIMEBASED,
-  items: async ({ auth, lastFetchEpochMS, propsValue }) => {
-    const { jql, sanitizeJql } = propsValue;
+const polling = createJiraPolling({
+  fields: ['summary', 'attachment'],
+  expand: ['changelog'],
+  extractItems: ({ issue }: { issue: IssueWithAttachments }): JiraPollingItem[] => {
+    const attachmentsById = new Map(
+      (issue.fields.attachment ?? []).map((attachment) => [attachment.id, attachment])
+    );
 
-    const since = dayjs(lastFetchEpochMS).format('YYYY-MM-DD HH:mm');
-    const userScope = jql ? `(${jql}) AND ` : '';
-    const searchQuery = `${userScope}updated > '${since}'`;
+    return (issue.changelog?.histories ?? []).flatMap((history) =>
+      history.items.flatMap((item): JiraPollingItem[] => {
+        const isAttachment =
+          item.field === 'Attachment' || item.fieldId === 'attachment';
+        if (!isAttachment || isNil(item.to)) {
+          return [];
+        }
 
-    const response = await searchIssuesByJql({
-      auth,
-      jql: searchQuery,
-      maxResults: 50,
-      sanitizeJql: sanitizeJql ?? false,
-      fields: ['summary', 'attachment'],
-      expand: ['changelog'],
-    });
-
-    const issues = response.issues as IssueWithAttachments[];
-    const results: Array<{ epochMilliSeconds: number; data: unknown }> = [];
-
-    for (const issue of issues) {
-      const attachmentsById = new Map<string, JiraAttachment>();
-      for (const attachment of issue.fields.attachment ?? []) {
-        attachmentsById.set(attachment.id, attachment);
-      }
-
-      const histories = issue.changelog?.histories ?? [];
-      for (const history of histories) {
-        const changedMS = Date.parse(history.created);
-        if (Number.isNaN(changedMS) || changedMS <= lastFetchEpochMS) continue;
-
-        for (const item of history.items) {
-          const isAttachment =
-            item.field === 'Attachment' || item.fieldId === 'attachment';
-          const wasAdded = item.to !== null && item.to !== undefined;
-          if (!isAttachment || !wasAdded) continue;
-
-          const attachmentDetails = item.to
-            ? attachmentsById.get(item.to)
-            : undefined;
-
-          results.push({
-            epochMilliSeconds: changedMS,
+        return [
+          {
+            id: item.to,
+            epochMilliSeconds: Date.parse(history.created),
             data: {
               issue: {
                 id: issue.id,
                 key: issue.key,
                 summary: issue.fields.summary,
               },
-              attachment: attachmentDetails ?? {
+              attachment: attachmentsById.get(item.to) ?? {
                 id: item.to,
                 filename: item.toString,
               },
               addedBy: history.author,
               addedAt: history.created,
             },
-          });
-        }
-      }
-    }
-
-    return results;
+          },
+        ];
+      }),
+    );
   },
-};
+});
 
 export const newAttachment = createTrigger({
   name: 'new_attachment',
@@ -206,15 +160,15 @@ Not sure what to write? Open Jira → Filters → Advanced search, build a filte
     addedAt: '2026-04-23T14:31:39.121+0530',
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, context);
+    await polling.onEnable({ context });
   },
-  async onDisable(context) {
-    await pollingHelper.onDisable(polling, context);
+  async onDisable() {
+    return;
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return await polling.poll({ context });
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return await polling.test({ context });
   },
 });

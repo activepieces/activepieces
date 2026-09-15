@@ -9,6 +9,7 @@ import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
 import { accessTokenManager } from './lib/access-token-manager'
+import { signupNames } from './lib/signup-names'
 import { userIdentityService } from './user-identity/user-identity-service'
 
 export const authenticationUtils = (log: FastifyBaseLogger) => ({
@@ -112,6 +113,21 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         }
     },
 
+    async provisionOrOnboard({ identityId }: ProvisionOrOnboardParams): Promise<AuthenticationResponse> {
+        const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
+        if (!identity.verified || signupNames.isPlaceholderName(identity)) {
+            return this.getOnboardingResponse({ identityId })
+        }
+        const { response } = await platformService(log).createPlatformWithProject({
+            identityId,
+            name: signupNames.platformNameFromSignup({ firstName: identity.firstName, email: identity.email }),
+            invalidatePreviousTokens: false,
+            isFirstPlatform: true,
+            callerTokenVersion: undefined,
+        })
+        return response
+    },
+
     async assertDomainIsAllowed({
         email,
         platformId,
@@ -194,18 +210,23 @@ export const authenticationUtils = (log: FastifyBaseLogger) => ({
         projectId,
     }: SendTelemetryParams): Promise<void> {
         try {
-            await telemetry(log).identify(identity, user)
-            await telemetry(log).trackProject(projectId, {
-                name: TelemetryEventName.SIGNED_UP,
-                payload: {
-                    userId: user.id,
-                    projectId,
-                    ...pickTelemetryPii({
-                        edition: system.getEdition(),
-                        email: identity.email,
-                        firstName: identity.firstName,
-                        lastName: identity.lastName,
-                    }),
+            if (!isNil(user.platformId)) {
+                await telemetry(log).identify({ identity, platformId: user.platformId, user })
+            }
+            await telemetry(log).trackProject({
+                projectId,
+                event: {
+                    name: TelemetryEventName.SIGNED_UP,
+                    payload: {
+                        userId: user.id,
+                        projectId,
+                        ...pickTelemetryPii({
+                            edition: system.getEdition(),
+                            email: identity.email,
+                            firstName: identity.firstName,
+                            lastName: identity.lastName,
+                        }),
+                    },
                 },
             })
         }
@@ -276,6 +297,10 @@ type AssertEmailMatchesSsoDomainParams = {
 type AssertUserIsInvitedToPlatformOrProjectParams = {
     email: string
     platformId: string
+}
+
+type ProvisionOrOnboardParams = {
+    identityId: string
 }
 
 type GetOnboardingResponseParams = {

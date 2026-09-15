@@ -1,6 +1,6 @@
 import MailerLite from '@mailerlite/mailerlite-nodejs';
 import { createAction } from '@activepieces/pieces-framework';
-import { mailerLiteAuth } from '../..';
+import { mailerLiteAuth } from '../auth';
 import { mailerLiteCommon } from '../common';
 
 export const removeSubscriberFromGroupAction = createAction({

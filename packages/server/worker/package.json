@@ -27,9 +27,8 @@
     "ai": "7.0.44",
     "async-mutex": "0.4.0",
     "dayjs": "1.11.9",
-    "decompress": "4.2.1",
     "env-var": "7.5.0",
-    "nanoid": "3.3.17",
+    "nanoid": "3.3.18",
     "proxy-chain": "2.7.1",
     "socket.io": "4.7.5",
     "dotenv": "16.4.7",
@@ -43,7 +42,6 @@
     "@activepieces/core-formula": "workspace:*"
   },
   "devDependencies": {
-    "@types/decompress": "4.2.7",
     "@types/node": "24.11.0",
     "@types/write-file-atomic": "4.0.3",
     "cli-table3": "0.6.3",

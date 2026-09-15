@@ -1,8 +1,7 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, HubspotAuthValue, hubspotAuth } from '../auth';
 import {
 	createAction,
 	DropdownOption,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
@@ -32,8 +31,8 @@ export const uploadFileAction = createAction({
 					};
 				}
 
-				const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-				const client = new Client({ accessToken: authValue.access_token });
+				const authValue = auth as HubspotAuthValue;
+				const client = new Client({ accessToken: getHubspotAccessToken(authValue) });
 
 				const limit = 100;
 				const options: DropdownOption<string>[] = [];
@@ -91,7 +90,7 @@ export const uploadFileAction = createAction({
 	},
 	async run(context) {
 		const { accessLevel, fileName, folderId, file } = context.propsValue;
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const response = await client.files.filesApi.upload(
 			{

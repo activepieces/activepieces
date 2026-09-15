@@ -56,7 +56,7 @@ export const dropboxUploadFile = createAction({
     }),
   },
   async run(context) {
-    const fileData = context.propsValue.file;
+    const { body, size } = streamUtils.toStreamingBody(context.propsValue.file);
     const token = context.auth.access_token;
     const commit = {
       autorename: context.propsValue.autorename,
@@ -69,17 +69,17 @@ export const dropboxUploadFile = createAction({
     // A known size within the single-request cap lets us stream the body straight
     // through with an explicit Content-Length. Larger files, and sources that don't
     // report a size, go through an upload session so nothing is buffered whole.
-    if (fileData.size != null && fileData.size <= SINGLE_REQUEST_LIMIT) {
+    if (size != null && size <= SINGLE_REQUEST_LIMIT) {
       return await sendToDropbox({
         endpoint: 'files/upload',
         apiArg: commit,
-        body: fileData.body,
-        contentLength: fileData.size,
+        body,
+        contentLength: size,
         token,
       });
     }
 
-    return await uploadInSession({ body: fileData.body, commit, token });
+    return await uploadInSession({ body, commit, token });
   },
 });
 

@@ -88,6 +88,20 @@ describe('apLogger', () => {
             expect(arg.error).toContain('boom')
         })
 
+        it('error(obj with a thrown object) keeps the payload instead of logging nothing', () => {
+            const logger = apLogger.create({})
+            logger.error({ error: { code: 'TOOL_FAILED', tool: 'ap_web_search' } }, 'agent job failed')
+            expect(spies.logErrorSpy.mock.calls[0][0].error).toContain('TOOL_FAILED')
+        })
+
+        it('error(obj with a string error) leaves it as it is', () => {
+            const logger = apLogger.create({})
+            logger.error({ error: 'connection refused', requestId: 'r1' }, 'context msg')
+            const arg = spies.logErrorSpy.mock.calls[0][0]
+            expect(arg.error).toBe('connection refused')
+            expect(arg.requestId).toBe('r1')
+        })
+
         it('error(obj with .err Error) extracts the error under the error key', () => {
             const logger = apLogger.create({})
             const err = new Error('nested')

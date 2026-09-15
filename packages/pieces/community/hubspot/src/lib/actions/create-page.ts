@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { pageType } from '../common/props';
 import { pageOutputSchema } from '../output-schemas';
@@ -90,7 +90,7 @@ export const createPageAction = createAction({
 			url,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth.access_token,
+				token: getHubspotAccessToken(context.auth),
 			},
 			body: {
 				htmlTitle: pageTitle,
@@ -110,7 +110,7 @@ export const createPageAction = createAction({
 				url: `https://api.hubapi.com/content/api/v2/pages/${createdPage.body.id}/publish-action`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.access_token,
+					token: getHubspotAccessToken(context.auth),
 				},
 				body: { action: 'schedule-publish' },
 			});
@@ -119,7 +119,7 @@ export const createPageAction = createAction({
 		const pageDetails = await httpClient.sendRequest({
 			method: HttpMethod.GET,
 			url: `${url}/${createdPage.body.id}`,
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: context.auth.access_token },
+			authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(context.auth) },
 		});
 
 		return pageDetails.body;

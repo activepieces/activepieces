@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { findProductOutputSchema } from '../output-schemas';
 
 export const wooFindProduct = createAction({
   name: 'Find Product',
@@ -20,6 +21,7 @@ export const wooFindProduct = createAction({
     idempotent: true,
   },
   auth: wooAuth,
+  outputSchema: findProductOutputSchema,
   props: {
     id: Property.ShortText({
       displayName: 'Product ID',

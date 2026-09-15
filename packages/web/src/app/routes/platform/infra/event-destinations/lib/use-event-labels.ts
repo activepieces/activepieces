@@ -16,6 +16,12 @@ export const useEventLabels = (): EventLabelsMap => {
       label: t('Agent taken offline'),
       description: t('Fires when someone takes an agent offline.'),
     },
+    [ApplicationEventName.AGENT_ACTION_EXECUTED]: {
+      label: t('Agent ran an action'),
+      description: t(
+        'Fires when an agent runs a configured action that is not a read.',
+      ),
+    },
     [ApplicationEventName.FLOW_RUN_STARTED]: { label: t('Flow run started') },
     [ApplicationEventName.FLOW_RUN_FINISHED]: {
       label: t('Flow run finished'),
@@ -26,6 +32,12 @@ export const useEventLabels = (): EventLabelsMap => {
     [ApplicationEventName.FLOW_CREATED]: { label: t('Flow created') },
     [ApplicationEventName.FLOW_UPDATED]: { label: t('Flow updated') },
     [ApplicationEventName.FLOW_DELETED]: { label: t('Flow deleted') },
+    [ApplicationEventName.FLOW_PIECES_UPGRADED]: {
+      label: t('Flow pieces upgraded'),
+    },
+    [ApplicationEventName.FLOW_PIECES_REVERTED]: {
+      label: t('Flow pieces reverted'),
+    },
     [ApplicationEventName.FOLDER_CREATED]: { label: t('Folder created') },
     [ApplicationEventName.FOLDER_UPDATED]: { label: t('Folder updated') },
     [ApplicationEventName.FOLDER_DELETED]: { label: t('Folder deleted') },
@@ -78,6 +90,18 @@ export const useEventLabels = (): EventLabelsMap => {
     },
     [ApplicationEventName.FLOW_DEACTIVATED]: {
       label: t('Flow deactivated'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_REQUESTED]: {
+      label: t('Flow approval requested'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_GRANTED]: {
+      label: t('Flow approval granted'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_REJECTED]: {
+      label: t('Flow approval rejected'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_WITHDRAWN]: {
+      label: t('Flow approval withdrawn'),
     },
   };
 };

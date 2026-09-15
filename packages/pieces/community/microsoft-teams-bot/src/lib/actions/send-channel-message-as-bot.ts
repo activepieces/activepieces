@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { microsoftTeamsBotAuth } from '../auth';
 import { microsoftTeamsBotCommon } from '../common';
+import { botConnector } from '../common/bot-connector';
 
 export const sendChannelMessageAsBotAction = createAction({
   auth: microsoftTeamsBotAuth,
@@ -37,13 +37,14 @@ export const sendChannelMessageAsBotAction = createAction({
     const { teamId, channelId, contentType, content } = context.propsValue;
     const { appId, appSecret, tenantId } = context.auth.props;
 
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${context.server.apiUrl}v1/teams-bot/send`,
-      headers: { Authorization: `Bearer ${context.server.token}` },
-      body: { appId, appSecret, tenantId, teamId, channelId, content, contentType },
+    return botConnector.sendChannelMessage({
+      appId,
+      appSecret,
+      tenantId,
+      teamId,
+      channelId,
+      content,
+      contentType,
     });
-
-    return response.body;
   },
 });

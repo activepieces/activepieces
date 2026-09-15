@@ -1,5 +1,5 @@
 import * as z from "zod/mini";
-import { ServerContext } from '../../context';
+import { AuthValidationServerContext, ServerContext } from '../../context';
 
 export const BasePieceAuthSchema = z.object({
   displayName: z.string(),
@@ -10,7 +10,7 @@ export const BasePieceAuthSchema = z.object({
 export type BasePieceAuthSchema<AuthValueSchema> = {
   displayName: string;
   description?: string;
-  validate?: (params: { auth: AuthValueSchema; server: Omit<ServerContext, 'token'> }) => Promise<
+  validate?: (params: { auth: AuthValueSchema; server: AuthValidationServerContext }) => Promise<
     | { valid: true }
     | {
     valid: false;

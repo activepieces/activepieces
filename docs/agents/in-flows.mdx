@@ -1,0 +1,46 @@
+---
+title: "Agents in Flows"
+sidebarTitle: "Agents in Flows"
+description: "Use an agent as a step, and act on what it returns"
+icon: "sitemap"
+---
+
+Drop an agent into a [flow](/flows/building-flows) as a step. The flow handles what's certain, the agent handles the rest.
+
+## What people use it for
+
+<CardGroup cols={3}>
+  <Card title="Research" icon="magnifying-glass" color="#8143E3">
+    Looks up a lead and returns a brief with a fit score.
+  </Card>
+  <Card title="Triage" icon="inbox" color="#F59E0B">
+    Reads an email, classifies it, sets the urgency.
+  </Card>
+  <Card title="Action" icon="bolt" color="#16A34A">
+    Files the invoice, updates the system, posts the summary.
+  </Card>
+</CardGroup>
+
+<Tip>
+If you can write the rule in one sentence without saying "depends", it's a condition, not an agent.
+</Tip>
+
+## Get a result you can build on
+
+Prose is hard to branch on, because the phrasing drifts every run.
+
+> "This looks fairly urgent, someone should pick it up today."
+
+Ask for **structured output** instead and you get fields:
+
+| Field | Type | Example |
+|---|---|---|
+| `category` | Text | `billing` |
+| `urgency` | Number | `4` |
+| `needs_human` | Boolean | `true` |
+
+Later steps pick these up from the [data selector](/flows/passing-data), the same as any other step's output. Route on `needs_human`, sort by `urgency`, drop `category` into the Slack message.
+
+<Tip>
+Ask for the fewest fields the next step needs. Every extra field is one more thing to get wrong.
+</Tip>

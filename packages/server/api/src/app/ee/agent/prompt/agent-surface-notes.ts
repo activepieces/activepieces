@@ -1,7 +1,8 @@
 import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
+import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
     source: AgentRunSource
     messageSource?: 'onboarding'
     currentDate: string
@@ -10,24 +11,44 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     scrapeAvailable: boolean
     imageAvailable: boolean
     emailAvailable: boolean
+    agentsAvailable: boolean
     userEmail: string
+    userIdentity: UserIdentity | null
     connections: ConnectionInventory | null
     memory: RunMemory
 }): string {
     const isChat = source === AgentRunSource.CHAT
-    return buildCapabilitiesNote({
-        currentDate,
-        searchAvailable,
-        fetchAvailable,
-        scrapeAvailable,
-        imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP,
-        emailAvailable: emailAvailable && isChat,
-        userEmail,
-    })
+    const readsTheWeb = source !== AgentRunSource.AGENT_BUILDER
+    return (isChat && !isNil(userIdentity) ? agentUserIdentity.buildNote(userIdentity) : '')
+        + buildCapabilitiesNote({
+            currentDate,
+            searchAvailable: searchAvailable && readsTheWeb,
+            fetchAvailable: fetchAvailable && readsTheWeb,
+            scrapeAvailable: scrapeAvailable && readsTheWeb,
+            imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP && readsTheWeb,
+            emailAvailable: emailAvailable && isChat,
+            userEmail,
+        })
+        + (isChat && agentsAvailable ? AGENTS_NOTE : '')
         + (isChat && !isNil(connections) ? buildConnectionInventoryNote(connections) : '')
         + (isChat ? buildMemoryNote(memory) : '')
         + (isChat && messageSource === 'onboarding' ? ONBOARDING_FIRST_MESSAGE_NOTE : '')
+        + (source === AgentRunSource.AGENT ? RECONNECT_NOTE : '')
+        + ((source === AgentRunSource.AGENT || isChat) && agentsAvailable ? SELF_EDIT_NOTE : '')
 }
+
+const SELF_EDIT_NOTE = [
+    '',
+    '',
+    '## You can change yourself',
+    'The person you are talking to owns you, and asking you to change how you work is a normal request rather than one to deflect. "Change your instructions to X", "stop doing Y", "add a Gmail tool": do it with `ap_update_agent`, `ap_add_agent_tool` or `ap_remove_agent_tool`, then say in one line what is different now.',
+    '',
+    'Send the whole new brief to `ap_update_agent`, never a diff, because it replaces what is there. Your brief is only the text at the very top of this message, above the first `##` heading; everything from that heading down is added fresh on every run and is not yours to send back. Read your brief first so a small change does not drop the rest of it, and send that plus your edit and nothing else. Leave `agentId` out: it is you, and it is fixed, so you cannot change another agent even if asked to.',
+    '',
+    'Reading anything — a search, a knowledge base, a flow, an action — refuses the change for the rest of that reply. So when one message asks you both to look something up and to change yourself, make the change FIRST and look it up after. If you are already past that point, say what you would have changed and offer to do it if they send that request on its own.',
+    '',
+    'A change takes effect from your next message, so say what is different now rather than promising it later. Flows that run you keep the version they were published with, and only a person can publish from the Configure panel, so never claim a change reached them.',
+].join('\n')
 
 const ONBOARDING_FIRST_MESSAGE_NOTE = [
     '',
@@ -53,7 +74,7 @@ function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, s
     emailAvailable: boolean
     userEmail: string
 }): string {
-    const lines: string[] = ['\n\n## Capabilities (current session)']
+    const lines: string[] = [`\n\n${CAPABILITIES_HEADING}`]
 
     lines.push(`- **Today's date**: ${currentDate}. Use this for anything time-relative — and when you add a year to a search query to get recent results, take it from here. Never assume the year from memory; your training is stale and will be wrong.`)
 
@@ -86,7 +107,7 @@ function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, s
 }
 
 function buildConnectionInventoryNote({ connections, truncated }: ConnectionInventory): string {
-    const lines: string[] = ['\n\n## Your connected apps (this project)']
+    const lines: string[] = [`\n\n${CONNECTED_APPS_HEADING}`]
     lines.push('This is the authoritative, complete list of the apps the user already has connected here. Use it as ground truth: resolve vague references ("my CRM", "my contacts", "my deals", "my pipeline") to an app in THIS list instead of guessing; never claim a listed app is unavailable, and never ask "which app?" when the answer is here. (Per-piece `ap_discover_action_auth` is still how you fetch the connection\'s auth/externalId once you\'ve picked it — not how you find out *whether* an app is connected.)')
 
     if (connections.length === 0) {
@@ -108,7 +129,7 @@ function buildConnectionInventoryNote({ connections, truncated }: ConnectionInve
 function buildMemoryNote({ instructions, memories }: RunMemory): string {
     const trimmedInstructions = instructions?.trim()
     const lines: string[] = [
-        '\n\n## Memory about this user (persists across every conversation)',
+        `\n\n${MEMORY_HEADING}`,
         'Honor anything below by default without re-asking. Save to memory with `ap_remember` (silent) whenever it would spare the user from repeating themselves next time:',
         '- The user asks you to remember or forget something ("remember I love cheese", "don\'t forget X", "forget that") — ALWAYS act on this immediately.',
         '- The user volunteers a durable fact, preference, or default about themselves ("I love cheese", "I prefer TypeScript", "my main channel is #ops", "I only hire EU-based") — save it proactively.',
@@ -125,7 +146,36 @@ function buildMemoryNote({ instructions, memories }: RunMemory): string {
     return lines.join('\n')
 }
 
-export const agentSurfaceNotes = { buildRunNotes }
+function headingOf(note: string): string {
+    return note.split('\n').find((line) => line.startsWith('## ')) ?? ''
+}
+
+function stripRunNotes(instructions: string): string {
+    const boundaries = RUN_NOTE_HEADINGS
+        .map((heading) => instructions.indexOf(`\n${heading}\n`))
+        .filter((index) => index > 0)
+    if (boundaries.length < RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY) {
+        return instructions
+    }
+    return instructions.slice(0, Math.min(...boundaries)).trim()
+}
+
+export const agentSurfaceNotes = { buildRunNotes, stripRunNotes }
+
+const RECONNECT_NOTE = [
+    '\n\n## When one of your tools cannot sign in',
+    'A tool failing with unauthorized, forbidden, invalid credentials or expired token means the account behind it needs reconnecting.',
+    'Say in one line which tool could not sign in, then call `ap_show_connection_picker` with that tool\'s piece and display name, which gives them a card to reconnect it. Show the card instead of explaining the problem, and never instead of saying anything.',
+    'The card only offers reconnecting the account this agent already uses. It does not list other accounts and returns nothing for you to pass anywhere.',
+    'If they reconnect, carry on with what you were asked. If they dismiss it, say what you cannot do without it rather than trying again.',
+].join('\n')
+
+const AGENTS_NOTE = [
+    '\n\n## Saved agents',
+    'This project can hold saved agents: named, reusable agents with their own instructions and tools, which the user can chat with and reuse.',
+    'Offer one when the user describes something recurring they will run again or across several flows, rather than a single automation. A one-off automation is still a flow.',
+    'What you edit is the draft; what runs unattended is the published version. Publish only when the user asks to make changes live, and do it with the `publish` flag on the edit rather than a separate publish call.',
+].join('\n')
 
 type ConnectionInventory = {
     connections: { displayName: string, pieceName: string, status: string }[]
@@ -136,3 +186,20 @@ type RunMemory = {
     instructions: string | null
     memories: string[]
 }
+
+const CAPABILITIES_HEADING = '## Capabilities (current session)'
+const CONNECTED_APPS_HEADING = '## Your connected apps (this project)'
+const MEMORY_HEADING = '## Memory about this user (persists across every conversation)'
+
+const RUN_NOTE_HEADINGS: readonly string[] = [
+    agentUserIdentity.heading,
+    CAPABILITIES_HEADING,
+    CONNECTED_APPS_HEADING,
+    MEMORY_HEADING,
+    headingOf(AGENTS_NOTE),
+    headingOf(ONBOARDING_FIRST_MESSAGE_NOTE),
+    headingOf(RECONNECT_NOTE),
+    headingOf(SELF_EDIT_NOTE),
+]
+
+const RUN_NOTE_HEADINGS_THAT_PROVE_A_COPY = 2

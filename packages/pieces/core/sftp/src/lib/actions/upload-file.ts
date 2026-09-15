@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { streamUtils } from '@activepieces/pieces-common';
 import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { endClient, getClient, getProtocolBackwardCompatibility } from '../common';
 import { sftpAuth } from '../auth';
 import { Readable } from 'stream';
 import { getSftpError } from './common';
+import { uploadFileActionOutputSchema } from '../output-schemas';
 
 async function uploadFileToFTP(client: FTPClient, fileName: string, body: Readable) {
   const remoteDirectory = fileName.substring(0, fileName.lastIndexOf('/'));
@@ -43,20 +45,21 @@ export const uploadFileAction = createAction({
       streaming: true,
     }),
   },
+  outputSchema: uploadFileActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const fileName = context.propsValue['fileName'];
-    const fileContent = context.propsValue['fileContent'];
+    const { body } = streamUtils.toStreamingBody(context.propsValue['fileContent']);
     const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
         case 'ftp':
-          await uploadFileToFTP(client as FTPClient, fileName, fileContent.body);
+          await uploadFileToFTP(client as FTPClient, fileName, body);
           break;
         default:
         case 'sftp':
-          await uploadFileToSFTP(client as Client, fileName, fileContent.body);
+          await uploadFileToSFTP(client as Client, fileName, body);
           break;
       }
       return {

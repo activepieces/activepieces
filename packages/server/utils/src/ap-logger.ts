@@ -1,3 +1,4 @@
+import { toError } from '@activepieces/core-utils'
 import { log } from 'evlog'
 import { wideEvent } from './wide-event'
 
@@ -150,13 +151,12 @@ function normalizePinoArgsWithError(args: unknown[]): { message: string | undefi
         const second = args[1]
         const message = typeof second === 'string' ? second : undefined
 
-        // pino convention: obj.err or obj.error as Error
         const errField = first['err'] ?? first['error']
-        if (errField instanceof Error) {
+        if (isRecord(errField)) {
             const { err: _err, error: _error, ...rest } = first
             void _err
             void _error
-            return { message, fields: rest, err: errField }
+            return { message, fields: rest, err: toError(errField) }
         }
         return { message, fields: first, err: undefined }
     }

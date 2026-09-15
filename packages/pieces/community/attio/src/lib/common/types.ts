@@ -120,6 +120,11 @@ export interface ListResponse {
 }
 
 export interface AttributeResponse {
+	id: {
+		workspace_id: string;
+		object_id: string;
+		attribute_id: string;
+	};
 	title: string;
 	description: string;
 	api_slug: string;
@@ -158,6 +163,7 @@ export interface ObjectWebhookPayload {
 			workspace_id: string;
 			object_id: string;
 			record_id: string;
+			attribute_id?: string;
 		};
 	}>;
 }

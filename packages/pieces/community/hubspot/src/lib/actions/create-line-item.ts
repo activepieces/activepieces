@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	getDefaultPropertiesForObject,
@@ -58,7 +58,7 @@ export const createLineItemAction = createAction({
 			lineItemProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const createdLineItem = await client.crm.lineItems.basicApi.create({
 			associations: [],

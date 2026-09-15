@@ -7,15 +7,21 @@ import {
   formErrors,
   OpenAICompatibleProviderConfig,
   Project,
+  ProviderModelConfig,
   UpdateAIProviderRequest,
+  VertexProviderConfig,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Activity, ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { z } from 'zod';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  LeaveWithoutSavingDialog,
+  useWarnBeforeLosingChanges,
+} from '@/components/custom/leave-without-saving';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,9 +34,11 @@ import {
 } from '@/components/ui/select';
 import { AiProviderInfo } from '@/features/agents';
 import { aiProviderApi, aiProviderKeys } from '@/features/platform-admin';
+import { formatUtils } from '@/lib/format-utils';
 
 import { SectionHeader } from '../components/section-header';
 
+import { KeyStatusBadge } from './key-status';
 import { ManualModelList } from './manual-model-list';
 import { ModelSelectionPanel } from './model-selection-panel';
 import { ProjectSelectionPanel } from './project-selection-panel';
@@ -45,24 +53,30 @@ export function ConfigDetail({
   onSave,
   onDelete,
   onReplaceCredentials,
+  isRechecking,
+  onRecheck,
   onBack,
 }: {
   config: AIProviderWithoutSensitiveData;
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
-  onSave: (request: UpdateAIProviderRequest) => void;
-  onDelete: () => void;
+  onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
+  onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
+  isRechecking: boolean;
+  onRecheck: () => void;
   onBack: () => void;
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const leavingOnPurpose = useRef(false);
+  const saveInFlight = useRef(false);
 
   const manualModels = providerCredentials.usesManualModels({
     provider: config.provider,
   });
-  const { data: models = [] } = useQuery({
+  const { data: models = [], isLoading: isLoadingModels } = useQuery({
     queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
@@ -78,11 +92,26 @@ export function ConfigDetail({
       })),
   ];
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
+  const leaveBlocker = useWarnBeforeLosingChanges({
+    hasChanges: dirty,
+    standDown: leavingOnPurpose,
+    blockSearchChanges: true,
+  });
+  const statusDetail = [
+    config.statusReason,
+    config.statusUpdated &&
+      t('Last checked {when}', {
+        when: formatUtils.formatDateToAgo(new Date(config.statusUpdated)),
+      }),
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const nameMissing = draft.name.trim().length === 0;
-  const enabledModelCount =
-    !manualModels && draft.modelScope === 'all'
-      ? models.length
-      : draft.modelIds.length;
+  const enabledModelCount = manualModels
+    ? draft.models.length
+    : draft.modelScope === 'all'
+    ? models.length
+    : draft.modelIds.length;
   const allowedProjectCount =
     draft.projectScope === 'all'
       ? projects.length
@@ -90,44 +119,39 @@ export function ConfigDetail({
       ? projects.length - draft.projectIds.length
       : draft.projectIds.length;
 
-  const save = () => {
+  const save = async () => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
     const manualConfig = manualConfigParse?.success
       ? manualConfigParse.data
       : undefined;
-    if (nameMissing) {
+    if (nameMissing || saveInFlight.current) {
       return;
     }
-    onSave({
-      displayName: draft.name.trim(),
-      modelScope: draft.modelScope,
-      modelIds: draft.modelIds,
-      projectScope: draft.projectScope,
-      projectIds: draft.projectIds,
-      ...(manualConfig
-        ? {
-            config: {
-              ...manualConfig,
-              models: draft.modelIds.map(
-                (modelId) =>
-                  manualConfig.models.find(
-                    (model) => model.modelId === modelId,
-                  ) ?? {
-                    modelId,
-                    modelName: modelId,
-                    modelType: AIProviderModelType.TEXT,
-                  },
-              ),
-            },
-          }
-        : {}),
-    });
+    saveInFlight.current = true;
+    try {
+      await onSave({
+        displayName: draft.name.trim(),
+        modelScope: draft.modelScope,
+        modelIds: manualModels
+          ? draft.models.map((model) => model.modelId)
+          : draft.modelIds,
+        projectScope: draft.projectScope,
+        projectIds: draft.projectIds,
+        ...(manualConfig
+          ? {
+              config: { ...manualConfig, models: draft.models },
+            }
+          : {}),
+      });
+    } finally {
+      saveInFlight.current = false;
+    }
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-20">
+    <div className="flex grow flex-col gap-8 pb-4">
       <div className="flex flex-col gap-4">
         <button
           type="button"
@@ -145,6 +169,7 @@ export function ConfigDetail({
             </h1>
             <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <span>{info.name}</span>
+              <KeyStatusBadge status={config.status} />
             </div>
           </div>
         </div>
@@ -191,6 +216,31 @@ export function ConfigDetail({
               {t('Replace')}
             </Button>
           </div>
+          <div className="flex items-center justify-between gap-3 p-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+                <Activity className="size-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-medium leading-none">
+                  {t('Status')}
+                </p>
+                {statusDetail && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {statusDetail}
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              loading={isRechecking}
+              onClick={onRecheck}
+            >
+              {t('Recheck')}
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -198,7 +248,7 @@ export function ConfigDetail({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <SectionHeader
             title={t('Models')}
-            count={enabledModelCount}
+            count={isLoadingModels ? undefined : enabledModelCount}
             description={
               manualModels
                 ? t('Model ids exposed through this key.')
@@ -224,14 +274,15 @@ export function ConfigDetail({
         </div>
         {manualModels ? (
           <ManualModelList
-            modelIds={draft.modelIds}
-            onChange={(modelIds) => setDraft({ ...draft, modelIds })}
+            models={draft.models}
+            onChange={(models) => setDraft({ ...draft, models })}
           />
         ) : (
           draft.modelScope === 'selected' && (
             <ModelSelectionPanel
               models={selectableModels}
               selectedIds={draft.modelIds}
+              isLoading={isLoadingModels}
               onChange={(modelIds) => setDraft({ ...draft, modelIds })}
             />
           )
@@ -313,13 +364,18 @@ export function ConfigDetail({
           title={t('Delete {name}', { name: config.name })}
           message={t('Steps and agents using this key will stop working.')}
           entityName={config.name}
-          mutationFn={async () => onDelete()}
+          showToast={true}
+          mutationFn={async () => {
+            await onDelete();
+            leavingOnPurpose.current = true;
+            onBack();
+          }}
         />
       </section>
 
       {dirty && (
-        <div className="fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-4">
-          <div className="flex items-center gap-3 rounded-xl border bg-background px-4 py-2.5 shadow-lg">
+        <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
+          <div className="flex animate-in items-center gap-3 rounded-xl border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
             <span className="text-sm">{t('You have unsaved changes')}</span>
             <Button
               variant="outline"
@@ -331,7 +387,9 @@ export function ConfigDetail({
             <Button
               size="sm"
               loading={isSaving}
-              disabled={nameMissing}
+              disabled={nameMissing || isSaving}
+              keyboardShortcut="S"
+              onKeyboardShortcut={save}
               onClick={save}
             >
               {t('Save')}
@@ -339,6 +397,12 @@ export function ConfigDetail({
           </div>
         </div>
       )}
+
+      <LeaveWithoutSavingDialog
+        open={leaveBlocker.state === 'blocked'}
+        onKeepEditing={() => leaveBlocker.reset?.()}
+        onDiscard={() => leaveBlocker.proceed?.()}
+      />
     </div>
   );
 }
@@ -375,16 +439,16 @@ function draftOf(config: AIProviderWithoutSensitiveData): ConfigDraft {
   return {
     name: config.name,
     modelScope: config.modelScope,
-    modelIds:
-      manualModels && 'models' in config.config
-        ? config.config.models.map((model) => model.modelId)
-        : config.modelIds,
+    modelIds: config.modelIds,
+    models:
+      manualModels && 'models' in config.config ? config.config.models : [],
     projectScope: config.projectScope,
     projectIds: config.projectIds,
   };
 }
 
 const ManualProviderConfig = z.union([
+  VertexProviderConfig,
   OpenAICompatibleProviderConfig,
   CloudflareGatewayProviderConfig,
 ]);
@@ -393,6 +457,7 @@ type ConfigDraft = {
   name: string;
   modelScope: AiProviderModelScope;
   modelIds: string[];
+  models: ProviderModelConfig[];
   projectScope: AiProviderProjectScope;
   projectIds: string[];
 };

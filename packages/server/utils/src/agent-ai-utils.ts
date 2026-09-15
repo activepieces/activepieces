@@ -1,6 +1,6 @@
-import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
+import { AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
+import { AI_PROVIDER_CAPABILITIES, AIWebSearchMode, aiProviderUtils, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
 import { createAnthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
@@ -8,6 +8,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
+import { agentProviderOptions } from './agent-provider-options'
 import { EmbeddingModel, LanguageModel, ModelMessage, SystemModelMessage, TelemetryOptions, ToolSet } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { wideEvent } from './wide-event'
@@ -49,6 +50,10 @@ function buildWebSearchTools({ provider, auth }: {
     return NATIVE_WEB_SEARCH_TOOLS[provider]?.(auth as BaseAIProviderAuthConfig) ?? {}
 }
 
+function webSearchModeOf(provider: AIProviderName): AIWebSearchMode | undefined {
+    return AI_PROVIDER_CAPABILITIES[provider].webSearch
+}
+
 function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
     if (!webSearchEnabled || AI_PROVIDER_CAPABILITIES[provider].webSearch !== 'plugin') {
         return undefined
@@ -56,13 +61,14 @@ function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boo
     return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
 }
 
-function createChatModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false }: {
+function createChatModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
     modelId: string
     metadata?: ChatModelMetadata
     webSearchEnabled?: boolean
+    onOutcome?: ProviderOutcomeReporter
 }): LanguageModel {
     if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
         const { apiKey } = auth as BaseAIProviderAuthConfig
@@ -72,6 +78,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
             name: 'cloudflare',
             baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
             headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
+            ...spreadIfDefined('fetch', observedProviderFetch(onOutcome)),
         }).chatModel(actualModelId)
     }
     return createLanguageModel({
@@ -83,6 +90,7 @@ function createChatModel({ provider, auth, config, modelId, metadata, webSearchE
             openRouterSettings: openRouterModelSettings(provider, webSearchEnabled),
             mistralViaOpenRouter: true,
             ...spreadIfDefined('extraHeaders', managedProviderMetadataHeaders({ provider, metadata })),
+            ...spreadIfDefined('onOutcome', onOutcome),
         },
     })
 }
@@ -101,32 +109,34 @@ function toStorageEmbedding(embedding: number[]): number[] {
     return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
 }
 
-function createEmbeddingModel({ provider, auth, config }: {
+function createEmbeddingModel({ provider, auth, config, onOutcome }: {
     provider: AIProviderName
     auth: Record<string, unknown>
     config: Record<string, unknown>
+    onOutcome?: ProviderOutcomeReporter
 }): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
     const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
     if (isNil(embeddingModelId)) {
         throw new Error(`Provider ${provider} does not support knowledge base search`)
     }
     const apiKey = readStringField(auth, 'apiKey')
+    const fetch = observedProviderFetch(onOutcome)
     switch (provider) {
         case AIProviderName.OPENAI:
-            return { model: createOpenAI({ apiKey }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
+            return { model: createOpenAI({ apiKey, ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
         case AIProviderName.GOOGLE:
-            return { model: createGoogleGenerativeAI({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
+            return { model: createGoogleGenerativeAI({ apiKey, ...spreadIfDefined('fetch', fetch) }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
         case AIProviderName.AZURE: {
             const resourceName = readStringField(config, 'resourceName')
             const apiVersion = readStringField(config, 'apiVersion')
             return {
-                model: createAzure({ resourceName, apiKey, ...spreadIfDefined('apiVersion', apiVersion || undefined) }).embeddingModel(embeddingModelId),
+                model: createAzure({ resourceName, apiKey, ...spreadIfDefined('apiVersion', apiVersion || undefined), ...spreadIfDefined('fetch', fetch) }).embeddingModel(embeddingModelId),
                 providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS,
             }
         }
         case AIProviderName.ACTIVEPIECES:
         case AIProviderName.OPENROUTER:
-            return { model: createOpenRouter({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
+            return { model: createOpenRouter({ apiKey, ...spreadIfDefined('fetch', fetch) }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
         default:
             throw new Error(`Provider ${provider} does not support knowledge base search`)
     }
@@ -163,7 +173,7 @@ function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName
     )
     if (!hasThinking) return messages
 
-    return messages
+    const stripped = messages
         .map((msg) => {
             if (msg.role !== 'assistant' || !Array.isArray(msg.content)) return msg
             const filtered = (msg.content as Array<Record<string, unknown>>).filter(
@@ -174,6 +184,13 @@ function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName
             return { ...msg, content: filtered }
         })
         .filter((msg): msg is ModelMessage => msg !== null)
+    return keepAtLeastOne({ transformed: stripped })
+}
+
+const CONTINUATION_NUDGE: ModelMessage = { role: 'user', content: 'Continue.' }
+
+function keepAtLeastOne({ transformed }: { transformed: ModelMessage[] }): ModelMessage[] {
+    return transformed.length === 0 ? [CONTINUATION_NUDGE] : transformed
 }
 
 function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
@@ -200,7 +217,7 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
 
     const head = messages.slice(0, -1)
     if (sanitizedParts.length === 0) {
-        return head
+        return keepAtLeastOne({ transformed: head })
     }
     if (sanitizedParts.length === last.content.length) {
         return messages
@@ -233,7 +250,7 @@ function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelM
 function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
     const totalToolResults = messages.reduce((count, message) => {
         if (message.role !== 'tool' || !Array.isArray(message.content)) return count
-        return count + message.content.filter((part) => part.type === 'tool-result').length
+        return count + message.content.filter((part) => part.type === 'tool-result' && !SCHEMA_TOOL_NAMES.has(part.toolName)).length
     }, 0)
 
     const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS
@@ -259,29 +276,6 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
         })
         return { ...message, content }
     })
-}
-
-function buildProviderOptions({ provider, tier, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, disableThinking?: boolean }): SharedV3ProviderOptions {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: disableThinking ? { type: 'disabled' } : { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
-        case AIProviderName.ACTIVEPIECES:
-        case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: disableThinking ? { enabled: false } : { max_tokens: tier.thinkingBudget } } }
-        default:
-            return {}
-    }
-}
-
-function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt: string, provider: AIProviderName }): string | SystemModelMessage {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { role: 'system', content: systemPrompt, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } }
-        default:
-            return systemPrompt
-    }
 }
 
 function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
@@ -538,13 +532,13 @@ export const agentAiUtils = {
     toStorageEmbedding,
     supportsWebSearch,
     buildWebSearchTools,
+    webSearchModeOf,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
     estimateTokenCount,
     collapseStaleToolOutputs,
-    buildProviderOptions,
-    buildSystemPromptWithCaching,
+    ...agentProviderOptions,
     buildTelemetry,
     buildStepParts,
     findDataArray,

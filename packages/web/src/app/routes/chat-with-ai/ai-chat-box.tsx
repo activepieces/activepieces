@@ -1,8 +1,9 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, SeekPage } from '@activepieces/core-utils';
 import {
   AgentConversation,
   AgentMessageSource,
   ChatPersonalizationStatus,
+  PlatformRole,
 } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -30,6 +31,8 @@ import { useCreditsState } from '@/features/chat/lib/use-credits-state';
 import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -51,6 +54,8 @@ import { getTextFromParts } from './lib/message-parsers';
 export function AIChatBox({
   incognito,
   agentId,
+  builder,
+  onTurnEnd,
   emptyState,
   footerNote,
   placeholder,
@@ -70,6 +75,8 @@ export function AIChatBox({
       <ChatBoxContent
         incognito={incognito}
         agentId={agentId}
+        builder={builder}
+        onTurnEnd={onTurnEnd}
         emptyState={emptyState}
         footerNote={footerNote}
         placeholder={placeholder}
@@ -84,6 +91,8 @@ export function AIChatBox({
 function ChatBoxContent({
   incognito,
   agentId,
+  builder,
+  onTurnEnd,
   emptyState,
   footerNote,
   placeholder,
@@ -110,11 +119,16 @@ function ChatBoxContent({
     setModelName,
   } = useAgentChat({
     ...(agentId === undefined ? {} : { agentId }),
+    ...(builder === undefined ? {} : { builder }),
     onTitleUpdate,
     onConversationCreated,
+    onTurnEnd,
     onCreditsExhausted: () => credits.setCreditsExhausted(true),
   });
 
+  const setStoreConversationId = useChatStoreContext(
+    (s) => s.setConversationId,
+  );
   const quickReplies = useChatStoreContext((s) => s.quickReplies);
   const offerRecurringAutomation = useChatStoreContext(
     (s) => s.offerRecurringAutomation,
@@ -125,6 +139,10 @@ function ChatBoxContent({
       void setConversationId(initialConversationId);
     }
   }, [initialConversationId, setConversationId]);
+
+  useEffect(() => {
+    setStoreConversationId(conversationId ?? null);
+  }, [conversationId, setStoreConversationId]);
 
   useEffect(() => {
     if (!isStreaming) return;
@@ -188,6 +206,7 @@ function ChatBoxContent({
   const [hasInput, setHasInput] = useState(false);
   const [promptOpen, setPromptOpen] = useState(false);
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const personalization = usePersonalization({ enabled: !incognito });
 
   const isAwaitingLoad =
@@ -202,12 +221,14 @@ function ChatBoxContent({
   const isFirstRun =
     personalization.personalStatus === ChatPersonalizationStatus.UNSET;
   const companyLocked =
-    isFirstRun && (personalization.companyInput ?? '').trim().length > 0;
+    (personalization.companyInput ?? '').trim().length > 0 &&
+    currentUser?.platformRole !== PlatformRole.ADMIN;
   const showOnboardingCard =
     isEmpty && !incognito && (isFirstRun || promptOpen);
   const showPersonalizationDonut =
     isEmpty &&
     !incognito &&
+    isNil(agentId) &&
     !showOnboardingCard &&
     !personalization.isResolving &&
     personalization.status !== null &&
@@ -269,7 +290,13 @@ function ChatBoxContent({
     <div className="flex flex-col h-full flex-1 min-w-0">
       <AnimatePresence mode="wait">
         {isEmpty ? (
-          <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
+          <div
+            key="empty-state"
+            className={cn(
+              'flex-1 overflow-y-auto min-h-0',
+              showPersonalizationDonut && 'pb-14',
+            )}
+          >
             {emptyState ??
               (showOnboardingCard ? (
                 <OnboardingWelcome />
@@ -291,7 +318,7 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full"
+              className="flex-1 relative h-full px-3 sm:px-6"
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -299,7 +326,7 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -483,6 +510,8 @@ function computeClaimedBuildIds(
 type AIChatBoxProps = {
   incognito: boolean;
   agentId?: string;
+  builder?: boolean;
+  onTurnEnd?: () => void;
   emptyState?: React.ReactNode;
   footerNote?: string;
   placeholder?: string;

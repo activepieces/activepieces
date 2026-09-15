@@ -16,7 +16,7 @@ export const apListAiModelsTool = (mcp: ProjectScopedMcpServer, log: FastifyBase
         title: 'ap_list_ai_models',
         description: 'List configured AI providers and their available models. Use this to discover valid provider and model values for configuring Run Agent steps. The output shows provider names and model IDs needed for the aiProviderModel input.',
         inputSchema: listAiModelsInput.shape,
-        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+        annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { provider: filterProvider } = listAiModelsInput.parse(args)

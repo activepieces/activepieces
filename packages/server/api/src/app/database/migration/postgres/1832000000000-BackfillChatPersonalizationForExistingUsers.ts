@@ -16,7 +16,7 @@ export class BackfillChatPersonalizationForExistingUsers1832000000000 implements
                 "user"."id",
                 'DISMISSED_LEGACY'
             FROM "user"
-            WHERE "user"."platformId" IS NOT NULL
+            INNER JOIN "platform" ON "platform"."id" = "user"."platformId"
             ON CONFLICT DO NOTHING
         `)
     }
