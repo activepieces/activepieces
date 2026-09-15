@@ -60,7 +60,7 @@ beforeAll(async () => {
         workerToken: ctx.workerToken,
     })
     await new Promise((resolve) => setTimeout(resolve, 5000))
-}, 30_000)
+})
 
 afterAll(async () => {
     worker.stop()
