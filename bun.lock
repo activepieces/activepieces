@@ -163,7 +163,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.168.0",
+      "version": "0.170.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -4342,7 +4342,7 @@
     },
     "packages/pieces/community/hubspot": {
       "name": "@activepieces/piece-hubspot",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
