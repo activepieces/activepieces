@@ -1,7 +1,13 @@
 import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronLeft, SearchX, Settings2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  History,
+  MessageSquare,
+  SearchX,
+  Settings2,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
   useLocation,
@@ -186,10 +192,28 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <Tabs value={runsOpen ? RUNS_TAB : CHAT_TAB} onValueChange={showTab}>
-            <TabsList>
-              <TabsTrigger value={CHAT_TAB}>{t('Chat')}</TabsTrigger>
-              <TabsTrigger value={RUNS_TAB}>{t('Runs')}</TabsTrigger>
+          <Tabs
+            value={runsOpen ? RUNS_TAB : CHAT_TAB}
+            onValueChange={showTab}
+            className="h-full self-stretch"
+          >
+            <TabsList variant="outline" className="h-full gap-1">
+              <TabsTrigger
+                value={CHAT_TAB}
+                variant="outline"
+                className="h-full rounded-none"
+              >
+                <MessageSquare className="mr-2 size-4" />
+                {t('Chat')}
+              </TabsTrigger>
+              <TabsTrigger
+                value={RUNS_TAB}
+                variant="outline"
+                className="h-full rounded-none"
+              >
+                <History className="mr-2 size-4" />
+                {t('Runs')}
+              </TabsTrigger>
             </TabsList>
           </Tabs>
           {!configureOpen && (
