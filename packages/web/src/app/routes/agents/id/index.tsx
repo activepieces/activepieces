@@ -113,9 +113,16 @@ const AgentEditorContent = () => {
   const runsOpen = pathname.endsWith(`/${RUNS_TAB}`);
   const showTab = (nextTab: string) => {
     const suffix = nextTab === RUNS_TAB ? `/${RUNS_TAB}` : '';
+    const carried = new URLSearchParams();
+    const openedConversation =
+      openedConversationId ?? searchParams.get(CONVERSATION_QUERY_PARAM);
+    if (!isNil(openedConversation)) {
+      carried.set(CONVERSATION_QUERY_PARAM, openedConversation);
+    }
+    const query = carried.toString();
     navigate(
       authenticationSession.appendProjectRoutePrefix(
-        `/agents/${agentId}${suffix}`,
+        `/agents/${agentId}${suffix}${query.length > 0 ? `?${query}` : ''}`,
       ),
     );
   };
