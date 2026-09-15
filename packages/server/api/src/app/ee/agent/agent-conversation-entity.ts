@@ -26,7 +26,7 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             nullable: false,
         },
         flowRunId: {
-            type: String,
+            ...ApIdSchema,
             nullable: true,
         },
         agentId: {
