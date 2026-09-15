@@ -21,6 +21,7 @@ A flow step type (the `run_agent` action of `@activepieces/piece-ai`) that runs 
 
 ### Gotchas
 
+- **`CHAT_HIDDEN_TOOL_NAMES` is load-bearing for the MCP Activity feed, not just for chat UX.** The chat reaches the MCP server as an ordinary HTTP client, and `mcp_activity` records `ap_run_action`. The only thing keeping chat activity out of that feed is `ap_run_action` sitting in `CHAT_HIDDEN_TOOL_NAMES` (`core/shared/src/lib/ee/agent/tool-phases.ts`), filtered worker-side in `agent-mcp-client.ts`. Remove it and the chat starts writing rows into a tab meant for external MCP clients, with no test failing. See the MCP Server page for the enforcement that was designed and deliberately not built.
 - Gated by `platform.plan.agentsEnabled`; when off, the step type is hidden from the piece selector. Off by default on Community, on for Cloud plans that include it.
 - External MCP tools are validated server-side via `POST /v1/projects/:projectId/agent-tools/mcp/validate` — a JSON-RPC `initialize` → `notifications/initialized` → `tools/list` handshake returning tool names. Outbound call routes through `apAxios` with `ssrf-agents.ts` rejecting private/loopback/link-local/meta IPs (allow ranges via `AP_SSRF_ALLOW_LIST`, CIDR). All error paths collapse to one generic message to avoid leaking reachability.
 - That validator lives under `agents/` (validating a server the agent connects *to*), deliberately separate from the `mcp/` module which exposes Activepieces itself *as* an MCP server (opposite direction).

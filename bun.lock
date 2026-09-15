@@ -163,7 +163,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.170.0",
+      "version": "0.171.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -186,7 +186,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.6.3",
+      "version": "0.7.0",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
