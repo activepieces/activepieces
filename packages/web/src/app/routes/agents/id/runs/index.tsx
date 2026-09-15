@@ -1,7 +1,7 @@
 import { AgentConversation } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { History } from 'lucide-react';
+import { Activity, Bot, Clock, History, Hourglass } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
@@ -30,19 +30,42 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   const columns: ColumnDef<RowDataWithActions<AgentConversation>>[] = useMemo(
     () => [
       {
-        accessorKey: 'status',
-        size: 150,
+        accessorKey: 'title',
+        size: 380,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Status')} />
+          <DataTableColumnHeader column={column} title={t('Run')} icon={Bot} />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2 text-left">
+            <TruncatedColumnTextValue
+              value={row.original.title ?? '—'}
+              className="max-w-[260px] 2xl:max-w-[420px]"
+            />
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        size: 140,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Status')}
+            icon={Activity}
+          />
         ),
         cell: ({ row }) => {
-          const look = agentRunUtils.statusLook(row.original.status);
+          const { Icon, variant } = agentRunUtils.getStatusIcon(
+            row.original.status,
+          );
           return (
-            <StatusIconWithText
-              icon={look.icon}
-              text={look.text}
-              variant={look.variant}
-            />
+            <div className="text-left">
+              <StatusIconWithText
+                icon={Icon}
+                text={agentRunUtils.getStatusLabel(row.original.status)}
+                variant={variant}
+              />
+            </div>
           );
         },
       },
@@ -50,43 +73,47 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         accessorKey: 'created',
         size: 200,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Started')} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('Started At')}
+            icon={Clock}
+          />
         ),
         cell: ({ row }) => (
-          <FormattedDate date={new Date(row.original.created)} includeTime />
+          <FormattedDate
+            date={new Date(row.original.created)}
+            className="text-left"
+            includeTime={true}
+          />
         ),
       },
       {
         accessorKey: 'updated',
         size: 140,
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Duration')} />
+          <DataTableColumnHeader
+            column={column}
+            title={t('Duration')}
+            icon={Hourglass}
+          />
         ),
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {formatUtils.formatDuration(
-              agentRunUtils.durationMs(row.original),
-              true,
-            )}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'modelName',
-        size: 220,
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Model')} />
-        ),
-        cell: ({ row }) => (
-          <TruncatedColumnTextValue value={row.original.modelName ?? '-'} />
-        ),
+        cell: ({ row }) => {
+          const durationMs = agentRunUtils.getDurationMs(row.original);
+          return (
+            <div className="text-left flex items-center gap-2 text-muted-foreground">
+              {durationMs === undefined
+                ? '—'
+                : formatUtils.formatDuration(durationMs, true)}
+            </div>
+          );
+        },
       },
     ],
     [],
   );
 
   return (
-    <div className="flex min-h-0 grow flex-col overflow-auto px-6 py-5">
+    <div className="flex-col w-full">
       <DataTable
         columns={columns}
         page={runs}
