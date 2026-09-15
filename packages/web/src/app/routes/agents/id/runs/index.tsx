@@ -2,7 +2,15 @@ import { isNil } from '@activepieces/core-utils';
 import { AgentRunListItem } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Activity, Bot, Clock, History, Workflow } from 'lucide-react';
+import {
+  Activity,
+  Bot,
+  Clock,
+  History,
+  Coins,
+  Hourglass,
+  Workflow,
+} from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -15,6 +23,7 @@ import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { authenticationSession } from '@/lib/authentication-session';
+import { formatUtils } from '@/lib/format-utils';
 import { useNewWindow } from '@/lib/navigation-utils';
 
 type AgentRunsProps = {
@@ -118,6 +127,43 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
             </div>
           );
         },
+      },
+      {
+        accessorKey: 'updated',
+        size: 140,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Duration')}
+            icon={Hourglass}
+          />
+        ),
+        cell: ({ row }) => {
+          const durationMs = agentRunUtils.getDurationMs(row.original);
+          return (
+            <span className="text-left text-muted-foreground">
+              {isNil(durationMs)
+                ? '\u2014'
+                : formatUtils.formatDuration(durationMs, true)}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'aiCredits',
+        size: 130,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Credits')}
+            icon={Coins}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="text-left text-muted-foreground">
+            {isNil(row.original.aiCredits) ? '\u2014' : row.original.aiCredits}
+          </span>
+        ),
       },
       {
         accessorKey: 'created',

@@ -150,6 +150,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
                 'agent_conversation.projectId',
                 'agent_conversation.agentId',
                 'agent_conversation.flowRunId',
+                'agent_conversation.aiCredits',
                 'agent_conversation.title',
                 'agent_conversation.modelName',
                 'agent_conversation.status',
