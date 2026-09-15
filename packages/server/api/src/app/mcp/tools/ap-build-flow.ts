@@ -244,6 +244,7 @@ function buildSkeleton({ step, name, resolvedPieceVersion, resolvedPieceName }: 
                     },
                     input: step.input ?? {},
                     errorHandlingOptions: mcpUtils.buildErrorHandlingOptions({ continueOnFailure: step.continueOnFailure, retryOnFailure: step.retryOnFailure }),
+                    useDeno: true,
                 },
             }
         case FlowActionType.PIECE:

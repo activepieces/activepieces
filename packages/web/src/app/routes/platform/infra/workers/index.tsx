@@ -22,6 +22,7 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { RequestTrial } from '@/app/components/request-trial';
 import { VIEW_QUERY_PARAM } from '@/app/routes/platform/admin-pages';
 import {
@@ -91,12 +92,10 @@ export default function WorkersPage() {
             <Activity className="w-4 h-4 mr-2" />
             {t('Health')}
           </TabsTrigger>
-          {platform.plan.workerGroupsEnabled && (
-            <TabsTrigger variant="outline" value="worker-groups">
-              <Layers className="w-4 h-4 mr-2" />
-              {t('Worker groups')}
-            </TabsTrigger>
-          )}
+          <TabsTrigger variant="outline" value="worker-groups">
+            <Layers className="w-4 h-4 mr-2" />
+            {t('Worker groups')}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="health">
@@ -178,11 +177,18 @@ export default function WorkersPage() {
           </div>
         </TabsContent>
 
-        {platform.plan.workerGroupsEnabled && (
-          <TabsContent value="worker-groups">
+        <TabsContent value="worker-groups">
+          <LockedFeatureGuard
+            locked={!platform.plan.workerGroupsEnabled}
+            lockTitle={t('Unlock Worker Groups')}
+            lockDescription={t(
+              'Reserve dedicated worker capacity for specific projects so a busy project never slows down the rest',
+            )}
+            lockDocumentationUrl="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
+          >
             <WorkerAssignmentsTab />
-          </TabsContent>
-        )}
+          </LockedFeatureGuard>
+        </TabsContent>
       </Tabs>
     </div>
   );

@@ -95,3 +95,60 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 })
+
+function capturingContext() {
+    const captured: Record<string, unknown>[] = []
+    const logged: { fields: unknown, message: unknown }[] = []
+    const record = (fields: unknown, message: unknown) => {
+        logged.push({ fields, message })
+    }
+    const logger: Record<string, unknown> = {
+        info: record, warn: record, error: record,
+        debug: () => undefined, trace: () => undefined, fatal: () => undefined,
+    }
+    logger.child = (fields: Record<string, unknown>) => {
+        captured.push(fields)
+        return logger
+    }
+    const apiClient = {
+        getAgentConfig: () => Promise.reject(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: 'OPENAI', entityType: 'AIProvider' },
+        })),
+        resumeFlowStep: () => Promise.resolve(),
+        saveAgentMessages: () => Promise.resolve(),
+        sendAgentEvent: () => Promise.resolve(),
+    }
+    return { ctx: { apiClient, log: logger } as unknown as JobContext, captured, logged }
+}
+
+describe('every line an agent job logs says which surface started it', () => {
+    it('carries the source, so a flow-step failure is not inferred from whether flowRun is present', async () => {
+        const { ctx, captured } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({
+            source: AgentRunSource.FLOW_STEP,
+            flowRunId: 'flow-run-1',
+            waitpointId: 'waitpoint-1',
+        }))
+
+        expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.FLOW_STEP } })
+    })
+
+    it('says CHAT for a real chat job, which omits the field entirely', async () => {
+        const { ctx, captured } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({}))
+
+        expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.CHAT } })
+    })
+
+    it('keeps the source on the failure line, which is the one worth filtering', async () => {
+        const { ctx, logged } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'f1', waitpointId: 'w1' }))
+
+        const failure = logged.find((entry) => String(entry.message).includes('Agent job failed'))
+        expect(failure?.fields).toMatchObject({ agentRun: { source: AgentRunSource.FLOW_STEP } })
+    })
+})

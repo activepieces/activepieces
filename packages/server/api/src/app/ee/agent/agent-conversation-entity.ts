@@ -80,6 +80,11 @@ export const AgentConversationEntity = new EntitySchema<AgentConversationWithRel
             where: `source = '${AgentRunSource.FLOW_STEP}'`,
         },
         {
+            name: 'idx_agent_conversation_agent_runs_created_id',
+            columns: ['projectId', 'agentId', 'created', 'id'],
+            where: `source = '${AgentRunSource.FLOW_STEP}' AND "agentId" IS NOT NULL`,
+        },
+        {
             name: 'idx_agent_conversation_agent_user_created_id',
             columns: ['agentId', 'userId', 'created', 'id'],
             where: '"agentId" IS NOT NULL',

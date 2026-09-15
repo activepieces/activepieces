@@ -365,6 +365,6 @@ export { CHAT_ALLOWED_MIME_TYPES }
 
 export * from './agent'
 export { agentToolClassification } from './tool-classification'
-export { agentToolPhases, type AgentPhase } from './tool-phases'
+export { AGENT_SELF_EDIT_TOOLS, AGENT_SURFACE_TOOLS, agentToolPhases, type AgentPhase } from './tool-phases'
 export { chatVisibility, type ResolveChatEnabledParams } from './chat-visibility'
 export * from './chat-personalization'
