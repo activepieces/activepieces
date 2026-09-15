@@ -54,9 +54,10 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
   other and Activepieces rejects the file and silently keeps serving the old prices.
 - A price change is no longer visible in `git log` of this repo. The audit trail is the CDN history
   prefix.
-- The reader **fails closed**: bad schema, no tiers, a missing default tier, a weight outside
-  1..10000, or a model list that lost more than 20% of the bundled entries all fall back to the last
-  good file, then to the release's own constants. CE and self-hosted keep working with zero setup.
+- The reader **fails closed**: bad schema, no tiers, a missing default tier, or a weight outside
+  1..10000 all fall back to the last good file, then to the release's own constants. CE and
+  self-hosted keep working with zero setup. A short model list is no longer one of these cases —
+  see [000036](000036-published-model-weights-layer-over-the-shipped-table.md).
 - Publishing is blocked whenever the live file cannot be read, so a CDN outage can never overwrite
   prices nobody can see.
 - **The two guards on publishing are not equally strict, which is easy to misread.** Reading the live
