@@ -28,7 +28,9 @@ export const sapSuccessFactorsSaml2Oauth = createPiece({
         })}/odata/v2`;
       },
       authMapping: async (auth, propsValue) => {
-        successFactorsHttp.assertCustomApiRelativePath(propsValue['url']);
+        successFactorsHttp.assertCustomApiRelativePath(
+          propsValue['url']['url'] as string,
+        );
 
         const accessToken = successFactorsHttp.requireNonEmpty({
           value: auth.access_token,

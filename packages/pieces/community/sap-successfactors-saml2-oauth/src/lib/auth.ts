@@ -182,18 +182,12 @@ export const successFactorsAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const token = await generateSuccessFactorsToken(auth);
-      await successFactorsHttp.apiCall({
-        apiUrl: auth.api_url,
-        accessToken: token.access_token,
-        method: HttpMethod.GET,
-        path: '/odata/v2/User',
-        queryParams: {
-          '$top': '1',
-          '$select': 'userId',
-          '$format': 'JSON',
-        },
+      successFactorsHttp.normalizeBaseUrl({
+        value: auth.api_url,
+        fieldName: 'OData API Base URL',
       });
+
+      await generateSuccessFactorsToken(auth);
 
       return { valid: true };
     } catch {
