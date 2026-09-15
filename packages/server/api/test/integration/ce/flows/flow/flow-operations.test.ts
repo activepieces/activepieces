@@ -1,6 +1,8 @@
 import {
+    FLOW_VERSION_TOKEN_HEADER,
     FlowActionType,
     flowOperations,
+    flowVersionToken,
     FlowOperationType,
     FlowStatus,
     FlowTriggerType,
@@ -11,6 +13,7 @@ import {
     PopulatedFlow,
     StepLocationRelativeToParent,
 } from '@activepieces/shared'
+import { ErrorCode } from '@activepieces/core-utils'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { db } from '../../../../helpers/db'
@@ -826,6 +829,59 @@ describe('Flow Operations API', () => {
             const body = response?.json()
             expect(body.data).toHaveLength(1)
             expect(body.data[0].id).toBe(mockFlowVersion.id)
+        })
+    })
+
+    describe('POST /v1/flows/:id If-Match', () => {
+        const renameWithToken = async (ctx: Awaited<ReturnType<typeof createTestContext>>, flowId: string, token: string | undefined) =>
+            ctx.inject({
+                method: 'POST',
+                url: `/api/v1/flows/${flowId}`,
+                ...(token ? { headers: { [FLOW_VERSION_TOKEN_HEADER]: token } } : {}),
+                payload: {
+                    type: FlowOperationType.CHANGE_NAME,
+                    request: { displayName: 'renamed' },
+                },
+            })
+
+        const createFlow = async (ctx: Awaited<ReturnType<typeof createTestContext>>): Promise<PopulatedFlow> => {
+            const response = await ctx.post('/v1/flows', {
+                displayName: 'concurrency',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            return response?.json()
+        }
+
+        it('applies the operation when the token matches the current version', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await createFlow(ctx)
+
+            const response = await renameWithToken(ctx, flow.id, flowVersionToken.of(flow.version))
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('rejects an operation computed against a stale version', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await createFlow(ctx)
+            const staleToken = flowVersionToken.of(flow.version)
+
+            const first = await renameWithToken(ctx, flow.id, staleToken)
+            expect(first?.statusCode).toBe(StatusCodes.OK)
+
+            const second = await renameWithToken(ctx, flow.id, staleToken)
+
+            expect(second?.statusCode).toBe(StatusCodes.PRECONDITION_FAILED)
+            expect(second?.json().code).toBe(ErrorCode.FLOW_VERSION_CONFLICT)
+        })
+
+        it('stays backwards compatible when no token is sent', async () => {
+            const ctx = await createTestContext(app!)
+            const flow = await createFlow(ctx)
+
+            const response = await renameWithToken(ctx, flow.id, undefined)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 })
