@@ -4,19 +4,20 @@ import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
-import { chargeFor } from './ai-credits'
+import { chargeFor, CostBasis, costBasisOf } from './ai-credits'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
         const toolCalls = input.toolCalls ?? 0
         const credits = chargeFor({ usage: input.usage, toolCalls })
+        const costBasis = costBasisOf(input.usage)
         if (credits === 0) {
             return
         }
         const platformId = input.billing.platformId
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const appSumo = isAppSumoCreditedPlan(platformPlan.plan)
-        const chat = chatEventOf(input, toolCalls)
+        const chat = chatEventOf({ input, toolCalls, costBasis })
         if (!isNil(chat)) {
             await trackBillingAndSendTelemetry({
                 log,
@@ -26,7 +27,7 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
             })
             return
         }
-        const properties = billingProperties(input, toolCalls)
+        const properties = billingProperties({ input, toolCalls, costBasis })
         await trackBillingAndSendTelemetry({
             log,
             licenseKey: platformPlan.licenseKey,
@@ -36,7 +37,7 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function chatEventOf(input: ReportAiUsageRequest, toolCalls: number): { credits: ChatCreditConsumptionProperties, appSumo: ChatAppSumoConsumptionProperties } | undefined {
+function chatEventOf({ input, toolCalls, costBasis }: PropertiesParams): { credits: ChatCreditConsumptionProperties, appSumo: ChatAppSumoConsumptionProperties } | undefined {
     if (input.billing.scope !== ActivepiecesAiBillingScope.CONVERSATION || isNil(input.chat)) {
         return undefined
     }
@@ -55,12 +56,13 @@ function chatEventOf(input: ReportAiUsageRequest, toolCalls: number): { credits:
             provider: input.provider,
             model: input.modelId,
             tier,
+            ...costBasis,
         },
         appSumo: { platformId: input.billing.platformId, projectId, conversationId, turnIndex, tier },
     }
 }
 
-function billingProperties(input: ReportAiUsageRequest, toolCalls: number): AiCreditConsumptionProperties {
+function billingProperties({ input, toolCalls, costBasis }: PropertiesParams): AiCreditConsumptionProperties {
     return {
         platformId: input.billing.platformId,
         projectId: projectIdOf(input),
@@ -75,6 +77,7 @@ function billingProperties(input: ReportAiUsageRequest, toolCalls: number): AiCr
             messages: MESSAGES_PER_MODEL_CALL,
             toolCalls,
         }],
+        ...costBasis,
     }
 }
 
@@ -83,6 +86,12 @@ function projectIdOf(input: ReportAiUsageRequest): string {
         return PROJECTLESS_CHAT
     }
     return input.billing.projectId ?? PROJECTLESS_CHAT
+}
+
+type PropertiesParams = {
+    input: ReportAiUsageRequest
+    toolCalls: number
+    costBasis: CostBasis | undefined
 }
 
 const MESSAGES_PER_MODEL_CALL = 1

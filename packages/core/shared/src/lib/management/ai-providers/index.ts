@@ -461,3 +461,5 @@ export {
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
 export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
+
+export const AI_PIECE_COST_BILLING_VERSION = '0.11.0'
