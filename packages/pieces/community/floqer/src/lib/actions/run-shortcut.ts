@@ -70,8 +70,8 @@ async function findShortcut({
             return undefined;
         }
         return response.data.find((shortcut) => shortcut.id === shortcutId);
-    } catch {
-        return undefined;
+    } catch (error) {
+        throw error;
     }
 }
 
