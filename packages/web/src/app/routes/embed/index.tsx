@@ -102,7 +102,7 @@ const EmbedPage = React.memo(() => {
       return data;
     },
   });
-  const { setTheme } = useTheme();
+  const { setThemeWithoutPersisting } = useTheme();
   const { i18n } = useTranslation();
   const { checkAccess } = useAuthorization();
   const initState = (event: MessageEvent<ActivepiecesVendorInit>) => {
@@ -111,7 +111,7 @@ const EmbedPage = React.memo(() => {
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       if (event.data.data.jwtToken) {
-        setTheme(event.data.data.mode ?? 'light');
+        setThemeWithoutPersisting(event.data.data.mode ?? 'light');
         mutateAsync(
           {
             externalAccessToken: event.data.data.jwtToken,

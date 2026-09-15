@@ -17,6 +17,7 @@ type ThemeProviderProps = {
 type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  setThemeWithoutPersisting: (theme: Theme) => void;
   forceLightMode: boolean;
   setForceLightMode: (value: boolean) => void;
 };
@@ -24,6 +25,7 @@ type ThemeProviderState = {
 const initialState: ThemeProviderState = {
   theme: 'light',
   setTheme: () => null,
+  setThemeWithoutPersisting: () => null,
   forceLightMode: false,
   setForceLightMode: () => null,
 };
@@ -119,6 +121,7 @@ export function ThemeProvider({
       localStorage.setItem(storageKey, theme);
       setTheme(theme);
     },
+    setThemeWithoutPersisting: setTheme,
     forceLightMode,
     setForceLightMode,
   };
