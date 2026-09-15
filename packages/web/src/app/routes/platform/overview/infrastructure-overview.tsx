@@ -60,7 +60,15 @@ export function InfrastructureOverview() {
   const workerCount = workers?.length ?? 0;
   const mismatched = health?.release?.workers.versionMismatched ?? 0;
 
-  const needsAttention = !isUpToDate || !appChecksPassed || mismatched > 0;
+  const workerChecksReported =
+    !isNil(health?.workerRam) && !isNil(health?.workerCpu);
+  const workerChecksPassed =
+    health?.workerRam === true && health?.workerCpu === true;
+  const needsAttention =
+    !isUpToDate ||
+    !appChecksPassed ||
+    mismatched > 0 ||
+    (workerChecksReported && !workerChecksPassed);
 
   return (
     <AdminOverview
@@ -167,11 +175,15 @@ export function InfrastructureOverview() {
             }
           />
           <OverviewRow
-            tone={isNil(health?.workerRam) ? 'off' : 'ok'}
+            tone={
+              !workerChecksReported ? 'off' : workerChecksPassed ? 'ok' : 'warn'
+            }
             label={
-              isNil(health?.workerRam)
+              !workerChecksReported
                 ? t('Worker hardware checks unavailable')
-                : t('Workers: RAM and CPU checks passed')
+                : workerChecksPassed
+                ? t('Workers: RAM and CPU checks passed')
+                : t('Workers: one or more hardware checks failed')
             }
           />
         </OverviewRows>
