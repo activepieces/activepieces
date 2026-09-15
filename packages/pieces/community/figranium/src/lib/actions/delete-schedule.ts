@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { figraniumAuth } from '../auth';
 import { figraniumClient } from '../common/client';
+import { taskIdDropdown } from '../common/props';
 
 export const deleteScheduleAction = createAction({
   auth: figraniumAuth,
@@ -10,17 +11,10 @@ export const deleteScheduleAction = createAction({
   description: 'Disable and remove the schedule from a task',
   audience: 'both',
   aiMetadata: {
-    description:
-      'Disables and removes the schedule from a Figranium task, stopping it from running automatically. The task itself is not deleted. Retrying after success typically errors since the schedule no longer exists.',
+    description: 'Disables and removes the schedule from a Figranium task. The task itself is not deleted.',
     idempotent: false,
   },
-  props: {
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task',
-      required: true,
-    }),
-  },
+  props: { taskId: taskIdDropdown },
   async run(context) {
     const { taskId } = context.propsValue;
     return figraniumClient({
