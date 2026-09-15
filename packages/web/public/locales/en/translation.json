@@ -2991,6 +2991,7 @@
   "Who can sign in, how they sign in, and what they can do inside projects.": "Who can sign in, how they sign in, and what they can do inside projects.",
   "Worker hardware checks unavailable": "Worker hardware checks unavailable",
   "Workers: RAM and CPU checks passed": "Workers: RAM and CPU checks passed",
+  "Workers: one or more hardware checks failed": "Workers: one or more hardware checks failed",
   "Workspace": "Workspace",
   "Your plan, credits and how projects consume them.": "Your plan, credits and how projects consume them.",
   "unknown": "unknown",
