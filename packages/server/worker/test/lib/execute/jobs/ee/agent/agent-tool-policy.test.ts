@@ -1,4 +1,4 @@
-import { AgentRunSource } from '@activepieces/shared'
+import { AgentRunSource, mcpToolNameUtils } from '@activepieces/shared'
 import { Tool, ToolSet } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { agentToolPolicy, AgentToolGroups } from '../../../../../../src/lib/execute/jobs/ee/agent/agent-tool-policy'
@@ -43,14 +43,27 @@ describe('what a chat run may reach', () => {
 
 describe('what may reach the tools that build saved agents', () => {
     const AGENT_SURFACE_TOOLS = ['ap_list_agents', 'ap_create_agent', 'ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+    const SELF_EDIT_TOOLS = ['ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
 
     it('a chat run and the builder, and no surface with nobody reading', () => {
         for (const toolName of AGENT_SURFACE_TOOLS) {
             expect(namesFor(AgentRunSource.CHAT), toolName).toContain(toolName)
             expect(namesFor(AgentRunSource.AGENT_BUILDER), toolName).toContain(toolName)
-            expect(namesFor(AgentRunSource.AGENT), toolName).not.toContain(toolName)
             expect(namesFor(AgentRunSource.FLOW_STEP), toolName).not.toContain(toolName)
         }
+    })
+
+    it('an agent talking to its owner may rewrite itself', () => {
+        for (const toolName of SELF_EDIT_TOOLS) {
+            expect(namesFor(AgentRunSource.AGENT), toolName).toContain(toolName)
+        }
+    })
+
+    it('and may not reach for another agent, or make a new one', () => {
+        const names = namesFor(AgentRunSource.AGENT)
+
+        expect(names).not.toContain('ap_list_agents')
+        expect(names).not.toContain('ap_create_agent')
     })
 })
 
@@ -182,3 +195,68 @@ describe('the shape of the policy itself', () => {
         }
     })
 })
+
+describe('withValidNames', () => {
+    const names = (tools: { toolName: string }[], reserved?: string[]): string[] =>
+        agentToolPolicy.withValidNames({ tools, ...(reserved === undefined ? {} : { reserved }) }).map((tool) => tool.toolName)
+
+    it('rewrites a name the providers would reject and keeps the rest of the tool', () => {
+        const [rewritten] = agentToolPolicy.withValidNames({ tools: [{ toolName: 'Company Docs', sourceId: 'kb-1' }] })
+
+        expect(rewritten.toolName).toMatch(PROVIDER_PATTERN)
+        expect(rewritten.sourceId).toBe('kb-1')
+    })
+
+    it('leaves an already generated name alone, because createToolName is not idempotent', () => {
+        const generated = mcpToolNameUtils.createToolName('Company Docs')
+
+        expect(names([{ toolName: generated }])).toEqual([generated])
+    })
+
+    it('rewrites a dotted name, which only Anthropic accepts', () => {
+        expect(names([{ toolName: 'handbook.pdf' }])).not.toEqual(['handbook.pdf'])
+    })
+
+    it('keeps two tools that would otherwise collapse onto one toolset key', () => {
+        const collided = names([{ toolName: 'Company Docs' }, { toolName: 'Company docs' }])
+
+        expect(new Set(collided).size).toBe(2)
+        for (const name of collided) {
+            expect(name).toMatch(PROVIDER_PATTERN)
+        }
+    })
+
+    it('keeps tools whose names share no characters a provider accepts', () => {
+        const collided = names([{ toolName: '\u6587\u6863' }, { toolName: '\u691c\u7d22' }, { toolName: '!!!' }])
+
+        expect(new Set(collided).size).toBe(3)
+    })
+
+    it('does not hand a collision the name of a tool that already claimed it', () => {
+        const collided = names([{ toolName: 'x_2' }, { toolName: 'x' }, { toolName: 'x' }])
+
+        expect(new Set(collided).size).toBe(3)
+    })
+
+    it('does not reuse a name another tool group already claimed', () => {
+        expect(names([{ toolName: 'company_docs' }], ['company_docs'])).not.toEqual(['company_docs'])
+    })
+
+    it('never lets a configured tool hold a built-in name, which the policy spreads last', () => {
+        for (const builtIn of ['ap_fetch_url', 'ap_show_questions', 'updateTaskStatus']) {
+            const [name] = names([{ toolName: builtIn }])
+
+            expect(name).not.toBe(builtIn)
+            expect(name.startsWith('ap_')).toBe(false)
+            expect(name).toMatch(PROVIDER_PATTERN)
+        }
+    })
+
+    it('trims a name past the 64 character limit', () => {
+        const [name] = names([{ toolName: 'a'.repeat(200) }])
+
+        expect(name.length).toBeLessThanOrEqual(64)
+    })
+})
+
+const PROVIDER_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_-]{0,63}$/

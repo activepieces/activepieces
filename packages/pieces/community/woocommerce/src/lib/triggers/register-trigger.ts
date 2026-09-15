@@ -2,6 +2,8 @@ import {
   PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
+  tryCatch,
+  OutputSchema,
 } from '@activepieces/pieces-framework';
 import { wooAuth } from '../auth';
 import { WebhookInformation, wooCommon } from '../common';
@@ -20,6 +22,7 @@ export const woocommerceRegisterTrigger = ({
   description,
   aiMetadata,
   sampleData,
+  outputSchema,
   testDataEndpoint,
 }: {
   name: string;
@@ -28,6 +31,7 @@ export const woocommerceRegisterTrigger = ({
   description: string;
   aiMetadata: { description: string };
   sampleData: unknown;
+  outputSchema: OutputSchema;
   testDataEndpoint: string;
 }) =>
   createTrigger({
@@ -39,6 +43,7 @@ export const woocommerceRegisterTrigger = ({
     aiMetadata,
     props: {},
     sampleData,
+    outputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
       const res = await wooCommon.createWebhook(
@@ -105,19 +110,24 @@ export const woocommerceRegisterTrigger = ({
       if (payload['webhook_id']) return [];
 
       if (topic.includes('deleted')) {
-        const response = await httpClient.sendRequest({
-          url: `${trimmedBaseUrl}${testDataEndpoint}/${payload['id']}`,
-          method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: context.auth.props.consumerKey,
-            password: context.auth.props.consumerSecret,
-          },
-          queryParams: {
-            per_page: '10',
-          },
-        });
-        return [response.body];
+        const { data, error } = await tryCatch(() =>
+          httpClient.sendRequest({
+            url: `${trimmedBaseUrl}${testDataEndpoint}/${payload['id']}`,
+            method: HttpMethod.GET,
+            authentication: {
+              type: AuthenticationType.BASIC,
+              username: context.auth.props.consumerKey,
+              password: context.auth.props.consumerSecret,
+            },
+            queryParams: {
+              per_page: '10',
+            },
+          }),
+        );
+        if (error !== null) {
+          return [payload];
+        }
+        return [data.body];
       }
 
       return [payload];

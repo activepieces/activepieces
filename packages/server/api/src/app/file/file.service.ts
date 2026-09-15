@@ -21,6 +21,7 @@ const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+const FILE_CLEANUP_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000
 
 type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
 
@@ -69,6 +70,9 @@ export const fileService = (log: FastifyBaseLogger) => ({
                     return await fileRepo().save({ ...baseFile, location: FileLocation.S3, s3Key })
                 }
                 catch (error) {
+                    if (isNil(params.data)) {
+                        throw error
+                    }
                     exceptionHandler.handle(error, log)
                     return saveFileToDb(baseFile, params.data)
                 }
@@ -189,15 +193,18 @@ export const fileService = (log: FastifyBaseLogger) => ({
             for (const type of types) {
                 let affected: undefined | number = undefined
                 while ((isNil(affected) || affected === maximumFilesToDeletePerIteration) && totalAffected < maximumFilesToDeletePerRun) {
-                    const staleFiles = await fileRepo().find({
-                        select: ['id', 's3Key'],
-                        where: {
-                            type,
-                            created: LessThanOrEqual(pass.retentionDateBoundary),
-                            ...(pass.projectIds ? { projectId: In(pass.projectIds) } : {}),
-                        },
-                        order: { created: 'ASC' },
-                        take: maximumFilesToDeletePerIteration,
+                    const staleFiles = await fileRepo().manager.transaction(async (em) => {
+                        await em.query(`SET LOCAL statement_timeout = ${FILE_CLEANUP_STATEMENT_TIMEOUT_MS}`)
+                        return em.getRepository(FileEntity).find({
+                            select: ['id', 's3Key'],
+                            where: {
+                                type,
+                                created: LessThanOrEqual(pass.retentionDateBoundary),
+                                ...(pass.projectIds ? { projectId: In(pass.projectIds) } : {}),
+                            },
+                            order: { created: 'ASC' },
+                            take: maximumFilesToDeletePerIteration,
+                        })
                     })
 
                     if (staleFiles.length === 0) {
@@ -344,7 +351,7 @@ function groupProjectIdsByRetentionDays(projects: Pick<Project, 'id' | 'executio
 
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
-    if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
+    if (type === FileType.FLOW_BUNDLE || type === FileType.PREWARM_SCOPE || isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION
     }
     return FileLocation.DB

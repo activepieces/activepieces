@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     getDefaultPropertiesForObject,
@@ -57,7 +57,7 @@ export const updateContactAction = createAction({
             contactProperties[key] = Array.isArray(value) ? value.join(';') : value;
         });
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         const updatedContact = await client.crm.contacts.basicApi.update(contactId, {
             properties: contactProperties,

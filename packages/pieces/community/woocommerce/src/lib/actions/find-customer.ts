@@ -7,6 +7,7 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { findCustomerOutputSchema } from '../output-schemas';
 
 export const wooFindCustomer = createAction({
   name: 'Find Customer',
@@ -20,6 +21,7 @@ export const wooFindCustomer = createAction({
     idempotent: true,
   },
   auth: wooAuth,
+  outputSchema: findCustomerOutputSchema,
   props: {
     email: Property.ShortText({
       displayName: 'Email',

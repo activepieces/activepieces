@@ -1,7 +1,6 @@
 import { isNil, tryCatch } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_CHAT_TIER_ID, DEFAULT_MANAGED_MODEL_WEIGHT, MANAGED_MODEL_WEIGHTS } from '@activepieces/shared'
 import { z } from 'zod'
-import { BUNDLED_MODEL_WEIGHTS, BUNDLED_UNPRICED_MODEL_CREDIT_WEIGHT } from './ai-pricing-defaults'
 import { apLogger } from './ap-logger'
 import { safeHttp } from './safe-http'
 
@@ -93,7 +92,7 @@ async function fetchPricing(): Promise<PublishedPricing> {
 }
 
 function assertNotTruncated(pricing: PublishedPricing): void {
-    const bundledCount = Object.keys(BUNDLED_MODEL_WEIGHTS).length
+    const bundledCount = Object.keys(MANAGED_MODEL_WEIGHTS).length
     const publishedCount = Object.keys(pricing.modelWeights).length
     if (publishedCount < bundledCount * MIN_RETAINED_RATIO) {
         throw new Error(
@@ -113,8 +112,8 @@ function bundledPricing(): PublishedPricing {
         publishedBy: 'bundled-with-release',
         tiers: ACTIVEPIECES_CHAT_TIERS.map((tier) => ({ ...tier })),
         defaultTierId: DEFAULT_CHAT_TIER_ID,
-        modelWeights: BUNDLED_MODEL_WEIGHTS,
-        unpricedModelCreditWeight: BUNDLED_UNPRICED_MODEL_CREDIT_WEIGHT,
+        modelWeights: MANAGED_MODEL_WEIGHTS,
+        unpricedModelCreditWeight: DEFAULT_MANAGED_MODEL_WEIGHT,
     }
 }
 
@@ -137,6 +136,7 @@ const PricingTier = z.object({
     id: z.string().min(1),
     label: z.string().min(1),
     modelId: z.string().min(1),
+    nativeModelId: z.string().min(1).optional(),
     thinkingBudget: z.number().int().positive(),
     creditWeight: CreditWeight,
 })

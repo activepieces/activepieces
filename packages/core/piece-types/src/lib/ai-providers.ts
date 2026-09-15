@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil, unique } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -23,6 +23,11 @@ const GoogleProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 const MistralProviderAuthConfig = BaseAIProviderAuthConfig
+
+export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().check(z.minLength(1)),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
@@ -49,6 +54,7 @@ export const OpenAICompatibleProviderConfig = z.object({
     baseUrl: z.string(),
     models: z.array(ProviderModelConfig),
     defaultHeaders: z.optional(z.record(z.string(), z.string())),
+    apiStyle: z.optional(z.enum(['chat', 'responses'])),
 })
 export type OpenAICompatibleProviderConfig = z.infer<typeof OpenAICompatibleProviderConfig>
 
@@ -75,6 +81,13 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    region: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const OpenAiCompatibleVendorConfig = z.object({})
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -88,6 +101,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -97,6 +111,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    VertexProviderConfig,
     BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
@@ -220,14 +235,17 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
-const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
-const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20', 'grok-4.1-fast'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
+const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
+const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
+
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.VERTEX]: GOOGLE_CHAT_MODELS,
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
@@ -247,6 +265,7 @@ const CHAT_MODEL_LABELS: Record<string, string> = {
     'claude-haiku-4-5': 'Claude Haiku 4.5',
     'gemini-2.5-pro': 'Gemini 2.5 Pro',
     'gemini-2.5-flash': 'Gemini 2.5 Flash',
+    'gemini-3.7-flash': 'Gemini 3.7 Flash',
     'gemini-3.1-pro-preview': 'Gemini 3.1 Pro Preview',
     'gemini-3-flash-preview': 'Gemini 3 Flash Preview',
 }
@@ -259,11 +278,30 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
+function canDisableReasoning({ modelId }: { modelId: string }): boolean {
+    return REASONING_OPTIONAL_CHAT_MODELS.includes(modelId)
+}
+
+function managedChatModelIds(): string[] {
+    return unique([
+        ...ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? [],
+        ...ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.modelId),
+    ])
+}
+
+function isManagedChatModelId({ modelId }: { modelId: string }): boolean {
+    return managedChatModelIds().includes(modelId)
+}
+
+function curatedChatModelIds(): string[] {
+    return unique([
+        ...ACTIVEPIECES_CHAT_TIERS.flatMap((tier) => [tier.id, tier.modelId]),
+        ...Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).flatMap((curatedIds) => curatedIds ?? []),
+    ])
+}
+
 function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
-    if (ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === modelId)) {
-        return true
-    }
-    return Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).some((curatedIds) => curatedIds.includes(modelId))
+    return curatedChatModelIds().includes(modelId)
 }
 
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
@@ -273,6 +311,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.ANTHROPIC]: 200_000,
     [AIProviderName.GOOGLE]: 1_048_576,
     [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.VERTEX]: 1_048_576,
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
@@ -331,10 +370,191 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000, creditWeight: 10 },
-    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000, creditWeight: 40 },
-    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000, creditWeight: 80 },
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', nativeModelId: 'claude-haiku-4-5', thinkingBudget: 5_000, creditWeight: 10 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', nativeModelId: 'claude-sonnet-4-6', thinkingBudget: 10_000, creditWeight: 40 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', nativeModelId: 'claude-opus-4-7', thinkingBudget: 20_000, creditWeight: 80 },
 ] as const
+
+export const MANAGED_MODEL_WEIGHTS: Record<string, number> = {
+    'ai21/jamba-large-1.7': 6,
+    'amazon/nova-premier-v1': 33,
+    'anthropic/claude-fable-5': 193,
+    'anthropic/claude-haiku-4.5': 10,
+    'anthropic/claude-opus-4': 325,
+    'anthropic/claude-opus-4.1': 325,
+    'anthropic/claude-opus-4.1:batch': 133,
+    'anthropic/claude-opus-4.5': 79,
+    'anthropic/claude-opus-4.6': 79,
+    'anthropic/claude-opus-4.7': 79,
+    'anthropic/claude-opus-4.7-fast': 792,
+    'anthropic/claude-opus-4.8': 80,
+    'anthropic/claude-opus-4.8-fast': 193,
+    'anthropic/claude-opus-5': 79,
+    'anthropic/claude-opus-5-fast': 193,
+    'anthropic/claude-sonnet-4': 41,
+    'anthropic/claude-sonnet-4.5': 41,
+    'anthropic/claude-sonnet-4.6': 40,
+    'anthropic/claude-sonnet-5': 25,
+    'cohere/command-a': 29,
+    'cohere/command-r-plus-08-2024': 29,
+    'deepseek/deepseek-chat-v3.1': 2,
+    'deepseek/deepseek-v3.1-terminus': 2,
+    'deepseek/deepseek-v3.2': 1,
+    'deepseek/deepseek-v3.2-exp': 2,
+    'deepseek/deepseek-v4-flash': 1,
+    'deepseek/deepseek-v4-flash-0731': 3,
+    'deepseek/deepseek-v4-pro': 13,
+    'dots-studio/dots-3-note-preview:free': 1,
+    'google/gemini-2.5-flash': 4,
+    'google/gemini-2.5-flash-image': 4,
+    'google/gemini-2.5-flash-lite': 1,
+    'google/gemini-2.5-flash-lite:batch': 1,
+    'google/gemini-2.5-flash:batch': 2,
+    'google/gemini-2.5-pro': 19,
+    'google/gemini-2.5-pro-preview': 19,
+    'google/gemini-2.5-pro-preview-05-06': 19,
+    'google/gemini-2.5-pro:batch': 8,
+    'google/gemini-3-flash-preview': 5,
+    'google/gemini-3-flash-preview:batch': 2,
+    'google/gemini-3-pro-image': 28,
+    'google/gemini-3-pro-image-preview': 28,
+    'google/gemini-3.1-flash-image': 5,
+    'google/gemini-3.1-flash-lite': 2,
+    'google/gemini-3.1-flash-lite-image': 2,
+    'google/gemini-3.1-flash-lite:batch': 1,
+    'google/gemini-3.1-pro-preview': 28,
+    'google/gemini-3.1-pro-preview-customtools': 28,
+    'google/gemini-3.1-pro-preview:batch': 12,
+    'google/gemini-3.5-flash': 19,
+    'google/gemini-3.5-flash-lite': 4,
+    'google/gemini-3.5-flash-lite:batch': 2,
+    'google/gemini-3.5-flash:batch': 8,
+    'google/gemini-3.6-flash': 7,
+    'google/gemini-3.6-flash:batch': 3,
+    'google/gemini-3.7-flash': 7,
+    'google/gemini-3.7-flash:batch': 2,
+    'google/gemma-4-26b-a4b-it': 1,
+    'kwaipilot/kat-coder-pro-v2': 2,
+    'kwaipilot/kat-coder-pro-v2.5': 6,
+    'meituan/longcat-2.0': 2,
+    'meta-llama/llama-3.3-70b-instruct': 4,
+    'meta-llama/llama-4-maverick': 3,
+    'meta-llama/llama-4-scout': 2,
+    'minimax/minimax-m2': 2,
+    'minimax/minimax-m2.5': 2,
+    'minimax/minimax-m2.7': 2,
+    'minimax/minimax-m3': 2,
+    'mistralai/mistral-medium-3-5': 17,
+    'moonshotai/kimi-k2-thinking': 5,
+    'moonshotai/kimi-k2.5': 5,
+    'moonshotai/kimi-k2.6': 9,
+    'moonshotai/kimi-k3': 41,
+    'openai/gpt-3.5-turbo': 4,
+    'openai/gpt-3.5-turbo-16k': 23,
+    'openai/gpt-3.5-turbo-instruct': 10,
+    'openai/gpt-4': 501,
+    'openai/gpt-4-turbo': 145,
+    'openai/gpt-4-turbo-preview': 145,
+    'openai/gpt-4.1': 22,
+    'openai/gpt-4.1-mini': 3,
+    'openai/gpt-4.1-nano': 1,
+    'openai/gpt-4o': 29,
+    'openai/gpt-4o-2024-05-13': 60,
+    'openai/gpt-4o-2024-08-06': 29,
+    'openai/gpt-4o-2024-11-20': 29,
+    'openai/gpt-4o-mini': 1,
+    'openai/gpt-4o-mini-2024-07-18': 1,
+    'openai/gpt-5': 19,
+    'openai/gpt-5-image': 100,
+    'openai/gpt-5-mini': 3,
+    'openai/gpt-5-nano': 1,
+    'openai/gpt-5-pro': 455,
+    'openai/gpt-5.1': 19,
+    'openai/gpt-5.1-codex': 19,
+    'openai/gpt-5.1-codex-max': 19,
+    'openai/gpt-5.2': 29,
+    'openai/gpt-5.2-chat': 29,
+    'openai/gpt-5.2-codex': 29,
+    'openai/gpt-5.2-pro': 702,
+    'openai/gpt-5.3-chat': 10,
+    'openai/gpt-5.3-codex': 29,
+    'openai/gpt-5.4': 37,
+    'openai/gpt-5.4-image-2': 90,
+    'openai/gpt-5.4-mini': 8,
+    'openai/gpt-5.4-nano': 2,
+    'openai/gpt-5.4-pro': 895,
+    'openai/gpt-5.5': 90,
+    'openai/gpt-5.5-pro': 895,
+    'openai/gpt-5.6-luna': 2,
+    'openai/gpt-5.6-luna-pro': 2,
+    'openai/gpt-5.6-sol': 25,
+    'openai/gpt-5.6-sol-pro': 25,
+    'openai/gpt-5.6-terra': 28,
+    'openai/gpt-5.6-terra-pro': 28,
+    'openai/gpt-audio': 29,
+    'openai/gpt-audio-mini': 5,
+    'openai/gpt-chat-latest': 90,
+    'openai/gpt-oss-120b': 1,
+    'openai/gpt-oss-20b': 1,
+    'openai/o1': 284,
+    'openai/o1-pro': 5487,
+    'openai/o3': 22,
+    'openai/o3-mini': 10,
+    'openai/o3-mini-high': 10,
+    'openai/o3-pro': 411,
+    'openai/o4-mini': 10,
+    'openai/o4-mini-high': 10,
+    'openrouter/auto': 100,
+    'openrouter/auto-beta': 100,
+    'openrouter/bodybuilder': 100,
+    'openrouter/free': 1,
+    'openrouter/fusion': 100,
+    'openrouter/pareto-code': 100,
+    'perplexity/sonar-deep-research': 22,
+    'perplexity/sonar-pro': 41,
+    'perplexity/sonar-pro-search': 41,
+    'perplexity/sonar-reasoning-pro': 22,
+    'qwen/qwen3-235b-a22b-2507': 2,
+    'qwen/qwen3-coder': 3,
+    'qwen/qwen3-next-80b-a3b-instruct': 2,
+    'qwen/qwen3-next-80b-a3b-thinking': 2,
+    'qwen/qwen3.5-122b-a10b': 3,
+    'qwen/qwen3.5-27b': 3,
+    'qwen/qwen3.5-35b-a3b': 3,
+    'qwen/qwen3.5-397b-a17b': 6,
+    'qwen/qwen3.6-35b-a3b': 2,
+    'sakana/fugu-ultra': 90,
+    'tencent/hy3': 2,
+    'x-ai/grok-4.20': 9,
+    'x-ai/grok-4.20-multi-agent': 9,
+    'x-ai/grok-4.3': 9,
+    'x-ai/grok-4.5': 19,
+    'x-ai/grok-4.6': 19,
+    'x-ai/grok-build-0.1': 7,
+    'xiaomi/mimo-v2.5-pro': 3,
+    'z-ai/glm-4.6': 5,
+    'z-ai/glm-4.7': 4,
+    'z-ai/glm-5': 8,
+    'z-ai/glm-5.1': 11,
+    'z-ai/glm-5.2': 11,
+    'z-ai/glm-5.3': 12,
+    '~anthropic/claude-fable-latest': 193,
+    '~anthropic/claude-haiku-latest': 10,
+    '~anthropic/claude-opus-latest': 79,
+    '~anthropic/claude-sonnet-latest': 41,
+    '~deepseek/deepseek-v4-flash-latest': 3,
+    '~google/gemini-flash-latest': 7,
+    '~google/gemini-pro-latest': 28,
+    '~moonshotai/kimi-latest': 9,
+    '~openai/gpt-latest': 25,
+    '~openai/gpt-mini-latest': 8,
+    '~x-ai/grok-latest': 19,
+    '~z-ai/glm-latest': 12,
+}
+
+export const MODELS_AWAITING_A_CREDIT_WEIGHT: string[] = []
+
+export const DEFAULT_MANAGED_MODEL_WEIGHT = 100
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const
 
@@ -349,6 +569,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.CLOUDFLARE_GATEWAY]: buildProviderCapabilities(AIProviderName.CLOUDFLARE_GATEWAY),
     [AIProviderName.CUSTOM]: buildProviderCapabilities(AIProviderName.CUSTOM),
     [AIProviderName.BEDROCK]: buildProviderCapabilities(AIProviderName.BEDROCK),
+    [AIProviderName.VERTEX]: buildProviderCapabilities(AIProviderName.VERTEX),
     [AIProviderName.MISTRAL]: buildProviderCapabilities(AIProviderName.MISTRAL),
     [AIProviderName.ACTIVEPIECES]: buildProviderCapabilities(AIProviderName.ACTIVEPIECES),
     [AIProviderName.XAI]: buildProviderCapabilities(AIProviderName.XAI),
@@ -363,6 +584,9 @@ export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
     isCuratedChatModelId,
+    managedChatModelIds,
+    isManagedChatModelId,
+    canDisableReasoning,
 }
 
 export const AI_PROVIDER_ENTITY_TYPES = {

@@ -5,7 +5,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
 import { system } from '../../helper/system/system'
-import { BillingEvents } from '../../helper/telemetry.utils'
+import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, CreditUsageSource, toFlowRunCreditProperties } from '../../platform/billing-provider'
 import { projectService } from '../../project/project-service'
@@ -63,7 +63,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
                 properties: aiProperties,
             } : undefined,
             telemetry: {
-                event: BillingEvents.AI_USAGE_PER_RUN,
+                event: LicenseKeyPostHogEvents.AI_USAGE_PER_RUN,
                 properties: {
                     platformId: project.platformId,
                     projectId: flowRun.projectId,
@@ -81,8 +81,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
     },
 })
 
-
-function resolveAiCreditWeight({ pricing, provider, model }: { pricing: AiPricingReader, provider: string, model: string }): number {
+export function resolveAiCreditWeight({ pricing, provider, model }: { pricing: AiPricingReader, provider: string, model: string }): number {
     if (provider !== AIProviderName.ACTIVEPIECES) {
         return 1
     }
@@ -91,8 +90,6 @@ function resolveAiCreditWeight({ pricing, provider, model }: { pricing: AiPricin
     }
     return pricing.creditWeightForModel(model)
 }
-
-
 
 async function fetchSlice({ log, projectId, ref }: FetchSliceParams): Promise<unknown> {
     const file = await fileService(log).getDataOrUndefined({
@@ -105,7 +102,6 @@ async function fetchSlice({ log, projectId, ref }: FetchSliceParams): Promise<un
     }
     return JSON.parse(file.data.toString('utf-8'))
 }
-
 
 type TrackParams = {
     flowRun: FlowRun

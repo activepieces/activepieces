@@ -1,4 +1,4 @@
-import { BUNDLED_MODEL_WEIGHTS, BUNDLED_UNPRICED_MODEL_CREDIT_WEIGHT } from '../src/ai-pricing-defaults'
+import { DEFAULT_MANAGED_MODEL_WEIGHT, MANAGED_MODEL_WEIGHTS } from '@activepieces/shared'
 
 const PRICING_URL = 'https://pricing.test/pricing.json'
 
@@ -11,7 +11,7 @@ const validPricing = {
         { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000, creditWeight: 44 },
     ],
     defaultTierId: 'smart',
-    modelWeights: { ...BUNDLED_MODEL_WEIGHTS, 'openai/gpt-4': 999 },
+    modelWeights: { ...MANAGED_MODEL_WEIGHTS, 'openai/gpt-4': 999 },
     unpricedModelCreditWeight: 250,
 }
 
@@ -58,32 +58,32 @@ describe('aiPricingCatalog', () => {
         const reader = await (await loadCatalog()).load()
 
         expect(reader.defaultTierId).toBe('smart')
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(BUNDLED_MODEL_WEIGHTS['openai/gpt-4'])
-        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(BUNDLED_UNPRICED_MODEL_CREDIT_WEIGHT)
+        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
+        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(DEFAULT_MANAGED_MODEL_WEIGHT)
     })
 
     it('rejects a file whose default tier does not exist', async () => {
         mockResponse({ ...validPricing, defaultTierId: 'nope' })
         const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(BUNDLED_MODEL_WEIGHTS['openai/gpt-4'])
+        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
     })
 
     it('rejects a file with no tiers', async () => {
         mockResponse({ ...validPricing, tiers: [] })
         const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(BUNDLED_MODEL_WEIGHTS['openai/gpt-4'])
+        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
     })
 
     it('rejects a file that lost more than 20 percent of the model list', async () => {
         mockResponse({ ...validPricing, modelWeights: { 'openai/gpt-4': 999 } })
         const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(BUNDLED_MODEL_WEIGHTS['openai/gpt-4'])
+        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
     })
 
     it('rejects a weight outside the allowed range', async () => {
         mockResponse({ ...validPricing, unpricedModelCreditWeight: 0 })
         const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(BUNDLED_UNPRICED_MODEL_CREDIT_WEIGHT)
+        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(DEFAULT_MANAGED_MODEL_WEIGHT)
     })
 
     it('resolves an unknown tier id to the default tier', async () => {
@@ -95,6 +95,6 @@ describe('aiPricingCatalog', () => {
     })
 
     it('prices an unknown model above every bundled tier, so a forgotten model is never cheap', () => {
-        expect(BUNDLED_UNPRICED_MODEL_CREDIT_WEIGHT).toBeGreaterThan(80)
+        expect(DEFAULT_MANAGED_MODEL_WEIGHT).toBeGreaterThan(80)
     })
 })

@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
 import { pipelineStageDetailsOutputSchema } from '../output-schemas';
@@ -44,7 +44,7 @@ export const getPipelineStageDetailsAction = createAction({
 		const pipelineId = context.propsValue.pipelineId;
 		const stageId = context.propsValue.stageId;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const response = await client.crm.pipelines.pipelineStagesApi.getById(
 			objectType,

@@ -17,6 +17,7 @@ export const routesThatRequireProjectId = {
   settings: '/settings',
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
+  approvals: '/approvals',
 };
 
 export const CHAT_ROUTE = '/chat';

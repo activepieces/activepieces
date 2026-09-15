@@ -5,8 +5,6 @@ import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepiece
 
 type AIModelType = 'text' | 'image';
 
-
-
 async function listProviders(ctx: {
   server: { apiUrl: string; token: string };
 }): Promise<ListedProvider[]> {

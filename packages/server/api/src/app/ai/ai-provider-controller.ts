@@ -87,8 +87,10 @@ const ListAIProvidersForProject = {
 }
 
 const ListChatTiers = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.ENGINE]),
+    },
     schema: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, { type: ProjectResourceType.QUERY }),
         response: {
             [StatusCodes.OK]: z.object({
                 tiers: z.array(z.object({

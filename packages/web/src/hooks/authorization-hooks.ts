@@ -8,17 +8,18 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
-export const useAuthorization = () => {
+export const useAuthorization = (projectId?: string) => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
   const platformId = authenticationSession.getPlatformId();
+  const scopedProjectId = projectId ?? authenticationSession.getProjectId();
   const { data: projectRole, isLoading } = useQuery({
-    queryKey: ['project-role', authenticationSession.getProjectId()],
+    queryKey: ['project-role', scopedProjectId],
     queryFn: async () => {
       const platform = await platformApi.getCurrentPlatform();
       if (platform.plan.projectRolesEnabled) {
         const projectRole = await authenticationApi.getCurrentProjectRole({
-          projectId: authenticationSession.getProjectId() ?? '',
+          projectId: scopedProjectId ?? '',
         });
         return projectRole;
       }

@@ -18,6 +18,8 @@ import { migrateV20GoogleModelPrefix } from './migrate-v20-google-model-prefix'
 import { migrateV21StepOutputNesting } from './migrate-v21-step-output-nesting'
 import { migrateV22AgentStepToThinClient } from './migrate-v22-agent-step-to-thin-client'
 import { migrateV23UpgradePieceVersions } from './migrate-v23-upgrade-piece-versions'
+import { migrateV24OpenaiPieceVersion } from './migrate-v24-openai-piece-version'
+import { migrateV25HttpPieceVersion } from './migrate-v25-http-piece-version'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
@@ -62,6 +64,8 @@ const migrations: Migration[] = [
     migrateV21StepOutputNesting,
     migrateV22AgentStepToThinClient,
     migrateV23UpgradePieceVersions,
+    migrateV24OpenaiPieceVersion,
+    migrateV25HttpPieceVersion,
 ] as const
 
 export const flowMigrations = {

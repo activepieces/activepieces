@@ -7,7 +7,7 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	createTrigger,
 
@@ -16,6 +16,7 @@ import {
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { newBlogArticleTriggerOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	articleState: string;
@@ -29,7 +30,6 @@ type ListBlogPostsResponse = {
 		};
 	};
 };
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -60,7 +60,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 				method: HttpMethod.GET,
 				url: 'https://api.hubapi.com/cms/v3/blogs/posts',
 				queryParams: qs,
-				authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.access_token },
+				authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(auth) },
 			});
 
 			after = response.body.paging?.next?.after;

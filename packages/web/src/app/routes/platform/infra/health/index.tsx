@@ -48,8 +48,12 @@ export default function SettingsHealthPage() {
     };
   }, [selectedMonth]);
 
-  const { data: report, isLoading: isReportLoading } =
-    healthMetricsQueries.useRunMetrics(range, activeTab === 'runs');
+  const {
+    data: report,
+    isLoading: isReportLoading,
+    isError: isReportError,
+    refetch: refetchReport,
+  } = healthMetricsQueries.useRunMetrics(range, activeTab === 'runs');
   const { data: live, isLoading: isLiveLoading } =
     healthMetricsQueries.useQueueMetrics(range, activeTab === 'queue');
 
@@ -117,7 +121,12 @@ export default function SettingsHealthPage() {
         </TabsContent>
 
         <TabsContent value="runs">
-          <RunsTab report={report} isLoading={isReportLoading} />
+          <RunsTab
+            report={report}
+            isLoading={isReportLoading}
+            isError={isReportError}
+            onRetry={refetchReport}
+          />
         </TabsContent>
 
         <TabsContent value="queue">

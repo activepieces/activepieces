@@ -37,6 +37,8 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
+import { DataFetchErrorState } from '../data-fetch-error-state';
+
 import { DataTableBulkActions } from './data-table-bulk-actions';
 import { DataTableColumnHeader } from './data-table-column-header';
 import { DataTableFilter, DataTableFilterProps } from './data-table-filter';
@@ -75,6 +77,9 @@ interface DataTableProps<
     e: React.MouseEvent<HTMLTableRowElement, MouseEvent>,
   ) => void;
   isLoading: boolean;
+  isError: boolean;
+  errorStateEntity: string;
+  onRetry?: () => void;
   filters?: DataTableFilters<Keys>[];
   customFilters?: React.ReactNode[];
   onSelectedRowsChange?: (rows: RowDataWithActions<TData>[]) => void;
@@ -92,6 +97,7 @@ interface DataTableProps<
   getRowClassName?: (row: RowDataWithActions<TData>, index: number) => string;
   isRowSelectionDisabled?: (row: RowDataWithActions<TData>) => boolean;
   virtualizeRows?: boolean;
+  bordered?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -116,6 +122,9 @@ export function DataTable<
   filters = [],
   actions = [],
   isLoading,
+  isError,
+  errorStateEntity,
+  onRetry,
   onSelectedRowsChange,
   hidePagination,
   bulkActions = [],
@@ -128,6 +137,7 @@ export function DataTable<
   initialSorting = [],
   clientPagination = false,
   clientFiltering = false,
+  bordered = false,
   getRowClassName,
   isRowSelectionDisabled,
   virtualizeRows = false,
@@ -340,7 +350,7 @@ export function DataTable<
       {((filters && filters.length > 0) ||
         (customFilters && customFilters.length > 0) ||
         (toolbarButtons && toolbarButtons.length > 0)) && (
-        <DataTableToolbar>
+        <DataTableToolbar className={bordered ? 'px-0' : undefined}>
           <div className="w-full flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {filters &&
@@ -369,10 +379,15 @@ export function DataTable<
 
       <div
         ref={scrollContainerRef}
-        className={cn('mt-0', {
-          'overflow-hidden': !virtualizeRows,
-          'flex-1 min-h-0 overflow-auto': virtualizeRows,
-        })}
+        className={cn(
+          'mt-0',
+          {
+            'overflow-hidden': !virtualizeRows,
+            'flex-1 min-h-0 overflow-auto': virtualizeRows,
+          },
+          bordered &&
+            'rounded-lg border [&_thead]:border-t-0 [&_tbody>tr:last-child]:border-b-0',
+        )}
       >
         <Table className="table-fixed">
           <TableHeader
@@ -603,6 +618,18 @@ export function DataTable<
                   </TableRow>
                 ))
               )
+            ) : isError ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-[350px] text-center"
+                >
+                  <DataFetchErrorState
+                    entity={errorStateEntity}
+                    onRetry={onRetry}
+                  />
+                </TableCell>
+              </TableRow>
             ) : (
               <TableRow className="hover:bg-background">
                 <TableCell

@@ -1,6 +1,8 @@
 import { AIProviderName } from '@activepieces/core-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.stubEnv('AP_AI_PRICING_URL', 'https://pricing.invalid/ai/pricing.json')
+
 const { mockTrackBillableUsage, mockExtractAiUsage, mockFlowVersionHasAiStep, mockGetOrCreateForPlatform, mockGetProject, mockGetStepsOrNull } = vi.hoisted(() => ({
     mockTrackBillableUsage: vi.fn().mockResolvedValue(undefined),
     mockExtractAiUsage: vi.fn(),
@@ -11,8 +13,8 @@ const { mockTrackBillableUsage, mockExtractAiUsage, mockFlowVersionHasAiStep, mo
 }))
 
 vi.mock('../../../../../src/app/helper/telemetry.utils', () => ({
-    BillingEvents: { AI_USAGE_PER_RUN: 'ai_usage_per_run' },
-    captureBillingEvent: vi.fn(),
+    LicenseKeyPostHogEvents: { AI_USAGE_PER_RUN: 'ai_usage_per_run' },
+    captureLicenseKeyEvent: vi.fn(),
 }))
 
 vi.mock('../../../../../src/app/helper/system/system', () => ({

@@ -298,7 +298,7 @@ function withIdTiebreaker(orderByConfig: OrderByConfig[]): OrderByConfig[] {
     ]
 }
 
-const CURSOR_SELECT_PREFIX = 'ap_cursor_'
+export const CURSOR_SELECT_PREFIX = 'ap_cursor_'
 
 const TIMESTAMP_TEXT_PATTERN = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(\.\d+)?([+-]\d{2}(:?\d{2})?|Z)?$/
 

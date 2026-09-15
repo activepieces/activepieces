@@ -103,6 +103,25 @@ describe('File Processor', () => {
         expect(file.body.destroyed).toBe(true)
     })
 
+    it('resolves a buffered URL input to null when the URL responds with a non-ok status', async () => {
+        // An expired signed link is the common case: without this the caller
+        // received the storage provider's error page as the file.
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('<Error>AuthenticationFailed</Error>', {
+            status: 403,
+            headers: { 'content-type': 'application/xml' },
+        })))
+
+        const { processedInput } = await propsProcessor.applyProcessorsAndValidators(
+            { file: FILE_URL },
+            { file: Property.File({ displayName: 'File', required: false }) },
+            PieceAuth.None(),
+            false,
+            {},
+        )
+
+        expect(processedInput.file).toBeNull()
+    })
+
     it('resolves a streaming file property to a lazy body without buffering', async () => {
         const props = {
             file: Property.File({ displayName: 'File', required: true, streaming: true }),

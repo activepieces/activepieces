@@ -174,6 +174,38 @@ describe('Authentication API', () => {
             expect(await databaseConnection().getRepository('platform').count()).toBe(0)
         })
 
+        it('Tells an identity with no user on the resolved platform why it cannot sign in', async () => {
+            // arrange
+            await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-up',
+                body: createMockSignUpRequest({ email: 'ahmad.tash@activepieces.com' }),
+            })
+
+            const password = 'password-that-verifies'
+            await userIdentityService(app!.log).create({
+                email: 'orphan.identity@activepieces.com',
+                password,
+                firstName: 'Orphan',
+                lastName: 'Identity',
+                trackEvents: false,
+                newsLetter: false,
+                provider: UserIdentityProvider.EMAIL,
+                verified: true,
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: '/api/v1/authentication/sign-in',
+                body: createMockSignInRequest({ email: 'orphan.identity@activepieces.com', password }),
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.json()?.code).toBe('USER_NOT_FOUND_ON_PLATFORM')
+        })
+
         it('Fails if password doesn\'t match', async () => {
             // arrange
             const mockSignUpRequest = createMockSignUpRequest()

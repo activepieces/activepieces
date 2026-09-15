@@ -2,14 +2,33 @@ import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql,
 import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager } from 'typeorm'
+import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { agentApprovalGate } from './agent-approval-gate'
 import { AgentConversationEntity } from './agent-conversation-entity'
+import { AgentEntity } from './agent-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
+
+async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityManager }: { agentId: string, authorisedProjectId: string, entityManager: EntityManager }): Promise<string> {
+    const locked = await entityManager.getRepository(AgentEntity)
+        .createQueryBuilder('agent')
+        .select(['agent.projectId'])
+        .setLock('pessimistic_write')
+        .where('agent.id = :agentId', { agentId })
+        .getOne()
+    if (isNil(locked) || locked.projectId !== authorisedProjectId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'That agent has just moved to another project. Open it again to start a new chat.' },
+        })
+    }
+    return locked.projectId
+}
 
 export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
@@ -20,17 +39,19 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const builderProjectId = builder
             ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
             : null
-        const conversation = await agentHelpers.conversationRepo().save({
+        const conversation = await transaction(async (entityManager) => entityManager.getRepository(AgentConversationEntity).save({
             id: id ?? apId(),
             platformId,
-            projectId: agent?.projectId ?? builderProjectId,
+            projectId: isNil(agent)
+                ? builderProjectId
+                : await projectStillHoldingAgent({ agentId: agent.id, authorisedProjectId: agent.projectId, entityManager }),
             userId,
             agentId: agent?.id ?? null,
             source: builder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
-        })
+        }))
         log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation created')
         return conversation
     },
@@ -74,6 +95,42 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
                 .andWhere('agent_conversation.source = :agentSource', { agentSource: AgentRunSource.AGENT })
                 .andWhere('agent_conversation."agentId" = :agentId', { agentId })
         }
+
+        const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
+        return paginationHelper.createPage(data, paginationCursor)
+    },
+
+    async listAgentRuns({ projectId, agentId, cursor, limit }: ListAgentRunsParams): Promise<SeekPage<AgentConversation>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const paginator = buildPaginator({
+            entity: AgentConversationEntity,
+            query: {
+                limit,
+                orderBy: [
+                    { field: 'created', order: Order.DESC },
+                    { field: 'id', order: Order.DESC },
+                ],
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+
+        const queryBuilder = agentHelpers.conversationRepo()
+            .createQueryBuilder('agent_conversation')
+            .select([
+                'agent_conversation.id',
+                'agent_conversation.created',
+                'agent_conversation.updated',
+                'agent_conversation.platformId',
+                'agent_conversation.projectId',
+                'agent_conversation.agentId',
+                'agent_conversation.title',
+                'agent_conversation.modelName',
+                'agent_conversation.status',
+            ])
+            .where('agent_conversation."projectId" = :projectId', { projectId })
+            .andWhere('agent_conversation."agentId" = :agentId', { agentId })
+            .andWhere('agent_conversation.source = :flowStepSource', { flowStepSource: AgentRunSource.FLOW_STEP })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
         return paginationHelper.createPage(data, paginationCursor)
@@ -160,6 +217,13 @@ type CreateConversationParams = {
     userId: string
     request: CreateAgentConversationRequest
     id?: string
+}
+
+type ListAgentRunsParams = {
+    projectId: string
+    agentId: string
+    cursor?: string
+    limit: number
 }
 
 type ListConversationsParams = {

@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { fromObjectTypeAssociationDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
@@ -36,7 +36,7 @@ export const findAssociationsAction = createAction({
 	async run(context) {
 		const { fromObjectId, fromObjectType, toObjectType } = context.propsValue;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const results = [];
 		const limit = 100;

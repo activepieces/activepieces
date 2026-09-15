@@ -81,7 +81,6 @@ function CreditsCostTable({
   chatEnabled,
 }: {
   includeActivepiecesModels: boolean;
-  tiers: ChatTier[];
   chatEnabled: boolean;
 }) {
   const { tiers } = useChatTiers();

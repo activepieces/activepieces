@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
@@ -23,6 +24,7 @@ import {
   Shield,
   SlidersHorizontal,
   SquarePen,
+  Unplug,
   UserCogIcon,
 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -58,8 +60,14 @@ import {
   projectCollectionUtils,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
-import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import {
+  railIsCollapsed,
+  useRailCollapsed,
+} from '@/features/workspace/lib/rail-collapsed';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -75,18 +83,25 @@ export function PrimaryRail() {
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const {
-    collapsed,
-    setCollapsed,
-    toggle: toggleCollapsed,
-  } = useRailCollapsed();
+  const { preference, setCollapsed, toggle } = useRailCollapsed();
+  const { pathname } = useLocation();
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
+  const { checkAccess } = useAuthorization();
 
   if (embedState.isEmbedded || embedState.hideSideNav) {
     return null;
   }
 
-  const openSidebar = () => setCollapsed(false);
+  const openSidebar = () => {
+    setOpenedOn(pathname);
+    setCollapsed(false);
+  };
+  const toggleCollapsed = () => {
+    setOpenedOn(pathname);
+    toggle();
+  };
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -94,7 +109,7 @@ export function PrimaryRail() {
         onClick={collapsed ? openSidebar : undefined}
         title={collapsed ? t('Open sidebar') : undefined}
         className={cn(
-          'flex h-svh shrink-0 flex-col bg-sidebar py-3 transition-[width] duration-150',
+          'flex h-svh shrink-0 flex-col overflow-hidden whitespace-nowrap bg-sidebar py-3 transition-[width] duration-200 ease-out motion-reduce:transition-none',
           collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-62',
         )}
       >
@@ -122,6 +137,15 @@ export function PrimaryRail() {
                 onClick={() =>
                   window.dispatchEvent(new Event(chatUtils.newChatEvent))
                 }
+              />
+            )}
+            {checkAccess(Permission.READ_MCP) && (
+              <RailNavButton
+                collapsed={collapsed}
+                to="/mcp-server"
+                icon={Unplug}
+                label={t('MCP')}
+                isActive={({ pathname }) => pathname.startsWith('/mcp-server')}
               />
             )}
             {showAgents && (
