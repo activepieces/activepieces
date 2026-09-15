@@ -87,6 +87,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
               )}
               className="flex items-center gap-2 text-left hover:underline"
               onClick={(e) => e.stopPropagation()}
+              onAuxClick={(e) => e.stopPropagation()}
             >
               <TruncatedColumnTextValue value={flow.displayName} />
             </Link>
