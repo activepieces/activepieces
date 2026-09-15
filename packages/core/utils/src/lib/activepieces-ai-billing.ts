@@ -1,4 +1,14 @@
+import { AiProviderCredentials } from './ai-provider-credentials'
 import { AIProviderName } from './permission'
+import { isNil } from './utils'
+
+export function aiChargeFor({ credentials, turnAlreadyCharged = false }: AiChargeForParams): AiCharge | undefined {
+    if (credentials.provider !== AIProviderName.ACTIVEPIECES) {
+        return turnAlreadyCharged ? undefined : { basis: AiChargeBasis.FIXED_CREDITS }
+    }
+    const { apiKey } = credentials.auth
+    return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, managedApiKey: isNil(apiKey) || apiKey.length === 0 ? undefined : apiKey }
+}
 
 export enum ActivepiecesAiConsumerSource {
     AI_STEP_IN_FLOW = 'ai-step-in-flow',
@@ -8,11 +18,6 @@ export enum ActivepiecesAiConsumerSource {
 export enum AiChargeBasis {
     PROVIDER_REPORTED_COST = 'provider-reported-cost',
     FIXED_CREDITS = 'fixed-credits',
-}
-
-export enum BYOKBilling {
-    ONE_CREDIT_PER_MODEL_CALL = 'one-credit-per-model-call',
-    ALREADY_CHARGED_FOR_THE_TURN = 'already-charged-for-the-turn',
 }
 
 export type ActivepiecesAiBilling =
@@ -28,6 +33,15 @@ export type ActivepiecesAiChat = {
     userId: string
     turnIndex: number
     tier: string
+}
+
+export type AiCharge =
+    | { basis: AiChargeBasis.PROVIDER_REPORTED_COST, managedApiKey?: string }
+    | { basis: AiChargeBasis.FIXED_CREDITS }
+
+export type AiChargeForParams = {
+    credentials: AiProviderCredentials
+    turnAlreadyCharged?: boolean
 }
 
 export type AiCallTokens = {

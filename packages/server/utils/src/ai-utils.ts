@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, AIProviderName, BYOKBilling, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
+import { ActivepiecesAiBilling, aiChargeFor, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
 import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, AIWebSearchMode, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { anthropic } from '@ai-sdk/anthropic'
@@ -116,13 +116,13 @@ function openRouterWebSearchResults(options?: WebSearchOptions): number {
     )
 }
 
-function createModel({ credentials, modelId, metadata, flowStep, billing, byokBilling, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId }: {
+function createModel({ credentials, modelId, metadata, flowStep, billing, turnAlreadyCharged, openaiResponsesModel = false, webSearchEnabled = false, webSearchOptions, platformId, providerConfigId }: {
     credentials: AiProviderCredentials
     modelId: string
     metadata?: ChatModelMetadata
     flowStep?: FlowStepMetadata
     billing?: ActivepiecesAiBilling
-    byokBilling?: BYOKBilling
+    turnAlreadyCharged?: boolean
     openaiResponsesModel?: boolean
     webSearchEnabled?: boolean
     webSearchOptions?: WebSearchOptions
@@ -135,17 +135,8 @@ function createModel({ credentials, modelId, metadata, flowStep, billing, byokBi
         provider: credentials.provider,
         modelId,
         billing,
-        ...spreadIfDefined('byokBilling', byokBilling),
-        ...spreadIfDefined('apiKey', managedApiKey(credentials)),
+        charge: aiChargeFor({ credentials, turnAlreadyCharged }),
     })
-}
-
-function managedApiKey(credentials: AiProviderCredentials): string | undefined {
-    if (credentials.provider !== AIProviderName.ACTIVEPIECES) {
-        return undefined
-    }
-    const { apiKey } = credentials.auth
-    return isNil(apiKey) || apiKey.length === 0 ? undefined : apiKey
 }
 
 function buildModel({ credentials, modelId, metadata, flowStep, openaiResponsesModel, webSearchEnabled, webSearchOptions, onOutcome }: {

@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, AiChargeBasis, AIProviderName, BYOKBilling } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCostEvent, aiChargeFor, AiChargeBasis, AIProviderName, aiProviderCredentials } from '@activepieces/core-utils'
 import { EmbeddingModelV4, LanguageModelV4 } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -78,8 +78,12 @@ function streamingModel({ provider, apiKey, chunks = [{ type: 'response-metadata
         provider,
         modelId: 'anthropic/claude-sonnet-5',
         billing: BILLING,
-        ...(apiKey ? { apiKey } : {}),
+        charge: chargeFor({ provider, apiKey }),
     })
+}
+
+function chargeFor({ provider, apiKey, turnAlreadyCharged }: { provider: AIProviderName, apiKey?: string, turnAlreadyCharged?: boolean }) {
+    return aiChargeFor({ credentials: aiProviderCredentials({ provider, auth: { apiKey }, config: {} }), turnAlreadyCharged })
 }
 
 function sourceOf(chunks: Record<string, unknown>[]): ReadableStream {
@@ -134,6 +138,7 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
         })
 
         await generateWith(model)
@@ -159,6 +164,7 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.OPENAI,
             modelId: 'gpt-5',
             billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.OPENAI }),
         })
 
         await generateWith(model)
@@ -180,6 +186,7 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
         })
 
         await generateWith(model)
@@ -195,6 +202,7 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
         })
 
         await generateWith(model)
@@ -218,6 +226,7 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: undefined,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES }),
         })
 
         expect(model).toBe(raw)
@@ -231,7 +240,7 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.OPENAI,
             modelId: 'gpt-5',
             billing: BILLING,
-            byokBilling: BYOKBilling.ALREADY_CHARGED_FOR_THE_TURN,
+            charge: chargeFor({ provider: AIProviderName.OPENAI, turnAlreadyCharged: true }),
         })
 
         await generateWith(model)
@@ -251,7 +260,7 @@ describe('what a model call reports back for billing', () => {
             provider: AIProviderName.ACTIVEPIECES,
             modelId: 'anthropic/claude-sonnet-5',
             billing: BILLING,
-            byokBilling: BYOKBilling.ALREADY_CHARGED_FOR_THE_TURN,
+            charge: chargeFor({ provider: AIProviderName.ACTIVEPIECES, turnAlreadyCharged: true }),
         })
 
         await generateWith(model)
