@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { figraniumAuth } from '../auth';
 import { figraniumClient } from '../common/client';
+import { taskIdDropdown } from '../common/props';
 import { buildScheduleBody, scheduleConfigProps, scheduleModeDropdown } from '../common/schedule-props';
 
 export const setScheduleAction = createAction({
@@ -11,16 +12,11 @@ export const setScheduleAction = createAction({
   description: 'Create or update a schedule on a task',
   audience: 'both',
   aiMetadata: {
-    description:
-      'Creates or updates the schedule on a Figranium task, either as a recurring frequency or a cron expression. Use this to make a task run automatically. Safe to retry since it upserts the schedule for the given task ID.',
+    description: 'Creates or updates the schedule on a Figranium task. Safe to retry since it upserts the schedule.',
     idempotent: true,
   },
   props: {
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task',
-      required: true,
-    }),
+    taskId: taskIdDropdown,
     scheduleEnabled: Property.Checkbox({
       displayName: 'Enabled',
       description: 'Whether the schedule should be active',
