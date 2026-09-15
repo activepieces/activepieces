@@ -14,10 +14,14 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Activity, ChevronLeft, KeyRound, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { z } from 'zod';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import {
+  LeaveWithoutSavingDialog,
+  useWarnBeforeLosingChanges,
+} from '@/components/custom/leave-without-saving';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,8 +61,8 @@ export function ConfigDetail({
   info: AiProviderInfo;
   projects: Project[];
   isSaving: boolean;
-  onSave: (request: UpdateAIProviderRequest) => void;
-  onDelete: () => void;
+  onSave: (request: UpdateAIProviderRequest) => Promise<unknown>;
+  onDelete: () => Promise<unknown>;
   onReplaceCredentials: () => void;
   isRechecking: boolean;
   onRecheck: () => void;
@@ -66,11 +70,13 @@ export function ConfigDetail({
 }) {
   const [draft, setDraft] = useState<ConfigDraft>(draftOf(config));
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const leavingOnPurpose = useRef(false);
+  const saveInFlight = useRef(false);
 
   const manualModels = providerCredentials.usesManualModels({
     provider: config.provider,
   });
-  const { data: models = [] } = useQuery({
+  const { data: models = [], isLoading: isLoadingModels } = useQuery({
     queryKey: aiProviderKeys.configModels(config.id),
     queryFn: () => aiProviderApi.listModelsForConfig(config.id),
     enabled: !manualModels,
@@ -86,11 +92,16 @@ export function ConfigDetail({
       })),
   ];
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(config));
+  const leaveBlocker = useWarnBeforeLosingChanges({
+    hasChanges: dirty,
+    standDown: leavingOnPurpose,
+    blockSearchChanges: true,
+  });
   const statusDetail = [
     config.statusReason,
     config.statusUpdated &&
       t('Last checked {when}', {
-        when: formatUtils.formatDateTime(new Date(config.statusUpdated)),
+        when: formatUtils.formatDateToAgo(new Date(config.statusUpdated)),
       }),
   ]
     .filter(Boolean)
@@ -108,34 +119,39 @@ export function ConfigDetail({
       ? projects.length - draft.projectIds.length
       : draft.projectIds.length;
 
-  const save = () => {
+  const save = async () => {
     const manualConfigParse = manualModels
       ? ManualProviderConfig.safeParse(config.config)
       : undefined;
     const manualConfig = manualConfigParse?.success
       ? manualConfigParse.data
       : undefined;
-    if (nameMissing) {
+    if (nameMissing || saveInFlight.current) {
       return;
     }
-    onSave({
-      displayName: draft.name.trim(),
-      modelScope: draft.modelScope,
-      modelIds: manualModels
-        ? draft.models.map((model) => model.modelId)
-        : draft.modelIds,
-      projectScope: draft.projectScope,
-      projectIds: draft.projectIds,
-      ...(manualConfig
-        ? {
-            config: { ...manualConfig, models: draft.models },
-          }
-        : {}),
-    });
+    saveInFlight.current = true;
+    try {
+      await onSave({
+        displayName: draft.name.trim(),
+        modelScope: draft.modelScope,
+        modelIds: manualModels
+          ? draft.models.map((model) => model.modelId)
+          : draft.modelIds,
+        projectScope: draft.projectScope,
+        projectIds: draft.projectIds,
+        ...(manualConfig
+          ? {
+              config: { ...manualConfig, models: draft.models },
+            }
+          : {}),
+      });
+    } finally {
+      saveInFlight.current = false;
+    }
   };
 
   return (
-    <div className="flex flex-col gap-8 pb-20">
+    <div className="flex grow flex-col gap-8 pb-4">
       <div className="flex flex-col gap-4">
         <button
           type="button"
@@ -232,7 +248,7 @@ export function ConfigDetail({
         <div className="flex flex-wrap items-end justify-between gap-3">
           <SectionHeader
             title={t('Models')}
-            count={enabledModelCount}
+            count={isLoadingModels ? undefined : enabledModelCount}
             description={
               manualModels
                 ? t('Model ids exposed through this key.')
@@ -266,6 +282,7 @@ export function ConfigDetail({
             <ModelSelectionPanel
               models={selectableModels}
               selectedIds={draft.modelIds}
+              isLoading={isLoadingModels}
               onChange={(modelIds) => setDraft({ ...draft, modelIds })}
             />
           )
@@ -347,13 +364,18 @@ export function ConfigDetail({
           title={t('Delete {name}', { name: config.name })}
           message={t('Steps and agents using this key will stop working.')}
           entityName={config.name}
-          mutationFn={async () => onDelete()}
+          showToast={true}
+          mutationFn={async () => {
+            await onDelete();
+            leavingOnPurpose.current = true;
+            onBack();
+          }}
         />
       </section>
 
       {dirty && (
-        <div className="fixed inset-x-0 bottom-0 z-20 flex justify-center px-4 pb-4">
-          <div className="flex items-center gap-3 rounded-xl border bg-background px-4 py-2.5 shadow-lg">
+        <div className="sticky bottom-4 z-20 mt-auto flex justify-center px-4">
+          <div className="flex animate-in items-center gap-3 rounded-xl border bg-background/95 px-4 py-2.5 shadow-lg backdrop-blur-sm duration-200 fade-in slide-in-from-bottom-4">
             <span className="text-sm">{t('You have unsaved changes')}</span>
             <Button
               variant="outline"
@@ -365,7 +387,9 @@ export function ConfigDetail({
             <Button
               size="sm"
               loading={isSaving}
-              disabled={nameMissing}
+              disabled={nameMissing || isSaving}
+              keyboardShortcut="S"
+              onKeyboardShortcut={save}
               onClick={save}
             >
               {t('Save')}
@@ -373,6 +397,12 @@ export function ConfigDetail({
           </div>
         </div>
       )}
+
+      <LeaveWithoutSavingDialog
+        open={leaveBlocker.state === 'blocked'}
+        onKeepEditing={() => leaveBlocker.reset?.()}
+        onDiscard={() => leaveBlocker.proceed?.()}
+      />
     </div>
   );
 }

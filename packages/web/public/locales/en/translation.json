@@ -2872,5 +2872,7 @@
   "See the events we track": "See the events we track",
   "Events we track": "Events we track",
   "Read the telemetry docs": "Read the telemetry docs",
-  "The connected app reported": "The connected app reported"
+  "The connected app reported": "The connected app reported",
+  "Chat provider updated": "Chat provider updated",
+  "Could not reach this provider": "Could not reach this provider"
 }
