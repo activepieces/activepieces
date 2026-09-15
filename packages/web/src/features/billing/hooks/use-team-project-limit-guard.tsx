@@ -1,12 +1,11 @@
 import { isNil } from '@activepieces/core-utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { Check, LayoutGrid } from 'lucide-react';
 
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -16,13 +15,15 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
+import { PLATFORM_FEATURES } from '../utils/platform-features';
+
+import { TIER_LABELS } from './use-feature-gate';
 
 export const useTeamProjectLimitGuard = ({
   projects,
 }: {
   projects: Pick<ProjectWithLimits, 'type'>[];
 }) => {
-  const [isLimitOpen, setIsLimitOpen] = useState(false);
   const isPlatformAdmin = useIsPlatformAdmin();
   const { platform } = platformHooks.useCurrentPlatform();
   const { openDialog } = useManagePlanDialogStore();
@@ -33,22 +34,13 @@ export const useTeamProjectLimitGuard = ({
   ).length;
   const hasReachedLimit = !isNil(limit) && teamProjectsUsed >= limit;
 
-  const ensureTeamProjectAvailable = (): boolean => {
-    if (!hasReachedLimit) {
-      return true;
-    }
-    setIsLimitOpen(true);
-    return false;
-  };
-
-  const teamProjectLimitDialog = (
-    <TeamProjectLimitDialog
-      open={isLimitOpen}
-      onOpenChange={setIsLimitOpen}
+  const teamProjectLimitContent = ({ onClose }: { onClose: () => void }) => (
+    <TeamProjectLimitContent
       limit={limit ?? 0}
       isPlatformAdmin={isPlatformAdmin}
+      onClose={onClose}
       onExplorePlans={() => {
-        setIsLimitOpen(false);
+        onClose();
         openDialog();
       }}
     />
@@ -56,67 +48,80 @@ export const useTeamProjectLimitGuard = ({
 
   return {
     hasReachedLimit,
-    ensureTeamProjectAvailable,
-    teamProjectLimitDialog,
+    teamProjectLimitContent,
   };
 };
 
-function TeamProjectLimitDialog({
-  open,
-  onOpenChange,
+function TeamProjectLimitContent({
   limit,
   isPlatformAdmin,
+  onClose,
   onExplorePlans,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  limit: number;
-  isPlatformAdmin: boolean;
-  onExplorePlans: () => void;
-}) {
+}: TeamProjectLimitContentProps) {
+  const feature = PLATFORM_FEATURES.projects;
+  const isFirstTeamProject = limit === 0;
+  const showBenefits = isPlatformAdmin && isFirstTeamProject;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[420px]">
-        <DialogHeader>
-          <DialogTitle>
-            {t("You've reached your team project limit")}
-          </DialogTitle>
-          <DialogDescription>
-            {isPlatformAdmin
-              ? limit === 0
-                ? t(
-                    'Team projects let you group flows and share them with your teammates. Upgrade to add one.',
-                  )
-                : t(
-                    'Your plan includes {count, plural, =1 {1 team project} other {# team projects}}. Upgrade to add more.',
-                    { count: limit },
-                  )
-              : t(
-                  'Contact a platform admin to upgrade the plan and add more team projects.',
-                )}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          {isPlatformAdmin ? (
-            <>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                {t('Cancel')}
-              </Button>
-              <Button type="button" onClick={onExplorePlans}>
-                {t('Explore plans')}
-              </Button>
-            </>
-          ) : (
-            <Button type="button" onClick={() => onOpenChange(false)}>
-              {t('Got it')}
-            </Button>
+    <>
+      <DialogHeader>
+        <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+          <LayoutGrid className="size-5 text-primary" />
+        </div>
+        <DialogTitle className="flex items-center gap-2">
+          {showBenefits
+            ? t(feature.title)
+            : t("You've reached your team project limit")}
+          {showBenefits && (
+            <Badge variant="outline">{TIER_LABELS[feature.tier]}</Badge>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </DialogTitle>
+        <DialogDescription>
+          {isPlatformAdmin
+            ? isFirstTeamProject
+              ? t(feature.description)
+              : t(
+                  'Your plan includes {count, plural, =1 {1 team project} other {# team projects}}. Upgrade to add more.',
+                  { count: limit },
+                )
+            : t(
+                'Contact a platform admin to upgrade the plan and add more team projects.',
+              )}
+        </DialogDescription>
+      </DialogHeader>
+      {showBenefits && (
+        <ul className="flex flex-col gap-2">
+          {feature.bullets.map((bullet) => (
+            <li key={bullet} className="flex items-start gap-2 text-sm">
+              <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+              <span>{t(bullet)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <DialogFooter>
+        {isPlatformAdmin ? (
+          <>
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t('Cancel')}
+            </Button>
+            <Button type="button" onClick={onExplorePlans}>
+              {t('Explore plans')}
+            </Button>
+          </>
+        ) : (
+          <Button type="button" onClick={onClose}>
+            {t('Got it')}
+          </Button>
+        )}
+      </DialogFooter>
+    </>
   );
 }
+
+type TeamProjectLimitContentProps = {
+  limit: number;
+  isPlatformAdmin: boolean;
+  onClose: () => void;
+  onExplorePlans: () => void;
+};

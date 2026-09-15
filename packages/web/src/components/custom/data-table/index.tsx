@@ -333,6 +333,7 @@ export function DataTable<
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const rows = table.getRowModel().rows;
+  const visibleColumnCount = table.getVisibleLeafColumns().length;
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => scrollContainerRef.current,
@@ -422,7 +423,7 @@ export function DataTable<
             {isLoading ? (
               <TableRow className="hover:bg-background">
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={visibleColumnCount}
                   className="h-24 text-center"
                 >
                   <DataTableSkeleton />
@@ -434,7 +435,7 @@ export function DataTable<
                   {virtualizer.getVirtualItems().length > 0 && (
                     <tr>
                       <td
-                        colSpan={columns.length}
+                        colSpan={visibleColumnCount}
                         style={{
                           height: virtualizer.getVirtualItems()[0].start,
                         }}
@@ -528,7 +529,7 @@ export function DataTable<
                   {virtualizer.getVirtualItems().length > 0 && (
                     <tr>
                       <td
-                        colSpan={columns.length}
+                        colSpan={visibleColumnCount}
                         style={{
                           height:
                             virtualizer.getTotalSize() -
@@ -621,7 +622,7 @@ export function DataTable<
             ) : isError ? (
               <TableRow className="hover:bg-transparent">
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
                   <DataFetchErrorState
@@ -633,7 +634,7 @@ export function DataTable<
             ) : (
               <TableRow className="hover:bg-background">
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={visibleColumnCount}
                   className="h-[350px] text-center"
                 >
                   <div className="flex flex-col items-center justify-center gap-2">

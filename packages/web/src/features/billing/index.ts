@@ -30,3 +30,6 @@ export {
 } from './components/plan-selector-utils';
 export { useManagePlanDialogStore } from './stores/manage-plan-dialog-state';
 export { AutomaticTrialActivation } from './components/automatic-trial-activation';
+export { useFeatureGate, UpgradeFeatureDialog } from './hooks/use-feature-gate';
+export type { PlatformFeature, FeatureTier } from './hooks/use-feature-gate';
+export { PLATFORM_FEATURES } from './utils/platform-features';
