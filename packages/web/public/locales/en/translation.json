@@ -2857,5 +2857,6 @@
   "See the events we track": "See the events we track",
   "Events we track": "Events we track",
   "Read the telemetry docs": "Read the telemetry docs",
-  "The connected app reported": "The connected app reported"
+  "The connected app reported": "The connected app reported",
+  "dispatchIndexRequiresParentWaitpointId": "A dispatch index only makes sense together with the barrier that dispatched the run."
 }
