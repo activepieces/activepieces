@@ -35,3 +35,21 @@ describe('jobFailureLogger.signatureOf', () => {
         expect(jobFailureLogger.signatureOf(undefined)).toBe('undefined')
     })
 })
+
+describe('jobFailureLogger.signatureFromMessage', () => {
+    it('groups by the leading token before the first colon', () => {
+        expect(jobFailureLogger.signatureFromMessage('ConnectionNotFoundError: connection abc not found', 'EngineError'))
+            .toBe('EngineError@ConnectionNotFoundError')
+        expect(jobFailureLogger.signatureFromMessage('ConnectionNotFoundError: connection xyz missing', 'EngineError'))
+            .toBe('EngineError@ConnectionNotFoundError')
+    })
+
+    it('uses the first line when no colon is present, truncated to 80 chars', () => {
+        expect(jobFailureLogger.signatureFromMessage('Sandbox process exited with code 137', 'EngineError'))
+            .toBe('EngineError@Sandbox process exited with code 137')
+    })
+
+    it('handles empty message with unknown fallback', () => {
+        expect(jobFailureLogger.signatureFromMessage('', 'EngineError')).toBe('EngineError@unknown')
+    })
+})

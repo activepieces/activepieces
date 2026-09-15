@@ -9,8 +9,15 @@ export const jobFailureLogger = {
         const frame = readTopStackFrame(error)
         return frame ? `${errorName}@${frame}` : errorName
     },
-    logJobFailed({ queueName, jobId, jobType, error, log }: LogJobFailedParams): void {
-        const errorSignature = jobFailureLogger.signatureOf(error)
+    signatureFromMessage(message: string, sourceLabel: string): string {
+        const firstLine = message.split('\n', 1)[0].trim()
+        const colonIdx = firstLine.indexOf(':')
+        const head = colonIdx > 0 ? firstLine.slice(0, colonIdx) : firstLine
+        const clean = head.replace(/\s+/g, ' ').slice(0, 80)
+        return `${sourceLabel}@${clean || 'unknown'}`
+    },
+    logJobFailed({ queueName, jobId, jobType, error, log, signatureOverride }: LogJobFailedParams): void {
+        const errorSignature = signatureOverride ?? jobFailureLogger.signatureOf(error)
         log.error({
             queue: { name: queueName },
             job: { id: jobId ?? '', type: jobType },
@@ -44,4 +51,5 @@ type LogJobFailedParams = {
     jobType: string
     error: unknown
     log: FastifyBaseLogger
+    signatureOverride?: string
 }

@@ -271,10 +271,18 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
                     await job.moveToCompleted({ response: undefined }, input.token, false)
                     return
                 }
-                const engineError = new Error(buildFailedReason(input.errorMessage ?? 'Internal error', input.logs))
+                const engineErrorMessage = input.errorMessage ?? 'Internal error'
+                const engineError = new Error(buildFailedReason(engineErrorMessage, input.logs))
                 await job.moveToFailed(engineError, input.token)
                 if ((job.attemptsMade ?? 0) >= (job.opts?.attempts ?? 1)) {
-                    jobFailureLogger.logJobFailed({ queueName: input.queueName, jobId: input.jobId, jobType: jobData.jobType, error: engineError, log })
+                    jobFailureLogger.logJobFailed({
+                        queueName: input.queueName,
+                        jobId: input.jobId,
+                        jobType: jobData.jobType,
+                        error: engineError,
+                        log,
+                        signatureOverride: jobFailureLogger.signatureFromMessage(engineErrorMessage, 'EngineError'),
+                    })
                 }
                 return
             }
