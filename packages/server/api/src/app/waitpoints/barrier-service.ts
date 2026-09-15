@@ -32,33 +32,30 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             if (!isNil(existing)) {
                 await repo.delete({ id: existing.id })
             }
-            const id = apId()
-            await repo
-                .createQueryBuilder()
-                .insert()
-                .into('waitpoint')
-                .values({
-                    id,
-                    flowRunId: params.flowRunId,
-                    projectId: params.projectId,
-                    stepName: params.stepName,
-                    type: PauseType.BARRIER,
-                    version: params.version,
-                    status: WaitpointStatus.PENDING,
-                    resumeDateTime: defaultBarrierDeadline(),
-                    responseToSend: params.responseToSend ?? null,
-                    workerHandlerId: params.workerHandlerId ?? null,
-                    httpRequestId: params.httpRequestId ?? null,
-                    resumePayload: null,
-                    sealed: true,
-                    policy: params.policy ?? null,
-                })
-                .execute()
-            const signals = buildPendingSignals({ barrierId: id, projectId: params.projectId, labels })
+            const now = dayjs().toISOString()
+            const barrier: Waitpoint = {
+                id: apId(),
+                created: now,
+                updated: now,
+                flowRunId: params.flowRunId,
+                projectId: params.projectId,
+                stepName: params.stepName,
+                type: PauseType.BARRIER,
+                version: params.version,
+                status: WaitpointStatus.PENDING,
+                resumeDateTime: defaultBarrierDeadline(),
+                responseToSend: params.responseToSend ?? null,
+                workerHandlerId: params.workerHandlerId ?? null,
+                httpRequestId: params.httpRequestId ?? null,
+                resumePayload: null,
+                sealed: true,
+                policy: params.policy ?? null,
+            }
+            await repo.createQueryBuilder().insert().into('waitpoint').values(barrier).execute()
+            const signals = buildPendingSignals({ barrierId: barrier.id, projectId: params.projectId, labels })
             for (const rows of chunk(signals, SIGNAL_INSERT_BATCH_SIZE)) {
                 await signalRepo(entityManager).createQueryBuilder().insert().into('waitpoint_signal').values(rows).execute()
             }
-            const barrier = await repo.findOneByOrFail({ id })
             return { inserted: true, barrier, signals }
         })
 
