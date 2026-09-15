@@ -10,9 +10,6 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
         const toolCalls = input.toolCalls ?? 0
         const credits = chargeFor({ usage: input.usage, toolCalls })
-        if (credits === 0) {
-            return
-        }
         const platformId = input.billing.platformId
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const appSumo = isAppSumoCreditedPlan(platformPlan.plan)
