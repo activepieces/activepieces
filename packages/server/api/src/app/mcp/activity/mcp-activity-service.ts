@@ -94,7 +94,7 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
                 truncated: payloadTruncated,
             })
         })
-        if (!isNil(error)) {
+        if (!isNil(error) || isNil(payload)) {
             log.error({ err: error, activityId: id, fileId: payloadFileId }, '[mcpActivityService#getPayload] unreadable payload')
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
