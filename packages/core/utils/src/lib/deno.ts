@@ -107,7 +107,7 @@ function newResultMarker(): string {
 async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
     const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
-    const denoDir = await fs.mkdtemp(`${os.tmpdir()}/ap-deno-`)
+    const denoDir = await fs.mkdtemp(`${cwd ?? os.tmpdir()}/ap-deno-`)
     const child = childProcess.spawn(denoPath, [
         'run',
         '--quiet',
@@ -124,8 +124,8 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         cwd,
         env: {
             PATH: process.env['PATH'] ?? '',
-            DENO_DIR: denoDir,
             ...env,
+            DENO_DIR: denoDir,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
     })
