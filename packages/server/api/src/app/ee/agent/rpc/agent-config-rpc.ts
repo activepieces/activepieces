@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
 import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -97,7 +97,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
-        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || agentAiUtils.supportsWebSearch(providerConfig.provider))
+        const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch(providerConfig.provider))
 
         const lockResult = await agentHelpers.conversationRepo()
             .createQueryBuilder()
@@ -199,7 +199,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const willCompact = agentCompaction.shouldCompact({ estimatedTokens, provider: providerConfig.provider, messageCount: llmHistory.length })
         log.debug({ estimatedTokens, willCompact, messageCount: llmHistory.length, systemPromptLength: systemPromptText.length }, '[agentRpc#getAgentConfig] Compaction decision')
         if (willCompact) {
-            const model = agentAiUtils.createChatModel({
+            const model = aiUtils.createModel({
                 provider: providerConfig.provider,
                 auth: providerConfig.auth as Record<string, unknown>,
                 config: providerConfig.config as Record<string, unknown>,

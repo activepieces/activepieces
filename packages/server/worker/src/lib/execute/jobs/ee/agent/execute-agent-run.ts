@@ -1,5 +1,5 @@
 import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
@@ -113,17 +113,17 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // nowhere to mark the turn. A run that can rewrite a saved agent does without it and
             // reads through ap_fetch_url or Tavily instead, both of which mark.
             const untrackedSearchWouldBeat = config.agentsAvailable
-                && agentAiUtils.webSearchModeOf(provider) === 'plugin'
+                && aiUtils.webSearchModeOf(provider) === 'plugin'
             const webSearchActive = !dryRun
                 && !tavilySearchActive
                 && !untrackedSearchWouldBeat
-                && agentAiUtils.supportsWebSearch(provider)
-            const model = agentAiUtils.createChatModel({
+                && aiUtils.supportsWebSearch(provider)
+            const model = aiUtils.createModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
                 webSearchEnabled: webSearchActive,
             })
-            const fastModel = agentAiUtils.createChatModel({
+            const fastModel = aiUtils.createModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
             })
 
@@ -188,7 +188,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
-                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: agentAiUtils.buildWebSearchTools({ provider, auth: config.auth }), taintState }) : {}),
+                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: aiUtils.buildWebSearchTools({ provider, auth: config.auth }), taintState }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
@@ -810,7 +810,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
 }
 
 async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId, abortSignal }: {
-    model: ReturnType<typeof agentAiUtils.createChatModel>
+    model: ReturnType<typeof aiUtils.createModel>
     userMessage: string
     previousUiMessages: unknown[]
     log: JobContext['log']

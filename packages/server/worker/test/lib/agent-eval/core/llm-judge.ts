@@ -1,4 +1,4 @@
-import { agentAiUtils } from '@activepieces/server-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { AIProviderName } from '@activepieces/core-utils';
 import { generateText } from 'ai'
 
@@ -9,7 +9,7 @@ function createJudge({ provider, modelId, auth }: {
     modelId: string
     auth: Record<string, unknown>
 }): { judge: (params: { dimension: string, rubric: string, transcript: string }) => Promise<JudgeVerdict> } {
-    const model = agentAiUtils.createChatModel({ provider, auth, config: {}, modelId })
+    const model = aiUtils.createModel({ provider, auth, config: {}, modelId })
 
     const judge = async ({ dimension, rubric, transcript }: { dimension: string, rubric: string, transcript: string }): Promise<JudgeVerdict> => {
         const { text } = await generateText({

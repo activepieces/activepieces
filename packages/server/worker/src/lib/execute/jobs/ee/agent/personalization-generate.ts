@@ -1,5 +1,5 @@
 import { AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { aiUtils } from '@activepieces/server-utils'
 import { generateObject, generateText, LanguageModel, stepCountIs } from 'ai'
 import { z } from 'zod'
 import { JobContext } from '../../../types'
@@ -18,11 +18,11 @@ export async function fallbackResearch({ provider, auth, providerConfig, fastMod
     log: JobContext['log']
 }): Promise<string> {
     const groundworkBlock = groundwork.length > 0 ? groundwork : '(no grounding facts could be gathered)'
-    if (!agentAiUtils.supportsWebSearch(provider)) {
+    if (!aiUtils.supportsWebSearch(provider)) {
         return groundworkBlock
     }
-    const model = agentAiUtils.createChatModel({ provider, auth, config: providerConfig, modelId: fastModelId, webSearchEnabled: true })
-    const nativeTools = agentAiUtils.buildWebSearchTools({ provider, auth })
+    const model = aiUtils.createModel({ provider, auth, config: providerConfig, modelId: fastModelId, webSearchEnabled: true })
+    const nativeTools = aiUtils.buildWebSearchTools({ provider, auth })
     const { data, error } = await tryCatch(() => generateText({
         model,
         abortSignal: AbortSignal.timeout(FALLBACK_RESEARCH_TIMEOUT_MS),
