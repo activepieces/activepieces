@@ -1,4 +1,4 @@
-import { createPiece } from '@activepieces/pieces-framework';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { pinterestAuth } from './lib/common/auth';
 import { createPin } from './lib/actions/create-pin';
 import { createBoard } from './lib/actions/create-board';
@@ -13,8 +13,9 @@ import { newPinOnBoard } from './lib/triggers/new-pin-on-board';
 export const pinterest = createPiece({
   displayName: 'Pinterest',
   auth: pinterestAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pinterest.png',
+  categories: [PieceCategory.MARKETING],
   authors: ['Sanket6652'],
   actions: [
     createPin,

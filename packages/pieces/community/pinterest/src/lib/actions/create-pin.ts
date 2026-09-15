@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
@@ -20,13 +19,35 @@ export const createPin = createAction({
   classification: 'WRITE',
   outputSchema: createPinActionOutputSchema,
   displayName: 'Create Pin',
-  description: 'Upload an image or video to create a new Pin on a board.',
+  description: 'Create a Pin on a board from an image URL or base64 image.',
   audience: 'both',
   aiMetadata: {
     description:
       'Creates a Pin on a Pinterest board by uploading media from a hosted image/video URL (or base64 image). Use to publish visual content to a board the user owns. Requires a valid board_id and a media source; each call creates a new Pin, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Save To',
+      icon: 'inbox',
+      props: ['board_id', 'board_section_id'],
+    },
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Pin',
+      icon: 'file',
+      props: [
+        'title',
+        'description',
+        'media_source_type',
+        'media_url',
+        'link',
+      ],
+    },
+  ],
   props: {
     ad_account_id: adAccountIdDropdown,
     board_id: boardIdDropdown,
@@ -34,73 +55,89 @@ export const createPin = createAction({
     title: Property.ShortText({
       displayName: 'Title',
       required: true,
-      description: 'The title of the Pin (max 100 characters).',
+      description: 'Up to 100 characters.',
+      placeholder: 'e.g. 10 easy summer salads',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description: 'The description of the Pin (max 800 characters).',
+      description: 'Up to 800 characters.',
     }),
     media_source_type: Property.StaticDropdown({
-      displayName: 'Media Source Type',
+      displayName: 'Media Type',
       required: true,
-      description: 'The type of media source for the Pin.',
+      defaultValue: 'image_url',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Image URL', value: 'image_url' },
-          { label: 'Base64 Image', value: 'image_base64' },
-          { label: 'Video URL', value: 'video_url' },
+          {
+            label: 'Image URL',
+            value: 'image_url',
+            description: 'JPG or PNG link',
+            icon: 'file',
+          },
+          {
+            label: 'Base64 Image',
+            value: 'image_base64',
+            description: 'Encoded data',
+            icon: 'code',
+          },
         ],
       },
     }),
     media_url: Property.ShortText({
-      displayName: 'Media URL',
+      displayName: 'Media',
       required: true,
-      description:
-        'The URL of the image or video to upload. Must be a valid URL.',
+      description: 'Public image URL, or base64 data for the Base64 type.',
+      placeholder: 'https://example.com/photo.jpg',
     }),
     link: Property.ShortText({
       displayName: 'Destination Link',
       required: false,
-      description:
-        'The destination URL that the Pin will link to when clicked.',
+      description: 'Opens when someone clicks the Pin.',
+      placeholder: 'https://example.com',
     }),
     dominant_color: Property.ShortText({
       displayName: 'Dominant Color',
-      description:
-        'The dominant color of the Pin as a hex color code (e.g., "#6E7874").',
+      description: 'Hex color shown while the image loads.',
+      placeholder: '#6E7874',
       required: false,
+      advanced: true,
     }),
     alt_text: Property.ShortText({
       displayName: 'Alt Text',
       description:
-        'Alternative text for accessibility and screen readers (max 500 characters).',
+        'Describes the image for screen readers. Up to 500 characters.',
       required: false,
+      advanced: true,
     }),
     parent_pin_id: Property.ShortText({
       displayName: 'Parent Pin ID',
-      description:
-        'The ID of the original Pin if this is a saved/repinned Pin.',
+      description: 'ID of the Pin this one was saved from.',
+      placeholder: '1234567890123456789',
       required: false,
+      advanced: true,
     }),
     sponsor_id: Property.ShortText({
       displayName: 'Sponsor ID',
       description:
-        'The sponsor account ID for paid partnership content. Available only to select users in closed beta.',
+        'Partner account for paid partnership Pins. Closed beta only.',
       required: false,
+      advanced: true,
     }),
     product_tags: pinIdMultiSelectDropdown,
     note: Property.ShortText({
       displayName: 'Note',
-      description: 'A private note for this Pin that only you can see.',
+      description: 'Private note only you can see.',
       required: false,
+      advanced: true,
     }),
     is_removable: Property.Checkbox({
-      displayName: 'Is Removable',
-      description:
-        'Set to true to create an ad-only Pin that can be easily removed.',
+      displayName: 'Removable',
+      description: 'Marks an ad-only Pin that can be removed later.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {
@@ -122,7 +159,6 @@ export const createPin = createAction({
       sponsor_id,
     } = propsValue;
 
-    // Validation
     if (title && title.length > 100) {
       throw new Error('Title must be 100 characters or less');
     }
@@ -135,14 +171,14 @@ export const createPin = createAction({
       throw new Error('Alt text must be 500 characters or less');
     }
 
-    // URL validation for media_url
-    try {
-      new URL(media_url);
-    } catch {
-      throw new Error('Please enter a valid URL for Image/Video URL');
+    if (media_source_type !== 'image_base64') {
+      try {
+        new URL(media_url);
+      } catch {
+        throw new Error('Please enter a valid URL in the Media field');
+      }
     }
 
-    // URL validation for link (if provided)
     if (link) {
       try {
         new URL(link);
@@ -151,7 +187,6 @@ export const createPin = createAction({
       }
     }
 
-    // Hex color validation for dominant_color (if provided)
     if (dominant_color) {
       const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
       if (!hexColorRegex.test(dominant_color)) {
@@ -161,17 +196,15 @@ export const createPin = createAction({
       }
     }
 
-    // Build request body according to Pinterest API spec
     const body: any = {
       board_id,
       title,
-      media_source: {
-        source_type: media_source_type,
-        url: media_url,
-      },
+      media_source: buildMediaSource({
+        mediaSourceType: media_source_type,
+        mediaUrl: media_url,
+      }),
     };
 
-    // Add optional fields only if they have values
     if (board_section_id) body.board_section_id = board_section_id;
     if (description) body.description = description;
     if (link) body.link = link;
@@ -182,7 +215,6 @@ export const createPin = createAction({
     if (sponsor_id) body.sponsor_id = sponsor_id;
     if (typeof is_removable === 'boolean') body.is_removable = is_removable;
 
-    // Handle product_tags array
     if (
       product_tags &&
       Array.isArray(product_tags) &&
@@ -191,7 +223,6 @@ export const createPin = createAction({
       body.product_tags = product_tags;
     }
 
-    // Build API path
     let path = '/pins';
     if (ad_account_id) {
       path = `/pins?ad_account_id=${encodeURIComponent(ad_account_id)}`;
@@ -205,3 +236,58 @@ export const createPin = createAction({
     );
   },
 });
+
+function buildMediaSource({
+  mediaSourceType,
+  mediaUrl,
+}: {
+  mediaSourceType: string;
+  mediaUrl: string;
+}): Record<string, string> {
+  if (mediaSourceType !== 'image_base64') {
+    return { source_type: mediaSourceType, url: mediaUrl };
+  }
+
+  const trimmed = mediaUrl.trim();
+  const dataUri = /^data:([^;,]*)((?:;[^;,]*)*),/.exec(trimmed);
+  const isBase64Uri =
+    dataUri !== null &&
+    dataUri[2].split(';').some((param) => param.toLowerCase() === 'base64');
+
+  if (dataUri && !isBase64Uri) {
+    throw new Error(
+      'Media data URI must be base64 encoded (data:image/png;base64,...)'
+    );
+  }
+
+  const data = dataUri ? trimmed.slice(dataUri[0].length) : trimmed;
+  if (!BASE64_PATTERN.test(data)) {
+    throw new Error('Media must be valid base64 when the type is Base64 Image');
+  }
+
+  const declaredType =
+    dataUri && dataUri[1].length > 0 ? dataUri[1].toLowerCase() : undefined;
+  const contentType = declaredType ?? detectImageContentType(data);
+
+  if (!contentType || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
+    throw new Error(
+      'Media must be a JPEG or PNG image, as a data URI or raw base64'
+    );
+  }
+
+  return {
+    source_type: 'image_base64',
+    content_type: contentType,
+    data,
+  };
+}
+
+function detectImageContentType(base64: string): string | undefined {
+  const signature = base64.slice(0, 8);
+  if (signature.startsWith('/9j/')) return 'image/jpeg';
+  if (signature.startsWith('iVBORw0K')) return 'image/png';
+  return undefined;
+}
+
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
+const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;
