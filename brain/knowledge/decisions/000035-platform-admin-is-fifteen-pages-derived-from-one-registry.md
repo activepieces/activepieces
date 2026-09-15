@@ -107,6 +107,14 @@ dialog, and only that final click is refused, with an upgrade dialog explaining 
 evaluating Activepieces can therefore see what a feature is before being asked to pay for it, which the
 earlier full-page teaser made impossible.
 
+**Which click refuses depends on whether the input can still change the answer.** `New Project` defers to
+the final `Create Project` on purpose: the dialog is worth opening because seeing the form is part of
+seeing the feature. `Invite` is the opposite case, because `isOutOfSeats` means zero seats remain, so
+every invitation the admin could type is already going to fail; it refuses on the click and never opens
+the form. Getting this wrong is a half-gate, marker on one control and check on another, which reads as a
+gate and behaves as wasted typing. Ask whether any input reaches a different outcome. If not, refuse where
+the crown is.
+
 **The crown replaces the action's own icon, it does not join it.** A plus and a crown side by side read as
 two separate affordances. `useFeatureGate` returns `crown` as an element when locked and `null` when not,
 so a plain button is `{gate.crown ?? <Plus className="size-4" />}` and only ever shows one icon. The
