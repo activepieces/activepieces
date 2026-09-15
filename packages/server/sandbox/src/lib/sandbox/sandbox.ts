@@ -91,14 +91,15 @@ export function createSandbox(
         wireConnectionHandler(ioServer)
         const { error } = await tryCatch(() => listenOnce(server))
         if (error) {
+            const reason = `Failed to bind sandbox ws port: ${String(error)}`
             throw new ActivepiecesError({
                 code: ErrorCode.SANDBOX_INTERNAL_ERROR,
                 params: {
-                    reason: `Failed to bind sandbox ws port: ${String(error)}`,
+                    reason,
                     standardOutput: '',
                     standardError: '',
                 },
-            })
+            }, reason)
         }
         io = ioServer
         const address = server.address()

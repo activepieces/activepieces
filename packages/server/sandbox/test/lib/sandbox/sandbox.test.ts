@@ -404,7 +404,10 @@ describe('createSandbox', () => {
                 testPM = createTestProcessMaker()
                 sandbox = createSandbox(createMockLogger(), 'sb-bind-fail', defaultOptions, testPM.maker)
 
-                await expect(sandbox.start(startOptions)).rejects.toMatchObject({ error: { code: ErrorCode.SANDBOX_INTERNAL_ERROR } })
+                await expect(sandbox.start(startOptions)).rejects.toMatchObject({
+                    error: { code: ErrorCode.SANDBOX_INTERNAL_ERROR },
+                    message: expect.stringContaining('EMFILE'),
+                })
                 expect(testPM.maker.create).not.toHaveBeenCalled()
             }
             finally {
