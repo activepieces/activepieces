@@ -11,16 +11,6 @@ import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-pro
 import { EmbeddingModel, LanguageModel, ToolSet } from 'ai'
 
 const MAX_WEB_SEARCH_RESULTS = 5
-export const EMBEDDING_DIMENSIONS = 768
-const OPENAI_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
-    openai: { dimensions: EMBEDDING_DIMENSIONS },
-}
-
-const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
-    openrouter: { dimensions: EMBEDDING_DIMENSIONS },
-    openai: { dimensions: EMBEDDING_DIMENSIONS },
-}
-
 // OpenAI is absent on purpose: its web search needs the Responses API, which breaks legacy BYOK models.
 // Which providers support web search (and how) is declared in AI_PROVIDER_CAPABILITIES; the native
 // tool builders below stay here because they need the provider SDKs.
@@ -144,6 +134,16 @@ function managedProviderMetadataHeaders({ provider, metadata }: {
         'x-ap-conversation-id': metadata.conversationId,
         ...spreadIfDefined('x-ap-run-id', metadata.runId),
     }
+}
+
+export const EMBEDDING_DIMENSIONS = 768
+const OPENAI_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
+    openai: { dimensions: EMBEDDING_DIMENSIONS },
+}
+
+const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
+    openrouter: { dimensions: EMBEDDING_DIMENSIONS },
+    openai: { dimensions: EMBEDDING_DIMENSIONS },
 }
 
 export const aiUtils = {
