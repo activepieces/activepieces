@@ -83,6 +83,8 @@ function baseEnv({ settings, networkMode }: { settings: SandboxSettings, network
         ...spreadIfDefined('AP_DENO_PATH', process.env['AP_DENO_PATH']),
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
+        ...spreadIfDefined('AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB', settings.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?.toString()),
+        ...spreadIfDefined('AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB', settings.FLOW_RUN_LOG_SLICE_THRESHOLD_KB?.toString()),
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
         AP_NETWORK_MODE: networkMode,
