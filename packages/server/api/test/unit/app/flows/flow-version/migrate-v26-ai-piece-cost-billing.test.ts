@@ -114,6 +114,21 @@ describe('migrateV26AiPieceCostBilling', () => {
         expect(input).toEqual({ maxSteps: 5 })
     })
 
+    it('keeps a max steps saved as text, since the engine reads it as a number too', async () => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.4.5', actionName: 'run_agent', input: { maxSteps: '3' } }))
+        expect(input).toEqual({ maxSteps: 3 })
+    })
+
+    it('ignores the padding around a max steps saved as text', async () => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.4.5', actionName: 'run_agent', input: { maxSteps: '10\n' } }))
+        expect(input).toEqual({ maxSteps: 10 })
+    })
+
+    it.each(['0', '-5', '3.7', 'abc', ''])('falls back to the default when the saved max steps %s is not a whole positive number', async (maxSteps) => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.4.5', actionName: 'run_agent', input: { maxSteps } }))
+        expect(input).toEqual({ maxSteps: 20 })
+    })
+
     it('leaves the input of a non-agent AI action untouched', async () => {
         const input = await migratedInputOf(withAiStep({ pieceVersion: '0.4.5', actionName: 'askAi', input: { prompt: 'hi' } }))
         expect(input).toEqual({ prompt: 'hi' })
