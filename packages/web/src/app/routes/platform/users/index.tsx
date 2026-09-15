@@ -4,11 +4,10 @@ import {
   UserWithMetaInformation,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { User } from 'lucide-react';
+import { Crown, User } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { DataTable } from '@/components/custom/data-table';
 import { UserRoundPlusIcon } from '@/components/icons/user-round-plus';
 import { Button } from '@/components/ui/button';
@@ -37,7 +36,8 @@ export type UserRowData =
 
 export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
-  const { handleSeatLimitError, seatLimitDialog } = useSeatLimitGuard();
+  const { isOutOfSeats, handleSeatLimitError, seatLimitDialog } =
+    useSeatLimitGuard();
 
   const {
     data: usersData,
@@ -117,12 +117,7 @@ export default function UsersPage() {
   const columns = createUsersTableColumns();
 
   return (
-    <LockedFeatureGuard
-      featureKey="USERS"
-      locked={false}
-      lockTitle={t('Unlock Users')}
-      lockDescription={t('Manage your users and their access to your projects')}
-    >
+    <>
       <div className="flex flex-col w-full">
         <DashboardPageHeader
           title={t('Users')}
@@ -152,7 +147,11 @@ export default function UsersPage() {
               size="sm"
               onClick={() => setInviteOpen(true)}
             >
-              <UserRoundPlusIcon size={16} />
+              {isOutOfSeats ? (
+                <Crown className="size-4 shrink-0 text-primary-foreground/90" />
+              ) : (
+                <UserRoundPlusIcon size={16} />
+              )}
               <span className="text-sm font-medium">{t('Invite')}</span>
             </Button>,
           ]}
@@ -175,6 +174,6 @@ export default function UsersPage() {
         onInviteSuccess={refetch}
       />
       {seatLimitDialog}
-    </LockedFeatureGuard>
+    </>
   );
 }
