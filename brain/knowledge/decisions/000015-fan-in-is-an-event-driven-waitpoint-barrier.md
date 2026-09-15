@@ -45,10 +45,18 @@ all, purely because child rows appear later than the dispatch that created them.
 - **Receiving is an upsert, last write wins.** It is not a state machine and does not reject a second write:
   a retried child reports its terminal status again — possibly a different one — and the barrier must reflect
   the latest truth, not the first. That also makes redelivery of the receive path free.
+- **A human decision is the one exception: it is compare-and-set.** `receiveSignal` keeps the upsert above for
+  machine producers; the confirm link goes through `recordDecision`, whose `UPDATE` carries
+  `AND status = PENDING` and answers "already responded" when it matches nothing. A double-click, an email
+  client prefetching on hover, or two people on a shared inbox must not silently flip a recorded approve into
+  a reject. Both paths are a single `UPDATE … RETURNING`: the previous read-then-`save()` also *re-inserted* a
+  signal row that the release had already deleted, because TypeORM's `save()` inserts when the row is gone.
 - **The deadline is set at create and nothing moves it.** The floor rule needs an evaluation to fire; a
   barrier nobody ever signals gets none, so the deadline is the only thing between "the producer died hard"
   and a run paused until retention deletes it. Seal does not touch it — the clamp with no requested value
   already returns the ceiling, and a shorter deadline is a `policy` input, so both are known at create.
+  `defaultBarrierDeadline({ flowRunCreated })` anchors it to the run's start, not to the moment the barrier
+  opened, so a barrier inside a long-running run cannot outlive `AP_PAUSED_FLOW_TIMEOUT_DAYS`.
 - **Evaluation must be coalesced, and coalescing must not swallow its own last signal.** At 10 000 signals,
   evaluating per signal is ~100M row reads. BullMQ holds a deduplication key while the job is queued *and*
   active, so the handler's **first statement** is `clearEvaluationDedupKey`, and every producer commits
