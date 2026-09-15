@@ -87,7 +87,7 @@ describe('AI Providers API', () => {
     })
 
     describe('GET /v1/ai-providers/:provider/config', () => {
-        it('should return config with defaultHeaders and platformId', async () => {
+        it('is removed, so an engine token no longer reaches a provider key', async () => {
             await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
@@ -113,44 +113,7 @@ describe('AI Providers API', () => {
                 headers: { authorization: `Bearer ${engineToken}` },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-           
-            expect(body.provider).toBe(AIProviderName.CUSTOM)
-            expect(body.platformId).toBe(ctx.platform.id)
-            expect(body.config.defaultHeaders).toEqual({ 'X-Org': 'org-789' })
-        })
-
-        it('should return platformId even without custom headers config', async () => {
-            await mockAndSaveAIProvider({
-                platformId: ctx.platform.id,
-                provider: AIProviderName.CUSTOM,
-                displayName: 'Minimal Provider',
-                config: {
-                    baseUrl: 'https://api.example.com/v1',
-                    apiKeyHeader: 'Authorization',
-                    models: [],
-                },
-            })
-
-            const engineToken = await generateMockToken({
-                type: PrincipalType.ENGINE,
-                id: apId(),
-                projectId: ctx.project.id,
-                platform: { id: ctx.platform.id },
-            })
-
-            const response = await app!.inject({
-                method: 'GET',
-                url: `/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`,
-                headers: { authorization: `Bearer ${engineToken}` },
-            })
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            const body = response?.json()
-
-            expect(body.platformId).toBe(ctx.platform.id)
-            expect(body.config.defaultHeaders).toBeUndefined()
+            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
 
