@@ -16,12 +16,18 @@ import {
 
 export function SecurityOverview() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: apiKeys, isLoading: isLoadingKeys } =
-    apiKeyQueries.useApiKeys();
-  const { data: secretManagers, isLoading: isLoadingSecrets } =
-    secretManagersHooks.useListSecretManagerConnections({
-      listForPlatform: true,
-    });
+  const {
+    data: apiKeys,
+    isLoading: isLoadingKeys,
+    isError: isKeysError,
+  } = apiKeyQueries.useApiKeys();
+  const {
+    data: secretManagers,
+    isLoading: isLoadingSecrets,
+    isError: isSecretsError,
+  } = secretManagersHooks.useListSecretManagerConnections({
+    listForPlatform: true,
+  });
 
   const keyCount = apiKeys?.data.length ?? 0;
   const secretCount = secretManagers?.length ?? 0;
@@ -42,6 +48,8 @@ export function SecurityOverview() {
           tier="team"
           value={platform.plan.apiKeysEnabled ? keyCount : t('Locked')}
           isLoading={isLoadingKeys}
+          isError={isKeysError}
+          errorEntity={t('API keys')}
           description={
             keyCount === 0 ? t('No keys issued') : t('Active platform keys')
           }
@@ -54,6 +62,8 @@ export function SecurityOverview() {
             platform.plan.secretManagersEnabled ? secretCount : t('Locked')
           }
           isLoading={isLoadingSecrets}
+          isError={isSecretsError}
+          errorEntity={t('secret managers')}
           description={
             secretCount === 0
               ? t('No external vault connected')

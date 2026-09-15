@@ -149,11 +149,13 @@ function activeTabId(
 }
 
 function isCrowned(page: AdminNavPage, context: AdminPageContext) {
-  const tabs = visibleTabs(page, context);
-  if (tabs.length === 0) {
-    return page.nav.isLocked?.(context) === true;
+  if (page.nav.isLocked?.(context) === true) {
+    return true;
   }
-  return tabs.every((tab) => tab.isLocked?.(context) === true);
+  const tabs = visibleTabs(page, context);
+  return (
+    tabs.length > 0 && tabs.every((tab) => tab.isLocked?.(context) === true)
+  );
 }
 
 function activePageId(pathname: string) {
