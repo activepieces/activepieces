@@ -83,7 +83,7 @@ import { getHubspotAccessToken, hubspotAuth } from './lib/auth';
 export const hubspot = createPiece({
 	displayName: 'HubSpot',
 	description: 'Powerful CRM that offers tools for sales, customer service, and marketing automation.',
-	minimumSupportedRelease: '0.86.4',
+	minimumSupportedRelease: '0.87.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/hubspot.png',
 	authors: ['Salem-Alaa', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
 	categories: [PieceCategory.SALES_AND_CRM],
