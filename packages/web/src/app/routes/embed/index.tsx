@@ -111,9 +111,7 @@ const EmbedPage = React.memo(() => {
       event.data.type === ActivepiecesVendorEventName.VENDOR_INIT
     ) {
       if (event.data.data.jwtToken) {
-        if (event.data.data.mode) {
-          setTheme(event.data.data.mode);
-        }
+        setTheme(event.data.data.mode ?? 'light');
         mutateAsync(
           {
             externalAccessToken: event.data.data.jwtToken,
