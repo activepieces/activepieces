@@ -5,7 +5,7 @@ import { figraniumClient, FigraniumTaskListResponse } from './client';
 
 export const taskIdDropdown = Property.Dropdown({
   displayName: 'Task',
-  description: 'The task to execute',
+  description: 'Choose a saved Figranium task',
   required: true,
   refreshers: ['auth'],
   auth: figraniumAuth,
