@@ -20,7 +20,7 @@ export const copyCard = createAction({
   outputSchema: copyCardActionOutputSchema,
   aiMetadata: {
     description:
-      'Copies an existing card into a list, optionally carrying over parts of the original such as its checklists, attachments, comments, labels, members or due date. Use it to instantiate a template card; use Create Card when there is nothing to copy from. Both the source card id and the destination list id are required, and each call produces another copy, so it is not idempotent.',
+      'Copies an existing card into a list, optionally carrying over parts of the original such as its checklists, attachments, comments, custom fields, labels, members or dates. Only the parts listed in Keep From Source are carried over, so leaving it empty produces a bare copy. Use it to instantiate a template card; use Create Card when there is nothing to copy from. Both the source card id and the destination list id are required, and each call produces another copy, so it is not idempotent.',
     idempotent: false,
   },
   props: {
@@ -43,16 +43,18 @@ export const copyCard = createAction({
     keep_from_source: Property.StaticMultiSelectDropdown({
       displayName: 'Keep From Source',
       description:
-        'Which parts of the original to carry over. Leave empty to copy the card without them.',
+        'Which parts of the original to carry over. Leave empty to copy the card without any of them.',
       required: false,
       options: {
         options: [
           { label: 'Attachments', value: 'attachments' },
           { label: 'Checklists', value: 'checklists' },
           { label: 'Comments', value: 'comments' },
+          { label: 'Custom Fields', value: 'customFields' },
           { label: 'Due Date', value: 'due' },
           { label: 'Labels', value: 'labels' },
           { label: 'Members', value: 'members' },
+          { label: 'Start Date', value: 'start' },
           { label: 'Stickers', value: 'stickers' },
         ],
       },
@@ -82,9 +84,7 @@ export const copyCard = createAction({
     if (context.propsValue['position']) {
       params['pos'] = context.propsValue['position'];
     }
-    if (keepFromSource !== undefined && keepFromSource.length > 0) {
-      params['keepFromSource'] = keepFromSource.join(',');
-    }
+    params['keepFromSource'] = keepFromSource?.join(',') ?? '';
 
     try {
       const request: HttpRequest = {

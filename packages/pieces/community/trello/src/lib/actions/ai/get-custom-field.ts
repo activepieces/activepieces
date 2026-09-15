@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { customFieldActionOutputSchema } from '../../output-schemas';
 
 export const getCustomField = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const getCustomField = createAction({
   displayName: 'Get Custom Field (Agent)',
   description: 'Read one custom field definition by id.',
   audience: 'ai',
+  outputSchema: customFieldActionOutputSchema,
   aiMetadata: {
     description:
       'Reads a single custom field definition, returning its name, type and the board it belongs to. Use it to confirm a field type before writing a value, since Set Card Custom Field Value needs a different body per type. Use List Board Custom Fields when only the board is known. Read-only and idempotent.',

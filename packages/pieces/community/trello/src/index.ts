@@ -142,9 +142,9 @@ export const trelloAuth = PieceAuth.BasicAuth({
 export const trello = createPiece({
   displayName: 'Trello',
   description: 'Project management tool for teams',
-  minimumSupportedRelease: '0.86.4',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/trello.png',
-  authors: ["Salem-Alaa", "kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", "AshotZaqoyan"],
+  authors: ["Salem-Alaa", "kishanprmr", "MoShizzle", "khaledmashaly", "abuaboud", "AshotZaqoyan", "OdaiAhmed99"],
   categories: [PieceCategory.PRODUCTIVITY],
   auth: trelloAuth,
   actions: [createCard, getCard, updateCard, deleteCard, getCardAttachments, addCardAttachment, getCardAttachment, deleteCardAttachment,

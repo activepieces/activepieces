@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { deleteCustomFieldActionOutputSchema } from '../../output-schemas';
 
 export const deleteCustomField = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const deleteCustomField = createAction({
   displayName: 'Delete Custom Field (Agent)',
   description: 'Permanently delete a custom field and every value stored in it.',
   audience: 'ai',
+  outputSchema: deleteCustomFieldActionOutputSchema,
   aiMetadata: {
     description:
       'Permanently deletes a custom field definition from its board, discarding the value every card held in that field. This cannot be undone and affects all cards on the board at once, so confirm the field with Get Custom Field first. Deleting an already-deleted field errors rather than succeeding, so it is not idempotent.',

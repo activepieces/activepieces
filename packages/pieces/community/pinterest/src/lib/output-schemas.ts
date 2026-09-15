@@ -272,10 +272,11 @@ export const listLinkedBusinessesActionOutputSchema: OutputSchema = {
       label: 'Linked Businesses',
       labelKey: 'username',
       listItems: [
-        { key: 'id', label: 'Business ID' },
         { key: 'username', label: 'Username' },
-        { key: 'business_name', label: 'Business Name' },
-        { key: 'profile_image', label: 'Profile Image', format: 'image' },
+        { key: 'image_small_url', label: 'Small Image', format: 'image' },
+        { key: 'image_medium_url', label: 'Medium Image', format: 'image' },
+        { key: 'image_large_url', label: 'Large Image', format: 'image' },
+        { key: 'image_xlarge_url', label: 'Extra Large Image', format: 'image' },
       ],
     },
     { key: 'count', label: 'Count', format: 'number' },
@@ -288,7 +289,6 @@ export const listVerifiedWebsitesActionOutputSchema = paginatedSchema(
     { key: 'website', label: 'Website', format: 'url' },
     { key: 'status', label: 'Verification Status' },
     { key: 'verified_at', label: 'Verified At', format: 'datetime' },
-    { key: 'verification_method', label: 'Verification Method' },
   ],
   'website'
 );
@@ -301,8 +301,6 @@ export const listPinProductTagsActionOutputSchema: OutputSchema = {
       labelKey: 'pin_id',
       listItems: [
         { key: 'pin_id', label: 'Tagged Product Pin ID' },
-        { key: 'x', label: 'X Position', format: 'number' },
-        { key: 'y', label: 'Y Position', format: 'number' },
       ],
     },
     { key: 'count', label: 'Count', format: 'number' },

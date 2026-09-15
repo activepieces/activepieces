@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { removeCardVoteActionOutputSchema } from '../../output-schemas';
 
 export const removeCardVote = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const removeCardVote = createAction({
   displayName: 'Remove Card Vote (Agent)',
   description: "Remove a member's vote from a card.",
   audience: 'ai',
+  outputSchema: removeCardVoteActionOutputSchema,
   aiMetadata: {
     description:
       "Removes one member's vote from a card. Use it to undo a vote cast by Vote On Card; check List Card Votes first to confirm the member actually voted, because removing a vote that was never cast returns an error rather than succeeding. Requires the Voting Power-Up on the board. Not idempotent.",

@@ -7,28 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
-
-function buildValueBody(
-  fieldType: string,
-  value: string
-): Record<string, unknown> {
-  switch (fieldType) {
-    case 'text':
-      return { value: { text: value } };
-    case 'number':
-      return { value: { number: value } };
-    case 'date':
-      return { value: { date: value } };
-    case 'checkbox':
-      return { value: { checked: value === 'true' } };
-    case 'list':
-      return { idValue: value };
-    default:
-      throw new Error(
-        `Unsupported field type "${fieldType}". Use text, number, date, checkbox or list.`
-      );
-  }
-}
+import { setCardCustomFieldValueActionOutputSchema } from '../../output-schemas';
 
 export const setCardCustomFieldValue = createAction({
   auth: trelloAuth,
@@ -37,6 +16,7 @@ export const setCardCustomFieldValue = createAction({
   displayName: 'Set Card Custom Field Value (Agent)',
   description: "Set a custom field's value on a card.",
   audience: 'ai',
+  outputSchema: setCardCustomFieldValueActionOutputSchema,
   aiMetadata: {
     description:
       'Sets one custom field value on one card. The Field Type must match the field definition from List Board Custom Fields, because Trello rejects a value written in the wrong shape: text, number and date take the value directly, checkbox takes true or false, and a dropdown takes an option id from List Custom Field Options rather than the option text. Writing the same value again produces the same state, so it is idempotent.',
@@ -79,13 +59,19 @@ export const setCardCustomFieldValue = createAction({
 
   async run(context) {
     const fieldType = context.propsValue['field_type'];
-    const body = buildValueBody(fieldType, context.propsValue['value']);
+    const body = buildValueBody({
+      fieldType,
+      value: context.propsValue['value'],
+    });
 
     try {
       const request: HttpRequest = {
         method: HttpMethod.PUT,
         url: `${trelloCommon.baseUrl}cards/${context.propsValue['card_id']}/customField/${context.propsValue['custom_field_id']}/item`,
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
         queryParams: withAuthParams(context.auth),
         body,
       };
@@ -101,3 +87,41 @@ export const setCardCustomFieldValue = createAction({
     }
   },
 });
+
+function buildValueBody({
+  fieldType,
+  value,
+}: {
+  fieldType: string;
+  value: string;
+}): Record<string, unknown> {
+  switch (fieldType) {
+    case 'text':
+      return { value: { text: value } };
+    case 'number':
+      return { value: { number: value } };
+    case 'date':
+      return { value: { date: value } };
+    case 'checkbox':
+      return { value: { checked: parseCheckbox(value) } };
+    case 'list':
+      return { idValue: value };
+    default:
+      throw new Error(
+        `Unsupported field type "${fieldType}". Use text, number, date, checkbox or list.`
+      );
+  }
+}
+
+function parseCheckbox(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true') {
+    return true;
+  }
+  if (normalized === 'false') {
+    return false;
+  }
+  throw new Error(
+    `Checkbox fields accept only "true" or "false", but received "${value}".`
+  );
+}

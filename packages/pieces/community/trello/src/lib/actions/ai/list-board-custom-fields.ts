@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listBoardCustomFieldsActionOutputSchema } from '../../output-schemas';
 
 export const listBoardCustomFields = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listBoardCustomFields = createAction({
   displayName: 'List Board Custom Fields (Agent)',
   description: "List the custom fields defined on a board.",
   audience: 'ai',
+  outputSchema: listBoardCustomFieldsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the custom fields defined on a board, returning each field id, name and type. Use it to resolve a custom_field_id before reading or writing a card value with List Card Custom Field Values or Set Card Custom Field Value. Custom fields need the Custom Fields Power-Up enabled on the board; obtain board_id from List Boards. Read-only and idempotent.',

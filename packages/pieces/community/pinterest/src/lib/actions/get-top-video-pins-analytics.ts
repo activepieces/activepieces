@@ -51,15 +51,9 @@ export const getTopVideoPinsAnalytics = createAction({
       required: false,
       description: 'How many Pins to return (1-50, Pinterest defaults to 10).',
     }),
-    bookmark: Property.ShortText({
-      displayName: 'Bookmark',
-      required: false,
-      description:
-        'Opaque cursor returned by a previous call; omit to read the first page.',
-    }),
   },
   async run({ auth, propsValue }) {
-    const { start_date, end_date, sort_by, num_of_pins, bookmark } = propsValue;
+    const { start_date, end_date, sort_by, num_of_pins } = propsValue;
 
     return await makeRequest(
       getAccessTokenOrThrow(auth),
@@ -69,7 +63,6 @@ export const getTopVideoPinsAnalytics = createAction({
         end_date,
         sort_by,
         num_of_pins,
-        bookmark,
       })
     );
   },

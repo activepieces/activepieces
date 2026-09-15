@@ -117,24 +117,6 @@ export function buildPath(
   return query === '' ? basePath : `${basePath}?${query}`;
 }
 
-export function repeatedParam(
-  basePath: string,
-  key: string,
-  values: string[],
-  params: Record<string, string | number | undefined>
-) {
-  const search = new URLSearchParams();
-  for (const value of values) {
-    search.append(key, value);
-  }
-  for (const [paramKey, value] of Object.entries(params)) {
-    if (value !== undefined && value !== '') {
-      search.append(paramKey, String(value));
-    }
-  }
-  return `${basePath}?${search.toString()}`;
-}
-
 export function paginatedResult(response: {
   items?: unknown[];
   bookmark?: string | null;

@@ -51,14 +51,28 @@ type SearchParams = {
   ad_account_id?: string;
 };
 
-function assertMaxLength(value: string | undefined, max: number, label: string) {
+function assertMaxLength({
+  value,
+  max,
+  label,
+}: {
+  value: string | undefined;
+  max: number;
+  label: string;
+}) {
   if (value !== undefined && value.length > max) {
     throw new Error(`${label} must be ${max} characters or less`);
   }
 }
 
-function assertUrl(value: string | undefined, label: string) {
-  if (value === undefined || value === '') {
+function assertUrl({
+  value,
+  label,
+}: {
+  value: string | undefined;
+  label: string;
+}) {
+  if (value === undefined) {
     return;
   }
   try {
@@ -69,11 +83,13 @@ function assertUrl(value: string | undefined, label: string) {
 }
 
 async function createPinOperation(params: CreatePinParams) {
-  assertMaxLength(params.title, 100, 'Title');
-  assertMaxLength(params.description, 800, 'Description');
-  assertMaxLength(params.alt_text, 500, 'Alt text');
-  assertUrl(params.media_url, 'Image/Video URL');
-  assertUrl(params.link, 'Destination Link');
+  assertMaxLength({ value: params.title, max: 100, label: 'Title' });
+  assertMaxLength({ value: params.description, max: 800, label: 'Description' });
+  assertMaxLength({ value: params.alt_text, max: 500, label: 'Alt text' });
+  assertUrl({ value: params.media_url, label: 'Image URL' });
+  if (params.link) {
+    assertUrl({ value: params.link, label: 'Destination Link' });
+  }
 
   if (params.dominant_color !== undefined && params.dominant_color !== '') {
     if (!/^#[0-9A-Fa-f]{6}$/.test(params.dominant_color)) {
@@ -116,8 +132,12 @@ async function createPinOperation(params: CreatePinParams) {
 }
 
 async function createBoardOperation(params: CreateBoardParams) {
-  assertMaxLength(params.name, 180, 'Board name');
-  assertMaxLength(params.description, 500, 'Board description');
+  assertMaxLength({ value: params.name, max: 180, label: 'Board name' });
+  assertMaxLength({
+    value: params.description,
+    max: 500,
+    label: 'Board description',
+  });
 
   const body: Record<string, unknown> = {
     name: params.name,
@@ -145,8 +165,12 @@ async function updateBoardOperation(params: UpdateBoardParams) {
     );
   }
 
-  assertMaxLength(params.name, 180, 'Board name');
-  assertMaxLength(params.description, 500, 'Board description');
+  assertMaxLength({ value: params.name, max: 180, label: 'Board name' });
+  assertMaxLength({
+    value: params.description,
+    max: 500,
+    label: 'Board description',
+  });
 
   const body: Record<string, unknown> = {};
   if (params.name && params.name.trim()) {
@@ -228,22 +252,18 @@ async function searchPinsOperation(
     );
 
     const allItems: unknown[] = response.items ?? [];
-    const items =
-      params.max_results !== undefined && allItems.length > params.max_results
-        ? allItems.slice(0, params.max_results)
-        : allItems;
+    const truncated =
+      params.max_results !== undefined && allItems.length > params.max_results;
+    const items = truncated ? allItems.slice(0, params.max_results) : allItems;
 
     return {
       items,
-      bookmark: response.bookmark,
+      bookmark: truncated ? null : response.bookmark ?? null,
       total_results: items.length,
       query_used: params.query,
-      has_more: !!response.bookmark,
+      has_more: truncated || !!response.bookmark,
     };
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Resource Not Found')) {
-      throw new Error('No pins found matching your search criteria.');
-    }
     throw new Error(
       `Failed to search pins: ${
         error instanceof Error ? error.message : 'Unknown error'

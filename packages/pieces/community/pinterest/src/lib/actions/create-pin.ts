@@ -45,7 +45,6 @@ export const createPin = createAction({
         options: [
           { label: 'Image URL', value: 'image_url' },
           { label: 'Base64 Image', value: 'image_base64' },
-          { label: 'Video URL', value: 'video_url' },
         ],
       },
     }),

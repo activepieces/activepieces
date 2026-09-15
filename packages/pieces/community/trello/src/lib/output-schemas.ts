@@ -80,6 +80,46 @@ const boardMemberFields: OutputSchema['fields'] = [
   { key: 'username', label: 'Username' },
 ];
 
+const customFieldOptionFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Option ID' },
+  { key: 'idCustomField', label: 'Custom Field ID' },
+  {
+    key: 'value',
+    label: 'Value',
+    children: [{ key: 'text', label: 'Text' }],
+  },
+  { key: 'color', label: 'Color' },
+  { key: 'pos', label: 'Position', format: 'number' },
+];
+
+const customFieldFields: OutputSchema['fields'] = [
+  { key: 'id', label: 'Custom Field ID' },
+  { key: 'name', label: 'Name' },
+  {
+    key: 'type',
+    label: 'Type',
+    description: 'One of text, number, date, checkbox or list.',
+  },
+  { key: 'idModel', label: 'Board ID' },
+  { key: 'modelType', label: 'Model Type' },
+  { key: 'fieldGroup', label: 'Field Group' },
+  {
+    key: 'display',
+    label: 'Display',
+    children: [
+      { key: 'cardFront', label: 'Show on Card Front', format: 'boolean' },
+    ],
+  },
+  { key: 'pos', label: 'Position', format: 'number' },
+  {
+    key: 'options',
+    label: 'Options',
+    description: 'Present on list (dropdown) fields only.',
+    labelKey: 'id',
+    listItems: customFieldOptionFields,
+  },
+];
+
 const checkItemFields: OutputSchema['fields'] = [
   { key: 'id', label: 'Check Item ID' },
   { key: 'name', label: 'Name' },
@@ -386,11 +426,11 @@ export const moveListToBoardActionOutputSchema: OutputSchema = {
 };
 
 export const listBoardMembershipsActionOutputSchema: OutputSchema = {
-  itemLabel: '{memberType}',
   fields: [
     {
       key: 'memberships',
       label: 'Memberships',
+      labelKey: 'memberType',
       listItems: [
         { key: 'id', label: 'Membership ID' },
         { key: 'idMember', label: 'Member ID' },
@@ -411,6 +451,25 @@ export const listCardActivityActionOutputSchema: OutputSchema = {
       label: 'Activity',
       description:
         'Activity entries, newest first, of the requested type. Each carries its type, date and the member who caused it.',
+      labelKey: 'type',
+      listItems: [
+        { key: 'id', label: 'Action ID' },
+        { key: 'type', label: 'Type' },
+        { key: 'date', label: 'Date', format: 'datetime' },
+        { key: 'idMemberCreator', label: 'Member ID' },
+        {
+          key: 'memberCreator',
+          label: 'Member',
+          children: boardMemberFields,
+        },
+        {
+          key: 'data',
+          label: 'Data',
+          description:
+            'Payload specific to the activity type, such as the comment text or the lists a card moved between.',
+          dynamicKey: true,
+        },
+      ],
     },
     { key: 'count', label: 'Count on This Page', format: 'number' },
   ],
@@ -422,6 +481,8 @@ export const listCardVotesActionOutputSchema: OutputSchema = {
       key: 'voters',
       label: 'Voters',
       description: 'The members who voted on this card.',
+      labelKey: 'username',
+      listItems: boardMemberFields,
     },
     { key: 'count', label: 'Vote Count', format: 'number' },
   ],
@@ -438,6 +499,108 @@ export const deleteLabelActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'label_id', label: 'Label ID' },
+  ],
+};
+
+export const deleteCustomFieldActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'custom_field_id', label: 'Custom Field ID' },
+  ],
+};
+
+export const removeCardVoteActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'card_id', label: 'Card ID' },
+    { key: 'member_id', label: 'Member ID' },
+  ],
+};
+
+export const customFieldActionOutputSchema: OutputSchema = {
+  fields: customFieldFields,
+};
+
+export const customFieldOptionActionOutputSchema: OutputSchema = {
+  fields: customFieldOptionFields,
+};
+
+export const listBoardCustomFieldsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'custom_fields',
+      label: 'Custom Fields',
+      labelKey: 'name',
+      listItems: customFieldFields,
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
+export const listCustomFieldOptionsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'options',
+      label: 'Options',
+      labelKey: 'id',
+      listItems: customFieldOptionFields,
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
+export const listCardCustomFieldValuesActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'custom_field_values',
+      label: 'Custom Field Values',
+      labelKey: 'idCustomField',
+      listItems: [
+        { key: 'id', label: 'Item ID' },
+        { key: 'idCustomField', label: 'Custom Field ID' },
+        { key: 'idModel', label: 'Card ID' },
+        { key: 'modelType', label: 'Model Type' },
+        {
+          key: 'idValue',
+          label: 'Selected Option ID',
+          description:
+            'Set on dropdown fields only; resolve it to its text via List Custom Field Options.',
+        },
+        {
+          key: 'value',
+          label: 'Value',
+          description:
+            'Absent on dropdown fields. Carries exactly one of the keys below, matching the field type.',
+          children: [
+            { key: 'text', label: 'Text' },
+            { key: 'number', label: 'Number' },
+            { key: 'date', label: 'Date', format: 'datetime' },
+            { key: 'checked', label: 'Checked' },
+          ],
+        },
+      ],
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
+export const setCardCustomFieldValueActionOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Item ID' },
+    { key: 'idCustomField', label: 'Custom Field ID' },
+    { key: 'idModel', label: 'Card ID' },
+    { key: 'modelType', label: 'Model Type' },
+    { key: 'idValue', label: 'Selected Option ID' },
+    {
+      key: 'value',
+      label: 'Value',
+      children: [
+        { key: 'text', label: 'Text' },
+        { key: 'number', label: 'Number' },
+        { key: 'date', label: 'Date', format: 'datetime' },
+        { key: 'checked', label: 'Checked' },
+      ],
+    },
   ],
 };
 

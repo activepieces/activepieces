@@ -44,7 +44,7 @@ export const pinterest = createPiece({
   auth: pinterestAuth,
   minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/pinterest.png',
-  authors: ['Sanket6652'],
+  authors: ['Sanket6652', 'OdaiAhmed99'],
   actions: [
     createPin,
     createBoard,

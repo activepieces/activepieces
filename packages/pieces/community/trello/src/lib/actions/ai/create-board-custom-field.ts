@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { customFieldActionOutputSchema } from '../../output-schemas';
 
 export const createBoardCustomField = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const createBoardCustomField = createAction({
   displayName: 'Create Board Custom Field (Agent)',
   description: 'Define a new custom field on a board.',
   audience: 'ai',
+  outputSchema: customFieldActionOutputSchema,
   aiMetadata: {
     description:
       'Defines a new custom field on a board and returns its id. Use it when a board lacks a field the workflow needs; check List Board Custom Fields first, because Trello allows two fields with the same name and each call creates another one. A dropdown field is created empty, so follow up with Create Custom Field Option for each choice before any card can be given a value. Requires the Custom Fields Power-Up on the board; not idempotent.',
@@ -58,7 +60,10 @@ export const createBoardCustomField = createAction({
       const request: HttpRequest = {
         method: HttpMethod.POST,
         url: `${trelloCommon.baseUrl}customFields`,
-        headers: { Accept: 'application/json' },
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
         queryParams: withAuthParams(context.auth),
         body: {
           idModel: context.propsValue['board_id'],

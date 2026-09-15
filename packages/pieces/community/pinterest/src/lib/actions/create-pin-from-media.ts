@@ -10,11 +10,11 @@ export const createPinFromMedia = createAction({
   classification: 'WRITE',
   outputSchema: createPinActionOutputSchema,
   displayName: 'Create Pin from Media',
-  description: 'Publish a new Pin from a hosted image or video URL.',
+  description: 'Publish a new Pin from a hosted image URL.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Publishes a new Pin to a board from a hosted image or video URL and returns the new pin id. Use it to put new content on Pinterest, and Save Pin to repin content that already exists. The media must be a URL Pinterest can fetch without authentication; raw image data is not accepted here. Requires a board id from List Boards and a title, and each call publishes another Pin, so it is not idempotent.',
+      'Publishes a new Pin to a board from a hosted image URL and returns the new pin id. Use it to put new content on Pinterest, and Save Pin to repin content that already exists. The image must be a URL Pinterest can fetch without authentication; this action cannot publish video, and raw image data is not accepted here. Requires a board id from List Boards and a title, and each call publishes another Pin, so it is not idempotent.',
     idempotent: false,
   },
   props: {
@@ -28,22 +28,11 @@ export const createPinFromMedia = createAction({
       required: true,
       description: 'Title of the Pin (max 100 characters).',
     }),
-    media_source_type: Property.StaticDropdown({
-      displayName: 'Media Source Type',
-      required: true,
-      description: 'Whether the URL points at an image or a video.',
-      options: {
-        options: [
-          { label: 'Image URL', value: 'image_url' },
-          { label: 'Video URL', value: 'video_url' },
-        ],
-      },
-    }),
     media_url: Property.ShortText({
-      displayName: 'Media URL',
+      displayName: 'Image URL',
       required: true,
       description:
-        'Publicly reachable URL of the image or video. Pinterest fetches it, so it must be reachable without authentication.',
+        'Publicly reachable URL of the image. Pinterest fetches it, so it must be reachable without authentication.',
     }),
     board_section_id: Property.ShortText({
       displayName: 'Board Section ID',
@@ -75,6 +64,7 @@ export const createPinFromMedia = createAction({
   async run({ auth, propsValue }) {
     return await pinterestOperations.createPin({
       accessToken: getAccessTokenOrThrow(auth),
+      media_source_type: 'image_url',
       ...propsValue,
     });
   },

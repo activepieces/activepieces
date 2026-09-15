@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listCustomFieldOptionsActionOutputSchema } from '../../output-schemas';
 
 export const listCustomFieldOptions = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listCustomFieldOptions = createAction({
   displayName: 'List Custom Field Options (Agent)',
   description: 'List the options of a dropdown custom field.',
   audience: 'ai',
+  outputSchema: listCustomFieldOptionsActionOutputSchema,
   aiMetadata: {
     description:
       'Lists the selectable options of a dropdown (list) custom field, returning each option id and its text. Use it to resolve the option id that Set Card Custom Field Value requires, because a dropdown field is written by option id rather than by text. Only dropdown fields have options; other field types return an empty list. Read-only and idempotent.',

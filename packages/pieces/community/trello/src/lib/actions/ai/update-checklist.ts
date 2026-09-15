@@ -51,10 +51,10 @@ export const updateChecklist = createAction({
 
   async run(context) {
     const params: QueryParams = {};
-    if (context.propsValue['name'] !== undefined) {
+    if (context.propsValue['name']) {
       params['name'] = context.propsValue['name'];
     }
-    if (context.propsValue['position'] !== undefined) {
+    if (context.propsValue['position']) {
       params['pos'] = context.propsValue['position'];
     }
 

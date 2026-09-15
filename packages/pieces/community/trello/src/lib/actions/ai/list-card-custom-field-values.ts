@@ -7,6 +7,7 @@ import {
 import { trelloCommon } from '../../common';
 import { trelloAuth } from '../../..';
 import { withAuthParams, rethrowTrelloError } from './ai-common';
+import { listCardCustomFieldValuesActionOutputSchema } from '../../output-schemas';
 
 export const listCardCustomFieldValues = createAction({
   auth: trelloAuth,
@@ -15,6 +16,7 @@ export const listCardCustomFieldValues = createAction({
   displayName: 'List Card Custom Field Values (Agent)',
   description: 'Read the custom field values set on a card.',
   audience: 'ai',
+  outputSchema: listCardCustomFieldValuesActionOutputSchema,
   aiMetadata: {
     description:
       'Reads the custom field values set on one card, returning each custom_field_id with its value. Get Card does not include custom fields, so this is the only way to read them. Only fields that have a value on the card come back, so a field missing from the result is unset rather than empty, and dropdown fields return an option id that List Custom Field Options resolves to text. Read-only and idempotent.',

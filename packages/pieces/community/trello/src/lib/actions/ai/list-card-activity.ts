@@ -53,11 +53,17 @@ export const listCardActivity = createAction({
   },
 
   async run(context) {
+    const page = context.propsValue['page'];
+    if (page !== undefined && (!Number.isInteger(page) || page < 0 || page > 19)) {
+      throw new Error('Page must be a whole number between 0 and 19.');
+    }
+
     const params: QueryParams = {
       filter: context.propsValue['filter'] ?? 'updateCard',
+      limit: '50',
     };
-    if (context.propsValue['page'] !== undefined) {
-      params['page'] = String(context.propsValue['page']);
+    if (page !== undefined) {
+      params['page'] = String(page);
     }
 
     try {
