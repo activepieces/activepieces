@@ -97,6 +97,24 @@ describe('aiPricingCatalog', () => {
         expect(reader.resolveTier('fast').id).toBe('fast')
     })
 
+    it('serves one snapshot to both readers, so a turn cannot select from one file and bill from another', async () => {
+        mockResponse(validPricing)
+        const catalog = await loadCatalog()
+
+        const first = await catalog.load()
+
+        expect(catalog.current()).toBe(first)
+        expect(await catalog.load()).toBe(first)
+    })
+
+    it('finishes start-up even when the pricing file cannot be read', async () => {
+        mockFailure()
+        const catalog = await loadCatalog()
+
+        await expect(catalog.warmUp()).resolves.toBeUndefined()
+        expect(catalog.current().creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
+    })
+
     it('prices an unknown model above every bundled tier, so a forgotten model is never cheap', () => {
         expect(DEFAULT_MANAGED_MODEL_WEIGHT).toBeGreaterThan(80)
     })

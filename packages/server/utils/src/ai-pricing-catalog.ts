@@ -7,13 +7,20 @@ import { safeHttp } from './safe-http'
 const logger = apLogger.create()
 
 export const aiPricingCatalog = {
-    async load(): Promise<AiPricingReader> {
-        return buildReader(await loadPricing())
+    async warmUp(): Promise<void> {
+        await Promise.race([
+            tryCatch(() => loadPricing()),
+            new Promise<void>((resolve) => setTimeout(resolve, WARM_UP_TIMEOUT_MS).unref()),
+        ])
     },
 
-    // Sync callers (tier lookups on the chat hot path) cannot await a fetch, so they read the last
-    // value we loaded and kick off a refresh in the background. Prices propagate in ~65 minutes
-    // anyway, so a snapshot that lags one request is not a correctness problem.
+    async load(): Promise<AiPricingReader> {
+        if (isNil(cached)) {
+            return buildReader(await loadPricing())
+        }
+        return aiPricingCatalog.current()
+    },
+
     current(): AiPricingReader {
         if (isNil(cached) || Date.now() - cached.fetchedAt >= PRICING_TTL_MS) {
             void tryCatch(() => loadPricing())
@@ -23,9 +30,12 @@ export const aiPricingCatalog = {
 }
 
 function buildReader(pricing: PublishedPricing): AiPricingReader {
+    if (readerCache?.pricing === pricing) {
+        return readerCache.reader
+    }
     const tiersById = new Map(pricing.tiers.map((tier) => [tier.id, tier]))
     const tiersByModelId = new Map(pricing.tiers.map((tier) => [tier.modelId, tier]))
-    return {
+    const reader: AiPricingReader = {
         tiers: pricing.tiers,
         defaultTierId: pricing.defaultTierId,
         findTierById(tierId: string) {
@@ -46,6 +56,8 @@ function buildReader(pricing: PublishedPricing): AiPricingReader {
             return pricing.modelWeights[modelId] ?? pricing.unpricedModelCreditWeight
         },
     }
+    readerCache = { pricing, reader }
+    return reader
 }
 
 async function loadPricing(): Promise<PublishedPricing> {
@@ -98,7 +110,7 @@ function pricingUrl(): string {
 }
 
 function bundledPricing(): PublishedPricing {
-    return {
+    bundled ??= {
         version: 0,
         publishedAt: BUNDLED_PUBLISHED_AT,
         publishedBy: 'bundled-with-release',
@@ -107,14 +119,18 @@ function bundledPricing(): PublishedPricing {
         modelWeights: MANAGED_MODEL_WEIGHTS,
         unpricedModelCreditWeight: DEFAULT_MANAGED_MODEL_WEIGHT,
     }
+    return bundled
 }
 
 let cached: { value: PublishedPricing, fetchedAt: number } | undefined
+let bundled: PublishedPricing | undefined
+let readerCache: { pricing: PublishedPricing, reader: AiPricingReader } | undefined
 let inFlight: Promise<PublishedPricing> | undefined
 let lastFailureAt: number | undefined
 
 const DEFAULT_PRICING_URL = 'https://cdn.activepieces.com/ai/pricing.json'
 const PRICING_TTL_MS = 60 * 60 * 1000
+const WARM_UP_TIMEOUT_MS = 2000
 const FAILURE_BACKOFF_MS = 5 * 60 * 1000
 const REQUEST_TIMEOUT_MS = 10_000
 const BUNDLED_PUBLISHED_AT = '1970-01-01T00:00:00.000Z'

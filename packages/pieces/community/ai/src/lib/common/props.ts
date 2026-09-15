@@ -114,6 +114,7 @@ export const aiProps = <T extends AIModelType>({
       const serverSentTierLabels = allModels.some(model => !isNil(model.tierLabel));
       const keepModel = (model: AIProviderModel) =>
         provider !== AIProviderName.ACTIVEPIECES ||
+        modelType !== 'text' ||
         !serverSentTierLabels ||
         model.tierLabel !== undefined;
 
