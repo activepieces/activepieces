@@ -165,6 +165,15 @@ describe('MCP activity', () => {
             expect(data.find((row: { id: string }) => row.id === beforeTheColumn).clientKey).toBeNull()
         })
 
+        it('matches a clientless row on the unknown client filter', async () => {
+            const fromTheChat = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: null })
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, clientKey: 'cursor' })
+
+            const response = await ctx.get('/v1/mcp-activity?clientKeys=unknown')
+
+            expect(response.json().data.map((row: { id: string }) => row.id)).toEqual([fromTheChat])
+        })
+
         it('filters by created window', async () => {
             const old = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(10) })
             const recent = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
@@ -285,6 +294,23 @@ describe('MCP activity', () => {
                 output: { ok: true },
                 truncated: false,
             })
+        })
+
+        it('404s when the stored payload cannot be decompressed', async () => {
+            const id = await insertActivityRow({
+                userId: ctx.user.id,
+                projectId: ctx.project.id,
+                payload: { input: {}, output: {} },
+            })
+            const { payloadFileId } = await db.findOneByOrFail<{ payloadFileId: string }>('mcp_activity', { id })
+            await db.update('file', payloadFileId, {
+                compression: FileCompression.ZSTD,
+                data: Buffer.from('not a zstd frame', 'utf-8'),
+            })
+
+            const response = await ctx.get(`/v1/mcp-activity/${id}/payload`)
+
+            expect(response.statusCode).toBe(404)
         })
 
         it('404s on another members activity for an unprivileged member', async () => {
