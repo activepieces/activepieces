@@ -14,6 +14,35 @@ We open PRs as drafts so no human reviewer is auto-assigned until "Ready for rev
 
 The diff comes from local `git diff --numstat`, not the `/files` API, so it is immune to GitHub's 3,000-file response cap — a mega-PR cannot under-count its way past the gate.
 
+## Splitting a big PR into a stack
+
+Reach for this when a branch is past the size gate and the work has real seams. Steps, in order:
+
+1. **Try commit ranges, but expect them not to work.** They only split cleanly if the history is
+   chronological. Ours was one 60-file commit plus 33 commits of iteration on it, so any range would have
+   shipped a PR full of bugs later commits already fixed. When later commits revise earlier ones, split by
+   **content**, not by history.
+2. **Base the stack on the exact commit the original branch last merged from `main`**, not on today's
+   `main`. Then the top of the stack is provably the reviewed tree: `git diff --quiet <original> <top>`
+   must be silent. Without that anchor you cannot tell a split mistake from a legitimate newer `main`.
+3. **Order by dependency, not by narrative.** Whatever the lower layers import has to land first, even if
+   the headline change reads better as PR 1.
+4. **Compose each branch with `git checkout <final-branch> -- <paths>`** so every file arrives at its final
+   content. Hand-edit only the files that genuinely need an intermediate state, and keep that list short
+   enough to name in the PR body.
+5. **Run typecheck and lint on every branch, not just the top.** A stack whose middle does not build is a
+   stack that cannot be merged in order.
+
+Two intermediate states are usually worth the surgery. Keep a removed prop **accepted but unused** in the
+early PR so it does not have to touch every caller (21, in our case) and let the last PR delete it with
+the callers. And keep the *values* that switch a feature on out of the PR that only builds its plumbing:
+we first shipped the registry's `sample: true` flags in the middle PR, which would have rendered two
+upgrade prompts stacked on every locked page had it merged alone.
+
+Put **all** the branch's `translation.json` keys in the first PR rather than attributing them per PR. A
+missing key is a runtime miss that renders the raw string, so `tsc` cannot catch a wrong attribution, and
+the keys are excluded from the size gate anyway.
+
 ## Reviewer assignment
 Which team gets asked to review comes entirely from `.github/CODEOWNERS` — there is no bot, no dependabot/renovate config, and no workflow that requests reviewers. `@activepieces/core` is the catch-all owner; `@activepieces/pieces` owns `/packages/pieces/`; `@activepieces/platform` owns the execution path (`/packages/server/engine/`, `/packages/server/worker/`, `/packages/core/execution/`). `/bun.lock` and `/brain/` are listed with an **empty owner column**, which releases them from the catch-all — a PR touching only those needs no code-owner approval. Each team uses GitHub round-robin assignment, so one human per team per PR.
 
