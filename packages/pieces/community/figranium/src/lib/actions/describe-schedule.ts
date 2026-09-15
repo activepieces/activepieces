@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { figraniumAuth } from '../auth';
 import { figraniumClient } from '../common/client';
+import { taskIdDropdown } from '../common/props';
 import { buildScheduleBody, scheduleConfigProps, scheduleModeDropdown } from '../common/schedule-props';
 
 export const describeScheduleAction = createAction({
@@ -11,16 +12,11 @@ export const describeScheduleAction = createAction({
   description: 'Validate and preview a schedule config without saving it',
   audience: 'both',
   aiMetadata: {
-    description:
-      'Validates a schedule configuration and previews its next run times without saving it to the task. Use this to check a schedule before committing to it with Set Schedule. Safe to retry, no state is changed.',
+    description: 'Validates a schedule configuration and previews its next run times without saving it.',
     idempotent: true,
   },
   props: {
-    taskId: Property.ShortText({
-      displayName: 'Task ID',
-      description: 'The ID of the task',
-      required: true,
-    }),
+    taskId: taskIdDropdown,
     scheduleMode: scheduleModeDropdown,
     scheduleConfig: scheduleConfigProps,
   },
