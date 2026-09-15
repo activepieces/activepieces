@@ -18,6 +18,7 @@ export {
   startCase,
   tryCatch,
   AIProviderName,
+  AiStepAction,
 } from '@activepieces/core-utils';
 export type { SeekPage } from '@activepieces/core-utils';
 

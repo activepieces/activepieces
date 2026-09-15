@@ -1,5 +1,6 @@
 import {
   AIProviderName,
+  AiStepAction,
   ApFile,
   createAction,
   DynamicPropsValue,
@@ -143,7 +144,7 @@ export const generateImageAction = createAction({
     const result = await runOnWorker({
       context,
       buildRequest: async () => ({
-        action: 'GENERATE_IMAGE',
+        action: AiStepAction.GENERATE_IMAGE,
         provider,
         ...spreadIfDefined('providerConfigId', configId),
         modelId: context.propsValue.model,
