@@ -1,11 +1,11 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, ActivepiecesAiCall, ActivepiecesAiCostReporter, AiCallTokens, AiChargeBasis, AIProviderName, BYOKBilling, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiCall, ActivepiecesAiConsumerSource, ActivepiecesAiCostReporter, AiCallTokens, AiCharge, AiChargeBasis, AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { EmbeddingModelV4Result, isJSONObject, LanguageModelV4GenerateResult, LanguageModelV4StreamPart, LanguageModelV4StreamResult, LanguageModelV4Usage, SharedV4ProviderMetadata } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel, wrapEmbeddingModel, wrapLanguageModel } from 'ai'
 import { z } from 'zod'
 import { lookupGeneration } from './openrouter-generation'
 
-export function billedLanguageModel({ model, provider, modelId, billing, byokBilling = BYOKBilling.ONE_CREDIT_PER_MODEL_CALL, apiKey }: BilledLanguageModelParams): LanguageModel {
-    const context = billingContextOf({ provider, modelId, billing, byokBilling, apiKey })
+export function billedLanguageModel({ model, provider, modelId, billing, charge }: BilledLanguageModelParams): LanguageModel {
+    const context = billingContextOf({ provider, modelId, billing, charge })
     if (isNil(context) || typeof model === 'string') {
         return model
     }
@@ -38,17 +38,14 @@ export function reportFixedCredits({ billing, provider, modelId, generationId }:
     })
 }
 
-function billingContextOf({ provider, modelId, billing, byokBilling, apiKey }: BillingContextParams): BillingContext | undefined {
-    if (isNil(billing)) {
+function billingContextOf({ provider, modelId, billing, charge }: BillingContextParams): BillingContext | undefined {
+    if (isNil(billing) || isNil(charge)) {
         return undefined
     }
-    if (provider === AIProviderName.ACTIVEPIECES) {
-        return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId, apiKey }
+    if (charge.basis === AiChargeBasis.FIXED_CREDITS) {
+        return { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, modelId }
     }
-    if (byokBilling === BYOKBilling.ALREADY_CHARGED_FOR_THE_TURN) {
-        return undefined
-    }
-    return { basis: AiChargeBasis.FIXED_CREDITS, billing, provider, modelId }
+    return { basis: AiChargeBasis.PROVIDER_REPORTED_COST, billing, provider, modelId, apiKey: charge.managedApiKey }
 }
 
 async function billGenerate({ doGenerate, context }: BillGenerateParams): Promise<LanguageModelV4GenerateResult> {
@@ -250,8 +247,7 @@ type BillingContextParams = {
     provider: AIProviderName
     modelId: string
     billing: ActivepiecesAiBilling | undefined
-    byokBilling: BYOKBilling
-    apiKey?: string
+    charge: AiCharge | undefined
 }
 
 type BilledLanguageModelParams = {
@@ -259,8 +255,7 @@ type BilledLanguageModelParams = {
     provider: AIProviderName
     modelId: string
     billing: ActivepiecesAiBilling | undefined
-    byokBilling?: BYOKBilling
-    apiKey?: string
+    charge: AiCharge | undefined
 }
 
 type BilledEmbeddingModelParams = {

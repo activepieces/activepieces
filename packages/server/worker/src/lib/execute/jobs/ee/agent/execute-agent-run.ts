@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, BYOKBilling, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -130,12 +130,12 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 metadata: { platformId, conversationId, runId },
                 webSearchEnabled: webSearchActive,
                 billing,
-                byokBilling: BYOKBilling.ALREADY_CHARGED_FOR_THE_TURN,
+                turnAlreadyCharged: true,
             })
             const fastModel = aiUtils.createModel({
                 credentials, modelId: config.fastModelId,
                 billing,
-                byokBilling: BYOKBilling.ALREADY_CHARGED_FOR_THE_TURN,
+                turnAlreadyCharged: true,
             })
 
             log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
