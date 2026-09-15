@@ -240,6 +240,82 @@ describe('Reaching a barrier child on request', () => {
     })
 })
 
+describe('Barrier children named by id', () => {
+    it('cancels a child the caller names by id', async () => {
+        const { children } = await seedFanOut({
+            childStatuses: [FlowRunStatus.QUEUED],
+        })
+
+        const response = await ctx.post('/v1/flow-runs/cancel', {
+            projectId: ctx.project.id,
+            flowRunIds: [children[0].id],
+        })
+
+        expect(response.statusCode).toBe(200)
+        await waitForRunStatus({ flowRunId: children[0].id, expected: FlowRunStatus.CANCELED })
+    })
+
+    it('does not select a child through a filter-driven cancel', async () => {
+        const { flow, children } = await seedFanOut({
+            childStatuses: [FlowRunStatus.QUEUED, FlowRunStatus.QUEUED],
+            parentStatus: FlowRunStatus.SUCCEEDED,
+        })
+
+        const response = await ctx.post('/v1/flow-runs/cancel', {
+            projectId: ctx.project.id,
+            flowId: [flow.id],
+        })
+
+        expect(response.statusCode).toBe(200)
+        for (const child of children) {
+            const row = await db.findOneByOrFail<{ id: string, status: string }>('flow_run', { id: child.id })
+            expect(row.status).toBe(FlowRunStatus.QUEUED)
+        }
+    })
+
+    it('reports an error instead of silence when a bulk retry names a child by id', async () => {
+        const { children } = await seedFanOut({
+            childStatuses: [FlowRunStatus.FAILED],
+            parentStatus: FlowRunStatus.FAILED,
+        })
+
+        const response = await ctx.post('/v1/flow-runs/retry', {
+            projectId: ctx.project.id,
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            flowRunIds: [children[0].id],
+        })
+
+        expect(response.statusCode).toBe(200)
+        const body = response.json()
+        expect(body).toHaveLength(1)
+        expect(body[0].id).toBe(children[0].id)
+        expect(body[0].error.errorMessage).toContain('started from a step inside its flow')
+        await waitForRunCountForProject({ projectId: ctx.project.id, expected: 2 })
+    })
+
+    it('rejects a dispatch index that names no barrier', async () => {
+        await seedFanOut({ childStatuses: [FlowRunStatus.SUCCEEDED] })
+
+        const response = await ctx.get('/v1/flow-runs', {
+            projectId: ctx.project.id,
+            dispatchIndex: 0,
+        })
+
+        expect(response.statusCode).toBe(400)
+    })
+})
+
+async function waitForRunStatus({ flowRunId, expected }: { flowRunId: string, expected: FlowRunStatus }): Promise<void> {
+    const read = async () => db.findOneByOrFail<{ id: string, status: string }>('flow_run', { id: flowRunId })
+    const start = Date.now()
+    let last = await read()
+    while (last.status !== expected && Date.now() - start < 10_000) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        last = await read()
+    }
+    expect(last.status).toBe(expected)
+}
+
 async function waitForRunCountForProject({ projectId, expected }: { projectId: string, expected: number }): Promise<void> {
     const read = async () => databaseConnection().getRepository('flow_run').count({ where: { projectId } })
     const start = Date.now()

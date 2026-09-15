@@ -130,7 +130,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
         log.info({ flowRun: { id: flowRunId }, flow: { id: oldFlowRun.flowId }, strategy }, 'Flow run retry initiated')
 
-        if (!isNil(oldFlowRun.dispatchIndex)) {
+        if (!isNil(oldFlowRun.dispatchIndex) || !isNil(oldFlowRun.parentWaitpointId)) {
             const message = `The run ${flowRunId} started from a step inside its flow rather than from the trigger, so it cannot be retried. Retry the run that dispatched it instead.`
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -571,15 +571,20 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
 async function filterFlowRunsAndApplyFilters(
     params: FilterFlowRunsAndApplyFiltersParams,
 ): Promise<FlowRun[]> {
+    const explicitFlowRunIds = params.flowRunIds ?? []
     let query = flowRunRepo().createQueryBuilder('flow_run').where({
         projectId: params.projectId,
         environment: RunEnvironment.PRODUCTION,
-        parentWaitpointId: IsNull(),
     })
 
-    if (!isNil(params.flowRunIds) && params.flowRunIds.length > 0) {
+    if (explicitFlowRunIds.length > 0) {
         query = query.andWhere({
-            id: In(params.flowRunIds),
+            id: In(explicitFlowRunIds),
+        })
+    }
+    else {
+        query = query.andWhere({
+            parentWaitpointId: IsNull(),
         })
     }
 
