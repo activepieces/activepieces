@@ -39,6 +39,15 @@ Reach for this when a branch is past the size gate and the work has real seams. 
    `git log --oneline <lower>..<upper>` shows the duplicate by subject, and
    `git rebase --onto <lower> <duplicate> <upper>` drops it. The check that catches it is
    `git diff <lower> <upper> -- <the file you just amended>`, which should be empty.
+
+   The cause is worth knowing, because it recurs every time the lower branch moves. Rebasing the lower
+   branch rewrites its SHAs, so the upper branch's merge base falls back to where the two last agreed and
+   every commit the lower branch just replayed now looks like it belongs to the upper one. A plain
+   `git rebase <lower> <upper>` then tries to apply the lower branch's own commits on top of themselves
+   and conflicts with itself, often across a dozen files, which reads like a real merge problem and is
+   not one. **Whenever the lower branch has been rebased, amended or merged into, move the upper one with
+   `git rebase --onto <new lower tip> <old lower tip> <upper>`**, taking the old tip from
+   `git rev-parse <lower>@{1}`. Plain `git rebase` is only safe while the lower branch has not moved.
 7. **Every PR in the stack is gated on its own.** Each needs the full template body, and each needs its own
    `large-pr-ok` if its slice is over the area budget. Splitting a branch does not divide one PR's
    compliance between the pieces.
