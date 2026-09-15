@@ -304,11 +304,12 @@ export {
     AI_PROVIDER_ENTITY_TYPES,
     ALLOWED_CHAT_MODELS_BY_PROVIDER,
     ACTIVEPIECES_CHAT_TIERS,
+    ACTIVEPIECES_IMAGE_TIERS,
     DEFAULT_CHAT_TIER_ID,
     AI_PROVIDER_CAPABILITIES,
     OPENAI_COMPATIBLE_VENDOR_BASE_URLS,
     aiProviderUtils,
 } from '@activepieces/core-piece-types'
-export type { ActivepiecesChatTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
+export type { ActivepiecesChatTier, ActivepiecesImageTier, AIProviderCapabilities, AIWebSearchMode, OpenAiCompatibleVendor } from '@activepieces/core-piece-types'
 
 export const AI_PIECE_COST_BILLING_VERSION = '0.11.0'
