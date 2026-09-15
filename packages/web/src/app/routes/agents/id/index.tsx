@@ -294,7 +294,6 @@ const AgentEditorPage = () => {
       locked={!agentsAvailable}
       lockTitle={t('Unlock Agents')}
       lockDescription={t('Build an agent once, then use it in any flow.')}
-      featureKey="AGENTS"
     >
       <AgentEditorContent />
     </LockedFeatureGuard>
