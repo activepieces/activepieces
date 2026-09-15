@@ -237,7 +237,14 @@ Four pages now hand-roll the same searchParams dance, three with an unsafe cast.
   sidebar. Its real lesson is that it bundled a navigation model change with unrelated surfaces, so nothing
   could be reverted alone. Scoping this to platform admin and splitting by concern keeps each piece
   revertable. Rendering the platform nav's item chrome locally rather than editing the shared
-  `ap-sidebar-item` keeps the shared-file count at zero.
+  `ap-sidebar-item` keeps the shared-file count at zero, at the cost of having to re-implement everything
+  that component quietly did. The sidebar icons are the bill: each one in `components/icons/` is a
+  `forwardRef` exposing `startAnimation` / `stopAnimation`, and `ApSidebarItem` drives them from row hover
+  through a ref. `PlatformNavItem` rendered the same components with no ref, so the icons went inert and
+  nothing failed. `pointer-events-none` on the icon is why the self-animating fallback does not cover it
+  either: the icon's own `onMouseEnter` never fires, and the component only marks itself externally
+  controlled once a ref is attached. Restored 2026-09-15. Before copying a shared component's markup,
+  diff it for refs, effects and handlers, not just classes.
 - **A quieter Community.** This is the open-source product, and upsell density there is a brand question and
   not only a conversion one. The structure stays honest, the pitch does not follow self-hosters around.
 - **No landing page yet.** It is purely additive, blocks nothing, needs five or six separate queries with no
