@@ -26,7 +26,15 @@ function withAgentMaxSteps({ actionName, input }: { actionName?: string, input: 
     if (actionName !== AGENT_ACTION_NAME || typeof input[AgentPieceProps.MAX_STEPS] === 'number') {
         return input
     }
-    return { ...input, [AgentPieceProps.MAX_STEPS]: DEFAULT_MAX_STEPS }
+    return { ...input, [AgentPieceProps.MAX_STEPS]: storedMaxSteps(input[AgentPieceProps.MAX_STEPS]) ?? DEFAULT_MAX_STEPS }
+}
+
+function storedMaxSteps(value: unknown): number | undefined {
+    if (typeof value !== 'string') {
+        return undefined
+    }
+    const parsed = Number(value.trim())
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
 function isBelowCostBillingVersion(pieceVersion: string): boolean {
