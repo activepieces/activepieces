@@ -28,8 +28,15 @@ export const updateContactProperty = createAction({
       method: HttpMethod.GET,
       path: `/contact-properties/${propsValue.contact_property_id}`,
     });
-    const fallback_value =
-      existing.type === 'number' ? Number(propsValue.fallback_value) : propsValue.fallback_value;
+
+    let fallback_value: string | number = propsValue.fallback_value;
+    if (existing.type === 'number') {
+      const parsed = Number(propsValue.fallback_value);
+      if (propsValue.fallback_value.trim() === '' || !Number.isFinite(parsed)) {
+        throw new Error(`Fallback Value must be a valid number, got "${propsValue.fallback_value}".`);
+      }
+      fallback_value = parsed;
+    }
 
     return await resendClient.sendRequest<{ object: string; id: string }>({
       auth: auth.secret_text,

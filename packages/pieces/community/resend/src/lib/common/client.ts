@@ -1,7 +1,5 @@
 import { AuthenticationType, HttpMethod, httpClient, QueryParams } from '@activepieces/pieces-common';
 
-export const RESEND_BASE_URL = 'https://api.resend.com';
-
 async function sendRequest<T>({
   auth,
   method,
@@ -29,3 +27,4 @@ async function sendRequest<T>({
 }
 
 export const resendClient = { sendRequest };
+export const RESEND_BASE_URL = 'https://api.resend.com';

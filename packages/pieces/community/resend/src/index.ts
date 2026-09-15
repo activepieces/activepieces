@@ -65,8 +65,7 @@ import { getEmailAttachment } from './lib/actions/get-email-attachment.action';
 import { listEmailAttachments } from './lib/actions/list-email-attachments.action';
 import { listReceivedEmails } from './lib/actions/list-received-emails.action';
 import { emailBounced } from './lib/triggers/email-bounced.trigger';
-
-const BASE_URL = 'https://api.resend.com';
+import { RESEND_BASE_URL } from './lib/common/client';
 
 export const resendAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -79,7 +78,7 @@ export const resendAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${BASE_URL}/api-keys`,
+        url: `${RESEND_BASE_URL}/api-keys`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth,
@@ -166,7 +165,7 @@ export const resend = createPiece({
     listEmailAttachments,
     listReceivedEmails,
     createCustomApiCallAction({
-      baseUrl: () => BASE_URL,
+      baseUrl: () => RESEND_BASE_URL,
       auth: resendAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,

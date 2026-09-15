@@ -38,8 +38,15 @@ export const createContactProperty = createAction({
   async run({ auth, propsValue }) {
     const body: Record<string, unknown> = { key: propsValue.key, type: propsValue.type };
     if (propsValue.fallback_value !== undefined && propsValue.fallback_value !== '') {
-      body['fallback_value'] =
-        propsValue.type === 'number' ? Number(propsValue.fallback_value) : propsValue.fallback_value;
+      if (propsValue.type === 'number') {
+        const parsed = Number(propsValue.fallback_value);
+        if (!Number.isFinite(parsed)) {
+          throw new Error(`Fallback Value must be a valid number, got "${propsValue.fallback_value}".`);
+        }
+        body['fallback_value'] = parsed;
+      } else {
+        body['fallback_value'] = propsValue.fallback_value;
+      }
     }
 
     return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.POST, path: '/contact-properties', body: body });
