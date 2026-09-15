@@ -118,7 +118,7 @@ This is the time the **worker** is occupied per job — and at concurrency 1 it 
 - **Worker**: 0.5 vCPU / 1 GB, concurrency 1, `SANDBOX_CODE_ONLY` (Node fork + `isolated-vm`). Idle RSS ~145 Mi
 - **App**: 1 vCPU / 1 GB
 - **Object store**: same-region GCS bucket (`europe-west1`) over the S3-interop endpoint, path-style SigV4 presigned URLs (`AP_S3_USE_SIGNED_URLS=true`)
-- **Piece bundles**: official tarballs served from the Activepieces CDN (`AP_USE_CDN_FOR_BUNDLES=true`)
+- **Piece bundles**: official tarballs served from the Activepieces CDN (`AP_USE_CDN_FOR_BUNDLES=true`; non-default — the platform default is `false`, which serves from npm)
 - **Postgres + Redis**: in-cluster singletons, deliberately generous — Postgres requesting 3 vCPU / 3 GB with `max_connections=2000` (the default 100 would starve the app pools past ~10 apps), durability off, and its data dir on tmpfs; Redis requesting 2 vCPU / 2 GB with `io-threads`. Neither has a CPU *limit*, so both may burst above their request; Postgres consumed 2738m at the top tier
 - **Load**: `hey` **run inside the cluster**, against the app Service, concurrency matched to worker count (40/80/120/160) so requests don't queue behind the concurrency-1 workers — latency reflects real service time, not backlog. 400 requests per worker per tier (16k/32k/48k/64k), preceded by an unmeasured warmup pass
 
