@@ -64,9 +64,32 @@ describe('denoCodeSandbox permission boundary', () => {
             expect(firstDir).toMatch(/ap-deno-/)
             expect(secondDir).toMatch(/ap-deno-/)
             expect(firstDir).not.toBe(secondDir)
-            expect(path.dirname(firstDir)).toBe(await realpath(stepDir))
+            expect(path.dirname(firstDir)).toBe(tmpdir())
             await expect.poll(() => existsSync(firstDir), { timeout: 5000 }).toBe(false)
             await expect.poll(() => existsSync(secondDir), { timeout: 5000 }).toBe(false)
+        })
+
+        it('bases the per-run DENO_DIR in the step dir only in SANDBOX_CODE_ONLY mode', async () => {
+            const originalMode = process.env.AP_EXECUTION_MODE
+            try {
+                process.env.AP_EXECUTION_MODE = 'SANDBOX_CODE_ONLY'
+                const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+                const codeFilePath = path.join(stepDir, 'index.ts')
+                await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+
+                const denoDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+                expect(path.dirname(denoDir)).toBe(await realpath(stepDir))
+                await expect.poll(() => existsSync(denoDir), { timeout: 5000 }).toBe(false)
+            }
+            finally {
+                if (originalMode === undefined) {
+                    delete process.env.AP_EXECUTION_MODE
+                }
+                else {
+                    process.env.AP_EXECUTION_MODE = originalMode
+                }
+            }
         })
 
         it('with the ENV permission exposes only PATH, never the engine env', async () => {
