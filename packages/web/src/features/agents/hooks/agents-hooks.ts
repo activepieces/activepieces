@@ -40,7 +40,8 @@ export const useAgentsNavVisible = (): boolean => {
 };
 
 const AGENTS_PAGE_SIZE = 100;
-const AGENT_RUNS_POLL_MS = 15 * 1000;
+const AGENT_RUNS_ACTIVE_POLL_MS = 5 * 1000;
+const AGENT_RUNS_IDLE_POLL_MS = 15 * 1000;
 
 export const agentsQueries = {
   useAgents: ({
@@ -124,7 +125,9 @@ export const agentsQueries = {
         const stillRunning = query.state.data?.data.some(
           (run) => run.status === AgentConversationStatus.STREAMING,
         );
-        return stillRunning === true ? AGENT_RUNS_POLL_MS : false;
+        return stillRunning === true
+          ? AGENT_RUNS_ACTIVE_POLL_MS
+          : AGENT_RUNS_IDLE_POLL_MS;
       },
     });
   },
