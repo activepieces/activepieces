@@ -1,5 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { nanoid } from 'nanoid'
+import { spreadIfDefined } from './object-utils'
 
 export const deno = {
     /**
@@ -115,6 +116,7 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         cwd,
         env: {
             PATH: process.env['PATH'] ?? '',
+            ...spreadIfDefined('HOME', process.env['HOME']),
             ...env,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
