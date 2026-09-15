@@ -378,6 +378,14 @@ export const DEFAULT_CHAT_TIER_ID = 'smart' as const
 
 export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
 
+export const ACTIVEPIECES_IMAGE_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'google/gemini-3.1-flash-lite-image' },
+    { id: 'smart', label: 'Expert', modelId: 'google/gemini-3.1-flash-image' },
+    { id: 'premium', label: 'Heavy', modelId: 'google/gemini-3-pro-image' },
+] as const
+
+export type ActivepiecesImageTier = typeof ACTIVEPIECES_IMAGE_TIERS[number]
+
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
     [AIProviderName.ANTHROPIC]: buildProviderCapabilities(AIProviderName.ANTHROPIC),
