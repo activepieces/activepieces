@@ -2,6 +2,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React, { Suspense } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 
+import { FeatureSample } from '@/app/components/feature-sample';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -29,9 +30,17 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
   const Page = page.component;
   if (Page !== undefined) {
     return (
-      <SuspenseWrapper>
-        <Page />
-      </SuspenseWrapper>
+      <FeatureSample
+        locked={page.sample === true && page.nav?.isLocked?.(context) === true}
+        title={page.teaser?.title ?? page.nav?.label ?? page.title}
+        description={page.teaser?.description}
+        tier={page.teaser?.tier}
+        documentationUrl={page.teaser?.documentationUrl}
+      >
+        <SuspenseWrapper>
+          <Page />
+        </SuspenseWrapper>
+      </FeatureSample>
     );
   }
 
@@ -40,9 +49,17 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
   const Overview = page.overview;
   if (Overview !== undefined && requested === null) {
     return (
-      <SuspenseWrapper>
-        <Overview />
-      </SuspenseWrapper>
+      <FeatureSample
+        locked={page.sample === true && page.nav?.isLocked?.(context) === true}
+        title={page.teaser?.title ?? page.nav?.label ?? page.title}
+        description={page.teaser?.description}
+        tier={page.teaser?.tier}
+        documentationUrl={page.teaser?.documentationUrl}
+      >
+        <SuspenseWrapper>
+          <Overview />
+        </SuspenseWrapper>
+      </FeatureSample>
     );
   }
 
@@ -57,9 +74,19 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
 
   const TabContent = activeTab.component;
   return (
-    <SuspenseWrapper>
-      <TabContent />
-    </SuspenseWrapper>
+    <FeatureSample
+      locked={
+        activeTab.sample === true && activeTab.isLocked?.(context) === true
+      }
+      title={activeTab.teaser?.title ?? activeTab.label}
+      description={activeTab.teaser?.description}
+      tier={activeTab.teaser?.tier}
+      documentationUrl={activeTab.teaser?.documentationUrl}
+    >
+      <SuspenseWrapper>
+        <TabContent />
+      </SuspenseWrapper>
+    </FeatureSample>
   );
 }
 
