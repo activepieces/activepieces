@@ -3,7 +3,9 @@ import {
   optionalTimeFormats,
   parseDate,
   timeFormat,
-  timeFormatDescription,
+  inputFormatDescription,
+  outputFormatDescription,
+  dateInputDescription,
   timeZoneOptions,
   getCorrectedFormat,
 } from '../common';
@@ -24,15 +26,31 @@ export const formatDateAction = createAction({
       hide: true,
     },
   },
+  propertyGroups: [
+    {
+      key: 'input',
+      display: 'section',
+      label: 'Input',
+      icon: 'calendar',
+      props: ['inputDate', 'inputFormat', 'inputTimeZone'],
+    },
+    {
+      key: 'output',
+      display: 'section',
+      label: 'Output',
+      icon: 'type',
+      props: ['outputFormat', 'outputTimeZone'],
+    },
+  ],
   props: {
     inputDate: Property.ShortText({
-      displayName: 'Input Date',
-      description: 'Enter the input date',
+      displayName: 'Date',
+      description: dateInputDescription,
       required: true,
     }),
     inputFormat: Property.StaticDropdown({
-      displayName: 'From Time Format',
-      description: timeFormatDescription,
+      displayName: 'Format',
+      description: inputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -40,7 +58,8 @@ export const formatDateAction = createAction({
       defaultValue: timeFormat.format00,
     }),
     inputTimeZone: Property.StaticDropdown<string>({
-      displayName: 'From Time Zone',
+      displayName: 'Time Zone',
+      description: 'Time zone the date above is written in.',
       options: {
         options: timeZoneOptions,
       },
@@ -48,8 +67,8 @@ export const formatDateAction = createAction({
       defaultValue: 'UTC',
     }),
     outputFormat: Property.StaticDropdown({
-      displayName: 'To Time Format',
-      description: timeFormatDescription,
+      displayName: 'Format',
+      description: outputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -57,7 +76,8 @@ export const formatDateAction = createAction({
       defaultValue: timeFormat.format00,
     }),
     outputTimeZone: Property.StaticDropdown<string>({
-      displayName: 'To Time Zone',
+      displayName: 'Time Zone',
+      description: 'Time zone to convert the result to.',
       options: {
         options: timeZoneOptions,
       },
