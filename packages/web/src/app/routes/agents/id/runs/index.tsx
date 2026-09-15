@@ -3,8 +3,8 @@ import { AgentRunListItem } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Activity, Bot, Clock, History, Workflow } from 'lucide-react';
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -15,6 +15,7 @@ import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { authenticationSession } from '@/lib/authentication-session';
+import { useNewWindow } from '@/lib/navigation-utils';
 
 type AgentRunsProps = {
   agentId: string;
@@ -22,6 +23,24 @@ type AgentRunsProps = {
 
 export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
+  const navigate = useNavigate();
+  const openNewWindow = useNewWindow();
+  const openFlowRun = useCallback(
+    (run: AgentRunListItem, newWindow: boolean) => {
+      if (isNil(run.flow)) {
+        return;
+      }
+      const to = authenticationSession.appendProjectRoutePrefix(
+        `/runs/${run.flow.flowRunId}`,
+      );
+      if (newWindow) {
+        openNewWindow(to);
+        return;
+      }
+      navigate(to);
+    },
+    [navigate, openNewWindow],
+  );
   const {
     data: runs,
     isLoading,
@@ -62,15 +81,9 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
             return <span className="text-muted-foreground">{'\u2014'}</span>;
           }
           return (
-            <Link
-              to={authenticationSession.appendProjectRoutePrefix(
-                `/runs/${flow.flowRunId}`,
-              )}
-              className="text-left hover:underline"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex items-center gap-2 text-left">
               <TruncatedColumnTextValue value={flow.displayName} />
-            </Link>
+            </div>
           );
         },
       },
@@ -128,6 +141,8 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         isError={isError}
         errorStateEntity={t('runs')}
         onRetry={refetch}
+        onRowClick={(row, newWindow) => openFlowRun(row, newWindow)}
+        getRowClassName={(row) => (isNil(row.flow) ? 'cursor-default' : '')}
         emptyStateIcon={<History className="size-14" />}
         emptyStateTextTitle={t('No flow has run this agent yet')}
         emptyStateTextDescription={t(
