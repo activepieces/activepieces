@@ -1,6 +1,6 @@
 
 import { z } from 'zod'
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, AiStepAction, isNil } from '@activepieces/core-utils'
 import { ResumeReason, StreamStepProgress, TriggerHookType, TriggerPayload } from '../engine'
 import { ExecutionType } from '../flow-run/execution/execution-output'
 import { RunEnvironment } from '../flow-run/flow-run'
@@ -369,14 +369,6 @@ export const EventDestinationJobData = z.object({
 })
 
 export type EventDestinationJobData = z.infer<typeof EventDestinationJobData>
-
-export enum AiStepAction {
-    ASK_AI = 'ASK_AI',
-    SUMMARIZE_TEXT = 'SUMMARIZE_TEXT',
-    CLASSIFY_TEXT = 'CLASSIFY_TEXT',
-    EXTRACT_STRUCTURED_DATA = 'EXTRACT_STRUCTURED_DATA',
-    GENERATE_IMAGE = 'GENERATE_IMAGE',
-}
 
 export const AiStepWebSearchOptions = z.object({
     maxUses: z.number().optional(),
