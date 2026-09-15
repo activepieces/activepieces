@@ -4,7 +4,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Activity, Bot, Clock, History, Workflow } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -81,9 +81,15 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
             return <span className="text-muted-foreground">{'\u2014'}</span>;
           }
           return (
-            <div className="flex items-center gap-2 text-left">
+            <Link
+              to={authenticationSession.appendProjectRoutePrefix(
+                `/runs/${flow.flowRunId}`,
+              )}
+              className="flex items-center gap-2 text-left hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
               <TruncatedColumnTextValue value={flow.displayName} />
-            </div>
+            </Link>
           );
         },
       },
