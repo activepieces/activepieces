@@ -1,11 +1,12 @@
 import { apId, Permission } from '@activepieces/core-utils'
-import { DefaultProjectRole, McpServerType, ProjectScopedMcpServer } from '@activepieces/shared'
+import { DefaultProjectRole, McpServerType, PlatformRole, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
+import { mockBasicUser } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -105,6 +106,26 @@ describe('MCP Tool RBAC', () => {
 
             const execute = checker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
             expect(execute).toBe(tool.execute)
+        })
+
+        it('denies every tool, even no-permission ones, when the user has no role in the project', async () => {
+            const ctx = await createTestContext(app)
+            const { mockUser } = await mockBasicUser({
+                user: { platformId: ctx.platform.id, platformRole: PlatformRole.MEMBER },
+            })
+            const mcp = makeMcp(ctx.project.id)
+
+            const checker = await resolvePermissionChecker({ userId: mockUser.id, projectId: ctx.project.id, log: mockLog })
+            const tool = apSetupGuideTool(mcp, mockLog)
+
+            const error = checker.check(tool.permission, tool.title)
+            expect(error).not.toBeNull()
+            expect(error!.isError).toBe(true)
+            expect(text(error!)).toContain('no role')
+
+            const execute = checker.wrapExecute({ execute: tool.execute, permission: tool.permission, toolTitle: tool.title })
+            const result = await execute({})
+            expect(text(result)).toContain('Permission denied')
         })
     })
 

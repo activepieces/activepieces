@@ -2,8 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { McpToolDefinition } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
+import { mcpAccess } from '../mcp-access'
 import { mcpProjectSelection, ProjectSelectionScope } from '../mcp-project-selection'
 
 export const apSetProjectContextTool = ({ platformId, userId, selectionScope, log }: {
@@ -26,12 +25,7 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
     execute: async (args: Record<string, unknown>) => {
         const projectId = args.projectId as string | undefined
 
-        const user = await userService(log).getOneOrFail({ id: userId })
-        const projects = await projectService(log).getAllForUser({
-            platformId,
-            userId,
-            isPrivileged: userService(log).isUserPrivileged(user),
-        })
+        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId, userId, log })
 
         if (!isNil(projectId) && projectId !== '') {
             const targetProject = projects.find(p => p.id === projectId)
