@@ -236,7 +236,7 @@ Nothing on a normal upgrade. Every flow is moved to the AI piece version that ru
 
 If you serve pieces from your own registry, make sure it carries the AI piece at `0.11.0` or later. A flow left on an earlier version would still try to fetch its provider credentials over this endpoint and fail.
 
-## 0.91.0
+## 0.92.0
 
 ### What has changed?
 
@@ -273,6 +273,10 @@ The limit is per file, not per step, so several large files in one step are fine
 #### What you need to do
 
 Nothing unless an AI step handles files larger than 25 MB. Those steps now fail with a size error naming the limit. Raise `AP_MAX_FILE_SIZE_MB` on a self-hosted installation if you need more.
+
+## 0.91.0
+
+### What has changed?
 
 #### Telemetry moves from `AP_TELEMETRY_ENABLED` to the platform admin UI
 
