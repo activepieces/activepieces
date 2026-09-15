@@ -27,14 +27,22 @@ export function AiOverview() {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
-  const { data: providers, isLoading: isLoadingProviders } =
-    aiProviderQueries.useAiProviderConfigs();
-  const { data: toolConfigs, isLoading: isLoadingTools } =
-    aiToolConfigQueries.useAiToolConfigs();
-  const { data: subscription } = billingQueries.usePlatformSubscription(
-    platform.id,
-    !isCommunity,
-  );
+  const {
+    data: providers,
+    isLoading: isLoadingProviders,
+    isError: isProvidersError,
+    refetch: refetchProviders,
+  } = aiProviderQueries.useAiProviderConfigs();
+  const {
+    data: toolConfigs,
+    isLoading: isLoadingTools,
+    isError: isToolsError,
+  } = aiToolConfigQueries.useAiToolConfigs();
+  const {
+    data: subscription,
+    isError: isSubscriptionError,
+    refetch: refetchSubscription,
+  } = billingQueries.usePlatformSubscription(platform.id, !isCommunity);
 
   const configured = (providers ?? []).filter(
     (provider) => provider.provider !== AIProviderName.ACTIVEPIECES,
@@ -68,6 +76,8 @@ export function AiOverview() {
           title={t('Providers')}
           value={configured.length}
           isLoading={isLoadingProviders}
+          isError={isProvidersError}
+          errorEntity={t('AI providers')}
           description={
             chatProvider === undefined
               ? t('No provider powers chat yet')
@@ -83,6 +93,8 @@ export function AiOverview() {
               total: AI_TOOL_CATALOG.length,
             })}
             isLoading={isLoadingTools}
+            isError={isToolsError}
+            errorEntity={t('capabilities')}
             description={t(
               'Web search, scraping and image generation for the assistant',
             )}
@@ -102,6 +114,11 @@ export function AiOverview() {
           description={t(
             'Credits spent on AI steps and chat, out of your plan total.',
           )}
+          error={
+            isSubscriptionError
+              ? { entity: t('credits'), onRetry: refetchSubscription }
+              : undefined
+          }
         >
           <div className="flex flex-col gap-2 rounded-lg border p-4">
             <div className="flex items-baseline justify-between gap-3">
@@ -132,6 +149,12 @@ export function AiOverview() {
         description={t(
           'Used by AI steps and the assistant when a flow does not pick a model explicitly.',
         )}
+        isLoading={isLoadingProviders}
+        error={
+          isProvidersError
+            ? { entity: t('AI providers'), onRetry: refetchProviders }
+            : undefined
+        }
       >
         <OverviewRows>
           <OverviewRow
