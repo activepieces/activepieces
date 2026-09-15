@@ -142,8 +142,9 @@ async function applySignalOutcome({ signalId, refId, projectId, status, result, 
         .update()
         .set({
             status,
-            result: isNil(result) ? null : sanitizeObjectForPostgresql(result),
+            result: () => 'CAST(:signalResult AS jsonb)',
         })
+        .setParameter('signalResult', isNil(result) ? null : JSON.stringify(sanitizeObjectForPostgresql(result)))
         .where({
             ...identity,
             projectId,
