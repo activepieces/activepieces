@@ -14,6 +14,54 @@ We open PRs as drafts so no human reviewer is auto-assigned until "Ready for rev
 
 The diff comes from local `git diff --numstat`, not the `/files` API, so it is immune to GitHub's 3,000-file response cap — a mega-PR cannot under-count its way past the gate.
 
+## Splitting a big PR into a stack
+
+Reach for this when a branch is past the size gate and the work has real seams. Steps, in order:
+
+1. **Try commit ranges, but expect them not to work.** They only split cleanly if the history is
+   chronological. Ours was one 60-file commit plus 33 commits of iteration on it, so any range would have
+   shipped a PR full of bugs later commits already fixed. When later commits revise earlier ones, split by
+   **content**, not by history.
+2. **Base the stack on the exact commit the original branch last merged from `main`**, not on today's
+   `main`. Then the top of the stack is provably the reviewed tree: `git diff --quiet <original> <top>`
+   must be silent. Without that anchor you cannot tell a split mistake from a legitimate newer `main`.
+3. **Order by dependency, not by narrative.** Whatever the lower layers import has to land first, even if
+   the headline change reads better as PR 1.
+4. **Compose each branch with `git checkout <final-branch> -- <paths>`** so every file arrives at its final
+   content. Hand-edit only the files that genuinely need an intermediate state, and keep that list short
+   enough to name in the PR body.
+5. **Run typecheck and lint on every branch, not just the top.** A stack whose middle does not build is a
+   stack that cannot be merged in order.
+6. **After amending a lower branch, diff the file against the upper one before pushing.** A stack
+   accumulates duplicate commits easily: rebase does not always drop a copy of a patch it has already
+   seen, and a duplicate sitting *below* the upper branch's own commits carries the pre-amend content, so
+   it silently reverts the fix at the top of the stack while both branches look right in isolation.
+   `git log --oneline <lower>..<upper>` shows the duplicate by subject, and
+   `git rebase --onto <lower> <duplicate> <upper>` drops it. The check that catches it is
+   `git diff <lower> <upper> -- <the file you just amended>`, which should be empty.
+
+   The cause is worth knowing, because it recurs every time the lower branch moves. Rebasing the lower
+   branch rewrites its SHAs, so the upper branch's merge base falls back to where the two last agreed and
+   every commit the lower branch just replayed now looks like it belongs to the upper one. A plain
+   `git rebase <lower> <upper>` then tries to apply the lower branch's own commits on top of themselves
+   and conflicts with itself, often across a dozen files, which reads like a real merge problem and is
+   not one. **Whenever the lower branch has been rebased, amended or merged into, move the upper one with
+   `git rebase --onto <new lower tip> <old lower tip> <upper>`**, taking the old tip from
+   `git rev-parse <lower>@{1}`. Plain `git rebase` is only safe while the lower branch has not moved.
+7. **Every PR in the stack is gated on its own.** Each needs the full template body, and each needs its own
+   `large-pr-ok` if its slice is over the area budget. Splitting a branch does not divide one PR's
+   compliance between the pieces.
+
+Two intermediate states are usually worth the surgery. Keep a removed prop **accepted but unused** in the
+early PR so it does not have to touch every caller (21, in our case) and let the last PR delete it with
+the callers. And keep the *values* that switch a feature on out of the PR that only builds its plumbing:
+we first shipped the registry's `sample: true` flags in the middle PR, which would have rendered two
+upgrade prompts stacked on every locked page had it merged alone.
+
+Put **all** the branch's `translation.json` keys in the first PR rather than attributing them per PR. A
+missing key is a runtime miss that renders the raw string, so `tsc` cannot catch a wrong attribution, and
+the keys are excluded from the size gate anyway.
+
 ## Reviewer assignment
 Which team gets asked to review comes entirely from `.github/CODEOWNERS` — there is no bot, no dependabot/renovate config, and no workflow that requests reviewers. `@activepieces/core` is the catch-all owner; `@activepieces/pieces` owns `/packages/pieces/`; `@activepieces/platform` owns the execution path (`/packages/server/engine/`, `/packages/server/worker/`, `/packages/core/execution/`). `/bun.lock` and `/brain/` are listed with an **empty owner column**, which releases them from the catch-all — a PR touching only those needs no code-owner approval. Each team uses GitHub round-robin assignment, so one human per team per PR.
 
@@ -58,6 +106,7 @@ Enforcement is the **`Codeowners review` repository ruleset** (active on the def
 - **Reopening a bot-closed external PR is futile until a core member adds `keep-open` first.** `close-external-prs.yml` triggers on `pull_request_target` `[opened, reopened]`, so every reopen re-runs the same comment-then-close step; its `if` exempts OWNER/MEMBER/COLLABORATOR, bots, and the `keep-open` label, and nothing else. A docs PR from an outside contributor ([#15031](https://github.com/activepieces/activepieces/pull/15031)) was reopened 13 times over two days and closed 13 times within seconds of each, until a member labelled it `keep-open` and reopened it once. The same job also runs a nightly `actions/stale` pass that closes any PR idle 60 days. The lasting fix for a change worth keeping is to re-open it from a branch owned by someone with write access — author association, not the diff, is what the gate reads.
 - **`license/cla` keys off the commit author email, so re-opening someone else's branch under your own name does not clear it.** CLA-assistant walks every commit in the PR rather than the PR author, and an author email that matches no GitHub account can never be matched to a signature — the 47 commits carried over onto [#15092](https://github.com/activepieces/activepieces/pull/15092) were authored as `ashrafsam@mac.lan`, a local hostname, so the check sat at `not_signed` on a PR opened by a member. It is not in the `main` ruleset's required-checks list, but it is red on the page and a reviewer reads that as unmergeable. Either the original author signs through the PR link, or the commits get re-authored to an email tied to their GitHub account before you open it.
 - **A branch that predates the `brain/` → `brain/knowledge/` move cannot edit a brain page in place — GitHub will call the PR conflicting even when `git merge` is clean locally.** Git follows the rename and merges the modification into the new path; GitHub's mergeability check does not, so it reports `modify/delete` on the old path and the PR goes `dirty`. Local `git merge-tree --write-tree` exits 0 and hides the problem; reproduce what GitHub sees with `git merge -X no-renames origin/main`. Fix: merge `origin/main` into the branch first, which lands the edit at the new path, then push.
+- **The PR body needs BOTH template sections, and omitting one fails the same way as leaving it unticked.** `breaking-change-check.ts` parses `Breaking change?` and `Security impact?` in isolation (a global scan would conflate them), and each must carry exactly one ticked box whose text begins `no` or `yes` right after the bracket. A body that answers only the breaking question fails on `Security impact?` being `unset`, which is the easy miss because `CLAUDE.md` names only the breaking section. Write the body from `.github/pull_request_template.md` rather than from memory: the options are worded `no — reviewed, not breaking` / `yes — technical (...)` / `yes — functional (...)`, and security-sensitive means it touches authentication, secrets, permissions and roles, cryptography, SSRF or outbound HTTP, or file handling. Removing a plan gate so a configuration screen renders for a platform that has not bought it counts, even when the change is display-only and the server still refuses.
 - **`breaking-change-check` couples the docs entry to the label in BOTH directions, so back-documenting an already-shipped change drags the label onto a docs-only PR.** R3 in `tools/scripts/breaking-change-check.ts` fails a PR that adds a `####` entry to `docs/install/reference/breaking-changes.mdx` without `⛓️‍💥 breaking-change`, exactly as it fails the label without an entry — and the template answer has to agree too, so "yes" must be ticked on a PR that changes no code. It reads the *added lines of that one file* from `git diff origin/<base>...HEAD`, and `hasBreakingEntry` wants a `####` heading **plus** a non-heading body line, so a heading alone, a `---`, or a version bump does not count. Two consequences: the label then collides with `skip-changelog` in release-drafter (pick one deliberately — the feature's own PR usually already carried the changelog entry), and an entry appended to a *released* section still trips it, since the check never looks at which heading the lines landed under.
 - **Nothing rolls `## Unreleased` over at release time, and the docs site is unversioned — so a breaking-changes entry has to name its own version.** No workflow or script writes to `docs/install/reference/breaking-changes.mdx` (`breaking-change-check.ts` only reads it), and `git log -S"## 0.88"` on the file comes back empty: the heading has not moved since 0.87.0, so entries for work that shipped months ago still sit under "Unreleased" (PM2 removal in 0.88.2, cache pre-warm gate and workspace naming in 0.89.0, …). `docs/docs.json` has no versioning either, so there is one live page for every self-hoster whatever version they run, published on merge rather than on release — the version heading is the *only* thing telling a reader whether a change is already in their build. So before adding an entry, run `git tag --contains <commit>` on the change it describes and file it under the release that actually shipped it; only genuinely unshipped work belongs under "Unreleased". What points self-hosters at the page in the first place is `release-drafter.yml`, which appends a "review the Breaking Changes page" line to every release body and groups `⛓️‍💥 breaking-change` PRs under their own heading — which also means a docs-only PR back-documenting an old change shows up in the *next* release's breaking-change list.
 - **Greptile enforces the file-order rule on *private* constants too, which CLAUDE.md only states for exported ones.** CLAUDE.md says "Exported types and constants must be placed at the end of the file" and gives the order as imports → exports → helpers → types; Greptile reads that as covering module-private constants as well, and flags a `const` sitting above the file's exported symbol (P2 on [#15226](https://github.com/activepieces/activepieces/pull/15226), for two constants only read inside the service they sat above). It has that as a stored custom-context memory, so it will keep raising it. Put private constants in the helpers section below the export — hoisting is a non-issue when they are only read at call time.
