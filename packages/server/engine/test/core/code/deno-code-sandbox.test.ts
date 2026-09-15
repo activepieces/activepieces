@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -52,12 +53,28 @@ describe('denoCodeSandbox permission boundary', () => {
                 .rejects.toThrow(PERMISSION_DENIED)
         })
 
+        it('gives each run its own DENO_DIR and removes it after the run', async () => {
+            const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
+            const codeFilePath = path.join(stepDir, 'index.ts')
+            await writeFile(codeFilePath, 'export const code = async () => Deno.env.get(\'DENO_DIR\')')
+
+            const firstDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+            const secondDir = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
+
+            expect(firstDir).toMatch(/ap-deno-/)
+            expect(secondDir).toMatch(/ap-deno-/)
+            expect(firstDir).not.toBe(secondDir)
+            expect(path.dirname(firstDir)).toBe(await realpath(stepDir))
+            await expect.poll(() => existsSync(firstDir), { timeout: 5000 }).toBe(false)
+            await expect.poll(() => existsSync(secondDir), { timeout: 5000 }).toBe(false)
+        })
+
         it('with the ENV permission exposes only PATH, never the engine env', async () => {
             const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
             const codeFilePath = path.join(stepDir, 'index.ts')
-            await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()), missing: process.env.AP_EXECUTION_MODE ?? null })`)
+            await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()).sort(), missing: process.env.AP_EXECUTION_MODE ?? null })`)
             const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-            expect(result).toEqual({ keys: ['PATH'], missing: null })
+            expect(result).toEqual({ keys: ['DENO_DIR', 'PATH'], missing: null })
         })
 
         it('forwards exactly the vars listed in AP_SANDBOX_PROPAGATED_ENV_VARS when ENV is granted, and none without it', async () => {
@@ -71,7 +88,7 @@ describe('denoCodeSandbox permission boundary', () => {
 
                 const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
                 const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['MY_PROPAGATED_SECRET', 'PATH'] })
+                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['DENO_DIR', 'MY_PROPAGATED_SECRET', 'PATH'] })
 
                 await writeFile(codeFilePath, `export const code = async () => { try { Deno.env.toObject(); return 'readable' } catch { return 'blocked' } }`)
                 const lockedResult = await denoCodeSandbox.runCodeModule({ codeFilePath, inputs: {} })
