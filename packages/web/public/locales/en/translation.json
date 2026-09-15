@@ -801,6 +801,7 @@
   "templates": "templates",
   "secret managers": "secret managers",
   "AI providers": "AI providers",
+  "capabilities": "capabilities",
   "AI tools": "AI tools",
   "health metrics": "health metrics",
   "projects": "projects",
