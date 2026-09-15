@@ -6,12 +6,11 @@ import { mcpActivityApi } from './mcp-activity-api';
 const ACTIVITY_QUERY_KEY = ['mcp-activity'];
 
 export const mcpActivityQueries = {
-  useActivity({ request, showErrorDialog }: UseActivityParams) {
+  useActivity({ request }: UseActivityParams) {
     return useQuery({
       queryKey: [...ACTIVITY_QUERY_KEY, request],
       queryFn: () => mcpActivityApi.list(request),
       placeholderData: keepPreviousData,
-      meta: { showErrorDialog, loadSubsetOptions: {} },
     });
   },
 
@@ -27,7 +26,6 @@ export const mcpActivityQueries = {
 
 type UseActivityParams = {
   request: ListMcpActivityRequestQuery;
-  showErrorDialog: boolean;
 };
 
 type UsePayloadParams = {

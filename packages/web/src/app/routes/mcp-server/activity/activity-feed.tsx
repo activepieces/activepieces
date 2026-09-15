@@ -1,7 +1,6 @@
 import {
   McpActivityStatus,
   McpOAuthClientKey,
-  PLATFORM_WIDE_PROJECT_FILTER_VALUE,
   PopulatedMcpActivity,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -72,10 +71,11 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
     request.createdAfter !== undefined ||
     request.createdBefore !== undefined;
 
-  const { data, isLoading, isError } = mcpActivityQueries.useActivity({
-    request,
-    showErrorDialog: true,
-  });
+  const { data, isLoading, isError, isPaused, refetch } =
+    mcpActivityQueries.useActivity({
+      request,
+    });
+  const couldNotLoad = isError || (isPaused && data === undefined);
 
   const pieceNames = useMemo(
     () => distinctPieceNames(data?.data ?? []),
@@ -115,9 +115,10 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
 
   if (
     !isLoading &&
-    !isError &&
+    !couldNotLoad &&
     !hasActiveFilters &&
-    (data?.data.length ?? 0) === 0
+    data !== undefined &&
+    data.data.length === 0
   ) {
     return (
       <Empty className="border border-dashed py-20">
@@ -143,6 +144,9 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
         columns={columns}
         page={data}
         isLoading={isLoading}
+        isError={couldNotLoad}
+        errorStateEntity={t('activity')}
+        onRetry={refetch}
         filters={buildFilters({
           projects,
           members: isPrivileged ? users?.data ?? [] : [],
@@ -203,16 +207,10 @@ function buildFilters({
       title: t('Project'),
       accessorKey: 'project',
       icon: FolderOpen,
-      options: [
-        ...projects.map((project) => ({
-          label: project.displayName,
-          value: project.id,
-        })),
-        {
-          label: t('All projects'),
-          value: PLATFORM_WIDE_PROJECT_FILTER_VALUE,
-        },
-      ],
+      options: projects.map((project) => ({
+        label: project.displayName,
+        value: project.id,
+      })),
     });
   }
 

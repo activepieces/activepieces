@@ -22,7 +22,7 @@ export function buildActivityColumns({
   resolvePieceDisplayName,
 }: BuildActivityColumnsParams): ActivityColumn[] {
   const when: ActivityColumn = {
-    accessorKey: 'created',
+    accessorKey: 'when',
     size: 150,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('When')} icon={Clock} />
@@ -35,7 +35,7 @@ export function buildActivityColumns({
   };
 
   const client: ActivityColumn = {
-    accessorKey: 'clientKey',
+    accessorKey: 'client',
     size: 170,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Client')} icon={Plug} />
@@ -140,7 +140,7 @@ export function buildActivityColumns({
   };
 
   const result: ActivityColumn = {
-    accessorKey: 'status',
+    accessorKey: 'result',
     size: 130,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Result')} />
