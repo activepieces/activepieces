@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
-import { AiPricingTier, aiPricingCatalog } from '@activepieces/server-utils'
+import { aiPricingCatalog, AiPricingTier } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
 
 function findTier({ tierId }: { tierId: string | null }) {

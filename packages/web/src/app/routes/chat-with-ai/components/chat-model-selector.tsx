@@ -57,9 +57,7 @@ function useModelOptions(): ModelOption[] {
   if (isNil(curatedModels)) {
     return tiers.map((tier) => ({
       id: tier.id,
-      icon: Sparkles,
-      description: null,
-      ...TIER_CONFIG[tier.id],
+      ...(TIER_CONFIG[tier.id] ?? { icon: Sparkles, description: null }),
       displayLabel: tier.label,
       creditWeight: tier.creditWeight,
     }));
