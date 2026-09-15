@@ -3,7 +3,6 @@ import { type ApLogger } from '@activepieces/server-utils'
 import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { cacheUtils } from './cache/cache-paths'
-import { sandboxCapacity } from './sandbox/capacity'
 import { simpleProcess } from './sandbox/fork'
 import { isolateProcess } from './sandbox/isolate'
 import { createSandbox } from './sandbox/sandbox'
@@ -29,8 +28,6 @@ export function createSandboxForJob(params: {
         { hostPath: paths.getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
     ]
 
-    const executionMode = settings.EXECUTION_MODE as ExecutionMode
-
     return createSandbox(
         log,
         sandboxId,
@@ -43,14 +40,9 @@ export function createSandboxForJob(params: {
             maxHttpBufferSizeBytes: maxSocketHttpBufferSizeBytes(settings.MAX_FILE_SIZE_MB),
             basePath,
             baseMounts,
-            wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
         },
         processMaker,
     )
-}
-
-export function isIsolateMode(mode: ExecutionMode): boolean {
-    return mode === ExecutionMode.SANDBOX_PROCESS || mode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
 function getProcessMaker(executionMode: string, log: ApLogger, boxId: number, paths: ReturnType<typeof cacheUtils>) {
