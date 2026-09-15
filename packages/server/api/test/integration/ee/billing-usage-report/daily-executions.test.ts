@@ -3,20 +3,20 @@ import { FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/s
 import { FastifyInstance } from 'fastify'
 import { vi } from 'vitest'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
-import { billingUsageReportService } from '../../../../src/app/ee/billing-usage-report/billing-usage-report-service'
+import { licenseKeyUsageReportService } from '../../../../src/app/ee/license-key-usage-report/license-key-usage-report-service'
 import { db } from '../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
-const { mockCaptureBillingEvent } = vi.hoisted(() => ({ mockCaptureBillingEvent: vi.fn() }))
+const { mockCaptureLicenseKeyEvent } = vi.hoisted(() => ({ mockCaptureLicenseKeyEvent: vi.fn() }))
 
 vi.mock('../../../../src/app/helper/telemetry.utils', async (importOriginal) => {
     const original = await importOriginal<typeof import('../../../../src/app/helper/telemetry.utils')>()
     return {
         ...original,
-        captureBillingEvent: mockCaptureBillingEvent,
-        flushBillingEvents: vi.fn().mockResolvedValue(undefined),
+        captureLicenseKeyEvent: mockCaptureLicenseKeyEvent,
+        flushLicenseKeyPostHogEvents: vi.fn().mockResolvedValue(undefined),
     }
 })
 
@@ -37,7 +37,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
     ctx = await createTestContext(app)
-    mockCaptureBillingEvent.mockClear()
+    mockCaptureLicenseKeyEvent.mockClear()
 })
 
 function yesterdayNoonUtc(): Date {
@@ -72,10 +72,10 @@ describe('Daily platform execution tracking', () => {
             await databaseConnection().query('UPDATE flow_run SET created = $1 WHERE id = $2', [runDay.toISOString(), run.id])
         }
 
-        await billingUsageReportService(app.log).reportAllPlatforms()
+        await licenseKeyUsageReportService(app.log).reportAllPlatforms()
 
-        const reported = mockCaptureBillingEvent.mock.calls
-            .map(([event]): CapturedBillingEvent => event)
+        const reported = mockCaptureLicenseKeyEvent.mock.calls
+            .map(([event]): CapturedLicenseKeyEvent => event)
             .find((event) => event.properties.platform_id === ctx.platform.id)
 
         expect(reported?.properties.daily_executions).toEqual([
@@ -84,7 +84,7 @@ describe('Daily platform execution tracking', () => {
     })
 })
 
-type CapturedBillingEvent = {
+type CapturedLicenseKeyEvent = {
     properties: {
         platform_id: string
         daily_executions: { date: string, count: number }[]
