@@ -3222,5 +3222,6 @@
   "No models available — ask your platform admin to add a provider.": "No models available — ask your platform admin to add a provider.",
   "{input} in · {output} out": "{input} in · {output} out",
   "Couldn't load {key} models": "Couldn't load {key} models",
-  "Flows and agents that use this key will fail.": "Flows and agents that use this key will fail."
+  "Flows and agents that use this key will fail.": "Flows and agents that use this key will fail.",
+  "dispatchIndexRequiresParentWaitpointId": "A dispatch index only makes sense together with the barrier that dispatched the run."
 }
