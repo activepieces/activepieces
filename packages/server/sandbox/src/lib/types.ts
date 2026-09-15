@@ -3,7 +3,7 @@ import { EngineOperation, EngineOperationType, EngineResponse, FailedStep, FlowV
 
 // Two roles:
 //   - Resolver (worker-side, owns the only apiClient): turns a job into a fully-materialized
-//     `ProvisionInput` — resolve the flowVersion, piece metadata, and a ready (compiled) flow bundle,
+//     `ProvisionInput` — resolve the flowVersion, piece metadata, and the flow bundle,
 //     disabling the flow on a missing piece. Always runs before `execute`.
 //   - Runtime: the in-process single sandbox box. It never reaches the app; it materializes the passed
 //     ProvisionInput, runs one engine operation, and releases (or invalidates on throw).
@@ -93,6 +93,7 @@ export type CodeArtifact = {
     sourceCode: SourceCode
     flowVersionId: string
     flowVersionState: FlowVersionState
+    useDeno: boolean
 }
 
 // Structural subset of WorkerSettingsResponse used by the local-pool runtime tree.

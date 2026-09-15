@@ -41,7 +41,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
     jobType: WorkerJobType.EXECUTE_AGENT_RUN,
     async execute(ctx: JobContext, data: ExecuteAgentRunJobData): Promise<FireAndForgetJobResult> {
         const { conversationId, runId, projectId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: jobSource, flowRunId, waitpointId } = data
-        const log = ctx.log.child({ conversation: { id: conversationId }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
+        const log = ctx.log.child({ conversation: { id: conversationId }, agentRun: { source: jobSource ?? AgentRunSource.CHAT }, ...spreadIfDefined('run', isNil(runId) ? undefined : { id: runId }) })
 
         const configuredTools = agentToolPolicy.withValidNames({ tools: data.tools ?? [] })
         const configuredFlowTools = agentToolPolicy.withValidNames({ tools: data.flowTools ?? [], reserved: configuredTools.map((tool) => tool.toolName) })
@@ -92,6 +92,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 conversationId, runId, platformId, userId, userMessage, modelName, files,
                 ...spreadIfDefined('source', jobSource),
                 ...spreadIfDefined('messageSource', data.messageSource),
+                ...spreadIfDefined('agentId', data.agentId),
+                ...spreadIfDefined('flowRunId', flowRunId),
                 ...spreadIfDefined('provider', data.provider),
                 ...spreadIfDefined('providerConfigId', data.providerConfigId),
                 ...spreadIfDefined('projectId', projectId),
@@ -373,7 +375,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
         }
         catch (err) {
             const errorClass = classifyAgentRunError({ error: err, provider: runProvider })
-            log[errorClass === 'internal' ? 'error' : 'warn']({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId }, agentRun: { errorClass } }, '[executeAgentRun] Agent job failed')
+            log[errorClass === 'internal' ? 'error' : 'warn']({ error: err, conversation: { id: conversationId }, provider: runProvider, model: { id: runModelId }, agentRun: { errorClass, source } }, '[executeAgentRun] Agent job failed')
             const errorMessage = formatPieceError(err).message
             const isCreditError = errorClass === 'credit'
             // "User not found" is OpenRouter refusing a key, and reads like a missing account.
