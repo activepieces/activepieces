@@ -57,7 +57,7 @@ function sheetIdProp() {
                 const response = await floqerApi.enveloped<FloqerWorkflowOverview>({
                     apiKey: auth.secret_text,
                     method: HttpMethod.GET,
-                    path: `/api/v1/workflows/${workflowId}`,
+                    path: `/api/v1/workflows/${encodeURIComponent(String(workflowId))}`,
                 });
                 return {
                     disabled: false,

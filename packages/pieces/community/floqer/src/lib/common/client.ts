@@ -68,8 +68,14 @@ function readErrorField(error: unknown, field: 'code' | 'message'): string | und
     if (!isRecord(body)) {
         return undefined;
     }
-    const nested = isRecord(body['error']) ? body['error'] : undefined;
-    return asString(nested?.[field]) ?? asString(body[field]);
+    const rawError = body['error'];
+    const nested = isRecord(rawError) ? rawError : undefined;
+    const fromNested = asString(nested?.[field]);
+    const fromBody = asString(body[field]);
+    if (field === 'message') {
+        return fromNested ?? fromBody ?? asString(rawError);
+    }
+    return fromNested ?? fromBody;
 }
 
 export const floqerApi = {

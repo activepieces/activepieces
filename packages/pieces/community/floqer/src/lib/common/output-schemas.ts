@@ -37,6 +37,11 @@ export const addRowsOutputSchema: OutputSchema = {
                     label: 'Errors',
                     description:
                         'Why the row was rejected. Codes include malformed_row and unknown_field.',
+                    listItems: [
+                        { key: 'field', label: 'Field' },
+                        { key: 'code', label: 'Code' },
+                        { key: 'message', label: 'Message' },
+                    ],
                 },
             ],
         },

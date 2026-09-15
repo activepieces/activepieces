@@ -207,9 +207,6 @@ describe('error extraction', () => {
 });
 
 describe('Run Shortcut — input_schema as Floqer really returns it', () => {
-    // Captured from a live published shortcut. Every field came back
-    // type:"string", including is_active and created_at, so the type carries
-    // no discriminating information and the default branch is the live path.
     const REAL_SCHEMA = [
         { reference: 'telegram_id', name: 'telegram_id', description: '', type: 'string', required: false },
         { reference: 'user_name', name: 'user_name', description: '', type: 'string', required: true },
@@ -233,9 +230,6 @@ describe('Run Shortcut — input_schema as Floqer really returns it', () => {
     });
 
     it('keys props by reference, not by name', async () => {
-        // On the live shortcut every reference happened to equal its name, so a
-        // fixture copied from it cannot tell the two apart. The spec's own
-        // example has them differ, and input_data is keyed by reference.
         const props = await buildProps([
             { reference: 'linkedin_url', name: 'LinkedIn URL', type: 'string', required: true },
         ]);

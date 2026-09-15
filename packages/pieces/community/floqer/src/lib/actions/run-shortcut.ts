@@ -39,12 +39,12 @@ export const runShortcutAction = createAction({
         }),
     },
     async run({ auth, propsValue }) {
-        const inputData = stripEmpty(propsValue.inputData);
+        const inputData = stripEmpty(propsValue.inputData ?? {});
 
         const response = await floqerApi.enveloped<unknown>({
             apiKey: auth.secret_text,
             method: HttpMethod.POST,
-            path: `/api/v1/shortcuts/${propsValue.shortcutId}/run`,
+            path: `/api/v1/shortcuts/${encodeURIComponent(propsValue.shortcutId)}/run`,
             body: { input_data: inputData },
         });
 
@@ -59,13 +59,20 @@ async function findShortcut({
     apiKey: string;
     shortcutId: string;
 }): Promise<FloqerShortcut | undefined> {
-    const response = await floqerApi.enveloped<FloqerShortcut[]>({
-        apiKey,
-        method: HttpMethod.GET,
-        path: '/api/v1/shortcuts/',
-        queryParams: { filter: 'all' },
-    });
-    return response.data.find((shortcut) => shortcut.id === shortcutId);
+    try {
+        const response = await floqerApi.enveloped<FloqerShortcut[]>({
+            apiKey,
+            method: HttpMethod.GET,
+            path: '/api/v1/shortcuts/',
+            queryParams: { filter: 'all' },
+        });
+        if (!Array.isArray(response.data)) {
+            return undefined;
+        }
+        return response.data.find((shortcut) => shortcut.id === shortcutId);
+    } catch {
+        return undefined;
+    }
 }
 
 function buildInputProps(fields: FloqerInputField[]): InputPropertyMap {

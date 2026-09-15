@@ -51,10 +51,10 @@ export const addRowsAction = createAction({
             );
         }
 
-        const response = await floqerApi.enveloped<FloqerAddRowsResult>({
+        const response = await floqerApi.enveloped<Partial<FloqerAddRowsResult>>({
             apiKey: auth.secret_text,
             method: HttpMethod.POST,
-            path: `/api/v1/workflows/${propsValue.workflowId}/sheets/${propsValue.sheetId}/rows`,
+            path: `/api/v1/workflows/${encodeURIComponent(propsValue.workflowId)}/sheets/${encodeURIComponent(propsValue.sheetId)}/rows`,
             body: {
                 rows,
                 run_after_add: propsValue.runAfterAdd ?? 'none',
@@ -62,7 +62,11 @@ export const addRowsAction = createAction({
         });
 
         return {
-            ...response.data,
+            row_count: 0,
+            row_ids: [],
+            rows_queued_for_run: 0,
+            rejected: [],
+            ...(response.data ?? {}),
             warnings: response.warnings ?? [],
         };
     },

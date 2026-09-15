@@ -40,7 +40,7 @@ export const runRowsAction = createAction({
         const response = await floqerApi.enveloped<FloqerRunRowsResult>({
             apiKey: auth.secret_text,
             method: HttpMethod.POST,
-            path: `/api/v1/workflows/${propsValue.workflowId}/sheets/${propsValue.sheetId}/run`,
+            path: `/api/v1/workflows/${encodeURIComponent(propsValue.workflowId)}/sheets/${encodeURIComponent(propsValue.sheetId)}/run`,
             body,
         });
 
@@ -58,6 +58,11 @@ function buildBody({ mode, rowIds }: { mode: string; rowIds: unknown }) {
             'Select at least one row ID, or switch "Rows To Run" to the first 10 rows on the sheet.',
         );
     }
+    if (ids.length > MAX_ROWS_PER_CALL) {
+        throw new Error(
+            `Floqer accepts at most ${MAX_ROWS_PER_CALL} row IDs per call, but ${ids.length} were provided. Split them across multiple steps.`,
+        );
+    }
     return { row_ids: ids };
 }
 
@@ -65,7 +70,14 @@ function normalizeRowIds(rowIds: unknown): string[] {
     if (!Array.isArray(rowIds)) {
         return [];
     }
-    return rowIds
-        .map((id) => (typeof id === 'string' ? id.trim() : ''))
-        .filter((id) => id.length > 0);
+    return rowIds.flat().map((id, index) => {
+        if (typeof id !== 'string') {
+            throw new Error(
+                `Row ID ${index + 1} must be a row UUID string, but received ${typeof id}.`,
+            );
+        }
+        return id.trim();
+    }).filter((id) => id.length > 0);
 }
+
+const MAX_ROWS_PER_CALL = 1000;
