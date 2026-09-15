@@ -26,14 +26,12 @@ export function BillingPageShell({
 
   return (
     <LockedFeatureGuard
-      featureKey="BILLING"
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={lockTitle}
       lockDescription={t(
         'Switch to the Enterprise edition to access billing and usage management.',
       )}
       lockDocumentationUrl={LOCK_DOCUMENTATION_URL}
-      showContactSales={false}
     >
       <BillingPageContent errorMessage={errorMessage}>
         {children}
