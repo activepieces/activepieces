@@ -102,26 +102,22 @@ export const agentsQueries = {
   useAgentRuns: ({
     agentId,
     projectId,
-    enabled = true,
   }: {
     agentId: string;
     projectId: string;
-    enabled?: boolean;
   }) => {
     const [searchParams] = useSearchParams();
+    const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+    const limit = searchParams.get(LIMIT_QUERY_PARAM);
     return useQuery({
-      queryKey: [AGENTS_KEY, 'runs', agentId, searchParams.toString()],
-      enabled,
-      staleTime: 0,
-      queryFn: () => {
-        const limit = searchParams.get(LIMIT_QUERY_PARAM);
-        return agentsApi.listRuns({
+      queryKey: [AGENTS_KEY, 'runs', agentId, cursor, limit],
+      queryFn: () =>
+        agentsApi.listRuns({
           agentId,
           projectId,
-          cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
+          cursor: cursor ?? undefined,
           limit: limit === null ? undefined : parseInt(limit),
-        });
-      },
+        }),
     });
   },
 };

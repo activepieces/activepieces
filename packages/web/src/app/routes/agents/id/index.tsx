@@ -1,15 +1,11 @@
 import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronLeft, SearchX, Settings2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
-import { ConversationsToggle } from '@/app/routes/chat-with-ai/components/conversations-toggle';
-import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
 import {
   Empty,
   EmptyDescription,
@@ -21,11 +17,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgentsAvailable } from '@/features/agents';
-import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
+import { AgentChatView, SLIDING_ASIDE } from './agent-chat-view';
 import { AgentConfigurePanel } from './configure-panel';
 import { AgentRuns } from './runs';
 
@@ -54,10 +51,8 @@ const buildCapabilityNote = (agent: Agent): string => {
 type OpenPanel = 'conversations' | 'configure' | 'none';
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
-const VIEW_QUERY_PARAM = 'view';
-const RUNS_VIEW = 'runs';
-const SLIDING_ASIDE =
-  'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
+const RUNS_TAB = 'runs';
+const CHAT_TAB = 'chat';
 
 const needsAModel = (agent: Agent): boolean => {
   const running = agent.published ?? agent.draft;
@@ -77,11 +72,10 @@ const AgentEditorSkeleton = () => (
 );
 const AgentEditorContent = () => {
   const navigate = useNavigate();
-  const { agentId } = useParams<{ agentId: string }>();
+  const { agentId, tab } = useParams<{ agentId: string; tab?: string }>();
   const agentsAvailable = useAgentsAvailable();
   const [openPanel, setOpenPanel] = useState<OpenPanel>();
   const [configureMounted, setConfigureMounted] = useState(false);
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
@@ -102,26 +96,17 @@ const AgentEditorContent = () => {
     setOpenedConversationId(nextConversationId);
     writeConversationParam(nextConversationId);
   };
-  const runsOpen = searchParams.get(VIEW_QUERY_PARAM) === RUNS_VIEW;
-  const showRuns = (show: boolean) => {
-    const next = new URLSearchParams(searchParams);
-    if (show) {
-      next.set(VIEW_QUERY_PARAM, RUNS_VIEW);
-    } else {
-      next.delete(VIEW_QUERY_PARAM);
-    }
-    next.delete('cursor');
-    next.delete('limit');
-    setSearchParams(next, { replace: true });
+  const runsOpen = tab === RUNS_TAB;
+  const agentRoute = (suffix: string) =>
+    authenticationSession.appendProjectRoutePrefix(
+      `/agents/${agentId}${suffix}`,
+    );
+  const showTab = (nextTab: string) => {
+    navigate(agentRoute(nextTab === CHAT_TAB ? '' : `/${nextTab}`));
   };
   const openRunInChat = (runConversationId: string) => {
     setOpenedConversationId(runConversationId);
-    const next = new URLSearchParams(searchParams);
-    next.set(CONVERSATION_QUERY_PARAM, runConversationId);
-    next.delete(VIEW_QUERY_PARAM);
-    next.delete('cursor');
-    next.delete('limit');
-    setSearchParams(next, { replace: true });
+    navigate(agentRoute(`?${CONVERSATION_QUERY_PARAM}=${runConversationId}`));
   };
   const startNewConversation = () => {
     setOpenedConversationId(undefined);
@@ -196,13 +181,10 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
-          <Tabs
-            value={runsOpen ? RUNS_VIEW : 'chat'}
-            onValueChange={(next) => showRuns(next === RUNS_VIEW)}
-          >
+          <Tabs value={runsOpen ? RUNS_TAB : CHAT_TAB} onValueChange={showTab}>
             <TabsList>
-              <TabsTrigger value="chat">{t('Chat')}</TabsTrigger>
-              <TabsTrigger value={RUNS_VIEW}>{t('Runs')}</TabsTrigger>
+              <TabsTrigger value={CHAT_TAB}>{t('Chat')}</TabsTrigger>
+              <TabsTrigger value={RUNS_TAB}>{t('Runs')}</TabsTrigger>
             </TabsList>
           </Tabs>
           {!configureOpen && (
@@ -223,60 +205,18 @@ const AgentEditorContent = () => {
           {runsOpen ? (
             <AgentRuns agentId={agent.id} onOpenRun={openRunInChat} />
           ) : (
-            <>
-              <aside
-                className={cn(
-                  SLIDING_ASIDE,
-                  'border-r',
-                  conversationsOpen ? 'w-[220px]' : 'w-[46px]',
-                )}
-              >
-                {conversationsOpen ? (
-                  <div className="flex h-full w-[220px] flex-col">
-                    <ConversationList
-                      agentId={agent.id}
-                      selectedId={
-                        openedConversationId ?? conversationId ?? null
-                      }
-                      onSelect={openConversation}
-                      onNewChat={startNewConversation}
-                      onCollapse={() => setOpenPanel('none')}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex h-full w-[46px] shrink-0 flex-col items-center pt-3">
-                    <ConversationsToggle
-                      open={false}
-                      onClick={() => setOpenPanel('conversations')}
-                    />
-                  </div>
-                )}
-              </aside>
-              <div className="flex min-h-0 min-w-0 grow flex-col">
-                <AIChatBox
-                  key={openedConversationId ?? `new-${freshConversations}`}
-                  incognito={false}
-                  agentId={agent.id}
-                  conversationId={openedConversationId ?? null}
-                  onConversationCreated={writeConversationParam}
-                  onTurnEnd={() =>
-                    void queryClient.invalidateQueries({
-                      queryKey: ['agents', 'one', agent.id],
-                    })
-                  }
-                  placeholder={t('Ask {name}...', { name: agent.displayName })}
-                  footerNote={buildCapabilityNote(agent)}
-                  emptyState={
-                    <AgentChatWelcome
-                      displayName={agent.displayName}
-                      description={agent.description ?? null}
-                      icon={agent.icon}
-                      color={agent.color}
-                    />
-                  }
-                />
-              </div>
-            </>
+            <AgentChatView
+              agent={agent}
+              conversationsOpen={conversationsOpen}
+              openedConversationId={openedConversationId ?? conversationId}
+              freshConversations={freshConversations}
+              footerNote={buildCapabilityNote(agent)}
+              onSelectConversation={openConversation}
+              onNewConversation={startNewConversation}
+              onCollapseConversations={() => setOpenPanel('none')}
+              onExpandConversations={() => setOpenPanel('conversations')}
+              onConversationCreated={writeConversationParam}
+            />
           )}
         </div>
       </div>

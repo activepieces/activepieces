@@ -9,6 +9,7 @@ import {
   CreateAgentRequest,
   DraftAgentRequest,
   DraftAgentResponse,
+  ListAgentRunsRequest,
   ListAgentsRequest,
   MoveAgentRequest,
   UpdateAgentRequest,
@@ -53,11 +54,4 @@ export const agentsApi = {
       request,
     );
   },
-};
-
-export type ListAgentRunsRequest = {
-  agentId: string;
-  projectId: string;
-  cursor?: string;
-  limit?: number;
 };
