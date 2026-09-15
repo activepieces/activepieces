@@ -53,19 +53,20 @@ async function runAiStep(ctx: JobContext, data: ExecuteAiJobData): Promise<unkno
         provider: data.provider,
         ...spreadIfDefined('providerConfigId', data.providerConfigId),
     })
+    const flowStep = flowStepMetadata(data)
     switch (data.action) {
         case AiStepAction.EXTRACT_STRUCTURED_DATA:
-            return { answer: await extractStructuredData({ data, resolved }) }
+            return { answer: await extractStructuredData({ data, resolved, flowStep }) }
         case AiStepAction.GENERATE_IMAGE:
-            return { answer: await generateImageStep({ ctx, data, resolved }) }
+            return { answer: await generateImageStep({ ctx, data, resolved, flowStep }) }
         case AiStepAction.ASK_AI:
         case AiStepAction.SUMMARIZE_TEXT:
         case AiStepAction.CLASSIFY_TEXT:
-            return runTextStep({ data, resolved })
+            return runTextStep({ data, resolved, flowStep })
     }
 }
 
-async function runTextStep({ data, resolved }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse }): Promise<unknown> {
+async function runTextStep({ data, resolved, flowStep }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse, flowStep: FlowStepMetadata }): Promise<unknown> {
     const { provider, auth, config } = resolved
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
@@ -76,7 +77,7 @@ async function runTextStep({ data, resolved }: { data: ExecuteAiJobData, resolve
         auth,
         config,
         modelId: data.modelId,
-        flowStep: flowStepMetadata(data),
+        flowStep,
         openaiResponsesModel: webSearchEnabled && (effectiveProvider ?? provider) === AIProviderName.OPENAI,
         webSearchEnabled,
         webSearchOptions,
