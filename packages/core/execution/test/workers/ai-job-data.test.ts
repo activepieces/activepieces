@@ -39,8 +39,27 @@ describe('what an AI step job accepts', () => {
         expect(parsed).toMatchObject({ action: AiStepAction.CLASSIFY_TEXT, text: 'warm', categories: ['sunny', 'rainy'] })
     })
 
-    it('rejects what it rejected before: no prompt, or an action nobody ships', () => {
-        expect(ExecuteAiJobData.safeParse({ ...base, action: AiStepAction.ASK_AI, prompt: undefined }).success).toBe(false)
+    it('takes the two actions that carry files and a schema', () => {
+        expect(ExecuteAiJobData.safeParse({
+            ...base,
+            action: AiStepAction.EXTRACT_STRUCTURED_DATA,
+            text: 'an invoice',
+            files: [{ mimeType: 'application/pdf', base64: 'eA==' }],
+            schema: { mode: 'simple', fields: [{ name: 'total' }] },
+        }).success).toBe(true)
+        expect(ExecuteAiJobData.safeParse({
+            ...base,
+            action: AiStepAction.GENERATE_IMAGE,
+            files: [{ mimeType: 'image/png', base64: 'eA==' }],
+            advancedOptions: { size: '1024x1024' },
+        }).success).toBe(true)
+    })
+
+    it('no longer needs a prompt, because Extract and Generate Image do not have one', () => {
+        expect(ExecuteAiJobData.safeParse({ ...base, action: AiStepAction.EXTRACT_STRUCTURED_DATA, prompt: undefined }).success).toBe(true)
+    })
+
+    it('still rejects an action nobody ships', () => {
         expect(ExecuteAiJobData.safeParse({ ...base, action: 'TRANSLATE' }).success).toBe(false)
     })
 })

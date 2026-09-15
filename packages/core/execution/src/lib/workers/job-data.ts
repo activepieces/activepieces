@@ -374,6 +374,8 @@ export enum AiStepAction {
     ASK_AI = 'ASK_AI',
     SUMMARIZE_TEXT = 'SUMMARIZE_TEXT',
     CLASSIFY_TEXT = 'CLASSIFY_TEXT',
+    EXTRACT_STRUCTURED_DATA = 'EXTRACT_STRUCTURED_DATA',
+    GENERATE_IMAGE = 'GENERATE_IMAGE',
 }
 
 export const AiStepWebSearchOptions = z.object({
@@ -395,6 +397,19 @@ export const AiStepWebSearch = z.object({
 })
 export type AiStepWebSearch = z.infer<typeof AiStepWebSearch>
 
+export const AiStepFile = z.object({
+    mimeType: z.string(),
+    base64: z.string(),
+    filename: z.string().optional(),
+})
+export type AiStepFile = z.infer<typeof AiStepFile>
+
+export const AiStepSchema = z.object({
+    mode: z.enum(['simple', 'advanced']),
+    fields: z.unknown(),
+})
+export type AiStepSchema = z.infer<typeof AiStepSchema>
+
 const AiStepJobBase = z.object({
     schemaVersion: z.number(),
     jobType: z.literal(WorkerJobType.EXECUTE_AI),
@@ -407,7 +422,7 @@ const AiStepJobBase = z.object({
     provider: z.enum(AIProviderName),
     providerConfigId: z.string().optional(),
     modelId: z.string(),
-    prompt: z.string(),
+    prompt: z.string().optional(),
     maxOutputTokens: z.number().optional(),
     temperature: z.number().optional(),
     webSearch: AiStepWebSearch.optional(),
@@ -432,10 +447,27 @@ export const ClassifyTextJobData = AiStepJobBase.extend({
 })
 export type ClassifyTextJobData = z.infer<typeof ClassifyTextJobData>
 
+export const ExtractStructuredDataJobData = AiStepJobBase.extend({
+    action: z.literal(AiStepAction.EXTRACT_STRUCTURED_DATA),
+    text: z.string().optional(),
+    files: z.array(AiStepFile).optional(),
+    schema: AiStepSchema.optional(),
+})
+export type ExtractStructuredDataJobData = z.infer<typeof ExtractStructuredDataJobData>
+
+export const GenerateImageJobData = AiStepJobBase.extend({
+    action: z.literal(AiStepAction.GENERATE_IMAGE),
+    files: z.array(AiStepFile).optional(),
+    advancedOptions: z.record(z.string(), z.unknown()).optional(),
+})
+export type GenerateImageJobData = z.infer<typeof GenerateImageJobData>
+
 export const ExecuteAiJobData = z.discriminatedUnion('action', [
     AskAiJobData,
     SummarizeTextJobData,
     ClassifyTextJobData,
+    ExtractStructuredDataJobData,
+    GenerateImageJobData,
 ])
 export type ExecuteAiJobData = z.infer<typeof ExecuteAiJobData>
 
