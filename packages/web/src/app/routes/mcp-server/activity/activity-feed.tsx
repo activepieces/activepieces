@@ -98,6 +98,14 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
       ? undefined
       : piecesByName.get(row.pieceName)?.displayName;
 
+  const projectTypes = useMemo(
+    () => new Map(projects.map((project) => [project.id, project.type])),
+    [projects],
+  );
+
+  const resolveProjectType = (row: PopulatedMcpActivity) =>
+    row.projectId === null ? undefined : projectTypes.get(row.projectId);
+
   const resolveActionDisplayName = (row: PopulatedMcpActivity) => {
     if (row.pieceName === null || row.actionName === null) {
       return undefined;
@@ -111,6 +119,7 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
     showMember: isPrivileged,
     resolveActionDisplayName,
     resolvePieceDisplayName,
+    resolveProjectType,
   });
 
   if (
@@ -167,6 +176,9 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
         }
         pieceDisplayName={
           selected === null ? undefined : resolvePieceDisplayName(selected)
+        }
+        projectType={
+          selected === null ? undefined : resolveProjectType(selected)
         }
       />
     </>

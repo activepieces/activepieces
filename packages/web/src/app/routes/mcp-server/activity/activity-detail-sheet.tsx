@@ -1,10 +1,12 @@
-import { PopulatedMcpActivity } from '@activepieces/shared';
+import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, X } from 'lucide-react';
+import { ReactNode } from 'react';
 
 import { SimpleJsonViewer } from '@/components/custom/simple-json-viewer';
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
+import { Badge } from '@/components/ui/badge';
 import {
   Sheet,
   SheetContent,
@@ -24,6 +26,7 @@ export function ActivityDetailSheet({
   actionDisplayName,
   pieceDisplayName,
   currentUserId,
+  projectType,
 }: ActivityDetailSheetProps) {
   return (
     <Sheet open={row !== null} onOpenChange={(open) => !open && onClose()}>
@@ -34,6 +37,7 @@ export function ActivityDetailSheet({
             actionDisplayName={actionDisplayName}
             pieceDisplayName={pieceDisplayName}
             currentUserId={currentUserId}
+            projectType={projectType}
           />
         )}
       </SheetContent>
@@ -46,6 +50,7 @@ function ActivityDetail({
   actionDisplayName,
   pieceDisplayName,
   currentUserId,
+  projectType,
 }: ActivityDetailProps) {
   const { action, piece } = activityUtils.formatRan({
     row,
@@ -105,7 +110,26 @@ function ActivityDetail({
                 : memberName
             }
           />
-          <DetailRow label={t('Project')} value={row.projectName} />
+          <DetailRow
+            label={t('Project')}
+            value={
+              row.projectName === null ? null : (
+                <span className="flex flex-wrap items-center gap-1.5">
+                  {row.projectName}
+                  {projectType !== undefined && (
+                    <Badge
+                      variant="accent"
+                      className="text-xss font-normal text-muted-foreground"
+                    >
+                      {projectType === ProjectType.PERSONAL
+                        ? t('Personal')
+                        : t('Team')}
+                    </Badge>
+                  )}
+                </span>
+              )
+            }
+          />
           <DetailRow
             label={t('Account')}
             value={activityUtils.formatAccount(row)}
@@ -182,7 +206,7 @@ function PayloadSection({ label, data }: { label: string; data: unknown }) {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string | null }) {
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex gap-4">
       <dt className="w-24 shrink-0 text-muted-foreground">{label}</dt>
@@ -197,6 +221,7 @@ type ActivityDetailSheetProps = {
   actionDisplayName: string | undefined;
   pieceDisplayName: string | undefined;
   currentUserId: string | undefined;
+  projectType: ProjectType | undefined;
 };
 
 type ActivityDetailProps = {
@@ -204,4 +229,5 @@ type ActivityDetailProps = {
   actionDisplayName: string | undefined;
   pieceDisplayName: string | undefined;
   currentUserId: string | undefined;
+  projectType: ProjectType | undefined;
 };

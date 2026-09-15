@@ -1,4 +1,4 @@
-import { PopulatedMcpActivity } from '@activepieces/shared';
+import { PopulatedMcpActivity, ProjectType } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Check, Clock, FolderOpen, Plug, User, Wrench, X } from 'lucide-react';
@@ -20,6 +20,7 @@ export function buildActivityColumns({
   showMember,
   resolveActionDisplayName,
   resolvePieceDisplayName,
+  resolveProjectType,
 }: BuildActivityColumnsParams): ActivityColumn[] {
   const when: ActivityColumn = {
     accessorKey: 'when',
@@ -121,7 +122,7 @@ export function buildActivityColumns({
 
   const project: ActivityColumn = {
     accessorKey: 'project',
-    size: 150,
+    size: 210,
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
@@ -129,14 +130,27 @@ export function buildActivityColumns({
         icon={FolderOpen}
       />
     ),
-    cell: ({ row }) =>
-      row.original.projectName === null ? (
-        <div className="text-muted-foreground">—</div>
-      ) : (
-        <Badge variant="outline" className="font-normal">
-          {row.original.projectName}
-        </Badge>
-      ),
+    cell: ({ row }) => {
+      const projectType = resolveProjectType(row.original);
+      if (row.original.projectName === null) {
+        return <div className="text-muted-foreground">—</div>;
+      }
+      return (
+        <div className="flex min-w-0 items-center gap-1.5">
+          <Badge variant="outline" className="min-w-0 font-normal">
+            <span className="truncate">{row.original.projectName}</span>
+          </Badge>
+          {projectType !== undefined && (
+            <Badge
+              variant="accent"
+              className="shrink-0 text-xss font-normal text-muted-foreground"
+            >
+              {projectType === ProjectType.PERSONAL ? t('Personal') : t('Team')}
+            </Badge>
+          )}
+        </div>
+      );
+    },
   };
 
   const result: ActivityColumn = {
@@ -170,4 +184,5 @@ type BuildActivityColumnsParams = {
   showMember: boolean;
   resolveActionDisplayName: (row: PopulatedMcpActivity) => string | undefined;
   resolvePieceDisplayName: (row: PopulatedMcpActivity) => string | undefined;
+  resolveProjectType: (row: PopulatedMcpActivity) => ProjectType | undefined;
 };
