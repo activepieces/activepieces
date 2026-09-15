@@ -3,7 +3,9 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { authenticationSession } from '@/lib/authentication-session';
 
 function toTab(value: string | undefined): McpTab {
-  return value === 'connections' || value === 'pieces' ? value : 'connect';
+  return value === 'connections' || value === 'pieces' || value === 'activity'
+    ? value
+    : 'connect';
 }
 
 export function useMcpNav(): McpNav {
@@ -25,7 +27,7 @@ export function useMcpNav(): McpNav {
   };
 }
 
-export type McpTab = 'connect' | 'pieces' | 'connections';
+export type McpTab = 'connect' | 'pieces' | 'connections' | 'activity';
 
 export type McpView = 'landing' | 'browse' | 'client';
 
