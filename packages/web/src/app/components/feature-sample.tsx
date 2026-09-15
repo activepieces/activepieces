@@ -28,6 +28,7 @@ export function FeatureSample({
   return (
     <div className="relative flex flex-1 min-h-0 min-w-0 flex-col overflow-hidden">
       <div
+        inert
         aria-hidden
         className="flex flex-1 min-h-0 min-w-0 flex-col pointer-events-none select-none opacity-25"
       >
