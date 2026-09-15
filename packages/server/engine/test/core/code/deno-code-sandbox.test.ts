@@ -57,7 +57,7 @@ describe('denoCodeSandbox permission boundary', () => {
             const codeFilePath = path.join(stepDir, 'index.ts')
             await writeFile(codeFilePath, `export const code = async () => ({ keys: Object.keys(Deno.env.toObject()), missing: process.env.AP_EXECUTION_MODE ?? null })`)
             const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-            expect(result).toEqual({ keys: ['PATH'], missing: null })
+            expect(result).toEqual({ keys: ['PATH', 'HOME'], missing: null })
         })
 
         it('forwards exactly the vars listed in AP_SANDBOX_PROPAGATED_ENV_VARS when ENV is granted, and none without it', async () => {
@@ -71,7 +71,7 @@ describe('denoCodeSandbox permission boundary', () => {
 
                 const envSandbox = denoModule.denoCodeSandbox([denoModule.DenoPermission.ENV])
                 const result = await envSandbox.runCodeModule({ codeFilePath, inputs: {} })
-                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['MY_PROPAGATED_SECRET', 'PATH'] })
+                expect(result).toEqual({ secret: 'propagated-value', unlisted: null, keys: ['HOME', 'MY_PROPAGATED_SECRET', 'PATH'] })
 
                 await writeFile(codeFilePath, `export const code = async () => { try { Deno.env.toObject(); return 'readable' } catch { return 'blocked' } }`)
                 const lockedResult = await denoCodeSandbox.runCodeModule({ codeFilePath, inputs: {} })
