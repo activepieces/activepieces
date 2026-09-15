@@ -19,7 +19,6 @@ const clientRepo = repoFactory(McpOAuthClientEntity)
 
 const ACCESS_TOKEN_TTL_15_MINUTES_SECONDS = 15 * 60
 const REFRESH_TOKEN_TTL_30_DAYS_MS = 30 * 24 * 60 * 60 * 1000
-const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 const DEFAULT_GRANT_PAGE_SIZE = 20
 const TOKEN_ALIAS = 'mcp_oauth_token'
 const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'
@@ -332,6 +331,8 @@ type TokenResponse = {
     expires_in: number
     refresh_token?: string
 }
+
+export const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 
 export type McpOAuthAccessTokenPayload = {
     sub: string
