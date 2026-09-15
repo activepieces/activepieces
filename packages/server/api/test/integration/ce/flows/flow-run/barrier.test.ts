@@ -1,9 +1,12 @@
 import { apId } from '@activepieces/core-utils'
-import { BarrierSignalStatus, BarrierSummary, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, PauseType, RunEnvironment } from '@activepieces/shared'
+import { Queue } from 'bullmq'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
+import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
+import { BarrierJobData } from '../../../../../src/app/waitpoints/barrier-queue-factory'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
@@ -53,6 +56,7 @@ async function createBarrier({ flowRunId, signalLabels, policy, stepName }: {
     return barrierService(app.log).create({
         flowRunId,
         projectId: ctx.project.id,
+        platformId: ctx.platform.id,
         stepName: stepName ?? 'approval',
         version: 'V1',
         policy,
@@ -87,6 +91,11 @@ async function completeWithoutConsuming(barrierId: string) {
         resumePayload: { body: { total: 1 }, headers: {}, queryParams: {} },
     })
     await databaseConnection().getRepository('waitpoint_signal').delete({ waitpointId: barrierId })
+}
+
+async function countPendingEvaluations({ queue, barrierId }: { queue: Queue<BarrierJobData>, barrierId: string }): Promise<number> {
+    const jobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'paused'])
+    return jobs.filter((job) => job.data.barrierId === barrierId).length
 }
 
 async function readStatus(barrierId: string): Promise<WaitpointStatus> {
@@ -208,18 +217,17 @@ describe('signal identity', () => {
 describe('evaluation coalescing', () => {
     it('clears the deduplication key before evaluating, so a signal landing mid-job is not swallowed', async () => {
         const { flowRun } = await createParentRun()
-        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
         const queue = barrierQueue(app.log).get()
         await queue.pause()
         try {
-            await queue.drain(true)
+            const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com', 'b@example.com'] })
+
             await barrierQueue(app.log).enqueueEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
-            await barrierQueue(app.log).enqueueEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
-            const beforeHandling = await queue.getJobCountByTypes('waiting', 'delayed', 'prioritized', 'paused')
+            const beforeHandling = await countPendingEvaluations({ queue, barrierId: barrier.id })
 
             await barrierQueue(app.log).clearEvaluationDedupKey(barrier.id)
             await barrierQueue(app.log).enqueueEvaluation({ barrierId: barrier.id, projectId: ctx.project.id })
-            const afterHandling = await queue.getJobCountByTypes('waiting', 'delayed', 'prioritized', 'paused')
+            const afterHandling = await countPendingEvaluations({ queue, barrierId: barrier.id })
 
             expect(beforeHandling).toBe(1)
             expect(afterHandling).toBe(2)
@@ -365,5 +373,28 @@ describe('resume guards', () => {
         })
 
         expect(stale).toBe(false)
+    })
+})
+
+describe('signal count limit', () => {
+    it('refuses a barrier that waits on more than the platform allows', async () => {
+        const { flowRun } = await createParentRun()
+        await platformConfigurationService(app.log).update({ platformId: ctx.platform.id, maxBarrierSignals: 2 })
+
+        await expect(createBarrier({ flowRunId: flowRun.id, signalLabels: ['a', 'b', 'c'] })).rejects.toMatchObject({
+            error: {
+                code: ErrorCode.VALIDATION,
+                params: { message: expect.stringContaining('exceeds the maximum of 2') },
+            },
+        })
+    })
+
+    it('allows a barrier at exactly the platform limit', async () => {
+        const { flowRun } = await createParentRun()
+        await platformConfigurationService(app.log).update({ platformId: ctx.platform.id, maxBarrierSignals: 2 })
+
+        const { signalCount } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a', 'b'] })
+
+        expect(signalCount).toBe(2)
     })
 })

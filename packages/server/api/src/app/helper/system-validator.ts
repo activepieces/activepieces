@@ -1,6 +1,6 @@
 import { inspect } from 'util'
 import { isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -26,6 +26,14 @@ function booleanValidator(value: string | undefined) {
 function numberValidator(value: string | undefined) {
     const isValid = !isNil(value) && !Number.isNaN(Number(value))
     return isValid ? true : 'Value must be a valid number'
+}
+
+function boundedNumberValidator({ min, max }: { min: number, max: number }) {
+    return (value: string | undefined) => {
+        const parsed = Number(value)
+        const isValid = !isNil(value) && Number.isInteger(parsed) && parsed >= min && parsed <= max
+        return isValid ? true : `Value must be a whole number between ${min} and ${max}`
+    }
 }
 
 function stringValidator(value: string) {
@@ -64,7 +72,7 @@ const systemPropValidators: {
     [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
-    [AppSystemProp.MAX_BARRIER_SIGNALS]: numberValidator,
+    [AppSystemProp.MAX_BARRIER_SIGNALS]: boundedNumberValidator(maxBarrierSignalsBounds),
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,

@@ -62,7 +62,8 @@ The step resumes with one shape, so an expression never breaks on fan-out width:
 
 The `signals` array is present only when `total <= 100`; above that only the counts travel and
 `signalsTruncated` is set. `AP_MAX_BARRIER_SIGNALS` (default 10 000) caps how many things one barrier may
-wait on. A barrier's deadline is set when it is created, from `AP_PAUSED_FLOW_TIMEOUT_DAYS`, and never moves.
+wait on. The cap is stored per platform, created from the env var the first time that platform's
+configuration is read. 10 000 is also the ceiling: the env var cannot raise it higher. A barrier's deadline is set when it is created, from `AP_PAUSED_FLOW_TIMEOUT_DAYS`, and never moves.
 
 ## Lifecycle
 
