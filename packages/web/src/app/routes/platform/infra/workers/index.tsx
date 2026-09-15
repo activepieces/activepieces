@@ -24,6 +24,7 @@ import { useSearchParams } from 'react-router-dom';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { RequestTrial } from '@/app/components/request-trial';
+import { VIEW_QUERY_PARAM } from '@/app/routes/platform/admin-pages';
 import {
   Alert,
   AlertAction,
@@ -53,8 +54,6 @@ import { SandboxesPopover } from './sandboxes-popover';
 import { WorkerAssignmentsTab } from './worker-assignments-tab';
 import { WorkerConfigsPopover } from './worker-configs-popover';
 
-type TabValue = 'health' | 'worker-groups';
-
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
@@ -62,14 +61,14 @@ export default function WorkersPage() {
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = (searchParams.get('tab') as TabValue) || 'health';
+  const activeTab = parseTabValue(searchParams.get(VIEW_QUERY_PARAM));
 
   const setTab = (tab: TabValue) => {
     const newParams = new URLSearchParams(searchParams);
     if (tab === 'health') {
-      newParams.delete('tab');
+      newParams.delete(VIEW_QUERY_PARAM);
     } else {
-      newParams.set('tab', tab);
+      newParams.set(VIEW_QUERY_PARAM, tab);
     }
     setSearchParams(newParams, { replace: true });
   };
@@ -180,7 +179,6 @@ export default function WorkersPage() {
 
         <TabsContent value="worker-groups">
           <LockedFeatureGuard
-            featureKey="DEDICATED_WORKERS"
             locked={!platform.plan.workerGroupsEnabled}
             lockTitle={t('Unlock Worker Groups')}
             lockDescription={t(
@@ -378,3 +376,9 @@ type WorkerCardProps = {
   worker: WorkerMachineWithStatus;
   index: number;
 };
+
+function parseTabValue(value: string | null): TabValue {
+  return value === 'worker-groups' ? value : 'health';
+}
+
+type TabValue = 'health' | 'worker-groups';
