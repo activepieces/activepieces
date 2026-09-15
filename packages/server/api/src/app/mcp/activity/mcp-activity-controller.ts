@@ -1,6 +1,5 @@
-import { SeekPage } from '@activepieces/core-utils'
+import { ApId, SeekPage } from '@activepieces/core-utils'
 import {
-    GetMcpActivityPayloadParams,
     ListMcpActivityRequestQuery,
     McpActivityPayload,
     PopulatedMcpActivity,
@@ -8,6 +7,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
+import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
 import { mcpListingUtils } from '../mcp-listing-utils'
 import { mcpActivityService } from './mcp-activity-service'
@@ -57,7 +57,7 @@ const GetPayloadRequest = {
     },
     schema: {
         tags: ['mcp-activity'],
-        params: GetMcpActivityPayloadParams,
+        params: z.object({ id: ApId }),
         response: {
             [StatusCodes.OK]: McpActivityPayload,
         },

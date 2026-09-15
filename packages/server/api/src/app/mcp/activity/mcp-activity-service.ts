@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isNil, SeekPage, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import {
     FileType,
     McpActivity,
@@ -10,7 +10,6 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { z } from 'zod'
 import { appConnectionsRepo } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { fileService } from '../../file/file.service'
@@ -74,7 +73,7 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
         const activity = await repo().findOneBy({
             id,
             platformId,
-            ...(isNil(userId) ? {} : { userId }),
+            ...spreadIfDefined('userId', userId),
         })
         if (isNil(activity) || isNil(activity.payloadFileId)) {
             throw new ActivepiecesError({
@@ -85,10 +84,20 @@ export const mcpActivityService = (log: FastifyBaseLogger) => ({
         const file = await fileService(log).getDataOrThrow({
             fileId: activity.payloadFileId,
             type: FileType.MCP_CALL_PAYLOAD,
-            ...(isNil(activity.projectId) ? {} : { projectId: activity.projectId }),
+            ...spreadIfDefined('projectId', activity.projectId),
         })
-        const { input, output } = StoredPayload.parse(JSON.parse(file.data.toString('utf-8')))
-        return { input, output, truncated: activity.payloadTruncated }
+        const { data: payload, error } = await tryCatch(async () => McpActivityPayload.parse({
+            ...JSON.parse(file.data.toString('utf-8')),
+            truncated: activity.payloadTruncated,
+        }))
+        if (!isNil(error)) {
+            log.error({ err: error, activityId: id, fileId: activity.payloadFileId }, '[mcpActivityService#getPayload] unreadable payload')
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'mcp_activity', entityId: id, message: 'Stored payload could not be read' },
+            })
+        }
+        return payload
     },
 
     async deleteStale(): Promise<void> {
@@ -141,11 +150,6 @@ async function findConnectionNames({ platformId, activities }: { platformId: str
         [connectionKey({ projectId, connectionExternalId: connection.externalId }), connection.displayName] as const,
     )))
 }
-
-const StoredPayload = z.object({
-    input: z.unknown(),
-    output: z.unknown(),
-})
 
 type ListParams = {
     platformId: string

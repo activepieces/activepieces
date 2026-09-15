@@ -1,7 +1,7 @@
-import { ApId, BaseModelSchema, OptionalArrayFromQuery } from '@activepieces/core-utils'
+import { ApId, BaseModelSchema, OptionalArrayFromQuery, OptionalIsoDateTimeQuery } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { UserWithMetaInformation } from '../../core/user/user'
-import { McpOAuthClientKey } from './mcp-oauth'
+import { McpOAuthClientKey, PLATFORM_WIDE_PROJECT_FILTER_VALUE } from './mcp-oauth'
 
 export const McpActivityStatus = z.enum(['SUCCEEDED', 'FAILED'])
 
@@ -49,12 +49,12 @@ export type PopulatedMcpActivity = z.infer<typeof PopulatedMcpActivity>
 export const ListMcpActivityRequestQuery = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(100).optional(),
-    projectIds: OptionalArrayFromQuery(z.string()),
+    projectIds: OptionalArrayFromQuery(z.union([ApId, z.literal(PLATFORM_WIDE_PROJECT_FILTER_VALUE)])),
     memberIds: OptionalArrayFromQuery(ApId),
     clientKeys: OptionalArrayFromQuery(McpOAuthClientKey),
     statuses: OptionalArrayFromQuery(McpActivityStatus),
-    createdAfter: z.iso.datetime({ offset: true }).optional(),
-    createdBefore: z.iso.datetime({ offset: true }).optional(),
+    createdAfter: OptionalIsoDateTimeQuery,
+    createdBefore: OptionalIsoDateTimeQuery,
 })
 
 export type ListMcpActivityRequestQuery = z.infer<typeof ListMcpActivityRequestQuery>
@@ -66,11 +66,5 @@ export const McpActivityPayload = z.object({
 })
 
 export type McpActivityPayload = z.infer<typeof McpActivityPayload>
-
-export const GetMcpActivityPayloadParams = z.object({
-    id: ApId,
-})
-
-export type GetMcpActivityPayloadParams = z.infer<typeof GetMcpActivityPayloadParams>
 
 export const MCP_ACTIVITY_PAYLOAD_MAX_BYTES = 128 * 1024

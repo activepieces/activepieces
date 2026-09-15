@@ -1,9 +1,10 @@
-import { apId } from '@activepieces/core-utils'
-import { DefaultProjectRole, PlatformRole } from '@activepieces/shared'
+import { apId, isNil } from '@activepieces/core-utils'
+import { DefaultProjectRole, FileCompression, FileType, PlatformRole } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { mcpActivityService } from '../../../../src/app/mcp/activity/mcp-activity-service'
 import { db } from '../../../helpers/db'
+import { createMockFile } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
@@ -12,15 +13,17 @@ let ctx: TestContext
 
 const daysAgo = (days: number) => new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
 
-async function insertActivityRow({ userId, projectId, platformId, status = 'SUCCEEDED', clientKey = null, created = new Date().toISOString() }: {
+async function insertActivityRow({ userId, projectId, platformId, status = 'SUCCEEDED', clientKey = null, created = new Date().toISOString(), payload }: {
     userId: string
     projectId: string | null
     platformId?: string
     status?: string
     clientKey?: string | null
     created?: string
+    payload?: { input: unknown, output: unknown }
 }): Promise<string> {
     const id = apId()
+    const payloadFileId = isNil(payload) ? null : await insertPayloadFile({ payload, projectId, platformId: platformId ?? ctx.platform.id })
     await db.save('mcp_activity', {
         id,
         platformId: platformId ?? ctx.platform.id,
@@ -34,12 +37,28 @@ async function insertActivityRow({ userId, projectId, platformId, status = 'SUCC
         connectionExternalId: 'conn-external-1',
         errorMessage: status === 'FAILED' ? 'Something broke' : null,
         durationMs: 42,
-        payloadFileId: null,
+        payloadFileId,
         payloadTruncated: false,
         created,
         updated: created,
     })
     return id
+}
+
+async function insertPayloadFile({ payload, projectId, platformId }: {
+    payload: { input: unknown, output: unknown }
+    projectId: string | null
+    platformId: string
+}): Promise<string> {
+    const file = createMockFile({
+        projectId,
+        platformId,
+        type: FileType.MCP_CALL_PAYLOAD,
+        compression: FileCompression.NONE,
+        data: Buffer.from(JSON.stringify(payload), 'utf-8'),
+    })
+    await db.save('file', file)
+    return file.id
 }
 
 async function promoteToOperator(memberCtx: TestContext): Promise<void> {
@@ -167,6 +186,33 @@ describe('MCP activity', () => {
             expect(before.statusCode).toBe(400)
         })
 
+        it('rejects a year zero created window that PostgreSQL cannot represent', async () => {
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+
+            const after = await ctx.get('/v1/mcp-activity?createdAfter=0000-01-01T00:00:00Z')
+            expect(after.statusCode).toBe(400)
+
+            const before = await ctx.get('/v1/mcp-activity?createdBefore=0000-01-01T00:00:00Z')
+            expect(before.statusCode).toBe(400)
+        })
+
+        it('accepts the earliest created window PostgreSQL can represent', async () => {
+            const mine = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+
+            const response = await ctx.get('/v1/mcp-activity?createdAfter=0001-01-01T00:00:00Z')
+
+            expect(response.statusCode).toBe(200)
+            expect(response.json().data.map((row: { id: string }) => row.id)).toEqual([mine])
+        })
+
+        it('rejects an empty project filter instead of matching nothing', async () => {
+            await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+
+            const response = await ctx.get('/v1/mcp-activity?projectIds=')
+
+            expect(response.statusCode).toBe(400)
+        })
+
         it('accepts an offset-bearing created window, not only UTC', async () => {
             const recent = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(1) })
             const old = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id, created: daysAgo(10) })
@@ -215,11 +261,46 @@ describe('MCP activity', () => {
             expect(response.statusCode).toBe(404)
         })
 
+        it('serves the stored payload to a privileged caller', async () => {
+            const id = await insertActivityRow({
+                userId: ctx.user.id,
+                projectId: ctx.project.id,
+                payload: { input: { pieceName: '@activepieces/piece-slack' }, output: { ok: true } },
+            })
+
+            const response = await ctx.get(`/v1/mcp-activity/${id}/payload`)
+
+            expect(response.statusCode).toBe(200)
+            expect(response.json()).toEqual({
+                input: { pieceName: '@activepieces/piece-slack' },
+                output: { ok: true },
+                truncated: false,
+            })
+        })
+
         it('404s on another members activity for an unprivileged member', async () => {
             const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.ADMIN })
-            const mine = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+            const mine = await insertActivityRow({
+                userId: ctx.user.id,
+                projectId: ctx.project.id,
+                payload: { input: {}, output: {} },
+            })
 
             const response = await member.get(`/v1/mcp-activity/${mine}/payload`)
+
+            expect(response.statusCode).toBe(404)
+        })
+
+        it('404s on another platforms activity for a privileged caller', async () => {
+            const otherPlatform = await createTestContext(app!)
+            const theirs = await insertActivityRow({
+                userId: otherPlatform.user.id,
+                projectId: otherPlatform.project.id,
+                platformId: otherPlatform.platform.id,
+                payload: { input: {}, output: {} },
+            })
+
+            const response = await ctx.get(`/v1/mcp-activity/${theirs}/payload`)
 
             expect(response.statusCode).toBe(404)
         })
