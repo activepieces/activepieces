@@ -1,5 +1,6 @@
+import { AiStepAction } from '@activepieces/core-utils'
 import { describe, expect, it } from 'vitest'
-import { AiStepAction, ExecuteAiJobData, WorkerJobType } from '../../src/index'
+import { ExecuteAiJobData, WorkerJobType } from '../../src/index'
 
 const base = {
     schemaVersion: 1,

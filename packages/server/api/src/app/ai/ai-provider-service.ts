@@ -1,6 +1,6 @@
 import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
 import { modelCatalog } from '@activepieces/server-utils'
-import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
+import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, aiProviderCredentials, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
@@ -162,7 +162,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return null
         }
         const auth = await decryptRowAuth({ aiProvider: chatProvider, platformId })
-        return { provider: chatProvider.provider, configId: chatProvider.id, auth, config: chatProvider.config, platformId, modelScope: chatProvider.modelScope, modelIds: chatProvider.modelIds }
+        return { ...aiProviderCredentials({ provider: chatProvider.provider, auth, config: chatProvider.config }), configId: chatProvider.id, platformId, modelScope: chatProvider.modelScope, modelIds: chatProvider.modelIds }
     },
 
     async keyServesScope({ platformId, provider, configId, resolvedFor, target }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, resolvedFor: ProviderScope, target: ProviderScope }): Promise<boolean> {
@@ -243,7 +243,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async getConfigOrThrow({ platformId, provider, scope, configId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string }): Promise<GetProviderConfigResponse> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
         const auth = await decryptRowAuth({ aiProvider, platformId })
-        return { provider: aiProvider.provider, configId: aiProvider.id, auth, config: aiProvider.config, platformId, modelScope: aiProvider.modelScope, modelIds: aiProvider.modelIds }
+        return { ...aiProviderCredentials({ provider: aiProvider.provider, auth, config: aiProvider.config }), configId: aiProvider.id, platformId, modelScope: aiProvider.modelScope, modelIds: aiProvider.modelIds }
     },
     async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
         await ensureManagedProviderRow({ platformId })
@@ -454,8 +454,7 @@ async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProvid
     if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
         const doesHaveKeys = !isNil(auth) && 'apiKey' in auth && !isNil(auth.apiKey) && auth.apiKey !== ''
         if (!doesHaveKeys) {
-            const { auth: activePiecesAuth } = await enrichWithKeysIfNeeded(aiProvider, platformId)
-            return activePiecesAuth
+            return enrichWithKeysIfNeeded(aiProvider, platformId)
         }
     }
     return auth
@@ -478,14 +477,14 @@ async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId:
     return shouldHideActivepiecesAiProvider({ platformId, log })
 }
 
-async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId): Promise<GetProviderConfigResponse> {
+async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
     const { key, data } = await openRouterApi.createKey({
         name: `Platform ${platformId}`,
         limit: MANAGED_OPENROUTER_KEY_MONTHLY_LIMIT_USD,
         limit_reset: MANAGED_OPENROUTER_KEY_LIMIT_RESET,
     })
     const rawAuth: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
-    const savedAiProvider = await aiProviderRepo().save({
+    await aiProviderRepo().save({
         id: aiProvider.id,
         platformId,
         provider: AIProviderName.ACTIVEPIECES,
@@ -493,7 +492,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         config: {},
         auth: await encryptUtils.encryptObject(rawAuth),
     })
-    return { provider: savedAiProvider.provider, configId: savedAiProvider.id, auth: rawAuth, config: savedAiProvider.config, platformId, modelScope: savedAiProvider.modelScope, modelIds: savedAiProvider.modelIds }
+    return rawAuth
 }
 
 

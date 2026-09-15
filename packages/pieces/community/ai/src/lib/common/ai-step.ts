@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ActionContext, ApFile, ExecutionType, InputPropertyMap, isNil, spreadIfDefined } from '@activepieces/pieces-framework';
+import { ActionContext, AiStepAction, ApFile, ExecutionType, InputPropertyMap, isNil, spreadIfDefined } from '@activepieces/pieces-framework';
 
 export async function runOnWorker(params: {
   context: AiStepContext;
@@ -90,13 +90,6 @@ export type AiStepContext = Pick<
   ActionContext<undefined, InputPropertyMap>,
   'server' | 'flows' | 'files' | 'run' | 'executionType'
 > & { resumePayload?: { body?: unknown } };
-
-export type AiStepAction =
-  | 'ASK_AI'
-  | 'SUMMARIZE_TEXT'
-  | 'CLASSIFY_TEXT'
-  | 'EXTRACT_STRUCTURED_DATA'
-  | 'GENERATE_IMAGE';
 
 export type AiStepFile = {
   fileId: string;

@@ -224,7 +224,7 @@ The connection's `Username` and `API Password` fields are removed and replaced w
 
 Only if you have an existing Kimai connection. Reconnect it: in your Kimai instance, generate an API token from your user profile's "API Access" page, then re-enter your Kimai connection in Activepieces with the Server URL and that token. Existing connections using the old username/API-password fields will fail to authenticate until reconnected.
 
-## 0.91.0
+## 0.92.0
 
 ### What has changed?
 
@@ -261,6 +261,10 @@ The limit is per file, not per step, so several large files in one step are fine
 #### What you need to do
 
 Nothing unless an AI step handles files larger than 25 MB. Those steps now fail with a size error naming the limit. Raise `AP_MAX_FILE_SIZE_MB` on a self-hosted installation if you need more.
+
+## 0.91.0
+
+### What has changed?
 
 #### Telemetry moves from `AP_TELEMETRY_ENABLED` to the platform admin UI
 
