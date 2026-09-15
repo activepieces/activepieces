@@ -1,8 +1,10 @@
-import { AgentConversation } from '@activepieces/shared';
+import { isNil } from '@activepieces/core-utils';
+import { AgentRunListItem } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Activity, Bot, Clock, History } from 'lucide-react';
+import { Activity, Bot, Clock, History, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -12,6 +14,7 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
+import { authenticationSession } from '@/lib/authentication-session';
 
 type AgentRunsProps = {
   agentId: string;
@@ -26,7 +29,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
     refetch,
   } = agentsQueries.useAgentRuns({ agentId, projectId: project.id });
 
-  const columns: ColumnDef<RowDataWithActions<AgentConversation>>[] = useMemo(
+  const columns: ColumnDef<RowDataWithActions<AgentRunListItem>>[] = useMemo(
     () => [
       {
         accessorKey: 'title',
@@ -42,6 +45,34 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
             />
           </div>
         ),
+      },
+      {
+        accessorKey: 'flow',
+        size: 220,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Flow')}
+            icon={Workflow}
+          />
+        ),
+        cell: ({ row }) => {
+          const flow = row.original.flow;
+          if (isNil(flow)) {
+            return <span className="text-muted-foreground">{'\u2014'}</span>;
+          }
+          return (
+            <Link
+              to={authenticationSession.appendProjectRoutePrefix(
+                `/runs/${flow.flowRunId}`,
+              )}
+              className="text-left hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TruncatedColumnTextValue value={flow.displayName} />
+            </Link>
+          );
+        },
       },
       {
         accessorKey: 'status',

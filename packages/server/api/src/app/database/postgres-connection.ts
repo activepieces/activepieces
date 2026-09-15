@@ -435,6 +435,7 @@ import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/
 import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
 import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841000000000-AddPlatformConfiguration'
 import { AddAgentRunsIndex1842000000000 } from './migration/postgres/1842000000000-AddAgentRunsIndex'
+import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres/1843000000000-AddAgentConversationFlowRunId'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -885,6 +886,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddFlowApprovalWorkflow1840000000000,
         AddPlatformConfiguration1841000000000,
         AddAgentRunsIndex1842000000000,
+        AddAgentConversationFlowRunId1843000000000,
     ]
     return migrations
 }
