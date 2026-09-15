@@ -2,7 +2,9 @@ import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, spreadIfDefined,
 import { ApEdition, AuthenticationResponse, OPEN_SOURCE_PLAN, Platform, PlatformPlanLimits, PlatformRole, PlatformUsage, PlatformWithoutFederatedAuth, PlatformWithoutSensitiveData, ProjectType, SsoDomainVerification, SsoDomainVerificationStatus, UpdatePlatformRequestBody, User, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
+import { z } from 'zod'
 import { authenticationUtils } from '../authentication/authentication-utils'
+import { signInMethodUtils } from '../authentication/sign-in-methods'
 import { userIdentityRepository, userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
@@ -166,6 +168,8 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 ...(params.federatedAuthProviders ?? {}),
             }
             : undefined
+        await assertSignInMethodRemains({ params, platform, federatedAuthProviders, hasSamlConfigured: () => this.hasSamlConfigured(params.id) })
+        const allowedAuthDomains = normalizeAllowedAuthDomains(params.allowedAuthDomains)
         const updatedPlatform = {
             ...platform,
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
@@ -183,7 +187,7 @@ export const platformService = (log: FastifyBaseLogger) => ({
                 'enforceAllowedAuthDomains',
                 params.enforceAllowedAuthDomains,
             ),
-            ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
+            ...spreadIfDefined('allowedAuthDomains', allowedAuthDomains),
             ...spreadIfDefined('allowedEmbedOrigins', params.allowedEmbedOrigins),
             ...spreadIfDefined('ssoDomain', params.ssoDomain),
             ...spreadIfDefined('ssoDomainVerification', params.ssoDomainVerification),
@@ -394,6 +398,57 @@ function stripFederatedAuth(platform: Platform): PlatformWithoutFederatedAuth {
 
 function hasFederatedAuth(platform: Platform | PlatformWithoutFederatedAuth): platform is Platform {
     return 'federatedAuthProviders' in platform
+}
+
+function normalizeAllowedAuthDomains(domains: string[] | undefined): string[] | undefined {
+    if (isNil(domains)) {
+        return undefined
+    }
+    return domains.map((domain) => {
+        const normalized = domain.trim().toLowerCase()
+        if (!AllowedAuthDomain.safeParse(normalized).success) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `"${domain}" is not a valid domain, enter a domain like acme.com`,
+                },
+            })
+        }
+        return normalized
+    })
+}
+
+async function assertSignInMethodRemains({ params, platform, federatedAuthProviders, hasSamlConfigured }: AssertSignInMethodRemainsParams): Promise<void> {
+    const touchesSignInMethods = params.emailAuthEnabled !== undefined
+        || params.googleAuthEnabled !== undefined
+        || params.federatedAuthProviders?.saml !== undefined
+    if (!touchesSignInMethods) {
+        return
+    }
+    const emailRemains = params.emailAuthEnabled ?? platform.emailAuthEnabled
+    const googleConfigured = signInMethodUtils.isGoogleConfigured()
+    const googleRemains = googleConfigured && (params.googleAuthEnabled ?? platform.googleAuthEnabled)
+    const samlRemains = isNil(federatedAuthProviders)
+        ? await hasSamlConfigured()
+        : !isNil(federatedAuthProviders.saml)
+    if (emailRemains || googleRemains || samlRemains) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: 'At least one sign-in method must stay enabled, enable another one before turning this off',
+        },
+    })
+}
+
+const AllowedAuthDomain = z.string().max(253).regex(z.regexes.domain)
+
+type AssertSignInMethodRemainsParams = {
+    params: UpdateParams
+    platform: Platform | PlatformWithoutFederatedAuth
+    federatedAuthProviders: Platform['federatedAuthProviders'] | undefined
+    hasSamlConfigured: () => Promise<boolean>
 }
 
 type AddParams = {

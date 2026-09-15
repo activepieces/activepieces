@@ -27,6 +27,7 @@ interface ConfirmationDeleteDialogProps {
   buttonText?: string;
   onOpenChange?: (open: boolean) => void;
   showToast?: boolean;
+  onSuccess?: () => void;
   onError?: (error: Error) => void;
   warning?: React.ReactNode | string;
   confirmDisabled?: boolean;
@@ -42,6 +43,7 @@ export const ConfirmationDeleteDialog = ({
   buttonText,
   children,
   open,
+  onSuccess,
   onError,
   onOpenChange,
   warning,
@@ -59,6 +61,7 @@ export const ConfirmationDeleteDialog = ({
       if (showToast) {
         toast.success(t('Removed {entityName}', { entityName }));
       }
+      onSuccess?.();
     },
     onError,
   });
