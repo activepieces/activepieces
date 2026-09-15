@@ -44,6 +44,8 @@ type Settings = {
     ENVIRONMENT: string
     APP_WEBHOOK_SECRETS: string
     MAX_FLOW_RUN_LOG_SIZE_MB: number
+    FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?: number
+    FLOW_RUN_LOG_SLICE_THRESHOLD_KB?: number
     MAX_FILE_SIZE_MB: number
     SANDBOX_MEMORY_LIMIT: string
     SANDBOX_PROPAGATED_ENV_VARS: string[]
@@ -167,6 +169,20 @@ describe('createSandboxForJob', () => {
                 AP_NETWORK_MODE: NetworkMode.STRICT,
             })
             expect('AP_EGRESS_PROXY_URL' in env).toBe(false)
+        })
+
+        it('forwards the run-log threshold vars only when the API sent them', () => {
+            const missing = buildSettings()
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => missing })
+            expect('AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB' in createSandboxMock.mock.calls[0][2].env).toBe(false)
+            expect('AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB' in createSandboxMock.mock.calls[0][2].env).toBe(false)
+
+            const present = buildSettings({ FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB: 50, FLOW_RUN_LOG_SLICE_THRESHOLD_KB: 64 })
+            createSandboxForJob({ log, boxId: 1, reusable: false, basePath: '/tmp', getSettings: () => present })
+            expect(createSandboxMock.mock.calls[1][2].env).toMatchObject({
+                AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB: '50',
+                AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB: '64',
+            })
         })
 
         it('forwards AP_ENFORCE_CONNECTION_PIECE_BINDING only when enabled', () => {

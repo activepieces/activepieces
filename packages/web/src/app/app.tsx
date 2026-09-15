@@ -29,13 +29,13 @@ export function App() {
                 <EmbeddingAnalyticsLoader />
                 <TelemetryProvider>
                   <TooltipProvider>
-                    <React.Fragment key={i18n.language}>
-                      <ThemeProvider storageKey="vite-ui-theme">
+                    <ThemeProvider storageKey="vite-ui-theme">
+                      <React.Fragment key={i18n.language}>
                         <ApRouter />
                         <Toaster position="bottom-right" />
                         <ApErrorDialog />
-                      </ThemeProvider>
-                    </React.Fragment>
+                      </React.Fragment>
+                    </ThemeProvider>
                   </TooltipProvider>
                 </TelemetryProvider>
               </EmbeddingFontLoader>
