@@ -61,7 +61,7 @@ export type ActivePiecesProviderConfig = z.infer<typeof ActivePiecesProviderConf
 export const ProviderModelConfig = z.object({
     modelId: z.string(),
     modelName: z.string(),
-    modelType: z.nativeEnum(AIProviderModelType),
+    modelType: z.enum(AIProviderModelType),
 })
 export type ProviderModelConfig = z.infer<typeof ProviderModelConfig>
 
