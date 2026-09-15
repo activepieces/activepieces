@@ -1,4 +1,4 @@
-import { AgentRunSource, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
+import { AGENT_SELF_EDIT_TOOLS, AgentRunSource, mcpToolNameUtils, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared'
 import { ToolSet } from 'ai'
 
 const UNATTENDED_WEB_TOOLS = ['ap_fetch_url', 'ap_web_search', 'ap_scrape_url']
@@ -62,6 +62,7 @@ function selectToolsForSource({ source, groups }: { source: AgentRunSource, grou
         return {
             ...configured,
             ...pick({ tools: groups.display, names: ['ap_show_questions', 'ap_show_quick_replies', 'ap_show_showcase', 'ap_show_connection_picker'] }),
+            ...pick({ tools: groups.agentSurface, names: [...AGENT_SELF_EDIT_TOOLS] }),
             ...groups.web,
             ...groups.thinking,
             ...groups.completion,

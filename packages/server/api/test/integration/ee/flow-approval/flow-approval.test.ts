@@ -238,6 +238,21 @@ describe('flow-approval — approve', () => {
         expect(reloadedFlow.publishedVersionId).toBe(version.id)
     })
 
+    it('refuses to publish a flow whose agent has left the project, exactly as publishing directly would', async () => {
+        const ctx = await setupSensitiveCtx()
+        const memberCtx = await createMemberContext(app!, ctx, {
+            projectRole: DefaultProjectRole.EDITOR,
+        })
+        const { flow, version, approval } = await seedPendingApproval(ctx, memberCtx.user.id)
+        await db.update('flow_version', version.id, { agentIds: ['an-agent-that-is-gone'] })
+
+        const response = await ctx.post(`/v1/flow-approval-requests/${approval.id}/approve`, {})
+
+        expect(response?.statusCode).not.toBe(StatusCodes.OK)
+        const reloadedFlow = await db.findOneByOrFail<Flow>('flow', { id: flow.id })
+        expect(reloadedFlow.publishedVersionId).toBeNull()
+    })
+
     it('approve is idempotent — second call returns same approved row, flow unchanged', async () => {
         const ctx = await setupSensitiveCtx()
         const memberCtx = await createMemberContext(app!, ctx, {

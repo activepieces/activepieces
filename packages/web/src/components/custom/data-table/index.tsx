@@ -466,7 +466,7 @@ export function DataTable<
                           ) {
                             return;
                           }
-                          onRowClick?.(row.original, e.ctrlKey, e);
+                          onRowClick?.(row.original, e.ctrlKey || e.metaKey, e);
                         }}
                         onAuxClick={(e) => {
                           const clickedCellIndex = (
@@ -558,7 +558,7 @@ export function DataTable<
                       ) {
                         return;
                       }
-                      onRowClick?.(row.original, e.ctrlKey, e);
+                      onRowClick?.(row.original, e.ctrlKey || e.metaKey, e);
                     }}
                     onAuxClick={(e) => {
                       const clickedCellIndex = (
