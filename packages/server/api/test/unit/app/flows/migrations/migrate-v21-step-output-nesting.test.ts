@@ -564,4 +564,94 @@ describe('migrateV21StepOutputNesting', () => {
             expect(router.children[0].settings.input.field).toBe('{{trigger[\'output\'].body.id}}')
         })
     })
+
+    describe('Q. replay safety — the migration must survive being applied twice', () => {
+        const versionWithRefs = () => baseVersion({
+            ...triggerWithNoNext(),
+            nextAction: {
+                type: FlowActionType.PIECE,
+                name: 'step_1',
+                displayName: 'Step 1',
+                skip: false,
+                valid: true,
+                lastUpdatedDate: new Date().toISOString(),
+                settings: {
+                    pieceName: '@activepieces/piece-test',
+                    pieceVersion: '0.0.1',
+                    actionName: 'do',
+                    input: {
+                        fromTrigger: '{{trigger[\'body\'][\'id\']}}',
+                        fromStep: '{{step_1[\'donor\'][\'ccv\']}}',
+                        bare: '{{step_1}}',
+                    },
+                    propertySettings: {},
+                },
+            },
+        })
+
+        const inputOf = (version: FlowVersion) => (version.trigger.nextAction as never as {
+            settings: { input: Record<string, string> }
+        }).settings.input
+
+        it('Q1. a single pass nests each reference exactly once', async () => {
+            const result = await migrateV21StepOutputNesting.migrate(versionWithRefs())
+            expect(inputOf(result)).toEqual({
+                fromTrigger: '{{trigger[\'output\'][\'body\'][\'id\']}}',
+                fromStep: '{{step_1[\'output\'][\'donor\'][\'ccv\']}}',
+                bare: '{{step_1[\'output\']}}',
+            })
+        })
+
+        it('Q2. a second pass is a no-op — it must not double-nest', async () => {
+            const once = await migrateV21StepOutputNesting.migrate(versionWithRefs())
+            const twice = await migrateV21StepOutputNesting.migrate({ ...once, schemaVersion: '21' })
+            expect(inputOf(twice)).toEqual(inputOf(once))
+        })
+
+        it('Q3. already-migrated content imported under a stale version is left alone', async () => {
+            const alreadyMigrated = baseVersion({
+                ...triggerWithNoNext(),
+                nextAction: {
+                    type: FlowActionType.PIECE,
+                    name: 'step_1',
+                    displayName: 'Step 1',
+                    skip: false,
+                    valid: true,
+                    lastUpdatedDate: new Date().toISOString(),
+                    settings: {
+                        pieceName: '@activepieces/piece-test',
+                        pieceVersion: '0.0.1',
+                        actionName: 'do',
+                        input: { field: '{{step_1[\'output\'][\'donor\'][\'ccv\']}}' },
+                        propertySettings: {},
+                    },
+                },
+            })
+            const result = await migrateV21StepOutputNesting.migrate(alreadyMigrated)
+            expect(inputOf(result).field).toBe('{{step_1[\'output\'][\'donor\'][\'ccv\']}}')
+        })
+
+        it('Q4. an error reference is not re-nested either', async () => {
+            const withError = baseVersion({
+                ...triggerWithNoNext(),
+                nextAction: {
+                    type: FlowActionType.PIECE,
+                    name: 'step_1',
+                    displayName: 'Step 1',
+                    skip: false,
+                    valid: true,
+                    lastUpdatedDate: new Date().toISOString(),
+                    settings: {
+                        pieceName: '@activepieces/piece-test',
+                        pieceVersion: '0.0.1',
+                        actionName: 'do',
+                        input: { field: '{{step_1[\'error\'][\'message\']}}' },
+                        propertySettings: {},
+                    },
+                },
+            })
+            const result = await migrateV21StepOutputNesting.migrate(withError)
+            expect(inputOf(result).field).toBe('{{step_1[\'error\'][\'message\']}}')
+        })
+    })
 })

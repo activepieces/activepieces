@@ -709,6 +709,55 @@ describe('Flow Operations API', () => {
             const persisted: PopulatedFlow = afterImport?.json()
             expect(persisted.version.trigger.nextAction).toBeUndefined()
         })
+
+        it('does not re-nest step outputs when schemaVersion is omitted', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'test flow',
+                projectId: ctx.project.id,
+            }, { query: { projectId: ctx.project.id } })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: {
+                    displayName: 'Already Migrated Flow',
+                    trigger: {
+                        type: FlowTriggerType.EMPTY,
+                        name: 'trigger',
+                        displayName: 'Select Trigger',
+                        settings: {},
+                        valid: false,
+                        lastUpdatedDate: new Date().toISOString(),
+                        nextAction: {
+                            type: FlowActionType.CODE,
+                            name: 'step_1',
+                            displayName: 'Code',
+                            valid: true,
+                            skip: false,
+                            lastUpdatedDate: new Date().toISOString(),
+                            settings: {
+                                input: {
+                                    fromTrigger: '{{trigger[\'output\'][\'body\'][\'id\']}}',
+                                },
+                                sourceCode: {
+                                    code: 'export const code = async () => ({})',
+                                    packageJson: '{}',
+                                },
+                            },
+                        },
+                    },
+                    schemaVersion: null,
+                    notes: null,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.version.trigger.nextAction.settings.input.fromTrigger)
+                .toBe('{{trigger[\'output\'][\'body\'][\'id\']}}')
+        })
     })
 
     describe('POST /v1/flows/:id draft creation rollback', () => {
