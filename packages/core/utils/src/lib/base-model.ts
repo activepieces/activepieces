@@ -30,7 +30,7 @@ export const OptionalBooleanFromQuery = z.pipe(
 )
 
 export const OptionalIsoDateTimeQuery = z.optional(
-    z.iso.datetime({ offset: true }).check(z.refine((val) => new Date(val).getUTCFullYear() >= 1)),
+    z.iso.datetime({ offset: true }).check(z.refine((val) => val.slice(0, 4) !== '0000')),
 )
 
 export const OptionalArrayFromQuery = <T extends z.ZodMiniType>(schema: T) =>

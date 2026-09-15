@@ -205,6 +205,15 @@ describe('MCP activity', () => {
             expect(response.json().data.map((row: { id: string }) => row.id)).toEqual([mine])
         })
 
+        it('accepts the earliest created window behind a positive offset', async () => {
+            const mine = await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
+
+            const response = await ctx.get(`/v1/mcp-activity?createdAfter=${encodeURIComponent('0001-01-01T00:00:00+01:00')}`)
+
+            expect(response.statusCode).toBe(200)
+            expect(response.json().data.map((row: { id: string }) => row.id)).toEqual([mine])
+        })
+
         it('rejects an empty project filter instead of matching nothing', async () => {
             await insertActivityRow({ userId: ctx.user.id, projectId: ctx.project.id })
 
