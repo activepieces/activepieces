@@ -12,7 +12,7 @@ icon: "hammer"
 
 Every managed AI model's credit weight changed. The three chat tiers go from 2 / 10 / 20 credits per message to 10 / 40 / 80, and the per-model table was rescaled the same way and grown from 79 models to 174. A managed model with no weight in the table used to cost 2 credits per message and now costs 100, so a model nobody priced is expensive instead of nearly free.
 
-The table is no longer only a constant in the release. On start-up the server reads `https://cdn.activepieces.com/ai/pricing.json` and refreshes it every hour, so prices can change without a deploy. If the file cannot be read, is malformed, or lists fewer than 80% of the models the release shipped with, the server keeps using the table built into the release and logs a warning — it never charges from a partial file.
+The table is no longer only a constant in the release. On start-up the server reads `https://cdn.activepieces.com/ai/pricing.json` and refreshes it every hour, so prices can change without a deploy. The published file sets prices on top of the table in the release rather than replacing it, so a model the file leaves out keeps the price we shipped instead of falling to the unpriced rate. If the file cannot be read or is malformed, the server uses the release's table on its own and logs a warning.
 
 #### What you need to do
 

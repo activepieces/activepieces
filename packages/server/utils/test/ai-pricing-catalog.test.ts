@@ -74,10 +74,13 @@ describe('aiPricingCatalog', () => {
         expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
     })
 
-    it('rejects a file that lost more than 20 percent of the model list', async () => {
+    it('keeps the shipped weight for a model the published file leaves out, so a short file cannot overcharge', async () => {
         mockResponse({ ...validPricing, modelWeights: { 'openai/gpt-4': 999 } })
         const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
+
+        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(999)
+        expect(reader.creditWeightForModel('google/gemini-2.5-flash-lite')).toBe(MANAGED_MODEL_WEIGHTS['google/gemini-2.5-flash-lite'])
+        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(validPricing.unpricedModelCreditWeight)
     })
 
     it('rejects a weight outside the allowed range', async () => {

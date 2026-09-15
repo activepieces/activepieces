@@ -87,17 +87,9 @@ async function fetchPricing(): Promise<PublishedPricing> {
         timeout: REQUEST_TIMEOUT_MS,
     })
     const parsed = PublishedPricing.parse(response.data)
-    assertNotTruncated(parsed)
-    return parsed
-}
-
-function assertNotTruncated(pricing: PublishedPricing): void {
-    const bundledCount = Object.keys(MANAGED_MODEL_WEIGHTS).length
-    const publishedCount = Object.keys(pricing.modelWeights).length
-    if (publishedCount < bundledCount * MIN_RETAINED_RATIO) {
-        throw new Error(
-            `The published pricing lists ${publishedCount} models, below ${MIN_RETAINED_RATIO * 100}% of the ${bundledCount} shipped with this release`,
-        )
+    return {
+        ...parsed,
+        modelWeights: { ...MANAGED_MODEL_WEIGHTS, ...parsed.modelWeights },
     }
 }
 
@@ -125,7 +117,6 @@ const DEFAULT_PRICING_URL = 'https://cdn.activepieces.com/ai/pricing.json'
 const PRICING_TTL_MS = 60 * 60 * 1000
 const FAILURE_BACKOFF_MS = 5 * 60 * 1000
 const REQUEST_TIMEOUT_MS = 10_000
-const MIN_RETAINED_RATIO = 0.8
 const BUNDLED_PUBLISHED_AT = '1970-01-01T00:00:00.000Z'
 const CREDIT_WEIGHT_MIN = 1
 const CREDIT_WEIGHT_MAX = 10_000

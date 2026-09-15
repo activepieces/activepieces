@@ -111,12 +111,18 @@ export const aiProps = <T extends AIModelType>({
           ...(isNil(configId) ? {} : { queryParams: { configId } }),
         });
 
+      const serverSentTierLabels = allModels.some(model => !isNil(model.tierLabel));
+      const keepModel = (model: AIProviderModel) =>
+        provider !== AIProviderName.ACTIVEPIECES ||
+        !serverSentTierLabels ||
+        model.tierLabel !== undefined;
+
       return {
         placeholder: 'Select AI Model',
         disabled: false,
         options: allModels
           .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || model.tierLabel !== undefined)
+          .filter(keepModel)
           .map(model => ({
             label: provider === AIProviderName.ACTIVEPIECES ? (model.tierLabel ?? model.name) : model.name,
             value: model.id,

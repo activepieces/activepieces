@@ -28,6 +28,7 @@ const CONFIRM_MIN_INTERVAL_SECONDS = 10
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
+        await tryCatch(() => aiPricingCatalog.load())
         cron.schedule('0 0 * * *', () => {
             log.info('Clearing AI provider models cache')
             modelsCache.clear()
@@ -439,16 +440,25 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             throw error
         }
         const catalog = await modelCatalog.load()
-        const pricing = await aiPricingCatalog.load()
         modelsCache.set(cacheKey, data.map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,
             ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id })),
-            ...spreadIfDefined('tierLabel', provider === AIProviderName.ACTIVEPIECES ? pricing.findTierByModelId(model.id)?.label : undefined),
         })))
     }
-    return modelsCache.get(cacheKey)!
+    return withTierLabels({ provider, models: modelsCache.get(cacheKey)! })
+}
+
+async function withTierLabels({ provider, models }: { provider: AIProviderName, models: AIProviderModel[] }): Promise<AIProviderModel[]> {
+    if (provider !== AIProviderName.ACTIVEPIECES) {
+        return models
+    }
+    const pricing = await aiPricingCatalog.load()
+    return models.map((model) => ({
+        ...model,
+        ...spreadIfDefined('tierLabel', pricing.findTierByModelId(model.id)?.label),
+    }))
 }
 
 async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderAuthConfig> {
