@@ -32,7 +32,14 @@ Reach for this when a branch is past the size gate and the work has real seams. 
    enough to name in the PR body.
 5. **Run typecheck and lint on every branch, not just the top.** A stack whose middle does not build is a
    stack that cannot be merged in order.
-6. **Every PR in the stack is gated on its own.** Each needs the full template body, and each needs its own
+6. **After amending a lower branch, diff the file against the upper one before pushing.** A stack
+   accumulates duplicate commits easily: rebase does not always drop a copy of a patch it has already
+   seen, and a duplicate sitting *below* the upper branch's own commits carries the pre-amend content, so
+   it silently reverts the fix at the top of the stack while both branches look right in isolation.
+   `git log --oneline <lower>..<upper>` shows the duplicate by subject, and
+   `git rebase --onto <lower> <duplicate> <upper>` drops it. The check that catches it is
+   `git diff <lower> <upper> -- <the file you just amended>`, which should be empty.
+7. **Every PR in the stack is gated on its own.** Each needs the full template body, and each needs its own
    `large-pr-ok` if its slice is over the area budget. Splitting a branch does not divide one PR's
    compliance between the pieces.
 
