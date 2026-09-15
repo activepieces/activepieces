@@ -22,18 +22,28 @@ import {
   httpClient,
   HttpMethod,
   HttpRequest,
+  QueryParams,
 } from '@activepieces/pieces-common';
+
+export const buildQueryParams = (
+  auth: string,
+  params: Record<string, string | number | undefined | null> = {}
+): QueryParams => {
+  const queryParams: QueryParams = { api_secret: auth };
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null && value !== '') {
+      queryParams[key] = String(value);
+    }
+  }
+  return queryParams;
+};
 
 export const fetchBroadcasts = async (auth: string, page: number) => {
   const url = BROADCASTS_API_ENDPOINT;
   const request: HttpRequest = {
     url,
     method: HttpMethod.GET,
-    queryParams: {
-      api_secret: auth,
-      page: page.toString(),
-      sort_order: 'desc',
-    },
+    queryParams: buildQueryParams(auth, { page, sort_order: 'desc' }),
   };
   const response = await httpClient.sendRequest<{ broadcasts: Broadcast[] }>(
     request
@@ -59,13 +69,9 @@ export const fetchCustomFields = async (
 ): Promise<CustomField[]> => {
   const url = CUSTOM_FIELDS_API_ENDPOINT;
 
-  const body = {
-    api_secret: auth,
-  };
-
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth),
     method: HttpMethod.GET,
   };
   const response = await httpClient.sendRequest<{
@@ -90,13 +96,9 @@ export const fetchCustomFields = async (
 export const fetchForms = async (auth: string) => {
   const url = FORMS_API_ENDPOINT;
 
-  const body = {
-    api_secret: auth,
-  };
-
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth),
     method: HttpMethod.GET,
   };
   const response = await httpClient.sendRequest<{ forms: Form[] }>(request);
@@ -119,14 +121,9 @@ export const fetchForms = async (auth: string) => {
 export const fetchPurchases = async (auth: string, page: number) => {
   const url = PURCHASES_API_ENDPOINT;
 
-  const body = {
-    api_secret: auth,
-    page,
-  };
-
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth, { page }),
     method: HttpMethod.GET,
   };
   const response = await httpClient.sendRequest<{ purchases: Purchase[] }>(
@@ -150,12 +147,9 @@ export const fetchPurchases = async (auth: string, page: number) => {
 
 export const fetchSequences = async (auth: string) => {
   const url = SEQUENCES_API_ENDPOINT;
-  const body = {
-    api_secret: auth,
-  };
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth),
     method: HttpMethod.GET,
   };
   const response = await httpClient.sendRequest<{ courses: Sequence[] }>(
@@ -182,13 +176,9 @@ export const fetchSubscriperById = async (
 ) => {
   const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}`;
 
-  const body = {
-    api_secret: auth,
-  };
-
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth),
     method: HttpMethod.GET,
   };
 
@@ -216,14 +206,9 @@ export const fetchSubscriberByEmail = async (
 ) => {
   const url = SUBSCRIBERS_API_ENDPOINT;
 
-  const body = {
-    api_secret: auth,
-    email_address,
-  };
-
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth, { email_address }),
     method: HttpMethod.GET,
   };
 
@@ -253,13 +238,9 @@ export const fetchSubscribedTags = async (
 ) => {
   const url = `${SUBSCRIBERS_API_ENDPOINT}/${subscriberId}/tags`;
 
-  const body = {
-    api_secret: auth,
-  };
-
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth),
     method: HttpMethod.GET,
   };
 
@@ -281,12 +262,9 @@ export const fetchSubscribedTags = async (
 
 export const fetchTags = async (auth: string) => {
   const url = TAGS_API_ENDPOINT;
-  const body = {
-    api_secret: auth,
-  };
   const request: HttpRequest = {
     url,
-    body,
+    queryParams: buildQueryParams(auth),
     method: HttpMethod.GET,
   };
 

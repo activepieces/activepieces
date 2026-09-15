@@ -600,3 +600,36 @@ export const newTeamCustomEmojiTriggerOutputSchema: OutputSchema = {
 export const newUserTriggerOutputSchema: OutputSchema = {
   fields: [{ key: 'team_id', label: 'Team ID' }, ...userMemberFields],
 };
+
+export const sendMessageToMultipleUsersOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'sent',
+      label: 'Sent',
+      labelKey: 'userId',
+      listItems: [
+        { key: 'userId', label: 'User ID' },
+        { key: 'channel', label: 'Channel ID' },
+        { key: 'ts', label: 'Timestamp' },
+      ],
+    },
+    {
+      key: 'failed',
+      label: 'Failed',
+      labelKey: 'userId',
+      listItems: [
+        { key: 'userId', label: 'User ID' },
+        { key: 'error', label: 'Error' },
+      ],
+    },
+    {
+      key: 'summary',
+      label: 'Summary',
+      children: [
+        { key: 'total', label: 'Total', format: 'number' },
+        { key: 'sentCount', label: 'Sent Count', format: 'number' },
+        { key: 'failedCount', label: 'Failed Count', format: 'number' },
+      ],
+    },
+  ],
+};

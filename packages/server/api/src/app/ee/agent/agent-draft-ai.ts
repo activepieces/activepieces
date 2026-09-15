@@ -76,7 +76,7 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
             ...parsed,
             tools: resolveToolPicks({ picks: parsed.tools, candidates }),
             provider: resolved.provider,
-            modelName: agentHelpers.resolveModelIdForProvider({ provider: resolved.provider, selectedModel: DEFAULT_CHAT_TIER_ID }),
+            modelName: agentHelpers.defaultModelIdForProvider({ provider: resolved.provider }),
         }
     },
 })

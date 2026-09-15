@@ -17,7 +17,6 @@ const OTHER = '@activepieces/piece-test-pinchat'
 const action = (name: string) => ({ name, displayName: name, description: name, requireAuth: true, props: {} })
 
 beforeAll(async () => {
-    process.env.AP_AGENTS_ENABLED = 'true'
     app = await setupTestEnvironment()
     for (const name of [MAILER, OTHER]) {
         await db.save('piece_metadata', createMockPieceMetadata({

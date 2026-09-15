@@ -16,7 +16,6 @@ export const aiToolConfigQueries = {
     useQuery({
       queryKey: aiToolConfigKeys.all,
       queryFn: () => aiToolConfigApi.list(),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
 };
 
