@@ -5,12 +5,13 @@ import { createEmailTools } from './tools/email-tools'
 import { createEventEmitter } from './tools/event-emitter'
 import { wrapTestFlowGate } from './tools/flow-gate-tools'
 import { createAgentSurfaceTools, createBuildPlanTools, createLocalTools, createPhaseTools, createStructuredOutputTool, createThinkingTools } from './tools/session-tools'
-import { extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout } from './tools/tool-primitives'
+import { extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout, wrapToolsWithTaint } from './tools/tool-primitives'
 import { createImageTools, createScrapeTools, createSearchTools, createWebTools } from './tools/web-media-tools'
 
 export { AgentEventEmitter, GateDecision, TaintState } from './tools/tool-primitives'
 
 export const agentWorkerTools = {
+    wrapToolsWithTaint,
     createEventEmitter,
     createDisplayTools,
     createAgentSurfaceTools,

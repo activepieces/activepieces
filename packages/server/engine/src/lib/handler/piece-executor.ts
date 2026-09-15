@@ -265,7 +265,8 @@ function createWaitpointHook({ constants, waitpointKey, hookParams }: { constant
 }
 
 async function submitWaitpoint({ constants, waitpointKey, hookParams, req }: { constants: EngineConstants, waitpointKey: string, hookParams: { hookResponse: HookResponse }, req: CreateWaitpointParams }): Promise<CreateWaitpointResult> {
-    assertDelayWithinTimeout(req.resumeDateTime)
+    const resumeDateTime = cappedForTestFlow({ resumeDateTime: req.resumeDateTime, maxTestWaitMs: req.maxTestWaitMs, isTestFlow: constants.isTestFlow })
+    assertDelayWithinTimeout(resumeDateTime)
     if (!isNil(req.responseToSend)) {
         hookParams.hookResponse = { ...hookParams.hookResponse, responseToSend: req.responseToSend }
     }
@@ -277,7 +278,7 @@ async function submitWaitpoint({ constants, waitpointKey, hookParams, req }: { c
         stepName: waitpointKey,
         type: req.type,
         version: req.version ?? 'V1',
-        resumeDateTime: req.resumeDateTime,
+        resumeDateTime,
         responseToSend: req.responseToSend,
         workerHandlerId: constants.workerHandlerId ?? undefined,
         httpRequestId: constants.httpRequestId ?? undefined,
@@ -306,6 +307,15 @@ function assertActionRunCannotSuspend(constants: EngineConstants): void {
     if (constants.actionRunMode) {
         throw new Error('This action pauses the run (waitpoint) and can only run inside a flow, not as a action run.')
     }
+}
+
+function cappedForTestFlow({ resumeDateTime, maxTestWaitMs, isTestFlow }: { resumeDateTime?: string, maxTestWaitMs?: number, isTestFlow: boolean }): string | undefined {
+    const noShorterTestWaitAsked = isNil(resumeDateTime) || isNil(maxTestWaitMs) || !isTestFlow
+    if (noShorterTestWaitAsked) {
+        return resumeDateTime
+    }
+    const ceiling = dayjs().add(maxTestWaitMs, 'millisecond')
+    return dayjs(resumeDateTime).isAfter(ceiling) ? ceiling.toISOString() : resumeDateTime
 }
 
 function assertDelayWithinTimeout(resumeDateTime?: string): void {

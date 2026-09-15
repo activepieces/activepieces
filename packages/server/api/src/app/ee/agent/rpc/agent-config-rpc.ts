@@ -25,7 +25,7 @@ import { CONNECTION_INVENTORY_LIMIT, loadOrStartConversation } from './rpc-share
 
 export const agentConfigRpc = (log: FastifyBaseLogger) => ({
     async getAgentConfig(input: GetAgentConfigRequest): Promise<AgentConfigResponse> {
-        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId } = input
+        const { conversationId, platformId, userId, userMessage, modelName, files, promptOverride, dryRun, discoveryOnly, source: requestedSource, projectId: requestedProjectId, agentId: linkedAgentId } = input
 
         // A flow-step run gets none of the owner's chat context, so it is not fetched. Reading it
         // anyway meant an owner without an MCP token or a user record failed the run outright.
@@ -36,17 +36,18 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const carriesChatContext = requestedSource !== AgentRunSource.FLOW_STEP && requestedSource !== AgentRunSource.AGENT && !isBuilder
 
         const [conversation, userProjects, enabledAiTools] = await Promise.all([
-            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName }),
+            loadOrStartConversation({ conversationId, platformId, userId, source: requestedSource, projectId: requestedProjectId, modelName, agentId: linkedAgentId }),
             agentHelpers.getUserProjects({ platformId, userId, log }),
             aiToolConfigService(log).getEnabledTools({ platformId }),
         ])
 
-        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult] = await Promise.all([
+        const [scopedMcpCredentials, runMemory, runUser, platformResult, identityResult, agentsSurfaceOn] = await Promise.all([
             carriesChatContext || isBuilder ? agentMcp.getCredentials({ platformId, userId, log }) : { mcpServerUrl: null, mcpToken: null },
             carriesChatContext ? agentHelpers.getUserMemory({ platformId, userId }) : { instructions: null, memories: [] as string[] },
             carriesChatContext ? userService(log).getMetaInformation({ id: userId }) : null,
             carriesChatContext ? tryCatch(() => platformService(log).getOneOrThrow(platformId)) : null,
             carriesChatContext ? tryCatch(() => chatPersonalizationService(log).getIdentityEnrichment({ platformId, userId })) : null,
+            requestedSource === AgentRunSource.FLOW_STEP ? false : agentHelpers.agentsSurfaceAvailable({ platformId, log }),
         ])
         const runUserEmail = runUser?.email ?? ''
         const userIdentity: UserIdentity | null = isNil(runUser)
@@ -92,7 +93,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const aiTools: GetEnabledAiToolsResponse = dryRun ? {} : enabledAiTools
         const actingRun = !dryRun && !discoveryOnly
         const emailEnabled = actingRun && carriesChatContext && smtpEmailSender(log).isSmtpConfigured()
-        const agentsAvailable = actingRun && (carriesChatContext || isBuilder) && await agentHelpers.agentsSurfaceAvailable({ platformId, log })
+        const agentsAvailable = actingRun && agentsSurfaceOn
         const fetchAvailable = !dryRun
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
