@@ -1,7 +1,7 @@
 import { AgentConversation } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Activity, Bot, Clock, History, Hourglass } from 'lucide-react';
+import { Activity, Bot, Clock, History } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
@@ -12,7 +12,6 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
-import { formatUtils } from '@/lib/format-utils';
 
 type AgentRunsProps = {
   agentId: string;
@@ -38,7 +37,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         cell: ({ row }) => (
           <div className="flex items-center gap-2 text-left">
             <TruncatedColumnTextValue
-              value={row.original.title ?? '—'}
+              value={row.original.title ?? t('Untitled run')}
               className="max-w-[260px] 2xl:max-w-[420px]"
             />
           </div>
@@ -71,7 +70,6 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
       },
       {
         accessorKey: 'created',
-        size: 200,
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -83,37 +81,15 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <FormattedDate
             date={new Date(row.original.created)}
             className="text-left"
-            includeTime={true}
           />
         ),
-      },
-      {
-        accessorKey: 'updated',
-        size: 140,
-        header: ({ column }) => (
-          <DataTableColumnHeader
-            column={column}
-            title={t('Duration')}
-            icon={Hourglass}
-          />
-        ),
-        cell: ({ row }) => {
-          const durationMs = agentRunUtils.getDurationMs(row.original);
-          return (
-            <div className="text-left flex items-center gap-2 text-muted-foreground">
-              {durationMs === undefined
-                ? '—'
-                : formatUtils.formatDuration(durationMs, true)}
-            </div>
-          );
-        },
       },
     ],
     [],
   );
 
   return (
-    <div className="flex-col w-full">
+    <div className="flex h-full w-full flex-col pt-2">
       <DataTable
         columns={columns}
         page={runs}

@@ -1,5 +1,6 @@
 import {
   Agent,
+  AgentConversationStatus,
   AgentListSort,
   CreateAgentRequest,
   DraftAgentRequest,
@@ -39,6 +40,7 @@ export const useAgentsNavVisible = (): boolean => {
 };
 
 const AGENTS_PAGE_SIZE = 100;
+const AGENT_RUNS_POLL_MS = 15 * 1000;
 
 export const agentsQueries = {
   useAgents: ({
@@ -118,6 +120,12 @@ export const agentsQueries = {
           cursor: cursor ?? undefined,
           limit: limit === null ? undefined : parseInt(limit),
         }),
+      refetchInterval: (query) => {
+        const stillRunning = query.state.data?.data.some(
+          (run) => run.status === AgentConversationStatus.STREAMING,
+        );
+        return stillRunning === true ? AGENT_RUNS_POLL_MS : false;
+      },
     });
   },
 };
