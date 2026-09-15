@@ -81,6 +81,14 @@ export function isTransientProviderError(text: string): boolean {
     return TRANSIENT_ERROR_PATTERN.test(text)
 }
 
+export function isProviderBillingError(text: string): boolean {
+    return BILLING_BODY_PATTERN.test(text)
+}
+
+export function isProviderRateLimitError(text: string): boolean {
+    return RATE_LIMIT_BODY_PATTERN.test(text)
+}
+
 export function classifyProviderOutcome({ statusCode, body, message }: ProviderOutcomeSignal): AiProviderKeyStatus | NoStatusChange {
     if (!isNil(statusCode)) {
         return classifyByStatus({ statusCode, haystack: `${body ?? ''} ${message ?? ''}` })
@@ -105,10 +113,10 @@ function classifyByStatus({ statusCode, haystack }: { statusCode: number, haysta
     if (statusCode === 402) {
         return 'out_of_credits'
     }
-    if (statusCode === 429 && RATE_LIMIT_BODY_PATTERN.test(haystack)) {
+    if (statusCode === 429 && isProviderRateLimitError(haystack)) {
         return 'no_change'
     }
-    if (BILLING_BODY_PATTERN.test(haystack)) {
+    if (isProviderBillingError(haystack)) {
         return 'out_of_credits'
     }
     if (statusCode === 429) {

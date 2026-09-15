@@ -8,6 +8,7 @@ import {
   convertPropValueToMondayColumnValue,
   generateColumnIdTypeMap,
 } from '../common/helper';
+import { updateColumnValuesOfItemActionOutputSchema } from '../output-schemas';
 
 export const updateColumnValuesOfItemAction = createAction({
   auth: mondayAuth,
@@ -17,6 +18,7 @@ export const updateColumnValuesOfItemAction = createAction({
   description: 'Updates multiple columns values of specific item.',
   audience: 'both',
   aiMetadata: { description: 'Updates one or more column values on an existing monday.com item identified by board and item id; provided values are auto-coerced to each column\'s type. Use to edit an item\'s fields. Idempotent: re-applying the same values leaves the item in the same state.', idempotent: true },
+  outputSchema: updateColumnValuesOfItemActionOutputSchema,
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

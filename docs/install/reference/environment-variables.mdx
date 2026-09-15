@@ -65,7 +65,7 @@ protect connections and tokens, and telemetry.
 | ❗ `AP_JWT_SECRET` | 32-character hexadecimal key used to sign JWT tokens. Generate one with `openssl rand -hex 32`. | `None` |
 | `AP_CONFIG_PATH` | Path where the PGLite database and local settings are stored. | `~/.activepieces` |
 | `AP_INTERNAL_URL` | (Beta) Internal URL used for SSO authentication, e.g. `https://demo.activepieces.com/api`. | `None` |
-| `AP_TELEMETRY_ENABLED` | Collect anonymous telemetry. | `true` |
+| `AP_TELEMETRY_ENABLED` | Starting value for product analytics. Each platform's setting is created from it on first read; after that, change it at Platform → Infrastructure → Configurations. | `true` |
 
 <Warning>
 `AP_FRONTEND_URL` is essential for webhooks and app triggers. It must be
@@ -166,8 +166,8 @@ run data is kept. The **Cloud** values and how these interact are covered in
 
 | Variable | Description | Default |
 |---|---|---|
-| `AP_EXECUTION_DATA_RETENTION_DAYS` | Days to retain execution data, logs, and events. | `30` |
-| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`. | `30` |
+| `AP_EXECUTION_DATA_RETENTION_DAYS` | Days to retain execution data, logs, and events. Should be **strictly greater** than `AP_PAUSED_FLOW_TIMEOUT_DAYS` — when the two are equal, a valid resume firing on the retention boundary can race the file-cleanup job and find its state files gone. A 1-2 day margin closes the race. | `30` |
+| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`, and should be at least 1 day smaller than it (see above). Measured cumulatively from `flow_run.created`, not per-pause — a flow with stacked delays whose sum exceeds this fails at waitpoint creation. Webhook waitpoints without an explicit expiry default to this deadline. | `30` |
 | `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
 | `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
 | `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` | Maximum size (KB) of a single value written by the Store piece or `context.store`. Larger writes are rejected with HTTP 413. | `512` |

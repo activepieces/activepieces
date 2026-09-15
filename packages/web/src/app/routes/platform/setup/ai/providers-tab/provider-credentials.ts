@@ -104,6 +104,28 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
       optional: true,
     },
   ],
+  [AIProviderName.VERTEX]: [
+    {
+      key: 'serviceAccountJson',
+      label: t('Service account JSON'),
+      placeholder: '{"type":"service_account", ...}',
+      secret: true,
+      type: 'textarea',
+      description: t(
+        'The complete JSON key file for a service account with the Vertex AI User role.',
+      ),
+    },
+    {
+      key: 'project',
+      label: t('Google Cloud project ID'),
+      placeholder: 'my-gcp-project',
+    },
+    {
+      key: 'region',
+      label: t('Region'),
+      placeholder: 'us-central1',
+    },
+  ],
   [AIProviderName.CUSTOM]: [
     {
       key: 'baseUrl',
@@ -143,6 +165,7 @@ const PROVIDER_CREDENTIAL_FIELDS: Partial<
 };
 
 const MANUAL_MODEL_PROVIDERS: AIProviderName[] = [
+  AIProviderName.VERTEX,
   AIProviderName.CUSTOM,
   AIProviderName.CLOUDFLARE_GATEWAY,
 ];
@@ -161,5 +184,5 @@ export type CredentialField = {
   optional?: boolean;
   description?: string;
   options?: { value: string; label: string }[];
-  type?: 'dictionary';
+  type?: 'dictionary' | 'textarea';
 };

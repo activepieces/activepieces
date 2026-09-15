@@ -21,14 +21,14 @@ done
 
 # Wait for webhook piece to be synced (pieces sync from cloud in batches)
 echo "Waiting for webhook piece to be available..." >&2
-for i in $(seq 1 300); do
+for i in $(seq 1 600); do
   HAS_WEBHOOK=$(curl -sf "$BASE_URL/pieces" 2>/dev/null | jq '[.[].name] | any(. == "@activepieces/piece-webhook")' 2>/dev/null || echo "false")
   if [ "$HAS_WEBHOOK" = "true" ]; then
     echo "Webhook piece is available (took ${i}s)" >&2
     break
   fi
-  if [ "$i" -eq 300 ]; then
-    echo "ERROR: Webhook piece not available after 300s" >&2
+  if [ "$i" -eq 600 ]; then
+    echo "ERROR: Webhook piece not available after 600s" >&2
     exit 1
   fi
   sleep 1

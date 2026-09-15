@@ -12,6 +12,7 @@ import {
     createMockFlow,
     createMockFlowVersion,
     createMockPieceMetadata,
+    createMockProject,
 } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
@@ -189,6 +190,19 @@ describe('Piece Metadata CE API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const body = response?.json()
             expect(body.name).toBe('@activepieces/ce-scoped-piece')
+        })
+    })
+
+    describe('project scoping', () => {
+        it('does not scope the projectId query param, since piece sets are inert on CE', async () => {
+            const ctx = await createTestContext(app!)
+            const member = await createMemberContext(app!, ctx, { projectRole: DefaultProjectRole.VIEWER })
+            const otherProject = createMockProject({ ownerId: ctx.user.id, platformId: ctx.platform.id })
+            await db.save('project', otherProject)
+
+            const response = await member.get(`/v1/pieces?projectId=${otherProject.id}`)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 

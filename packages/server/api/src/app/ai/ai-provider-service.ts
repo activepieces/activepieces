@@ -162,7 +162,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             return null
         }
         const auth = await decryptRowAuth({ aiProvider: chatProvider, platformId })
-        return { provider: chatProvider.provider, configId: chatProvider.id, auth, config: chatProvider.config, platformId }
+        return { provider: chatProvider.provider, configId: chatProvider.id, auth, config: chatProvider.config, platformId, modelScope: chatProvider.modelScope, modelIds: chatProvider.modelIds }
     },
 
     async keyServesScope({ platformId, provider, configId, resolvedFor, target }: { platformId: PlatformId, provider?: AIProviderName, configId?: string, resolvedFor: ProviderScope, target: ProviderScope }): Promise<boolean> {
@@ -223,15 +223,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
         catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            const configProblem = ownConfigProblem(error)
             const includeHttpErrorInMessage = provider === AIProviderName.CLOUDFLARE_GATEWAY
             log.error({ error }, '[aiProviderService#validateProviderCredentials] Failed to validate provider credentials')
             throw new ActivepiecesError({
                 code: ErrorCode.INVALID_AI_PROVIDER_CREDENTIALS,
                 params: {
                     provider,
-                    message: includeHttpErrorInMessage
-                        ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
-                        : `Failed to validate credentials for ${providerStrategy.name}`,
+                    message: !isNil(configProblem)
+                        ? configProblem
+                        : includeHttpErrorInMessage
+                            ? `Failed to validate credentials for ${providerStrategy.name}, ${errorMessage}`
+                            : `Failed to validate credentials for ${providerStrategy.name}`,
                     httpErrorResponse: errorMessage,
                 },
             })
@@ -240,7 +243,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async getConfigOrThrow({ platformId, provider, scope, configId }: { platformId: PlatformId, provider: AIProviderName, scope: ProviderScope, configId?: string }): Promise<GetProviderConfigResponse> {
         const aiProvider = await resolveRowForScope({ platformId, provider, scope, configId })
         const auth = await decryptRowAuth({ aiProvider, platformId })
-        return { provider: aiProvider.provider, configId: aiProvider.id, auth, config: aiProvider.config, platformId }
+        return { provider: aiProvider.provider, configId: aiProvider.id, auth, config: aiProvider.config, platformId, modelScope: aiProvider.modelScope, modelIds: aiProvider.modelIds }
     },
     async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
         await ensureManagedProviderRow({ platformId })
@@ -490,9 +493,17 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         config: {},
         auth: await encryptUtils.encryptObject(rawAuth),
     })
-    return { provider: savedAiProvider.provider, configId: savedAiProvider.id, auth: rawAuth, config: savedAiProvider.config, platformId }
+    return { provider: savedAiProvider.provider, configId: savedAiProvider.id, auth: rawAuth, config: savedAiProvider.config, platformId, modelScope: savedAiProvider.modelScope, modelIds: savedAiProvider.modelIds }
 }
 
+
+function ownConfigProblem(error: unknown): string | undefined {
+    if (!(error instanceof ActivepiecesError) || error.error.code !== ErrorCode.VALIDATION) {
+        return undefined
+    }
+    const { message } = error.error.params
+    return typeof message === 'string' ? message : undefined
+}
 
 function getModelsCacheKey({ provider, auth, config }: { provider: AIProviderName, auth: AIProviderAuthConfig, config: AIProviderConfig }): string {
     return `${provider}-${JSON.stringify(auth)}-${JSON.stringify(config)}`

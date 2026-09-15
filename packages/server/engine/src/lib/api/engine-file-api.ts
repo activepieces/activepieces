@@ -1,6 +1,6 @@
 import { promisify } from 'node:util'
 import { zstdDecompress as zstdDecompressCallback } from 'node:zlib'
-import { EngineFileNotFoundError, EngineGenericError, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
+import { EngineFileNotFoundError, EngineGenericError, ExecutionError, ExecutionErrorType, FileCompression, FileType, isZstdCompressed } from '@activepieces/shared'
 import { retryFetch } from './retry-fetch'
 
 const zstdDecompress = promisify(zstdDecompressCallback)
@@ -83,6 +83,14 @@ export const engineFileApi = {
 
 async function resolveUploadReadUrl(fileId: string, response: Response): Promise<UploadResult> {
     if (!response.ok) {
+        if (response.status === 413) {
+            const serverMessage = await readErrorMessage(response)
+            throw new ExecutionError(
+                'EngineFileTooLarge',
+                JSON.stringify({ message: serverMessage ?? `File ${fileId} exceeds the server's size limit` }),
+                ExecutionErrorType.USER,
+            )
+        }
         throw new EngineGenericError(
             'EngineFileUploadError',
             `Failed to upload engine file ${fileId}: ${response.status} ${response.statusText}`,
@@ -101,6 +109,16 @@ async function resolveUploadReadUrl(fileId: string, response: Response): Promise
 
 function toRequestBody(data: Uint8Array): BodyInit {
     return data.buffer instanceof ArrayBuffer ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength) : new Uint8Array(data)
+}
+
+async function readErrorMessage(response: Response): Promise<string | undefined> {
+    try {
+        const body = await response.json() as { params?: { message?: unknown } }
+        return typeof body?.params?.message === 'string' ? body.params.message : undefined
+    }
+    catch {
+        return undefined
+    }
 }
 
 function buildPutHeaders({ type, fileName, compression, contentLength }: BuildHeadersParams): Record<string, string> {

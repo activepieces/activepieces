@@ -18,6 +18,8 @@ const MAX_AGENT_CONFIG_BYTES = 128_000
 const MAX_DRAFT_PROMPT_LENGTH = 2_000
 const DEFAULT_AGENT_MAX_STEPS = 20
 
+const MAX_AGENT_TURN_WALL_CLOCK_MS = 2 * 60 * 60 * 1_000
+
 enum AgentVisibility {
     PROJECT = 'PROJECT',
     RESTRICTED = 'RESTRICTED',
@@ -129,6 +131,28 @@ enum AgentListSort {
     NAME = 'name',
 }
 
+const MoveAgentRequest = z.object({
+    projectId: ApId,
+})
+
+enum AgentMoveLossKind {
+    CONNECTION = 'connection',
+    FLOW = 'flow',
+    KNOWLEDGE = 'knowledge',
+}
+
+const AgentMoveLoss = z.object({
+    kind: z.enum(AgentMoveLossKind),
+    label: z.string(),
+})
+
+const AgentMovePreview = z.object({
+    blockedByPublishedFlows: AgentUsage,
+    mayCreateAgentsThere: z.boolean(),
+    toolsThatStopWorking: z.array(AgentMoveLoss),
+    membersLosingAccess: z.number().int().nonnegative(),
+})
+
 const ListAgentsRequest = z.object({
     projectId: z.optional(ApId),
     search: z.optional(z.string().max(MAX_AGENT_SEARCH_LENGTH)),
@@ -143,6 +167,10 @@ const agentUtils = {
 
 export {
     AgentListSort,
+    AgentMoveLoss,
+    AgentMoveLossKind,
+    AgentMovePreview,
+    MoveAgentRequest,
     MAX_AGENT_SEARCH_LENGTH,
     Agent,
     AgentUsage,
@@ -155,6 +183,7 @@ export {
     AgentVisibility,
     CreateAgentRequest,
     DEFAULT_AGENT_MAX_STEPS,
+    MAX_AGENT_TURN_WALL_CLOCK_MS,
     DraftAgentRequest,
     AgentDraftFields,
     DraftAgentResponse,
@@ -183,5 +212,8 @@ export type CreateAgentRequest = z.infer<typeof CreateAgentRequest>
 export type DraftAgentRequest = z.infer<typeof DraftAgentRequest>
 export type AgentDraftFields = z.infer<typeof AgentDraftFields>
 export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
+export type AgentMoveLoss = z.infer<typeof AgentMoveLoss>
+export type AgentMovePreview = z.infer<typeof AgentMovePreview>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
+export type MoveAgentRequest = z.infer<typeof MoveAgentRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>

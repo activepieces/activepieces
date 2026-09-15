@@ -78,7 +78,7 @@ function registerMcpEndpoint(app: Parameters<FastifyPluginAsyncZod>[0], scope: M
         const serverMcp = conversationProjectId
             ? await mcpServerService(req.log).getPopulatedByProjectId(conversationProjectId) ?? mcp
             : mcp
-        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId })
+        const { server } = await mcpServerService(req.log).buildServer({ mcp: serverMcp, userId, clientId: identity.clientId })
 
         const transport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
@@ -142,10 +142,10 @@ async function resolveIdentity({ token, scope, log }: { token: string, scope: Mc
     const { projectId } = payload
     const isPlatformToken = isNil(projectId)
     if (isPlatformToken && scope === McpServerType.PLATFORM) {
-        return { status: 'ok', identity: { type: McpServerType.PLATFORM, platformId: payload.platformId, userId: payload.sub } }
+        return { status: 'ok', identity: { type: McpServerType.PLATFORM, platformId: payload.platformId, userId: payload.sub, clientId: payload.clientId } }
     }
     if (!isPlatformToken && scope === McpServerType.PROJECT) {
-        return { status: 'ok', identity: { type: McpServerType.PROJECT, projectId, userId: payload.sub } }
+        return { status: 'ok', identity: { type: McpServerType.PROJECT, projectId, userId: payload.sub, clientId: payload.clientId } }
     }
     return { status: 'invalid' }
 }
@@ -154,11 +154,14 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
     try {
         if (identity.type === McpServerType.PLATFORM) {
             if (telemetryDedupe.onceToday(`mcp-server-connected:platform:${identity.platformId}:${identity.userId}`)) {
-                rejectedPromiseHandler(telemetry(log).trackPlatform(identity.platformId, {
-                    name: TelemetryEventName.MCP_SERVER_CONNECTED,
-                    payload: {
-                        platformId: identity.platformId,
-                        userId: identity.userId,
+                rejectedPromiseHandler(telemetry(log).trackPlatform({
+                    platformId: identity.platformId,
+                    event: {
+                        name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                        payload: {
+                            platformId: identity.platformId,
+                            userId: identity.userId,
+                        },
                     },
                 }), log)
             }
@@ -166,11 +169,14 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
             return { mcp, userId: identity.userId }
         }
         if (telemetryDedupe.onceToday(`mcp-server-connected:project:${identity.projectId}:${identity.userId}`)) {
-            rejectedPromiseHandler(telemetry(log).trackProject(identity.projectId, {
-                name: TelemetryEventName.MCP_SERVER_CONNECTED,
-                payload: {
-                    projectId: identity.projectId,
-                    userId: identity.userId,
+            rejectedPromiseHandler(telemetry(log).trackProject({
+                projectId: identity.projectId,
+                event: {
+                    name: TelemetryEventName.MCP_SERVER_CONNECTED,
+                    payload: {
+                        projectId: identity.projectId,
+                        userId: identity.userId,
+                    },
                 },
             }), log)
         }
@@ -184,8 +190,8 @@ async function resolveMcpAndUser({ identity, log }: { identity: ResolvedIdentity
 }
 
 type ResolvedIdentity =
-    | { type: McpServerType.PROJECT, projectId: string, userId: string }
-    | { type: McpServerType.PLATFORM, platformId: string, userId: string }
+    | { type: McpServerType.PROJECT, projectId: string, userId: string, clientId: string }
+    | { type: McpServerType.PLATFORM, platformId: string, userId: string, clientId: string }
 
 type IdentityResult =
     | { status: 'ok', identity: ResolvedIdentity }
