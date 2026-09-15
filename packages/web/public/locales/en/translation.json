@@ -3099,5 +3099,6 @@
   "1 min ago": "1 min ago",
   "{count} mins ago": "{count} mins ago",
   "1 hour ago": "1 hour ago",
-  "{count} hours ago": "{count} hours ago"
+  "{count} hours ago": "{count} hours ago",
+  "dispatchIndexRequiresParentWaitpointId": "A dispatch index only makes sense together with the barrier that dispatched the run."
 }
