@@ -39,6 +39,4 @@ type LockedFeatureGuardProps = {
   lockDocumentationUrl?: string;
   lockBullets?: string[];
   lockTier?: FeatureTier;
-  featureKey?: string;
-  showContactSales?: boolean;
 };
