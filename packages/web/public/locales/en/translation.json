@@ -1145,6 +1145,7 @@
   "vs last period": "vs last period",
   "Showing cached data · next refresh after {time}": "Showing cached data · next refresh after {time}",
   "Jobs done": "Jobs done",
+  "Untitled run": "Untitled run",
   "Completed jobs (success + failure) in the period": "Completed jobs (success + failure) in the period",
   "Success rate": "Success rate",
   "Share of completed jobs that succeeded": "Share of completed jobs that succeeded",

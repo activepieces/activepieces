@@ -1,9 +1,12 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunFlowReference, AgentRunListItem, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
+import { EntityManager, In } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
+import { databaseConnection } from '../../database/database-connection'
+import { FlowRunEntity } from '../../flows/flow-run/flow-run-entity'
+import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
@@ -13,6 +16,28 @@ import { AgentEntity } from './agent-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
+
+async function flowReferencesFor(runs: AgentConversation[]): Promise<Map<string, AgentRunFlowReference>> {
+    const flowRunIds = unique(runs.map((run) => run.flowRunId).filter((id): id is string => !isNil(id)))
+    if (flowRunIds.length === 0) {
+        return new Map()
+    }
+    const flowRuns = await databaseConnection().getRepository(FlowRunEntity).find({
+        where: { id: In(flowRunIds) },
+        select: ['id', 'flowId', 'flowVersionId'],
+    })
+    const flowVersionIds = unique(flowRuns.map((flowRun) => flowRun.flowVersionId))
+    const flowVersions = await databaseConnection().getRepository(FlowVersionEntity).find({
+        where: { id: In(flowVersionIds) },
+        select: ['id', 'displayName'],
+    })
+    const displayNameByVersionId = new Map(flowVersions.map((version) => [version.id, version.displayName]))
+    return new Map(flowRuns.map((flowRun) => [flowRun.id, {
+        flowRunId: flowRun.id,
+        flowId: flowRun.flowId,
+        displayName: displayNameByVersionId.get(flowRun.flowVersionId) ?? '',
+    }]))
+}
 
 async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityManager }: { agentId: string, authorisedProjectId: string, entityManager: EntityManager }): Promise<string> {
     const locked = await entityManager.getRepository(AgentEntity)
@@ -56,7 +81,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         return conversation
     },
 
-    async listConversations({ platformId, userId, cursor, limit, agentId }: ListConversationsParams): Promise<SeekPage<AgentConversation>> {
+    async listConversations({ platformId, userId, cursor, limit, agentId }: ListConversationsParams): Promise<SeekPage<AgentRunListItem>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: AgentConversationEntity,
@@ -124,6 +149,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
                 'agent_conversation.platformId',
                 'agent_conversation.projectId',
                 'agent_conversation.agentId',
+                'agent_conversation.flowRunId',
                 'agent_conversation.title',
                 'agent_conversation.modelName',
                 'agent_conversation.status',
@@ -133,7 +159,12 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             .andWhere('agent_conversation.source = :flowStepSource', { flowStepSource: AgentRunSource.FLOW_STEP })
 
         const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
-        return paginationHelper.createPage(data, paginationCursor)
+        const flowByRunId = await flowReferencesFor(data)
+        const withFlow = data.map((run) => ({
+            ...run,
+            flow: isNil(run.flowRunId) ? null : flowByRunId.get(run.flowRunId) ?? null,
+        }))
+        return paginationHelper.createPage(withFlow, paginationCursor)
     },
 
     async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<AgentConversation> {
