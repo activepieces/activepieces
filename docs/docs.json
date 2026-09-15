@@ -451,27 +451,27 @@
                         ]
                       }
                     ]
-                  },
-                  {
-                    "group": "General",
-                    "pages": [
-                      "admin-guide/guides/structure-projects",
-                      "admin-guide/guides/project-releases",
-                      "admin-guide/guides/project-replace-cli",
-                      "admin-guide/guides/manage-concurrency",
-                      "admin-guide/guides/permissions",
-                      {
-                        "group": "SCIM",
-                        "icon": "users",
-                        "pages": [
-                          "admin-guide/guides/scim/overview",
-                          "admin-guide/guides/scim/providers/okta",
-                          "admin-guide/guides/scim/providers/microsoft-entra-id"
-                        ]
-                      },
-                      "admin-guide/guides/connections"
-                    ]
                   }
+                ]
+              },
+              {
+                "group": "General",
+                "pages": [
+                  "admin-guide/guides/structure-projects",
+                  "admin-guide/guides/project-releases",
+                  "admin-guide/guides/project-replace-cli",
+                  "admin-guide/guides/manage-concurrency",
+                  "admin-guide/guides/permissions",
+                  {
+                    "group": "SCIM",
+                    "icon": "users",
+                    "pages": [
+                      "admin-guide/guides/scim/overview",
+                      "admin-guide/guides/scim/providers/okta",
+                      "admin-guide/guides/scim/providers/microsoft-entra-id"
+                    ]
+                  },
+                  "admin-guide/guides/connections"
                 ]
               }
             ]
