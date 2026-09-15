@@ -1,13 +1,9 @@
-import { ACTIVEPIECES_CHAT_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepieces/pieces-framework';
 
 type AIModelType = 'text' | 'image';
-
-function managedModelLabel(modelId: string): string | undefined {
-  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)?.label;
-}
 
 async function listProviders(ctx: {
   server: { apiUrl: string; token: string };
@@ -115,14 +111,21 @@ export const aiProps = <T extends AIModelType>({
           ...(isNil(configId) ? {} : { queryParams: { configId } }),
         });
 
+      const serverSentTierLabels = allModels.some(model => !isNil(model.tierLabel));
+      const keepModel = (model: AIProviderModel) =>
+        provider !== AIProviderName.ACTIVEPIECES ||
+        modelType !== 'text' ||
+        !serverSentTierLabels ||
+        model.tierLabel !== undefined;
+
       return {
         placeholder: 'Select AI Model',
         disabled: false,
         options: allModels
           .filter(model => model.type === modelType)
-          .filter(model => provider !== AIProviderName.ACTIVEPIECES || managedModelLabel(model.id) !== undefined)
+          .filter(keepModel)
           .map(model => ({
-            label: provider === AIProviderName.ACTIVEPIECES ? (managedModelLabel(model.id) ?? model.name) : model.name,
+            label: provider === AIProviderName.ACTIVEPIECES ? (model.tierLabel ?? model.name) : model.name,
             value: model.id,
           })),
       };

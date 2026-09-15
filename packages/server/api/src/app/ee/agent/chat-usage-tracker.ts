@@ -1,4 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { aiPricingCatalog } from '@activepieces/server-utils'
 import { AgentConversation, AgentRunSource, CHAT_BYOK_CREDIT_WEIGHT, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
@@ -27,7 +28,7 @@ export const chatUsageTracker = (log: FastifyBaseLogger) => ({
         const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
 
         const isManagedProvider = provider === AIProviderName.ACTIVEPIECES
-        const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null })
+        const tier = (await aiPricingCatalog.load()).resolveTier(conversation.modelName ?? undefined)
         const creditWeight = isManagedProvider ? tier.creditWeight : CHAT_BYOK_CREDIT_WEIGHT
         const creditValue = creditWeight + billableToolCalls * CHAT_CREDITS_PER_TOOL_CALL
 

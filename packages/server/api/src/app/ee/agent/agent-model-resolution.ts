@@ -1,12 +1,17 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
+import { aiPricingCatalog, AiPricingTier } from '@activepieces/server-utils'
+import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
 
 function findTier({ tierId }: { tierId: string | null }) {
-    return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
+    return isNil(tierId) ? undefined : aiPricingCatalog.current().findTierById(tierId)
 }
 
 function resolveTier({ tierId }: { tierId: string | null }) {
-    return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
+    return aiPricingCatalog.current().resolveTier(tierId ?? undefined)
+}
+
+function nativeModelIdFor({ tier }: { tier: AiPricingTier }): string | null {
+    return tier.nativeModelId ?? ACTIVEPIECES_CHAT_TIERS.find((shipped) => shipped.id === tier.id)?.nativeModelId ?? null
 }
 
 // An admin-listed catalog is the whole truth about what a key exposes, so an empty one means the key
@@ -61,12 +66,12 @@ function resolveModelIdForProvider({ provider, selectedModel, config, modelScope
         return tier.modelId
     }
     const candidates = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
-    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : tier.nativeModelId
+    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelIdFor({ tier })
     return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }
 
 function defaultModelIdForProvider({ provider }: { provider: AIProviderName }): string | null {
-    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: DEFAULT_CHAT_TIER_ID }))
+    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: aiPricingCatalog.current().defaultTierId }))
     return data
 }
 

@@ -1,5 +1,6 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_MANAGED_MODEL_WEIGHT, FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef, MANAGED_MODEL_WEIGHTS } from '@activepieces/shared'
+import { aiPricingCatalog, AiPricingReader } from '@activepieces/server-utils'
+import { FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
@@ -33,7 +34,8 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
         if (usage.messages === 0 && usage.toolCalls === 0) {
             return
         }
-        const creditValue = usage.breakdown.reduce((sum, entry) => sum + entry.messages * resolveAiCreditWeight({ provider: entry.provider, model: entry.model }) + entry.toolCalls, 0)
+        const pricing = await aiPricingCatalog.load()
+        const creditValue = usage.breakdown.reduce((sum, entry) => sum + entry.messages * resolveAiCreditWeight({ pricing, provider: entry.provider, model: entry.model }) + entry.toolCalls, 0)
         const attempt = flowRun.startTime ?? flowRun.created
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
         const isAppSumoPlan = isAppSumoCreditedPlan(platformPlan.plan)
@@ -79,18 +81,15 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
     },
 })
 
-export function resolveAiCreditWeight({ provider, model }: { provider: string, model: string }): number {
+export function resolveAiCreditWeight({ pricing, provider, model }: { pricing: AiPricingReader, provider: string, model: string }): number {
     if (provider !== AIProviderName.ACTIVEPIECES) {
         return 1
     }
-    const tierWeight = ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === model)?.creditWeight
-    if (!isNil(tierWeight)) {
-        return tierWeight
+    if (model === flowRunAiUsageExtractor.UNRESOLVED_VALUE) {
+        return pricing.resolveTier(undefined).creditWeight
     }
-    return MANAGED_MODEL_WEIGHTS[model] ?? DEFAULT_MANAGED_MODEL_WEIGHT
+    return pricing.creditWeightForModel(model)
 }
-
-
 
 async function fetchSlice({ log, projectId, ref }: FetchSliceParams): Promise<unknown> {
     const file = await fileService(log).getDataOrUndefined({

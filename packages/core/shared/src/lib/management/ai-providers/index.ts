@@ -317,6 +317,7 @@ export const AIProviderModel = z.object({
     name: z.string(),
     type: z.nativeEnum(AIProviderModelType),
     metadata: AIProviderModelMetadata.optional(),
+    tierLabel: z.optional(z.string()),
 })
 export type AIProviderModel = z.infer<typeof AIProviderModel>
 

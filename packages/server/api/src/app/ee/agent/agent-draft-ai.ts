@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentDraftFields, AgentTool, AgentToolType, CHAT_BYOK_CREDIT_WEIGHT, DEFAULT_CHAT_TIER_ID, DraftAgentResponse, isAppSumoCreditedPlan, MAX_SUGGESTED_AGENT_TOOLS, mcpToolNameUtils } from '@activepieces/shared'
+import { agentAiUtils, aiPricingCatalog } from '@activepieces/server-utils'
+import { AgentDraftFields, AgentTool, AgentToolType, CHAT_BYOK_CREDIT_WEIGHT, DraftAgentResponse, isAppSumoCreditedPlan, MAX_SUGGESTED_AGENT_TOOLS, mcpToolNameUtils } from '@activepieces/shared'
 import { APICallError, generateText, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -41,7 +41,7 @@ export const agentDraftAi = (log: FastifyBaseLogger) => ({
         let attempt = await runDraft({ model: resolved.model, prompt: withCandidates({ prompt, candidates }) })
         let usedModelId = resolved.modelId
         if (!isNil(attempt.error) && !rejectedCredentials(statusOf(attempt.error))) {
-            const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: DEFAULT_CHAT_TIER_ID, scope: agentHelpers.runScopeOrThrow({ projectId }), log }))
+            const { data: fallback } = await tryCatch(() => agentHelpers.resolveTierModel({ platformId, tierId: aiPricingCatalog.current().defaultTierId, scope: agentHelpers.runScopeOrThrow({ projectId }), log }))
             if (!isNil(fallback) && fallback.modelId !== resolved.modelId) {
                 log.warn({ from: resolved.modelId, to: fallback.modelId, platform: { id: platformId } }, '[agentDraftAi] Retrying the draft on the model chat runs on')
                 attempt = await runDraft({ model: fallback.model, prompt: withCandidates({ prompt, candidates }) })

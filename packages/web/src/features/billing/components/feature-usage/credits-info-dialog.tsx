@@ -1,8 +1,4 @@
-import {
-  ACTIVEPIECES_CHAT_TIERS,
-  ApEdition,
-  ApFlagId,
-} from '@activepieces/shared';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, Coins } from 'lucide-react';
 import React from 'react';
@@ -20,6 +16,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  ChatTier,
+  useChatTiers,
+} from '@/features/agents/ai-model/use-chat-tiers';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
@@ -83,7 +83,12 @@ function CreditsCostTable({
   includeActivepiecesModels: boolean;
   chatEnabled: boolean;
 }) {
-  const items = buildCostItems({ includeActivepiecesModels, chatEnabled });
+  const { tiers } = useChatTiers();
+  const items = buildCostItems({
+    includeActivepiecesModels,
+    chatEnabled,
+    tiers,
+  });
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[10px] border">
       <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-muted-foreground">
@@ -131,9 +136,11 @@ function CreditsCostTable({
 
 function buildCostItems({
   includeActivepiecesModels,
+  tiers,
   chatEnabled,
 }: {
   includeActivepiecesModels: boolean;
+  tiers: ChatTier[];
   chatEnabled: boolean;
 }): CostItem[] {
   const modelByActivepieces = t('Model by Activepieces');
@@ -170,7 +177,7 @@ function buildCostItems({
     },
   ];
   const activepiecesModels: CostItem[] = includeActivepiecesModels
-    ? ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
+    ? tiers.map((tier) => ({
         kind: 'row',
         action: t(tier.label),
         sub: modelByActivepieces,

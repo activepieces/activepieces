@@ -1,5 +1,5 @@
 import { ActivepiecesError, AiProviderKeyStatus, AIProviderName, apId, classifyProviderOutcome, ErrorCode, isNil, PlatformId, ProviderOutcomeSignal, spreadIfDefined, spreadIfNotUndefined, toProviderOutcomeSignal, tryCatch, unique } from '@activepieces/core-utils'
-import { modelCatalog } from '@activepieces/server-utils'
+import { aiPricingCatalog, modelCatalog } from '@activepieces/server-utils'
 import { ActivePiecesProviderAuthConfig, AI_PROVIDER_ENTITY_TYPES, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AiProviderProjectScope, AIProviderWithoutSensitiveData, CreateAIProviderRequest, GetProviderConfigResponse, ProjectAIProvider, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
@@ -28,6 +28,7 @@ const CONFIRM_MIN_INTERVAL_SECONDS = 10
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
+        await aiPricingCatalog.warmUp()
         cron.schedule('0 0 * * *', () => {
             log.info('Clearing AI provider models cache')
             modelsCache.clear()
@@ -446,7 +447,18 @@ async function fetchModels({ aiProvider, platformId, log }: { aiProvider: AIProv
             ...spreadIfDefined('metadata', catalog.lookup({ provider, modelId: model.id })),
         })))
     }
-    return modelsCache.get(cacheKey)!
+    return withTierLabels({ provider, models: modelsCache.get(cacheKey)! })
+}
+
+async function withTierLabels({ provider, models }: { provider: AIProviderName, models: AIProviderModel[] }): Promise<AIProviderModel[]> {
+    if (provider !== AIProviderName.ACTIVEPIECES) {
+        return models
+    }
+    const pricing = await aiPricingCatalog.load()
+    return models.map((model) => ({
+        ...model,
+        ...spreadIfDefined('tierLabel', pricing.findTierByModelId(model.id)?.label),
+    }))
 }
 
 async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProviderSchema, platformId: PlatformId }): Promise<AIProviderAuthConfig> {

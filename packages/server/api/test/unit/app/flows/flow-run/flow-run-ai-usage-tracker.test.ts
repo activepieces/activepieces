@@ -1,7 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_MANAGED_MODEL_WEIGHT } from '@activepieces/shared'
-import { resolveAiCreditWeight } from '../../../../../src/app/flows/flow-run/flow-run-ai-usage-tracker'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.stubEnv('AP_AI_PRICING_URL', 'https://pricing.invalid/ai/pricing.json')
 
 const { mockTrackBillableUsage, mockExtractAiUsage, mockFlowVersionHasAiStep, mockGetOrCreateForPlatform, mockGetProject, mockGetStepsOrNull } = vi.hoisted(() => ({
     mockTrackBillableUsage: vi.fn().mockResolvedValue(undefined),
@@ -56,6 +56,7 @@ vi.mock('../../../../../src/app/flows/flow-run/flow-run-ai-usage-extractor', () 
     flowRunAiUsageExtractor: {
         extractAiUsage: mockExtractAiUsage,
         flowVersionHasAiStep: mockFlowVersionHasAiStep,
+        UNRESOLVED_VALUE: 'unknown',
     },
 }))
 
@@ -81,6 +82,20 @@ async function callTrack({ startTime }: { startTime?: string | null }): Promise<
 
 function creditsKeyFromLastCall(): string | undefined {
     return mockTrackBillableUsage.mock.calls[0][0].credits.idempotencyKey
+}
+
+function creditsValueFromLastCall(): number {
+    return mockTrackBillableUsage.mock.calls[0][0].credits.value
+}
+
+async function trackOneMessage({ provider, model, toolCalls = 0 }: { provider: string, model: string, toolCalls?: number }): Promise<number> {
+    mockExtractAiUsage.mockResolvedValue({
+        messages: 1,
+        toolCalls,
+        breakdown: [{ provider, model, messages: 1, toolCalls }],
+    })
+    await callTrack({ startTime: FIRST_ATTEMPT_START })
+    return creditsValueFromLastCall()
 }
 
 function appSumoKeyFromLastCall(): string | undefined {
@@ -141,21 +156,47 @@ describe('flowRunAiUsageTracker.track — idempotency key scoping', () => {
     })
 })
 
-describe('resolveAiCreditWeight', () => {
-    it('bills each tier model at the tier weight, not the table', () => {
-        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
-            expect(resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: tier.modelId }), tier.id).toBe(tier.creditWeight)
-        }
+describe('flowRunAiUsageTracker.track — managed model credit weights', () => {
+    beforeEach(() => {
+        mockTrackBillableUsage.mockClear()
+        mockGetProject.mockResolvedValue({ platformId: 'plat-1' })
+        mockGetStepsOrNull.mockResolvedValue({})
+        mockGetOrCreateForPlatform.mockResolvedValue({ plan: 'plus', licenseKey: null })
     })
 
-    it('charges more for a frontier model than for a mini one, so the table is not uniformly the default', () => {
-        const frontier = resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'openai/gpt-5.5' })
-        const mini = resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'openai/gpt-5.4-mini' })
-
-        expect(frontier).toBeGreaterThan(mini)
+    it('charges the tier weight for each of the three managed tiers', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-haiku-4.5' })).toBe(10)
+        mockTrackBillableUsage.mockClear()
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-sonnet-4.6' })).toBe(40)
+        mockTrackBillableUsage.mockClear()
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-opus-4.8' })).toBe(80)
     })
 
-    it('leaves a model nobody offers on the default rate', () => {
-        expect(resolveAiCreditWeight({ provider: AIProviderName.ACTIVEPIECES, model: 'someone/never-offered' })).toBe(DEFAULT_MANAGED_MODEL_WEIGHT)
+    it('charges the table weight for a managed model outside the tiers', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'google/gemini-2.5-flash' })).toBe(4)
+    })
+
+    it('charges the table weight for a model far above the tiers rather than capping it', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'openai/o1-pro' })).toBe(5487)
+    })
+
+    it('charges the unpriced weight for a managed model missing from the table', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'someone/brand-new-model' })).toBe(100)
+    })
+
+    it('charges the unpriced weight for a router model whose price cannot be known upfront', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'openrouter/auto' })).toBe(100)
+    })
+
+    it('charges the default tier weight when the model could not be read off the step', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'unknown' })).toBe(40)
+    })
+
+    it('charges one credit per message on a bring-your-own-key provider', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.OPENAI, model: 'openai/o1-pro' })).toBe(1)
+    })
+
+    it('adds one credit per tool call on top of the model weight', async () => {
+        expect(await trackOneMessage({ provider: AIProviderName.ACTIVEPIECES, model: 'anthropic/claude-opus-4.8', toolCalls: 3 })).toBe(83)
     })
 })

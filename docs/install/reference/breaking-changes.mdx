@@ -8,6 +8,20 @@ icon: "hammer"
 
 ### What has changed?
 
+#### AI credit weights are rescaled, and are now published to a file instead of shipped in the release
+
+Every managed AI model's credit weight changed. The three chat tiers go from 2 / 10 / 20 credits per message to 10 / 40 / 80, and the per-model table was rescaled the same way and grown from 79 models to 174. A managed model with no weight in the table used to cost 2 credits per message and now costs 100, so a model nobody priced is expensive instead of nearly free.
+
+The table is no longer only a constant in the release. On start-up the server reads `https://cdn.activepieces.com/ai/pricing.json` and refreshes it every hour, so prices can change without a deploy. The published file sets prices on top of the table in the release rather than replacing it, so a model the file leaves out keeps the price we shipped instead of falling to the unpriced rate. If the file cannot be read or is malformed, the server uses the release's table on its own and logs a warning.
+
+#### What you need to do
+
+Nothing on a self-hosted installation. The published file is optional and the release works without it.
+
+If your network blocks outbound HTTPS, either allow `cdn.activepieces.com` or point `AP_AI_PRICING_URL` at your own copy of the file. Leaving it blocked is safe: the server falls back to the weights in the release.
+
+If you resell AI credits, re-check your pricing against the new weights before upgrading.
+
 #### Worker group runs no longer fall back to shared workers
 
 Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
