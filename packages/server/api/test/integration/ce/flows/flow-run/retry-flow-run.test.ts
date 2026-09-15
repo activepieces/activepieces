@@ -106,12 +106,12 @@ describe('Retry flow run', () => {
         expect(body.flowId).toBe(flowRun.flowId)
     })
 
-    it('should keep parentRunId but drop parentWaitpointId when retrying on latest version', async () => {
+    it('should keep parentRunId when retrying a subflow run on latest version', async () => {
         const { flowRun } = await createFailedFlowRun({
             projectId: ctx.project.id,
         })
         const parentRunId = apId()
-        await db.update('flow_run', flowRun.id, { parentRunId, parentWaitpointId: apId() })
+        await db.update('flow_run', flowRun.id, { parentRunId })
 
         const response = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
             strategy: FlowRetryStrategy.ON_LATEST_VERSION,
@@ -123,6 +123,29 @@ describe('Retry flow run', () => {
         expect(retried.id).not.toBe(flowRun.id)
         expect(retried.parentRunId).toBe(parentRunId)
         expect(retried.parentWaitpointId).toBeUndefined()
+    })
+
+    it('should refuse to retry a barrier child on either strategy', async () => {
+        const { flowRun } = await createFailedFlowRun({
+            projectId: ctx.project.id,
+        })
+        await db.update('flow_run', flowRun.id, { parentWaitpointId: apId(), dispatchIndex: 3 })
+
+        const fromFailedStep = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.FROM_FAILED_STEP,
+            projectId: ctx.project.id,
+        })
+        expect(fromFailedStep.statusCode).toBe(409)
+
+        const onLatestVersion = await ctx.post(`/v1/flow-runs/${flowRun.id}/retry`, {
+            strategy: FlowRetryStrategy.ON_LATEST_VERSION,
+            projectId: ctx.project.id,
+        })
+        expect(onLatestVersion.statusCode).toBe(409)
+
+        const notRetried = await db.findOneByOrFail<{ id: string, status: string, parentWaitpointId: string | null }>('flow_run', { id: flowRun.id })
+        expect(notRetried.status).toBe(FlowRunStatus.FAILED)
+        expect(notRetried.parentWaitpointId).not.toBeNull()
     })
 
     it('should refuse to retry a run that started mid-graph', async () => {
