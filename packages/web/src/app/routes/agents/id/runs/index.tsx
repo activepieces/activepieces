@@ -16,10 +16,9 @@ import { formatUtils } from '@/lib/format-utils';
 
 type AgentRunsProps = {
   agentId: string;
-  onOpenRun: (conversationId: string) => void;
 };
 
-export const AgentRuns = ({ agentId, onOpenRun }: AgentRunsProps) => {
+export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
   const {
     data: runs,
@@ -95,7 +94,6 @@ export const AgentRuns = ({ agentId, onOpenRun }: AgentRunsProps) => {
         isError={isError}
         errorStateEntity={t('runs')}
         onRetry={refetch}
-        onRowClick={(row) => onOpenRun(row.id)}
         emptyStateIcon={<History className="size-14" />}
         emptyStateTextTitle={t('No flow has run this agent yet')}
         emptyStateTextDescription={t(

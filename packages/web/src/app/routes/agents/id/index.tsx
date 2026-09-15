@@ -3,7 +3,12 @@ import { Agent, AgentToolType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronLeft, SearchX, Settings2 } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import {
@@ -22,7 +27,7 @@ import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import { AgentChatView, SLIDING_ASIDE } from './agent-chat-view';
+import { AgentChatView } from './agent-chat-view';
 import { AgentConfigurePanel } from './configure-panel';
 import { AgentRuns } from './runs';
 
@@ -53,6 +58,8 @@ type OpenPanel = 'conversations' | 'configure' | 'none';
 const CONVERSATION_QUERY_PARAM = 'conversation';
 const RUNS_TAB = 'runs';
 const CHAT_TAB = 'chat';
+const SLIDING_ASIDE =
+  'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
 const needsAModel = (agent: Agent): boolean => {
   const running = agent.published ?? agent.draft;
@@ -72,7 +79,8 @@ const AgentEditorSkeleton = () => (
 );
 const AgentEditorContent = () => {
   const navigate = useNavigate();
-  const { agentId, tab } = useParams<{ agentId: string; tab?: string }>();
+  const { agentId } = useParams<{ agentId: string }>();
+  const { pathname } = useLocation();
   const agentsAvailable = useAgentsAvailable();
   const [openPanel, setOpenPanel] = useState<OpenPanel>();
   const [configureMounted, setConfigureMounted] = useState(false);
@@ -96,17 +104,14 @@ const AgentEditorContent = () => {
     setOpenedConversationId(nextConversationId);
     writeConversationParam(nextConversationId);
   };
-  const runsOpen = tab === RUNS_TAB;
-  const agentRoute = (suffix: string) =>
-    authenticationSession.appendProjectRoutePrefix(
-      `/agents/${agentId}${suffix}`,
-    );
+  const runsOpen = pathname.endsWith(`/${RUNS_TAB}`);
   const showTab = (nextTab: string) => {
-    navigate(agentRoute(nextTab === CHAT_TAB ? '' : `/${nextTab}`));
-  };
-  const openRunInChat = (runConversationId: string) => {
-    setOpenedConversationId(runConversationId);
-    navigate(agentRoute(`?${CONVERSATION_QUERY_PARAM}=${runConversationId}`));
+    const suffix = nextTab === RUNS_TAB ? `/${RUNS_TAB}` : '';
+    navigate(
+      authenticationSession.appendProjectRoutePrefix(
+        `/agents/${agentId}${suffix}`,
+      ),
+    );
   };
   const startNewConversation = () => {
     setOpenedConversationId(undefined);
@@ -203,7 +208,7 @@ const AgentEditorContent = () => {
         </div>
         <div className="flex min-h-0 grow">
           {runsOpen ? (
-            <AgentRuns agentId={agent.id} onOpenRun={openRunInChat} />
+            <AgentRuns agentId={agent.id} />
           ) : (
             <AgentChatView
               agent={agent}
