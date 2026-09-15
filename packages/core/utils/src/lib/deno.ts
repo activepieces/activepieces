@@ -7,9 +7,9 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {} }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
-        const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env })
+        const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
         child.stdin.end(buildRunProgram({ body, marker }))
 
         return new Promise((resolve, reject) => {
@@ -104,10 +104,10 @@ function newResultMarker(): string {
     return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
 }
 
-async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
     const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
-    const denoDir = await fs.mkdtemp(`${cwd ?? os.tmpdir()}/ap-deno-`)
+    const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
     const child = childProcess.spawn(denoPath, [
         'run',
         '--quiet',
@@ -220,6 +220,7 @@ type DenoProgramParams = {
     allowReadPaths?: string[]
     resolveNodeModules?: boolean
     env?: Record<string, string>
+    denoDirBase?: string
 }
 
 type SpawnDenoParams = {
@@ -230,6 +231,7 @@ type SpawnDenoParams = {
     allowReadPaths: string[]
     resolveNodeModules: boolean
     env: Record<string, string>
+    denoDirBase?: string
 }
 
 type NodeApis = {
