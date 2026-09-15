@@ -1,4 +1,4 @@
-import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
@@ -117,13 +117,24 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 && !tavilySearchActive
                 && !untrackedSearchWouldBeat
                 && aiUtils.supportsWebSearch(provider)
+            const billing: ActivepiecesAiBilling = {
+                scope: ActivepiecesAiBillingScope.CONVERSATION,
+                platformId,
+                projectId: projectId ?? null,
+                conversationId,
+                chat: { userId, turnIndex: config.previousUiMessages.length, tier: config.tier.id },
+            }
             const model = aiUtils.createModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
                 webSearchEnabled: webSearchActive,
+                billing,
+                ownKeyCredit: 'charged-with-the-turn',
             })
             const fastModel = aiUtils.createModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+                billing,
+                ownKeyCredit: 'charged-with-the-turn',
             })
 
             log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
