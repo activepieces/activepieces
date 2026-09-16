@@ -169,10 +169,16 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
     },
 
     async getAgentRunOrThrow({ id, projectId }: { id: string, projectId: string }): Promise<AgentRunListItem & { agentId: string }> {
-        const run = await agentHelpers.conversationRepo().findOneBy({
-            id,
-            projectId,
-            source: AgentRunSource.FLOW_STEP,
+        const run = await agentHelpers.conversationRepo().findOne({
+            where: { id, projectId, source: AgentRunSource.FLOW_STEP },
+            // Never the raw `messages` column: that is the model-facing transcript, and every
+            // other read path in this file hands back the curated `uiMessages` instead.
+            select: [
+                'id', 'created', 'updated', 'platformId', 'projectId', 'userId',
+                'agentId', 'flowRunId', 'aiCredits', 'source', 'title',
+                'modelName', 'status', 'activeRunId', 'uiMessages', 'summary',
+                'summarizedUpToIndex',
+            ],
         })
         if (isNil(run) || isNil(run.agentId)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })

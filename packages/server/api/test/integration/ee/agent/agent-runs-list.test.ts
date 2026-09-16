@@ -82,6 +82,18 @@ describe('reading one unattended run', () => {
         expect(response.json().title).toBe('Swept the inbox')
     })
 
+    it('never hands back the raw model transcript, only the curated one the UI shows', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const runId = await seedRun({ ctx, agentId: agent.id, source: AgentRunSource.FLOW_STEP })
+
+        const response = await getRun(ctx, runId)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().messages).toBeUndefined()
+        expect(response.json()).toHaveProperty('uiMessages')
+    })
+
     it('refuses a chat conversation, so this is not a way around the rule that chat history stays private', async () => {
         const ctx = await context()
         const agent = await createAgent(ctx)

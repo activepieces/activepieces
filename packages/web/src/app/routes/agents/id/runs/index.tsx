@@ -51,7 +51,10 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <button
             type="button"
             className="flex items-center gap-2 text-left hover:underline"
-            onClick={() => setOpenRunId(row.original.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenRunId(row.original.id);
+            }}
           >
             <TruncatedColumnTextValue
               value={row.original.title ?? t('Untitled run')}

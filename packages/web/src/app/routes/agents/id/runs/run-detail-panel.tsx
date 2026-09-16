@@ -134,12 +134,6 @@ const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
 
 const Dot = () => <span aria-hidden="true">&middot;</span>;
 
-const Label = ({ children }: { children: React.ReactNode }) => (
-  <span className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
-    {children}
-  </span>
-);
-
 const Prompt = ({ parts }: { parts: PersistedAgentPart[] }) => {
   const text = parts
     .filter((part) => part.type === PersistedAgentPartType.TEXT)
@@ -214,5 +208,13 @@ const ToolCall = ({
 };
 
 const Payload = ({ label, value }: { label: string; value: unknown }) => (
-  <JsonViewer json={value} title={<Label>{label}</Label>} hideDownload />
+  <JsonViewer
+    json={value}
+    title={
+      <span className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+    }
+    hideDownload
+  />
 );
