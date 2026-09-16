@@ -56,7 +56,7 @@ function makePollingJobData(): PollingJobData {
     }
 }
 
-function makeMockContext(opts?: { executeResult?: unknown }): JobContext {
+function makeMockContext(opts?: { executeResult?: unknown, executeError?: unknown }): JobContext {
     return {
         jobId: 'job-1',
         log: {
@@ -77,7 +77,9 @@ function makeMockContext(opts?: { executeResult?: unknown }): JobContext {
             }),
         },
         runtime: {
-            execute: vi.fn().mockResolvedValue(opts?.executeResult ?? { status: EngineResponseStatus.OK, response: { output: [] } }),
+            execute: opts?.executeError
+                ? vi.fn().mockRejectedValue(opts.executeError)
+                : vi.fn().mockResolvedValue(opts?.executeResult ?? { status: EngineResponseStatus.OK, response: { output: [] } }),
         },
         workerIndex: 0,
         engineToken: 'test-token',
@@ -125,6 +127,21 @@ describe('executePollingJob silent-drop visibility', () => {
                 engine: { status: EngineResponseStatus.USER_FAILURE, error: 'trigger threw' },
             }),
             expect.stringContaining('no flow run created'),
+        )
+        expect(result).toMatchObject({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK })
+    })
+
+    it('logs a thrown engine failure as an Error so the wide event keeps its message and stack', async () => {
+        const ctx = makeMockContext({ executeError: new Error('sandbox died') })
+
+        const result = await executePollingJob.execute(ctx, makePollingJobData())
+
+        expect(ctx.log.error).toHaveBeenCalledWith(
+            expect.objectContaining({
+                ...expectedBaseFields,
+                error: expect.objectContaining({ message: 'sandbox died' }),
+            }),
+            expect.stringContaining('will retry'),
         )
         expect(result).toMatchObject({ kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK })
     })
