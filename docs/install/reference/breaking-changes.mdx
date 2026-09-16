@@ -346,7 +346,7 @@ Nothing to configure or migrate, and no new environment variable — a default i
 
 #### Sign-up addresses are checked with ZeroBounce instead of a bundled blocklist
 
-The bundled list of disposable-email domains introduced in 0.88.2 is gone. Sign-up now asks ZeroBounce about the address and refuses it when ZeroBounce reports it as disposable, a spam trap, abusive, or on a global suppression list. The refusal is silent, so the response looks the same as a successful one. When ZeroBounce cannot be reached, or the key is invalid or out of credits, the address is let through and the reason is logged.
+The bundled list of disposable-email domains introduced in 0.88.2 is gone. Sign-up now asks ZeroBounce about the address, on every password sign-up and on the emailed-code path only when the address has no account yet, and refuses it when ZeroBounce reports it as disposable, a spam trap, abusive, or on a global suppression list. The refusal is silent, so the response looks the same as a successful one. When ZeroBounce cannot be reached, or the key is invalid or out of credits, the address is let through and the reason is logged.
 
 The check runs only when `AP_ZEROBOUNCE_API_KEY` is set. `AP_ALLOW_DISPOSABLE_EMAILS` is removed; the key is the switch. An instance without a key accepts throwaway addresses again, as it did before 0.88.2.
 
@@ -382,7 +382,7 @@ Nothing on upgrade. Re-check any flow or API integration that filters a Date col
 
 #### What you need to do
 
-If your network policy restricts outbound traffic and you allowed only `cdn.activepieces.com` after 0.87.0, allow `registry.npmjs.org` as well, or set `AP_USE_CDN_FOR_BUNDLES=true` to keep official bundles coming from the CDN. Otherwise nothing.
+If your network policy restricts outbound traffic, allow `registry.npmjs.org`: it is the default source, and it stays the fallback for any bundle the CDN does not have even when `AP_USE_CDN_FOR_BUNDLES=true`. Set the flag to `true` to prefer the CDN, and allow `cdn.activepieces.com` as well in that case. Otherwise nothing.
 
 #### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
 
