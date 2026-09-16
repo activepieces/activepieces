@@ -297,22 +297,20 @@ describe('Send Reaction and Mark As Read', () => {
 });
 
 describe('Upload Media', () => {
-	test('posts a built-in multipart FormData with messaging_product, type and the file, letting fetch set the boundary', async () => {
+	test('posts a hand-built multipart body with messaging_product, type and the file under its own boundary', async () => {
 		respondWith({ id: 'MEDIA' });
 		const result = await uploadMedia.run(
 			context({ phone_number_id: 'PN', mime_type: 'image/png', file: { filename: 'a.png', data: Buffer.from('png-bytes'), extension: 'png', base64: '' } }),
 		);
 		expect(result).toEqual({ id: 'MEDIA' });
-		const body = requests[0].body as FormData;
-		expect(body).toBeInstanceOf(FormData);
-		expect(requests[0].headers?.['content-type']).toBeUndefined();
-		expect(requests[0].headers?.['Content-Type']).toBeUndefined();
-		expect(body.get('messaging_product')).toBe('whatsapp');
-		expect(body.get('type')).toBe('image/png');
-		const file = body.get('file') as File;
-		expect(file.name).toBe('a.png');
-		expect(file.type).toBe('image/png');
-		expect(await file.text()).toBe('png-bytes');
+		const contentType = String(requests[0].headers?.['Content-Type']);
+		expect(contentType).toMatch(/^multipart\/form-data; boundary=----ActivepiecesWhatsApp[0-9a-f]{24}$/);
+		const boundary = contentType.split('boundary=')[1];
+		const body = (requests[0].body as Buffer).toString('utf8');
+		expect(body).toContain(`--${boundary}\r\nContent-Disposition: form-data; name="messaging_product"\r\n\r\nwhatsapp\r\n`);
+		expect(body).toContain(`--${boundary}\r\nContent-Disposition: form-data; name="type"\r\n\r\nimage/png\r\n`);
+		expect(body).toContain(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\nContent-Type: image/png\r\n\r\npng-bytes\r\n`);
+		expect(body.endsWith(`--${boundary}--\r\n`)).toBe(true);
 	});
 });
 

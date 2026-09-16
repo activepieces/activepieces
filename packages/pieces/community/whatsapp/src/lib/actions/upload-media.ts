@@ -52,15 +52,16 @@ export const uploadMedia = createAction({
 	},
 	async run(context) {
 		const { phone_number_id, file, mime_type } = context.propsValue;
-		const formData = new FormData();
-		formData.append('messaging_product', 'whatsapp');
-		formData.append('type', mime_type);
-		formData.append('file', new Blob([file.data], { type: mime_type }), file.filename);
+		const multipart = whatsappClient.buildMultipartBody({
+			fields: { messaging_product: 'whatsapp', type: mime_type },
+			file: { field: 'file', filename: file.filename, contentType: mime_type, data: file.data },
+		});
 		return whatsappClient.request<{ id: string }>({
 			accessToken: context.auth.props.access_token,
 			method: HttpMethod.POST,
 			path: `/${phone_number_id}/media`,
-			body: formData,
+			body: multipart.body,
+			headers: { 'Content-Type': multipart.contentType },
 		});
 	},
 });

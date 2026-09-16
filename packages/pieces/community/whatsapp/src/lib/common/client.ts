@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import {
 	AuthenticationType,
 	httpClient,
@@ -51,6 +52,26 @@ async function sendMessage({
 	});
 }
 
+function buildMultipartBody({ fields, file }: MultipartParams): { body: Buffer; contentType: string } {
+	const boundary = `----ActivepiecesWhatsApp${randomBytes(12).toString('hex')}`;
+	const fieldParts = Object.entries(fields).map(([name, value]) =>
+		Buffer.from(`--${boundary}${CRLF}Content-Disposition: form-data; name="${name}"${CRLF}${CRLF}${value}${CRLF}`, 'utf8'),
+	);
+	const safeFilename = file.filename.replace(/["\r\n]/g, '_');
+	const fileHeader = Buffer.from(
+		`--${boundary}${CRLF}Content-Disposition: form-data; name="${file.field}"; filename="${safeFilename}"${CRLF}Content-Type: ${file.contentType}${CRLF}${CRLF}`,
+		'utf8',
+	);
+	const closing = Buffer.from(`${CRLF}--${boundary}--${CRLF}`, 'utf8');
+	return {
+		body: Buffer.concat([...fieldParts, fileHeader, file.data, closing]),
+		contentType: `multipart/form-data; boundary=${boundary}`,
+	};
+}
+
+const CRLF = '\r\n';
+
+
 function buildInteractiveHeader({
 	headerType,
 	headerText,
@@ -85,6 +106,7 @@ function normalizeTemplateComponents(components: unknown): unknown {
 }
 
 export const whatsappClient = {
+	buildMultipartBody,
 	request,
 	sendMessage,
 	buildInteractiveHeader,
@@ -118,4 +140,9 @@ type InteractiveHeaderParams = {
 	headerType?: string;
 	headerText?: string;
 	headerMediaUrl?: string;
+};
+
+type MultipartParams = {
+	fields: Record<string, string>;
+	file: { field: string; filename: string; contentType: string; data: Buffer };
 };
