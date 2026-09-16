@@ -40,10 +40,14 @@ function deletionJobIds(platformId: string) {
 }
 
 beforeAll(async () => {
+    process.env.AP_GOOGLE_CLIENT_ID = 'mock-google-client-id'
+    process.env.AP_GOOGLE_CLIENT_SECRET = 'mock-google-client-secret'
     app = await setupTestEnvironment()
 })
 
 afterAll(async () => {
+    delete process.env.AP_GOOGLE_CLIENT_ID
+    delete process.env.AP_GOOGLE_CLIENT_SECRET
     await teardownTestEnvironment()
 })
 describe('Platform API', () => {
@@ -103,6 +107,206 @@ describe('Platform API', () => {
                 saml: null,
             })
             expect(responseBody.cloudAuthEnabled).toBe(false)
+        }),
+
+        it('rejects disabling the last remaining sign-in method', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: false,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+
+            const platformAfter = await databaseConnection()
+                .getRepository('platform')
+                .findOneByOrFail({ id: mockPlatform.id })
+            expect(platformAfter.emailAuthEnabled).toBe(true)
+        }),
+
+        it('allows disabling a sign-in method while another one remains', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { emailAuthEnabled: false },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().emailAuthEnabled).toBe(false)
+        }),
+
+        it('rejects disabling the last sign-in method when the Google credentials are blank', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    emailAuthEnabled: true,
+                    googleAuthEnabled: true,
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+            const googleClientId = process.env.AP_GOOGLE_CLIENT_ID
+            const googleClientSecret = process.env.AP_GOOGLE_CLIENT_SECRET
+            process.env.AP_GOOGLE_CLIENT_ID = '   '
+            process.env.AP_GOOGLE_CLIENT_SECRET = ''
+
+            try {
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: `/api/v1/platforms/${mockPlatform.id}`,
+                    headers: {
+                        authorization: `Bearer ${testToken}`,
+                    },
+                    body: { emailAuthEnabled: false },
+                })
+
+                // assert
+                expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+
+                const platformAfter = await databaseConnection()
+                    .getRepository('platform')
+                    .findOneByOrFail({ id: mockPlatform.id })
+                expect(platformAfter.emailAuthEnabled).toBe(true)
+            }
+            finally {
+                process.env.AP_GOOGLE_CLIENT_ID = googleClientId
+                process.env.AP_GOOGLE_CLIENT_SECRET = googleClientSecret
+            }
+        }),
+
+        it.each([
+            'activepieces',
+            'acme.123',
+            'acme.c',
+            '-acme.com',
+            'acme-.com',
+            'acme..com',
+            'acme.com.',
+            'ac me.com',
+            'localhost',
+            '192.168.1.1',
+        ])('rejects %s as an allowed auth domain', async (invalidDomain) => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                platform: {
+                    allowedAuthDomains: ['acme.com'],
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { allowedAuthDomains: [invalidDomain] },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            expect(response?.json().params.message).toContain(invalidDomain)
+
+            const platformAfter = await databaseConnection()
+                .getRepository('platform')
+                .findOneByOrFail({ id: mockPlatform.id })
+            expect(platformAfter.allowedAuthDomains).toStrictEqual(['acme.com'])
+        }),
+
+        it.each(['acme.com', 'acme.co.uk', 'sub.domain.acme.com', 'a.io', 'xn--bcher-kva.de'])(
+            'accepts %s as an allowed auth domain',
+            async (validDomain) => {
+                // arrange
+                const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({})
+                const testToken = await generateMockToken({
+                    type: PrincipalType.USER,
+                    id: mockOwner.id,
+                    platform: { id: mockPlatform.id },
+                })
+
+                // act
+                const response = await app?.inject({
+                    method: 'POST',
+                    url: `/api/v1/platforms/${mockPlatform.id}`,
+                    headers: {
+                        authorization: `Bearer ${testToken}`,
+                    },
+                    body: { allowedAuthDomains: [validDomain] },
+                })
+
+                // assert
+                expect(response?.statusCode).toBe(StatusCodes.OK)
+                expect(response?.json().allowedAuthDomains).toStrictEqual([validDomain])
+            },
+        ),
+
+        it('normalizes allowed auth domains before saving them', async () => {
+            // arrange
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({})
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: { allowedAuthDomains: ['  Acme.COM  '] },
+            })
+
+            // assert
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().allowedAuthDomains).toStrictEqual(['acme.com'])
         }),
 
         it('updates the platform logo icons', async () => {
