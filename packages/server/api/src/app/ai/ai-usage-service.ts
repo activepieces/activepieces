@@ -1,10 +1,11 @@
-import { ActivepiecesAiBillingScope, isNil } from '@activepieces/core-utils'
+import { ActivepiecesAiBillingScope, isNil, tryCatch } from '@activepieces/core-utils'
 import { isAppSumoCreditedPlan, ReportAiUsageRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { trackBillingAndSendTelemetry } from '../platform/billing-and-telemetry'
 import { AiCreditConsumptionProperties, ChatAppSumoConsumptionProperties, ChatCreditConsumptionProperties, CreditUsageSource } from '../platform/billing-provider'
 import { chargeFor } from './ai-credits'
+import { aiUsageHooks } from './ai-usage-hooks'
 
 export const aiUsageService = (log: FastifyBaseLogger) => ({
     async report(input: ReportAiUsageRequest): Promise<void> {
@@ -21,17 +22,30 @@ export const aiUsageService = (log: FastifyBaseLogger) => ({
                 credits: { platformId, value: credits, source: CreditUsageSource.CHAT, idempotencyKey: input.idempotencyKey, properties: chat.credits },
                 appSumo: appSumo ? { platformId, value: credits, source: CreditUsageSource.CHAT, idempotencyKey: `${input.idempotencyKey}:appSumo`, properties: chat.appSumo } : undefined,
             })
-            return
         }
-        const properties = billingProperties(input, toolCalls)
-        await trackBillingAndSendTelemetry({
-            log,
-            licenseKey: platformPlan.licenseKey,
-            credits: { platformId, value: credits, source: CreditUsageSource.AI, idempotencyKey: input.idempotencyKey, properties },
-            appSumo: appSumo ? { platformId, value: credits, source: CreditUsageSource.AI, idempotencyKey: `${input.idempotencyKey}:appSumo`, properties } : undefined,
-        })
+        else {
+            const properties = billingProperties(input, toolCalls)
+            await trackBillingAndSendTelemetry({
+                log,
+                licenseKey: platformPlan.licenseKey,
+                credits: { platformId, value: credits, source: CreditUsageSource.AI, idempotencyKey: input.idempotencyKey, properties },
+                appSumo: appSumo ? { platformId, value: credits, source: CreditUsageSource.AI, idempotencyKey: `${input.idempotencyKey}:appSumo`, properties } : undefined,
+            })
+        }
+        await addConversationCredits({ input, credits, log })
     },
 })
+
+async function addConversationCredits({ input, credits, log }: { input: ReportAiUsageRequest, credits: number, log: FastifyBaseLogger }): Promise<void> {
+    if (input.billing.scope !== ActivepiecesAiBillingScope.CONVERSATION) {
+        return
+    }
+    const { conversationId } = input.billing
+    const { error } = await tryCatch(() => aiUsageHooks.get(log).addConversationCredits({ conversationId, credits }))
+    if (!isNil(error)) {
+        log.warn({ conversation: { id: conversationId }, error }, '[aiUsageService] Could not add this call to the conversation credit total')
+    }
+}
 
 function chatEventOf(input: ReportAiUsageRequest, toolCalls: number): { credits: ChatCreditConsumptionProperties, appSumo: ChatAppSumoConsumptionProperties } | undefined {
     if (input.billing.scope !== ActivepiecesAiBillingScope.CONVERSATION || isNil(input.chat)) {
@@ -63,7 +77,7 @@ function billingProperties(input: ReportAiUsageRequest, toolCalls: number): AiCr
         projectId: projectIdOf(input),
         flowId: input.flowRun?.flowId ?? OUTSIDE_A_FLOW,
         flowRunId: input.flowRun?.flowRunId ?? input.requestId ?? OUTSIDE_A_FLOW,
-        environment: input.flowRun?.environment ?? OUTSIDE_A_FLOW,
+        environment: input.flowRun?.environment ?? UNKNOWN_ENVIRONMENT,
         messages: MESSAGES_PER_MODEL_CALL,
         toolCalls,
         breakdown: [{
@@ -85,3 +99,4 @@ function projectIdOf(input: ReportAiUsageRequest): string {
 const MESSAGES_PER_MODEL_CALL = 1
 const PROJECTLESS_CHAT = 'chat'
 const OUTSIDE_A_FLOW = 'none'
+const UNKNOWN_ENVIRONMENT = 'unknown'

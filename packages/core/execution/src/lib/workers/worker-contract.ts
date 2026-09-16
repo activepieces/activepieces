@@ -180,7 +180,6 @@ export type SaveAgentMessagesRequest = {
     uiMessages: unknown[]
     title?: string
     modelName?: string
-    aiCredits?: number
 }
 
 export type SaveAgentFileRequest = {
@@ -454,7 +453,7 @@ export type ReportAiUsageRequest = {
 export type AiUsageFlowRunContext = {
     flowId: string
     flowRunId: string
-    environment: string
+    environment?: string
 }
 
 export type AiUsageChatContext = {

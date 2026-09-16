@@ -1,6 +1,6 @@
-import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, aiProviderUtils, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentPartType, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
@@ -118,13 +118,24 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 && !tavilySearchActive
                 && !untrackedSearchWouldBeat
                 && aiUtils.supportsWebSearch(provider)
+            const billing: ActivepiecesAiBilling = {
+                scope: ActivepiecesAiBillingScope.CONVERSATION,
+                platformId,
+                projectId: projectId ?? null,
+                conversationId,
+                chat: { userId, turnIndex: config.previousUiMessages.length, tier: config.tier.id },
+            }
             const model = aiUtils.createModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
                 webSearchEnabled: webSearchActive,
+                billing,
+                ownKeyCredit: 'charged-with-the-turn',
             })
             const fastModel = aiUtils.createModel({
                 provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+                billing,
+                ownKeyCredit: 'charged-with-the-turn',
             })
 
             log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
@@ -336,11 +347,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }, 'Chat message completed')
 
             const thinkingDurationMs = Date.now() - thinkingStartTime
-            const billedAsAiCredits = source === AgentRunSource.FLOW_STEP
-            const toolCallsThisTurn = uiParts.filter((part) => part.type === PersistedAgentPartType.TOOL_CALL).length
-            const aiCredits = billedAsAiCredits
-                ? aiProviderUtils.resolveAiCreditWeight({ provider: config.provider, model: config.modelId }) + toolCallsThisTurn
-                : undefined
             const savePayload = {
                 conversationId,
                 runId,
@@ -351,7 +357,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ],
                 ...spreadIfDefined('title', autoTitle),
                 ...spreadIfDefined('modelName', isNil(data.modelName) ? config.tier.id : undefined),
-                ...spreadIfDefined('aiCredits', aiCredits),
             }
             await retryWithBackoff({ fn: () => ctx.apiClient.saveAgentMessages(savePayload), description: 'Saving the transcript', throwOnExhausted: true, log })
 
