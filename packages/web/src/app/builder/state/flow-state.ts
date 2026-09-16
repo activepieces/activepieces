@@ -1,4 +1,4 @@
-import { isNil, debounce } from '@activepieces/core-utils';
+import { isNil, debounce, tryCatch } from '@activepieces/core-utils';
 import {
   FlowOperationRequest,
   FlowOperationType,
@@ -7,14 +7,21 @@ import {
   PopulatedFlow,
   flowOperations,
   flowStructureUtil,
+  flowVersionToken,
   StepSettings,
   FlowTriggerType,
 } from '@activepieces/shared';
 import { QueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { toast } from 'sonner';
 import { StoreApi } from 'zustand';
 
 import { RightSideBarType } from '@/app/builder/types';
-import { flowsApi, sampleDataHooks } from '@/features/flows';
+import {
+  flowsApi,
+  isFlowVersionConflict,
+  sampleDataHooks,
+} from '@/features/flows';
 import {
   PieceSelectorItem,
   PieceSelectorOperation,
@@ -85,6 +92,30 @@ export const createFlowState = (
   set: StoreApi<BuilderState>['setState'],
 ): FlowState => {
   const flowUpdatesQueue = new PromiseQueue();
+  let syncGeneration = 0;
+  const reloadAfterConflict = async () => {
+    syncGeneration++;
+    flowUpdatesQueue.halt();
+    flowUpdatesQueue.discardPending();
+    const reloaded = await tryCatch(flowsApi.get(get().flow.id));
+    if (reloaded.error) {
+      set({ saving: false });
+      toast.error(t('This flow was edited somewhere else'), {
+        description: t(
+          'We could not load the latest version. Reload the page to keep editing.',
+        ),
+      });
+      return;
+    }
+    set({ flow: reloaded.data, saving: false });
+    get().setVersion(reloaded.data.version, false);
+    flowUpdatesQueue.resume();
+    toast.error(t('This flow was edited somewhere else'), {
+      description: t(
+        'Your recent changes were not saved. The latest version has been loaded.',
+      ),
+    });
+  };
   const debouncedAddToFlowUpdatesQueue = debounce(
     (updateRequest: () => Promise<void>) => {
       flowUpdatesQueue.add(updateRequest);
@@ -179,12 +210,18 @@ export const createFlowState = (
           listener(state.flowVersion, operation);
         });
         set({ saving: true });
+        const operationGeneration = syncGeneration;
         const updateRequest = async () => {
+          if (operationGeneration !== syncGeneration) {
+            set({ saving: flowUpdatesQueue.size() !== 0 });
+            return;
+          }
           try {
             const { version: serverFlowVersion } = await flowsApi.update(
               state.flow.id,
               operation,
               true,
+              flowVersionToken.of(get().flowVersion),
             );
             if (operation.type === FlowOperationType.SAVE_SAMPLE_DATA) {
               sampleDataHooks.invalidateSampleData(
@@ -204,6 +241,7 @@ export const createFlowState = (
                   ...updatedFlowVersionWithUpdatedSampleData,
                   id: serverFlowVersion.id,
                   state: serverFlowVersion.state,
+                  updated: serverFlowVersion.updated,
                 },
                 saving: flowUpdatesQueue.size() !== 0,
               };
@@ -211,6 +249,10 @@ export const createFlowState = (
             onSuccess?.();
           } catch (error) {
             console.error(error);
+            if (isFlowVersionConflict(error)) {
+              await reloadAfterConflict();
+              return;
+            }
             flowUpdatesQueue.halt();
           }
         };
