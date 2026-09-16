@@ -29,7 +29,7 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
                     flowId: publishedFlowVersion.flowId,
                     projectId: flowToUpdate.projectId,
                     simulate: false,
-                    ignoreError: false,
+                    ignoreError: true,
                     templateId,
                 })
                 break

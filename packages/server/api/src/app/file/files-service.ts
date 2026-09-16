@@ -37,8 +37,11 @@ export const filesService = {
 
 export function fileTooLargeError(maxBytes: number): ActivepiecesError {
     return new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: { message: `File exceeds the maximum allowed size of ${maxBytes} bytes` },
+        code: ErrorCode.FILE_TOO_LARGE,
+        params: {
+            message: `File exceeds the maximum allowed size of ${maxBytes} bytes`,
+            maxBytes,
+        },
     })
 }
 

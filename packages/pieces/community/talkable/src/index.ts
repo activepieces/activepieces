@@ -20,6 +20,7 @@ import {
   updateReferralStatus,
   claimOffer,
 } from './lib/actions';
+import { TALKABLE_API_URL } from './lib/common/constants';
 
 const markdownDescription = `
 Follow these steps:
@@ -70,7 +71,7 @@ export const talkable = createPiece({
     updateReferralStatus,
     claimOffer,
     createCustomApiCallAction({
-      baseUrl: () => 'https://www.talkable.com/api/v2',
+      baseUrl: () => TALKABLE_API_URL,
       auth: talkableAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth.props.api_key}`,

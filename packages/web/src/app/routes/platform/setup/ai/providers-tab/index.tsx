@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils';
+import { AIProviderName, tryCatch } from '@activepieces/core-utils';
 import { AIProviderWithoutSensitiveData, Project } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -35,7 +37,7 @@ import { SectionHeader } from '../components/section-header';
 
 import { ConfigDetail } from './config-detail';
 import { ConnectProviderDialog } from './connect-provider-dialog';
-import { KeyStatusBadge } from './key-status';
+import { KeyStatusBadge, keyStatusText } from './key-status';
 import { ProjectSwatch } from './project-selection-panel';
 import { ProviderLogo } from './provider-logo';
 
@@ -51,7 +53,12 @@ export function ProvidersTab() {
   >(undefined);
 
   const queryClient = useQueryClient();
-  const { data: providers, refetch } = aiProviderQueries.useAiProviderConfigs();
+  const {
+    data: providers,
+    isLoading,
+    isError: isProvidersError,
+    refetch,
+  } = aiProviderQueries.useAiProviderConfigs();
   const { platform } = platformHooks.useCurrentPlatform();
   const allowWrite = platform.plan.aiProvidersEnabled;
   const { data: projects } = projectCollectionUtils.useAllPlatformProjects();
@@ -62,9 +69,12 @@ export function ProvidersTab() {
     (provider) => provider.enabledForChat,
   );
 
-  const { mutate: toggleChatProvider } =
+  const { mutate: toggleChatProvider, isPending: isSwitchingChatProvider } =
     aiProviderMutations.useToggleChatProvider({
-      onSuccess: () => refetch(),
+      onSuccess: () => {
+        refetch();
+        toast.success(t('Chat provider updated'));
+      },
     });
   const { mutateAsync: deleteProvider } =
     aiProviderMutations.useDeleteAiProvider({
@@ -72,11 +82,22 @@ export function ProvidersTab() {
     });
   const { mutate: recheckProvider, isPending: isRechecking } =
     aiProviderMutations.useRecheckAiProvider({
-      onSuccess: () => refetch(),
+      onSuccess: ({ status }) => {
+        refetch();
+        const label = keyStatusText({ status });
+        if (status === 'active') {
+          toast.success(label ?? t('Saved'));
+          return;
+        }
+        toast.error(label ?? t('Could not reach this provider'));
+      },
     });
-  const { mutate: updateProvider, isPending: isSaving } =
+  const { mutateAsync: updateProvider, isPending: isSaving } =
     aiProviderMutations.useUpdateAiProvider({
-      onSuccess: () => refetch(),
+      onSuccess: () => {
+        refetch();
+        toast.success(t('Saved'));
+      },
       onError: (error) => {
         const data = error.response?.data;
         toast.error(
@@ -114,6 +135,7 @@ export function ProvidersTab() {
         queryKey: aiProviderKeys.configModels(),
       }),
     ]);
+    toast.success(t('Saved'));
     if (createdId) {
       openConfig(createdId);
       return;
@@ -132,6 +154,10 @@ export function ProvidersTab() {
     ({ provider }) => !connectedProviders.includes(provider),
   );
 
+  if (isLoading) {
+    return <ProvidersSkeleton />;
+  }
+
   const activeConfig = configs.find(
     (config) => config.id === searchParams.get('config'),
   );
@@ -148,12 +174,11 @@ export function ProvidersTab() {
           projects={projects}
           isSaving={isSaving}
           onSave={(request) =>
-            updateProvider({ providerId: activeConfig.id, request })
+            tryCatch(() =>
+              updateProvider({ providerId: activeConfig.id, request }),
+            )
           }
-          onDelete={async () => {
-            await deleteProvider(activeConfig.id);
-            closeConfig();
-          }}
+          onDelete={() => deleteProvider(activeConfig.id)}
           onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
           isRechecking={isRechecking}
           onRecheck={() => recheckProvider(activeConfig.id)}
@@ -197,7 +222,9 @@ export function ProvidersTab() {
           )}
         </div>
 
-        {configs.length === 0 ? (
+        {isProvidersError ? (
+          <DataFetchErrorState entity={t('AI providers')} onRetry={refetch} />
+        ) : configs.length === 0 ? (
           <EmptyProviders onConnect={openConnect} allowWrite={allowWrite} />
         ) : (
           <>
@@ -205,6 +232,7 @@ export function ProvidersTab() {
               <ChatProviderRow
                 configs={providers ?? []}
                 value={chatProviderRow?.id ?? null}
+                isSwitching={isSwitchingChatProvider}
                 onChange={selectChatConfig}
               />
             )}
@@ -371,7 +399,7 @@ function ConfigRow({
       className={cn(
         'group flex items-center gap-4 px-5 py-3 transition-colors',
         allowWrite &&
-          'cursor-pointer hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+          'cursor-pointer hover:bg-muted/50 active:bg-muted focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -431,13 +459,14 @@ function ConfigRow({
             </TooltipTrigger>
             <TooltipContent>{t('Delete')}</TooltipContent>
           </Tooltip>
-          <ChevronRight className="size-4 text-muted-foreground" />
+          <ChevronRight className="size-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-foreground" />
           <ConfirmationDeleteDialog
             open={deleteOpen}
             onOpenChange={setDeleteOpen}
             title={t('Delete {name}', { name: config.name })}
             message={t('Steps and agents using this key will stop working.')}
             entityName={config.name}
+            showToast={true}
             mutationFn={async () => {
               await onDelete();
             }}
@@ -493,10 +522,12 @@ function ProjectChips({
 function ChatProviderRow({
   configs,
   value,
+  isSwitching,
   onChange,
 }: {
   configs: AIProviderWithoutSensitiveData[];
   value: string | null;
+  isSwitching: boolean;
   onChange: (configId: string) => void;
 }) {
   return (
@@ -515,7 +546,11 @@ function ChatProviderRow({
           {t('Powers the built-in chat for everyone on this platform')}
         </p>
       </div>
-      <Select value={value ?? undefined} onValueChange={onChange}>
+      <Select
+        value={value ?? undefined}
+        onValueChange={onChange}
+        disabled={isSwitching}
+      >
         <SelectTrigger className="w-52">
           <SelectValue placeholder={t('Select provider')} />
         </SelectTrigger>
@@ -641,6 +676,60 @@ function AvailableProviderCard({
           {t('Connect')}
         </Button>
       )}
+    </div>
+  );
+}
+
+function ProvidersSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-5 w-28" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-8 w-24 rounded-md" />
+      </div>
+      <div
+        className={cn(
+          'flex items-center gap-3 rounded-xl border border-border/60 bg-card px-4 py-3',
+          CARD_SHADOW,
+        )}
+      >
+        <Skeleton className="size-9 shrink-0 rounded-xl" />
+        <div className="flex flex-1 flex-col gap-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-64" />
+        </div>
+        <Skeleton className="h-9 w-52 rounded-md" />
+      </div>
+      {[0, 1].map((group) => (
+        <section
+          key={group}
+          className={cn(
+            'overflow-hidden rounded-xl border border-border/60 bg-card',
+            CARD_SHADOW,
+          )}
+        >
+          <div className="flex items-center gap-3 px-5 py-4">
+            <Skeleton className="size-8 shrink-0 rounded-lg" />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-20" />
+            </div>
+            <Skeleton className="h-8 w-20 rounded-md" />
+          </div>
+          <div className="border-t border-border/60 px-5 pb-1 pt-3">
+            <Skeleton className="h-3 w-10" />
+          </div>
+          {[0, 1].map((row) => (
+            <div key={row} className="flex flex-col gap-2 px-5 py-3.5">
+              <Skeleton className="h-4 w-44" />
+              <Skeleton className="h-3 w-56" />
+            </div>
+          ))}
+        </section>
+      ))}
     </div>
   );
 }

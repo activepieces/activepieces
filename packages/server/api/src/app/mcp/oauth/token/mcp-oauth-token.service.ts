@@ -1,14 +1,13 @@
 import { randomBytes } from 'crypto'
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { McpOAuthClientKey, McpOAuthGrant, McpOAuthToken, PLATFORM_WIDE_PROJECT_FILTER_VALUE, UserWithMetaInformation } from '@activepieces/shared'
-import { Brackets, In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
+import { McpOAuthClientKey, McpOAuthGrant, McpOAuthToken } from '@activepieces/shared'
+import { In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
-import { projectRepo } from '../../../project/project-repo'
-import { mapToUserWithMetaInformation, userRepo } from '../../../user/user-service'
+import { mcpListingUtils } from '../../mcp-listing-utils'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
@@ -41,6 +40,7 @@ async function issueAccessToken(params: IssueAccessTokenParams): Promise<string>
             platformId: params.platformId,
             clientId: params.clientId,
             ...spreadIfDefined('grantId', params.grantId ?? undefined),
+            clientKey: params.clientKey,
             scopes: params.scopes,
             type: 'mcp_oauth',
         },
@@ -59,12 +59,13 @@ export const mcpOAuthTokenService = {
 
         const rawRefreshToken = generateRefreshToken()
         const hashedRefreshToken = hashRefreshToken(rawRefreshToken)
+        const clientKey = mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris })
 
         const tokenRecord: McpOAuthToken = {
             id: apId(),
             refreshToken: hashedRefreshToken,
             clientId: params.clientId,
-            clientKey: mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris }),
+            clientKey,
             userId: params.userId,
             projectId: params.projectId,
             platformId: params.platformId,
@@ -83,6 +84,7 @@ export const mcpOAuthTokenService = {
             platformId: params.platformId,
             clientId: params.clientId,
             grantId: tokenRecord.id,
+            clientKey,
             scopes: params.scopes,
         })
 
@@ -104,9 +106,10 @@ export const mcpOAuthTokenService = {
             throw new OAuthTokenError('invalid_grant', 'Client mismatch')
         }
 
+        const clientKey = record.clientKey ?? mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris })
         await repo().update({ id: record.id }, {
             lastUsedAt: new Date().toISOString(),
-            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? mcpOAuthClientIdentity.detectClientKey({ redirectUris: params.redirectUris }) : undefined),
+            ...spreadIfDefined('clientKey', isNil(record.clientKey) ? clientKey : undefined),
         })
 
         const accessToken = await issueAccessToken({
@@ -115,6 +118,7 @@ export const mcpOAuthTokenService = {
             platformId: record.platformId,
             clientId: record.clientId,
             grantId: record.id,
+            clientKey,
             scopes: record.scopes ?? [],
         })
 
@@ -167,14 +171,14 @@ export const mcpOAuthTokenService = {
         if (!isNil(memberIds)) {
             queryBuilder.andWhere(`${TOKEN_ALIAS}."userId" IN (:...memberIds)`, { memberIds })
         }
-        applyProjectFilter(queryBuilder, projectIds)
+        mcpListingUtils.applyProjectFilter({ queryBuilder, alias: TOKEN_ALIAS, projectIds })
 
         const { data, cursor: nextCursor } = await paginator.paginate(queryBuilder)
 
         const [clientNames, members, projectNames] = await Promise.all([
             findClientNames({ clientIds: data.filter((token) => isNil(token.clientKey) || token.clientKey === UNKNOWN_CLIENT_KEY).map((token) => token.clientId) }),
-            findMembers({ userIds: data.map((token) => token.userId), platformId }),
-            findProjectNames({ projectIds: data.map((token) => token.projectId), platformId }),
+            mcpListingUtils.findMembers({ userIds: data.map((token) => token.userId), platformId }),
+            mcpListingUtils.findProjectNames({ projectIds: data.map((token) => token.projectId), platformId }),
         ])
 
         const rows = data.map((token) => ({
@@ -205,7 +209,7 @@ export const mcpOAuthTokenService = {
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
-        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, scopes: ['mcp'] })
+        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: ['mcp'] })
     },
 }
 
@@ -219,22 +223,6 @@ function applyGrantScope<T extends ObjectLiteral>(queryBuilder: SelectQueryBuild
     }
 }
 
-function applyProjectFilter<T extends ObjectLiteral>(queryBuilder: SelectQueryBuilder<T>, projectIds: string[] | undefined): void {
-    if (isNil(projectIds)) {
-        return
-    }
-    const scopedProjectIds = projectIds.filter((projectId) => projectId !== PLATFORM_WIDE_PROJECT_FILTER_VALUE)
-    const includesPlatformWide = projectIds.length !== scopedProjectIds.length
-    queryBuilder.andWhere(new Brackets((qb) => {
-        if (scopedProjectIds.length > 0) {
-            qb.orWhere(`${TOKEN_ALIAS}."projectId" IN (:...scopedProjectIds)`, { scopedProjectIds })
-        }
-        if (includesPlatformWide) {
-            qb.orWhere(`${TOKEN_ALIAS}."projectId" IS NULL`)
-        }
-    }))
-}
-
 async function findClientNames({ clientIds }: FindClientNamesParams): Promise<Map<string, string | null>> {
     const distinct = unique(clientIds)
     if (distinct.length === 0) {
@@ -242,27 +230,6 @@ async function findClientNames({ clientIds }: FindClientNamesParams): Promise<Ma
     }
     const clients = await clientRepo().findBy({ clientId: In(distinct) })
     return new Map(clients.map((client) => [client.clientId, client.clientName]))
-}
-
-async function findProjectNames({ projectIds, platformId }: FindProjectNamesParams): Promise<Map<string, string>> {
-    const distinct = unique(projectIds.filter((projectId): projectId is string => !isNil(projectId)))
-    if (distinct.length === 0) {
-        return new Map()
-    }
-    const projects = await projectRepo().findBy({ id: In(distinct), platformId })
-    return new Map(projects.map((project) => [project.id, project.displayName]))
-}
-
-async function findMembers({ userIds, platformId }: FindMembersParams): Promise<Map<string, UserWithMetaInformation>> {
-    const distinct = unique(userIds)
-    if (distinct.length === 0) {
-        return new Map()
-    }
-    const users = await userRepo().find({ where: { id: In(distinct), platformId }, relations: { identity: true } })
-    return new Map(users.flatMap((user) => {
-        const member = mapToUserWithMetaInformation(user)
-        return isNil(member) ? [] : [[user.id, member] as const]
-    }))
 }
 
 export class OAuthTokenError extends Error {
@@ -280,6 +247,7 @@ type IssueAccessTokenParams = {
     platformId: string
     clientId: string
     grantId: string | null
+    clientKey: McpOAuthClientKey | null
     scopes: string[]
 }
 
@@ -302,16 +270,6 @@ type RevokeRefreshTokenParams = {
 
 type FindClientNamesParams = {
     clientIds: string[]
-}
-
-type FindProjectNamesParams = {
-    projectIds: (string | null)[]
-    platformId: string
-}
-
-type FindMembersParams = {
-    userIds: string[]
-    platformId: string
 }
 
 type GrantScope = {
@@ -350,6 +308,7 @@ export type McpOAuthAccessTokenPayload = {
     platformId: string
     clientId: string
     grantId?: string
+    clientKey: McpOAuthClientKey | null
     scopes: string[]
     type: 'mcp_oauth'
     iat: number

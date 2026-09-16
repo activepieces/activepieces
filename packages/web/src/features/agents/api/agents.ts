@@ -3,11 +3,15 @@ import {
   Agent,
   AgentWithUsage,
   GetAgentRequest,
+  AgentMovePreview,
   AgentSummary,
   CreateAgentRequest,
   DraftAgentRequest,
   DraftAgentResponse,
+  AgentRunListItem,
+  ListAgentRunsRequest,
   ListAgentsRequest,
+  MoveAgentRequest,
   UpdateAgentRequest,
 } from '@activepieces/shared';
 
@@ -16,6 +20,14 @@ import { api } from '@/lib/api';
 export const agentsApi = {
   list(request: ListAgentsRequest): Promise<SeekPage<AgentSummary>> {
     return api.get<SeekPage<AgentSummary>>('/v1/agents', request);
+  },
+  movePreview(id: string, projectId: string): Promise<AgentMovePreview> {
+    return api.get<AgentMovePreview>(`/v1/agents/${id}/move-preview`, {
+      projectId,
+    });
+  },
+  move(id: string, request: MoveAgentRequest): Promise<Agent> {
+    return api.post<Agent>(`/v1/agents/${id}/move`, request);
   },
   get(id: string, request?: GetAgentRequest): Promise<AgentWithUsage> {
     return api.get<AgentWithUsage>(`/v1/agents/${id}`, {
@@ -33,5 +45,11 @@ export const agentsApi = {
   },
   delete(id: string): Promise<void> {
     return api.delete<void>(`/v1/agents/${id}`);
+  },
+  listRuns(request: ListAgentRunsRequest): Promise<SeekPage<AgentRunListItem>> {
+    return api.get<SeekPage<AgentRunListItem>>(
+      '/v1/agents/conversations/runs',
+      request,
+    );
   },
 };

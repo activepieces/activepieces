@@ -15,10 +15,12 @@ import {
   FlowTriggerType,
   ApFlagId,
   ApEnvironment,
+  SuggestionType,
   TelemetryEventName,
 } from '@activepieces/shared';
 import {
   QueryClient,
+  QueryKey,
   useMutation,
   usePrefetchQuery,
   useQueries,
@@ -78,10 +80,14 @@ type UseMultiplePiecesProps = {
 };
 
 type UsePiecesProps = {
+  projectId?: string;
   searchQuery?: string;
   includeHidden?: boolean;
   isTableQuery?: boolean;
   skipProjectFilter?: boolean;
+  suggestionType?: SuggestionType;
+  enabled?: boolean;
+  keepPreviousResults?: boolean;
 };
 type UsePrefetchPiecesProps = {
   skipProjectFilter?: boolean;
@@ -179,27 +185,34 @@ export const piecesHooks = {
     return { summary, isLoading };
   },
   usePieces: ({
+    projectId,
     searchQuery,
     includeHidden = false,
     isTableQuery = false,
     skipProjectFilter = false,
+    suggestionType,
+    enabled = true,
+    keepPreviousResults = false,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModelSummary[], Error>({
       ...piecesQueryOptions({
+        projectId,
         searchQuery,
         includeHidden,
         isTableQuery,
         skipProjectFilter,
+        suggestionType,
         locale: i18n.language as LocalesEnum,
+        keepPreviousResults,
       }),
-      meta: isTableQuery
-        ? { showErrorDialog: true, loadSubsetOptions: {} }
-        : undefined,
+      enabled,
     });
     return {
       pieces: query.data,
       isLoading: query.isLoading,
+      isError: query.isError,
+      error: query.error,
       refetch: query.refetch,
     };
   },
@@ -585,32 +598,59 @@ function invalidatePieceCaches(queryClient: QueryClient): Promise<void[]> {
 export const pieceCacheUtils = { invalidatePieceCaches };
 
 function piecesQueryOptions({
+  projectId,
   searchQuery,
   includeHidden,
   isTableQuery,
   skipProjectFilter,
+  suggestionType,
   locale,
+  keepPreviousResults = false,
 }: {
+  projectId?: string;
   searchQuery?: string;
   includeHidden: boolean;
   isTableQuery: boolean;
   skipProjectFilter: boolean;
+  suggestionType?: SuggestionType;
   locale: LocalesEnum;
+  keepPreviousResults?: boolean;
 }) {
-  const projectId = skipProjectFilter
+  const queriedProjectId = skipProjectFilter
     ? undefined
-    : authenticationSession.getProjectId()!;
+    : projectId ?? authenticationSession.getProjectId() ?? undefined;
   return {
     queryKey: [
       isTableQuery ? 'pieces-table' : 'pieces',
+      queriedProjectId,
       searchQuery,
       includeHidden,
       skipProjectFilter,
-      projectId,
+      suggestionType,
       locale,
     ],
     queryFn: () =>
-      piecesApi.list({ projectId, searchQuery, includeHidden, locale }),
-    staleTime: searchQuery ? 0 : Infinity,
+      piecesApi.list({
+        projectId: queriedProjectId,
+        searchQuery,
+        includeHidden,
+        suggestionType,
+        locale,
+      }),
+    staleTime: searchQuery ? SEARCH_RESULTS_STALE_TIME_MS : Infinity,
+    ...(keepPreviousResults
+      ? {
+          placeholderData: (
+            previousPieces: PieceMetadataModelSummary[] | undefined,
+            previousQuery: { queryKey: QueryKey } | undefined,
+          ) =>
+            previousQuery?.queryKey[PROJECT_ID_KEY_INDEX] === queriedProjectId
+              ? previousPieces
+              : undefined,
+        }
+      : {}),
   };
 }
+
+const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
+const PROJECT_ID_KEY_INDEX = 1;

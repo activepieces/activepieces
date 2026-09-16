@@ -3,6 +3,7 @@ import { codaAuth } from '../auth';
 import { codaClient } from '../common/types';
 import { docIdDropdown, tableIdDropdown, tableRowsDynamicProps } from '../common/props';
 import { isNil } from '@activepieces/pieces-framework';
+import { updateRowActionOutputSchema } from '../output-schemas';
 
 export const updateRowAction = createAction({
 	auth: codaAuth,
@@ -21,6 +22,7 @@ export const updateRowAction = createAction({
 		}),
 		rowData: tableRowsDynamicProps,
 	},
+	outputSchema: updateRowActionOutputSchema,
 	async run(context) {
 		const { docId, tableId, rowIdOrName, rowData } = context.propsValue;
 		const client = codaClient(context.auth);

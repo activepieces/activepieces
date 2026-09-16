@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { createContactActionOutputSchema } from '../output-schemas';
 
 interface ContactField {
   field: string;
@@ -194,6 +195,7 @@ export const createContact = createAction({
       },
     }),
   },
+  outputSchema: createContactActionOutputSchema,
   async run(context) {
     const { 
       email, 

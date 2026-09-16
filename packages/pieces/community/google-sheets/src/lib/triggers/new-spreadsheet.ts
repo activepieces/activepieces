@@ -63,7 +63,7 @@ export const newSpreadsheetTrigger = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	props: {
-		includeTeamDrives: includeTeamDrivesProp(),
+		includeTeamDrives: includeTeamDrivesProp({ advanced: false }),
 	},
 	outputSchema: newSpreadsheetTriggerOutputSchema,
 	async onEnable(context) {

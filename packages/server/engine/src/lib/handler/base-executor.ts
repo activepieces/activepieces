@@ -12,7 +12,7 @@ export async function failStep({ action, executionState, stepOutput, error, dura
         status: FlowRunStatus.FAILED,
         failedStep: {
             name: action.name,
-            displayName: action.displayName,
+            displayName: action.displayName ?? action.name,
             message,
         },
     })
