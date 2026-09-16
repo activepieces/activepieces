@@ -3,7 +3,6 @@ import { type ApLogger } from '@activepieces/server-utils'
 import { ExecutionMode, maxSocketHttpBufferSizeBytes, NetworkMode } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { cacheUtils } from './cache/cache-paths'
-import { sandboxCapacity } from './sandbox/capacity'
 import { simpleProcess } from './sandbox/fork'
 import { isolateProcess } from './sandbox/isolate'
 import { createSandbox } from './sandbox/sandbox'
@@ -29,8 +28,6 @@ export function createSandboxForJob(params: {
         { hostPath: paths.getGlobalCacheCommonPath(), sandboxPath: '/root/common' },
     ]
 
-    const executionMode = settings.EXECUTION_MODE as ExecutionMode
-
     return createSandbox(
         log,
         sandboxId,
@@ -43,14 +40,9 @@ export function createSandboxForJob(params: {
             maxHttpBufferSizeBytes: maxSocketHttpBufferSizeBytes(settings.MAX_FILE_SIZE_MB),
             basePath,
             baseMounts,
-            wsRpcPort: isIsolateMode(executionMode) ? sandboxCapacity.wsRpcPortForBox(boxId) : undefined,
         },
         processMaker,
     )
-}
-
-export function isIsolateMode(mode: ExecutionMode): boolean {
-    return mode === ExecutionMode.SANDBOX_PROCESS || mode === ExecutionMode.SANDBOX_CODE_AND_PROCESS
 }
 
 function getProcessMaker(executionMode: string, log: ApLogger, boxId: number, paths: ReturnType<typeof cacheUtils>) {
@@ -91,6 +83,8 @@ function baseEnv({ settings, networkMode }: { settings: SandboxSettings, network
         ...spreadIfDefined('AP_DENO_PATH', process.env['AP_DENO_PATH']),
         AP_EXECUTION_MODE: settings.EXECUTION_MODE,
         AP_MAX_FLOW_RUN_LOG_SIZE_MB: String(settings.MAX_FLOW_RUN_LOG_SIZE_MB),
+        ...spreadIfDefined('AP_FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB', settings.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB?.toString()),
+        ...spreadIfDefined('AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB', settings.FLOW_RUN_LOG_SLICE_THRESHOLD_KB?.toString()),
         AP_MAX_FILE_SIZE_MB: String(settings.MAX_FILE_SIZE_MB),
         NODE_PATH: '/usr/src/node_modules',
         AP_NETWORK_MODE: networkMode,
