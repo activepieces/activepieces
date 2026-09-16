@@ -82,7 +82,8 @@ More information on data types and accepted values:
       const dbData = JSON.stringify(resolveTableRows(dbTable));
       let dbSchema = null;
 
-      if (dbTable.schema) {
+      const hasSchema = dbTable.schema && Object.keys(dbTable.schema).length > 0;
+      if (hasSchema) {
         dbSchema = JSON.stringify([dbTable.schema]);
       } else {
         const schemaResult = await connection.run(
