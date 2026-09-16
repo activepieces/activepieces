@@ -3,8 +3,9 @@ import { Migration } from '../../migration'
 
 export class NullOrphanFolderReferences1846000000000 implements Migration {
     name = 'NullOrphanFolderReferences1846000000000'
-    breaking = false
+    breaking = true
     release = '0.91.0'
+    transaction = true
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
