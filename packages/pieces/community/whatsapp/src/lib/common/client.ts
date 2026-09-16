@@ -58,9 +58,15 @@ function buildInteractiveHeader({
 }: InteractiveHeaderParams): Record<string, unknown> | undefined {
 	if (!headerType || headerType === 'none') return undefined;
 	if (headerType === 'text') {
-		return headerText ? { type: 'text', text: headerText } : undefined;
+		if (!headerText) {
+			throw new Error('Header Text is required when the header type is text.');
+		}
+		return { type: 'text', text: headerText };
 	}
-	return headerMediaUrl ? { type: headerType, [headerType]: { link: headerMediaUrl } } : undefined;
+	if (!headerMediaUrl) {
+		throw new Error(`Header Media URL is required when the header type is ${headerType}.`);
+	}
+	return { type: headerType, [headerType]: { link: headerMediaUrl } };
 }
 
 function normalizeTemplateComponents(components: unknown): unknown {

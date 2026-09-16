@@ -67,14 +67,14 @@ describe('buildInteractiveHeader', () => {
 		expect(whatsappClient.buildInteractiveHeader({ headerType: undefined, headerText: 'x' })).toBeUndefined();
 	});
 
-	test('text header needs text; media header needs a URL', () => {
+	test('text header without text and media header without a URL are rejected instead of silently dropped', () => {
 		expect(whatsappClient.buildInteractiveHeader({ headerType: 'text', headerText: 'Hello' })).toEqual({ type: 'text', text: 'Hello' });
-		expect(whatsappClient.buildInteractiveHeader({ headerType: 'text', headerText: '' })).toBeUndefined();
+		expect(() => whatsappClient.buildInteractiveHeader({ headerType: 'text', headerText: '' })).toThrow('Header Text is required');
 		expect(whatsappClient.buildInteractiveHeader({ headerType: 'image', headerMediaUrl: 'https://x/y.png' })).toEqual({
 			type: 'image',
 			image: { link: 'https://x/y.png' },
 		});
-		expect(whatsappClient.buildInteractiveHeader({ headerType: 'video', headerMediaUrl: '' })).toBeUndefined();
+		expect(() => whatsappClient.buildInteractiveHeader({ headerType: 'video', headerMediaUrl: '' })).toThrow('Header Media URL is required when the header type is video');
 		expect(whatsappClient.buildInteractiveHeader({ headerType: 'document', headerMediaUrl: 'https://x/a.pdf' })).toEqual({
 			type: 'document',
 			document: { link: 'https://x/a.pdf' },
