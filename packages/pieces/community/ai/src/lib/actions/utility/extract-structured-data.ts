@@ -1,4 +1,4 @@
-import { ApFile, createAction, PieceAuth, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AiStepAction, ApFile, createAction, PieceAuth, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import Ajv from 'ajv';
 import mime from 'mime-types';
 import { runOnWorker, uploadAiFiles } from '../../common/ai-step';
@@ -140,7 +140,7 @@ export const extractStructuredData = createAction({
 		const result = await runOnWorker({
 			context,
 			buildRequest: async () => ({
-				action: 'EXTRACT_STRUCTURED_DATA',
+				action: AiStepAction.EXTRACT_STRUCTURED_DATA,
 				provider,
 				...spreadIfDefined('providerConfigId', configId),
 				modelId: context.propsValue.model,

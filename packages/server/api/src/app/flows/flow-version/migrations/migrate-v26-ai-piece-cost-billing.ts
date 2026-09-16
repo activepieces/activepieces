@@ -1,3 +1,4 @@
+import { extractMustacheTokens } from '@activepieces/core-utils'
 import { AgentPieceProps, AI_PIECE_COST_BILLING_VERSION, AI_PIECE_NAME, FlowActionType, flowStructureUtil, FlowVersion } from '@activepieces/shared'
 import semver from 'semver'
 import { Migration } from '.'
@@ -23,10 +24,23 @@ export const migrateV26AiPieceCostBilling: Migration = {
 }
 
 function withAgentMaxSteps({ actionName, input }: { actionName?: string, input: Record<string, unknown> }): Record<string, unknown> {
-    if (actionName !== AGENT_ACTION_NAME || typeof input[AgentPieceProps.MAX_STEPS] === 'number') {
+    const stored = input[AgentPieceProps.MAX_STEPS]
+    if (actionName !== AGENT_ACTION_NAME || typeof stored === 'number' || holdsExpression(stored)) {
         return input
     }
-    return { ...input, [AgentPieceProps.MAX_STEPS]: DEFAULT_MAX_STEPS }
+    return { ...input, [AgentPieceProps.MAX_STEPS]: storedMaxSteps(stored) ?? DEFAULT_MAX_STEPS }
+}
+
+function holdsExpression(value: unknown): boolean {
+    return typeof value === 'string' && extractMustacheTokens(value).length > 0
+}
+
+function storedMaxSteps(value: unknown): number | undefined {
+    if (typeof value !== 'string') {
+        return undefined
+    }
+    const parsed = Number(value.trim())
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined
 }
 
 function isBelowCostBillingVersion(pieceVersion: string): boolean {

@@ -236,6 +236,30 @@ Nothing on a normal upgrade. Every flow is moved to the AI piece version that ru
 
 If you serve pieces from your own registry, make sure it carries the AI piece at `0.11.0` or later. A flow left on an earlier version would still try to fetch its provider credentials over this endpoint and fail.
 
+#### AI steps are billed on what each call costs, not on a fixed price per model
+
+The managed Activepieces AI provider used to charge a fixed number of credits per model per step, taken from a table calibrated at roughly a thousand tokens per call. A short call was charged about right; a long one was charged the same as a short one while costing us many times more.
+
+Every managed AI call is now billed on the dollar cost the provider reports for that call, converted at `AP_AI_CREDIT_USD_VALUE` (default `0.0005`, so one credit is a twentieth of a cent of model spend). A call on your own API key is billed a flat one credit per model call. Tool calls stay at one credit each.
+
+This changes what the same flow costs in both directions. A short prompt on an expensive model gets much cheaper; a long document through Extract Structured Data gets dearer. The credit cost shown in the model picker and in the credits breakdown is gone, because there is no longer a fixed number to show.
+
+A step or a chat turn on your own API key costs the same as it did: one credit, plus one per tool call. An agent still counts as one credit however many times it goes back to the model.
+
+#### What you need to do
+
+Nothing to configure. Self-hosters who want a different conversion rate can set `AP_AI_CREDIT_USD_VALUE` to the dollar value of one credit.
+
+#### AI steps now consume credits on your own API key too
+
+`POST /v1/ai/execute` refuses to start an AI step when the platform is out of credits, whatever provider the step uses. Previously only the managed Activepieces provider was gated, so a platform that had exhausted its credits kept running AI steps as long as they used its own key.
+
+Credits are only enforced where a billing provider is configured, so a Community self-host is unaffected.
+
+#### What you need to do
+
+Nothing, unless you run AI steps on your own provider key on a platform that sits at zero credits. Those steps now fail with a credits error instead of running. Top up, or raise the plan's credit allowance.
+
 #### Files passed to an AI step are capped at `AP_MAX_FILE_SIZE_MB`
 
 Extract Structured Data and Generate Image used to read file inputs straight from the flow's memory, so no Activepieces-side size limit applied. Those files are now stored and fetched by the worker that runs the model, which puts them under the same per-file limit as every other file the engine writes: `AP_MAX_FILE_SIZE_MB`, 25 MB by default.

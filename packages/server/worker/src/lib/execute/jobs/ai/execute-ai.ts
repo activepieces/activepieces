@@ -1,4 +1,4 @@
-import { ActivepiecesAiBilling, ActivepiecesAiBillingScope, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { aiUtils, FlowStepMetadata } from '@activepieces/server-utils'
 import { AiStepAction, ClassifyTextJobData, EngineResponseStatus, ExecuteAiJobData, getEffectiveProviderAndModel, ResolveAiProviderResponse, WorkerJobType } from '@activepieces/shared'
 import { generateText, ModelMessage, stepCountIs } from 'ai'
@@ -72,15 +72,14 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
 }
 
 async function runTextStep({ data, resolved, flowStep, billing }: { data: ExecuteAiJobData, resolved: ResolveAiProviderResponse, flowStep: FlowStepMetadata, billing: ActivepiecesAiBilling }): Promise<unknown> {
-    const { provider, auth, config } = resolved
+    const credentials = resolved
+    const { provider } = credentials
     const webSearchEnabled = data.webSearch?.enabled ?? false
     const webSearchOptions = data.webSearch?.options
     const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model: data.modelId })
-    const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: data.modelId, auth, webSearchEnabled, options: webSearchOptions })
+    const tools = aiUtils.buildWebSearchToolsOrThrow({ provider, model: data.modelId, webSearchEnabled, options: webSearchOptions })
     const model = aiUtils.createModel({
-        provider,
-        auth,
-        config,
+        credentials,
         modelId: data.modelId,
         flowStep,
         billing,
@@ -104,7 +103,7 @@ async function runTextStep({ data, resolved, flowStep, billing }: { data: Execut
 
 function billingFor(data: ExecuteAiJobData): ActivepiecesAiBilling {
     return {
-        scope: ActivepiecesAiBillingScope.PROJECT,
+        source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
         platformId: data.platformId,
         projectId: data.projectId,
         flowRun: { flowId: data.flowId, flowRunId: data.flowRunId },

@@ -1,4 +1,4 @@
-import { createAction, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AiStepAction, createAction, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { runOnWorker } from '../../common/ai-step';
 import { aiProps, aiProviderSelection } from '../../common/props';
 import { buildWebSearchOptionsProperty, sanitizeWebSearchOptions, usesNativeWebSearchTools } from '../../common/web-search';
@@ -60,7 +60,7 @@ export const askAI = createAction({
     const result = await runOnWorker({
       context,
       buildRequest: async () => ({
-        action: 'ASK_AI',
+        action: AiStepAction.ASK_AI,
         provider,
         ...spreadIfDefined('providerConfigId', configId),
         modelId: context.propsValue.model,

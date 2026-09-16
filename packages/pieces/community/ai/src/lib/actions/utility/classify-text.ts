@@ -1,4 +1,4 @@
-import { createAction, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { AiStepAction, createAction, Property, spreadIfDefined } from '@activepieces/pieces-framework';
 import { runOnWorker } from '../../common/ai-step';
 import { aiProps, aiProviderSelection } from '../../common/props';
 
@@ -29,7 +29,7 @@ export const classifyText = createAction({
     const result = await runOnWorker({
       context,
       buildRequest: async () => ({
-        action: 'CLASSIFY_TEXT',
+        action: AiStepAction.CLASSIFY_TEXT,
         provider,
         ...spreadIfDefined('providerConfigId', configId),
         modelId: context.propsValue.model,
