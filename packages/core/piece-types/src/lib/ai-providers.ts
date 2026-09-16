@@ -484,8 +484,20 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.MOONSHOT]: buildProviderCapabilities(AIProviderName.MOONSHOT),
 }
 
+function resolveAiCreditWeight({ provider, model }: { provider: string, model: string }): number {
+    if (provider !== AIProviderName.ACTIVEPIECES) {
+        return 1
+    }
+    const tierWeight = ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === model)?.creditWeight
+    if (tierWeight !== undefined) {
+        return tierWeight
+    }
+    return MANAGED_MODEL_WEIGHTS[model] ?? DEFAULT_MANAGED_MODEL_WEIGHT
+}
+
 export const aiProviderUtils = {
     getMaxContextTokens,
+    resolveAiCreditWeight,
     getCuratedChatModels,
     isCuratedChatModelId,
     managedChatModelIds,

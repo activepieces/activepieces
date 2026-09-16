@@ -1,4 +1,7 @@
-import { AgentConversationStatus } from '@activepieces/shared';
+import {
+  AgentConversationStatus,
+  AgentRunListItem,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { CircleAlert, CircleCheck, LucideIcon, Play } from 'lucide-react';
 
@@ -24,9 +27,18 @@ function getStatusLabel(status: AgentConversationStatus): string {
   }
 }
 
+function getDurationMs(run: AgentRunListItem): number | undefined {
+  const stillRunning = run.status === AgentConversationStatus.STREAMING;
+  if (stillRunning) {
+    return undefined;
+  }
+  return new Date(run.updated).getTime() - new Date(run.created).getTime();
+}
+
 export const agentRunUtils = {
   getStatusIcon,
   getStatusLabel,
+  getDurationMs,
 };
 
 export type AgentRunStatusIcon = {

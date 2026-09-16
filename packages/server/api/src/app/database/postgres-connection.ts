@@ -438,6 +438,7 @@ import { AddAgentRunsIndex1842000000000 } from './migration/postgres/18420000000
 import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres/1843000000000-AddAgentConversationFlowRunId'
 import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
 import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
+import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -891,6 +892,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentConversationFlowRunId1843000000000,
         AddMcpActivity1844000000000,
         NullOrphanFolderReferences1846000000000,
+        AddAgentConversationAiCredits1850000000000,
     ]
     return migrations
 }

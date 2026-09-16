@@ -1,5 +1,6 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_MANAGED_MODEL_WEIGHT, FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef, MANAGED_MODEL_WEIGHTS } from '@activepieces/shared'
+import { aiProviderUtils } from '@activepieces/core-piece-types'
+import { isNil } from '@activepieces/core-utils'
+import { FileType, FlowRun, FlowVersion, isAppSumoCreditedPlan, LogSliceRef } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { fileService } from '../../file/file.service'
@@ -79,16 +80,7 @@ export const flowRunAiUsageTracker = (log: FastifyBaseLogger) => ({
     },
 })
 
-export function resolveAiCreditWeight({ provider, model }: { provider: string, model: string }): number {
-    if (provider !== AIProviderName.ACTIVEPIECES) {
-        return 1
-    }
-    const tierWeight = ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === model)?.creditWeight
-    if (!isNil(tierWeight)) {
-        return tierWeight
-    }
-    return MANAGED_MODEL_WEIGHTS[model] ?? DEFAULT_MANAGED_MODEL_WEIGHT
-}
+export const resolveAiCreditWeight = aiProviderUtils.resolveAiCreditWeight
 
 
 

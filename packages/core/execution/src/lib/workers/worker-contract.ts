@@ -175,6 +175,7 @@ export type SaveAgentMessagesRequest = {
     uiMessages: unknown[]
     title?: string
     modelName?: string
+    aiCredits?: number
 }
 
 export type SaveAgentFileRequest = {

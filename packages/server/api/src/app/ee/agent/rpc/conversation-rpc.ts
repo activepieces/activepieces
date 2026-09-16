@@ -40,6 +40,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
         const isSuccessfulCompletion = input.messages.length > 0
         const updates: Record<string, unknown> = {
             status: isSuccessfulCompletion ? AgentConversationStatus.IDLE : AgentConversationStatus.ERROR,
+            ...spreadIfDefined('aiCredits', input.aiCredits),
         }
 
         // No-shrink guard against silent context loss. The LLM history only ever grows within a
