@@ -46,12 +46,21 @@ export const createAndQueryDB = createAction({
 Provide the schema as a JSON object. Note that only the specified columns would be loaded.
 Leave empty to autodetect schema, although it is recommended to specify the schema for consistency and avoid unexpected behaviour.
 
+A column type that doesn't match the actual shape of the row data (e.g. a STRUCT/array type for a column that's a plain string, which is always the case for CSV-sourced tables) silently loads as null instead of erroring - double check this against autodetected schema if a column is unexpectedly empty.
+
 More information on data types and accepted values:
 - https://duckdb.org/2023/03/03/json
 - https://duckdb.org/docs/stable/sql/data_types/overview
           `.trim(),
           required: false,
           defaultValue: {},
+        }),
+        flattenNestedFields: Property.Checkbox({
+          displayName: 'Flatten Nested Fields',
+          description:
+            'When on (default), a nested object/struct field is split into individual top-level columns (e.g. "meta": {"a":1} becomes column "a"). Turn off to keep it as a single nested column instead, queryable with dot notation (e.g. "meta.a").',
+          required: false,
+          defaultValue: true,
         }),
       },
     }),
@@ -95,16 +104,21 @@ More information on data types and accepted values:
         dbSchema = detectedSchema[0][0];
       }
 
-      await connection.run(
-        `
+      const shouldFlatten = dbTable.flattenNestedFields ?? true;
+      const createTableQuery = shouldFlatten
+        ? `
           CREATE TABLE ${dbTable.name} AS
             SELECT UNNEST(JSON_TRANSFORM($sourceData, $sourceSchema), recursive := true);
-        `,
-        {
-          sourceData: dbData,
-          sourceSchema: dbSchema,
-        }
-      );
+        `
+        : `
+          CREATE TABLE ${dbTable.name} AS
+            SELECT row.* FROM (SELECT UNNEST(JSON_TRANSFORM($sourceData, $sourceSchema)) AS row) t;
+        `;
+
+      await connection.run(createTableQuery, {
+        sourceData: dbData,
+        sourceSchema: dbSchema,
+      });
     }
 
     const queryArgs = context.propsValue.args ?? [];
