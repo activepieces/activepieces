@@ -279,11 +279,11 @@ Nothing. No configuration, no new environment variable, and nothing to migrate. 
 
 #### Workers no longer pre-warm the flow cache on startup by default
 
-Since v0.86.1 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before v0.86.1.
+Since 0.86.2 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before 0.86.2.
 
 #### What you need to do
 
-Nothing, unless you want to keep the pre-v0.88 warm-up behaviour. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
+Nothing, unless you want to keep the warm-up behaviour of 0.86.2 through 0.88.4. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
 
 #### The Microsoft Teams Bot piece no longer needs a server-side installation record
 
@@ -346,7 +346,7 @@ Nothing to configure or migrate, and no new environment variable — a default i
 
 #### Sign-up addresses are checked with ZeroBounce instead of a bundled blocklist
 
-The bundled list of disposable-email domains introduced in 0.88.2 is gone. Sign-up now asks ZeroBounce about any address that has no account yet, and refuses it when ZeroBounce reports it as disposable, a spam trap, abusive, or on a global suppression list. The refusal is silent, so the response looks the same as a successful one. When ZeroBounce cannot be reached, or the key is invalid or out of credits, the address is let through and the reason is logged.
+The bundled list of disposable-email domains introduced in 0.88.2 is gone. Sign-up now asks ZeroBounce about the address and refuses it when ZeroBounce reports it as disposable, a spam trap, abusive, or on a global suppression list. The refusal is silent, so the response looks the same as a successful one. When ZeroBounce cannot be reached, or the key is invalid or out of credits, the address is let through and the reason is logged.
 
 The check runs only when `AP_ZEROBOUNCE_API_KEY` is set. `AP_ALLOW_DISPOSABLE_EMAILS` is removed; the key is the switch. An instance without a key accepts throwaway addresses again, as it did before 0.88.2.
 
@@ -378,11 +378,11 @@ Nothing on upgrade. Re-check any flow or API integration that filters a Date col
 
 #### Official piece bundles are served from npm again by default
 
-`AP_USE_CDN_FOR_BUNDLES` goes back to defaulting to `false`, reversing the change in 0.87.0. Official piece bundles that are not already cached in your own S3 bucket are downloaded from `registry.npmjs.org` instead of `cdn.activepieces.com`. When the flag is switched on, the CDN now serves the repackaged, self-contained tarballs from `https://cdn.activepieces.com/pieces/bundled/`.
+`AP_USE_CDN_FOR_BUNDLES` goes back to defaulting to `false`, reversing the change in 0.87.0. Official piece bundles are downloaded from `registry.npmjs.org` instead of `cdn.activepieces.com`. When the flag is switched on, the CDN serves the repackaged, self-contained tarballs from `https://cdn.activepieces.com/pieces/bundled/`. The same release stops mirroring bundles into your own S3 bucket: a bundle that was copied there is no longer served from it, and every download goes to npm or the CDN.
 
 #### What you need to do
 
-Nothing. Set `AP_USE_CDN_FOR_BUNDLES=true` if you want official bundles to keep coming from the CDN, and allow outbound traffic to `cdn.activepieces.com` if your network policy restricts it.
+If your network policy restricts outbound traffic and you allowed only `cdn.activepieces.com` after 0.87.0, allow `registry.npmjs.org` as well, or set `AP_USE_CDN_FOR_BUNDLES=true` to keep official bundles coming from the CDN. Otherwise nothing.
 
 #### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
 
@@ -403,8 +403,12 @@ If you maintain your own MCP OAuth client, check two things before upgrading: th
 
 Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
 
+#### What you need to do
+
+Only if your members sign up with addresses from a disposable email provider. On 0.88.2 through 0.88.4, set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
+
 <Note>
-Superseded in 0.89.0: the bundled blocklist was replaced by a ZeroBounce check that runs only when `AP_ZEROBOUNCE_API_KEY` is set. See the 0.89.0 entry.
+Superseded in 0.89.0: the bundled blocklist was replaced by a ZeroBounce check that runs only when `AP_ZEROBOUNCE_API_KEY` is set, and `AP_ALLOW_DISPOSABLE_EMAILS` is no longer read. See the 0.89.0 entry.
 </Note>
 
 #### Sign-in and sign-up are one screen, and an emailed code signs people in wherever SMTP is configured
@@ -488,7 +492,6 @@ When a platform has no credits left, new production runs are recorded with the `
 In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
 
 ### Do you need to take action?
-- Only if your members sign up with addresses from a disposable email provider. Set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
 - Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
 - Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
 - Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
@@ -502,7 +505,7 @@ In the AI piece, picking the Activepieces-provided AI now lists only the named t
 - Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
 
 <Note>
-Reverted in 0.88.2: `AP_USE_CDN_FOR_BUNDLES` defaults to `false` again, so official bundles are served from npm by default. Set it to `true` to opt back into the CDN.
+Reverted in 0.88.2: `AP_USE_CDN_FOR_BUNDLES` defaults to `false` again, so official bundles are served from npm by default. Set it to `true` to opt back into the CDN. The S3 cache mentioned above was removed in the same release.
 </Note>
 
 ## 0.86.0
@@ -522,6 +525,10 @@ Each piece is now built into a single self-contained bundle — its own code, th
 The `AP_PRE_WARM_CACHE` environment variable no longer exists. It used to make a worker install pieces into its cache on startup. The worker is now its own sandbox and fills its cache lazily on first use, so the flag has no effect and setting it does nothing. Cache warmth now comes from running long-lived worker replicas rather than an up-front install step.
 
 The up-front install is no longer needed because piece installs are now fast: each piece is a self-contained bundle fetched as a single file. If you have S3 enabled, official piece bundles are cached to your S3 bucket on first use and served from there via signed links — so when your bucket is co-located in the same region as your workers, subsequent installs are a low-latency download from a nearby object store instead of a registry round-trip.
+
+<Note>
+Removed in 0.88.2: bundles are no longer mirrored into your S3 bucket. Every download goes to npm or, with `AP_USE_CDN_FOR_BUNDLES=true`, to the CDN.
+</Note>
 
 ### Do you need to take action?
 - Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.
