@@ -33,22 +33,6 @@ Nothing for a self-hosted installation, and no environment variable or migration
 
 If you call one of the endpoints above against Activepieces Cloud, move to the current embedding flow, which provisions users and connections through a platform signing key. See [Embedding](/embedding/overview).
 
-#### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
-
-Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
-
-The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and neither checkbox defaults to off any more, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
-
-The `Attributes` field used to come pre-filled with nine empty values (`FIRST_NAME`, `LAST_NAME`, `SMS`, `CIV`, `DOB`, `ADDRESS`, `ZIP_CODE`, `CITY`, `AREA`). Because they were sent on every call, running the step overwrote whatever those attributes held in Brevo with empty strings. The default is removed, and only the attributes you list are written.
-
-`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. A stored numeric id is still sent exactly as before, so existing steps keep working unchanged.
-
-The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses` list. Brevo expects a list of sender email addresses here, not a true or false, and rejects a boolean outright with *"Invalid smtpBlacklistSender format"* — so ticking that checkbox always failed the step, and leaving it clear did nothing at all. The field never worked. It is now a list of addresses, which Brevo accepts, and any value your step already had is ignored rather than sent.
-
-#### What you need to do
-
-Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
-
 #### A custom AI provider is now checked when you save it
 
 The custom OpenAI-compatible provider accepted any text as its base URL and as its API key header name. A config that cannot be used saved without complaint and then failed on every run that used it, with a message from the HTTP layer rather than from Activepieces: a header name of `authorization: bearer` produced *"Headers.append: is an invalid header name"*, and a base URL that will not parse produced *"Invalid URL"*.
@@ -115,14 +99,6 @@ This only affects platforms created from here on. Existing platforms keep their 
 #### What you need to do
 
 Nothing. No configuration, no new environment variable, and nothing to migrate. If you script or test first-run sign-up and assert on the generated platform or project name, update that assertion: a work-domain address no longer yields `"<FirstName>'s Platform"`.
-
-#### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
-
-The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.
-
-#### What you need to do
-
-Nothing for catalog pieces — oracle-database is the only piece that forks a sibling file, and this change fixes it (0.1.13). If you build custom pieces and one references `__dirname`, either declare the runtime-loaded file in `bundleForkedEntries` (see [Bundling Pieces](/build-pieces/misc/bundling-pieces)) or remove the `__dirname` usage. Already-published pieces keep working; the check runs at build time only.
 
 #### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
 
@@ -201,28 +177,6 @@ Two cases are deliberately unchanged. A run that succeeds without reaching a Ret
 #### What you need to do
 
 Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
-
-#### AWS connections using the IAM Role / OIDC method are now verified against AWS before they save
-
-Saving an AWS connection (Bedrock, S3, Secrets Manager) with the **IAM Role / OIDC** method previously only checked that the Role ARN was well formed, so any well-formed ARN saved with status "Connected" even when the role did not exist or could not be assumed. The connection now performs the same `sts:AssumeRoleWithWebIdentity` call the flow makes at runtime, and the save fails with the AWS error when the role cannot be assumed.
-
-Two consequences. A connection that was accepted before is now rejected if its IAM OIDC provider, trust policy, or `AP_FRONTEND_URL` issuer is not set up correctly. And because the save now calls AWS, an instance with no outbound access to `sts.<region>.amazonaws.com` cannot create these connections at all.
-
-The region on these connections is also validated against the AWS region format at both save time and every flow step (the region flows into the STS endpoint hostname, so the check is enforced everywhere it is used). The STS call now times out after 10 seconds instead of waiting for the job timeout.
-
-#### What you need to do
-
-Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it. Existing saved connections keep working and are not revalidated automatically — pressing **Recheck** on a connection whose trust policy is wrong will now move it to an error state, which reflects what already happens when a flow runs.
-
-#### Kimai connections now authenticate with an API token instead of a username and API password
-
-Kimai is deprecating its legacy `X-AUTH-USER` / `X-AUTH-TOKEN` authentication (API passwords), with removal planned no later than July 2026 — see [Kimai's announcement](https://www.kimai.org/en/blog/2026/removing-api-passwords). The Kimai piece's connection now sends `Authorization: Bearer <token>` instead, matching Kimai's current API. This also fixes the Activity dropdown on the Create Timesheet action, which ignored the selected project because it tried to filter on a GET request body that the piece's HTTP client cannot send.
-
-The connection's `Username` and `API Password` fields are removed and replaced with a single `API Token` field.
-
-#### What you need to do
-
-Only if you have an existing Kimai connection. Reconnect it: in your Kimai instance, generate an API token from your user profile's "API Access" page, then re-enter your Kimai connection in Activepieces with the Server URL and that token. Existing connections using the old username/API-password fields will fail to authenticate until reconnected.
 
 ## 0.91.0
 
