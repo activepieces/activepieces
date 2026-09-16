@@ -3739,15 +3739,14 @@
     },
     "packages/pieces/community/goodmem": {
       "name": "@activepieces/piece-goodmem",
-      "version": "0.0.5",
+      "version": "0.1.0",
       "dependencies": {
-        "@activepieces/core-piece-types": "workspace:*",
-        "@activepieces/core-utils": "workspace:*",
-        "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "@pairsystems/goodmem": "0.1.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/google-bigquery": {
@@ -13675,6 +13674,9 @@
     "@opentelemetry/api": ["@opentelemetry/api@1.9.0", "", {}, "sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg=="],
 
     "@oxc-project/types": ["@oxc-project/types@0.70.0", "", {}, "sha512-ngyLUpUjO3dpqygSRQDx7nMx8+BmXbWOU4oIwTJFV2MVIDG7knIZwgdwXlQWLg3C3oxg1lS7ppMtPKqKFb7wzw=="],
+
+
+    "@pairsystems/goodmem": ["@pairsystems/goodmem@0.1.6", "", {}, "sha512-ag+UWejB8FNZYQpjVtnKjNXXIfdXwTK/zENzTnn6xWRiPmox8nT1TUOKTsH1PRvZKzqhpPboFpnabJv6dBnKzg=="],
 
     "@paralleldrive/cuid2": ["@paralleldrive/cuid2@2.3.1", "", { "dependencies": { "@noble/hashes": "^1.1.5" } }, "sha512-XO7cAxhnTZl0Yggq6jOgjiOHhbgcO4NqFqwSmQpjK3b6TEE6Uj/jfSk6wzYyemh3+I0sHirKSetjQwn5cZktFw=="],
 

@@ -63,6 +63,10 @@ jobs:
         if: steps.changed.outputs.has_changes == 'true'
         run: npx turbo run build ${{ steps.changed.outputs.turbo_filter }}
 
+      - name: Test GoodMem piece
+        if: steps.changed.outputs.has_changes == 'true' && contains(steps.changed.outputs.changed_dirs, 'packages/pieces/community/goodmem')
+        run: npx turbo run test --filter=@activepieces/piece-goodmem --force
+
       - name: check piece heap usage
         if: steps.changed.outputs.has_changes == 'true' && !contains(github.event.pull_request.labels.*.name, 'skip-heap-check')
         env:

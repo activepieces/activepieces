@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### GoodMem 0.1 changes failure handling, indexing waits, and content downloads
+
+The GoodMem piece now uses the official SDK. Initial HTTP failures and malformed retrieval responses fail the step instead of returning `success: false`. Retrieval returns the final completed result stage and exposes `partial` and `statuses` when results are incomplete. Get Memory returns readable `content` for text or a `file` URL for binary content.
+
+Wait for Indexing moves from Retrieve Memories to Create Memory and defaults to enabled for new writes. It waits only for the accepted memory ID. If processing fails or the wait expires, that ID and its indexing state remain available. Empty searches return immediately. Ambiguous space names are rejected, and Chronological Resort requires a reranker to match current server behavior.
+
+#### What you need to do
+
+When upgrading GoodMem steps from 0.0.x, move failure handling to the step's failure path, update download references to `content` or `file`, and check `partial` and `indexing.ready` before using incomplete work. Use the returned memory ID to check processing status rather than uploading again. Select an explicit space ID when several accessible spaces share a name; select a reranker when enabling Chronological Resort.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
