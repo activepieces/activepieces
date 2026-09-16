@@ -356,23 +356,27 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'All projects',
-                config: customConfig('https://all.example.com'),
+                config: customConfig('https://all.example.com', [
+                    { modelId: 'all-projects-model', modelName: 'All Projects Model', modelType: AIProviderModelType.TEXT },
+                ]),
                 created: '2026-08-10T00:00:00.000Z',
             })
             await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Scoped',
-                config: { baseUrl: 'https://scoped.example.com', apiKeyHeader: 'Authorization', models: [] },
+                config: customConfig('https://scoped.example.com', [
+                    { modelId: 'scoped-model', modelName: 'Scoped Model', modelType: AIProviderModelType.TEXT },
+                ]),
                 projectScope: 'selected',
                 projectIds: [ctx.project.id],
                 created: '2026-08-01T00:00:00.000Z',
             })
 
-            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`, ctx.project.id)
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models`, ctx.project.id)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json().config.baseUrl).toBe('https://scoped.example.com')
+            expect(response?.json().map((model: { id: string }) => model.id)).toEqual(['scoped-model'])
         })
 
         it('breaks specificity ties by newest created', async () => {
@@ -380,21 +384,25 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Older',
-                config: customConfig('https://older.example.com'),
+                config: customConfig('https://older.example.com', [
+                    { modelId: 'older-model', modelName: 'Older Model', modelType: AIProviderModelType.TEXT },
+                ]),
                 created: '2026-08-01T00:00:00.000Z',
             })
             await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Newer',
-                config: customConfig('https://newer.example.com'),
+                config: customConfig('https://newer.example.com', [
+                    { modelId: 'newer-model', modelName: 'Newer Model', modelType: AIProviderModelType.TEXT },
+                ]),
                 created: '2026-08-10T00:00:00.000Z',
             })
 
-            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`, ctx.project.id)
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models`, ctx.project.id)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json().config.baseUrl).toBe('https://newer.example.com')
+            expect(response?.json().map((model: { id: string }) => model.id)).toEqual(['newer-model'])
         })
 
         it('excludes a project listed in an except scope', async () => {
@@ -402,12 +410,12 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Except this project',
-                config: { baseUrl: 'https://except.example.com', apiKeyHeader: 'Authorization', models: [] },
+                config: customConfig('https://except.example.com'),
                 projectScope: 'except',
                 projectIds: [ctx.project.id],
             })
 
-            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`, ctx.project.id)
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models`, ctx.project.id)
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
@@ -417,15 +425,17 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Except another project',
-                config: customConfig('https://except-other.example.com'),
+                config: customConfig('https://except-other.example.com', [
+                    { modelId: 'except-other-model', modelName: 'Except Other Model', modelType: AIProviderModelType.TEXT },
+                ]),
                 projectScope: 'except',
                 projectIds: [apId()],
             })
 
-            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`, ctx.project.id)
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models`, ctx.project.id)
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json().config.baseUrl).toBe('https://except-other.example.com')
+            expect(response?.json().map((model: { id: string }) => model.id)).toEqual(['except-other-model'])
         })
 
         it('lists one entry per provider for an engine caller, whatever the key count', async () => {
@@ -677,24 +687,28 @@ describe('AI Providers API', () => {
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Older',
-                config: customConfig('https://older.example.com'),
+                config: customConfig('https://older.example.com', [
+                    { modelId: 'older-model', modelName: 'Older Model', modelType: AIProviderModelType.TEXT },
+                ]),
                 created: '2026-08-01T00:00:00.000Z',
             })
             await mockAndSaveAIProvider({
                 platformId: ctx.platform.id,
                 provider: AIProviderName.CUSTOM,
                 displayName: 'Newer',
-                config: customConfig('https://newer.example.com'),
+                config: customConfig('https://newer.example.com', [
+                    { modelId: 'newer-model', modelName: 'Newer Model', modelType: AIProviderModelType.TEXT },
+                ]),
                 created: '2026-08-10T00:00:00.000Z',
             })
 
-            const pinned = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config?configId=${older.id}`, ctx.project.id)
+            const pinned = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models?configId=${older.id}`, ctx.project.id)
             expect(pinned?.statusCode).toBe(StatusCodes.OK)
-            expect(pinned?.json().config.baseUrl).toBe('https://older.example.com')
-            expect(pinned?.json().configId).toBe(older.id)
+            expect(pinned?.json().map((model: { id: string }) => model.id)).toEqual(['older-model'])
 
-            const automatic = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config`, ctx.project.id)
-            expect(automatic?.json().config.baseUrl).toBe('https://newer.example.com')
+            const automatic = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models`, ctx.project.id)
+            expect(automatic?.statusCode).toBe(StatusCodes.OK)
+            expect(automatic?.json().map((model: { id: string }) => model.id)).toEqual(['newer-model'])
         })
 
         it('refuses a key whose project scope excludes the caller project', async () => {
@@ -713,7 +727,7 @@ describe('AI Providers API', () => {
                 config: customConfig('https://mine.example.com'),
             })
 
-            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config?configId=${excluded.id}`, ctx.project.id)
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models?configId=${excluded.id}`, ctx.project.id)
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
@@ -731,7 +745,7 @@ describe('AI Providers API', () => {
                 config: customConfig('https://custom.example.com'),
             })
 
-            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/config?configId=${openai.id}`, ctx.project.id)
+            const response = await engineGet(`/api/v1/ai-providers/${AIProviderName.CUSTOM}/models?configId=${openai.id}`, ctx.project.id)
 
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
