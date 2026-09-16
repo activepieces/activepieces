@@ -134,6 +134,29 @@ describe('Nested schema and Flatten Nested Fields', () => {
   });
 });
 
+describe('Table Name is a SQL identifier, not a value (cannot be parameterized)', () => {
+  it('quotes the table name so multi-statement SQL injection cannot execute', async () => {
+    const maliciousName =
+      "z(v INT); CREATE TABLE injected_evil AS SELECT 'pwned' AS marker; CREATE TABLE legit_final";
+
+    const rows = await runAction({
+      tables: [table({ name: maliciousName, data: [{ id: 1 }] })],
+      query: 'SELECT table_name FROM information_schema.tables',
+    });
+
+    expect(rows).toEqual([{ table_name: maliciousName }]);
+  });
+
+  it('accepts a plain alphanumeric/underscore table name', async () => {
+    const rows = await runAction({
+      tables: [table({ name: 'valid_table_1', data: [{ id: 1 }] })],
+      query: 'SELECT * FROM valid_table_1',
+    });
+
+    expect(rows).toEqual([{ id: '1' }]);
+  });
+});
+
 describe('Multiple tables', () => {
   it('loads more than one table and can join across them in a single query', async () => {
     const rows = await runAction({

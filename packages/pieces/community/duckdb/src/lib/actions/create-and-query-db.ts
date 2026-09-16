@@ -1,6 +1,7 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 
 import { DuckDBInstance } from '@duckdb/node-api';
+import { quotedIdentifier } from '@duckdb/node-api/lib/sql';
 import { parse as parseCsv } from 'csv-parse/sync';
 
 export const createAndQueryDB = createAction({
@@ -88,6 +89,7 @@ More information on data types and accepted values:
 
     const dbTables: any[] = context.propsValue.tables ?? [];
     for (const dbTable of dbTables) {
+      const tableName = quotedIdentifier(dbTable.name);
       const dbData = JSON.stringify(resolveTableRows(dbTable));
       let dbSchema = null;
 
@@ -107,11 +109,11 @@ More information on data types and accepted values:
       const shouldFlatten = dbTable.flattenNestedFields ?? true;
       const createTableQuery = shouldFlatten
         ? `
-          CREATE TABLE ${dbTable.name} AS
+          CREATE TABLE ${tableName} AS
             SELECT UNNEST(JSON_TRANSFORM($sourceData, $sourceSchema), recursive := true);
         `
         : `
-          CREATE TABLE ${dbTable.name} AS
+          CREATE TABLE ${tableName} AS
             SELECT row.* FROM (SELECT UNNEST(JSON_TRANSFORM($sourceData, $sourceSchema)) AS row) t;
         `;
 
