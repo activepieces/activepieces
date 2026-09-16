@@ -437,7 +437,8 @@ import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841
 import { AddAgentRunsIndex1842000000000 } from './migration/postgres/1842000000000-AddAgentRunsIndex'
 import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres/1843000000000-AddAgentConversationFlowRunId'
 import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
-import { AddAgentConversationAiCredits1845000000000 } from './migration/postgres/1845000000000-AddAgentConversationAiCredits'
+import { CapTodosPieceMaxSupportedRelease1845000000000 } from './migration/postgres/1845000000000-CapTodosPieceMaxSupportedRelease'
+import { AddAgentConversationAiCredits1846000000000 } from './migration/postgres/1846000000000-AddAgentConversationAiCredits'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -890,7 +891,8 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAgentRunsIndex1842000000000,
         AddAgentConversationFlowRunId1843000000000,
         AddMcpActivity1844000000000,
-        AddAgentConversationAiCredits1845000000000,
+        CapTodosPieceMaxSupportedRelease1845000000000,
+        AddAgentConversationAiCredits1846000000000,
     ]
     return migrations
 }

@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { dirname } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { deno, DenoPermission } from '@activepieces/core-utils'
+import { ExecutionMode } from '@activepieces/shared'
 import { CodeSandbox } from './code-sandbox-common'
 
 export { DenoPermission } from '@activepieces/core-utils'
@@ -31,6 +32,7 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 allowReadPaths: [stepDir],
                 resolveNodeModules: true,
                 env: buildPropagatedEnv(permissions),
+                denoDirBase: resolveDenoDirBase(stepDir),
             })
         },
 
@@ -70,6 +72,10 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
         },
     }
     return sandbox
+}
+
+function resolveDenoDirBase(stepDir: string): string | undefined {
+    return process.env['AP_EXECUTION_MODE'] === ExecutionMode.SANDBOX_CODE_ONLY ? stepDir : undefined
 }
 
 function buildPropagatedEnv(permissions: DenoPermission[]): Record<string, string> {
