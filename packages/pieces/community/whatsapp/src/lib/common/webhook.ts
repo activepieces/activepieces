@@ -5,15 +5,16 @@ const setupInstructions = Property.MarkDown({
 	value: `
 **Connect this trigger to your Meta app**
 
-1. Open [developers.facebook.com](https://developers.facebook.com/apps), pick your app and go to **WhatsApp → Configuration**.
-2. Under **Webhook**, click **Edit** and paste this URL as the Callback URL:
+1. **Publish this flow first.** Meta verifies the URL immediately, and an unpublished flow cannot answer.
+2. Open [developers.facebook.com](https://developers.facebook.com/apps), pick your app and go to **WhatsApp → Configuration**.
+3. Under **Webhook**, click **Edit** and paste this URL as the Callback URL:
 
    \`{{webhookUrl}}\`
 
-3. Enter the same value you put in **Verify Token** below (any secret string), then click **Verify and save**.
-4. Click **Manage** next to Webhook fields and subscribe to **messages** (and **message_template_status_update** for template triggers).
+4. Enter the same value you put in **Verify Token** below (any secret string), then click **Verify and save**.
+5. Click **Manage** next to Webhook fields and subscribe to **messages** (and **message_template_status_update** for template triggers).
 
-Meta sends one callback URL per app, so every WhatsApp trigger in your flows receives every event and filters what it needs.
+Meta accepts **one callback URL per app**, so only the flow whose URL you paste receives events. To react to several event kinds, use one flow with this trigger and branch on the payload, or forward the payload to your other flows from a step.
 `,
 });
 
