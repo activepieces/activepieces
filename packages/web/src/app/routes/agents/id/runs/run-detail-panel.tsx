@@ -1,7 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   AgentRunListItem,
-  MarkdownVariant,
+  ContentBlockType,
   PersistedAgentPart,
   PersistedAgentPartType,
   PersistedAgentRole,
@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { ApMarkdown } from '@/components/custom/markdown';
+import { JsonViewer } from '@/components/custom/json-viewer';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import {
   Collapsible,
@@ -31,6 +31,11 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  MarkdownBlock,
+  PromptBlock,
+  TimelineItem,
+} from '@/features/agents/agent-timeline/timeline-blocks';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
@@ -74,7 +79,7 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
                 ) : (
                   <div key={messageIndex} className="flex flex-col gap-6">
                     {message.parts.map((part, partIndex) => (
-                      <Part key={partIndex} part={part} />
+                      <Part key={partIndex} part={part} index={partIndex} />
                     ))}
                   </div>
                 ),
@@ -143,18 +148,16 @@ const Prompt = ({ parts }: { parts: PersistedAgentPart[] }) => {
   if (text.length === 0) {
     return null;
   }
-  return (
-    <div className="flex flex-col gap-1.5 border-b border-border pb-6">
-      <Label>{t('Prompt')}</Label>
-      <p className="rounded-lg bg-muted/40 p-3 text-sm">{text}</p>
-    </div>
-  );
+  return <PromptBlock prompt={text} />;
 };
 
-const Part = ({ part }: { part: PersistedAgentPart }) => {
+const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
   if (part.type === PersistedAgentPartType.TEXT) {
     return (
-      <ApMarkdown markdown={part.text} variant={MarkdownVariant.BORDERLESS} />
+      <MarkdownBlock
+        index={index}
+        step={{ type: ContentBlockType.MARKDOWN, markdown: part.text }}
+      />
     );
   }
   if (part.type !== PersistedAgentPartType.TOOL_CALL) {
@@ -174,42 +177,42 @@ const ToolCall = ({
   const hasOutput = !isNil(part.output);
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger className="flex w-full items-center gap-2 text-left text-sm">
-        {failed ? (
-          <CircleAlert size={16} className="shrink-0 text-destructive" />
+    <TimelineItem
+      icon={
+        failed ? (
+          <CircleAlert className="h-4 w-4 text-destructive" />
         ) : (
-          <CircleCheck size={16} className="shrink-0 text-muted-foreground" />
-        )}
-        <span className="min-w-0 truncate">
-          {part.title ?? (
-            <span className="font-mono text-xs">{part.toolName}</span>
+          <CircleCheck className="h-4 w-4 text-muted-foreground" />
+        )
+      }
+    >
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger className="flex w-full items-center gap-2 py-3 text-left text-sm">
+          <span className="min-w-0 truncate">
+            {part.title ?? (
+              <span className="font-mono text-xs">{part.toolName}</span>
+            )}
+          </span>
+          <ChevronRight
+            size={14}
+            className={cn(
+              'shrink-0 text-muted-foreground transition-transform',
+              open && 'rotate-90',
+            )}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="flex flex-col gap-3 pt-3">
+          {failed && !isNil(part.errorText) && (
+            <p className="text-xs text-destructive">{part.errorText}</p>
           )}
-        </span>
-        <ChevronRight
-          size={14}
-          className={cn(
-            'shrink-0 text-muted-foreground transition-transform',
-            open && 'rotate-90',
-          )}
-        />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="flex flex-col gap-3 pl-6 pt-3">
-        {failed && !isNil(part.errorText) && (
-          <p className="text-xs text-destructive">{part.errorText}</p>
-        )}
-        {hasInput && <Payload label={t('Input')} value={part.input} />}
-        {hasOutput && <Payload label={t('Output')} value={part.output} />}
-      </CollapsibleContent>
-    </Collapsible>
+          {hasInput && <Payload label={t('Input')} value={part.input} />}
+          {hasOutput && <Payload label={t('Output')} value={part.output} />}
+        </CollapsibleContent>
+      </Collapsible>
+    </TimelineItem>
   );
 };
 
 const Payload = ({ label, value }: { label: string; value: unknown }) => (
-  <div className="flex flex-col gap-1">
-    <Label>{label}</Label>
-    <pre className="max-h-60 overflow-auto rounded-md bg-muted/40 p-2 font-mono text-xs whitespace-pre-wrap break-words">
-      {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
-    </pre>
-  </div>
+  <JsonViewer json={value} title={<Label>{label}</Label>} hideDownload />
 );

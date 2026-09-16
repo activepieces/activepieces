@@ -12,7 +12,6 @@ import {
   Workflow,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -22,7 +21,6 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
-import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
 
 import { RunDetailPanel } from './run-detail-panel';
@@ -50,12 +48,16 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <DataTableColumnHeader column={column} title={t('Run')} icon={Bot} />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2 text-left">
+          <button
+            type="button"
+            className="flex items-center gap-2 text-left hover:underline"
+            onClick={() => setOpenRunId(row.original.id)}
+          >
             <TruncatedColumnTextValue
               value={row.original.title ?? t('Untitled run')}
               className="max-w-[260px] 2xl:max-w-[420px]"
             />
-          </div>
+          </button>
         ),
       },
       {
@@ -74,16 +76,9 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
             return <span className="text-muted-foreground">{'\u2014'}</span>;
           }
           return (
-            <Link
-              to={authenticationSession.appendProjectRoutePrefix(
-                `/runs/${flow.flowRunId}`,
-              )}
-              className="flex items-center gap-2 text-left hover:underline"
-              onClick={(e) => e.stopPropagation()}
-              onAuxClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex items-center gap-2 text-left">
               <TruncatedColumnTextValue value={flow.displayName} />
-            </Link>
+            </div>
           );
         },
       },
