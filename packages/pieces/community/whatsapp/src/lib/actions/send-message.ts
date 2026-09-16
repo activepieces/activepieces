@@ -2,10 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { whatsappAuth } from '../auth';
 import { commonProps, WHATSAPP_API_BASE } from '../common/utils';
+import { messageSendOutputSchema } from '../output-schemas';
 
 export const sendMessage = createAction({
 	auth: whatsappAuth,
 	name: 'sendMessage',
+	outputSchema: messageSendOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Message',
 	description: 'Send a text message through WhatsApp',

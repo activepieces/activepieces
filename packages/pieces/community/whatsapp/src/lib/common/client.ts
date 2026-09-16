@@ -1,0 +1,115 @@
+import {
+	AuthenticationType,
+	httpClient,
+	HttpMethod,
+	HttpRequest,
+	QueryParams,
+} from '@activepieces/pieces-common';
+import { WHATSAPP_API_BASE } from './utils';
+
+async function request<T = Record<string, unknown>>({
+	accessToken,
+	method,
+	path,
+	body,
+	queryParams,
+	headers,
+}: RequestParams): Promise<T> {
+	const httpRequest: HttpRequest = {
+		method,
+		url: `${WHATSAPP_API_BASE}${path}`,
+		authentication: {
+			type: AuthenticationType.BEARER_TOKEN,
+			token: accessToken,
+		},
+		body,
+		queryParams,
+		headers,
+	};
+	const response = await httpClient.sendRequest<T>(httpRequest);
+	return response.body;
+}
+
+async function sendMessage({
+	accessToken,
+	phoneNumberId,
+	to,
+	replyToMessageId,
+	payload,
+}: SendMessageParams): Promise<MessageSendResponse> {
+	return request<MessageSendResponse>({
+		accessToken,
+		method: HttpMethod.POST,
+		path: `/${phoneNumberId}/messages`,
+		body: {
+			messaging_product: 'whatsapp',
+			recipient_type: 'individual',
+			to,
+			...(replyToMessageId ? { context: { message_id: replyToMessageId } } : {}),
+			...payload,
+		},
+	});
+}
+
+function buildInteractiveHeader({
+	headerType,
+	headerText,
+	headerMediaUrl,
+}: InteractiveHeaderParams): Record<string, unknown> | undefined {
+	if (!headerType || headerType === 'none') return undefined;
+	if (headerType === 'text') {
+		return headerText ? { type: 'text', text: headerText } : undefined;
+	}
+	return headerMediaUrl ? { type: headerType, [headerType]: { link: headerMediaUrl } } : undefined;
+}
+
+function normalizeTemplateComponents(components: unknown): unknown {
+	if (typeof components === 'string') {
+		return components.replace(/\[\[(\w+)\]\]/g, '{{$1}}');
+	}
+	if (Array.isArray(components)) {
+		return components.map((item) => normalizeTemplateComponents(item));
+	}
+	if (components && typeof components === 'object') {
+		return Object.fromEntries(
+			Object.entries(components).map(([key, value]) => [key, normalizeTemplateComponents(value)]),
+		);
+	}
+	return components;
+}
+
+export const whatsappClient = {
+	request,
+	sendMessage,
+	buildInteractiveHeader,
+	normalizeTemplateComponents,
+};
+
+export type MessageSendResponse = {
+	messaging_product: string;
+	contacts: { input: string; wa_id: string }[];
+	messages: { id: string; message_status?: string }[];
+};
+
+type RequestParams = {
+	accessToken: string;
+	method: HttpMethod;
+	path: string;
+	body?: unknown;
+	queryParams?: QueryParams;
+	headers?: Record<string, string>;
+};
+
+type SendMessageParams = {
+	accessToken: string;
+	phoneNumberId: string;
+	to: string;
+	replyToMessageId?: string;
+	payload: Record<string, unknown>;
+};
+
+type InteractiveHeaderParams = {
+	headerType?: string;
+	headerText?: string;
+	headerMediaUrl?: string;
+};

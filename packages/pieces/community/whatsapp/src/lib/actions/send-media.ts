@@ -8,10 +8,12 @@ import {
 	commonProps,
 	WHATSAPP_API_BASE,
 } from '../common/utils';
+import { messageSendOutputSchema } from '../output-schemas';
 
 export const sendMedia = createAction({
 	auth: whatsappAuth,
 	name: 'sendMedia',
+	outputSchema: messageSendOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Media',
 	description: 'Send a media message through WhatsApp',

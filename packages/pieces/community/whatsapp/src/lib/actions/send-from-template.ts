@@ -2,10 +2,12 @@ import { whatsappAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { commonProps, WHATSAPP_API_BASE } from '../common/utils';
+import { messageSendOutputSchema } from '../output-schemas';
 
 export const sendTemplateMessageAction = createAction({
 	auth: whatsappAuth,
 	name: 'send-template-message',
+	outputSchema: messageSendOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Template Message',
 	description: 'Sends a template message.',
