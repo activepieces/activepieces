@@ -214,12 +214,17 @@ self-hosted instance needs neither a Cloudflare nor a ZeroBounce account.
 
 With `AP_ZEROBOUNCE_API_KEY` set, a sign-up is refused when ZeroBounce reports
 the address as disposable, toxic, a spam trap, an abuse address or globally
-suppressed. Role addresses such as `info@` and `sales@` are accepted, and so is
-an address whose mailbox ZeroBounce cannot confirm. A member who already holds an
-accepted invitation is never refused. One credit is spent per address, and only
-for an address that has no account yet. If ZeroBounce cannot be reached, or
-answers that the key is invalid or out of credits, the sign-up is allowed through
-and the reason is logged — a validation outage never blocks sign-up.
+suppressed, or reports that its domain cannot receive mail at all: no DNS
+records, a send-only domain, or a mail server at an unroutable address. Role
+addresses such as `info@` and `sales@` are accepted, and so is an address whose
+mailbox ZeroBounce cannot confirm. A member who already holds an accepted
+invitation is never refused. One credit is spent per address, and only for an
+address that has no account yet. If ZeroBounce cannot be reached, or answers
+that the key is invalid or out of credits, the sign-up is allowed through and
+the reason is logged — a validation outage never blocks sign-up.
+
+ZeroBounce resolves DNS from the public internet. If your members' mail domains
+are only resolvable inside your own network, leave the key unset.
 
 Both refusals are silent: the emailed-code request answers exactly as a served
 one does and the sign-in page moves to the code step, while password sign-up
