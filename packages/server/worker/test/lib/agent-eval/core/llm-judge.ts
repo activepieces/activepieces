@@ -1,5 +1,5 @@
 import { aiUtils } from '@activepieces/server-utils'
-import { AIProviderName } from '@activepieces/core-utils';
+import { aiProviderCredentials, AIProviderName } from '@activepieces/core-utils';
 import { generateText } from 'ai'
 
 const JUDGE_SYSTEM = 'You are a strict binary evaluator of an AI assistant transcript. You judge exactly ONE dimension against ONE pass criterion. Be conservative: if the criterion is not clearly met, answer FAIL. Respond with "PASS" or "FAIL" on the first line, then a single short sentence explaining why on the second line. Output nothing else.'
@@ -9,7 +9,7 @@ function createJudge({ provider, modelId, auth }: {
     modelId: string
     auth: Record<string, unknown>
 }): { judge: (params: { dimension: string, rubric: string, transcript: string }) => Promise<JudgeVerdict> } {
-    const model = aiUtils.createModel({ provider, auth, config: {}, modelId })
+    const model = aiUtils.createModel({ credentials: aiProviderCredentials({ provider, auth, config: {} }), modelId })
 
     const judge = async ({ dimension, rubric, transcript }: { dimension: string, rubric: string, transcript: string }): Promise<JudgeVerdict> => {
         const { text } = await generateText({
