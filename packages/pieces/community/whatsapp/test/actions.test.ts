@@ -18,6 +18,7 @@ import { getBusinessProfile } from '../src/lib/actions/get-business-profile';
 import { listMessageTemplates } from '../src/lib/actions/list-message-templates';
 import { sendMessage } from '../src/lib/actions/send-message';
 import { sendMedia } from '../src/lib/actions/send-media';
+import { sendTemplate } from '../src/lib/actions/send-template';
 
 const AUTH = { type: 'CUSTOM_AUTH', props: { access_token: 'tok', businessAccountId: 'WABA' } };
 const SEND_RESPONSE = { messaging_product: 'whatsapp', contacts: [{ input: '1', wa_id: '1' }], messages: [{ id: 'wamid.NEW' }] };
@@ -68,6 +69,45 @@ describe('send actions return the bare API payload', () => {
 		await sendMedia.run(context({ ...BASE, type: 'image', media: 'https://x/a.png', filename: 'nope.png' }));
 		expect(requests[2].body).toMatchObject({ image: { link: 'https://x/a.png' } });
 		expect(requests[2].body).not.toMatchObject({ image: { filename: 'nope.png' } });
+	});
+});
+
+describe('Send Template (agent twin)', () => {
+	test('sends name + language only when there are no parameters', async () => {
+		await sendTemplate.run(context({ ...BASE, template_name: 'hello_world', language_code: 'en_US' }));
+		expect(requests[0].body).toEqual({
+			messaging_product: 'whatsapp',
+			recipient_type: 'individual',
+			to: '962782550213',
+			type: 'template',
+			template: { name: 'hello_world', language: { code: 'en_US' } },
+		});
+	});
+
+	test('builds header, body and url-button components from positional lists, accepting JSON strings', async () => {
+		await sendTemplate.run(
+			context({
+				...BASE,
+				template_name: 'order_update',
+				language_code: 'en_US',
+				header_parameters: ['Sam'],
+				body_parameters: '["A1","tomorrow"]',
+				button_url_parameters: ['track/A1', ''],
+				reply_to_message_id: 'wamid.R',
+			}),
+		);
+		expect(requests[0].body).toMatchObject({
+			context: { message_id: 'wamid.R' },
+			template: {
+				name: 'order_update',
+				language: { code: 'en_US' },
+				components: [
+					{ type: 'header', parameters: [{ type: 'text', text: 'Sam' }] },
+					{ type: 'body', parameters: [{ type: 'text', text: 'A1' }, { type: 'text', text: 'tomorrow' }] },
+					{ type: 'button', sub_type: 'url', index: 0, parameters: [{ type: 'text', text: 'track/A1' }] },
+				],
+			},
+		});
 	});
 });
 

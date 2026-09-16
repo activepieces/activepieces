@@ -2,6 +2,7 @@ import { createPiece } from '@activepieces/pieces-framework';
 import { sendMessage } from './lib/actions/send-message';
 import { sendMedia } from './lib/actions/send-media';
 import { sendTemplateMessageAction } from './lib/actions/send-from-template';
+import { sendTemplate } from './lib/actions/send-template';
 import { sendInteractiveButtons } from './lib/actions/send-interactive-buttons';
 import { sendInteractiveList } from './lib/actions/send-interactive-list';
 import { sendInteractiveCtaUrl } from './lib/actions/send-interactive-cta-url';
@@ -38,6 +39,7 @@ export const whatsapp = createPiece({
 		sendMessage,
 		sendMedia,
 		sendTemplateMessageAction,
+		sendTemplate,
 		sendInteractiveButtons,
 		sendInteractiveList,
 		sendInteractiveCtaUrl,
