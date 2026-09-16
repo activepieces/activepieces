@@ -10,12 +10,15 @@ import {
 import { t } from 'i18next';
 import {
   ArrowUpRight,
+  Brain,
   ChevronRight,
   CircleAlert,
   CircleCheck,
+  Paperclip,
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { JsonViewer } from '@/components/custom/json-viewer';
 import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import {
@@ -50,7 +53,12 @@ type RunDetailPanelProps = {
 
 export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
-  const { data: run, isLoading } = agentsQueries.useAgentRun({
+  const {
+    data: run,
+    isLoading,
+    isError,
+    refetch,
+  } = agentsQueries.useAgentRun({
     runId,
     projectId: project.id,
   });
@@ -64,7 +72,12 @@ export const RunDetailPanel = ({ runId, onClose }: RunDetailPanelProps) => {
           </SheetTitle>
           {!isNil(run) && <MetaStrip run={run} />}
         </SheetHeader>
-        {isLoading || isNil(run) ? (
+        {isError ? (
+          <DataFetchErrorState
+            entity={t('run')}
+            onRetry={() => void refetch()}
+          />
+        ) : isLoading || isNil(run) ? (
           <div className="flex flex-col gap-3 px-6 py-5">
             <Skeleton className="h-16 w-full" />
             <Skeleton className="h-4 w-2/3" />
@@ -154,11 +167,54 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
       />
     );
   }
-  if (part.type !== PersistedAgentPartType.TOOL_CALL) {
-    return null;
+  if (part.type === PersistedAgentPartType.TOOL_CALL) {
+    return <ToolCall part={part} />;
   }
-  return <ToolCall part={part} />;
+  if (part.type === PersistedAgentPartType.REASONING) {
+    return (
+      <TimelineItem icon={<Brain className="h-4 w-4 text-muted-foreground" />}>
+        <p className="py-3 text-sm text-muted-foreground">{part.text}</p>
+      </TimelineItem>
+    );
+  }
+  if (
+    part.type === PersistedAgentPartType.IMAGE ||
+    part.type === PersistedAgentPartType.FILE ||
+    part.type === PersistedAgentPartType.SOURCE_URL
+  ) {
+    return (
+      <TimelineItem
+        icon={<Paperclip className="h-4 w-4 text-muted-foreground" />}
+      >
+        <a
+          href={part.url}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1 py-3 text-sm hover:underline"
+        >
+          <span className="min-w-0 truncate">{partLabel(part)}</span>
+          <ArrowUpRight size={12} className="shrink-0" />
+        </a>
+      </TimelineItem>
+    );
+  }
+  // Thinking status and batch progress are transient: they narrate a run while it happens
+  // and say nothing once it has finished, so a finished transcript leaves them out.
+  return null;
 };
+
+function partLabel(part: PersistedAgentPart): string {
+  if (part.type === PersistedAgentPartType.IMAGE) {
+    return part.title ?? t('Image');
+  }
+  if (part.type === PersistedAgentPartType.FILE) {
+    return part.fileName;
+  }
+  if (part.type === PersistedAgentPartType.SOURCE_URL) {
+    return part.title ?? part.url;
+  }
+  return '';
+}
 
 const ToolCall = ({
   part,
