@@ -1,6 +1,6 @@
 import { isNil, isObject, isString, parseToJsonIfPossible, Permission, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { Agent, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
+import { Agent, AgentActionOutcome, AgentIcon, AgentRunSource, AgentTool, agentToolClassification, AgentToolType, AppConnectionStatus, AppConnectionType, ApplicationEventName, ColorName, DEFAULT_AGENT_MAX_STEPS, FileCompression, FileType, FlowRunStatus, FlowStatus, mcpToolNameUtils, Project, RunEnvironment } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { fileService } from '../../../file/file.service'
@@ -21,7 +21,8 @@ import { agentHelpers } from '../agent-helpers'
 import { agentMemoryAi } from '../agent-memory-ai'
 import { agentAudit, agentService } from '../agent-service'
 import { agentPrompt } from '../prompt/agent-prompt'
-import { recordAgentAction } from '../rpc/rpc-shared'
+import { agentSurfaceNotes } from '../prompt/agent-surface-notes'
+import { outcomeOfToolResult, recordAgentAction } from '../rpc/rpc-shared'
 
 const AGENT_LIST_LIMIT = 50
 const CROSS_PROJECT_CONNECTION_LIMIT = 100
@@ -222,6 +223,11 @@ function nonEmpty(value: unknown): string | undefined {
     return isString(value) && value.trim().length > 0 ? value.trim() : undefined
 }
 
+function briefOnly(value: unknown): string | undefined {
+    const text = nonEmpty(value)
+    return isNil(text) ? undefined : nonEmpty(agentSurfaceNotes.stripRunNotes(text))
+}
+
 async function createAgentFromChat({ toolInput, platformId, projectId, userId, log }: {
     toolInput: Record<string, unknown>
     platformId: string
@@ -230,7 +236,7 @@ async function createAgentFromChat({ toolInput, platformId, projectId, userId, l
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const displayName = nonEmpty(toolInput.displayName)
-    const instructions = nonEmpty(toolInput.instructions)
+    const instructions = briefOnly(toolInput.instructions)
     if (isNil(displayName) || isNil(instructions)) {
         return { error: 'An agent needs a name and instructions.' }
     }
@@ -247,21 +253,21 @@ async function createAgentFromChat({ toolInput, platformId, projectId, userId, l
             draft: { instructions, maxSteps: DEFAULT_AGENT_MAX_STEPS, tools: [], structuredOutput: [] },
         },
     })
-    return afterDraftChange({ agent, publish: false, editedItself: false, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
+    return afterDraftChange({ agent, publish: false, editedItself: false, projectId, platformId, userId, log })
 }
 
-async function updateAgentFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log }: {
+async function updateAgentFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
     editedItself: boolean
-    platformId?: string
     projectId: string
+    platformId: string
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const displayName = nonEmpty(toolInput.displayName)
     const description = nonEmpty(toolInput.description)
-    const instructions = nonEmpty(toolInput.instructions)
+    const instructions = briefOnly(toolInput.instructions)
     const publish = toolInput.publish === true
     if (isNil(displayName) && isNil(description) && isNil(instructions) && !publish) {
         return { error: 'Nothing to change. Pass a new displayName, description or instructions, and none of them may be blank.' }
@@ -269,6 +275,7 @@ async function updateAgentFromChat({ toolInput, agent, editedItself, platformId,
     const updated = await agentService(log).update({
         id: agent.id,
         projectId,
+        platformId,
         userId,
         request: {
             ...spreadIfDefined('displayName', displayName),
@@ -276,7 +283,7 @@ async function updateAgentFromChat({ toolInput, agent, editedItself, platformId,
             ...(isNil(instructions) ? {} : { draft: { ...agent.draft, instructions } }),
         },
     })
-    return afterDraftChange({ agent: updated, publish, editedItself, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish, editedItself, projectId, platformId, userId, log })
 }
 
 async function resolveConnectionToPin({ piece, pieceName, projectId, platformId, log }: {
@@ -371,15 +378,15 @@ async function addAgentToolFromChat({ toolInput, agent, editedItself, projectId,
     if (isNil(updated)) {
         return { error: `${agent.displayName} already has one of those tools. List them with ap_list_agents before adding.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
 }
 
-async function removeAgentToolFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log }: {
+async function removeAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log }: {
     toolInput: Record<string, unknown>
     agent: Agent
     editedItself: boolean
-    platformId?: string
     projectId: string
+    platformId: string
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
@@ -422,7 +429,7 @@ async function removeAgentToolFromChat({ toolInput, agent, editedItself, platfor
     if (isNil(updated)) {
         return { error: `${agent.displayName} has none of those tools, so there is nothing to remove.` }
     }
-    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, ...spreadIfDefined('platformId', platformId), projectId, userId, log })
+    return afterDraftChange({ agent: updated, publish: toolInput.publish === true, editedItself, projectId, platformId, userId, log })
 }
 
 function pieceActionOf(tool: AgentTool): { pieceName: string, actionName: string } | undefined {
@@ -435,25 +442,23 @@ function toolNamesFrom(toolInput: Record<string, unknown>): string[] {
     return Array.isArray(toolInput.actionNames) ? toolInput.actionNames.flatMap((name) => nonEmpty(name) ?? []) : []
 }
 
-async function afterDraftChange({ agent, publish, editedItself, platformId, projectId, userId, log }: {
+async function afterDraftChange({ agent, publish, editedItself, projectId, platformId, userId, log }: {
     agent: Agent
     publish: boolean
     editedItself: boolean
-    platformId?: string
     projectId: string
+    platformId: string
     userId: string
     log: FastifyBaseLogger
 }): Promise<unknown> {
     const mayPublish = publish && !editedItself
     const { data: published } = mayPublish
-        ? await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, userId }))
+        ? await tryCatch(() => agentService(log).publish({ id: agent.id, projectId, platformId, userId }))
         : { data: undefined }
-    if (!isNil(platformId)) {
-        applicationEvents(log).sendUserEvent({ platformId, projectId, userId }, {
-            action: isNil(published) ? ApplicationEventName.AGENT_UPDATED : ApplicationEventName.AGENT_PUBLISHED,
-            data: { agent: { id: agent.id, displayName: agent.displayName, ...(isNil(published) ? {} : agentAudit.describePublished({ published: agent.draft })) } },
-        })
-    }
+    applicationEvents(log).sendUserEvent({ platformId, projectId, userId }, {
+        action: isNil(published) ? ApplicationEventName.AGENT_UPDATED : ApplicationEventName.AGENT_PUBLISHED,
+        data: { agent: { id: agent.id, displayName: agent.displayName, ...(isNil(published) ? {} : agentAudit.describePublished({ published: agent.draft })) } },
+    })
     return {
         agentId: agent.id,
         displayName: agent.displayName,
@@ -609,10 +614,10 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
                 return { error: 'No agent with that id in this project. Call ap_list_agents to see what is there.' }
             }
             if (toolName === 'ap_update_agent') {
-                return updateAgentFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log })
+                return updateAgentFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log })
             }
             if (toolName === 'ap_remove_agent_tool') {
-                return removeAgentToolFromChat({ toolInput, agent, editedItself, platformId, projectId, userId, log })
+                return removeAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log })
             }
             return addAgentToolFromChat({ toolInput, agent, editedItself, projectId, platformId, userId, log })
         }
@@ -745,21 +750,23 @@ async function runAgentAction({ toolInput, projects, availableProjectIds, conver
         log,
     })
 
+    const resultObj = isObject(result) ? result : undefined
+    const structured = !isNil(resultObj) && isObject(resultObj.structuredContent) ? resultObj.structuredContent : undefined
+    const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
+
     await recordChatAction({
         piece: { pieceName: normalizedPiece, actionName },
         input: parsedInput ?? {},
         projectId: resolvedProjectId,
         userId,
         connection: { ...spreadIfDefined('externalId', connectionExternalId), ...spreadIfDefined('label', connectionLabel) },
+        outcome: outcomeOfToolResult(result),
         log,
         ...spreadIfDefined('platformId', platformId),
         ...spreadIfDefined('conversationId', conversationId),
     })
 
-    if (typeof result === 'object' && result !== null) {
-        const resultObj = result as Record<string, unknown>
-        const structured = isObject(resultObj.structuredContent) ? resultObj.structuredContent as Record<string, unknown> : undefined
-        const errorSummary = typeof structured?.errorSummary === 'string' ? structured.errorSummary : undefined
+    if (!isNil(resultObj)) {
         if (isNil(connectionLabel) && isNil(errorSummary)) {
             return result
         }
@@ -966,7 +973,7 @@ type RunCodeToolResult = {
 
 export { executeCrossProjectTool, findConnectionsForPiece }
 
-async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, log }: {
+async function recordChatAction({ piece, input, projectId, platformId, userId, conversationId, connection, outcome, log }: {
     piece: { pieceName: string, actionName: string }
     input: Record<string, unknown>
     projectId: string
@@ -974,6 +981,7 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
     userId: string
     conversationId?: string
     connection: { externalId?: string, label?: string }
+    outcome: AgentActionOutcome
     log: FastifyBaseLogger
 }): Promise<void> {
     if (isNil(platformId)) {
@@ -986,6 +994,7 @@ async function recordChatAction({ piece, input, projectId, platformId, userId, c
         piece,
         resolvedInput: input,
         names: { action: action?.displayName ?? piece.actionName, piece: metadata?.displayName ?? piece.pieceName },
+        outcome,
         connection,
         log,
         ...spreadIfDefined('conversationId', conversationId),

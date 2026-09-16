@@ -187,12 +187,19 @@ export enum AgentConversationStatus {
 
 export { AgentRunSource }
 
+export const AgentRunFlowReference = z.object({
+    flowRunId: z.string(),
+    flowId: z.string(),
+    displayName: z.string(),
+})
+
 export const AgentConversation = z.object({
     ...BaseModelSchema,
     platformId: z.string(),
     projectId: Nullable(z.string()),
     userId: z.string(),
     agentId: Nullable(z.string()),
+    flowRunId: Nullable(z.string()),
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
@@ -203,7 +210,13 @@ export const AgentConversation = z.object({
     summary: Nullable(z.string()),
     summarizedUpToIndex: Nullable(z.number().int()),
 })
+
+export const AgentRunListItem = AgentConversation.extend({
+    flow: Nullable(AgentRunFlowReference),
+})
 export type AgentConversation = z.infer<typeof AgentConversation>
+export type AgentRunFlowReference = z.infer<typeof AgentRunFlowReference>
+export type AgentRunListItem = z.infer<typeof AgentRunListItem>
 
 export const CreateAgentConversationRequest = z.object({
     title: z.optional(Nullable(z.string())),

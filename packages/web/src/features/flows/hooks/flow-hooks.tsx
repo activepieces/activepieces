@@ -143,7 +143,7 @@ export const flowHooks = {
         }
         const apError = error.response.data as ApErrorParams;
         if (apError.code === ErrorCode.TRIGGER_UPDATE_STATUS) {
-          const params = apError.params as Record<string, string>;
+          const params = apError.params;
           const reportedError = triggerStatusErrorUtils.describeStandardError(
             params.standardError,
           );
@@ -187,7 +187,20 @@ export const flowHooks = {
             duration: 5000,
           });
         } else {
-          internalErrorToast();
+          const serverMessage = api.serverErrorMessage(error);
+          if (isNil(serverMessage)) {
+            internalErrorToast();
+            return;
+          }
+          toast.error(
+            change === 'publish'
+              ? t('Publish failed')
+              : t('Status update failed'),
+            {
+              description: serverMessage,
+              duration: 8000,
+            },
+          );
         }
       },
     });
