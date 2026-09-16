@@ -7671,7 +7671,7 @@
     },
     "packages/pieces/community/resend": {
       "name": "@activepieces/piece-resend",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
