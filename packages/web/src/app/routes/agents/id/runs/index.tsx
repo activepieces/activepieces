@@ -11,8 +11,8 @@ import {
   Hourglass,
   Workflow,
 } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -24,7 +24,8 @@ import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
-import { useNewWindow } from '@/lib/navigation-utils';
+
+import { RunDetailPanel } from './run-detail-panel';
 
 type AgentRunsProps = {
   agentId: string;
@@ -32,24 +33,7 @@ type AgentRunsProps = {
 
 export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
-  const navigate = useNavigate();
-  const openNewWindow = useNewWindow();
-  const openFlowRun = useCallback(
-    (run: AgentRunListItem, newWindow: boolean) => {
-      if (isNil(run.flow)) {
-        return;
-      }
-      const to = authenticationSession.appendProjectRoutePrefix(
-        `/runs/${run.flow.flowRunId}`,
-      );
-      if (newWindow) {
-        openNewWindow(to);
-        return;
-      }
-      navigate(to);
-    },
-    [navigate, openNewWindow],
-  );
+  const [openRunId, setOpenRunId] = useState<string | null>(null);
   const {
     data: runs,
     isLoading,
@@ -186,22 +170,26 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   );
 
   return (
-    <div className="flex h-full w-full flex-col pt-2">
-      <DataTable
-        columns={columns}
-        page={runs}
-        isLoading={isLoading}
-        isError={isError}
-        errorStateEntity={t('runs')}
-        onRetry={refetch}
-        onRowClick={(row, newWindow) => openFlowRun(row, newWindow)}
-        getRowClassName={(row) => (isNil(row.flow) ? 'cursor-default' : '')}
-        emptyStateIcon={<History className="size-14" />}
-        emptyStateTextTitle={t('No flow has run this agent yet')}
-        emptyStateTextDescription={t(
-          'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
-        )}
-      />
+    <div className="flex h-full w-full min-w-0">
+      <div className="flex min-w-0 grow flex-col pt-2">
+        <DataTable
+          columns={columns}
+          page={runs}
+          isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('runs')}
+          onRetry={refetch}
+          onRowClick={(row) => setOpenRunId(row.id)}
+          emptyStateIcon={<History className="size-14" />}
+          emptyStateTextTitle={t('No flow has run this agent yet')}
+          emptyStateTextDescription={t(
+            'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
+          )}
+        />
+      </div>
+      {!isNil(openRunId) && (
+        <RunDetailPanel runId={openRunId} onClose={() => setOpenRunId(null)} />
+      )}
     </div>
   );
 };

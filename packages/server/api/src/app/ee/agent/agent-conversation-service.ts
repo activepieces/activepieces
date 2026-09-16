@@ -168,6 +168,22 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage(withFlow, paginationCursor)
     },
 
+    async getAgentRunOrThrow({ id, projectId }: { id: string, projectId: string }): Promise<AgentRunListItem> {
+        const run = await agentHelpers.conversationRepo().findOneBy({
+            id,
+            projectId,
+            source: AgentRunSource.FLOW_STEP,
+        })
+        if (isNil(run) || isNil(run.agentId)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
+        }
+        const flowByRunId = await flowReferencesFor([run])
+        return {
+            ...run,
+            flow: isNil(run.flowRunId) ? null : flowByRunId.get(run.flowRunId) ?? null,
+        }
+    },
+
     async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<AgentConversation> {
         // Eval conversations must never be opened or messaged through the regular (non-dry-run) chat
         // path — that would run real tools against a conversation meant to be side-effect-free.
