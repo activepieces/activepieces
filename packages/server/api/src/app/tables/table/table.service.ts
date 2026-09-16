@@ -8,6 +8,7 @@ import { projectStateService } from '../../ee/projects/project-release/project-s
 import { fileService } from '../../file/file.service'
 import { enforceByteLimit, filesService } from '../../file/files-service'
 import { getFolderIdFromRequest } from '../../flows/flow/flow.service'
+import { flowFolderService } from '../../flows/folder/folder.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { CURSOR_SELECT_PREFIX, Order } from '../../helper/pagination/paginator'
@@ -339,12 +340,15 @@ export const tableService = {
         id,
         request,
     }: UpdateParams): Promise<Table> {
-
+        const folderId = request.folderId === UncategorizedFolderId ? null : request.folderId
+        if (!isNil(folderId)) {
+            await flowFolderService(system.globalLogger()).getOneOrThrow({ projectId, folderId })
+        }
         const updateData: Record<string, unknown> = {
             ...spreadIfDefined('name', request.name),
             ...spreadIfDefined('trigger', request.trigger),
             ...spreadIfDefined('status', request.status),
-            folderId: request.folderId,
+            folderId,
         }
 
         await tableRepo().update({ id, projectId }, updateData)
