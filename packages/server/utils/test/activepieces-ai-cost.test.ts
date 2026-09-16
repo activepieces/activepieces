@@ -323,6 +323,31 @@ describe('an embedding call on the managed provider', () => {
         expect(reported).toHaveLength(0)
     })
 
+    it('bills on the cost even when the response carried no id, because OpenRouter marks it optional', async () => {
+        const model = activepiecesAiCost.billedEmbeddingModel({
+            model: embeddingModelReturning({
+                embeddings: [[0.1]],
+                usage: { tokens: 8 },
+                providerMetadata: { openrouter: { usage: { cost: 0.0004 } } },
+                response: { body: { object: 'list' } },
+                warnings: [],
+            }),
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'openai/text-embedding-3-small',
+            billing: BILLING,
+        })
+
+        await embedWith(model)
+
+        expect(reported).toHaveLength(1)
+        expect(reported[0].call).toEqual({
+            charge: AiChargeBasis.PROVIDER_REPORTED_COST,
+            generationId: undefined,
+            costUsd: 0.0004,
+            inputTokens: 8,
+        })
+    })
+
     it('counts the call as unbilled when the provider did not say what it cost', async () => {
         activepiecesAiCost.drainUnbilledCalls()
         const model = activepiecesAiCost.billedEmbeddingModel({

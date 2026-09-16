@@ -50,7 +50,7 @@ export type AiCallTokens = {
 }
 
 export type ActivepiecesAiCall = AiCallTokens & (
-    | { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId: string, costUsd: number }
+    | { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId?: string, costUsd: number }
     | { charge: AiChargeBasis.FIXED_CREDITS, credits: number, generationId?: string }
 )
 

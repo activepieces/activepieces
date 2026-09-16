@@ -81,8 +81,11 @@ function trackChunk({ chunk, controller, state, context }: TrackChunkParams): vo
         state.generationId = chunk.id ?? state.generationId
     }
     if (chunk.type === 'finish' && !state.reported) {
-        state.reported = true
-        report({ context, generationId: state.generationId, call: createBillingInfo({ context, generationId: state.generationId, providerMetadata: chunk.providerMetadata, usage: chunk.usage }) })
+        const call = createBillingInfo({ context, generationId: state.generationId, providerMetadata: chunk.providerMetadata, usage: chunk.usage })
+        if (!isNil(call)) {
+            state.reported = true
+            report({ context, generationId: state.generationId, call })
+        }
     }
     controller.enqueue(chunk)
 }
@@ -130,7 +133,7 @@ function createBillingInfo({ context, generationId, providerMetadata, usage }: C
         return { ...createFixedCreditChargeInfo({ generationId }), ...tokens }
     }
     const costUsd = openRouterCostOf(providerMetadata)
-    if (isNil(generationId) || isNil(costUsd)) {
+    if (isNil(costUsd)) {
         return undefined
     }
     return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, ...tokens }
@@ -138,7 +141,7 @@ function createBillingInfo({ context, generationId, providerMetadata, usage }: C
 
 function createEmbeddingBillingInfo({ result, generationId }: CreateEmbeddingBillingInfoParams): ActivepiecesAiCall | undefined {
     const costUsd = openRouterCostOf(result.providerMetadata)
-    if (isNil(generationId) || isNil(costUsd)) {
+    if (isNil(costUsd)) {
         return undefined
     }
     return { charge: AiChargeBasis.PROVIDER_REPORTED_COST, generationId, costUsd, inputTokens: result.usage?.tokens }
@@ -174,7 +177,7 @@ function parseOrUndefined<T extends z.ZodType>(schema: T, value: unknown): z.inf
 
 function report({ context, call, generationId }: ReportParams): void {
     if (isNil(call)) {
-        recordUnbilledCall({ context, generationId, reason: UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
+        recordUnbilledCall({ context, generationId, reason: isNil(generationId) ? UnbilledCallReason.NO_GENERATION_ID : UnbilledCallReason.PROVIDER_REPORTED_NO_COST })
         return
     }
     if (isNil(reporter)) {
@@ -336,6 +339,7 @@ type UnbilledCallOwner = {
 
 export enum UnbilledCallReason {
     PROVIDER_REPORTED_NO_COST = 'provider-reported-no-cost',
+    NO_GENERATION_ID = 'no-generation-id',
     NO_REPORTER_INSTALLED = 'no-reporter-installed',
 }
 
