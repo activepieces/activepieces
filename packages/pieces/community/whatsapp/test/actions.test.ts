@@ -16,6 +16,7 @@ import { deleteMessageTemplate } from '../src/lib/actions/delete-message-templat
 import { updateBusinessProfile } from '../src/lib/actions/update-business-profile';
 import { getBusinessProfile } from '../src/lib/actions/get-business-profile';
 import { listMessageTemplates } from '../src/lib/actions/list-message-templates';
+import { listPhoneNumbers } from '../src/lib/actions/list-phone-numbers';
 import { sendMessage } from '../src/lib/actions/send-message';
 import { sendMedia } from '../src/lib/actions/send-media';
 import { sendTemplate } from '../src/lib/actions/send-template';
@@ -112,6 +113,10 @@ describe('Send Template (agent twin)', () => {
 });
 
 describe('Send Interactive Buttons', () => {
+	test('a selected header with no content is rejected instead of sent without a header', async () => {
+		await expect(sendInteractiveButtons.run(context({ ...BASE, body_text: 'Pick', header_type: 'image', buttons: [{ id: 'a', title: 'A' }] }))).rejects.toThrow('Header Media URL is required');
+		expect(requests).toHaveLength(0);
+	});
 	const buttons = [{ id: 'yes', title: 'Yes' }, { id: 'no', title: 'No' }];
 
 	test('happy path builds the interactive button payload with optional header and footer', async () => {
@@ -347,6 +352,21 @@ describe('Templates', () => {
 		expect(requests[0].queryParams).toEqual({ fields: 'id,name,language,category,status,components,quality_score', limit: '100' });
 		await listMessageTemplates.run(context({ status: 'APPROVED', limit: 5 }));
 		expect(requests[1].queryParams).toMatchObject({ status: 'APPROVED', limit: '5' });
+	});
+});
+
+describe('List Phone Numbers', () => {
+	test('follows the after cursor until the last page and counts every number', async () => {
+		respondWith(
+			{ data: [{ id: '1' }, { id: '2' }], paging: { cursors: { after: 'c1' }, next: 'https://graph/next' } },
+			{ data: [{ id: '3' }], paging: { cursors: { after: 'c2' } } },
+		);
+		const result = await listPhoneNumbers.run(context({}));
+		expect(requests).toHaveLength(2);
+		expect(requests[0].queryParams).toMatchObject({ limit: '100' });
+		expect(requests[0].queryParams).not.toHaveProperty('after');
+		expect(requests[1].queryParams).toMatchObject({ after: 'c1' });
+		expect(result).toEqual({ phone_numbers: [{ id: '1' }, { id: '2' }, { id: '3' }], count: 3 });
 	});
 });
 

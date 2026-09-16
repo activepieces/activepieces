@@ -19,20 +19,46 @@ export const listPhoneNumbers = createAction({
 	},
 	props: {},
 	async run(context) {
-		const response = await whatsappClient.request<{ data: PhoneNumberRecord[] }>({
+		const phoneNumbers = await fetchAllPhoneNumbers({
 			accessToken: context.auth.props.access_token,
-			method: HttpMethod.GET,
-			path: `/${context.auth.props.businessAccountId}/phone_numbers`,
-			queryParams: {
-				fields: 'id,verified_name,display_phone_number,quality_rating,code_verification_status,platform_type',
-			},
+			businessAccountId: context.auth.props.businessAccountId,
 		});
 		return {
-			phone_numbers: response.data,
-			count: response.data.length,
+			phone_numbers: phoneNumbers,
+			count: phoneNumbers.length,
 		};
 	},
 });
+
+async function fetchAllPhoneNumbers({ accessToken, businessAccountId }: FetchAllParams): Promise<PhoneNumberRecord[]> {
+	const pages: PhoneNumberRecord[][] = [];
+	let after: string | undefined = undefined;
+	for (let page = 0; page < MAX_PAGES; page++) {
+		const response: PhoneNumbersPage = await whatsappClient.request<PhoneNumbersPage>({
+			accessToken,
+			method: HttpMethod.GET,
+			path: `/${businessAccountId}/phone_numbers`,
+			queryParams: {
+				fields: 'id,verified_name,display_phone_number,quality_rating,code_verification_status,platform_type',
+				limit: String(PAGE_SIZE),
+				...(after ? { after } : {}),
+			},
+		});
+		pages.push(response.data);
+		after = response.paging?.next ? response.paging.cursors?.after : undefined;
+		if (!after) break;
+	}
+	return pages.flat();
+}
+
+const PAGE_SIZE = 100;
+const MAX_PAGES = 50;
+
+type FetchAllParams = { accessToken: string; businessAccountId: string };
+type PhoneNumbersPage = {
+	data: PhoneNumberRecord[];
+	paging?: { cursors?: { before?: string; after?: string }; next?: string };
+};
 
 type PhoneNumberRecord = {
 	id: string;
