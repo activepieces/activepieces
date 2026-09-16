@@ -49,7 +49,7 @@ export const commonProps = {
 
 				const response = await httpClient.sendRequest({
 					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/phone_numbers`,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/phone_numbers`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authValue.access_token,
@@ -109,7 +109,7 @@ export const commonProps = {
 
 				const response = await httpClient.sendRequest({
 					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/message_templates`,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/message_templates`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authValue.access_token,
@@ -151,7 +151,7 @@ export const commonProps = {
 			const templateId = message_template_id as unknown as string;
 
 			const response = await httpClient.sendRequest({
-				url: `https://graph.facebook.com/v20.0/${templateId}`,
+				url: `${WHATSAPP_API_BASE}/${templateId}`,
 				method: HttpMethod.GET,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
@@ -223,3 +223,5 @@ export const commonProps = {
 		},
 	}),
 };
+
+export const WHATSAPP_API_BASE = 'https://graph.facebook.com/v23.0';

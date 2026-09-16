@@ -1,7 +1,7 @@
 import { whatsappAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps } from '../common/utils';
+import { commonProps, WHATSAPP_API_BASE } from '../common/utils';
 
 export const sendTemplateMessageAction = createAction({
 	auth: whatsappAuth,
@@ -68,7 +68,7 @@ export const sendTemplateMessageAction = createAction({
 		// fetch template language code
 		const templateData = await httpClient.sendRequest({
 			method: HttpMethod.GET,
-			url: `https://graph.facebook.com/v20.0/${templateId}`,
+			url: `${WHATSAPP_API_BASE}/${templateId}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: context.auth.props.access_token,
@@ -84,7 +84,7 @@ export const sendTemplateMessageAction = createAction({
 		// https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates/#text-based
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+			url: `${WHATSAPP_API_BASE}/${phoneNumberId}/messages`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: context.auth.props.access_token,
