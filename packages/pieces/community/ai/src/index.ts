@@ -24,4 +24,3 @@ export const ai = createPiece({
 });
 
 export * from './lib/common/props';
-export * from './lib/common/ai-sdk';

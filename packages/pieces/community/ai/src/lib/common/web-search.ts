@@ -3,10 +3,7 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { ToolSet } from 'ai';
-import { ProviderOptions } from '@ai-sdk/provider-utils';
 import { spreadIfDefined, AIProviderName, getEffectiveProviderAndModel } from '@activepieces/pieces-framework';
-import { anthropicSearchTool, openaiSearchTool, googleSearchTool } from './ai-sdk';
 
 function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSources?: boolean }): InputPropertyMap {
   const showIncludeSources = params?.showIncludeSources ?? true;
@@ -124,98 +121,6 @@ function buildWebSearchOptionsProps(provider: string, params?: { showIncludeSour
   return options;
 }
 
-function buildUserLocation(
-  options: UserLocationOptions
-): (UserLocationOptions & { type: 'approximate' }) | undefined {
-  if (
-    !options.userLocationCity &&
-    !options.userLocationRegion &&
-    !options.userLocationCountry &&
-    !options.userLocationTimezone
-  ) {
-    return undefined;
-  }
-
-  return {
-    type: 'approximate' as const,
-    ...spreadIfDefined('city', options.userLocationCity),
-    ...spreadIfDefined('region', options.userLocationRegion),
-    ...spreadIfDefined('country', options.userLocationCountry),
-    ...spreadIfDefined('timezone', options.userLocationTimezone),
-  };
-}
-
-function createWebSearchTool(
-  provider: string,
-  options: WebSearchOptions = {}
-): ToolSet {
-  const defaultMaxUses = 5;
-
-  switch (provider) {
-    case AIProviderName.ANTHROPIC: {
-      const anthropicOptions = options as AnthropicWebSearchOptions;
-
-      let allowedDomains: string[] | undefined;
-      let blockedDomains: string[] | undefined;
-
-      if (
-        anthropicOptions.allowedDomains &&
-        anthropicOptions.allowedDomains.length > 0
-      ) {
-        allowedDomains = anthropicOptions.allowedDomains.map(
-          ({ domain }) => domain
-        );
-      }
-
-      if (
-        anthropicOptions.blockedDomains &&
-        anthropicOptions.blockedDomains.length > 0 &&
-        (!anthropicOptions.allowedDomains ||
-          anthropicOptions.allowedDomains.length === 0)
-      ) {
-        blockedDomains = anthropicOptions.blockedDomains.map(
-          ({ domain }) => domain
-        );
-      }
-
-      return {
-        web_search: anthropicSearchTool({
-          maxUses: anthropicOptions.maxUses ?? defaultMaxUses,
-          ...spreadIfDefined(
-            'userLocation',
-            buildUserLocation(anthropicOptions)
-          ),
-          ...spreadIfDefined('allowedDomains', allowedDomains),
-          ...spreadIfDefined('blockedDomains', blockedDomains),
-        }),
-      } as any;
-    }
-
-    case AIProviderName.OPENAI: {
-      const openaiOptions = options as OpenAIWebSearchOptions;
-
-      return {
-        web_search_preview: openaiSearchTool({
-          ...spreadIfDefined(
-            'searchContextSize',
-            openaiOptions.searchContextSize
-          ),
-          ...spreadIfDefined('userLocation', buildUserLocation(openaiOptions)),
-        }),
-      } as any;
-    }
-
-    case AIProviderName.GOOGLE: {
-      return {
-        google_search: googleSearchTool({}),
-      } as any;
-    }
-
-    default:
-      throw new Error(`Provider ${provider} is not supported for web search`);
-  }
-}
-
 export function buildWebSearchOptionsProperty(
   getProviderAndModel: (propsValue: Record<string, unknown>) => { provider: string | undefined, model: string | undefined },
   refreshers: string[],
@@ -239,48 +144,6 @@ export function buildWebSearchOptionsProperty(
       return buildWebSearchOptionsProps(effectiveProvider ?? provider, params);
     },
   });
-}
-
-export function buildWebSearchConfig(params: {
-  provider: string
-  model?: string
-  webSearchEnabled: boolean
-  webSearchOptions: WebSearchOptions
-}): { tools: ToolSet | undefined, providerOptions: ProviderOptions | undefined } {
-  const { provider, model, webSearchEnabled, webSearchOptions } = params;
-
-  if (!webSearchEnabled) {
-    return { tools: undefined, providerOptions: undefined };
-  }
-
-  const { provider: effectiveProvider } = getEffectiveProviderAndModel({ provider, model });
-  const resolvedProvider = effectiveProvider ?? provider;
-  
-  const isOpenRouter =
-    resolvedProvider === AIProviderName.OPENROUTER ||
-    resolvedProvider === AIProviderName.ACTIVEPIECES;
-  
-  if (isOpenRouter) {
-    return {
-      tools: undefined,
-      providerOptions: {
-        openrouter: {
-          plugins: [{
-            id: 'web' as const,
-            max_results: Math.min(
-              Math.max(webSearchOptions?.maxUses ?? 5, 1),
-              10
-            ),
-          }],
-        },
-      },
-    };
-  }
-
-  return {
-    tools: createWebSearchTool(resolvedProvider, webSearchOptions),
-    providerOptions: undefined,
-  };
 }
 
 export function usesNativeWebSearchTools({ provider, model }: { provider: string; model: string | undefined }): boolean {
@@ -351,25 +214,3 @@ const NATIVE_WEB_SEARCH_PROVIDERS: ReadonlySet<string> = new Set([
   AIProviderName.GOOGLE,
 ]);
 
-type BaseWebSearchOptions = {
-  maxUses?: number
-  includeSources?: boolean
-}
-
-type UserLocationOptions = {
-  userLocationCity?: string
-  userLocationRegion?: string
-  userLocationCountry?: string
-  userLocationTimezone?: string
-}
-
-type AnthropicWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
-  allowedDomains?: { domain: string }[]
-  blockedDomains?: { domain: string }[]
-}
-
-type OpenAIWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
-  searchContextSize?: 'low' | 'medium' | 'high'
-}
-
-export type WebSearchOptions = AnthropicWebSearchOptions | OpenAIWebSearchOptions

@@ -711,7 +711,7 @@
   "Voice input": "Spracheingabe",
   "Drop files here": "Dateien hier ablegen",
   "Release to add files to your message": "Loslassen, um Dateien zu Ihrer Nachricht hinzuzufügen",
-  "Credits are charged on what each message actually costs, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.": "",
+  "Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.": "",
   "Expired": "Abgelaufen",
   "Using this {name} account": "Benutze dieses {name} Konto",
   "Which {name} account should I use?": "Welcher {name} Account soll ich verwenden?",

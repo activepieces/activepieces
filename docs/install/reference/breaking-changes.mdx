@@ -224,6 +224,28 @@ The connection's `Username` and `API Password` fields are removed and replaced w
 
 Only if you have an existing Kimai connection. Reconnect it: in your Kimai instance, generate an API token from your user profile's "API Access" page, then re-enter your Kimai connection in Activepieces with the Server URL and that token. Existing connections using the old username/API-password fields will fail to authenticate until reconnected.
 
+#### The AI provider config endpoint is removed
+
+`GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
+
+The route only ever accepted an engine token, so it was never reachable with a user token, an API key or from the browser. `GET /v1/ai-providers` and `GET /v1/ai-providers/:provider/models` are unchanged.
+
+#### What you need to do
+
+Nothing on a normal upgrade. Every flow is moved to the AI piece version that runs on the worker the first time its version is read, before it can run.
+
+If you serve pieces from your own registry, make sure it carries the AI piece at `0.11.0` or later. A flow left on an earlier version would still try to fetch its provider credentials over this endpoint and fail.
+
+#### Files passed to an AI step are capped at `AP_MAX_FILE_SIZE_MB`
+
+Extract Structured Data and Generate Image used to read file inputs straight from the flow's memory, so no Activepieces-side size limit applied. Those files are now stored and fetched by the worker that runs the model, which puts them under the same per-file limit as every other file the engine writes: `AP_MAX_FILE_SIZE_MB`, 25 MB by default.
+
+The limit is per file, not per step, so several large files in one step are fine as long as each is under it. On Activepieces Cloud the limit is 10 MB and is not configurable.
+
+#### What you need to do
+
+Nothing unless an AI step handles files larger than 25 MB. Those steps now fail with a size error naming the limit. Raise `AP_MAX_FILE_SIZE_MB` on a self-hosted installation if you need more.
+
 ## 0.91.0
 
 ### What has changed?
