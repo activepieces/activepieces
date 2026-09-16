@@ -1,6 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 
 import { DuckDBInstance } from '@duckdb/node-api';
+import { parse as parseCsv } from 'csv-parse/sync';
 
 export const createAndQueryDB = createAction({
   name: 'createAndQueryDB',
@@ -29,9 +30,15 @@ export const createAndQueryDB = createAction({
         data: Property.Json({
           displayName: 'JSON Data',
           description:
-            'Table data in the form of a JSON array of objects. Object keys would be taken as column names.',
-          required: true,
+            'Table data as a JSON array of objects. Object keys are taken as column names. Takes priority over the file below if set.',
+          required: false,
           defaultValue: [],
+        }),
+        file: Property.File({
+          displayName: 'CSV/JSON File',
+          description:
+            'Upload a CSV or JSON file as the table source, used only if JSON Data above is empty. Format is detected from the file extension.',
+          required: false,
         }),
         schema: Property.Json({
           displayName: 'Schema in JSON format',
@@ -72,7 +79,7 @@ More information on data types and accepted values:
 
     const dbTables: any[] = context.propsValue.tables ?? [];
     for (const dbTable of dbTables) {
-      const dbData = JSON.stringify(dbTable.data);
+      const dbData = JSON.stringify(resolveTableRows(dbTable));
       let dbSchema = null;
 
       if (dbTable.schema) {
@@ -118,3 +125,23 @@ More information on data types and accepted values:
     return results;
   },
 });
+
+function resolveTableRows(dbTable: { data?: unknown; file?: ApFile }): unknown {
+  if (Array.isArray(dbTable.data) ? dbTable.data.length > 0 : dbTable.data) {
+    return dbTable.data;
+  }
+
+  if (!dbTable.file) {
+    return dbTable.data;
+  }
+
+  const text = dbTable.file.data.toString('utf-8');
+  return dbTable.file.extension?.toLowerCase() === 'csv'
+    ? parseCsv(text, {
+        columns: true,
+        skip_empty_lines: true,
+        bom: true,
+        relax_column_count: true,
+      })
+    : JSON.parse(text);
+}

@@ -2800,6 +2800,7 @@
         "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
         "@duckdb/node-api": "1.4.3-r.2",
+        "csv-parse": "5.6.0",
       },
       "devDependencies": {
         "tslib": "^2.3.0",
