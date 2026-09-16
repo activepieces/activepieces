@@ -10,7 +10,7 @@ function install({ log, report, pageWebhookUrl }: InstallAiCostReporterParams): 
             if (isNil(error)) {
                 return
             }
-            log.error({ error, provider: event.provider, model: event.modelId, generationId: event.call.generationId }, '[aiCostReporter] An AI call went unbilled')
+            log.error({ error, provider: event.provider, model: { id: event.modelId }, generation: { id: event.call.generationId } }, '[aiCostReporter] An AI call went unbilled')
         }).catch(() => undefined)
     })
     startUnbilledCallWatch({ log, pageWebhookUrl })
