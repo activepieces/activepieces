@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'crypto';
 import { Property, WebhookHandshakeStrategy, WebhookResponse } from '@activepieces/pieces-framework';
 import { inputUtils } from './inputs';
 
@@ -13,6 +14,9 @@ const setupInstructions = Property.MarkDown({
 
 4. Enter the same value you put in **Verify Token** below (any secret string), then click **Verify and save**.
 5. Click **Manage** next to Webhook fields and subscribe to **messages** (and **message_template_status_update** for template triggers).
+6. Make sure your app is subscribed to the WhatsApp Business Account itself. If events never arrive although the URL verified, call \`POST /{WABA_ID}/subscribed_apps\` with your access token; the dashboard does not show this state.
+
+To reject deliveries that are not signed by Meta, add your **App Secret** to the WhatsApp connection.
 
 Meta accepts **one callback URL per app**, so only the flow whose URL you paste receives events. To react to several event kinds, use one flow with this trigger and branch on the payload, or forward the payload to your other flows from a step.
 `,
@@ -36,6 +40,33 @@ function handleHandshake({ queryParams, expectedToken }: HandshakeParams): Webho
 		return { status: 403, body: 'verify token mismatch', headers: { 'Content-Type': 'text/plain' } };
 	}
 	return { status: 200, body: challenge ?? '', headers: { 'Content-Type': 'text/plain' } };
+}
+
+function isSignedByMeta({ appSecret, headers, rawBody }: SignatureParams): boolean {
+	if (!appSecret) {
+		return true;
+	}
+	const header = headers['x-hub-signature-256'] ?? headers['X-Hub-Signature-256'];
+	const payload = rawBodyToBuffer(rawBody);
+	if (!header || !header.startsWith('sha256=') || payload === undefined) {
+		return false;
+	}
+	const expected = createHmac('sha256', appSecret).update(payload).digest('hex');
+	const received = header.slice('sha256='.length);
+	if (received.length !== expected.length) {
+		return false;
+	}
+	return timingSafeEqual(Buffer.from(received, 'utf8'), Buffer.from(expected, 'utf8'));
+}
+
+function rawBodyToBuffer(rawBody: unknown): Buffer | undefined {
+	if (Buffer.isBuffer(rawBody)) {
+		return rawBody;
+	}
+	if (typeof rawBody === 'string') {
+		return Buffer.from(rawBody, 'utf8');
+	}
+	return undefined;
 }
 
 function extractChanges({ body, field }: ExtractChangesParams): ChangeValue[] {
@@ -131,6 +162,7 @@ export const whatsappWebhook = {
 	verifyToken,
 	handshakeConfiguration,
 	handleHandshake,
+	isSignedByMeta,
 	extractChanges,
 	matchesPhoneNumber,
 	flattenIncomingMessage,
@@ -251,6 +283,7 @@ type WebhookBody = {
 };
 
 type HandshakeParams = { queryParams: Record<string, string>; expectedToken?: string };
+type SignatureParams = { appSecret: string | undefined; headers: Record<string, string>; rawBody: unknown };
 type ExtractChangesParams = { body: unknown; field: string };
 type MatchPhoneParams = { value: ChangeValue; phoneNumberId?: string };
 type FlattenMessageParams = { message: IncomingMessage; value: ChangeValue };

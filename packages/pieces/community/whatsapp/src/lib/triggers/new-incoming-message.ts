@@ -73,6 +73,9 @@ export const newIncomingMessage = createTrigger({
 		return;
 	},
 	async run(context) {
+		if (!whatsappWebhook.isSignedByMeta({ appSecret: context.auth.props.app_secret, headers: context.payload.headers, rawBody: context.payload.rawBody })) {
+			return [];
+		}
 		const phoneNumberId = context.propsValue.phone_number_id;
 		return whatsappWebhook
 			.extractChanges({ body: context.payload.body, field: 'messages' })

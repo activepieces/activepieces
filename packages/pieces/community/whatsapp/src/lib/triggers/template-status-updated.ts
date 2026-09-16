@@ -46,6 +46,9 @@ export const templateStatusUpdated = createTrigger({
 		return;
 	},
 	async run(context) {
+		if (!whatsappWebhook.isSignedByMeta({ appSecret: context.auth.props.app_secret, headers: context.payload.headers, rawBody: context.payload.rawBody })) {
+			return [];
+		}
 		return whatsappWebhook
 			.extractChanges({ body: context.payload.body, field: 'message_template_status_update' })
 			.map((value) => ({

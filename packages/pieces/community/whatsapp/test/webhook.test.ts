@@ -1,5 +1,7 @@
 /// <reference types="vitest/globals" />
 
+import { createHmac } from 'crypto';
+
 import { ChangeValue, IncomingMessage, MessageStatus, whatsappWebhook } from '../src/lib/common/webhook';
 
 const METADATA = { display_phone_number: '15551394669', phone_number_id: '1285944454608901' };
@@ -265,5 +267,28 @@ describe('handleHandshake', () => {
 
 	test('a missing challenge still answers 200 with an empty body', () => {
 		expect(whatsappWebhook.handleHandshake({ queryParams: {}, expectedToken: undefined }).body).toBe('');
+	});
+});
+
+describe('delivery signature', () => {
+	const raw = JSON.stringify({ object: 'whatsapp_business_account', entry: [] });
+	const sign = (secret: string, body: string) => `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
+
+	test('without an app secret every delivery is accepted, as before', () => {
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: undefined, headers: {}, rawBody: raw })).toBe(true);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: '', headers: {}, rawBody: undefined })).toBe(true);
+	});
+
+	test('with an app secret a valid signature over the raw body is required', () => {
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw) }, rawBody: raw })).toBe(true);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw) }, rawBody: Buffer.from(raw) })).toBe(true);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('other', raw) }, rawBody: raw })).toBe(false);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw + ' ') }, rawBody: raw })).toBe(false);
+	});
+
+	test('a missing header, wrong prefix or missing raw body is rejected when a secret is set', () => {
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: {}, rawBody: raw })).toBe(false);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': 'sha1=abc' }, rawBody: raw })).toBe(false);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw) }, rawBody: undefined })).toBe(false);
 	});
 });
