@@ -124,6 +124,11 @@ describe('migrateV26AiPieceCostBilling', () => {
         expect(input).toEqual({ maxSteps: 10 })
     })
 
+    it('keeps a max steps the flow computes at run time, since the engine resolves the expression to a number', async () => {
+        const input = await migratedInputOf(withAiStep({ pieceVersion: '0.4.5', actionName: 'run_agent', input: { maxSteps: '{{trigger.maxSteps}}' } }))
+        expect(input).toEqual({ maxSteps: '{{trigger.maxSteps}}' })
+    })
+
     it.each(['0', '-5', '3.7', 'abc', ''])('falls back to the default when the saved max steps %s is not a whole positive number', async (maxSteps) => {
         const input = await migratedInputOf(withAiStep({ pieceVersion: '0.4.5', actionName: 'run_agent', input: { maxSteps } }))
         expect(input).toEqual({ maxSteps: 20 })
