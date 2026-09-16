@@ -97,7 +97,7 @@ describe('File prop (CSV/JSON)', () => {
   });
 });
 
-describe('Nested schema and Flatten Nested Fields', () => {
+describe('Nested schema and Keep Nested Fields', () => {
   const NESTED_DATA = [{ id: 1, meta: { a: 'x', b: 2 }, tags: ['a', 'b'] }];
   const NESTED_SCHEMA = { id: 'INTEGER', meta: 'STRUCT(a VARCHAR, b INTEGER)', tags: 'VARCHAR[]' };
 
@@ -110,9 +110,18 @@ describe('Nested schema and Flatten Nested Fields', () => {
     expect(rows).toEqual([{ id: 1, a: 'x', b: 2, tags: ['a', 'b'] }]);
   });
 
-  it('flattenNestedFields: false keeps the nested object as a single struct column', async () => {
+  it('a fresh array row seeds Keep Nested Fields to false (builder default for a checkbox sub-prop), so it still flattens', async () => {
     const rows = await runAction({
-      tables: [table({ data: NESTED_DATA, schema: NESTED_SCHEMA, flattenNestedFields: false })],
+      tables: [table({ data: NESTED_DATA, schema: NESTED_SCHEMA, keepNestedFields: false })],
+      query: 'SELECT * FROM t',
+    });
+
+    expect(rows).toEqual([{ id: 1, a: 'x', b: 2, tags: ['a', 'b'] }]);
+  });
+
+  it('keepNestedFields: true keeps the nested object as a single struct column', async () => {
+    const rows = await runAction({
+      tables: [table({ data: NESTED_DATA, schema: NESTED_SCHEMA, keepNestedFields: true })],
       query: 'SELECT * FROM t',
     });
 

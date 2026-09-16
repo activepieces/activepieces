@@ -56,12 +56,12 @@ More information on data types and accepted values:
           required: false,
           defaultValue: {},
         }),
-        flattenNestedFields: Property.Checkbox({
-          displayName: 'Flatten Nested Fields',
+        keepNestedFields: Property.Checkbox({
+          displayName: 'Keep Nested Fields',
           description:
-            'When on (default), a nested object/struct field is split into individual top-level columns (e.g. "meta": {"a":1} becomes column "a"). Turn off to keep it as a single nested column instead, queryable with dot notation (e.g. "meta.a").',
+            'When off, a nested object/struct field is split into individual top-level columns (e.g. "meta": {"a":1} becomes column "a"). Turn on to keep it as a single nested column instead, queryable with dot notation (e.g. "meta.a").',
           required: false,
-          defaultValue: true,
+          defaultValue: false,
         }),
       },
     }),
@@ -106,7 +106,7 @@ More information on data types and accepted values:
         dbSchema = detectedSchema[0][0];
       }
 
-      const shouldFlatten = dbTable.flattenNestedFields ?? true;
+      const shouldFlatten = !dbTable.keepNestedFields;
       const createTableQuery = shouldFlatten
         ? `
           CREATE TABLE ${tableName} AS
