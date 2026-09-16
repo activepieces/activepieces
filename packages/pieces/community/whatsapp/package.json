@@ -13,8 +13,7 @@
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*",
-    "form-data": "4.0.6"
+    "@activepieces/core-utils": "workspace:*"
   },
   "devDependencies": {
     "tslib": "2.6.2",

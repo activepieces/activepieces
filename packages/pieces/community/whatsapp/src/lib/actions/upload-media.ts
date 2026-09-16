@@ -1,6 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import FormData from 'form-data';
 import { whatsappAuth } from '../auth';
 import { commonProps } from '../common/utils';
 import { whatsappClient } from '../common/client';
@@ -56,13 +55,12 @@ export const uploadMedia = createAction({
 		const formData = new FormData();
 		formData.append('messaging_product', 'whatsapp');
 		formData.append('type', mime_type);
-		formData.append('file', file.data, { filename: file.filename, contentType: mime_type });
+		formData.append('file', new Blob([file.data], { type: mime_type }), file.filename);
 		return whatsappClient.request<{ id: string }>({
 			accessToken: context.auth.props.access_token,
 			method: HttpMethod.POST,
 			path: `/${phone_number_id}/media`,
 			body: formData,
-			headers: formData.getHeaders(),
 		});
 	},
 });

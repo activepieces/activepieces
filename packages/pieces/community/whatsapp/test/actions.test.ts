@@ -2,7 +2,6 @@
 
 import { httpClient, HttpMethod, HttpRequest, HttpResponse } from '@activepieces/pieces-common';
 import { createMockActionContext } from '@activepieces/pieces-framework';
-import FormData from 'form-data';
 import { sendInteractiveButtons } from '../src/lib/actions/send-interactive-buttons';
 import { sendInteractiveList } from '../src/lib/actions/send-interactive-list';
 import { sendInteractiveCtaUrl } from '../src/lib/actions/send-interactive-cta-url';
@@ -298,22 +297,22 @@ describe('Send Reaction and Mark As Read', () => {
 });
 
 describe('Upload Media', () => {
-	test('posts multipart form-data with messaging_product, type and the file', async () => {
-		respondWith({ id: 'media-1' });
-		const out = await uploadMedia.run(
-			context({ phone_number_id: 'PN', file: { filename: 'logo.png', data: Buffer.from('png-bytes'), extension: 'png' }, mime_type: 'image/png' }),
+	test('posts a built-in multipart FormData with messaging_product, type and the file, letting fetch set the boundary', async () => {
+		respondWith({ id: 'MEDIA' });
+		const result = await uploadMedia.run(
+			context({ phone_number_id: 'PN', mime_type: 'image/png', file: { filename: 'a.png', data: Buffer.from('png-bytes'), extension: 'png', base64: '' } }),
 		);
-		expect(out).toEqual({ id: 'media-1' });
-		expect(requests[0].url).toBe('https://graph.facebook.com/v23.0/PN/media');
-		expect(requests[0].body).toBeInstanceOf(FormData);
-		expect(String(requests[0].headers?.['content-type'])).toMatch(/^multipart\/form-data; boundary=/);
-		const serialized = (requests[0].body as FormData).getBuffer().toString();
-		expect(serialized).toContain('name="messaging_product"');
-		expect(serialized).toContain('whatsapp');
-		expect(serialized).toContain('name="type"');
-		expect(serialized).toContain('image/png');
-		expect(serialized).toContain('filename="logo.png"');
-		expect(serialized).toContain('png-bytes');
+		expect(result).toEqual({ id: 'MEDIA' });
+		const body = requests[0].body as FormData;
+		expect(body).toBeInstanceOf(FormData);
+		expect(requests[0].headers?.['content-type']).toBeUndefined();
+		expect(requests[0].headers?.['Content-Type']).toBeUndefined();
+		expect(body.get('messaging_product')).toBe('whatsapp');
+		expect(body.get('type')).toBe('image/png');
+		const file = body.get('file') as File;
+		expect(file.name).toBe('a.png');
+		expect(file.type).toBe('image/png');
+		expect(await file.text()).toBe('png-bytes');
 	});
 });
 
