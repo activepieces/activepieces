@@ -198,8 +198,6 @@ const Part = ({ part, index }: { part: PersistedAgentPart; index: number }) => {
       </TimelineItem>
     );
   }
-  // Thinking status and batch progress are transient: they narrate a run while it happens
-  // and say nothing once it has finished, so a finished transcript leaves them out.
   return null;
 };
 
