@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { formErrors } from './form-errors'
 import { AIProviderName } from './permission'
+import { isNil } from './utils'
 
 export enum AIProviderModelType {
     IMAGE = 'image',
@@ -177,5 +178,20 @@ export function aiProviderCredentials({ provider, auth, config }: { provider: AI
     if (parsed.success) {
         return parsed.data
     }
+    const withoutModels = AiProviderCredentials.safeParse({ provider, auth, config: configWithoutModels(config) })
+    if (withoutModels.success) {
+        return withoutModels.data
+    }
+    const authOnly = AiProviderCredentials.safeParse({ provider, auth, config: {} })
+    if (authOnly.success) {
+        return authOnly.data
+    }
     return AiProviderCredentials.parse({ provider, auth: {}, config: {} })
+}
+
+function configWithoutModels(config: unknown): unknown {
+    if (isNil(config) || typeof config !== 'object' || Array.isArray(config)) {
+        return config
+    }
+    return { ...config as Record<string, unknown>, models: [] }
 }
