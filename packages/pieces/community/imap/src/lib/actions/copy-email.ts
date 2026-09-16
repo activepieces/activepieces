@@ -27,6 +27,7 @@ const props = {
 export const copyEmail = createAction({
   auth: imapAuth,
   name: 'copy_email',
+  classification: 'WRITE',
   displayName: 'Copy Email',
   description: 'Copy an email to another mailbox',
   outputSchema: copyEmailActionOutputSchema,

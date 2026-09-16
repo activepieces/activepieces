@@ -7,6 +7,7 @@ import { callIdDropdown, tagIdDropdown } from '../common/props';
 export const tagACall = createAction({
   auth: aircallAuth,
   name: 'tagACall',
+  classification: 'WRITE',
   displayName: 'Tag a Call',
   description: 'Add tags to a specific call.',
   audience: 'both',

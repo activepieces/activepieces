@@ -7,6 +7,7 @@ import { clientId, listId } from '../common/props';
 export const unsubscribeSubscriberAction = createAction({
   auth: campaignMonitorAuth,
   name: 'unsubscribe_subscriber',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Subscriber',
   description: 'Remove a subscriber from a list.',
   audience: 'both',

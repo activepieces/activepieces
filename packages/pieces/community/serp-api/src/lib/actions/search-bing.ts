@@ -7,6 +7,7 @@ import { searchBingOutputSchema } from '../output-schemas';
 export const searchBing = createAction({
   auth: serpApiAuth,
   name: 'search_bing',
+  classification: 'SEARCH',
   displayName: 'Search Bing',
   description: 'Run a Bing web search for a query.',
   audience: 'ai',

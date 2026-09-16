@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const getCustomSourceById = createAction({
   auth: ChatAidAuth,
   name: 'getCustomSourceById',
+  classification: 'READ',
   displayName: 'Get Custom Source by ID',
   description: 'Retrieve single source details by ID',
   audience: 'both',

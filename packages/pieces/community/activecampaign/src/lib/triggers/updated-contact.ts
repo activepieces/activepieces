@@ -7,6 +7,7 @@ import { WEBHOOK_SOURCES } from '../common/constants';
 export const updatedContactTrigger = createTrigger({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_updated_contact',
+	classification: 'READ',
 	displayName: 'Updated Contact',
 	description: 'Triggers when an existing contact details are updated.',
 	aiMetadata: {

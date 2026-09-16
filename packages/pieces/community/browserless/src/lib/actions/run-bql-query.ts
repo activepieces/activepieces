@@ -5,6 +5,7 @@ import { browserlessCommon } from '../common/client';
 
 export const runBqlQuery = createAction({
     name: 'run_bql_query',
+    classification: 'WRITE',
     displayName: 'Run BQL Query',
     description: 'Execute Browser Query Language (BQL) GraphQL-based queries for advanced browser automation',
     audience: 'both',

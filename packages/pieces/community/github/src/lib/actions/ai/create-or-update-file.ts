@@ -8,6 +8,7 @@ import { fileMutationResultOutputSchema } from '../../output-schemas';
 export const githubCreateOrUpdateFileAction = createAction({
   auth: githubAuth,
   name: 'create_or_update_file',
+  classification: 'WRITE',
   displayName: 'Create or Update File (Agent)',
   description: 'Creates or updates a single file via a commit.',
   audience: 'ai',

@@ -1334,6 +1334,20 @@ export const spaceTagsOutputSchema: OutputSchema = {
   fields: [{ key: 'tags', label: 'Tags', labelKey: 'name', listItems: tagFields }],
 };
 
+export const updateSpaceTagOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'tag',
+      label: 'Tag',
+      children: [
+        { key: 'name', label: 'Name' },
+        { key: 'fg_color', label: 'Foreground Color' },
+        { key: 'bg_color', label: 'Background Color' },
+      ],
+    },
+  ],
+};
+
 export const taskWrapperOutputSchema: OutputSchema = {
   fields: [{ key: 'task', label: 'Task', children: taskFields }],
 };
@@ -1378,6 +1392,46 @@ export const timeEntryOutputSchema: OutputSchema = {
 export const listTimeEntriesOutputSchema: OutputSchema = {
   fields: [
     { key: 'data', label: 'Time Entries', labelKey: 'description', listItems: timeEntryFields },
+  ],
+};
+
+const timeInStatusFields: OutputSchemaField[] = [
+  { key: 'by_minute', label: 'Minutes', format: 'number' },
+  { key: 'since', label: 'Since' },
+];
+
+export const getBulkTasksTimeInStatusOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'tasks',
+      label: 'Tasks',
+      value: '',
+      dynamicKey: true,
+      labelKey: 'current_status.status',
+      children: [
+        {
+          key: 'current_status',
+          label: 'Current Status',
+          children: [
+            { key: 'status', label: 'Status' },
+            { key: 'color', label: 'Color' },
+            { key: 'total_time', label: 'Total Time', children: timeInStatusFields },
+          ],
+        },
+        {
+          key: 'status_history',
+          label: 'Status History',
+          labelKey: 'status',
+          listItems: [
+            { key: 'status', label: 'Status' },
+            { key: 'color', label: 'Color' },
+            { key: 'type', label: 'Type' },
+            { key: 'total_time', label: 'Total Time', children: timeInStatusFields },
+            { key: 'orderindex', label: 'Order Index', format: 'number' },
+          ],
+        },
+      ],
+    },
   ],
 };
 

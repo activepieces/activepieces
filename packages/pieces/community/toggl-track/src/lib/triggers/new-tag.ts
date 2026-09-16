@@ -14,6 +14,7 @@ import {
 export const newTag = createTrigger({
   auth: togglTrackAuth,
   name: 'new_tag',
+  classification: 'READ',
   displayName: 'New Tag',
   description: 'Triggers when a new tag is created',
   aiMetadata: {

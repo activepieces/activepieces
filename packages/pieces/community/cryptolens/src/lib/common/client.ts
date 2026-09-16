@@ -9,15 +9,23 @@ export async function makeRequest(
   body?: unknown
 ) {
   try {
-    const url = `${BASE_URL}${path}?token=${encodeURIComponent(access_token)}`;
+    const [pathname, search] = path.split('?');
+    const authenticatedUrl = `${BASE_URL}${pathname}?token=${encodeURIComponent(
+      access_token
+    )}`;
+    const sendsFormBody = method !== HttpMethod.GET && !!search;
 
     const response = await httpClient.sendRequest({
       method,
-      url,
+      url: sendsFormBody || !search
+        ? authenticatedUrl
+        : `${authenticatedUrl}&${search}`,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': sendsFormBody
+          ? 'application/x-www-form-urlencoded'
+          : 'application/json',
       },
-      body,
+      body: sendsFormBody ? search : body,
     });
     return response.body;
   } catch (error: any) {

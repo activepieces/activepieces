@@ -1,0 +1,38 @@
+---
+title: "Fields and records"
+sidebarTitle: "Fields and records"
+description: "The building blocks of a table"
+icon: "table-columns"
+---
+
+A table is a set of **fields**, and each row of data is a **record**.
+
+## Field types
+
+| Type | Use it for | Why not just text |
+|---|---|---|
+| **Text** | Names, notes, IDs, anything freeform | |
+| **Number** | Amounts, counts, scores | So you can sort and compare properly |
+| **Date** | Birthdays, due dates, calendar days | So "before" and "after" mean something |
+| **Date & Time** | Timestamps, appointments | So the time of day survives |
+| **Dropdown** | A fixed set of options | So values stay consistent and typos can't creep in |
+
+<Tip>
+Reach for **Dropdown** whenever a field has a known set of values, such as status or priority. It's the difference between a table you can filter and one full of "In Progress", "in progress" and "InProgress".
+</Tip>
+
+## Adding records
+
+Three ways in:
+
+- **By hand**, typing straight into the table
+- **From a flow**, using the Tables piece to create or update records
+- **From a CSV**, see [Import and export](/tables/import-export)
+
+## Editing the table itself
+
+You can rename a table, add and delete fields, delete records, or clear a table entirely.
+
+<Warning>
+Deleting a field removes its data from every record in the table. There's no undo.
+</Warning>

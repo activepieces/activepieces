@@ -5,6 +5,7 @@ import { browseAiAuth } from '../common/auth';
 
 export const listRobotsAction = createAction({
   name: 'list-robots',
+  classification: 'SEARCH',
   auth: browseAiAuth,
   displayName: 'List Robots',
   description: 'Retrieves all robots available in your account.',

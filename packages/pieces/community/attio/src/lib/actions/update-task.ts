@@ -8,6 +8,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const updateTaskAction = createAction({
 	auth: attioAuth,
 	name: 'update_task',
+	classification: 'WRITE',
 	displayName: 'Update Task',
 	description: 'Update an existing task in Attio.',
 	audience: 'both',

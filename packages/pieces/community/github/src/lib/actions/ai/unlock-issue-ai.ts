@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const githubUnlockIssueAiAction = createAction({
   auth: githubAuth,
   name: 'unlock_issue_ai',
+  classification: 'WRITE',
   displayName: 'Unlock Issue (Agent)',
   description: 'Removes the conversation lock from an issue or pull request.',
   audience: 'ai',

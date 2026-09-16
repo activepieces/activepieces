@@ -7,6 +7,7 @@ import { getTaskActionOutputSchema } from '../output-schemas';
 export const todoistGetTaskAction = createAction({
   auth: todoistAuth,
   name: 'todoist_get_task',
+  classification: 'READ',
   displayName: 'Get Task',
   description: 'Fetch a single task by its ID.',
   audience: 'ai',

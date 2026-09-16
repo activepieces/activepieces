@@ -6,6 +6,7 @@ import { resendProps } from '../common/props';
 
 export const sendBroadcast = createAction({
   name: 'send_broadcast',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Send Broadcast',
   outputSchema: sendBroadcastOutputSchema,

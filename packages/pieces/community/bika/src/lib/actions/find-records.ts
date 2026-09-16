@@ -10,6 +10,7 @@ import { prepareQuery } from '../common/client';
 export const findRecordsAction = createAction({
   auth: BikaAuth,
   name: 'bika_find_records',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Finds records in database.',
   audience: 'both',

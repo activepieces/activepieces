@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const createContactAction = createAction({
     auth: connectucAuth,
     name: 'create-contact',
+    classification: 'WRITE',
     displayName: 'Create Contact',
     description: 'Create a new contact in ConnectUC',
     audience: 'both',

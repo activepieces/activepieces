@@ -9,6 +9,7 @@ import { prepareQuery } from '../common/client';
 export const findRecordAction = createAction({
   auth: TeableAuth,
   name: 'teable_get_record',
+  classification: 'READ',
   displayName: 'Get Record',
   description: 'Retrieves a single record from a table by its ID.',
   audience: 'both',

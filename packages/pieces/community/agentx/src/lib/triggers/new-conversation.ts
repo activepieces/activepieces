@@ -58,6 +58,7 @@ const polling: Polling<
 export const newConversation = createTrigger({
   auth: AgentXAuth,
   name: "new_conversation",
+  classification: 'READ',
   displayName: "New Conversation",
   description: "Triggers when a new conversation begins with a specific Agent. Only detects conversations created after the trigger is enabled.",
   aiMetadata: {

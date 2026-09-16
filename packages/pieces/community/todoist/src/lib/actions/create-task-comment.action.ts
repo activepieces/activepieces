@@ -13,6 +13,7 @@ const API = 'https://api.todoist.com/api/v1';
 export const todoistCreateTaskCommentAction = createAction({
   auth: todoistAuth,
   name: 'todoist_create_task_comment',
+  classification: 'WRITE',
   displayName: 'Create Task Comment',
   description: 'Adds a comment to a Todoist task.',
   audience: 'ai',

@@ -5,6 +5,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const retrieveBookingById = createAction({
   auth: youcanbookmeAuth,
   name: 'retrieveBookingById',
+  classification: 'READ',
   displayName: 'Retrieve Booking by ID',
   description: 'Retrieve a booking by its ID from YouCanBookMe',
   audience: 'both',

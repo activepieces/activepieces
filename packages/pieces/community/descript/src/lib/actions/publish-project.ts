@@ -6,6 +6,7 @@ import { descriptCommon } from '../common';
 export const descriptPublishProjectAction = createAction({
   auth: descriptAuth,
   name: 'publish_project',
+  classification: 'WRITE',
   displayName: 'Publish Project',
   description:
     'Publishes a composition from a project to create a shareable link and a downloadable export file.',

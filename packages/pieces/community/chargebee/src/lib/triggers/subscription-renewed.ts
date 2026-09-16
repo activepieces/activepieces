@@ -13,6 +13,7 @@ const STORE_KEY = '_chargebee_subscription_renewed_webhook_id';
 export const subscriptionRenewed = createTrigger({
   auth: chargebeeAuth,
   name: 'subscription_renewed',
+  classification: 'READ',
   displayName: 'Subscription Renewed',
   description: 'Triggers when a subscription is successfully renewed.',
   aiMetadata: {

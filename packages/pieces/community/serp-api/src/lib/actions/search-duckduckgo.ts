@@ -7,6 +7,7 @@ import { searchDuckduckgoOutputSchema } from '../output-schemas';
 export const searchDuckduckgo = createAction({
   auth: serpApiAuth,
   name: 'search_duckduckgo',
+  classification: 'SEARCH',
   displayName: 'Search DuckDuckGo',
   description: 'Run a DuckDuckGo web search for a query.',
   audience: 'ai',

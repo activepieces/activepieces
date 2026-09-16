@@ -9,6 +9,7 @@ const LAST_BITLINK_IDS_KEY = 'bitly-last-bitlink-ids';
 export const newBitlinkCreatedTrigger = createTrigger({
   auth: bitlyAuth,
   name: 'new_bitlink_created',
+  classification: 'READ',
   displayName: 'New Bitlink Created',
   description: 'Fires when a new Bitlink is created.',
   aiMetadata: {

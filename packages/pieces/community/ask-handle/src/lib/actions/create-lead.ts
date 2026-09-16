@@ -6,6 +6,7 @@ import { askHandleApiCall } from '../common/client';
 export const createLead = createAction({
   auth: askHandleAuth,
   name: 'create_lead',
+  classification: 'WRITE',
   displayName: 'Create Lead',
   description: 'Create a new lead',
   audience: 'both',

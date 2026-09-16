@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowCreateCollectionItemAction = createAction({
 	auth: webflowAuth,
 	name: 'create_collection_item',
+	classification: 'WRITE',
 	displayName: 'Create Collection Item',
 	description: 'Creates new collection item.',
 	audience: 'both',

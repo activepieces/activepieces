@@ -41,6 +41,7 @@ interface ZendeskUser {
 
 export const tagAddedToUser = createTrigger({
   name: 'tag_added_to_user',
+  classification: 'READ',
   displayName: 'Tag Added to User',
   description: 'Triggers when one or more tags are added to a user.',
   aiMetadata: {

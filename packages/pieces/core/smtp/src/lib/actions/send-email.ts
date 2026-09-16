@@ -3,6 +3,7 @@ import { smtpAuth } from '../..';
 import { smtpCommon } from '../common';
 import { Attachment, Headers } from 'nodemailer/lib/mailer';
 import mime from 'mime-types';
+import { sendEmailActionOutputSchema } from '../output-schemas';
 
 export const sendEmail = createAction({
   audience: 'both',
@@ -84,6 +85,7 @@ export const sendEmail = createAction({
       }
     }),
   },
+  outputSchema: sendEmailActionOutputSchema,
   run: async ({ auth, propsValue }) => {
     const transporter = smtpCommon.createSMTPTransport(auth.props);
 

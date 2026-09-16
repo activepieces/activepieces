@@ -7,6 +7,7 @@ import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import { useTeamProjectLimitGuard } from '@/features/billing';
+import { cn } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
 
@@ -14,6 +15,7 @@ export function CreateProjectButton({
   variant,
   projects,
   onCreate,
+  className,
 }: CreateProjectButtonProps) {
   const {
     hasReachedLimit,
@@ -23,6 +25,7 @@ export function CreateProjectButton({
 
   const trigger = triggerFor({
     variant,
+    className,
     onClick: hasReachedLimit ? () => ensureTeamProjectAvailable() : undefined,
   });
 
@@ -38,14 +41,14 @@ export function CreateProjectButton({
   );
 }
 
-function triggerFor({ variant, onClick }: TriggerForParams) {
+function triggerFor({ variant, className, onClick }: TriggerForParams) {
   switch (variant) {
     case 'icon':
       return (
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 hover:bg-accent"
+          className={cn('h-6 w-6 hover:bg-accent', className)}
           onClick={onClick}
         >
           <Plus />
@@ -57,6 +60,7 @@ function triggerFor({ variant, onClick }: TriggerForParams) {
           icon={PlusIcon}
           iconSize={16}
           size="sm"
+          className={className}
           onClick={onClick}
         >
           {t('New Project')}
@@ -65,7 +69,7 @@ function triggerFor({ variant, onClick }: TriggerForParams) {
     case 'sidebar-menu':
       return (
         <SidebarMenuButton
-          className="text-muted-foreground gap-2"
+          className={cn('text-muted-foreground gap-2', className)}
           onClick={onClick}
         >
           <Plus className="size-4" />
@@ -79,6 +83,7 @@ type CreateProjectButtonVariant = 'icon' | 'full' | 'sidebar-menu';
 
 type TriggerForParams = {
   variant: CreateProjectButtonVariant;
+  className?: string;
   onClick?: () => void;
 };
 
@@ -86,4 +91,5 @@ type CreateProjectButtonProps = {
   variant: CreateProjectButtonVariant;
   projects: Pick<ProjectWithLimits, 'type'>[];
   onCreate?: (project: ProjectWithLimits) => void;
+  className?: string;
 };

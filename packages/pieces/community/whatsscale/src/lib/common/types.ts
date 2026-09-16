@@ -1,17 +1,18 @@
 /**
- * Chat type for Manual Entry actions only.
+ * Chat type for Manual Entry / agent-facing actions.
  *
- * Used by the "Send To" static dropdown in manual entry actions
- * to determine the chatId suffix:
- *   - CONTACT → appends @c.us
- *   - GROUP   → appends @g.us
+ * Used by the "Send To" dropdown to determine how the raw recipient
+ * value gets turned into a request body:
+ *   - CONTACT     → appends @c.us if missing
+ *   - GROUP       → appends @g.us if missing
+ *   - CHANNEL     → appends @newsletter if missing
+ *   - CRM_CONTACT → not a chatId at all, sent as contact_type + crm_contact_id
  *
- * Channels (@newsletter) are NOT included here because they are
- * handled by dedicated channel actions with a dropdown that returns
- * pre-formatted values. See recipients.ts (Sprint 2) for the full
- * recipient resolution logic.
+ * See recipients.ts for the full resolution logic.
  */
 export enum ChatType {
   CONTACT = 'contact',
   GROUP = 'group',
+  CHANNEL = 'channel',
+  CRM_CONTACT = 'crm_contact',
 }

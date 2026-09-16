@@ -5,6 +5,7 @@ import { biginApiService } from '../common/request';
 export const searchPipelineRecord = createAction({
   auth: biginAuth,
   name: 'searchPipelineRecord',
+  classification: 'SEARCH',
   displayName: 'Search Pipeline Record',
   description: 'Searches deals by name via criteria or word',
   audience: 'both',

@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const bulkUpdateJobLineItems = createAction({
   auth: housecallProAuth,
   name: "bulk_update_job_line_items",
+  classification: 'WRITE',
   displayName: "Bulk update a job's line items",
   description: "Bulk update job line items. If upsert not define for a line item it will be considered as a new line item for the job.",
   audience: 'both',

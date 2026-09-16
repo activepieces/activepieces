@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
+  isCloudOnlyTelemetryEvent,
   pickTelemetryPii,
   TelemetryEvent,
 } from '@activepieces/shared';
@@ -11,9 +12,10 @@ import { useDeepCompareEffect } from 'react-use';
 
 import { useEmbedding } from '@/components/providers/embed-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { acquisitionUtils } from '@/lib/acquisition-utils';
-import { isRunningCloudInDevMode } from '@/lib/api';
+import { CLOUD_HOSTNAME, isRunningCloudInDevMode } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 
 interface TelemetryProviderProps {
@@ -24,10 +26,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
   const identifiedKey = useRef<string | null>(null);
 
-  const { data: telemetryFlagEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.TELEMETRY_ENABLED,
-  );
-  const telemetryEnabled = telemetryFlagEnabled && !isRunningCloudInDevMode;
+  const { data: configuration } =
+    platformConfigurationHooks.useCurrentPlatformConfiguration();
   const { data: flagCurrentVersion } = flagsHooks.useFlag<string>(
     ApFlagId.CURRENT_VERSION,
   );
@@ -36,6 +36,18 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   );
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { embedState } = useEmbedding();
+
+  const isCloud = edition === ApEdition.CLOUD;
+  const isPreLoginCloudFunnel =
+    isNil(currentUser) &&
+    isCloud &&
+    window.location.hostname === CLOUD_HOSTNAME;
+  const isSignedInWithAnalyticsOn =
+    !isNil(currentUser) &&
+    (isCloud || configuration?.isProductTelemetryEnabled === true);
+  const telemetryEnabled =
+    (isPreLoginCloudFunnel || isSignedInWithAnalyticsOn) &&
+    !isRunningCloudInDevMode;
 
   const posthogInitialized = useRef(false);
 
@@ -49,8 +61,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
       return;
     }
     posthogInitialized.current = true;
-
-    const isCloud = edition === ApEdition.CLOUD;
 
     posthog.init('phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh', {
       // Same-origin reverse proxy (/ingest) so ad blockers don't drop ingestion.
@@ -94,14 +104,24 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
       posthog.startSessionRecording();
     }
-  }, [telemetryEnabled, embedState.isEmbedded, edition]);
+  }, [telemetryEnabled, embedState.isEmbedded, edition, isCloud]);
 
   useEffect(() => {
     if (!posthogInitialized.current) {
       return;
     }
-    posthog.register({ activepiecesEdition: edition ?? ApEdition.COMMUNITY });
-  }, [telemetryEnabled, edition, embedState.isEmbedded]);
+    posthog.register({
+      activepiecesEdition: edition ?? ApEdition.COMMUNITY,
+      activepiecesVersion: flagCurrentVersion ?? UNKNOWN_FLAG_VALUE,
+      activepiecesEnvironment: flagEnvironment ?? UNKNOWN_FLAG_VALUE,
+    });
+  }, [
+    telemetryEnabled,
+    edition,
+    embedState.isEmbedded,
+    flagCurrentVersion,
+    flagEnvironment,
+  ]);
 
   useEffect(() => {
     errorReporting.init();
@@ -124,8 +144,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     if (isNil(currentUser)) {
       return;
     }
-    const currentVersion = flagCurrentVersion || '0.0.0';
-    const environment = flagEnvironment || '0.0.0';
+    const currentVersion = flagCurrentVersion || UNKNOWN_FLAG_VALUE;
+    const environment = flagEnvironment || UNKNOWN_FLAG_VALUE;
 
     posthog.identify(
       currentUser.id,
@@ -153,9 +173,13 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   };
 
   const capture = (event: TelemetryEvent) => {
-    if (telemetryEnabled) {
-      posthog.capture(event.name, event.payload);
+    if (
+      !telemetryEnabled ||
+      (!isCloud && isCloudOnlyTelemetryEvent(event.name))
+    ) {
+      return;
     }
+    posthog.capture(event.name, event.payload);
   };
 
   return (
@@ -164,6 +188,8 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     </TelemetryContext.Provider>
   );
 };
+
+const UNKNOWN_FLAG_VALUE = '0.0.0';
 
 const RECORDING_SAMPLE_RATE = 0.1;
 

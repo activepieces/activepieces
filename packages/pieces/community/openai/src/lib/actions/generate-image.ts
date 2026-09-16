@@ -4,6 +4,7 @@ import { kebabCase } from '@activepieces/pieces-framework';
 import { randomBytes } from 'node:crypto';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { generateImageActionOutputSchema } from '../output-schemas';
 
 export const generateImage = createAction({
   audience: 'both',
@@ -84,6 +85,7 @@ export const generateImage = createAction({
       },
     }),
   },
+  outputSchema: generateImageActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { quality, resolution, model, prompt } = context.propsValue;

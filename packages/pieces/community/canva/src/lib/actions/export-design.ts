@@ -21,6 +21,7 @@ import {
 export const exportDesign = createAction({
   auth: canvaAuth,
   name: 'export_design',
+  classification: 'READ',
   displayName: 'Export Design',
   description: 'Export a Canva design to various formats (PDF, JPG, PNG, GIF, PPTX, MP4). This creates an asynchronous job with download URLs valid for 24 hours.',
   audience: 'both',

@@ -141,7 +141,7 @@ const PieceSelectorContent = ({
       });
     }
   }, [isOpen]);
-  const { data: aiProviders } = aiProviderQueries.useAiProviders();
+  const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
   const {
     pieceModel: aiPieceModel,
     isError: isAiPieceError,

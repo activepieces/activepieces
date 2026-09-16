@@ -7,6 +7,7 @@ import { searchGoogleImagesOutputSchema } from '../output-schemas';
 export const searchGoogleImages = createAction({
   auth: serpApiAuth,
   name: 'search_google_images',
+  classification: 'SEARCH',
   displayName: 'Search Google Images',
   description: 'Discover images on Google Images for a query.',
   audience: 'ai',

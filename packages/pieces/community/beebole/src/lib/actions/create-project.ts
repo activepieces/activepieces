@@ -18,6 +18,7 @@ type CreateProjectResponse = {
 export const createProjectAction = createAction({
   auth: beeboleAuth,
   name: 'create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Creates a new project under a company in Beebole.',
   audience: 'both',

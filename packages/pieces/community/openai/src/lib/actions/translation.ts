@@ -8,6 +8,7 @@ import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
 import { baseUrl } from '../common/common';
+import { translateActionOutputSchema } from '../output-schemas';
 
 export const translateAction = createAction({
   audience: 'both',
@@ -24,6 +25,7 @@ export const translateAction = createAction({
       description: 'Audio file to translate',
     }),
   },
+  outputSchema: translateActionOutputSchema,
   run: async (context) => {
     const fileData = context.propsValue.audio;
     const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');

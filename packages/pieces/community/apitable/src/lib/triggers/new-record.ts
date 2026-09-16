@@ -41,6 +41,7 @@ const polling: Polling<
 export const newRecordTrigger = createTrigger({
   auth: APITableAuth,
   name: 'new_record',
+  classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to a datasheet.',
   aiMetadata: {

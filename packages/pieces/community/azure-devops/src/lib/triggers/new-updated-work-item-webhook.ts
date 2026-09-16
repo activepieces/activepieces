@@ -41,6 +41,7 @@ const sampleWebhookOutput: FlatWorkItem = {
 export const newUpdatedWorkItemWebhookTrigger = createTrigger({
   auth: azureDevOpsAuth,
   name: 'new_updated_work_item_webhook',
+  classification: 'READ',
   displayName: 'New or Updated Work Item (Instant)',
   description:
     'Fires instantly when a work item is created, updated, or commented on in Azure DevOps via a Service Hooks subscription. Requires a public webhook URL reachable from Azure DevOps.',

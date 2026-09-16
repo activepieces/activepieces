@@ -16,6 +16,7 @@ type CreateSubprojectResponse = {
 export const createSubprojectAction = createAction({
   auth: beeboleAuth,
   name: 'create_subproject',
+  classification: 'WRITE',
   displayName: 'Create Subproject',
   description: 'Creates a new subproject under an existing project in Beebole.',
   audience: 'both',

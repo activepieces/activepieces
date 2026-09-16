@@ -7,6 +7,7 @@ import { AgentIdDropdown, ConversationIdDropdown } from "../common/dropdown";
 export const findConversation = createAction({
   auth: AgentXAuth,
   name: "find_conversation",
+  classification: 'SEARCH',
   displayName: "Find Conversation",
   description:
     "Looks up an existing conversation by Agent ID (optionally by conversation ID or Name).",

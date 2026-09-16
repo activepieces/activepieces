@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const protectPdfAction = createAction({
   auth: iloveapiAuth,
   name: 'protect_pdf',
+  classification: 'READ',
   displayName: 'Protect PDF',
   description: 'Add a password to a PDF document.',
   audience: 'both',

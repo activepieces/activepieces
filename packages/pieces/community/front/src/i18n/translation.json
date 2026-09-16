@@ -117,7 +117,7 @@
   "List of BCC recipient handles.": "List of BCC recipient handles.",
   "The subject of the draft.": "The subject of the draft.",
   "The body of the draft message.": "The body of the draft message.",
-  "List of attachment URLs.": "List of attachment URLs.",
+  "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.": "Files to attach. Each entry takes a URL, a base64 data URI, or a file from an earlier step. Front allows 25 MB across all attachments on one message.",
   "Mode of the draft reply": "Mode of the draft reply",
   "The ID of the signature to use for the draft reply (if applicable).": "The ID of the signature to use for the draft reply (if applicable).",
   "Whether to append the default signature to the draft reply (if applicable).": "Whether to append the default signature to the draft reply (if applicable).",

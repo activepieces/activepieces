@@ -16,6 +16,7 @@ import {
 export const importDesign = createAction({
   auth: canvaAuth,
   name: 'import_design',
+  classification: 'WRITE',
   displayName: 'Import Design',
   description: 'Import an external file (PDF, PSD, DOCX, PPTX, etc.) into Canva as a new design. This creates an asynchronous job that you can monitor for completion.',
   audience: 'both',

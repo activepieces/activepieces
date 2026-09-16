@@ -120,6 +120,7 @@ function extractMatchedTerms(text: string, query: string): string[] {
 export const newPost = createTrigger({
   auth: blueskyAuth,
   name: 'newPost',
+  classification: 'READ',
   displayName: 'New Post (with Search Options)',
   description: 'Triggers when posts match your search criteria',
   aiMetadata: {

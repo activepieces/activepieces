@@ -6,6 +6,7 @@ import { knowledgeItemDropdown } from '../common/props';
 export const startTraining = createAction({
   auth: aidbaseAuth,
   name: 'start_training',
+  classification: 'WRITE',
   displayName: 'Start Training',
   description: 'Starts a training job on an existing knowledge base item (FAQ, website, video, etc.).',
   audience: 'both',

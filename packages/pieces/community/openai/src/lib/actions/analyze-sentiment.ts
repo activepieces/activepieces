@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { analyzeSentimentActionOutputSchema } from '../output-schemas';
 
 const sentiments = ['positive', 'negative', 'neutral'] as const;
 
@@ -35,6 +36,7 @@ export const analyzeSentiment = createAction({
       required: true,
     }),
   },
+  outputSchema: analyzeSentimentActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { model, text } = context.propsValue;

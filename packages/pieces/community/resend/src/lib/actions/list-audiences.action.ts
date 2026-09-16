@@ -5,6 +5,7 @@ import { listAudiencesOutputSchema } from '../output-schemas';
 
 export const listAudiences = createAction({
   name: 'list_audiences',
+  classification: 'SEARCH',
   auth: resendAuth,
   displayName: 'List Audiences',
   outputSchema: listAudiencesOutputSchema,

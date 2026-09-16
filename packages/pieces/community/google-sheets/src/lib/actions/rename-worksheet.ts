@@ -10,7 +10,7 @@ export const renameWorksheetAction = createAction({
     name: 'rename-worksheet',
     classification: 'WRITE',
     displayName: 'Rename Worksheet',
-    description: 'Rename specific worksheet.',
+    description: 'Give an existing worksheet a new title.',
     audience: 'human',
     aiMetadata: {
         description:
@@ -19,10 +19,10 @@ export const renameWorksheetAction = createAction({
     },
     props: {
         includeTeamDrives: includeTeamDrivesProp(),
-        spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The ID of the spreadsheet to use.'),
-        sheetId: sheetIdProp('Worksheet', 'The ID of the worksheet to rename.'),
+        spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The spreadsheet to work in.'),
+        sheetId: sheetIdProp('Worksheet', 'The tab to rename.'),
         newName:Property.ShortText({
-            displayName:'New Sheet Name',
+            displayName:'New Worksheet Name',
             required:true
         })
     },

@@ -34,7 +34,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: 'false',
     [AppSystemProp.LOG_LEVEL]: 'info',
-    [AppSystemProp.ALLOW_DISPOSABLE_EMAILS]: 'false',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',

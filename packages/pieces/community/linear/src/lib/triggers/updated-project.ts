@@ -6,6 +6,7 @@ import { props } from '../common/props';
 export const linearUpdatedProject = createTrigger({
   auth: linearAuth,
   name: 'updated_project',
+  classification: 'READ',
   displayName: 'Project Status Updated',
   description: 'Triggers when the status of an Linear project is updated',
   aiMetadata: {

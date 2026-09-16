@@ -6,6 +6,7 @@ import { mailchimpAuth } from '../..';
 export const updateSubscriberInList = createAction({
   auth: mailchimpAuth,
   name: 'update_member_in_list',
+  classification: 'WRITE',
   displayName: 'Update Member in an Audience (List)',
   description: 'Update a member in an existing Mailchimp audience (list)',
   audience: 'both',

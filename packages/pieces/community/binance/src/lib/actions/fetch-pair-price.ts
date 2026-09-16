@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 
 export const fetchCryptoPairPrice = createAction({
   name: 'fetch_crypto_pair_price',
+  classification: 'READ',
   displayName: 'Fetch Pair Price',
   description: 'Fetch the current price of a pair (e.g. BTC/USDT)',
   audience: 'both',

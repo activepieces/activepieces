@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const getBusinessInputDataAction = createAction({
   auth: aipriseAuth,
   name: 'get_business_input_data',
+  classification: 'READ',
   displayName: "Get Business's Submitted Verification Data",
   description:
     'Returns the company information provided during a business verification — such as company name, registration number, directors, and ownership details.',

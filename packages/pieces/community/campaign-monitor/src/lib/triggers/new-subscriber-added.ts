@@ -8,6 +8,7 @@ import { clientId, listId } from '../common/props';
 export const newSubscriberAddedTrigger = createTrigger({
   auth: campaignMonitorAuth,
   name: 'new_subscriber_added',
+  classification: 'READ',
   displayName: 'New Subscriber Added',
   description: 'Triggered when a new subscriber is added to a list.',
   aiMetadata: {

@@ -6,6 +6,7 @@ import { createContactOutputSchema } from '../output-schemas';
 
 export const createContact = createAction({
   name: 'create_contact',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Create Contact',
   outputSchema: createContactOutputSchema,

@@ -1,31 +1,144 @@
 ---
-title: "Setup AI Providers"
-description: ""
+title: "AI Providers"
+description: "Bring your own AI keys and use them across every project"
 icon: "sparkles"
 ---
 
-AI providers are configured by the platform admin to centrally manage credentials and access, making [AI pieces](https://www.activepieces.com/pieces/ai) and their features available to everyone in all projects.
+AI Providers lets platform administrators connect the AI services that can be used by [<u>AI pieces</u>](https://www.activepieces.com/pieces/ai).
 
-## Supported Providers
+Instead of every user adding their own provider credentials, an administrator can configure supported providers centrally and make them available for use across the platform.
 
-- **OpenAI**
-- **Anthropic**
-- **Gemini**
-- **Vercel AI Gateway**
-- **Cloudflare AI Gateway**
+### **Why use AI Providers?**
 
-## How to Setup
+AI Providers gives organizations one place to control which AI services are connected to Activepieces.
 
-Go to **Admin Console** → **AI** page. Add your provider's base URL and API key. These settings apply to all projects.
+This is especially useful for larger teams that want to:
 
-![Manage AI Providers](/resources/screenshots/configure-ai-provider.png)
+- Use company-managed AI provider accounts instead of personal accounts
+- Keep provider credentials managed centrally
+- Standardize which AI providers teams use
+- Apply company security and access policies to AI usage
 
-## Cost Control & Logging
+### **How Connect to an AI Provider**
 
-Use an AI gateway like **Vercel AI Gateway** or **Cloudflare AI Gateway** to:
+**Step 1**: Go to **Platform Admin → AI Center →AI Providers**.
+
+**Step 2:** Find the provider you want to configure.
+
+**Step 3**: Click **Connect**.
+
+**Step 4**: Follow the instructions shown for that provider and enter the required credentials.
+
+**Step 5**: Click **Save**.
+
+Once configured, the provider can be used by supported AI features in Activepieces.
+
+<video src="https://cdn.activepieces.com/videos/docs/Connect-to-AI-Provider.mp4" controls />
+
+## Supported providers
+
+<Columns cols={2}>
+  <div>
+  **Model providers**
+
+  * OpenAI
+  * Anthropic
+  * Google Gemini
+  * Mistral AI
+  * DeepSeek
+  * xAI
+  * Qwen
+  * Z.ai
+  * MiniMax
+  * Moonshot AI
+</div>
+
+  <div>
+  **Cloud platforms**
+
+  * Azure
+  * AWS Bedrock
+
+  **Gateways**
+
+  * OpenRouter
+  * Cloudflare AI Gateway
+
+  **Anything else**
+
+  * Other (OpenAI Compatible)
+</div>
+</Columns>
+
+<Tip>
+  **Other (OpenAI Compatible)** covers any endpoint that speaks the OpenAI API, including self-hosted models and gateways not listed here. Point it at your own base URL.
+</Tip>
+
+## Cost control and logging
+
+Spend on your own key goes to your provider, so put a gateway in front of it when you want limits and an audit trail:
 
 - Set rate limits and budgets
-- Log and monitor all AI requests
+- Log and monitor every AI request
 - Track usage across projects
 
-Just set the gateway URL as your provider's base URL in the Admin Console.
+**OpenRouter** and **Cloudflare AI Gateway** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so LiteLLM, Portkey, Helicone, and self-hosted routers are all fine.
+
+## Supported providers
+
+<Columns cols={2}>
+  <div>
+  **Model providers**
+
+  * OpenAI
+  * Anthropic
+  * Google Gemini
+  * Mistral AI
+  * DeepSeek
+  * xAI
+  * Qwen
+  * Z.ai
+  * MiniMax
+  * Moonshot AI
+</div>
+
+  <div>
+  **Cloud platforms**
+
+  * Azure
+  * AWS Bedrock
+
+  **Gateways**
+
+  * OpenRouter
+  * Cloudflare AI Gateway
+
+  **Anything else**
+
+  * Other (OpenAI Compatible)
+</div>
+</Columns>
+
+<Tip>
+  **Other (OpenAI Compatible)** covers any endpoint that speaks the OpenAI API, including self-hosted models and gateways not listed here. Point it at your own base URL.
+</Tip>
+
+## Cost control and logging
+
+Spend on your own key goes to your provider, so put a gateway in front of it when you want limits and an audit trail:
+
+- Set rate limits and budgets
+- Log and monitor every AI request
+- Track usage across projects
+
+**OpenRouter** and **Cloudflare AI Gateway** are set up like any other provider. Any other gateway that speaks the OpenAI API works through **Other (OpenAI Compatible)**, so LiteLLM, Portkey, Helicone, and self-hosted routers are all fine.
+
+**Azure** and **AWS Bedrock** give you the same thing through your cloud account's own quotas and logs**Azure** and **AWS Bedrock** give you the same thing through your cloud account's own quotas and logs.
+
+<Tip>
+  You can add several providers at once and pick the model per agent or per step, so the expensive models only run on the work that needs them.
+</Tip>
+
+<Tip>
+  You can add several providers at once and pick the model per agent or per step, so the expensive models only run on the work that needs them.
+</Tip>

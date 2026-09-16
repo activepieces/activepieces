@@ -7,6 +7,7 @@ import { updateTaskActionOutputSchema } from '../output-schemas';
 export const todoistUpdateTaskAiAction = createAction({
   auth: todoistAuth,
   name: 'todoist_update_task',
+  classification: 'WRITE',
   displayName: 'Update Task',
   description: 'Update fields on an existing Todoist task.',
   audience: 'ai',

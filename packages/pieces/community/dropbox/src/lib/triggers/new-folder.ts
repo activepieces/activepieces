@@ -10,6 +10,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { newFolderTriggerOutputSchema } from '../output-schemas';
 
 type DropboxListFolderEntry = {
   id: string;
@@ -109,6 +110,7 @@ export const dropboxNewFolder = createTrigger({
 
   type: TriggerStrategy.POLLING,
 
+  outputSchema: newFolderTriggerOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Watched Folder Path',

@@ -6,6 +6,7 @@ import { verifyDomainOutputSchema } from '../output-schemas';
 
 export const verifyDomain = createAction({
   name: 'verify_domain',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Verify Domain',
   outputSchema: verifyDomainOutputSchema,

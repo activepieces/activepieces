@@ -5,6 +5,7 @@ import { rescheduleEmailOutputSchema } from '../output-schemas';
 
 export const rescheduleEmail = createAction({
   name: 'reschedule_email',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Reschedule Email',
   outputSchema: rescheduleEmailOutputSchema,

@@ -2,10 +2,12 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { randomBytes } from 'crypto';
+import { newContactTriggerOutputSchema } from '../output-schemas';
 
 export const newContact = createTrigger({
     auth: systemeIoAuth,
     name: 'newContact',
+    classification: 'READ',
     displayName: 'New Contact',
     description: 'Fires when a new contact is created',
     aiMetadata: {
@@ -51,6 +53,7 @@ export const newContact = createTrigger({
             ]
         }
     },
+    outputSchema: newContactTriggerOutputSchema,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
         const secret = randomBytes(32).toString('hex');

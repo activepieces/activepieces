@@ -1,9 +1,10 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getLineItemAction = createAction({
 	auth: hubspotAuth,
@@ -13,6 +14,7 @@ export const getLineItemAction = createAction({
 	description: 'Gets a line item.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single line item by its HubSpot line item ID, returning default and any requested additional properties. Use when you already have the line item ID and need its details (price, quantity, product). Read-only and idempotent.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		lineItemId: Property.ShortText({
 			displayName: 'Line Item ID',
@@ -39,7 +41,7 @@ export const getLineItemAction = createAction({
 		const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
 
 		const defaultLineItemProperties = getDefaultPropertiesForObject(OBJECT_TYPE.LINE_ITEM);
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const lineItemDetails = await client.crm.lineItems.basicApi.getById(lineItemId, [
 			...defaultLineItemProperties,

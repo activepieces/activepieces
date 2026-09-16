@@ -20,7 +20,7 @@ export const apDuplicateFlowTool = ({ mcp, userId }: McpToolContext, log: Fastif
             flowId: z.string().describe('The id of the flow to duplicate. Use ap_list_flows to find it.'),
             name: z.string().optional().describe('Name for the duplicated flow. Defaults to "Copy of {original name}".'),
         },
-        annotations: { destructiveHint: false, idempotentHint: false, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, name } = duplicateFlowInput.parse(args)

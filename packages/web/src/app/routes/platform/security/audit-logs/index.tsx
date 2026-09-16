@@ -1,18 +1,24 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  AgentActionKind,
+  AgentActionOutcome,
+  AgentRunSource,
   ApplicationEvent,
   ApplicationEventName,
   summarizeApplicationEvent,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
+  Bot,
   CheckIcon,
+  CircleArrowUp,
   Eye,
   Folder,
   History,
   Key,
   Link2,
   Logs,
+  Undo2,
   Users,
   Wand,
   Workflow,
@@ -99,7 +105,12 @@ export default function AuditLogsPage() {
     },
   ];
 
-  const { data: auditLogsData, isLoading } = auditLogQueries.useAuditLogs();
+  const {
+    data: auditLogsData,
+    isLoading,
+    isError,
+    refetch,
+  } = auditLogQueries.useAuditLogs();
 
   const isEnabled = platform.plan.auditLogEnabled;
   return (
@@ -245,6 +256,9 @@ export default function AuditLogsPage() {
           ]}
           page={auditLogsData}
           isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('audit logs')}
+          onRetry={refetch}
         />
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetContent className="w-[480px] sm:max-w-[480px] flex flex-col p-0">
@@ -358,6 +372,16 @@ function convertToIcon(event: ApplicationEvent) {
         icon: <Workflow className="size-4" />,
         tooltip: t('Flow'),
       };
+    case ApplicationEventName.FLOW_PIECES_UPGRADED:
+      return {
+        icon: <CircleArrowUp className="size-4" />,
+        tooltip: t('Flow pieces upgraded'),
+      };
+    case ApplicationEventName.FLOW_PIECES_REVERTED:
+      return {
+        icon: <Undo2 className="size-4" />,
+        tooltip: t('Flow pieces reverted'),
+      };
     case ApplicationEventName.FOLDER_CREATED:
     case ApplicationEventName.FOLDER_DELETED:
     case ApplicationEventName.FOLDER_UPDATED:
@@ -377,6 +401,11 @@ function convertToIcon(event: ApplicationEvent) {
       return {
         icon: <Link2 className="size-4" />,
         tooltip: t('Variable'),
+      };
+    case ApplicationEventName.AGENT_ACTION_EXECUTED:
+      return {
+        icon: <Bot className="size-4" />,
+        tooltip: t('Agent action'),
       };
     case ApplicationEventName.USER_SIGNED_UP:
     case ApplicationEventName.USER_SIGNED_IN:
@@ -468,6 +497,30 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
     case ApplicationEventName.FLOW_ACTIVATED:
     case ApplicationEventName.FLOW_DEACTIVATED:
       return [{ label: t('Flow'), value: event.data.flowVersion.displayName }];
+    case ApplicationEventName.FLOW_PIECES_UPGRADED: {
+      const { flowId, steps } = event.data;
+      return [
+        { label: t('Flow'), value: flowId },
+        ...steps.map((step) => ({
+          label: step.stepName,
+          value: `${step.actionOrTriggerName}: ${
+            step.decision === 'UPGRADED'
+              ? `${step.prevVersion} → ${step.newVersion}`
+              : t('kept at {version}', { version: step.prevVersion })
+          }`,
+        })),
+      ];
+    }
+    case ApplicationEventName.FLOW_PIECES_REVERTED: {
+      const { flowId, steps } = event.data;
+      return [
+        { label: t('Flow'), value: flowId },
+        ...steps.map((step) => ({
+          label: step.stepName,
+          value: `${step.actionOrTriggerName}: ${step.prevVersion} → ${step.newVersion}`,
+        })),
+      ];
+    }
     case ApplicationEventName.CONNECTION_UPSERTED:
     case ApplicationEventName.CONNECTION_DELETED: {
       const { connection } = event.data;
@@ -503,6 +556,33 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
           : []),
         ...(agent.publishedToolNames?.length
           ? [{ label: t('Tools'), value: agent.publishedToolNames.join(', ') }]
+          : []),
+      ];
+    }
+    case ApplicationEventName.AGENT_ACTION_EXECUTED: {
+      const { agent, action, connection, source, flow, outcome } = event.data;
+      return [
+        ...(agent
+          ? [{ label: t('Agent'), value: agent.displayName ?? agent.id }]
+          : []),
+        ...(action.kind === AgentActionKind.FLOW
+          ? [{ label: t('Flow'), value: action.displayName }]
+          : [
+              { label: t('Action'), value: action.displayName },
+              { label: t('App'), value: action.pieceDisplayName },
+            ]),
+        ...(outcome === undefined
+          ? []
+          : [{ label: t('Result'), value: OUTCOME_LABEL[outcome]() }]),
+        { label: t('Ran from'), value: RAN_FROM_LABEL[source]() },
+        ...(flow ? [{ label: t('Flow run'), value: flow.runId }] : []),
+        ...(connection
+          ? [
+              {
+                label: t('Account'),
+                value: connection.label ?? connection.externalId,
+              },
+            ]
           : []),
       ];
     }
@@ -576,10 +656,45 @@ function extractEventDetails(event: ApplicationEvent): EventDetailRow[] {
         { label: t('Failed'), value: String(failedCount) },
       ];
     }
+    case ApplicationEventName.FLOW_APPROVAL_REQUESTED:
+    case ApplicationEventName.FLOW_APPROVAL_GRANTED:
+    case ApplicationEventName.FLOW_APPROVAL_WITHDRAWN: {
+      const rows: EventDetailRow[] = [
+        {
+          label: t('Flow'),
+          value: event.data.flowDisplayName ?? event.data.flowId,
+        },
+      ];
+      return rows;
+    }
+    case ApplicationEventName.FLOW_APPROVAL_REJECTED: {
+      const rows: EventDetailRow[] = [
+        {
+          label: t('Flow'),
+          value: event.data.flowDisplayName ?? event.data.flowId,
+        },
+      ];
+      if (event.data.rejectionReason) {
+        rows.push({ label: t('Reason'), value: event.data.rejectionReason });
+      }
+      return rows;
+    }
   }
 }
 
 type EventDetailRow = {
   label: string;
   value: string;
+};
+
+const OUTCOME_LABEL: Record<AgentActionOutcome, () => string> = {
+  [AgentActionOutcome.SUCCEEDED]: () => t('Succeeded'),
+  [AgentActionOutcome.FAILED]: () => t('Failed'),
+};
+
+const RAN_FROM_LABEL: Record<AgentRunSource, () => string> = {
+  [AgentRunSource.FLOW_STEP]: () => t('A flow step'),
+  [AgentRunSource.AGENT]: () => t('The agent page'),
+  [AgentRunSource.CHAT]: () => t('Chat'),
+  [AgentRunSource.AGENT_BUILDER]: () => t('The agent builder'),
 };

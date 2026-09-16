@@ -46,11 +46,13 @@ export enum WorkerSystemProp {
     BETTERSTACK_HOST = 'AP_BETTERSTACK_HOST',
     LOAD_TRANSLATIONS_FOR_DEV_PIECES = 'AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES',
     WORKER_GROUP_ID = 'AP_WORKER_GROUP_ID',
+    IS_CANARY_WORKER = 'AP_IS_CANARY_WORKER',
     PROJECT_WORKER = 'AP_PROJECT_WORKER',
     WORKER_CONCURRENCY = 'AP_WORKER_CONCURRENCY',
     EXECUTION_MODE = 'AP_EXECUTION_MODE',
     REUSE_SANDBOX = 'AP_REUSE_SANDBOX',
     CACHE_BASE_PATH = 'AP_CACHE_BASE_PATH',
+    PREWARM_CACHE_ON_STARTUP = 'AP_PREWARM_CACHE_ON_STARTUP',
 }
 
 const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
@@ -63,6 +65,9 @@ const defaultValues: Partial<Record<WorkerSystemProp, string>> = {
     // The destination is concurrency 1 + horizontal replicas (ADR 0003).
     [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
     [WorkerSystemProp.CACHE_BASE_PATH]: 'cache',
+    // Off by default: prewarm resolves and compiles every enabled flow on the platform, so its
+    // startup memory/CPU cost grows with flow count and can OOM small workers on large instances.
+    [WorkerSystemProp.PREWARM_CACHE_ON_STARTUP]: 'false',
 }
 
 export const system = {

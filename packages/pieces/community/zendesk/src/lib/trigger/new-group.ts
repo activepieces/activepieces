@@ -56,6 +56,7 @@ const polling: Polling<ZendeskAuthValue, Record<string, never>> = {
 
 export const newGroup = createTrigger({
   name: 'new_group',
+  classification: 'READ',
   displayName: 'New Group',
   description: 'Fires when a new group is created.',
   aiMetadata: {

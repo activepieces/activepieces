@@ -12,6 +12,7 @@ interface WebhookInformation {
 export const newReviewRequestTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_review_request',
+  classification: 'READ',
   displayName: 'New Review Request',
   description: 'Triggers when you are requested to review a pull request.',
   aiMetadata: {

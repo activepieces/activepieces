@@ -19,6 +19,7 @@ async function exchangeFreshCode(clientId: string): Promise<string> {
     const codeVerifier = randomBytes(32).toString('base64url')
     const codeChallenge = createHash('sha256').update(codeVerifier).digest().toString('base64url')
     const tokens = await mcpOAuthTokenService.exchangeCode({
+        redirectUris: [],
         codeVerifier,
         codeChallenge,
         codeChallengeMethod: 'S256',
@@ -40,7 +41,7 @@ describe('MCP OAuth token refresh', () => {
         const clientId = apId()
         const refreshToken = await exchangeFreshCode(clientId)
 
-        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ refreshToken, clientId })
+        const refreshed = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken, clientId })
 
         expect(refreshed.access_token).toBeTypeOf('string')
         expect(refreshed.refresh_token).toBe(refreshToken)
@@ -50,8 +51,8 @@ describe('MCP OAuth token refresh', () => {
         const clientId = apId()
         const first = await exchangeFreshCode(clientId)
 
-        const second = await mcpOAuthTokenService.refreshAccessToken({ refreshToken: first, clientId })
-        const third = await mcpOAuthTokenService.refreshAccessToken({ refreshToken: requireRefreshToken(second), clientId })
+        const second = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: first, clientId })
+        const third = await mcpOAuthTokenService.refreshAccessToken({ redirectUris: [], refreshToken: requireRefreshToken(second), clientId })
 
         expect(third.refresh_token).toBe(first)
     })

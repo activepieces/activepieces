@@ -5,6 +5,7 @@ import { createDomainOutputSchema } from '../output-schemas';
 
 export const createDomain = createAction({
   name: 'create_domain',
+  classification: 'WRITE',
   auth: resendAuth,
   displayName: 'Create Domain',
   outputSchema: createDomainOutputSchema,

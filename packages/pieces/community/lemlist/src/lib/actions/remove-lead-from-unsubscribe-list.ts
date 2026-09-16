@@ -5,6 +5,7 @@ import { lemlistApiService } from '../common/requests';
 export const removeLeadFromUnsubscribeList = createAction({
   auth: lemlistAuth,
   name: 'removeLeadFromUnsubscribeList',
+  classification: 'WRITE',
   displayName: 'Remove Lead From Unsubscribe List',
   description: 'Remove a lead from “unsubscribe” list.',
   audience: 'both',

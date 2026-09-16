@@ -6,6 +6,7 @@ import { deleteContactOutputSchema } from '../output-schemas';
 
 export const deleteContact = createAction({
   name: 'delete_contact',
+  classification: 'DESTRUCTIVE',
   auth: resendAuth,
   displayName: 'Delete Contact',
   outputSchema: deleteContactOutputSchema,

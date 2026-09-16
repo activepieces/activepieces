@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const updateEstimateOptionSchedule = createAction({
   auth: housecallProAuth,
   name: "update_estimate_option_schedule",
+  classification: 'WRITE',
   displayName: "Update estimate option schedule",
   description: "Update an estimate option's schedule.",
   audience: 'both',

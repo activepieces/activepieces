@@ -7,6 +7,7 @@ import { billplzAuth } from '../common/auth';
 
 export const getBill = createAction({
   name: 'get_bill',
+  classification: 'READ',
   displayName: 'Get Bill',
   description: 'Retrieve information about a specific bill',
   audience: 'both',

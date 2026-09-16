@@ -6,6 +6,7 @@ import { listContactsOutputSchema } from '../output-schemas';
 
 export const listContacts = createAction({
   name: 'list_contacts',
+  classification: 'SEARCH',
   auth: resendAuth,
   displayName: 'List Contacts',
   outputSchema: listContactsOutputSchema,

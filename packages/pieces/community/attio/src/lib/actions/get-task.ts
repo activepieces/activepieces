@@ -7,6 +7,7 @@ import { taskIdDropdown } from '../common/props';
 export const getTaskAction = createAction({
 	auth: attioAuth,
 	name: 'get_task',
+	classification: 'READ',
 	displayName: 'Get Task',
 	description: 'Fetch a single task by its ID.',
 	audience: 'both',

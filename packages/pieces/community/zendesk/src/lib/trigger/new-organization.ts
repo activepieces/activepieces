@@ -28,6 +28,7 @@ interface ZendeskOrganization {
 
 export const newOrganization = createTrigger({
   name: 'new_organization',
+  classification: 'READ',
   displayName: 'New Organization',
   description: 'Fires when a new organization record is created. Uses Zendesk event webhook (no Trigger needed).',
   aiMetadata: {

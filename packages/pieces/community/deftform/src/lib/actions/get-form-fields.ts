@@ -6,6 +6,7 @@ import { deftformApiCall, DeftformCommon } from '../common';
 export const getFormFields = createAction({
     auth: deftformAuth,
     name: 'get_form_fields',
+    classification: 'READ',
     displayName: 'Get Form Fields',
     description: 'Retrieves only the fields of a specific form. Great for understanding the structure before building automations.',
     audience: 'both',

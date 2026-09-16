@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const newCampaignTrigger = createTrigger({
   auth: senderAuth,
   name: 'new_campaign',
+  classification: 'READ',
   displayName: 'New Campaign',
   description: 'Fires when a new campaign is created in Sender',
   aiMetadata: {

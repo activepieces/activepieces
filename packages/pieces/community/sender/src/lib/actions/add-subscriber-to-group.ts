@@ -10,6 +10,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addSubscriberToGroupAction = createAction({
   auth: senderAuth,
   name: 'add_subscriber_to_group',
+  classification: 'WRITE',
   displayName: 'Add Subscriber to Group',
   description: 'Add an existing or new subscriber into one or more groups',
   audience: 'both',
