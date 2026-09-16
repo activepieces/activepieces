@@ -170,26 +170,22 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   );
 
   return (
-    <div className="flex h-full w-full min-w-0">
-      <div className="flex min-w-0 grow flex-col pt-2">
-        <DataTable
-          columns={columns}
-          page={runs}
-          isLoading={isLoading}
-          isError={isError}
-          errorStateEntity={t('runs')}
-          onRetry={refetch}
-          onRowClick={(row) => setOpenRunId(row.id)}
-          emptyStateIcon={<History className="size-14" />}
-          emptyStateTextTitle={t('No flow has run this agent yet')}
-          emptyStateTextDescription={t(
-            'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
-          )}
-        />
-      </div>
-      {!isNil(openRunId) && (
-        <RunDetailPanel runId={openRunId} onClose={() => setOpenRunId(null)} />
-      )}
+    <div className="flex h-full w-full min-w-0 flex-col">
+      <DataTable
+        columns={columns}
+        page={runs}
+        isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('runs')}
+        onRetry={refetch}
+        onRowClick={(row) => setOpenRunId(row.id)}
+        emptyStateIcon={<History className="size-14" />}
+        emptyStateTextTitle={t('No flow has run this agent yet')}
+        emptyStateTextDescription={t(
+          'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
+        )}
+      />
+      <RunDetailPanel runId={openRunId} onClose={() => setOpenRunId(null)} />
     </div>
   );
 };

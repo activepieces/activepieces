@@ -168,7 +168,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage(withFlow, paginationCursor)
     },
 
-    async getAgentRunOrThrow({ id, projectId }: { id: string, projectId: string }): Promise<AgentRunListItem> {
+    async getAgentRunOrThrow({ id, projectId }: { id: string, projectId: string }): Promise<AgentRunListItem & { agentId: string }> {
         const run = await agentHelpers.conversationRepo().findOneBy({
             id,
             projectId,
@@ -180,6 +180,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         const flowByRunId = await flowReferencesFor([run])
         return {
             ...run,
+            agentId: run.agentId,
             flow: isNil(run.flowRunId) ? null : flowByRunId.get(run.flowRunId) ?? null,
         }
     },
