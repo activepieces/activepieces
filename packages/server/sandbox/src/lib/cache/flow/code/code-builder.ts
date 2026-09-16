@@ -143,9 +143,7 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
-            // A transient bun install failure must self-heal: never cache the throwing stub, so the
-            // next build re-runs install. Deterministic compile errors stay cached. See GIT-1608.
-            skipSave: () => buildStatus === 'install-failed',
+            skipSave: () => buildStatus !== 'success',
         })
         return cacheHit ? 'success' : buildStatus
     },

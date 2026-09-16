@@ -79,4 +79,16 @@ describe('linear updated-issue run()', () => {
       )
     ).toEqual([body]);
   });
+
+  test('filters on team change via teamId', async () => {
+    const teamChanged = updateBody({ updatedAt: 'x', teamId: 'team_2' });
+    const stateChanged = updateBody({ updatedAt: 'x', stateId: 'state_1' });
+
+    expect(
+      await linearUpdatedIssue.run(buildContext(teamChanged, ['teamId']))
+    ).toEqual([teamChanged]);
+    expect(
+      await linearUpdatedIssue.run(buildContext(stateChanged, ['teamId']))
+    ).toEqual([]);
+  });
 });
