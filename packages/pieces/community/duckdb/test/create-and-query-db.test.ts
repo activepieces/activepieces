@@ -74,6 +74,21 @@ describe('File prop (CSV/JSON)', () => {
     expect(rows).toEqual([{ id: 1, name: 'a' }]);
   });
 
+  it('strips a UTF-8 BOM from a JSON file instead of failing to parse', async () => {
+    const file = new ApFile(
+      'rows.json',
+      Buffer.from('﻿' + JSON.stringify([{ id: 1, name: 'a' }])),
+      'json'
+    );
+
+    const rows = await runAction({
+      tables: [table({ data: [], file, schema: { id: 'INTEGER', name: 'VARCHAR' } })],
+      query: 'SELECT * FROM t',
+    });
+
+    expect(rows).toEqual([{ id: 1, name: 'a' }]);
+  });
+
   it('a ragged CSV row does not abort the whole file', async () => {
     const file = new ApFile('rows.csv', Buffer.from('id,name\n1,a,extra\n2,b\n'), 'csv');
 

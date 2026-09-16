@@ -160,5 +160,5 @@ function resolveTableRows(dbTable: { data?: unknown; file?: ApFile }): unknown {
         bom: true,
         relax_column_count: true,
       })
-    : JSON.parse(text);
+    : JSON.parse(text.replace(/^﻿/, ''));
 }
