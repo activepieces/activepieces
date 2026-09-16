@@ -1,22 +1,32 @@
-import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { sendMessage } from './lib/actions/send-message';
 import { sendMedia } from './lib/actions/send-media';
 import { sendTemplateMessageAction } from './lib/actions/send-from-template';
+import { sendTemplate } from './lib/actions/send-template';
+import { sendInteractiveButtons } from './lib/actions/send-interactive-buttons';
+import { sendInteractiveList } from './lib/actions/send-interactive-list';
+import { sendInteractiveCtaUrl } from './lib/actions/send-interactive-cta-url';
+import { sendLocation } from './lib/actions/send-location';
+import { sendContact } from './lib/actions/send-contact';
+import { sendReaction } from './lib/actions/send-reaction';
+import { markMessageAsRead } from './lib/actions/mark-message-as-read';
+import { uploadMedia } from './lib/actions/upload-media';
+import { getMediaUrl } from './lib/actions/get-media-url';
+import { downloadMedia } from './lib/actions/download-media';
+import { deleteMedia } from './lib/actions/delete-media';
+import { listMessageTemplates } from './lib/actions/list-message-templates';
+import { createMessageTemplate } from './lib/actions/create-message-template';
+import { editMessageTemplate } from './lib/actions/edit-message-template';
+import { deleteMessageTemplate } from './lib/actions/delete-message-template';
+import { listPhoneNumbers } from './lib/actions/list-phone-numbers';
+import { getPhoneNumber } from './lib/actions/get-phone-number';
+import { getBusinessProfile } from './lib/actions/get-business-profile';
+import { updateBusinessProfile } from './lib/actions/update-business-profile';
+import { newIncomingMessage } from './lib/triggers/new-incoming-message';
+import { newMessageReaction } from './lib/triggers/new-message-reaction';
+import { messageStatusUpdated } from './lib/triggers/message-status-updated';
+import { templateStatusUpdated } from './lib/triggers/template-status-updated';
 import { whatsappAuth } from './lib/auth';
-
-const markdown = `
-To Obtain a Phone Number ID and a Permanent System User Access Token, follow these steps:
-
-1. Go to https://developers.facebook.com/
-2. Make a new app, Select Other for usecase.
-3. Choose Business as the type of app.
-4. Add new Product -> WhatsApp.
-5. Navigate to WhatsApp Settings > API Setup.
-6. Copy the Business Account ID.
-7. Login to your [Meta Business Manager](https://business.facebook.com/).
-8. Click on Settings.
-9. Create a new System User with access over the app and copy the access token.
-`;
 
 export const whatsapp = createPiece({
 	displayName: 'WhatsApp Business',
@@ -25,6 +35,30 @@ export const whatsapp = createPiece({
 	minimumSupportedRelease: '0.30.0',
 	logoUrl: 'https://cdn.activepieces.com/pieces/whatsapp.png',
 	authors: ['LevwTech', 'kishanprmr'],
-	actions: [sendMessage, sendMedia, sendTemplateMessageAction],
-	triggers: [],
+	actions: [
+		sendMessage,
+		sendMedia,
+		sendTemplateMessageAction,
+		sendTemplate,
+		sendInteractiveButtons,
+		sendInteractiveList,
+		sendInteractiveCtaUrl,
+		sendLocation,
+		sendContact,
+		sendReaction,
+		markMessageAsRead,
+		uploadMedia,
+		getMediaUrl,
+		downloadMedia,
+		deleteMedia,
+		listMessageTemplates,
+		createMessageTemplate,
+		editMessageTemplate,
+		deleteMessageTemplate,
+		listPhoneNumbers,
+		getPhoneNumber,
+		getBusinessProfile,
+		updateBusinessProfile,
+	],
+	triggers: [newIncomingMessage, newMessageReaction, messageStatusUpdated, templateStatusUpdated],
 });

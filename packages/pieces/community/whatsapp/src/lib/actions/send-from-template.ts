@@ -1,15 +1,17 @@
 import { whatsappAuth } from '../auth';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { commonProps } from '../common/utils';
+import { commonProps, WHATSAPP_API_BASE } from '../common/utils';
+import { messageSendOutputSchema } from '../output-schemas';
 
 export const sendTemplateMessageAction = createAction({
 	auth: whatsappAuth,
 	name: 'send-template-message',
+	outputSchema: messageSendOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Template Message',
 	description: 'Sends a template message.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Sends a pre-approved WhatsApp message template to a recipient, filling its header, body, and button placeholders from the supplied fields. Choose this to initiate conversations outside the 24-hour customer service window or for notifications/marketing where a registered template is required; the template must already be approved in the WhatsApp Business account. Requires the sender phone number ID, recipient phone number, and the template ID (its name and language are resolved automatically). Not idempotent — each call delivers a new message.', idempotent: false },
 	props: {
 		phone_number_id: commonProps.phone_number_id,
@@ -68,7 +70,7 @@ export const sendTemplateMessageAction = createAction({
 		// fetch template language code
 		const templateData = await httpClient.sendRequest({
 			method: HttpMethod.GET,
-			url: `https://graph.facebook.com/v20.0/${templateId}`,
+			url: `${WHATSAPP_API_BASE}/${templateId}`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: context.auth.props.access_token,
@@ -84,7 +86,7 @@ export const sendTemplateMessageAction = createAction({
 		// https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates/#text-based
 		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+			url: `${WHATSAPP_API_BASE}/${phoneNumberId}/messages`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
 				token: context.auth.props.access_token,

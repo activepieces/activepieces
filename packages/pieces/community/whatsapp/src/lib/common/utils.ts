@@ -7,7 +7,6 @@ import {
 import { whatsappAuth } from '../auth';
 import {
 	Property,
-	PiecePropValueSchema,
 	DynamicPropsValue,
 	DropdownOption,
 } from '@activepieces/pieces-framework';
@@ -18,67 +17,7 @@ export const mediaTypeSupportsCaption = (type: string) =>
 	['image', 'video', 'document'].includes(type);
 
 export const commonProps = {
-	phone_number_id: Property.Dropdown({
-		auth: whatsappAuth,
-		displayName: 'Phone Number ID',
-		description: 'Phone number ID that will be used to send the message.',
-		refreshers: [],
-		required: true,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					placeholder: 'Please connect account first',
-					disabled: true,
-					options: [],
-				};
-			}
-
-			const authValue = auth.props;
-
-			const options: DropdownOption<string>[] = [];
-
-			let hasMore = false;
-			let cursor;
-
-			do {
-				const qs: QueryParams = {
-					fields: 'verified_name,id,display_phone_number',
-					limit: '1',
-				};
-				if (cursor) qs['after'] = cursor;
-
-				const response = await httpClient.sendRequest({
-					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/phone_numbers`,
-					authentication: {
-						type: AuthenticationType.BEARER_TOKEN,
-						token: authValue.access_token,
-					},
-					queryParams: qs,
-				});
-
-				for (const phoneNumber of response.body.data) {
-					options.push({
-						label: `${phoneNumber.verified_name as string} : ${
-							phoneNumber.display_phone_number as string
-						}`,
-						value: phoneNumber.id as string,
-					});
-				}
-
-				if (response.body.paging.next) {
-					(hasMore = true), (cursor = response.body.paging.cursors.after);
-				} else {
-					hasMore = false;
-				}
-			} while (hasMore);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	}),
+	phone_number_id: phoneNumberDropdown({ required: true }),
 	message_template_id: Property.Dropdown({
 		displayName: 'Message Template ID',
 		refreshers: [],
@@ -109,7 +48,7 @@ export const commonProps = {
 
 				const response = await httpClient.sendRequest({
 					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/message_templates`,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/message_templates`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authValue.access_token,
@@ -151,7 +90,7 @@ export const commonProps = {
 			const templateId = message_template_id as unknown as string;
 
 			const response = await httpClient.sendRequest({
-				url: `https://graph.facebook.com/v20.0/${templateId}`,
+				url: `${WHATSAPP_API_BASE}/${templateId}`,
 				method: HttpMethod.GET,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
@@ -223,3 +162,70 @@ export const commonProps = {
 		},
 	}),
 };
+
+
+export function phoneNumberDropdown<R extends boolean>({ required }: { required: R }) {
+	return Property.Dropdown({
+		auth: whatsappAuth,
+		displayName: 'Phone Number ID',
+		description: 'Phone number ID that will be used to send the message.',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					placeholder: 'Please connect account first',
+					disabled: true,
+					options: [],
+				};
+			}
+
+			const authValue = auth.props;
+
+			const options: DropdownOption<string>[] = [];
+
+			let hasMore = false;
+			let cursor;
+
+			do {
+				const qs: QueryParams = {
+					fields: 'verified_name,id,display_phone_number',
+					limit: '1',
+				};
+				if (cursor) qs['after'] = cursor;
+
+				const response = await httpClient.sendRequest({
+					method: HttpMethod.GET,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/phone_numbers`,
+					authentication: {
+						type: AuthenticationType.BEARER_TOKEN,
+						token: authValue.access_token,
+					},
+					queryParams: qs,
+				});
+
+				for (const phoneNumber of response.body.data) {
+					options.push({
+						label: `${phoneNumber.verified_name as string} : ${
+							phoneNumber.display_phone_number as string
+						}`,
+						value: phoneNumber.id as string,
+					});
+				}
+
+				if (response.body.paging.next) {
+					(hasMore = true), (cursor = response.body.paging.cursors.after);
+				} else {
+					hasMore = false;
+				}
+			} while (hasMore);
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+}
+
+export const WHATSAPP_API_BASE = 'https://graph.facebook.com/v23.0';
