@@ -403,6 +403,9 @@ export function createHandlers(log: FastifyBaseLogger, assignment: WorkerGroupAs
         async readFlowStepFile(input) {
             return aiRpcHandlers(log).readFlowStepFile(input)
         },
+        async reportAiUsage(input) {
+            return aiRpcHandlers(log).reportAiUsage(input)
+        },
         async resumeAiStep(input) {
             return aiRpcHandlers(log).resumeAiStep(input)
         },
