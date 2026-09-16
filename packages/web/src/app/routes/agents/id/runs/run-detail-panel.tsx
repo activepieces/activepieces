@@ -8,7 +8,12 @@ import {
   PersistedToolCallStatus,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronRight, CircleAlert, CircleCheck } from 'lucide-react';
+import {
+  ArrowUpRight,
+  ChevronRight,
+  CircleAlert,
+  CircleCheck,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -111,9 +116,10 @@ const MetaStrip = ({ run }: { run: AgentRunListItem }) => {
             href={authenticationSession.appendProjectRoutePrefix(
               `/runs/${run.flow.flowRunId}`,
             )}
-            className="min-w-0 truncate hover:underline"
+            className="flex min-w-0 items-center gap-1 hover:underline"
           >
-            {run.flow.displayName}
+            <span className="min-w-0 truncate">{run.flow.displayName}</span>
+            <ArrowUpRight size={12} className="shrink-0" />
           </a>
         </>
       )}
