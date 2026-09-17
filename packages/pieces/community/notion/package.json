@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "tslib": "2.6.2",
-    "vitest": "3.2.6"
+    "vitest": "4.1.11"
   },
   "overrides": {
     "@notionhq/client": "2.2.14"
