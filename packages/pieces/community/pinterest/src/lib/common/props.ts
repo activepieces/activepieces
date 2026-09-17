@@ -27,7 +27,7 @@ export const boardIdDropdown = Property.Dropdown({
 
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const adAccountId = isNonEmptyString(ad_account_id) ? ad_account_id : '';
+      const adAccountId = toAdAccountId(ad_account_id);
       const boards =
         search.length > 0
           ? await fetchAllPages({
@@ -90,7 +90,7 @@ export const pinIdDropdown = Property.Dropdown({
 
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const adAccountId = isNonEmptyString(ad_account_id) ? ad_account_id : '';
+      const adAccountId = toAdAccountId(ad_account_id);
       const pins = await fetchPins({ accessToken, search, adAccountId });
       const options = toPinOptions(pins.items);
 
@@ -226,7 +226,7 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
 
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const adAccountId = isNonEmptyString(ad_account_id) ? ad_account_id : '';
+      const adAccountId = toAdAccountId(ad_account_id);
       const pins = await fetchPins({ accessToken, search, adAccountId });
       const options = toPinOptions(pins.items);
 
@@ -309,6 +309,10 @@ function toDropdownState({
     disabled: false,
     options,
   };
+}
+
+function toAdAccountId(value: unknown): string {
+  return isNonEmptyString(value) ? value : '';
 }
 
 function toNamedOptions(items: unknown[]): DropdownOption<string>[] {
