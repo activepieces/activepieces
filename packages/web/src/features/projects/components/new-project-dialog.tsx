@@ -52,7 +52,8 @@ type NewProjectDialogProps = {
 
 export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [showGate, setShowGate] = useState(false);
+  const [blockedOnSubmit, setBlockedOnSubmit] = useState(false);
+  const showGate = props.gate?.locked === true || blockedOnSubmit;
   const { platform } = platformHooks.useCurrentPlatform();
   const globalConnectionsEnabled = platform.plan.globalConnectionsEnabled;
 
@@ -67,7 +68,7 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
   const changeOpen = (next: boolean) => {
     setOpen(next);
     if (!next) {
-      setShowGate(false);
+      setBlockedOnSubmit(false);
     }
   };
 
@@ -102,7 +103,7 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
                     ? undefined
                     : {
                         locked: props.gate.locked,
-                        onBlocked: () => setShowGate(true),
+                        onBlocked: () => setBlockedOnSubmit(true),
                       }
                 }
               />

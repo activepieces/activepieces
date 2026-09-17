@@ -1,6 +1,6 @@
 import { ProjectWithLimits } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
+import { Crown, Plus } from 'lucide-react';
 import React from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
@@ -12,7 +12,6 @@ import {
   useFeatureGate,
   useTeamProjectLimitGuard,
 } from '@/features/billing';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
 
 import { NewProjectDialog } from './new-project-dialog';
@@ -26,9 +25,8 @@ export function CreateProjectButton({
   const { hasReachedLimit, teamProjectLimitContent } = useTeamProjectLimitGuard(
     { projects },
   );
-  const { platform } = platformHooks.useCurrentPlatform();
   const projectsGate = useFeatureGate({
-    locked: platform.plan.billedTeamProjectsLimit === 0,
+    locked: hasReachedLimit,
     feature: PLATFORM_FEATURES.projects,
   });
 
@@ -36,6 +34,7 @@ export function CreateProjectButton({
     variant,
     className,
     crown: projectsGate.crown,
+    locked: projectsGate.locked,
   });
 
   return (
@@ -51,7 +50,7 @@ export function CreateProjectButton({
   );
 }
 
-function triggerFor({ variant, className, crown }: TriggerForParams) {
+function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
   switch (variant) {
     case 'icon':
       return (
@@ -60,7 +59,7 @@ function triggerFor({ variant, className, crown }: TriggerForParams) {
           size="icon"
           className={cn('h-6 w-6 hover:bg-accent', className)}
         >
-          <Plus />
+          {locked ? <Crown className="text-primary" /> : <Plus />}
         </Button>
       );
     case 'full':
@@ -84,7 +83,11 @@ function triggerFor({ variant, className, crown }: TriggerForParams) {
         <SidebarMenuButton
           className={cn('text-muted-foreground gap-2', className)}
         >
-          <Plus className="size-4" />
+          {locked ? (
+            <Crown className="size-4 text-primary" />
+          ) : (
+            <Plus className="size-4" />
+          )}
           <span>{t('Add team project')}</span>
         </SidebarMenuButton>
       );
@@ -97,6 +100,7 @@ type TriggerForParams = {
   variant: CreateProjectButtonVariant;
   className?: string;
   crown: React.ReactNode;
+  locked: boolean;
 };
 
 type CreateProjectButtonProps = {

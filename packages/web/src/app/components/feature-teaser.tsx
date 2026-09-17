@@ -18,6 +18,19 @@ export function FeatureTeaserContent({
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
+  const showcase =
+    videoUrl === undefined ? null : (
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="w-full rounded-lg"
+        controls={false}
+        src={videoUrl}
+      />
+    );
+
   if (edition === ApEdition.COMMUNITY) {
     const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
     return (
@@ -35,6 +48,7 @@ export function FeatureTeaserContent({
           {t('Read the docs')}
           <ExternalLink className="size-3.5" />
         </a>
+        {showcase}
       </div>
     );
   }
@@ -81,17 +95,7 @@ export function FeatureTeaserContent({
         )}
       </div>
 
-      {videoUrl !== undefined && (
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full rounded-lg"
-          controls={false}
-          src={videoUrl}
-        />
-      )}
+      {showcase}
     </div>
   );
 }
