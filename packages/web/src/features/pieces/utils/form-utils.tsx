@@ -134,6 +134,8 @@ function parseDynamicValue({
         /^\s*[[{]/.test(value) && parsed !== value;
       return restoredJsonStringifiedValue ? parsed : value;
     }
+    case PropertyType.COLOR:
+      return typeof value === 'string' && value !== '' ? value : undefined;
     default:
       return undefined;
   }

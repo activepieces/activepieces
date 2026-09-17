@@ -14,6 +14,7 @@ const checkbox = Property.Checkbox({
   required: false,
 });
 const shortText = Property.ShortText({ displayName: 'Text', required: false });
+const color = Property.Color({ displayName: 'Brand', required: false });
 const staticDropdown = Property.StaticDropdown({
   displayName: 'Channel',
   required: true,
@@ -35,7 +36,9 @@ describe('formUtils.parseDynamicValue', () => {
     ['{{ trigger.body.channel || "C0123" }}', staticDropdown],
     ['{{ trigger.body.units }}', multiSelect],
     ['{{ trigger.body.enabled }}', checkbox],
-  ])('preserves the expression %s across the toggle', (value, property) => {
+    ['{{ trigger.body.brandColor }}', color],
+    ['#8142E3', color],
+  ])('preserves the value %s across the toggle', (value, property) => {
     expect(formUtils.parseDynamicValue({ property, value })).toEqual(value);
   });
 
@@ -69,6 +72,8 @@ describe('formUtils.parseDynamicValue', () => {
     ['["year","day"]', shortText],
     ['', staticDropdown],
     [undefined, staticDropdown],
+    ['', color],
+    [undefined, color],
   ])('has nothing unambiguous to restore in %s', (value, property) => {
     expect(formUtils.parseDynamicValue({ property, value })).toBeUndefined();
   });
