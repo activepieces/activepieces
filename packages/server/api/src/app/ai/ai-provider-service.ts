@@ -36,19 +36,21 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async listConfigs(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
         const rows = await listVisibleRows({ platformId, log })
-        return rows.map(toConfigResponse)
+        const chatRow = pickChatRow(rows)
+        return rows.map((row) => ({ ...toConfigResponse(row), enabledForChat: row.id === chatRow?.id }))
     },
 
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
         const rows = await listVisibleRows({ platformId, log })
         const eligible = rows.filter((row) => rowAllowsScope({ row, scope: { type: 'project', projectId } }))
         const ranked = rankRows(eligible)
+        const chatRow = pickChatRow(ranked)
         return unique(ranked.map((row) => row.provider)).map((provider) => {
             const rows = ranked.filter((row) => row.provider === provider)
             return {
                 provider,
                 name: aiProviders[provider].name,
-                enabledForChat: rows.some((row) => row.enabledForChat === true),
+                enabledForChat: rows.some((row) => row.id === chatRow?.id),
                 keys: rows.map((row) => ({ id: row.id, name: row.displayName })),
             }
         })
@@ -461,13 +463,15 @@ async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProvid
 }
 
 async function findAvailableChatProviderRow({ platformId, scope, log }: { platformId: PlatformId, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
-    const allChatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
-    const chatProviders = allChatProviders.filter((row) => rowAllowsScope({ row, scope }))
-    if (!chatProviders.some((chatProvider) => chatProvider.provider === AIProviderName.ACTIVEPIECES)) {
-        return chatProviders[0] ?? null
-    }
+    const rows = await aiProviderRepo().findBy({ platformId })
     const activepiecesHidden = await isActivepiecesAiProviderHidden({ platformId, log })
-    return chatProviders.find((chatProvider) => chatProvider.provider !== AIProviderName.ACTIVEPIECES || !activepiecesHidden) ?? null
+    return pickChatRow(rows.filter((row) => rowAllowsScope({ row, scope }) && !(activepiecesHidden && row.provider === AIProviderName.ACTIVEPIECES)))
+}
+
+function pickChatRow(rows: AIProviderSchema[]): AIProviderSchema | null {
+    return rows.find((row) => row.enabledForChat === true)
+        ?? rows.find((row) => row.provider === AIProviderName.ACTIVEPIECES)
+        ?? null
 }
 
 async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
