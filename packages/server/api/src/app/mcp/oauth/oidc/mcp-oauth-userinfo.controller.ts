@@ -3,7 +3,7 @@ import { FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { mcpOAuthTokenService } from '../token/mcp-oauth-token.service'
-import { mcpOidc } from './mcp-oidc'
+import { mcpOAuthOidcService } from './mcp-oauth-oidc.service'
 
 export const mcpOAuthUserInfoController: FastifyPluginAsyncZod = async (app) => {
     app.get('/userinfo', UserInfoRequest, handleUserInfo)
@@ -30,7 +30,7 @@ async function handleUserInfo(req: FastifyRequest, reply: FastifyReply): Promise
     }
 
     const claims = authenticated.status === 'ok'
-        ? await mcpOidc.getUserInfo({
+        ? await mcpOAuthOidcService.getUserInfo({
             userId: authenticated.payload.sub,
             platformId: authenticated.payload.platformId,
             scopes: authenticated.payload.scopes ?? [],

@@ -11,8 +11,8 @@ import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { mcpListingUtils } from '../../mcp-listing-utils'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
+import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
-import { mcpOidc } from '../oidc/mcp-oidc'
 import { mcpOAuthRevocationList } from './mcp-oauth-revocation-list'
 import { MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_REFRESH_TOKEN_TTL_MS } from './mcp-oauth-token-lifetimes'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
@@ -79,32 +79,21 @@ export const mcpOAuthTokenService = {
         }
         await repo().save(sanitizeObjectForPostgresql(tokenRecord))
 
-        const [accessToken, idToken] = await Promise.all([
-            issueAccessToken({
-                userId: params.userId,
-                projectId: params.projectId,
-                platformId: params.platformId,
-                clientId: params.clientId,
-                grantId: tokenRecord.id,
-                clientKey,
-                scopes: params.scopes,
-            }),
-            mcpOidc.issueIdToken({
-                userId: params.userId,
-                platformId: params.platformId,
-                clientId: params.clientId,
-                scopes: params.scopes,
-                nonce: params.nonce,
-                issuer: params.issuer,
-            }),
-        ])
+        const accessToken = await issueAccessToken({
+            userId: params.userId,
+            projectId: params.projectId,
+            platformId: params.platformId,
+            clientId: params.clientId,
+            grantId: tokenRecord.id,
+            clientKey,
+            scopes: params.scopes,
+        })
 
         return {
             access_token: accessToken,
             token_type: 'Bearer',
             expires_in: MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS,
             refresh_token: rawRefreshToken,
-            ...spreadIfDefined('id_token', idToken),
         }
     },
 
@@ -241,7 +230,7 @@ export const mcpOAuthTokenService = {
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
-        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: ['mcp'] })
+        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: DEFAULT_MCP_OAUTH_SCOPES })
     },
 }
 
@@ -293,8 +282,6 @@ type ExchangeCodeParams = {
     projectId: string | null
     platformId: string
     scopes: string[]
-    nonce?: string | null
-    issuer?: string
 }
 
 type RevokeRefreshTokenParams = {
@@ -334,7 +321,6 @@ type TokenResponse = {
     token_type: string
     expires_in: number
     refresh_token?: string
-    id_token?: string
 }
 
 type AuthenticateParams = {

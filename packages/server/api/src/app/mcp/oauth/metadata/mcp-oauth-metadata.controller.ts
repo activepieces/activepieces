@@ -1,4 +1,3 @@
-import { McpServerType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
 import { domainHelper } from '../../../helper/domain-helper'
@@ -24,7 +23,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
     }
 }
 
-const RESOURCE_PATHS = [McpServerType.PROJECT, McpServerType.PLATFORM].map((scope) => scope === McpServerType.PLATFORM ? 'mcp/platform' : 'mcp')
+const RESOURCE_PATHS = ['mcp', 'mcp/platform']
 
 const PublicMetadataRequest = {
     config: { security: securityAccess.public() },

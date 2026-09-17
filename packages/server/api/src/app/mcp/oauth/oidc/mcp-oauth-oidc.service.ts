@@ -31,7 +31,7 @@ async function getUserInfo({ userId, platformId, scopes }: UserInfoParams): Prom
     }
 }
 
-export const mcpOidc = {
+export const mcpOAuthOidcService = {
     getUserInfo,
 
     async issueIdToken({ userId, platformId, clientId, scopes, nonce, issuer }: IssueIdTokenParams): Promise<string | undefined> {
@@ -62,8 +62,8 @@ type UserInfoParams = {
 
 type IssueIdTokenParams = UserInfoParams & {
     clientId: string
-    nonce?: string | null
-    issuer?: string
+    nonce: string | null
+    issuer: string
 }
 
 type OidcClaims = {

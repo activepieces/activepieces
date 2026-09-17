@@ -1,5 +1,6 @@
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
+import { domainHelper } from '../../../helper/domain-helper'
 import { securityAccess } from '../authorization/fastify-security'
 import { oidcKeyManager } from './oidc-key-manager'
 
@@ -13,6 +14,7 @@ export const oidcTokenController: FastifyPluginAsyncZod = async (app) => {
                 aud: audience,
             },
             expiresInSeconds,
+            issuer: domainHelper.getConfiguredPublicUrl(),
         })
         void reply.header('Cache-Control', 'no-store')
         void reply.header('Pragma', 'no-cache')

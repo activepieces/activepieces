@@ -1,6 +1,6 @@
 import { MCP_OAUTH_SUPPORTED_SCOPES } from '../mcp-oauth-scopes'
 
-export function authorizationServerMetadata({ issuer }: { issuer: string }): Record<string, unknown> {
+export function authorizationServerMetadata({ issuer }: { issuer: string }): AuthorizationServerMetadata {
     return {
         issuer,
         authorization_endpoint: `${issuer}/authorize`,
@@ -18,3 +18,18 @@ export function authorizationServerMetadata({ issuer }: { issuer: string }): Rec
 }
 
 const CLIENT_AUTH_METHODS = ['client_secret_post', 'client_secret_basic', 'none']
+
+export type AuthorizationServerMetadata = {
+    issuer: string
+    authorization_endpoint: string
+    token_endpoint: string
+    userinfo_endpoint: string
+    registration_endpoint: string
+    revocation_endpoint: string
+    response_types_supported: string[]
+    grant_types_supported: string[]
+    code_challenge_methods_supported: string[]
+    token_endpoint_auth_methods_supported: string[]
+    revocation_endpoint_auth_methods_supported: string[]
+    scopes_supported: string[]
+}

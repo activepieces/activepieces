@@ -5,6 +5,7 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
+import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
@@ -41,7 +42,7 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 codeChallengeMethod: code_challenge_method,
                 state: state ?? null,
                 nonce: nonce ?? null,
-                scopes: scope ? scope.split(' ') : ['mcp'],
+                scopes: scope ? scope.split(' ') : DEFAULT_MCP_OAUTH_SCOPES,
                 resource: resource ?? null,
                 type: 'mcp_auth_request',
             },

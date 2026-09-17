@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { McpOAuthClient } from '@activepieces/shared'
 import { FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
@@ -7,7 +7,9 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { domainHelper } from '../../../helper/domain-helper'
 import { mcpOAuthClientAuth } from '../client/mcp-oauth-client-auth'
 import { mcpOAuthCodeService } from '../code/mcp-oauth-code.service'
+import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthValidation } from '../mcp-oauth-validation'
+import { mcpOAuthOidcService } from '../oidc/mcp-oauth-oidc.service'
 import { mcpOAuthTokenService, OAuthTokenError } from './mcp-oauth-token.service'
 
 export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
@@ -72,6 +74,7 @@ async function handleAuthorizationCode({ authorizationHeader, body, reply, issue
         return
     }
 
+    const scopes = authCode.scopes ?? DEFAULT_MCP_OAUTH_SCOPES
     const tokens = await mcpOAuthTokenService.exchangeCode({
         redirectUris: client.redirectUris,
         codeVerifier: code_verifier,
@@ -81,12 +84,18 @@ async function handleAuthorizationCode({ authorizationHeader, body, reply, issue
         userId: authCode.userId,
         projectId: authCode.projectId,
         platformId: authCode.platformId,
-        scopes: authCode.scopes ?? ['mcp'],
+        scopes,
+    })
+    const idToken = await mcpOAuthOidcService.issueIdToken({
+        userId: authCode.userId,
+        platformId: authCode.platformId,
+        clientId: client.clientId,
+        scopes,
         nonce: authCode.nonce,
         issuer,
     })
 
-    await reply.status(200).send(tokens)
+    await reply.status(200).send({ ...tokens, ...spreadIfDefined('id_token', idToken) })
 }
 
 async function handleRefreshToken({ authorizationHeader, body, reply }: HandlerParams): Promise<void> {

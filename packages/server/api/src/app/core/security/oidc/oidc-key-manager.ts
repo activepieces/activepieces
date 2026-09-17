@@ -5,8 +5,6 @@ import { Mutex } from 'async-mutex'
 import { FlagEntity } from '../../../flags/flag.entity'
 import { EncryptedObject, encryptUtils } from '../../../helper/encryption'
 import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
-import { system } from '../../../helper/system/system'
-import { AppSystemProp } from '../../../helper/system/system-props'
 import { repoFactory } from '../../db/repo-factory'
 
 const flagRepo = repoFactory(FlagEntity)
@@ -53,13 +51,9 @@ export const oidcKeyManager = {
             expiresInSeconds,
             algorithm: JwtSignAlgorithm.RS256,
             keyId: kid,
-            issuer: issuer ?? configuredIssuer(),
+            issuer,
         })
     },
-}
-
-function configuredIssuer(): string {
-    return system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
 }
 
 async function getOrGenerateStoredPrivateKey(): Promise<string> {
@@ -108,7 +102,7 @@ function computeKidFromJwk(jwk: JsonWebKey): string {
 type SignParams = {
     payload: Record<string, unknown>
     expiresInSeconds: number
-    issuer?: string
+    issuer: string
 }
 
 type OidcJwk = JsonWebKey & { use: string, alg: string, kid: string }
