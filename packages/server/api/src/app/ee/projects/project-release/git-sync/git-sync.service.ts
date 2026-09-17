@@ -12,9 +12,9 @@ import { GitRepoEntity } from './git-sync.entity'
 
 const repo = repoFactory(GitRepoEntity)
 
-export const gitRepoService = (_log: FastifyBaseLogger) => ({
+export const gitRepoService = (log: FastifyBaseLogger) => ({
     async upsert(request: ConfigureRepoRequest): Promise<GitRepo> {
-        await gitHelper.validateConnection(request)
+        await gitHelper.validateConnection(log, request)
 
         const existingRepo = await repo().findOneBy({ projectId: request.projectId })
         const id = existingRepo?.id ?? apId()

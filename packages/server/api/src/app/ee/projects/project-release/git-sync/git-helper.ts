@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { fileSystemUtils } from '@activepieces/server-utils'
 import { ApEnvironment, ConfigureRepoRequest, GitRepo } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -35,12 +35,7 @@ async function createGitRepoAndReturnPaths(
 ): Promise<{ flowFolderPath: string, git: SimpleGit, stateFolderPath: string, connectionsFolderPath: string, tablesFolderPath: string }> {
     assertSafeSlug(gitRepo.slug)
     const tmpFolder = path.join('/', 'tmp', 'repo', gitRepo.projectId)
-    try {
-        await fs.rmdir(tmpFolder, { recursive: true })
-    }
-    catch (e) {
-        // ignore
-    }
+    await removeQuietly({ target: tmpFolder, recursive: true, log })
     await fs.mkdir(tmpFolder, { recursive: true })
     const projectRoot = path.join(tmpFolder, 'projects', gitRepo.slug)
     await fileSystemUtils.assertPathInside({ baseDir: tmpFolder, targetPath: projectRoot })
@@ -85,6 +80,7 @@ async function initGitRepo(
     branch: string,
 ): Promise<SimpleGit> {
     assertSafeKeyPath(keyPath)
+    let stdErr = ''
     const git = simpleGit({
         baseDir,
         binary: 'git',
@@ -92,16 +88,36 @@ async function initGitRepo(
             allowUnsafeSshCommand: true,
             allowUnsafeProtocolOverride: true,
         },
-    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
-    await git.init()
-    await git.addConfig('core.symlinks', 'false')
-    await git.addConfig('protocol.file.allow', 'never')
-    await git.addRemote('origin', remoteUrl)
-    await git.branch(['-M', branch])
-    await git.pull('origin', branch)
+    })
+        .env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10`)
+        .outputHandler((_command, _stdOut, stdErrStream) => {
+            stdErrStream.on('data', (chunk: Buffer) => {
+                stdErr += chunk.toString('utf-8')
+            })
+        })
+    const { error } = await tryCatch(async () => {
+        await git.init()
+        await git.addConfig('core.symlinks', 'false')
+        await git.addConfig('protocol.file.allow', 'never')
+        await git.addRemote('origin', remoteUrl)
+        await git.branch(['-M', branch])
+        await git.pull('origin', branch)
+    })
+    if (!isNil(error)) {
+        throw new Error(buildGitErrorMessage({ error, stdErr }))
+    }
     return git
 }
 
+function buildGitErrorMessage({ error, stdErr }: { error: Error, stdErr: string }): string {
+    const details = stdErr.trim()
+    if (details.length === 0) {
+        return error.message
+    }
+    return details.slice(-MAX_GIT_ERROR_DETAILS_LENGTH)
+}
+
+const MAX_GIT_ERROR_DETAILS_LENGTH = 2000
 const SAFE_SLUG_PATTERN = /^[A-Za-z0-9._-]{1,128}$/
 const SAFE_KEY_PATH_PATTERN = /^[A-Za-z0-9._/-]+$/
 
@@ -127,7 +143,7 @@ function assertSafeKeyPath(keyPath: string): void {
     }
 }
 
-async function validateConnection(request: ConfigureRepoRequest): Promise<void> {
+async function validateConnection(log: FastifyBaseLogger, request: ConfigureRepoRequest): Promise<void> {
     const environment = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
     if (environment === ApEnvironment.TESTING) {
         return
@@ -151,7 +167,14 @@ async function validateConnection(request: ConfigureRepoRequest): Promise<void> 
         })
     }
     finally {
-        await fs.rmdir(tmpFolder, { recursive: true })
-        await fs.unlink(keyPath)
+        await removeQuietly({ target: tmpFolder, recursive: true, log })
+        await removeQuietly({ target: keyPath, recursive: false, log })
+    }
+}
+
+async function removeQuietly({ target, recursive, log }: { target: string, recursive: boolean, log: FastifyBaseLogger }): Promise<void> {
+    const { error } = await tryCatch(() => fs.rm(target, { recursive, force: true }))
+    if (!isNil(error)) {
+        log.error({ error, target }, '[gitHelper#removeQuietly] Failed to remove temporary git sync file, it may still hold an ssh private key')
     }
 }
