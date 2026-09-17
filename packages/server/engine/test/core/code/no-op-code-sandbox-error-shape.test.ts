@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { inspect } from 'node:util'
@@ -30,6 +30,10 @@ async function failureOf({ sandbox, codeFilePath }: { sandbox: CodeSandbox, code
 
 beforeAll(async () => {
     directory = await mkdtemp(path.join(tmpdir(), 'ap-code-error-shape-'))
+})
+
+afterAll(async () => {
+    await rm(directory, { recursive: true, force: true })
 })
 
 describe('a code step error reads the same in every sandbox', () => {
