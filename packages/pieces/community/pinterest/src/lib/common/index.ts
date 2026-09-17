@@ -107,24 +107,28 @@ export async function fetchAllPages({
   accessToken,
   path,
   maxPages = 2,
+  pageSize = 250,
 }: {
   accessToken: string;
   path: string;
   maxPages?: number;
+  pageSize?: number | null;
 }): Promise<{ items: unknown[]; truncated: boolean }> {
-  const separator = path.includes('?') ? '&' : '?';
   let items: unknown[] = [];
   let bookmark: string | undefined = undefined;
   let truncated = false;
 
   for (let page = 0; page < maxPages; page++) {
-    const bookmarkQuery = isNonEmptyString(bookmark)
-      ? `&bookmark=${encodeURIComponent(bookmark)}`
-      : '';
+    const query = [
+      ...(pageSize === null ? [] : [`page_size=${pageSize}`]),
+      ...(isNonEmptyString(bookmark)
+        ? [`bookmark=${encodeURIComponent(bookmark)}`]
+        : []),
+    ];
     const response: unknown = await makeRequest(
       accessToken,
       HttpMethod.GET,
-      `${path}${separator}page_size=250${bookmarkQuery}`
+      appendQuery({ path, query })
     );
 
     if (!isRecord(response)) {
@@ -153,6 +157,22 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 
 export function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
+}
+
+function appendQuery({
+  path,
+  query,
+}: {
+  path: string;
+  query: string[];
+}): string {
+  if (query.length === 0) {
+    return path;
+  }
+
+  const separator = path.includes('?') ? '&' : '?';
+
+  return `${path}${separator}${query.join('&')}`;
 }
 
 function dedupeById(items: unknown[]): unknown[] {

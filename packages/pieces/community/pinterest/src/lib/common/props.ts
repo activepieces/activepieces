@@ -1,5 +1,6 @@
 import {
   DropdownOption,
+  DropdownState,
   Property,
   OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
@@ -12,7 +13,8 @@ export const boardIdDropdown = Property.Dropdown({
   displayName: 'Board',
   required: true,
   refreshers: ['auth', 'ad_account_id'],
-  options: async ({ auth, ad_account_id }) => {
+  refreshOnSearch: true,
+  options: async ({ auth, ad_account_id }, ctx) => {
     if (!auth) {
       return {
         disabled: true,
@@ -21,37 +23,44 @@ export const boardIdDropdown = Property.Dropdown({
       };
     }
 
+    const search = ctx.searchValue?.trim() ?? '';
+
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const boards = await fetchAllPages({
-        accessToken,
-        path: isNonEmptyString(ad_account_id)
-          ? `/boards?ad_account_id=${encodeURIComponent(ad_account_id)}`
-          : '/boards',
-      });
+      const adAccountId = isNonEmptyString(ad_account_id) ? ad_account_id : '';
+      const boards =
+        search.length > 0
+          ? await fetchAllPages({
+              accessToken,
+              path: buildSearchPath({
+                resource: 'boards',
+                search,
+                adAccountId,
+              }),
+              pageSize: null,
+            })
+          : await fetchAllPages({
+              accessToken,
+              path:
+                adAccountId.length > 0
+                  ? `/boards?ad_account_id=${encodeURIComponent(adAccountId)}`
+                  : '/boards',
+            });
 
       const options = toNamedOptions(boards.items);
 
-      if (options.length === 0) {
-        return {
-          disabled: false,
-          options: [],
-          placeholder: 'No boards found. Create one in Pinterest first.',
-        };
-      }
-
-      if (boards.truncated) {
-        return {
-          disabled: false,
-          options,
-          placeholder: `Showing the first ${options.length} boards. Type to filter.`,
-        };
-      }
-
-      return {
-        disabled: false,
+      return toDropdownState({
         options,
-      };
+        truncated: boards.truncated,
+        emptyPlaceholder:
+          search.length > 0
+            ? `No boards match "${search}".`
+            : 'No boards found. Create one in Pinterest first.',
+        truncatedPlaceholder:
+          search.length > 0
+            ? `Showing the first ${options.length} matches. Refine your search.`
+            : `Showing the first ${options.length} boards. Type to search.`,
+      });
     } catch (error) {
       return {
         disabled: true,
@@ -67,7 +76,8 @@ export const pinIdDropdown = Property.Dropdown({
   displayName: 'Pin',
   required: true,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  refreshOnSearch: true,
+  options: async ({ auth }, ctx) => {
     if (!auth) {
       return {
         disabled: true,
@@ -76,31 +86,25 @@ export const pinIdDropdown = Property.Dropdown({
       };
     }
 
+    const search = ctx.searchValue?.trim() ?? '';
+
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const pins = await fetchAllPages({ accessToken, path: '/pins' });
+      const pins = await fetchPins({ accessToken, search });
       const options = toPinOptions(pins.items);
 
-      if (options.length === 0) {
-        return {
-          disabled: false,
-          options: [],
-          placeholder: 'No Pins found. Create one in Pinterest first.',
-        };
-      }
-
-      if (pins.truncated) {
-        return {
-          disabled: false,
-          options,
-          placeholder: `Showing the first ${options.length} Pins. Type to filter.`,
-        };
-      }
-
-      return {
-        disabled: false,
+      return toDropdownState({
         options,
-      };
+        truncated: pins.truncated,
+        emptyPlaceholder:
+          search.length > 0
+            ? `No Pins match "${search}".`
+            : 'No Pins found. Create one in Pinterest first.',
+        truncatedPlaceholder:
+          search.length > 0
+            ? `Showing the first ${options.length} matches. Refine your search.`
+            : `Showing the first ${options.length} Pins. Type to search.`,
+      });
     } catch (error) {
       return {
         disabled: true,
@@ -135,26 +139,12 @@ export const adAccountIdDropdown = Property.Dropdown({
       });
       const options = toNamedOptions(adAccounts.items);
 
-      if (options.length === 0) {
-        return {
-          disabled: false,
-          options: [],
-          placeholder: 'No ad accounts found on this Pinterest account.',
-        };
-      }
-
-      if (adAccounts.truncated) {
-        return {
-          disabled: false,
-          options,
-          placeholder: `Showing the first ${options.length} ad accounts. Type to filter.`,
-        };
-      }
-
-      return {
-        disabled: false,
+      return toDropdownState({
         options,
-      };
+        truncated: adAccounts.truncated,
+        emptyPlaceholder: 'No ad accounts found on this Pinterest account.',
+        truncatedPlaceholder: `Showing the first ${options.length} ad accounts. Type to filter.`,
+      });
     } catch (error) {
       return {
         disabled: true,
@@ -196,26 +186,12 @@ export const boardSectionIdDropdown = Property.Dropdown({
       });
       const options = toNamedOptions(boardSections.items);
 
-      if (options.length === 0) {
-        return {
-          disabled: false,
-          options: [],
-          placeholder: 'No sections found on this board.',
-        };
-      }
-
-      if (boardSections.truncated) {
-        return {
-          disabled: false,
-          options,
-          placeholder: `Showing the first ${options.length} sections. Type to filter.`,
-        };
-      }
-
-      return {
-        disabled: false,
+      return toDropdownState({
         options,
-      };
+        truncated: boardSections.truncated,
+        emptyPlaceholder: 'No sections found on this board.',
+        truncatedPlaceholder: `Showing the first ${options.length} sections. Type to filter.`,
+      });
     } catch (error) {
       return {
         disabled: true,
@@ -233,7 +209,8 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
   required: false,
   advanced: true,
   refreshers: ['auth'],
-  options: async ({ auth }) => {
+  refreshOnSearch: true,
+  options: async ({ auth }, ctx) => {
     if (!auth) {
       return {
         disabled: true,
@@ -242,31 +219,25 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
       };
     }
 
+    const search = ctx.searchValue?.trim() ?? '';
+
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const pins = await fetchAllPages({ accessToken, path: '/pins' });
+      const pins = await fetchPins({ accessToken, search });
       const options = toPinOptions(pins.items);
 
-      if (options.length === 0) {
-        return {
-          disabled: false,
-          options: [],
-          placeholder: 'No Pins found. Create one in Pinterest first.',
-        };
-      }
-
-      if (pins.truncated) {
-        return {
-          disabled: false,
-          options,
-          placeholder: `Showing the first ${options.length} Pins. Type to filter.`,
-        };
-      }
-
-      return {
-        disabled: false,
+      return toDropdownState({
         options,
-      };
+        truncated: pins.truncated,
+        emptyPlaceholder:
+          search.length > 0
+            ? `No Pins match "${search}".`
+            : 'No Pins found. Create one in Pinterest first.',
+        truncatedPlaceholder:
+          search.length > 0
+            ? `Showing the first ${options.length} matches. Refine your search.`
+            : `Showing the first ${options.length} Pins. Type to search.`,
+      });
     } catch (error) {
       return {
         disabled: true,
@@ -276,6 +247,57 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
     }
   },
 });
+
+async function fetchPins({
+  accessToken,
+  search,
+}: {
+  accessToken: string;
+  search: string;
+}): Promise<{ items: unknown[]; truncated: boolean }> {
+  if (search.length === 0) {
+    return fetchAllPages({ accessToken, path: '/pins' });
+  }
+
+  return fetchAllPages({
+    accessToken,
+    path: buildSearchPath({ resource: 'pins', search, adAccountId: '' }),
+    pageSize: null,
+  });
+}
+
+function toDropdownState({
+  options,
+  truncated,
+  emptyPlaceholder,
+  truncatedPlaceholder,
+}: {
+  options: DropdownOption<string>[];
+  truncated: boolean;
+  emptyPlaceholder: string;
+  truncatedPlaceholder: string;
+}): DropdownState<string> {
+  if (options.length === 0) {
+    return {
+      disabled: false,
+      options: [],
+      placeholder: emptyPlaceholder,
+    };
+  }
+
+  if (truncated) {
+    return {
+      disabled: false,
+      options,
+      placeholder: truncatedPlaceholder,
+    };
+  }
+
+  return {
+    disabled: false,
+    options,
+  };
+}
 
 function toNamedOptions(items: unknown[]): DropdownOption<string>[] {
   return items.flatMap((item) => {
@@ -309,4 +331,23 @@ function toPinOptions(items: unknown[]): DropdownOption<string>[] {
 
     return [{ label: isNonEmptyString(title) ? title : id, value: id }];
   });
+}
+
+function buildSearchPath({
+  resource,
+  search,
+  adAccountId,
+}: {
+  resource: 'boards' | 'pins';
+  search: string;
+  adAccountId: string;
+}): string {
+  const adAccountQuery =
+    adAccountId.length > 0
+      ? `&ad_account_id=${encodeURIComponent(adAccountId)}`
+      : '';
+
+  return `/search/${resource}?query=${encodeURIComponent(
+    search
+  )}${adAccountQuery}`;
 }
