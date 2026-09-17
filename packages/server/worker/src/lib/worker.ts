@@ -348,6 +348,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
         ...spreadIfDefined('run', isAgentJob && 'runId' in jobData ? { id: jobData.runId } : undefined),
         ...spreadIfDefined('conversation', 'conversationId' in jobData ? { id: jobData.conversationId } : undefined),
         ...spreadIfDefined('flowVersion', 'flowVersionId' in jobData ? { id: jobData.flowVersionId } : undefined),
+        ...spreadIfDefined('waitpoint', 'parentWaitpointId' in jobData && jobData.parentWaitpointId != null ? { id: jobData.parentWaitpointId } : undefined),
     })
     return wideEvent.run({
         logger: jobLogger,

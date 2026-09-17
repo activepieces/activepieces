@@ -2894,5 +2894,6 @@
   "The input and output were not kept for this call.": "The input and output were not kept for this call.",
   "The input and output are no longer available.": "The input and output are no longer available.",
   "Too large to keep in full — some of it was dropped.": "Too large to keep in full — some of it was dropped.",
-  "what the call costs": "what the call costs"
+  "what the call costs": "what the call costs",
+  "dispatchIndexRequiresParentWaitpointId": "A dispatch index only makes sense together with the barrier that dispatched the run."
 }
