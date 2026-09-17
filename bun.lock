@@ -93,6 +93,7 @@
       "devDependencies": {
         "@types/autocannon": "7.12.7",
         "@types/node": "24.11.0",
+        "vitest": "3.2.6",
       },
     },
     "packages/core/ai-providers": {

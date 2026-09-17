@@ -83,6 +83,9 @@ function translateProperty(pieceModelOrProperty: Record<string, unknown>, path: 
   if (parsedKeys[0] === '*') {
     return Object.values(pieceModelOrProperty).forEach(item => translateProperty(item as Record<string, unknown>, parsedKeys.slice(1).join('.'), i18n))
   }
+  if (Array.isArray(pieceModelOrProperty)) {
+    return pieceModelOrProperty.forEach(item => translateProperty(item as Record<string, unknown>, path, i18n))
+  }
   const nextObject = pieceModelOrProperty[parsedKeys[0]] as Record<string, unknown>;
   if (!nextObject) {
     return;
