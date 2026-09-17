@@ -119,7 +119,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.20.2",
+      "version": "0.21.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -164,7 +164,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.173.0",
+      "version": "0.174.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",

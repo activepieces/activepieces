@@ -11,6 +11,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { WaitpointEntity } from '../../waitpoints/waitpoint-entity'
+import { resumeDelayJobId } from '../../waitpoints/waitpoint-service'
 import { jobQueue } from '../job-queue/job-queue'
 
 const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v7'
@@ -68,7 +69,7 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 job: {
                     name: SystemJobName.RESUME_DELAY_WAITPOINT,
                     data: { flowRunId: pausedRun.id, projectId: pausedRun.projectId, waitpointId: waitpoint.id },
-                    jobId: `resume-delay-${pausedRun.id}`,
+                    jobId: resumeDelayJobId(waitpoint.id),
                 },
                 schedule: {
                     type: 'one-time',
