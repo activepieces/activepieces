@@ -1,11 +1,12 @@
 {
   "name": "activepieces",
-  "version": "0.90.4",
+  "version": "0.92.0",
   "packageManager": "bun@1.4.0",
   "trustedDependencies": [
     "sqlite3",
     "isolated-vm",
-    "redis-memory-server"
+    "redis-memory-server",
+    "deno"
   ],
   "redisMemoryServer": {
     "version": "8.8.1"
@@ -138,6 +139,6 @@
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node",
     "axios": "1.18.0",
-    "nanoid": "3.3.17"
+    "nanoid": "3.3.18"
   }
 }

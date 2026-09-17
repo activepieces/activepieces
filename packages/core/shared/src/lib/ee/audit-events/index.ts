@@ -120,6 +120,16 @@ const AgentEventData = z.object({
     }),
 })
 
+export enum AgentActionKind {
+    PIECE = 'PIECE',
+    FLOW = 'FLOW',
+}
+
+export enum AgentActionOutcome {
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+}
+
 const AgentActionEventData = z.object({
     source: z.enum(AgentRunSource),
     conversation: z.object({
@@ -134,12 +144,21 @@ const AgentActionEventData = z.object({
         id: z.string(),
         runId: z.string(),
     }).optional(),
-    action: z.object({
-        pieceName: z.string(),
-        pieceDisplayName: z.string(),
-        actionName: z.string(),
-        displayName: z.string(),
-    }),
+    action: z.discriminatedUnion('kind', [
+        z.object({
+            kind: z.literal(AgentActionKind.PIECE),
+            pieceName: z.string(),
+            pieceDisplayName: z.string(),
+            actionName: z.string(),
+            displayName: z.string(),
+        }),
+        z.object({
+            kind: z.literal(AgentActionKind.FLOW),
+            flowId: z.string(),
+            displayName: z.string(),
+        }),
+    ]),
+    outcome: z.enum(AgentActionOutcome).optional(),
     connection: z.object({
         externalId: z.string(),
         label: z.string().optional(),
@@ -678,7 +697,11 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
             return `Agent ${event.data.agent.displayName} is taken offline`
         case ApplicationEventName.AGENT_ACTION_EXECUTED: {
             const who = event.data.agent?.displayName ?? 'An agent'
-            return `${who} ran ${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
+            const what = event.data.action.kind === AgentActionKind.FLOW
+                ? `the flow ${event.data.action.displayName}`
+                : `${event.data.action.pieceDisplayName}: ${event.data.action.displayName}`
+            const verb = event.data.outcome === AgentActionOutcome.FAILED ? 'tried to run' : 'ran'
+            return `${who} ${verb} ${what}`
         }
         case ApplicationEventName.VARIABLE_UPSERTED:
             return `Variable ${event.data.variable.name} is created or updated`
@@ -807,5 +830,7 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             return `Updated sample data info for step "${event.data.request.request.stepName}" in flow "${event.data.flowVersion.displayName}".`
     }
 }
+
+export type AgentActionRef = z.infer<typeof AgentActionEventData>['action']
 
 export * from './mock-event-builder'

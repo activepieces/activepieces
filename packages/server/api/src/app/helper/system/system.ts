@@ -37,7 +37,10 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
+    [AppSystemProp.AI_CREDIT_USD_VALUE]: '0.0005',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '50',
+    [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: '2',
+    [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: '32',
     [AppSystemProp.MAX_WEBHOOK_PAYLOAD_SIZE_MB]: '25',
     [AppSystemProp.WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB]: '512',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
@@ -94,6 +97,23 @@ export const system = {
         }
         return value
 
+    },
+    getDecimalOrThrow(prop: SystemProp): number {
+        const stringNumber = getEnvVarOrReturnDefaultValue(prop)
+        const parsedNumber = isNil(stringNumber) || stringNumber === '' ? Number.NaN : Number(stringNumber)
+
+        if (!Number.isFinite(parsedNumber)) {
+            throw new ActivepiecesError(
+                {
+                    code: ErrorCode.SYSTEM_PROP_NOT_DEFINED,
+                    params: {
+                        prop,
+                    },
+                },
+                `System property AP_${prop} is not a finite number, please check the documentation`,
+            )
+        }
+        return parsedNumber
     },
     getNumber(prop: SystemProp): number | null {
         const stringNumber = getEnvVarOrReturnDefaultValue(prop)

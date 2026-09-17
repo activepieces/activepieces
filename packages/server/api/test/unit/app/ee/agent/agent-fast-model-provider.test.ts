@@ -15,7 +15,7 @@ vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    agentAiUtils: { createChatModel: (args: unknown) => args },
+    aiUtils: { createModel: (args: unknown) => args },
 }))
 
 const { agentHelpers } = await import('../../../../../src/app/ee/agent/agent-helpers')
@@ -40,7 +40,7 @@ describe('resolveFastModel', () => {
 
         expect(mockGetChatProvider).not.toHaveBeenCalled()
         expect(mockGetConfigOrThrow).toHaveBeenCalledWith({ platformId, provider: AIProviderName.OPENROUTER, scope })
-        expect(model).toMatchObject({ provider: AIProviderName.OPENROUTER, modelId: 'anthropic/claude-haiku-4.5' })
+        expect(model).toMatchObject({ credentials: { provider: AIProviderName.OPENROUTER }, modelId: 'anthropic/claude-haiku-4.5' })
     })
 
     it('asks for the pinned key when the run names one', async () => {
@@ -60,6 +60,6 @@ describe('resolveFastModel', () => {
 
         const model = await agentHelpers.resolveFastModel({ platformId, scope, log })
 
-        expect(model).toMatchObject({ provider: AIProviderName.ANTHROPIC, modelId: 'claude-haiku-4-5' })
+        expect(model).toMatchObject({ credentials: { provider: AIProviderName.ANTHROPIC }, modelId: 'claude-haiku-4-5' })
     })
 })
