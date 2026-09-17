@@ -14,7 +14,7 @@ export const getImportProcess = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Reads the current status of one Brevo background process by the id that Import Contacts returned. Status is one of queued, processing, completed, failed or cancelled; a completed import also carries links to CSV files listing invalid emails and duplicate records. This is a single status read, not a wait — call it again after a delay while the status is still queued or processing. Read-only and idempotent.',
+			'Reads the current status of one Brevo background process by the id that Import Contacts returned. Status is one of queued, in_process, processing, completed, failed or cancelled; a completed import also carries links to CSV files listing invalid emails and duplicate records. This is a single status read, not a wait — call it again after a delay while the status is still queued, in_process or processing. Read-only and idempotent.',
 		idempotent: true,
 	},
 	props: {
