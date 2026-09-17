@@ -145,8 +145,11 @@ export const executionJournal = {
             if (step.type !== FlowActionType.LOOP_ON_ITEMS) continue
             if (!step.output?.iterations) continue
 
-            for (const iteration of step.output.iterations) {
-                const nestedPath = this.getPathToStep(iteration, stepName, loopsIndexes, [...currentPath, [currentStepName, loopsIndexes[currentStepName]]])
+            const iterations = step.output.iterations
+            const iterationIndex = Math.max(Math.min(loopsIndexes[currentStepName] ?? 0, iterations.length - 1), 0)
+
+            for (const iteration of iterations) {
+                const nestedPath = this.getPathToStep(iteration, stepName, loopsIndexes, [...currentPath, [currentStepName, iterationIndex]])
                 if (nestedPath) return nestedPath
             }
         }
