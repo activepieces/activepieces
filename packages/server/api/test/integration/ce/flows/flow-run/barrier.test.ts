@@ -5,6 +5,7 @@ import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { databaseConnection } from '../../../../../src/app/database/database-connection'
 import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
+import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { BarrierJobData } from '../../../../../src/app/waitpoints/barrier-queue-factory'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
@@ -96,6 +97,39 @@ async function completeWithoutConsuming(barrierId: string) {
 async function countPendingEvaluations({ queue, barrierId }: { queue: Queue<BarrierJobData>, barrierId: string }): Promise<number> {
     const jobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'paused'])
     return jobs.filter((job) => job.data.barrierId === barrierId).length
+}
+
+async function closeWithoutConsuming(barrierId: string) {
+    await databaseConnection().getRepository('waitpoint').update({ id: barrierId }, {
+        status: WaitpointStatus.COMPLETED,
+        resumePayload: {
+            body: {
+                total: 1,
+                succeeded: 1,
+                failed: 0,
+                rejected: 0,
+                canceled: 0,
+                notDispatched: 0,
+                stillRunning: 0,
+                timedOut: false,
+                signals: [],
+            },
+            headers: {},
+            queryParams: {},
+        },
+    })
+    await databaseConnection().getRepository('waitpoint_signal').delete({ waitpointId: barrierId })
+}
+
+async function listResumeJobs(flowRunId: string) {
+    const queue = jobQueue(app.log).getSharedQueue()
+    const jobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'paused', 'active'])
+    return jobs.filter((job) => job.id?.startsWith(`${flowRunId}-resume-`))
+}
+
+async function dropResumeJobs(flowRunId: string) {
+    const jobs = await listResumeJobs(flowRunId)
+    await Promise.all(jobs.map((job) => job.remove()))
 }
 
 async function readStatus(barrierId: string): Promise<WaitpointStatus> {
@@ -288,6 +322,19 @@ describe('resume guards', () => {
 
         expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
         expect(await listSignals(barrier.id)).toHaveLength(0)
+    })
+
+    it('leaves the resume to the release that closed the barrier, even inside the window before that release consumes it', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await closeWithoutConsuming(barrier.id)
+        await dropResumeJobs(flowRun.id)
+
+        const lost = await releaseNow(barrier)
+
+        expect(lost).toBeNull()
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.COMPLETED)
     })
 
     it('refuses a by-run resume between the barrier closing and the trusted resume consuming it', async () => {
