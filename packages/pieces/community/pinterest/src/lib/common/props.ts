@@ -75,9 +75,9 @@ export const pinIdDropdown = Property.Dropdown({
   auth: pinterestAuth,
   displayName: 'Pin',
   required: true,
-  refreshers: ['auth'],
+  refreshers: ['auth', 'ad_account_id'],
   refreshOnSearch: true,
-  options: async ({ auth }, ctx) => {
+  options: async ({ auth, ad_account_id }, ctx) => {
     if (!auth) {
       return {
         disabled: true,
@@ -90,7 +90,8 @@ export const pinIdDropdown = Property.Dropdown({
 
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const pins = await fetchPins({ accessToken, search });
+      const adAccountId = isNonEmptyString(ad_account_id) ? ad_account_id : '';
+      const pins = await fetchPins({ accessToken, search, adAccountId });
       const options = toPinOptions(pins.items);
 
       return toDropdownState({
@@ -136,6 +137,7 @@ export const adAccountIdDropdown = Property.Dropdown({
       const adAccounts = await fetchAllPages({
         accessToken,
         path: '/ad_accounts',
+        maxPages: 10,
       });
       const options = toNamedOptions(adAccounts.items);
 
@@ -183,6 +185,7 @@ export const boardSectionIdDropdown = Property.Dropdown({
       const boardSections = await fetchAllPages({
         accessToken,
         path: `/boards/${board_id}/sections`,
+        maxPages: 10,
       });
       const options = toNamedOptions(boardSections.items);
 
@@ -208,9 +211,9 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
   description: 'Pins whose products to tag. Needs product tagging access.',
   required: false,
   advanced: true,
-  refreshers: ['auth'],
+  refreshers: ['auth', 'ad_account_id'],
   refreshOnSearch: true,
-  options: async ({ auth }, ctx) => {
+  options: async ({ auth, ad_account_id }, ctx) => {
     if (!auth) {
       return {
         disabled: true,
@@ -223,7 +226,8 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
 
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
-      const pins = await fetchPins({ accessToken, search });
+      const adAccountId = isNonEmptyString(ad_account_id) ? ad_account_id : '';
+      const pins = await fetchPins({ accessToken, search, adAccountId });
       const options = toPinOptions(pins.items);
 
       return toDropdownState({
@@ -251,17 +255,25 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
 async function fetchPins({
   accessToken,
   search,
+  adAccountId,
 }: {
   accessToken: string;
   search: string;
+  adAccountId: string;
 }): Promise<{ items: unknown[]; truncated: boolean }> {
   if (search.length === 0) {
-    return fetchAllPages({ accessToken, path: '/pins' });
+    return fetchAllPages({
+      accessToken,
+      path:
+        adAccountId.length > 0
+          ? `/pins?ad_account_id=${encodeURIComponent(adAccountId)}`
+          : '/pins',
+    });
   }
 
   return fetchAllPages({
     accessToken,
-    path: buildSearchPath({ resource: 'pins', search, adAccountId: '' }),
+    path: buildSearchPath({ resource: 'pins', search, adAccountId }),
     pageSize: null,
   });
 }
