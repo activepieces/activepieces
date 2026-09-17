@@ -9,6 +9,9 @@ process.env.AP_EXECUTION_MODE = 'UNSANDBOXED'
 process.env.AP_BASE_CODE_DIRECTORY = 'packages/server/engine/test/resources/codes'
 process.env.AP_TEST_MODE = 'true'
 process.env.AP_DEV_PIECES = 'http,data-mapper,approval,webhook,delay'
+// Template-expression scripts always run in Deno, so every suite needs the binary.
+// Resolve it from the `deno` npm devDependency instead of relying on PATH.
+process.env.AP_DENO_PATH = process.env.AP_DENO_PATH ?? path.join(path.dirname(require.resolve('deno/bin.cjs')), 'deno')
 
 export default defineConfig({
   // esbuild injects this at bundle time; vitest runs the source directly, so define it here too.

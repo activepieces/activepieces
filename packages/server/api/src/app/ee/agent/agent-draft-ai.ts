@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, PlatformId, ProjectId, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentDraftFields, AgentTool, AgentToolType, CHAT_BYOK_CREDIT_WEIGHT, DEFAULT_CHAT_TIER_ID, DraftAgentResponse, isAppSumoCreditedPlan, MAX_SUGGESTED_AGENT_TOOLS, mcpToolNameUtils } from '@activepieces/shared'
+import { AgentDraftFields, AgentTool, AgentToolType, DEFAULT_CHAT_TIER_ID, DraftAgentResponse, isAppSumoCreditedPlan, MAX_SUGGESTED_AGENT_TOOLS, mcpToolNameUtils } from '@activepieces/shared'
 import { APICallError, generateText, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -17,6 +17,7 @@ const DRAFT_TIMEOUT_MS = 30_000
 const REPLY_LOG_LIMIT = 500
 const REASON_LIMIT = 200
 const FAST_TIER_ID = 'fast'
+const CREDITS_PER_DRAFT = 1
 const CANDIDATE_PIECE_LIMIT = 8
 const DRAFT_SYSTEM_PROMPT = readFileSync(path.resolve('packages/server/api/src/assets/prompts/agent-draft-prompt.md'), 'utf8')
 
@@ -196,11 +197,10 @@ function parseDraft(raw: string): DraftReply | null {
 async function debitDraft({ platformId, projectId, log }: { platformId: PlatformId, projectId: ProjectId, log: FastifyBaseLogger }): Promise<void> {
     const { error } = await tryCatch(async () => {
         const provider = await agentHelpers.resolveChatProviderName({ platformId, projectId, log })
-        const value = provider === AIProviderName.ACTIVEPIECES ? agentHelpers.resolveTier({ tierId: FAST_TIER_ID }).creditWeight : CHAT_BYOK_CREDIT_WEIGHT
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const usage = {
             platformId,
-            value,
+            value: CREDITS_PER_DRAFT,
             source: CreditUsageSource.AGENT_DRAFT as const,
             idempotencyKey: `agent-draft:${apId()}`,
             properties: { platformId, projectId, provider },

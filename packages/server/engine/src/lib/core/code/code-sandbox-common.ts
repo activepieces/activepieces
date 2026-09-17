@@ -27,7 +27,8 @@ export type ScriptSession = {
 
 type RunCodeModuleParams = {
     /**
-     * Path to the compiled index.js file to execute.
+     * Path to the step's TypeScript entry module (index.ts). Deno resolves its
+     * bare-specifier imports from the sibling node_modules directory.
      */
     codeFilePath: string
 
