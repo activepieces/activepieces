@@ -5,16 +5,19 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
 import { AfterImportFlowRedirect } from '@/app/guards/after-import-flow-redirect';
+import { flowHooks } from '@/features/flows';
 
 const FLOW_ID = 'flow_1';
 const OTHER_FLOW_ID = 'flow_2';
+const PURGED_PREFIX = ['flow', FLOW_ID];
 const builderPageKey = (flowId: string) => [
-  'flow',
-  flowId,
-  undefined,
+  ...flowHooks.createFlowQueryKeys({ flowId, versionId: undefined }),
   'project_1',
 ];
-const versionPinnedKey = ['flow', FLOW_ID, 'version_1'];
+const versionPinnedKey = flowHooks.createFlowQueryKeys({
+  flowId: FLOW_ID,
+  versionId: 'version_1',
+});
 
 const renderRedirect = (queryClient: QueryClient) =>
   render(
@@ -47,6 +50,11 @@ describe('AfterImportFlowRedirect', () => {
     expect(queryClient.getQueryData(builderPageKey(OTHER_FLOW_ID))).toEqual({
       id: OTHER_FLOW_ID,
     });
+  });
+
+  it('keeps the flow id at the position the guard purges by', () => {
+    expect(builderPageKey(FLOW_ID).slice(0, 2)).toEqual(PURGED_PREFIX);
+    expect(versionPinnedKey.slice(0, 2)).toEqual(PURGED_PREFIX);
   });
 
   it('redirects to the builder route of the imported flow', () => {
