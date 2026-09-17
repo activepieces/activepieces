@@ -127,36 +127,12 @@ function resolveResetMoment({
   creditsNextResetAt,
   creditsResetInterval,
   nextBillingDate,
-  isPaid,
 }: CreditsResetParams): { at: string; resetsDaily: boolean } | null {
-  if (!isNil(creditsNextResetAt)) {
-    return {
-      at: creditsNextResetAt,
-      resetsDaily: isDailyReset({ creditsResetInterval, isPaid }),
-    };
+  const at = creditsNextResetAt ?? nextBillingDate;
+  if (isNil(at)) {
+    return null;
   }
-  if (isPaid) {
-    return isNil(nextBillingDate)
-      ? null
-      : { at: nextBillingDate, resetsDaily: false };
-  }
-  return {
-    at: dayjs().add(1, 'day').startOf('day').toISOString(),
-    resetsDaily: true,
-  };
-}
-
-function isDailyReset({
-  creditsResetInterval,
-  isPaid,
-}: {
-  creditsResetInterval: string | null | undefined;
-  isPaid: boolean;
-}): boolean {
-  if (isNil(creditsResetInterval)) {
-    return !isPaid;
-  }
-  return creditsResetInterval === DAILY_RESET_INTERVAL;
+  return { at, resetsDaily: creditsResetInterval === DAILY_RESET_INTERVAL };
 }
 
 function formatTimeUntil(value: string): string {
@@ -235,7 +211,6 @@ export type CreditsResetParams = {
   creditsNextResetAt: string | null | undefined;
   creditsResetInterval: string | null | undefined;
   nextBillingDate: string | null | undefined;
-  isPaid: boolean;
 };
 
 export type CreditsResetLine = {
