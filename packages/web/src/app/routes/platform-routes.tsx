@@ -36,6 +36,8 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
         description={page.teaser?.description}
         tier={page.teaser?.tier}
         documentationUrl={page.teaser?.documentationUrl}
+        featureKey={page.teaser?.featureKey}
+        showContactSales={page.teaser?.showContactSales}
       >
         <SuspenseWrapper>
           <Page />
@@ -55,6 +57,8 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
         description={page.teaser?.description}
         tier={page.teaser?.tier}
         documentationUrl={page.teaser?.documentationUrl}
+        featureKey={page.teaser?.featureKey}
+        showContactSales={page.teaser?.showContactSales}
       >
         <SuspenseWrapper>
           <Overview />
@@ -82,6 +86,8 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
       description={activeTab.teaser?.description}
       tier={activeTab.teaser?.tier}
       documentationUrl={activeTab.teaser?.documentationUrl}
+      featureKey={activeTab.teaser?.featureKey}
+      showContactSales={activeTab.teaser?.showContactSales}
     >
       <SuspenseWrapper>
         <TabContent />

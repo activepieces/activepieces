@@ -4,9 +4,14 @@ import { ExternalLink, Lock } from 'lucide-react';
 import { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { useManagePlanDialogStore } from '@/features/billing';
+import {
+  FeatureKey,
+  FeatureTier,
+  RequestTrial,
+  TIER_LABELS,
+  useManagePlanDialogStore,
+} from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { FeatureTier, TIER_LABELS } from '@/lib/feature-tier';
 
 export function FeatureSample({
   locked,
@@ -14,6 +19,8 @@ export function FeatureSample({
   description,
   tier,
   documentationUrl,
+  featureKey,
+  showContactSales = true,
   children,
 }: FeatureSampleProps) {
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
@@ -49,15 +56,20 @@ export function FeatureSample({
             )}
           </div>
           {isCommunity ? (
-            <a
-              href={documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-            >
-              {t('Read the docs')}
-              <ExternalLink className="size-3.5" />
-            </a>
+            <div className="flex flex-col items-center gap-3">
+              {showContactSales && featureKey !== undefined && (
+                <RequestTrial featureKey={featureKey} />
+              )}
+              <a
+                href={documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              >
+                {t('Read the docs')}
+                <ExternalLink className="size-3.5" />
+              </a>
+            </div>
           ) : (
             <Button className="w-full" onClick={() => openManagePlanDialog()}>
               {tier === undefined
@@ -86,6 +98,8 @@ const ENTERPRISE_DOCUMENTATION_URL =
 
 export type FeatureSampleProps = {
   locked: boolean;
+  featureKey?: FeatureKey;
+  showContactSales?: boolean;
   title: string;
   description?: string;
   tier?: FeatureTier;

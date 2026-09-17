@@ -34,6 +34,7 @@ const EnvironmentSettings = () => {
 
   return (
     <LockedFeatureGuard
+      featureKey="ENVIRONMENT"
       locked={!platform.plan.environmentsEnabled}
       lockTitle={t('Enable Environments')}
       lockDescription={t(

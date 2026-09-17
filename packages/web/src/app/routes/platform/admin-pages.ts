@@ -224,6 +224,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         isLocked: ({ plan }) => !plan.ssoEnabled,
         sample: true,
         teaser: {
+          featureKey: 'SSO',
           title: 'Enable Single Sign On',
           description:
             'Let your users sign in with your current SSO provider or give them self serve sign up access',
@@ -242,6 +243,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         isLocked: ({ plan }) => !plan.projectRolesEnabled,
         sample: true,
         teaser: {
+          featureKey: 'CUSTOM_ROLES',
           title: 'Project Role Management',
           description:
             'Define custom roles and permissions to control what your team members can access and modify',
@@ -274,6 +276,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         isLocked: ({ plan }) => !plan.globalConnectionsEnabled,
         sample: true,
         teaser: {
+          featureKey: 'GLOBAL_CONNECTIONS',
           title: 'Enable Global Connections',
           description: 'Manage platform-wide connections to external systems.',
           tier: 'team',
@@ -334,6 +337,7 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'templates',
     sample: true,
     teaser: {
+      featureKey: 'TEMPLATES',
       title: 'Unlock Templates',
       description:
         'Convert the most common automations into reusable templates 1 click away from your users',
@@ -352,6 +356,7 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'embed',
     sample: true,
     teaser: {
+      featureKey: 'SIGNING_KEYS',
       title: 'Unlock Embedding Through JS SDK',
       description: 'Enable signing keys to access embedding functionalities.',
       tier: 'enterprise',
@@ -382,6 +387,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         isLocked: ({ plan }) => !plan.apiKeysEnabled,
         sample: true,
         teaser: {
+          featureKey: 'API',
           title: 'Enable API Keys',
           description:
             'Create and manage API keys to access Activepieces APIs.',
@@ -400,6 +406,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         isLocked: ({ plan }) => !plan.secretManagersEnabled,
         sample: true,
         teaser: {
+          featureKey: 'SECRET_MANAGERS',
           title: 'Enable Secret Managers',
           description: 'Manage your secrets from a single and secure place',
           tier: 'enterprise',
@@ -417,6 +424,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         isLocked: ({ plan }) => !plan.auditLogEnabled,
         sample: true,
         teaser: {
+          featureKey: 'AUDIT_LOGS',
           title: 'Unlock Audit Logs',
           description:
             'Comply with internal and external security policies by tracking activities done within your account',
@@ -435,6 +443,7 @@ export const ADMIN_PAGES: AdminPage[] = [
         isLocked: ({ plan }) => !plan.eventStreamingEnabled,
         sample: true,
         teaser: {
+          featureKey: 'EVENT_DESTINATIONS',
           title: 'Unlock Event Streaming',
           description:
             'Forward every audit event we emit to a webhook, then handle it in a flow.',
@@ -452,6 +461,8 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'billing',
     sample: true,
     teaser: {
+      featureKey: 'BILLING',
+      showContactSales: false,
       title: 'Billing & usage',
       description:
         'Plans, credits and usage tracking are part of the Enterprise and Cloud editions.',
