@@ -1,5 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { nanoid } from 'nanoid'
+import { isNil } from './utils'
 
 export const deno = {
     /**
@@ -54,7 +55,7 @@ export const deno = {
                 }
 
                 if (!message.success) {
-                    reject(buildError({ message: message.error, stdout: userOutput, stderr: capturedStderr }))
+                    reject(buildError({ message: message.error, stack: message.stack, name: message.name, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else if (code !== 0) {
                     // e.g. an unhandled rejection fired after the result was printed — deno exits
@@ -171,7 +172,8 @@ ${body}
     console.log(${JSON.stringify(marker)} + JSON.stringify({ success: true, result: result ?? null }));
 }
 catch (error) {
-    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: false, error: (error && error.stack) || String(error) }));
+    const described = error instanceof Error ? { error: error.message, stack: error.stack, name: error.name } : { error: String(error) };
+    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: false, ...described }));
     Deno.exit(1);
 }
 `
@@ -189,7 +191,7 @@ function extractResult(stdout: string, marker: string): { userOutput: string, re
     return { userOutput: stdout.slice(0, idx) + trailing, resultJson }
 }
 
-function buildError({ message, stdout, stderr }: BuildErrorParams): Error {
+function buildError({ message, stack, name, stdout, stderr }: BuildErrorParams): Error {
     const parts: string[] = [message ?? 'Code execution failed']
     if (stdout.trim()) {
         parts.push(`\n--- stdout ---\n${stdout.trim()}`)
@@ -197,7 +199,14 @@ function buildError({ message, stdout, stderr }: BuildErrorParams): Error {
     if (stderr.trim()) {
         parts.push(`\n--- stderr ---\n${stderr.trim()}`)
     }
-    return new Error(parts.join(''))
+    const error = new Error(parts.join(''))
+    if (!isNil(name)) {
+        error.name = name
+    }
+    if (!isNil(stack)) {
+        error.stack = stack
+    }
+    return error
 }
 
 const DEFAULT_MEMORY_LIMIT_MB = 128
@@ -242,6 +251,8 @@ type NodeApis = {
 
 type BuildErrorParams = {
     message: string
+    stack?: string
+    name?: string
     stdout: string
     stderr: string
 }
@@ -252,5 +263,7 @@ type DenoResultMessage = {
 } | {
     success: false
     error: string
+    stack?: string
+    name?: string
 }
 

@@ -36,21 +36,24 @@ async function runModule(source: string, inputs: Record<string, unknown> = {}): 
 
 const PERMISSION_DENIED = /NotCapable|PermissionDenied/
 
+const isPermissionDenied = (error: Error): boolean =>
+    PERMISSION_DENIED.test(error.name) || PERMISSION_DENIED.test(error.message)
+
 describe('denoCodeSandbox permission boundary', () => {
     describe('blocks unpermitted operations', () => {
         it('rejects outbound network access', async () => {
             await expect(runModule(`export const code = async () => (await fetch('https://example.com')).status`))
-                .rejects.toThrow(PERMISSION_DENIED)
+                .rejects.toSatisfy(isPermissionDenied)
         })
 
         it('rejects reading a file outside the step directory', async () => {
             await expect(runModule(`export const code = async () => Deno.readTextFile('/etc/hosts')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+                .rejects.toSatisfy(isPermissionDenied)
         })
 
         it('rejects reading environment variables', async () => {
             await expect(runModule(`export const code = async () => Deno.env.toObject()`))
-                .rejects.toThrow(PERMISSION_DENIED)
+                .rejects.toSatisfy(isPermissionDenied)
         })
 
         it('gives each run its own DENO_DIR and removes it after the run', async () => {
@@ -126,29 +129,29 @@ describe('denoCodeSandbox permission boundary', () => {
             await expect(runModule(`export const code = async () => {
                 await Deno.symlink('/etc/passwd', './escape')
                 return Deno.readTextFile('./escape')
-            }`)).rejects.toThrow(PERMISSION_DENIED)
+            }`)).rejects.toSatisfy(isPermissionDenied)
         })
 
         it('rejects spawning a subprocess', async () => {
             await expect(runModule(`export const code = async () => {
                 const out = await new Deno.Command('sh', { args: ['-c', 'id'] }).output()
                 return new TextDecoder().decode(out.stdout)
-            }`)).rejects.toThrow(PERMISSION_DENIED)
+            }`)).rejects.toSatisfy(isPermissionDenied)
         })
 
         it('rejects writing outside the step directory', async () => {
             await expect(runModule(`export const code = async () => Deno.writeTextFile('/tmp/ap-pwned.txt', 'hi')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+                .rejects.toSatisfy(isPermissionDenied)
         })
 
         it('rejects writing inside the step directory (locked profile grants no write)', async () => {
             await expect(runModule(`export const code = async () => Deno.writeTextFile('./data.json', 'x')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+                .rejects.toSatisfy(isPermissionDenied)
         })
 
         it('rejects path traversal out of the step directory', async () => {
             await expect(runModule(`export const code = async () => Deno.readTextFile('../../../../etc/hosts')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+                .rejects.toSatisfy(isPermissionDenied)
         })
     })
 
@@ -244,7 +247,7 @@ describe('denoCodeSandbox permission boundary', () => {
 
         it('runs without any permissions (network blocked)', async () => {
             await expect(denoCodeSandbox.runScript({ script: `fetch('https://example.com')`, scriptContext: {}, functions: {} }))
-                .rejects.toThrow(PERMISSION_DENIED)
+                .rejects.toSatisfy(isPermissionDenied)
         })
     })
 
@@ -267,7 +270,7 @@ describe('denoCodeSandbox permission boundary', () => {
                 await expect(session.run('missingVar.foo')).rejects.toThrow(/missingVar/)
                 expect(await session.run('Promise.resolve(base + step_1.out)')).toBe(45)
 
-                await expect(session.run(`fetch('https://example.com')`)).rejects.toThrow(PERMISSION_DENIED)
+                await expect(session.run(`fetch('https://example.com')`)).rejects.toSatisfy(isPermissionDenied)
             }
             finally {
                 session.dispose()
