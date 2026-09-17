@@ -4,8 +4,8 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-export class AddWaitpointDeadLetteredAt1846000000000 implements Migration {
-    name = 'AddWaitpointDeadLetteredAt1846000000000'
+export class AddWaitpointDeadLetteredAt1851000000000 implements Migration {
+    name = 'AddWaitpointDeadLetteredAt1851000000000'
     breaking = false
     release = '0.91.0'
     transaction = false
