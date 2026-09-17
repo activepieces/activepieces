@@ -208,7 +208,7 @@ self-hosted instance needs neither a Cloudflare nor a ZeroBounce account.
 
 | Variable | Description | Default |
 |---|---|---|
-| `AP_ZEROBOUNCE_API_KEY` | ZeroBounce API key. Set it to check each new address against ZeroBounce before an account is created. | `None` |
+| `AP_ZEROBOUNCE_API_KEY` | ZeroBounce API key. Set it to check each new address against ZeroBounce before an account is created, whether it arrives through the sign-up form or through Sign in with Google. | `None` |
 | `AP_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key. Public; served to the sign-in page. | `None` |
 | `AP_TURNSTILE_SECRET_KEY` | Cloudflare Turnstile secret key, used to verify a solved challenge. | `None` |
 
@@ -222,6 +222,14 @@ invitation is never refused. One credit is spent per address, and only for an
 address that has no account yet. If ZeroBounce cannot be reached, or answers
 that the key is invalid or out of credits, the sign-up is allowed through and
 the reason is logged — a validation outage never blocks sign-up.
+
+The check covers the two public doors — password sign-up and Sign in with
+Google — and skips accounts a platform provisions itself through SSO (SAML) or
+embedding (managed authentication), since those are vouched for by the platform.
+A Google sign-up costs a credit only the first time an address is seen. A refused
+Google sign-up answers `DOMAIN_NOT_ALLOWED` and the sign-in page says so; there
+is nothing to hide there, because the member has already proven they own the
+account.
 
 ZeroBounce resolves DNS from the public internet. If your members' mail domains
 are only resolvable inside your own network, leave the key unset.

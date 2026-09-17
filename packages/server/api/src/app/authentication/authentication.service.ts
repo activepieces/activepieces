@@ -14,17 +14,14 @@ import { zerobounce } from './lib/zerobounce'
 import { otpService } from './otp/otp-service'
 import { userIdentityService } from './user-identity/user-identity-service'
 
+const PLATFORM_CONTROLLED_PROVIDERS = new Set([UserIdentityProvider.JWT, UserIdentityProvider.SAML])
+
 export const authenticationService = (log: FastifyBaseLogger) => ({
     async signUp(params: SignUpParams): Promise<AuthenticationResponse> {
-        if (params.provider === UserIdentityProvider.EMAIL) {
+        if (requiresSignUpAbuseCheck(params.provider)) {
             const maySignUp = await zerobounce.maySignUp({ email: params.email, log })
             if (!maySignUp) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
-                    params: {
-                        email: params.email.toLowerCase().trim(),
-                    },
-                })
+                throw refusedSignUpError(params)
             }
         }
         const platformId = params.platformId
@@ -266,6 +263,24 @@ async function selectCloudSignInPlatformIdByEmail({ email, log }: SelectCloudSig
 }
 
 
+
+function requiresSignUpAbuseCheck(provider: UserIdentityProvider): boolean {
+    return !PLATFORM_CONTROLLED_PROVIDERS.has(provider)
+}
+
+function refusedSignUpError({ email, provider }: SignUpParams): ActivepiecesError {
+    const normalizedEmail = email.toLowerCase().trim()
+    if (provider === UserIdentityProvider.EMAIL) {
+        return new ActivepiecesError({
+            code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+            params: { email: normalizedEmail },
+        })
+    }
+    return new ActivepiecesError({
+        code: ErrorCode.DOMAIN_NOT_ALLOWED,
+        params: { domain: normalizedEmail.split('@')[1] },
+    })
+}
 
 type SelectCloudSignInPlatformIdParams = {
     identityId: string
