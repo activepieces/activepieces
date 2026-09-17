@@ -2,20 +2,20 @@ import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { oidcKeyManager } from '../../../core/security/oidc/oidc-key-manager'
 import { UserEntity } from '../../../user/user-entity'
-import { EMAIL_SCOPE, OPENID_SCOPE, PROFILE_SCOPE } from '../mcp-oauth-scopes'
 import { MCP_OAUTH_ID_TOKEN_TTL_SECONDS } from '../token/mcp-oauth-token-lifetimes'
 
 const userRepo = repoFactory(UserEntity)
 
-async function buildClaims({ userId, platformId, scopes }: BuildClaimsParams): Promise<OidcClaims | null> {
-    const grantsEmail = scopes.includes(EMAIL_SCOPE) || scopes.includes(OPENID_SCOPE)
-    const grantsProfile = scopes.includes(PROFILE_SCOPE)
+async function getUserInfo({ userId, platformId, scopes }: UserInfoParams): Promise<OidcClaims | null> {
+    const grantsEmail = scopes.includes('email') || scopes.includes('openid')
+    const grantsProfile = scopes.includes('profile')
     if (!grantsEmail && !grantsProfile) {
         return { sub: userId }
     }
     const user = await userRepo().findOne({
         where: { id: userId, platformId },
         relations: { identity: true },
+        select: { id: true, identity: { email: true, verified: true, firstName: true, lastName: true } },
     })
     if (isNil(user)) {
         return null
@@ -32,13 +32,13 @@ async function buildClaims({ userId, platformId, scopes }: BuildClaimsParams): P
 }
 
 export const mcpOidc = {
-    getUserInfo: buildClaims,
+    getUserInfo,
 
     async issueIdToken({ userId, platformId, clientId, scopes, nonce, issuer }: IssueIdTokenParams): Promise<string | undefined> {
-        if (!scopes.includes(OPENID_SCOPE)) {
+        if (!scopes.includes('openid')) {
             return undefined
         }
-        const claims = await buildClaims({ userId, platformId, scopes })
+        const claims = await getUserInfo({ userId, platformId, scopes })
         if (isNil(claims)) {
             return undefined
         }
@@ -54,16 +54,16 @@ export const mcpOidc = {
     },
 }
 
-type BuildClaimsParams = {
+type UserInfoParams = {
     userId: string
     platformId: string
     scopes: string[]
 }
 
-type IssueIdTokenParams = BuildClaimsParams & {
+type IssueIdTokenParams = UserInfoParams & {
     clientId: string
-    nonce: string | null
-    issuer: string
+    nonce?: string | null
+    issuer?: string
 }
 
 type OidcClaims = {

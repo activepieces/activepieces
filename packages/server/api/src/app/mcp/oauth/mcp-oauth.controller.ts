@@ -122,14 +122,9 @@ function revocationCheckUnavailable(reply: FastifyReply): FastifyReply {
 }
 
 async function resolveIdentity({ token, scope, log }: { token: string, scope: McpServerType, log: FastifyBaseLogger }): Promise<IdentityResult> {
-    const authenticated = await mcpOAuthTokenService.authenticate(token)
-    if (authenticated.status === 'unavailable') {
-        log.error({ error: authenticated.error }, 'Could not read the MCP OAuth revocation list')
-        return { status: 'unavailable' }
-    }
-    if (authenticated.status === 'invalid') {
-        log.debug({ error: authenticated.error }, 'OAuth token verification failed')
-        return { status: 'invalid' }
+    const authenticated = await mcpOAuthTokenService.authenticate({ token, log })
+    if (authenticated.status !== 'ok') {
+        return { status: authenticated.status }
     }
     const { payload } = authenticated
     const { projectId } = payload

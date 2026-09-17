@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { McpOAuthClient } from '@activepieces/shared'
-import { FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { securityAccess } from '../../../core/security/authorization/fastify-security'
@@ -19,10 +19,10 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
 
         try {
             if (grant_type === 'authorization_code') {
-                return await handleAuthorizationCode({ authorizationHeader, body: req.body, reply, req })
+                return await handleAuthorizationCode({ authorizationHeader, body: req.body, reply, issuer: domainHelper.getPublicUrlFromRequest({ req }) })
             }
             if (grant_type === 'refresh_token') {
-                return await handleRefreshToken({ authorizationHeader, body: req.body, reply, req })
+                return await handleRefreshToken({ authorizationHeader, body: req.body, reply })
             }
             return await reply.status(400).send({ error: 'unsupported_grant_type' })
         }
@@ -39,7 +39,7 @@ export const mcpOAuthTokenController: FastifyPluginAsyncZod = async (app) => {
     })
 }
 
-async function authenticateClient({ authorizationHeader, body, reply }: AuthenticateClientParams): Promise<McpOAuthClient | null> {
+async function authenticateClient({ authorizationHeader, body, reply }: HandlerParams): Promise<McpOAuthClient | null> {
     const result = await mcpOAuthClientAuth.authenticate({
         authorizationHeader,
         clientId: body.client_id,
@@ -56,7 +56,7 @@ async function authenticateClient({ authorizationHeader, body, reply }: Authenti
     return result.client
 }
 
-async function handleAuthorizationCode({ authorizationHeader, body, reply, req }: HandlerParams): Promise<void> {
+async function handleAuthorizationCode({ authorizationHeader, body, reply, issuer }: AuthorizationCodeParams): Promise<void> {
     const { code, code_verifier, redirect_uri } = body
     if (!code || !code_verifier || !redirect_uri) {
         await reply.status(400).send({ error: 'invalid_request', error_description: 'Missing code, code_verifier, or redirect_uri' })
@@ -83,7 +83,7 @@ async function handleAuthorizationCode({ authorizationHeader, body, reply, req }
         platformId: authCode.platformId,
         scopes: authCode.scopes ?? ['mcp'],
         nonce: authCode.nonce,
-        issuer: domainHelper.getPublicUrlFromRequest({ req }),
+        issuer,
     })
 
     await reply.status(200).send(tokens)
@@ -108,14 +108,14 @@ async function handleRefreshToken({ authorizationHeader, body, reply }: HandlerP
     await reply.status(200).send(tokens)
 }
 
-type AuthenticateClientParams = {
+type HandlerParams = {
     authorizationHeader: string | undefined
     body: TokenRequestBody
     reply: FastifyReply
 }
 
-type HandlerParams = AuthenticateClientParams & {
-    req: FastifyRequest
+type AuthorizationCodeParams = HandlerParams & {
+    issuer: string
 }
 
 const tokenRequestSchema = z.object({

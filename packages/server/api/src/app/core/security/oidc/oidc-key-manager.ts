@@ -42,9 +42,6 @@ export const oidcKeyManager = {
     async getKid(): Promise<string> {
         return (await oidcKeyManager.getPublicKeyJwk()).kid
     },
-    getIssuer(): string {
-        return system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
-    },
     async sign({ payload, expiresInSeconds, issuer }: SignParams): Promise<string> {
         const [privateKey, kid] = await Promise.all([
             oidcKeyManager.getPrivateKeyPem(),
@@ -56,9 +53,13 @@ export const oidcKeyManager = {
             expiresInSeconds,
             algorithm: JwtSignAlgorithm.RS256,
             keyId: kid,
-            issuer: issuer ?? oidcKeyManager.getIssuer(),
+            issuer: issuer ?? configuredIssuer(),
         })
     },
+}
+
+function configuredIssuer(): string {
+    return system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
 }
 
 async function getOrGenerateStoredPrivateKey(): Promise<string> {

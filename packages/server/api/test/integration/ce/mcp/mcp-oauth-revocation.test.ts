@@ -42,8 +42,6 @@ async function connectClient({ userId, projectId, platformId }: { userId: string
         projectId,
         platformId,
         scopes: ['mcp'],
-        nonce: null,
-        issuer: 'https://example.com',
     })
     const grant = await db.findOneBy<McpOAuthToken>('mcp_oauth_token', { clientId })
     if (grant === null) {

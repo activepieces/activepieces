@@ -28,8 +28,6 @@ async function exchangeFreshCode(clientId: string): Promise<string> {
         projectId: apId(),
         platformId: apId(),
         scopes: ['mcp'],
-        nonce: null,
-        issuer: 'https://example.com',
     })
     return requireRefreshToken(tokens)
 }

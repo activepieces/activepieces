@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto'
 import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { McpOAuthClientKey, McpOAuthGrant, McpOAuthToken } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
@@ -141,16 +142,18 @@ export const mcpOAuthTokenService = {
         }
     },
 
-    async authenticate(token: string): Promise<AuthenticateResult> {
+    async authenticate({ token, log }: AuthenticateParams): Promise<AuthenticateResult> {
         const { data: payload, error } = await tryCatch(() => mcpOAuthTokenService.verifyAccessToken(token))
         if (error || isNil(payload)) {
-            return { status: 'invalid', error }
+            log.debug({ error }, 'MCP OAuth token verification failed')
+            return { status: 'invalid' }
         }
         const { grantId } = payload
         if (!isNil(grantId)) {
             const { data: revoked, error: revocationError } = await tryCatch(() => mcpOAuthRevocationList.isRevoked({ grantId }))
             if (revocationError) {
-                return { status: 'unavailable', error: revocationError }
+                log.error({ error: revocationError }, 'Could not read the MCP OAuth revocation list')
+                return { status: 'unavailable' }
             }
             if (revoked) {
                 return { status: 'invalid' }
@@ -290,8 +293,8 @@ type ExchangeCodeParams = {
     projectId: string | null
     platformId: string
     scopes: string[]
-    nonce: string | null
-    issuer: string
+    nonce?: string | null
+    issuer?: string
 }
 
 type RevokeRefreshTokenParams = {
@@ -334,10 +337,15 @@ type TokenResponse = {
     id_token?: string
 }
 
+type AuthenticateParams = {
+    token: string
+    log: FastifyBaseLogger
+}
+
 type AuthenticateResult =
     | { status: 'ok', payload: McpOAuthAccessTokenPayload }
-    | { status: 'invalid', error?: unknown }
-    | { status: 'unavailable', error: unknown }
+    | { status: 'invalid' }
+    | { status: 'unavailable' }
 
 export const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 

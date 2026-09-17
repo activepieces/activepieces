@@ -21,28 +21,22 @@ async function handleUserInfo(req: FastifyRequest, reply: FastifyReply): Promise
         })
     }
 
-    const authenticated = await mcpOAuthTokenService.authenticate(token)
+    const authenticated = await mcpOAuthTokenService.authenticate({ token, log: req.log })
     if (authenticated.status === 'unavailable') {
-        req.log.error({ error: authenticated.error }, 'Could not read the MCP OAuth revocation list')
         return reply.status(503).header('Retry-After', '1').send({
             error: 'temporarily_unavailable',
             message: 'Could not verify the access token right now, retry shortly.',
         })
     }
-    if (authenticated.status === 'invalid') {
-        req.log.debug({ error: authenticated.error }, 'Userinfo token verification failed')
-        return reply.status(401).header('WWW-Authenticate', 'Bearer error="invalid_token"').send({
-            error: 'invalid_token',
-            message: 'Invalid or expired access token',
-        })
-    }
 
-    const { payload } = authenticated
-    const claims = await mcpOidc.getUserInfo({
-        userId: payload.sub,
-        platformId: payload.platformId,
-        scopes: payload.scopes ?? [],
-    })
+    const claims = authenticated.status === 'ok'
+        ? await mcpOidc.getUserInfo({
+            userId: authenticated.payload.sub,
+            platformId: authenticated.payload.platformId,
+            scopes: authenticated.payload.scopes ?? [],
+        })
+        : null
+
     if (isNil(claims)) {
         return reply.status(401).header('WWW-Authenticate', 'Bearer error="invalid_token"').send({
             error: 'invalid_token',
