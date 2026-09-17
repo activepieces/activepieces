@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { isNil } from '@activepieces/core-utils'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 
 const CODE_RUNNER_SCRIPT = `
@@ -7,16 +8,20 @@ process.once('message', async function(msg) {
 
     const inspect = require('util').inspect
 
+    const describeThrown = (value) => value instanceof Error
+        ? { error: value.message, stack: value.stack, name: value.name }
+        : { error: inspect(value) }
+
     process.on('unhandledRejection', (reason) => {
         if (settled) return
         settled = true
-        process.send({ success: false, error: inspect(reason) }, () => process.exit(1))
+        process.send({ success: false, ...describeThrown(reason) }, () => process.exit(1))
     })
 
     process.on('uncaughtException', (err) => {
         if (settled) return
         settled = true
-        process.send({ success: false, error: inspect(err) }, () => process.exit(1))
+        process.send({ success: false, ...describeThrown(err) }, () => process.exit(1))
     })
 
     try {
@@ -32,7 +37,7 @@ process.once('message', async function(msg) {
     } catch(e) {
         if (settled) return
         settled = true
-        process.send({ success: false, error: inspect(e) }, () => process.exit(0))
+        process.send({ success: false, ...describeThrown(e) }, () => process.exit(0))
     }
 })
 `
@@ -60,14 +65,14 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
 
         let settled = false
 
-        child.on('message', (msg: { success: boolean, result?: unknown, error?: string }) => {
+        child.on('message', (msg: { success: boolean, result?: unknown, error?: string, stack?: string, name?: string }) => {
             if (settled) return
             settled = true
             if (msg.success) {
                 resolve(msg.result)
             }
             else {
-                reject(buildError({ message: msg.error, stdout: capturedStdout, stderr: capturedStderr }))
+                reject(buildError({ message: msg.error, stack: msg.stack, name: msg.name, stdout: capturedStdout, stderr: capturedStderr }))
             }
         })
 
@@ -91,7 +96,7 @@ async function runInChildProcess({ codeFilePath, inputs }: { codeFilePath: strin
     })
 }
 
-function buildError({ message, stdout, stderr }: { message: string | undefined, stdout: string, stderr: string }): Error {
+function buildError({ message, stack, name, stdout, stderr }: { message: string | undefined, stack?: string, name?: string, stdout: string, stderr: string }): Error {
     const parts: string[] = [message ?? 'Code execution failed']
     if (stdout.trim()) {
         parts.push(`\n--- stdout ---\n${stdout.trim()}`)
@@ -99,7 +104,14 @@ function buildError({ message, stdout, stderr }: { message: string | undefined, 
     if (stderr.trim()) {
         parts.push(`\n--- stderr ---\n${stderr.trim()}`)
     }
-    return new Error(parts.join(''))
+    const error = new Error(parts.join(''))
+    if (!isNil(name)) {
+        error.name = name
+    }
+    if (!isNil(stack)) {
+        error.stack = stack
+    }
+    return error
 }
 
 export const noOpCodeSandbox: CodeSandbox = {
