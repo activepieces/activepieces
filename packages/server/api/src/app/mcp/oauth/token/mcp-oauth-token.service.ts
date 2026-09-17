@@ -18,7 +18,6 @@ import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
 const repo = repoFactory(McpOAuthTokenEntity)
 const clientRepo = repoFactory(McpOAuthClientEntity)
 
-const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 const DEFAULT_GRANT_PAGE_SIZE = 20
 const TOKEN_ALIAS = 'mcp_oauth_token'
 const UNKNOWN_CLIENT_KEY: McpOAuthClientKey = 'unknown'
@@ -301,6 +300,8 @@ type TokenResponse = {
     expires_in: number
     refresh_token?: string
 }
+
+export const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 
 export type McpOAuthAccessTokenPayload = {
     sub: string

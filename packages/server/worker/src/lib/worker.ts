@@ -2,7 +2,7 @@ import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
-import { createLogger, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, createLogger, systemUsage, wideEvent } from '@activepieces/server-utils'
 import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -71,6 +71,11 @@ export const worker = {
         })
 
         const apiClient = createRpcClient<WorkerToApiContract>(socket, rpcTimeoutMsFor)
+        aiCostReporter.install({
+            log: logger,
+            report: (request) => apiClient.reportAiUsage(request),
+            pageWebhookUrl: () => tryCatchSync(() => workerSettings.getSettings()).data?.PAGE_ONCALL_WEBHOOK,
+        })
 
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
