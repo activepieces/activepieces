@@ -9658,6 +9658,20 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/wavix": {
+      "name": "@activepieces/piece-wavix",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "form-data": "4.0.6",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/wayfront": {
       "name": "@activepieces/piece-wayfront",
       "version": "0.0.5",
@@ -12593,6 +12607,8 @@
     "@activepieces/piece-wafeq": ["@activepieces/piece-wafeq@workspace:packages/pieces/community/wafeq"],
 
     "@activepieces/piece-waitwhile": ["@activepieces/piece-waitwhile@workspace:packages/pieces/community/waitwhile"],
+
+    "@activepieces/piece-wavix": ["@activepieces/piece-wavix@workspace:packages/pieces/community/wavix"],
 
     "@activepieces/piece-wayfront": ["@activepieces/piece-wayfront@workspace:packages/pieces/community/wayfront"],
 

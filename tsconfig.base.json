@@ -1474,6 +1474,9 @@
       "@activepieces/piece-wafeq": [
         "packages/pieces/community/wafeq/src/index.ts"
       ],
+      "@activepieces/piece-wavix": [
+        "packages/pieces/community/wavix/src/index.ts"
+      ],
       "@activepieces/piece-wealthbox": [
         "packages/pieces/community/wealthbox/src/index.ts"
       ],
