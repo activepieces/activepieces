@@ -561,3 +561,48 @@ export const getAccountInfoActionOutputSchema: OutputSchema = {
 		{ key: 'language', label: 'Language' },
 	],
 };
+
+export const getImportProcessActionOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'id', label: 'Process ID', format: 'number' },
+		{
+			key: 'status',
+			label: 'Status',
+			description: 'queued, in_process, processing, completed, failed or cancelled.',
+		},
+		{
+			key: 'finished',
+			label: 'Finished',
+			description: 'True once the status is completed, failed or cancelled.',
+			format: 'boolean',
+		},
+		{ key: 'name', label: 'Process Name' },
+		{
+			key: 'export_url',
+			label: 'Export URL',
+			description: 'Download link, only on completed export processes.',
+			format: 'url',
+		},
+		{
+			key: 'info',
+			label: 'Details',
+			description: 'Only on completed imports.',
+			children: [
+				{
+					key: 'import',
+					label: 'Import Report',
+					description: 'Links to CSV files of rejected rows, null when there were none.',
+					children: [
+						{ key: 'invalid_emails', label: 'Invalid Emails CSV', format: 'url' },
+						{ key: 'duplicate_contact_id', label: 'Duplicate Contact IDs CSV', format: 'url' },
+						{ key: 'duplicate_ext_id', label: 'Duplicate External IDs CSV', format: 'url' },
+						{ key: 'duplicate_email_id', label: 'Duplicate Emails CSV', format: 'url' },
+						{ key: 'duplicate_phone_id', label: 'Duplicate Phone Numbers CSV', format: 'url' },
+						{ key: 'duplicate_whatsapp_id', label: 'Duplicate WhatsApp Numbers CSV', format: 'url' },
+						{ key: 'duplicate_landline_number_id', label: 'Duplicate Landline Numbers CSV', format: 'url' },
+					],
+				},
+			],
+		},
+	],
+};
