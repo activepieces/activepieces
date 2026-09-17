@@ -11,7 +11,7 @@ import {
   baserowAuthHelpers,
 } from '../auth';
 import { BaserowClient } from './client';
-import { BaserowFieldType } from './constants';
+import { BaserowFieldType, BaserowLinkBy } from './constants';
 import { BaserowField } from './types';
 
 export async function makeClient(
@@ -35,26 +35,45 @@ export async function makeClient(
   return new BaserowClient(apiUrl, `Token ${token}`);
 }
 
-export function formatFieldValues(
-  input: DynamicPropsValue,
-  fieldTypeMap: Record<string, string>,
-  options: { skipEmpty: boolean }
-): Record<string, unknown> {
+export function formatFieldValues({
+  input,
+  fields,
+  skipEmpty,
+}: {
+  input: DynamicPropsValue;
+  fields: BaserowField[];
+  skipEmpty: boolean;
+}): Record<string, unknown> {
+  const fieldsByName = new Map(fields.map((field) => [field.name, field]));
   const result: Record<string, unknown> = {};
   for (const key of Object.keys(input)) {
+    if (isLinkByKey({ key, fieldsByName })) continue;
     const value = input[key];
-    const fieldType = fieldTypeMap[key];
+    const field = fieldsByName.get(key);
 
-    if (options.skipEmpty) {
+    if (skipEmpty) {
       if (value === null || value === undefined || value === '') continue;
       if (Array.isArray(value) && value.length === 0) continue;
     }
 
-    switch (fieldType) {
-      case BaserowFieldType.LINK_TO_TABLE:
-        result[key] = Array.isArray(value)
-          ? value.map(toLinkedRowReference)
-          : [];
+    switch (field?.type) {
+      case BaserowFieldType.LINK_TO_TABLE: {
+        const references = toLinkedRowReferences({
+          fieldName: key,
+          value,
+          linkBy: readLinkBy(input[linkByKey(key)]),
+        });
+        if (references.length > 0 || !skipEmpty) {
+          result[key] = references;
+        }
+        break;
+      }
+      case BaserowFieldType.DATE:
+        if (value === null || value === undefined) {
+          result[key] = skipEmpty ? undefined : null;
+        } else {
+          result[key] = field.date_include_time ? value : toDateOnly(value);
+        }
         break;
       case BaserowFieldType.MULTIPLE_COLLABORATORS:
         if (Array.isArray(value) && value.length > 0) {
@@ -70,21 +89,21 @@ export function formatFieldValues(
           value === '' ||
           (Array.isArray(value) && value.length === 0)
         ) {
-          result[key] = options.skipEmpty ? undefined : null;
+          result[key] = skipEmpty ? undefined : null;
         } else {
           result[key] = value;
         }
         break;
       case BaserowFieldType.MULTI_SELECT:
         if (value === null || value === undefined || value === '') {
-          result[key] = options.skipEmpty ? undefined : [];
+          result[key] = skipEmpty ? undefined : [];
         } else {
           result[key] = value;
         }
         break;
       default:
         if (value === null || value === undefined) {
-          result[key] = options.skipEmpty ? undefined : null;
+          result[key] = skipEmpty ? undefined : null;
         } else {
           result[key] = value;
         }
@@ -141,13 +160,78 @@ export async function ensureSelectOptionsExist({
   }
 }
 
-function toLinkedRowReference(value: unknown): unknown {
-  if (typeof value === 'number') return value;
+function linkByKey(fieldName: string): string {
+  return `__link_by__${fieldName}`;
+}
+
+function isLinkByKey({
+  key,
+  fieldsByName,
+}: {
+  key: string;
+  fieldsByName: Map<string, BaserowField>;
+}): boolean {
+  const prefix = linkByKey('');
+  if (!key.startsWith(prefix) || fieldsByName.has(key)) return false;
+  return fieldsByName.get(key.slice(prefix.length))?.type === BaserowFieldType.LINK_TO_TABLE;
+}
+
+function readLinkBy(value: unknown): BaserowLinkBy {
+  return value === BaserowLinkBy.PRIMARY_FIELD_VALUE
+    ? BaserowLinkBy.PRIMARY_FIELD_VALUE
+    : BaserowLinkBy.ROW_ID;
+}
+
+function toLinkedRowReferences({
+  fieldName,
+  value,
+  linkBy,
+}: {
+  fieldName: string;
+  value: unknown;
+  linkBy: BaserowLinkBy;
+}): number[] | string[] {
+  const items = (Array.isArray(value) ? value.flat() : [value])
+    .map((item) => unwrapLinkedRow({ item, linkBy }))
+    .filter((item) => !isBlankLinkItem(item));
+  if (linkBy === BaserowLinkBy.PRIMARY_FIELD_VALUE) {
+    return items.map((item) => (typeof item === 'string' ? item.trim() : String(item)));
+  }
+  return items.map((item) => toRowId({ fieldName, item }));
+}
+
+function unwrapLinkedRow({
+  item,
+  linkBy,
+}: {
+  item: unknown;
+  linkBy: BaserowLinkBy;
+}): unknown {
+  if (typeof item !== 'object' || item === null) return item;
+  const key = linkBy === BaserowLinkBy.PRIMARY_FIELD_VALUE ? 'value' : 'id';
+  return key in item ? Reflect.get(item, key) : item;
+}
+
+function isBlankLinkItem(item: unknown): boolean {
+  if (item === null || item === undefined) return true;
+  return typeof item === 'string' && item.trim().length === 0;
+}
+
+function toRowId({ fieldName, item }: { fieldName: string; item: unknown }): number {
+  const candidate = typeof item === 'string' ? item.trim() : item;
+  const rowId = typeof candidate === 'string' && /^\d+$/.test(candidate) ? Number(candidate) : candidate;
+  if (typeof rowId === 'number' && Number.isSafeInteger(rowId) && rowId > 0) {
+    return rowId;
+  }
+  throw new Error(
+    `Field "${fieldName}": "${String(item)}" is not a row ID. To link rows by the value of the linked table's primary field, set "${fieldName} — Link by" to "Primary field value".`
+  );
+}
+
+function toDateOnly(value: unknown): unknown {
   if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  if (trimmed.length === 0) return value;
-  const asNumber = Number(trimmed);
-  return Number.isInteger(asNumber) ? asNumber : trimmed;
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value.trim());
+  return match ? match[1] : value;
 }
 
 function buildRowLabel({
@@ -292,7 +376,24 @@ Check that your Baserow connection still has access to this table, then reselect
                 fields[field.name] = Property.Array({
                   displayName: field.name,
                   required: false,
-                  description: `Enter row ids from table(ID: ${field.link_row_table_id}) that you want to link to.`,
+                  description: `Rows of table ${field.link_row_table_id} to link to, as row IDs or primary field values depending on "${field.name} — Link by".`,
+                });
+                fields[linkByKey(field.name)] = Property.StaticDropdown({
+                  displayName: `${field.name} — Link by`,
+                  description:
+                    "**Row ID**: the numeric ID of each linked row. **Primary field value**: the value of the linked table's primary field, compared as text even when it looks like a number.",
+                  required: false,
+                  defaultValue: BaserowLinkBy.ROW_ID,
+                  options: {
+                    disabled: false,
+                    options: [
+                      { label: 'Row ID', value: BaserowLinkBy.ROW_ID },
+                      {
+                        label: 'Primary field value',
+                        value: BaserowLinkBy.PRIMARY_FIELD_VALUE,
+                      },
+                    ],
+                  },
                 });
                 break;
               case BaserowFieldType.LONG_TEXT:
