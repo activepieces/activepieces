@@ -8,6 +8,20 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Instagram for Business no longer reports success when a reel fails to publish
+
+Publishing a reel uploads the video to Instagram and then waits for Instagram to finish processing it before the post goes live. The piece used to give up after about a hundred seconds and return the boolean `false`, which the flow recorded as a **successful** step. Anything downstream carried on with `false` where a media id was expected, and nothing in the run said the post had not been published.
+
+Upload Reel now throws when Instagram reports an error, and waits up to five minutes, which is the window Instagram's own guidance describes. Upload Photo waits for the same signal instead of publishing blind, so a container Instagram rejects now surfaces as a failed step rather than a confusing error from the next call.
+
+The piece also moves from Graph API v17.0, which expired on 12 September 2025, to v23.0.
+
+#### What you need to do
+
+If a flow branches on the output of Upload Reel being `false`, that branch will no longer be taken — the step fails instead. Handle the failure with the step's error handling options, or with a branch on the run status.
+
+Reconnect your Instagram connections. The piece now requests the permissions needed for comments, insights, content management, direct messages and Page metadata, and a token issued before this release does not carry them. Steps that were saved earlier will also ask you to select the Page again, because messaging needs the Facebook Page id that the Page dropdown now stores.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
