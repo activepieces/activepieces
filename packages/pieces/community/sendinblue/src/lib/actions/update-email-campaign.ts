@@ -128,6 +128,14 @@ export const updateEmailCampaign = createAction({
 			utm_campaign,
 		} = context.propsValue;
 
+		if (!isNil(sender_id) && !isNil(sender_email)) {
+			throw new Error('Provide Sender ID or Sender Email, not both.');
+		}
+
+		if (!isNil(html_content) && !isNil(html_url)) {
+			throw new Error('Provide HTML Content or HTML URL, not both.');
+		}
+
 		const listIds = (list_ids ?? [])
 			.map((listId) => Number(listId))
 			.filter((listId) => Number.isFinite(listId));

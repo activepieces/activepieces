@@ -130,8 +130,24 @@ export const createEmailCampaign = createAction({
 			utm_campaign,
 		} = context.propsValue;
 
-		if (isNil(template_id) && (isNil(subject) || (isNil(html_content) && isNil(html_url)))) {
-			throw new Error('Provide a Template, or supply both Subject and HTML Content (or HTML URL).');
+		if (!isNil(sender_id) && !isNil(sender_email)) {
+			throw new Error('Provide Sender ID or Sender Email, not both.');
+		}
+		if (isNil(sender_id) && isNil(sender_email)) {
+			throw new Error('Provide a Sender ID or Sender Email.');
+		}
+
+		const contentSourceCount = [!isNil(template_id), !isNil(html_content), !isNil(html_url)].filter(
+			Boolean,
+		).length;
+		if (contentSourceCount === 0) {
+			throw new Error('Provide a Template ID, HTML Content, or HTML URL.');
+		}
+		if (contentSourceCount > 1) {
+			throw new Error('Provide only one of Template ID, HTML Content, or HTML URL.');
+		}
+		if (isNil(template_id) && isNil(subject)) {
+			throw new Error('Subject is required unless Template ID is provided.');
 		}
 
 		const listIds = (list_ids ?? [])

@@ -91,6 +91,10 @@ export const createOrUpdateEmailTemplate = createAction({
 
 		const isUpdate = !isNil(template_id);
 
+		if (!isNil(html_content) && !isNil(html_url)) {
+			throw new Error('Provide HTML Content or HTML URL, not both.');
+		}
+
 		if (!isUpdate) {
 			if (isNil(template_name)) {
 				throw new Error('Template Name is required when creating a new template.');

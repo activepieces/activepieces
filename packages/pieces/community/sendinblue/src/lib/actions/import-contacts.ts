@@ -95,10 +95,6 @@ export const importContacts = createAction({
 			empty_contacts_attributes,
 		} = context.propsValue;
 
-		if (isNil(file_url) && (isNil(json_body) || json_body.length === 0)) {
-			throw new Error('Provide either a File URL or at least one inline contact row.');
-		}
-
 		const listIds = (list_ids ?? [])
 			.map((listId) => Number(listId))
 			.filter((listId) => Number.isFinite(listId));
@@ -106,6 +102,12 @@ export const importContacts = createAction({
 		const jsonBody = (json_body ?? [])
 			.map((row) => toImportRow(row))
 			.filter((row): row is ImportRow => row !== null);
+
+		if (isNil(file_url) && jsonBody.length === 0) {
+			throw new Error(
+				'Provide either a File URL or at least one inline contact row with a valid email.',
+			);
+		}
 
 		const newList =
 			new_list_name && !isNil(new_list_folder_id)
