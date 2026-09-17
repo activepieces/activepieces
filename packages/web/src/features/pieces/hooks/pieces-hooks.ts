@@ -88,7 +88,6 @@ type UsePiecesProps = {
   suggestionType?: SuggestionType;
   enabled?: boolean;
   keepPreviousResults?: boolean;
-  showErrorDialog?: boolean;
 };
 type UsePrefetchPiecesProps = {
   skipProjectFilter?: boolean;
@@ -194,7 +193,6 @@ export const piecesHooks = {
     suggestionType,
     enabled = true,
     keepPreviousResults = false,
-    showErrorDialog,
   }: UsePiecesProps) => {
     const { i18n } = useTranslation();
     const query = useQuery<PieceMetadataModelSummary[], Error>({
@@ -209,10 +207,6 @@ export const piecesHooks = {
         keepPreviousResults,
       }),
       enabled,
-      meta:
-        showErrorDialog ?? isTableQuery
-          ? { showErrorDialog: true, loadSubsetOptions: {} }
-          : undefined,
     });
     return {
       pieces: query.data,

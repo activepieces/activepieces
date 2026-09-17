@@ -8,6 +8,7 @@ import { MondayWebhookEventType } from '../common/constants';
 import { parseMondayColumnValue } from '../common/helper';
 import { WebhookInformation } from '../common/models';
 import { WebhookHandshakeStrategy } from '@activepieces/pieces-framework';
+import { newItemInBoardTriggerOutputSchema } from '../output-schemas';
 export const newItemInBoardTrigger = createTrigger({
   auth: mondayAuth,
   name: 'monday_new_item_in_board',
@@ -17,6 +18,7 @@ export const newItemInBoardTrigger = createTrigger({
   aiMetadata: {
     description: 'Fires when a new item (row) is created on the selected monday.com board, enriching the payload with the new item\'s column values. Represents an item-creation event scoped to one board.',
   },
+  outputSchema: newItemInBoardTriggerOutputSchema,
   props: {
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),

@@ -16,12 +16,6 @@ export enum ApNodeType {
   LOOP_RETURN_NODE = 'LOOP_RETURN_NODE',
   NOTE = 'NOTE',
 }
-export type ApBoundingBox = {
-  width: number;
-  height: number;
-  left: number;
-  right: number;
-};
 
 export type ApStepNode = {
   id: string;

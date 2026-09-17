@@ -55,6 +55,7 @@ const PiecesListTab = () => {
     pieces,
     refetch: refetchPieces,
     isLoading,
+    isError,
   } = piecesHooks.usePieces({
     searchQuery,
     includeHidden: true,
@@ -199,6 +200,9 @@ const PiecesListTab = () => {
         previous: null,
       }}
       isLoading={isLoading}
+      isError={isError}
+      errorStateEntity={t('pieces')}
+      onRetry={refetchPieces}
       toolbarButtons={[
         <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
         <DownloadPiecesReportButton key="download-report" />,

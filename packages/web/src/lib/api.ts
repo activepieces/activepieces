@@ -10,10 +10,12 @@ import qs from 'qs';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { chatDebug } from '@/lib/chat-debug-logger';
+export const CLOUD_HOSTNAME = 'cloud.activepieces.com';
+
 export const isRunningCloudInDevMode = import.meta.env.MODE === 'cloud';
 
 export const API_BASE_URL = isRunningCloudInDevMode
-  ? 'https://cloud.activepieces.com'
+  ? `https://${CLOUD_HOSTNAME}`
   : typeof window !== 'undefined'
   ? window.location.origin
   : '';
@@ -176,16 +178,22 @@ export const api = {
   isError(error: unknown): error is HttpError {
     return isAxiosError(error);
   },
+  serverErrorMessage(error: unknown): string | undefined {
+    if (!api.isError(error)) {
+      return undefined;
+    }
+    const data = error.response?.data as ApErrorParams | undefined;
+    const message =
+      data?.params && 'message' in data.params
+        ? data.params.message
+        : undefined;
+    const isUsable = typeof message === 'string' && message.length > 0;
+    return isUsable ? message : undefined;
+  },
   extractServerErrorMessage(error: unknown, fallback: string): string {
-    if (api.isError(error)) {
-      const data = error.response?.data as ApErrorParams | undefined;
-      const message =
-        data?.params && 'message' in data.params
-          ? data.params.message
-          : undefined;
-      if (typeof message === 'string' && message.length > 0) {
-        return message;
-      }
+    const serverMessage = api.serverErrorMessage(error);
+    if (serverMessage !== undefined) {
+      return serverMessage;
     }
     if (error instanceof Error && error.message.length > 0) {
       return error.message;

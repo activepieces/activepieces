@@ -16,6 +16,12 @@ export const useEventLabels = (): EventLabelsMap => {
       label: t('Agent taken offline'),
       description: t('Fires when someone takes an agent offline.'),
     },
+    [ApplicationEventName.AGENT_ACTION_EXECUTED]: {
+      label: t('Agent ran an action'),
+      description: t(
+        'Fires when an agent runs a configured action that is not a read.',
+      ),
+    },
     [ApplicationEventName.FLOW_RUN_STARTED]: { label: t('Flow run started') },
     [ApplicationEventName.FLOW_RUN_FINISHED]: {
       label: t('Flow run finished'),
@@ -84,6 +90,18 @@ export const useEventLabels = (): EventLabelsMap => {
     },
     [ApplicationEventName.FLOW_DEACTIVATED]: {
       label: t('Flow deactivated'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_REQUESTED]: {
+      label: t('Flow approval requested'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_GRANTED]: {
+      label: t('Flow approval granted'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_REJECTED]: {
+      label: t('Flow approval rejected'),
+    },
+    [ApplicationEventName.FLOW_APPROVAL_WITHDRAWN]: {
+      label: t('Flow approval withdrawn'),
     },
   };
 };

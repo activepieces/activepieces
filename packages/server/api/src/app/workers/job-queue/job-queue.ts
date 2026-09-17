@@ -1,6 +1,6 @@
 import { ApId, isNil, tryCatch } from '@activepieces/core-utils'
 import { apDayjsDuration, memoryLock } from '@activepieces/server-utils'
-import { EventDestinationJobData, ExecuteAgentRunJobData, ExecuteFlowJobData, ExecutePersonalizationResearchJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
+import { EventDestinationJobData, ExecuteAgentRunJobData, ExecuteAiJobData, ExecuteFlowJobData, ExecutePersonalizationResearchJobData, getDefaultJobPriority, JOB_PRIORITY, JobData, PollingJobData, RenewWebhookJobData, ScheduleOptions, TriggerSourceScheduleType, UserInteractionJobData, WebhookJobData, WorkerJobType } from '@activepieces/shared'
 import { Job, Queue } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
 import { redisConnections } from '../../database/redis-connections'
@@ -9,7 +9,6 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { projectWorkerGroupService } from '../../project/project-worker-group.service'
 import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName } from '../job'
-import { workerCapacity } from '../machine/worker-capacity'
 
 const EIGHT_MINUTES_IN_MILLISECONDS = apDayjsDuration(8, 'minute').asMilliseconds()
 const REDIS_FAILED_JOB_RETENTION_DAYS = apDayjsDuration(system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS), 'day').asSeconds()
@@ -54,7 +53,7 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
                     delay: params.delay,
                     jobId: params.id,
                     ...(data.jobType === WorkerJobType.EVENT_DESTINATION ? { removeOnFail: true } : {}),
-                    ...(data.jobType === WorkerJobType.EXECUTE_AGENT_RUN ? { attempts: 1 } : {}),
+                    ...([WorkerJobType.EXECUTE_AGENT_RUN, WorkerJobType.EXECUTE_AI].includes(data.jobType) ? { attempts: 1 } : {}),
                     ...isUserInteractionJob(data.jobType) ? {
                         attempts: 1,
                         removeOnComplete: { age: 300 },
@@ -207,7 +206,17 @@ export function isUserInteractionJobData(jobData: JobData): jobData is UserInter
     return USER_INTERACTION_JOB_TYPES.has(jobData.jobType)
 }
 
-const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
+export function callerWaitingForResponse(jobData: JobData): { webserverId: string, requestId: string } | null {
+    if (isUserInteractionJobData(jobData)) {
+        return { webserverId: jobData.webserverId, requestId: jobData.requestId }
+    }
+    if (jobData.jobType === WorkerJobType.EXECUTE_AI && !isNil(jobData.webserverId)) {
+        return { webserverId: jobData.webserverId, requestId: jobData.requestId }
+    }
+    return null
+}
+
+export const PROJECT_GROUP_ROUTABLE_JOB_TYPES = new Set<WorkerJobType>([
     WorkerJobType.EXECUTE_FLOW,
     WorkerJobType.EXECUTE_WEBHOOK,
 ])
@@ -218,13 +227,7 @@ async function getQueueName({ platformId, projectId, jobType }: GetQueueNamePara
         if (workerGroupsEnabled) {
             const projectGroupId = await projectWorkerGroupService(log).getProjectWorkerGroup({ projectId, platformId })
             if (!isNil(projectGroupId)) {
-                // Only route to the group's dedicated queue while it has a live worker; otherwise fall
-                // through to the shared/platform queue so runs still execute until a worker returns.
-                const { projectGroups } = await workerCapacity.get()
-                const capacity = projectGroups.get(projectGroupId)
-                if (!isNil(capacity) && capacity.online > 0) {
-                    return getProjectGroupQueueName(projectGroupId)
-                }
+                return getProjectGroupQueueName(projectGroupId)
             }
         }
     }
@@ -272,6 +275,6 @@ type BaseAddParams<JD extends Omit<JobData, 'engineToken'>, JT extends JobType> 
 type RepeatingJobAddParams = BaseAddParams<PollingJobData | RenewWebhookJobData, JobType.REPEATING> & {
     scheduleOptions: ScheduleOptions
 }
-type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteAgentRunJobData | ExecutePersonalizationResearchJobData, JobType.ONE_TIME>
+type OneTimeJobAddParams = BaseAddParams<ExecuteFlowJobData | WebhookJobData | UserInteractionJobData | EventDestinationJobData | ExecuteAgentRunJobData | ExecuteAiJobData | ExecutePersonalizationResearchJobData, JobType.ONE_TIME>
 
 export type AddJobParams<type extends JobType> = type extends JobType.REPEATING ? RepeatingJobAddParams : OneTimeJobAddParams

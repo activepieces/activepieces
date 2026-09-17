@@ -23,34 +23,26 @@ export const DictionaryInput = ({
   valuePlaceholder,
 }: DictionaryInputProps) => {
   const id = useRef(1);
-  const valuesArray = Object.entries(values ?? {}).map((el) => {
-    id.current++;
-    return {
-      key: el[0],
-      value: el[1],
-      id: `${id.current}`,
-    };
-  });
-  const valuesArrayRef = useRef(valuesArray);
-  // To allow keys that have the same prefix to be added in any order
-  const valuesArrayRefUnique = valuesArrayRef.current
-    .toReversed()
-    .filter(
-      (el, index, self) => self.findIndex((t) => t.key === el.key) === index,
-    )
-    .toReversed();
+  const valuesArrayRef = useRef<DictionaryInputItem[]>([]);
+  const incomingValues = values ?? {};
+  const currentValues = toRecord(valuesArrayRef.current);
   const haveValuesChangedFromOutside =
-    valuesArrayRefUnique.length !== valuesArray.length ||
-    valuesArray.reduce((acc, _, index) => {
-      return (
-        acc ||
-        valuesArrayRefUnique[index].key !== valuesArray[index].key ||
-        valuesArrayRefUnique[index].value !== valuesArray[index].value
-      );
-    }, false);
+    Object.keys(currentValues).length !== Object.keys(incomingValues).length ||
+    Object.entries(incomingValues).some(
+      ([key, value]) => !(key in currentValues) || currentValues[key] !== value,
+    );
 
   if (haveValuesChangedFromOutside) {
-    valuesArrayRef.current = valuesArray;
+    valuesArrayRef.current = Object.entries(incomingValues)
+      .sort(([firstKey], [secondKey]) => compareKeys(firstKey, secondKey))
+      .map(([key, value]) => {
+        id.current++;
+        return {
+          key,
+          value,
+          id: `${id.current}`,
+        };
+      });
   }
 
   const remove = (index: number) => {
@@ -85,13 +77,10 @@ export const DictionaryInput = ({
   };
 
   const updateValue = (items: DictionaryInputItem[]) => {
-    const value = items.reduce((acc, current) => {
-      return { ...acc, [current.key]: current.value };
-    }, {});
     // Wrap in event-like object so RHF's field.onChange correctly extracts
     // target.value instead of treating the record itself as an event.
     // See: https://github.com/react-hook-form/react-hook-form/issues/13078
-    onChange({ target: { value } } as unknown as Record<string, string>);
+    onChange({ target: { value: toRecord(items) } });
   };
 
   return (
@@ -153,9 +142,28 @@ export const DictionaryInput = ({
   );
 };
 
+const keyCollator = new Intl.Collator('en', { numeric: true });
+
+function compareKeys(firstKey: string, secondKey: string): number {
+  if (firstKey === '' || secondKey === '') {
+    return firstKey === secondKey ? 0 : firstKey === '' ? 1 : -1;
+  }
+  const humanOrder = keyCollator.compare(firstKey, secondKey);
+  if (humanOrder !== 0) {
+    return humanOrder;
+  }
+  return firstKey < secondKey ? -1 : firstKey > secondKey ? 1 : 0;
+}
+
+function toRecord(items: DictionaryInputItem[]): Record<string, string> {
+  return Object.fromEntries(
+    items.map((item): [string, string] => [item.key, item.value]),
+  );
+}
+
 export type DictionaryInputProps = {
   values: Record<string, string> | undefined;
-  onChange: (values: Record<string, string>) => void;
+  onChange: (event: { target: { value: Record<string, string> } }) => void;
   disabled?: boolean;
   keyInputClassName?: string;
   keyPlaceholder?: string;

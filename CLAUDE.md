@@ -47,6 +47,7 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 - **No type casting** — Do not use `as SomeType` to force types. If you encounter an unnecessary cast, remove it.
 - **No deprecated APIs** — Before using any library method or export, check its JSDoc. If it carries a `@deprecated` tag, use the recommended replacement instead. Examples: prefer `z.enum` over `z.nativeEnum`.
 - **Go-style error handling** — Use `tryCatch` / `tryCatchSync` from `@activepieces/shared`
+- **Never write `void` in front of a promise** — When a promise is deliberately not awaited, end the chain with `.catch()` instead. `void somePromise()` is not our convention: it reads as a marker for the author rather than for the next reader, and it hides the question that matters — who handles a rejection. `@typescript-eslint/no-floating-promises` is an error in `server/api` and every package extending it (`server/worker`), so a bare statement will not lint — `.catch(() => undefined)` is the minimum, `tryCatch` where a failure changes what happens next, `rejectedPromiseHandler` in `server/api` where it only needs logging. Existing `void` usages predate this rule; do not sweep them, but do not add new ones. (This is about promises only — `void reply.header(...)` on Fastify's chainable reply is a different thing and is fine.)
 - **Zod error messages must be i18n keys** — Every `.min()`, `.refine()`, `.superRefine()`, etc. that surfaces a user-facing message must pass a string that exists as a key in `packages/web/public/locales/en/translation.json`. For common messages (e.g. required fields) use the `formErrors` constant from `@activepieces/shared`. Add a new translation key if none fits; never use raw English sentences that are not in the translation file.
 - **`@activepieces/shared` version bump** — Any change to `packages/core/shared` must be accompanied by a version bump in `packages/core/shared/package.json`: bump the **patch** version for non-breaking additions or fixes, bump the **minor** version for new exports or behaviour changes after you check if it has already been bumped in the current branch or not
 - **Helper functions** — Define non-exported helpers outside of const declarations
@@ -59,9 +60,10 @@ Open-source AI-first workflow automation platform. Self-hosted or cloud. 400+ pi
 
 ## Query Error Handling
 
-- **Global error dialog via `meta`** — `app.tsx` has a `QueryCache.onError` handler that shows an error dialog when `query.meta?.showErrorDialog` is truthy. When adding a new `useQuery` that fetches primary page data (e.g. table rows, list data), add `meta: { showErrorDialog: true }` to the query options.
-- **Do NOT add** `showErrorDialog` to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
-- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, it should have `meta: { showErrorDialog: true }`.
+- **A failed fetch is reported in place, never as a toast.** When adding a `useQuery` that fetches primary page data (table rows, list data), render `DataFetchErrorState` (`components/custom/data-fetch-error-state.tsx`) where the rows would go: pass `isError` / `errorStateEntity` / `onRetry` to `DataTable`, or branch on `isError` ahead of the empty state in a custom list. `errorStateEntity` is the already-translated, lowercase noun that reads inside "Trouble loading {entity}".
+- **There is no global error toast.** `QueryCache.onError` in `query-client.ts` only `console.error`s. A toast on top of the placeholder is two notifications for one failure, and a toast on its own leaves an empty table behind that reads as data loss.
+- **Do NOT add** an error state to minor/auxiliary queries (feature flags, piece metadata, single-item fetches, filter options, user details). These should fail silently.
+- Rule of thumb: if the query failure would leave the user staring at an empty table or blank page with no explanation, that surface needs the placeholder.
 
 ## Key Utilities (`@activepieces/shared`)
 
