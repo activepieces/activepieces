@@ -59,8 +59,25 @@ function insertUnderVersion({ published, tag, blocks }: { published: string, tag
     return [...lines.slice(0, at), ...section, ...lines.slice(at)].join('\n')
 }
 
+function duplicateTitles({ blocks }: { blocks: string[][] }): string[] {
+    const seen = new Set<string>()
+    const duplicates = new Set<string>()
+    for (const block of blocks) {
+        const title = block[0].trim()
+        if (seen.has(title)) {
+            duplicates.add(title)
+        }
+        seen.add(title)
+    }
+    return [...duplicates]
+}
+
 function rollover({ hidden, snapshot, published, tag }: RolloverParams): RolloverResult {
     const current = parseEntries({ text: hidden })
+    const duplicates = duplicateTitles({ blocks: current.blocks })
+    if (duplicates.length > 0) {
+        throw new Error(`Duplicate entry titles on ${UNRELEASED_DOC}; make them unique before releasing: ${duplicates.join(' | ')}`)
+    }
     const shipped = new Set(parseEntries({ text: snapshot }).blocks.map((block) => block[0].trim()))
     const moving = current.blocks.filter((block) => shipped.has(block[0].trim()))
     if (moving.length === 0) {

@@ -62,6 +62,15 @@ describe('rollover', () => {
         expect(breakingChangesRollover.rollover({ hidden: withAlpha, snapshot: '', published, tag: '0.92.0' }).moved).toEqual([])
     })
 
+    it('refuses to roll over when two hidden entries share a title', () => {
+        expect(() => breakingChangesRollover.rollover({
+            hidden: hiddenPage({ entries: [alpha, entry({ title: 'Alpha changes', body: 'A different change with the same title.' })] }),
+            snapshot: hiddenPage({ entries: [alpha] }),
+            published: publishedPage({ sections: '## 0.91.0\n' }),
+            tag: '0.92.0',
+        })).toThrow('Duplicate entry titles')
+    })
+
     it('keeps the intro and heading of the hidden page when the last entry leaves', () => {
         const result = breakingChangesRollover.rollover({
             hidden: hiddenPage({ entries: [alpha] }),

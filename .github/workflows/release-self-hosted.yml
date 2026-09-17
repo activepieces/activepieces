@@ -183,7 +183,7 @@ jobs:
             echo "main already matches $TAG, nothing to sync."
             exit 0
           fi
-          BRANCH="automated/sync-version-${TAG%%-*}"
+          BRANCH="automated/sync-main-$TAG"
           git checkout -b "$BRANCH"
           git add package.json docker-compose.yml docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx
           git commit -m "chore(release): sync main after $TAG"
