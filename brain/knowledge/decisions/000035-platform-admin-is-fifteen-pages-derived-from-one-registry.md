@@ -270,6 +270,22 @@ vocabularies spelled the same so the next drift is visible. `FeatureTier` and `T
 declared in four places (`lib/feature-tier.ts`, `feature-teaser.tsx`, `use-feature-gate.tsx`, and a fourth
 label map inline in `overview-shell.tsx`), so any future rename has to touch all four.
 
+**The registry trades drift bugs for derivation bugs, and the escape hatches are how you tell whether it
+is still worth it.** Three sources describing the same pages had already disagreed in production, which is
+why this exists, and that class is now impossible: the URL and the nav entry are one object. What replaced
+it is smaller but real, and the first week produced two of them. The registry claimed `?tab=` and silently
+broke the two pages that kept their own inner tabs there, and `isCrowned` miscomputed a page whose lock
+lived on the page rather than its tabs. A hand-maintained boolean can be stale; it cannot be computed
+wrong. Expect that shape of bug from anything derived here.
+
+The signal to watch is the **escape-hatch count**. `AdminPage` carries `isHidden`, `hideInNav`, `overview`
+versus `component` versus `tabs`: four places where the uniform model did not hold, one of which
+(`hideInNav`) was added days after the registry landed because Pieces wanted a routable tab that the nav
+should not draw. Each new one is the model being bent rather than used. If the list keeps growing, the
+answer is not a fifth: it is a thinner registry carrying path, title, nav and gate only, with routes
+composed normally, which keeps most of the benefit because the drift was always between *those* four
+things and never between the JSX blocks.
+
 **An overview's card row fits three, and the fourth wraps.** The cards sit in a
 `repeat(auto-fit, minmax(15rem, 1fr))` grid inside a column capped at 1024px, so three tracks plus gaps
 are all that fit and Security and Infrastructure render three cards plus an orphan. Narrowing the track
