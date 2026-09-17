@@ -33,13 +33,19 @@ vi.mock('@/hooks/platform-hooks', () => ({
   },
 }));
 vi.mock('@/hooks/user-hooks', () => ({
-  userHooks: { getCurrentUserPlatformRole: () => 'ADMIN' },
+  userHooks: {
+    getCurrentUserPlatformRole: () => 'ADMIN',
+    useCurrentUser: () => ({ data: undefined }),
+  },
 }));
 vi.mock('@/hooks/authorization-hooks', () => ({
   useIsPlatformAdmin: () => true,
 }));
 vi.mock('@/hooks/flags-hooks', () => ({
-  flagsHooks: { useFlag: () => ({ data: edition }) },
+  flagsHooks: {
+    useFlag: () => ({ data: edition }),
+    useFlags: () => ({ data: {} }),
+  },
 }));
 vi.mock('@/features/billing/stores/manage-plan-dialog-state', () => ({
   useManagePlanDialogStore: () => ({ openDialog: vi.fn() }),
@@ -167,6 +173,7 @@ describe('feature teaser', () => {
     edition = 'ce';
     const { container } = render(
       <FeatureTeaser
+        featureKey="API"
         title="Enable API Keys"
         description=""
         videoUrl={SHOWCASE_VIDEO}
@@ -177,10 +184,32 @@ describe('feature teaser', () => {
     );
   });
 
+  it('offers contact sales on community, as the locked page did before', () => {
+    edition = 'ce';
+    render(
+      <FeatureTeaser featureKey="API" title="Enable API Keys" description="" />,
+    );
+    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+  });
+
+  it('drops contact sales only where the caller opts out', () => {
+    edition = 'ce';
+    render(
+      <FeatureTeaser
+        featureKey="BILLING"
+        title="Enable Billing"
+        description=""
+        showContactSales={false}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
+  });
+
   it('plays the showcase video on cloud', () => {
     edition = 'cloud';
     const { container } = render(
       <FeatureTeaser
+        featureKey="API"
         title="Enable API Keys"
         description=""
         videoUrl={SHOWCASE_VIDEO}

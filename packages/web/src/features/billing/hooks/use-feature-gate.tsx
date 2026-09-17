@@ -16,6 +16,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
+import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
 
 export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
   const [open, setOpen] = useState(false);
@@ -105,13 +106,6 @@ export function UpgradeFeatureDialog({
 
 const ENTERPRISE_DOCUMENTATION_URL =
   'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
-
-export const TIER_LABELS: Record<FeatureTier, string> = {
-  team: 'Team',
-  enterprise: 'Enterprise',
-};
-
-export type FeatureTier = 'team' | 'enterprise';
 
 export type PlatformFeature = {
   title: string;

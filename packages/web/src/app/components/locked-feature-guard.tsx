@@ -1,6 +1,9 @@
 import React from 'react';
 
-import { FeatureTeaser, FeatureTier } from './feature-teaser';
+import { FeatureTier } from '@/features/billing';
+
+import { FeatureTeaser } from './feature-teaser';
+import { FeatureKey } from './request-trial';
 
 export const LockedFeatureGuard = ({
   children,
@@ -11,6 +14,8 @@ export const LockedFeatureGuard = ({
   lockDocumentationUrl,
   lockBullets,
   lockTier,
+  featureKey,
+  showContactSales = true,
 }: LockedFeatureGuardProps) => {
   if (!locked) {
     return children;
@@ -24,6 +29,8 @@ export const LockedFeatureGuard = ({
       tier={lockTier}
       documentationUrl={lockDocumentationUrl}
       videoUrl={lockVideoUrl}
+      featureKey={featureKey}
+      showContactSales={showContactSales}
     />
   );
 };
@@ -32,6 +39,8 @@ export default LockedFeatureGuard;
 
 type LockedFeatureGuardProps = {
   children: React.ReactNode;
+  featureKey: FeatureKey;
+  showContactSales?: boolean;
   locked: boolean;
   lockTitle: string;
   lockDescription: string;
@@ -39,6 +48,4 @@ type LockedFeatureGuardProps = {
   lockDocumentationUrl?: string;
   lockBullets?: string[];
   lockTier?: FeatureTier;
-  featureKey?: string;
-  showContactSales?: boolean;
 };

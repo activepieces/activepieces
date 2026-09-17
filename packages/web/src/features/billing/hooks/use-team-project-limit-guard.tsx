@@ -15,9 +15,8 @@ import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
+import { TIER_LABELS } from '../utils/feature-tier';
 import { PLATFORM_FEATURES } from '../utils/platform-features';
-
-import { TIER_LABELS } from './use-feature-gate';
 
 export const useTeamProjectLimitGuard = ({
   projects,

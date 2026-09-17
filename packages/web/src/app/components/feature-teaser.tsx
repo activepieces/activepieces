@@ -5,7 +5,13 @@ import { Check, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useManagePlanDialogStore } from '@/features/billing';
+import {
+  FeatureTier,
+  TIER_LABELS,
+} from '@/features/billing/utils/feature-tier';
 import { flagsHooks } from '@/hooks/flags-hooks';
+
+import { FeatureKey, RequestTrial } from './request-trial';
 
 export function FeatureTeaserContent({
   title,
@@ -14,6 +20,8 @@ export function FeatureTeaserContent({
   tier,
   documentationUrl,
   videoUrl,
+  featureKey,
+  showContactSales = true,
 }: FeatureTeaserProps) {
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -48,6 +56,11 @@ export function FeatureTeaserContent({
           {t('Read the docs')}
           <ExternalLink className="size-3.5" />
         </a>
+        {showContactSales && (
+          <div className="w-fit pt-2">
+            <RequestTrial featureKey={featureKey} />
+          </div>
+        )}
         {showcase}
       </div>
     );
@@ -111,14 +124,9 @@ export function FeatureTeaser(props: FeatureTeaserProps) {
 const ENTERPRISE_DOCUMENTATION_URL =
   'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
 
-const TIER_LABELS: Record<FeatureTier, string> = {
-  team: 'Team',
-  enterprise: 'Enterprise',
-};
-
-export type FeatureTier = 'team' | 'enterprise';
-
 export type FeatureTeaserProps = {
+  featureKey: FeatureKey;
+  showContactSales?: boolean;
   title: string;
   description: string;
   bullets?: string[];
