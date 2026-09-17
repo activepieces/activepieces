@@ -67,10 +67,20 @@ export const updateBroadcast = createAction({
     if (propsValue.subject) body['subject'] = propsValue.subject;
     if (propsValue.reply_to) body['reply_to'] = propsValue.reply_to;
     if (propsValue.name) body['name'] = propsValue.name;
-    if (propsValue.content_type === 'html' && propsValue.content) {
+    if (propsValue.content && !propsValue.content_type) {
+      throw new Error('Content Type is required when Content is provided.');
+    }
+    if (propsValue.content_type && !propsValue.content) {
+      throw new Error('Content is required when Content Type is provided.');
+    }
+    if (propsValue.content_type === 'html') {
       body['html'] = propsValue.content;
-    } else if (propsValue.content_type === 'text' && propsValue.content) {
+    } else if (propsValue.content_type === 'text') {
       body['text'] = propsValue.content;
+    }
+
+    if (Object.keys(body).length === 0) {
+      throw new Error('At least one field must be provided to update the broadcast.');
     }
 
     return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.PATCH, path: `/broadcasts/${propsValue.broadcast_id}`, body: body });
