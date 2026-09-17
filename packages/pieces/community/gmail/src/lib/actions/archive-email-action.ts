@@ -9,12 +9,7 @@ export const gmailArchiveEmailAction = createAction({
   classification: 'WRITE',
   displayName: 'Archive Email',
   description: 'Archive an email message by removing it from the inbox.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Archives a single email message by message ID, removing the INBOX label so it no longer appears in the inbox while remaining searchable and in its thread. Does not delete the message or move it to Trash. Obtain the message ID from Search Email or Get Message. Idempotent: true — archiving an already-archived message has no additional effect.',
-    idempotent: true,
-  },
+  audience: 'human',
   props: {
     message_id: Property.ShortText({
       displayName: 'Message ID',

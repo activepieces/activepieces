@@ -1,19 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { httpClient } from '@activepieces/pieces-common';
 import { createMockActionContext } from '@activepieces/pieces-framework';
-import { generateText } from 'ai';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { askAI } from './ask-ai';
 import { summarizeText } from './summarize-text';
 
-vi.mock('ai', () => ({
-  generateText: vi.fn(async () => ({ text: 'ok', sources: [] })),
-  stepCountIs: vi.fn(),
-}));
+vi.mock('@activepieces/pieces-common', async (importOriginal) => {
+  const original = await importOriginal<Record<string, unknown>>();
+  return {
+    ...original,
+    httpClient: { sendRequest: vi.fn(async () => ({ body: { requestId: 'request-1' } })) },
+  };
+});
 
-vi.mock('../../common/ai-sdk', () => ({
-  createAIModel: vi.fn(async () => ({})),
-}));
-
-const generateTextMock = vi.mocked(generateText);
+const sendRequest = vi.mocked(httpClient.sendRequest);
 
 const baseProps = {
   provider: { provider: 'openai', configId: 'config1' },
@@ -21,41 +20,41 @@ const baseProps = {
   maxOutputTokens: 2000,
 };
 
-async function askAiGenerateTextArgs({ creativity }: { creativity: number | null | undefined }) {
+async function askAiRequestBody({ creativity }: { creativity: number | null | undefined }) {
   await askAI.run(createMockActionContext({
     propsValue: { ...baseProps, prompt: 'hello', webSearch: false, creativity },
   }));
-  return generateTextMock.mock.calls[0][0];
+  return sendRequest.mock.calls[0][0].body as Record<string, unknown>;
 }
 
 beforeEach(() => {
-  generateTextMock.mockClear();
+  sendRequest.mockClear();
 });
 
 describe('askAI temperature', () => {
   it('omits temperature when creativity is not set', async () => {
-    const args = await askAiGenerateTextArgs({ creativity: undefined });
-    expect(args).not.toHaveProperty('temperature');
+    const body = await askAiRequestBody({ creativity: undefined });
+    expect(body).not.toHaveProperty('temperature');
   });
 
   it('omits temperature when creativity is null', async () => {
-    const args = await askAiGenerateTextArgs({ creativity: null });
-    expect(args).not.toHaveProperty('temperature');
+    const body = await askAiRequestBody({ creativity: null });
+    expect(body).not.toHaveProperty('temperature');
   });
 
   it('sends temperature scaled from an explicit creativity', async () => {
-    const args = await askAiGenerateTextArgs({ creativity: 50 });
-    expect(args.temperature).toBe(0.5);
+    const body = await askAiRequestBody({ creativity: 50 });
+    expect(body['temperature']).toBe(0.5);
   });
 
   it('sends temperature 1 for the previously seeded default of 100', async () => {
-    const args = await askAiGenerateTextArgs({ creativity: 100 });
-    expect(args.temperature).toBe(1);
+    const body = await askAiRequestBody({ creativity: 100 });
+    expect(body['temperature']).toBe(1);
   });
 
   it('sends temperature 0 when creativity is 0', async () => {
-    const args = await askAiGenerateTextArgs({ creativity: 0 });
-    expect(args.temperature).toBe(0);
+    const body = await askAiRequestBody({ creativity: 0 });
+    expect(body['temperature']).toBe(0);
   });
 });
 
@@ -64,6 +63,6 @@ describe('summarizeText temperature', () => {
     await summarizeText.run(createMockActionContext({
       propsValue: { ...baseProps, text: 'long text', prompt: 'Summarize' },
     }));
-    expect(generateTextMock.mock.calls[0][0]).not.toHaveProperty('temperature');
+    expect(sendRequest.mock.calls[0][0].body).not.toHaveProperty('temperature');
   });
 });

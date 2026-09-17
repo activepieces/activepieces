@@ -60,6 +60,7 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
             codeChallengeMethod: authRequest.codeChallengeMethod,
             scopes: authRequest.scopes,
             state: authRequest.state ?? undefined,
+            nonce: authRequest.nonce,
         })
 
         const redirectUrl = new URL(authRequest.redirectUri)
@@ -91,6 +92,7 @@ type AuthRequestPayload = {
     codeChallenge: string
     codeChallengeMethod: string
     state: string | null
+    nonce: string | null
     scopes: string[]
     resource: string | null
     type: 'mcp_auth_request'

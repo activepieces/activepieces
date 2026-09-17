@@ -337,18 +337,6 @@ export const autumnConsole = {
     async compFreeLegacy({ autumnCustomerId }: { autumnCustomerId: string }): Promise<void> {
         await consoleRequest({ path: '/api/v1/billing/free-legacy', token: consoleSecretOrThrow(), body: { autumnCustomerId } })
     },
-    async grantChatPlan({ email }: { email: string }): Promise<string> {
-        const grant = await consoleRequest<{ licenseKey: string | null } | null>({
-            path: '/api/external/grant-chat-plan',
-            token: consoleSecretOrThrow(),
-            body: { email },
-        })
-        const licenseKey = grant?.licenseKey
-        if (isNil(licenseKey) || isEmpty(licenseKey)) {
-            throw new Error('Console returned no license key for the chat plan grant')
-        }
-        return licenseKey
-    },
     async getCreds(log: FastifyBaseLogger, platformId: string): Promise<ConsoleCustomerCall | null> {
         return autumnUtils.loadAutumnCreds(log, platformId)
     },

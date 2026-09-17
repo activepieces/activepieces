@@ -494,6 +494,9 @@
       "@activepieces/piece-frill": [
         "packages/pieces/community/frill/src/index.ts"
       ],
+      "@activepieces/piece-floqer": [
+        "packages/pieces/community/floqer/src/index.ts"
+      ],
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
       ],
@@ -1154,6 +1157,9 @@
       ],
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
+      ],
+      "@activepieces/piece-sage-accounting": [
+        "packages/pieces/community/sage-accounting/src/index.ts"
       ],
       "@activepieces/piece-saleor": [
         "packages/pieces/community/saleor/src/index.ts"
