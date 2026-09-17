@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { FeatureTier } from '@/features/billing';
+import { FeatureTier, TIER_LABELS } from '@/features/billing';
 import { cn } from '@/lib/utils';
 
 export function AdminOverview({
@@ -156,11 +156,6 @@ const TONE_CLASS: Record<OverviewRowTone, string> = {
   warn: 'bg-amber-500',
   error: 'bg-destructive',
   off: 'bg-muted-foreground/35',
-};
-
-const TIER_LABELS: Record<FeatureTier, string> = {
-  team: 'Team',
-  enterprise: 'Enterprise',
 };
 
 export type OverviewRowTone = 'ok' | 'warn' | 'error' | 'off';

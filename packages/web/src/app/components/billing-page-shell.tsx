@@ -26,6 +26,8 @@ export function BillingPageShell({
 
   return (
     <LockedFeatureGuard
+      featureKey="BILLING"
+      showContactSales={false}
       locked={edition === ApEdition.COMMUNITY}
       lockTitle={lockTitle}
       lockDescription={t(

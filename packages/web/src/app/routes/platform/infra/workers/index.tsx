@@ -179,6 +179,7 @@ export default function WorkersPage() {
 
         <TabsContent value="worker-groups">
           <LockedFeatureGuard
+            featureKey="DEDICATED_WORKERS"
             locked={!platform.plan.workerGroupsEnabled}
             lockTitle={t('Unlock Worker Groups')}
             lockDescription={t(
