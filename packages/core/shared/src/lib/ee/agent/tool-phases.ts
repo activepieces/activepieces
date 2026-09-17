@@ -67,6 +67,12 @@ function isAgentHiddenTool(toolName: string): boolean {
     return CHAT_HIDDEN_TOOL_NAMES.has(toolName)
 }
 
+// A saved agent may rewrite itself in its own conversation; the platform assistant and the
+// builder may also reach for other agents. The worker decides which of these to hand the model
+// and the server decides which to run, so both read the same two lists.
+export const AGENT_SELF_EDIT_TOOLS: readonly string[] = ['ap_update_agent', 'ap_add_agent_tool', 'ap_remove_agent_tool']
+export const AGENT_SURFACE_TOOLS: readonly string[] = ['ap_list_agents', 'ap_create_agent', ...AGENT_SELF_EDIT_TOOLS]
+
 export type AgentPhase = 'discovery' | 'build'
 
 export const agentToolPhases = {

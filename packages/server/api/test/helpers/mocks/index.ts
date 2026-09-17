@@ -204,12 +204,12 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         themeColors: platform?.themeColors ?? null,
-        logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
-        fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
+        logoIconUrl: platform?.logoIconUrl ?? faker.image.url(),
+        fullLogoUrl: platform?.fullLogoUrl ?? faker.image.url(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
         autoCreatePersonalProjects: platform?.autoCreatePersonalProjects ?? true,
         pinnedPieces: platform?.pinnedPieces ?? [],
-        favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
+        favIconUrl: platform?.favIconUrl ?? faker.image.url(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
@@ -319,7 +319,7 @@ export const createMockPieceMetadata = (
         updated: pieceMetadata?.updated ?? faker.date.recent().toISOString(),
         name: pieceMetadata?.name ?? faker.lorem.word(),
         displayName: pieceMetadata?.displayName ?? faker.lorem.word(),
-        logoUrl: pieceMetadata?.logoUrl ?? faker.image.urlPlaceholder(),
+        logoUrl: pieceMetadata?.logoUrl ?? faker.image.url(),
         description: pieceMetadata?.description ?? faker.lorem.sentence(),
         directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
@@ -336,6 +336,7 @@ export const createMockPieceMetadata = (
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
         contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
+        i18n: pieceMetadata?.i18n,
     }
 }
 

@@ -20,8 +20,8 @@ export const deleteClickupMessageReaction = createAction({
       required: true,
     }),
     reaction_id: Property.ShortText({
-      description: 'ID of the reaction to delete',
-      displayName: 'Reaction ID',
+      description: 'Emoji shortcode of the reaction to delete, without colons, e.g. heart or tada',
+      displayName: 'Reaction',
       required: true,
     }),
   },

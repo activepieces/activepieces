@@ -18,13 +18,6 @@ export function getUpdatedDate(
   return new Date(item.updated).getTime();
 }
 
-export function getItemName(item: PopulatedFlow | Table): string {
-  if ('version' in item) {
-    return item.version.displayName;
-  }
-  return item.name;
-}
-
 export function mergeAndSortItems({
   flows,
   tables,

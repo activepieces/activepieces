@@ -432,6 +432,14 @@ import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836
 import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
 import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
 import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
+import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
+import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841000000000-AddPlatformConfiguration'
+import { AddAgentRunsIndex1842000000000 } from './migration/postgres/1842000000000-AddAgentRunsIndex'
+import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres/1843000000000-AddAgentConversationFlowRunId'
+import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
+import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
+import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
+import { AddMcpOAuthCodeNonce1851000000000 } from './migration/postgres/1851000000000-AddMcpOAuthCodeNonce'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -879,6 +887,14 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProviderStatus1837000000000,
         AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
         AddFlowProjectIdExternalIdUniqueIndex1839000000000,
+        AddFlowApprovalWorkflow1840000000000,
+        AddPlatformConfiguration1841000000000,
+        AddAgentRunsIndex1842000000000,
+        AddAgentConversationFlowRunId1843000000000,
+        AddMcpActivity1844000000000,
+        NullOrphanFolderReferences1846000000000,
+        AddAgentConversationAiCredits1850000000000,
+        AddMcpOAuthCodeNonce1851000000000,
     ]
     return migrations
 }

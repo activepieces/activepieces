@@ -19,6 +19,8 @@ export const setChannelTopicAction = createAction({
 		channel: slackChannel(true),
 		topic: Property.LongText({
 			displayName: 'Topic',
+			description: 'Shown under the channel name.',
+			placeholder: 'Weekly release coordination',
 			required: true,
 		}),
 	},

@@ -21,8 +21,11 @@ const listener = {
 
 const eventPermissions: Partial<Record<WebsocketServerEvent, Permission>> = {}
 
+const projectRoleBySocket = new WeakMap<Socket, ProjectRole>()
+
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
+    socketHasPermission: ({ socket, permission }: SocketHasPermissionParams): boolean => hasPermission(projectRoleBySocket.get(socket), permission),
     notifyWorkers: () => createNotifyClient<ApiToWorkerContract>(app!.io.to(WORKERS_ROOM)),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
         const principal = await websocketService.verifyPrincipal(socket)
@@ -37,6 +40,7 @@ export const websocketService = {
         switch (type) {
             case PrincipalType.USER: {
                 projectRole = await validateProjectId({ userId: principal.id, projectId, log })
+                projectRoleBySocket.set(socket, projectRole)
                 log.info({
                     message: 'User connected',
                     user: { id: principal.id },
@@ -140,4 +144,9 @@ type ValidateProjectIdArgs = {
     userId: string
     projectId?: string
     log: FastifyBaseLogger
+}
+
+type SocketHasPermissionParams = {
+    socket: Socket
+    permission: Permission
 }
