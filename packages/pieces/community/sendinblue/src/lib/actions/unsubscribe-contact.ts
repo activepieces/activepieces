@@ -3,16 +3,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
 import { brevoProps } from '../common/props';
-import { unsubscribeContactActionOutputSchema } from '../output-schemas';
 
 export const unsubscribeContact = createAction({
 	auth: sendinblueAuth,
 	name: 'unsubscribe_contact',
-	outputSchema: unsubscribeContactActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Unsubscribe Contact',
 	description: 'Blacklist a contact so it stops receiving email or SMS.',
-	audience: 'human',
+	audience: 'both',
 	aiMetadata: {
 		description:
 			'Opts a Brevo contact out by setting its email and optionally SMS blacklist flags, and can additionally remove it from specific lists. Use this to honour an unsubscribe request received elsewhere. Brevo answers with an empty body, so this returns a success flag. Idempotent — unsubscribing an already unsubscribed contact changes nothing.',

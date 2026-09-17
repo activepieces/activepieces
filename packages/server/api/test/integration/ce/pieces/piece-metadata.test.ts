@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, LocalesEnum } from '@activepieces/core-utils'
 import { ActionBase } from '@activepieces/pieces-framework'
 import { DefaultProjectRole, FlowTriggerType, PackageType, PieceType, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
@@ -84,6 +84,109 @@ describe('Piece Metadata CE API', () => {
             expect(Array.isArray(body)).toBe(true)
             expect(body).toHaveLength(1)
             expect(body[0].name).toBe('ce-list-test-piece')
+        })
+
+        it('translates the listed piece into the requested locale and never leaks i18n', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'locale-test-piece',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'Locale Test',
+                description: 'Send a message',
+                packageType: PackageType.REGISTRY,
+                i18n: {
+                    [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' },
+                    [LocalesEnum.FRENCH]: { 'Send a message': 'Envoyer un message' },
+                },
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces?locale=de',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body).toHaveLength(1)
+            expect(body[0].description).toBe('Eine Nachricht senden')
+            expect(body[0].i18n).toBeUndefined()
+        })
+
+        it('falls back to the untranslated value when the piece has no entry for the locale', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'locale-missing-piece',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'Locale Missing',
+                description: 'Send a message',
+                packageType: PackageType.REGISTRY,
+                i18n: {
+                    [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' },
+                },
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces?locale=fr',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body).toHaveLength(1)
+            expect(body[0].description).toBe('Send a message')
+            expect(body[0].i18n).toBeUndefined()
+        })
+
+        it('leaves the piece untranslated and free of i18n for the default English locale', async () => {
+            const mockPiece = createMockPieceMetadata({
+                name: 'locale-english-piece',
+                pieceType: PieceType.OFFICIAL,
+                displayName: 'Locale English',
+                description: 'Send a message',
+                packageType: PackageType.REGISTRY,
+                i18n: {
+                    [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' },
+                },
+            })
+            await db.save('piece_metadata', mockPiece)
+            await pieceCache(mockLog).setup()
+
+            const testToken = await generateMockToken({
+                type: PrincipalType.UNKNOWN,
+                id: apId(),
+            })
+
+            const response = await app?.inject({
+                method: 'GET',
+                url: '/api/v1/pieces',
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body).toHaveLength(1)
+            expect(body[0].description).toBe('Send a message')
+            expect(body[0].i18n).toBeUndefined()
         })
 
         it('should filter pieces by searchQuery', async () => {

@@ -1,26 +1,42 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
-import { brevoProps } from '../common/props';
-import { deleteContactActionOutputSchema } from '../output-schemas';
 
 export const deleteContact = createAction({
 	auth: sendinblueAuth,
 	name: 'delete_contact',
-	outputSchema: deleteContactActionOutputSchema,
-	classification: 'WRITE',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Contact',
-	description: 'Permanently delete a contact and its history.',
+	description: 'Permanently delete a contact from Brevo.',
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Permanently deletes a Brevo contact along with its statistics and list memberships. This cannot be undone — to stop mailing someone while keeping their record, use Update Contact with Blacklist From Email set to Yes instead. Identify the contact by email, phone, contact id or external id, setting Identifier Type for the last one. Not idempotent: deleting an already deleted contact fails with a not-found error.',
+			'Permanently deletes a Brevo contact identified by email, phone number, contact id, external id, WhatsApp id or landline number. This removes the contact record entirely and cannot be undone; prefer unsubscribe_contact when the intent is only to stop sending, not to erase the record. Not idempotent — retrying after a successful delete returns a 404 for the now-missing contact.',
 		idempotent: false,
 	},
 	props: {
-		identifier: brevoProps.contactIdentifier,
-		identifier_type: brevoProps.contactIdentifierType,
+		identifier: Property.ShortText({
+			displayName: 'Identifier',
+			description: 'The value to look the contact up by, for example an email address.',
+			required: true,
+		}),
+		identifier_type: Property.StaticDropdown({
+			displayName: 'Identifier Type',
+			description: 'How the identifier above should be interpreted.',
+			required: false,
+			defaultValue: 'email_id',
+			options: {
+				options: [
+					{ label: 'Email', value: 'email_id' },
+					{ label: 'Phone (SMS)', value: 'phone_id' },
+					{ label: 'Contact ID', value: 'contact_id' },
+					{ label: 'External ID', value: 'ext_id' },
+					{ label: 'WhatsApp', value: 'whatsapp_id' },
+					{ label: 'Landline Number', value: 'landline_number_id' },
+				],
+			},
+		}),
 	},
 	async run(context) {
 		const { identifier, identifier_type } = context.propsValue;
@@ -32,6 +48,6 @@ export const deleteContact = createAction({
 			query: { identifierType: identifier_type },
 		});
 
-		return { success: true, identifier };
+		return { success: true };
 	},
 });

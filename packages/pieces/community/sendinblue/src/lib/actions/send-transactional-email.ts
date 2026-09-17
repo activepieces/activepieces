@@ -12,7 +12,7 @@ export const sendTransactionalEmail = createAction({
 	classification: 'WRITE',
 	displayName: 'Send Transactional Email',
 	description: 'Send an email from your Brevo account with HTML or plain text content.',
-	audience: 'human',
+	audience: 'both',
 	aiMetadata: {
 		description:
 			'Sends a one-off transactional email through Brevo, either by supplying subject and HTML content directly or by selecting a saved template and passing its variables. Use for receipts, password resets, notifications and other per-recipient mail; not for bulk marketing campaigns. Requires a verified sender unless a template with its own sender is used. Not idempotent — each call sends a new message.',

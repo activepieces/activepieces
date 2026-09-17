@@ -184,6 +184,7 @@ const getDefaultStepValues = ({
             },
             input,
             errorHandlingOptions,
+            useDeno: true,
           },
         },
         common,

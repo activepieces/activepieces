@@ -53,24 +53,9 @@ function isEmptyObject(value: Record<string, unknown> | undefined): boolean {
 	return isNil(value) || Object.keys(value).length === 0;
 }
 
-function errorDetail(body: unknown): BrevoErrorDetail {
-	if (!isPlainObject(body)) {
-		return {};
-	}
-	return {
-		code: typeof body['code'] === 'string' ? body['code'] : undefined,
-		message: typeof body['message'] === 'string' ? body['message'] : undefined,
-	};
-}
-
-export const brevoCommon = { apiCall, isEmptyObject, errorDetail };
+export const brevoCommon = { apiCall, isEmptyObject };
 
 export const BREVO_API_URL = 'https://api.brevo.com/v3';
-
-export type BrevoErrorDetail = {
-	code?: string;
-	message?: string;
-};
 
 export type BrevoApiCallParams = {
 	apiKey: string;

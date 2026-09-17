@@ -11,7 +11,7 @@ export const findContact = createAction({
 	classification: 'READ',
 	displayName: 'Find Contact',
 	description: 'Check whether a contact exists in Brevo and fetch its details.',
-	audience: 'human',
+	audience: 'both',
 	aiMetadata: {
 		description:
 			'Looks up a single Brevo contact by email, phone number, contact id, external id, WhatsApp id or landline number, and returns its attributes, list membership and blacklist flags. Returns found:false instead of failing when no contact matches, so it is safe to branch on. Read-only and idempotent.',

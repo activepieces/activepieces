@@ -8,29 +8,21 @@ export const listContactAttributes = createAction({
 	auth: sendinblueAuth,
 	name: 'list_contact_attributes',
 	outputSchema: listContactAttributesActionOutputSchema,
-	classification: 'READ',
+	classification: 'SEARCH',
 	displayName: 'List Contact Attributes',
-	description: 'List the contact attributes configured on the account.',
+	description: 'List all contact attributes configured in the Brevo account.',
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Lists every contact attribute defined on the Brevo account, with its name, category and data type. Call this before Create Contact or Update Contact when you intend to set attributes: Brevo rejects any attribute name that is not already configured, so this is how you learn the valid keys and their types. Takes no input. Read-only and idempotent.',
+			'Lists every contact attribute configured in the Brevo account, with its category and type. Use this before calling create_or_update_contact or update_contact to discover valid attribute names, since Brevo rejects attributes that do not already exist. Read-only and idempotent.',
 		idempotent: true,
 	},
 	props: {},
 	async run(context) {
-		const response = await brevoCommon.apiCall<AttributesResponse>({
+		return await brevoCommon.apiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: '/contacts/attributes',
 		});
-
-		const attributes = response.attributes ?? [];
-
-		return { attributes, count: attributes.length };
 	},
 });
-
-type AttributesResponse = {
-	attributes?: unknown[];
-};

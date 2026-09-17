@@ -1,61 +1,54 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, isNil, Property } from '@activepieces/pieces-framework';
 import { sendinblueAuth } from '../auth';
 import { brevoCommon } from '../common';
+import { getContactCampaignStatsActionOutputSchema } from '../output-schemas';
 
 export const getContactCampaignStats = createAction({
 	auth: sendinblueAuth,
 	name: 'get_contact_campaign_stats',
+	outputSchema: getContactCampaignStatsActionOutputSchema,
 	classification: 'READ',
 	displayName: 'Get Contact Campaign Stats',
-	description: 'Email campaign statistics for one contact.',
+	description: `Get a contact's engagement statistics (opens, clicks, deliveries, and more) across campaigns.`,
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Returns how one Brevo contact has engaged with email campaigns — opens, clicks, bounces, unsubscribes and complaints — optionally bounded to a date range. Identify the contact by email address or numeric contact id only; unlike the other contact actions this endpoint does not accept external, WhatsApp or landline identifiers. Read-only and idempotent.',
+			`Fetches a Brevo contact's campaign engagement statistics, such as opened, clicked, delivered, and unsubscribed events, optionally restricted to a date range. Start Date and End Date must both be supplied or both omitted, and Brevo caps the range at 90 days. Read-only and idempotent, though results can change over time as new engagement events occur.`,
 		idempotent: true,
 	},
 	props: {
 		identifier: Property.ShortText({
-			displayName: 'Contact Identifier',
-			description:
-				'Email address or numeric contact id. External, WhatsApp and landline ids are not supported here.',
+			displayName: 'Identifier',
+			description: 'Email address or numeric contact id of the contact.',
 			required: true,
 		}),
-		start_date: Property.DateTime({
+		start_date: Property.ShortText({
 			displayName: 'Start Date',
-			description: 'Beginning of the reporting window. Requires End Date.',
+			description: 'YYYY-MM-DD. Must be supplied together with End Date.',
 			required: false,
 		}),
-		end_date: Property.DateTime({
+		end_date: Property.ShortText({
 			displayName: 'End Date',
-			description: 'End of the reporting window. Requires Start Date.',
+			description: 'YYYY-MM-DD. Must be supplied together with Start Date. Brevo caps the range at 90 days.',
 			required: false,
 		}),
 	},
 	async run(context) {
 		const { identifier, start_date, end_date } = context.propsValue;
 
-		if (Boolean(start_date) !== Boolean(end_date)) {
-			throw new Error(
-				'Start Date and End Date must be supplied together — Brevo rejects a one-sided range.',
-			);
+		if (isNil(start_date) !== isNil(end_date)) {
+			throw new Error('Provide both Start Date and End Date, or neither.');
 		}
 
-		const stats = await brevoCommon.apiCall({
+		return await brevoCommon.apiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/contacts/${encodeURIComponent(identifier)}/campaignStats`,
 			query: {
-				startDate: start_date ? toDateOnly(start_date) : undefined,
-				endDate: end_date ? toDateOnly(end_date) : undefined,
+				startDate: start_date,
+				endDate: end_date,
 			},
 		});
-
-		return stats;
 	},
 });
-
-function toDateOnly(value: string): string {
-	return value.slice(0, 10);
-}

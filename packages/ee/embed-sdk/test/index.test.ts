@@ -109,6 +109,27 @@ describe('ActivepiecesEmbedded', () => {
     expect(initMessages[0].data.initialRoute).toBe('/runs');
   });
 
+  it('sends the configured analytics ids in VENDOR_INIT', () => {
+    const sdk = new ActivepiecesEmbedded();
+    configureSdk({
+      sdk,
+      analytics: { gtmContainerId: 'GTM-ABC123', clarityProjectId: 'abc123xyz' },
+    });
+    const { iframeWindow, postMessageSpy } = spyOnDashboardIframe();
+
+    dispatchFromIframe({
+      source: iframeWindow,
+      data: { type: ActivepiecesClientEventName.CLIENT_INIT, data: {} },
+    });
+
+    const initMessages = getPostedMessages(postMessageSpy).filter(
+      (message) => message.type === ActivepiecesVendorEventName.VENDOR_INIT,
+    );
+    expect(initMessages).toHaveLength(1);
+    expect(initMessages[0].data.gtmContainerId).toBe('GTM-ABC123');
+    expect(initMessages[0].data.clarityProjectId).toBe('abc123xyz');
+  });
+
   it('cancels a configure() that is superseded while still waiting for its container', async () => {
     document.body.innerHTML = '';
     const sdk = new ActivepiecesEmbedded();
@@ -159,10 +180,12 @@ function configureSdk({
   sdk,
   initialRoute,
   navigationHandler,
+  analytics,
 }: {
   sdk: ActivepiecesEmbedded;
   initialRoute?: string;
   navigationHandler?: (data: { route: string }) => void;
+  analytics?: { gtmContainerId?: string; clarityProjectId?: string };
 }) {
   return sdk.configure({
     instanceUrl: INSTANCE_URL,
@@ -170,6 +193,7 @@ function configureSdk({
     embedding: {
       containerId: CONTAINER_ID,
       initialRoute,
+      analytics,
       navigation: navigationHandler
         ? { handler: navigationHandler }
         : undefined,

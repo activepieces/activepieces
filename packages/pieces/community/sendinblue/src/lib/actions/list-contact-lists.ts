@@ -8,46 +8,54 @@ export const listContactLists = createAction({
 	auth: sendinblueAuth,
 	name: 'list_contact_lists',
 	outputSchema: listContactListsActionOutputSchema,
-	classification: 'READ',
+	classification: 'SEARCH',
 	displayName: 'List Contact Lists',
-	description: 'List the contact lists on the account.',
+	description: 'List the contact lists in the Brevo account.',
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Returns one page of Brevo contact lists with their ids, names, folder and subscriber counts. This is the way to turn a list name an agent was given into the numeric list id that Create Contact, Update Contact, Import Contacts and the campaign actions all require. Read-only and idempotent.',
+			'Lists Brevo contact lists with their id, name, folder id and subscriber counts. This is the way to resolve a list name to the numeric list id that other actions such as Create Contact List, Get Contact List or contact management actions require. Read-only and idempotent.',
 		idempotent: true,
 	},
 	props: {
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'How many lists to return, up to 50.',
+			description: 'Number of lists to return per page. Maximum 50. Defaults to 10.',
 			required: false,
-			defaultValue: 50,
+			defaultValue: 10,
 		}),
 		offset: Property.Number({
 			displayName: 'Offset',
-			description: 'How many lists to skip, for paging.',
+			description: 'Index of the first list to return. Defaults to 0.',
 			required: false,
 			defaultValue: 0,
 		}),
+		sort: Property.StaticDropdown({
+			displayName: 'Sort',
+			description: 'Sort order for the results, based on the list creation date.',
+			required: false,
+			options: {
+				options: [
+					{ label: 'Ascending', value: 'asc' },
+					{ label: 'Descending', value: 'desc' },
+				],
+			},
+		}),
 	},
 	async run(context) {
-		const { limit, offset } = context.propsValue;
+		const { limit, offset, sort } = context.propsValue;
 
-		const response = await brevoCommon.apiCall<ListsResponse>({
+		const response = await brevoCommon.apiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: '/contacts/lists',
-			query: { limit, offset },
+			query: {
+				limit,
+				offset,
+				sort,
+			},
 		});
 
-		const lists = response.lists ?? [];
-
-		return { lists, count: response.count ?? lists.length };
+		return response;
 	},
 });
-
-type ListsResponse = {
-	lists?: unknown[];
-	count?: number;
-};

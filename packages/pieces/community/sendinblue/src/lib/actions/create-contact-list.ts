@@ -10,40 +10,38 @@ export const createContactList = createAction({
 	outputSchema: createContactListActionOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Create Contact List',
-	description: 'Create a contact list inside a folder.',
+	description: 'Create a new contact list in Brevo.',
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Creates a new Brevo contact list and returns its id. A list must live inside a folder, so Folder ID is required — existing lists returned by List Contact Lists carry the folder id they belong to. Creating a list does not add anyone to it; use Create Contact or Update Contact with the new id for that. Not idempotent: calling twice with the same name creates two lists.',
+			'Creates a new Brevo contact list inside a folder and returns its numeric id. Use List Contact Lists first to find a folder id if you do not already know one. Not idempotent — calling this again with the same name creates another list, Brevo does not dedupe by name.',
 		idempotent: false,
 	},
 	props: {
 		name: Property.ShortText({
 			displayName: 'Name',
-			description: 'Name of the new list.',
 			required: true,
 		}),
 		folder_id: Property.Number({
 			displayName: 'Folder ID',
 			description:
-				'Folder the list is created in. Existing lists report their folder id.',
+				"ID of the folder to create this list in. Use List Contact Lists first if you don't know a folder id; Brevo's default folder for a new account is usually id 1, but this varies.",
 			required: true,
 		}),
 	},
 	async run(context) {
 		const { name, folder_id } = context.propsValue;
 
-		const created = await brevoCommon.apiCall<CreateListResponse>({
+		const list = await brevoCommon.apiCall({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/contacts/lists',
-			body: { name, folderId: folder_id },
+			body: {
+				name,
+				folderId: folder_id,
+			},
 		});
 
-		return { id: created?.id, name, folderId: folder_id };
+		return list;
 	},
 });
-
-type CreateListResponse = {
-	id?: number;
-};
