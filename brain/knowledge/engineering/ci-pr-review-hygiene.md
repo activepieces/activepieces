@@ -30,6 +30,13 @@ Reach for this when a branch is past the size gate and the work has real seams. 
 4. **Compose each branch with `git checkout <final-branch> -- <paths>`** so every file arrives at its final
    content. Hand-edit only the files that genuinely need an intermediate state, and keep that list short
    enough to name in the PR body.
+
+   **Place a file in the PR where it is first used, not where it is introduced.** Dependency order pushes
+   new modules downward, and it is tempting to let the bottom PR own every new file. The reviewer sees the
+   result: our first PR shipped three modules with zero consumers and a hook whose `intercept`, `open` and
+   `dialog` never executed, and was rightly asked why. A PR that adds code nothing runs cannot be reviewed
+   for behaviour, only for taste. If a lower PR needs a symbol only for a *type*, import the type and leave
+   the implementation where it is used.
 5. **Run typecheck and lint on every branch, not just the top.** A stack whose middle does not build is a
    stack that cannot be merged in order.
 6. **After amending a lower branch, diff the file against the upper one before pushing.** A stack
