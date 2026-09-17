@@ -113,12 +113,6 @@ export const findPinActionOutputSchema: OutputSchema = {
       label: 'Next Page Bookmark',
       description: 'Pass back as "Bookmark" to continue where these results end.',
     },
-    {
-      key: 'skip',
-      label: 'Skip',
-      format: 'number',
-      description: 'Pass back as "Skip" with the bookmark so no Pin repeats.',
-    },
   ],
 };
 

@@ -30,13 +30,21 @@ export const boardIdDropdown = Property.Dropdown({
           : '/boards',
       });
 
-      const options = toNamedOptions(boards);
+      const options = toNamedOptions(boards.items);
 
       if (options.length === 0) {
         return {
           disabled: false,
           options: [],
           placeholder: 'No boards found. Create one in Pinterest first.',
+        };
+      }
+
+      if (boards.truncated) {
+        return {
+          disabled: false,
+          options,
+          placeholder: `Showing the first ${options.length} boards. Type to filter.`,
         };
       }
 
@@ -71,13 +79,21 @@ export const pinIdDropdown = Property.Dropdown({
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
       const pins = await fetchAllPages({ accessToken, path: '/pins' });
-      const options = toPinOptions(pins);
+      const options = toPinOptions(pins.items);
 
       if (options.length === 0) {
         return {
           disabled: false,
           options: [],
           placeholder: 'No Pins found. Create one in Pinterest first.',
+        };
+      }
+
+      if (pins.truncated) {
+        return {
+          disabled: false,
+          options,
+          placeholder: `Showing the first ${options.length} Pins. Type to filter.`,
         };
       }
 
@@ -117,13 +133,21 @@ export const adAccountIdDropdown = Property.Dropdown({
         accessToken,
         path: '/ad_accounts',
       });
-      const options = toNamedOptions(adAccounts);
+      const options = toNamedOptions(adAccounts.items);
 
       if (options.length === 0) {
         return {
           disabled: false,
           options: [],
           placeholder: 'No ad accounts found on this Pinterest account.',
+        };
+      }
+
+      if (adAccounts.truncated) {
+        return {
+          disabled: false,
+          options,
+          placeholder: `Showing the first ${options.length} ad accounts. Type to filter.`,
         };
       }
 
@@ -170,13 +194,21 @@ export const boardSectionIdDropdown = Property.Dropdown({
         accessToken,
         path: `/boards/${board_id}/sections`,
       });
-      const options = toNamedOptions(boardSections);
+      const options = toNamedOptions(boardSections.items);
 
       if (options.length === 0) {
         return {
           disabled: false,
           options: [],
           placeholder: 'No sections found on this board.',
+        };
+      }
+
+      if (boardSections.truncated) {
+        return {
+          disabled: false,
+          options,
+          placeholder: `Showing the first ${options.length} sections. Type to filter.`,
         };
       }
 
@@ -213,13 +245,21 @@ export const pinIdMultiSelectDropdown = Property.MultiSelectDropdown({
     try {
       const accessToken = getAccessTokenOrThrow(auth as OAuth2PropertyValue);
       const pins = await fetchAllPages({ accessToken, path: '/pins' });
-      const options = toPinOptions(pins);
+      const options = toPinOptions(pins.items);
 
       if (options.length === 0) {
         return {
           disabled: false,
           options: [],
           placeholder: 'No Pins found. Create one in Pinterest first.',
+        };
+      }
+
+      if (pins.truncated) {
+        return {
+          disabled: false,
+          options,
+          placeholder: `Showing the first ${options.length} Pins. Type to filter.`,
         };
       }
 

@@ -106,15 +106,16 @@ export async function makeRequest(
 export async function fetchAllPages({
   accessToken,
   path,
-  maxPages = 10,
+  maxPages = 2,
 }: {
   accessToken: string;
   path: string;
   maxPages?: number;
-}): Promise<unknown[]> {
+}): Promise<{ items: unknown[]; truncated: boolean }> {
   const separator = path.includes('?') ? '&' : '?';
   let items: unknown[] = [];
   let bookmark: string | undefined = undefined;
+  let truncated = false;
 
   for (let page = 0; page < maxPages; page++) {
     const bookmarkQuery = isNonEmptyString(bookmark)
@@ -134,20 +135,45 @@ export async function fetchAllPages({
     items = Array.isArray(pageItems) ? [...items, ...pageItems] : items;
 
     const nextBookmark = response['bookmark'];
-    bookmark = isNonEmptyString(nextBookmark) ? nextBookmark : undefined;
 
-    if (!isNonEmptyString(bookmark)) {
+    if (!isNonEmptyString(nextBookmark) || nextBookmark === bookmark) {
       break;
     }
+
+    bookmark = nextBookmark;
+    truncated = page === maxPages - 1;
   }
 
-  return items;
+  return { items: dedupeById(items), truncated };
 }
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 export function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0;
+}
+
+function dedupeById(items: unknown[]): unknown[] {
+  const seenIds = new Set<string>();
+
+  return items.filter((item) => {
+    if (!isRecord(item)) {
+      return true;
+    }
+
+    const id = item['id'];
+
+    if (!isNonEmptyString(id)) {
+      return true;
+    }
+
+    if (seenIds.has(id)) {
+      return false;
+    }
+
+    seenIds.add(id);
+    return true;
+  });
 }

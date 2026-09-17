@@ -16,7 +16,7 @@ export const pinterest = createPiece({
   minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/pinterest.png',
   categories: [PieceCategory.MARKETING],
-  authors: ['Sanket6652'],
+  authors: ['Sanket6652', 'Talaljaber'],
   actions: [
     createPin,
     createBoard,

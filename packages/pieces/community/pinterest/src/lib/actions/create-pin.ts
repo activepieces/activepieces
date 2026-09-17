@@ -159,6 +159,15 @@ export const createPin = createAction({
       sponsor_id,
     } = propsValue;
 
+    if (
+      media_source_type !== 'image_url' &&
+      media_source_type !== 'image_base64'
+    ) {
+      throw new Error(
+        'Video Pins are not supported by this action. Choose Image URL or Base64 Image.'
+      );
+    }
+
     if (title && title.length > 100) {
       throw new Error('Title must be 100 characters or less');
     }
@@ -260,7 +269,10 @@ function buildMediaSource({
     );
   }
 
-  const data = dataUri ? trimmed.slice(dataUri[0].length) : trimmed;
+  const data = (dataUri ? trimmed.slice(dataUri[0].length) : trimmed)
+    .replace(/\s+/g, '')
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
   if (!BASE64_PATTERN.test(data)) {
     throw new Error('Media must be valid base64 when the type is Base64 Image');
   }
