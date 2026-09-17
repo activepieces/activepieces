@@ -81,6 +81,10 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             columns: ['projectId'],
         },
         {
+            name: 'idx_waitpoint_flow_run_id_status_created',
+            columns: ['flowRunId', 'status', 'created'],
+        },
+        {
             name: 'idx_waitpoint_pending_resume_date_time',
             columns: ['resumeDateTime'],
             where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL',
