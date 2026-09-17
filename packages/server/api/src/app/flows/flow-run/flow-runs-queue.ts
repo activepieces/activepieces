@@ -103,7 +103,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             const parentRunId = savedFlowRun.parentRunId
                             const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
                             if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: false })) {
-                                await barrierService(log).receive({
+                                await barrierService(log).receiveSignal({
                                     refId: savedFlowRun.id,
                                     projectId: savedFlowRun.projectId,
                                     status: toSignalStatus(savedFlowRun.status),

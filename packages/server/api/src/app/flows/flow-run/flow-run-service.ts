@@ -168,7 +168,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                     ? await resolveStepOutput({ step: triggerStep, flowRun: oldFlowRun, log })
                     : undefined
 
-                await waitpointService(log).deleteByFlowRunId(oldFlowRun.id)
+                await waitpointService(log).deleteByFlowRunId({ flowRunId: oldFlowRun.id, projectId: oldFlowRun.projectId })
                 await flowRunRepo().update({
                     id: oldFlowRun.id,
                     projectId: oldFlowRun.projectId,
