@@ -675,6 +675,7 @@ describe('multi-approval confirm page', () => {
         const created = await barrierService(app.log).create({
             flowRunId: flowRun.id,
             projectId: ctx.project.id,
+            platformId: ctx.platform.id,
             stepName: 'approval',
             version: 'V1',
             policy: { requiredSuccesses: requiredSuccesses ?? 2, ...(reasonRequiredOn ? { reasonRequiredOn } : {}) },
