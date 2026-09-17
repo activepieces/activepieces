@@ -8,7 +8,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-import LockedFeatureGuard from '../../../../components/locked-feature-guard';
+import { LockedFeatureGuard } from '../../../../components/locked-feature-guard';
 
 import { CapabilitiesTab } from './capabilities-tab';
 import { ProvidersTab } from './providers-tab';
