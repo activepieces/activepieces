@@ -28,6 +28,8 @@ import { listBroadcasts } from './lib/actions/list-broadcasts.action';
 import { createBroadcast } from './lib/actions/create-broadcast.action';
 import { sendBroadcast } from './lib/actions/send-broadcast.action';
 import { deleteBroadcast } from './lib/actions/delete-broadcast.action';
+import { getBroadcast } from './lib/actions/get-broadcast.action';
+import { updateBroadcast } from './lib/actions/update-broadcast.action';
 import { getContact } from './lib/actions/get-contact.action';
 import { addContactToSegment } from './lib/actions/add-contact-to-segment.action';
 import { removeContactFromSegment } from './lib/actions/remove-contact-from-segment.action';
@@ -126,6 +128,8 @@ export const resend = createPiece({
     createBroadcast,
     sendBroadcast,
     deleteBroadcast,
+    getBroadcast,
+    updateBroadcast,
     getContact,
     addContactToSegment,
     removeContactFromSegment,
