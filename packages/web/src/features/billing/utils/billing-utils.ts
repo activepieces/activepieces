@@ -45,9 +45,10 @@ function creditsSeverity(percent: number): CreditsSeverity {
 }
 
 function formatCredits(credits: number): string {
-  return credits >= COMPACT_CREDITS_FROM
-    ? formatUtils.formatNumberCompact(credits)
-    : formatUtils.formatNumber(credits);
+  const wholeCredits = Math.round(credits);
+  return wholeCredits >= COMPACT_CREDITS_FROM
+    ? formatUtils.formatNumberCompact(wholeCredits)
+    : formatUtils.formatNumber(wholeCredits);
 }
 
 function shouldShowCreditsAlert({
