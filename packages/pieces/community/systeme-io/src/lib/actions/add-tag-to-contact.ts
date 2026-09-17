@@ -3,10 +3,12 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { addTagToContactActionOutputSchema } from '../output-schemas';
 
 export const addTagToContact = createAction({
   auth: systemeIoAuth,
   name: 'addTagToContact',
+  classification: 'WRITE',
   displayName: 'Add Tag to Contact',
   description: 'Assign a tag to an existing contact - select an existing tag or create a new one',
   audience: 'both',
@@ -87,6 +89,7 @@ export const addTagToContact = createAction({
       required: false,
     }),
   },
+  outputSchema: addTagToContactActionOutputSchema,
   async run(context) {
     const { contactId, tagSource, existingTagId, newTagName } = context.propsValue;
     

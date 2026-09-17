@@ -11,6 +11,7 @@ import { clickupAuth } from '../../auth';
 export const clickupAddTagToTaskAi = createAction({
   auth: clickupAuth,
   name: 'clickup_add_tag_to_task',
+  classification: 'WRITE',
   description: 'Add an existing space tag to a task',
   audience: 'ai',
   aiMetadata: {

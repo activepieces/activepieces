@@ -6,6 +6,7 @@ import { mailchimpAuth } from '../..';
 export const addNoteToSubscriber = createAction({
   auth: mailchimpAuth,
   name: 'add_note_to_subscriber',
+  classification: 'WRITE',
   displayName: 'Add Note to Subscriber',
   description: 'Add a note to a subscriber in your Mailchimp audience.',
   audience: 'both',

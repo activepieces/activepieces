@@ -6,6 +6,7 @@ import { biginApiService } from '../common/request';
 export const createCompany = createAction({
   auth: biginAuth,
   name: 'createCompany',
+  classification: 'WRITE',
   displayName: 'Create Company',
   description: 'Creates a Company Record',
   audience: 'both',

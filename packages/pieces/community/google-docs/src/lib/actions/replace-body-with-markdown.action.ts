@@ -7,6 +7,7 @@ import { replaceBodyWithMarkdownActionOutputSchema } from '../output-schemas';
 export const replaceBodyWithMarkdown = createAction({
   auth: googleDocsAuth,
   name: 'replace_body_with_markdown',
+  classification: 'DESTRUCTIVE',
   displayName: 'Replace Body with Markdown',
   description: 'Replace the entire body of a Google Docs document with Markdown content',
   audience: 'ai',

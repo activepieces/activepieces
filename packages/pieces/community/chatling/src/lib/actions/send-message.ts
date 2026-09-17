@@ -13,6 +13,7 @@ import {
 export const sendMessage = createAction({
   auth: chatlingAuth,
   name: 'send_message',
+  classification: 'WRITE',
   displayName: 'Send Message',
   description: 'Send a message to the chatbot and receive an AI response.',
   audience: 'both',

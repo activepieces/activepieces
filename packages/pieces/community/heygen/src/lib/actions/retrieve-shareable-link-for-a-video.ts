@@ -6,6 +6,7 @@ import { heygenAuth } from '../common/auth';
 export const retrieveSharableVideoUrlAction = createAction({
   auth: heygenAuth,
   name: 'retrieve_sharable_video_url',
+  classification: 'WRITE',
   displayName: 'Retrieve Sharable Video URL',
   description: 'Generates a public URL for a video, allowing it to be shared and accessed publicly.',
   audience: 'both',

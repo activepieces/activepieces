@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 export const aiImportEvent = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_import_event',
+  classification: 'WRITE',
   displayName: 'Import Event',
   description:
     'Import an existing event (by iCalUID) into a Google Calendar as a private copy, using events.import.',

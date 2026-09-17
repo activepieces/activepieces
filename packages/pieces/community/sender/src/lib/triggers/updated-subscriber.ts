@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const updatedSubscriberTrigger = createTrigger({
   auth: senderAuth,
   name: 'updated_subscriber',
+  classification: 'READ',
   displayName: 'Updated Subscriber',
   description: "Fires when a subscriber's data (fields) is updated",
   aiMetadata: {

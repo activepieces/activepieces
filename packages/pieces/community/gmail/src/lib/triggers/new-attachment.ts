@@ -27,6 +27,7 @@ type Props = {
 export const gmailNewAttachmentTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_attachment',
+  classification: 'READ',
   displayName: 'New Attachment',
   description: 'Triggers when an email with an attachment arrives.',
   aiMetadata: {

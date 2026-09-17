@@ -4,6 +4,7 @@ import { baserowCommon, makeClient } from '../common';
 
 export const getRowAction = createAction({
   name: 'baserow_get_row',
+  classification: 'READ',
   displayName: 'Get Row',
   description: 'Gets a single row by its ID from a table.',
   audience: 'both',

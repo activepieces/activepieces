@@ -27,7 +27,7 @@ export const AgentTimeline = ({
   agentResult,
   className = '',
 }: AgentTimelineProps) => {
-  if (isNil(agentResult)) {
+  if (isNil(agentResult) || isNil(agentResult.steps)) {
     return <p>{t('No agent output available')}</p>;
   }
 
@@ -37,7 +37,7 @@ export const AgentTimeline = ({
         <div className="absolute left-2 top-4 bottom-8 w-px bg-border" />
 
         <div className="space-y-7 pb-4">
-          {agentResult.prompt.length > 0 && (
+          {(agentResult.prompt?.length ?? 0) > 0 && (
             <PromptBlock prompt={agentResult.prompt} />
           )}
 

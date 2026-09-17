@@ -11,6 +11,7 @@ import { newMentionInDirectMessageTriggerOutputSchema } from '../output-schemas'
 export const newMentionInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
   name: 'new-mention-in-direct-message',
+  classification: 'READ',
   displayName: 'New Mention in Direct Message',
   description:
     'Triggers when a username is mentioned in a direct message channel.',

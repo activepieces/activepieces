@@ -10,6 +10,7 @@ const triggerHooks = createWebhookTriggerHooks({
 
 export const rowsUpdatedTrigger = createTrigger({
   name: 'baserow_rows_updated',
+  classification: 'READ',
   auth: baserowAuth,
   displayName: 'Updated Rows (Batch)',
   description:

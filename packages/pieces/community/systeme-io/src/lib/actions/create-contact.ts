@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { createContactActionOutputSchema } from '../output-schemas';
 
 interface ContactField {
   field: string;
@@ -16,6 +17,7 @@ interface TagName {
 export const createContact = createAction({
   auth: systemeIoAuth,
   name: 'createContact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Create a new contact with email and contact fields from your Systeme.io account, with optional tags',
   audience: 'both',
@@ -193,6 +195,7 @@ export const createContact = createAction({
       },
     }),
   },
+  outputSchema: createContactActionOutputSchema,
   async run(context) {
     const { 
       email, 

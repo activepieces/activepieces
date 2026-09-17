@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'labels';
 export const gmailNewLabelTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_label',
+  classification: 'READ',
   displayName: 'New Label',
   description: 'Triggers when a new label is created.',
   aiMetadata: {

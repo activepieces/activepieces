@@ -1,6 +1,6 @@
 import { groupBy, tryCatch } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
-import { PieceSyncMode, PieceType } from '@activepieces/shared'
+import { PieceAudienceFilter, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -17,6 +17,7 @@ import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-serv
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
+const CACHE_INVALIDATION_INTERVAL_MS = 15_000
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -52,11 +53,12 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 },
             }), listCloudPieces()])
             log.info({ dbCount: dbPieces.length, cloudCount: cloudPieces.length }, 'Fetched pieces from DB and Cloud')
-            const added = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
+            const { added, fetchFailed } = await installNewPieces(cloudPieces, dbPieces, log, publishCacheRefresh)
             const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
 
             log.info({
                 added,
+                fetchFailed,
                 deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
@@ -83,17 +85,26 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
     return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<number> {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger, _publishCacheRefresh: boolean): Promise<{ added: number, fetchFailed: number }> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5
+    let added = 0
+    let fetchFailed = 0
+    let addedAtLastInvalidation = 0
+    let lastInvalidationTime = performance.now()
     for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
         const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
-            const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
+            const queryParams = new URLSearchParams({ audience: PieceAudienceFilter.ALL })
+            if (piece.version) {
+                queryParams.append('version', piece.version)
+            }
+            const url = `${CLOUD_API_URL}/${piece.name}?${queryParams.toString()}`
             const response = await fetch(url)
             if (!response.ok) {
                 log.warn({ piece: { name: piece.name, version: piece.version }, status: response.status }, '[pieceSyncService#installNewPieces] Error reading piece metadata')
+                fetchFailed++
                 return
             }
             const pieceMetadata = await response.json()
@@ -106,12 +117,20 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
             if (error) {
                 log.debug({ piece: { name: piece.name, version: piece.version } }, '[pieceSyncService#installNewPieces] Piece already exists, skipping')
             }
+            else {
+                added++
+            }
         }))
+        if (added > addedAtLastInvalidation && performance.now() - lastInvalidationTime > CACHE_INVALIDATION_INTERVAL_MS) {
+            await pieceCache(log).invalidate()
+            addedAtLastInvalidation = added
+            lastInvalidationTime = performance.now()
+        }
     }
-    if (newPiecesToFetch.length > 0) {
+    if (added > addedAtLastInvalidation) {
         await pieceCache(log).invalidate()
     }
-    return newPiecesToFetch.length
+    return { added, fetchFailed }
 }
 
 

@@ -7,6 +7,7 @@ import { findUserByHandleActionOutputSchema } from '../output-schemas';
 export const findUserByHandleAction = createAction({
   auth: slackAuth,
   name: 'slack-find-user-by-handle',
+  classification: 'SEARCH',
   displayName: 'Find User by Handle',
   description: 'Finds a user by matching against their Slack handle.',
   audience: 'human',

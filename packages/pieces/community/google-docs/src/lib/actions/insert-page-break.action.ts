@@ -7,6 +7,7 @@ import { insertPageBreakActionOutputSchema } from '../output-schemas';
 export const insertPageBreak = createAction({
 	auth: googleDocsAuth,
 	name: 'insert_page_break',
+	classification: 'WRITE',
 	displayName: 'Insert Page Break',
 	description: 'Insert a page break into a Google Docs document at a position or at the end.',
 	audience: 'ai',

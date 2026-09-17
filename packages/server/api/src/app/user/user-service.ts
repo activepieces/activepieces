@@ -45,12 +45,15 @@ export const userService = (log: FastifyBaseLogger) => ({
                 platformRole: PlatformRole.MEMBER,
             })
 
-            await projectService(log).create({
-                displayName: identity.firstName + '\'s Project',
-                ownerId: newUser.id,
-                platformId,
-                type: ProjectType.PERSONAL,
-            })
+            const platform = await platformService(log).getOneOrThrow(platformId)
+            if (platform.autoCreatePersonalProjects) {
+                await projectService(log).create({
+                    displayName: identity.firstName + '\'s Project',
+                    ownerId: newUser.id,
+                    platformId,
+                    type: ProjectType.PERSONAL,
+                })
+            }
             return newUser
         }
         return user
@@ -166,13 +169,20 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await assertNotPlatformOwner({ id, platformId, log })
+        const user = await userRepo().findOneBy({ id, platformId })
+        if (isNil(user)) {
+            return
+        }
         await platformProjectService(log).deletePersonalProjectForUser({
             userId: id,
             platformId,
         })
-        await userRepo().delete({
-            id,
-            platformId,
+        await transaction(async (entityManager) => {
+            await userRepo(entityManager).delete({
+                id,
+                platformId,
+            })
+            await deleteIdentityIfOrphaned({ identityId: user.identityId, entityManager })
         })
     },
     async removeFromPlatform({ id, platformId }: DeleteParams): Promise<void> {
@@ -251,6 +261,29 @@ export const userService = (log: FastifyBaseLogger) => ({
     },
 })
 
+export function mapToUserWithMetaInformation(user: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
+    if (isNil(user)) {
+        return null
+    }
+    const identity = user.identity
+    if (isNil(identity)) {
+        return null
+    }
+    return {
+        id: user.id,
+        email: identity.email,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        platformId: user.platformId,
+        platformRole: user.platformRole,
+        status: user.status,
+        externalId: user.externalId,
+        created: user.created,
+        updated: user.updated,
+        lastActiveDate: user.lastActiveDate,
+        imageUrl: identity.imageUrl,
+    }
+}
 
 async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { log: FastifyBaseLogger }): Promise<void> {
     const platform = await platformService(log).getOneOrThrow(platformId)
@@ -261,6 +294,13 @@ async function assertNotPlatformOwner({ id, platformId, log }: DeleteParams & { 
                 message: 'Platform owner cannot be deleted',
             },
         })
+    }
+}
+
+async function deleteIdentityIfOrphaned({ identityId, entityManager }: { identityId: string, entityManager: EntityManager }): Promise<void> {
+    const identityStillReferenced = await userRepo(entityManager).existsBy({ identityId })
+    if (!identityStillReferenced) {
+        await userIdentityRepository(entityManager).delete({ id: identityId })
     }
 }
 

@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { checkoutSessionOutputSchema } from '../output-schemas';
 export const stripeCreateCheckoutSession = createAction({
   name: 'create_checkout_session',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Checkout Session (Agent)',
   description: 'Create a Stripe-hosted Checkout Session.',

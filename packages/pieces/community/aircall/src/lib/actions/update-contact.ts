@@ -7,6 +7,7 @@ import { contactIdDropdown } from '../common/props';
 export const updateContact = createAction({
   auth: aircallAuth,
   name: 'updateContact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update an existing contact.',
   audience: 'both',

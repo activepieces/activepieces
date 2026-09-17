@@ -7,6 +7,7 @@ import { scrapeUrlActionOutputSchema } from '../output-schemas';
 export const scrapeUrl = createAction({
   auth: firecrawlAuth,
   name: 'scrape_url',
+  classification: 'READ',
   displayName: 'Scrape URL',
   description: 'Fetch the content of a single web page in a chosen format.',
   audience: 'ai',

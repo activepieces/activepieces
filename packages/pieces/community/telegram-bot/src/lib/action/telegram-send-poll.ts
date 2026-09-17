@@ -7,6 +7,7 @@ import { telegramSendPollActionOutputSchema } from '../output-schemas';
 export const telegramSendPoll = createAction({
   auth: telegramBotAuth,
   name: 'telegram_send_poll',
+  classification: 'WRITE',
   displayName: 'Send Poll',
   description: 'Send a native Telegram poll (regular or quiz) to a chat.',
   audience: 'ai',

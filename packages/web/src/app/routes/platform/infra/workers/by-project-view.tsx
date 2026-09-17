@@ -45,7 +45,12 @@ export function ByProjectView({
 
   const queryClient = useQueryClient();
 
-  const { data: page, isLoading } = usePlatformProjectsPage({
+  const {
+    data: page,
+    isLoading,
+    isError,
+    refetch,
+  } = usePlatformProjectsPage({
     cursor,
     limit,
     displayName,
@@ -96,6 +101,9 @@ export function ByProjectView({
         columns={columns}
         page={page}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('projects')}
+        onRetry={refetch}
         emptyStateTextTitle={t('No projects yet')}
         emptyStateTextDescription={t(
           'Start by creating projects to manage your automation teams',
@@ -124,7 +132,6 @@ function usePlatformProjectsPage({
         limit: Number(limit) || 10,
         displayName,
       }),
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
   });
 }
 
@@ -274,7 +281,7 @@ function WorkerGroupCell({
       </Select>
       {isOffline && (
         <p className="text-xs text-destructive">
-          {t('{group} has no workers online. Fallback to Shared', {
+          {t('{group} has no workers online. Runs will wait in its queue', {
             group: row.workerGroupId!.replaceAll('_', ' '),
           })}
         </p>

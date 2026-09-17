@@ -11,6 +11,7 @@ import { discordGetChannelActionOutputSchema } from '../output-schemas';
 export const discordDeleteChannel = createAction({
   auth: discordAuth,
   name: 'delete_channel',
+  classification: 'DESTRUCTIVE',
   description: 'delete a channel',
   audience: 'human',
   aiMetadata: { description: 'Permanently deletes a channel, identified by channel ID. Use to remove a channel and its messages; this is destructive and cannot be undone. Requires the bot to have Manage Channels permission; idempotent in end state, since deleting an already-removed channel leaves it gone.', idempotent: true },

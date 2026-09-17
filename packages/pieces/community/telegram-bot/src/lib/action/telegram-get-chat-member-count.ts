@@ -7,6 +7,7 @@ import { telegramGetChatMemberCountActionOutputSchema } from '../output-schemas'
 export const telegramGetChatMemberCount = createAction({
   auth: telegramBotAuth,
   name: 'telegram_get_chat_member_count',
+  classification: 'READ',
   displayName: 'Get Chat Member Count',
   description: 'Get the number of members in a Telegram chat.',
   audience: 'ai',

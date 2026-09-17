@@ -29,6 +29,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAut
 export const newContact = createTrigger({
   auth: leadConnectorAuth,
   name: 'new_contact',
+  classification: 'READ',
   displayName: 'New Contact',
   description: 'Trigger when a new contact is added.',
   aiMetadata: {

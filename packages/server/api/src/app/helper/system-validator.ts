@@ -28,6 +28,11 @@ function numberValidator(value: string | undefined) {
     return isValid ? true : 'Value must be a valid number'
 }
 
+function positiveIntegerValidator(value: string | undefined) {
+    const parsed = Number(value)
+    return Number.isInteger(parsed) && parsed > 0 ? true : 'Value must be a positive integer'
+}
+
 function stringValidator(value: string) {
     const isValid = typeof value === 'string' && value.length > 0
     return isValid ? true : 'Value must be a non-empty string'
@@ -50,7 +55,6 @@ const systemPropValidators: {
     [key in SystemProp]: (value: string) => true | string
 } = {
     // AppSystemProp
-    [AppSystemProp.ALLOW_DISPOSABLE_EMAILS]: booleanValidator,
     [AppSystemProp.ALLOW_OPEN_SIGN_UP]: booleanValidator,
     [AppSystemProp.EXECUTION_MODE]: enumValidator(Object.values(ExecutionMode)),
     [AppSystemProp.SKIP_PROJECT_LIMITS_CHECK]: booleanValidator,
@@ -67,6 +71,8 @@ const systemPropValidators: {
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
+    [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: positiveIntegerValidator,
+    [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: positiveIntegerValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
@@ -154,8 +160,10 @@ const systemPropValidators: {
     [AppSystemProp.TOOL_SEARCH_ENABLED]: booleanValidator,
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: numberValidator,
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.ZEROBOUNCE_API_KEY]: stringValidator,
     [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: booleanValidator,
     [AppSystemProp.APPSUMO_TOKEN]: stringValidator,
+    [AppSystemProp.APOLLO_API_KEY]: stringValidator,
     [AppSystemProp.AUTUMN_CONSOLE_URL]: urlValidator,
     [AppSystemProp.FILE_STORAGE_LOCATION]: enumValidator(Object.values(FileLocation)),
     [AppSystemProp.FIREBASE_ADMIN_CREDENTIALS]: stringValidator,

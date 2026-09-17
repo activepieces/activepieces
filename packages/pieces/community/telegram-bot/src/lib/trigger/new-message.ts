@@ -68,6 +68,7 @@ const SAMPLE_UPDATE: TelegramUpdate = {
 export const telegramNewMessage = createTrigger({
   auth: telegramBotAuth,
   name: 'new_telegram_message',
+  classification: 'READ',
   displayName: 'New Update',
   description:
     'Triggers when the bot receives a Telegram update (message, callback query, poll answer, etc.).',

@@ -8,10 +8,13 @@ import {
 } from '../common';
 import { GetField, GetPersonResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { addLabelsToPersonActionOutputSchema } from '../output-schemas';
 
 export const addLabelToPersonAction = createAction({
 	auth: pipedriveAuth,
 	name: 'add-labels-to-person',
+	outputSchema: addLabelsToPersonActionOutputSchema,
+	classification: 'WRITE',
 	displayName: 'Add Labels to Person',
 	description: 'Adds existing labels to an existing person.',
 	audience: 'both',

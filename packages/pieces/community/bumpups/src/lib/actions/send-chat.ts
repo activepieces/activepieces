@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 
 export const sendChat = createAction({
   name: 'send_chat',
+  classification: 'READ',
   displayName: 'Send Chat',
   description:
     'Creates an interactive chat response for a given YouTube video using the bump-1.0 model. Provide the video URL and an optional prompt.',

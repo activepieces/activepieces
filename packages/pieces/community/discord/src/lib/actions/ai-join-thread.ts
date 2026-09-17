@@ -10,6 +10,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordJoinThread = createAction({
   auth: discordAuth,
   name: 'discord_join_thread',
+  classification: 'WRITE',
   displayName: 'Join Thread',
   description: 'Have the bot join a thread.',
   audience: 'ai',

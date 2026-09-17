@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
+import { findContactByEmailActionOutputSchema } from '../output-schemas';
 
 export const findContactByEmail = createAction({
   auth: systemeIoAuth,
   name: 'findContactByEmail',
+  classification: 'READ',
   displayName: 'Find Contact by Email',
   description: 'Locate an existing contact by email address',
   audience: 'both',
@@ -16,6 +18,7 @@ export const findContactByEmail = createAction({
       required: true,
     }),
   },
+  outputSchema: findContactByEmailActionOutputSchema,
   async run(context) {
     const { email } = context.propsValue;
     const searchEmail = email.toLowerCase().trim();

@@ -12,6 +12,7 @@ import { updateCardAiActionOutputSchema } from '../../output-schemas';
 export const updateCardAi = createAction({
   auth: trelloAuth,
   name: 'update_card_ai',
+  classification: 'WRITE',
   displayName: 'Update Card (Agent)',
   description: 'Update fields on an existing Trello card.',
   audience: 'ai',

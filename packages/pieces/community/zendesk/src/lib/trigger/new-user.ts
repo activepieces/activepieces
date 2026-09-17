@@ -60,6 +60,7 @@ interface ZendeskUser {
 
 export const newUser = createTrigger({
   name: 'new_user',
+  classification: 'READ',
   displayName: 'New User',
   description: 'Fires when a new user is created. Uses Zendesk event webhook (no Trigger needed).',
   aiMetadata: {

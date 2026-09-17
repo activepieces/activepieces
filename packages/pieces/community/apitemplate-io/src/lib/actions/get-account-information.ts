@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const getAccountInformation = createAction({
   auth: ApitemplateAuth,
   name: 'getAccountInformation',
+  classification: 'READ',
   displayName: 'Get Account Information',
   description: 'Retrieves account information including usage statistics and account details.',
   audience: 'both',

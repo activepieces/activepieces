@@ -11,6 +11,7 @@ import {
 export const slackRemoveReaction = createAction({
   auth: slackAuth,
   name: 'slack_remove_reaction',
+  classification: 'WRITE',
   displayName: 'Remove Reaction',
   description: 'Remove an emoji reaction from a message or file.',
   audience: 'ai',

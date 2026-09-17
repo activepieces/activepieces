@@ -8,6 +8,7 @@ import { activePieceAuth } from '../auth';
 
 export const listProject = createAction({
   name: 'list_project',
+  classification: 'SEARCH',
   auth: activePieceAuth,
   displayName: 'List Projects',
   description: 'List all projects',

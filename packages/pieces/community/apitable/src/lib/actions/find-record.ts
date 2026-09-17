@@ -10,6 +10,7 @@ import { prepareQuery } from '../common/client';
 export const findRecordAction = createAction({
   auth: APITableAuth,
   name: 'apitable_find_record',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Finds records in datasheet.',
   audience: 'both',

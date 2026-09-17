@@ -8,6 +8,7 @@ import { MailchimpClient } from '../common/types';
 export const createAudience = createAction({
   auth: mailchimpAuth,
   name: 'create_audience',
+  classification: 'WRITE',
   displayName: 'Create Audience',
   description: 'Create a new audience (list) in your Mailchimp account',
   audience: 'both',

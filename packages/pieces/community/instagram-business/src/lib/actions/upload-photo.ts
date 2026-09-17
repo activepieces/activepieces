@@ -5,6 +5,7 @@ import { instagramCommon, FacebookPageDropdown } from '../common';
 export const uploadPhoto = createAction({
   auth: instagramCommon.authentication,
   name: 'upload_photo',
+  classification: 'WRITE',
   displayName: 'Upload Photo',
   description: 'Upload a photo to an Instagram Professional Account',
   audience: 'both',

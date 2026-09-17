@@ -13,6 +13,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const gristSearchRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-search-record',
+  classification: 'SEARCH',
   displayName: 'Search Record',
   description: 'Search record by matching criteria.',
   audience: 'both',

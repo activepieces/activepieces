@@ -4,6 +4,7 @@ import { googleSlidesAuth } from '../auth';
 
 export const refreshSheetsCharts = createAction({
   name: 'refresh_sheets_charts',
+  classification: 'WRITE',
   displayName: 'Refresh Sheets Charts',
   description: 'Refresh all Google Sheets charts in the presentation',
   audience: 'both',

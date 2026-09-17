@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { balanceTransactionListOutputSchema } from '../output-schemas';
 export const stripeListBalanceTransactions = createAction({
   name: 'list_balance_transactions',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Balance Transactions (Agent)',
   description: 'List balance transactions (the reconciliation ledger).',

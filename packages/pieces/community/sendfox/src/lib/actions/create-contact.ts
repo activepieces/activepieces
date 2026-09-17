@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createContact = createAction({
   name: 'create-contact',
+  classification: 'WRITE',
   auth: sendfoxAuth,
   displayName: 'Create Contact',
   description: 'Create a new contact',

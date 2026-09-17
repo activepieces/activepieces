@@ -7,6 +7,7 @@ import { deleteFooterActionOutputSchema } from '../output-schemas';
 export const deleteFooter = createAction({
   auth: googleDocsAuth,
   name: 'delete_footer',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Footer',
   description: 'Delete a footer from a Google Docs document',
   audience: 'ai',

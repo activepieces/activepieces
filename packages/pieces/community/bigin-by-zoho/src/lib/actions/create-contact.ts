@@ -7,6 +7,7 @@ import { handleDropdownError } from '../common/helpers';
 export const createContact = createAction({
   auth: biginAuth,
   name: 'createContact',
+  classification: 'WRITE',
   displayName: 'Create Contact',
   description: 'Creates a Contact Record',
   audience: 'both',

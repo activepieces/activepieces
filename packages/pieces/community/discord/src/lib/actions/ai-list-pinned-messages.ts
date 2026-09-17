@@ -11,6 +11,7 @@ import { discordListPinnedMessagesActionOutputSchema } from '../output-schemas';
 export const discordListPinnedMessages = createAction({
   auth: discordAuth,
   name: 'discord_list_pinned_messages',
+  classification: 'SEARCH',
   displayName: 'List Pinned Messages',
   description: 'List the pinned messages in a channel.',
   audience: 'ai',

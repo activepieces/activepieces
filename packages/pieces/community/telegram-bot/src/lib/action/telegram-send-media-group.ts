@@ -16,6 +16,7 @@ type MediaItem = {
 export const telegramSendMediaGroup = createAction({
   auth: telegramBotAuth,
   name: 'telegram_send_media_group',
+  classification: 'WRITE',
   displayName: 'Send Media Group (Album)',
   description:
     'Send a group of 2–10 photos, videos, documents or audios as an album to a chat.',

@@ -21,6 +21,7 @@ const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+const FILE_CLEANUP_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000
 
 type BaseFile = Pick<File, 'id' | 'projectId' | 'platformId' | 'type' | 'fileName' | 'compression' | 'size' | 'metadata' | 'created' | 'updated'>
 
@@ -69,6 +70,9 @@ export const fileService = (log: FastifyBaseLogger) => ({
                     return await fileRepo().save({ ...baseFile, location: FileLocation.S3, s3Key })
                 }
                 catch (error) {
+                    if (isNil(params.data)) {
+                        throw error
+                    }
                     exceptionHandler.handle(error, log)
                     return saveFileToDb(baseFile, params.data)
                 }
@@ -176,25 +180,31 @@ export const fileService = (log: FastifyBaseLogger) => ({
             },
         ]
         let totalAffected = 0
-        // Iterate one type at a time with an equality predicate so the select hits the
-        // (type, created) index (idx_file_type_created_desc) as an index scan. A `type IN (...)`
-        // predicate makes the planner fall back to a sequential scan of the file table (140M+ rows),
-        // which, as the cleanup deletes rows, wades through dead tuples and hits statement_timeout —
-        // so the cleanup never drains and the backlog grows. The delete is by primary key only.
+        // Iterate one type at a time with an equality predicate AND an explicit ORDER BY created ASC
+        // so the select hits the (type, created) index (idx_file_type_created_desc) as an index scan.
+        // Either a `type IN (...)` predicate OR a missing ORDER BY makes the planner fall back to a
+        // sequential scan of the file table (150M+ rows) for any type that is >10% of it — its
+        // LIMIT-cost heuristic estimates the seq scan will find 4000 hits in ~2000 pages, but the
+        // cleanup deletes wade through dead tuples and hit statement_timeout, so the cleanup never
+        // drains and the backlog grows. The delete is by primary key only.
         // Cap the work per run so a large backlog drains across the hourly schedule instead of one
         // multi-hour run (which could outlive its worker lock); the next run resumes from the oldest.
         for (const pass of cleanupPasses) {
             for (const type of types) {
                 let affected: undefined | number = undefined
                 while ((isNil(affected) || affected === maximumFilesToDeletePerIteration) && totalAffected < maximumFilesToDeletePerRun) {
-                    const staleFiles = await fileRepo().find({
-                        select: ['id', 's3Key'],
-                        where: {
-                            type,
-                            created: LessThanOrEqual(pass.retentionDateBoundary),
-                            ...(pass.projectIds ? { projectId: In(pass.projectIds) } : {}),
-                        },
-                        take: maximumFilesToDeletePerIteration,
+                    const staleFiles = await fileRepo().manager.transaction(async (em) => {
+                        await em.query(`SET LOCAL statement_timeout = ${FILE_CLEANUP_STATEMENT_TIMEOUT_MS}`)
+                        return em.getRepository(FileEntity).find({
+                            select: ['id', 's3Key'],
+                            where: {
+                                type,
+                                created: LessThanOrEqual(pass.retentionDateBoundary),
+                                ...(pass.projectIds ? { projectId: In(pass.projectIds) } : {}),
+                            },
+                            order: { created: 'ASC' },
+                            take: maximumFilesToDeletePerIteration,
+                        })
                     })
 
                     if (staleFiles.length === 0) {
@@ -341,7 +351,7 @@ function groupProjectIdsByRetentionDays(projects: Pick<Project, 'id' | 'executio
 
 export function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
-    if (type === FileType.FLOW_BUNDLE || isExecutionDataFileThatExpires(type)) {
+    if (type === FileType.FLOW_BUNDLE || type === FileType.PREWARM_SCOPE || isExecutionDataFileThatExpires(type)) {
         return FILE_LOCATION
     }
     return FileLocation.DB
@@ -367,6 +377,7 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
         case FileType.WEBHOOK_PAYLOAD:
+        case FileType.MCP_CALL_PAYLOAD:
             return true
         case FileType.PLATFORM_ASSET:
         case FileType.USER_PROFILE_PICTURE:

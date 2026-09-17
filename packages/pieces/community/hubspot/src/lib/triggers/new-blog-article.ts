@@ -7,7 +7,7 @@ import {
 	pollingHelper,
 	QueryParams,
 } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import {
 	createTrigger,
 
@@ -15,6 +15,8 @@ import {
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
+import { newBlogArticleTriggerOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	articleState: string;
@@ -28,7 +30,6 @@ type ListBlogPostsResponse = {
 		};
 	};
 };
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
@@ -59,7 +60,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 				method: HttpMethod.GET,
 				url: 'https://api.hubapi.com/cms/v3/blogs/posts',
 				queryParams: qs,
-				authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.access_token },
+				authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(auth) },
 			});
 
 			after = response.body.paging?.next?.after;
@@ -84,12 +85,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newBlogArticleTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-blog-article',
+	classification: 'READ',
 	displayName: 'New COS Blog Article',
 	description: 'Triggers when a new article is added to your COS blog.',
 	aiMetadata: {
 		description:
 			'Fires when a blog post is added to your HubSpot COS (CMS) blog. The configured article state (Published only, Draft only, or Both) determines which posts qualify; published posts are tracked by publish date and drafts by creation date. Each event represents one blog post with its full CMS metadata.',
 	},
+	outputSchema: newBlogArticleTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		articleState: Property.StaticDropdown({

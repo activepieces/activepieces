@@ -8,6 +8,7 @@ import { getMessageActionOutputSchema } from '../output-schemas';
 
 export const getMessageAction = createAction({
 	name: 'get-message',
+	classification: 'READ',
 	displayName: 'Get Message by Timestamp',
 	description: `Retrieves a specific message from a channel history using the message's timestamp.`,
 	audience: 'human',

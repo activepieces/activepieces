@@ -4,11 +4,13 @@ import { kebabCase } from '@activepieces/pieces-framework';
 import { randomBytes } from 'node:crypto';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { generateImageActionOutputSchema } from '../output-schemas';
 
 export const generateImage = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'generate_image',
+  classification: 'READ',
   displayName: 'Generate Image',
   description: 'Generate an image using text-to-image models',
   aiMetadata: { description: 'Creates a brand new image from a text prompt using an image model available to the account (gpt-image or dall-e), saving each returned image as a file and reporting its URL. Resolution and quality both default to auto. Pick edit_image instead when an existing image is the starting point, and vision_prompt when the task is reading an image rather than producing one. Requires the prompt and a model id; not idempotent: each call renders a fresh image.', idempotent: false },
@@ -83,6 +85,7 @@ export const generateImage = createAction({
       },
     }),
   },
+  outputSchema: generateImageActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { quality, resolution, model, prompt } = context.propsValue;

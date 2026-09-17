@@ -16,6 +16,7 @@ import {
   XaiResponse,
   AskGrokResult
 } from '../common/utils';
+import { askGrokActionOutputSchema } from '../output-schemas';
 import * as z from 'zod/mini'
 
 export const askGrok = createAction({
@@ -205,6 +206,7 @@ export const askGrok = createAction({
       required: false,
     }),
   },
+  outputSchema: askGrokActionOutputSchema,
   async run({ auth, propsValue, store }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),

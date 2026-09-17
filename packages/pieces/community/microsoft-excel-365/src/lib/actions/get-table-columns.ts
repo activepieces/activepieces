@@ -6,6 +6,7 @@ import { getDrivePath, createMSGraphClient } from '../common/helpers';
 export const getTableColumnsAction = createAction({
   auth: excelAuth,
   name: 'get_table_columns',
+  classification: 'SEARCH',
   description: 'List columns of a table in a worksheet',
   audience: 'both',
   aiMetadata: { description: 'List the column names of a specific named table in a worksheet, optionally capped by a limit. Pick this to discover a table schema before mapping fields for row reads or writes. Use Get Worksheet Columns instead when the data is loose cells rather than a formal table. Read-only and idempotent.', idempotent: true },

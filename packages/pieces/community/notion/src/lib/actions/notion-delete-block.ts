@@ -7,6 +7,7 @@ import { notionDeleteBlockActionOutputSchema } from '../output-schemas';
 export const notionDeleteBlock = createAction({
   auth: notionAuth,
   name: 'notion_delete_block',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Block',
   description:
     'Deletes (archives) a single block by id, removing it from its page.',

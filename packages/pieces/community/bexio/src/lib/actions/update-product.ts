@@ -6,6 +6,7 @@ import { bexioCommonProps } from '../common/props';
 export const updateProductAction = createAction({
   auth: bexioAuth,
   name: 'update_product',
+  classification: 'WRITE',
   displayName: 'Update Product',
   description: 'Update an existing product or service',
   audience: 'both',

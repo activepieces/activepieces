@@ -12,6 +12,7 @@ import { createCardAiActionOutputSchema } from '../../output-schemas';
 export const createCardAi = createAction({
   auth: trelloAuth,
   name: 'create_card_ai',
+  classification: 'WRITE',
   displayName: 'Create Card (Agent)',
   description: 'Create a new card in a Trello list.',
   audience: 'ai',

@@ -9,6 +9,7 @@ import {
 export const askChatbotAction = createAction({
   auth: afforaiAuth,
   name: 'afforai_ask_chatbot',
+  classification: 'READ',
   displayName: 'Ask Chatbot',
   description: 'Gets AI-generated completions for a given chatbot.',
   audience: 'both',

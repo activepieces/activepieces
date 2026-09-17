@@ -6,6 +6,7 @@ import { parseMondayColumnValue } from '../common/helper';
 export const getItemsColumnValuesAction = createAction({
   auth: mondayAuth,
   name: 'monday_get_item_column_values',
+  classification: 'READ',
   displayName: "Get an Item's Column Values",
   description: 'Gets column values of an item.',
   audience: 'both',

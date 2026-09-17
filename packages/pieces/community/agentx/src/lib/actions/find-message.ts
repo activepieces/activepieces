@@ -19,6 +19,7 @@ type ConversationDetail = {
 export const findMessage = createAction({
   auth: AgentXAuth,
   name: "find_message",
+  classification: 'SEARCH',
   displayName: "Find Message",
   description:
     "Searches for a specific message by ID (or searches text within messages) inside a conversation.",

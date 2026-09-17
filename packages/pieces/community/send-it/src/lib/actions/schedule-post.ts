@@ -12,6 +12,7 @@ import {
 export const schedulePost = createAction({
   auth: sendItAuth,
   name: 'schedule_post',
+  classification: 'WRITE',
   displayName: 'Schedule Post',
   description: 'Schedule content to be published at a future time',
   audience: 'both',

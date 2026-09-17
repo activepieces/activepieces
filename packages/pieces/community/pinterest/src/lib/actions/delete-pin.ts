@@ -12,6 +12,7 @@ import { deletePinActionOutputSchema } from '../output-schemas';
 export const deletePin = createAction({
   auth: pinterestAuth,
   name: 'deletePin',
+  classification: 'DESTRUCTIVE',
   outputSchema: deletePinActionOutputSchema,
   displayName: 'Delete Pin',
   description: 'Permanently delete a specific Pin.',

@@ -150,7 +150,7 @@ async function buildFailedTriggerContext({ input, baseContext, error }: BuildFai
         status: FlowRunStatus.FAILED,
         failedStep: {
             name: trigger.name,
-            displayName: trigger.displayName,
+            displayName: trigger.displayName ?? trigger.name,
             message,
         },
     })

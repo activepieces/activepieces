@@ -135,6 +135,7 @@ function extractParticipants(messages: any[]): {
 export const gmailNewConversationTrigger = createTrigger({
   auth: gmailAuth,
   name: 'new_conversation',
+  classification: 'READ',
   displayName: 'New Conversation',
   description: 'Triggers when a new email conversation (thread) begins',
   props: {

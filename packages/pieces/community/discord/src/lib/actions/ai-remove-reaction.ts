@@ -10,6 +10,7 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordRemoveReaction = createAction({
   auth: discordAuth,
   name: 'discord_remove_reaction',
+  classification: 'WRITE',
   displayName: 'Remove Own Reaction',
   description: "Remove the bot's own reaction from a message.",
   audience: 'ai',

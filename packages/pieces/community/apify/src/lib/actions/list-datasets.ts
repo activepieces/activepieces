@@ -5,6 +5,7 @@ import { listDatasetsActionOutputSchema } from '../output-schemas';
 
 export const apifyListDatasets = createAction({
   name: 'apify_list_datasets',
+  classification: 'SEARCH',
   auth: apifyAuth,
   displayName: 'List Datasets',
   description: 'Lists the datasets in the authenticated account.',

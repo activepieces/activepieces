@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { productOutputSchema } from '../output-schemas';
 export const stripeGetProduct = createAction({
   name: 'get_product',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Product (Agent)',
   description: 'Retrieve a Stripe product by its ID.',

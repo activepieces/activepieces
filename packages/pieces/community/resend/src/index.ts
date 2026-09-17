@@ -28,9 +28,42 @@ import { listBroadcasts } from './lib/actions/list-broadcasts.action';
 import { createBroadcast } from './lib/actions/create-broadcast.action';
 import { sendBroadcast } from './lib/actions/send-broadcast.action';
 import { deleteBroadcast } from './lib/actions/delete-broadcast.action';
+import { getContact } from './lib/actions/get-contact.action';
+import { addContactToSegment } from './lib/actions/add-contact-to-segment.action';
+import { removeContactFromSegment } from './lib/actions/remove-contact-from-segment.action';
+import { listContactSegments } from './lib/actions/list-contact-segments.action';
+import { listContactTopics } from './lib/actions/list-contact-topics.action';
+import { createContactProperty } from './lib/actions/create-contact-property.action';
+import { getContactProperty } from './lib/actions/get-contact-property.action';
+import { listContactProperties } from './lib/actions/list-contact-properties.action';
+import { updateContactProperty } from './lib/actions/update-contact-property.action';
+import { deleteContactProperty } from './lib/actions/delete-contact-property.action';
+import { createSegment } from './lib/actions/create-segment.action';
+import { getSegment } from './lib/actions/get-segment.action';
+import { listSegments } from './lib/actions/list-segments.action';
+import { deleteSegment } from './lib/actions/delete-segment.action';
+import { createTopic } from './lib/actions/create-topic.action';
+import { getTopic } from './lib/actions/get-topic.action';
+import { listTopics } from './lib/actions/list-topics.action';
+import { updateTopic } from './lib/actions/update-topic.action';
+import { deleteTopic } from './lib/actions/delete-topic.action';
+import { createTemplate } from './lib/actions/create-template.action';
+import { getTemplate } from './lib/actions/get-template.action';
+import { listTemplates } from './lib/actions/list-templates.action';
+import { updateTemplate } from './lib/actions/update-template.action';
+import { deleteTemplate } from './lib/actions/delete-template.action';
+import { publishTemplate } from './lib/actions/publish-template.action';
+import { duplicateTemplate } from './lib/actions/duplicate-template.action';
+import { createWebhook } from './lib/actions/create-webhook.action';
+import { getWebhook } from './lib/actions/get-webhook.action';
+import { listWebhooks } from './lib/actions/list-webhooks.action';
+import { updateWebhook } from './lib/actions/update-webhook.action';
+import { deleteWebhook } from './lib/actions/delete-webhook.action';
+import { getEmailAttachment } from './lib/actions/get-email-attachment.action';
+import { listEmailAttachments } from './lib/actions/list-email-attachments.action';
+import { listReceivedEmails } from './lib/actions/list-received-emails.action';
 import { emailBounced } from './lib/triggers/email-bounced.trigger';
-
-const BASE_URL = 'https://api.resend.com';
+import { RESEND_BASE_URL } from './lib/common/client';
 
 export const resendAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -43,7 +76,7 @@ export const resendAuth = PieceAuth.SecretText({
     try {
       await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${BASE_URL}/api-keys`,
+        url: `${RESEND_BASE_URL}/api-keys`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
           token: auth,
@@ -67,7 +100,7 @@ export const resend = createPiece({
   displayName: 'Resend',
   description: 'The email API for developers',
   auth: resendAuth,
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.87.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/resend.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ['Tosh94'],
@@ -93,8 +126,42 @@ export const resend = createPiece({
     createBroadcast,
     sendBroadcast,
     deleteBroadcast,
+    getContact,
+    addContactToSegment,
+    removeContactFromSegment,
+    listContactSegments,
+    listContactTopics,
+    createContactProperty,
+    getContactProperty,
+    listContactProperties,
+    updateContactProperty,
+    deleteContactProperty,
+    createSegment,
+    getSegment,
+    listSegments,
+    deleteSegment,
+    createTopic,
+    getTopic,
+    listTopics,
+    updateTopic,
+    deleteTopic,
+    createTemplate,
+    getTemplate,
+    listTemplates,
+    updateTemplate,
+    deleteTemplate,
+    publishTemplate,
+    duplicateTemplate,
+    createWebhook,
+    getWebhook,
+    listWebhooks,
+    updateWebhook,
+    deleteWebhook,
+    getEmailAttachment,
+    listEmailAttachments,
+    listReceivedEmails,
     createCustomApiCallAction({
-      baseUrl: () => BASE_URL,
+      baseUrl: () => RESEND_BASE_URL,
       auth: resendAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${(auth as { secret_text: string }).secret_text}`,

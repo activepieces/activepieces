@@ -14,6 +14,7 @@ import { sheetsAddColumnActionOutputSchema } from '../output-schemas';
 export const sheetsAddColumn = createAction({
 	auth: googleSheetsAuth,
 	name: 'sheets_add_column',
+	classification: 'WRITE',
 	displayName: 'Add Column',
 	description: 'Create a new column in a worksheet.',
 	audience: 'ai',

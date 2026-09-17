@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { staticListsDropdown } from '../common/props';
 import { HttpMethod } from '@activepieces/pieces-common';
@@ -8,6 +8,7 @@ import { FilterOperatorEnum, HubSpotAddContactsToListResponse } from '../common/
 export const removeContactFromListAction = createAction({
 	auth: hubspotAuth,
 	name: 'remove-contact-from-list',
+	classification: 'WRITE',
 	displayName: 'Remove Contact from List',
 	description: 'Remove a contact from a specific list.',
 	audience: 'both',
@@ -26,7 +27,7 @@ export const removeContactFromListAction = createAction({
 	async run(context) {
 		const { listId, email } = context.propsValue;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const contact = await client.crm.contacts.searchApi.doSearch({
 			limit: 1,

@@ -10,6 +10,7 @@ export const webflowNewSubmission = createTrigger({
 	auth: webflowAuth,
 
 	name: 'new_submission',
+	classification: 'READ',
 	displayName: 'New Submission',
 	description: 'Triggers when Webflow Site receives a new submission',
 	aiMetadata: {

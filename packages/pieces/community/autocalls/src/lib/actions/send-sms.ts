@@ -6,6 +6,7 @@ import { baseApiUrl } from '../..';
 export const sendSms = createAction({
   auth:autocallsAuth,
   name: 'sendSms',
+  classification: 'WRITE',
   displayName: 'Send SMS to Customer',
   description: "Send an SMS to a customer using a phone number from our platform.",
   audience: 'both',

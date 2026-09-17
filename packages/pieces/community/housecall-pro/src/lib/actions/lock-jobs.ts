@@ -5,6 +5,7 @@ import { HttpMethod } from "@activepieces/pieces-common";
 export const lockJobs = createAction({
   auth: housecallProAuth,
   name: "lock_jobs",
+  classification: 'WRITE',
   displayName: "Lock Jobs",
   description: "Lock completed or scheduled jobs by the given time range",
   audience: 'both',

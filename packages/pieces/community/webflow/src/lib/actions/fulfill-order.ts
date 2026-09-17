@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowFulfillOrder = createAction({
 	auth: webflowAuth,
 	name: 'fulfill_order',
+	classification: 'WRITE',
 	description: 'Fulfill order',
 	displayName: 'Fulfill an order',
 	audience: 'both',

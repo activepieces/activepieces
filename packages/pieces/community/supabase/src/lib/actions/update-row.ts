@@ -6,6 +6,7 @@ import { updateRowActionOutputSchema } from '../output-schemas';
 
 export const updateRow = createAction({
     name: 'update_row',
+    classification: 'WRITE',
     displayName: 'Update Row',
     description: 'Update rows in a table based on filter criteria',
     audience: 'both',

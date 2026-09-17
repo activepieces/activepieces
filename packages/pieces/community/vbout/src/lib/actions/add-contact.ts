@@ -5,6 +5,7 @@ import { makeClient, vboutCommon } from '../common';
 export const addContactAction = createAction({
   auth: vboutAuth,
   name: 'vbout_add_contact',
+  classification: 'WRITE',
   displayName: 'Add Contact to List',
   description: 'Adds a contact to a given email list.',
   audience: 'both',

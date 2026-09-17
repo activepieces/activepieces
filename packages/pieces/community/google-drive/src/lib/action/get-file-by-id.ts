@@ -7,6 +7,7 @@ import { getFileOrFolderByIdActionOutputSchema } from '../output-schemas';
 export const googleDriveGetResourceById = createAction({
   auth: googleDriveAuth,
   name: 'get-file-or-folder-by-id',
+  classification: 'READ',
   displayName: 'Get File Information',
   description: 'Get a file folder for files/sub-folders',
   audience: 'human',

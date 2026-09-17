@@ -10,6 +10,7 @@ import {
 export const createComment = createAction({
   auth: beamerAuth,
   name: 'create_new_comment',
+  classification: 'WRITE',
   displayName: 'Create a new comment',
   description: 'Create a new comment for a Feature request',
   audience: 'both',

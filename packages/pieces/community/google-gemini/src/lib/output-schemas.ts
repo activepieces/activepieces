@@ -129,3 +129,14 @@ export const textToSpeechActionOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const createVideoActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'videoFile',
+      label: 'Video File URL',
+      value: '',
+      format: 'url',
+    },
+  ],
+};

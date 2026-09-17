@@ -13,6 +13,7 @@ export const createTweet = createAction({
   auth: twitterAuth,
 
   name: 'create-tweet',
+  classification: 'WRITE',
   displayName: 'Create Tweet',
   description: 'Create a tweet',
   audience: 'both',

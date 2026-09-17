@@ -7,6 +7,7 @@ import { accessibleCustomFieldsOutputSchema } from '../../output-schemas';
 export const getClickupAccessibleCustomFields = createAction({
   auth: clickupAuth,
   name: 'get_accessible_custom_fields',
+  classification: 'SEARCH',
   displayName: 'Get Accessible Custom Fields',
   description: 'View the Custom Fields available on tasks in a specific List.',
   audience: 'human',

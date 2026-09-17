@@ -29,3 +29,4 @@ export {
   planSelectorUtils,
 } from './components/plan-selector-utils';
 export { useManagePlanDialogStore } from './stores/manage-plan-dialog-state';
+export { AutomaticTrialActivation } from './components/automatic-trial-activation';

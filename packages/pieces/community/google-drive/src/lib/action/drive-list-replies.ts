@@ -6,6 +6,7 @@ import { driveListRepliesOutputSchema } from '../output-schemas';
 export const driveListReplies = createAction({
   auth: googleDriveAuth,
   name: 'drive_list_replies',
+  classification: 'SEARCH',
   displayName: 'List Replies',
   description: 'List the replies under a Drive comment.',
   audience: 'ai',

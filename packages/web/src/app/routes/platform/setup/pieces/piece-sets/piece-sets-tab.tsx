@@ -47,6 +47,7 @@ export const PieceSetsTab = () => {
   const {
     data: pieceSetsPage,
     isLoading,
+    isError,
     refetch,
   } = pieceSetQueries.usePieceSets({ cursor, limit });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
@@ -187,6 +188,9 @@ export const PieceSetsTab = () => {
           previous: pieceSetsPage?.previous ?? null,
         }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('piece sets')}
+        onRetry={refetch}
         clientFiltering={true}
         toolbarButtons={[
           <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,

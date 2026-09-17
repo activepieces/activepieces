@@ -1,37 +1,87 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { Agent, AgentConversation, AgentConversationStatus, AgentHistoryMessage, AgentRunFlowReference, AgentRunListItem, AgentRunSource, CreateAgentConversationRequest, PersistedAgentMessage, PersistedAgentRole, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
+import { EntityManager, In } from 'typeorm'
+import { transaction } from '../../core/db/transaction'
+import { databaseConnection } from '../../database/database-connection'
+import { FlowRunEntity } from '../../flows/flow-run/flow-run-entity'
+import { FlowVersionEntity } from '../../flows/flow-version/flow-version-entity'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
 import { agentApprovalGate } from './agent-approval-gate'
 import { AgentConversationEntity } from './agent-conversation-entity'
+import { AgentEntity } from './agent-entity'
 import { agentHelpers, EVAL_CONVERSATION_ID_PREFIX, isEvalConversationId } from './agent-helpers'
 import { agentService } from './agent-service'
 import { agentHistory } from './history/agent-history'
+
+async function flowReferencesFor(runs: AgentConversation[]): Promise<Map<string, AgentRunFlowReference>> {
+    const flowRunIds = unique(runs.map((run) => run.flowRunId).filter((id): id is string => !isNil(id)))
+    if (flowRunIds.length === 0) {
+        return new Map()
+    }
+    const flowRuns = await databaseConnection().getRepository(FlowRunEntity).find({
+        where: { id: In(flowRunIds) },
+        select: ['id', 'flowId', 'flowVersionId'],
+    })
+    const flowVersionIds = unique(flowRuns.map((flowRun) => flowRun.flowVersionId))
+    const flowVersions = await databaseConnection().getRepository(FlowVersionEntity).find({
+        where: { id: In(flowVersionIds) },
+        select: ['id', 'displayName'],
+    })
+    const displayNameByVersionId = new Map(flowVersions.map((version) => [version.id, version.displayName]))
+    return new Map(flowRuns.map((flowRun) => [flowRun.id, {
+        flowRunId: flowRun.id,
+        flowId: flowRun.flowId,
+        displayName: displayNameByVersionId.get(flowRun.flowVersionId) ?? '',
+    }]))
+}
+
+async function projectStillHoldingAgent({ agentId, authorisedProjectId, entityManager }: { agentId: string, authorisedProjectId: string, entityManager: EntityManager }): Promise<string> {
+    const locked = await entityManager.getRepository(AgentEntity)
+        .createQueryBuilder('agent')
+        .select(['agent.projectId'])
+        .setLock('pessimistic_write')
+        .where('agent.id = :agentId', { agentId })
+        .getOne()
+    if (isNil(locked) || locked.projectId !== authorisedProjectId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'That agent has just moved to another project. Open it again to start a new chat.' },
+        })
+    }
+    return locked.projectId
+}
 
 export const agentConversationService = (log: FastifyBaseLogger) => ({
     async createConversation({ platformId, userId, request, id }: CreateConversationParams): Promise<AgentConversation> {
         const agent = isNil(request.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: request.agentId, platformId, userId })
-        const conversation = await agentHelpers.conversationRepo().save({
+        const builder = request.builder === true
+        const builderProjectId = builder
+            ? await resolveBuilderProject({ agent, requestedProjectId: request.projectId, platformId, userId, log })
+            : null
+        const conversation = await transaction(async (entityManager) => entityManager.getRepository(AgentConversationEntity).save({
             id: id ?? apId(),
             platformId,
-            projectId: agent?.projectId ?? null,
+            projectId: isNil(agent)
+                ? builderProjectId
+                : await projectStillHoldingAgent({ agentId: agent.id, authorisedProjectId: agent.projectId, entityManager }),
             userId,
             agentId: agent?.id ?? null,
-            source: isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
+            source: builder ? AgentRunSource.AGENT_BUILDER : isNil(agent) ? AgentRunSource.CHAT : AgentRunSource.AGENT,
             title: request.title ?? null,
             modelName: request.modelName ?? null,
             messages: [],
-        })
+        }))
         log.info({ conversation: { id: conversation.id }, platform: { id: platformId }, user: { id: userId } }, '[agentConversationService] Conversation created')
         return conversation
     },
 
-    async listConversations({ platformId, userId, cursor, limit, agentId }: ListConversationsParams): Promise<SeekPage<AgentConversation>> {
+    async listConversations({ platformId, userId, cursor, limit, agentId }: ListConversationsParams): Promise<SeekPage<AgentRunListItem>> {
         const decodedCursor = paginationHelper.decodeCursor(cursor)
         const paginator = buildPaginator({
             entity: AgentConversationEntity,
@@ -75,6 +125,49 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
         return paginationHelper.createPage(data, paginationCursor)
     },
 
+    async listAgentRuns({ projectId, agentId, cursor, limit }: ListAgentRunsParams): Promise<SeekPage<AgentConversation>> {
+        const decodedCursor = paginationHelper.decodeCursor(cursor)
+        const paginator = buildPaginator({
+            entity: AgentConversationEntity,
+            query: {
+                limit,
+                orderBy: [
+                    { field: 'created', order: Order.DESC },
+                    { field: 'id', order: Order.DESC },
+                ],
+                afterCursor: decodedCursor.nextCursor,
+                beforeCursor: decodedCursor.previousCursor,
+            },
+        })
+
+        const queryBuilder = agentHelpers.conversationRepo()
+            .createQueryBuilder('agent_conversation')
+            .select([
+                'agent_conversation.id',
+                'agent_conversation.created',
+                'agent_conversation.updated',
+                'agent_conversation.platformId',
+                'agent_conversation.projectId',
+                'agent_conversation.agentId',
+                'agent_conversation.flowRunId',
+                'agent_conversation.aiCredits',
+                'agent_conversation.title',
+                'agent_conversation.modelName',
+                'agent_conversation.status',
+            ])
+            .where('agent_conversation."projectId" = :projectId', { projectId })
+            .andWhere('agent_conversation."agentId" = :agentId', { agentId })
+            .andWhere('agent_conversation.source = :flowStepSource', { flowStepSource: AgentRunSource.FLOW_STEP })
+
+        const { data, cursor: paginationCursor } = await paginator.paginate(queryBuilder)
+        const flowByRunId = await flowReferencesFor(data)
+        const withFlow = data.map((run) => ({
+            ...run,
+            flow: isNil(run.flowRunId) ? null : flowByRunId.get(run.flowRunId) ?? null,
+        }))
+        return paginationHelper.createPage(withFlow, paginationCursor)
+    },
+
     async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<AgentConversation> {
         // Eval conversations must never be opened or messaged through the regular (non-dry-run) chat
         // path — that would run real tools against a conversation meant to be side-effect-free.
@@ -82,7 +175,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         const conversation = await agentHelpers.getConversationOrThrow({ id, platformId, userId, log })
-        if (![AgentRunSource.CHAT, AgentRunSource.AGENT].includes(conversation.source)) {
+        if (![AgentRunSource.CHAT, AgentRunSource.AGENT, AgentRunSource.AGENT_BUILDER].includes(conversation.source)) {
             throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
         }
         return conversation
@@ -158,12 +251,45 @@ type CreateConversationParams = {
     id?: string
 }
 
+type ListAgentRunsParams = {
+    projectId: string
+    agentId: string
+    cursor?: string
+    limit: number
+}
+
 type ListConversationsParams = {
     platformId: string
     userId: string
     cursor?: string
     limit: number
     agentId?: string
+}
+
+async function resolveBuilderProject({ agent, requestedProjectId, platformId, userId, log }: {
+    agent: Agent | null
+    requestedProjectId?: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): Promise<string> {
+    if (!isNil(agent)) {
+        return agent.projectId
+    }
+    if (isNil(requestedProjectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: 'A builder conversation needs either an agentId to change or a projectId to build in' },
+        })
+    }
+    const projects = await agentHelpers.getUserProjects({ platformId, userId, log })
+    if (!projects.some((project) => project.id === requestedProjectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: requestedProjectId, entityType: 'Project' },
+        })
+    }
+    return requestedProjectId
 }
 
 type ConversationIdentifier = {

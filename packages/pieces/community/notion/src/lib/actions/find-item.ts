@@ -7,6 +7,7 @@ import { notionFindDatabaseItemActionOutputSchema } from '../output-schemas';
 export const findDatabaseItem = createAction({
   auth: notionAuth,
   name: 'notion-find-database-item',
+  classification: 'SEARCH',
   displayName: 'Find Database Item',
   description: 'Searches for an item in database by field.',
   audience: 'human',

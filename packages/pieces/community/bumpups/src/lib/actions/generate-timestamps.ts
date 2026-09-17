@@ -6,6 +6,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const generateTimestamps = createAction({
   auth: BumpupsAuth,
   name: 'generateTimestamps',
+  classification: 'READ',
   displayName: 'Generate Timestamps',
   description: 'Generates detailed timestamps for a YouTube video based on its content.',
   audience: 'both',

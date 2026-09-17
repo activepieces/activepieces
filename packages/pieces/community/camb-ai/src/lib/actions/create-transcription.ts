@@ -8,6 +8,7 @@ import { listFoldersDropdown } from '../common';
 export const createTranscription = createAction({
     auth: cambaiAuth,
     name: 'create_transcription',
+    classification: 'READ',
     displayName: 'Create Transcription',
     description: 'Creates a task to process speech into readable text.',
     audience: 'both',

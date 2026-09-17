@@ -7,6 +7,7 @@ import { channelHistoryActionOutputSchema } from '../output-schemas';
 export const slackGetChannelHistoryAiAction = createAction({
   auth: slackAuth,
   name: 'slack_get_channel_history',
+  classification: 'SEARCH',
   displayName: 'Get Channel History',
   description:
     'Retrieve top-level messages from a Slack channel, optionally bounded by timestamps.',

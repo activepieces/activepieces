@@ -6,6 +6,7 @@ import { getRecordAiActionOutputSchema } from '../output-schemas';
 export const airtableGetRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'get_record',
+  classification: 'READ',
   displayName: 'Get Record (Agent)',
   description: 'Retrieve a single Airtable record by its ID.',
   audience: 'ai',

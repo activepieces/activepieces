@@ -5,6 +5,7 @@ import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { PassThrough, Readable } from 'stream';
 import { getSftpError } from './common';
+import { readFileActionOutputSchema } from '../output-schemas';
 
 // Return a Readable and let the transfer run in the background; files.write
 // consumes it, so the file is never fully buffered in the sandbox. The client
@@ -25,6 +26,7 @@ export const readFileContent = createAction({
   audience: 'both',
   auth: sftpAuth,
   name: 'read_file_content',
+  classification: 'READ',
   displayName: 'Read File Content',
   description: 'Read the content of a file.',
   aiMetadata: { description: 'Downloads one file from the connected FTP, FTPS or SFTP server by remote path and returns it as a file reference that later steps can consume. Use it to fetch the content of a file whose path you know; run List Folder Contents first when you still need to discover which paths exist. Requires an exact remote file path - it does not glob, search or recurse; read-only and idempotent.', idempotent: true },
@@ -34,6 +36,7 @@ export const readFileContent = createAction({
       required: true,
     }),
   },
+  outputSchema: readFileActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const filePath = context.propsValue['filePath'];

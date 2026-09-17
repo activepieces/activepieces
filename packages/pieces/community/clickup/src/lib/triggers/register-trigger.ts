@@ -28,6 +28,7 @@ export const clickupRegisterTrigger = ({
   createTrigger({
     auth: clickupAuth,
     name: `clickup_trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

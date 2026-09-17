@@ -4,10 +4,13 @@ import { activityTypeIdProp, filterIdProp, ownerIdProp } from '../common/props';
 import { pipedrivePaginatedV2ApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
+import { findActivityActionOutputSchema } from '../output-schemas';
 
 export const findActivityAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-activity',
+	outputSchema: findActivityActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find Activity',
 	description: 'Finds an activity by subject.',
 	audience: 'both',

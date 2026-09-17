@@ -7,6 +7,7 @@ import { createNewGdriveFileActionOutputSchema } from '../output-schemas';
 export const googleDriveCreateNewTextFile = createAction({
   auth: googleDriveAuth,
   name: 'create_new_gdrive_file',
+  classification: 'WRITE',
   description: 'Create a new text file in your Google Drive from text',
   audience: 'human',
   aiMetadata: { description: 'Creates a new file in Google Drive from inline text content as plain text, CSV, or XML, optionally inside a parent folder. Use when an agent has generated text it needs to persist as a Drive file. Not idempotent: each call creates a new file.', idempotent: false },

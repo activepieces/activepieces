@@ -6,6 +6,7 @@ import { gmailListThreadsActionOutputSchema } from '../output-schemas';
 export const gmailListThreadsAction = createAction({
   auth: gmailAuth,
   name: 'gmail_list_threads',
+  classification: 'SEARCH',
   displayName: 'List Threads',
   description: 'List email conversation threads in the mailbox.',
   audience: 'ai',

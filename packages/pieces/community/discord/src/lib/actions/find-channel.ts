@@ -12,6 +12,7 @@ import { discordSuccessWithChannelIdActionOutputSchema } from '../output-schemas
 export const discordFindChannel = createAction({
   auth: discordAuth,
   name: 'find_channel',
+  classification: 'SEARCH',
   description: 'find a channel by name',
   audience: 'human',
   aiMetadata: { description: 'Looks up a channel in a guild by its exact name and returns its channel ID, given the guild ID. Use to resolve a channel name into the ID required by message, rename, or delete actions. Read-only and idempotent; matching is exact and returns the first match.', idempotent: true },

@@ -10,6 +10,7 @@ function isValidEmail(email: string) {
 export const clicksendFindContactByEmailAction = createAction({
   auth: clicksendAuth,
   name: 'find_contact_by_email',
+  classification: 'READ',
   description: 'Finds contact by email address.',
   audience: 'both',
   aiMetadata: {

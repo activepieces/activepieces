@@ -3,14 +3,17 @@ import { PageCollection } from '@microsoft/microsoft-graph-client';
 import { FileAttachment } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookCommon } from '../common/client';
+import { downloadAttachmentActionOutputSchema } from '../output-schemas';
 
 export const downloadAttachmentAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'downloadAttachment',
+	classification: 'READ',
 	displayName: 'Download Attachment',
 	description: 'Download attachments from a specific email message.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: { description: 'Fetches all file attachments from a specific Outlook message (by message ID) and writes them to storage for downstream steps. Use this after locating a message to retrieve its attached files. Requires a valid message ID; idempotent since it only reads.', idempotent: true },
+	outputSchema: downloadAttachmentActionOutputSchema,
 	props: {
 		messageId: Property.ShortText({
 			displayName: 'Message ID',

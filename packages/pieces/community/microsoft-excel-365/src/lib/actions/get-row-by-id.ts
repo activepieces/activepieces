@@ -9,6 +9,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export const getRowAction = createAction({
   auth: excelAuth,
   name: 'getRowById',
+  classification: 'READ',
   displayName: 'Get Row by ID',
   description: '  Retrieve the entire content of a row by its row ID.',
   audience: 'both',

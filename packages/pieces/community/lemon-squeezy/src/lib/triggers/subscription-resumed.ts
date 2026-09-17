@@ -5,6 +5,7 @@ import { subscribeWebhook, unsubscribeWebhook, createStoreDropdownProperty, gene
 export const subscriptionResumedTrigger = createTrigger({
   auth: lemonSqueezyAuth,
   name: 'subscription_resumed',
+  classification: 'READ',
   displayName: 'Subscription Resumed',
   description: 'Triggers when a subscription is resumed after being previously cancelled',
   aiMetadata: {

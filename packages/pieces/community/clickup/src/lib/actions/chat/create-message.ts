@@ -8,6 +8,7 @@ import { messageOutputSchema } from '../../output-schemas';
 export const createClickupMessage = createAction({
   auth: clickupAuth,
   name: 'create_message',
+  classification: 'WRITE',
   description: 'Creates a message in a ClickUp channel',
   audience: 'both',
   aiMetadata: { description: 'Post a new top-level message into a ClickUp Chat channel, given the workspace and channel IDs. Each call sends a separate message, so repeated calls create duplicates (not idempotent). Use Create Message Reply to respond within an existing message thread instead.', idempotent: false },

@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import {
   gmailAuth,
   createGoogleClient,
@@ -7,7 +7,8 @@ import {
 } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import MailComposer from 'nodemailer/lib/mail-composer';
-import Mail from 'nodemailer/lib/mailer';
+import mime from 'mime-types';
+import Mail, { Attachment } from 'nodemailer/lib/mailer';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
 import { ExecutionType } from '@activepieces/pieces-framework';
 import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
@@ -15,13 +16,14 @@ import { requestApprovalInMailActionOutputSchema } from '../output-schemas';
 export const requestApprovalInEmail = createAction({
   auth: gmailAuth,
   name: 'request_approval_in_mail',
+  classification: 'WRITE',
   displayName: 'Request Approval in Email',
   description:
     'Send approval request email and then wait until the email is approved or disapproved',
   audience: 'both',
   aiMetadata: {
     description:
-      'Sends an email with a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
+      'Sends an email, optionally with file attachments, carrying a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
     idempotent: false,
   },
   props: {
@@ -69,6 +71,22 @@ export const requestApprovalInEmail = createAction({
         "The address must be listed in your GMail account's settings",
       required: false,
     }),
+    attachments: Property.Array({
+      displayName: 'Attachments',
+      required: false,
+      properties: {
+        file: Property.File({
+          displayName: 'File',
+          description: 'File to attach to the approval request email.',
+          required: true,
+        }),
+        name: Property.ShortText({
+          displayName: 'Attachment Name',
+          description: 'In case you want to change the name of the attachment.',
+          required: false,
+        }),
+      },
+    }),
     in_reply_to: Property.ShortText({
       displayName: 'In reply to',
       description: 'Reply to this Message-ID',
@@ -112,6 +130,9 @@ export const requestApprovalInEmail = createAction({
           context.propsValue['subject']
         ).toString('base64');
 
+        const attachments = context.propsValue.attachments as
+          | { file: ApFile; name: string | undefined }[]
+          | undefined;
         const replyTo = context.propsValue['reply_to']?.filter(
           (email) => email !== ''
         );
@@ -131,6 +152,24 @@ export const requestApprovalInEmail = createAction({
           html: htmlBody,
           attachments: [],
         };
+
+        if (attachments && attachments.length > 0) {
+          const attachmentOption: Attachment[] = attachments.map(
+            ({ file, name }) => {
+              const lookupResult = mime.lookup(
+                file.extension ? file.extension : ''
+              );
+              return {
+                filename: name ?? file.filename,
+                content: file?.base64,
+                contentType: lookupResult ? lookupResult : undefined,
+                encoding: 'base64',
+              };
+            }
+          );
+
+          mailOptions.attachments = attachmentOption;
+        }
 
         const senderEmail =
           context.propsValue.from ||

@@ -17,6 +17,7 @@ import { requestActionActionOutputSchema } from '../output-schemas';
 export const requestActionMessageAction = createAction({
   auth: slackAuth,
   name: 'request_action_message',
+  classification: 'WRITE',
   displayName: 'Request Action in A Channel',
   description:
     'Send a message in a channel and wait until an action is selected',

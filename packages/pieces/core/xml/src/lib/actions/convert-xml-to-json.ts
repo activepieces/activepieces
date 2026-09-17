@@ -4,6 +4,7 @@ import { XMLParser } from 'fast-xml-parser';
 export const convertXmlToJson = createAction({
   audience: 'both',
   name: 'convert-xml-to-json',
+  classification: 'READ',
   displayName: 'Convert XML to JSON',
   description: 'Convert XML to JSON',
   aiMetadata: {

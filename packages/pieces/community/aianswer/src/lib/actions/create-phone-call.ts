@@ -5,6 +5,7 @@ import { aiAnswerConfig } from '../common/models';
 
 export const createPhoneCall = createAction({
   name: 'createPhoneCall',
+  classification: 'WRITE',
   auth: aiAnswerAuth,
   displayName: 'Create Phone Call',
   description: 'Create a phone call to customer from Agent',

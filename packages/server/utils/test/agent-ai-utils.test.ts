@@ -1,3 +1,5 @@
+import { AIProviderName } from '@activepieces/core-utils'
+import { ACTIVEPIECES_CHAT_TIERS } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { describe, expect, it } from 'vitest'
 import { agentAiUtils } from '../src/agent-ai-utils'
@@ -310,6 +312,21 @@ describe('collapseStaleToolOutputs', () => {
         expect(outputAt(0)).not.toContain('omitted to save context')
         expect(outputAt(1)).toContain('omitted to save context') // ordinary stale result still collapses
     })
+
+    it('pinned schema results do not consume a keep-recent slot', () => {
+        const big = 'z'.repeat(2000)
+        const schemaMessage: ModelMessage = {
+            role: 'tool',
+            content: [{ type: 'tool-result', toolCallId: 'schema', toolName: 'ap_get_piece_props', output: { type: 'text', value: big } }],
+        }
+        const messages: ModelMessage[] = [schemaMessage, ...Array.from({ length: 6 }, (_, i) => toolResultMessage({ id: `c${i}`, outputText: big }))]
+        const out = agentAiUtils.collapseStaleToolOutputs({ messages })
+        const outputAt = (idx: number): string => JSON.stringify(Array.isArray(out[idx].content) ? out[idx].content[0] : undefined)
+
+        for (let i = 0; i < messages.length; i++) {
+            expect(outputAt(i)).not.toContain('omitted to save context')
+        }
+    })
 })
 
 describe('estimateTokenCount', () => {
@@ -361,5 +378,100 @@ describe('buildLargeResultPreview', () => {
         const text = agentAiUtils.buildLargeResultPreview({ payload, byteSize: 200_000 })
         expect(text.toLowerCase()).toMatch(/paginate|filter|narrow/)
         expect(text).not.toContain('undefined')
+    })
+})
+
+describe('buildProviderOptions', () => {
+    const TIER = { id: 'fast', thinkingBudget: 5_000 }
+    const REASONING_OPTIONAL = 'anthropic/claude-haiku-4.5'
+    const REASONING_NATIVE = 'google/gemini-3.8-flash'
+
+    const reasoningFor = ({ provider, modelId, disableThinking }: { provider: AIProviderName, modelId: string, disableThinking: boolean }) =>
+        agentAiUtils.buildProviderOptions({ provider, tier: TIER, modelId, disableThinking }).openrouter?.reasoning
+
+    for (const provider of [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER]) {
+        it(`switches reasoning off on ${provider} for a model documented to allow it`, () => {
+            expect(reasoningFor({ provider, modelId: REASONING_OPTIONAL, disableThinking: true })).toEqual({ enabled: false })
+        })
+
+        it(`never asks ${provider} to switch reasoning off on a reasoning-native model`, () => {
+            const reasoning = reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: true })
+            expect(reasoning).not.toHaveProperty('enabled')
+            expect(reasoning).not.toMatchObject({ effort: 'none' })
+            expect(reasoning).toEqual({ effort: 'minimal' })
+        })
+
+        it(`spends the tier's thinking budget on ${provider} when thinking is on`, () => {
+            expect(reasoningFor({ provider, modelId: REASONING_NATIVE, disableThinking: false })).toEqual({ max_tokens: TIER.thinkingBudget })
+        })
+    }
+
+    it('leaves every default tier model on the zero-reasoning path it runs on today', () => {
+        for (const tier of ACTIVEPIECES_CHAT_TIERS) {
+            expect(reasoningFor({ provider: AIProviderName.ACTIVEPIECES, modelId: tier.modelId, disableThinking: true }), tier.modelId).toEqual({ enabled: false })
+        }
+    })
+
+    it('turns thinking off on Anthropic, where disabling it is legal', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ANTHROPIC, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
+    })
+
+    it('turns thinking off on Bedrock, where disabling it is legal', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.BEDROCK, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.anthropic?.thinking).toEqual({ type: 'disabled' })
+    })
+
+    it('leaves the ephemeral prompt cache in place beside the reasoning directive', () => {
+        const options = agentAiUtils.buildProviderOptions({ provider: AIProviderName.ACTIVEPIECES, tier: TIER, modelId: REASONING_OPTIONAL, disableThinking: true })
+        expect(options.openrouter?.cache_control).toEqual({ type: 'ephemeral' })
+    })
+
+    it('sends nothing for a provider that does not take a reasoning directive', () => {
+        expect(agentAiUtils.buildProviderOptions({ provider: AIProviderName.GOOGLE, tier: TIER, modelId: 'gemini-2.5-flash', disableThinking: true })).toEqual({})
+    })
+})
+
+describe('a message transform never hands the provider an empty history', () => {
+    const onlyThinking: ModelMessage[] = [
+        { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+    ]
+
+    it('sends a plain nudge rather than nothing when stripping reasoning empties the turn', () => {
+        const stripped = agentAiUtils.stripThinkingBlocks(onlyThinking, AIProviderName.ANTHROPIC)
+
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
+        expect(JSON.stringify(stripped)).not.toContain('reasoning')
+    })
+
+    it('does the same for a truncated tail, rather than replaying a message that cannot be replayed', () => {
+        const sanitized = sanitizeTruncatedAssistantTail(onlyThinking)
+
+        expect(sanitized).toHaveLength(1)
+        expect(sanitized[0].role).toBe('user')
+        expect(JSON.stringify(sanitized)).not.toContain('reasoning')
+    })
+
+    it('never replays an unresolved tool call as the last thing the model sees', () => {
+        const danglingCall: ModelMessage[] = [
+            { role: 'assistant', content: [{ type: 'tool-call', toolCallId: 'never-answered', toolName: 'ap_web_search', input: {} }] } as unknown as ModelMessage,
+        ]
+
+        const sanitized = sanitizeTruncatedAssistantTail(danglingCall)
+
+        expect(JSON.stringify(sanitized)).not.toContain('never-answered')
+    })
+
+    it('still drops a spent reasoning message when a real one survives beside it', () => {
+        const withRealContent: ModelMessage[] = [
+            { role: 'user', content: 'do the thing' },
+            { role: 'assistant', content: [{ type: 'reasoning', text: 'weighing it up' }] } as unknown as ModelMessage,
+        ]
+
+        const stripped = agentAiUtils.stripThinkingBlocks(withRealContent, AIProviderName.ANTHROPIC)
+
+        expect(stripped).toHaveLength(1)
+        expect(stripped[0].role).toBe('user')
     })
 })

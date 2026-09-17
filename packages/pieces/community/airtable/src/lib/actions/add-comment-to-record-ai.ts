@@ -6,6 +6,7 @@ import { addCommentToRecordAiActionOutputSchema } from '../output-schemas';
 export const airtableAddCommentToRecordAiAction = createAction({
   auth: airtableAuth,
   name: 'add_comment_to_record_ai',
+  classification: 'WRITE',
   displayName: 'Add Comment to Record (Agent)',
   description: 'Post a comment on an Airtable record.',
   audience: 'ai',

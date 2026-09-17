@@ -14,6 +14,7 @@ import { youtubeSearchOutputSchema } from '../output-schemas';
 export const youtubeSearch = createAction({
   auth: serpApiAuth,
   name: 'youtube_search',
+  classification: 'SEARCH',
   displayName: 'YouTube Search',
   description: 'Retrieve top video content results from YouTube for specific keywords or topics with advanced filtering.',
   audience: 'human',

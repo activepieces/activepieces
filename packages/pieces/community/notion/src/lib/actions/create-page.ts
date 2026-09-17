@@ -8,6 +8,7 @@ import { createPageActionOutputSchema } from '../output-schemas';
 export const createPage = createAction({
   auth: notionAuth,
   name: 'createPage',
+  classification: 'WRITE',
   displayName: 'Create Page',
   description:
     'Create a new Notion page as a sub-page with custom title and content. Perfect for organizing documentation, notes, or creating structured page hierarchies.',

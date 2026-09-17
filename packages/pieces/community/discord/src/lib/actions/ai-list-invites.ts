@@ -19,6 +19,7 @@ interface Invite {
 export const discordListInvites = createAction({
   auth: discordAuth,
   name: 'discord_list_invites',
+  classification: 'SEARCH',
   displayName: 'List Invites',
   description: 'List the active invites of a guild.',
   audience: 'ai',

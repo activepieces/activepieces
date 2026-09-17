@@ -7,6 +7,7 @@ import { telegramAnswerCallbackQueryActionOutputSchema } from '../output-schemas
 export const telegramAnswerCallbackQuery = createAction({
   auth: telegramBotAuth,
   name: 'telegram_answer_callback_query',
+  classification: 'WRITE',
   displayName: 'Answer Callback Query',
   description: 'Respond to a callback query raised by an inline keyboard button tap.',
   audience: 'ai',

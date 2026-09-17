@@ -5,6 +5,7 @@ import { browserlessCommon } from '../common/client';
 
 export const getWebsitePerformance = createAction({
     name: 'get_website_performance',
+    classification: 'READ',
     displayName: 'Get Website Performance',
     description: 'Analyze website performance metrics using Lighthouse',
     audience: 'both',

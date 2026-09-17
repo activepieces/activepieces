@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const deleteOOO = createAction({
   auth: assembledAuth,
   name: 'delete_OOO',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete OOO Request',
   description: 'Cancel/delete a OOO request.',
   audience: 'both',

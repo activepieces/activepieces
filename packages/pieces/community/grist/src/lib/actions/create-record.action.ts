@@ -6,6 +6,7 @@ import { GristAPIClient, transformTableColumnValues } from '../common/helpers';
 export const gristCreateRecordAction = createAction({
   auth: gristAuth,
   name: 'grist-create-record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in specific table.',
   audience: 'both',

@@ -24,6 +24,7 @@ interface ZendeskPayload {
 
 export const newTicket = createTrigger({
   name: 'new_ticket',
+  classification: 'READ',
   displayName: 'New Ticket',
   description: 'Fires when a new ticket is created (optionally filtered by organization). Requires a Zendesk Trigger with Notify active webhook.',
   aiMetadata: {

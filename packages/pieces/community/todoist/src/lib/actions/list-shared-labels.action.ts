@@ -7,6 +7,7 @@ import { listSharedLabelsActionOutputSchema } from '../output-schemas';
 export const todoistListSharedLabelsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_list_shared_labels',
+  classification: 'SEARCH',
   displayName: 'List Shared Labels',
   description: 'Lists shared (workspace) label names in Todoist.',
   audience: 'ai',

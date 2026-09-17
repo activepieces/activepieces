@@ -7,12 +7,21 @@ import {
 } from '@activepieces/pieces-common';
 
 import { wooAuth } from '../auth';
+import { findCouponOutputSchema } from '../output-schemas';
 
 export const wooFindCoupon = createAction({
   name: 'Find Coupon',
+  classification: 'READ',
   displayName: 'Find Coupon',
   description: 'Find a Coupon',
+  audience: 'both',
+  aiMetadata: {
+    description:
+      'Retrieves a single coupon from a WooCommerce store by its numeric coupon ID, including the discount type, amount, usage limits and restrictions. Use when an agent already has a coupon ID and needs the full coupon record. Read-only and idempotent.',
+    idempotent: true,
+  },
   auth: wooAuth,
+  outputSchema: findCouponOutputSchema,
   props: {
     id: Property.ShortText({
       displayName: 'Coupon ID',

@@ -10,6 +10,7 @@ import { trelloAuth } from '../../..';
 export const deleteCardAttachment = createAction({
   auth: trelloAuth,
   name: 'delete_card_attachment',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Card Attachment',
   description: 'Deletes an attachment from a card.',
   audience: 'both',

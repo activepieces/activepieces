@@ -1,9 +1,8 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, HubspotAuthValue, hubspotAuth } from '../auth';
 import {
 	createTrigger,
 	DropdownOption,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -12,13 +11,14 @@ import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import dayjs from 'dayjs';
+import { newContactInListTriggerOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	listId: string;
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
@@ -28,7 +28,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 		const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
 		const propertiesToRetrieve = [...defaultContactProperties, ...additionalProperties];
 
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth) });
 		const isTestMode = lastFetchEpochMS === 0;
 
 		let listMembers = [];
@@ -88,12 +88,14 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newContactInListTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-contact-in-list',
+	classification: 'READ',
 	displayName: 'New Contact in List',
 	description: 'Triggers when a new contact is added to the specified list.',
 	aiMetadata: {
 		description:
 			'Fires when a contact is added to the selected HubSpot contact list. Each event represents one contact whose membership was added since the last poll, enriched with the contact record properties (name, email, etc.) plus the timestamp it joined the list. Tracked by list-membership date.',
 	},
+	outputSchema: newContactInListTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	props: {
 		listId: Property.Dropdown({
@@ -110,8 +112,8 @@ export const newContactInListTrigger = createTrigger({
 					};
 				}
 
-				const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-				const client = new Client({ accessToken: authValue.access_token });
+				const authValue = auth as HubspotAuthValue;
+				const client = new Client({ accessToken: getHubspotAccessToken(authValue) });
 				let offset = 0;
 				let hasMore = true;
 				const options: DropdownOption<string>[] = [];

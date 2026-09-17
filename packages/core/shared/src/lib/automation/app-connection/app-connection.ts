@@ -113,15 +113,6 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
     preSelectForNewProjects: boolean
 }
 
-export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>
-export type SecretKeyAppConnection = AppConnection<AppConnectionType.SECRET_TEXT>
-export type CloudAuth2Connection = AppConnection<AppConnectionType.CLOUD_OAUTH2>
-export type PlatformOAuth2Connection = AppConnection<AppConnectionType.PLATFORM_OAUTH2>
-export type BasicAuthConnection = AppConnection<AppConnectionType.BASIC_AUTH>
-export type CustomAuthConnection = AppConnection<AppConnectionType.CUSTOM_AUTH>
-export type OIDCAppConnection = AppConnection<AppConnectionType.OIDC>
-export type NoAuthConnection = AppConnection<AppConnectionType.NO_AUTH>
-
 export const AppConnectionWithoutSensitiveData = z.object({
     ...BaseModelSchema,
     externalId: z.string(),
@@ -149,14 +140,13 @@ export const AppConnectionOwners = z.object({
 })
 
 export type AppConnectionOwners = z.infer<typeof AppConnectionOwners>
-/**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
 export const resolveValueFromProps = (props: Record<string, unknown> | undefined, value: string)=>{
     let resolvedScope = value
     if (!props) {
         return resolvedScope
     }
     Object.entries(props).forEach(([key, value]) => {
-        resolvedScope = resolvedScope.replace(`{${key}}`, String(value))
+        resolvedScope = resolvedScope.replaceAll(`{${key}}`, () => String(value))
     })
     return resolvedScope
 }

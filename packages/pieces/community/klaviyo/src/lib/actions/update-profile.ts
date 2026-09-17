@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const updateProfile = createAction({
   auth: klaviyoAuth,
   name: 'updateProfile',
+  classification: 'WRITE',
   displayName: 'Update Profile',
   description: 'Update existing profile data and preferences.',
   audience: 'both',

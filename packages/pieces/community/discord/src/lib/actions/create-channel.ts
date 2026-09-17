@@ -11,6 +11,7 @@ import { discordCreateChannelActionOutputSchema } from '../output-schemas';
 export const discordCreateChannel = createAction({
   auth: discordAuth,
   name: 'create_channel',
+  classification: 'WRITE',
   description: 'create a channel',
   audience: 'human',
   aiMetadata: { description: 'Creates a new channel in a guild with the given name and optional topic, identified by guild ID. Use to provision a channel before posting to it. Requires the bot to have Manage Channels permission; not idempotent, since each call creates a separate channel even with the same name.', idempotent: false },

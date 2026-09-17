@@ -10,6 +10,7 @@ export const split = createAction({
   },
   displayName: 'Split',
   name: 'split',
+  classification: 'READ',
   errorHandlingOptions: {
     continueOnFailure: {
       hide: true,

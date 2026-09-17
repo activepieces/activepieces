@@ -60,27 +60,95 @@ describe('executeAgentRunJob — a config failure must not swallow the turn', ()
             waitpointId: 'waitpoint-1',
         })
 
-        await expect(executeAgentRunJob.execute(ctx, data)).rejects.toThrow('ENTITY_NOT_FOUND')
+        const result = await executeAgentRunJob.execute(ctx, data)
 
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
         expect(resumed).toHaveLength(1)
         expect(resumed[0].waitpointId).toBe('waitpoint-1')
         expect(JSON.stringify(resumed[0].output)).toContain('FAILED')
+        expect(resumed[0].output).toMatchObject({ failure: expect.stringContaining('ENTITY_NOT_FOUND') })
     })
 
     it('tells the chat client the turn failed instead of leaving it streaming', async () => {
         const { ctx, events } = buildContext()
 
-        await expect(executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))).rejects.toThrow('ENTITY_NOT_FOUND')
+        const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
 
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
     })
 
-    it('completes the job when the platform is out of credits, so it is not retried or paged', async () => {
+    it('tells the client it was a billing failure, so the UI can offer a top-up', async () => {
         const { ctx, events } = buildContext(new Error('You have run out of AI credits'))
 
         const result = await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))
 
-        expect(result.status).toBe(EngineResponseStatus.OK)
+        expect(result.status).toBe(EngineResponseStatus.USER_FAILURE)
+        expect(events[0]).toMatchObject({ type: AgentEventType.ERROR, data: { code: ErrorCode.QUOTA_EXCEEDED } })
+    })
+
+    it('still fails the job on an unrecognised error, so our own bugs are not laundered', async () => {
+        const { ctx, events } = buildContext(new Error('Cannot read properties of undefined'))
+
+        await expect(executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.CHAT }))).rejects.toThrow('Cannot read properties of undefined')
+
         expect(events.map((event) => event.type)).toEqual([AgentEventType.ERROR, AgentEventType.FINISHED])
+    })
+})
+
+function capturingContext() {
+    const captured: Record<string, unknown>[] = []
+    const logged: { fields: unknown, message: unknown }[] = []
+    const record = (fields: unknown, message: unknown) => {
+        logged.push({ fields, message })
+    }
+    const logger: Record<string, unknown> = {
+        info: record, warn: record, error: record,
+        debug: () => undefined, trace: () => undefined, fatal: () => undefined,
+    }
+    logger.child = (fields: Record<string, unknown>) => {
+        captured.push(fields)
+        return logger
+    }
+    const apiClient = {
+        getAgentConfig: () => Promise.reject(new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: { entityId: 'OPENAI', entityType: 'AIProvider' },
+        })),
+        resumeFlowStep: () => Promise.resolve(),
+        saveAgentMessages: () => Promise.resolve(),
+        sendAgentEvent: () => Promise.resolve(),
+    }
+    return { ctx: { apiClient, log: logger } as unknown as JobContext, captured, logged }
+}
+
+describe('every line an agent job logs says which surface started it', () => {
+    it('carries the source, so a flow-step failure is not inferred from whether flowRun is present', async () => {
+        const { ctx, captured } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({
+            source: AgentRunSource.FLOW_STEP,
+            flowRunId: 'flow-run-1',
+            waitpointId: 'waitpoint-1',
+        }))
+
+        expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.FLOW_STEP } })
+    })
+
+    it('says CHAT for a real chat job, which omits the field entirely', async () => {
+        const { ctx, captured } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({}))
+
+        expect(captured[0]).toMatchObject({ agentRun: { source: AgentRunSource.CHAT } })
+    })
+
+    it('keeps the source on the failure line, which is the one worth filtering', async () => {
+        const { ctx, logged } = capturingContext()
+
+        await executeAgentRunJob.execute(ctx, buildJobData({ source: AgentRunSource.FLOW_STEP, flowRunId: 'f1', waitpointId: 'w1' }))
+
+        const failure = logged.find((entry) => String(entry.message).includes('Agent job failed'))
+        expect(failure?.fields).toMatchObject({ agentRun: { source: AgentRunSource.FLOW_STEP } })
     })
 })

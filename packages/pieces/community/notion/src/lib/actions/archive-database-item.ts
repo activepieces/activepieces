@@ -7,6 +7,7 @@ import { archiveDatabaseItemActionOutputSchema } from '../output-schemas';
 export const archiveDatabaseItem = createAction({
   auth: notionAuth,
   name: 'archive_database_item',
+  classification: 'DESTRUCTIVE',
   displayName: 'Archive Database Item',
   description:
     'Archive (soft-delete) a database item without permanently removing it. Archived items can be restored later if needed.',

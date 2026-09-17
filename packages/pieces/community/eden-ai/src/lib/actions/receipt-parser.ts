@@ -29,6 +29,7 @@ function normalizeDataExtractionResponse(provider: string, response: any) {
 export const receiptParserAction = createAction({
   auth: edenAiAuth,
   name: 'receipt_parser',
+  classification: 'READ',
   displayName: 'Receipt Parser',
   description: 'Extract structured data from receipts and documents using Eden AI. Supports general data extraction with bounding boxes.',
   audience: 'both',

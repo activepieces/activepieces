@@ -8,6 +8,7 @@ import { chargeOutputSchema } from '../output-schemas';
 export const stripePaymentFailed = createTrigger({
   auth: stripeAuth,
   name: 'payment_failed',
+  classification: 'READ',
   displayName: 'Payment Failed',
   description: 'Triggers when a payment fails',
   aiMetadata: {

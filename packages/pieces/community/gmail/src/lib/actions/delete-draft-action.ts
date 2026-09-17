@@ -5,6 +5,7 @@ import { gmail as googleGmail } from '@googleapis/gmail';
 export const gmailDeleteDraftAction = createAction({
   auth: gmailAuth,
   name: 'gmail_delete_draft',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Draft',
   description: 'Permanently delete a draft email by its ID.',
   audience: 'ai',

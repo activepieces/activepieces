@@ -12,6 +12,7 @@ import { zendeskAuth } from '../..';
 export const findOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'find-organization',
+  classification: 'SEARCH',
   displayName: 'Find Organization(s)',
   description: 'Search organizations by name, domain, external ID, or other criteria.',
   audience: 'both',

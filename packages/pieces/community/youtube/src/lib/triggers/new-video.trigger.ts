@@ -14,6 +14,7 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { channelIdentifier } from '../common/props';
+import { newVideoTriggerOutputSchema } from '../output-schemas';
 import { isNil } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { load as cheerioLoad } from 'cheerio';
@@ -21,6 +22,7 @@ import FeedParser from 'feedparser';
 
 export const youtubeNewVideoTrigger = createTrigger({
   name: 'new-video',
+  classification: 'READ',
   displayName: 'New Video In Channel',
   description: 'Runs when a new video is added to a YouTube channel',
   aiMetadata: {
@@ -29,6 +31,8 @@ export const youtubeNewVideoTrigger = createTrigger({
   },
   auth: PieceAuth.None(),
   requireAuth: false,
+  outputSchema: newVideoTriggerOutputSchema,
+
   type: TriggerStrategy.POLLING,
   props: {
     channel_identifier: channelIdentifier,

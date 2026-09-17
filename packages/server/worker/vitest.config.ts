@@ -11,6 +11,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@activepieces/ai-providers': path.resolve(__dirname, '../../../packages/core/ai-providers/src/index.ts'),
       '@activepieces/shared': path.resolve(__dirname, '../../../packages/core/shared/src/index.ts'),
       '@activepieces/pieces-framework': path.resolve(__dirname, '../../../packages/pieces/framework/src/index.ts'),
       '@activepieces/server-utils': path.resolve(__dirname, '../../../packages/server/utils/src/index.ts'),

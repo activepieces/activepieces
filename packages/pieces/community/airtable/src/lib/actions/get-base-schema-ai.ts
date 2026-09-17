@@ -6,6 +6,7 @@ import { getBaseSchemaAiActionOutputSchema } from '../output-schemas';
 export const airtableGetBaseSchemaAiAction = createAction({
   auth: airtableAuth,
   name: 'get_base_schema_ai',
+  classification: 'READ',
   displayName: 'Get Base Schema (Agent)',
   description: 'Get every table and field in a base.',
   audience: 'ai',

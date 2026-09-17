@@ -112,6 +112,7 @@ export async function runGetEvents(
 export const getEvents = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_get_events',
+  classification: 'SEARCH',
   description: 'Get Events',
   audience: 'human',
   aiMetadata: { description: 'Lists events from a Google Calendar, optionally filtered by a date range, search term, and event types, and can expand recurring events into individual instances. Use to look up or browse multiple events when you do not already have a specific event ID; use Get Event by ID for a single known event. Read-only and idempotent.', idempotent: true },

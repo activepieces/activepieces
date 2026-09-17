@@ -8,6 +8,7 @@ import { MailchimpClient } from '../common/types';
 export const unsubscribeEmail = createAction({
   auth: mailchimpAuth,
   name: 'unsubscribe_email',
+  classification: 'DESTRUCTIVE',
   displayName: 'Unsubscribe Email',
   description: 'Unsubscribe an email address from an audience',
   audience: 'both',

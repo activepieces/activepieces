@@ -9,7 +9,7 @@ const proxyOutfile = path.join(outdir, 'main.js');
 
 const watch = process.argv.includes('--watch');
 
-fs.rmSync(outdir, { recursive: true, force: true });
+fs.mkdirSync(outdir, { recursive: true });
 
 const zodLocaleTrim = {
   // Drop zod's 46 unused locale packs (~184KB). The app surfaces validation
@@ -38,6 +38,7 @@ function rebuildLogger(outfile) {
       });
       build.onEnd((result) => {
         if (result.metafile) {
+          fs.mkdirSync(path.dirname(outfile), { recursive: true });
           fs.writeFileSync(
             outfile + '.meta.json',
             JSON.stringify(result.metafile)
@@ -75,7 +76,7 @@ function buildOptions({ outfile }) {
         '@activepieces/core-formula': path.resolve(__dirname, '../../core/formula/src'),
         '@activepieces/core-execution': path.resolve(__dirname, '../../core/execution/src'),
     },
-    external: ['isolated-vm', 'utf-8-validate', 'bufferutil'],
+    external: ['isolated-vm', 'utf-8-validate', 'bufferutil', 'deno/bin.cjs'],
     plugins: [zodLocaleTrim, rebuildLogger(outfile)],
   };
 }

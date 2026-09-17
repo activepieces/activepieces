@@ -1,5 +1,13 @@
+import { ActivepiecesError, AIProviderName, ErrorCode } from '@activepieces/core-utils'
+import { AgentRunSource } from '@activepieces/shared'
+import { APICallError, RetryError } from 'ai'
 import { describe, expect, it } from 'vitest'
-import { isTransientFailureText, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+
+import { classifyAgentRunError, firstStepUsesFastModel, isTransientFailureText, jsonInputFrom, looksEmptyResultText } from '../../../../../../src/lib/execute/jobs/ee/agent/run-agent-turn'
+
+function apiError({ statusCode, message, responseBody }: { statusCode: number, message: string, responseBody?: string }): APICallError {
+    return new APICallError({ message, url: 'https://provider.test/v1/chat', requestBodyValues: {}, statusCode, responseBody })
+}
 
 describe('isTransientFailureText', () => {
     it('flags retryable errors (rate limit, 5xx, timeout, dropped socket)', () => {
@@ -24,5 +32,167 @@ describe('looksEmptyResultText', () => {
 
     it('does not flag a populated result', () => {
         expect(looksEmptyResultText('✅ done {"found":true,"result":[{"id":"r1"}]}')).toBe(false)
+    })
+})
+
+describe('firstStepUsesFastModel', () => {
+    it('buys time to first token on the surfaces someone is watching', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, runsASavedAgent: false })).toBe(true)
+        expect(firstStepUsesFastModel({ source: AgentRunSource.AGENT, runsASavedAgent: false })).toBe(true)
+    })
+
+    it('leaves a step that runs a saved agent on the model that agent names', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.FLOW_STEP, runsASavedAgent: true })).toBe(false)
+    })
+
+    it('leaves a step that configures itself exactly as it ran before, so an upgrade changes nothing', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.FLOW_STEP, runsASavedAgent: false })).toBe(true)
+    })
+
+    it('stays off in the playground, which executes nothing', () => {
+        expect(firstStepUsesFastModel({ source: AgentRunSource.CHAT, dryRun: true, runsASavedAgent: false })).toBe(false)
+    })
+})
+
+describe('classifyAgentRunError', () => {
+    const classify = (error: unknown, provider?: string): string => classifyAgentRunError({ error, ...(provider === undefined ? {} : { provider }) })
+    const notFound = (entityType: string): ActivepiecesError => new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: 'x', entityType } })
+
+    it.each([
+        [400, 'internal'], [401, 'user'], [402, 'credit'], [403, 'user'], [404, 'user'], [408, 'internal'],
+        [409, 'internal'], [413, 'internal'], [422, 'internal'], [429, 'internal'], [500, 'internal'], [503, 'internal'],
+    ])('classifies a provider %i as %s', (statusCode, expected) => {
+        expect(classify(apiError({ statusCode, message: 'the provider said no' }))).toBe(expected)
+    })
+
+    it.each([
+        'Grok 4.1 Fast is deprecated',
+        'gemini-2.5-pro is no longer available',
+        'the model was decommissioned',
+    ])('blames the user for a 400 that names a retired model: %s', (message) => {
+        expect(classify(apiError({ statusCode: 400, message }))).toBe('user')
+    })
+
+    it('does not read the retired-model marker out of a response body, which carries error pages we did not write', () => {
+        expect(classify(apiError({ statusCode: 400, message: 'Bad Request', responseBody: '<html><footer>this endpoint is deprecated</footer></html>' }))).toBe('internal')
+    })
+
+    it('never blames the user for a retired model on the managed key, which we chose for them', () => {
+        expect(classify(apiError({ statusCode: 400, message: 'Grok 4.1 Fast is deprecated' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 400, message: 'Grok 4.1 Fast is deprecated' }), AIProviderName.OPENROUTER)).toBe('user')
+    })
+
+    it('keeps a 400 we caused internal, so an illegal tool name is not laundered as user config', () => {
+        expect(classify(apiError({ statusCode: 400, message: "tools.0.name: should match pattern '^[a-zA-Z0-9_.-]{1,64}$'" }))).toBe('internal')
+    })
+
+    it('never blames the user for the managed key, which is ours and fails everyone at once', () => {
+        for (const statusCode of [401, 403, 404]) {
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES), String(statusCode)).toBe('internal')
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.OPENAI), String(statusCode)).toBe('user')
+        }
+    })
+
+    it('calls a model missing from our own catalog our problem, since the customer never chose that key', () => {
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.OPENAI)).toBe('user')
+    })
+
+    it('reads a billing exhaustion out of a 429 even when the provider only has one word for it', () => {
+        const googleBilling = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Billing has not been enabled for this project","details":[{"quotaValue":"0"}]}}',
+        })
+
+        expect(classify(googleBilling, AIProviderName.GOOGLE)).toBe('credit')
+    })
+
+    it('still treats an ordinary per-minute 429 as something to retry, not a bill to pay', () => {
+        const googleThrottle = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Quota exceeded for quota metric Generate Content API requests per minute"}}',
+        })
+
+        expect(classify(googleThrottle, AIProviderName.GOOGLE)).not.toBe('credit')
+    })
+
+    it('reads billing exhaustion out of a 429 body, which the provider marks retryable', () => {
+        expect(classify(apiError({ statusCode: 429, message: 'quota', responseBody: '{"code":"insufficient_quota"}' }))).toBe('credit')
+    })
+
+    it('does not let a 5xx error page mentioning credits masquerade as a billing failure', () => {
+        expect(classify(apiError({ statusCode: 500, message: 'Bad gateway', responseBody: '<html>Buy more credits</html>' }))).toBe('internal')
+        expect(classify(apiError({ statusCode: 503, message: 'Unavailable', responseBody: 'trace-id 402 upstream down' }))).toBe('internal')
+    })
+
+    it('reports a real quota rejection as credit, so the client can offer a top-up', () => {
+        expect(classify(new Error('You have run out of AI credits'))).toBe('credit')
+        expect(classify(new ActivepiecesError({ code: ErrorCode.QUOTA_EXCEEDED, params: { metric: 'credits', quota: 0 } }))).toBe('credit')
+    })
+
+    it('unwraps the retry envelope the SDK adds after a retried attempt', () => {
+        expect(classify(new RetryError({
+            message: 'Failed after 2 attempts',
+            reason: 'errorNotRetryable',
+            errors: [apiError({ statusCode: 429, message: 'Too Many Requests' }), apiError({ statusCode: 401, message: 'Unauthorized' })],
+        }))).toBe('user')
+    })
+
+    it('treats a missing AI provider as user config, but any other not-found as our bug', () => {
+        expect(classify(notFound('AIProvider'))).toBe('user')
+        expect(classify(notFound('ChatAiProvider'))).toBe('user')
+        expect(classify(notFound('Conversation'))).toBe('internal')
+    })
+
+    it('keeps a conversation stuck mid-stream visible instead of completing quietly', () => {
+        expect(classify(new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'An agent is already running for this conversation' } }))).toBe('internal')
+    })
+
+    it('reads the error code an RPC failure now carries across the boundary', () => {
+        expect(classify(Object.assign(new Error('RPC [getAgentConfig] handler threw: ENTITY_NOT_FOUND'), {
+            apError: { code: ErrorCode.ENTITY_NOT_FOUND, entityType: 'AIProvider' },
+        }))).toBe('user')
+    })
+
+    it('keeps an unrecognised error internal', () => {
+        for (const input of [new Error('Cannot read properties of undefined'), undefined, null, 'a string', {}]) {
+            expect(classify(input)).toBe('internal')
+        }
+    })
+})
+
+describe('jsonInputFrom', () => {
+    it('takes the object out of whatever wrapping the model put around it', () => {
+        const wrappings = [
+            '{"query":"pricing"}',
+            '```json\n{"query":"pricing"}\n```',
+            '```JSON\n{"query":"pricing"}\n```',
+            '```\n{"query":"pricing"}\n```',
+            'Sure, here you go:\n```json\n{"query":"pricing"}\n```\nHope that helps!',
+            '{"query":"pricing"}\n\nLet me know.',
+            '{"query":"pricing"}\n\nOr if you prefer: {"query":"plans"}',
+        ]
+
+        for (const wrapping of wrappings) {
+            expect(jsonInputFrom(wrapping), wrapping).toBe('{"query":"pricing"}')
+        }
+    })
+
+    it('keeps a brace that lives inside a string value', () => {
+        expect(jsonInputFrom('{"query":"a } b"}')).toBe('{"query":"a } b"}')
+    })
+
+    it('reaches past a nested object to the end of the real one', () => {
+        expect(jsonInputFrom('{"filter":{"tier":"pro"}}')).toBe('{"filter":{"tier":"pro"}}')
+    })
+
+    it('rejects anything that is not an object, so prose never reaches a tool', () => {
+        const rejected = ['Sure! Here is the corrected call.', '', '42', 'null', '{"query":', 'not json at all']
+
+        for (const text of rejected) {
+            expect(jsonInputFrom(text), text).toBeUndefined()
+        }
     })
 })

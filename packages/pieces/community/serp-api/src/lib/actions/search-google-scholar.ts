@@ -7,6 +7,7 @@ import { searchGoogleScholarOutputSchema } from '../output-schemas';
 export const searchGoogleScholar = createAction({
   auth: serpApiAuth,
   name: 'search_google_scholar',
+  classification: 'SEARCH',
   displayName: 'Search Google Scholar',
   description: 'Search academic papers and citations on Google Scholar for a query.',
   audience: 'ai',

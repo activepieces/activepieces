@@ -10,6 +10,7 @@ import { groupIdDropdown } from '../common/props';
 export const createOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'create-organization',
+  classification: 'WRITE',
   displayName: 'Create Organization',
   description: 'Create a new organization record.',
   audience: 'both',

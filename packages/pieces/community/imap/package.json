@@ -1,14 +1,14 @@
 {
   "name": "@activepieces/piece-imap",
-  "version": "0.4.8",
+  "version": "0.4.9",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
     "dayjs": "1.11.9",
-    "imapflow": "1.0.200",
-    "mailparser": "3.9.3",
+    "imapflow": "1.7.8",
+    "mailparser": "3.9.20",
     "@activepieces/core-piece-types": "workspace:*",
     "@activepieces/core-utils": "workspace:*"
   },

@@ -6,6 +6,7 @@ import { lemlistApiService } from '../common/requests';
 export const resumeLeadFromAllOrSpecificCampaigns = createAction({
   auth: lemlistAuth,
   name: 'resumeLeadFromAllOrSpecificCampaigns',
+  classification: 'WRITE',
   displayName: 'Resume Lead From All or Specific Campaigns',
   description: 'Resume a lead’s outreach across all or specific campaigns.',
   audience: 'both',

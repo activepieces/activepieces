@@ -69,6 +69,7 @@ function constructQuery({ table, order_by, lastItem, order_direction }: { table:
 
 export const newRow = createTrigger({
     name: 'new-row',
+    classification: 'READ',
     auth: postgresAuth,
     displayName: 'New Row',
     description: 'triggered when a new row is added',

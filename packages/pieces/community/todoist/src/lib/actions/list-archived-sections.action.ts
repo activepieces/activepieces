@@ -7,6 +7,7 @@ import { listArchivedSectionsActionOutputSchema } from '../output-schemas';
 export const todoistListArchivedSectionsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_list_archived_sections',
+  classification: 'SEARCH',
   displayName: 'List Archived Sections',
   description: 'List archived sections within a Todoist project.',
   audience: 'ai',

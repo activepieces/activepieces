@@ -10,6 +10,7 @@ import { formsGetFormActionOutputSchema } from '../output-schemas';
 export const formsGetForm = createAction({
   auth: googleFormsAuth,
   name: 'forms_get_form',
+  classification: 'READ',
   displayName: 'Get Form',
   description:
     'Fetch a form\'s full structure: title, settings, items with their indices and itemIds, question IDs, and current revisionId.',

@@ -1,14 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { getEmailStatusOutputSchema } from '../output-schemas';
 
 export const getEmailStatus = createAction({
   name: 'get_email_status',
+  classification: 'READ',
   auth: resendAuth,
   displayName: 'Get Email Status',
   outputSchema: getEmailStatusOutputSchema,
@@ -23,14 +21,6 @@ export const getEmailStatus = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.GET,
-      url: `https://api.resend.com/emails/${propsValue.email_id}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: auth.secret_text,
-      },
-    });
-    return response.body;
+    return await resendClient.sendRequest({ auth: auth.secret_text, method: HttpMethod.GET, path: `/emails/${propsValue.email_id}` });
   },
 });

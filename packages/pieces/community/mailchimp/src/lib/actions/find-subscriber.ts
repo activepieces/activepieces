@@ -6,6 +6,7 @@ import mailchimp from '@mailchimp/mailchimp_marketing';
 export const findSubscriber = createAction({
   auth: mailchimpAuth,
   name: 'find_subscriber',
+  classification: 'READ',
   displayName: 'Find Subscriber',
   description: 'Search for subscribers across all lists or within a specific list. This action provides comprehensive subscriber information including merge fields, interests, and activity data.',
   audience: 'both',

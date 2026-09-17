@@ -5,6 +5,7 @@ import { stripeCommon, getClient } from '../common';
 import { subscriptionOutputSchema } from '../output-schemas';
 export const stripeCancelSubscription = createAction({
   name: 'cancel_subscription',
+  classification: 'DESTRUCTIVE',
   auth: stripeAuth,
   displayName: 'Cancel Subscription',
   description:

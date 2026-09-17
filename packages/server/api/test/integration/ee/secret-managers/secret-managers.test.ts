@@ -1,6 +1,6 @@
 import { ErrorCode } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { AppConnectionScope, AppConnectionType, PrincipalType, SecretManagerConnectionScope, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
+import { AppConnectionScope, AppConnectionType, DefaultProjectRole, PrincipalType, SecretManagerConnectionScope, SecretManagerFieldsSeparator, SecretManagerProviderId, UpsertGlobalConnectionRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { MockInstance } from 'vitest'
@@ -9,6 +9,7 @@ import { validatePathFormat } from '../../../../src/app/ee/secret-managers/secre
 import { secretManagersService } from '../../../../src/app/ee/secret-managers/secret-managers.service'
 import { generateMockToken } from '../../../helpers/auth'
 import { mockAndSaveBasicSetup, mockPieceMetadata } from '../../../helpers/mocks'
+import { createMemberContext, createTestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 import {
     hashicorpMock,
@@ -458,6 +459,64 @@ describe('Secret Managers API', () => {
                     code: ErrorCode.VALIDATION,
                 }),
             })
+        })
+    })
+
+    describe('List Secret Manager Connections authorization', () => {
+        it('should deny a non-admin member listing across the whole platform', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: { secretManagersEnabled: true },
+            })
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+
+            const response = await memberCtx.get('/v1/secret-managers')
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should allow a non-admin member listing within their own project', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: { secretManagersEnabled: true },
+            })
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+
+            const response = await memberCtx.get('/v1/secret-managers', {
+                projectId: ctx.project.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
+        it('should deny a non-admin member listing another project', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: { secretManagersEnabled: true },
+            })
+            const otherCtx = await createTestContext(app!, {
+                plan: { secretManagersEnabled: true },
+            })
+            const memberCtx = await createMemberContext(app!, ctx, {
+                projectRole: DefaultProjectRole.EDITOR,
+            })
+
+            const response = await memberCtx.get('/v1/secret-managers', {
+                projectId: otherCtx.project.id,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        })
+
+        it('should allow a platform admin listing across the whole platform', async () => {
+            const ctx = await createTestContext(app!, {
+                plan: { secretManagersEnabled: true },
+            })
+
+            const response = await ctx.get('/v1/secret-managers')
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
         })
     })
 })

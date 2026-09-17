@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { pushoverAuth } from '../..';
+import { sendNotificationActionOutputSchema } from '../output-schemas';
 
 export const sendNotification = createAction({
   auth: pushoverAuth,
   name: 'send_notification',
+  classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to Pushover',
   audience: 'both',
@@ -70,6 +72,7 @@ export const sendNotification = createAction({
       required: false,
     }),
   },
+  outputSchema: sendNotificationActionOutputSchema,
   async run({ auth, propsValue }) {
     const baseUrl = 'https://api.pushover.net/1/messages.json';
     const apiToken = auth.props.api_token;

@@ -7,6 +7,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const getChannelInfoAction = createAction({
   auth: slackAuth,
   name: 'slack_get_channel_info',
+  classification: 'READ',
   displayName: 'Get Channel Info',
   description: 'Gets details about a single channel.',
   audience: 'ai',

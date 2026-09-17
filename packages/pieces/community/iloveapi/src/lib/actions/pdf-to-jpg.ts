@@ -6,6 +6,7 @@ import { runAndStoreResult } from '../common/runner';
 export const pdfToJpgAction = createAction({
   auth: iloveapiAuth,
   name: 'pdf_to_jpg',
+  classification: 'READ',
   displayName: 'PDF to JPG',
   description:
     'Convert PDF pages to JPG images, or extract images embedded in the PDF.',

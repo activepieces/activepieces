@@ -22,6 +22,7 @@ const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 export const createMultipleTimeEntriesAction = createAction({
   auth: beeboleAuth,
   name: 'create_multiple_time_entries',
+  classification: 'WRITE',
   displayName: 'Create Multiple Time Entries',
   description:
     'Creates time entries (working time or absence) across multiple days in Beebole.',

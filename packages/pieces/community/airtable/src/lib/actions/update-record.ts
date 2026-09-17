@@ -10,6 +10,7 @@ import { updateRecordActionOutputSchema } from '../output-schemas';
 export const airtableUpdateRecordAction = createAction({
   auth: airtableAuth,
   name: 'airtable_update_record',
+  classification: 'WRITE',
   displayName: 'Update Airtable Record',
   description: 'Update a record in airtable',
   audience: 'human',

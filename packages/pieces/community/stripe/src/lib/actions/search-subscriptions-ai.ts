@@ -23,6 +23,7 @@ const statusOptions = [
 import { subscriptionSearchOutputSchema } from '../output-schemas';
 export const stripeSearchSubscriptionsAi = createAction({
   name: 'search_subscriptions_ai',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'Search Subscriptions (Agent)',
   description:

@@ -16,7 +16,6 @@ interface CopyButtonProps extends ButtonProps {
   tooltipSide?: React.ComponentProps<typeof TooltipContent>['side'];
   withoutTooltip?: boolean;
   children?: React.ReactNode;
-  variant?: 'ghost' | 'outline';
 }
 
 export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
@@ -27,6 +26,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
       tooltipSide,
       withoutTooltip = false,
       variant = 'outline',
+      children,
       ...props
     },
     ref,
@@ -46,22 +46,29 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
       },
     });
 
-    if (withoutTooltip) {
+    const content = (
+      <>
+        {isCopied ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <Copy className="h-4 w-4" />
+        )}
+        {children}
+      </>
+    );
+
+    if (withoutTooltip || children) {
       return (
         <Button
           ref={ref}
           variant={variant}
-          size={'icon'}
+          size={children ? 'default' : 'icon'}
           type="button"
           className={className}
           onClick={() => copyToClipboard()}
           {...props}
         >
-          {isCopied ? (
-            <Check className="h-4 w-4" />
-          ) : (
-            <Copy className="h-4 w-4" />
-          )}
+          {content}
         </Button>
       );
     }
@@ -77,11 +84,7 @@ export const CopyButton = forwardRef<HTMLButtonElement, CopyButtonProps>(
             onClick={() => copyToClipboard()}
             {...props}
           >
-            {isCopied ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
+            {content}
           </Button>
         </TooltipTrigger>
         <TooltipContent side={tooltipSide}>{t('Copy')}</TooltipContent>

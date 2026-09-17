@@ -10,10 +10,13 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { searchFieldProp, searchFieldValueProp } from '../common/props';
 import { DEAL_OPTIONAL_FIELDS } from '../common/constants';
+import { findDealActionOutputSchema } from '../output-schemas';
 
 export const findDealAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-deal',
+	outputSchema: findDealActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find Deal',
 	description: 'Finds a deal by any field.',
 	audience: 'both',

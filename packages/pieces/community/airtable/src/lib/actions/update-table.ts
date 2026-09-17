@@ -12,6 +12,7 @@ import { updateTableActionOutputSchema } from '../output-schemas';
 export const airtableUpdateTableAction = createAction({
   auth: airtableAuth,
   name: 'update_table',
+  classification: 'WRITE',
   displayName: 'Update Table (Agent)',
   description: 'Rename or re-describe a table.',
   audience: 'ai',

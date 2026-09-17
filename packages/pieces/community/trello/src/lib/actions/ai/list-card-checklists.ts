@@ -12,6 +12,7 @@ import { listCardChecklistsActionOutputSchema } from '../../output-schemas';
 export const listCardChecklists = createAction({
   auth: trelloAuth,
   name: 'list_card_checklists',
+  classification: 'SEARCH',
   displayName: 'List Card Checklists (Agent)',
   description: "List a card's checklists and their items.",
   audience: 'ai',

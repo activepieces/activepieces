@@ -7,6 +7,7 @@ import { getSpacesOutputSchema } from '../../output-schemas';
 export const clickupGetSpaces = createAction({
   auth: clickupAuth,
   name: 'clickup_get_spaces',
+  classification: 'SEARCH',
   description: 'List all spaces in a ClickUp workspace',
   audience: 'ai',
   aiMetadata: {

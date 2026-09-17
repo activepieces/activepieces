@@ -7,6 +7,7 @@ import { AttioRecordResponse } from '../common/types';
 
 export const findRecordAction = createAction({
 	name: 'find_record',
+	classification: 'SEARCH',
 	displayName: 'Find Record',
 	description: 'Search for records in Attio using filters and return matching results.',
 	audience: 'both',

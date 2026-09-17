@@ -6,6 +6,7 @@ import { updateRowOutputSchema } from '../output-schemas';
 export const updateRow = createAction({
   auth: postgresAuth,
   name: 'update-row',
+  classification: 'WRITE',
   displayName: 'Update Row',
   description: 'Updates one or more rows in a table',
   audience: 'both',

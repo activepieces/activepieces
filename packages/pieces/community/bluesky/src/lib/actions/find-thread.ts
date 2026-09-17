@@ -7,6 +7,7 @@ import { postUrlProperty, threadDepthDropdown, parentHeightDropdown, extractPost
 export const findThread = createAction({
   auth: blueskyAuth,
   name: 'findThread',
+  classification: 'READ',
   displayName: 'Find Thread',
   description: 'Get a full conversation thread with replies',
   audience: 'both',

@@ -5,6 +5,7 @@ import { updatedRecordTriggerOutputSchema } from '../output-schemas';
 
 export const updatedRecordTrigger = createTrigger({
     name: 'updatedRecord',
+    classification: 'READ',
     displayName: 'Record Updated',
     description: 'Triggers when a record is updated in the selected table.',
     aiMetadata: {

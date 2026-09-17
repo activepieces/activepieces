@@ -11,6 +11,7 @@ import { groupGuid } from '../common/props';
 export const createQrCodeAction = createAction({
   auth: bitlyAuth,
   name: 'create_qr_code',
+  classification: 'WRITE',
   displayName: 'Create QR Code',
   description: 'Generate a customized QR code for a Bitlink.',
   audience: 'both',

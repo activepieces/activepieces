@@ -12,9 +12,11 @@ import {
 import * as z from 'zod/mini'
 
 import { wooAuth } from '../auth';
+import { createCouponOutputSchema } from '../output-schemas';
 
 export const wooCreateCoupon = createAction({
   name: 'Create Coupon',
+  classification: 'WRITE',
   displayName: 'Create Coupon',
   description: 'Create a coupon',
   audience: 'both',
@@ -24,6 +26,7 @@ export const wooCreateCoupon = createAction({
     idempotent: false,
   },
   auth: wooAuth,
+  outputSchema: createCouponOutputSchema,
   props: {
     code: Property.ShortText({
       displayName: 'Coupon code',

@@ -44,6 +44,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof trelloAuth>, Pro
 export const deadlineTrigger = createTrigger({
     auth: trelloAuth,
     name: 'deadline',
+    classification: 'READ',
     displayName: 'Card Deadline',
     description: 'Triggers at a specified time before a card deadline.',
     outputSchema: deadlineTriggerOutputSchema,

@@ -10,6 +10,7 @@ import { ticketIdDropdown } from '../common/props';
 export const removeTagFromTicketAction = createAction({
   auth: zendeskAuth,
   name: 'remove-tag-from-ticket',
+  classification: 'WRITE',
   displayName: 'Remove Tag(s) from Ticket',
   description: 'Remove one or more tags from a ticket.',
   audience: 'both',

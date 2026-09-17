@@ -5,6 +5,7 @@ import { BlobServiceClient } from '@azure/storage-blob';
 export const createContainer = createAction({
   auth: azureBlobStorageAuth,
   name: 'createContainer',
+  classification: 'WRITE',
   displayName: 'Create Container',
   description: 'Creates a new container',
   audience: 'both',

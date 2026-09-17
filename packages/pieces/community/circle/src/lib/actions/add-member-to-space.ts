@@ -11,6 +11,7 @@ interface AddMemberToSpacePayload {
 export const addMemberToSpace = createAction({
 	auth: circleAuth,
 	name: 'add_member_to_space',
+	classification: 'WRITE',
 	displayName: 'Add Member to Space',
 	description: 'Add an existing member to a specific space by their email.',
 	audience: 'both',

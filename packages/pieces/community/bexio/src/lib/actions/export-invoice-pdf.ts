@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const exportInvoicePdfAction = createAction({
   auth: bexioAuth,
   name: 'export_invoice_pdf',
+  classification: 'READ',
   displayName: 'Export Invoice to PDF',
   description: 'Export an existing sales invoice as a PDF document',
   audience: 'both',

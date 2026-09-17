@@ -8,6 +8,7 @@ import {
 
 export const matchPerson = createAction({
   name: 'matchPerson',
+  classification: 'READ',
   displayName: 'Match Person',
   description: 'Enrich a persons details using their email address',
   audience: 'both',

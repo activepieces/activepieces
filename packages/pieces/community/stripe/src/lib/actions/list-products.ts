@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { productListOutputSchema } from '../output-schemas';
 export const stripeListProducts = createAction({
   name: 'list_products',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Products (Agent)',
   description: 'List Stripe products.',

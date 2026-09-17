@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowUnfulfillOrder = createAction({
 	auth: webflowAuth,
 	name: 'unfulfill_order',
+	classification: 'WRITE',
 	description: 'Unfulfill order',
 	displayName: 'Unfulfill an order',
 	audience: 'both',

@@ -6,6 +6,7 @@ import { gmailGetDraftActionOutputSchema } from '../output-schemas';
 export const gmailGetDraftAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_draft',
+  classification: 'READ',
   displayName: 'Get Draft',
   description: 'Get a single draft email by its ID.',
   audience: 'ai',

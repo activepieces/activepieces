@@ -9,6 +9,7 @@ import { secretIdDropdown } from '../common/props';
 export const updateSecret = createAction({
   auth: awsSecretsManagerCombinedAuth,
   name: 'updateSecret',
+  classification: 'WRITE',
   displayName: 'Update Secret',
   description: 'Updates an existing secret.',
   audience: 'both',

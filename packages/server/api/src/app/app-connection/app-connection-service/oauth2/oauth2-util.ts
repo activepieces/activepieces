@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'crypto'
-import { ActivepiecesError, assertNotNullOrUndefined, deleteProps, ErrorCode, PlatformId } from '@activepieces/core-utils'
-import { PropertyType } from '@activepieces/pieces-framework'
+import { ActivepiecesError, assertNotNullOrUndefined, deleteProps, ErrorCode, isNil, PlatformId, unique } from '@activepieces/core-utils'
+import { OAuth2Props, PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionType, BaseOAuth2ConnectionValue, GetOAuth2AuthorizationUrlResponse, OAuth2GrantType, resolveValueFromProps } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
@@ -78,6 +78,11 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(pieceAuth, 'auth')
         switch (pieceAuth.type) {
             case PropertyType.OAUTH2:
+                assertPlaceholdersResolved({
+                    templates: [pieceAuth.tokenUrl, ...pieceAuth.scope],
+                    props,
+                    authProps: pieceAuth.props,
+                })
                 return resolveValueFromProps(props, pieceAuth.tokenUrl)
             default:
                 throw new ActivepiecesError({
@@ -120,8 +125,13 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             throwOnFailure: true,
             projectIds: projectId ? [projectId] : undefined,
         })
-        const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)
         const selectedScopes = resolveSelectedScopes(scopes, pieceAuth.scope)
+        assertPlaceholdersResolved({
+            templates: [pieceAuth.authUrl, ...selectedScopes],
+            props,
+            authProps: pieceAuth.props,
+        })
+        const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)
         const scope = resolveValueFromProps(props, selectedScopes.join(' '))
 
         const queryParams: Record<string, string> = {
@@ -211,6 +221,34 @@ const resolveSelectedScopes = (requested: string[] | undefined, allowed: string[
         })
     }
     return requested
+}
+
+const assertPlaceholdersResolved = ({ templates, props, authProps }: AssertPlaceholdersResolvedParams): void => {
+    const declaredProps = authProps ?? {}
+    const missing = unique(
+        templates
+            .flatMap(template => [...template.matchAll(/\{([A-Za-z0-9_]+)\}/g)])
+            .map(match => match[1])
+            .filter(key => !isNil(declaredProps[key]))
+            .filter(key => {
+                const value = props?.[key]
+                return isNil(value) || String(value).trim() === ''
+            }),
+    )
+    if (missing.length === 0) {
+        return
+    }
+    const labels = missing.map(key => declaredProps[key].displayName).join(', ')
+    throw new ActivepiecesError({
+        code: ErrorCode.INVALID_APP_CONNECTION,
+        params: { error: `missing required connection settings: ${labels}` },
+    })
+}
+
+type AssertPlaceholdersResolvedParams = {
+    templates: string[]
+    props: Record<string, unknown> | undefined
+    authProps: OAuth2Props | undefined
 }
 
 type BuildAuthorizationUrlParams = {

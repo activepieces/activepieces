@@ -27,6 +27,7 @@ interface KlaviyoProfile {
 export const findProfileByEmailPhone = createAction({
   auth: klaviyoAuth,
   name: 'findProfileByEmailPhone',
+  classification: 'READ',
   displayName: 'Find Profile by Email/Phone',
   description: 'Find a profile using email or phone number.',
   audience: 'both',

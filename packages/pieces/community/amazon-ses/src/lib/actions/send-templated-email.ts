@@ -17,6 +17,7 @@ import {
 export const sendTemplatedEmail = createAction({
   auth: amazonSesAuth,
   name: 'send_templated_email',
+  classification: 'WRITE',
   displayName: 'Send Templated Email',
   description: 'Send personalized emails using pre-created templates',
   audience: 'both',

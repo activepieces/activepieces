@@ -8,6 +8,7 @@ import { getReactionsActionOutputSchema } from '../output-schemas';
 export const slackGetReactions = createAction({
   auth: slackAuth,
   name: 'slack_get_reactions',
+  classification: 'READ',
   displayName: 'Get Reactions',
   description: 'Get the reactions on a message or file.',
   audience: 'ai',

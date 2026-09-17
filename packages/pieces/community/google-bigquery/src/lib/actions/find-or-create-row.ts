@@ -31,6 +31,7 @@ interface InsertResponse {
 export const findOrCreateRowAction = createAction({
   auth: bigQueryAuth,
   name: 'find_or_create_row',
+  classification: 'WRITE',
   displayName: 'Find or Create Record',
   description:
     'Searches for a row matching a WHERE clause. If found, returns it. If not found, inserts the provided row data and returns that.',

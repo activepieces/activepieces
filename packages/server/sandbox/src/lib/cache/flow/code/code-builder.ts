@@ -8,6 +8,7 @@ import { CodeArtifact, SandboxSettings } from '../../../types'
 import { bunRunner } from '../../../utils/bun-runner'
 import { cacheState } from '../../cache-state'
 import { codeCache } from './code-cache'
+import { packageDependencies } from './package-dependencies'
 
 const TS_CONFIG_CONTENT = `
 {
@@ -35,7 +36,13 @@ const TS_CONFIG_CONTENT = `
 
 const INVALID_ARTIFACT_ERROR_PLACEHOLDER = '__AP_ERROR_MESSAGE__'
 
-const INVALID_ARTIFACT_TEMPLATE = `
+const INVALID_DENO_ARTIFACT_TEMPLATE = `
+    export const code = async () => {
+      throw new Error(${INVALID_ARTIFACT_ERROR_PLACEHOLDER});
+    };
+    `
+
+const INVALID_LEGACY_ARTIFACT_TEMPLATE = `
     exports.code = async (params) => {
       throw new Error(${INVALID_ARTIFACT_ERROR_PLACEHOLDER});
     };
@@ -46,22 +53,27 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
         artifact,
         codesFolderPath,
     }: ProcessCodeStepParams): Promise<CodeBuildStatus> {
-        const { sourceCode, flowVersionId, name } = artifact
-        const codePath = codeCache(codesFolderPath).stepDir({ flowVersionId, stepName: name })
-        log.debug({ sourceCode, name, codePath }, 'Processing code step')
+        const { sourceCode, flowVersionId, name, useDeno } = artifact
+        const codes = codeCache(codesFolderPath)
+        const codePath = codes.stepDir({ flowVersionId, stepName: name })
+        log.debug({ sourceCode, name, codePath, useDeno }, 'Processing code step')
 
-        const currentHash = await cryptoUtils.hashObject(sourceCode)
-        const compiledStepPath = codeCache(codesFolderPath).compiledStepPath({ flowVersionId, stepName: name })
+        const currentHash = await cryptoUtils.hashObject({ sourceCode, useDeno })
+        const entryPath = useDeno
+            ? codes.stepEntryPath({ flowVersionId, stepName: name })
+            : codes.compiledStepPath({ flowVersionId, stepName: name })
+        const packageJson = getPackageJson(sourceCode.packageJson, getSettings)
+        const hasDependencies = Object.keys(JSON.parse(packageJson).dependencies ?? {}).length > 0
         const cache = cacheState(codePath)
         let buildStatus: CodeBuildStatus = 'success'
         const { cacheHit } = await cache.getOrSetCache({
             key: codePath,
             cacheMiss: (value: string) => {
-                return value !== currentHash || !existsSync(compiledStepPath)
+                return value !== currentHash
+                    || !existsSync(entryPath)
+                    || (useDeno && hasDependencies && !existsSync(path.join(codePath, 'node_modules')))
             },
             installFn: async () => {
-                const { code, packageJson } = sourceCode
-
                 const codeNeedCleanUp = await fileSystemUtils.fileExists(codePath)
                 if (codeNeedCleanUp) {
                     await rm(codePath, { recursive: true })
@@ -74,7 +86,7 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     fn: async () => {
                         const { error } = await tryCatch(() => installDependencies({
                             path: codePath,
-                            packageJson: getPackageJson(packageJson, getSettings),
+                            packageJson,
                         }, log))
                         if (error) {
                             log.info({ codePath, error }, 'Dependency installation error')
@@ -87,9 +99,18 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                 })
 
                 if (installError) {
-                    await handleInstallError({ codePath, error: installError })
+                    await writeInvalidArtifact({
+                        entryPath,
+                        useDeno,
+                        errorMessage: `Failed to install dependencies. ${installError ?? 'error installing dependencies'}`,
+                    })
                     await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                     buildStatus = 'install-failed'
+                    return currentHash
+                }
+
+                if (useDeno) {
+                    await fs.writeFile(entryPath, sourceCode.code, 'utf8')
                     return currentHash
                 }
 
@@ -98,11 +119,15 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     fn: async () => {
                         const { error } = await tryCatch(() => compileCode({
                             path: codePath,
-                            code,
+                            code: sourceCode.code,
                         }, log))
                         if (error) {
                             log.info({ codePath, error }, 'Compilation error')
-                            await handleCompilationError({ codePath, error })
+                            await writeInvalidArtifact({
+                                entryPath,
+                                useDeno,
+                                errorMessage: `Compilation Error ${error ?? 'error compiling'}`,
+                            })
                         }
                         else {
                             log.info({ codePath }, 'Compilation success')
@@ -114,13 +139,11 @@ export const codeBuilder = (log: ApLogger, getSettings: () => SandboxSettings) =
                     buildStatus = 'compile-failed'
                 }
 
-                // node_modules is no longer needed after esbuild bundles everything into index.js
+                // node_modules is only needed at runtime by deno steps; the legacy bundle inlines it.
                 await tryCatch(() => rm(path.join(codePath, 'node_modules'), { recursive: true }))
                 return currentHash
             },
-            // A transient bun install failure must self-heal: never cache the throwing stub, so the
-            // next build re-runs install. Deterministic compile errors stay cached. See GIT-1608.
-            skipSave: () => buildStatus === 'install-failed',
+            skipSave: () => buildStatus !== 'success',
         })
         return cacheHit ? 'success' : buildStatus
     },
@@ -146,11 +169,11 @@ function getPackageJson(packageJson: string, getSettings: () => SandboxSettings)
     }
     const { data: parsedPackageJson, error: parseError } = tryCatchSync(() => JSON.parse(packageJson))
     const packageJsonObject = parseError ? {} : (parsedPackageJson as Record<string, unknown>)
+    const requestedDependencies = packageDependencies.sanitize(packageJsonObject?.['dependencies'])
     return JSON.stringify({
-        ...packageJsonObject,
         dependencies: {
             '@types/node': '18.17.1',
-            ...(packageJsonObject?.['dependencies'] ?? {}),
+            ...requestedDependencies,
         },
     })
 }
@@ -177,22 +200,13 @@ async function compileCode({ path, code }: CompileCodeParams, log: ApLogger): Pr
     })
 }
 
-async function handleCompilationError({ codePath, error }: HandleCompilationErrorParams): Promise<void> {
-    const errorMessage = `Compilation Error ${error ?? 'error compiling'}`
-    await writeInvalidArtifact({ codePath, errorMessage })
-}
-
-async function handleInstallError({ codePath, error }: HandleInstallErrorParams): Promise<void> {
-    const errorMessage = `Failed to install dependencies. ${error ?? 'error installing dependencies'}`
-    await writeInvalidArtifact({ codePath, errorMessage })
-}
-
-async function writeInvalidArtifact({ codePath, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
-    const invalidArtifactContent = INVALID_ARTIFACT_TEMPLATE.replace(
+async function writeInvalidArtifact({ entryPath, useDeno, errorMessage }: WriteInvalidArtifactParams): Promise<void> {
+    const template = useDeno ? INVALID_DENO_ARTIFACT_TEMPLATE : INVALID_LEGACY_ARTIFACT_TEMPLATE
+    const invalidArtifactContent = template.replace(
         INVALID_ARTIFACT_ERROR_PLACEHOLDER,
         () => JSON.stringify(errorMessage),
     )
-    await fs.writeFile(`${codePath}/index.js`, invalidArtifactContent, 'utf8')
+    await fs.writeFile(entryPath, invalidArtifactContent, 'utf8')
 }
 
 type ProcessCodeStepParams = {
@@ -210,18 +224,9 @@ type CompileCodeParams = {
     code: string
 }
 
-type HandleCompilationErrorParams = {
-    codePath: string
-    error: unknown
-}
-
-type HandleInstallErrorParams = {
-    codePath: string
-    error: unknown
-}
-
 type WriteInvalidArtifactParams = {
-    codePath: string
+    entryPath: string
+    useDeno: boolean
     errorMessage: string
 }
 

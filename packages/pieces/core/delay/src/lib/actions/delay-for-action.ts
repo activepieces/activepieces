@@ -24,6 +24,7 @@ const propsSchema = {
 export const delayForAction = createAction({
   audience: 'both',
   name: 'delayFor',
+  classification: 'READ',
   displayName: 'Delay For',
   description: 'Delays the execution of the next action for a given duration',
   aiMetadata: { description: 'Pauses the flow for a fixed relative duration before the next step runs, given as an amount plus a unit (seconds, minutes, hours or days); short waits sleep in-process while longer ones suspend the run and resume it later. Pick this when the wait is known relative to now, and prefer Delay Until when you have an absolute target date/time. The amount must be non-negative and the wait cannot exceed the instance paused-flow timeout; idempotent, nothing is created or mutated.', idempotent: true },

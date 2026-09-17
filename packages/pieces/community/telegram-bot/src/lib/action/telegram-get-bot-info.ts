@@ -7,6 +7,7 @@ import { telegramGetBotInfoActionOutputSchema } from '../output-schemas';
 export const telegramGetBotInfo = createAction({
   auth: telegramBotAuth,
   name: 'telegram_get_bot_info',
+  classification: 'READ',
   displayName: 'Get Bot Info',
   description: "Get the authenticated bot's own identity and capabilities.",
   audience: 'ai',

@@ -7,6 +7,7 @@ import { getDocumentEndIndexActionOutputSchema } from '../output-schemas';
 export const getDocumentEndIndex = createAction({
   auth: googleDocsAuth,
   name: 'get_document_end_index',
+  classification: 'READ',
   displayName: 'Get Document End Index',
   description: 'Get the end index of a Google Docs document body',
   audience: 'ai',

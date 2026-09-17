@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 export const searchAnalytics = createAction({
   auth: googleSearchConsoleAuth,
   name: 'search_analytics',
+  classification: 'SEARCH',
   displayName: 'Search Analytics',
   description:
     'Query traffic data for your site using the Google Search Console API.',

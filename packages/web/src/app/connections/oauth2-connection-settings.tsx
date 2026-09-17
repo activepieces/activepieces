@@ -6,8 +6,10 @@ import {
   PieceMetadataModelSummary,
 } from '@activepieces/pieces-framework';
 import {
+  ApErrorParams,
   ApFlagId,
   AppConnectionType,
+  ErrorCode,
   OAuth2GrantType,
   UpsertCloudOAuth2Request,
   UpsertOAuth2Request,
@@ -39,6 +41,7 @@ import { Input } from '@/components/ui/input';
 import { OAuth2App, oauth2Utils } from '@/features/connections';
 import { appConnectionsApi } from '@/features/connections/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
@@ -74,10 +77,10 @@ function OAuth2ConnectionSettings({
   const { data: thirdPartyUrl } = flagsHooks.useFlag<string>(
     ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
   );
-  const redirectUrl =
-    oauth2App.oauth2Type === AppConnectionType.CLOUD_OAUTH2
-      ? 'https://secrets.activepieces.com/redirect'
-      : thirdPartyUrl ?? 'no_redirect_url_found';
+  const redirectUrl = oauth2Utils.resolveRedirectUrl({
+    oauth2Type: oauth2App.oauth2Type,
+    platformRedirectUrl: thirdPartyUrl ?? 'no_redirect_url_found',
+  });
 
   const showRedirectUrlInput =
     oauth2App.oauth2Type === AppConnectionType.OAUTH2 &&
@@ -263,6 +266,7 @@ function OAuth2ConnectionSettings({
                         );
                         openPopup({
                           redirectUrl,
+                          oauth2Type: oauth2App.oauth2Type,
                           clientId: form.getValues().request.value.client_id,
                           props: form.getValues().request.value.props,
                           pieceName: piece.name,
@@ -305,6 +309,7 @@ function parseScopeString(value: string | undefined): string[] {
 
 async function openPopup({
   redirectUrl,
+  oauth2Type,
   clientId,
   props,
   pieceName,
@@ -329,12 +334,20 @@ async function openPopup({
     authorizationUrl = result.authorizationUrl;
     codeVerifier = result.codeVerifier;
   } catch (error: unknown) {
-    form.setError('request.value.client_id', {
+    const apError = api.isError(error)
+      ? (error.response?.data as ApErrorParams | undefined)
+      : undefined;
+    form.setError('request.value.code', {
       type: 'manual',
       message:
-        error instanceof Error
-          ? error.message
-          : 'Failed to initiate OAuth2 authentication',
+        apError?.code === ErrorCode.INVALID_APP_CONNECTION
+          ? t('Connection failed with error {msg}', {
+              msg: apError.params.error,
+            })
+          : api.extractServerErrorMessage(
+              error,
+              'Failed to initiate OAuth2 authentication',
+            ),
     });
     setLoading(false);
     return;
@@ -343,6 +356,7 @@ async function openPopup({
   const { code } = await oauth2Utils.openOAuth2Popup({
     authorizationUrl,
     redirectUrl,
+    oauth2Type,
     codeVerifier,
   });
   form.setValue('request.value.code', code, { shouldValidate: true });
@@ -360,6 +374,7 @@ type OAuth2ConnectionSettingsProps = {
 
 type OpenPopupParams = {
   redirectUrl: string;
+  oauth2Type: OAuth2App['oauth2Type'];
   clientId: string;
   props: Record<string, unknown> | undefined;
   pieceName: string;
