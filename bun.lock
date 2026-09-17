@@ -1957,7 +1957,7 @@
     },
     "packages/pieces/community/clickup": {
       "name": "@activepieces/piece-clickup",
-      "version": "0.8.0",
+      "version": "0.8.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -7661,7 +7661,7 @@
     },
     "packages/pieces/community/resend": {
       "name": "@activepieces/piece-resend",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8085,7 +8085,7 @@
     },
     "packages/pieces/community/sendinblue": {
       "name": "@activepieces/piece-sendinblue",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

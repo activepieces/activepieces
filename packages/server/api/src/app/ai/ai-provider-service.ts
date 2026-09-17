@@ -36,19 +36,21 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async listConfigs(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
         const rows = await listVisibleRows({ platformId, log })
-        return rows.map(toConfigResponse)
+        const chatRowId = pickChatRow(rows)?.id
+        return rows.map((row) => toConfigResponse({ row, enabledForChat: row.id === chatRowId }))
     },
 
     async listForProject({ platformId, projectId }: { platformId: PlatformId, projectId: string }): Promise<ProjectAIProvider[]> {
         const rows = await listVisibleRows({ platformId, log })
         const eligible = rows.filter((row) => rowAllowsScope({ row, scope: { type: 'project', projectId } }))
         const ranked = rankRows(eligible)
+        const chatRow = pickChatRow(ranked)
         return unique(ranked.map((row) => row.provider)).map((provider) => {
             const rows = ranked.filter((row) => row.provider === provider)
             return {
                 provider,
                 name: aiProviders[provider].name,
-                enabledForChat: rows.some((row) => row.enabledForChat === true),
+                enabledForChat: provider === chatRow?.provider,
                 keys: rows.map((row) => ({ id: row.id, name: row.displayName })),
             }
         })
@@ -91,7 +93,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             statusReason: null,
             statusUpdated: new Date().toISOString(),
         })
-        return toConfigResponse(saved)
+        return toConfigResponse({ row: saved, enabledForChat: false })
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -291,13 +293,13 @@ function provedHealthy(): { status: AiProviderKeyStatus, statusReason: null, sta
     return { status: 'active', statusReason: null, statusUpdated: () => 'now()', statusVersion: () => '"statusVersion" + 1' }
 }
 
-function toConfigResponse(row: AIProviderSchema): AIProviderWithoutSensitiveData {
+function toConfigResponse({ row, enabledForChat }: { row: AIProviderSchema, enabledForChat: boolean }): AIProviderWithoutSensitiveData {
     return {
         id: row.id,
         name: row.displayName,
         provider: row.provider,
         config: row.config,
-        enabledForChat: row.enabledForChat ?? false,
+        enabledForChat,
         modelScope: row.modelScope,
         modelIds: row.modelIds,
         projectScope: row.projectScope,
@@ -313,7 +315,6 @@ async function ensureManagedProviderRow({ platformId }: { platformId: PlatformId
     if (exists) {
         return
     }
-    const hasChatProvider = await aiProviderRepo().existsBy({ platformId, enabledForChat: true })
     // Two concurrent readers both miss the existsBy above, so the row is inserted with
     // ON CONFLICT DO NOTHING and idx_ai_provider_platform_id_managed - a partial unique
     // index on (platformId) WHERE provider = 'activepieces' - decides which one lands.
@@ -326,7 +327,6 @@ async function ensureManagedProviderRow({ platformId }: { platformId: PlatformId
             provider: AIProviderName.ACTIVEPIECES,
             displayName: 'Activepieces',
             platformId,
-            enabledForChat: !hasChatProvider,
             modelScope: 'all',
             modelIds: [],
             projectScope: 'all',
@@ -461,13 +461,23 @@ async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProvid
 }
 
 async function findAvailableChatProviderRow({ platformId, scope, log }: { platformId: PlatformId, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
-    const allChatProviders = await aiProviderRepo().findBy({ platformId, enabledForChat: true })
-    const chatProviders = allChatProviders.filter((row) => rowAllowsScope({ row, scope }))
-    if (!chatProviders.some((chatProvider) => chatProvider.provider === AIProviderName.ACTIVEPIECES)) {
-        return chatProviders[0] ?? null
+    const candidates = await aiProviderRepo().findBy([
+        { platformId, enabledForChat: true },
+        { platformId, provider: AIProviderName.ACTIVEPIECES },
+    ])
+    const rows = candidates.filter((row) => rowAllowsScope({ row, scope }))
+    const chatRow = pickChatRow(rows)
+    if (chatRow?.provider !== AIProviderName.ACTIVEPIECES) {
+        return chatRow
     }
     const activepiecesHidden = await isActivepiecesAiProviderHidden({ platformId, log })
-    return chatProviders.find((chatProvider) => chatProvider.provider !== AIProviderName.ACTIVEPIECES || !activepiecesHidden) ?? null
+    return activepiecesHidden ? pickChatRow(rows.filter((row) => row.provider !== AIProviderName.ACTIVEPIECES)) : chatRow
+}
+
+function pickChatRow(rows: AIProviderSchema[]): AIProviderSchema | null {
+    return rows.find((row) => row.enabledForChat)
+        ?? rows.find((row) => row.provider === AIProviderName.ACTIVEPIECES)
+        ?? null
 }
 
 async function isActivepiecesAiProviderHidden({ platformId, log }: { platformId: PlatformId, log: FastifyBaseLogger }): Promise<boolean> {
