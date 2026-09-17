@@ -26,16 +26,14 @@ export const newCommand = createTrigger({
     user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
-      description:
-        'List of valid commands that the bot should respond to (e.g., help, ocr, remind)',
+      description: 'Words the bot responds to, such as help or remind.',
       required: true,
       defaultValue: ['help'],
     }),
     channels: Property.MultiSelectDropdown({
       auth: slackAuth,
       displayName: 'Channels',
-      description:
-        'If no channel is selected, the flow will be triggered for commands in all channels',
+      description: 'Empty means every channel the bot is in.',
       required: false,
       refreshers: [],
       async options({ auth }) {
@@ -56,8 +54,9 @@ export const newCommand = createTrigger({
       },
     }),
     ignoreBots: Property.Checkbox({
-      displayName: 'Ignore Bot Messages ?',
-      required: true,
+      displayName: 'Ignore Bot Messages',
+      description: 'Skip messages posted by bots and apps.',
+      required: false,
       defaultValue: true,
     }),
   },
@@ -99,7 +98,6 @@ export const newCommand = createTrigger({
       return [];
     }
 
-    // Check for mention and parse command
     if (user && payloadBody.event.text) {
       const parsedCommand = parseCommand(
         payloadBody.event.text,
@@ -107,8 +105,7 @@ export const newCommand = createTrigger({
         commands
       );
 
-      if (parsedCommand && commands.includes(parsedCommand.command)) {
-        // Return event with parsed command
+      if (parsedCommand) {
         return [
           {
             ...payloadBody.event,
