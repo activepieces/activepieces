@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { ApplicationEventName, attributionUtils, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -60,11 +60,20 @@ export const authenticationController: FastifyPluginAsyncZod = async (
     app.post('/sign-in', SignInRequestOptions, async (request) => {
 
         const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
-        const response = await authenticationService(request.log).signInWithPassword({
+        const { response, signedUp } = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,
             password: request.body.password,
             predefinedPlatformId,
         })
+
+        if (signedUp && !isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
+                userId: response.id,
+                platformId: response.platformId,
+                method: SignUpMethod.PASSWORD,
+                attribution: request.body.attribution,
+            }), request.log)
+        }
 
         if (!isNil(response.platformId)) {
             applicationEvents(request.log).sendUserEvent({
@@ -93,7 +102,7 @@ export const authenticationController: FastifyPluginAsyncZod = async (
     })
 
     app.post('/complete-sign-up', CompleteSignUpRequestOptions, async (request) => {
-        const { response, signedUp } = await passwordlessAuthService(request.log).completeSignUp({
+        const { response, signedUp, provider } = await passwordlessAuthService(request.log).completeSignUp({
             identityId: request.principal.id,
             fullName: request.body.fullName,
         })
@@ -111,7 +120,7 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             rejectedPromiseHandler(telemetry(request.log).identifySignUp({
                 userId: response.id,
                 platformId: response.platformId,
-                method: SignUpMethod.EMAIL_CODE,
+                method: attributionUtils.signUpMethodFromProvider({ provider }),
                 attribution: request.body.attribution,
             }), request.log)
         }

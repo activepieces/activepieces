@@ -394,6 +394,7 @@ function AuthStep({
         </>
       )}
       <EmailStep
+        mode={effectiveMode}
         invitedEmail={invitedEmail}
         captchaToken={captchaToken}
         captchaRequired={captchaRequired}
@@ -491,6 +492,7 @@ function WorkEmailHint() {
 }
 
 function EmailStep({
+  mode,
   invitedEmail,
   captchaToken,
   captchaRequired,
@@ -530,13 +532,16 @@ function EmailStep({
 
   const onSubmit: SubmitHandler<EmailSchema> = (data) => {
     form.clearErrors('root.serverError');
-    capture({
-      name: TelemetryEventName.SIGN_UP_SUBMITTED,
-      payload: {
-        method: 'email_code',
-        ...acquisitionUtils.getAcquisitionParams(),
-      },
-    });
+    // The same box serves sign-in; only a sign-up attempt belongs in the funnel.
+    if (mode === 'signup') {
+      capture({
+        name: TelemetryEventName.SIGN_UP_SUBMITTED,
+        payload: {
+          method: 'email_code',
+          ...acquisitionUtils.getAcquisitionParams(),
+        },
+      });
+    }
     mutate({ email: data.email.trim(), captchaToken });
   };
 
@@ -1098,6 +1103,7 @@ type CodeStepProps = {
 };
 
 type EmailStepProps = {
+  mode: AuthMode;
   invitedEmail: string;
   captchaToken: string | undefined;
   captchaRequired: boolean;

@@ -16,7 +16,6 @@ import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks
 import { userHooks } from '@/hooks/user-hooks';
 import { CLOUD_HOSTNAME, isRunningCloudInDevMode } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
-import { telemetryUtils } from '@/lib/telemetry-utils';
 
 interface TelemetryProviderProps {
   children: React.ReactNode;
@@ -161,11 +160,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     }
   };
 
-  const reset = () => {
-    telemetryUtils.resetIdentity();
-    identifiedKey.current = null;
-  };
-
   const capture = (event: TelemetryEvent) => {
     if (
       !telemetryEnabled ||
@@ -177,7 +171,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   };
 
   return (
-    <TelemetryContext.Provider value={{ capture, reset }}>
+    <TelemetryContext.Provider value={{ capture }}>
       {children}
     </TelemetryContext.Provider>
   );
@@ -197,12 +191,10 @@ function isInRecordingSample(distinctId: string): boolean {
 
 interface TelemetryContextType {
   capture: (event: TelemetryEvent) => void;
-  reset: () => void;
 }
 
 const TelemetryContext = React.createContext<TelemetryContextType>({
   capture: () => {},
-  reset: () => {},
 });
 
 export const useTelemetry = () => React.useContext(TelemetryContext);

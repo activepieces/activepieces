@@ -131,7 +131,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         return authenticationUtils(log).provisionOrOnboard({ identityId: verifiedIdentity.id })
     },
 
-    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<AuthenticationResult> {
+    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<AuthenticationResult & { provider: UserIdentityProvider }> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
         const writeNames = async (): Promise<void> => {
@@ -145,7 +145,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
             callerTokenVersion: undefined,
             beforeProvision: writeNames,
         })
-        return { response, signedUp: provisioned }
+        return { response, signedUp: provisioned, provider: identity.provider }
     },
 })
 

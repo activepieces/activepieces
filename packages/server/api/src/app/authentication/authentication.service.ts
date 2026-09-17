@@ -93,14 +93,16 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         return authenticationUtils(log).provisionOrOnboard({ identityId: userIdentity.id })
 
     },
-    async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResponse> {
+    async signInWithPassword(params: SignInWithPasswordParams): Promise<AuthenticationResult> {
         const identity = await userIdentityService(log).verifyIdentityPassword(params)
         const platformId = isNil(params.predefinedPlatformId) ? await authenticationService(log).selectCloudSignInPlatformId({ identityId: identity.id }) : params.predefinedPlatformId
 
         if (isNil(platformId)) { // always cloud
+            // A Cloud password sign-up is created unverified and only gets its
+            // platform here, on the first sign-in after the verification email.
+            // `signedUp` carries that moment out so the controller can stamp it.
             log.info({ email: params.email }, 'User signed in without an active platform on cloud')
-            const { response } = await authenticationUtils(log).provisionOrOnboard({ identityId: identity.id })
-            return response
+            return authenticationUtils(log).provisionOrOnboard({ identityId: identity.id })
         }
 
         await authenticationUtils(log).assertEmailAuthIsEnabled({
@@ -124,11 +126,12 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
         }
         log.info({ email: params.email, platform: { id: platformId } }, 'User signed in with password')
-        return authenticationUtils(log).getProjectAndToken({
+        const response = await authenticationUtils(log).getProjectAndToken({
             userId: user.id,
             platformId,
             projectId: null,
         })
+        return { response, signedUp: false }
     },
     async selectCloudSignInPlatformId({ identityId }: SelectCloudSignInPlatformIdParams): Promise<string | null> {
         if (system.getEdition() !== ApEdition.CLOUD) {

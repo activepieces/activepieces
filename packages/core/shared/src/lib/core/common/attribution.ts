@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { UserIdentityProvider } from '../authentication/user-identity'
 
 function readAttributionFromSearch({ search }: { search: string }): AttributionParams {
     const params = new URLSearchParams(search)
@@ -21,6 +22,7 @@ function isEmptyAttribution({ attribution }: { attribution: AttributionParams | 
 export const attributionUtils = {
     readAttributionFromSearch,
     isEmptyAttribution,
+    signUpMethodFromProvider,
 }
 
 export const ATTRIBUTION_VALUE_MAX_LENGTH = 300
@@ -69,4 +71,23 @@ export enum SignUpMethod {
     PASSWORD = 'password',
     EMAIL_CODE = 'email_code',
     GOOGLE = 'google',
+    SAML = 'saml',
+    JWT = 'jwt',
+}
+
+// Any provider whose identity lands in onboarding finishes at /complete-sign-up,
+// so the method there has to come from the identity, not from the route.
+// EMAIL identities that reach onboarding came through the code flow; a password
+// sign-up is provisioned at /sign-in instead and is stamped there.
+function signUpMethodFromProvider({ provider }: { provider: UserIdentityProvider }): SignUpMethod {
+    switch (provider) {
+        case UserIdentityProvider.EMAIL:
+            return SignUpMethod.EMAIL_CODE
+        case UserIdentityProvider.GOOGLE:
+            return SignUpMethod.GOOGLE
+        case UserIdentityProvider.SAML:
+            return SignUpMethod.SAML
+        case UserIdentityProvider.JWT:
+            return SignUpMethod.JWT
+    }
 }
