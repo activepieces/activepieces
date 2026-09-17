@@ -34,6 +34,14 @@ Security-relevant actions persisted to `audit_event`, queryable by platform admi
 
 Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. minutesSaved = runs × flow.timeSavedPerRun. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled` — NOT in CE. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
 
+### Structured Logging (evlog)
+
+All server logging goes through `ap-logger` onto evlog wide events: one event per API request and **one per worker job** (`wideEvent.run` wraps the whole handler in `worker.ts`). Inside that scope a `logger.info/warn/error` call does not emit its own line — it merges its fields into the single job/request event and its message is captured on it. The field schema (entity groups, canonical names) is in `packages/server/CLAUDE.md`.
+
+Gotchas:
+- **The top-level `error` key belongs to the wide event, and a string you put there is silently thrown away.** `RequestLogger.error` ends with `context.error = errorObj`, built from whatever the call passed — so `log.error({ error: String(e) }, 'msg')` is overwritten by an object derived from `'msg'`, and the real error text is gone with no warning (GIT-1876; the same line shipped in `execute-polling.ts` for a year). Pass the **Error object** instead — `ap-logger` normalizes `obj.err ?? obj.error` through `toError` and hands it to the wide event, keeping name, message and stack — or, for an error that belongs to something else, name it after its owner (`engine: { status, error }`). The rule only bites the reserved top-level key; nested and descriptive error fields are safe.
+- **The job logger already binds the request and flow ids, so handler logs rarely need to repeat them.** `executeJob` seeds each job's wide event with `requestId`, `project`, `platform`, `flow`, `flowVersion` and `job` from the job data. One exception worth knowing: `flowVersion` is bound from a `flowVersionId` field, and `WebhookJobData` calls it `flowVersionIdToRun` — so webhook jobs are the one case where the handler has to add `flowVersion: { id }` itself.
+
 ### Product Telemetry
 
 Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Infrastructure > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
