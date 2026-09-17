@@ -361,6 +361,11 @@ export const selectGenericFormComponentForProperty = ({
               }
               enableMarkdown={enableMarkdownForInputWithMention}
               ariaLabel={property.displayName}
+              minHeightClassName={
+                property.type === PropertyType.LONG_TEXT
+                  ? 'min-h-20'
+                  : undefined
+              }
             ></FormFieldMentionInput>
           ) : (
             <SecretInput
