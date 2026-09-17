@@ -439,6 +439,7 @@ import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres
 import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
 import { AddMaxBarrierSignalsToPlatformConfiguration1845000000000 } from './migration/postgres/1845000000000-AddMaxBarrierSignalsToPlatformConfiguration'
 import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
+import { IndexWaitpointLookups1847000000000 } from './migration/postgres/1847000000000-IndexWaitpointLookups'
 import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
 import { AddWaitpointDeadLetteredAt1851000000000 } from './migration/postgres/1851000000000-AddWaitpointDeadLetteredAt'
 
@@ -895,6 +896,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddMcpActivity1844000000000,
         AddMaxBarrierSignalsToPlatformConfiguration1845000000000,
         NullOrphanFolderReferences1846000000000,
+        IndexWaitpointLookups1847000000000,
         AddAgentConversationAiCredits1850000000000,
         AddWaitpointDeadLetteredAt1851000000000,
     ]

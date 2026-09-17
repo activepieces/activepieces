@@ -29,7 +29,7 @@ export class AddWaitpointDeadLetteredAt1851000000000 implements Migration {
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_signal_ref_id"`)
         await queryRunner.query(`
             CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_signal_ref_id"
-            ON "waitpoint_signal" ("refId")
+            ON "waitpoint_signal" ("refId", "projectId")
             WHERE "refId" IS NOT NULL
         `)
     }
@@ -40,7 +40,7 @@ export class AddWaitpointDeadLetteredAt1851000000000 implements Migration {
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_signal_ref_id"`)
         await queryRunner.query(`
             CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_signal_ref_id"
-            ON "waitpoint_signal" ("refId")
+            ON "waitpoint_signal" ("refId", "projectId")
         `)
 
         await queryRunner.query(`

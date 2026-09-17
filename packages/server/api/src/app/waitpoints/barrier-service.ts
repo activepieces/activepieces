@@ -109,26 +109,24 @@ export const barrierService = (log: FastifyBaseLogger) => ({
 
     async release({ barrier, timedOut, releaseReason }: ReleaseParams): Promise<BarrierSummary | null> {
         const summary = await closeBarrier({ barrier, timedOut })
-        const finalSummary = summary ?? readStoredSummary(await waitpointRepo().findOneBy({ id: barrier.id }))
-        if (isNil(finalSummary)) {
+        if (isNil(summary)) {
+            log.info({ waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[barrierService#release] Barrier was already closed by another release; leaving the resume to the release that closed it')
             return null
         }
-        if (!isNil(summary)) {
-            wideEvent.set({
-                fanIn: {
-                    barrierId: barrier.id,
-                    signalCount: summary.total,
-                    releaseReason,
-                    stillRunning: summary.stillRunning,
-                },
-            })
-        }
+        wideEvent.set({
+            fanIn: {
+                barrierId: barrier.id,
+                signalCount: summary.total,
+                releaseReason,
+                stillRunning: summary.stillRunning,
+            },
+        })
         await resumeService(log).resumeTrusted({
             flowRunId: barrier.flowRunId,
             waitpointId: barrier.id,
-            resumePayload: { body: finalSummary, headers: {}, queryParams: {} },
+            resumePayload: { body: summary, headers: {}, queryParams: {} },
         })
-        return finalSummary
+        return summary
     },
 })
 
@@ -267,14 +265,6 @@ async function assertSignalCountWithinLimit({ signalCount, platformId, log }: As
 function defaultBarrierDeadline({ flowRunCreated }: DefaultBarrierDeadlineParams): string {
     const maxDurationInDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
     return dayjs(flowRunCreated).add(maxDurationInDays, 'day').toISOString()
-}
-
-function readStoredSummary(waitpoint: Waitpoint | null): BarrierSummary | null {
-    if (isNil(waitpoint) || waitpoint.status !== WaitpointStatus.COMPLETED) {
-        return null
-    }
-    const parsed = BarrierSummary.safeParse(waitpoint.resumePayload?.body)
-    return parsed.success ? parsed.data : null
 }
 
 const SIGNAL_INSERT_BATCH_SIZE = 500
