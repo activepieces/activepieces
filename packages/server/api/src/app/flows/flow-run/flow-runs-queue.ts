@@ -121,7 +121,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 willRetry: runMetadata.willRetry,
                             })
                             if (!isNil(savedFlowRun.parentWaitpointId) && isFlowRunStateTerminal({ status: savedFlowRun.status, ignoreInternalError: runMetadata.willRetry === true })) {
-                                await barrierService(log).receive({
+                                await barrierService(log).receiveSignal({
                                     refId: savedFlowRun.id,
                                     projectId: savedFlowRun.projectId,
                                     status: toSignalStatus(savedFlowRun.status),
