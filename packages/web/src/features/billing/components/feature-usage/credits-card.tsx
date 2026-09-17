@@ -12,7 +12,6 @@ const CARD_DATE_FORMAT = 'D MMM YYYY, h:mm A';
 
 export const CreditsCard = ({ info }: CreditsCardProps) => {
   const { plan, usage } = info;
-  const isPaid = billingUtils.isPaidPlan(plan.plan);
   const remaining = usage.creditsRemaining;
   const isUnlimited = isNil(remaining);
   const total = plan.includedCredits;
@@ -21,7 +20,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
     used,
     total: isUnlimited ? null : total,
   });
-  const footer = resolveFooter({ info, isPaid });
+  const footer = resolveFooter(info);
   const switchesToPlanName =
     info.scheduledPlanName ??
     (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
@@ -75,13 +74,9 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
   );
 };
 
-function resolveFooter({
-  info,
-  isPaid,
-}: {
-  info: PlatformBillingInformation;
-  isPaid: boolean;
-}): CreditsResetLine | null {
+function resolveFooter(
+  info: PlatformBillingInformation,
+): CreditsResetLine | null {
   if (!isNil(info.trialEndsAt)) {
     return {
       label: t('Trial ends'),
@@ -92,7 +87,6 @@ function resolveFooter({
     creditsNextResetAt: info.usage.creditsNextResetAt,
     creditsResetInterval: info.creditsResetInterval,
     nextBillingDate: info.nextBillingDate,
-    isPaid,
     dateFormat: CARD_DATE_FORMAT,
   });
 }
