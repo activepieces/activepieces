@@ -1,10 +1,12 @@
-import { ActivepiecesError, apId, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, ListAgentRunsRequest, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { ProjectResourceType } from '../../core/security/authorization/common'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
+import { securityHelper } from '../../helper/security-helper'
 import { mcpUtils } from '../../mcp/tools/mcp-utils'
 import { assertCreditsAndAppSumoNotExceeded } from '../../platform/billing-provider'
 import { jobQueue, JobType } from '../../workers/job-queue/job-queue'
@@ -14,7 +16,6 @@ import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
 import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
-import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
 import { agentPrompt } from './prompt/agent-prompt'
 import { findConnectionsForPiece } from './tools/agent-tools'
@@ -41,6 +42,22 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
             ...spreadIfDefined('agentId', request.query.agentId),
+        })
+    })
+
+    app.get('/conversations/runs', ListAgentRunsRoute, async (request) => {
+        const readerId = await securityHelper.getUserIdFromRequest(request)
+        assertNotNullOrUndefined(readerId, 'userId')
+        await agentService(request.log).getOneOrThrow({
+            id: request.query.agentId,
+            projectId: request.projectId,
+            userId: readerId,
+        })
+        return agentConversationService(request.log).listAgentRuns({
+            projectId: request.projectId,
+            agentId: request.query.agentId,
+            cursor: request.query.cursor,
+            limit: request.query.limit ?? 20,
         })
     })
 
@@ -118,15 +135,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         await assertAgentMessageRateLimitNotExceeded({ platformId, userId, log })
 
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
-        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        await chatRolloutService.recordChatted({ userId, platformId })
         // Refresh the console rollout funnel snapshot (chatted count just changed).
         chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
-        if (needsCreditDecision) {
-            const { error } = await tryCatch(() => chatPlanGrant.grant({ userId, platformId, log }))
-            if (!isNil(error)) {
-                log.warn({ error, platform: { id: platformId }, user: { id: userId } }, '[agentConversationController] Chat plan grant failed; continuing to the credit gate')
-            }
-        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -416,6 +427,22 @@ const ListConversationsRoute = {
             limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
             agentId: z.string().optional(),
         }),
+    },
+}
+
+const ListAgentRunsRoute = {
+    config: {
+        security: securityAccess.project(
+            CHAT_PRINCIPALS,
+            Permission.READ_AGENT,
+            { type: ProjectResourceType.QUERY },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'List the unattended runs a flow step made with this agent',
+        querystring: ListAgentRunsRequest,
     },
 }
 

@@ -1,6 +1,9 @@
+import { rm } from 'node:fs/promises'
+import { join } from 'node:path'
 import { ActivepiecesError, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
 import { type ApLogger, apVersionUtil, wideEvent } from '@activepieces/server-utils'
 import { PrewarmScopeFileContent, WorkerToApiContract } from '@activepieces/shared'
+import { cacheUtils } from './cache/cache-paths'
 import { localExecutionCache } from './cache/local-execution-cache'
 import { createResolver } from './resolver'
 import { createSandboxManager, SandboxManager } from './sandbox-manager'
@@ -118,6 +121,11 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             }
             const startedAt = Date.now()
             const { error } = await tryCatch(async () => {
+                if (!isNil(flow)) {
+                    // The version JSON may have been updated in place (e.g. admin deno migration):
+                    // drop the local copies so the resolve below refetches fresh data.
+                    await evictFlowVersionCaches({ basePath, flowVersionId: flow.versionId })
+                }
                 const prewarmData = await apiClient.getPrewarmData({
                     workerGroupId: getSettings().WORKER_GROUP_ID,
                     projectWorker: getSettings().PROJECT_WORKER,
@@ -149,6 +157,14 @@ export function createSandboxRuntime({ concurrency = 1, basePath, getSettings }:
             await Promise.all(managers.map((manager) => manager.shutdown(shutdownLog)))
         },
     }
+}
+
+async function evictFlowVersionCaches({ basePath, flowVersionId }: { basePath: string, flowVersionId: string }): Promise<void> {
+    const paths = cacheUtils(basePath)
+    await Promise.all([
+        rm(join(paths.getGlobalCacheFlowsPath(), flowVersionId), { recursive: true, force: true }),
+        rm(join(paths.getGlobalCacheBundlesPath(), flowVersionId), { recursive: true, force: true }),
+    ])
 }
 
 async function fetchScopeFile({ apiClient, scopeFileId }: FetchScopeFileParams): Promise<ResolvedPrewarmInputs> {

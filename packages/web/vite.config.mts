@@ -83,6 +83,14 @@ export default defineConfig(({ command, mode }) => {
             'X-Forwarded-Host': 'localhost:4200',
           },
         },
+        '/userinfo': {
+          target: 'http://127.0.0.1:3000',
+          secure: false,
+          changeOrigin: true,
+          headers: {
+            'X-Forwarded-Host': 'localhost:4200',
+          },
+        },
       },
       port: 4200,
       host: '0.0.0.0',

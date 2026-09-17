@@ -122,6 +122,9 @@ jobs:
             echo "pieces_filters=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Typecheck web
+        run: npx turbo run typecheck --filter=web
+
       - name: Build core projects
         run: npx turbo run build --filter=web --filter=worker --filter=api --filter=@activepieces/engine --filter=@activepieces/piece-http --filter=@activepieces/piece-data-mapper --filter=@activepieces/piece-approval --filter=@activepieces/piece-webhook --filter=@activepieces/piece-delay
 

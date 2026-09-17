@@ -7,15 +7,17 @@ import { searchMessagesActionOutputSchema } from '../output-schemas';
 export const searchMessages = createAction({
   name: 'searchMessages',
   classification: 'SEARCH',
-  displayName: 'Search messages',
-  description: 'Searches for messages matching a query',
+  displayName: 'Search Messages',
+  description: 'Searches messages. Needs a user token.',
   audience: 'human',
   aiMetadata: { description: 'Search across the workspace for messages matching a query string and return all matching messages, paging through every result; read-only and repeatable. Requires a user token (search is not available to bot tokens). Use this to find messages anywhere by content; use Get channel history or Get Message by Timestamp when you already know the channel.', idempotent: true },
   auth: slackAuth,
   outputSchema: searchMessagesActionOutputSchema,
   props: {
     query: Property.ShortText({
-      displayName: 'Search query',
+      displayName: 'Search Query',
+      description: 'Slack search syntax works, e.g. from:@jane in:#general.',
+      placeholder: 'invoice in:#finance',
       required: true,
     }),
   },
@@ -24,10 +26,6 @@ export const searchMessages = createAction({
     const client = new WebClient(userToken);
     const matches = [];
 
-    // We can't use the usual "for await ... of" syntax with client.paginate
-    // Because search.messages uses a bastardized version of cursor-based pagination
-    // Where you need to pass * as first cursor
-    // https://api.slack.com/methods/search.messages#arg_cursor
     let cursor = '*';
     do {
       const page = await client.search.messages({
