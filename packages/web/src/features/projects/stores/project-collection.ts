@@ -80,6 +80,9 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
         if (modified.workerGroupId !== original.workerGroupId) {
           request.workerGroupId = modified.workerGroupId;
         }
+        if (modified.sensitive !== original.sensitive) {
+          request.sensitive = modified.sensitive;
+        }
         if (Object.keys(request).length === 0) {
           continue;
         }
