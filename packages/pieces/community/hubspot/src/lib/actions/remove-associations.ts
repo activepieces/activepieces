@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
     fromObjectTypeAssociationDropdown,
@@ -9,14 +9,17 @@ import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
 import { chunk } from '@activepieces/pieces-framework';
+import { removeAssociationsOutputSchema } from '../output-schemas';
 
 export const removeAssociationsAction = createAction({
     auth: hubspotAuth,
     name: 'remove-associations',
+    classification: 'WRITE',
     displayName: 'Remove Associations',
     description: 'Removes associations between objects',
     audience: 'both',
     aiMetadata: { description: 'Remove the labeled association of a specific type between one source HubSpot object and one or more target objects, batching the targets. Removing an already-absent association is harmless, so it is idempotent on the end state. Use Create Associations to add links.', idempotent: true },
+    outputSchema: removeAssociationsOutputSchema,
     props: {
         fromObjectId: Property.ShortText({
             displayName: 'From Object ID',
@@ -46,7 +49,7 @@ export const removeAssociationsAction = createAction({
     async run(context) {
         const { fromObjectId, fromObjectType, toObjectType, associationType } = context.propsValue;
 
-        const client = new Client({ accessToken: context.auth.access_token });
+        const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
         if(context.propsValue.toObjectIds === undefined) {            
             throw new Error('Please provide To Object IDs');

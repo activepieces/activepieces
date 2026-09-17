@@ -7,6 +7,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const renameChannelAction = createAction({
   auth: slackAuth,
   name: 'slack_rename_channel',
+  classification: 'WRITE',
   displayName: 'Rename Channel',
   description: 'Renames a channel.',
   audience: 'ai',

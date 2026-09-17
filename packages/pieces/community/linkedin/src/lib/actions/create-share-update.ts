@@ -13,6 +13,7 @@ import { createShareUpdateActionOutputSchema } from '../output-schemas';
 export const createShareUpdate = createAction({
   auth: linkedinAuth,
   name: 'create_share_update',
+  classification: 'WRITE',
   displayName: 'Create Share Update',
   description: 'Create a share update on LinkedIn',
   audience: 'both',

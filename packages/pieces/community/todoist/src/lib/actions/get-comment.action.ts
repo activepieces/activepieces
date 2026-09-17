@@ -13,6 +13,7 @@ const API = 'https://api.todoist.com/api/v1';
 export const todoistGetCommentAction = createAction({
   auth: todoistAuth,
   name: 'todoist_get_comment',
+  classification: 'READ',
   displayName: 'Get Comment',
   description: 'Fetches a single Todoist comment by its ID.',
   audience: 'ai',

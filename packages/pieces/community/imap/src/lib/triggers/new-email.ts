@@ -72,6 +72,7 @@ const testPolling: typeof polling = {
 export const newEmail = createTrigger({
   auth: imapAuth,
   name: 'new_email',
+  classification: 'READ',
   displayName: 'New Email',
   description: 'Trigger when a new email is received',
   outputSchema: newEmailTriggerOutputSchema,

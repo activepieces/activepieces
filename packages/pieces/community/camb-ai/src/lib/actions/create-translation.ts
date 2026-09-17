@@ -6,6 +6,7 @@ import { API_BASE_URL, listSourceLanguagesDropdown, listTargetLanguagesDropdown 
 export const createTranslation = createAction({
     auth: cambaiAuth,
     name: 'create_translation',
+    classification: 'READ',
     displayName: 'Create Translation',
     description: 'Translate text from a source language to a target language.',
     audience: 'both',

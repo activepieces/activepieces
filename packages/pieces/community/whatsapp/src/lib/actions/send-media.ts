@@ -11,6 +11,7 @@ import {
 export const sendMedia = createAction({
 	auth: whatsappAuth,
 	name: 'sendMedia',
+	classification: 'WRITE',
 	displayName: 'Send Media',
 	description: 'Send a media message through WhatsApp',
 	audience: 'both',

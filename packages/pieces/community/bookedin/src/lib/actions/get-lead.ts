@@ -5,6 +5,7 @@ import { BASE_URL, getBookedinHeaders, leadIdDropdown, extractApiKey } from '../
 
 export const getLead = createAction({
   name: 'getLead',
+  classification: 'READ',
   displayName: 'Get Lead',
   description: 'Get a specific lead by ID.',
   audience: 'both',

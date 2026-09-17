@@ -7,6 +7,7 @@ import { issueActionOutputSchema } from '../output-schemas';
 export const githubGetIssueInformation = createAction({
   auth: githubAuth,
   name: 'getIssueInformation',
+  classification: 'READ',
   displayName: 'Get issue information',
   description: 'Grabs information from a specific issue',
   audience: 'human',

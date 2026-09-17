@@ -23,6 +23,7 @@ const webhookSetupMarkdown = `**Setup Instructions:**
 export const messageStatusUpdate = createTrigger({
   auth: kapsoAuth,
   name: 'message_status_update',
+  classification: 'READ',
   displayName: 'Message Status Update',
   description:
     'Triggers when a message status changes (sent, delivered, read).',

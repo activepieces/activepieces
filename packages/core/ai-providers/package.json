@@ -1,6 +1,6 @@
 {
   "name": "@activepieces/ai-providers",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "commonjs",
   "sideEffects": false,
   "main": "./dist/src/index.js",
@@ -17,6 +17,7 @@
     "@ai-sdk/anthropic": "4.0.25",
     "@ai-sdk/azure": "4.0.26",
     "@ai-sdk/google": "4.0.29",
+    "@ai-sdk/google-vertex": "5.0.36",
     "@ai-sdk/openai": "4.0.25",
     "@ai-sdk/openai-compatible": "3.0.18",
     "@openrouter/ai-sdk-provider": "3.0.0",

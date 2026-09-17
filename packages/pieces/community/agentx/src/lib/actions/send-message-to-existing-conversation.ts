@@ -8,6 +8,7 @@ import { AgentIdDropdown } from '../common/dropdown';
 export const sendMessageToExistingConversation = createAction({
   auth: AgentXAuth,
   name: 'sendMessageToExistingConversation',
+  classification: 'WRITE',
   displayName: 'Send Message to Existing Conversation',
   description: 'Send a message to an existing conversation with an agent.',
   audience: 'both',

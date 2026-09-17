@@ -6,6 +6,7 @@ import { searchMessagesActionOutputSchema } from '../output-schemas';
 
 export const searchMessages = createAction({
   name: 'searchMessages',
+  classification: 'SEARCH',
   displayName: 'Search messages',
   description: 'Searches for messages matching a query',
   audience: 'human',

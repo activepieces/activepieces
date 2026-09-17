@@ -11,6 +11,7 @@ import { withAuthParams, rethrowTrelloError } from './ai-common';
 export const removeLabelFromCard = createAction({
   auth: trelloAuth,
   name: 'remove_label_from_card',
+  classification: 'WRITE',
   displayName: 'Remove Label From Card (Agent)',
   description: 'Detach a label from a Trello card.',
   audience: 'ai',

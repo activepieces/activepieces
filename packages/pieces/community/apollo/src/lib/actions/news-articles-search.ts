@@ -9,6 +9,7 @@ import {
 export const newsArticlesSearch = createAction({
   auth: apolloAuth,
   name: 'newsArticlesSearch',
+  classification: 'SEARCH',
   displayName: 'News Articles Search',
   description:
     'Search for news articles related to companies in the Apollo database',

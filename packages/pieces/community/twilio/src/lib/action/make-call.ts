@@ -6,6 +6,7 @@ import { twilioAuth } from '../..';
 export const twilioMakeCall = createAction({
   auth: twilioAuth,
   name: 'make_call',
+  classification: 'WRITE',
   description: 'Call a number and say a message.',
   audience: 'both',
   aiMetadata: { description: 'Places an outbound voice call from a Twilio number that reads a text-to-speech message to the recipient. Use to deliver a spoken notification or alert by phone. Requires both numbers in E.164 format and the message text; each call places a real, billable phone call, so it is not idempotent.', idempotent: false },

@@ -6,6 +6,7 @@ import { deftformApiCall, DeftformCommon } from '../common';
 export const getFormResponses = createAction({
     auth: deftformAuth,
     name: 'get_form_responses',
+    classification: 'SEARCH',
     displayName: 'Get Form Responses',
     description: 'Retrieves all submissions (responses) for a specific form. Useful for reporting and data exports.',
     audience: 'both',

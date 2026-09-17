@@ -17,6 +17,7 @@ import { googleAuth } from '../..';
 
 export const newReview = createTrigger({
   name: 'new_review',
+  classification: 'READ',
   displayName: 'New Review',
   description: 'Triggers when there is new review',
   aiMetadata: {
@@ -77,7 +78,7 @@ const getResponse = async (
   const response = await httpClient.sendRequest<{
     reviews: { createTime: string }[];
   }>({
-    url: ` https://mybusiness.googleapis.com/v4/${account}/${location}/reviews`,
+    url: `https://mybusiness.googleapis.com/v4/${account}/${location}/reviews`,
     method: HttpMethod.GET,
     headers: {
       Authorization: `Bearer ${authentication.access_token}`,

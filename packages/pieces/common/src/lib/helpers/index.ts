@@ -1,4 +1,5 @@
 import {
+  ActionClassification,
   OAuth2PropertyValue,
   PieceAuthProperty,
   Property,
@@ -16,6 +17,7 @@ import {
   HttpMethod,
   HttpRequest,
   QueryParams,
+  acceptsRequestBody,
   httpClient,
   toFailsafeOutput,
 } from '../http';
@@ -148,6 +150,7 @@ export function createCustomApiCallAction<
   props,
   extraProps,
   authLocation = 'headers',
+  classification = 'WRITE',
 }: {
   auth?: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
@@ -167,15 +170,20 @@ export function createCustomApiCallAction<
     headers?: Partial<ReturnType<typeof Property.Object>>;
     queryParams?: Partial<ReturnType<typeof Property.Object>>;
     body?: Partial<ReturnType<typeof Property.Json>>;
+    response_is_binary?: Partial<ReturnType<typeof Property.Checkbox>>;
     failsafe?: Partial<ReturnType<typeof Property.Checkbox>>;
     timeout?: Partial<ReturnType<typeof Property.Number>>;
+    followRedirects?: Partial<ReturnType<typeof Property.Checkbox>>;
   };
   extraProps?: InputPropertyMap;
   authLocation?: 'headers' | 'queryParams';
+  // The method is caller-supplied at runtime, so a single tag has to assume mutation.
+  classification?: ActionClassification;
 }) {
   return createAction({
     audience: 'human',
     name: name ? name : 'custom_api_call',
+    classification,
     displayName: displayName ? displayName : 'Custom API Call',
     description: description
       ? description
@@ -192,9 +200,9 @@ export function createCustomApiCallAction<
           return {
             url: Property.ShortText({
               displayName: 'URL',
-              description: `You can either use the full URL or the relative path to the base URL
-i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
+              description: `Full URL, or a path relative to ${getBaseUrlForDescription(baseUrl, auth)}`,
               required: true,
+              placeholder: '/resource',
               defaultValue: auth ? baseUrl(auth) : '',
               ...(props?.url ?? {}),
             }),
@@ -204,6 +212,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       method: Property.StaticDropdown({
         displayName: 'Method',
         required: true,
+        defaultValue: HttpMethod.GET,
         options: {
           options: Object.values(HttpMethod).map((v) => {
             return {
@@ -218,47 +227,47 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         displayName: 'Headers',
         description:
           'Authorization headers are injected automatically from your connection.',
-        required: true,
+        required: false,
         ...(props?.headers ?? {}),
       }),
       queryParams: Property.Object({
         displayName: 'Query Parameters',
-        required: true,
+        description: 'Appended to the URL as ?key=value.',
+        required: false,
         ...(props?.queryParams ?? {}),
       }),
-      body_type: Property.StaticDropdown({
+      body_type: Property.Dropdown({
+        auth,
         displayName: 'Body Type',
         required: false,
         defaultValue: 'none',
-        options: {
-          disabled: false,
-          options: [
-            {
-              label: 'None',
-              value: 'none',
-            },
-            {
-              label: 'JSON',
-              value: 'json',
-            },
-            {
-              label: 'Form Data',
-              value: 'form_data',
-            },
-            {
-              label: 'Raw',
-              value: 'raw',
-            },
-          ],
+        refreshers: ['method'],
+        options: async ({ method }) => {
+          if (!acceptsRequestBody(method as HttpMethod)) {
+            return {
+              disabled: true,
+              placeholder: 'Not available for GET or HEAD requests',
+              options: [],
+            };
+          }
+          return {
+            disabled: false,
+            options: [
+              { label: 'None', value: 'none' },
+              { label: 'JSON', value: 'json' },
+              { label: 'Form Data', value: 'form_data' },
+              { label: 'Raw', value: 'raw' },
+            ],
+          };
         },
       }),
       body: Property.DynamicProperties({
         auth,
         displayName: 'Body',
-        refreshers: ['body_type'],
+        refreshers: ['body_type', 'method'],
         required: false,
-        props: async ({ body_type }) => {
-          if (!body_type) return {};
+        props: async ({ body_type, method }) => {
+          if (!body_type || !acceptsRequestBody(method as HttpMethod)) return {};
 
           const bodyTypeInput = body_type as unknown as string;
 
@@ -316,25 +325,36 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         },
       }),
       response_is_binary: Property.Checkbox({
-        displayName: 'Response is Binary ?',
+        displayName: 'Response is Binary',
         description: 'Enable for files like PDFs, images, etc.',
         required: false,
         defaultValue: false,
+        advanced: true,
+        ...(props?.response_is_binary ?? {}),
       }),
       failsafe: Property.Checkbox({
-        displayName: 'No Error on Failure',
+        displayName: 'Return Error as Output',
+        description:
+          'On a failed request, output the error instead of failing the step.',
         required: false,
+        advanced: true,
         ...(props?.failsafe ?? {}),
       }),
       timeout: Property.Number({
-        displayName: 'Timeout (in seconds)',
+        displayName: 'Timeout',
+        description: 'Seconds to wait for a response. Empty: up to the flow limit (10 min).',
         required: false,
+        advanced: true,
         ...(props?.timeout ?? {}),
       }),
       followRedirects: Property.Checkbox({
         displayName: 'Follow redirects',
+        description:
+          'Follow 3xx redirects instead of returning them as the response.',
         required: false,
         defaultValue: false,
+        advanced: true,
+        ...(props?.followRedirects ?? {}),
       }),
       ...extraProps,
     },

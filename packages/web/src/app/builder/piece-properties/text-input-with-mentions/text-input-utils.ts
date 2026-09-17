@@ -90,32 +90,77 @@ function stringStateAfter({
   return current;
 }
 
-function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
+function formulaStartsAt({
+  expr,
+  index,
+}: {
+  expr: string;
+  index: number;
+}): boolean {
+  if (!expr.startsWith(formulaEvaluator.PREFIX, index)) {
+    return false;
+  }
+  const afterPrefix = index + formulaEvaluator.PREFIX.length;
+  const suffixIndex = expr.indexOf(formulaEvaluator.SUFFIX, afterPrefix);
+  if (suffixIndex === -1) {
+    return false;
+  }
+  const nextPrefixIndex = expr.indexOf(formulaEvaluator.PREFIX, afterPrefix);
+  return nextPrefixIndex === -1 || nextPrefixIndex > suffixIndex;
+}
+
+function matchFunctionNameAt({
+  expr,
+  index,
+}: {
+  expr: string;
+  index: number;
+}): string | null {
+  if (index > 0 && /[a-z0-9_]/i.test(expr[index - 1])) {
+    return null;
+  }
+  const match = expr.slice(index).match(/^([a-z_][a-z0-9_]*)\(/i);
+  return match ? match[1] : null;
+}
+
+function tokenizeExpression(expr: string): ExprToken[] {
   const tokens: ExprToken[] = [];
   const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name));
   let i = 0;
   let fnDepth = 0;
+  let inFormula = false;
 
   while (i < expr.length) {
+    if (!inFormula && formulaStartsAt({ expr, index: i })) {
+      inFormula = true;
+      i += formulaEvaluator.PREFIX.length;
+      continue;
+    }
+    if (inFormula && expr.startsWith(formulaEvaluator.SUFFIX, i)) {
+      inFormula = false;
+      i += formulaEvaluator.SUFFIX.length;
+      continue;
+    }
+
     if (expr[i] === '\n') {
       tokens.push({ kind: 'newline' });
       i++;
       continue;
     }
 
-    const fnMatch = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
-    if (fnMatch && (fnNames.has(fnMatch[1]) || allowBroken)) {
+    const fnName = inFormula ? matchFunctionNameAt({ expr, index: i }) : null;
+    if (fnName) {
       tokens.push({
         kind: 'fn_open',
-        name: fnMatch[1],
-        known: fnNames.has(fnMatch[1]),
+        name: fnName,
+        known: fnNames.has(fnName),
       });
       fnDepth++;
-      i += fnMatch[1].length + 1;
+      i += fnName.length + 1;
       continue;
     }
 
-    if (expr[i] === ')') {
+    if (inFormula && expr[i] === ')') {
       tokens.push({ kind: 'fn_close' });
       if (fnDepth > 0) fnDepth--;
       i++;
@@ -171,10 +216,11 @@ function tokenizeExpression(expr: string, allowBroken: boolean): ExprToken[] {
         continue;
       }
       if (ch === '\n') break;
-      if (ch === ')') break;
+      if (!inFormula && formulaStartsAt({ expr, index: i })) break;
+      if (inFormula && expr.startsWith(formulaEvaluator.SUFFIX, i)) break;
+      if (inFormula && ch === ')') break;
       if (ch === ';' && fnDepth > 0) break;
-      const ahead = expr.slice(i).match(/^([a-z_][a-z0-9_]*)\(/i);
-      if (ahead && (fnNames.has(ahead[1]) || allowBroken)) break;
+      if (inFormula && matchFunctionNameAt({ expr, index: i })) break;
       text += ch;
       i++;
     }
@@ -190,17 +236,7 @@ function convertTextToTipTapJsonContent(
   stepsMetadata: (StepMetadataWithDisplayName | undefined)[],
   variableByName?: Map<string, string>,
 ): { type: TipTapNodeTypes.paragraph; content: JSONContent[] }[] {
-  // Strip ap-formula-v1::{...} wrappers before tokenizing so the editor can
-  // reconstruct function nodes from the inner expression. Saved values use the
-  // wrapper; the editor's internal tree does not.
-  // `allowBroken` only kicks in when the saved value really did contain a
-  // formula wrapper — otherwise typing literal "foo()" in a plain text field
-  // would render as a broken-function badge.
-  const allowBroken = formulaEvaluator.containsWrapper(userInputText);
-  const tokens = tokenizeExpression(
-    formulaEvaluator.unwrap(userInputText),
-    allowBroken,
-  );
+  const tokens = tokenizeExpression(userInputText);
   const paragraphs: {
     type: TipTapNodeTypes.paragraph;
     content: JSONContent[];

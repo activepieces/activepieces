@@ -11,6 +11,7 @@ import { phoneNumberDropdown } from '../common/props';
 export const incomingCallCompleted = createTrigger({
   auth: openPhoneAuth,
   name: 'incoming_call_completed',
+  classification: 'READ',
   displayName: 'Incoming Call Completed',
   description:
     'Fires when an incoming call is completed. Includes voicemail data if available.',

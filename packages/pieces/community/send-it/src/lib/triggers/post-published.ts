@@ -19,6 +19,7 @@ type PublishedPayload = {
 export const postPublished = createTrigger({
   auth: sendItAuth,
   name: 'post_published',
+  classification: 'READ',
   displayName: 'Post Published',
   description: 'Triggers when a post is successfully published to a platform',
   aiMetadata: {

@@ -8,6 +8,7 @@ import { resolveSecretsManagerClient } from '../common/client';
 export const getARandomPassword = createAction({
   auth: awsSecretsManagerCombinedAuth,
   name: 'getARandomPassword',
+  classification: 'READ',
   displayName: 'Generate Random Password',
   description: 'Generates a random password using AWS Secrets Manager.',
   audience: 'both',

@@ -10,6 +10,7 @@ import {
 
 export const everyMonthTrigger = createTrigger({
   name: 'every_month',
+  classification: 'READ',
   displayName: 'Every Month',
   description: 'Triggers the current flow every month',
   aiMetadata: {

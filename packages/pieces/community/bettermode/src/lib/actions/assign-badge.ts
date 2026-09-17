@@ -5,6 +5,7 @@ import { bettermodeAuth } from '../auth';
 
 export const assignBadgeAction = createAction({
   name: 'assign_badge',
+  classification: 'WRITE',
   auth: bettermodeAuth,
   displayName: 'Assign Badge to Member',
   description: 'Assign an existing badge to a member by email',

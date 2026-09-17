@@ -45,6 +45,7 @@ const polling: Polling<
 export const addEventNewRsvpAttendeeTrigger = createTrigger({
   auth: addEventAuth,
   name: 'new_rsvp_attendee',
+  classification: 'READ',
   displayName: 'New RSVP Attendee',
   description: 'Triggers when a new attendee RSVPs to your AddEvent event.',
   aiMetadata: {

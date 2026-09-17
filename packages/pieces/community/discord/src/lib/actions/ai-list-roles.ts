@@ -19,6 +19,7 @@ interface Role {
 export const discordListRoles = createAction({
   auth: discordAuth,
   name: 'discord_list_roles',
+  classification: 'SEARCH',
   displayName: 'List Roles',
   description: 'List the roles of a guild.',
   audience: 'ai',

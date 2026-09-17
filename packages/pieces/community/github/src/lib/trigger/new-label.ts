@@ -12,6 +12,7 @@ interface WebhookInformation {
 export const newLabelTrigger = createTrigger({
   auth: githubAuth,
   name: 'new_label',
+  classification: 'READ',
   displayName: 'New Label',
   description: 'Triggers when a new label is created in a repository.',
   aiMetadata: {

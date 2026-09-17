@@ -13,6 +13,7 @@ import { isNil } from '@activepieces/pieces-framework';
 export const createVideoFromTemplateAction = createAction({
 	auth: heygenAuth,
 	name: 'create-video-from-template',
+	classification: 'WRITE',
 	displayName: 'Create Video from Template',
 	description: 'Create a video using a selected template.',
 	audience: 'both',

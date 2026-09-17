@@ -8,6 +8,7 @@ import { AddEventEvent } from '../common/types';
 export const addEventCreateEventAction = createAction({
   auth: addEventAuth,
   name: 'create_event',
+  classification: 'WRITE',
   displayName: 'Create Event',
   description: 'Creates a new event on your AddEvent calendar.',
   audience: 'both',

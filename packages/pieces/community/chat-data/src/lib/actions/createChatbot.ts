@@ -5,6 +5,7 @@ import { chatDataAuth, CreateChatbotDto } from '../common/types';
 export const createChatbot = createAction({
   auth: chatDataAuth,
   name: 'create_chatbot',
+  classification: 'WRITE',
   displayName: 'Create Chatbot',
   description:
     'Create and train a chatbot using custom data, medical models, or custom models. Training takes 1-2 minutes.',

@@ -7,6 +7,7 @@ import { getChatMemberActionOutputSchema } from '../output-schemas';
 export const telegramGetChatMemberAction = createAction({
   auth: telegramBotAuth,
   name: 'get_chat_member',
+  classification: 'READ',
   description: 'Get member info (or null) for the provided chat id and user id',
   audience: 'human',
   aiMetadata: { description: 'Looks up a specific user\'s membership in a chat by chat_id and user_id, returning their role and status (member, administrator, left, kicked, etc.). Use to check whether a user belongs to a chat or what permissions they hold before acting. Idempotent: read-only lookup with no side effects.', idempotent: true },

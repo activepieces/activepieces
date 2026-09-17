@@ -1,11 +1,13 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import OpenAI from 'openai';
 import { openaiAuth } from '../auth';
+import { listModelsActionOutputSchema } from '../output-schemas';
 
 export const listModels = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'list_models',
+  classification: 'SEARCH',
   displayName: 'List Models',
   description:
     'Return the list of models available to the connected OpenAI account, optionally filtered by an ID substring.',
@@ -18,6 +20,7 @@ export const listModels = createAction({
       required: false,
     }),
   },
+  outputSchema: listModelsActionOutputSchema,
   async run(context) {
     const openai = new OpenAI({ apiKey: context.auth.secret_text });
     const { contains } = context.propsValue;

@@ -27,6 +27,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof amazonS3Combined
 export const newFile = createTrigger({
   auth: amazonS3CombinedAuth,
   name: 'new_file',
+  classification: 'READ',
   displayName: 'New or Updated File',
   description: 'Triggers when you add or update a file in your bucket. The bucket/folder you choose must not contain more than 10,000 files.',
   aiMetadata: {

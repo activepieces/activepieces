@@ -13,6 +13,7 @@ import { addChecklistToCardActionOutputSchema } from '../../output-schemas';
 export const addChecklistToCard = createAction({
   auth: trelloAuth,
   name: 'add_checklist_to_card',
+  classification: 'WRITE',
   displayName: 'Add Checklist To Card (Agent)',
   description: 'Create a checklist on a Trello card.',
   audience: 'ai',

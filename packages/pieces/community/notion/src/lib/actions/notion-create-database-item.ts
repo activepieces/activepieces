@@ -7,6 +7,7 @@ import { notionCreateDatabaseItemActionOutputSchema } from '../output-schemas';
 export const notionCreateDatabaseItem = createAction({
   auth: notionAuth,
   name: 'notion_create_database_item',
+  classification: 'WRITE',
   displayName: 'Create Database Item',
   description:
     'Creates a new row (page) in a Notion database, setting its property values from a raw Notion properties object, with optional body content.',

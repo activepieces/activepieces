@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
@@ -44,6 +45,10 @@ export const SidebarUsageLimits = React.memo(() => {
   );
 
   if (edition === ApEdition.COMMUNITY) {
+    return null;
+  }
+
+  if (isNil(authenticationSession.getProjectId())) {
     return null;
   }
 

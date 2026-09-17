@@ -7,6 +7,7 @@ import { findTableActionOutputSchema } from '../output-schemas';
 export const airtableFindTableAction = createAction({
   auth: airtableAuth,
   name: 'airtable_find_table',
+  classification: 'READ',
   displayName: 'Find Table',
   description: 'Find a table in a given base by its name.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { aipriseAuth } from '../common/auth';
 export const runBusinessVerificationAction = createAction({
   auth: aipriseAuth,
   name: 'run_business_verification',
+  classification: 'WRITE',
   displayName: 'Start Business Verification',
   description:
     'Kicks off a company background check. AiPrise will run the checks defined in your template — which can include company registry lookup, ownership structure (UBO), sanctions screening, and adverse media.',

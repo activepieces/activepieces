@@ -5,6 +5,7 @@ import { getTaskActionOutputSchema } from '../output-schemas';
 
 export const apifyGetTask = createAction({
   name: 'apify_get_task',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Task',
   description: 'Retrieves metadata for a saved Actor task by task ID.',

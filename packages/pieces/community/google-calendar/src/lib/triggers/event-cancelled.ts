@@ -127,6 +127,7 @@ const polling: Polling<
 export const eventCancelled = createTrigger({
   auth: googleCalendarAuth,
   name: 'event_cancelled',
+  classification: 'READ',
   displayName: 'Event Cancelled',
   description: 'Fires when an event is canceled or deleted.',
   aiMetadata: {

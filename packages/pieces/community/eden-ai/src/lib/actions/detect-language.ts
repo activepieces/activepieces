@@ -39,6 +39,7 @@ function normalizeLanguageDetectionResponse(provider: string, response: any) {
 export const detectLanguageAction = createAction({
   auth: edenAiAuth,
   name: 'detect_language',
+  classification: 'READ',
   displayName: 'Detect Language of Text',
   description: 'Detect the language used in a text using Eden AI. Supports multiple providers and models.',
   audience: 'both',

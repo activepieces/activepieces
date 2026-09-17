@@ -18,6 +18,7 @@ import { approvalActionOutputSchema } from '../output-schemas';
 export const requestSendApprovalMessageAction = createAction({
   auth: slackAuth,
   name: 'request_approval_message',
+  classification: 'WRITE',
   displayName: 'Request Approval in a Channel',
   description:
     'Send approval message to a channel and then wait until the message is approved or disapproved',

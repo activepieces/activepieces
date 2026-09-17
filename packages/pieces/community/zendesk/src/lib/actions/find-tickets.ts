@@ -11,6 +11,7 @@ import dayjs from 'dayjs'
 export const findTicketsAction = createAction({
   auth: zendeskAuth,
   name: 'find-tickets',
+  classification: 'SEARCH',
   displayName: 'Find Ticket(s)',
   description: 'Search tickets by ID, field, or content.',
   audience: 'both',

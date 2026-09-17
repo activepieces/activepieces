@@ -10,6 +10,7 @@ import { discordCreateScheduledEventActionOutputSchema } from '../output-schemas
 export const discordCreateScheduledEvent = createAction({
   auth: discordAuth,
   name: 'discord_create_scheduled_event',
+  classification: 'WRITE',
   displayName: 'Create Scheduled Event',
   description: 'Create a scheduled event in a guild.',
   audience: 'ai',

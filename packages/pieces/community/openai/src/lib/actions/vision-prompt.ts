@@ -11,6 +11,7 @@ export const visionPrompt = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'vision_prompt',
+  classification: 'READ',
   displayName: 'Vision Prompt',
   description: 'Ask GPT a question about an image',
   aiMetadata: { description: 'Answers a question about an image by sending the uploaded picture inline with the prompt to gpt-4o, covering captioning, reading text off an image, and visual question answering. It is the only action here that accepts image input, so pick it over ask_chatgpt whenever a picture is part of the question, and generate_image or edit_image when the goal is producing an image instead. The model is fixed at gpt-4o and the image is embedded as base64 in the request, so keep it small; a detail setting trades cost against fidelity. Not idempotent: each call produces a fresh completion.', idempotent: false },

@@ -7,6 +7,7 @@ import { getTaskCommentsOutputSchema } from '../../output-schemas';
 export const clickupGetTaskComments = createAction({
   auth: clickupAuth,
   name: 'clickup_get_task_comments',
+  classification: 'SEARCH',
   description: 'Gets comments from a task in ClickUp',
   audience: 'ai',
   aiMetadata: {

@@ -9,6 +9,7 @@ import { togglTrackAuth } from '../..';
 export const findTimeEntry = createAction({
   auth: togglTrackAuth,
   name: 'find_time_entry',
+  classification: 'SEARCH',
   displayName: 'Find Time Entry',
   description: 'Find time entries by description.',
   audience: 'both',

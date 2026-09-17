@@ -5,6 +5,7 @@ import { Buffer } from 'buffer';
 export const hmacSignature = createAction({
   audience: 'both',
   name: 'hmac-signature',
+  classification: 'READ',
   description:
     'Converts text to a HMAC signed hash value using various hashing algorithms',
   aiMetadata: { description: 'Computes a keyed HMAC digest of a text string with a secret key, selecting the hash algorithm and how the secret key itself is interpreted (UTF-8, hex or base64). Pick this to sign or verify webhook payloads and API requests that use a shared secret; use Text to Hash for an unkeyed digest and Generate RSA Signature for asymmetric private-key signing. The secret-key encoding must match how the key was issued or the signature will not match; pure computation and idempotent.', idempotent: true },

@@ -1,13 +1,9 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
-import {
-  AuthenticationType,
-  HttpMethod,
-  httpClient,
-} from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import crypto from 'crypto';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 
-const BASE_URL = 'https://api.resend.com';
 const STORE_KEY = 'webhookData';
 const TIMESTAMP_TOLERANCE_SECONDS = 300;
 
@@ -74,6 +70,7 @@ function verifyResendWebhook({
 
 export const emailBounced = createTrigger({
   name: 'email_bounced',
+  classification: 'READ',
   auth: resendAuth,
   displayName: 'Email Event',
   description: 'Triggers when a selected email or contact event occurs in Resend',
@@ -92,36 +89,30 @@ export const emailBounced = createTrigger({
     }),
   },
   async onEnable(context) {
-    const response = await httpClient.sendRequest<{
+    const response = await resendClient.sendRequest<{
       id: string;
       signing_secret: string;
     }>({
+      auth: context.auth.secret_text,
       method: HttpMethod.POST,
-      url: `${BASE_URL}/webhooks`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.secret_text,
-      },
+      path: '/webhooks',
       body: {
         endpoint: context.webhookUrl,
         events: context.propsValue.events,
       },
     });
     await context.store.put(STORE_KEY, {
-      id: response.body.id,
-      signingSecret: response.body.signing_secret,
+      id: response.id,
+      signingSecret: response.signing_secret,
     });
   },
   async onDisable(context) {
     const data = await context.store.get<{ id: string; signingSecret: string }>(STORE_KEY);
     if (data?.id) {
-      await httpClient.sendRequest({
+      await resendClient.sendRequest({
+        auth: context.auth.secret_text,
         method: HttpMethod.DELETE,
-        url: `${BASE_URL}/webhooks/${data.id}`,
-        authentication: {
-          type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.secret_text,
-        },
+        path: `/webhooks/${data.id}`,
       });
     }
   },

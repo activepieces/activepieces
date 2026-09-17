@@ -6,6 +6,7 @@ import { driveEmptyTrashOutputSchema } from '../output-schemas';
 export const driveEmptyTrash = createAction({
   auth: googleDriveAuth,
   name: 'drive_empty_trash',
+  classification: 'DESTRUCTIVE',
   displayName: 'Empty Trash',
   description: 'Permanently delete ALL files in the trash (irreversible, account-wide).',
   audience: 'ai',

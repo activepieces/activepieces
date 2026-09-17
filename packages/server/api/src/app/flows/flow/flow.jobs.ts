@@ -3,8 +3,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
+import { WaitpointEntity } from '../../waitpoints/waitpoint-entity'
 import { flowRunRepo } from '../flow-run/flow-run-service'
-import { WaitpointEntity } from '../flow-run/waitpoint/waitpoint-entity'
 import { flowVersionRepo } from '../flow-version/flow-version.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -15,24 +15,29 @@ const waitpointRepo = repoFactory(WaitpointEntity)
 const BATCH_SIZE = 1000
 
 export async function batchDeleteByFlowId(flowId: string): Promise<void> {
-    await waitpointRepo()
-        .createQueryBuilder()
-        .delete()
-        .where('"flowRunId" IN (SELECT id FROM flow_run WHERE "flowId" = :flowId)', { flowId })
-        .execute()
-
-    let deleted: number
-    do {
-        const result = await flowRunRepo()
+    while (true) {
+        const runs = await flowRunRepo().find({
+            select: { id: true },
+            where: { flowId },
+            take: BATCH_SIZE,
+        })
+        if (runs.length === 0) break
+        const ids = runs.map(r => r.id)
+        await waitpointRepo()
             .createQueryBuilder()
             .delete()
-            .where('id IN (SELECT id FROM flow_run WHERE "flowId" = :flowId LIMIT :limit)', { flowId, limit: BATCH_SIZE })
+            .where('"flowRunId" IN (:...ids)', { ids })
             .execute()
-        deleted = result.affected ?? 0
-    } while (deleted > 0)
+        await flowRunRepo()
+            .createQueryBuilder()
+            .delete()
+            .where('id IN (:...ids)', { ids })
+            .execute()
+    }
 
     await flowRepo().update({ id: flowId }, { publishedVersionId: null })
 
+    let deleted: number
     do {
         const result = await flowVersionRepo()
             .createQueryBuilder()

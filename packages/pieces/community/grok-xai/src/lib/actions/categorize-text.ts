@@ -16,6 +16,7 @@ import {
   XaiResponse,
   CategorizationResult
 } from '../common/utils';
+import { categorizeTextActionOutputSchema } from '../output-schemas';
 import * as z from 'zod/mini'
 
 interface Category {
@@ -98,6 +99,7 @@ export const categorizeText = createAction({
       },
     }),
   },
+  outputSchema: categorizeTextActionOutputSchema,
   async run({ auth, propsValue }) {
     await propsValidation.validateZod(propsValue, {
       temperature: z.optional(z.number().check(z.minimum(0), z.maximum(2))),

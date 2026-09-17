@@ -13,6 +13,7 @@ import {
 
 export const listSubscriptions = createAction({
   name: 'list_subscriptions',
+  classification: 'SEARCH',
   displayName: 'List Subscriptions',
   description: 'Retrieve a paginated list of subscriptions from your Lemon Squeezy store.',
   audience: 'both',

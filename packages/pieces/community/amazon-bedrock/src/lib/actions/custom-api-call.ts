@@ -70,6 +70,7 @@ async function signAwsRequest({
 export const customApiCall = createAction({
   audience: 'human',
   name: 'custom_api_call',
+  classification: 'WRITE',
   displayName: 'Custom API Call',
   description:
     'Make a custom API call to any AWS Bedrock endpoint. Requests are automatically signed with AWS Signature V4.',

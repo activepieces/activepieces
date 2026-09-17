@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const insertRow = createAction({
   auth: clicdataAuth,
   name: 'insert_row',
+  classification: 'WRITE',
   displayName: 'Insert Row',
   description: 'Insert rows into a ClicData table (maximum 500 rows)',
   audience: 'both',

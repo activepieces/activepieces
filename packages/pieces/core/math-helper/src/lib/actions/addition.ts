@@ -8,6 +8,7 @@ import { additionActionOutputSchema } from '../output-schemas';
 export const addition = createAction({
   audience: 'both',
   name: 'addition_math',
+  classification: 'READ',
   outputSchema: additionActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Addition',

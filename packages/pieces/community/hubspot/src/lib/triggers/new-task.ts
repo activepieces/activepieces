@@ -1,8 +1,8 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
@@ -10,16 +10,17 @@ import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from 
 
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultTaskProperties = getDefaultPropertiesForObject(OBJECT_TYPE.TASK);
@@ -74,6 +75,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newTaskTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-task',
+	classification: 'READ',
 	displayName: 'New Task',
 	description: 'Trigger when a new task is added.',
 	aiMetadata: {
@@ -95,6 +97,7 @@ export const newTaskTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

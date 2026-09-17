@@ -8,6 +8,7 @@ import { codaAuth } from '../auth';
 import { CodaRow, codaClient } from '../common/types';
 import dayjs from 'dayjs';
 import { docIdDropdown, tableIdDropdown } from '../common/props';
+import { newRowCreatedTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	tableId: string;
@@ -55,6 +56,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof codaAuth>, Props
 export const newRowCreatedTrigger = createTrigger({
 	auth: codaAuth,
 	name: 'new-row-created',
+	classification: 'READ',
 	displayName: 'New Row Created',
 	description: 'Triggers when a new row is added to the selected table.',
 	aiMetadata: {
@@ -64,6 +66,7 @@ export const newRowCreatedTrigger = createTrigger({
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,
 	},
+	outputSchema: newRowCreatedTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {

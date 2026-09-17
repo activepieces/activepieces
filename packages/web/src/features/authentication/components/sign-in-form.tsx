@@ -64,7 +64,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
 
-      if (isNil(data.projectId)) {
+      if (isNil(data.platformId)) {
         navigate('/create-platform');
         return;
       }
@@ -111,6 +111,14 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
           case ErrorCode.EMAIL_AUTH_DISABLED: {
             form.setError('root.serverError', {
               message: t(`Email authentication has been disabled`),
+            });
+            break;
+          }
+          case ErrorCode.USER_NOT_FOUND_ON_PLATFORM: {
+            form.setError('root.serverError', {
+              message: t(
+                'Your account is not set up on this platform, please contact your administrator',
+              ),
             });
             break;
           }

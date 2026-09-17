@@ -6,6 +6,7 @@ import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 export const sendTextMessage = createAction({
   auth: kapsoAuth,
   name: 'send_text_message',
+  classification: 'WRITE',
   displayName: 'Send Text Message',
   description: 'Send a text message via WhatsApp.',
   audience: 'both',

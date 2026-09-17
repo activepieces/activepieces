@@ -9,10 +9,13 @@ import {
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { GetField } from '../common/types';
+import { findProductsActionOutputSchema } from '../output-schemas';
 
 export const findProductsAction = createAction({
 	auth: pipedriveAuth,
 	name: 'find-products',
+	outputSchema: findProductsActionOutputSchema,
+	classification: 'SEARCH',
 	displayName: 'Find Products',
 	description: 'Finds a product or products by name or product code.',
 	audience: 'both',

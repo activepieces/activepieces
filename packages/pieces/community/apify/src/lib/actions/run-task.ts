@@ -16,6 +16,7 @@ import { runTaskActionOutputSchema } from '../output-schemas';
 
 export const runTask = createAction({
   name: 'runTask',
+  classification: 'WRITE',
   auth: apifyAuth,
   displayName: 'Run Task',
   description: 'Runs an Actor task and returns all associated details.',

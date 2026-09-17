@@ -8,6 +8,7 @@ import { messageOutputSchema } from '../../output-schemas';
 export const updateClickupMessage = createAction({
   auth: clickupAuth,
   name: 'update_message',
+  classification: 'WRITE',
   description: 'Updates a message in a ClickUp channel',
   audience: 'both',
   aiMetadata: { description: 'Replace the content of an existing ClickUp chat message, identified by its message ID, within a workspace. Pick this to edit a message that was already posted; you must already know the message ID and supply the new content plus its format (Markdown or plain text). Overwrites the message content rather than appending, so re-running with the same content is effectively idempotent.', idempotent: false },

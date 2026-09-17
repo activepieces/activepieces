@@ -8,6 +8,7 @@ import { userBodyOutputSchema } from '../../output-schemas';
 export const githubGetUserAction = createAction({
   auth: githubAuth,
   name: 'get_user',
+  classification: 'READ',
   displayName: 'Get User (Agent)',
   description: "Fetches a user's public profile by login.",
   audience: 'ai',

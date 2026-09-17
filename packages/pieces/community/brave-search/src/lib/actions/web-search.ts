@@ -5,6 +5,7 @@ import { braveSearchAuth } from '../auth';
 export const braveWebSearchAction = createAction({
   auth: braveSearchAuth,
   name: 'web_search',
+  classification: 'SEARCH',
   displayName: 'Web Search',
   description: 'Search the web using Brave Search',
   audience: 'both',

@@ -104,6 +104,7 @@ function clipToWorkingHours(
 export const findFreeSlots = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_find_free_slots',
+  classification: 'SEARCH',
   displayName: 'Find Free Time Slots',
   description:
     'Computes open time slots shared across one or more calendars within a window, by inverting their busy blocks.',

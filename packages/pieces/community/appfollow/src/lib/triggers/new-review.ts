@@ -49,6 +49,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof appfollowAuth>, 
 export const newReview = createTrigger({
   auth: appfollowAuth,
   name: 'newReview',
+  classification: 'READ',
   displayName: 'New Review',
   description: 'Triggered when a new review is added',
   aiMetadata: {

@@ -13,6 +13,7 @@ import { addCardAttachmentActionOutputSchema } from '../../output-schemas';
 export const addCardAttachment = createAction({
   auth: trelloAuth,
   name: 'add_card_attachment',
+  classification: 'WRITE',
   displayName: 'Add Card Attachment',
   description: 'Adds an attachment to a card.',
   audience: 'both',

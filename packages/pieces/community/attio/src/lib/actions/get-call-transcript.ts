@@ -7,6 +7,7 @@ import { callRecordingIdDropdown, meetingIdDropdown } from '../common/props';
 export const getCallTranscriptAction = createAction({
 	auth: attioAuth,
 	name: 'get_call_transcript',
+	classification: 'READ',
 	displayName: 'Get Call Transcript',
 	description: 'Fetches the full transcript for a given call recording.',
 	audience: 'both',

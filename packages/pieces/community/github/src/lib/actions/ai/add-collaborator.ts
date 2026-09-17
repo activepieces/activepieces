@@ -8,6 +8,7 @@ import { addCollaboratorOutputSchema } from '../../output-schemas';
 export const githubAddCollaboratorAction = createAction({
   auth: githubAuth,
   name: 'add_collaborator',
+  classification: 'WRITE',
   displayName: 'Add Collaborator (Agent)',
   description: 'Invites a user as a repository collaborator.',
   audience: 'ai',

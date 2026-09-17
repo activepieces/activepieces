@@ -15,6 +15,7 @@ interface FileObject {
 
 export const sendMessageWithBot = createAction({
   name: 'sendMessageWithBot',
+  classification: 'WRITE',
   auth:discordAuth,
   displayName: 'Send Message with Bot',
   description:

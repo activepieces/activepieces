@@ -6,6 +6,7 @@ import { makeRequest } from '../common/client';
 export const fraudCheck = createAction({
   auth: chainAwareAuth,
   name: 'fraudCheck',
+  classification: 'READ',
   displayName: 'Fraud Check',
   description: 'Calculate fraud probability for a wallet address',
   audience: 'both',

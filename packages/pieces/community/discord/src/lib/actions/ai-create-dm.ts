@@ -10,6 +10,7 @@ import { discordSuccessWithChannelIdActionOutputSchema } from '../output-schemas
 export const discordCreateDm = createAction({
   auth: discordAuth,
   name: 'discord_create_dm',
+  classification: 'WRITE',
   displayName: 'Create DM Channel',
   description: 'Open (or fetch) a direct-message channel with a user.',
   audience: 'ai',

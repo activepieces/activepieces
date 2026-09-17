@@ -290,6 +290,7 @@ function normalizeTextToSpeechResponse(provider: string, response: any) {
 
 export const textToSpeechAction = createAction({
   name: 'text_to_speech',
+  classification: 'READ',
   auth: edenAiAuth,
   displayName: 'Generate Audio From Text',
   description: 'Convert text to spoken audio using Eden AI. Supports multiple providers, languages, and voice customization.',

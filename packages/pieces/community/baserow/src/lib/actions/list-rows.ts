@@ -7,6 +7,7 @@ import { baserowCommon, makeClient } from '../common';
 
 export const listRowsAction = createAction({
   name: 'baserow_list_rows',
+  classification: 'SEARCH',
   displayName: 'List Rows',
   description: 'Lists rows from a table with optional search, sorting, and filtering.',
   audience: 'both',

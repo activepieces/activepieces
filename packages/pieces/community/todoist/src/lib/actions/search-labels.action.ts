@@ -7,6 +7,7 @@ import { searchLabelsActionOutputSchema } from '../output-schemas';
 export const todoistSearchLabelsAction = createAction({
   auth: todoistAuth,
   name: 'todoist_search_labels',
+  classification: 'SEARCH',
   displayName: 'Search Labels',
   description: 'Searches personal labels by name in Todoist.',
   audience: 'ai',

@@ -7,6 +7,7 @@ import { batchUpdateActionOutputSchema } from '../output-schemas';
 export const batchUpdate = createAction({
   auth: googleDocsAuth,
   name: 'batch_update',
+  classification: 'WRITE',
   displayName: 'Batch Update (Advanced)',
   description: 'Send a raw Google Docs batchUpdate requests array to a document',
   audience: 'ai',

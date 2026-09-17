@@ -7,6 +7,7 @@ import { createS3, createS3WithAssumeRole, isOidcAuth, MAX_STS_DURATION_SECONDS,
 export const generateSignedUploadUrl = createAction({
   auth: amazonS3CombinedAuth,
   name: 'generate-signed-upload-url',
+  classification: 'READ',
   displayName: 'Generate Signed Upload URL',
   description:
     'Generate a pre-signed URL that allows anyone with the link to upload a file directly to S3 without needing AWS credentials.',

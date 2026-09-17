@@ -11,6 +11,7 @@ import { newMentionTriggerOutputSchema } from '../output-schemas';
 export const newMention = createTrigger({
   auth: slackAuth,
   name: 'new_mention',
+  classification: 'READ',
   displayName: 'New Mention in Channel',
   description: 'Triggers when a user or user group is mentioned.',
   aiMetadata: {

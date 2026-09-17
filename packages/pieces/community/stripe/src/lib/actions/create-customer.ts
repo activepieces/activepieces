@@ -5,6 +5,7 @@ import { stripeAuth } from '../..';
 import { customerOutputSchema } from '../output-schemas';
 export const stripeCreateCustomer = createAction({
   name: 'create_customer',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Customer',
   description: 'Create a customer in stripe',

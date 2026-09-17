@@ -12,6 +12,7 @@ import { createDatabaseItemActionOutputSchema } from '../output-schemas';
 export const createDatabaseItem = createAction({
   auth: notionAuth,
   name: 'create_database_item',
+  classification: 'WRITE',
   displayName: 'Create Database Item',
   description:
     'Add a new item to a Notion database with custom field values and optional content. Ideal for creating tasks, records, or entries in structured databases.',

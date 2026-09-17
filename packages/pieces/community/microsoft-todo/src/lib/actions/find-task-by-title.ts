@@ -8,6 +8,7 @@ import { TodoTask } from '@microsoft/microsoft-graph-types';
 export const findTaskByTitleAction = createAction({
 	auth: microsoftToDoAuth,
 	name: 'find_task_by_title',
+	classification: 'SEARCH',
 	displayName: 'Find Task',
 	description: 'Finds tasks by title.',
 	audience: 'both',

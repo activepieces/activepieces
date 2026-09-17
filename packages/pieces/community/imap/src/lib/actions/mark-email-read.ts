@@ -23,6 +23,7 @@ const props = {
 export const markEmailAsRead = createAction({
   auth: imapAuth,
   name: 'mark_email_read',
+  classification: 'WRITE',
   displayName: 'Mark Email as Read/Unread',
   description: 'Sets the read status of an email',
   audience: 'both',

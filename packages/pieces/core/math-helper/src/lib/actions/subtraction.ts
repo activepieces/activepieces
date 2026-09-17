@@ -8,6 +8,7 @@ import { subtractionActionOutputSchema } from '../output-schemas';
 export const subtraction = createAction({
   audience: 'both',
   name: 'subtraction_math',
+  classification: 'READ',
   outputSchema: subtractionActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Subtraction',

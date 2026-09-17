@@ -9,6 +9,7 @@ import { zendeskAuth } from '../..';
 export const findUserAction = createAction({
   auth: zendeskAuth,
   name: 'find-user',
+  classification: 'SEARCH',
   displayName: 'Find User(s)',
   description: 'Search users by email, name, role, or other criteria.',
   audience: 'both',

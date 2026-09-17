@@ -13,6 +13,7 @@ import { carboneProps } from '../common/props';
 export const updateTemplateAction = createAction({
   auth: carboneAuth,
   name: 'carbone_update_template',
+  classification: 'WRITE',
   displayName: 'Update Template Metadata',
   description: 'Update the metadata of an existing Carbone template.',
   audience: 'both',

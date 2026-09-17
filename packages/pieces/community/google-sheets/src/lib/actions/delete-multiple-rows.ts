@@ -7,6 +7,7 @@ import { deleteMultipleRowsActionOutputSchema } from '../output-schemas';
 export const deleteMultipleRowsAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'delete-multiple-rows',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Multiple Rows',
 	description:
 		'Deletes a contiguous range of rows, or a list of specific row numbers. Row numbers are 1-based.',
@@ -21,7 +22,7 @@ export const deleteMultipleRowsAction = createAction({
 		mode: Property.StaticDropdown({
 			displayName: 'Mode',
 			description:
-				'Choose whether to delete a contiguous range (start/end) or a comma-separated list of row numbers.',
+				'Delete a range of rows, or a list of specific row numbers.',
 			required: true,
 			defaultValue: 'range',
 			options: {
@@ -45,8 +46,9 @@ export const deleteMultipleRowsAction = createAction({
 		rowNumbers: Property.ShortText({
 			displayName: 'Row Numbers',
 			description:
-				'Comma-separated row numbers to delete (used in "Specific Row Numbers" mode), e.g. "3, 5, 8".',
+				'Comma-separated row numbers to delete.',
 			required: false,
+			placeholder: '3, 5, 8',
 		}),
 	},
 	outputSchema: deleteMultipleRowsActionOutputSchema,

@@ -8,6 +8,7 @@ import { listUsersActionOutputSchema } from '../output-schemas';
 export const listUsers = createAction({
   // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'listUsers',
+  classification: 'SEARCH',
   displayName: 'List users',
   description: 'List all users of the workspace',
   audience: 'human',

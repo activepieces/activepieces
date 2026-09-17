@@ -1,9 +1,7 @@
-import { isNil, partition } from '@activepieces/core-utils'
+import { isNil } from '@activepieces/core-utils'
 import { apVersionUtil } from '@activepieces/server-utils'
 import { ExecutionMode, NetworkMode, WorkerGroupScope, WorkerMachineHealthcheckRequest, WorkerMachineStatus, WorkerMachineType, WorkerMachineWithStatus, WorkerSettingsResponse } from '@activepieces/shared'
 
-import dayjs from 'dayjs'
-import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { workerGroupService } from '../../ee/platform/platform-plan/worker-group.service'
 import { domainHelper } from '../../helper/domain-helper'
@@ -12,8 +10,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { WorkerGroupAssignment } from '../job'
 import { workerMachineCache } from './machine-cache'
 import { parseWorkerConcurrency, workerCapacity } from './worker-capacity'
-
-dayjs.extend(utc)
+import { workerLiveness } from './worker-liveness'
 
 const settingsCache = new Map<string, WorkerSettingsResponse>()
 
@@ -35,6 +32,8 @@ async function buildSettingsResponse(_log: FastifyBaseLogger): Promise<WorkerSet
         ENVIRONMENT: system.getOrThrow(AppSystemProp.ENVIRONMENT),
         APP_WEBHOOK_SECRETS: system.getOrThrow(AppSystemProp.APP_WEBHOOK_SECRETS),
         MAX_FLOW_RUN_LOG_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB),
+        FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB: system.getNumberOrThrow(AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB),
+        FLOW_RUN_LOG_SLICE_THRESHOLD_KB: system.getNumberOrThrow(AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB),
         MAX_FILE_SIZE_MB: system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB),
         SANDBOX_MEMORY_LIMIT: system.getOrThrow(AppSystemProp.SANDBOX_MEMORY_LIMIT),
         SANDBOX_PROPAGATED_ENV_VARS: system.get(AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS)?.split(',').map(f => f.trim()) ?? [],
@@ -92,11 +91,9 @@ export const machineService = (log: FastifyBaseLogger) => {
         async list(platformId: string): Promise<WorkerMachineWithStatus[]> {
             const allWorkers = await workerMachineCache().find()
 
-            const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+            const { online: onlineWorkers, offline: offlineWorkers } = workerLiveness.partitionByLiveness(allWorkers)
 
-            const [onlineWorkers, offLineWorkers] = partition(allWorkers, (worker) => dayjs(worker.updated).isAfter(offlineThreshold))
-
-            await workerMachineCache().delete(offLineWorkers.map(worker => worker.id))
+            await workerMachineCache().delete(offlineWorkers.map(worker => worker.id))
 
             const platformWorkerGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
             return onlineWorkers
@@ -118,14 +115,10 @@ export const machineService = (log: FastifyBaseLogger) => {
                 }))
         },
         async listProjectWorkerGroups(): Promise<WorkerPoolCapacity> {
-            const allWorkers = await workerMachineCache().find()
-            const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
+            const { online: onlineWorkers } = workerLiveness.partitionByLiveness(await workerMachineCache().find())
             const slotsByLabel = new Map<string, number>()
             let sharedSlots = 0
-            for (const worker of allWorkers) {
-                if (!dayjs(worker.updated).isAfter(offlineThreshold)) {
-                    continue
-                }
+            for (const worker of onlineWorkers) {
                 const slots = parseWorkerConcurrency(worker.information.workerProps.WORKER_CONCURRENCY)
                 if (worker.workerGroupScope === WorkerGroupScope.PROJECT && !isNil(worker.workerGroupId) && worker.workerGroupId.length > 0) {
                     slotsByLabel.set(worker.workerGroupId, (slotsByLabel.get(worker.workerGroupId) ?? 0) + slots)

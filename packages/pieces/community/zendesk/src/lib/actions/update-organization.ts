@@ -13,6 +13,7 @@ import { organizationIdDropdown, groupIdDropdown } from '../common/props';
 export const updateOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'update-organization',
+  classification: 'WRITE',
   displayName: 'Update Organization',
   description: 'Update existing organization fields.',
   audience: 'both',

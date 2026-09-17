@@ -9,6 +9,7 @@ const MAX_LIMIT = 100;
 export const listDatabases = createAction({
   auth: notionAuth,
   name: 'list_databases',
+  classification: 'SEARCH',
   displayName: 'List Databases',
   description:
     'Lists Notion databases accessible by the connected account with pagination support.',

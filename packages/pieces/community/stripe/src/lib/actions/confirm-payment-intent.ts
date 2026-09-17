@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { paymentIntentOutputSchema } from '../output-schemas';
 export const stripeConfirmPaymentIntent = createAction({
   name: 'confirm_payment_intent',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Confirm Payment Intent (Agent)',
   description: 'Confirm a PaymentIntent to attempt the charge.',

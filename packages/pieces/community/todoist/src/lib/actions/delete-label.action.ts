@@ -6,6 +6,7 @@ import { todoistAuth } from '../..';
 export const todoistDeleteLabelAction = createAction({
   auth: todoistAuth,
   name: 'todoist_delete_label',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Label',
   description: 'Deletes a personal label in Todoist.',
   audience: 'ai',

@@ -10,6 +10,7 @@ import {
 export const searchSubscriberAction = createAction({
   auth: acumbamailAuth,
   name: 'acumbamail_search_subscriber',
+  classification: 'READ',
   displayName: 'Search Subscriber',
   description:
     "Returns the subscriber's advanced data in each list to which they belong.",

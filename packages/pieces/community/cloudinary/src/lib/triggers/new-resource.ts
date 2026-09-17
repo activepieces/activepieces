@@ -46,6 +46,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof cloudinaryAuth>,
 export const newResourceInFolder = createTrigger({
   auth: cloudinaryAuth,
   name: 'new_resource',
+  classification: 'READ',
   displayName: 'New Resource',
   description: 'Triggers when a new image, video, or file is uploaded to a specific folder or account in Cloudinary.',
   aiMetadata: {

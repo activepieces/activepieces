@@ -9,6 +9,7 @@ import { cleanRecordActionOutputSchema } from '../output-schemas';
 export const airtableCleanRecordAction = createAction({
   auth: airtableAuth,
   name: 'airtable_clean_record',
+  classification: 'DESTRUCTIVE',
   displayName: 'Clean Record',
   description:
     'Clears fields in a record. Empty values will clear the corresponding fields.',

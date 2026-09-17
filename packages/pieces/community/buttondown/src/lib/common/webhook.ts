@@ -37,6 +37,7 @@ export const createButtondownWebhookTrigger = ({
   createTrigger({
     auth: buttondownAuth,
     name,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata,

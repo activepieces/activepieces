@@ -5,6 +5,7 @@ import { transcriptIdProp } from './shared-props';
 
 export const wordSearch = createAction({
   name: 'wordSearch',
+  classification: 'SEARCH',
   auth: assemblyaiAuth,
   requireAuth: true,
   displayName: 'Search words in transcript',

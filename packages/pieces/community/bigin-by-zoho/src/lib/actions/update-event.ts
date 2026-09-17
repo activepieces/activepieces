@@ -12,6 +12,7 @@ import {
 export const updateEvent = createAction({
   auth: biginAuth,
   name: 'updateEvent',
+  classification: 'WRITE',
   displayName: 'Update Event',
   description: 'Updates an existing event in Bigin',
   audience: 'both',

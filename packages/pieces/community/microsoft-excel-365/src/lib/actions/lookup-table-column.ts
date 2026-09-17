@@ -7,6 +7,7 @@ import { excelCommon } from '../common/common';
 export const lookupTableColumnAction = createAction({
   auth: excelAuth,
   name: 'lookup_table_column',
+  classification: 'SEARCH',
   description: 'Lookup a value in a table column in a worksheet',
   audience: 'both',
   aiMetadata: { description: 'Find rows in a defined Excel table where a named column exactly equals a given value, returning the first match by default or all matches when Return All Matches is enabled. Use to look up table records by a key; throws if the named column does not exist. Read-only and idempotent.', idempotent: true },

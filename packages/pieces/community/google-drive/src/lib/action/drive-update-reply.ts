@@ -6,6 +6,7 @@ import { driveUpdateReplyOutputSchema } from '../output-schemas';
 export const driveUpdateReply = createAction({
   auth: googleDriveAuth,
   name: 'drive_update_reply',
+  classification: 'WRITE',
   displayName: 'Update Reply',
   description: 'Edit the text of an existing reply on a Drive comment.',
   audience: 'ai',

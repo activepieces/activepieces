@@ -9,6 +9,7 @@ import { updateProfileActionOutputSchema } from '../output-schemas';
 export const setUserStatusAction = createAction({
   auth: slackAuth,
   name: 'slack-set-user-status',
+  classification: 'WRITE',
   displayName: 'Set User Status',
   description: "Sets a user's custom status",
   audience: 'human',

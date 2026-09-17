@@ -97,11 +97,32 @@ describe('an agent conversation', () => {
     })
 })
 
+describe('which version a conversation runs', () => {
+    it('answers on what was saved, with nothing left to publish afterwards', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, { modelName: CONFIGURED_MODEL, provider: AIProviderName.OPENROUTER })
+        const cleared = await ctx.post(`/v1/agents/${agent.id}`, {
+            draft: { ...agent.draft, provider: null, modelName: null },
+        })
+        expect(cleared.statusCode).toBe(StatusCodes.OK)
+        expect(cleared.json().published.modelName).toBeNull()
+        const conversation = await startConversation(ctx, agent.id)
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, {
+            content: 'hello',
+        })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json().params.message).toContain('Pick a model')
+    })
+})
+
 describe('the model an agent answers on', () => {
     it('refuses to run an agent that names no model, even when the platform has a chat provider', async () => {
         const ctx = await context()
+        const agent = await createAgent(ctx)
         await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
-        const agent = await createAgent(ctx, { provider: null, modelName: null })
         const conversation = await startConversation(ctx, agent.id)
 
         const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, {

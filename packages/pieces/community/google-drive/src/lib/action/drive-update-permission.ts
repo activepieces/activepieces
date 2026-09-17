@@ -6,6 +6,7 @@ import { driveUpdatePermissionOutputSchema } from '../output-schemas';
 export const driveUpdatePermission = createAction({
   auth: googleDriveAuth,
   name: 'drive_update_permission',
+  classification: 'WRITE',
   displayName: 'Update Permission Role',
   description: 'Change an existing collaborator\'s role on a Drive file or folder.',
   audience: 'ai',

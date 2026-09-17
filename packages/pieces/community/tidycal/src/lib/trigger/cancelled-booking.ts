@@ -12,6 +12,7 @@ import dayjs from 'dayjs';
 export const tidycalbookingcancelled = createTrigger({
   auth: tidyCalAuth,
   name: 'booking_canceled',
+  classification: 'READ',
   displayName: 'Booking Canceled',
   description: 'Triggers when a new booking is canceled',
   aiMetadata: {

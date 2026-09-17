@@ -1,19 +1,22 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 
 import { Client } from '@hubspot/api-client';
 import { standardObjectDynamicProperties } from '../common/props';
 import { OBJECT_TYPE } from '../common/constants';
 import { FilterOperatorEnum } from '../common/types';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 
 export const createOrUpdateContactAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-or-update-contact',
+	classification: 'WRITE',
 	displayName: 'Create or Update Contact',
 	description: 'Creates a new contact or updates an existing contact based on email address.',
 	audience: 'both',
 	aiMetadata: { description: 'Upserts a contact keyed on email: searches for a contact with the given email and updates it if found, otherwise creates a new one with the provided properties. Use this safe-to-retry path when you want to set a contact by email without risking duplicates; use Create Contact when you specifically need a new record. Idempotent on the email key.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		email: Property.ShortText({
 			displayName: 'Contact Email',
@@ -33,7 +36,7 @@ export const createOrUpdateContactAction = createAction({
 			contactProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const searchResponse = await client.crm.contacts.searchApi.doSearch({
 			limit: 1,

@@ -1,6 +1,8 @@
 ---
-title: 'Helm'
-description: 'Deploy Activepieces on Kubernetes using Helm'
+title: 'Kubernetes Installation'
+sidebarTitle: 'Kubernetes (Helm)'
+icon: 'ship'
+description: 'Deploy Activepieces on Kubernetes using the official Helm chart'
 ---
 
 This guide walks you through deploying Activepieces on Kubernetes using the official Helm chart.
@@ -111,7 +113,21 @@ helm dependency update
 ### 3. Create a Values File
 
 Create a `my-values.yaml` file with your configuration. You can use the [example values file](https://github.com/activepieces/activepieces/blob/main/deploy/activepieces-helm/values.yaml) as a reference.
-The Helm chart has sensible defaults for required values while leaving the optional ones empty, but you should customize these core values for production
+The Helm chart has sensible defaults for required values while leaving the optional ones empty, but you should customize these core values for production.
+
+Include these so you can activate a [license key](/install/configure-operate/enterprise-license) later:
+
+```yaml
+activepiecesConfig:
+  AP_EDITION: "ee"
+  AP_EXECUTION_MODE: "SANDBOX_CODE_ONLY"
+```
+
+<Warning>
+Set both, and set each variable in **one place only**. `activepiecesConfig` writes plain values into the pod, while `activepiecesEnvVariables` pulls the same names from Kubernetes secrets you create yourself and renders *after* it, so a secret that holds the key wins. The chart lists `AP_EDITION` and `AP_EXECUTION_MODE` under `activepieces-config-secrets` by default, so either remove them from there or set them in that secret instead of here.
+
+`AP_EDITION=ee` with the default execution mode is rejected at startup and the app will not boot.
+</Warning>
 
 
 ### 4. Install Activepieces
@@ -175,26 +191,9 @@ kubectl port-forward svc/activepieces 4200:80 --namespace default
 kubectl get all --namespace default
 ```
 
-## Editions
-
-Activepieces supports three editions:
-
-- **`ce` (Community Edition)**: Open-source version with all core features (default)
-- **`ee` (Enterprise Edition)**: Self-hosted edition with advanced features like SSO, RBAC, and audit logs
-- **`cloud`**: For Activepieces Cloud deployments
-
-Set the edition in your values file:
-
-```yaml
-activepieces:
-  edition: "ce"  # or "ee" for Enterprise Edition
-```
-
-For Enterprise Edition features and licensing, visit [activepieces.com](https://www.activepieces.com/docs/admin-console/overview).
-
 ## Environment Variables
 
-For a complete list of configuration options, see the [Environment Variables](/install/reference/environment-variables) documentation. Most environment variables can be configured through the Helm values file under the `activepieces` section.
+For a complete list of configuration options, see the [Environment Variables](/install/reference/environment-variables) documentation. Most environment variables can be configured through the Helm values file, either as plain values under `activepiecesConfig` or injected from your own secrets under `activepiecesEnvVariables`.
 
 ## Execution Modes
 

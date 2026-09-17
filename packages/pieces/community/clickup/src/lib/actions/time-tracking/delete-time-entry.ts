@@ -7,6 +7,7 @@ import { listTimeEntriesOutputSchema } from '../../output-schemas';
 export const clickupDeleteTimeEntry = createAction({
   auth: clickupAuth,
   name: 'clickup_delete_time_entry',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Time Entry',
   description: 'Delete a time entry by its ID.',
   audience: 'ai',

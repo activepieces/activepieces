@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -7,19 +7,20 @@ import dayjs from 'dayjs';
 import { isNil } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
+import { crmObjectOutputSchema } from '../output-schemas';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
 type Props = {
 	additionalPropertiesToRetrieve?: string | string[];
 };
 
-import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
+		const client = new Client({ accessToken: getHubspotAccessToken(auth), numberOfApiCallRetries: 3 });
 
 		const additionalProperties = propsValue.additionalPropertiesToRetrieve ?? [];
 		const defaultContactProperties = getDefaultPropertiesForObject(OBJECT_TYPE.CONTACT);
@@ -74,6 +75,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Pr
 export const newContactTrigger = createTrigger({
 	auth: hubspotAuth,
 	name: 'new-contact',
+	classification: 'READ',
 	displayName: 'New Contact',
 	description: 'Trigger when new contact is available.',
 	aiMetadata: {
@@ -95,6 +97,7 @@ export const newContactTrigger = createTrigger({
 			required: false,
 		}),
 	},
+	outputSchema: crmObjectOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, context);

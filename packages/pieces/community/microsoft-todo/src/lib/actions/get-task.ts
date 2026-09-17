@@ -6,6 +6,7 @@ import { TodoTask } from '@microsoft/microsoft-graph-types';
 export const getTaskAction = createAction({
     auth: microsoftToDoAuth,
     name: 'get_task',
+    classification: 'READ',
     displayName: 'Get Task',
     description: 'Gets the details of a specific task.',
     audience: 'both',

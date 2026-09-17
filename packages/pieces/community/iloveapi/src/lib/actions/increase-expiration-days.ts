@@ -5,6 +5,7 @@ import { iLoveApi } from '../common/client';
 export const increaseExpirationDaysAction = createAction({
   auth: iloveapiAuth,
   name: 'increase_expiration_days',
+  classification: 'WRITE',
   displayName: 'Increase Expiration Days',
   description:
     'Extend the expiration of a signature request by a number of days. Total cannot exceed 130 days from now.',

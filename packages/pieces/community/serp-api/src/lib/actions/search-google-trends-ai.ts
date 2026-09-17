@@ -7,6 +7,7 @@ import { searchGoogleTrendsAiOutputSchema } from '../output-schemas';
 export const searchGoogleTrendsAi = createAction({
   auth: serpApiAuth,
   name: 'search_google_trends_ai',
+  classification: 'SEARCH',
   displayName: 'Google Trends Search (Agent)',
   description: 'Query Google Trends for interest in a keyword over time and across regions.',
   audience: 'ai',

@@ -8,6 +8,7 @@ import { CARBONE_API_URL, CARBONE_VERSION } from '../common/constants';
 export const uploadTemplateAction = createAction({
   auth: carboneAuth,
   name: 'carbone_upload_template',
+  classification: 'WRITE',
   displayName: 'Upload Template',
   description: 'Upload a template file to Carbone and get a template ID for rendering.',
   audience: 'both',

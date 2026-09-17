@@ -6,6 +6,7 @@ import { togglCommon } from '../common';
 export const findClient = createAction({
   auth: togglTrackAuth,
   name: 'find_client',
+  classification: 'SEARCH',
   displayName: 'Find Client',
   description: 'Find a client by name or status in a workspace.',
   audience: 'both',

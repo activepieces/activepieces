@@ -15,6 +15,7 @@ Use this piece if you are unsure which connection to use beforehand, such as whe
 export const readConnection = createAction({
   audience: 'both',
   name: 'read_connection',
+  classification: 'READ',
   displayName: 'Read Connection',
   description: 'Fetch connection by name',
   aiMetadata: { description: 'Looks up a stored app connection in the current project by its external ID, so a flow can resolve credentials at runtime instead of binding one fixed connection at build time (for example when the external ID arrives in a webhook payload). When the connection is known up front, configure the target piece action with its own auth instead. Requires the exact external ID and throws if no connection matches; read-only and idempotent.', idempotent: true },

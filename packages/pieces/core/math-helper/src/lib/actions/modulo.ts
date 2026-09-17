@@ -8,6 +8,7 @@ import { moduloActionOutputSchema } from '../output-schemas';
 export const modulo = createAction({
   audience: 'both',
   name: 'modulo_math',
+  classification: 'READ',
   outputSchema: moduloActionOutputSchema,
   auth: PieceAuth.None(),
   displayName: 'Modulo',

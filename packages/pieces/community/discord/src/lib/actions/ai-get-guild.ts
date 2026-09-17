@@ -10,6 +10,7 @@ import { discordGetGuildActionOutputSchema } from '../output-schemas';
 export const discordGetGuild = createAction({
   auth: discordAuth,
   name: 'discord_get_guild',
+  classification: 'READ',
   displayName: 'Get Guild',
   description: 'Fetch metadata about a guild.',
   audience: 'ai',

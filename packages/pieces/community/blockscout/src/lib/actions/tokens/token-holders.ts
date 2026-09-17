@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTokenHolders = createAction({
   name: 'get_token_holders',
+  classification: 'SEARCH',
   displayName: 'Get Token Holders',
   description: 'Get list of token holders',
   audience: 'both',

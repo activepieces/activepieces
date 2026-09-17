@@ -10,6 +10,7 @@ import { oneDriveCommon } from '../common/common';
 export const listFolders = createAction({
   auth: oneDriveAuth,
   name: 'list_folders',
+  classification: 'SEARCH',
   description: 'List folders in a OneDrive folder',
   audience: 'both',
   aiMetadata: { description: 'List the subfolders contained in a Microsoft OneDrive folder (file items are excluded). Provide a parent folder ID to scope the listing, or leave it empty to list folders at the drive root; useful for discovering a folder ID to pass to other actions. Read-only and idempotent.', idempotent: true },

@@ -10,6 +10,7 @@ import { discordSuccessActionOutputSchema } from '../output-schemas';
 export const discordClearReactions = createAction({
   auth: discordAuth,
   name: 'discord_clear_reactions',
+  classification: 'DESTRUCTIVE',
   displayName: 'Clear All Reactions',
   description: 'Remove all reactions from a message.',
   audience: 'ai',

@@ -10,6 +10,7 @@ import { discordSuccessWithAlreadyAbsentActionOutputSchema } from '../output-sch
 export const discordRemoveUserReaction = createAction({
   auth: discordAuth,
   name: 'discord_remove_user_reaction',
+  classification: 'WRITE',
   displayName: 'Remove User Reaction',
   description: "Remove another user's reaction from a message (moderation).",
   audience: 'ai',

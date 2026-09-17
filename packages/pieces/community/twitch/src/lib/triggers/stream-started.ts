@@ -60,6 +60,7 @@ const polling: Polling<
 export const streamStarted = createTrigger({
   auth: twitchAuth,
   name: 'stream_started',
+  classification: 'READ',
   displayName: 'Streamer(s) Go Live',
   description: 'Triggers when a stream from a list of streamers has started',
   aiMetadata: {

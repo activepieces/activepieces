@@ -7,6 +7,7 @@ import { callIdDropdown } from '../common/props';
 export const getCall = createAction({
   auth: aircallAuth,
   name: 'getCall',
+  classification: 'READ',
   displayName: 'Get Call',
   description: 'Retrieves details about a specific call.',
   audience: 'both',

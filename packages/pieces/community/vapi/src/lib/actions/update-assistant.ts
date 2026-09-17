@@ -6,6 +6,7 @@ import { createVapiClient } from '../common/client';
 export const updateAssistant = createAction({
   auth: vapiAuth,
   name: 'update_assistant',
+  classification: 'WRITE',
   displayName: 'Update Assistant',
   description:
     'Update an existing Vapi assistant configuration (name, model, first message, etc.).',

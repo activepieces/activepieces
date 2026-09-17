@@ -5,6 +5,7 @@ import { abortActorRunActionOutputSchema } from '../output-schemas';
 
 export const apifyAbortActorRun = createAction({
   name: 'apify_abort_actor_run',
+  classification: 'DESTRUCTIVE',
   auth: apifyAuth,
   displayName: 'Abort Actor Run',
   description: 'Stops a running Actor run by run ID.',

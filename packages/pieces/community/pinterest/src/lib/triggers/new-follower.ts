@@ -80,6 +80,7 @@ const polling: Polling<
 export const newFollower = createTrigger({
   auth: pinterestAuth,
   name: 'newFollower',
+  classification: 'READ',
   outputSchema: newFollowerTriggerOutputSchema,
   displayName: 'New Follower',
   description: 'Triggers when a user gains a new follower.',

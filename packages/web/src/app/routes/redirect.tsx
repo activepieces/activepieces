@@ -39,7 +39,7 @@ const RedirectPage: React.FC = React.memo(() => {
             code,
           });
           authenticationSession.saveResponse(data, false);
-          if (isNil(data.projectId)) {
+          if (isNil(data.platformId)) {
             navigate('/create-platform');
             return;
           }

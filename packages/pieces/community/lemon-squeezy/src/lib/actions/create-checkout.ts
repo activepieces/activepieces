@@ -11,6 +11,7 @@ import {
 
 export const createCheckout = createAction({
   name: 'create_checkout',
+  classification: 'WRITE',
   displayName: 'Create Checkout',
   description: 'Create a checkout URL for a specific Lemon Squeezy product variant.',
   audience: 'both',

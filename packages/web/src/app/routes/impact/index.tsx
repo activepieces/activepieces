@@ -50,10 +50,11 @@ export default function ImpactPage() {
   const activeTab = (searchParams.get('tab') as TabValue) || 'analytics';
 
   const { data: projects } = projectCollectionUtils.useAll();
-  const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(
-    selectedTimePeriod,
-    selectedProjectId,
-  );
+  const { data, isLoading, isError } =
+    platformAnalyticsHooks.useAnalyticsTimeBased(
+      selectedTimePeriod,
+      selectedProjectId,
+    );
 
   const { mutate: refreshAnalytics } =
     platformAnalyticsHooks.useRefreshAnalytics();
@@ -107,7 +108,6 @@ export default function ImpactPage() {
     >
       <div className="flex flex-col gap-4 w-full">
         <PageHeader
-          showSidebarToggle={true}
           title={
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium">{t('Impact')}</span>
@@ -223,6 +223,7 @@ export default function ImpactPage() {
             <FlowsDetails
               report={report}
               isLoading={isLoading}
+              isError={isError}
               projects={projects}
             />
           </TabsContent>

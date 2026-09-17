@@ -8,6 +8,7 @@ import { listPullRequestFilesOutputSchema } from '../../output-schemas';
 export const githubListPullRequestFilesAction = createAction({
   auth: githubAuth,
   name: 'list_pull_request_files',
+  classification: 'SEARCH',
   displayName: 'List Pull Request Files (Agent)',
   description: 'Lists the files changed in a pull request.',
   audience: 'ai',

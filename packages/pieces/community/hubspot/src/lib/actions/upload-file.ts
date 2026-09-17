@@ -1,19 +1,21 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, HubspotAuthValue, hubspotAuth } from '../auth';
 import {
 	createAction,
 	DropdownOption,
-	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
+import { uploadFileOutputSchema } from '../output-schemas';
 
 export const uploadFileAction = createAction({
 	auth: hubspotAuth,
 	name: 'upload-file',
+	classification: 'WRITE',
 	displayName: 'Upload File',
 	description: 'Uploads a file to HubSpot File Manager.',
 	audience: 'both',
 	aiMetadata: { description: 'Upload a file into a chosen folder in the HubSpot File Manager with a given name and access level. Each call uploads a new file rather than replacing an existing one, so it is not idempotent.', idempotent: false },
+	outputSchema: uploadFileOutputSchema,
 	props: {
 		folderId: Property.Dropdown({
 			auth: hubspotAuth,
@@ -29,8 +31,8 @@ export const uploadFileAction = createAction({
 					};
 				}
 
-				const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
-				const client = new Client({ accessToken: authValue.access_token });
+				const authValue = auth as HubspotAuthValue;
+				const client = new Client({ accessToken: getHubspotAccessToken(authValue) });
 
 				const limit = 100;
 				const options: DropdownOption<string>[] = [];
@@ -88,7 +90,7 @@ export const uploadFileAction = createAction({
 	},
 	async run(context) {
 		const { accessLevel, fileName, folderId, file } = context.propsValue;
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const response = await client.files.filesApi.upload(
 			{

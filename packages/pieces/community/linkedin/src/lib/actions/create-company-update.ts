@@ -12,6 +12,7 @@ import { createCompanyUpdateActionOutputSchema } from '../output-schemas';
 export const createCompanyUpdate = createAction({
   auth: linkedinAuth,
   name: 'create_company_update',
+  classification: 'WRITE',
   displayName: 'Create Company Update',
   description: 'Create a new company update for Company Page',
   audience: 'both',

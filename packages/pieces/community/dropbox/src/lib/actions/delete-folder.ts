@@ -5,14 +5,17 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import { dropboxAuth } from '../auth';
+import { folderMetadataOutputSchema } from '../output-schemas';
 
 export const dropboxDeleteFolder = createAction({
   auth: dropboxAuth,
   name: 'delete_dropbox_folder',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a folder',
   audience: 'both',
   aiMetadata: { description: 'Permanently deletes the folder at the given Dropbox path along with all of its contents. Use to remove an entire directory. Effectively idempotent on the end state once the path is gone, but a repeat call fails because the path no longer exists; treat as a destructive, non-recoverable mutation.', idempotent: false },
   displayName: 'Delete folder',
+  outputSchema: folderMetadataOutputSchema,
   props: {
     path: Property.ShortText({
       displayName: 'Path',

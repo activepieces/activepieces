@@ -8,6 +8,7 @@ import { createWorksheetActionOutputSchema } from '../output-schemas';
 export const createWorksheetAction = createAction({
   auth: googleSheetsAuth,
   name: 'create-worksheet',
+  classification: 'WRITE',
   displayName: 'Create Worksheet',
   description:'Create a new blank worksheet with a title.',
   audience: 'human',
@@ -18,7 +19,7 @@ export const createWorksheetAction = createAction({
   },
   props: {
     includeTeamDrives: includeTeamDrivesProp(),
-    spreadsheetId: spreadsheetIdProp('Spreadsheet',''),
+    spreadsheetId: spreadsheetIdProp('Spreadsheet','The spreadsheet to add the worksheet to.'),
     title:Property.ShortText({
         displayName:'Title',
         description:'The title of the new worksheet.',
@@ -26,6 +27,7 @@ export const createWorksheetAction = createAction({
     }),
     headers:Property.Array({
         displayName:'Headers',
+        description:'Column names to write into the first row.',
         required:false
     })
    

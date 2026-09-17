@@ -10,6 +10,7 @@ import { discordEditMessageActionOutputSchema } from '../output-schemas';
 export const discordEditMessage = createAction({
   auth: discordAuth,
   name: 'discord_edit_message',
+  classification: 'WRITE',
   displayName: 'Edit Message',
   description: "Edit the content of one of the bot's own messages.",
   audience: 'ai',

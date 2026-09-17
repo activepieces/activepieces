@@ -10,6 +10,7 @@ import { canvaCommon, CanvaDesignResponse, fetchUserDesigns } from '../common';
 export const getDesign = createAction({
   auth: canvaAuth,
   name: 'get_design',
+  classification: 'READ',
   displayName: 'Get Design',
   description: 'Get the metadata for one of your designs, including owner information, URLs for editing and viewing, and thumbnail information.',
   audience: 'both',

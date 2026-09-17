@@ -8,10 +8,12 @@ import { openaiAuth } from '../auth';
 import FormData from 'form-data';
 import mime from 'mime-types';
 import { Languages, baseUrl } from '../common/common';
+import { transcribeActionOutputSchema } from '../output-schemas';
 
 export const transcribeAction = createAction({
   audience: 'both',
   name: 'transcribe',
+  classification: 'READ',
   displayName: 'Transcribe Audio',
   description: 'Transcribe audio to text using whisper-1 model',
   aiMetadata: { description: 'Transcribes an uploaded audio file to text with the whisper-1 model, keeping the words in the language that was spoken, with an optional language hint (defaulting to English, and silently falling back to English when an unsupported code is given) that improves accuracy. Choose the sibling translate action instead whenever the output must be English no matter what language was spoken, and text_to_speech for the opposite direction. Requires an audio file; not idempotent: each call re-runs the model and the wording can vary slightly.', idempotent: false },
@@ -32,6 +34,7 @@ export const transcribeAction = createAction({
       defaultValue: 'en',
     }),
   },
+  outputSchema: transcribeActionOutputSchema,
   run: async (context) => {
     const fileData = context.propsValue.audio;
     const mimeType = mime.lookup(fileData.extension ? fileData.extension : '');

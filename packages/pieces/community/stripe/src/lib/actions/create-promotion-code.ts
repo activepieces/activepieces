@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { promotionCodeOutputSchema } from '../output-schemas';
 export const stripeCreatePromotionCode = createAction({
   name: 'create_promotion_code',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Create Promotion Code (Agent)',
   description: 'Create a customer-facing promotion code for a coupon.',

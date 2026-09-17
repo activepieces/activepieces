@@ -6,6 +6,7 @@ import { pgClient } from '../common';
 export const runQuery = createAction({
   auth: postgresAuth,
   name: 'run-query',
+  classification: 'WRITE',
   displayName: 'Run Query',
   description: 'Run Query',
   audience: 'both',

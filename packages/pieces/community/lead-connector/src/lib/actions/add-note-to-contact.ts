@@ -9,6 +9,7 @@ import { leadConnectorAuth } from '../..';
 export const addNoteToContactAction = createAction({
   auth: leadConnectorAuth,
   name: 'add_note_to_contact',
+  classification: 'WRITE',
   displayName: 'Add Note to Contact',
   description: 'Add a new note to a contact.',
   audience: 'both',

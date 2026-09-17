@@ -1,5 +1,5 @@
-import { isNil } from '@activepieces/core-utils'
-import { FlowRunStatus, TelemetryEventName } from '@activepieces/shared'
+import { unique } from '@activepieces/core-utils'
+import { TelemetryEventName } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyPluginAsync } from 'fastify'
 import { Between, EntityManager } from 'typeorm'
@@ -9,13 +9,14 @@ import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
+import { platformConfigurationService } from '../../platform/platform-configuration.service'
+import { resumeController } from '../../waitpoints/resume-controller'
+import { handleResumeDelayWaitpoint } from '../../waitpoints/resume-delay-handler'
+import { waitpointController } from '../../waitpoints/waitpoint-controller'
 import { engineResponseWatcher } from '../../workers/engine-response-watcher'
 import { flowRunController } from './flow-run-controller'
 import { FlowRunEntity } from './flow-run-entity'
-import { flowRunRepo, flowRunService } from './flow-run-service'
-import { resumeController } from './waitpoint/resume-controller'
-import { resumeService } from './waitpoint/resume-service'
-import { waitpointController } from './waitpoint/waitpoint-controller'
+import { flowRunRepo } from './flow-run-service'
 
 const RUN_TELEMETRY_STATEMENT_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
 
@@ -25,9 +26,6 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
     await app.register(resumeController, { prefix: '/v1/flow-runs' })
     await app.register(waitpointController, { prefix: '/v1/waitpoints' })
     systemJobHandlers.registerJobHandler(SystemJobName.RUN_TELEMETRY, async (_job: SystemJobData<SystemJobName.RUN_TELEMETRY>) => {
-        if (!telemetry(app.log).isEnabled()) {
-            return
-        }
         app.log.info({
             name: SystemJobName.RUN_TELEMETRY,
         }, 'Run telemetry started')
@@ -43,7 +41,15 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
                 .groupBy('"projectId", "flowId", "environment"')
                 .getRawMany()
         })
+        const eligibleProjectIds = new Set(
+            await platformConfigurationService(app.log).filterProjectsWithProductTelemetryEnabled({
+                projectIds: unique(projectFlowCounts.map((row) => row.projectId)),
+            }),
+        )
         for (const { projectId, flowId, environment, count } of projectFlowCounts) {
+            if (!eligibleProjectIds.has(projectId)) {
+                continue
+            }
             app.log.info({
                 project: { id: projectId },
                 flow: { id: flowId },
@@ -51,13 +57,16 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
                 count: parseInt(count, 10),
             }, 'Tracking flow run created')
             rejectedPromiseHandler(
-                telemetry(app.log).trackProject(projectId, {
-                    name: TelemetryEventName.FLOW_RUN_CREATED,
-                    payload: {
-                        projectId,
-                        flowId,
-                        environment,
-                        count: parseInt(count, 10),
+                telemetry(app.log).trackProject({
+                    projectId,
+                    event: {
+                        name: TelemetryEventName.FLOW_RUN_CREATED,
+                        payload: {
+                            projectId,
+                            flowId,
+                            environment,
+                            count: parseInt(count, 10),
+                        },
                     },
                 }),
                 app.log,
@@ -76,24 +85,7 @@ export const flowRunModule: FastifyPluginAsync = async (app) => {
         },
     })
     systemJobHandlers.registerJobHandler(SystemJobName.RESUME_DELAY_WAITPOINT, async (data: SystemJobData<SystemJobName.RESUME_DELAY_WAITPOINT>) => {
-        const flowRun = await flowRunService(app.log).getOne({ id: data.flowRunId, projectId: data.projectId })
-        if (isNil(flowRun)) {
-            app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
-                '[RESUME_DELAY_WAITPOINT] Flow run no longer exists (expired/deleted), skipping')
-            return
-        }
-        if (flowRun.status !== FlowRunStatus.PAUSED) {
-            app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId }, status: flowRun.status },
-                '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
-            return
-        }
-        app.log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId } },
-            '[RESUME_DELAY_WAITPOINT] Resuming flow')
-        await resumeService(app.log).resumeFromWaitpoint({
-            flowRunId: data.flowRunId,
-            waitpointId: data.waitpointId,
-            resumePayload: null,
-        })
+        await handleResumeDelayWaitpoint({ data, log: app.log })
     })
     await engineResponseWatcher(app.log).init()
 }

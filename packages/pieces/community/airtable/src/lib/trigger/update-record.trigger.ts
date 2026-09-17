@@ -105,6 +105,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof airtableAuth>, S
 export const airtableUpdatedRecordTrigger = createTrigger({
   auth: airtableAuth,
   name: 'updated_record',
+  classification: 'READ',
   displayName: 'New or Updated Record',
   description:
     'Triggers when a record is created or updated in selected table.',

@@ -5,6 +5,7 @@ import { getActorInputSchemaActionOutputSchema } from '../output-schemas';
 
 export const apifyGetActorInputSchema = createAction({
   name: 'apify_get_actor_input_schema',
+  classification: 'READ',
   auth: apifyAuth,
   displayName: 'Get Actor Input Schema',
   description: 'Retrieves the input schema (fields, types, required, enums) of an Actor\'s default build.',

@@ -11,6 +11,7 @@ import { bubbleCommon } from '../common';
 export const bubbleDeleteThingAction = createAction({
   auth: bubbleAuth,
   name: 'bubble_delete_thing',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Thing',
   description: 'Delete a thing',
   audience: 'both',

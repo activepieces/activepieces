@@ -17,6 +17,7 @@ interface GuildMember {
 export const discordFindMember = createAction({
   auth: discordAuth,
   name: 'discord_find_member',
+  classification: 'SEARCH',
   displayName: 'Find Member',
   description: 'Search guild members by username/nickname prefix.',
   audience: 'ai',

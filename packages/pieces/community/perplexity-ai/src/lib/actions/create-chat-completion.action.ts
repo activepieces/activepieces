@@ -17,6 +17,7 @@ export const createChatCompletionAction = createAction({
   audience: 'both',
   auth: perplexityAiAuth,
   name: 'ask-ai',
+  classification: 'READ',
   displayName: 'Ask AI',
   description:
     'Enables users to generate prompt completion based on a specified model.',
