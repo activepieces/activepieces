@@ -17,7 +17,8 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
             code_challenge_methods_supported: ['S256'],
             token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
             revocation_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
-            scopes_supported: ['mcp'],
+            scopes_supported: ['mcp', 'openid', 'email', 'profile'],
+            userinfo_endpoint: `${issuer}/userinfo`,
         })
     })
 
@@ -26,6 +27,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp`,
             authorization_servers: [issuer],
+            scopes_supported: ['mcp', 'openid', 'email', 'profile'],
         })
     })
 
@@ -34,6 +36,7 @@ export const mcpOAuthMetadataController: FastifyPluginAsyncZod = async (app) => 
         return reply.status(200).header('Access-Control-Allow-Origin', '*').send({
             resource: `${issuer}/mcp/platform`,
             authorization_servers: [issuer],
+            scopes_supported: ['mcp', 'openid', 'email', 'profile'],
         })
     })
 }

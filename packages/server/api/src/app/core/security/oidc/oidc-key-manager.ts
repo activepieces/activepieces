@@ -4,6 +4,9 @@ import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { Mutex } from 'async-mutex'
 import { FlagEntity } from '../../../flags/flag.entity'
 import { EncryptedObject, encryptUtils } from '../../../helper/encryption'
+import { JwtSignAlgorithm, jwtUtils } from '../../../helper/jwt-utils'
+import { system } from '../../../helper/system/system'
+import { AppSystemProp } from '../../../helper/system/system-props'
 import { repoFactory } from '../../db/repo-factory'
 
 const flagRepo = repoFactory(FlagEntity)
@@ -38,6 +41,23 @@ export const oidcKeyManager = {
     },
     async getKid(): Promise<string> {
         return (await oidcKeyManager.getPublicKeyJwk()).kid
+    },
+    getIssuer(): string {
+        return system.getOrThrow(AppSystemProp.FRONTEND_URL).replace(/\/$/, '')
+    },
+    async sign({ payload, expiresInSeconds, issuer }: SignParams): Promise<string> {
+        const [privateKey, kid] = await Promise.all([
+            oidcKeyManager.getPrivateKeyPem(),
+            oidcKeyManager.getKid(),
+        ])
+        return jwtUtils.sign({
+            payload,
+            key: privateKey,
+            expiresInSeconds,
+            algorithm: JwtSignAlgorithm.RS256,
+            keyId: kid,
+            issuer: issuer ?? oidcKeyManager.getIssuer(),
+        })
     },
 }
 
@@ -82,6 +102,12 @@ function computeKidFromJwk(jwk: JsonWebKey): string {
     // RFC 7638: SHA-256 thumbprint of required RSA members in lexicographic order
     const thumbprintData = JSON.stringify({ e: jwk.e, kty: jwk.kty, n: jwk.n })
     return createHash('sha256').update(thumbprintData).digest('base64url')
+}
+
+type SignParams = {
+    payload: Record<string, unknown>
+    expiresInSeconds: number
+    issuer?: string
 }
 
 type OidcJwk = JsonWebKey & { use: string, alg: string, kid: string }

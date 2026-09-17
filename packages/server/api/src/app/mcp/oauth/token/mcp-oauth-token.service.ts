@@ -1,5 +1,5 @@
 import { randomBytes } from 'crypto'
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { McpOAuthClientKey, McpOAuthGrant, McpOAuthToken } from '@activepieces/shared'
 import { In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
@@ -11,6 +11,7 @@ import { mcpListingUtils } from '../../mcp-listing-utils'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
+import { mcpOidc } from '../oidc/mcp-oidc'
 import { mcpOAuthRevocationList } from './mcp-oauth-revocation-list'
 import { MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_REFRESH_TOKEN_TTL_MS } from './mcp-oauth-token-lifetimes'
 import { McpOAuthTokenEntity } from './mcp-oauth-token.entity'
@@ -77,21 +78,32 @@ export const mcpOAuthTokenService = {
         }
         await repo().save(sanitizeObjectForPostgresql(tokenRecord))
 
-        const accessToken = await issueAccessToken({
-            userId: params.userId,
-            projectId: params.projectId,
-            platformId: params.platformId,
-            clientId: params.clientId,
-            grantId: tokenRecord.id,
-            clientKey,
-            scopes: params.scopes,
-        })
+        const [accessToken, idToken] = await Promise.all([
+            issueAccessToken({
+                userId: params.userId,
+                projectId: params.projectId,
+                platformId: params.platformId,
+                clientId: params.clientId,
+                grantId: tokenRecord.id,
+                clientKey,
+                scopes: params.scopes,
+            }),
+            mcpOidc.issueIdToken({
+                userId: params.userId,
+                platformId: params.platformId,
+                clientId: params.clientId,
+                scopes: params.scopes,
+                nonce: params.nonce,
+                issuer: params.issuer,
+            }),
+        ])
 
         return {
             access_token: accessToken,
             token_type: 'Bearer',
             expires_in: MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS,
             refresh_token: rawRefreshToken,
+            ...spreadIfDefined('id_token', idToken),
         }
     },
 
@@ -127,6 +139,24 @@ export const mcpOAuthTokenService = {
             expires_in: MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS,
             refresh_token: params.refreshToken,
         }
+    },
+
+    async authenticate(token: string): Promise<AuthenticateResult> {
+        const { data: payload, error } = await tryCatch(() => mcpOAuthTokenService.verifyAccessToken(token))
+        if (error || isNil(payload)) {
+            return { status: 'invalid', error }
+        }
+        const { grantId } = payload
+        if (!isNil(grantId)) {
+            const { data: revoked, error: revocationError } = await tryCatch(() => mcpOAuthRevocationList.isRevoked({ grantId }))
+            if (revocationError) {
+                return { status: 'unavailable', error: revocationError }
+            }
+            if (revoked) {
+                return { status: 'invalid' }
+            }
+        }
+        return { status: 'ok', payload }
     },
 
     async verifyAccessToken(token: string): Promise<McpOAuthAccessTokenPayload> {
@@ -260,6 +290,8 @@ type ExchangeCodeParams = {
     projectId: string | null
     platformId: string
     scopes: string[]
+    nonce: string | null
+    issuer: string
 }
 
 type RevokeRefreshTokenParams = {
@@ -299,7 +331,13 @@ type TokenResponse = {
     token_type: string
     expires_in: number
     refresh_token?: string
+    id_token?: string
 }
+
+type AuthenticateResult =
+    | { status: 'ok', payload: McpOAuthAccessTokenPayload }
+    | { status: 'invalid', error?: unknown }
+    | { status: 'unavailable', error: unknown }
 
 export const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 
