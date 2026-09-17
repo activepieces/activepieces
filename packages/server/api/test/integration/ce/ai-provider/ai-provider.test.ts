@@ -539,6 +539,12 @@ describe('AI Providers API', () => {
                 expect(response?.statusCode).toBe(StatusCodes.OK)
                 const chatProviders = response?.json().filter((p: { enabledForChat: boolean }) => p.enabledForChat)
                 expect(chatProviders.map((p: { provider: string }) => p.provider)).toEqual([AIProviderName.ACTIVEPIECES])
+
+                const served = await aiProviderService(app!.log).getChatProvider({
+                    platformId: ctx.platform.id,
+                    scope: { type: 'project', projectId: ctx.project.id },
+                })
+                expect(served?.provider).toBe(AIProviderName.ACTIVEPIECES)
             }
             finally {
                 delete process.env.AP_OPENROUTER_PROVISION_KEY

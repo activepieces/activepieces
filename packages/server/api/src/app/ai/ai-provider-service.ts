@@ -461,7 +461,11 @@ async function decryptRowAuth({ aiProvider, platformId }: { aiProvider: AIProvid
 }
 
 async function findAvailableChatProviderRow({ platformId, scope, log }: { platformId: PlatformId, scope: ProviderScope, log: FastifyBaseLogger }): Promise<AIProviderSchema | null> {
-    const rows = (await aiProviderRepo().findBy({ platformId })).filter((row) => rowAllowsScope({ row, scope }))
+    const candidates = await aiProviderRepo().findBy([
+        { platformId, enabledForChat: true },
+        { platformId, provider: AIProviderName.ACTIVEPIECES },
+    ])
+    const rows = candidates.filter((row) => rowAllowsScope({ row, scope }))
     const chatRow = pickChatRow(rows)
     if (chatRow?.provider !== AIProviderName.ACTIVEPIECES) {
         return chatRow
