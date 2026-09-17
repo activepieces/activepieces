@@ -1,12 +1,15 @@
-import { isNil, ProjectId } from '@activepieces/core-utils'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, FlowRetryStrategy, FlowRun, IncreaseAICreditsForPlatformRequestBody, PlatformRole } from '@activepieces/shared'
+import { FlowId, isNil, ProjectId, tryCatch } from '@activepieces/core-utils'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, FlowOperationType, FlowRetryStrategy, FlowRun, IncreaseAICreditsForPlatformRequestBody, PlatformRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { aiProviderService } from '../../../ai/ai-provider-service'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
+import { flowRepo } from '../../../flows/flow/flow.repo'
+import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunRepo, flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { billingProvider } from '../../../platform/billing-provider'
 import { platformRepo } from '../../../platform/platform.service'
+import { projectService } from '../../../project/project-service'
 import { userRepo } from '../../../user/user-service'
 import { openRouterApi } from '../platform-plan/openrouter/openrouter-api'
 
@@ -83,4 +86,56 @@ export const adminPlatformService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async publishFlows({ flowIds }: PublishFlowsParams): Promise<PublishFlowsResult> {
+        const results: PublishFlowResult[] = []
+        for (const flowId of flowIds) {
+            const result = await publishFlow({ flowId, log })
+            results.push(result)
+            log.info({ flow: { id: flowId }, ...result }, 'Admin publish flow')
+        }
+        return {
+            published: results.filter((result) => result.status === 'PUBLISHED').length,
+            failed: results.filter((result) => result.status === 'FAILED').length,
+            results,
+        }
+    },
+
 })
+
+async function publishFlow({ flowId, log }: { flowId: FlowId, log: FastifyBaseLogger }): Promise<PublishFlowResult> {
+    const flow = await flowRepo().findOneBy({ id: flowId })
+    if (isNil(flow)) {
+        return { flowId, status: 'FAILED', error: 'Flow not found' }
+    }
+    const platformId = await projectService(log).getPlatformId(flow.projectId)
+    const { error } = await tryCatch(() => flowService(log).update({
+        id: flow.id,
+        userId: null,
+        projectId: flow.projectId,
+        platformId,
+        operation: {
+            type: FlowOperationType.LOCK_AND_PUBLISH,
+            request: {},
+        },
+    }))
+    if (!isNil(error)) {
+        return { flowId, status: 'FAILED', error: error.message }
+    }
+    return { flowId, status: 'PUBLISHED' }
+}
+
+type PublishFlowsParams = {
+    flowIds: FlowId[]
+}
+
+type PublishFlowResult = {
+    flowId: FlowId
+    status: 'PUBLISHED' | 'FAILED'
+    error?: string
+}
+
+type PublishFlowsResult = {
+    published: number
+    failed: number
+    results: PublishFlowResult[]
+}

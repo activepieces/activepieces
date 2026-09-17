@@ -96,6 +96,11 @@ const adminPlatformController: FastifyPluginAsyncZod = async (
         return res.status(StatusCodes.OK).send(result)
     })
 
+    app.post('/flows/publish', PublishFlowsRequest, async (req, res) => {
+        const result = await adminPlatformService(req.log).publishFlows(req.body)
+        return res.status(StatusCodes.OK).send(result)
+    })
+
     app.post('/chat/sync-all', SyncAllConversationsRequest, async (req, res) => {
         const PAGE_SIZE = 100
         const conversationRepo = repoFactory(AgentConversationEntity)
@@ -232,6 +237,17 @@ const MigrateFlowsDenoRequest = {
             flowIds: z.array(z.string()).optional(),
         }).refine((body) => [body.platformId, body.projectId, body.flowIds].filter((value) => !isNil(value)).length === 1, {
             message: 'exactly one of platformId, projectId or flowIds must be provided',
+        }),
+    },
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const PublishFlowsRequest = {
+    schema: {
+        body: z.object({
+            flowIds: z.array(z.string()).min(1),
         }),
     },
     config: {
