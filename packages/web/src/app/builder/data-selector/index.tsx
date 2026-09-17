@@ -6,6 +6,7 @@ import {
   FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -174,6 +175,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
           name: pieceName,
           version: pieceVersion,
           locale: i18n.language as LocalesEnum,
+          audience: PieceAudienceFilter.ALL,
         }),
       staleTime: Infinity,
     })),
