@@ -140,6 +140,17 @@ jobs:
           ref: main
           token: ${{ secrets.CROWDIN_PRS }}
 
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Roll unreleased breaking changes under the released version
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          git fetch --no-tags --depth=1 origin "refs/tags/$TAG:refs/tags/$TAG"
+          bun tools/scripts/breaking-changes-rollover.ts "$TAG"
+
       - name: Check if main version is behind release
         id: compare
         env:
@@ -155,31 +166,50 @@ jobs:
             echo "tag_base=$TAG_BASE" >> $GITHUB_OUTPUT
           fi
 
-      - name: Push version sync branch
-        if: steps.compare.outputs.tag_base != ''
+      - name: Push sync branch
+        id: push
         env:
           TAG: ${{ inputs.tag }}
           TAG_BASE: ${{ steps.compare.outputs.tag_base }}
         run: |
           git config --local user.email "abdulyki+automatedcommits@activepieces.com"
           git config --local user.name "automated-commits-ap"
-          npm pkg set version="$TAG_BASE"
-          sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
-          grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
-          git checkout -b "automated/sync-version-$TAG_BASE"
-          git add package.json docker-compose.yml
-          git commit -m "chore(release): sync version to $TAG_BASE after off-cycle release"
-          git push -f origin "automated/sync-version-$TAG_BASE"
+          if [ -n "$TAG_BASE" ]; then
+            npm pkg set version="$TAG_BASE"
+            sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
+            grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
+          fi
+          if git diff --quiet; then
+            echo "main already matches $TAG, nothing to sync."
+            exit 0
+          fi
+          BRANCH="automated/sync-version-${TAG%%-*}"
+          git checkout -b "$BRANCH"
+          git add package.json docker-compose.yml docs/install/reference/breaking-changes.mdx docs/install/reference/breaking-changes-unreleased.mdx
+          git commit -m "chore(release): sync main after $TAG"
+          git push -f origin "$BRANCH"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
 
       - name: Open sync PR
-        if: steps.compare.outputs.tag_base != ''
+        if: steps.push.outputs.branch != ''
         env:
           GH_TOKEN: ${{ secrets.CROWDIN_PRS }}
           TAG: ${{ inputs.tag }}
-          TAG_BASE: ${{ steps.compare.outputs.tag_base }}
+          BRANCH: ${{ steps.push.outputs.branch }}
         run: |
-          BRANCH="automated/sync-version-$TAG_BASE"
-          BODY="The self-hosted release \`$TAG\` was published from a branch whose version bump is not on \`main\`. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin so the next weekly release does not read a stale version. Merge before the next release-candidate cut (Thursday 5 PM UTC). See GIT-1595."
+          BODY="$(printf '%s\n' \
+            "The self-hosted release \`$TAG\` was published. This PR syncs \`package.json\` and the \`docker-compose.yml\` image pin when \`main\` is behind, and moves the breaking-change entries that \`$TAG\` contains from the hidden unreleased page under \`## $TAG\` on the Breaking Changes page. Merge before the next release-candidate cut (Thursday 5 PM UTC). See GIT-1595 and SRE-232." \
+            "" \
+            "### Breaking change?" \
+            "" \
+            "- [x] no, reviewed, not breaking (entries are moved, none added)" \
+            "- [ ] yes, technical" \
+            "- [ ] yes, functional" \
+            "" \
+            "### Security impact?" \
+            "" \
+            "- [x] no, reviewed, no security impact" \
+            "- [ ] yes, security-sensitive")"
           PR_NUMBER="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
           if [ -n "$PR_NUMBER" ]; then
             echo "An open sync PR from $BRANCH already exists, refreshing its body for $TAG."
@@ -188,7 +218,7 @@ jobs:
             gh pr create \
               --base main \
               --head "$BRANCH" \
-              --title "chore(release): sync version to $TAG_BASE after off-cycle release" \
+              --title "chore(release): sync main after $TAG" \
               --body "$BODY" \
               --label skip-changelog \
               --label automated
