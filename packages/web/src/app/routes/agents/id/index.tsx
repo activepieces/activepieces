@@ -181,7 +181,12 @@ const AgentEditorContent = () => {
   return (
     <div className="flex h-full w-full">
       <div className="flex min-w-0 grow flex-col">
-        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+        <div
+          className={cn(
+            'flex h-[60px] shrink-0 items-center gap-3 px-5',
+            !runsOpen && 'border-b border-border',
+          )}
+        >
           <button
             type="button"
             aria-label={t('Back to agents')}

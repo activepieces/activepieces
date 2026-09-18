@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConversationStatus,
@@ -101,6 +102,18 @@ export const agentsQueries = {
       queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
+    }),
+  useAgentRun: ({
+    runId,
+    projectId,
+  }: {
+    runId: string | null;
+    projectId: string;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'run', runId],
+      enabled: !isNil(runId),
+      queryFn: () => agentsApi.getRun(runId ?? '', projectId),
     }),
   useAgentRuns: ({
     agentId,
