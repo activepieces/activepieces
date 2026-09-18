@@ -320,9 +320,12 @@ guard before giving any surface an overlay.
 that already exist, so the diff is reviewable as pure refactor with identical screenshots, and the
 derivation is proven against the IA everyone knows before the data changes under it.
 
-**The quiet Community treatment retires `RequestTrial` from platform admin**, which is currently the only
-in-product path from a self-hosted install to sales, feeding `activepieces.com/sales` from 26 feature keys.
-That is a growth decision as much as a design one and was taken with that understood.
+**The quiet Community treatment was reversed in review: `RequestTrial` stays.** Retiring it would have
+closed the only in-product path from a self-hosted install to sales, feeding `activepieces.com/sales` from
+26 feature keys, and doing that inside a design refactor made it a growth decision smuggled in as one. Both
+locked surfaces render it again on Community, gated by `showContactSales`, which only the billing shell
+sets to `false` exactly as before. Each registry teaser therefore carries the `featureKey` the sales page
+expects; a surface with no teaser shows no form rather than one tagged with the wrong feature.
 
 Old deep links must redirect. 22 items becoming 15 means eleven redirects on top of the five
 that exist, and `docs/docs.json` mirrors this IA across about twenty `admin-guide` pages, so a rename lands
@@ -400,9 +403,11 @@ sign-in enforcement returns early on that edition anyway.
 web app already calls it for the test-destination flow. Reuse it there; only the other locked surfaces need
 fixtures written by hand.
 
-**Community keeps its quiet copy inside the loud treatment.** It sees the same sample content, but the
-strip names the feature as Enterprise with a docs link in place of the upgrade button, so the open-source
-product still avoids a sales button on a dozen pages.
+**Community gets its own call to action inside the loud treatment.** It sees the same sample content, but
+where paid editions show `Upgrade to {tier}` and an `Included with the {tier} plan and above.` footer,
+Community gets Contact Sales above a docs link, because a self-hosted install has no plan to buy in-app.
+The tier is named only on the paid branch, so a Community reader is told what the feature is but never
+which plan it belongs to.
 
 **Nothing renders the full-page teaser once all nine are sampled.** `LockedFeatureGuard` and the page-level
 `FeatureTeaser` lose their last callers in platform admin, and `overlay: true` in the registry is replaced
