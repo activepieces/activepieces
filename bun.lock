@@ -892,7 +892,7 @@
     },
     "packages/pieces/community/aws-bedrock": {
       "name": "@activepieces/piece-aws-bedrock",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8381,7 +8381,7 @@
     },
     "packages/pieces/community/slack": {
       "name": "@activepieces/piece-slack",
-      "version": "0.19.0",
+      "version": "0.20.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10065,7 +10065,7 @@
     },
     "packages/pieces/community/zagomail": {
       "name": "@activepieces/piece-zagomail",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10409,7 +10409,7 @@
     },
     "packages/pieces/core/forms": {
       "name": "@activepieces/piece-forms",
-      "version": "0.4.21",
+      "version": "0.4.22",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10421,6 +10421,7 @@
       "devDependencies": {
         "@types/mime-types": "2.1.1",
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/core/graphql": {
