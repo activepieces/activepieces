@@ -32,6 +32,9 @@ function getPropertyValue(object: Record<string, unknown>, path: string): unknow
   if (parsedKeys[0] === '*') {
     return Object.values(object).map(item => getPropertyValue(item as Record<string, unknown>, parsedKeys.slice(1).join('.'))).filter(Boolean).flat()
   }
+  if (Array.isArray(object)) {
+    return object.map(item => getPropertyValue(item as Record<string, unknown>, path)).filter(Boolean).flat()
+  }
   const nextObject = object[parsedKeys[0]] as Record<string, unknown>;
   if (nextObject && parsedKeys.length > 1) {
     return getPropertyValue(nextObject, parsedKeys.slice(1).join('.'));
@@ -39,7 +42,7 @@ function getPropertyValue(object: Record<string, unknown>, path: string): unknow
   return nextObject;
 }
 
-const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
+export const generateTranslationFileFromPiece = (piece: Record<string, unknown>) => { const translation: Record<string, string> = {}
   try {
     pieceTranslation.pathsToValuesToTranslate.forEach(path => {
       const value = getPropertyValue(piece, path)
