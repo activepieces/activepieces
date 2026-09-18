@@ -1170,6 +1170,9 @@
       "@activepieces/piece-salesloft": [
         "packages/pieces/community/salesloft/src/index.ts"
       ],
+      "@activepieces/piece-sap-successfactors-saml2-oauth": [
+        "packages/pieces/community/sap-successfactors-saml2-oauth/src/index.ts"
+      ],
       "@activepieces/piece-savvycal": [
         "packages/pieces/community/savvycal/src/index.ts"
       ],
