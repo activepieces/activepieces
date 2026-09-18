@@ -3,7 +3,8 @@ import {
   optionalTimeFormats,
   timeFormat,
   timeParts,
-  timeFormatDescription,
+  inputFormatDescription,
+  dateInputDescription,
   parseDate,
   getCorrectedFormat,
 } from '../common';
@@ -13,8 +14,7 @@ export const extractDateParts = createAction({
   name: 'extract_date_parts',
   classification: 'READ',
   displayName: 'Extract Date Units',
-  description:
-    'Extract date units ( year , month , day , hour , minute , second , day of week , month name ) from a date',
+  description: 'Pull year, month, day, weekday and more out of a date',
   aiMetadata: { description: 'Parses one date string and returns the selected calendar components as separate values, any combination in a single call, with month as a 1-12 number and the weekday and month names spelled out. Use it when downstream logic needs the parts as data, for example branching on the weekday name; prefer Format Date when you only need the whole date rendered differently. Requires the date and its input pattern, and each requested unit must come from that supported set or the action throws; read-only and idempotent.', idempotent: true },
   errorHandlingOptions: {
     continueOnFailure: {
@@ -26,13 +26,13 @@ export const extractDateParts = createAction({
   },
   props: {
     inputDate: Property.ShortText({
-      displayName: 'Input Date',
-      description: 'Enter the input date',
+      displayName: 'Date',
+      description: dateInputDescription,
       required: true,
     }),
     inputFormat: Property.StaticDropdown({
-      displayName: 'From Time Format',
-      description: timeFormatDescription,
+      displayName: 'Date Format',
+      description: inputFormatDescription,
       options: {
         options: optionalTimeFormats,
       },
@@ -40,8 +40,8 @@ export const extractDateParts = createAction({
       defaultValue: timeFormat.format00,
     }),
     unitExtract: Property.StaticMultiSelectDropdown({
-      displayName: 'Unit to Extract',
-      description: 'Select the unit to extract from the date',
+      displayName: 'Units',
+      description: 'Each unit becomes its own output field. Month is 1 to 12.',
       options: {
         options: [
           { label: 'Year', value: timeParts.year },
@@ -51,11 +51,11 @@ export const extractDateParts = createAction({
           { label: 'Minute', value: timeParts.minute },
           { label: 'Second', value: timeParts.second },
           { label: 'Day of Week', value: timeParts.dayOfWeek },
-          { label: 'Month name', value: timeParts.monthName },
+          { label: 'Month Name', value: timeParts.monthName },
         ],
       },
       required: true,
-      defaultValue: [timeParts.year],
+      defaultValue: [timeParts.year, timeParts.month, timeParts.day],
     }),
   },
   async run(context) {
