@@ -421,6 +421,132 @@ async function createTable({
   return response;
 }
 
+function buildFieldValueProperty({
+  field,
+  displayName,
+}: {
+  field: AirtableField;
+  displayName: string;
+}) {
+  const params = {
+    displayName,
+    description: ['date', 'dateTime'].includes(field.type)
+      ? `${field.description ? field.description : ''}Expected format: mmmm d,yyyy`
+      : field.description,
+    required: false,
+  };
+
+  if (isNil(AirtableFieldMapping[field.type])) {
+    return Property.ShortText({ ...params });
+  }
+
+  if (field.type === 'singleSelect' || field.type === 'multipleSelects') {
+    const options = field.options?.choices.map(
+      (option: { id: string; name: string }) => ({
+        value: option.id,
+        label: option.name,
+      })
+    );
+
+    return AirtableFieldMapping[field.type]({
+      ...params,
+      options: {
+        options: options ?? [],
+      },
+    });
+  }
+
+  return AirtableFieldMapping[field.type](params);
+}
+
+function updateToggleKey(fieldId: string) {
+  return `${fieldId}${UPDATE_TOGGLE_SUFFIX}`;
+}
+
+function isEmptyFieldValue(value: unknown) {
+  return (
+    isNil(value) ||
+    value === '' ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
+function clearedValueFor(field: AirtableField) {
+  if (field.type === 'checkbox') {
+    return false;
+  }
+  if (
+    field.type === 'multipleAttachments' ||
+    ARRAY_VALUE_FIELD_TYPES.includes(field.type)
+  ) {
+    return [];
+  }
+  return null;
+}
+
+function valueToWrite({
+  field,
+  value,
+}: {
+  field: AirtableField;
+  value: unknown;
+}) {
+  if (isEmptyFieldValue(value)) {
+    return clearedValueFor(field);
+  }
+  if (field.type === 'multipleAttachments') {
+    return [{ url: value as string }];
+  }
+  return value;
+}
+
+function writableFieldsOf(tableFields: AirtableField[]) {
+  return tableFields.filter(
+    (field) => !AirtableEnterpriseFields.includes(field.type)
+  );
+}
+
+function buildSuppliedFields({
+  tableFields,
+  fields,
+}: {
+  tableFields: AirtableField[];
+  fields: Record<string, unknown>;
+}): Record<string, unknown> {
+  return Object.fromEntries(
+    writableFieldsOf(tableFields).flatMap((field) => {
+      if (!(field.id in fields)) {
+        return [];
+      }
+      const value = fields[field.id];
+      if (ARRAY_VALUE_FIELD_TYPES.includes(field.type)) {
+        return Array.isArray(value) && value.length > 0
+          ? [[field.id, value]]
+          : [];
+      }
+      return isEmptyFieldValue(value)
+        ? []
+        : [[field.id, valueToWrite({ field, value })]];
+    })
+  );
+}
+
+function buildUpdateFields({
+  tableFields,
+  fields,
+}: {
+  tableFields: AirtableField[];
+  fields: Record<string, unknown>;
+}): Record<string, unknown> {
+  return Object.fromEntries(
+    writableFieldsOf(tableFields).flatMap((field) =>
+      fields[updateToggleKey(field.id)] === true
+        ? [[field.id, valueToWrite({ field, value: fields[field.id] })]]
+        : []
+    )
+  );
+}
+
 export const airtableCommon = {
   base: Property.Dropdown<string,true,typeof airtableAuth>({
     auth: airtableAuth,
@@ -612,46 +738,54 @@ export const airtableCommon = {
       });
       const fields = airtable.fields.reduce((acc, field) => {
         if (!AirtableEnterpriseFields.includes(field.type)) {
-          const params = {
+          acc[field.id] = buildFieldValueProperty({
+            field,
             displayName: field.name,
-            description: ['date', 'dateTime'].includes(field.type)
-              ? `${
-                  field.description ? field.description : ''
-                }Expected format: mmmm d,yyyy`
-              : field.description,
-            required: false,
-          };
-
-          if (isNil(AirtableFieldMapping[field.type])) {
-            acc[field.id] = Property.ShortText({
-              ...params,
-            });
-          } else if (
-            field.type === 'singleSelect' ||
-            field.type === 'multipleSelects'
-          ) {
-            const options = field.options?.choices.map(
-              (option: { id: string; name: string }) => ({
-                value: option.id,
-                label: option.name,
-              })
-            );
-
-            acc[field.id] = AirtableFieldMapping[field.type]({
-              ...params,
-              options: {
-                options: options ?? [],
-              },
-            });
-          } else {
-            acc[field.id] = AirtableFieldMapping[field.type](params);
-          }
+          });
         }
 
         return acc;
       }, {} as DynamicPropsValue);
 
       return fields;
+    },
+  }),
+
+  updateFields: Property.DynamicProperties({
+    auth: airtableAuth,
+    displayName: 'Fields',
+    required: true,
+    refreshers: ['base', 'tableId'],
+
+    props: async ({ auth, base, tableId }) => {
+      if (!auth) return {};
+      if (!base) return {};
+      if (!tableId) return {};
+
+      const airtable: AirtableTable = await fetchTable({
+        token: auth.secret_text,
+        baseId: base as unknown as string,
+        tableId: tableId as unknown as string,
+      });
+
+      return Object.fromEntries(
+        airtable.fields
+          .filter((field) => !AirtableEnterpriseFields.includes(field.type))
+          .flatMap((field) => [
+            [
+              updateToggleKey(field.id),
+              Property.Checkbox({
+                displayName: field.name,
+                required: false,
+                reveals: [field.id],
+              }),
+            ],
+            [
+              field.id,
+              buildFieldValueProperty({ field, displayName: 'New value' }),
+            ],
+          ])
+      );
     },
   }),
 
@@ -753,14 +887,11 @@ export const airtableCommon = {
     auth: string,
     base: string,
     tableId: string,
-    fields: Record<string, unknown>,
-    allowEmpty = false
+    fields: Record<string, unknown>
   ) => {
     if (!auth) return fields;
     if (!base) return fields;
     if (!tableId) return fields;
-
-    const newFields: Record<string, unknown> = {};
 
     const airtable: AirtableTable = await fetchTable({
       token: auth,
@@ -768,42 +899,11 @@ export const airtableCommon = {
       tableId: tableId,
     });
 
-    airtable.fields.forEach((field) => {
-      if (!AirtableEnterpriseFields.includes(field.type)) {
-        const key = field.id;
-
-        if (!(key in fields)) {
-          return;
-        }
-        if (field.type === 'multipleAttachments') {
-          if (allowEmpty && (!fields[key] || (Array.isArray(fields[key]) && (fields[key] as any[]).length === 0))) {
-            newFields[key] = [];
-          } else if (fields[key] && !(Array.isArray(fields[key]) && (fields[key] as any[]).length === 0)) {
-            newFields[key] = [
-              {
-                url: fields[key] as string,
-              },
-            ];
-          }
-        } else if (
-          ['multipleRecordLinks', 'multipleSelects'].includes(field.type)
-        ) {
-          if (allowEmpty) {
-            newFields[key] = Array.isArray(fields[key]) ? fields[key] : [];
-          } else if (Array.isArray(fields[key]) && (fields[key] as any[]).length > 0) {
-            newFields[key] = fields[key];
-          }
-        } else {
-          if (allowEmpty) {
-            newFields[key] = (fields[key] === '' || fields[key] === undefined) ? null : fields[key];
-          } else if (fields[key] !== undefined && fields[key] !== '' && fields[key] !== null) {
-            newFields[key] = fields[key];
-          }
-        }
-      }
-    });
-    return newFields;
+    return buildSuppliedFields({ tableFields: airtable.fields, fields });
   },
+
+  buildUpdateFields,
+  updateToggleKey,
 
   getTableSnapshot: async (params: Params) => {
     Airtable.configure({
@@ -841,3 +941,10 @@ export const airtableCommon = {
   listRecords,
   fetchBase,
 };
+
+const UPDATE_TOGGLE_SUFFIX = '_update';
+
+const ARRAY_VALUE_FIELD_TYPES: string[] = [
+  'multipleRecordLinks',
+  'multipleSelects',
+];
