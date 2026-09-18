@@ -4653,7 +4653,7 @@
     },
     "packages/pieces/community/instantly-ai": {
       "name": "@activepieces/piece-instantly-ai",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

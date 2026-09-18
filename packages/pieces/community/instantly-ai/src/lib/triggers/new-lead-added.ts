@@ -3,63 +3,41 @@ import {
   createTrigger,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
-import { instantlyAiAuth } from '../auth';
 import {
   DedupeStrategy,
   HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { makeRequest } from '../common/client';
 import dayjs from 'dayjs';
+import { instantlyAuth } from '../auth';
+import { instantlyClient } from '../common/client';
+import { InstantlyLead } from '../common/types';
+
 const polling: Polling<
-  AppConnectionValueForAuthProperty<typeof instantlyAiAuth>,
-  Record<string, any>
+  AppConnectionValueForAuthProperty<typeof instantlyAuth>,
+  Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
-    const result = [];
     const isTest = lastFetchEpochMS === 0;
-    let startingAfter: string | undefined = undefined;
-    let hasMore = true;
 
-    do {
-      const body: Record<string, any> = {
-        limit: isTest ? 10 : 100,
-      };
-
-      if (startingAfter) body['starting_after'] = startingAfter;
-
-      const response = (await makeRequest({
-        endpoint: 'leads/list',
-        method: HttpMethod.POST,
-        apiKey: auth,
-        body,
-      })) as {
-        next_starting_after?: string;
-        items: { timestamp_created: string }[];
-      };
-
-      const items = response.items || [];
-      result.push(...items);
-
-      if (isTest) break;
-
-      startingAfter = response.next_starting_after;
-      hasMore = !!startingAfter && items.length > 0;
-    } while (hasMore);
-
-    return result.map((lead) => {
-      return {
-        epochMilliSeconds: dayjs(lead.timestamp_created).valueOf(),
-        data: lead,
-      };
+    const leads = await instantlyClient.listAllPages<InstantlyLead>({
+      auth: auth.secret_text,
+      path: 'leads/list',
+      method: HttpMethod.POST,
+      maxPages: isTest ? 1 : undefined,
     });
+
+    return leads.map((lead) => ({
+      epochMilliSeconds: dayjs(lead.timestamp_created).valueOf(),
+      data: lead,
+    }));
   },
 };
 
 export const newLeadAddedTrigger = createTrigger({
-  auth: instantlyAiAuth,
+  auth: instantlyAuth,
   name: 'new_lead_added',
   classification: 'READ',
   displayName: 'New Lead Added',
@@ -70,24 +48,16 @@ export const newLeadAddedTrigger = createTrigger({
   props: {},
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async test(context) {
-    return await pollingHelper.test(polling, context);
+    return pollingHelper.test(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, context);
+    return pollingHelper.poll(polling, context);
   },
   sampleData: {
     id: 'd1f61dbc-bcb2-44fb-86b8-3d01c8701fe9',
