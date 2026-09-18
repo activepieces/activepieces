@@ -2,54 +2,44 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { pinterestOperations } from '../common/operations';
-import { adAccountIdDropdown } from '../common/props';
 import { createBoardActionOutputSchema } from '../output-schemas';
 
-export const createBoard = createAction({
+export const createNewBoard = createAction({
   auth: pinterestAuth,
-  name: 'createBoard',
+  name: 'createNewBoard',
   classification: 'WRITE',
   outputSchema: createBoardActionOutputSchema,
-  displayName: 'Create Board',
-  description: 'Create a new Pinterest board for organizing Pins.',
-  audience: 'human',
+  displayName: 'Create New Board',
+  description: 'Create a board to organise Pins.',
+  audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a new Pinterest board to organize Pins, with a name and optional description and privacy level. Use before adding Pins when no suitable board exists. Each call creates a separate board even with identical input, so it is not idempotent.',
+      'Creates a board and returns its new board id, optionally with a description and a privacy level of public or protected. Use it when no suitable board exists yet; check List Boards or Search Boards first, because Pinterest allows two boards with the same name and each call creates another one, which makes this not idempotent. Secret boards are not offered because this connection does not hold the scope Pinterest requires to write them.',
     idempotent: false,
   },
   props: {
-    ad_account_id: adAccountIdDropdown,
     name: Property.ShortText({
       displayName: 'Board Name',
       required: true,
-      description: 'The name of the board (max 180 characters).',
+      description: 'Name of the board (max 180 characters).',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description: 'Optional description for your board.',
+      description: 'Description of the board (max 500 characters).',
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
       defaultValue: 'PUBLIC',
+      description:
+        'Who can see the board. Defaults to public. Secret boards cannot be created through this connection.',
       options: {
         options: [
           { label: 'Public', value: 'PUBLIC' },
           { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
         ],
       },
-      description:
-        'Board privacy setting (auto-set to "PROTECTED" for ad-only boards).',
-    }),
-    is_ads_only: Property.Checkbox({
-      displayName: 'Ads Only Board',
-      description:
-        'Create an ad-only board that can only store promotional Pins. Note: Board name will become "Ad-only Pins" and privacy will be set to "PROTECTED".',
-      defaultValue: false,
-      required: false,
     }),
   },
   async run({ auth, propsValue }) {

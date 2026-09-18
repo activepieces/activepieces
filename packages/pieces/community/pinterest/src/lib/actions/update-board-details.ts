@@ -2,49 +2,49 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { pinterestAuth } from '../common/auth';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { pinterestOperations } from '../common/operations';
-import { adAccountIdDropdown, boardIdDropdown } from '../common/props';
 import { updateBoardActionOutputSchema } from '../output-schemas';
 
-export const updateBoard = createAction({
+export const updateBoardDetails = createAction({
   auth: pinterestAuth,
-  name: 'updateBoard',
+  name: 'updateBoardDetails',
   classification: 'WRITE',
   outputSchema: updateBoardActionOutputSchema,
-  displayName: 'Update Board',
-  description: "Update a board's name, description, or privacy settings.",
-  audience: 'human',
+  displayName: 'Update Board Details',
+  description: 'Change the name, description or privacy of a board.',
+  audience: 'ai',
   aiMetadata: {
     description:
-      "Updates an existing board's name, description, and/or privacy setting, identified by board_id. Use to rename or reconfigure a board the user owns; at least one field must be supplied. Mutates the board on each call, so it is not idempotent.",
-    idempotent: false,
+      'Updates a board in place: its name, description or privacy setting. Anything left unset keeps its current value, so one field can be corrected without resending the rest, and at least one field must be supplied. Use Rename Board Section for a section rather than a board. Re-sending the same values converges on the same state, so it is idempotent.',
+    idempotent: true,
   },
   props: {
-    board_id: boardIdDropdown,
-    ad_account_id: adAccountIdDropdown,
+    board_id: Property.ShortText({
+      displayName: 'Board ID',
+      required: true,
+      description: 'Numeric board id, as returned by List Boards.',
+    }),
     name: Property.ShortText({
       displayName: 'Board Name',
       required: false,
-      description:
-        'The new name of the board (max 180 characters). Leave empty to keep current name.',
+      description: 'New name (max 180 characters). Leave empty to keep it.',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
       description:
-        'The new description of the board (max 500 characters). Leave empty to keep current description.',
+        'New description (max 500 characters). Leave empty to keep it.',
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
+      description:
+        'New privacy setting. Leave empty to keep it. A board cannot be switched to secret through this connection.',
       options: {
         options: [
           { label: 'Public', value: 'PUBLIC' },
           { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
         ],
       },
-      description:
-        'Update board privacy setting. Leave empty to keep current setting.',
     }),
   },
   async run({ auth, propsValue }) {
