@@ -4,14 +4,16 @@ import { Check, ExternalLink } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useManagePlanDialogStore } from '@/features/billing';
+import {
+  FeatureKey,
+  RequestTrial,
+  useManagePlanDialogStore,
+} from '@/features/billing';
 import {
   FeatureTier,
   TIER_LABELS,
 } from '@/features/billing/utils/feature-tier';
 import { flagsHooks } from '@/hooks/flags-hooks';
-
-import { FeatureKey, RequestTrial } from './request-trial';
 
 export function FeatureTeaserContent({
   title,

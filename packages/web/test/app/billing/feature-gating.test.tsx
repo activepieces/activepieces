@@ -157,6 +157,28 @@ describe('create project gating', () => {
     expect(createProject).not.toHaveBeenCalled();
   });
 
+  it('offers contact sales instead of a dead upgrade button on community', () => {
+    edition = 'ce';
+    teamProjectsLimit = 1;
+    renderWithQueryClient(
+      <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
+    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+    expect(screen.queryByRole('button', { name: /explore plans/i })).toBeNull();
+  });
+
+  it('keeps explore plans where the plan dialog is actually mounted', () => {
+    edition = 'cloud';
+    teamProjectsLimit = 1;
+    renderWithQueryClient(
+      <CreateProjectButton variant="full" projects={usedTeamProjects(1)} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /new project/i }));
+    expect(screen.getByRole('button', { name: /explore plans/i })).toBeDefined();
+    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
+  });
+
   it('still opens the form when the plan has room', () => {
     teamProjectsLimit = 3;
     renderWithQueryClient(

@@ -1,5 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
-import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  ProjectType,
+  ProjectWithLimits,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, LayoutGrid } from 'lucide-react';
 
@@ -12,8 +17,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { RequestTrial } from '../components/request-trial';
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { TIER_LABELS } from '../utils/feature-tier';
 import { PLATFORM_FEATURES } from '../utils/platform-features';
@@ -26,6 +33,7 @@ export const useTeamProjectLimitGuard = ({
   const isPlatformAdmin = useIsPlatformAdmin();
   const { platform } = platformHooks.useCurrentPlatform();
   const { openDialog } = useManagePlanDialogStore();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   const limit = platform.plan.billedTeamProjectsLimit;
   const teamProjectsUsed = projects.filter(
@@ -37,6 +45,7 @@ export const useTeamProjectLimitGuard = ({
     <TeamProjectLimitContent
       limit={limit ?? 0}
       isPlatformAdmin={isPlatformAdmin}
+      isCommunity={edition === ApEdition.COMMUNITY}
       onClose={onClose}
       onExplorePlans={() => {
         onClose();
@@ -54,6 +63,7 @@ export const useTeamProjectLimitGuard = ({
 function TeamProjectLimitContent({
   limit,
   isPlatformAdmin,
+  isCommunity,
   onClose,
   onExplorePlans,
 }: TeamProjectLimitContentProps) {
@@ -104,9 +114,13 @@ function TeamProjectLimitContent({
             <Button type="button" variant="outline" onClick={onClose}>
               {t('Cancel')}
             </Button>
-            <Button type="button" onClick={onExplorePlans}>
-              {t('Explore plans')}
-            </Button>
+            {isCommunity ? (
+              <RequestTrial featureKey={feature.featureKey} />
+            ) : (
+              <Button type="button" onClick={onExplorePlans}>
+                {t('Explore plans')}
+              </Button>
+            )}
           </>
         ) : (
           <Button type="button" onClick={onClose}>
@@ -121,6 +135,7 @@ function TeamProjectLimitContent({
 type TeamProjectLimitContentProps = {
   limit: number;
   isPlatformAdmin: boolean;
+  isCommunity: boolean;
   onClose: () => void;
   onExplorePlans: () => void;
 };

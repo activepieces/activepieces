@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
+import { FeatureKey } from '../components/request-trial';
 import { useManagePlanDialogStore } from '../stores/manage-plan-dialog-state';
 import { FeatureTier, TIER_LABELS } from '../utils/feature-tier';
 
@@ -108,6 +109,7 @@ const ENTERPRISE_DOCUMENTATION_URL =
   'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';
 
 export type PlatformFeature = {
+  featureKey: FeatureKey;
   title: string;
   description: string;
   bullets?: string[];

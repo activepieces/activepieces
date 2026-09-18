@@ -22,8 +22,7 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { RequestTrial } from '@/app/components/request-trial';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import {
   Alert,
   AlertAction,
@@ -43,6 +42,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { RequestTrial } from '@/features/billing';
 import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

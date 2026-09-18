@@ -1,9 +1,8 @@
 import React from 'react';
 
-import { FeatureTier } from '@/features/billing';
+import { FeatureKey, FeatureTier } from '@/features/billing';
 
 import { FeatureTeaser } from './feature-teaser';
-import { FeatureKey } from './request-trial';
 
 export const LockedFeatureGuard = ({
   children,

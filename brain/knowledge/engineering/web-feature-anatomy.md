@@ -62,6 +62,12 @@ Every customer-facing surface must be checked on all five edition paths — CE, 
 
 A default local dev instance runs `edition=ce` (check `/api/v1/flags`), and most of the platform-admin surface is unreachable there — Global Connections, Pieces, Templates, Billing, Usage, Embedding, SSO, Project Roles, API Keys, Secret Managers, Audit Logs and Event Streaming all render `LockedFeatureGuard` instead of their body, and the AI Center's Capabilities tab is not rendered at all. So a change to any of those cannot be seen locally without first flipping the `platform_plan` flags in the dev Postgres; Embedding needs more than that, since `useEmbedSubdomain` is gated on `edition === CLOUD` and so needs `AP_EDITION=cloud` and a restart. Plan for that before promising a screenshot of a gated page.
 
+Running one frontend per edition side by side (a vite port each against its own backend) is the quickest
+way to check all of them, but **every port serves the same working tree**, so checking out another branch
+changes the code under all three at once. Comparing editions and comparing branches are therefore the same
+gesture, and the give-away is a UI that looks a release behind on every port at once rather than on one.
+Read the edition off `/api/v1/flags`, not off the port you think you started.
+
 Verify with `npx turbo run lint --filter=web`, or `npm run lint-dev` for the whole repo.
 
 ## Gotchas

@@ -2,6 +2,7 @@ import { PlatformFeature } from '../hooks/use-feature-gate';
 
 export const PLATFORM_FEATURES = {
   projects: {
+    featureKey: 'PROJECTS',
     title: 'Unlock Projects',
     description:
       'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
@@ -13,6 +14,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   sso: {
+    featureKey: 'SSO',
     title: 'Enable Single Sign On',
     description:
       'Let your users sign in with your current SSO provider or give them self serve sign up access',
@@ -24,6 +26,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   projectRoles: {
+    featureKey: 'CUSTOM_ROLES',
     title: 'Project Role Management',
     description:
       'Define custom roles and permissions to control what your team members can access and modify',
@@ -35,6 +38,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   globalConnections: {
+    featureKey: 'GLOBAL_CONNECTIONS',
     title: 'Enable Global Connections',
     description: 'Manage platform-wide connections to external systems.',
     tier: 'team',
@@ -45,6 +49,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   apiKeys: {
+    featureKey: 'API',
     title: 'Enable API Keys',
     description: 'Create and manage API keys to access Activepieces APIs.',
     tier: 'team',
@@ -55,6 +60,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   secretManagers: {
+    featureKey: 'SECRET_MANAGERS',
     title: 'Enable Secret Managers',
     description: 'Manage your secrets from a single and secure place',
     tier: 'enterprise',
@@ -65,6 +71,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   auditLogs: {
+    featureKey: 'AUDIT_LOGS',
     title: 'Unlock Audit Logs',
     description:
       'Comply with internal and external security policies by tracking activities done within your account',
@@ -76,6 +83,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   eventStreaming: {
+    featureKey: 'EVENT_DESTINATIONS',
     title: 'Unlock Event Streaming',
     description:
       'Forward every audit event we emit to a webhook, then handle it in a flow.',
@@ -87,6 +95,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   templates: {
+    featureKey: 'TEMPLATES',
     title: 'Unlock Templates',
     description:
       'Convert the most common automations into reusable templates 1 click away from your users',
@@ -98,6 +107,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   embedding: {
+    featureKey: 'SIGNING_KEYS',
     title: 'Unlock Embedding Through JS SDK',
     description: 'Enable signing keys to access embedding functionalities.',
     tier: 'enterprise',
@@ -108,6 +118,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   branding: {
+    featureKey: 'BRANDING',
     title: 'Unlock Branding',
     description: 'Your name, logo and colors across the entire experience.',
     tier: 'enterprise',
@@ -118,6 +129,7 @@ export const PLATFORM_FEATURES = {
     ],
   },
   pieces: {
+    featureKey: 'PIECES',
     title: 'Unlock Piece Management',
     description:
       'Curate which pieces your users see, hide the rest, and add your own private pieces.',
