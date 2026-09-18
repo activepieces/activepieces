@@ -1,4 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
+import { t } from 'i18next';
 import { ArrowUpIcon, Paperclip } from 'lucide-react';
 import * as React from 'react';
 import { useRef, useState } from 'react';
@@ -27,7 +28,7 @@ const ChatInput = React.forwardRef<HTMLTextAreaElement, ChatInputProps>(
       className,
       onSendMessage,
       disabled = false,
-      placeholder = 'Type your message here...',
+      placeholder = t('Type your message here...'),
       ...props
     },
     ref,
