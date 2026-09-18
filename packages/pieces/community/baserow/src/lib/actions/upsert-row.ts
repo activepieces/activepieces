@@ -90,12 +90,9 @@ export const upsertRowAction = createAction({
     const client = await makeClient(context.auth);
     const tableSchema = await client.listTableFields(table_id!);
 
-    const fieldTypeMap: Record<string, string> = {};
-    for (const column of tableSchema) {
-      fieldTypeMap[column.name] = column.type;
-    }
-
-    const formattedFields = formatFieldValues(table_fields!, fieldTypeMap, {
+    const formattedFields = formatFieldValues({
+      input: table_fields!,
+      fields: tableSchema,
       skipEmpty: true,
     });
 
