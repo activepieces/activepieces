@@ -794,6 +794,49 @@ describe('Flow Operations API', () => {
             const persisted: PopulatedFlow = afterImport?.json()
             expect(persisted.version.trigger.nextAction).toBeUndefined()
         })
+
+        it('imports a template whose steps the piece-upgrade register bumps, even though a template has no persisted flow to audit', async () => {
+            const ctx = await createTestContext(app!)
+
+            const createResponse = await ctx.post('/v1/flows', {
+                displayName: 'template flow',
+                projectId: ctx.project.id,
+            })
+            const flow: PopulatedFlow = createResponse?.json()
+
+            const response = await ctx.post(`/v1/flows/${flow.id}`, {
+                type: FlowOperationType.IMPORT_FLOW,
+                request: {
+                    displayName: 'Create GitLab Issues From Linear',
+                    schemaVersion: '16',
+                    notes: [],
+                    trigger: {
+                        type: FlowTriggerType.EMPTY,
+                        name: 'trigger',
+                        settings: {},
+                        valid: false,
+                        displayName: 'Select Trigger',
+                        nextAction: {
+                            name: 'step_1',
+                            type: FlowActionType.PIECE,
+                            valid: true,
+                            displayName: 'Create Issue',
+                            settings: {
+                                pieceName: '@activepieces/piece-gitlab',
+                                pieceVersion: '0.1.0',
+                                actionName: 'create_issue',
+                                input: {},
+                                propertySettings: {},
+                            },
+                        },
+                    },
+                },
+            })
+
+            expect(response?.statusCode, response?.body).toBe(StatusCodes.OK)
+            const body = response?.json()
+            expect(body.version.trigger.nextAction.settings.pieceVersion).not.toBe('0.1.0')
+        })
     })
 
     describe('POST /v1/flows/:id draft creation rollback', () => {
