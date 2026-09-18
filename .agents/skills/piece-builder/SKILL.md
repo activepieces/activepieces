@@ -12,6 +12,7 @@ description: Build and edit Activepieces pieces (integrations) — creating new 
 | **New piece** | Building an integration for an app that has no piece yet | Full 5-step workflow below |
 | **Add action / trigger** | An existing piece needs another operation or event | Skip Steps 1–3. Open the existing piece, **match its conventions** (its `common/` helpers, auth access, file naming, error handling), then jump to Step 4 IMPLEMENT and Step 5 WIRE & VERIFY. Bump the piece version. |
 | **Fix a bug** | An existing action/trigger misbehaves | Reproduce → read the offending file *and its `common/` helpers* → smallest fix that matches surrounding style → Step 5 VERIFY. Bump the piece version. |
+| **Improve the forms** | "Improve the UI of piece X" — copy, labels, Advanced placement on a piece that already works | [`step-form-review.md`](./step-form-review.md), then `scripts/check-step-form.mjs`. Do not change a prop's `type`; that is a migration, not a UI change. |
 
 **Golden rule for existing-piece modes:** the piece you're editing is the source of truth, not these templates. If the piece already has a helper, a particular auth access pattern, or a way of shaping output, follow *that*. Reach into the reference files only for a pattern the piece doesn't already demonstrate.
 
