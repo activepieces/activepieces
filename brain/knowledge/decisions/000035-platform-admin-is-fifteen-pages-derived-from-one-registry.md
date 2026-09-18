@@ -21,6 +21,15 @@ its label did not name. This also retires the rule below that a page with its ow
 `Workers`, `Health`, `Triggers` and `Configurations` are now tabs of `Infrastructure`, which is what let the
 group labels come back over a nav short enough to read.
 
+**Three knobs decide whether a row appears, and they are not interchangeable.** `isLocked` keeps the row
+visible and crowned and the page reachable, because the point is to advertise what a plan would buy.
+`isHidden` removes the row and the route together, for something an edition does not have at all rather
+than has not bought: the AI `capabilities` tab is `isHidden` on Community, matching what
+`setup/ai/index.tsx` did before the registry. `hideInNav` keeps the route and drops only the nav entry, for
+a tab its parent row already stands for. Picking `isHidden` where `isLocked` belongs silently deletes a
+feature from the product tour; picking `isLocked` where `isHidden` belongs advertises something the
+edition can never enable.
+
 **`Pieces` takes the other way out: the parent row IS the first tab.** It has tabs and no overview, and
 rather than invent a landing page over two children, its `pieces` tab carries `hideInNav: true`. The tab
 stays routable and still owns the bare path, but the sidebar does not draw it as a sub-item, so the nav
