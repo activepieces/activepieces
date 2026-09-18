@@ -28,8 +28,6 @@ export function useFeatureGate({ locked, feature }: UseFeatureGateParams) {
       <Crown className="size-3.5 shrink-0 text-primary-foreground/90" />
     ) : null,
     open: () => setOpen(true),
-    intercept: (handler?: () => void) =>
-      locked ? () => setOpen(true) : handler,
     dialog: (
       <UpgradeFeatureDialog open={open} onOpenChange={setOpen} {...feature} />
     ),
