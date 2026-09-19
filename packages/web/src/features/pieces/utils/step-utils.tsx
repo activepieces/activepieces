@@ -11,6 +11,7 @@ import {
   Step,
   FlowTriggerType,
   FlowTrigger,
+  PieceAudienceFilter,
   StepOutput,
   StepRunResponse,
 } from '@activepieces/shared';
@@ -72,30 +73,28 @@ export const stepUtils = {
           name: step.settings.pieceName,
           version: step.settings.pieceVersion,
           locale,
+          audience: PieceAudienceFilter.ALL,
         });
         const latestPieceVersion = await piecesApi.get({
           name: step.settings.pieceName,
           version: undefined,
           locale,
+          audience: PieceAudienceFilter.ALL,
         });
         piece.logoUrl = latestPieceVersion.logoUrl;
         const metadata = stepUtils.mapPieceToMetadata({
           piece,
           type: step.type === FlowActionType.PIECE ? 'action' : 'trigger',
         });
-        const actionOrTriggerDisplayName =
+        const actionOrTrigger =
           step.type === FlowActionType.PIECE
-            ? piece.actions[step.settings.actionName!].displayName
-            : piece.triggers[step.settings.triggerName!].displayName;
-        const actionOrTriggerDescription =
-          step.type === FlowActionType.PIECE
-            ? piece.actions[step.settings.actionName!].description
-            : piece.triggers[step.settings.triggerName!].description;
+            ? piece.actions[step.settings.actionName!]
+            : piece.triggers[step.settings.triggerName!];
         return {
           ...metadata,
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
-          actionOrTriggerOrAgentDescription: actionOrTriggerDescription,
-          actionOrTriggerOrAgentDisplayName: actionOrTriggerDisplayName,
+          actionOrTriggerOrAgentDescription: actionOrTrigger?.description ?? '',
+          actionOrTriggerOrAgentDisplayName: actionOrTrigger?.displayName ?? '',
         };
       }
     }

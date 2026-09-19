@@ -12,6 +12,7 @@ import {
   LogSliceRef,
   StepOutputType,
   RunInternalError,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Download, Info, ShieldAlert } from 'lucide-react';
@@ -100,6 +101,7 @@ export const FlowStepInputOutput = () => {
     name: stepPieceName ?? '',
     version: stepPieceVersion,
     enabled: !isNil(stepPieceName),
+    audience: PieceAudienceFilter.ALL,
   });
   const parsedOutput = isSlicedOutput
     ? undefined
