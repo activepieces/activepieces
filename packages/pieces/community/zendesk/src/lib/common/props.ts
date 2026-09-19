@@ -1,10 +1,7 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
-import {
-  HttpMethod,
-  AuthenticationType,
-  httpClient,
-} from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { zendeskAuth, ZendeskAuthValue } from '../auth';
+import { sendZendeskRequest } from './client';
 
 interface ZendeskTicket {
   id: number;
@@ -86,14 +83,14 @@ interface ZendeskGroupsResponse {
   groups: ZendeskGroup[];
 }
 
-export const ticketIdDropdown =  Property.Dropdown({
+export const ticketIdDropdown = Property.Dropdown({
   auth: zendeskAuth,
   displayName: 'Ticket',
   description: 'Select the ticket to work with',
   required: true,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -103,15 +100,11 @@ export const ticketIdDropdown =  Property.Dropdown({
     }
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest<ZendeskTicketsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets.json?per_page=100`,
+      const response = await sendZendeskRequest<ZendeskTicketsResponse>({
+        auth,
+        urlPath: '/api/v2/tickets.json',
+        queryParams: { per_page: '100' },
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const tickets = response.body.tickets;
@@ -137,15 +130,14 @@ export const ticketIdDropdown =  Property.Dropdown({
   },
 });
 
-export const organizationIdDropdown =  Property.Dropdown({
-auth: zendeskAuth,
-
+export const organizationIdDropdown = Property.Dropdown({
+  auth: zendeskAuth,
   displayName: 'Organization',
   description: 'Select the organization to work with',
   required: true,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -155,17 +147,12 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
-      const response =
-        await httpClient.sendRequest<ZendeskOrganizationsResponse>({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organizations.json?per_page=100`,
-          method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
-        });
+      const response = await sendZendeskRequest<ZendeskOrganizationsResponse>({
+        auth,
+        urlPath: '/api/v2/organizations.json',
+        queryParams: { per_page: '100' },
+        method: HttpMethod.GET,
+      });
 
       const organizations = response.body.organizations;
 
@@ -192,15 +179,14 @@ auth: zendeskAuth,
   },
 });
 
-export const userIdDropdown =  Property.Dropdown({
-auth: zendeskAuth,
-
+export const userIdDropdown = Property.Dropdown({
+  auth: zendeskAuth,
   displayName: 'User',
   description: 'Select the user to work with',
   required: true,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -210,15 +196,11 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest<ZendeskUsersResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users.json?per_page=100`,
+      const response = await sendZendeskRequest<ZendeskUsersResponse>({
+        auth,
+        urlPath: '/api/v2/users.json',
+        queryParams: { per_page: '100' },
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const users = response.body.users;
@@ -246,15 +228,14 @@ auth: zendeskAuth,
   },
 });
 
-export const brandIdDropdown =  Property.Dropdown({
-auth: zendeskAuth,
-
+export const brandIdDropdown = Property.Dropdown({
+  auth: zendeskAuth,
   displayName: 'Brand',
   description: 'Select the brand to work with',
   required: false,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -264,15 +245,10 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest<ZendeskBrandsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/brands.json`,
+      const response = await sendZendeskRequest<ZendeskBrandsResponse>({
+        auth,
+        urlPath: '/api/v2/brands.json',
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const brands = response.body.brands;
@@ -302,15 +278,14 @@ auth: zendeskAuth,
   },
 });
 
-export const problemTicketIdDropdown =  Property.Dropdown({
-auth: zendeskAuth,
-
+export const problemTicketIdDropdown = Property.Dropdown({
+  auth: zendeskAuth,
   displayName: 'Problem Ticket',
   description: 'Select the problem ticket this ticket is an incident of',
   required: false,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -320,15 +295,11 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest<ZendeskTicketsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets.json?per_page=100`,
+      const response = await sendZendeskRequest<ZendeskTicketsResponse>({
+        auth,
+        urlPath: '/api/v2/tickets.json',
+        queryParams: { per_page: '100' },
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const tickets = response.body.tickets;
@@ -360,15 +331,14 @@ auth: zendeskAuth,
   },
 });
 
-export const customRoleIdDropdown =  Property.Dropdown({
-auth: zendeskAuth,
-
+export const customRoleIdDropdown = Property.Dropdown({
+  auth: zendeskAuth,
   displayName: 'Custom Role',
   description: 'Select the custom role for the agent',
   required: false,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -378,15 +348,10 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest<ZendeskCustomRolesResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/custom_roles.json`,
+      const response = await sendZendeskRequest<ZendeskCustomRolesResponse>({
+        auth,
+        urlPath: '/api/v2/custom_roles.json',
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const customRoles = response.body.custom_roles;
@@ -419,7 +384,7 @@ export const agentBrandIdDropdown = Property.MultiSelectDropdown({
   required: false,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -429,15 +394,10 @@ export const agentBrandIdDropdown = Property.MultiSelectDropdown({
     }
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest<ZendeskBrandsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/brands.json`,
+      const response = await sendZendeskRequest<ZendeskBrandsResponse>({
+        auth,
+        urlPath: '/api/v2/brands.json',
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const brands = response.body.brands;
@@ -445,7 +405,7 @@ export const agentBrandIdDropdown = Property.MultiSelectDropdown({
       return {
         disabled: false,
         options: brands
-          .filter((brand) => brand.active) // Only show active brands
+          .filter((brand) => brand.active)
           .map((brand) => ({
             label: `${brand.name}${brand.default ? ' (Default)' : ''} - ${brand.subdomain}`,
             value: brand.id.toString(),
@@ -472,18 +432,14 @@ export const userFieldsDynamicProp = Property.DynamicProperties({
   required: false,
   refreshers: ['auth'],
   props: async ({ auth }) => {
-    if (!auth) return {};
+    const authValue = auth as ZendeskAuthValue | undefined;
+    if (!authValue) return {};
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/user_fields.json`,
+      const response = await sendZendeskRequest({
+        auth: authValue,
+        urlPath: '/api/v2/user_fields.json',
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const fields = (response.body as {
@@ -593,15 +549,14 @@ export const userFieldsDynamicProp = Property.DynamicProperties({
   },
 });
 
-export const groupIdDropdown =  Property.Dropdown({
-auth: zendeskAuth,
-
+export const groupIdDropdown = Property.Dropdown({
+  auth: zendeskAuth,
   displayName: 'Group',
   description: 'Select the group to assign',
   required: false,
   refreshers: ['auth'],
   options: async (propsValue) => {
-    const auth = propsValue.auth;
+    const auth = propsValue.auth as ZendeskAuthValue | undefined;
     if (!auth) {
       return {
         disabled: true,
@@ -611,15 +566,11 @@ auth: zendeskAuth,
     }
 
     try {
-      const authentication = auth;
-      const response = await httpClient.sendRequest<ZendeskGroupsResponse>({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/groups.json?per_page=100`,
+      const response = await sendZendeskRequest<ZendeskGroupsResponse>({
+        auth,
+        urlPath: '/api/v2/groups.json',
+        queryParams: { per_page: '100' },
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
       });
 
       const groups = response.body.groups;
@@ -644,4 +595,5 @@ auth: zendeskAuth,
     }
   },
 });
+
 
