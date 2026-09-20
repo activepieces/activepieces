@@ -20,28 +20,32 @@ import {
 
 function useAdminPageViewed({
   page,
-  tab,
-  locked,
+  surface,
 }: {
   page: string;
-  tab: string | null;
-  locked: boolean;
+  surface: { tab: string | null; locked: boolean } | null;
 }) {
   const { capture } = useTelemetry();
+  const tab = surface?.tab ?? null;
+  const locked = surface?.locked ?? false;
+  const viewed = surface !== null;
   useEffect(() => {
+    if (!viewed) {
+      return;
+    }
     capture({
       name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
       payload: { page, tab, locked },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, tab, locked]);
+  }, [page, tab, locked, viewed]);
 }
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
-function AdminRoute({ page }: { page: AdminPageSpec }) {
+export function AdminRoute({ page }: { page: AdminPageSpec }) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const [searchParams] = useSearchParams();
@@ -51,25 +55,26 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
   const tabs = adminPagesUtils.visibleTabs({ page, context });
   const requestedTab = tabs.find((tab) => tab.id === requested);
   const activeTab = requestedTab ?? tabs[0];
-  const surface =
+  const rendersOwnBody =
     page.component !== undefined ||
-    (page.overview !== undefined && requested === null)
+    (page.overview !== undefined && requested === null);
+  const redirects =
+    !rendersOwnBody && requested !== null && requestedTab === undefined;
+  const surface =
+    redirects || (!rendersOwnBody && activeTab === undefined)
+      ? null
+      : rendersOwnBody
       ? {
           tab: null,
           locked:
             page.sample === true && page.nav?.isLocked?.(context) === true,
         }
       : {
-          tab: activeTab?.id ?? null,
+          tab: activeTab.id,
           locked:
-            activeTab?.sample === true &&
-            activeTab.isLocked?.(context) === true,
+            activeTab.sample === true && activeTab.isLocked?.(context) === true,
         };
-  useAdminPageViewed({
-    page: page.id,
-    tab: surface.tab,
-    locked: surface.locked,
-  });
+  useAdminPageViewed({ page: page.id, surface });
 
   const Page = page.component;
   if (Page !== undefined) {
