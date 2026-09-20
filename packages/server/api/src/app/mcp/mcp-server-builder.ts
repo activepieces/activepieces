@@ -106,7 +106,7 @@ function registerPlatformTools({ server, mcp, platformId, userId, clientKey, sel
         withMcpReach({ execute, toolTitle, platformId, userId, log })
 
     const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
-    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing })(args))
+    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => requireMcpReach(charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing }), contextTool.title)(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
     const tools = filterEnabledTools({ tools: activepiecesTools(templateMcp, userId, log), disabledTools: mcp.disabledTools })
