@@ -10,6 +10,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Tooltip,
@@ -21,14 +22,9 @@ import { cn } from '@/lib/utils';
 
 import { getToolCategories } from './utils/mcp-tools-metadata';
 
-type McpToolsProps = {
-  disabledTools: string[] | null;
-  isPending: boolean;
-  onUpdateDisabledTools: (tools: string[]) => void;
-};
-
 export function McpTools({
   disabledTools: externalDisabledTools,
+  platformDisabledTools = [],
   isPending,
   onUpdateDisabledTools,
 }: McpToolsProps) {
@@ -75,13 +71,18 @@ export function McpTools({
     <Accordion type="multiple" className="space-y-2">
       {toolCategories.map((category) => {
         const toolNames = category.tools.map((tool) => tool.name);
+        const isPlatformOff = (name: string) =>
+          !category.locked && platformDisabledTools.includes(name);
+        const editableNames = toolNames.filter((n) => !isPlatformOff(n));
         const enabledInCategory = category.locked
           ? toolNames
-          : toolNames.filter((n) => !disabledTools.includes(n));
-        const allChecked = enabledInCategory.length === toolNames.length;
+          : editableNames.filter((n) => !disabledTools.includes(n));
+        const allChecked =
+          editableNames.length > 0 &&
+          enabledInCategory.length === editableNames.length;
         const someChecked =
           enabledInCategory.length > 0 &&
-          enabledInCategory.length < toolNames.length;
+          enabledInCategory.length < editableNames.length;
 
         return (
           <AccordionItem key={category.label} value={category.label}>
@@ -101,8 +102,9 @@ export function McpTools({
                     checked={
                       allChecked ? true : someChecked ? 'indeterminate' : false
                     }
+                    disabled={editableNames.length === 0}
                     onCheckedChange={(v) =>
-                      toggleCategory(toolNames, v === true)
+                      toggleCategory(editableNames, v === true)
                     }
                     onClick={(e) => e.stopPropagation()}
                     aria-label={t('Select all in {{category}}', {
@@ -126,8 +128,11 @@ export function McpTools({
             <AccordionContent className="p-0 pl-6">
               <div className="divide-y">
                 {category.tools.map((tool) => {
+                  const platformOff = isPlatformOff(tool.name);
                   const isChecked =
-                    category.locked || !disabledTools.includes(tool.name);
+                    !platformOff &&
+                    (category.locked || !disabledTools.includes(tool.name));
+                  const isEditable = !category.locked && !platformOff;
                   return (
                     <div
                       key={tool.name}
@@ -139,6 +144,7 @@ export function McpTools({
                         <Checkbox
                           id={tool.name}
                           checked={isChecked}
+                          disabled={platformOff}
                           onCheckedChange={(v) =>
                             toggleTool(tool.name, v === true)
                           }
@@ -146,17 +152,29 @@ export function McpTools({
                         />
                       )}
                       <label
-                        htmlFor={category.locked ? undefined : tool.name}
+                        htmlFor={isEditable ? tool.name : undefined}
                         className={cn(
                           'flex flex-col gap-0.5',
-                          !category.locked && 'cursor-pointer',
+                          isEditable && 'cursor-pointer',
+                          platformOff && 'opacity-60',
                         )}
                       >
-                        <span className="text-sm font-mono font-medium">
-                          {tool.name}
+                        <span className="flex items-center gap-2">
+                          <span className="text-sm font-mono font-medium">
+                            {tool.name}
+                          </span>
+                          {platformOff && (
+                            <Badge variant="outline" className="font-normal">
+                              {t('Off for the whole platform')}
+                            </Badge>
+                          )}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {tool.description}
+                          {platformOff
+                            ? t(
+                                'A platform admin switched this off on the platform MCP server, so no client connected there can call it.',
+                              )
+                            : tool.description}
                         </span>
                       </label>
                     </div>
@@ -170,3 +188,10 @@ export function McpTools({
     </Accordion>
   );
 }
+
+type McpToolsProps = {
+  disabledTools: string[] | null;
+  platformDisabledTools?: string[];
+  isPending: boolean;
+  onUpdateDisabledTools: (tools: string[]) => void;
+};

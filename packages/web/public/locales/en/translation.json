@@ -2891,5 +2891,8 @@
   "Built-in": "Built-in",
   "Turn on Run action": "Turn on Run action",
   "Everything a connected client can call in this project.": "Everything a connected client can call in this project.",
-  "Built-in tools are switched on and off here. Pieces are controlled in piece sets.": "Built-in tools are switched on and off here. Pieces are controlled in piece sets."
+  "Built-in tools are switched on and off here. Pieces are controlled in piece sets.": "Built-in tools are switched on and off here. Pieces are controlled in piece sets.",
+  "Off for the whole platform": "Off for the whole platform",
+  "A platform admin switched this off on the platform MCP server, so no client connected there can call it.": "A platform admin switched this off on the platform MCP server, so no client connected there can call it.",
+  "A platform admin switched Run action off for the whole platform. Clients can still see the list, but every call fails.": "A platform admin switched Run action off for the whole platform. Clients can still see the list, but every call fails."
 }

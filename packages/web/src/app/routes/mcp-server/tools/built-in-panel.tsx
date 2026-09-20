@@ -4,6 +4,7 @@ import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools
 
 export function BuiltInPanel({
   disabledTools,
+  platformDisabledTools,
   projectId,
   isPending,
   onUpdateDisabledTools,
@@ -18,6 +19,7 @@ export function BuiltInPanel({
       <McpTools
         key={projectId}
         disabledTools={disabledTools}
+        platformDisabledTools={platformDisabledTools}
         isPending={isPending}
         onUpdateDisabledTools={onUpdateDisabledTools}
       />
@@ -27,6 +29,7 @@ export function BuiltInPanel({
 
 type BuiltInPanelProps = {
   disabledTools: string[] | null;
+  platformDisabledTools: string[];
   projectId: string | null;
   isPending: boolean;
   onUpdateDisabledTools: (tools: string[]) => void;

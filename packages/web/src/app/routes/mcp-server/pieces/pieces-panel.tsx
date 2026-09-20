@@ -34,6 +34,7 @@ export function PiecesPanel({
   projectId,
   searchQuery,
   isRunActionDisabled,
+  isRunActionDisabledByPlatform,
   onShowBuiltIn,
 }: PiecesPanelProps) {
   const [debouncedSearchQuery] = useDebounce(
@@ -68,8 +69,11 @@ export function PiecesPanel({
     <div className="flex flex-col gap-4">
       <PieceSetBanner projectId={projectId} />
 
-      {isRunActionDisabled && (
-        <RunActionDisabledAlert onShowBuiltIn={onShowBuiltIn} />
+      {(isRunActionDisabled || isRunActionDisabledByPlatform) && (
+        <RunActionDisabledAlert
+          isDisabledByPlatform={isRunActionDisabledByPlatform}
+          onShowBuiltIn={onShowBuiltIn}
+        />
       )}
 
       {isLoading ? (
@@ -144,8 +148,10 @@ function PiecesUnavailableAlert({
 }
 
 function RunActionDisabledAlert({
+  isDisabledByPlatform,
   onShowBuiltIn,
 }: {
+  isDisabledByPlatform: boolean;
   onShowBuiltIn: () => void;
 }) {
   return (
@@ -153,18 +159,24 @@ function RunActionDisabledAlert({
       <TriangleAlert />
       <AlertTitle>{t('Nothing below can run right now')}</AlertTitle>
       <AlertDescription>
-        {t(
-          'Running piece actions is switched off for this project. Clients can still see the list, but every call fails.',
-        )}
+        {isDisabledByPlatform
+          ? t(
+              'A platform admin switched Run action off for the whole platform. Clients can still see the list, but every call fails.',
+            )
+          : t(
+              'Running piece actions is switched off for this project. Clients can still see the list, but every call fails.',
+            )}
       </AlertDescription>
-      <Button
-        variant="outline"
-        size="sm"
-        className="col-start-2 mt-3 w-fit"
-        onClick={onShowBuiltIn}
-      >
-        {t('Turn on Run action')}
-      </Button>
+      {!isDisabledByPlatform && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="col-start-2 mt-3 w-fit"
+          onClick={onShowBuiltIn}
+        >
+          {t('Turn on Run action')}
+        </Button>
+      )}
     </Alert>
   );
 }
@@ -236,5 +248,6 @@ type PiecesPanelProps = {
   projectId: string | null;
   searchQuery: string;
   isRunActionDisabled: boolean;
+  isRunActionDisabledByPlatform: boolean;
   onShowBuiltIn: () => void;
 };

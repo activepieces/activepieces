@@ -1,7 +1,6 @@
 import { ApFlagId, isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { getToolCategories } from '@/app/components/project-settings/mcp-server/utils/mcp-tools-metadata';
@@ -71,17 +70,7 @@ export function ToolsTab({
   };
 
   const updateDisabledTools = (disabledTools: string[]) =>
-    updateMcpServer(
-      { disabledTools },
-      {
-        onError: (mutationError) =>
-          toast.error(
-            isProjectAccessError(mutationError)
-              ? t('You are not allowed to change the tools of this project.')
-              : t('The tools could not be saved. Try again.'),
-          ),
-      },
-    );
+    updateMcpServer({ disabledTools });
 
   return (
     <PageBand className="flex flex-col gap-6 py-8">
@@ -133,14 +122,18 @@ export function ToolsTab({
         <PiecesPanel
           projectId={projectId}
           searchQuery={searchQuery}
-          isRunActionDisabled={
-            mcpServer.disabledTools?.includes(RUN_ACTION_TOOL_NAME) ?? false
-          }
+          isRunActionDisabled={(mcpServer.disabledTools ?? []).includes(
+            RUN_ACTION_TOOL_NAME,
+          )}
+          isRunActionDisabledByPlatform={(
+            mcpServer.platformDisabledTools ?? []
+          ).includes(RUN_ACTION_TOOL_NAME)}
           onShowBuiltIn={() => selectSegment('built-in')}
         />
       ) : (
         <BuiltInPanel
           disabledTools={mcpServer.disabledTools}
+          platformDisabledTools={mcpServer.platformDisabledTools ?? []}
           projectId={projectId}
           isPending={isPending}
           onUpdateDisabledTools={updateDisabledTools}

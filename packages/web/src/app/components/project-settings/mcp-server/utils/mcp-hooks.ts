@@ -1,4 +1,9 @@
+import { ErrorCode } from '@activepieces/core-utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
+import { toast } from 'sonner';
+
+import { api } from '@/lib/api';
 
 import { mcpApi } from './mcp-api';
 
@@ -23,6 +28,13 @@ export const mcpHooks = {
       onSuccess: (data) => {
         queryClient.setQueryData([...MCP_SERVER_QUERY_KEY, projectId], data);
       },
+      onError: (error: Error) => {
+        toast.error(
+          isMcpServerAccessError(error)
+            ? t('You are not allowed to change the tools of this project.')
+            : t('The tools could not be saved. Try again.'),
+        );
+      },
     });
   },
 
@@ -37,3 +49,11 @@ export const mcpHooks = {
     });
   },
 };
+
+function isMcpServerAccessError(error: Error | null): boolean {
+  return (
+    api.isApError(error, ErrorCode.AUTHORIZATION) ||
+    api.isApError(error, ErrorCode.PERMISSION_DENIED) ||
+    api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
+  );
+}

@@ -11,7 +11,7 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
     selectionScope: ProjectSelectionScope
     log: FastifyBaseLogger
 }): McpToolDefinition => ({
-    title: 'ap_set_project_context',
+    title: SET_PROJECT_CONTEXT_TOOL_NAME,
     description: 'Set or clear the active project context. All tools require a project context to operate. Call with a projectId to select a project, or without to clear the selection. Always returns the list of available projects.',
     inputSchema: {
         projectId: z.string().optional().describe('The project ID to select. Omit to clear the current selection and list available projects.'),
@@ -26,6 +26,10 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
         const projectId = args.projectId as string | undefined
 
         const projects = await mcpAccess.listAccessibleProjects({ platformId, userId, log })
+
+        if (projects.length === 0) {
+            return mcpAccess.noMcpReachResult(SET_PROJECT_CONTEXT_TOOL_NAME)
+        }
 
         if (!isNil(projectId) && projectId !== '') {
             const targetProject = projects.find(p => p.id === projectId)
@@ -61,3 +65,5 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
         }
     },
 })
+
+export const SET_PROJECT_CONTEXT_TOOL_NAME = 'ap_set_project_context'

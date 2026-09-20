@@ -9,6 +9,7 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpActivityContext, withActivityRecording } from './activity/mcp-activity-recorder'
+import { mcpAccess } from './mcp-access'
 import { ALLOW_ALL, PermissionChecker, resolveMcpPermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { mcpToolInput } from './mcp-tool-input'
@@ -100,6 +101,9 @@ function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope,
     log: FastifyBaseLogger
 }): void {
     const platformId = mcp.platformId!
+    const requireMcpReach = (execute: McpToolDefinition['execute'], toolTitle: string): McpToolDefinition['execute'] =>
+        withMcpReach({ execute, toolTitle, platformId, userId, log })
+
     const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
     server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing })(args))
 
@@ -108,7 +112,7 @@ function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope,
 
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
-            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => charged({ execute: tool.execute, toolName: tool.title, projectId: null, billing })(args))
+            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => requireMcpReach(charged({ execute: tool.execute, toolName: tool.title, projectId: null, billing }), tool.title)(args))
             return
         }
 
@@ -157,6 +161,22 @@ async function executeInSelectedProject({ toolTitle, args, projectId, userId, re
         toolTitle: realTool.title,
     })
     return execute(args)
+}
+
+function withMcpReach({ execute, toolTitle, platformId, userId, log }: {
+    execute: McpToolDefinition['execute']
+    toolTitle: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): McpToolDefinition['execute'] {
+    return async (args) => {
+        const reachesMcp = await mcpAccess.hasMcpReach({ platformId, userId, log })
+        if (!reachesMcp) {
+            return mcpAccess.noMcpReachResult(toolTitle)
+        }
+        return execute(args)
+    }
 }
 
 function filterEnabledTools({ tools, disabledTools }: {
