@@ -9,6 +9,7 @@ import { pubsub } from '../../../../../src/app/helper/pubsub'
 import { engineResponseWatcher } from '../../../../../src/app/workers/engine-response-watcher'
 import { redisMetadataKey, RunsMetadataUpsertData } from '../../../../../src/app/workers/job'
 import { createHandlers } from '../../../../../src/app/workers/rpc/worker-rpc-service'
+import { distributedStore } from '../../../../../src/app/database/redis-connections'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
@@ -601,6 +602,23 @@ describe('Resume flow run', () => {
         })
 
         expect(redelivery.json().discarded).toBe(false)
+    })
+
+    it('ignores a consumption marker while the waitpoint row is still pending', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+        // A rollback after the marker was written leaves the marker behind with the row intact.
+        // The row is the authority: still PENDING means nothing ever accepted the response.
+        await distributedStore.put(`waitpoint_consumed:${waitpoint!.id}`, true, 3600)
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.FAILED })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        expect(response.json().discarded).toBe(true)
     })
 
     it('reports a response as discarded when the waitpoint was never consumed', async () => {

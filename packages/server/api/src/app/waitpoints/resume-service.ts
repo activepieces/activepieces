@@ -29,6 +29,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             resumePayload: resumePayload ?? null,
             workerHandlerId,
             onReady: async (waitpoint) => {
+                await recordWaitpointConsumed({ waitpointId, log })
                 await enqueueResume({
                     flowRun,
                     waitpoint,
@@ -36,7 +37,6 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                     workerHandlerId,
                     httpRequestId,
                 }, log)
-                await recordWaitpointConsumed({ waitpointId, log })
             },
         })
 
@@ -65,16 +65,16 @@ export const resumeService = (log: FastifyBaseLogger) => ({
     },
 
     async waitpointWasConsumed({ waitpointId, flowRunId }: WaitpointWasConsumedParams): Promise<boolean> {
+        const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+        if (!isNil(waitpoint)) {
+            return waitpoint.status === WaitpointStatus.COMPLETED
+        }
         const { data, error } = await tryCatch(() => distributedStore.get<boolean>(waitpointConsumedKey(waitpointId)))
         if (error) {
             log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#waitpointWasConsumed] Could not read the consumption marker, assuming the response was delivered')
             return true
         }
-        if (data === true) {
-            return true
-        }
-        const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
-        return !isNil(waitpoint) && waitpoint.status === WaitpointStatus.COMPLETED
+        return data === true
     },
 
     async legacyResume({ flowRunId, resumePayload, workerHandlerId }: LegacyResumeParams): Promise<ResumeFromWaitpointResult> {
