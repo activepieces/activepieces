@@ -87,4 +87,4 @@ type CreditsActionButtonProps = {
   variant?: CreditsActionButtonVariant;
 };
 
-type CreditsActionButtonVariant = 'basic' | 'accent';
+type CreditsActionButtonVariant = 'basic' | 'accent' | 'default';

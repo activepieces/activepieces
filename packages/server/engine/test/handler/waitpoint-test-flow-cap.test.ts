@@ -2,9 +2,19 @@ import { FlowRunStatus, StreamStepProgress } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockCreate, mockGetPieceAndAction } = vi.hoisted(() => ({
+const { mockCreate, mockGetPieceAndAction, mockRunProgress } = vi.hoisted(() => ({
     mockCreate: vi.fn().mockResolvedValue({ id: 'waitpoint-id', resumeUrl: 'http://localhost/resume' }),
     mockGetPieceAndAction: vi.fn(),
+    mockRunProgress: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('../../src/lib/api/engine-run-api', () => ({
+    engineRunApi: {
+        updateRunProgress: mockRunProgress,
+        updateStepProgress: vi.fn(),
+        uploadRunLog: vi.fn(),
+        sendFlowResponse: vi.fn(),
+    },
 }))
 
 vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
@@ -24,6 +34,10 @@ vi.mock('../../src/lib/helper/piece-loader', () => ({
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildPieceAction, generateMockEngineConstants } from './test-helper'
+
+// Nothing listens here. A progress call that escapes the mock fails loudly in this suite
+// instead of quietly succeeding against whatever dev server the author happens to be running.
+const UNREACHABLE_API_URL = 'http://127.0.0.1:1/'
 
 const THREE_HOURS_MS = 3 * 60 * 60 * 1_000
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1_000
@@ -59,7 +73,7 @@ async function runWaitingStep({ maxTestWaitMs, streamStepProgress }: { maxTestWa
     const result = await flowExecutor.execute({
         action,
         executionState: FlowExecutorContext.empty(),
-        constants: generateMockEngineConstants({ streamStepProgress }),
+        constants: generateMockEngineConstants({ streamStepProgress, internalApiUrl: UNREACHABLE_API_URL }),
     })
     expect(result.verdict, JSON.stringify(result.steps?.waiter?.errorMessage ?? null)).not.toBe(FlowRunStatus.FAILED)
     expect(mockCreate).toHaveBeenCalledTimes(1)
@@ -76,6 +90,12 @@ describe('a step that asks to wait longer than a person will sit through', () =>
         const sent = await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET })
 
         expect(dayjs(sent.resumeDateTime).diff(dayjs(), 'minute')).toBeLessThanOrEqual(15)
+    })
+
+    it('reports run progress through the mocked api, so the suite needs nothing listening on port 3000', async () => {
+        await runWaitingStep({ maxTestWaitMs: FIFTEEN_MINUTES_MS, streamStepProgress: StreamStepProgress.WEBSOCKET })
+
+        expect(mockRunProgress).toHaveBeenCalled()
     })
 
     it('keeps the full deadline when the flow runs unattended', async () => {

@@ -1,9 +1,5 @@
-import {
-  createAction,
-  Property,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
-import { makeRequest } from '../common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { isRecord, makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 import { HttpMethod, getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { adAccountIdDropdown } from '../common/props';
@@ -14,12 +10,12 @@ export const findPin = createAction({
   name: 'findPin',
   classification: 'SEARCH',
   outputSchema: findPinActionOutputSchema,
-  displayName: 'Find Pin by Title/Keyword',
+  displayName: 'Find Pin by Keyword',
   description: 'Search for Pins using title, description, or keywords.',
   audience: 'both',
   aiMetadata: {
     description:
-      "Searches the authenticated account's Pins by keywords matched against title, description, or tags (comma-separated pin IDs also work). Use to locate existing Pins or resolve a pin_id before deleting or referencing one. Read-only and idempotent; supports a max-results cap and pagination via a bookmark token.",
+      "Searches the authenticated account's Pins by keywords matched against title, description, or tags (comma-separated pin IDs also work). Use to locate existing Pins or resolve a pin_id before deleting or referencing one. Read-only and idempotent; it returns at most max_results Pins, and the next batch is fetched by passing the returned bookmark back as bookmark.",
     idempotent: true,
   },
   props: {
@@ -28,66 +24,164 @@ export const findPin = createAction({
       displayName: 'Search Query',
       required: true,
       description:
-        'Search terms for pin titles, descriptions, or tags. You can also search using comma-separated pin IDs.',
+        'Words in the title, description or tags, or comma-separated Pin IDs.',
+      placeholder: 'e.g. summer salad',
     }),
     bookmark: Property.ShortText({
-      displayName: 'Pagination Bookmark',
+      displayName: 'Bookmark',
       required: false,
-      description:
-        'Bookmark token from previous search results for pagination.',
+      description: 'Bookmark from a previous run to continue where it stopped.',
+      advanced: true,
     }),
     max_results: Property.Number({
-      displayName: 'Maximum Results',
+      displayName: 'Max Results',
       required: false,
-      description:
-        'Maximum number of pins to return (useful for large result sets).',
+      description: 'Never returns more than this many Pins.',
       defaultValue: 25,
+      display: 'stepper',
+      min: 1,
+      max: 250,
+      step: 1,
     }),
   },
   async run({ auth, propsValue }) {
     const { query, bookmark, ad_account_id, max_results } = propsValue;
+    const limit = Math.min(
+      250,
+      Math.max(1, Math.floor(max_results ?? DEFAULT_MAX_RESULTS))
+    );
+    const cursor = decodeCursor(bookmark);
+    const accessToken = getAccessTokenOrThrow(auth);
 
-    // Build query parameters
-    const params = new URLSearchParams();
-    params.append('query', query);
+    let items: unknown[] = [];
+    let pageBookmark: string | null = cursor.bookmark;
+    let requestedBookmark: string | null = cursor.bookmark;
+    let nextBookmark: string | undefined = undefined;
+    let lastPageStart = 0;
+    let lastPageSkipped = 0;
 
-    if (bookmark) {
-      params.append('bookmark', bookmark);
-    }
+    for (let page = 0; page < MAX_SEARCH_PAGES; page++) {
+      const params = new URLSearchParams();
+      params.append('query', query);
+      if (pageBookmark !== null) {
+        params.append('bookmark', pageBookmark);
+      }
+      if (ad_account_id) {
+        params.append('ad_account_id', ad_account_id);
+      }
 
-    if (ad_account_id) {
-      params.append('ad_account_id', ad_account_id);
-    }
-
-    const path = `/search/pins?${params.toString()}`;
-
-    try {
-      const response = await makeRequest(
-        getAccessTokenOrThrow(auth),
+      const response: unknown = await makeRequest(
+        accessToken,
         HttpMethod.GET,
-        path
+        `/search/pins?${params.toString()}`
       );
 
-      // Apply max_results limit if specified
-      let items = response.items || [];
-      if (max_results && items.length > max_results) {
-        items = items.slice(0, max_results);
+      if (!isRecord(response) || !Array.isArray(response['items'])) {
+        throw new Error(
+          'Pinterest returned an unexpected response for the Pin search'
+        );
       }
 
-      return {
-        items,
-        bookmark: response.bookmark,
-        total_results: items.length,
-        query_used: query,
-        has_more: !!response.bookmark,
-      };
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        throw new Error('No pins found matching your search criteria.');
+      const rawItems: unknown[] = response['items'];
+
+      if (page === 0 && cursor.skip > rawItems.length) {
+        throw new Error(
+          'Bookmark does not match this search. Start again without a bookmark.'
+        );
       }
-      throw new Error(
-        `Failed to search pins: ${error.message || 'Unknown error'}`
-      );
+
+      const skipped = page === 0 ? cursor.skip : 0;
+      const responseBookmark = response['bookmark'];
+
+      requestedBookmark = pageBookmark;
+      lastPageStart = items.length;
+      lastPageSkipped = skipped;
+      items = [...items, ...rawItems.slice(skipped)];
+      nextBookmark =
+        typeof responseBookmark === 'string' && responseBookmark.length > 0
+          ? responseBookmark
+          : undefined;
+
+      if (!nextBookmark || items.length >= limit || rawItems.length === 0) {
+        break;
+      }
+      pageBookmark = nextBookmark;
     }
+
+    const cutInsidePage = items.length > limit;
+    const limitedItems = cutInsidePage ? items.slice(0, limit) : items;
+
+    return {
+      items: limitedItems,
+      bookmark: cutInsidePage
+        ? encodeCursor({
+            bookmark: requestedBookmark,
+            skip: lastPageSkipped + (limit - lastPageStart),
+          })
+        : nextBookmark,
+      total_results: limitedItems.length,
+      query_used: query,
+      has_more: cutInsidePage || !!nextBookmark,
+    };
   },
 });
+
+function encodeCursor({
+  bookmark,
+  skip,
+}: {
+  bookmark: string | null;
+  skip: number;
+}): string {
+  const payload = JSON.stringify({ b: bookmark, s: skip });
+  return `${CURSOR_PREFIX}${Buffer.from(payload, 'utf8').toString('base64url')}`;
+}
+
+function decodeCursor(value: string | undefined): {
+  bookmark: string | null;
+  skip: number;
+} {
+  if (!value) {
+    return { bookmark: null, skip: 0 };
+  }
+
+  if (!value.startsWith(CURSOR_PREFIX)) {
+    return { bookmark: value, skip: 0 };
+  }
+
+  const decoded = parseCursorPayload(value.slice(CURSOR_PREFIX.length));
+
+  if (!isRecord(decoded)) {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+
+  const cursorBookmark = decoded['b'];
+  const cursorSkip = decoded['s'];
+
+  if (cursorBookmark !== null && typeof cursorBookmark !== 'string') {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+
+  if (
+    typeof cursorSkip !== 'number' ||
+    !Number.isInteger(cursorSkip) ||
+    cursorSkip < 0
+  ) {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+
+  return { bookmark: cursorBookmark, skip: cursorSkip };
+}
+
+function parseCursorPayload(encoded: string): unknown {
+  try {
+    return JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+  } catch {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+}
+
+const DEFAULT_MAX_RESULTS = 25;
+const MAX_SEARCH_PAGES = 10;
+const CURSOR_PREFIX = 'apc1.';
+const INVALID_CURSOR_MESSAGE = 'Bookmark is not a valid Find Pin bookmark';

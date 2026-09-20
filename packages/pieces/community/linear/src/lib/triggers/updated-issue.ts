@@ -27,6 +27,7 @@ export const linearUpdatedIssue = createTrigger({
       options: {
         options: [
           { label: 'Status', value: 'stateId' },
+          { label: 'Team', value: 'teamId' },
           { label: 'Assignee', value: 'assigneeId' },
           { label: 'Priority', value: 'priority' },
           { label: 'Title', value: 'title' },

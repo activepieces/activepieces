@@ -62,6 +62,19 @@ describe('billingUtils.formatCredits', () => {
       formatUtils.formatNumberCompact(2_500_000),
     );
   });
+
+  it('rounds a fractional credit count to a whole credit', () => {
+    expect(billingUtils.formatCredits(838.822)).toBe(
+      formatUtils.formatNumber(839),
+    );
+    expect(billingUtils.formatCredits(0.4)).toBe(formatUtils.formatNumber(0));
+  });
+
+  it('rounds before choosing compact notation', () => {
+    expect(billingUtils.formatCredits(999_999.6)).toBe(
+      formatUtils.formatNumberCompact(1_000_000),
+    );
+  });
 });
 
 describe('billingUtils.shouldShowCreditsAlert', () => {

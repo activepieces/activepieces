@@ -65,13 +65,15 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
     }
 }
 
-export async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName }: {
+export async function loadOrStartConversation({ conversationId, platformId, userId, source, projectId, modelName, agentId, flowRunId }: {
     conversationId: string
     platformId: string
     userId: string
     source?: AgentRunSource
     projectId?: string | null
     modelName?: string | null
+    agentId?: string
+    flowRunId?: string
 }): Promise<AgentConversation> {
     if (source !== AgentRunSource.FLOW_STEP) {
         return agentHelpers.getConversationOrThrow({ id: conversationId, platformId, userId })
@@ -89,6 +91,8 @@ export async function loadOrStartConversation({ conversationId, platformId, user
         projectId: projectId ?? null,
         userId,
         source: AgentRunSource.FLOW_STEP,
+        agentId: agentId ?? null,
+        flowRunId: flowRunId ?? null,
         title: null,
         modelName: modelName ?? null,
         messages: [],

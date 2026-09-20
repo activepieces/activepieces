@@ -161,6 +161,13 @@ const ListAgentsRequest = z.object({
     limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
 })
 
+const ListAgentRunsRequest = z.object({
+    projectId: ApId,
+    agentId: ApId,
+    cursor: z.string().optional(),
+    limit: z.coerce.number().int().min(1).max(MAX_AGENT_PAGE_SIZE).optional(),
+})
+
 const agentUtils = {
     isPublishable: (config: AgentConfig): boolean => (config.instructions ?? '').trim().length > 0,
 }
@@ -187,6 +194,7 @@ export {
     DraftAgentRequest,
     AgentDraftFields,
     DraftAgentResponse,
+    ListAgentRunsRequest,
     ListAgentsRequest,
     MAX_AGENT_OUTPUT_FIELDS,
     MAX_AGENT_CONFIG_BYTES,
@@ -214,6 +222,7 @@ export type AgentDraftFields = z.infer<typeof AgentDraftFields>
 export type DraftAgentResponse = z.infer<typeof DraftAgentResponse>
 export type AgentMoveLoss = z.infer<typeof AgentMoveLoss>
 export type AgentMovePreview = z.infer<typeof AgentMovePreview>
+export type ListAgentRunsRequest = z.infer<typeof ListAgentRunsRequest>
 export type ListAgentsRequest = z.infer<typeof ListAgentsRequest>
 export type MoveAgentRequest = z.infer<typeof MoveAgentRequest>
 export type UpdateAgentRequest = z.infer<typeof UpdateAgentRequest>

@@ -102,3 +102,98 @@ export async function makeRequest(
     );
   }
 }
+
+export async function fetchAllPages({
+  accessToken,
+  path,
+  maxPages = 2,
+  pageSize = 250,
+}: {
+  accessToken: string;
+  path: string;
+  maxPages?: number;
+  pageSize?: number | null;
+}): Promise<{ items: unknown[]; truncated: boolean }> {
+  let items: unknown[] = [];
+  let bookmark: string | undefined = undefined;
+  let truncated = false;
+
+  for (let page = 0; page < maxPages; page++) {
+    const query = [
+      ...(pageSize === null ? [] : [`page_size=${pageSize}`]),
+      ...(isNonEmptyString(bookmark)
+        ? [`bookmark=${encodeURIComponent(bookmark)}`]
+        : []),
+    ];
+    const response: unknown = await makeRequest(
+      accessToken,
+      HttpMethod.GET,
+      appendQuery({ path, query })
+    );
+
+    if (!isRecord(response)) {
+      break;
+    }
+
+    const pageItems = response['items'];
+    items = Array.isArray(pageItems) ? [...items, ...pageItems] : items;
+
+    const nextBookmark = response['bookmark'];
+
+    if (!isNonEmptyString(nextBookmark) || nextBookmark === bookmark) {
+      break;
+    }
+
+    bookmark = nextBookmark;
+    truncated = page === maxPages - 1;
+  }
+
+  return { items: dedupeById(items), truncated };
+}
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+export function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
+function appendQuery({
+  path,
+  query,
+}: {
+  path: string;
+  query: string[];
+}): string {
+  if (query.length === 0) {
+    return path;
+  }
+
+  const separator = path.includes('?') ? '&' : '?';
+
+  return `${path}${separator}${query.join('&')}`;
+}
+
+function dedupeById(items: unknown[]): unknown[] {
+  const seenIds = new Set<string>();
+
+  return items.filter((item) => {
+    if (!isRecord(item)) {
+      return true;
+    }
+
+    const id = item['id'];
+
+    if (!isNonEmptyString(id)) {
+      return true;
+    }
+
+    if (seenIds.has(id)) {
+      return false;
+    }
+
+    seenIds.add(id);
+    return true;
+  });
+}

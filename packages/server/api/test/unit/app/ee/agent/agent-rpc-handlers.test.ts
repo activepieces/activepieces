@@ -95,7 +95,7 @@ vi.mock('../../../../../src/app/mcp/mcp-server-builder', async (importOriginal) 
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    agentAiUtils: { createChatModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
+    aiUtils: { createModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
 }))
 
 type QueryBuilderMock = {
@@ -135,8 +135,8 @@ vi.mock('../../../../../src/app/ee/agent/chat-analytics-sync', () => ({
     chatAnalyticsTelemetry: () => ({ sendConversationUpdate: mockSendConversationUpdate }),
 }))
 
-vi.mock('../../../../../src/app/ee/agent/chat-usage-tracker', () => ({
-    chatUsageTracker: () => ({ track: mockTrack }),
+vi.mock('../../../../../src/app/ee/agent/chat-tool-billing', () => ({
+    chatToolBilling: { chargeForLatestTurn: mockTrack },
 }))
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }

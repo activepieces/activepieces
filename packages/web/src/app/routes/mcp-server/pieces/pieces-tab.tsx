@@ -170,7 +170,7 @@ function PiecesUnavailableAlert({
       <Button
         variant="outline"
         size="sm"
-        className="mt-3 w-fit"
+        className="col-start-2 mt-3 w-fit"
         onClick={() => onRetry()}
       >
         {t('Try again')}
@@ -216,9 +216,12 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
   }
 
   return (
-    <Alert variant="primary" className="flex items-center gap-3">
+    <Alert
+      variant="primary"
+      className="flex flex-wrap items-center gap-x-3 gap-y-2"
+    >
       <Info />
-      <AlertDescription>
+      <AlertDescription className="min-w-60 flex-1">
         {isPlatformAdmin
           ? t("This project's pieces are controlled by a Piece Set.")
           : t(
