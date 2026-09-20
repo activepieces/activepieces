@@ -90,7 +90,7 @@ export function FeatureSample({
                 capture({
                   name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
                   payload: {
-                    feature: featureKey ?? title,
+                    feature: featureKey ?? null,
                     tier: tier ?? null,
                     surface: 'sample',
                   },

@@ -43,6 +43,7 @@ export function UpgradeFeatureDialog({
   bullets,
   tier,
   documentationUrl,
+  featureKey,
 }: UpgradeFeatureDialogProps) {
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -95,7 +96,7 @@ export function UpgradeFeatureDialog({
                 capture({
                   name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
                   payload: {
-                    feature: title,
+                    feature: featureKey,
                     tier: tier ?? null,
                     surface: 'dialog',
                   },

@@ -142,7 +142,7 @@ type PlatformAdminGateBlocked = {
 }
 
 type PlatformAdminUpgradeClicked = {
-    feature: string
+    feature: string | null
     tier: string | null
     surface: 'sample' | 'teaser' | 'dialog' | 'limit'
 }
