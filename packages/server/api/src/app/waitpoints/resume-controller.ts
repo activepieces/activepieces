@@ -1,5 +1,5 @@
 import { ApId, isNil } from '@activepieces/core-utils'
-import { ALL_PRINCIPAL_TYPES, FlowRun, FlowRunStatus, isFlowRunStateTerminal } from '@activepieces/shared'
+import { ALL_PRINCIPAL_TYPES, FlowRunStatus } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyReply } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import Mustache from 'mustache'
@@ -111,7 +111,7 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
         resumePayload: { body, headers, queryParams },
     })
     if (!acceptsHtml(headers)) {
-        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, expired: responseCannotReachRun({ flowRun, stale }) })
+        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
         return
     }
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
@@ -122,12 +122,12 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
 }
 
 async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply }: AsyncResumeHandlerParams): Promise<void> {
-    const { flowRun, stale } = await resumeService(log).resumeFromWaitpoint({
+    const { stale } = await resumeService(log).resumeFromWaitpoint({
         flowRunId,
         waitpointId,
         resumePayload: { body, headers, queryParams },
     })
-    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, expired: responseCannotReachRun({ flowRun, stale }) })
+    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
 }
 
 async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: AsyncResumeHandlerParams & { correlationId: string }): Promise<void> {
@@ -141,11 +141,11 @@ async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryPa
 }
 
 async function handleLegacyAsyncResume({ flowRunId, body, headers, queryParams, log, reply }: LegacyResumeHandlerParams): Promise<void> {
-    const { flowRun, stale } = await resumeService(log).legacyResume({
+    const { stale } = await resumeService(log).legacyResume({
         flowRunId,
         resumePayload: { body, headers, queryParams },
     })
-    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, expired: responseCannotReachRun({ flowRun, stale }) })
+    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
 }
 
 async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, log, reply, correlationId }: LegacyResumeHandlerParams & { correlationId: string }): Promise<void> {
@@ -155,10 +155,6 @@ async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, l
         correlationId,
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
-}
-
-function responseCannotReachRun({ flowRun, stale }: ResponseCannotReachRunParams): boolean {
-    return stale && isFlowRunStateTerminal({ status: flowRun.status, ignoreInternalError: false })
 }
 
 async function resolveResumePageTheme({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<ResumePageTheme> {
@@ -313,11 +309,6 @@ const STATUS_HTML_TEMPLATE = `<!DOCTYPE html>
 </div>
 </body>
 </html>`
-
-type ResponseCannotReachRunParams = {
-    flowRun: FlowRun
-    stale: boolean
-}
 
 type ConfirmationPageParams = {
     flowRunId: string

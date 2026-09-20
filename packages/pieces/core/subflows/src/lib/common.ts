@@ -134,26 +134,6 @@ export async function dispatchToSubflow({
     return response.body;
 }
 
-export async function deliverSubflowResponse({
-    callbackUrl,
-    response,
-}: DeliverSubflowResponseParams): Promise<void> {
-    const acknowledgement = await httpClient.sendRequest<SubflowCallbackAck>({
-        method: HttpMethod.POST,
-        url: callbackUrl,
-        body: {
-            status: 'success',
-            data: response,
-        },
-        retries: 10,
-    });
-    if (acknowledgement.body?.expired === true) {
-        throw new Error(
-            'The calling flow is no longer waiting for a response, so this response was not delivered. Open the parent run to see why it stopped waiting.'
-        );
-    }
-}
-
 type ListParams = {
     flowsContext: FlowsContext,
     params?: ListFlowsContextParams
@@ -167,14 +147,4 @@ type DispatchToSubflowParams = {
     data: unknown;
     callbackUrl?: string;
     retries?: number;
-}
-
-type DeliverSubflowResponseParams = {
-    callbackUrl: string;
-    response: unknown;
-}
-
-type SubflowCallbackAck = {
-    message?: string;
-    expired?: boolean;
 }
