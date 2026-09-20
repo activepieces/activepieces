@@ -37,10 +37,11 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, platformId, clientKey, clientId, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, platformId, platformDisabledTools, clientKey, clientId, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId?: string
     platformId?: string
+    platformDisabledTools: string[]
     clientKey: McpOAuthClientKey | null
     clientId: string
     log: FastifyBaseLogger
@@ -77,10 +78,10 @@ export async function buildMcpServer({ mcp, userId, platformId, clientKey, clien
             : ALLOW_ALL
         const activityContext: McpActivityContext | null = isNil(platformId) || isNil(userId) ? null : { platformId, projectId, userId, clientKey }
         registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log })
-        registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, billing, log })
+        registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
-        registerPlatformTools({ server, mcp, userId, clientKey, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, billing, log })
+        registerPlatformTools({ server, mcp, platformId: mcp.platformId, userId, clientKey, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, billing, log })
     }
     else {
         registerPlaceholderTools(server)
@@ -90,9 +91,10 @@ export async function buildMcpServer({ mcp, userId, platformId, clientKey, clien
     return server
 }
 
-function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope, resolveProjectMcp, billing, log }: {
+function registerPlatformTools({ server, mcp, platformId, userId, clientKey, selectionScope, resolveProjectMcp, billing, log }: {
     server: McpServer
     mcp: PopulatedMcpServer
+    platformId: string
     userId: string
     clientKey: McpOAuthClientKey | null
     selectionScope: ProjectSelectionScope
@@ -100,7 +102,6 @@ function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope,
     billing: McpCallBilling
     log: FastifyBaseLogger
 }): void {
-    const platformId = mcp.platformId!
     const requireMcpReach = (execute: McpToolDefinition['execute'], toolTitle: string): McpToolDefinition['execute'] =>
         withMcpReach({ execute, toolTitle, platformId, userId, log })
 
@@ -304,8 +305,11 @@ export async function runFlowAsTool({ flow, properties, payload, returnsResponse
     return { content: [{ type: 'text', text }], ...(isOkay ? {} : { isError: true }) }
 }
 
-function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, billing, log }: RegisterStaticToolsParams): void {
-    const tools = filterEnabledTools({ tools: activepiecesTools({ ...mcp, projectId }, userId, log), disabledTools: mcp.disabledTools })
+function registerStaticTools({ server, mcp, projectId, userId, platformDisabledTools, permissionChecker, activityContext, billing, log }: RegisterStaticToolsParams): void {
+    const tools = filterEnabledTools({
+        tools: activepiecesTools({ ...mcp, projectId }, userId, log),
+        disabledTools: [...(mcp.disabledTools ?? []), ...platformDisabledTools],
+    })
 
     tools.forEach((tool) => {
         const execute = permissionChecker.wrapExecute({
@@ -384,5 +388,6 @@ type RegisterToolsParams = {
 
 type RegisterStaticToolsParams = RegisterToolsParams & {
     userId?: string
+    platformDisabledTools: string[]
     activityContext: McpActivityContext | null
 }

@@ -172,7 +172,7 @@ export function McpTools({
                         <span className="text-xs text-muted-foreground">
                           {platformOff
                             ? t(
-                                'A platform admin switched this off on the platform MCP server, so no client connected there can call it.',
+                                'A platform admin switched this off for the whole platform, so no client can call it here or on the platform MCP server.',
                               )
                             : tool.description}
                         </span>

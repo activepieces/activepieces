@@ -1480,7 +1480,7 @@
   "Change the settings for your platform.": "Change the settings for your platform.",
   "Platform MCP Server": "Platform MCP Server",
   "Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.": "Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.",
-  "Control which built-in tools are available to the AI Chat and external agents via the platform MCP server.": "Control which built-in tools are available to the AI Chat and external agents via the platform MCP server.",
+  "Switching a tool off here switches it off everywhere on this platform: the AI Chat, external agents, and every project MCP server.": "Switching a tool off here switches it off everywhere on this platform: the AI Chat, external agents, and every project MCP server.",
   "Customize Selector": "Customize Selector",
   "Custom tabs must have a name": "Custom tabs must have a name",
   "Sections must have a name": "Sections must have a name",
@@ -2893,6 +2893,6 @@
   "Everything a connected client can call in this project.": "Everything a connected client can call in this project.",
   "Built-in tools are switched on and off here. Pieces are controlled in piece sets.": "Built-in tools are switched on and off here. Pieces are controlled in piece sets.",
   "Off for the whole platform": "Off for the whole platform",
-  "A platform admin switched this off on the platform MCP server, so no client connected there can call it.": "A platform admin switched this off on the platform MCP server, so no client connected there can call it.",
+  "A platform admin switched this off for the whole platform, so no client can call it here or on the platform MCP server.": "A platform admin switched this off for the whole platform, so no client can call it here or on the platform MCP server.",
   "A platform admin switched Run action off for the whole platform. Clients can still see the list, but every call fails.": "A platform admin switched Run action off for the whole platform. Clients can still see the list, but every call fails."
 }

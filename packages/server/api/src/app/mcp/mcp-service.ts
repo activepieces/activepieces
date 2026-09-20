@@ -74,6 +74,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
             mcp,
             userId,
             platformId,
+            platformDisabledTools: await resolveBindingPlatformTools({ mcp, platformId, log }),
             clientKey: clientKey ?? null,
             clientId,
             log,
@@ -81,6 +82,18 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+async function resolveBindingPlatformTools({ mcp, platformId, log }: {
+    mcp: PopulatedMcpServer
+    platformId?: string
+    log: FastifyBaseLogger
+}): Promise<string[]> {
+    if (mcp.type !== McpServerType.PROJECT || isNil(platformId)) {
+        return []
+    }
+    const platformMcp = await mcpServerService(log).getByPlatformId(platformId)
+    return platformMcp.disabledTools ?? []
+}
 
 async function getOrCreate({ where, defaults }: {
     where: { projectId: string } | { platformId: string }

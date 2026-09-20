@@ -1,5 +1,5 @@
 import { apId, Permission, ProjectRole, RoleType } from '@activepieces/core-utils'
-import { DefaultProjectRole, McpServerType, PlatformRole, PrincipalType, Project } from '@activepieces/shared'
+import { AgentRunSource, DefaultProjectRole, McpServerType, PlatformRole, PrincipalType, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateMockToken } from '../../../helpers/auth'
@@ -23,12 +23,41 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-async function connectAs({ ctx, projectId }: { ctx: TestContext, projectId?: string }): Promise<McpClient> {
+async function connectAs({ ctx, projectId, conversationId }: { ctx: TestContext, projectId?: string, conversationId?: string }): Promise<McpClient> {
     return mcpClientHelpers.connect({
         app,
         approve: (payload) => ctx.post('/v1/mcp-oauth/approve', payload),
         ...(projectId ? { projectId } : {}),
+        ...(conversationId ? { conversationId } : {}),
     })
+}
+
+async function switchOffOnPlatform({ ctx, tools }: { ctx: TestContext, tools: string[] }): Promise<void> {
+    await db.save('mcp_server', {
+        id: apId(),
+        projectId: null,
+        platformId: ctx.platform.id,
+        type: McpServerType.PLATFORM,
+        token: apId(72),
+        disabledTools: tools,
+    })
+}
+
+async function createConversation({ ctx }: { ctx: TestContext }): Promise<string> {
+    const conversationId = apId()
+    await db.save('agent_conversation', {
+        id: conversationId,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString(),
+        platformId: ctx.platform.id,
+        projectId: ctx.project.id,
+        userId: ctx.user.id,
+        source: AgentRunSource.AGENT,
+        status: 'STREAMING',
+        messages: [],
+        uiMessages: [],
+    })
+    return conversationId
 }
 
 function call({ mcpClient, name, args }: { mcpClient: McpClient, name: string, args?: Record<string, unknown> }): Promise<string> {
@@ -314,6 +343,51 @@ describe('project-scoped MCP end to end', () => {
         await db.update('project_role', role.id, { permissions: [Permission.READ_FLOW] })
 
         expect(await call({ mcpClient, name: PIECE_CATALOG_TOOL, args: { query: 'slack' } })).toContain(Permission.READ_MCP)
+    })
+
+    it('drops a tool the platform server switched off, although the project leaves it on', async () => {
+        const ctx = await createTestContext(app)
+        await switchOffOnPlatform({ ctx, tools: [SWITCHED_OFF_TOOL] })
+        const mcpClient = await connectAs({ ctx, projectId: ctx.project.id })
+
+        const toolNames = await mcpClientHelpers.listToolNames({ app, mcpClient })
+
+        expect(toolNames).not.toContain(SWITCHED_OFF_TOOL)
+    })
+
+    it('keeps a locked tool callable, whatever the platform list says', async () => {
+        const ctx = await createTestContext(app)
+        await switchOffOnPlatform({ ctx, tools: [LOCKED_TOOL] })
+        const mcpClient = await connectAs({ ctx, projectId: ctx.project.id })
+
+        const toolNames = await mcpClientHelpers.listToolNames({ app, mcpClient })
+
+        expect(toolNames).toContain(LOCKED_TOOL)
+        expect(await call({ mcpClient, name: LOCKED_TOOL })).not.toContain('Permission denied')
+    })
+
+    it('leaves the other tools alone', async () => {
+        const ctx = await createTestContext(app)
+        await switchOffOnPlatform({ ctx, tools: [SWITCHED_OFF_TOOL] })
+        const mcpClient = await connectAs({ ctx, projectId: ctx.project.id })
+
+        const toolNames = await mcpClientHelpers.listToolNames({ app, mcpClient })
+
+        expect(toolNames).toContain('ap_rename_flow')
+    })
+})
+
+describe('the AI chat, which resolves its project from the conversation', () => {
+    it('honours the platform switch, which the platform setup page has always promised', async () => {
+        const ctx = await createTestContext(app)
+        await switchOffOnPlatform({ ctx, tools: [SWITCHED_OFF_TOOL] })
+        const conversationId = await createConversation({ ctx })
+        const mcpClient = await connectAs({ ctx, conversationId })
+
+        const toolNames = await mcpClientHelpers.listToolNames({ app, mcpClient })
+
+        expect(toolNames).not.toContain(SWITCHED_OFF_TOOL)
+        expect(toolNames).toContain(LOCKED_TOOL)
     })
 })
 
