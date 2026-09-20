@@ -22,13 +22,15 @@ export const findBoardByName = createAction({
     query: Property.ShortText({
       displayName: 'Search Query',
       required: true,
-      description: 'The search term to find boards (required).',
+      description: 'Words in the board name.',
+      placeholder: 'e.g. recipes',
     }),
     ad_account_id: adAccountIdDropdown,
     bookmark: Property.ShortText({
       displayName: 'Bookmark',
       required: false,
-      description: 'Pagination bookmark from previous response.',
+      description: 'Bookmark from a previous run to fetch the next page.',
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {

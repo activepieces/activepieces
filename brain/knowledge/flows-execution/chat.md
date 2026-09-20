@@ -54,7 +54,8 @@ Entry point: `agentModule`, the Fastify plugin registered in `packages/server/ap
 
 - `packages/server/api/src/app/ee/agent/` — the API module: controllers, service, helpers, approval gate, compaction, rollout, console sync, billing (`chat-usage-tracker.ts`, `chat-tool-billing.ts`), memory (`agent-memory-ai.ts`, `user-memory-entity.ts`), entities, plus `tools/`, `mcp/`, `prompt/`, `history/` subdirs
 - `packages/server/worker/src/lib/execute/jobs/ee/agent/` — where the LLM loop actually runs: `execute-agent-run.ts` job handler (+ the three liveness timers + `streamChunksToClient` idle watchdog), `run-agent-turn.ts` DI streaming loop, `agent-worker-tools.ts` tool defs
-- `packages/server/utils/src/agent-ai-utils.ts` — the AI-utils bag: `createChatModel` per provider, `supportsWebSearch`/`buildWebSearchTools`, `collapseStaleToolOutputs` history hygiene
+- `packages/server/utils/src/ai-utils.ts` — the provider-agnostic half: `createModel` per provider, `createEmbeddingModel`/`toStorageEmbedding`, `supportsWebSearch`/`buildWebSearchTools`
+- `packages/server/utils/src/agent-ai-utils.ts` — what is genuinely agent-shaped: `collapseStaleToolOutputs` history hygiene, the `onStepEnd` content handling
 - `packages/core/shared/src/lib/ee/agent/` — shared zod schemas and types, `tool-phases.ts` gating, `tool-classification.ts`, `chat-visibility.ts`
 - `packages/server/api/src/assets/prompts/` — system prompt + project-context markdown and the on-demand `guides/`; agent-eval fixtures live in `packages/server/worker/test/lib/agent-eval/`
 - `packages/web/src/app/routes/chat-with-ai/` — the chat page, chat box, conversation list, and `components/` cards

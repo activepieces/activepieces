@@ -10,12 +10,12 @@ export const findPin = createAction({
   name: 'findPin',
   classification: 'SEARCH',
   outputSchema: findPinActionOutputSchema,
-  displayName: 'Find Pin by Title/Keyword',
+  displayName: 'Find Pin by Keyword',
   description: 'Search for Pins using title, description, or keywords.',
   audience: 'human',
   aiMetadata: {
     description:
-      "Searches the authenticated account's Pins by keywords matched against title, description, or tags (comma-separated pin IDs also work). Use to locate existing Pins or resolve a pin_id before deleting or referencing one. Read-only and idempotent; supports a max-results cap and pagination via a bookmark token.",
+      "Searches the authenticated account's Pins by keywords matched against title, description, or tags (comma-separated pin IDs also work). Use to locate existing Pins or resolve a pin_id before deleting or referencing one. Read-only and idempotent; it returns at most max_results Pins, and the next batch is fetched by passing the returned bookmark back as bookmark.",
     idempotent: true,
   },
   props: {
@@ -24,20 +24,24 @@ export const findPin = createAction({
       displayName: 'Search Query',
       required: true,
       description:
-        'Search terms for pin titles, descriptions, or tags. You can also search using comma-separated pin IDs.',
+        'Words in the title, description or tags, or comma-separated Pin IDs.',
+      placeholder: 'e.g. summer salad',
     }),
     bookmark: Property.ShortText({
-      displayName: 'Pagination Bookmark',
+      displayName: 'Bookmark',
       required: false,
-      description:
-        'Bookmark token from previous search results for pagination.',
+      description: 'Bookmark from a previous run to continue where it stopped.',
+      advanced: true,
     }),
     max_results: Property.Number({
-      displayName: 'Maximum Results',
+      displayName: 'Max Results',
       required: false,
-      description:
-        'Maximum number of pins to return (useful for large result sets).',
+      description: 'Never returns more than this many Pins.',
       defaultValue: 25,
+      display: 'stepper',
+      min: 1,
+      max: 250,
+      step: 1,
     }),
   },
   async run({ auth, propsValue }) {

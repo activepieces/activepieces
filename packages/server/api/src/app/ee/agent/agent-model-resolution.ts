@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AIProviderConfig, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
 
 function findTier({ tierId }: { tierId: string | null }) {
     return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
@@ -11,8 +11,8 @@ function resolveTier({ tierId }: { tierId: string | null }) {
 
 // An admin-listed catalog is the whole truth about what a key exposes, so an empty one means the key
 // serves no text model - not that we may fall back to a curated id it was never configured for.
-function manualTextModelCatalog({ config }: { config?: AIProviderConfig }): string[] | undefined {
-    if (isNil(config) || !('models' in config)) {
+function manualTextModelCatalog({ config }: { config?: AiProviderCredentials['config'] }): string[] | undefined {
+    if (isNil(config) || !('models' in config) || isNil(config.models)) {
         return undefined
     }
     return config.models.filter((model) => model.modelType === AIProviderModelType.TEXT).map((model) => model.modelId)
@@ -51,7 +51,7 @@ function resolveNamedModelId({ provider, modelName, modelScope, modelIds }: { pr
     return requested
 }
 
-function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
     const catalog = manualTextModelCatalog({ config })
     if (!isNil(catalog)) {
         return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
@@ -87,7 +87,7 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-function resolveFastModelId({ provider, config, modelScope, modelIds }: { provider: AIProviderName, config?: AIProviderConfig, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+function resolveFastModelId({ provider, config, modelScope, modelIds }: { provider: AIProviderName, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
     return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
 }
 

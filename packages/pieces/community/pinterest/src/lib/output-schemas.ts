@@ -146,7 +146,7 @@ export const findPinActionOutputSchema: OutputSchema = {
     {
       key: 'bookmark',
       label: 'Next Page Bookmark',
-      description: 'Pass back as "Bookmark" to fetch the next page.',
+      description: 'Pass back as "Bookmark" to continue where these results end.',
     },
   ],
 };

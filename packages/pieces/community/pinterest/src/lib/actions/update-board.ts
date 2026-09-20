@@ -24,27 +24,33 @@ export const updateBoard = createAction({
     name: Property.ShortText({
       displayName: 'Board Name',
       required: false,
-      description:
-        'The new name of the board (max 180 characters). Leave empty to keep current name.',
+      description: 'Leave empty to keep the current name.',
+      placeholder: 'e.g. Summer Recipes',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description:
-        'The new description of the board (max 500 characters). Leave empty to keep current description.',
+      description: 'Leave empty to keep the current description.',
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
+      display: 'cards',
       options: {
         options: [
-          { label: 'Public', value: 'PUBLIC' },
-          { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
+          {
+            label: 'Public',
+            value: 'PUBLIC',
+            description: 'Visible to all',
+          },
+          {
+            label: 'Secret',
+            value: 'SECRET',
+            description: 'Only you',
+          },
         ],
       },
-      description:
-        'Update board privacy setting. Leave empty to keep current setting.',
+      description: 'Leave empty to keep the current setting.',
     }),
   },
   async run({ auth, propsValue }) {

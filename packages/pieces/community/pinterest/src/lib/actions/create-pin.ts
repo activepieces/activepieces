@@ -16,13 +16,35 @@ export const createPin = createAction({
   classification: 'WRITE',
   outputSchema: createPinActionOutputSchema,
   displayName: 'Create Pin',
-  description: 'Upload an image or video to create a new Pin on a board.',
+  description: 'Create a Pin on a board from an image URL or base64 image.',
   audience: 'human',
   aiMetadata: {
     description:
       'Creates a Pin on a Pinterest board by uploading media from a hosted image/video URL (or base64 image). Use to publish visual content to a board the user owns. Requires a valid board_id and a media source; each call creates a new Pin, so it is not idempotent.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'destination',
+      display: 'section',
+      label: 'Save To',
+      icon: 'inbox',
+      props: ['board_id', 'board_section_id'],
+    },
+    {
+      key: 'content',
+      display: 'section',
+      label: 'Pin',
+      icon: 'file',
+      props: [
+        'title',
+        'description',
+        'media_source_type',
+        'media_url',
+        'link',
+      ],
+    },
+  ],
   props: {
     ad_account_id: adAccountIdDropdown,
     board_id: boardIdDropdown,
@@ -30,72 +52,89 @@ export const createPin = createAction({
     title: Property.ShortText({
       displayName: 'Title',
       required: true,
-      description: 'The title of the Pin (max 100 characters).',
+      description: 'Up to 100 characters.',
+      placeholder: 'e.g. 10 easy summer salads',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description: 'The description of the Pin (max 800 characters).',
+      description: 'Up to 800 characters.',
     }),
     media_source_type: Property.StaticDropdown({
-      displayName: 'Media Source Type',
+      displayName: 'Media Type',
       required: true,
-      description: 'The type of media source for the Pin.',
+      defaultValue: 'image_url',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Image URL', value: 'image_url' },
-          { label: 'Base64 Image', value: 'image_base64' },
+          {
+            label: 'Image URL',
+            value: 'image_url',
+            description: 'JPG or PNG link',
+            icon: 'file',
+          },
+          {
+            label: 'Base64 Image',
+            value: 'image_base64',
+            description: 'Encoded data',
+            icon: 'code',
+          },
         ],
       },
     }),
     media_url: Property.ShortText({
-      displayName: 'Media URL',
+      displayName: 'Media',
       required: true,
-      description:
-        'The URL of the image or video to upload. Must be a valid URL.',
+      description: 'Public image URL, or base64 data for the Base64 type.',
+      placeholder: 'https://example.com/photo.jpg',
     }),
     link: Property.ShortText({
       displayName: 'Destination Link',
       required: false,
-      description:
-        'The destination URL that the Pin will link to when clicked.',
+      description: 'Opens when someone clicks the Pin.',
+      placeholder: 'https://example.com',
     }),
     dominant_color: Property.ShortText({
       displayName: 'Dominant Color',
-      description:
-        'The dominant color of the Pin as a hex color code (e.g., "#6E7874").',
+      description: 'Hex color shown while the image loads.',
+      placeholder: '#6E7874',
       required: false,
+      advanced: true,
     }),
     alt_text: Property.ShortText({
       displayName: 'Alt Text',
       description:
-        'Alternative text for accessibility and screen readers (max 500 characters).',
+        'Describes the image for screen readers. Up to 500 characters.',
       required: false,
+      advanced: true,
     }),
     parent_pin_id: Property.ShortText({
       displayName: 'Parent Pin ID',
-      description:
-        'The ID of the original Pin if this is a saved/repinned Pin.',
+      description: 'ID of the Pin this one was saved from.',
+      placeholder: '1234567890123456789',
       required: false,
+      advanced: true,
     }),
     sponsor_id: Property.ShortText({
       displayName: 'Sponsor ID',
       description:
-        'The sponsor account ID for paid partnership content. Available only to select users in closed beta.',
+        'Partner account for paid partnership Pins. Closed beta only.',
       required: false,
+      advanced: true,
     }),
     product_tags: pinIdMultiSelectDropdown,
     note: Property.ShortText({
       displayName: 'Note',
-      description: 'A private note for this Pin that only you can see.',
+      description: 'Private note only you can see.',
       required: false,
+      advanced: true,
     }),
     is_removable: Property.Checkbox({
-      displayName: 'Is Removable',
-      description:
-        'Set to true to create an ad-only Pin that can be easily removed.',
+      displayName: 'Removable',
+      description: 'Marks an ad-only Pin that can be removed later.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {

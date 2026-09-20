@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, ListAgentRunsRequest, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -16,7 +16,6 @@ import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
 import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
-import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
 import { agentPrompt } from './prompt/agent-prompt'
 import { findConnectionsForPiece } from './tools/agent-tools'
@@ -136,15 +135,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         await assertAgentMessageRateLimitNotExceeded({ platformId, userId, log })
 
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
-        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        await chatRolloutService.recordChatted({ userId, platformId })
         // Refresh the console rollout funnel snapshot (chatted count just changed).
         chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
-        if (needsCreditDecision) {
-            const { error } = await tryCatch(() => chatPlanGrant.grant({ userId, platformId, log }))
-            if (!isNil(error)) {
-                log.warn({ error, platform: { id: platformId }, user: { id: userId } }, '[agentConversationController] Chat plan grant failed; continuing to the credit gate')
-            }
-        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -449,12 +442,7 @@ const ListAgentRunsRoute = {
         tags: ['agents'],
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         description: 'List the unattended runs a flow step made with this agent',
-        querystring: z.object({
-            projectId: z.string(),
-            agentId: z.string(),
-            cursor: z.string().optional(),
-            limit: z.coerce.number().int().min(1).max(100).default(20).optional(),
-        }),
+        querystring: ListAgentRunsRequest,
     },
 }
 

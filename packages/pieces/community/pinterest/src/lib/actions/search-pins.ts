@@ -34,7 +34,7 @@ export const searchPins = createAction({
       displayName: 'Maximum Results',
       required: false,
       description:
-        'Trim the returned page to at most this many Pins. Pinterest has no page-size parameter for Pin search, so this only shortens the response.',
+        'Return at most this many Pins, 1 to 250. Pinterest has no page-size parameter for Pin search, so further pages are followed until the count is reached.',
     }),
   },
   async run({ auth, propsValue }) {

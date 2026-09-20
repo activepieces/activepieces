@@ -68,12 +68,11 @@ export const SidebarUsageLimits = React.memo(() => {
     return null;
   }
 
-  const creditsText = billingUtils.formatCredits(Math.round(creditsRemaining));
+  const creditsText = billingUtils.formatCredits(creditsRemaining);
   const resetLine = billingUtils.resolveCreditsReset({
     creditsNextResetAt: usage.creditsNextResetAt,
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
-    isPaid,
     dateFormat: BILLING_DATE_FORMAT,
   });
   return (

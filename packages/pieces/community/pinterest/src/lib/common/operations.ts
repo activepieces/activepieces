@@ -1,5 +1,5 @@
 import { HttpMethod } from '@activepieces/pieces-common';
-import { buildPath, makeRequest } from '.';
+import { buildPath, isRecord, makeRequest } from '.';
 
 type CreatePinParams = {
   accessToken: string;
@@ -44,6 +44,14 @@ type DeletePinParams = {
   ad_account_id?: string;
 };
 
+type SearchPinsResult = {
+  items: unknown[];
+  bookmark: string | undefined | null;
+  total_results: number;
+  query_used: string;
+  has_more: boolean;
+};
+
 type SearchParams = {
   accessToken: string;
   query: string;
@@ -86,7 +94,6 @@ async function createPinOperation(params: CreatePinParams) {
   assertMaxLength({ value: params.title, max: 100, label: 'Title' });
   assertMaxLength({ value: params.description, max: 800, label: 'Description' });
   assertMaxLength({ value: params.alt_text, max: 500, label: 'Alt text' });
-  assertUrl({ value: params.media_url, label: 'Image URL' });
   if (params.link) {
     assertUrl({ value: params.link, label: 'Destination Link' });
   }
@@ -102,10 +109,10 @@ async function createPinOperation(params: CreatePinParams) {
   const body: Record<string, unknown> = {
     board_id: params.board_id,
     title: params.title,
-    media_source: {
-      source_type: params.media_source_type,
-      url: params.media_url,
-    },
+    media_source: buildMediaSource({
+      mediaSourceType: params.media_source_type,
+      mediaUrl: params.media_url,
+    }),
   };
 
   if (params.board_section_id) body['board_section_id'] = params.board_section_id;
@@ -155,11 +162,10 @@ async function createBoardOperation(params: CreateBoardParams) {
 }
 
 async function updateBoardOperation(params: UpdateBoardParams) {
-  if (
-    !params.name &&
-    params.description === undefined &&
-    !params.privacy
-  ) {
+  const trimmedName = params.name?.trim();
+  const trimmedDescription = params.description?.trim();
+
+  if (!trimmedName && !trimmedDescription && !params.privacy) {
     throw new Error(
       'At least one field (name, description, or privacy) must be provided to update the board.'
     );
@@ -173,11 +179,11 @@ async function updateBoardOperation(params: UpdateBoardParams) {
   });
 
   const body: Record<string, unknown> = {};
-  if (params.name && params.name.trim()) {
-    body['name'] = params.name.trim();
+  if (trimmedName) {
+    body['name'] = trimmedName;
   }
-  if (params.description !== undefined) {
-    body['description'] = params.description;
+  if (trimmedDescription) {
+    body['description'] = trimmedDescription;
   }
   if (params.privacy) {
     body['privacy'] = params.privacy;
@@ -239,36 +245,195 @@ async function searchBoardsOperation(params: SearchParams) {
 
 async function searchPinsOperation(
   params: SearchParams & { max_results?: number }
-) {
-  try {
-    const response = await makeRequest(
+): Promise<SearchPinsResult> {
+  const limit = Math.min(
+    250,
+    Math.max(1, Math.floor(params.max_results ?? DEFAULT_MAX_RESULTS))
+  );
+  const cursor = decodeCursor(params.bookmark);
+
+  let items: unknown[] = [];
+  let pageBookmark: string | null = cursor.bookmark;
+  let requestedBookmark: string | null = cursor.bookmark;
+  let nextBookmark: string | undefined = undefined;
+  let lastPageStart = 0;
+  let lastPageSkipped = 0;
+
+  for (let page = 0; page < MAX_SEARCH_PAGES; page++) {
+    const response: unknown = await makeRequest(
       params.accessToken,
       HttpMethod.GET,
       buildPath('/search/pins', {
         query: params.query,
-        bookmark: params.bookmark,
+        bookmark: pageBookmark ?? undefined,
         ad_account_id: params.ad_account_id,
       })
     );
 
-    const allItems: unknown[] = response.items ?? [];
-    const truncated =
-      params.max_results !== undefined && allItems.length > params.max_results;
-    const items = truncated ? allItems.slice(0, params.max_results) : allItems;
+    if (!isRecord(response) || !Array.isArray(response['items'])) {
+      throw new Error(
+        'Pinterest returned an unexpected response for the Pin search'
+      );
+    }
 
-    return {
-      items,
-      bookmark: truncated ? null : response.bookmark ?? null,
-      total_results: items.length,
-      query_used: params.query,
-      has_more: truncated || !!response.bookmark,
-    };
-  } catch (error) {
+    const rawItems: unknown[] = response['items'];
+
+    if (page === 0 && cursor.skip > rawItems.length) {
+      throw new Error(
+        'Bookmark does not match this search. Start again without a bookmark.'
+      );
+    }
+
+    const skipped = page === 0 ? cursor.skip : 0;
+    const responseBookmark = response['bookmark'];
+
+    requestedBookmark = pageBookmark;
+    lastPageStart = items.length;
+    lastPageSkipped = skipped;
+    items = [...items, ...rawItems.slice(skipped)];
+    nextBookmark =
+      typeof responseBookmark === 'string' && responseBookmark.length > 0
+        ? responseBookmark
+        : undefined;
+
+    if (!nextBookmark || items.length >= limit || rawItems.length === 0) {
+      break;
+    }
+    pageBookmark = nextBookmark;
+  }
+
+  const cutInsidePage = items.length > limit;
+  const limitedItems = cutInsidePage ? items.slice(0, limit) : items;
+
+  return {
+    items: limitedItems,
+    bookmark: cutInsidePage
+      ? encodeCursor({
+          bookmark: requestedBookmark,
+          skip: lastPageSkipped + (limit - lastPageStart),
+        })
+      : nextBookmark,
+    total_results: limitedItems.length,
+    query_used: params.query,
+    has_more: cutInsidePage || !!nextBookmark,
+  };
+}
+
+function buildMediaSource({
+  mediaSourceType,
+  mediaUrl,
+}: {
+  mediaSourceType: string;
+  mediaUrl: string;
+}): Record<string, string> {
+  if (mediaSourceType !== 'image_url' && mediaSourceType !== 'image_base64') {
     throw new Error(
-      `Failed to search pins: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`
+      'Video Pins are not supported by this action. Choose Image URL or Base64 Image.'
     );
+  }
+
+  if (mediaSourceType !== 'image_base64') {
+    assertUrl({ value: mediaUrl, label: 'Image URL' });
+    return { source_type: mediaSourceType, url: mediaUrl };
+  }
+
+  const trimmed = mediaUrl.trim();
+  const dataUri = /^data:([^;,]*)((?:;[^;,]*)*),/.exec(trimmed);
+  const isBase64Uri =
+    dataUri !== null &&
+    dataUri[2].split(';').some((param) => param.toLowerCase() === 'base64');
+
+  if (dataUri && !isBase64Uri) {
+    throw new Error(
+      'Media data URI must be base64 encoded (data:image/png;base64,...)'
+    );
+  }
+
+  const data = (dataUri ? trimmed.slice(dataUri[0].length) : trimmed)
+    .replace(/\s+/g, '')
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+  if (!BASE64_PATTERN.test(data)) {
+    throw new Error('Media must be valid base64 when the type is Base64 Image');
+  }
+
+  const declaredType =
+    dataUri && dataUri[1].length > 0 ? dataUri[1].toLowerCase() : undefined;
+  const contentType = declaredType ?? detectImageContentType(data);
+
+  if (!contentType || !SUPPORTED_IMAGE_TYPES.has(contentType)) {
+    throw new Error(
+      'Media must be a JPEG or PNG image, as a data URI or raw base64'
+    );
+  }
+
+  return {
+    source_type: 'image_base64',
+    content_type: contentType,
+    data,
+  };
+}
+
+function detectImageContentType(base64: string): string | undefined {
+  const signature = base64.slice(0, 8);
+  if (signature.startsWith('/9j/')) return 'image/jpeg';
+  if (signature.startsWith('iVBORw0K')) return 'image/png';
+  return undefined;
+}
+
+function encodeCursor({
+  bookmark,
+  skip,
+}: {
+  bookmark: string | null;
+  skip: number;
+}): string {
+  const payload = JSON.stringify({ b: bookmark, s: skip });
+  const encoded = Buffer.from(payload, "utf8").toString("base64url");
+  return `${CURSOR_PREFIX}${encoded}`;
+}
+
+function decodeCursor(value: string | undefined): {
+  bookmark: string | null;
+  skip: number;
+} {
+  if (!value) {
+    return { bookmark: null, skip: 0 };
+  }
+
+  if (!value.startsWith(CURSOR_PREFIX)) {
+    return { bookmark: value, skip: 0 };
+  }
+
+  const decoded = parseCursorPayload(value.slice(CURSOR_PREFIX.length));
+
+  if (!isRecord(decoded)) {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+
+  const cursorBookmark = decoded['b'];
+  const cursorSkip = decoded['s'];
+
+  if (cursorBookmark !== null && typeof cursorBookmark !== 'string') {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+
+  if (
+    typeof cursorSkip !== 'number' ||
+    !Number.isInteger(cursorSkip) ||
+    cursorSkip < 0
+  ) {
+    throw new Error(INVALID_CURSOR_MESSAGE);
+  }
+
+  return { bookmark: cursorBookmark, skip: cursorSkip };
+}
+
+function parseCursorPayload(encoded: string): unknown {
+  try {
+    return JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
+  } catch {
+    throw new Error(INVALID_CURSOR_MESSAGE);
   }
 }
 
@@ -280,3 +445,10 @@ export const pinterestOperations = {
   searchBoards: searchBoardsOperation,
   searchPins: searchPinsOperation,
 };
+
+const DEFAULT_MAX_RESULTS = 25;
+const MAX_SEARCH_PAGES = 10;
+const CURSOR_PREFIX = 'apc1.';
+const INVALID_CURSOR_MESSAGE = 'Bookmark is not a valid Find Pin bookmark';
+const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png']);
+const BASE64_PATTERN = /^[A-Za-z0-9+/]+={0,2}$/;

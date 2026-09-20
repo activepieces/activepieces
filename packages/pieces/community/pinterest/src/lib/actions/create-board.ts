@@ -23,33 +23,46 @@ export const createBoard = createAction({
     name: Property.ShortText({
       displayName: 'Board Name',
       required: true,
-      description: 'The name of the board (max 180 characters).',
+      description: 'Up to 180 characters.',
+      placeholder: 'e.g. Summer Recipes',
     }),
     description: Property.LongText({
       displayName: 'Description',
       required: false,
-      description: 'Optional description for your board.',
+      description: 'Up to 500 characters.',
     }),
     privacy: Property.StaticDropdown({
       displayName: 'Privacy',
       required: false,
       defaultValue: 'PUBLIC',
+      display: 'cards',
       options: {
         options: [
-          { label: 'Public', value: 'PUBLIC' },
-          { label: 'Protected', value: 'PROTECTED' },
-          { label: 'Secret', value: 'SECRET' },
+          {
+            label: 'Public',
+            value: 'PUBLIC',
+            description: 'Visible to all',
+          },
+          {
+            label: 'Protected',
+            value: 'PROTECTED',
+            description: 'Ads only',
+          },
+          {
+            label: 'Secret',
+            value: 'SECRET',
+            description: 'Only you',
+          },
         ],
       },
-      description:
-        'Board privacy setting (auto-set to "PROTECTED" for ad-only boards).',
     }),
     is_ads_only: Property.Checkbox({
-      displayName: 'Ads Only Board',
+      displayName: 'Ads-Only Board',
       description:
-        'Create an ad-only board that can only store promotional Pins. Note: Board name will become "Ad-only Pins" and privacy will be set to "PROTECTED".',
+        'Pinterest names it "Ad-only Pins" and makes it protected.',
       defaultValue: false,
       required: false,
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {
