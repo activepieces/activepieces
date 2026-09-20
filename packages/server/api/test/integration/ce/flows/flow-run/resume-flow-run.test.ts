@@ -130,7 +130,7 @@ describe('Resume flow run', () => {
         const runId = flowRun.id
         const requestId = apId()
 
-        await distributedStore.merge(redisMetadataKey(runId), {
+        await distributedStore.merge(redisMetadataKey({ projectId: ctx.project.id, runId }), {
             id: runId,
             projectId: ctx.project.id,
             flowId: flow.id,
@@ -257,7 +257,7 @@ describe('Resume flow run', () => {
             environment: RunEnvironment.PRODUCTION,
             status: FlowRunStatus.RUNNING,
         }
-        await distributedStore.merge(redisMetadataKey(runId), runMetadata)
+        await distributedStore.merge(redisMetadataKey({ projectId: ctx.project.id, runId }), runMetadata)
 
         await db.save('waitpoint', {
             id: apId(),
@@ -316,7 +316,7 @@ describe('Resume flow run', () => {
             environment: RunEnvironment.PRODUCTION,
             status: FlowRunStatus.RUNNING,
         }
-        await distributedStore.merge(redisMetadataKey(runId), runMetadata)
+        await distributedStore.merge(redisMetadataKey({ projectId: ctx.project.id, runId }), runMetadata)
 
         await db.save('waitpoint', {
             id: apId(),
