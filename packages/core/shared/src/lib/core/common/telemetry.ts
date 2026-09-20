@@ -87,6 +87,34 @@ type McpToolCalled = {
     toolName: string
 }
 
+type PlatformAdminPageViewed = {
+    page: string
+    tab: string | null
+    locked: boolean
+}
+
+type PlatformAdminGateBlocked = {
+    feature: string
+    control: string
+}
+
+type PlatformAdminUpgradeClicked = {
+    feature: string
+    tier: string | null
+    surface: 'sample' | 'teaser' | 'dialog' | 'limit'
+}
+
+type PlatformAdminSalesContacted = {
+    feature: string
+    surface: 'sample' | 'teaser' | 'limit'
+}
+
+type PlatformAdminLimitReached = {
+    limit: 'teamProjects' | 'seats'
+    used: number
+    allowed: number | null
+}
+
 type McpServerConnected = {
     userId: string
     projectId?: string
@@ -119,6 +147,11 @@ export enum TelemetryEventName {
     PIECE_SELECTOR_SEARCH = 'piece.selector.search',
     MCP_TOOL_CALLED = 'mcp.tool.called',
     MCP_SERVER_CONNECTED = 'mcp.server.connected',
+    PLATFORM_ADMIN_PAGE_VIEWED = 'platform.admin.page.viewed',
+    PLATFORM_ADMIN_GATE_BLOCKED = 'platform.admin.gate.blocked',
+    PLATFORM_ADMIN_UPGRADE_CLICKED = 'platform.admin.upgrade.clicked',
+    PLATFORM_ADMIN_SALES_CONTACTED = 'platform.admin.sales.contacted',
+    PLATFORM_ADMIN_LIMIT_REACHED = 'platform.admin.limit.reached',
 }
 
 export type TelemetryEvent =
@@ -142,6 +175,11 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>
     | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
     | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED, PlatformAdminPageViewed>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED, PlatformAdminGateBlocked>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED, PlatformAdminUpgradeClicked>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED, PlatformAdminSalesContacted>
+    | BaseTelemetryEvent<TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED, PlatformAdminLimitReached>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.SIGNED_UP,

@@ -1,10 +1,11 @@
-import { ProjectWithLimits } from '@activepieces/shared';
+import { ProjectWithLimits, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Crown, Plus } from 'lucide-react';
 import React from 'react';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import {
@@ -29,6 +30,7 @@ export function CreateProjectButton({
     locked: hasReachedLimit,
     feature: PLATFORM_FEATURES.projects,
   });
+  const { capture } = useTelemetry();
 
   const trigger = triggerFor({
     variant,
@@ -40,6 +42,15 @@ export function CreateProjectButton({
   return (
     <NewProjectDialog
       onCreate={onCreate}
+      onBlocked={() =>
+        capture({
+          name: TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED,
+          payload: {
+            feature: PLATFORM_FEATURES.projects.featureKey,
+            control: `createProject.${variant}`,
+          },
+        })
+      }
       gate={{
         locked: hasReachedLimit,
         content: teamProjectLimitContent,
