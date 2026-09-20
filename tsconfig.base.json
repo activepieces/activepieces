@@ -1897,6 +1897,9 @@
       "@activepieces/piece-kudosity": [
         "packages/pieces/community/kudosity/src/index.ts"
       ],
+      "@activepieces/piece-neuralverge": [
+        "packages/pieces/community/neuralverge/src/index.ts"
+      ],
       "@activepieces/piece-neverbounce": [
         "packages/pieces/community/neverbounce/src/index.ts"
       ],
