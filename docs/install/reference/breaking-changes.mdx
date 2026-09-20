@@ -89,6 +89,20 @@ Clearing a description from this action is therefore no longer possible; that is
 
 Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
 
+#### MCP access is governed by the `READ_MCP` permission on every call
+
+Authorizing an MCP client for a project used to require only that you were a member of it, and the permission was never consulted again once a token existed. Two things change.
+
+A project role must now grant `READ_MCP` to authorize MCP for that project, and the permission is checked on every tool call against your live role rather than once at authorization. Removing `READ_MCP` from a role therefore takes effect immediately, on tokens that are already issued: the client keeps its token, and every tool answers with a permission error instead — piece-catalogue lookups included, since those resolve project connections and AI providers. All three built-in roles — Admin, Editor and Viewer — grant `READ_MCP`, so only a custom role that leaves it out is affected.
+
+This reaches the in-app AI Chat too, not only external MCP clients. The chat talks to the platform MCP server over an internal token, so a member whose role does not grant `READ_MCP` keeps the chat itself but loses every Activepieces tool inside it — it can no longer read their flows, run a step, or look a piece up for them.
+
+In exchange, the platform-wide MCP server is no longer restricted to platform administrators. Any member holding `READ_MCP` in at least one project can authorize it, and it reaches exactly the projects whose role grants them that permission. Embedded users are the exception: they authorize MCP for their own project, as the embed SDK already does, and cannot mint a platform-wide token that would span every tenant they have been signed into.
+
+#### What you need to do
+
+Nothing, if your members use the built-in roles. If you have built a custom project role and expect its holders to connect an MCP client, or to use the AI Chat for anything beyond conversation, add the `READ_MCP` permission to it — otherwise their existing MCP clients stop working when you upgrade, rather than at the next token expiry. There is no environment variable, migration, or new setup step.
+
 ## 0.91.0
 
 ### What has changed?

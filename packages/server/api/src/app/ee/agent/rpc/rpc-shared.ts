@@ -9,7 +9,7 @@ import { agentToolPinning } from '.././agent-tool-pinning'
 import { appConnectionService } from '../../../app-connection/app-connection-service/app-connection-service'
 import { redisConnections } from '../../../database/redis-connections'
 import { applicationEvents } from '../../../helper/application-events'
-import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
+import { resolveRolePermissionChecker } from '../../../mcp/mcp-permissions'
 import { mcpUtils } from '../../../mcp/tools/mcp-utils'
 
 
@@ -150,7 +150,7 @@ export async function pinConnectionToAgent({ conversationId, pieceName, external
     // getOneOrThrowByPlatform resolves through READ_AGENT, which is enough to talk to a shared
     // agent and not enough to change what it runs on. Pinning is a write to the saved agent, so it
     // asks for the same permission ap_add_agent_tool does.
-    const checker = await resolvePermissionChecker({ userId, projectId: agent.projectId, log })
+    const checker = await resolveRolePermissionChecker({ userId, projectId: agent.projectId, log })
     if (!isNil(checker.check(Permission.WRITE_AGENT, '__store_selected_connection'))) {
         refuse('Caller cannot write this agent, so the account was used for this run only')
         return
