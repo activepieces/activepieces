@@ -54,7 +54,8 @@
     "bump-translated-pieces": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-translated-pieces.ts",
     "bump-all-pieces-patch-version": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-all-pieces-patch-version.ts",
     "security:sla": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/security/sla-report.ts",
-    "sync-model-catalog": "npx tsx tools/scripts/sync-model-catalog.ts"
+    "sync-model-catalog": "npx tsx tools/scripts/sync-model-catalog.ts",
+    "knip": "knip --workspace packages/web"
   },
   "private": true,
   "dependencies": {
@@ -95,6 +96,7 @@
     "i18next-parser": "9.3.0",
     "inquirer": "8.2.7",
     "jsonc-eslint-parser": "2.4.1",
+    "knip": "6.35.1",
     "lint-staged": "15.2.9",
     "prettier": "2.8.4",
     "semver": "7.6.0",

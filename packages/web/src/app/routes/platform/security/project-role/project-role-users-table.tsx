@@ -4,13 +4,13 @@ import { t } from 'i18next';
 import { Loader2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { UserAvatar } from '@/components/custom/user-avatar';
 import {
   Item,
   ItemContent,
   ItemDescription,
   ItemTitle,
-} from '@/components/custom/item';
-import { UserAvatar } from '@/components/custom/user-avatar';
+} from '@/components/ui/item';
 import {
   Sheet,
   SheetContent,
