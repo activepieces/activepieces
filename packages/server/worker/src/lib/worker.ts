@@ -366,6 +366,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 }),
                 workerIndex,
                 jobId: job.jobId,
+                lastAttempt: job.lastAttempt ?? true,
                 engineToken: job.engineToken,
                 internalApiUrl,
                 publicApiUrl,
