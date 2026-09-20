@@ -1,6 +1,16 @@
+import os from 'os'
 import { auditEnricher, auditRedactPreset, enricherPlugin, initLogger, RedactConfig } from 'evlog'
+import { defineEnricher } from 'evlog/toolkit'
 import { apLogger, ApLogger } from './ap-logger'
 import { evlogDrains, EvlogDrainConfig } from './evlog-drains'
+
+const HOSTNAME = os.hostname()
+
+const hostEnricher = defineEnricher<string>({
+    name: 'host',
+    field: 'host',
+    compute: () => HOSTNAME,
+})
 
 // Module-level flush function; replaced each time init() is called.
 let activeFlusher: (() => Promise<void>) = async () => undefined
@@ -143,7 +153,10 @@ function init({ params }: { params: EvlogSetupParams }): ApLogger {
         drain: resolved.drain,
         // Fills audit.context (requestId, traceId, ip, userAgent) on audit-bearing
         // events only; all other events pass through untouched.
-        plugins: [enricherPlugin('audit-context', auditEnricher())],
+        plugins: [
+            enricherPlugin('audit-context', auditEnricher()),
+            enricherPlugin('host', hostEnricher),
+        ],
     })
 
     apLogger.setCurrentLevel(mappedLevel)
