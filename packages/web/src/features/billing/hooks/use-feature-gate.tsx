@@ -53,7 +53,7 @@ export function UpgradeFeatureDialog({
       <DialogContent className="sm:max-w-[28rem]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {title}
+            {t(title)}
             {tier !== undefined && !isCommunity && (
               <Badge variant="outline">{TIER_LABELS[tier]}</Badge>
             )}
@@ -61,7 +61,7 @@ export function UpgradeFeatureDialog({
           <DialogDescription>
             {isCommunity
               ? t('This is an Enterprise feature, available on our paid plans.')
-              : description}
+              : t(description)}
           </DialogDescription>
         </DialogHeader>
 
@@ -70,7 +70,7 @@ export function UpgradeFeatureDialog({
             {bullets.map((bullet) => (
               <li key={bullet} className="flex items-start gap-2 text-sm">
                 <Check className="mt-0.5 size-4 shrink-0 text-primary" />
-                <span>{bullet}</span>
+                <span>{t(bullet)}</span>
               </li>
             ))}
           </ul>

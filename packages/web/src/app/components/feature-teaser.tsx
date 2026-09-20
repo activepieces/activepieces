@@ -45,7 +45,7 @@ export function FeatureTeaserContent({
     const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
     return (
       <div className="flex max-w-md flex-col gap-2">
-        <h2 className="text-base font-medium">{title}</h2>
+        <h2 className="text-base font-medium">{t(title)}</h2>
         <p className="text-sm text-muted-foreground">
           {t('This is an Enterprise feature, available on our paid plans.')}
         </p>
@@ -72,13 +72,13 @@ export function FeatureTeaserContent({
     <div className="flex max-w-md flex-col gap-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-medium">{title}</h2>
+          <h2 className="text-xl font-medium">{t(title)}</h2>
           {tier !== undefined && (
             <Badge variant="outline">{TIER_LABELS[tier]}</Badge>
           )}
         </div>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          {description}
+          {t(description)}
         </p>
       </div>
 
@@ -87,7 +87,7 @@ export function FeatureTeaserContent({
           {bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
               <Check className="mt-0.5 size-4 shrink-0 text-primary" />
-              <span>{bullet}</span>
+              <span>{t(bullet)}</span>
             </li>
           ))}
         </ul>
