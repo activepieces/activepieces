@@ -142,6 +142,11 @@ export const newReportingEvent = createTrigger({
   },
   async onEnable(context) {
     const { region, api_bearer_token } = context.auth.props;
+    const flowIdentifier = context.webhookUrl
+      .split('?')[0]
+      .split('/')
+      .filter(Boolean)
+      .pop();
     const response = await httpClient.sendRequest<{ id: number }>({
       method: HttpMethod.POST,
       url: `${customerIOCommon[region || 'us'].apiUrl}reporting_webhooks`,
@@ -149,7 +154,7 @@ export const newReportingEvent = createTrigger({
       body: {
         endpoint: context.webhookUrl,
         events: context.propsValue.events,
-        name: 'Activepieces',
+        name: flowIdentifier ? `Activepieces (${flowIdentifier})` : 'Activepieces',
         disabled: false,
       },
     });
