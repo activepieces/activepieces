@@ -71,7 +71,7 @@ const RUNS_METADATA_UPSERT_KEYS: (keyof RunsMetadataUpsertData)[] = [
     'triggeredBy', 'startTime', 'finishTime', 'status', 'tags',
     'failedStep', 'stepNameToTest', 'parentRunId', 'failParentOnFailure',
     'logsFileId', 'updated', 'stepsCount', 'requestId',
-    'provisionMs', 'bootMs', 'runMs',
+    'provisionMs', 'bootMs', 'runMs', 'willRetry',
 ]
 
 function stripToRunsMetadataUpsertData(params: RunsMetadataUpsertData): RunsMetadataUpsertData {
@@ -123,4 +123,5 @@ export type RunsMetadataUpsertData = {
     provisionMs?: number
     bootMs?: number
     runMs?: number
+    willRetry?: boolean
 }

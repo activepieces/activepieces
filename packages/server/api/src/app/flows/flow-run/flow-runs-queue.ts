@@ -100,11 +100,17 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             const parentRunId = savedFlowRun.parentRunId
-                            const shouldMarkParentAsFailed = savedFlowRun.failParentOnFailure && !isNil(parentRunId) && ![FlowRunStatus.SUCCEEDED, FlowRunStatus.RUNNING, FlowRunStatus.PAUSED, FlowRunStatus.QUEUED].includes(savedFlowRun.status)
+                            const shouldMarkParentAsFailed = !isNil(parentRunId) && childRunFailsParent({
+                                status: savedFlowRun.status,
+                                failParentOnFailure: savedFlowRun.failParentOnFailure,
+                                willRetry: runMetadata.willRetry,
+                            })
                             if (shouldMarkParentAsFailed) {
                                 await markParentRunAsFailed({
                                     parentRunId,
                                     childRunId: savedFlowRun.id,
+                                    childStatus: savedFlowRun.status,
+                                    childFailureMessage: savedFlowRun.failedStep?.message,
                                     projectId: savedFlowRun.projectId,
                                     log,
                                 })
@@ -188,9 +194,17 @@ function buildTimeline({ existingFlowRun, runMetadata }: BuildTimelineParams): R
     })
 }
 
+export function childRunFailsParent({ status, failParentOnFailure, willRetry }: ChildRunFailsParentParams): boolean {
+    return failParentOnFailure
+        && status !== FlowRunStatus.SUCCEEDED
+        && isFlowRunStateTerminal({ status, ignoreInternalError: willRetry === true })
+}
+
 export async function markParentRunAsFailed({
     parentRunId,
     childRunId,
+    childStatus,
+    childFailureMessage,
     projectId,
     log,
 }: MarkParentRunAsFailedParams): Promise<void> {
@@ -208,7 +222,8 @@ export async function markParentRunAsFailed({
         body: {
             status: 'error',
             data: {
-                message: 'Subflow execution failed',
+                message: childFailureMessage ?? 'Subflow execution failed',
+                status: childStatus,
                 link: childRunUrl,
             },
         },
@@ -233,6 +248,12 @@ export async function markParentRunAsFailed({
     }
 }
 
+type ChildRunFailsParentParams = {
+    status: FlowRunStatus
+    failParentOnFailure: boolean
+    willRetry?: boolean
+}
+
 type BuildTimelineParams = {
     existingFlowRun: FlowRun
     runMetadata: RunsMetadataUpsertData
@@ -241,6 +262,8 @@ type BuildTimelineParams = {
 type MarkParentRunAsFailedParams = {
     parentRunId: string
     childRunId: string
+    childStatus: FlowRunStatus
+    childFailureMessage?: string
     projectId: string
     log: FastifyBaseLogger
 }
