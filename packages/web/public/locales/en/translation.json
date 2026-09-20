@@ -948,6 +948,7 @@
   "Build, test, and manage automations": "Build, test, and manage automations",
   "Use connections and execute flows": "Use connections and execute flows",
   "Authorization failed. Please try again.": "Authorization failed. Please try again.",
+  "You do not have MCP access here. Pick another project, or ask a platform admin for access.": "You do not have MCP access here. Pick another project, or ask a platform admin for access.",
   "Deny": "Deny",
   "Authorize": "Authorize",
   "Unknown app": "Unknown app",

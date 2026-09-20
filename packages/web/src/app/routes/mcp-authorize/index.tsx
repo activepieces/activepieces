@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { StatusCodes } from 'http-status-codes';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
 import { CheckCircle, FolderKanban, Lock, Plug, Workflow } from 'lucide-react';
@@ -192,7 +193,7 @@ function McpAuthorizePage() {
 
           {approveMutation.isError && (
             <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
-              {t('Authorization failed. Please try again.')}
+              {authorizeFailureMessage(approveMutation.error)}
             </div>
           )}
 
@@ -241,3 +242,12 @@ function decodeJwtPayload(token: string | null): {
 }
 
 export { McpAuthorizePage };
+
+function authorizeFailureMessage(error: Error | null): string {
+  if (api.isError(error) && error.response?.status === StatusCodes.FORBIDDEN) {
+    return t(
+      'You do not have MCP access here. Pick another project, or ask a platform admin for access.',
+    );
+  }
+  return t('Authorization failed. Please try again.');
+}

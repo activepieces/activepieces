@@ -78,7 +78,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
             clientKey: clientKey ?? null,
             clientId,
             log,
-            resolveProjectMcp: (projectId: string) => mcpServerService(log).getPopulatedByProjectId(projectId),
+            resolveProjectMcp: (projectId: string) => mcpServerService(log).getByProjectId(projectId),
         })
     },
 })

@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowStatus, McpOAuthClientKey, McpProperty, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, McpOAuthClientKey, McpProperty, McpServer as McpServerSchema, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../flows/flow/flow.service'
@@ -45,7 +45,7 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
     clientKey: McpOAuthClientKey | null
     clientId: string
     log: FastifyBaseLogger
-    resolveProjectMcp?: (projectId: string) => Promise<PopulatedMcpServer>
+    resolveProjectMcp?: (projectId: string) => Promise<McpServerSchema>
 }): Promise<McpServer> {
     const projectId = mcp.projectId
 
@@ -98,7 +98,7 @@ function registerPlatformTools({ server, mcp, platformId, userId, clientKey, sel
     userId: string
     clientKey: McpOAuthClientKey | null
     selectionScope: ProjectSelectionScope
-    resolveProjectMcp: (projectId: string) => Promise<PopulatedMcpServer>
+    resolveProjectMcp: (projectId: string) => Promise<McpServerSchema>
     billing: McpCallBilling
     log: FastifyBaseLogger
 }): void {
@@ -139,7 +139,7 @@ async function executeInSelectedProject({ toolTitle, args, projectId, userId, re
     args: Record<string, unknown>
     projectId: string
     userId: string
-    resolveProjectMcp: (projectId: string) => Promise<PopulatedMcpServer>
+    resolveProjectMcp: (projectId: string) => Promise<McpServerSchema>
     billing: McpCallBilling
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
