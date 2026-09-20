@@ -44,6 +44,7 @@ import { userHooks } from '@/hooks/user-hooks';
 type NewProjectDialogProps = {
   children: React.ReactNode;
   onCreate?: (project: ProjectWithLimits) => void;
+  onBlocked?: () => void;
   gate?: {
     locked: boolean;
     content: (args: { onClose: () => void }) => React.ReactNode;
@@ -67,6 +68,9 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
 
   const changeOpen = (next: boolean) => {
     setOpen(next);
+    if (next && props.gate?.locked === true) {
+      props.onBlocked?.();
+    }
     if (!next) {
       setBlockedOnSubmit(false);
     }
@@ -103,7 +107,10 @@ export const NewProjectDialog = (props: NewProjectDialogProps) => {
                     ? undefined
                     : {
                         locked: props.gate.locked,
-                        onBlocked: () => setBlockedOnSubmit(true),
+                        onBlocked: () => {
+                          setBlockedOnSubmit(true);
+                          props.onBlocked?.();
+                        },
                       }
                 }
               />

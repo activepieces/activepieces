@@ -1,8 +1,9 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Crown, ExternalLink } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -45,6 +46,7 @@ export function UpgradeFeatureDialog({
 }: UpgradeFeatureDialogProps) {
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { capture } = useTelemetry();
   const isCommunity = edition === ApEdition.COMMUNITY;
   const docsUrl = documentationUrl ?? ENTERPRISE_DOCUMENTATION_URL;
 
@@ -90,6 +92,14 @@ export function UpgradeFeatureDialog({
           ) : (
             <Button
               onClick={() => {
+                capture({
+                  name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
+                  payload: {
+                    feature: title,
+                    tier: tier ?? null,
+                    surface: 'dialog',
+                  },
+                });
                 onOpenChange(false);
                 openManagePlanDialog();
               }}

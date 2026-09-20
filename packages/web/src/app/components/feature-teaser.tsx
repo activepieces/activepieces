@@ -1,7 +1,8 @@
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ExternalLink } from 'lucide-react';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,7 @@ export function FeatureTeaserContent({
 }: FeatureTeaserProps) {
   const { openDialog: openManagePlanDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { capture } = useTelemetry();
 
   const showcase =
     videoUrl === undefined ? null : (
@@ -59,7 +61,15 @@ export function FeatureTeaserContent({
           <ExternalLink className="size-3.5" />
         </a>
         {showContactSales && (
-          <div className="w-fit pt-2">
+          <div
+            className="w-fit pt-2"
+            onClickCapture={() =>
+              capture({
+                name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
+                payload: { feature: featureKey, surface: 'teaser' },
+              })
+            }
+          >
             <RequestTrial featureKey={featureKey} />
           </div>
         )}
@@ -94,7 +104,19 @@ export function FeatureTeaserContent({
       )}
 
       <div className="flex items-center gap-3">
-        <Button onClick={() => openManagePlanDialog()}>
+        <Button
+          onClick={() => {
+            capture({
+              name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
+              payload: {
+                feature: featureKey,
+                tier: tier ?? null,
+                surface: 'teaser',
+              },
+            });
+            openManagePlanDialog();
+          }}
+        >
           {t('Upgrade plan')}
         </Button>
         {documentationUrl !== undefined && (
