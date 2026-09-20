@@ -48,8 +48,6 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                     log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeFromWaitpointWithoutLock] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; consuming waitpoint and enqueuing resume')
                     // Consume the stale COMPLETED waitpoint under the lock so it cannot
                     // poison the next createForPause call on a subsequent loop iteration
-                    await recordWaitpointConsumed({ waitpointId: latestWaitpoint.id, log })
-                    await waitpointService(log).delete({ id: latestWaitpoint.id })
                     await enqueueResume({
                         flowRun: currentFlowRun,
                         waitpoint: latestWaitpoint,
@@ -57,6 +55,8 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                         workerHandlerId,
                         httpRequestId,
                     }, log)
+                    await recordWaitpointConsumed({ waitpointId: latestWaitpoint.id, log })
+                    await waitpointService(log).delete({ id: latestWaitpoint.id })
                 }
             }
         }
