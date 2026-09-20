@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, ChevronDown } from 'lucide-react';
 
@@ -17,11 +18,19 @@ import { cn } from '@/lib/utils';
 
 type ProjectPickerProps = {
   projectId: string | null;
+  allowedProjectIds?: string[] | null;
   onSelect: (projectId: string) => void;
 };
 
-export function ProjectPicker({ projectId, onSelect }: ProjectPickerProps) {
-  const { data: projects = [] } = projectCollectionUtils.useAll();
+export function ProjectPicker({
+  projectId,
+  allowedProjectIds,
+  onSelect,
+}: ProjectPickerProps) {
+  const { data: allProjects = [] } = projectCollectionUtils.useAll();
+  const projects = isNil(allowedProjectIds)
+    ? allProjects
+    : allProjects.filter((project) => allowedProjectIds.includes(project.id));
   const selectedProject = projects.find((project) => project.id === projectId);
 
   return (

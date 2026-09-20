@@ -73,7 +73,16 @@ function toReachablePieces({
   return orderedPieces.map((piece) => toReachablePiece({ piece, isSearching }));
 }
 
-export const piecesUtils = { toReachablePieces };
+function countReachablePieces({
+  pieces,
+}: {
+  pieces: PieceMetadataModelSummary[];
+}): number {
+  return pieces.filter((piece) => (piece.suggestedActions ?? []).length > 0)
+    .length;
+}
+
+export const piecesUtils = { toReachablePieces, countReachablePieces };
 
 export type ActionGroup = {
   classification: ActionClassification;
