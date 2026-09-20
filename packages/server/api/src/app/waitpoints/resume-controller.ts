@@ -127,7 +127,7 @@ async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryP
         waitpointId,
         resumePayload: { body, headers, queryParams },
     })
-    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, expired: stale })
 }
 
 async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: AsyncResumeHandlerParams & { correlationId: string }): Promise<void> {
@@ -145,7 +145,7 @@ async function handleLegacyAsyncResume({ flowRunId, body, headers, queryParams, 
         flowRunId,
         resumePayload: { body, headers, queryParams },
     })
-    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, expired: stale })
 }
 
 async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, log, reply, correlationId }: LegacyResumeHandlerParams & { correlationId: string }): Promise<void> {

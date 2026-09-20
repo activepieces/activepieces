@@ -29,6 +29,7 @@ export const UploadRunLogsRequest = z.object({
     runMs: z.number().optional(),
     workerHandlerId: z.string().optional(),
     httpRequestId: z.string().optional(),
+    willRetry: z.boolean().optional(),
 })
 
 export type UploadRunLogsRequest = z.infer<typeof UploadRunLogsRequest>

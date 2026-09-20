@@ -60,6 +60,7 @@ describe('markParentRunAsFailed tenant isolation', () => {
         await markParentRunAsFailed({
             parentRunId: victimRun.id,
             childRunId: apId(),
+            childStatus: FlowRunStatus.INTERNAL_ERROR,
             projectId: projectA.id,
             log: app.log,
         })
@@ -79,6 +80,7 @@ describe('markParentRunAsFailed tenant isolation', () => {
         await markParentRunAsFailed({
             parentRunId: parentRun.id,
             childRunId: apId(),
+            childStatus: FlowRunStatus.INTERNAL_ERROR,
             projectId: mockProject.id,
             log: app.log,
         })

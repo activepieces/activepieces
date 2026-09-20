@@ -104,6 +104,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            expired: false,
         })
     })
 
@@ -517,6 +518,7 @@ describe('Resume flow run', () => {
         expect(firstResponse.statusCode).toBe(200)
         expect(firstResponse.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            expired: false,
         })
 
         const secondResponse = await app.inject({
@@ -527,6 +529,7 @@ describe('Resume flow run', () => {
         expect(secondResponse.statusCode).toBe(200)
         expect(secondResponse.json()).toEqual({
             message: 'This link has expired. The action may have already been processed.',
+            expired: true,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
@@ -567,6 +570,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            expired: false,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
@@ -614,6 +618,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            expired: false,
         })
 
         const waitpointAfter = await db.findOneBy<{ id: string, version: string }>('waitpoint', { flowRunId: flowRun.id })
@@ -775,6 +780,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            expired: false,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
