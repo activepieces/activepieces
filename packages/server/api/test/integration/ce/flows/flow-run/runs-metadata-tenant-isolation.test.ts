@@ -120,6 +120,9 @@ describe('runs metadata tenant isolation', () => {
         const foreign = await db.findOneBy<{ status: string }>('flow_run', { id: foreignRun.id })
         expect(owned?.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(foreign?.status).toBe(FlowRunStatus.RUNNING)
+        // a non-owner must not consume the pending metadata it refused to apply
+        const foreignLegacy = await distributedStore.hgetJson(legacyRedisMetadataKey(foreignRun.id))
+        expect(foreignLegacy).not.toBeNull()
     }, 60_000)
 
     it('still applies a report from the run own project', async () => {

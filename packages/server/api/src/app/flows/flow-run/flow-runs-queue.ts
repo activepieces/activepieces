@@ -96,6 +96,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                         flowRun: { id: job.data.runId },
                                         project: { id: job.data.projectId },
                                     }, '[runsMetadataQueue#worker] Run metadata reported for a run owned by another project, skipping job')
+                                    await discardMetadata({ key, requestId: runMetadata.requestId })
                                     return
                                 }
                                 const flowId = runMetadata.flowId
@@ -105,6 +106,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                         job: { id: job.id },
                                         flowRun: { id: job.data.runId },
                                     }, '[runsMetadataQueue#worker] Flow does not exist (deleted), skipping job')
+                                    await discardMetadata({ key, requestId: runMetadata.requestId })
                                     return
                                 }
                                 savedFlowRun = await flowRunRepo().save({ ...runMetadata, ...flowRunScope })
@@ -193,14 +195,21 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
 
 })
 
+async function discardMetadata({ key, requestId }: DiscardMetadataParams): Promise<void> {
+    if (isNil(requestId)) {
+        return
+    }
+    await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', requestId)
+}
+
 async function claimMetadataWrittenBeforeTheKeyWasScoped({ runId, projectId }: RunsMetadataJobData): Promise<RunsMetadataUpsertData | null> {
     const legacyKey = legacyRedisMetadataKey(runId)
     const legacyMetadata = await distributedStore.hgetJson<RunsMetadataUpsertData>(legacyKey)
-    if (isNil(legacyMetadata)) {
+    if (isNil(legacyMetadata) || legacyMetadata.projectId !== projectId) {
         return null
     }
     await distributedStore.delete(legacyKey)
-    return legacyMetadata.projectId === projectId ? legacyMetadata : null
+    return legacyMetadata
 }
 
 function buildTimeline({ existingFlowRun, runMetadata }: BuildTimelineParams): RunTimeline | undefined {
@@ -273,6 +282,11 @@ type ChildRunFailsParentParams = {
     status: FlowRunStatus
     failParentOnFailure: boolean
     willRetry?: boolean
+}
+
+type DiscardMetadataParams = {
+    key: string
+    requestId?: string
 }
 
 type BuildTimelineParams = {
