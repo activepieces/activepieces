@@ -230,9 +230,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }))
         return paginationHelper.createPage(populatedFlows, isNil(sortBy) ? paginationResult.cursor : null)
     },
-    async exists(id: FlowId): Promise<boolean> {
+    async exists({ id, projectId }: FlowExistsParams): Promise<boolean> {
         return flowRepo().existsBy({
             id,
+            projectId,
         })
     },
     async getOneById(id: string): Promise<Flow | null> {
@@ -980,6 +981,11 @@ type LockFlowVersionIfNotLockedParams = {
     platformId: PlatformId
     entityManager: EntityManager
     log: FastifyBaseLogger
+}
+
+type FlowExistsParams = {
+    id: FlowId
+    projectId: ProjectId
 }
 
 type ExistsByProjectAndStatusParams = {
