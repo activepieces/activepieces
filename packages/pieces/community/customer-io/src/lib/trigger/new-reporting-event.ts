@@ -205,9 +205,12 @@ export const newReportingEvent = createTrigger({
     ) {
       return [];
     }
-    const recipientEmail =
-      data.recipient ?? data.email_address ?? data.identifiers?.email;
-    if (recipient_domain && !recipientMatchesDomain(recipientEmail, recipient_domain)) {
+    if (
+      recipient_domain &&
+      ![data.recipient, data.email_address, data.identifiers?.email].some(
+        (candidate) => recipientMatchesDomain(candidate, recipient_domain)
+      )
+    ) {
       return [];
     }
     return [event];

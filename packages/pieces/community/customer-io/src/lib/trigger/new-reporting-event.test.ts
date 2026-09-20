@@ -100,6 +100,24 @@ describe('customer-io new-reporting-event run()', () => {
     expect(output).toEqual([event]);
   });
 
+  test('matches on identifiers.email even when recipient holds a non-email address', async () => {
+    const event = {
+      ...EVENT,
+      object_type: 'sms',
+      data: {
+        action_id: 489,
+        campaign_id: 20,
+        recipient: '+15551234567',
+        identifiers: { email: 'user@odoo.com' },
+      },
+    };
+    const output = await newReportingEvent.run(
+      buildContext({ events: ['sms_delivered'], recipient_domain: 'odoo.com' }, event)
+    );
+
+    expect(output).toEqual([event]);
+  });
+
   test('matches on identifiers.email when recipient and email_address are absent', async () => {
     const event = {
       ...EVENT,
