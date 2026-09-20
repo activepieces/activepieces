@@ -1,11 +1,12 @@
 import { apId, Permission, RoleType } from '@activepieces/core-utils'
-import { DefaultProjectRole, PlatformRole, ProjectType } from '@activepieces/shared'
+import { DefaultProjectRole, PlatformRole, PrincipalType, ProjectType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { mcpAccess } from '../../../../src/app/mcp/mcp-access'
+import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
-import { createMockProject, createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
-import { createMemberContext, createTestContext } from '../../../helpers/test-context'
+import { createMockProject, createMockProjectMember, createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
+import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -19,6 +20,31 @@ beforeAll(async () => {
 afterAll(async () => {
     await teardownTestEnvironment()
 })
+
+async function embeddedMemberToken(ctx: TestContext): Promise<string> {
+    const { mockUser } = await mockBasicUser({
+        userIdentity: { provider: UserIdentityProvider.JWT, verified: true },
+        user: { platformId: ctx.platform.id, platformRole: PlatformRole.MEMBER },
+    })
+    const role = createMockProjectRole({
+        platformId: ctx.platform.id,
+        name: `embed-role-${apId()}`,
+        permissions: [Permission.READ_MCP],
+        type: RoleType.CUSTOM,
+    })
+    await db.save('project_role', role)
+    await db.save('project_member', createMockProjectMember({
+        userId: mockUser.id,
+        platformId: ctx.platform.id,
+        projectId: ctx.project.id,
+        projectRoleId: role.id,
+    }))
+    return generateMockToken({
+        id: mockUser.id,
+        type: PrincipalType.USER,
+        platform: { id: ctx.platform.id },
+    })
+}
 
 describe('mcpAccess.listAccessibleProjects', () => {
     it('returns every project for a privileged (admin) user', async () => {
@@ -152,7 +178,7 @@ describe('GET /v1/mcp-server/reach', () => {
         expect(response.json().projectIds).toEqual([])
     })
 
-    it('answers a platform admin with every project, without making them one', async () => {
+    it('answers a platform admin with null, rather than enumerating every project of the platform', async () => {
         const ctx = await createTestContext(app)
         const sibling = createMockProject({
             platformId: ctx.platform.id,
@@ -164,7 +190,20 @@ describe('GET /v1/mcp-server/reach', () => {
         const response = await ctx.get('/v1/mcp-server/reach')
 
         expect(response.statusCode).toBe(200)
-        expect(response.json().projectIds).toEqual(expect.arrayContaining([ctx.project.id, sibling.id]))
+        expect(response.json().projectIds).toBeNull()
+    })
+
+    it('refuses an embedded user, who must not read the project ids of their other tenants', async () => {
+        const ctx = await createTestContext(app)
+        const token = await embeddedMemberToken(ctx)
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/api/v1/mcp-server/reach',
+            headers: { authorization: `Bearer ${token}` },
+        })
+
+        expect(response.statusCode).toBe(403)
     })
 
     it('never answers with the platform server token, unlike the admin-only route beside it', async () => {
