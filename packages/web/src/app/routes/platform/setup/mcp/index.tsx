@@ -115,7 +115,7 @@ export default function PlatformMcpPage() {
                 </h3>
                 <p className="text-sm text-muted-foreground mb-3">
                   {t(
-                    'Control which built-in tools are available to the AI Chat and external agents via the platform MCP server.',
+                    'Switching a tool off here switches it off everywhere on this platform: the AI Chat, external agents, and every project MCP server.',
                   )}
                 </p>
                 <McpTools

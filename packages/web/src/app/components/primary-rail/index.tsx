@@ -1,4 +1,3 @@
-import { Permission } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
@@ -63,10 +62,7 @@ import {
   railIsCollapsed,
   useRailCollapsed,
 } from '@/features/workspace/lib/rail-collapsed';
-import {
-  useAuthorization,
-  useIsPlatformAdmin,
-} from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
@@ -77,6 +73,7 @@ import { AccountSettingsDialog } from '../account-settings';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
+import { mcpHooks } from '../project-settings/mcp-server/utils/mcp-hooks';
 
 export function PrimaryRail() {
   const { embedState } = useEmbedding();
@@ -87,7 +84,9 @@ export function PrimaryRail() {
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
-  const { checkAccess } = useAuthorization();
+  const { reachesMcp } = mcpHooks.useMcpReach({
+    enabled: !embedState.isEmbedded && !embedState.hideSideNav,
+  });
 
   if (embedState.isEmbedded || embedState.hideSideNav) {
     return null;
@@ -138,7 +137,7 @@ export function PrimaryRail() {
                 }
               />
             )}
-            {checkAccess(Permission.READ_MCP) && (
+            {reachesMcp && (
               <RailNavButton
                 collapsed={collapsed}
                 to="/mcp-server"
