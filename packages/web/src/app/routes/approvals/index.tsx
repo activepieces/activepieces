@@ -150,5 +150,3 @@ export function ApprovalsPage() {
     </div>
   );
 }
-
-export default ApprovalsPage;
