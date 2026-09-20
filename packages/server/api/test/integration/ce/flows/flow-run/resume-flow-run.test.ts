@@ -580,6 +580,29 @@ describe('Resume flow run', () => {
         expect(redelivery.json().discarded).toBe(false)
     })
 
+    it('keeps the evidence when the race path deletes the completed waitpoint row', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+        // RUNNING takes the complete() branch, then the PAUSED race block below it deletes the
+        // COMPLETED row — so the marker is the only evidence that can survive.
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.RUNNING })
+
+        await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.FAILED })
+        const redelivery = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        expect(redelivery.json().discarded).toBe(false)
+    })
+
     it('reports a response as discarded when the waitpoint was never consumed', async () => {
         const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
         const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
