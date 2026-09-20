@@ -19,6 +19,8 @@ export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             log.info('[pieceCache] Registry cache initialized')
+            cachedRegistry = null
+            registryGeneration++
             if (!isTestingEnvironment) {
                 await pubsub.subscribe(PIECE_REGISTRY_INVALIDATION_CHANNEL, () => {
                     cachedRegistry = null
@@ -76,6 +78,10 @@ async function fetchRegistryFromDB(): Promise<PieceRegistryEntry[]> {
         .createQueryBuilder('pm')
         .select(['pm."name"', 'pm."version"', 'pm."platformId"', 'pm."pieceType"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
         .getRawMany<PieceRegistryEntry>()
+}
+
+export function currentPieceGeneration(): number {
+    return registryGeneration
 }
 
 export const PIECE_REGISTRY_INVALIDATION_CHANNEL = 'piece-registry-invalidation'

@@ -8,6 +8,18 @@ icon: "hammer"
 
 ### What has changed?
 
+#### The single piece endpoint no longer returns the raw `i18n` blob
+
+`GET /v1/pieces/:name` and `GET /v1/pieces/:scope/:name` returned an `i18n` field holding every locale's translation table for that piece, on every request, whatever locale was asked for. It was never used by the frontend: the response body is already translated into the requested locale before it is sent, and the list endpoint `GET /v1/pieces` has always stripped the same field.
+
+The field is now stripped on the single piece endpoints too, so the two routes agree. On the current catalogue this removes about 63% of the bytes those endpoints ship — 716 KB down to 401 KB for HubSpot, 2.6 MB down to about 0.8 MB for ampeco — and it is paid on every step the builder opens.
+
+Every other field is unchanged, and the translated values in the response are exactly what they were.
+
+#### What you need to do
+
+Nothing, unless you have an API consumer that reads `i18n` off one of those two endpoints. Nothing in Activepieces itself does. If you need a piece's raw translation tables, they are not available over the public API any more.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.

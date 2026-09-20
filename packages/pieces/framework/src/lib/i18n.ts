@@ -6,7 +6,7 @@ import fs from 'fs/promises';
 
 export const pieceTranslation = {
   translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>(params: TranslatePieceParams<T>): T => {
-    const { piece, locale, mutate = false } = params
+    const { piece, locale, mutate = false, paths = pieceTranslation.pathsToValuesToTranslate } = params
     if (!locale) {
       return piece
     }
@@ -15,11 +15,16 @@ export const pieceTranslation = {
       if (!target) {
         return piece
       }
-      const translatedPiece: T = mutate ? piece : JSON.parse(JSON.stringify(piece))
-      pieceTranslation.pathsToValuesToTranslate.forEach(key => {
-        translateProperty(translatedPiece, key, target)
-      })
-      return translatedPiece
+      if (mutate) {
+        paths.forEach(key => {
+          translateProperty(piece as unknown as Record<string, unknown>, key, target)
+        })
+        return piece
+      }
+      return paths.reduce<T>(
+        (acc, key) => translateAtPath(acc as unknown as Record<string, unknown>, key.split('.'), target) as unknown as T,
+        piece,
+      )
     }
     catch (err) {
       console.error(`error translating piece ${piece.name}:`, err)
@@ -68,6 +73,22 @@ export const pieceTranslation = {
     "triggers.*.props.*.displayName",
     "triggers.*.props.*.description",
     "triggers.*.props.*.options.options.*.label"
+  ],
+
+  pathsForSummary: [
+    "description",
+    "auth.username.displayName",
+    "auth.username.description",
+    "auth.password.displayName",
+    "auth.password.description",
+    "auth.props.*.displayName",
+    "auth.props.*.description",
+    "auth.props.*.options.options.*.label",
+    "auth.description",
+    "actions.*.displayName",
+    "actions.*.description",
+    "triggers.*.displayName",
+    "triggers.*.description"
   ]
 }
 
@@ -95,6 +116,54 @@ function translateProperty(pieceModelOrProperty: Record<string, unknown>, path: 
   if (valueInI18n) {
     pieceModelOrProperty[parsedKeys[0]] = valueInI18n
   }
+}
+
+function translateAtPath(node: unknown, parsedKeys: string[], i18n: Record<string, string>): unknown {
+  if (node === null || typeof node !== 'object') {
+    return node
+  }
+  const [head, ...rest] = parsedKeys
+  if (head === '*') {
+    return mapChildren(node as Record<string, unknown>, (child) => translateAtPath(child, rest, i18n))
+  }
+  const container = node as Record<string, unknown>
+  const child = container[head]
+  if (!child) {
+    return node
+  }
+  if (rest.length > 0) {
+    const translatedChild = translateAtPath(child, rest, i18n)
+    return translatedChild === child ? node : { ...container, [head]: translatedChild }
+  }
+  if (typeof child !== 'string') {
+    return node
+  }
+  const valueInI18n = i18n[child.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)]
+  if (!valueInI18n || valueInI18n === child) {
+    return node
+  }
+  return { ...container, [head]: valueInI18n }
+}
+
+function mapChildren(node: Record<string, unknown>, fn: (child: unknown) => unknown): unknown {
+  if (Array.isArray(node)) {
+    let changed = false
+    const next = node.map((child) => {
+      const translated = fn(child)
+      changed ||= translated !== child
+      return translated
+    })
+    return changed ? next : node
+  }
+  const entries = Object.entries(node)
+  let changed = false
+  const next: Record<string, unknown> = {}
+  for (const [key, child] of entries) {
+    const translated = fn(child)
+    changed ||= translated !== child
+    next[key] = translated
+  }
+  return changed ? next : node
 }
 
 async function fileExists(filePath: string) {
@@ -129,4 +198,5 @@ type TranslatePieceParams<T extends PieceMetadataModelSummary | PieceMetadataMod
   piece: T
   locale?: LocalesEnum
   mutate?: boolean
+  paths?: string[]
 }

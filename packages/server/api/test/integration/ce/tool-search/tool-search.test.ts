@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { encryptUtils } from '../../../../src/app/helper/encryption'
 import { system } from '../../../../src/app/helper/system/system'
+import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
 import { l2normalize, ToolSearchEmbedder } from '../../../../src/app/tool-search/embedder'
 import { toolSearchReindexService } from '../../../../src/app/tool-search/tool-search-reindex.service'
 import { toolSearchService } from '../../../../src/app/tool-search/tool-search.service'
@@ -122,6 +123,7 @@ afterAll(async () => {
 beforeEach(async () => {
     await databaseConnection().getRepository('tool_search_index').createQueryBuilder().delete().execute()
     await databaseConnection().getRepository('piece_metadata').createQueryBuilder().delete().execute()
+    await pieceCache(log).invalidate()
 })
 
 describe('Tool Search Engine (Phase 1)', () => {
