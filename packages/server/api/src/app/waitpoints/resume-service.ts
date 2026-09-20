@@ -29,6 +29,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             resumePayload: resumePayload ?? null,
             workerHandlerId,
             onReady: async (waitpoint) => {
+                await recordWaitpointConsumed({ waitpointId, log })
                 await enqueueResume({
                     flowRun,
                     waitpoint,
@@ -40,7 +41,6 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         })
 
         if (processed) {
-            await recordWaitpointConsumed({ waitpointId, log })
             const currentFlowRun = await findFlowRunOrThrow(flowRunId)
             if (currentFlowRun.status === FlowRunStatus.PAUSED) {
                 const latestWaitpoint = await waitpointService(log).getByFlowRunId(flowRunId)
@@ -63,13 +63,17 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         return { flowRun, stale: !processed }
     },
 
-    async waitpointWasConsumed({ waitpointId }: { waitpointId: string }): Promise<boolean> {
+    async waitpointWasConsumed({ waitpointId, flowRunId }: WaitpointWasConsumedParams): Promise<boolean> {
         const { data, error } = await tryCatch(() => distributedStore.get<boolean>(waitpointConsumedKey(waitpointId)))
         if (error) {
             log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#waitpointWasConsumed] Could not read the consumption marker, assuming the response was delivered')
             return true
         }
-        return data === true
+        if (data === true) {
+            return true
+        }
+        const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+        return !isNil(waitpoint) && waitpoint.status === WaitpointStatus.COMPLETED
     },
 
     async legacyResume({ flowRunId, resumePayload, workerHandlerId }: LegacyResumeParams): Promise<ResumeFromWaitpointResult> {
@@ -140,9 +144,11 @@ export const resumeService = (log: FastifyBaseLogger) => ({
 
 async function recordWaitpointConsumed({ waitpointId, log }: RecordWaitpointConsumedParams): Promise<void> {
     const { error } = await tryCatch(() => distributedStore.put(waitpointConsumedKey(waitpointId), true, WAITPOINT_CONSUMED_TTL_SECONDS))
-    if (error) {
-        log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#recordWaitpointConsumed] Could not record the consumption marker; a redelivery of this response may be reported as undelivered')
+    if (isNil(error)) {
+        return
     }
+    log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#recordWaitpointConsumed] Could not record the consumption marker, rolling the resume back so the caller can retry')
+    throw error
 }
 
 async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
@@ -169,6 +175,11 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
 
 const WAITPOINT_CONSUMED_TTL_SECONDS = 3600
 const waitpointConsumedKey = (waitpointId: string): string => `waitpoint_consumed:${waitpointId}`
+
+type WaitpointWasConsumedParams = {
+    waitpointId: string
+    flowRunId: string
+}
 
 type RecordWaitpointConsumedParams = {
     waitpointId: string

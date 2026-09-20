@@ -556,6 +556,30 @@ describe('Resume flow run', () => {
         expect(redelivery.json().discarded).toBe(false)
     })
 
+    it('falls back to the completed waitpoint row when no consumption marker exists', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+        // RUNNING takes the complete() branch: the waitpoint is marked COMPLETED and kept,
+        // and no Redis marker is written at all, so only the row can prove acceptance.
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.RUNNING })
+
+        const accepted = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+        expect(accepted.json().discarded).toBe(false)
+
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.FAILED })
+        const redelivery = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        expect(redelivery.json().discarded).toBe(false)
+    })
+
     it('reports a response as discarded when the waitpoint was never consumed', async () => {
         const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
         const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
