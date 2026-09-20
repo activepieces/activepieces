@@ -14,7 +14,7 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order, OrderByConfig } from '../../helper/pagination/paginator'
 import { knowledgeBaseService } from '../../knowledge-base/knowledge-base.service'
-import { resolvePermissionChecker } from '../../mcp/mcp-permissions'
+import { resolveRolePermissionChecker } from '../../mcp/mcp-permissions'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { projectMemberService } from '../projects/project-members/project-member.service'
@@ -228,7 +228,7 @@ export const agentService = (log: FastifyBaseLogger) => ({
     },
 
     async publishedFlowsUsing({ agent, projectId, userId }: { agent: Agent, projectId: ProjectId, userId: UserId }): Promise<PublishedFlowsUsingAgent> {
-        const checker = await resolvePermissionChecker({ userId, projectId, log })
+        const checker = await resolveRolePermissionChecker({ userId, projectId, log })
         const mayReadFlows = isNil(checker.check(Permission.READ_FLOW, '__name_flows_using_agent'))
         const usage = await publishedFlowsUsingAgent({ projectId, agentExternalId: agent.externalId, nameLimit: mayReadFlows ? MAX_NAMED_FLOWS_IN_USE : 0 })
         return { total: usage.total, names: usage.names }
@@ -552,7 +552,7 @@ async function lockedAgentInProjectOrThrow({ entityManager, id, projectId }: { e
 }
 
 async function mayWriteAgentsIn({ projectId, userId, log }: { projectId: ProjectId, userId: UserId, log: FastifyBaseLogger }): Promise<boolean> {
-    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    const checker = await resolveRolePermissionChecker({ userId, projectId, log })
     return isNil(checker.check(Permission.WRITE_AGENT, '__move_agent_into_project'))
 }
 

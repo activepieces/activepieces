@@ -25,6 +25,11 @@ export const PopulatedMcpServer = McpServer.extend({
 })
 export type PopulatedMcpServer = z.infer<typeof PopulatedMcpServer>
 
+export const McpReachResponse = z.object({
+    projectIds: z.array(ApId).nullable(),
+})
+export type McpReachResponse = z.infer<typeof McpReachResponse>
+
 export type McpServer = z.infer<typeof McpServer>
 
 export type ProjectScopedMcpServer = McpServer & { projectId: string }

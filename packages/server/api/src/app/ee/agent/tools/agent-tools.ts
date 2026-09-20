@@ -9,7 +9,7 @@ import { flowService } from '../../../flows/flow/flow.service'
 import { flowRunService } from '../../../flows/flow-run/flow-run-service'
 import { applicationEvents } from '../../../helper/application-events'
 import { domainHelper } from '../../../helper/domain-helper'
-import { resolvePermissionChecker } from '../../../mcp/mcp-permissions'
+import { resolveRolePermissionChecker } from '../../../mcp/mcp-permissions'
 import { formatFlowLine } from '../../../mcp/tools/ap-list-flows'
 import { runActionInput } from '../../../mcp/tools/ap-run-action'
 import { ActionRunOffload, executeCodeActionRun, executePieceActionRun, formatRunSummary } from '../../../mcp/tools/flow-run-utils'
@@ -482,7 +482,7 @@ async function checkWriteRunPermission({ userId, projectId, toolName, log }: {
     toolName: string
     log: FastifyBaseLogger
 }): Promise<string | null> {
-    const checker = await resolvePermissionChecker({ userId, projectId, log })
+    const checker = await resolveRolePermissionChecker({ userId, projectId, log })
     const denial = checker.check(Permission.WRITE_RUN, toolName)
     return isNil(denial) ? null : denial.content.map((part) => part.text).join(' ')
 }
@@ -559,7 +559,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (isNil(projectId)) {
                 return { connectionExternalId: externalId, notFound: true, note: 'No project is selected for this conversation. Ask the user which project this connection is in.' }
             }
-            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const checker = await resolveRolePermissionChecker({ userId, projectId, log })
             const denial = checker.check(Permission.WRITE_APP_CONNECTION, 'ap_revalidate_connection')
             if (!isNil(denial)) {
                 return denial
@@ -592,7 +592,7 @@ async function executeCrossProjectTool({ toolName, toolInput, platformId, userId
             if (isNil(projectId)) {
                 return { error: 'No project is selected for this conversation. Ask the user which project the agent belongs to.' }
             }
-            const checker = await resolvePermissionChecker({ userId, projectId, log })
+            const checker = await resolveRolePermissionChecker({ userId, projectId, log })
             const denial = checker.check(toolName === 'ap_list_agents' ? Permission.READ_AGENT : Permission.WRITE_AGENT, toolName)
             if (!isNil(denial)) {
                 return denial

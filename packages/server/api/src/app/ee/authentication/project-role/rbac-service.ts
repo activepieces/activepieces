@@ -1,10 +1,10 @@
 import { ActivepiecesError, ApId, ErrorCode, isNil, Permission, ProjectId, ProjectRole } from '@activepieces/core-utils'
-import { ApEdition, FlowOperationType, Principal, PrincipalType, UserPrincipal } from '@activepieces/shared'
+import { FlowOperationType, Principal, PrincipalType, UserPrincipal } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { system } from '../../../helper/system/system'
 import { projectService } from '../../../project/project-service'
 import { projectMemberService } from '../../projects/project-members/project-member.service'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
+import { editionRequiresRbac } from './rbac-middleware'
 
 export const rbacService = (log: FastifyBaseLogger) => ({
     async assertPrinicpalAccessToProject({ principal, permission, projectId }: AssertRoleHasPermissionParams): Promise<void> {
@@ -63,8 +63,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
         }
     },
     async assertUserHasPermissionToFlow({ principal, operationType, projectId }: AssertUserHasPermissionToFlowParams): Promise<void> {
-        const edition = system.getEdition()
-        if (![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(edition)) {
+        if (!editionRequiresRbac()) {
             return
         }
 
