@@ -130,6 +130,7 @@ export const createChatCompletionAction = createAction({
       },
       headers: {
         'Content-Type': 'application/json',
+        'X-Pplx-Integration': 'activepieces',
       },
       body: {
         model: context.propsValue.model,
