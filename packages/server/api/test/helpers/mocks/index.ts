@@ -130,6 +130,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
+        sensitive: project?.sensitive ?? false,
         notifyFlowOwnerOnFailure: project?.notifyFlowOwnerOnFailure ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
@@ -707,6 +708,10 @@ export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): P
         modelIds: aiProvider?.modelIds ?? [],
         projectScope: aiProvider?.projectScope ?? 'all',
         projectIds: aiProvider?.projectIds ?? [],
+        status: 'active',
+        statusReason: null,
+        statusUpdated: null,
+        statusVersion: 0,
     }
 
 }
