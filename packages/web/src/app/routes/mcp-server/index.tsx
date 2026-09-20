@@ -12,6 +12,7 @@ import { useMcpNav } from './mcp-nav';
 import { useMcpServerUrl } from './mcp-server-url';
 import { PageBand } from './page-band';
 import { PiecesTab } from './pieces/pieces-tab';
+import { ToolsTab } from './tools/tools-tab';
 
 export default function McpServerPage() {
   const { serverUrl, isReachableFromInternet } = useMcpServerUrl({
@@ -33,6 +34,9 @@ export default function McpServerPage() {
               <TabsTrigger variant="outline" value="pieces">
                 {t('Pieces')}
               </TabsTrigger>
+              <TabsTrigger variant="outline" value="tools">
+                {t('Tools')}
+              </TabsTrigger>
               <TabsTrigger variant="outline" value="connections">
                 {t('Connections')}
               </TabsTrigger>
@@ -46,6 +50,11 @@ export default function McpServerPage() {
       <div className="w-full">
         {nav.tab === 'pieces' ? (
           <PiecesTab
+            projectId={nav.projectId}
+            onSelectProject={nav.selectProject}
+          />
+        ) : nav.tab === 'tools' ? (
+          <ToolsTab
             projectId={nav.projectId}
             onSelectProject={nav.selectProject}
           />

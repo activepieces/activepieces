@@ -2887,5 +2887,11 @@
   "The input and output were not kept for this call.": "The input and output were not kept for this call.",
   "The input and output are no longer available.": "The input and output are no longer available.",
   "Too large to keep in full — some of it was dropped.": "Too large to keep in full — some of it was dropped.",
-  "what the call costs": "what the call costs"
+  "what the call costs": "what the call costs",
+  "Every tool a connected client can call in this project.": "Every tool a connected client can call in this project.",
+  "Switch a tool off and every client loses it, in this project only.": "Switch a tool off and every client loses it, in this project only.",
+  "You are not allowed to change the tools of this project.": "You are not allowed to change the tools of this project.",
+  "The tools could not be saved. Try again.": "The tools could not be saved. Try again.",
+  "the tools": "the tools",
+  "Turn it on in Tools": "Turn it on in Tools"
 }

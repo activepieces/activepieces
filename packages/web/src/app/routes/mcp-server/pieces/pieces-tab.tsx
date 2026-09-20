@@ -1,4 +1,3 @@
-import { ErrorCode } from '@activepieces/core-utils';
 import { isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Info, TriangleAlert } from 'lucide-react';
@@ -19,13 +18,16 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { api } from '@/lib/api';
 
 import { PageBand } from '../page-band';
+import {
+  isProjectAccessError,
+  ProjectAccessDeniedAlert,
+} from '../project-access';
+import { ProjectPicker } from '../project-picker';
 
 import { PieceRow } from './piece-row';
 import { piecesUtils } from './pieces-utils';
-import { ProjectPicker } from './project-picker';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
@@ -84,7 +86,7 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
 
       {projectId !== null &&
         mcpServer?.disabledTools?.includes(RUN_ACTION_TOOL_NAME) && (
-          <RunActionDisabledAlert />
+          <RunActionDisabledAlert projectId={projectId} />
         )}
 
       <div className="flex flex-wrap items-center gap-3">
@@ -145,17 +147,7 @@ function PiecesUnavailableAlert({
   onRetry,
 }: PiecesUnavailableAlertProps) {
   if (isProjectAccessError(error)) {
-    return (
-      <Alert variant="destructive">
-        <TriangleAlert />
-        <AlertTitle>{t('You cannot see this project')}</AlertTitle>
-        <AlertDescription>
-          {t(
-            'Pick another project above, or ask a platform admin for access to this one.',
-          )}
-        </AlertDescription>
-      </Alert>
-    );
+    return <ProjectAccessDeniedAlert />;
   }
 
   return (
@@ -179,7 +171,7 @@ function PiecesUnavailableAlert({
   );
 }
 
-function RunActionDisabledAlert() {
+function RunActionDisabledAlert({ projectId }: { projectId: string }) {
   return (
     <Alert variant="warning">
       <TriangleAlert />
@@ -189,6 +181,16 @@ function RunActionDisabledAlert() {
           'Running piece actions is switched off for this project. Clients can still see the list, but every call fails.',
         )}
       </AlertDescription>
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        className="col-start-2 mt-3 w-fit"
+      >
+        <Link to={`/mcp-server/tools?project=${projectId}`}>
+          {t('Turn it on in Tools')}
+        </Link>
+      </Button>
     </Alert>
   );
 }
@@ -248,14 +250,6 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
         </Button>
       )}
     </Alert>
-  );
-}
-
-function isProjectAccessError(error: Error | null): boolean {
-  return (
-    api.isApError(error, ErrorCode.AUTHORIZATION) ||
-    api.isApError(error, ErrorCode.PERMISSION_DENIED) ||
-    api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
   );
 }
 
