@@ -1,0 +1,4 @@
+Confidence Score: 4/5
+The PR is not yet safe to merge because changed pieces without test scripts are no longer built by this CI job.
+
+Reviews (3) · Last reviewed commit: "chore(ghostcms): drop the test declarati..."
