@@ -23,7 +23,6 @@ import {
 import { ProjectPicker } from '../project-picker';
 
 import { BuiltInPanel } from './built-in-panel';
-import { FlowsPanel } from './flows-panel';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const SKELETON_ROW_COUNT = 5;
@@ -92,7 +91,7 @@ export function ToolsTab({
         </h2>
         <p className="text-sm text-muted-foreground">
           {t(
-            'Built-in tools are switched on and off here. Flows and pieces are controlled where they live.',
+            'Built-in tools are switched on and off here. Pieces are controlled in piece sets.',
           )}
         </p>
       </div>
@@ -104,10 +103,6 @@ export function ToolsTab({
             <TabsTrigger value="built-in">
               {t('Built-in')}
               <GroupCount count={builtInCount} />
-            </TabsTrigger>
-            <TabsTrigger value="flows">
-              {t('Flows')}
-              <GroupCount count={mcpServer?.flows.length ?? null} />
             </TabsTrigger>
             <TabsTrigger value="pieces">
               {t('Pieces')}
@@ -134,9 +129,7 @@ export function ToolsTab({
         </div>
       ) : isError ? (
         <ToolsUnavailableAlert error={error} onRetry={refetch} />
-      ) : isNil(mcpServer) ? null : group === 'flows' ? (
-        <FlowsPanel mcpServer={mcpServer} />
-      ) : group === 'pieces' ? (
+      ) : isNil(mcpServer) ? null : group === 'pieces' ? (
         <PiecesPanel
           projectId={projectId}
           searchQuery={searchQuery}

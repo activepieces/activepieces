@@ -55,7 +55,7 @@ function toTab(value: string | undefined): McpTab {
 }
 
 function toGroup(value: string | undefined | null): McpToolGroup {
-  return value === 'flows' || value === 'pieces' ? value : DEFAULT_GROUP;
+  return value === 'pieces' ? value : DEFAULT_GROUP;
 }
 
 function isLegacyPiecesTab(value: string | undefined): boolean {
@@ -71,7 +71,7 @@ const DEFAULT_GROUP: McpToolGroup = 'built-in';
 
 export type McpTab = 'connect' | 'tools' | 'connections' | 'activity';
 
-export type McpToolGroup = 'built-in' | 'flows' | 'pieces';
+export type McpToolGroup = 'built-in' | 'pieces';
 
 export type McpView = 'landing' | 'browse' | 'client';
 

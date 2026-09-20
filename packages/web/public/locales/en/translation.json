@@ -2891,5 +2891,5 @@
   "Built-in": "Built-in",
   "Turn on Run action": "Turn on Run action",
   "Everything a connected client can call in this project.": "Everything a connected client can call in this project.",
-  "Built-in tools are switched on and off here. Flows and pieces are controlled where they live.": "Built-in tools are switched on and off here. Flows and pieces are controlled where they live."
+  "Built-in tools are switched on and off here. Pieces are controlled in piece sets.": "Built-in tools are switched on and off here. Pieces are controlled in piece sets."
 }
