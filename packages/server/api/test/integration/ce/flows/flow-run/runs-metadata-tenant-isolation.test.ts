@@ -1,4 +1,4 @@
-import { FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/shared'
+import { FlowRun, FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { engineRunCallbackService } from '../../../../../src/app/flows/flow-run/engine-run-callback-service'
 import { distributedStore } from '../../../../../src/app/database/redis-connections'
@@ -40,11 +40,19 @@ async function createRunningFlowRun(projectId: string) {
     return flowRun
 }
 
-// A rejection is a non-event, so there is nothing to poll for: the queue's own counts are
-// not a usable signal under the in-memory redis used in tests, and a drain check that always
-// reports empty makes these assertions pass even when the guard is removed.
-async function waitForTheReportToBeRejected(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 3000))
+// A rejected report is a non-event, and the queue's own counts are not a usable signal under
+// the in-memory redis used in tests — a drain check there reports empty immediately and makes
+// these assertions pass even with the guards removed. So the barrier is a later report from the
+// run's own project: once its marker lands, the earlier foreign report has been processed too.
+async function waitUntilTheOwnerReportLands({ flowRun, marker }: { flowRun: FlowRun, marker: string }): Promise<void> {
+    await engineRunCallbackService(app.log).uploadRunLog({
+        projectId: flowRun.projectId,
+        request: { runId: flowRun.id, tags: [marker] },
+    })
+    await vi.waitUntil(
+        async () => (await db.findOneBy<{ tags: string[] }>('flow_run', { id: flowRun.id }))?.tags?.includes(marker) === true,
+        { timeout: 15_000, interval: 100 },
+    )
 }
 
 describe('runs metadata tenant isolation', () => {
@@ -61,7 +69,7 @@ describe('runs metadata tenant isolation', () => {
                 finishTime: new Date().toISOString(),
             },
         })
-        await waitForTheReportToBeRejected()
+        await waitUntilTheOwnerReportLands({ flowRun: victimRun, marker: 'barrier-update' })
 
         const run = await db.findOneBy<{ status: string, projectId: string }>('flow_run', { id: victimRun.id })
         expect(run?.status).toBe(FlowRunStatus.RUNNING)
@@ -82,13 +90,7 @@ describe('runs metadata tenant isolation', () => {
                 failedStep: { name: 'step_1', displayName: 'Injected', message: 'injected by another project' },
             },
         })
-        await waitForTheReportToBeRejected()
-
-        await engineRunCallbackService(app.log).uploadRunLog({
-            projectId: victim.id,
-            request: { runId: victimRun.id, projectId: victim.id, provisionMs: 5, bootMs: 5, runMs: 5 },
-        })
-        await waitForTheReportToBeRejected()
+        await waitUntilTheOwnerReportLands({ flowRun: victimRun, marker: 'barrier-poison' })
 
         const run = await db.findOneBy<{ status: string, failedStep: unknown }>('flow_run', { id: victimRun.id })
         expect(run?.status).toBe(FlowRunStatus.RUNNING)
@@ -109,7 +111,10 @@ describe('runs metadata tenant isolation', () => {
         })
         await runsMetadataQueue(app.log).get().add('update-run-metadata', { runId: ownedRun.id, projectId: victim.id })
         await runsMetadataQueue(app.log).get().add('update-run-metadata', { runId: foreignRun.id, projectId: victim.id })
-        await waitForTheReportToBeRejected()
+        await vi.waitUntil(
+            async () => (await db.findOneBy<{ status: string }>('flow_run', { id: ownedRun.id }))?.status === FlowRunStatus.SUCCEEDED,
+            { timeout: 15_000, interval: 100 },
+        )
 
         const owned = await db.findOneBy<{ status: string }>('flow_run', { id: ownedRun.id })
         const foreign = await db.findOneBy<{ status: string }>('flow_run', { id: foreignRun.id })
