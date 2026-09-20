@@ -205,7 +205,9 @@ export const newReportingEvent = createTrigger({
     ) {
       return [];
     }
-    if (recipient_domain && !recipientMatchesDomain(data.recipient, recipient_domain)) {
+    const recipientEmail =
+      data.recipient ?? data.email_address ?? data.identifiers?.email;
+    if (recipient_domain && !recipientMatchesDomain(recipientEmail, recipient_domain)) {
       return [];
     }
     return [event];
@@ -255,6 +257,8 @@ type CustomerIoReportingEvent = {
     campaign_id?: number;
     action_id?: number;
     recipient?: string;
+    email_address?: string;
+    identifiers?: { email?: string };
     [key: string]: unknown;
   };
 };

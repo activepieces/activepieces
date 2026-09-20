@@ -87,4 +87,32 @@ describe('customer-io new-reporting-event run()', () => {
 
     expect(output).toEqual([EVENT]);
   });
+
+  test('matches on email_address when recipient is absent', async () => {
+    const event = {
+      ...EVENT,
+      data: { action_id: 489, campaign_id: 20, email_address: 'user@odoo.com' },
+    };
+    const output = await newReportingEvent.run(
+      buildContext({ events: ['email_delivered'], recipient_domain: 'odoo.com' }, event)
+    );
+
+    expect(output).toEqual([event]);
+  });
+
+  test('matches on identifiers.email when recipient and email_address are absent', async () => {
+    const event = {
+      ...EVENT,
+      data: {
+        action_id: 489,
+        campaign_id: 20,
+        identifiers: { email: 'user@odoo.com' },
+      },
+    };
+    const output = await newReportingEvent.run(
+      buildContext({ events: ['email_delivered'], recipient_domain: 'odoo.com' }, event)
+    );
+
+    expect(output).toEqual([event]);
+  });
 });
