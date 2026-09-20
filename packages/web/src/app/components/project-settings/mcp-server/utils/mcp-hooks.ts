@@ -11,18 +11,20 @@ export const MCP_SERVER_QUERY_KEY = ['mcp-server'];
 export const MCP_REACH_QUERY_KEY = ['mcp-reach'];
 
 export const mcpHooks = {
-  useMcpReach(): McpReach {
+  useMcpReach(options: { enabled?: boolean } = {}): McpReach {
+    const enabled = options.enabled ?? true;
     const { data, isLoading } = useQuery({
       queryKey: MCP_REACH_QUERY_KEY,
       queryFn: () => mcpApi.reach(),
       retry: false,
       staleTime: Infinity,
+      enabled,
     });
 
     const projectIds = data?.projectIds ?? null;
     return {
       projectIds,
-      isResolved: !isLoading,
+      isResolved: enabled && !isLoading,
       reachesMcp: isNil(projectIds) || projectIds.length > 0,
     };
   },
