@@ -104,9 +104,7 @@ function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope,
     server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing })(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
-    const allTools = activepiecesTools(templateMcp, userId, log)
-    const disabledToolSet = new Set(mcp.disabledTools ?? [])
-    const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
+    const tools = enabledTools({ tools: activepiecesTools(templateMcp, userId, log), disabledTools: mcp.disabledTools })
 
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
@@ -152,11 +150,37 @@ async function executeInSelectedProject({ toolTitle, args, projectId, userId, re
         }
     }
     const execute = permissionChecker.wrapExecute({
-        execute: charged({ execute: realTool.execute, toolName: realTool.title, projectId, billing }),
+        execute: isToolEnabled({ toolTitle: realTool.title, disabledTools: projectMcp.disabledTools })
+            ? charged({ execute: realTool.execute, toolName: realTool.title, projectId, billing })
+            : (): Promise<McpToolResult> => Promise.resolve(toolSwitchedOffResult(realTool.title)),
         permission: realTool.permission,
         toolTitle: realTool.title,
     })
     return execute(args)
+}
+
+function enabledTools({ tools, disabledTools }: {
+    tools: McpToolDefinition[]
+    disabledTools: string[] | null
+}): McpToolDefinition[] {
+    return tools.filter(tool => isToolEnabled({ toolTitle: tool.title, disabledTools }))
+}
+
+function isToolEnabled({ toolTitle, disabledTools }: {
+    toolTitle: string
+    disabledTools: string[] | null
+}): boolean {
+    return LOCKED_TOOL_NAMES.includes(toolTitle) || !(disabledTools ?? []).includes(toolTitle)
+}
+
+function toolSwitchedOffResult(toolTitle: string): McpToolResult {
+    return {
+        content: [{
+            type: 'text' as const,
+            text: `Tool "${toolTitle}" is switched off for the selected project.`,
+        }],
+        isError: true,
+    }
 }
 
 function noProjectSelectedResult(): McpToolResult {
@@ -261,9 +285,7 @@ export async function runFlowAsTool({ flow, properties, payload, returnsResponse
 }
 
 function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, billing, log }: RegisterStaticToolsParams): void {
-    const allTools = activepiecesTools({ ...mcp, projectId }, userId, log)
-    const disabledToolSet = new Set(mcp.disabledTools ?? [])
-    const tools = allTools.filter(t => LOCKED_TOOL_NAMES.includes(t.title) || !disabledToolSet.has(t.title))
+    const tools = enabledTools({ tools: activepiecesTools({ ...mcp, projectId }, userId, log), disabledTools: mcp.disabledTools })
 
     tools.forEach((tool) => {
         const execute = permissionChecker.wrapExecute({

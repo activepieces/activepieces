@@ -1,4 +1,4 @@
-import { DefaultProjectRole, FlowStatus, FlowVersionState, Project } from '@activepieces/shared'
+import { apId, DefaultProjectRole, FlowStatus, FlowVersionState, McpServerType, Project } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../../../helpers/db'
@@ -10,10 +10,13 @@ import { setupTestEnvironment } from '../../../helpers/test-setup'
 let app: FastifyInstance
 let ctx: TestContext
 let secondProject: Project
+let restrictedProject: Project
 
 const PLATFORM_RESOURCE = 'https://cloud.activepieces.com/mcp/platform'
 const FLOW_IN_FIRST_PROJECT = 'flow-in-first-project'
 const FLOW_IN_SECOND_PROJECT = 'flow-in-second-project'
+const SWITCHED_OFF_TOOL = 'ap_create_flow'
+const LOCKED_TOOL = 'ap_list_flows'
 
 async function connectPlatformWideClient(): Promise<string> {
     const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
@@ -108,6 +111,21 @@ describe('platform MCP project selection', () => {
         })
         await db.save('project', secondProject)
 
+        restrictedProject = createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: ctx.user.id,
+            displayName: 'restricted-project',
+        })
+        await db.save('project', restrictedProject)
+        await db.save('mcp_server', {
+            id: apId(),
+            projectId: restrictedProject.id,
+            platformId: null,
+            type: McpServerType.PROJECT,
+            token: apId(72),
+            disabledTools: [SWITCHED_OFF_TOOL, LOCKED_TOOL],
+        })
+
         await seedFlow({ projectId: ctx.project.id, displayName: FLOW_IN_FIRST_PROJECT })
         await seedFlow({ projectId: secondProject.id, displayName: FLOW_IN_SECOND_PROJECT })
     })
@@ -150,6 +168,28 @@ describe('platform MCP project selection', () => {
         const approved = await member.post('/v1/mcp-oauth/approve', { authRequestId })
 
         expect(approved.statusCode).toBe(200)
+    })
+
+    it('refuses a tool the selected project switched off, and runs it in a project that did not', async () => {
+        const client = await connectPlatformWideClient()
+
+        await callTool({ accessToken: client, name: 'ap_set_project_context', args: { projectId: restrictedProject.id } })
+        const refused = await callTool({ accessToken: client, name: SWITCHED_OFF_TOOL, args: { flowName: 'blocked-flow' } })
+
+        await callTool({ accessToken: client, name: 'ap_set_project_context', args: { projectId: ctx.project.id } })
+        const created = await callTool({ accessToken: client, name: SWITCHED_OFF_TOOL, args: { flowName: 'allowed-flow' } })
+
+        expect(refused).toContain('switched off for the selected project')
+        expect(created).toContain('allowed-flow')
+    })
+
+    it('keeps a locked tool callable even when the selected project lists it in disabledTools', async () => {
+        const client = await connectPlatformWideClient()
+        await callTool({ accessToken: client, name: 'ap_set_project_context', args: { projectId: restrictedProject.id } })
+
+        const listed = await callTool({ accessToken: client, name: LOCKED_TOOL })
+
+        expect(listed).not.toContain('switched off')
     })
 
     it('asks a client with no selection of its own to pick a project', async () => {

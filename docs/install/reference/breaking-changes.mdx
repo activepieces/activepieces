@@ -82,6 +82,18 @@ The MCP page now hands out the platform server address, `/mcp/platform`, rather 
 
 Nothing, if your members use the built-in roles. If you have built a custom project role and expect its holders to connect an MCP client, add the `READ_MCP` permission to it — otherwise their existing MCP clients stop working when you upgrade, rather than at the next token expiry. There is no environment variable, migration, or new setup step.
 
+#### A project's switched-off tools now apply to platform-wide MCP clients
+
+A project's MCP server carries a list of tools that are switched off for that project. Until now it governed only a client connected to the project address, `/mcp`. A client connected to the platform address, `/mcp/platform`, was filtered by the platform's own list and never consulted the project's, so a tool an admin had switched off for a project still ran there once the client selected it.
+
+Both lists now apply. The platform list sets the outer bound and decides which tools the client is offered; the project list narrows it at the moment of the call, against the project the client has selected. A tool that is off for the selected project answers with an error instead of running, and is not charged. Locked read-only tools are exempt, as they always have been — a `disabledTools` entry never switched those off.
+
+The check reads the project's live list on every call, so switching a tool on or off takes effect at once, on clients that are already connected. Because the client selects its project after it connects, and can change it, the tool stays in the client's tool list and refuses when called. This matches how a missing `READ_MCP` permission already behaves.
+
+#### What you need to do
+
+Nothing on a normal upgrade, and no environment variable or migration. Check the Tools tab of the MCP page for each project if you use the platform-wide server and have switched tools off per project: those settings were doing nothing for platform clients and now take effect. A connected agent that relied on a tool you had switched off will start being refused.
+
 ## 0.91.0
 
 ### What has changed?
