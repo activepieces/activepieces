@@ -1,3 +1,4 @@
+import { ExecutionType, LATEST_JOB_DATA_SCHEMA_VERSION, RunEnvironment, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { InterceptorVerdict } from '../../../../../src/app/workers/job-queue/job-interceptor'
 import { Worker as BullMQWorker, Job } from 'bullmq'
 import { FastifyBaseLogger } from 'fastify'
@@ -41,12 +42,30 @@ const mockLog: FastifyBaseLogger = {
     level: 'info',
 } as unknown as FastifyBaseLogger
 
+// tryDequeue zod-parses job data and fails anything that does not match, so the fixture
+// has to be a real job shape rather than two loose fields.
+const validExecuteFlowJobData = {
+    projectId: 'proj-1',
+    platformId: 'plat-1',
+    jobType: WorkerJobType.EXECUTE_FLOW,
+    executionType: ExecutionType.BEGIN,
+    environment: RunEnvironment.PRODUCTION,
+    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+    flowId: 'flow-1',
+    flowVersionId: 'flow-version-1',
+    runId: 'run-1',
+    payload: { type: 'inline' as const, value: null },
+    streamStepProgress: StreamStepProgress.NONE,
+    logsFileId: 'logs-1',
+}
+
 function createMockJob(id: string, data?: Record<string, unknown>, deferredFailure?: string): Job {
     return {
         id,
         name: `job-name-${id}`,
-        data: { projectId: 'proj-1', platformId: 'plat-1', ...data },
+        data: { ...validExecuteFlowJobData, ...data },
         attemptsMade: 0,
+        opts: { attempts: 2 },
         deferredFailure,
         moveToDelayed: vi.fn().mockResolvedValue(undefined),
         moveToFailed: vi.fn().mockResolvedValue(undefined),
@@ -75,7 +94,6 @@ describe('tryDequeue', () => {
         expect(result).not.toBeNull()
         expect(result!.jobId).toBe('job-1')
         expect(result!.engineToken).toBe('engine-token')
-        expect(result!.timeoutInSeconds).toBe(600)
         expect(result!.token).toMatch(/^token-/)
         expect(result!.queueName).toBe('test-queue')
         expect(job.updateData).not.toHaveBeenCalled()

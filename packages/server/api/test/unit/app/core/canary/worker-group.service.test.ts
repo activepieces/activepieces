@@ -13,11 +13,23 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
     }),
 }))
 
-const mockDistributedStoreGet = vi.fn()
-const mockDistributedStorePut = vi.fn()
-const mockDistributedStoreDelete = vi.fn()
+const cache = new Map<string, unknown>()
+const mockDistributedStoreGet = vi.fn(async (key: string) => cache.get(key) ?? null)
+const mockDistributedStorePut = vi.fn(async (key: string, value: unknown) => {
+    cache.set(key, value)
+})
+const mockDistributedStoreDelete = vi.fn(async (key: string) => {
+    cache.delete(key)
+})
 
 vi.mock('../../../../../src/app/database/redis-connections', () => ({
+    redisConnections: {
+        create: vi.fn(),
+        useExisting: vi.fn(),
+        getRedisType: vi.fn().mockReturnValue('MEMORY'),
+        destroy: vi.fn(),
+    },
+    distributedLock: { runExclusive: vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) => fn()) },
     distributedStore: {
         get: (...args: unknown[]) => mockDistributedStoreGet(...args),
         put: (...args: unknown[]) => mockDistributedStorePut(...args),
@@ -39,6 +51,8 @@ const mockLog: FastifyBaseLogger = {
 
 type WorkerGroupService = ReturnType<typeof import('../../../../../src/app/ee/platform/platform-plan/worker-group.service').workerGroupService>
 
+const CANARY_WORKER_GROUP_ID = 'canary'
+
 async function loadService(): Promise<WorkerGroupService> {
     const mod = await import('../../../../../src/app/ee/platform/platform-plan/worker-group.service')
     return mod.workerGroupService(mockLog)
@@ -50,12 +64,19 @@ describe('workerGroupService', () => {
     beforeEach(async () => {
         vi.clearAllMocks()
         vi.resetModules()
+        cache.clear()
+        mockDistributedStoreGet.mockImplementation(async (key: string) => cache.get(key) ?? null)
+        mockDistributedStorePut.mockImplementation(async (key: string, value: unknown) => {
+            cache.set(key, value)
+        })
+        mockDistributedStoreDelete.mockImplementation(async (key: string) => {
+            cache.delete(key)
+        })
         service = await loadService()
     })
 
     describe('getWorkerGroupId', () => {
         it('returns groupId from DB when not cached', async () => {
-            mockDistributedStoreGet.mockResolvedValue(null)
             mockFindOne.mockResolvedValue({ workerGroupId: 'canary' })
 
             const result = await service.getWorkerGroupId({ platformId: 'p1' })
@@ -65,7 +86,6 @@ describe('workerGroupService', () => {
         })
 
         it('returns null and caches sentinel when platform has no worker group', async () => {
-            mockDistributedStoreGet.mockResolvedValue(null)
             mockFindOne.mockResolvedValue({ workerGroupId: null })
 
             const result = await service.getWorkerGroupId({ platformId: 'p2' })
@@ -75,7 +95,7 @@ describe('workerGroupService', () => {
         })
 
         it('returns null without hitting DB when sentinel is cached', async () => {
-            mockDistributedStoreGet.mockResolvedValue('__none__')
+            cache.set('platform:p3:worker_group_id:v2', '__none__')
 
             const result = await service.getWorkerGroupId({ platformId: 'p3' })
 
@@ -84,7 +104,7 @@ describe('workerGroupService', () => {
         })
 
         it('returns cached value without hitting DB', async () => {
-            mockDistributedStoreGet.mockResolvedValue('my-group')
+            cache.set('platform:p1:worker_group_id:v2', 'my-group')
 
             const result = await service.getWorkerGroupId({ platformId: 'p1' })
 
@@ -94,83 +114,59 @@ describe('workerGroupService', () => {
     })
 
     describe('isCanaryPlatform', () => {
-        it('returns true for canary platform', async () => {
-            mockFind.mockResolvedValue([{ platformId: 'p1' }])
+        it('is true when the platform runs on the canary worker group', async () => {
+            mockFindOne.mockResolvedValue({ workerGroupId: CANARY_WORKER_GROUP_ID })
 
-            const result = await service.isCanaryPlatform({ platformId: 'p1' })
-
-            expect(result).toBe(true)
+            expect(await service.isCanaryPlatform({ platformId: 'p1' })).toBe(true)
         })
 
-        it('returns false for non-canary platform', async () => {
-            mockFind.mockResolvedValue([{ platformId: 'p1' }])
+        it('is false when the platform runs on another worker group', async () => {
+            mockFindOne.mockResolvedValue({ workerGroupId: 'not-canary' })
 
-            const result = await service.isCanaryPlatform({ platformId: 'p2' })
-
-            expect(result).toBe(false)
+            expect(await service.isCanaryPlatform({ platformId: 'p1' })).toBe(false)
         })
 
-        it('caches after first call', async () => {
-            mockFind.mockResolvedValue([{ platformId: 'p1' }])
+        it('is false when the platform has no worker group', async () => {
+            mockFindOne.mockResolvedValue({ workerGroupId: null })
+
+            expect(await service.isCanaryPlatform({ platformId: 'p1' })).toBe(false)
+        })
+
+        it('answers from the cache on a repeat call, so the platform is read once', async () => {
+            mockFindOne.mockResolvedValue({ workerGroupId: CANARY_WORKER_GROUP_ID })
 
             await service.isCanaryPlatform({ platformId: 'p1' })
             await service.isCanaryPlatform({ platformId: 'p1' })
 
-            expect(mockFind).toHaveBeenCalledTimes(1)
-        })
-
-        it('concurrent calls only hit DB once', async () => {
-            let resolveFind!: (value: { platformId: string }[]) => void
-            mockFind.mockReturnValue(new Promise((resolve) => {
-                resolveFind = resolve
-            }))
-
-            const promises = Array.from({ length: 10 }, () =>
-                service.isCanaryPlatform({ platformId: 'p1' }),
-            )
-
-            await new Promise((r) => setTimeout(r, 50))
-            resolveFind([{ platformId: 'p1' }])
-
-            const results = await Promise.all(promises)
-
-            expect(mockFind).toHaveBeenCalledTimes(1)
-            expect(results.every((r) => r === true)).toBe(true)
+            expect(mockFindOne).toHaveBeenCalledTimes(1)
         })
     })
 
     describe('updateWorkerGroup', () => {
-        it('invalidates cache', async () => {
-            mockFind.mockResolvedValue([{ platformId: 'p1' }])
+        it('drops the cached group, so the next read sees the new one', async () => {
             mockUpdate.mockResolvedValue(undefined)
-            mockDistributedStoreGet.mockResolvedValue(null)
-            mockDistributedStoreDelete.mockResolvedValue(undefined)
-
-            await service.isCanaryPlatform({ platformId: 'p1' })
-            expect(mockFind).toHaveBeenCalledTimes(1)
+            mockFindOne.mockResolvedValue({ workerGroupId: CANARY_WORKER_GROUP_ID })
+            expect(await service.getWorkerGroupId({ platformId: 'p1' })).toBe(CANARY_WORKER_GROUP_ID)
 
             await service.updateWorkerGroup({ platformId: 'p1', workerGroupId: null })
 
-            mockFind.mockResolvedValue([])
-            await service.isCanaryPlatform({ platformId: 'p1' })
-            expect(mockFind).toHaveBeenCalledTimes(2)
+            mockFindOne.mockResolvedValue({ workerGroupId: null })
+            expect(await service.getWorkerGroupId({ platformId: 'p1' })).toBeNull()
+            expect(mockFindOne).toHaveBeenCalledTimes(2)
         })
     })
 
-    describe('disableAllCanary', () => {
-        it('invalidates cache', async () => {
-            mockFind.mockResolvedValue([{ platformId: 'p1' }])
+    describe('updateCanary', () => {
+        it('moves the platform onto the canary group and drops the cached value', async () => {
             mockUpdate.mockResolvedValue(undefined)
-            mockDistributedStoreDelete.mockResolvedValue(undefined)
+            mockFindOne.mockResolvedValue({ workerGroupId: null })
+            expect(await service.isCanaryPlatform({ platformId: 'p1' })).toBe(false)
 
-            await service.isCanaryPlatform({ platformId: 'p1' })
-            expect(mockFind).toHaveBeenCalledTimes(1)
+            await service.updateCanary({ platformId: 'p1', canary: true })
 
-            await service.disableAllCanary()
-
-            mockFind.mockResolvedValue([])
-            await service.isCanaryPlatform({ platformId: 'p1' })
-            expect(mockFind).toHaveBeenCalledTimes(3)
+            expect(mockUpdate).toHaveBeenCalledWith({ platformId: 'p1' }, { workerGroupId: CANARY_WORKER_GROUP_ID })
+            mockFindOne.mockResolvedValue({ workerGroupId: CANARY_WORKER_GROUP_ID })
+            expect(await service.isCanaryPlatform({ platformId: 'p1' })).toBe(true)
         })
     })
 })

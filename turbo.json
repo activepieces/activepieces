@@ -113,6 +113,10 @@
       "inputs": ["src/**", "test/**", "tsconfig*.json", "vitest.config.*"],
       "outputs": ["coverage/**"]
     },
+    "test-unit": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "test-ce": {
       "dependsOn": ["build"],
       "cache": false

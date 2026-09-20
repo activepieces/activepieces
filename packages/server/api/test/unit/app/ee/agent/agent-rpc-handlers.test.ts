@@ -446,6 +446,7 @@ describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a f
         mockRunFlowAsTool.mockClear()
         mockGetOnePopulated.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
+        mockFindOne.mockResolvedValue(conversation)
         const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executeFlowTool({
             conversationId: 'conv-1',

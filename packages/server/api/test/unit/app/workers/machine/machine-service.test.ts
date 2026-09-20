@@ -1,4 +1,4 @@
-import { ExecutionMode } from '@activepieces/shared'
+import { ApEdition, ExecutionMode } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('../../../../../src/app/workers/machine/machine-cache', () => ({
@@ -12,7 +12,38 @@ vi.mock('../../../../../src/app/helper/system/system', () => ({
     system: {
         getOrThrow: vi.fn().mockReturnValue('test-value'),
         getNumberOrThrow: vi.fn().mockReturnValue(60),
+        getNumber: vi.fn().mockReturnValue(null),
+        globalLogger: vi.fn(() => ({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() })),
+        getEdition: vi.fn().mockReturnValue(ApEdition.COMMUNITY),
+        getBoolean: vi.fn().mockReturnValue(undefined),
+        getBooleanOrThrow: vi.fn().mockReturnValue(false),
+        getDecimalOrThrow: vi.fn().mockReturnValue(0),
+        getList: vi.fn().mockReturnValue([]),
+        isWorker: vi.fn().mockReturnValue(false),
+        isApp: vi.fn().mockReturnValue(true),
         get: vi.fn().mockReturnValue(undefined),
+    },
+}))
+
+vi.mock('../../../../../src/app/helper/pubsub', () => ({
+    pubsub: {
+        publish: vi.fn().mockResolvedValue(undefined),
+        subscribe: vi.fn().mockResolvedValue(undefined),
+    },
+}))
+
+vi.mock('../../../../../src/app/database/redis-connections', () => ({
+    redisConnections: {
+        create: vi.fn(),
+        useExisting: vi.fn(),
+        getRedisType: vi.fn().mockReturnValue('MEMORY'),
+        destroy: vi.fn(),
+    },
+    distributedLock: { runExclusive: vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) => fn()) },
+    distributedStore: {
+        get: vi.fn().mockResolvedValue(null),
+        put: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined),
     },
 }))
 

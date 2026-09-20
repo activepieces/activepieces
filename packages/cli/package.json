@@ -8,9 +8,8 @@
     "start": "ts-node src/index.ts",
     "build": "tsc -p tsconfig.lib.json",
     "build-publish": "node scripts/build-publish.mjs",
-    "test": "vitest run --exclude '**/bundle-piece-utils.test.ts'",
-    "lint": "eslint 'src/**/*.ts'",
-    "test-quarantined": "vitest run src/lib/utils/bundle-piece-utils.test.ts"
+    "test": "vitest run",
+    "lint": "eslint 'src/**/*.ts'"
   },
   "dependencies": {
     "@activepieces/pieces-common": "workspace:*",

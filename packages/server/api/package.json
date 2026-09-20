@@ -143,7 +143,7 @@
     "serve": "cd ../../.. && npx tsx watch --clear-screen=false --exclude 'packages/pieces/**' --exclude 'packages/**/dist/**' --include 'packages/server/api/src/**' --include 'packages/core/shared/src/**' --include 'packages/server/utils/src/**' --include 'packages/pieces/framework/src/**' --include 'packages/pieces/common/src/**' --tsconfig packages/server/api/tsconfig.app.json packages/server/api/src/bootstrap.ts",
     "lint": "eslint 'src/**/*.ts'",
     "test": "npm run test-ce && npm run test-ee && npm run test-cloud",
-    "test-unit": "vitest run test/unit --passWithNoTests=false --exclude '**/worker-group.service.test.ts' --exclude '**/agent-rpc-handlers.test.ts' --exclude '**/job-broker.test.ts' --exclude '**/machine-service.test.ts'",
+    "test-unit": "vitest run test/unit --passWithNoTests=false",
     "test-ce-command": "vitest run test/integration/ce --bail 1 --passWithNoTests=false",
     "test-ee-command": "vitest run test/integration/ee --bail 1 --passWithNoTests=false",
     "test-cloud-command": "vitest run test/integration/cloud --bail 1 --passWithNoTests=false",
@@ -154,7 +154,6 @@
     "db": "ts-node --transpile-only -r tsconfig-paths/register -P tsconfig.app.json node_modules/typeorm/cli.js",
     "db-migration": "export $(cat .env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && export AP_EDITION=ce && ts-node --transpile-only -r tsconfig-paths/register -P tsconfig.app.json node_modules/typeorm/cli.js migration:generate -p -d src/app/database/migration-data-source.ts",
     "test:docker": "UID=\"$(id -u)\" GID=\"$(id -g)\" docker compose --profile full -f docker-compose.test.yml up --exit-code-from app --attach app",
-    "rollback": "node dist/src/rollback.js",
-    "test-unit-quarantined": "vitest run test/unit/app/core/canary/worker-group.service.test.ts test/unit/app/ee/agent/agent-rpc-handlers.test.ts test/unit/app/workers/job-queue/job-broker.test.ts test/unit/app/workers/machine/machine-service.test.ts"
+    "rollback": "node dist/src/rollback.js"
   }
 }

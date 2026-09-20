@@ -39,9 +39,7 @@ let sent: Captured[] = [];
 beforeEach(() => {
   sent = [];
   vi.stubGlobal('fetch', async (url: string, init: FetchInit) => {
-    // Headers may arrive as a plain object or a Headers instance depending on the
-    // client; normalise so the capture does not depend on which one production uses.
-    const headers = new Headers(init.headers as HeadersInit);
+    const headers = new Headers(init.headers);
     sent.push({
       url: String(url),
       contentType: headers.get('content-type') ?? '',
@@ -292,6 +290,6 @@ function actionContext(propsValue: Record<string, unknown>) {
 }
 
 type FetchInit = {
-  headers: Record<string, string>;
+  headers: HeadersInit;
   body: unknown;
 };
