@@ -39,10 +39,13 @@ let sent: Captured[] = [];
 beforeEach(() => {
   sent = [];
   vi.stubGlobal('fetch', async (url: string, init: FetchInit) => {
+    // Headers may arrive as a plain object or a Headers instance depending on the
+    // client; normalise so the capture does not depend on which one production uses.
+    const headers = new Headers(init.headers as HeadersInit);
     sent.push({
       url: String(url),
-      contentType: init.headers['content-type'] ?? '',
-      authorization: init.headers['authorization'] ?? '',
+      contentType: headers.get('content-type') ?? '',
+      authorization: headers.get('authorization') ?? '',
       body: await readBody(init.body),
     });
     return new Response(JSON.stringify({ id: 'msg_1' }), {

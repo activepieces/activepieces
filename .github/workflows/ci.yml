@@ -152,13 +152,16 @@ jobs:
           set -euo pipefail
           pids=()
 
-          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=@activepieces/sandbox --filter=@activepieces/ai-providers --filter=@activepieces/core-execution --filter=@activepieces/core-piece-types --filter=@activepieces/server-utils --filter=@activepieces/pieces-framework --filter=@activepieces/piece-subflows --filter=web --filter=worker &
+          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=@activepieces/sandbox --filter=@activepieces/ai-providers --filter=@activepieces/core-execution --filter=@activepieces/core-piece-types --filter=@activepieces/server-utils --filter=@activepieces/core-utils --filter=@activepieces/pieces-framework --filter=@activepieces/pieces-common --filter=ee-embed-sdk --filter=@activepieces/cli --filter='@activepieces/piece-*' --filter=web --filter=worker &
           pids+=($!)
 
-          npx turbo run test-ce test-ee test-cloud check-migrations --filter=api &
+          npx turbo run test-unit test-ce test-ee test-cloud check-migrations --filter=api &
           pids+=($!)
 
           npx tsx tools/scripts/check-migration-rollback.ts &
+          pids+=($!)
+
+          npx tsx tools/scripts/check-tests-run-in-ci.ts &
           pids+=($!)
 
           status=0
