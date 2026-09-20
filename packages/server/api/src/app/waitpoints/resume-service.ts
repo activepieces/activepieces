@@ -29,7 +29,6 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             resumePayload: resumePayload ?? null,
             workerHandlerId,
             onReady: async (waitpoint) => {
-                await recordWaitpointConsumed({ waitpointId, log })
                 await enqueueResume({
                     flowRun,
                     waitpoint,
@@ -37,6 +36,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                     workerHandlerId,
                     httpRequestId,
                 }, log)
+                await recordWaitpointConsumed({ waitpointId, log })
             },
         })
 
