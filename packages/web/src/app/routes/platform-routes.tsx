@@ -1,8 +1,11 @@
-import React, { Suspense } from 'react';
-import { Navigate } from 'react-router-dom';
+import { TelemetryEventName } from '@activepieces/shared';
+import React, { Suspense, useEffect } from 'react';
+import { matchRoutes, Navigate, useLocation } from 'react-router-dom';
 
+import { useInsideFeatureSample } from '@/app/components/feature-sample';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
@@ -92,7 +95,23 @@ const PlatformConnectionsPage = React.lazy(
   () => import('./platform/connections'),
 );
 
+function useAdminPageViewed() {
+  const { capture } = useTelemetry();
+  const { pathname } = useLocation();
+  const locked = useInsideFeatureSample();
+  const page =
+    matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname;
+  useEffect(() => {
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
+      payload: { page, locked },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, locked]);
+}
+
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  useAdminPageViewed();
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
