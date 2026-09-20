@@ -1,6 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
+/* eslint-disable jest-dom/prefer-in-document -- @testing-library/jest-dom is not a dependency of packages/web */
 import { TelemetryEventName } from '@activepieces/shared';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -35,7 +36,9 @@ vi.mock('@/hooks/user-hooks', () => ({
     useCurrentUser: () => ({ data: undefined }),
   },
 }));
-vi.mock('@/hooks/authorization-hooks', () => ({ useIsPlatformAdmin: () => true }));
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useIsPlatformAdmin: () => true,
+}));
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: {
     useFlag: () => ({ data: edition }),
@@ -85,6 +88,7 @@ vi.mock('@/components/ui/sidebar-shadcn', () => ({
 
 import { FeatureSample } from '@/app/components/feature-sample';
 import { FeatureTeaser } from '@/app/components/feature-teaser';
+import { UpgradeFeatureDialog } from '@/features/billing';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 
 const renderWithQueryClient = (ui: React.ReactElement) =>
@@ -168,6 +172,23 @@ describe('platform admin telemetry', () => {
     expect(
       capturedPayload(TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED),
     ).toEqual({ limit: 'teamProjects', used: 3, allowed: 3 });
+  });
+
+  it('names the feature by its stable key on every surface, not the title', () => {
+    render(
+      <UpgradeFeatureDialog
+        open
+        onOpenChange={vi.fn()}
+        featureKey="PROJECTS"
+        title="Unlock Projects"
+        description=""
+        tier="team"
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /upgrade plan/i }));
+    expect(
+      capturedPayload(TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED),
+    ).toEqual({ feature: 'PROJECTS', tier: 'team', surface: 'dialog' });
   });
 
   it('stays silent while the plan still has room', () => {
