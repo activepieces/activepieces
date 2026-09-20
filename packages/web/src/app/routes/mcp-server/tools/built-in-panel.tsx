@@ -1,10 +1,9 @@
-import { PopulatedMcpServer } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
 
 export function BuiltInPanel({
-  mcpServer,
+  disabledTools,
   projectId,
   isPending,
   onUpdateDisabledTools,
@@ -18,7 +17,7 @@ export function BuiltInPanel({
       </p>
       <McpTools
         key={projectId}
-        disabledTools={mcpServer.disabledTools}
+        disabledTools={disabledTools}
         isPending={isPending}
         onUpdateDisabledTools={onUpdateDisabledTools}
       />
@@ -27,7 +26,7 @@ export function BuiltInPanel({
 }
 
 type BuiltInPanelProps = {
-  mcpServer: PopulatedMcpServer;
+  disabledTools: string[] | null;
   projectId: string | null;
   isPending: boolean;
   onUpdateDisabledTools: (tools: string[]) => void;

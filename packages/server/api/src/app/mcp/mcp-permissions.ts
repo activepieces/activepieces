@@ -1,15 +1,14 @@
 import { ActivepiecesError, ErrorCode, isNil, Permission, tryCatch } from '@activepieces/core-utils'
 import { McpToolDefinition, ProjectRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { getPrincipalRoleOrThrow } from '../ee/authentication/project-role/rbac-middleware'
-import { mcpAccess } from './mcp-access'
+import { editionRequiresRbac, getPrincipalRoleOrThrow } from '../ee/authentication/project-role/rbac-middleware'
 
-export async function resolvePermissionChecker({ userId, projectId, log }: ResolveCheckerParams): Promise<PermissionChecker> {
+export async function resolveRolePermissionChecker({ userId, projectId, log }: ResolveCheckerParams): Promise<PermissionChecker> {
     return buildPermissionChecker({ userId, projectId, log })
 }
 
 export async function resolveMcpPermissionChecker({ userId, projectId, log }: ResolveCheckerParams): Promise<PermissionChecker> {
-    return buildPermissionChecker({ userId, projectId, log, surfacePermission: Permission.READ_MCP })
+    return buildPermissionChecker({ userId, projectId, log, requiredPermission: Permission.READ_MCP })
 }
 
 export const ALLOW_ALL: PermissionChecker = {
@@ -17,23 +16,23 @@ export const ALLOW_ALL: PermissionChecker = {
     wrapExecute: ({ execute }) => execute,
 }
 
-async function buildPermissionChecker({ userId, projectId, log, surfacePermission }: ResolveCheckerParams & {
-    surfacePermission?: Permission
+async function buildPermissionChecker({ userId, projectId, log, requiredPermission }: ResolveCheckerParams & {
+    requiredPermission?: Permission
 }): Promise<PermissionChecker> {
-    if (!mcpAccess.editionRequiresRbac()) {
+    if (!editionRequiresRbac()) {
         return ALLOW_ALL
     }
 
     const role = await resolveProjectRole({ userId, projectId, log })
 
     if (isNil(role)) {
-        return denyAllTools((toolTitle) => `❌ Permission denied: no role found for this user in the project. Cannot execute "${toolTitle}".`)
+        return buildDenyAllChecker((toolTitle) => `❌ Permission denied: no role found for this user in the project. Cannot execute "${toolTitle}".`)
     }
 
     const permissionSet = new Set(role.permissions ?? [])
 
-    if (!isNil(surfacePermission) && !permissionSet.has(surfacePermission)) {
-        return denyAllTools((toolTitle) => `❌ Permission denied: your role does not have the "${surfacePermission}" permission required to use MCP in this project. Cannot execute "${toolTitle}".`)
+    if (!isNil(requiredPermission) && !permissionSet.has(requiredPermission)) {
+        return buildDenyAllChecker((toolTitle) => `❌ Permission denied: your role does not have the "${requiredPermission}" permission required to use MCP in this project. Cannot execute "${toolTitle}".`)
     }
 
     return buildChecker((permission, toolTitle) => {
@@ -58,7 +57,7 @@ async function resolveProjectRole({ userId, projectId, log }: ResolveCheckerPara
     throw error
 }
 
-function denyAllTools(buildMessage: (toolTitle: string) => string): PermissionChecker {
+function buildDenyAllChecker(buildMessage: (toolTitle: string) => string): PermissionChecker {
     return buildChecker((_permission, toolTitle) => ({
         content: [{ type: 'text' as const, text: buildMessage(toolTitle) }],
         isError: true,

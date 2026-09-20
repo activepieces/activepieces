@@ -21,7 +21,7 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-async function newAuthRequestId(): Promise<string> {
+async function createAuthRequestId(): Promise<string> {
     const client = await mcpOAuthTestHelpers.registerClient({ app, tokenEndpointAuthMethod: 'none' })
     const { challenge } = mcpOAuthTestHelpers.generatePkce()
     const consent = await app.inject({
@@ -45,7 +45,7 @@ async function approveAs({ token, projectId }: { token: string, projectId?: stri
         url: '/api/v1/mcp-oauth/approve',
         headers: { authorization: `Bearer ${token}` },
         payload: {
-            authRequestId: await newAuthRequestId(),
+            authRequestId: await createAuthRequestId(),
             ...(projectId ? { projectId } : {}),
         },
     })

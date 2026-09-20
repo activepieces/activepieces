@@ -8,40 +8,43 @@ export function useMcpNav(): McpNav {
   const [params, setParams] = useSearchParams();
   const clientKey = params.get('client');
   const projectParam = params.get('project');
-  const group = toGroup(params.get('group') ?? legacyGroup(tab));
+  const segment = toSegment(params.get('segment') ?? legacySegment(tab));
 
-  const toolsParams = ({
+  const buildToolsParams = ({
     projectId,
-    group,
+    segment,
   }: {
     projectId: string | null;
-    group: McpToolGroup;
+    segment: McpToolSegment;
   }) => ({
     ...(projectId === null ? {} : { project: projectId }),
-    ...(group === DEFAULT_GROUP ? {} : { group }),
+    ...(segment === DEFAULT_SEGMENT ? {} : { segment }),
   });
 
   return {
     clientKey,
-    group,
+    segment,
     tab: toTab(tab),
     view: clientKey ? 'client' : params.has('browse') ? 'browse' : 'landing',
     projectId: projectParam ?? authenticationSession.getProjectId(),
     legacyRedirect: isLegacyPiecesTab(tab)
       ? `/mcp-server/tools?${new URLSearchParams(
-          toolsParams({ projectId: projectParam, group: 'pieces' }),
+          buildToolsParams({ projectId: projectParam, segment: 'pieces' }),
         ).toString()}`
       : null,
     showLanding: () => setParams({}),
     showBrowse: () => setParams({ browse: '1' }),
     showClient: (key: string) => setParams({ client: key }),
     showTab: (value: string) => navigate(`/mcp-server/${toTab(value)}`),
-    showGroup: (value: string) =>
+    selectSegment: (value: string) =>
       setParams(
-        toolsParams({ projectId: projectParam, group: toGroup(value) }),
+        buildToolsParams({
+          projectId: projectParam,
+          segment: toSegment(value),
+        }),
       ),
     selectProject: (projectId: string) =>
-      setParams(toolsParams({ projectId, group })),
+      setParams(buildToolsParams({ projectId, segment })),
   };
 }
 
@@ -54,30 +57,30 @@ function toTab(value: string | undefined): McpTab {
     : 'connect';
 }
 
-function toGroup(value: string | undefined | null): McpToolGroup {
-  return value === 'pieces' ? value : DEFAULT_GROUP;
+function toSegment(value: string | undefined | null): McpToolSegment {
+  return value === 'pieces' ? value : DEFAULT_SEGMENT;
 }
 
 function isLegacyPiecesTab(value: string | undefined): boolean {
   return value === LEGACY_PIECES_TAB;
 }
 
-function legacyGroup(tab: string | undefined): McpToolGroup | undefined {
+function legacySegment(tab: string | undefined): McpToolSegment | undefined {
   return isLegacyPiecesTab(tab) ? 'pieces' : undefined;
 }
 
 const LEGACY_PIECES_TAB = 'pieces';
-const DEFAULT_GROUP: McpToolGroup = 'built-in';
+const DEFAULT_SEGMENT: McpToolSegment = 'built-in';
 
 export type McpTab = 'connect' | 'tools' | 'connections' | 'activity';
 
-export type McpToolGroup = 'built-in' | 'pieces';
+export type McpToolSegment = 'built-in' | 'pieces';
 
 export type McpView = 'landing' | 'browse' | 'client';
 
 export type McpNav = {
   tab: McpTab;
-  group: McpToolGroup;
+  segment: McpToolSegment;
   view: McpView;
   clientKey: string | null;
   projectId: string | null;
@@ -86,6 +89,6 @@ export type McpNav = {
   showBrowse: () => void;
   showClient: (key: string) => void;
   showTab: (value: string) => void;
-  showGroup: (value: string) => void;
+  selectSegment: (value: string) => void;
   selectProject: (projectId: string) => void;
 };

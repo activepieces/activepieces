@@ -1,13 +1,13 @@
 import { Permission } from '@activepieces/core-utils'
-import { ApEdition, DefaultProjectRole, Project } from '@activepieces/shared'
+import { DefaultProjectRole, Project } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { editionRequiresRbac } from '../ee/authentication/project-role/rbac-middleware'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
-import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 
-async function listMcpAccessibleProjects({ platformId, userId, log }: {
+async function listAccessibleProjects({ platformId, userId, log }: {
     platformId: string
     userId: string
     log: FastifyBaseLogger
@@ -20,12 +20,11 @@ async function listMcpAccessibleProjects({ platformId, userId, log }: {
         return projects
     }
 
-    const [ownedProjectRoleGrantsMcp, projectIdsGrantingMcp] = await Promise.all([
+    const [ownedProjectRoleGrantsMcp, memberProjectIdsGrantingMcp] = await Promise.all([
         defaultRoleGrantsMcp({ platformId, roleName: DefaultProjectRole.ADMIN }),
-        projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_MCP }),
+        projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_MCP }).then((projectIds) => new Set(projectIds)),
     ])
 
-    const memberProjectIdsGrantingMcp = new Set(projectIdsGrantingMcp)
     return projects.filter((project) => project.ownerId === userId
         ? ownedProjectRoleGrantsMcp
         : memberProjectIdsGrantingMcp.has(project.id))
@@ -39,11 +38,6 @@ async function defaultRoleGrantsMcp({ platformId, roleName }: {
     return role?.permissions?.includes(Permission.READ_MCP) ?? false
 }
 
-function editionRequiresRbac(): boolean {
-    return [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
-}
-
 export const mcpAccess = {
-    listMcpAccessibleProjects,
-    editionRequiresRbac,
+    listAccessibleProjects,
 }

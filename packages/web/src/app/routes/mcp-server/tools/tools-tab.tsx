@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
-import { McpToolGroup } from '../mcp-nav';
+import { McpToolSegment } from '../mcp-nav';
 import { PageBand } from '../page-band';
 import { PiecesPanel } from '../pieces/pieces-panel';
 import { piecesUtils } from '../pieces/pieces-utils';
@@ -29,9 +29,9 @@ const SKELETON_ROW_COUNT = 5;
 
 export function ToolsTab({
   projectId,
-  group,
+  segment,
   onSelectProject,
-  onSelectGroup,
+  onSelectSegment,
 }: ToolsTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const {
@@ -61,13 +61,13 @@ export function ToolsTab({
     [toolSearchEnabled],
   );
   const pieceCount = useMemo(
-    () => (isNil(pieces) ? null : piecesUtils.countReachable({ pieces })),
+    () => (isNil(pieces) ? null : piecesUtils.countReachablePieces({ pieces })),
     [pieces],
   );
 
-  const selectGroup = (value: string) => {
+  const selectSegment = (value: string) => {
     setSearchQuery('');
-    onSelectGroup(value);
+    onSelectSegment(value);
   };
 
   const updateDisabledTools = (disabledTools: string[]) =>
@@ -98,19 +98,19 @@ export function ToolsTab({
 
       <div className="flex flex-wrap items-center gap-3">
         <ProjectPicker projectId={projectId} onSelect={onSelectProject} />
-        <Tabs value={group} onValueChange={selectGroup}>
+        <Tabs value={segment} onValueChange={selectSegment}>
           <TabsList>
             <TabsTrigger value="built-in">
               {t('Built-in')}
-              <GroupCount count={builtInCount} />
+              <SegmentCount count={builtInCount} />
             </TabsTrigger>
             <TabsTrigger value="pieces">
               {t('Pieces')}
-              <GroupCount count={pieceCount} />
+              <SegmentCount count={pieceCount} />
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        {group === 'pieces' && (
+        {segment === 'pieces' && (
           <div className="w-full max-w-[360px]">
             <SearchInput
               value={searchQuery}
@@ -129,18 +129,18 @@ export function ToolsTab({
         </div>
       ) : isError ? (
         <ToolsUnavailableAlert error={error} onRetry={refetch} />
-      ) : isNil(mcpServer) ? null : group === 'pieces' ? (
+      ) : isNil(mcpServer) ? null : segment === 'pieces' ? (
         <PiecesPanel
           projectId={projectId}
           searchQuery={searchQuery}
           isRunActionDisabled={
             mcpServer.disabledTools?.includes(RUN_ACTION_TOOL_NAME) ?? false
           }
-          onShowBuiltIn={() => selectGroup('built-in')}
+          onShowBuiltIn={() => selectSegment('built-in')}
         />
       ) : (
         <BuiltInPanel
-          mcpServer={mcpServer}
+          disabledTools={mcpServer.disabledTools}
           projectId={projectId}
           isPending={isPending}
           onUpdateDisabledTools={updateDisabledTools}
@@ -150,7 +150,7 @@ export function ToolsTab({
   );
 }
 
-function GroupCount({ count }: { count: number | null }) {
+function SegmentCount({ count }: { count: number | null }) {
   if (isNil(count)) {
     return null;
   }
@@ -172,7 +172,7 @@ type ToolsUnavailableAlertProps = {
 
 type ToolsTabProps = {
   projectId: string | null;
-  group: McpToolGroup;
+  segment: McpToolSegment;
   onSelectProject: (projectId: string) => void;
-  onSelectGroup: (group: string) => void;
+  onSelectSegment: (segment: string) => void;
 };

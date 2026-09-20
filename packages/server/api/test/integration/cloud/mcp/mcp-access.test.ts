@@ -20,11 +20,11 @@ afterAll(async () => {
     await teardownTestEnvironment()
 })
 
-describe('mcpAccess.listMcpAccessibleProjects', () => {
+describe('mcpAccess.listAccessibleProjects', () => {
     it('returns every project for a privileged (admin) user', async () => {
         const ctx = await createTestContext(app)
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: ctx.user.id, log: mockLog })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: ctx.user.id, log: mockLog })
 
         expect(projects.map(p => p.id)).toContain(ctx.project.id)
     })
@@ -33,7 +33,7 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
         const ctx = await createTestContext(app)
         const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
 
         expect(projects.map(p => p.id)).toContain(ctx.project.id)
     })
@@ -49,7 +49,7 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
         await db.save('project_role', roleWithoutMcp)
         const member = await createMemberContext(app, ctx, { projectRole: roleWithoutMcp.name })
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
 
         expect(projects).toHaveLength(0)
     })
@@ -65,7 +65,7 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
         await db.save('project_role', roleWithoutMcp)
         const member = await createMemberContext(app, ctx, { projectRole: roleWithoutMcp.name })
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: member.user.id, log: mockLog })
 
         expect(projects).toHaveLength(0)
     })
@@ -76,7 +76,7 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
             user: { platformId: ctx.platform.id, platformRole: PlatformRole.MEMBER },
         })
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: stranger.id, log: mockLog })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: stranger.id, log: mockLog })
 
         expect(projects).toHaveLength(0)
     })
@@ -93,7 +93,7 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
         })
         await db.save('project', ownedProject)
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: owner.id, log: mockLog })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: owner.id, log: mockLog })
 
         expect(projects.map(p => p.id)).toEqual([ownedProject.id])
     })
@@ -110,10 +110,10 @@ describe('mcpAccess.listMcpAccessibleProjects', () => {
         })
         await db.save('project', someonesPersonalProject)
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId: ctx.platform.id, userId: operator.id, log: mockLog })
-        const ids = projects.map(p => p.id)
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: operator.id, log: mockLog })
+        const projectIds = projects.map(p => p.id)
 
-        expect(ids).toContain(ctx.project.id)
-        expect(ids).toContain(someonesPersonalProject.id)
+        expect(projectIds).toContain(ctx.project.id)
+        expect(projectIds).toContain(someonesPersonalProject.id)
     })
 })

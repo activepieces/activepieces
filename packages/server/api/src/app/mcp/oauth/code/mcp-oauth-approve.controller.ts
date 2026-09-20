@@ -15,7 +15,7 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
         const userId = req.principal.id
         const platformId = req.principal.platform.id
 
-        const mcpAccessibleProjects = await mcpAccess.listMcpAccessibleProjects({ platformId, userId, log: req.log })
+        const mcpAccessibleProjects = await mcpAccess.listAccessibleProjects({ platformId, userId, log: req.log })
 
         if (isNil(projectId)) {
             if (await userIdentityHelper(req.log).isUserEmbedded(userId)) {

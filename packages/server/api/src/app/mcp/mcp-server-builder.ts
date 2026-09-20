@@ -104,7 +104,7 @@ function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope,
     server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing })(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
-    const tools = enabledTools({ tools: activepiecesTools(templateMcp, userId, log), disabledTools: mcp.disabledTools })
+    const tools = filterEnabledTools({ tools: activepiecesTools(templateMcp, userId, log), disabledTools: mcp.disabledTools })
 
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
@@ -159,7 +159,7 @@ async function executeInSelectedProject({ toolTitle, args, projectId, userId, re
     return execute(args)
 }
 
-function enabledTools({ tools, disabledTools }: {
+function filterEnabledTools({ tools, disabledTools }: {
     tools: McpToolDefinition[]
     disabledTools: string[] | null
 }): McpToolDefinition[] {
@@ -285,7 +285,7 @@ export async function runFlowAsTool({ flow, properties, payload, returnsResponse
 }
 
 function registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, billing, log }: RegisterStaticToolsParams): void {
-    const tools = enabledTools({ tools: activepiecesTools({ ...mcp, projectId }, userId, log), disabledTools: mcp.disabledTools })
+    const tools = filterEnabledTools({ tools: activepiecesTools({ ...mcp, projectId }, userId, log), disabledTools: mcp.disabledTools })
 
     tools.forEach((tool) => {
         const execute = permissionChecker.wrapExecute({

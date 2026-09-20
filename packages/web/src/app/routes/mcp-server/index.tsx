@@ -16,7 +16,7 @@ import { ToolsTab } from './tools/tools-tab';
 
 export default function McpServerPage() {
   const { serverUrl, isReachableFromInternet } = useMcpServerUrl({
-    scope: McpServerType.PLATFORM,
+    serverType: McpServerType.PLATFORM,
   });
   const nav = useMcpNav();
   piecesHooks.usePrefetchPieces({ skipProjectFilter: true });
@@ -52,9 +52,9 @@ export default function McpServerPage() {
         {nav.tab === 'tools' ? (
           <ToolsTab
             projectId={nav.projectId}
-            group={nav.group}
+            segment={nav.segment}
             onSelectProject={nav.selectProject}
-            onSelectGroup={nav.showGroup}
+            onSelectSegment={nav.selectSegment}
           />
         ) : nav.tab === 'connections' ? (
           <GrantsTab />

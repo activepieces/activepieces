@@ -25,7 +25,7 @@ export const apSetProjectContextTool = ({ platformId, userId, selectionScope, lo
     execute: async (args: Record<string, unknown>) => {
         const projectId = args.projectId as string | undefined
 
-        const projects = await mcpAccess.listMcpAccessibleProjects({ platformId, userId, log })
+        const projects = await mcpAccess.listAccessibleProjects({ platformId, userId, log })
 
         if (!isNil(projectId) && projectId !== '') {
             const targetProject = projects.find(p => p.id === projectId)

@@ -6,7 +6,7 @@ import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 
 export function McpCredentials() {
-  const { serverUrl } = useMcpServerUrl({ scope: McpServerType.PROJECT });
+  const { serverUrl } = useMcpServerUrl({ serverType: McpServerType.PROJECT });
 
   const jsonConfiguration = {
     mcpServers: {
