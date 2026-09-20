@@ -117,3 +117,64 @@ describe('mcpAccess.listAccessibleProjects', () => {
         expect(projectIds).toContain(someonesPersonalProject.id)
     })
 })
+
+describe('GET /v1/mcp-server/reach', () => {
+    it('answers a member with only the projects where their role grants READ_MCP', async () => {
+        const ctx = await createTestContext(app)
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+        const unreachable = createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: ctx.user.id,
+            displayName: `project-${apId()}`,
+        })
+        await db.save('project', unreachable)
+
+        const response = await member.get('/v1/mcp-server/reach')
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().projectIds).toEqual([ctx.project.id])
+    })
+
+    it('answers a member holding READ_MCP nowhere with an empty list', async () => {
+        const ctx = await createTestContext(app)
+        const roleWithoutMcp = createMockProjectRole({
+            platformId: ctx.platform.id,
+            name: `no-mcp-${apId()}`,
+            permissions: [Permission.READ_FLOW],
+            type: RoleType.CUSTOM,
+        })
+        await db.save('project_role', roleWithoutMcp)
+        const member = await createMemberContext(app, ctx, { projectRole: roleWithoutMcp.name })
+
+        const response = await member.get('/v1/mcp-server/reach')
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().projectIds).toEqual([])
+    })
+
+    it('answers a platform admin with every project, without making them one', async () => {
+        const ctx = await createTestContext(app)
+        const sibling = createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: ctx.user.id,
+            displayName: `project-${apId()}`,
+        })
+        await db.save('project', sibling)
+
+        const response = await ctx.get('/v1/mcp-server/reach')
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().projectIds).toEqual(expect.arrayContaining([ctx.project.id, sibling.id]))
+    })
+
+    it('never answers with the platform server token, unlike the admin-only route beside it', async () => {
+        const ctx = await createTestContext(app)
+        const member = await createMemberContext(app, ctx, { projectRole: DefaultProjectRole.EDITOR })
+
+        const reach = await member.get('/v1/mcp-server/reach')
+        const adminOnly = await member.get('/v1/mcp-server')
+
+        expect(Object.keys(reach.json())).toEqual(['projectIds'])
+        expect(adminOnly.statusCode).toBe(403)
+    })
+})

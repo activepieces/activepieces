@@ -1,12 +1,23 @@
-import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { McpReachResponse, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
+import { StatusCodes } from 'http-status-codes'
 import { securityAccess } from '../core/security/authorization/fastify-security'
+import { mcpAccess } from './mcp-access'
 import { mcpServerService } from './mcp-service'
 
 export const mcpPlatformController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', GetPlatformMcpRoute, async (req) => {
         return mcpServerService(req.log).getByPlatformId(req.principal.platform.id)
+    })
+
+    app.get('/reach', GetMcpReachRoute, async (req) => {
+        const projects = await mcpAccess.listAccessibleProjects({
+            platformId: req.principal.platform.id,
+            userId: req.principal.id,
+            log: req.log,
+        })
+        return { projectIds: projects.map((project) => project.id) }
     })
 
     app.post('/', UpdatePlatformMcpRoute, async (req) => {
@@ -32,6 +43,20 @@ const GetPlatformMcpRoute = {
         tags: ['mcp'],
         description: 'Get the platform MCP server configuration',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
+const GetMcpReachRoute = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['mcp'],
+        description: 'List the projects where the caller may use MCP',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        response: {
+            [StatusCodes.OK]: McpReachResponse,
+        },
     },
 }
 

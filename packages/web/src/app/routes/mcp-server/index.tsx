@@ -2,6 +2,7 @@ import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Navigate } from 'react-router-dom';
 
+import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { PageHeader } from '@/components/custom/page-header';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
@@ -19,6 +20,7 @@ export default function McpServerPage() {
     serverType: McpServerType.PLATFORM,
   });
   const nav = useMcpNav();
+  const { projectIds: reachableProjectIds } = mcpHooks.useMcpReach();
   piecesHooks.usePrefetchPieces({ skipProjectFilter: true });
 
   if (nav.legacyRedirect !== null) {
@@ -52,6 +54,7 @@ export default function McpServerPage() {
         {nav.tab === 'tools' ? (
           <ToolsTab
             projectId={nav.projectId}
+            reachableProjectIds={reachableProjectIds}
             segment={nav.segment}
             onSelectProject={nav.selectProject}
             onSelectSegment={nav.selectSegment}

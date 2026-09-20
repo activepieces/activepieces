@@ -22,34 +22,40 @@ import {
 import { ProjectPicker } from '../project-picker';
 
 import { BuiltInPanel } from './built-in-panel';
+import { reachableProjectUtils } from './project-selection';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const SKELETON_ROW_COUNT = 5;
 
 export function ToolsTab({
   projectId,
+  reachableProjectIds,
   segment,
   onSelectProject,
   onSelectSegment,
 }: ToolsTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const selectedProjectId = reachableProjectUtils.resolveSelected({
+    projectId,
+    reachableProjectIds,
+  });
   const {
     data: mcpServer,
     isLoading,
     isError,
     error,
     refetch,
-  } = mcpHooks.useMcpServer(projectId ?? '');
+  } = mcpHooks.useMcpServer(selectedProjectId ?? '');
   const { mutate: updateMcpServer, isPending } = mcpHooks.useUpdateMcpServer(
-    projectId ?? '',
+    selectedProjectId ?? '',
   );
   const { data: toolSearchEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TOOL_SEARCH_ENABLED,
   );
   const { pieces } = piecesHooks.usePieces({
-    projectId: projectId ?? undefined,
+    projectId: selectedProjectId ?? undefined,
     suggestionType: SuggestionType.ACTION,
-    enabled: !isNil(projectId),
+    enabled: !isNil(selectedProjectId),
   });
 
   const builtInCount = useMemo(
@@ -86,7 +92,11 @@ export function ToolsTab({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <ProjectPicker projectId={projectId} onSelect={onSelectProject} />
+        <ProjectPicker
+          projectId={selectedProjectId}
+          allowedProjectIds={reachableProjectIds}
+          onSelect={onSelectProject}
+        />
         <Tabs value={segment} onValueChange={selectSegment}>
           <TabsList>
             <TabsTrigger value="built-in">
@@ -120,7 +130,7 @@ export function ToolsTab({
         <ToolsUnavailableAlert error={error} onRetry={refetch} />
       ) : isNil(mcpServer) ? null : segment === 'pieces' ? (
         <PiecesPanel
-          projectId={projectId}
+          projectId={selectedProjectId}
           searchQuery={searchQuery}
           isRunActionDisabled={(mcpServer.disabledTools ?? []).includes(
             RUN_ACTION_TOOL_NAME,
@@ -134,7 +144,7 @@ export function ToolsTab({
         <BuiltInPanel
           disabledTools={mcpServer.disabledTools}
           platformDisabledTools={mcpServer.platformDisabledTools ?? []}
-          projectId={projectId}
+          projectId={selectedProjectId}
           isPending={isPending}
           onUpdateDisabledTools={updateDisabledTools}
         />
@@ -165,6 +175,7 @@ type ToolsUnavailableAlertProps = {
 
 type ToolsTabProps = {
   projectId: string | null;
+  reachableProjectIds: string[] | null;
   segment: McpToolSegment;
   onSelectProject: (projectId: string) => void;
   onSelectSegment: (segment: string) => void;

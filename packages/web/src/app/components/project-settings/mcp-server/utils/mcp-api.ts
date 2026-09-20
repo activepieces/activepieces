@@ -1,4 +1,5 @@
 import {
+  McpReachResponse,
   ProjectMcpServerResponse,
   UpdateMcpServerRequest,
 } from '@activepieces/shared';
@@ -6,6 +7,10 @@ import {
 import { api } from '@/lib/api';
 
 export const mcpApi = {
+  async reach(): Promise<McpReachResponse> {
+    return await api.get<McpReachResponse>('/v1/mcp-server/reach');
+  },
+
   async get(projectId: string): Promise<ProjectMcpServerResponse> {
     return await api.get<ProjectMcpServerResponse>(
       `/v1/projects/${projectId}/mcp-server`,
