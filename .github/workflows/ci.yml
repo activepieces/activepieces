@@ -75,6 +75,14 @@ jobs:
         ports:
           - 6379:6379
     steps:
+      # packages/server/api/.env.tests hardcodes AP_REDIS_HOST=redis, and the tests that open a
+      # real connection inherit it. The service container answers to that alias only inside the
+      # job's docker network, which a non-container job is not on, so point the name at the
+      # published port. A job-level `env:` would not do: turbo runs these tasks in its default
+      # strict env mode and drops any variable the task has not declared.
+      - name: Resolve the redis service by the hostname the tests expect
+        run: echo "127.0.0.1 redis" | sudo tee -a /etc/hosts
+
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
