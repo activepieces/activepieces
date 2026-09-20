@@ -529,11 +529,42 @@ describe('Resume flow run', () => {
         expect(secondResponse.statusCode).toBe(200)
         expect(secondResponse.json()).toEqual({
             message: 'This link has expired. The action may have already been processed.',
-            expired: true,
+            expired: false,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
         expect(waitpointAfter).toBeNull()
+    })
+
+    it('does not report a redelivery to a still-live run as undelivered', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+
+        const deliver = async () => app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        await deliver()
+        const redelivery = await deliver()
+
+        expect(redelivery.json().expired).toBe(false)
+    })
+
+    it('reports a callback to a run that can never receive it as undelivered', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.FAILED })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().expired).toBe(true)
     })
 
     it('should clean up waitpoints when flow is deleted via batchDeleteByFlowId', async () => {
