@@ -129,6 +129,39 @@ describe('translated catalogue cache stays correct', () => {
         expect(results[0].body[0].description).toBe('Eine Nachricht senden')
     })
 
+    it('serves fresh data to a request that arrives while a fill is already running', async () => {
+        const filler = Array.from({ length: 40 }, (_, i) => createMockPieceMetadata({
+            name: `piece-race-filler-${i}`, displayName: `Filler ${i}`, description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+            i18n: { [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' } },
+        }))
+        await db.save('piece_metadata', filler)
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'piece-race-one', displayName: 'One', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+            i18n: { [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' } },
+        }))
+        await pieceCache(app.log!).invalidate()
+
+        const inFlight = get('/api/v1/pieces?locale=de')
+
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'piece-race-two', displayName: 'Two', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+            i18n: { [LocalesEnum.GERMAN]: { 'Send a message': 'Zweite Nachricht' } },
+        }))
+        await pieceCache(app.log!).invalidate()
+
+        const joined = await get('/api/v1/pieces?locale=de')
+        await inFlight
+
+        expect(joined.body.map((p: any) => p.name)).toContain('piece-race-two')
+
+        const afterwards = await get('/api/v1/pieces?locale=de')
+        expect(afterwards.body.map((p: any) => p.name)).toContain('piece-race-two')
+        expect(afterwards.body).toHaveLength(42)
+    })
+
     it('reflects a piece created through the service without a manual invalidate', async () => {
         await db.save('piece_metadata', createMockPieceMetadata({
             name: 'piece-seed', displayName: 'Seed', description: 'Send a message',

@@ -23,7 +23,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const locale = params.locale ?? LocalesEnum.ENGLISH
-            const { pieces: translatedPieces, translationsByPieceId } = await dedupe(`list:${params.platformId ?? ''}:${locale}`, () => fetchLatestPieces({
+            const { pieces: translatedPieces, translationsByPieceId } = await dedupe(`list:${params.platformId ?? ''}:${locale}:${currentPieceGeneration()}`, () => fetchLatestPieces({
                 platformId: params.platformId,
                 locale,
                 log,
@@ -429,12 +429,11 @@ async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log
 
 let rawCatalogueCache: PieceMetadataSchema[] | null = null
 
-function loadRawCatalogue(currentRelease: string): Promise<PieceMetadataSchema[]> {
+function loadRawCatalogue({ currentRelease, generation }: LoadRawCatalogueParams): Promise<PieceMetadataSchema[]> {
     if (!isNil(rawCatalogueCache)) {
         return Promise.resolve(rawCatalogueCache)
     }
-    return dedupe(`latest-pieces:${currentRelease}`, async () => {
-        const generation = currentPieceGeneration()
+    return dedupe(`latest-pieces:${currentRelease}:${generation}`, async () => {
         const pieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
         if (currentPieceGeneration() === generation) {
             rawCatalogueCache = pieces
@@ -457,10 +456,10 @@ function loadTranslatedCatalogue({ currentRelease, locale }: LoadTranslatedCatal
     if (!isNil(cached)) {
         return Promise.resolve(cached)
     }
-    return dedupe(`catalogue:${currentRelease}:${locale}`, async () => {
-        const latestPieces = await loadRawCatalogue(currentRelease)
+    return dedupe(`catalogue:${currentRelease}:${locale}:${generation}`, async () => {
+        const latestPieces = await loadRawCatalogue({ currentRelease, generation })
         const catalogue = await translatePieces({ pieces: latestPieces, locale })
-        if (currentPieceGeneration() === catalogueCacheGeneration) {
+        if (currentPieceGeneration() === generation) {
             catalogueCacheByLocale.set(locale, catalogue)
         }
         return catalogue
@@ -765,4 +764,9 @@ type LoadTranslatedCatalogueParams = {
 type FetchTranslationsForPieceIdParams = {
     pieceId: string | undefined
     locale: LocalesEnum
+}
+
+type LoadRawCatalogueParams = {
+    currentRelease: string
+    generation: number
 }

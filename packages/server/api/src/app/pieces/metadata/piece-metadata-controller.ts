@@ -84,7 +84,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })
-            return filterModelActionsByAudience(visiblePiece, req.query.audience)
+            return { ...filterModelActionsByAudience(visiblePiece, req.query.audience), i18n: undefined }
         },
     )
 
@@ -105,7 +105,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })
-            return filterModelActionsByAudience(visiblePiece, req.query.audience)
+            return { ...filterModelActionsByAudience(visiblePiece, req.query.audience), i18n: undefined }
         },
     )
 
