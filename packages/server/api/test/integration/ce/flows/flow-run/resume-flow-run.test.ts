@@ -517,6 +517,7 @@ describe('Resume flow run', () => {
         expect(firstResponse.statusCode).toBe(200)
         expect(firstResponse.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            discarded: false,
         })
 
         const secondResponse = await app.inject({
@@ -527,10 +528,47 @@ describe('Resume flow run', () => {
         expect(secondResponse.statusCode).toBe(200)
         expect(secondResponse.json()).toEqual({
             message: 'This link has expired. The action may have already been processed.',
+            discarded: false,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
         expect(waitpointAfter).toBeNull()
+    })
+
+    it.each([
+        FlowRunStatus.INTERNAL_ERROR,
+        FlowRunStatus.SUCCEEDED,
+        FlowRunStatus.FAILED,
+    ])('does not report a redelivered response as discarded when the caller has since reached %s', async (status) => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+
+        const deliver = async () => app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        await deliver()
+        await db.update('flow_run', flowRun.id, { status })
+        const redelivery = await deliver()
+
+        expect(redelivery.json().discarded).toBe(false)
+    })
+
+    it('reports a response as discarded when the waitpoint was never consumed', async () => {
+        const { flowRun } = await createPausedFlowRunWithWaitpoint({ projectId: ctx.project.id })
+        const waitpoint = await db.findOneBy<{ id: string }>('waitpoint', { flowRunId: flowRun.id })
+        await db.update('flow_run', flowRun.id, { status: FlowRunStatus.FAILED })
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/waitpoints/${waitpoint!.id}`,
+            body: { status: 'success', data: { greeting: 'Hello' } },
+        })
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().discarded).toBe(true)
     })
 
     it('should clean up waitpoints when flow is deleted via batchDeleteByFlowId', async () => {
@@ -567,6 +605,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            discarded: false,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
@@ -733,6 +772,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            discarded: false,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
@@ -775,6 +815,7 @@ describe('Resume flow run', () => {
         expect(response.statusCode).toBe(200)
         expect(response.json()).toEqual({
             message: 'Your response has been recorded. You can close this page now.',
+            discarded: false,
         })
 
         const waitpointAfter = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
