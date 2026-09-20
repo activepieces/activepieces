@@ -54,13 +54,13 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
                             const runMetadata = sanitizeObjectForPostgresql(rawRunMetadata)
 
-                            const existingFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
+                            const flowRunScope = { id: job.data.runId, projectId: job.data.projectId }
+                            const existingFlowRun = await flowRunRepo().findOneBy(flowRunScope)
                             let savedFlowRun: FlowRun
                             if (!isNil(existingFlowRun)) {
                                 const timeline = buildTimeline({ existingFlowRun, runMetadata })
-                                await flowRunRepo().update(job.data.runId, {
+                                await flowRunRepo().update(flowRunScope, {
                                     ...spreadIfDefined('timeline', timeline),
-                                    ...spreadIfDefined('projectId', runMetadata.projectId),
                                     ...spreadIfDefined('flowId', runMetadata.flowId),
                                     ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
                                     ...spreadIfDefined('environment', runMetadata.environment),
@@ -76,7 +76,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('updated', runMetadata.updated),
                                     ...spreadIfDefined('stepsCount', runMetadata.stepsCount),
                                 })
-                                const updatedFlowRun = await flowRunRepo().findOneBy({ id: job.data.runId })
+                                const updatedFlowRun = await flowRunRepo().findOneBy(flowRunScope)
                                 if (isNil(updatedFlowRun)) {
                                     log.info({
                                         job: { id: job.id },
