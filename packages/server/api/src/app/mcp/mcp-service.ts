@@ -3,6 +3,7 @@ import { FlowTriggerType, FlowVersionState, MCP_TRIGGER_PIECE_NAME, McpOAuthClie
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
+import { projectService } from '../project/project-service'
 import { McpServerEntity } from './mcp-entity'
 import { buildMcpServer } from './mcp-server-builder'
 
@@ -27,6 +28,16 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         const mcp = await mcpServerService(log).getByProjectId(projectId)
         const flows = await listMcpFlows(projectId, log)
         return { ...mcp, flows }
+    },
+
+    listPlatformDisabledTools: async ({ projectId }: { projectId: string }): Promise<string[]> => {
+        const project = await projectService(log).getOneOrThrow(projectId)
+        return mcpServerService(log).listPlatformDisabledToolsFor({ platformId: project.platformId })
+    },
+
+    listPlatformDisabledToolsFor: async ({ platformId }: { platformId: string }): Promise<string[]> => {
+        const platformMcp = await mcpServerService(log).getByPlatformId(platformId)
+        return platformMcp.disabledTools ?? []
     },
 
     getPopulatedByPlatformId: async (platformId: string): Promise<PopulatedMcpServer> => {
@@ -67,6 +78,9 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
             mcp,
             userId,
             platformId,
+            platformDisabledTools: mcp.type === McpServerType.PROJECT && !isNil(platformId)
+                ? await mcpServerService(log).listPlatformDisabledToolsFor({ platformId })
+                : [],
             clientKey: clientKey ?? null,
             clientId,
             log,

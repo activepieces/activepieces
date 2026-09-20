@@ -1,5 +1,5 @@
 import { apId, Permission, RoleType } from '@activepieces/core-utils'
-import { DefaultProjectRole, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { DefaultProjectRole, McpServerType, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { mcpAccess } from '../../../../src/app/mcp/mcp-access'
@@ -7,12 +7,13 @@ import { resolveMcpPermissionChecker } from '../../../../src/app/mcp/mcp-permiss
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { McpClient, mcpClientHelpers } from '../../../helpers/mcp-client'
-import { createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
+import { createMockProject, createMockProjectRole, mockBasicUser } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
 
+const SWITCHED_OFF_TOOL = 'ap_create_flow'
 const LOCKED_TOOL = 'ap_list_flows'
 const PIECE_CATALOG_TOOL = 'ap_research_pieces'
 
@@ -102,6 +103,46 @@ describe('MCP access on enterprise edition', () => {
         const listed = await mcpClientHelpers.callTool({ app, mcpClient, name: LOCKED_TOOL })
 
         expect(listed).not.toContain('Permission denied')
+    })
+
+    it('applies the selected project\'s switched-off tools to a platform client', async () => {
+        const ctx = await createTestContext(app)
+        const restricted = createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: ctx.user.id,
+            displayName: `project-${apId()}`,
+        })
+        await db.save('project', restricted)
+        await db.save('mcp_server', {
+            id: apId(),
+            projectId: restricted.id,
+            platformId: null,
+            type: McpServerType.PROJECT,
+            token: apId(72),
+            disabledTools: [SWITCHED_OFF_TOOL],
+        })
+        const mcpClient = await connectAs({ ctx })
+
+        await mcpClientHelpers.callTool({ app, mcpClient, name: 'ap_set_project_context', args: { projectId: restricted.id } })
+        const refused = await mcpClientHelpers.callTool({ app, mcpClient, name: SWITCHED_OFF_TOOL, args: { flowName: 'blocked-flow' } })
+
+        expect(refused).toContain('switched off for the selected project')
+    })
+
+    it('reports the platform switched-off tools on the project MCP server route', async () => {
+        const ctx = await createTestContext(app)
+        await db.save('mcp_server', {
+            id: apId(),
+            projectId: null,
+            platformId: ctx.platform.id,
+            type: McpServerType.PLATFORM,
+            token: apId(72),
+            disabledTools: [SWITCHED_OFF_TOOL],
+        })
+
+        const response = await ctx.get(`/v1/projects/${ctx.project.id}/mcp-server`)
+
+        expect(response.json().platformDisabledTools).toEqual([SWITCHED_OFF_TOOL])
     })
 
     it('lets a platform admin run a piece-catalog tool on the platform server', async () => {
