@@ -64,6 +64,24 @@ jobs:
   main:
     runs-on: ubuntu-latest
     if: github.repository == 'activepieces/activepieces'
+    services:
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    env:
+      # packages/server/api/.env.tests pins AP_REDIS_HOST=redis, the alias the service container
+      # answers to inside the job's docker network, which a non-container job is not on. dotenv
+      # (vitest.setup.ts) does not override values already in the environment, so this wins and
+      # the tests reach the published port. AP_REDIS_HOST/PORT are in turbo.json
+      # globalPassThroughEnv; without that turbo's strict env mode would drop them.
+      AP_REDIS_HOST: localhost
+      AP_REDIS_PORT: "6379"
     steps:
       - uses: actions/checkout@v5
         with:
@@ -152,10 +170,10 @@ jobs:
           set -euo pipefail
           pids=()
 
-          npx turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=@activepieces/sandbox --filter=@activepieces/ai-providers --filter=@activepieces/core-execution --filter=@activepieces/core-piece-types --filter=@activepieces/server-utils --filter=@activepieces/pieces-framework --filter=@activepieces/piece-subflows --filter=web --filter=worker &
+          npx turbo run test $(npx tsx tools/scripts/test-filters.ts) &
           pids+=($!)
 
-          npx turbo run test-ce test-ee test-cloud check-migrations --filter=api &
+          npx turbo run test-unit test-ce test-ee test-cloud check-migrations --filter=api &
           pids+=($!)
 
           npx tsx tools/scripts/check-migration-rollback.ts &
