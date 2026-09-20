@@ -111,7 +111,7 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
         resumePayload: { body, headers, queryParams },
     })
     if (!acceptsHtml(headers)) {
-        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, expired: stale })
         return
     }
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })

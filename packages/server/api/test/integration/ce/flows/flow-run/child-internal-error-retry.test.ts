@@ -3,7 +3,7 @@ import { FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/s
 import { FastifyInstance } from 'fastify'
 import { engineRunCallbackService } from '../../../../../src/app/flows/flow-run/engine-run-callback-service'
 import { db } from '../../../../helpers/db'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, createMockWaitpoint, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -32,17 +32,8 @@ async function createParentWithPausedWaitpointAndChild(projectId: string) {
     })
     await db.save('flow_run', parentRun)
 
-    const waitpointId = apId()
-    await db.save('waitpoint', {
-        id: waitpointId,
-        flowRunId: parentRun.id,
-        projectId,
-        stepName: 'step_1',
-        type: 'WEBHOOK',
-        status: 'PENDING',
-        httpRequestId: null,
-        workerHandlerId: null,
-    })
+    const waitpoint = createMockWaitpoint({ flowRunId: parentRun.id, projectId, stepName: 'step_1' })
+    await db.save('waitpoint', waitpoint)
 
     const childRun = createMockFlowRun({
         projectId,
@@ -56,7 +47,7 @@ async function createParentWithPausedWaitpointAndChild(projectId: string) {
     })
     await db.save('flow_run', childRun)
 
-    return { parentRun, childRun, waitpointId }
+    return { parentRun, childRun, waitpointId: waitpoint.id }
 }
 
 async function reportChildInternalError({ projectId, childRunId, willRetry }: { projectId: string, childRunId: string, willRetry: boolean }) {

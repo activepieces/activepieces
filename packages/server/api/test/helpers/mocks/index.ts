@@ -735,6 +735,19 @@ export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<Pie
     return mockPieceMetadata
 }
 
+export const createMockWaitpoint = (waitpoint?: Partial<MockWaitpoint>): MockWaitpoint => {
+    return {
+        id: waitpoint?.id ?? apId(),
+        flowRunId: waitpoint?.flowRunId ?? apId(),
+        projectId: waitpoint?.projectId ?? apId(),
+        stepName: waitpoint?.stepName ?? 'approval',
+        type: waitpoint?.type ?? 'WEBHOOK',
+        status: waitpoint?.status ?? 'PENDING',
+        httpRequestId: waitpoint?.httpRequestId ?? null,
+        workerHandlerId: waitpoint?.workerHandlerId ?? null,
+    }
+}
+
 export const createMockFolder = (folder?: Partial<Folder>): Folder => {
     return {
         id: folder?.id ?? apId(),
@@ -802,4 +815,15 @@ type MockBasicSetupParams = {
     plan?: Partial<PlatformPlan>
     platform?: Partial<Platform>
     project?: Partial<Project>
+}
+
+export type MockWaitpoint = {
+    id: string
+    flowRunId: string
+    projectId: string
+    stepName: string
+    type: string
+    status: string
+    httpRequestId: string | null
+    workerHandlerId: string | null
 }

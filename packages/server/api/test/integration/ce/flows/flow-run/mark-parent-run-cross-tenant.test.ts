@@ -3,7 +3,7 @@ import { FlowRunStatus, FlowVersionState, RunEnvironment } from '@activepieces/s
 import { FastifyInstance } from 'fastify'
 import { markParentRunAsFailed } from '../../../../../src/app/flows/flow-run/flow-runs-queue'
 import { db } from '../../../../helpers/db'
-import { createMockFlow, createMockFlowVersion, createMockFlowRun, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, createMockFlowRun, createMockWaitpoint, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
 let app: FastifyInstance
@@ -35,19 +35,10 @@ async function createPausedParentWithWaitpoint(projectId: string) {
     })
     await db.save('flow_run', flowRun)
 
-    const waitpointId = apId()
-    await db.save('waitpoint', {
-        id: waitpointId,
-        flowRunId: flowRun.id,
-        projectId,
-        stepName: 'approval',
-        type: 'WEBHOOK',
-        status: 'PENDING',
-        httpRequestId: null,
-        workerHandlerId: null,
-    })
+    const waitpoint = createMockWaitpoint({ flowRunId: flowRun.id, projectId })
+    await db.save('waitpoint', waitpoint)
 
-    return { flowRun, waitpointId }
+    return { flowRun, waitpointId: waitpoint.id }
 }
 
 describe('markParentRunAsFailed tenant isolation', () => {
