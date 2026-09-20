@@ -52,8 +52,9 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
 - **The pricing schema now lives in two repos** and they must match. `packages/shared/src/lib/ai-pricing/`
   in ap-analytics, `packages/server/utils/src/ai-pricing-catalog.ts` here. Change one without the
   other and Activepieces rejects the file and silently keeps serving the old tiers. The reader
-  ignores keys it does not declare, so the console may publish extra fields without breaking it —
-  that is what lets the console keep sending its now-unread credit fields until it is trimmed.
+  ignores keys it does not declare, which is what kept the console publishable while it still sent
+  the credit fields; ap-analytics dropped those on 2026-09-20 and added `nativeModelId`, so the two
+  schemas name the same five tier fields again.
 - A tier change is no longer visible in `git log` of this repo. The audit trail is the CDN history
   prefix.
 - The reader **fails closed**: bad schema, no tiers, or a missing default tier all fall back to the
@@ -67,7 +68,9 @@ the bucket; a key scoped to `ai/pricing*` is the follow-up.
   bills managed AI on the dollar cost the provider reports per call, so there is no fixed price left
   to publish. Only the tier table survived. The object is still called `ai/pricing.json` because it
   is already live and the console writes there; the name is now wrong, and renaming it needs both
-  repos plus the live object to move together.
+  repos plus the live object to move together. The console page, its nav entry and its docs were
+  renamed to **AI Tiers** instead, because an editor that still showed a credits box let an admin
+  change a number, press Publish and believe they had changed billing.
 - **The two guards on publishing are not equally strict, which is easy to misread.** Reading the live
   `pricing.json` before a write fails *closed* (above). The separate check that every priced model id
   exists in `ai/model-catalog.json` fails *open*: when the catalog cannot be loaded,
