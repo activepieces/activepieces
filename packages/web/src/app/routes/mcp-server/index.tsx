@@ -1,5 +1,6 @@
 import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Navigate } from 'react-router-dom';
 
 import { PageHeader } from '@/components/custom/page-header';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,7 +12,6 @@ import { GrantsTab } from './grants/grants-tab';
 import { useMcpNav } from './mcp-nav';
 import { useMcpServerUrl } from './mcp-server-url';
 import { PageBand } from './page-band';
-import { PiecesTab } from './pieces/pieces-tab';
 import { ToolsTab } from './tools/tools-tab';
 
 export default function McpServerPage() {
@@ -20,6 +20,10 @@ export default function McpServerPage() {
   });
   const nav = useMcpNav();
   piecesHooks.usePrefetchPieces({ skipProjectFilter: true });
+
+  if (nav.legacyRedirect !== null) {
+    return <Navigate to={nav.legacyRedirect} replace />;
+  }
 
   return (
     <div className="flex min-h-full w-full flex-col gap-2">
@@ -30,9 +34,6 @@ export default function McpServerPage() {
             <TabsList variant="outline">
               <TabsTrigger variant="outline" value="connect">
                 {t('Connect')}
-              </TabsTrigger>
-              <TabsTrigger variant="outline" value="pieces">
-                {t('Pieces')}
               </TabsTrigger>
               <TabsTrigger variant="outline" value="tools">
                 {t('Tools')}
@@ -48,15 +49,12 @@ export default function McpServerPage() {
         </PageBand>
       </div>
       <div className="w-full">
-        {nav.tab === 'pieces' ? (
-          <PiecesTab
-            projectId={nav.projectId}
-            onSelectProject={nav.selectProject}
-          />
-        ) : nav.tab === 'tools' ? (
+        {nav.tab === 'tools' ? (
           <ToolsTab
             projectId={nav.projectId}
+            group={nav.group}
             onSelectProject={nav.selectProject}
+            onSelectGroup={nav.showGroup}
           />
         ) : nav.tab === 'connections' ? (
           <GrantsTab />

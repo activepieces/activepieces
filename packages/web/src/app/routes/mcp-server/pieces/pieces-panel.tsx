@@ -5,10 +5,8 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { RequestTrial } from '@/app/components/request-trial';
 import { LockedAlert } from '@/components/custom/locked-alert';
-import { SearchInput } from '@/components/custom/search-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,24 +17,25 @@ import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import { PageBand } from '../page-band';
 import {
   isProjectAccessError,
   ProjectAccessDeniedAlert,
 } from '../project-access';
-import { ProjectPicker } from '../project-picker';
 
 import { PieceRow } from './piece-row';
 import { piecesUtils } from './pieces-utils';
 
-const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
 const COLLAPSED_ROW_HEIGHT = 50;
 const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
 const SEARCH_DEBOUNCE_MS = 300;
 
-export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export function PiecesPanel({
+  projectId,
+  searchQuery,
+  isRunActionDisabled,
+  onShowBuiltIn,
+}: PiecesPanelProps) {
   const [debouncedSearchQuery] = useDebounce(
     searchQuery.trim(),
     SEARCH_DEBOUNCE_MS,
@@ -51,8 +50,6 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
     enabled: !isNil(projectId),
     keepPreviousResults: true,
   });
-  const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
-
   const rows = useMemo(
     () =>
       piecesUtils.toReachablePieces({
@@ -68,37 +65,12 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <PageBand className="flex flex-col gap-6 py-8">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-xl font-bold leading-7 tracking-tight">
-          {t(
-            'Every piece a connected client can reach, and every action inside it.',
-          )}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t(
-            'This page is a mirror — a platform admin decides what is on the list.',
-          )}
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-4">
       <PieceSetBanner projectId={projectId} />
 
-      {projectId !== null &&
-        mcpServer?.disabledTools?.includes(RUN_ACTION_TOOL_NAME) && (
-          <RunActionDisabledAlert projectId={projectId} />
-        )}
-
-      <div className="flex flex-wrap items-center gap-3">
-        <ProjectPicker projectId={projectId} onSelect={onSelectProject} />
-        <div className="w-full max-w-[420px]">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={t('Search pieces and actions...')}
-          />
-        </div>
-      </div>
+      {isRunActionDisabled && (
+        <RunActionDisabledAlert onShowBuiltIn={onShowBuiltIn} />
+      )}
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
@@ -138,7 +110,7 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
           )}
         </div>
       )}
-    </PageBand>
+    </div>
   );
 }
 
@@ -171,7 +143,11 @@ function PiecesUnavailableAlert({
   );
 }
 
-function RunActionDisabledAlert({ projectId }: { projectId: string }) {
+function RunActionDisabledAlert({
+  onShowBuiltIn,
+}: {
+  onShowBuiltIn: () => void;
+}) {
   return (
     <Alert variant="warning">
       <TriangleAlert />
@@ -182,14 +158,12 @@ function RunActionDisabledAlert({ projectId }: { projectId: string }) {
         )}
       </AlertDescription>
       <Button
-        asChild
         variant="outline"
         size="sm"
         className="col-start-2 mt-3 w-fit"
+        onClick={onShowBuiltIn}
       >
-        <Link to={`/mcp-server/tools?project=${projectId}`}>
-          {t('Turn it on in Tools')}
-        </Link>
+        {t('Turn on Run action')}
       </Button>
     </Alert>
   );
@@ -258,7 +232,9 @@ type PiecesUnavailableAlertProps = {
   onRetry: () => void;
 };
 
-type PiecesTabProps = {
+type PiecesPanelProps = {
   projectId: string | null;
-  onSelectProject: (projectId: string) => void;
+  searchQuery: string;
+  isRunActionDisabled: boolean;
+  onShowBuiltIn: () => void;
 };
