@@ -17,7 +17,6 @@ import {
   SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -41,7 +40,7 @@ export function PlatformSidebar() {
 
   const location = useLocation();
   const context = { plan: platform.plan, edition };
-  const groups = adminPagesUtils.navGroups(context);
+  const pages = adminPagesUtils.visibleNavPages(context);
   const activeId = adminPagesUtils.activePageId(location.pathname);
   const [searchParams] = useSearchParams();
   const requestedTabId = searchParams.get('tab');
@@ -64,49 +63,44 @@ export function PlatformSidebar() {
       </SidebarHeader>
       <div className="flex-1 overflow-y-auto">
         <SidebarContent className="gap-0">
-          {groups.map((group) => (
-            <SidebarGroup key={group.group} className="cursor-default shrink-0">
-              <SidebarGroupLabel className="px-2 text-xss font-semibold uppercase tracking-wider text-muted-foreground">
-                {t(group.label)}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.pages.map((page) => {
-                    const tabs = adminPagesUtils.navTabs(page, context);
-                    const isActivePage = page.id === activeId;
-                    const activeTabId = adminPagesUtils.activeTabId(
-                      page,
-                      context,
-                      requestedTabId,
-                    );
-                    return (
-                      <Fragment key={page.id}>
-                        <PlatformNavItem
-                          to={page.path}
-                          label={t(page.nav.label)}
-                          icon={page.nav.icon}
-                          active={
-                            isActivePage &&
-                            !tabs.some((tab) => tab.id === activeTabId)
-                          }
-                          crowned={adminPagesUtils.isCrowned(page, context)}
+          <SidebarGroup className="cursor-default shrink-0">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {pages.map((page) => {
+                  const tabs = adminPagesUtils.navTabs(page, context);
+                  const isActivePage = page.id === activeId;
+                  const activeTabId = adminPagesUtils.activeTabId(
+                    page,
+                    context,
+                    requestedTabId,
+                  );
+                  return (
+                    <Fragment key={page.id}>
+                      <PlatformNavItem
+                        to={page.path}
+                        label={t(page.nav.label)}
+                        icon={page.nav.icon}
+                        active={
+                          isActivePage &&
+                          !tabs.some((tab) => tab.id === activeTabId)
+                        }
+                        crowned={adminPagesUtils.isCrowned(page, context)}
+                      />
+                      {tabs.map((tab) => (
+                        <PlatformNavSubItem
+                          key={tab.id}
+                          to={`${page.path}?tab=${tab.id}`}
+                          label={t(tab.label)}
+                          active={isActivePage && activeTabId === tab.id}
+                          crowned={tab.isLocked?.(context) === true}
                         />
-                        {tabs.map((tab) => (
-                          <PlatformNavSubItem
-                            key={tab.id}
-                            to={`${page.path}?tab=${tab.id}`}
-                            label={t(tab.label)}
-                            active={isActivePage && activeTabId === tab.id}
-                            crowned={tab.isLocked?.(context) === true}
-                          />
-                        ))}
-                      </Fragment>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+                      ))}
+                    </Fragment>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </SidebarContent>
       </div>
 

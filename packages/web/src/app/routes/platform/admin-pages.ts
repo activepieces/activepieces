@@ -106,7 +106,11 @@ const EmbedPage = React.lazy(() =>
 );
 const SettingsWorkersPage = React.lazy(() => import('./infra/workers'));
 const SettingsHealthPage = React.lazy(() => import('./infra/health'));
-const ConfigurationsPage = React.lazy(() => import('./infra/configurations'));
+const ConfigurationsPage = React.lazy(() =>
+  import('./infra/configurations').then((m) => ({
+    default: m.ConfigurationsPage,
+  })),
+);
 const TriggerHealthPage = React.lazy(() => import('./infra/triggers'));
 const EventDestinationsPage = React.lazy(
   () => import('./infra/event-destinations'),
@@ -172,16 +176,7 @@ function activePageId(pathname: string) {
   return best?.id;
 }
 
-function navGroups(context: AdminPageContext) {
-  return ADMIN_NAV_GROUPS.map(({ id, label }) => ({
-    group: id,
-    label,
-    pages: visibleNavPages(context).filter((page) => page.nav.group === id),
-  })).filter((entry) => entry.pages.length > 0);
-}
-
 export const adminPagesUtils = {
-  navGroups,
   visibleNavPages,
   visibleTabs,
   navTabs,
@@ -190,12 +185,6 @@ export const adminPagesUtils = {
   activePageId,
 };
 
-export const ADMIN_NAV_GROUPS = [
-  { id: 'workspace', label: 'Workspace' },
-  { id: 'build', label: 'Build' },
-  { id: 'platform', label: 'Platform' },
-] as const;
-
 export const ADMIN_PAGES: AdminPage[] = [
   {
     id: 'projects',
@@ -203,7 +192,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     title: 'Projects',
     component: ProjectsPage,
     nav: {
-      group: 'workspace',
       label: 'Projects',
       icon: LayoutGridIcon,
     },
@@ -214,7 +202,7 @@ export const ADMIN_PAGES: AdminPage[] = [
     title: 'Users & access',
     description: "Who's on your platform and what they can touch.",
     overview: UsersOverview,
-    nav: { group: 'workspace', label: 'Users & access', icon: UsersIcon },
+    nav: { label: 'Users & access', icon: UsersIcon },
     tabs: [
       { id: 'members', label: 'Members', component: UsersPage },
       {
@@ -237,7 +225,7 @@ export const ADMIN_PAGES: AdminPage[] = [
     title: 'Connections',
     description: 'The credentials your flows use to talk to other apps.',
     overview: ConnectionsOverview,
-    nav: { group: 'workspace', label: 'Connections', icon: UnplugIcon },
+    nav: { label: 'Connections', icon: UnplugIcon },
     tabs: [
       {
         id: 'project',
@@ -253,20 +241,12 @@ export const ADMIN_PAGES: AdminPage[] = [
     ],
   },
   {
-    id: 'general',
-    path: '/platform/setup/general',
-    title: 'General',
-    description: 'Your platform name, branding and general settings.',
-    component: GeneralPage,
-    nav: { group: 'platform', label: 'General', icon: SettingsIcon },
-  },
-  {
     id: 'ai',
     path: '/platform/setup/ai',
     title: 'AI Center & MCP',
     description: 'AI providers, models and the platform MCP server.',
     overview: AiOverview,
-    nav: { group: 'build', label: 'AI Center & MCP', icon: SparklesIcon },
+    nav: { label: 'AI Center & MCP', icon: SparklesIcon },
     tabs: [
       { id: 'providers', label: 'Providers', component: ProvidersTab },
       {
@@ -288,7 +268,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     title: 'Pieces',
     description: 'The pieces your users can build with.',
     nav: {
-      group: 'build',
       label: 'Pieces',
       icon: PuzzleIcon,
     },
@@ -313,11 +292,18 @@ export const ADMIN_PAGES: AdminPage[] = [
     title: 'Templates',
     component: PlatformTemplatesPage,
     nav: {
-      group: 'build',
       label: 'Templates',
       icon: LayoutGridIcon,
       isLocked: ({ plan }) => !plan.manageTemplatesEnabled,
     },
+  },
+  {
+    id: 'general',
+    path: '/platform/setup/general',
+    title: 'General',
+    description: 'Your platform name, branding and general settings.',
+    component: GeneralPage,
+    nav: { label: 'General', icon: SettingsIcon },
   },
   {
     id: 'embed',
@@ -325,7 +311,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     title: 'Embedding',
     component: EmbedPage,
     nav: {
-      group: 'platform',
       label: 'Embedding',
       icon: FrameIcon,
       isLocked: ({ plan }) => !plan.embeddingEnabled,
@@ -338,7 +323,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     description: 'API access, secrets and the audit trail.',
     overview: SecurityOverview,
     nav: {
-      group: 'platform',
       label: 'Security',
       icon: ShieldIcon,
     },
@@ -377,7 +361,6 @@ export const ADMIN_PAGES: AdminPage[] = [
       'For questions about billing contact us at support@activepieces.com',
     overview: BillingOverview,
     nav: {
-      group: 'platform',
       label: 'Billing & usage',
       icon: ReceiptIcon,
       isLocked: isCommunity,
@@ -394,7 +377,7 @@ export const ADMIN_PAGES: AdminPage[] = [
     description:
       'Health of the app, workers, queues and triggers running your automations.',
     overview: InfrastructureOverview,
-    nav: { group: 'platform', label: 'Infrastructure', icon: ServerIcon },
+    nav: { label: 'Infrastructure', icon: ServerIcon },
     tabs: [
       { id: 'health', label: 'Health', component: SettingsHealthPage },
       { id: 'workers', label: 'Workers', component: SettingsWorkersPage },
@@ -489,15 +472,12 @@ export const ADMIN_REDIRECTS: AdminRedirect[] = [
   },
 ];
 
-export type AdminNavGroup = (typeof ADMIN_NAV_GROUPS)[number]['id'];
-
 export type AdminPageContext = {
   plan: PlatformWithoutSensitiveData['plan'];
   edition: ApEdition | null;
 };
 
 export type AdminPageNav = {
-  group: AdminNavGroup;
   label: string;
   icon?: ComponentType<{ className?: string }>;
   isLocked?: (context: AdminPageContext) => boolean;
