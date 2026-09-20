@@ -74,7 +74,7 @@ top. `AP_DEV_AUTH_BYPASS` + `VITE_DEV_AUTH_BYPASS` disables all admin auth for l
   That line is dead unless the platform injects `AP_PORT` separately.
 - **App Platform autodetect makes one component per `package.json`, so an Nx monorepo lands as three.** With no `.do/app.yaml` in the repo, DigitalOcean scans and creates a component for `packages/server`, `packages/web` and `packages/shared` — `ap-analytics` came out as two Web Services and a Function for what is a single container. Only one is right: the root `Dockerfile` already serves the API and the built web assets together (`@fastify/static` on `packages/web/dist` with an `index.html` fallback), so keep the component whose Source Directory is `/` and whose build is the Dockerfile, and destroy the rest. The auto-generated names (`<repo>2`, `<repo>3`) say nothing about which is which — check the Source tab, not the name. Committing a `.do/app.yaml` stops the guessing for good.
 - **Config features belong in `ap-analytics` (the repo that calls itself "config console"), not here** — see decision
-  [000033](../decisions/000033-ai-prices-are-published-to-the-cdn-from-a-second-console.md).
+  [000039](../decisions/000039-ai-model-tiers-are-published-to-the-cdn-from-a-second-console.md).
 
 ## Key files
 

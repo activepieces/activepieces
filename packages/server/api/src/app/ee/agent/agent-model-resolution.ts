@@ -1,4 +1,4 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiPricingCatalog, AiPricingTier } from '@activepieces/server-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
 
@@ -37,7 +37,10 @@ function pickAllowedModel({ provider, selectedModel, candidates, modelScope, mod
 }
 
 function managedModelCandidates({ modelScope, modelIds }: { modelScope?: AiProviderModelScope, modelIds?: string[] }): string[] {
-    const managed = aiProviderUtils.managedChatModelIds()
+    const managed = unique([
+        ...aiProviderUtils.managedChatModelIds(),
+        ...aiPricingCatalog.current().tiers.map((tier) => tier.modelId),
+    ])
     return modelScope === 'selected' && !isNil(modelIds) ? managed.filter((id) => modelIds.includes(id)) : managed
 }
 

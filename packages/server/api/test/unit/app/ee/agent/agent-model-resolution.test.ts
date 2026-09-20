@@ -1,14 +1,35 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, tryCatchSync } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../../src/app/ee/agent/agent-helpers'
 import { agentModelResolution } from '../../../../../src/app/ee/agent/agent-model-resolution'
 
 const getChatProviderName = vi.fn()
 
+const published = vi.hoisted(() => ({
+    tiers: [] as { id: string, label: string, modelId: string, nativeModelId?: string, thinkingBudget: number }[],
+}))
+
 vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
     aiProviderService: () => ({ getChatProviderName }),
 }))
+
+vi.mock('@activepieces/server-utils', async (importOriginal) => ({
+    ...await importOriginal<Record<string, unknown>>(),
+    aiPricingCatalog: {
+        current: () => ({
+            tiers: published.tiers,
+            defaultTierId: published.tiers[0].id,
+            findTierById: (tierId: string) => published.tiers.find((tier) => tier.id === tierId),
+            findTierByModelId: (modelId: string) => published.tiers.find((tier) => tier.modelId === modelId),
+            resolveTier: (tierId?: string) => published.tiers.find((tier) => tier.id === tierId) ?? published.tiers[0],
+        }),
+    },
+}))
+
+beforeEach(() => {
+    published.tiers = ACTIVEPIECES_CHAT_TIERS.map((tier) => ({ ...tier }))
+})
 
 const resolve = ({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }) =>
     agentModelResolution.resolveModelIdForProvider({ provider, selectedModel })
@@ -203,6 +224,15 @@ describe('resolveNamedModelId', () => {
         for (const tier of ACTIVEPIECES_CHAT_TIERS) {
             expect(named({ provider: AIProviderName.ACTIVEPIECES, modelName: tier.id }), tier.id).toBe(tier.modelId)
         }
+    })
+
+    it('accepts a tier model the published file names but the release does not ship', () => {
+        const unreleased = 'anthropic/claude-sonnet-5'
+        published.tiers = published.tiers.map((tier) => tier.id === 'smart' ? { ...tier, modelId: unreleased } : tier)
+
+        expect(aiProviderUtils.managedChatModelIds()).not.toContain(unreleased)
+        expect(named({ provider: AIProviderName.ACTIVEPIECES, modelName: 'smart' })).toBe(unreleased)
+        expect(named({ provider: AIProviderName.ACTIVEPIECES, modelName: unreleased })).toBe(unreleased)
     })
 
     it('refuses a model nobody put on the managed allow-list, on our key and our credits', () => {
