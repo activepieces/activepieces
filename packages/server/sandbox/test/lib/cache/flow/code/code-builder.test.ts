@@ -230,6 +230,44 @@ describe('codeBuilder.processCodeStep', () => {
         expect(installMock).toHaveBeenCalledTimes(2)
     })
 
+    it('does not cache a compile failure — the next build re-runs esbuild and self-heals (GIT-1864)', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}', false)
+        mockInstallSuccess()
+        buildMock.mockRejectedValueOnce(new Error('Could not resolve "jsrsasign"'))
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('compile-failed')
+        mockBuildSuccess()
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+
+        expect(buildMock).toHaveBeenCalledTimes(2)
+    })
+
+    it('does not leave a stale hash behind when a rebuild of an already-cached step fails', async () => {
+        const codesFolderPath = uniqueFolder()
+        const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}', false)
+        const entryPath = codeCache(codesFolderPath).compiledStepPath({
+            flowVersionId: artifact.flowVersionId,
+            stepName: artifact.name,
+        })
+        mockInstallSuccess()
+        mockBuildSuccess()
+
+        const builder = codeBuilder(noopLog, getSettings)
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+
+        await rm(entryPath)
+        buildMock.mockRejectedValueOnce(new Error('Could not resolve "jsrsasign"'))
+
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('compile-failed')
+        await expect(builder.processCodeStep({ artifact, codesFolderPath })).resolves.toBe('success')
+
+        expect(buildMock).toHaveBeenCalledTimes(3)
+    })
+
     it('rebuilds when the entry module was deleted out of band, instead of serving a phantom cache hit', async () => {
         const codesFolderPath = uniqueFolder()
         const artifact = buildArtifact('{"dependencies":{"pkg":"1.0.0"}}')

@@ -200,6 +200,7 @@ export const AgentConversation = z.object({
     userId: z.string(),
     agentId: Nullable(z.string()),
     flowRunId: Nullable(z.string()),
+    aiCredits: Nullable(z.number().int()),
     source: z.enum(AgentRunSource),
     title: Nullable(z.string()),
     modelName: Nullable(z.string()),
@@ -254,7 +255,6 @@ export const UpdateAgentMemoryRequest = z.object({
 })
 export type UpdateAgentMemoryRequest = z.infer<typeof UpdateAgentMemoryRequest>
 
-export const CHAT_BYOK_CREDIT_WEIGHT = 1
 export const CHAT_CREDITS_PER_TOOL_CALL = 1
 
 export const ImportAgentMemoryRequest = z.object({

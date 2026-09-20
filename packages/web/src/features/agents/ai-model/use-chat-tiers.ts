@@ -11,7 +11,6 @@ const BUNDLED_TIERS: ChatTiersResponse = {
     id: tier.id,
     label: tier.label,
     modelId: tier.modelId,
-    creditWeight: tier.creditWeight,
   })),
   defaultTierId: DEFAULT_CHAT_TIER_ID,
 };
@@ -29,7 +28,6 @@ export type ChatTier = {
   id: string;
   label: string;
   modelId: string;
-  creditWeight: number;
 };
 
 export type ChatTiersResponse = {

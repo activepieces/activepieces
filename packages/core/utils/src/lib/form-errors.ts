@@ -6,6 +6,8 @@ export const formErrors = {
     invalidExternalId: 'invalidExternalId',
     invalidFileName: 'invalidFileName',
     messageRequiresContentOrFiles: 'messageRequiresContentOrFiles',
+    agentConfigTooLarge: 'agentConfigTooLarge',
+    invalidGcpResourceId: 'invalidGcpResourceId',
 } as const
 
 export const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/

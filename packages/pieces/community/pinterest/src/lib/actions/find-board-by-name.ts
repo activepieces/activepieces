@@ -1,7 +1,6 @@
 import {
   createAction,
   Property,
-  OAuth2PropertyValue,
 } from '@activepieces/pieces-framework';
 import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
@@ -26,19 +25,20 @@ export const findBoardByName = createAction({
     query: Property.ShortText({
       displayName: 'Search Query',
       required: true,
-      description: 'The search term to find boards (required).',
+      description: 'Words in the board name.',
+      placeholder: 'e.g. recipes',
     }),
     ad_account_id: adAccountIdDropdown,
     bookmark: Property.ShortText({
       displayName: 'Bookmark',
       required: false,
-      description: 'Pagination bookmark from previous response.',
+      description: 'Bookmark from a previous run to fetch the next page.',
+      advanced: true,
     }),
   },
   async run({ auth, propsValue }) {
     const { query, ad_account_id, bookmark } = propsValue;
 
-    // Build query parameters
     const searchParams = new URLSearchParams();
     searchParams.append('query', query);
 

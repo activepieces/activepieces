@@ -59,7 +59,6 @@ function useModelOptions(): ModelOption[] {
       id: tier.id,
       ...(TIER_CONFIG[tier.id] ?? { icon: Sparkles, description: null }),
       displayLabel: tier.label,
-      creditWeight: tier.creditWeight,
     }));
   }
   return curatedModels.map((model) => ({
@@ -67,7 +66,6 @@ function useModelOptions(): ModelOption[] {
     icon: Sparkles,
     displayLabel: model.label,
     description: null,
-    creditWeight: null,
   }));
 }
 
@@ -169,14 +167,6 @@ export function ChatModelSelector({
                       <span className="text-sm font-medium">
                         {t(option.displayLabel)}
                       </span>
-                      {showCredits && !isNil(option.creditWeight) && (
-                        <span className="text-xs text-muted-foreground">
-                          {t(
-                            '{count, plural, =1 {1 credit} other {# credits}}',
-                            { count: option.creditWeight },
-                          )}
-                        </span>
-                      )}
                     </div>
                     {option.description && (
                       <span className="text-xs text-muted-foreground">
@@ -197,7 +187,7 @@ export function ChatModelSelector({
           {showCredits && (
             <div className="border-t px-3 py-2 text-xs text-muted-foreground">
               {t(
-                'Per message, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
+                'Credits are charged based on how much work the agent does, plus {count, plural, =1 {1 credit} other {# credits}} per tool call.',
                 { count: CHAT_CREDITS_PER_TOOL_CALL },
               )}
             </div>
@@ -230,5 +220,4 @@ type ModelOption = {
   icon: React.ComponentType<{ className?: string }>;
   displayLabel: string;
   description: string | null;
-  creditWeight: number | null;
 };

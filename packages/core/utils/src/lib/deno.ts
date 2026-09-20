@@ -7,9 +7,9 @@ export const deno = {
      * output to a `result` variable. Resolves with the result, or rejects with
      * an Error carrying the process stdout/stderr.
      */
-    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {} }: DenoProgramParams): Promise<unknown> {
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase }: DenoProgramParams): Promise<unknown> {
         const marker = newResultMarker()
-        const { child, denoPath } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env })
+        const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
         child.stdin.end(buildRunProgram({ body, marker }))
 
         return new Promise((resolve, reject) => {
@@ -28,6 +28,7 @@ export const deno = {
             })
 
             child.on('close', (code, signal) => {
+                void removeDenoDir(denoDir)
                 if (settled) {
                     return
                 }
@@ -66,6 +67,7 @@ export const deno = {
             })
 
             child.on('error', (error) => {
+                void removeDenoDir(denoDir)
                 if (settled) {
                     return
                 }
@@ -83,22 +85,29 @@ export const deno = {
 let nodeApisCache: NodeApis | null = null
 async function getNodeApis(): Promise<NodeApis> {
     if (nodeApisCache === null) {
-        const [childProcess, os] = await Promise.all([
+        const [childProcess, os, fs] = await Promise.all([
             import('node:child_process'),
             import('node:os'),
+            import('node:fs/promises'),
         ])
-        nodeApisCache = { childProcess, os }
+        nodeApisCache = { childProcess, os, fs }
     }
     return nodeApisCache
+}
+
+async function removeDenoDir(denoDir: string): Promise<void> {
+    const { fs } = await getNodeApis()
+    await fs.rm(denoDir, { recursive: true, force: true }).catch(() => undefined)
 }
 
 function newResultMarker(): string {
     return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
 }
 
-async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string }> {
-    const { childProcess, os } = await getNodeApis()
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
+    const { childProcess, os, fs } = await getNodeApis()
     const denoPath = resolveDenoPath()
+    const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
     const child = childProcess.spawn(denoPath, [
         'run',
         '--quiet',
@@ -116,10 +125,11 @@ async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPath
         env: {
             PATH: process.env['PATH'] ?? '',
             ...env,
+            DENO_DIR: denoDir,
         },
         stdio: ['pipe', 'pipe', 'pipe'],
     })
-    return { child, denoPath }
+    return { child, denoPath, denoDir }
 }
 
 function resolveDenoPath(): string {
@@ -210,6 +220,7 @@ type DenoProgramParams = {
     allowReadPaths?: string[]
     resolveNodeModules?: boolean
     env?: Record<string, string>
+    denoDirBase?: string
 }
 
 type SpawnDenoParams = {
@@ -220,11 +231,13 @@ type SpawnDenoParams = {
     allowReadPaths: string[]
     resolveNodeModules: boolean
     env: Record<string, string>
+    denoDirBase?: string
 }
 
 type NodeApis = {
     childProcess: typeof import('node:child_process')
     os: typeof import('node:os')
+    fs: typeof import('node:fs/promises')
 }
 
 type BuildErrorParams = {

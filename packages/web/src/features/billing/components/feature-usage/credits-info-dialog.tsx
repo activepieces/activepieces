@@ -16,10 +16,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  ChatTier,
-  useChatTiers,
-} from '@/features/agents/ai-model/use-chat-tiers';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
@@ -83,12 +79,7 @@ function CreditsCostTable({
   includeActivepiecesModels: boolean;
   chatEnabled: boolean;
 }) {
-  const { tiers } = useChatTiers();
-  const items = buildCostItems({
-    includeActivepiecesModels,
-    chatEnabled,
-    tiers,
-  });
+  const items = buildCostItems({ includeActivepiecesModels, chatEnabled });
   return (
     <div className="flex w-full flex-col overflow-hidden rounded-[10px] border">
       <div className="flex items-center gap-2 border-b px-3 py-2.5 text-sm font-medium text-muted-foreground">
@@ -136,11 +127,9 @@ function CreditsCostTable({
 
 function buildCostItems({
   includeActivepiecesModels,
-  tiers,
   chatEnabled,
 }: {
   includeActivepiecesModels: boolean;
-  tiers: ChatTier[];
   chatEnabled: boolean;
 }): CostItem[] {
   const modelByActivepieces = t('Model by Activepieces');
@@ -172,17 +161,19 @@ function buildCostItems({
     {
       kind: 'row',
       action: chatEnabled ? t('Agent/Chat') : t('Agent'),
-      sub: t('sum of tools use + model cost per message'),
+      sub: t('sum of tools use + what each message costs'),
       credits: t('see below'),
     },
   ];
   const activepiecesModels: CostItem[] = includeActivepiecesModels
-    ? tiers.map((tier) => ({
-        kind: 'row',
-        action: t(tier.label),
-        sub: modelByActivepieces,
-        credits: String(tier.creditWeight),
-      }))
+    ? [
+        {
+          kind: 'row',
+          action: t('Activepieces AI'),
+          sub: modelByActivepieces,
+          credits: t('what the call costs'),
+        },
+      ]
     : [];
   const ai: CostItem[] = [
     { kind: 'section', label: t('AI Steps (per call)') },
@@ -215,11 +206,7 @@ function buildFaqs({
       question: t('How are credits consumed?'),
       answer: (
         <div className="flex flex-col gap-2.5">
-          <span>
-            {t(
-              "Each action in Activepieces has a fixed credit cost. Here's a breakdown:",
-            )}
-          </span>
+          <span>{t("Here's what each action in Activepieces costs:")}</span>
           <CreditsCostTable
             includeActivepiecesModels={isCloud}
             chatEnabled={chatEnabled}

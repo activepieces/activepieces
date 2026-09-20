@@ -1,5 +1,5 @@
-import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
+import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
 import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
@@ -75,13 +75,13 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             }
             progressSequence += 1
             const sequence = progressSequence
-            void tryCatch(async () => {
+            tryCatch(async () => {
                 const { error } = await tryCatch(() => ctx.apiClient.updateFlowStepProgress({ conversationId, flowRunId, output, sequence }))
                 if (!isNil(error) && !warnedOnProgress) {
                     warnedOnProgress = true
                     log.warn({ error, flowRun: { id: flowRunId } }, '[executeAgentRun] Could not push step progress; the builder timeline may lag')
                 }
-            })
+            }).catch(() => undefined)
         }
         const reportFinal = (output: AgentResult) => pushProgress(output)
         const reportProgress = (uiParts: PersistedAgentPart[]) =>
@@ -102,7 +102,8 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...spreadIfDefined('discoveryOnly', discoveryOnly),
             })
 
-            const provider = config.provider as AIProviderName
+            const { credentials } = config
+            const { provider } = credentials
             runProvider = provider
             runModelId = config.modelId
             source = config.source
@@ -113,18 +114,29 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // nowhere to mark the turn. A run that can rewrite a saved agent does without it and
             // reads through ap_fetch_url or Tavily instead, both of which mark.
             const untrackedSearchWouldBeat = config.agentsAvailable
-                && agentAiUtils.webSearchModeOf(provider) === 'plugin'
+                && aiUtils.webSearchModeOf(provider) === 'plugin'
             const webSearchActive = !dryRun
                 && !tavilySearchActive
                 && !untrackedSearchWouldBeat
-                && agentAiUtils.supportsWebSearch(provider)
-            const model = agentAiUtils.createChatModel({
-                provider, auth: config.auth, config: config.providerConfig, modelId: config.modelId,
+                && aiUtils.supportsWebSearch(provider)
+            const billing: ActivepiecesAiBilling = {
+                source: ActivepiecesAiConsumerSource.CHAT,
+                platformId,
+                projectId: projectId ?? null,
+                conversationId,
+                chat: { userId, turnIndex: config.previousUiMessages.length, tier: config.tier.id },
+            }
+            const model = aiUtils.createModel({
+                credentials, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
                 webSearchEnabled: webSearchActive,
+                billing,
+                turnAlreadyCharged: true,
             })
-            const fastModel = agentAiUtils.createChatModel({
-                provider, auth: config.auth, config: config.providerConfig, modelId: config.fastModelId,
+            const fastModel = aiUtils.createModel({
+                credentials, modelId: config.fastModelId,
+                billing,
+                turnAlreadyCharged: true,
             })
 
             log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
@@ -174,11 +186,11 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             // timestamp, so a slow-but-live turn is never reclaimed as stale by either the
             // client stale-check or the server's getConversationOrThrow stale-recovery.
             const sendHeartbeat = () => {
-                void tryCatch(() => ctx.apiClient.sendAgentEvent({
+                tryCatch(() => ctx.apiClient.sendAgentEvent({
                     userId, conversationId, runId,
                     event: { type: AgentEventType.CHUNK, data: [] },
-                }))
-                void tryCatch(() => ctx.apiClient.heartbeatAgentConversation({ conversationId, runId }))
+                })).catch(() => undefined)
+                tryCatch(() => ctx.apiClient.heartbeatAgentConversation({ conversationId, runId })).catch(() => undefined)
             }
             heartbeatInterval = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL_MS)
 
@@ -188,7 +200,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
-                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: agentAiUtils.buildWebSearchTools({ provider, auth: config.auth }), taintState }) : {}),
+                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: aiUtils.buildWebSearchTools({ provider }), taintState }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
                 ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
                     imageGeneration: aiTools.imageGeneration,
@@ -262,7 +274,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                                 },
                             }),
                             onProgress: ({ uiParts, responseMessages }) => {
-                                void retryWithBackoff({
+                                retryWithBackoff({
                                     fn: () => ctx.apiClient.updateAgentProgress({
                                         conversationId,
                                         runId,
@@ -274,7 +286,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                                     }),
                                     maxAttempts: 2,
                                     log,
-                                })
+                                }).catch(() => undefined)
                                 reportProgress(uiParts)
                             },
                         },
@@ -330,7 +342,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 outputTokens: totalOutputTokens,
                 ...spreadIfDefined('cacheReadTokens', usage?.inputTokenDetails?.cacheReadTokens),
                 ...spreadIfDefined('cacheWriteTokens', usage?.inputTokenDetails?.cacheWriteTokens),
-                provider: config.provider,
+                provider: config.credentials.provider,
                 finishReason: turn.finishReason,
                 truncatedAfterRetries,
             }, 'Chat message completed')
@@ -810,7 +822,7 @@ async function streamChunksToClient({ result, ctx, userId, conversationId, runId
 }
 
 async function generateTitleIfFirstTurn({ model, userMessage, previousUiMessages, log, conversationId, abortSignal }: {
-    model: ReturnType<typeof agentAiUtils.createChatModel>
+    model: ReturnType<typeof aiUtils.createModel>
     userMessage: string
     previousUiMessages: unknown[]
     log: JobContext['log']

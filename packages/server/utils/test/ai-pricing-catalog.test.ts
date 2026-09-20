@@ -1,4 +1,4 @@
-import { DEFAULT_MANAGED_MODEL_WEIGHT, MANAGED_MODEL_WEIGHTS } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
 
 const PRICING_URL = 'https://pricing.test/pricing.json'
 
@@ -7,12 +7,10 @@ const validPricing = {
     publishedAt: '2026-08-31T10:00:00.000Z',
     publishedBy: 'marketing@activepieces.com',
     tiers: [
-        { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000, creditWeight: 11 },
-        { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000, creditWeight: 44 },
+        { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000 },
+        { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000 },
     ],
     defaultTierId: 'smart',
-    modelWeights: { ...MANAGED_MODEL_WEIGHTS, 'openai/gpt-4': 999 },
-    unpricedModelCreditWeight: 250,
 }
 
 async function loadCatalog(): Promise<typeof import('../src/ai-pricing-catalog')['aiPricingCatalog']> {
@@ -43,50 +41,42 @@ afterEach(() => {
 })
 
 describe('aiPricingCatalog', () => {
-    it('uses the published prices when the file is valid', async () => {
+    it('uses the published tiers when the file is valid', async () => {
         mockResponse(validPricing)
         const reader = await (await loadCatalog()).load()
 
         expect(reader.defaultTierId).toBe('smart')
-        expect(reader.creditWeightForModel('anthropic/claude-haiku-4.5')).toBe(11)
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(999)
-        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(250)
+        expect(reader.tiers.map((tier) => tier.id)).toEqual(['fast', 'smart'])
+        expect(reader.findTierById('fast')?.modelId).toBe('anthropic/claude-haiku-4.5')
+        expect(reader.findTierByModelId('anthropic/claude-sonnet-4.6')?.id).toBe('smart')
     })
 
-    it('falls back to the values shipped with the release when the fetch fails', async () => {
+    it('falls back to the tiers shipped with the release when the fetch fails', async () => {
         mockFailure()
         const reader = await (await loadCatalog()).load()
 
-        expect(reader.defaultTierId).toBe('smart')
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
-        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(DEFAULT_MANAGED_MODEL_WEIGHT)
+        expect(reader.defaultTierId).toBe(DEFAULT_CHAT_TIER_ID)
+        expect(reader.tiers.map((tier) => tier.id)).toEqual(ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.id))
     })
 
     it('rejects a file whose default tier does not exist', async () => {
         mockResponse({ ...validPricing, defaultTierId: 'nope' })
         const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
+        expect(reader.tiers.map((tier) => tier.id)).toEqual(ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.id))
     })
 
     it('rejects a file with no tiers', async () => {
         mockResponse({ ...validPricing, tiers: [] })
         const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
+        expect(reader.tiers.map((tier) => tier.id)).toEqual(ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.id))
     })
 
-    it('keeps the shipped weight for a model the published file leaves out, so a short file cannot overcharge', async () => {
-        mockResponse({ ...validPricing, modelWeights: { 'openai/gpt-4': 999 } })
+    it('ignores the credit fields an older console still publishes', async () => {
+        mockResponse({ ...validPricing, modelWeights: { 'openai/gpt-4': 999 }, unpricedModelCreditWeight: 250 })
         const reader = await (await loadCatalog()).load()
 
-        expect(reader.creditWeightForModel('openai/gpt-4')).toBe(999)
-        expect(reader.creditWeightForModel('google/gemini-2.5-flash-lite')).toBe(MANAGED_MODEL_WEIGHTS['google/gemini-2.5-flash-lite'])
-        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(validPricing.unpricedModelCreditWeight)
-    })
-
-    it('rejects a weight outside the allowed range', async () => {
-        mockResponse({ ...validPricing, unpricedModelCreditWeight: 0 })
-        const reader = await (await loadCatalog()).load()
-        expect(reader.creditWeightForModel('some/model-we-never-priced')).toBe(DEFAULT_MANAGED_MODEL_WEIGHT)
+        expect(reader.findTierById('fast')?.modelId).toBe('anthropic/claude-haiku-4.5')
+        expect(Object.keys(reader.tiers[0])).not.toContain('creditWeight')
     })
 
     it('resolves an unknown tier id to the default tier', async () => {
@@ -112,10 +102,6 @@ describe('aiPricingCatalog', () => {
         const catalog = await loadCatalog()
 
         await expect(catalog.warmUp()).resolves.toBeUndefined()
-        expect(catalog.current().creditWeightForModel('openai/gpt-4')).toBe(MANAGED_MODEL_WEIGHTS['openai/gpt-4'])
-    })
-
-    it('prices an unknown model above every bundled tier, so a forgotten model is never cheap', () => {
-        expect(DEFAULT_MANAGED_MODEL_WEIGHT).toBeGreaterThan(80)
+        expect(catalog.current().defaultTierId).toBe(DEFAULT_CHAT_TIER_ID)
     })
 })

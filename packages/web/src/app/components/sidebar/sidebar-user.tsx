@@ -6,7 +6,6 @@ import { useState } from 'react';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,7 +33,6 @@ export function SidebarUser() {
   const { embedState } = useEmbedding();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { reset } = useTelemetry();
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   if (!user || embedState.isEmbedded) {
@@ -44,7 +42,6 @@ export function SidebarUser() {
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
-    reset();
   };
 
   return (

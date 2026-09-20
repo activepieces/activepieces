@@ -6,7 +6,6 @@ import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
-import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
@@ -19,7 +18,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
     app.get('/tiers', ListChatTiers, async () => {
         const pricing = await aiPricingCatalog.load()
         return {
-            tiers: pricing.tiers.map((tier) => ({ id: tier.id, label: tier.label, modelId: tier.modelId, creditWeight: tier.creditWeight })),
+            tiers: pricing.tiers.map((tier) => ({ id: tier.id, label: tier.label, modelId: tier.modelId })),
             defaultTierId: pricing.defaultTierId,
         }
     })
@@ -30,19 +29,6 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         return aiProviderService(app.log).listModelsForConfig({
             platformId: request.principal.platform.id,
             configId: request.params.id,
-        })
-    })
-    app.get('/:provider/config', GetAIProviderConfig, async (request) => {
-        const platformId = request.principal.platform.id
-        const provider = request.params.provider
-        if (provider === AIProviderName.ACTIVEPIECES) {
-            await assertCreditsAndAppSumoNotExceeded({ platformId, log: app.log })
-        }
-        return aiProviderService(app.log).getConfigOrThrow({
-            platformId,
-            provider,
-            scope: { type: 'project', projectId: request.principal.projectId },
-            ...spreadIfDefined('configId', request.query.configId),
         })
     })
     app.get('/:provider/models', ListModels, async (request) => {
@@ -97,7 +83,6 @@ const ListChatTiers = {
                     id: z.string(),
                     label: z.string(),
                     modelId: z.string(),
-                    creditWeight: z.number(),
                 })),
                 defaultTierId: z.string(),
             }),
@@ -122,20 +107,6 @@ const ListModelsForConfig = {
         response: {
             [StatusCodes.OK]: z.array(AIProviderModel),
         },
-    },
-}
-
-const GetAIProviderConfig = {
-    config: {
-        security: securityAccess.engine(),
-    },
-    schema: {
-        params: z.object({
-            provider: z.nativeEnum(AIProviderName),
-        }),
-        querystring: z.object({
-            configId: z.string().optional(),
-        }),
     },
 }
 
