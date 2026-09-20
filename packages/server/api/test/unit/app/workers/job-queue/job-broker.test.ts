@@ -100,6 +100,24 @@ describe('tryDequeue', () => {
         expect(mockWorker.getNextJob).toHaveBeenCalledTimes(1)
     })
 
+    it('should mark lastAttempt only once no retry remains', async () => {
+        const retryable = createMockJob('job-retryable')
+        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(retryable)
+        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+        const firstAttempt = await tryDequeue(mockWorker, 'test-queue', mockLog)
+
+        expect(firstAttempt!.lastAttempt).toBe(false)
+
+        const exhausted = { ...createMockJob('job-exhausted'), attemptsMade: 1 } as unknown as Job
+        vi.mocked(mockWorker.getNextJob).mockResolvedValueOnce(exhausted)
+        mockPreDispatch.mockResolvedValueOnce({ verdict: InterceptorVerdict.ALLOW })
+
+        const finalAttempt = await tryDequeue(mockWorker, 'test-queue', mockLog)
+
+        expect(finalAttempt!.lastAttempt).toBe(true)
+    })
+
     it('should retry when interceptor rejects then return next allowed job', async () => {
         const jobA = createMockJob('job-a')
         const jobB = createMockJob('job-b')

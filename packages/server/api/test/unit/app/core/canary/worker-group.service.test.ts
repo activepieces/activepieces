@@ -1,13 +1,11 @@
 import { FastifyBaseLogger } from 'fastify'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mockFind = vi.fn()
 const mockFindOne = vi.fn()
 const mockUpdate = vi.fn()
 
 vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service', () => ({
     platformPlanRepo: () => ({
-        find: mockFind,
         findOne: mockFindOne,
         update: mockUpdate,
     }),
@@ -23,13 +21,7 @@ const mockDistributedStoreDelete = vi.fn(async (key: string) => {
 })
 
 vi.mock('../../../../../src/app/database/redis-connections', () => ({
-    redisConnections: {
-        create: vi.fn(),
-        useExisting: vi.fn(),
-        getRedisType: vi.fn().mockReturnValue('MEMORY'),
-        destroy: vi.fn(),
-    },
-    distributedLock: { runExclusive: vi.fn(async ({ fn }: { fn: () => Promise<unknown> }) => fn()) },
+    redisConnections: { getRedisType: vi.fn().mockReturnValue('MEMORY') },
     distributedStore: {
         get: (...args: unknown[]) => mockDistributedStoreGet(...args),
         put: (...args: unknown[]) => mockDistributedStorePut(...args),
@@ -65,13 +57,6 @@ describe('workerGroupService', () => {
         vi.clearAllMocks()
         vi.resetModules()
         cache.clear()
-        mockDistributedStoreGet.mockImplementation(async (key: string) => cache.get(key) ?? null)
-        mockDistributedStorePut.mockImplementation(async (key: string, value: unknown) => {
-            cache.set(key, value)
-        })
-        mockDistributedStoreDelete.mockImplementation(async (key: string) => {
-            cache.delete(key)
-        })
         service = await loadService()
     })
 

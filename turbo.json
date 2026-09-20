@@ -3,6 +3,8 @@
   "globalPassThroughEnv": [
     "AP_EDITION",
     "AP_DB_TYPE",
+    "AP_REDIS_HOST",
+    "AP_REDIS_PORT",
     "AP_POSTGRES_HOST",
     "AP_POSTGRES_PORT",
     "AP_POSTGRES_USERNAME",
