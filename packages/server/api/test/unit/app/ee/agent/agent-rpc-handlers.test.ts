@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
     mockGetFlowRun: vi.fn(),
@@ -371,7 +371,7 @@ describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conver
     })
 
     it('does not create a second row when the run is retried', async () => {
-        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'owner-1', messages: [] })
 
         await callGetAgentConfigFor({
             conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
@@ -442,6 +442,13 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
 })
 
 describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a flow tool, scoped to its own project', () => {
+    // runFlowTool primes the conversation lookups for the whole describe; without this the
+    // primed value outlives it and a later describe resolves someone else's conversation.
+    afterEach(() => {
+        mockFindOne.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue(null)
+    })
+
     async function runFlowTool(conversation: unknown, flowId = 'flow-1', flowVersionId?: string) {
         mockRunFlowAsTool.mockClear()
         mockGetOnePopulated.mockClear()
