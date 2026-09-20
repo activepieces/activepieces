@@ -128,12 +128,31 @@ jobs:
       - name: Build core projects
         run: npx turbo run build --filter=web --filter=worker --filter=api --filter=@activepieces/engine --filter=@activepieces/piece-http --filter=@activepieces/piece-data-mapper --filter=@activepieces/piece-approval --filter=@activepieces/piece-webhook --filter=@activepieces/piece-delay
 
+      - name: Build changed pieces projects
+        if: steps.extract-pieces.outputs.pieces_filters != '' && steps.check-framework-common.outputs.framework_or_common_changed == 'false'
+        run: |
+          IFS=',' read -ra PIECES <<< "${{ steps.extract-pieces.outputs.pieces_filters }}"
+          FILTER_ARGS=""
+          for piece in "${PIECES[@]}"; do
+            piece_name=$(echo "$piece" | tr -d '{}')
+            if [ -f "packages/pieces/community/${piece_name}/package.json" ] || [ -f "packages/pieces/core/${piece_name}/package.json" ]; then
+              FILTER_ARGS="$FILTER_ARGS --filter=@activepieces/piece-${piece_name}"
+            fi
+          done
+          if [ -n "$FILTER_ARGS" ]; then
+            npx turbo run build $FILTER_ARGS
+          fi
+
+      - name: Build all pieces projects
+        if: steps.check-framework-common.outputs.framework_or_common_changed == 'true'
+        run: npx turbo run build --filter='@activepieces/piece-*'
+
       - name: Run all tests and migration checks in parallel
         run: |
           set -euo pipefail
           pids=()
 
-          npx turbo run test --filter='!api' &
+          npx turbo run test $(npx tsx tools/scripts/test-filters.ts) &
           pids+=($!)
 
           npx turbo run test-unit test-ce test-ee test-cloud check-migrations --filter=api &
