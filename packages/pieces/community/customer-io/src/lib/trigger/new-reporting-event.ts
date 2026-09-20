@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import {
   Property,
   TriggerStrategy,
@@ -142,6 +142,7 @@ export const newReportingEvent = createTrigger({
   },
   async onEnable(context) {
     const { region, api_bearer_token } = context.auth.props;
+    const apiUrl = customerIOCommon[region || 'us'].apiUrl;
     const flowIdentifier = context.webhookUrl
       .split('?')[0]
       .split('/')
@@ -149,7 +150,7 @@ export const newReportingEvent = createTrigger({
       .pop();
     const response = await httpClient.sendRequest<{ id: number }>({
       method: HttpMethod.POST,
-      url: `${customerIOCommon[region || 'us'].apiUrl}reporting_webhooks`,
+      url: `${apiUrl}reporting_webhooks`,
       headers: { Authorization: `Bearer ${api_bearer_token}` },
       body: {
         endpoint: context.webhookUrl,
@@ -158,7 +159,20 @@ export const newReportingEvent = createTrigger({
         disabled: false,
       },
     });
-    await context.store.put(WEBHOOK_ID_STORE_KEY, response.body.id);
+    try {
+      await context.store.put(WEBHOOK_ID_STORE_KEY, response.body.id);
+    } catch (error) {
+      try {
+        await deleteReportingWebhook({
+          apiUrl,
+          token: api_bearer_token,
+          webhookId: response.body.id,
+        });
+      } catch {
+        // Rollback is best-effort; surface the original persistence failure.
+      }
+      throw error;
+    }
   },
   async onDisable(context) {
     const webhookId = await context.store.get<number>(WEBHOOK_ID_STORE_KEY);
@@ -166,17 +180,11 @@ export const newReportingEvent = createTrigger({
       return;
     }
     const { region, api_bearer_token } = context.auth.props;
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.DELETE,
-        url: `${
-          customerIOCommon[region || 'us'].apiUrl
-        }reporting_webhooks/${webhookId}`,
-        headers: { Authorization: `Bearer ${api_bearer_token}` },
-      });
-    } catch {
-      // Webhook may already be deleted — ignore.
-    }
+    await deleteReportingWebhook({
+      apiUrl: customerIOCommon[region || 'us'].apiUrl,
+      token: api_bearer_token,
+      webhookId,
+    });
   },
   async run(context) {
     const event = context.payload.body as CustomerIoReportingEvent;
@@ -203,6 +211,29 @@ export const newReportingEvent = createTrigger({
     return [event];
   },
 });
+
+async function deleteReportingWebhook({
+  apiUrl,
+  token,
+  webhookId,
+}: {
+  apiUrl: string;
+  token: string;
+  webhookId: number;
+}): Promise<void> {
+  try {
+    await httpClient.sendRequest({
+      method: HttpMethod.DELETE,
+      url: `${apiUrl}reporting_webhooks/${webhookId}`,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch (error) {
+    if (error instanceof HttpError && error.response.status === 404) {
+      return;
+    }
+    throw error;
+  }
+}
 
 function recipientMatchesDomain(
   recipient: string | undefined,
