@@ -74,7 +74,7 @@ async function trackPlanChange({ platformId, previousPlan, plan, trialEndsAt, lo
     await telemetry(log).trackPlatform({
         platformId,
         event: {
-            name: TelemetryEventName.PLAN_UPGRADED,
+            name: TelemetryEventName.PLAN_CHANGED,
             payload: { platformId, plan, previousPlan: previousPlan ?? undefined },
         },
     })

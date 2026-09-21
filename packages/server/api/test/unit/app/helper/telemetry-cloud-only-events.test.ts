@@ -66,7 +66,7 @@ const trackPlanUpgraded = (edition: ApEdition) => {
     return telemetry(mockLog).trackPlatform({
         platformId: 'platform-1',
         event: {
-            name: TelemetryEventName.PLAN_UPGRADED,
+            name: TelemetryEventName.PLAN_CHANGED,
             payload: { platformId: 'platform-1', plan: 'plus', previousPlan: 'free' },
         },
     })
@@ -75,7 +75,7 @@ const trackPlanUpgraded = (edition: ApEdition) => {
 const CLOUD_ONLY_BILLING_AND_ONBOARDING_EVENTS: TelemetryEvent[] = [
     { name: TelemetryEventName.ONBOARDING_COMPLETED, payload: { userId: 'user-1', platformId: 'platform-1' } },
     { name: TelemetryEventName.CHECKOUT_STARTED, payload: { platformId: 'platform-1', plan: 'plus' } },
-    { name: TelemetryEventName.PLAN_UPGRADED, payload: { platformId: 'platform-1', plan: 'plus', previousPlan: 'free' } },
+    { name: TelemetryEventName.PLAN_CHANGED, payload: { platformId: 'platform-1', plan: 'plus', previousPlan: 'free' } },
     { name: TelemetryEventName.PLAN_CANCELLED, payload: { platformId: 'platform-1', plan: 'plus' } },
     { name: TelemetryEventName.PLAN_REACTIVATED, payload: { platformId: 'platform-1', plan: 'plus' } },
     { name: TelemetryEventName.TRIAL_STARTED, payload: { platformId: 'platform-1', plan: 'plus', trialEndsAt: '2030-01-01T00:00:00.000Z' } },
@@ -112,7 +112,7 @@ describe('cloud-only telemetry events', () => {
     it('should send a billing event on cloud attributed to the platform owner', async () => {
         await trackPlanUpgraded(ApEdition.CLOUD)
 
-        expect(capturedEventNames()).toEqual([TelemetryEventName.PLAN_UPGRADED])
+        expect(capturedEventNames()).toEqual([TelemetryEventName.PLAN_CHANGED])
         expect(capturedDistinctIds()).toEqual(['owner-1'])
     })
 

@@ -160,7 +160,7 @@ export enum TelemetryEventName {
     MCP_SERVER_CONNECTED = 'mcp.server.connected',
     ONBOARDING_COMPLETED = 'onboarding.completed',
     CHECKOUT_STARTED = 'checkout.started',
-    PLAN_UPGRADED = 'plan.upgraded',
+    PLAN_CHANGED = 'plan.changed',
     PLAN_CANCELLED = 'plan.cancelled',
     PLAN_REACTIVATED = 'plan.reactivated',
     TRIAL_STARTED = 'trial.started',
@@ -192,7 +192,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
     | BaseTelemetryEvent<TelemetryEventName.ONBOARDING_COMPLETED, OnboardingCompleted>
     | BaseTelemetryEvent<TelemetryEventName.CHECKOUT_STARTED, CheckoutStarted>
-    | BaseTelemetryEvent<TelemetryEventName.PLAN_UPGRADED, PlanChange>
+    | BaseTelemetryEvent<TelemetryEventName.PLAN_CHANGED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.PLAN_CANCELLED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.PLAN_REACTIVATED, PlanChange>
     | BaseTelemetryEvent<TelemetryEventName.TRIAL_STARTED, TrialStarted>
@@ -203,7 +203,7 @@ export type TelemetryEvent =
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.ONBOARDING_COMPLETED,
     TelemetryEventName.CHECKOUT_STARTED,
-    TelemetryEventName.PLAN_UPGRADED,
+    TelemetryEventName.PLAN_CHANGED,
     TelemetryEventName.PLAN_CANCELLED,
     TelemetryEventName.PLAN_REACTIVATED,
     TelemetryEventName.TRIAL_STARTED,

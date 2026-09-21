@@ -109,9 +109,9 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'billing',
     label: t('Checkout started'),
   },
-  [TelemetryEventName.PLAN_UPGRADED]: {
+  [TelemetryEventName.PLAN_CHANGED]: {
     group: 'billing',
-    label: t('Plan upgraded'),
+    label: t('Plan changed'),
   },
   [TelemetryEventName.PLAN_CANCELLED]: {
     group: 'billing',
