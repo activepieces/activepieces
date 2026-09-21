@@ -1,31 +1,35 @@
 import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
 import { BodyType, Message } from '@microsoft/microsoft-graph-types';
-
 import { microsoftOutlookAuth } from '../common/auth';
+import { outlookAtomicCommon } from '../common/atomic-common';
 import { outlookCommon } from '../common/client';
+import { outlookSendEmailActionOutputSchema } from '../output-schemas';
 
-export const sendEmailAction = createAction({
+export const outlookSendEmailAction = createAction({
 	auth: microsoftOutlookAuth,
-	name: 'send-email',
+	name: 'outlook_send_email',
 	classification: 'WRITE',
 	displayName: 'Send Email',
-	description: 'Sends an email using Microsoft Outlook.',
-	audience: 'human',
-	aiMetadata: { description: 'Composes and sends a new email from the authenticated Outlook mailbox to the given recipients, with optional CC/BCC and file attachments. Use this to send a fresh message (not a reply or forward). Not idempotent: each call dispatches a new email and saves a copy to Sent Items.', idempotent: false },
+	description: 'Composes and sends a new email.',
+	audience: 'ai',
+	aiMetadata: {
+		description:
+			'Composes and immediately sends a brand new email from the connected Outlook mailbox, with optional CC, BCC and attachments, and saves a copy in Sent Items. Use Reply to Message or Forward Message instead when responding to existing mail, and Create Draft when the message should be staged rather than sent. Not idempotent: every call dispatches another email.',
+		idempotent: false,
+	},
 	props: {
 		recipients: Property.Array({
 			displayName: 'To Email(s)',
+			description: 'Email addresses of the primary recipients.',
 			required: true,
 		}),
 		ccRecipients: Property.Array({
 			displayName: 'CC Email(s)',
 			required: false,
-			defaultValue: [],
 		}),
 		bccRecipients: Property.Array({
 			displayName: 'BCC Email(s)',
 			required: false,
-			defaultValue: [],
 		}),
 		subject: Property.ShortText({
 			displayName: 'Subject',
@@ -49,8 +53,8 @@ export const sendEmailAction = createAction({
 		}),
 		attachments: Property.Array({
 			displayName: 'Attachments',
+			description: 'Files to attach. Total message size must stay under 3 MB.',
 			required: false,
-			defaultValue: [],
 			properties: {
 				file: Property.File({
 					displayName: 'File',
@@ -63,11 +67,15 @@ export const sendEmailAction = createAction({
 			},
 		}),
 	},
+	outputSchema: outlookSendEmailActionOutputSchema,
 	async run(context) {
 		const recipients = context.propsValue.recipients as string[];
 		const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];
 		const bccRecipients = (context.propsValue.bccRecipients ?? []) as string[];
-		const attachments = (context.propsValue.attachments ?? []) as Array<{ file: ApFile; fileName: string }>;
+		const attachments = (context.propsValue.attachments ?? []) as Array<{
+			file: ApFile;
+			fileName: string;
+		}>;
 
 		const { subject, body, bodyFormat } = context.propsValue;
 
@@ -77,21 +85,9 @@ export const sendEmailAction = createAction({
 				content: body,
 				contentType: bodyFormat as BodyType,
 			},
-			toRecipients: recipients.map((mail) => ({
-				emailAddress: {
-					address: mail,
-				},
-			})),
-			ccRecipients: ccRecipients.map((mail) => ({
-				emailAddress: {
-					address: mail,
-				},
-			})),
-			bccRecipients: bccRecipients.map((mail) => ({
-				emailAddress: {
-					address: mail,
-				},
-			})),
+			toRecipients: recipients.map((mail) => ({ emailAddress: { address: mail } })),
+			ccRecipients: ccRecipients.map((mail) => ({ emailAddress: { address: mail } })),
+			bccRecipients: bccRecipients.map((mail) => ({ emailAddress: { address: mail } })),
 			attachments: attachments.map((attachment) => ({
 				'@odata.type': '#microsoft.graph.fileAttachment',
 				name: attachment.fileName || attachment.file.filename,
@@ -101,11 +97,20 @@ export const sendEmailAction = createAction({
 
 		const client = outlookCommon.createClient(context.auth);
 
-		const response = await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/sendMail`).post({
-			message: mailPayload,
-			saveToSentItems: 'true',
-		});
+		try {
+			await client.api(`${outlookCommon.mailboxPrefix(context.auth)}/sendMail`).post({
+				message: mailPayload,
+				saveToSentItems: 'true',
+			});
 
-		return response;
+			return {
+				success: true,
+				message: 'Email sent successfully.',
+				subject,
+				recipients,
+			};
+		} catch (error) {
+			throw outlookAtomicCommon.graphError({ error, operation: 'Sending the Outlook email' });
+		}
 	},
 });
