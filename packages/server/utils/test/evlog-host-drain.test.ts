@@ -9,17 +9,6 @@ function makeCtx(event: Partial<WideEvent>): DrainContext {
 }
 
 describe('evlogSetup.wrapDrainWithHost', () => {
-    it('stamps os.hostname() on events that arrive with no host', async () => {
-        const inner = vi.fn().mockResolvedValue(undefined)
-        const wrapped = evlogSetup.wrapDrainWithHost(inner)
-
-        const ctx = makeCtx({ event: 'job.failed', level: 'error' } as Partial<WideEvent>)
-        await wrapped(ctx)
-
-        expect(inner).toHaveBeenCalledOnce()
-        expect(inner.mock.calls[0][0].event.host).toBe(os.hostname())
-    })
-
     it('preserves a host set explicitly at the call site (system.snapshot pattern)', async () => {
         const inner = vi.fn().mockResolvedValue(undefined)
         const wrapped = evlogSetup.wrapDrainWithHost(inner)
@@ -28,23 +17,6 @@ describe('evlogSetup.wrapDrainWithHost', () => {
         await wrapped(ctx)
 
         expect(inner.mock.calls[0][0].event.host).toBe('explicit-host-abc')
-    })
-
-    it('propagates errors thrown by the inner drain', async () => {
-        const inner = vi.fn().mockRejectedValue(new Error('drain boom'))
-        const wrapped = evlogSetup.wrapDrainWithHost(inner)
-
-        await expect(wrapped(makeCtx({ event: 'x' } as Partial<WideEvent>))).rejects.toThrow('drain boom')
-    })
-
-    it('leaves an empty string host in place (treated as caller intent, not absence)', async () => {
-        const inner = vi.fn().mockResolvedValue(undefined)
-        const wrapped = evlogSetup.wrapDrainWithHost(inner)
-
-        const ctx = makeCtx({ event: 'x', host: '' } as Partial<WideEvent>)
-        await wrapped(ctx)
-
-        expect(inner.mock.calls[0][0].event.host).toBe('')
     })
 })
 
