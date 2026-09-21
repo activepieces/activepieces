@@ -8,7 +8,7 @@ All structured logging goes through **evlog**. One wide event per unit of work (
 
 ### Setup
 
-- `evlogSetup.init` (`packages/server/utils/src/evlog-setup.ts`) wires `initLogger` with service/version/env, level + sampling, a redact list (secrets, tokens, `authorization`, `connection.value`, axios internals), and a `host` enricher that stamps `os.hostname()` on every event.
+- `evlogSetup.init` (`packages/server/utils/src/evlog-setup.ts`) wires `initLogger` with service/version/env, level + sampling, a redact list (secrets, tokens, `authorization`, `connection.value`, axios internals), and a drain wrapper (`wrapDrainWithHost`) that stamps `os.hostname()` on every event whose `host` field is undefined. Uses the drain, not `enricherPlugin`, because `enricherPlugin.enrich` hooks only run on the HTTP request-finish path; plain `log.info/warn/error` and `createLogger().emit()` go through `emitWideEvent`, which invokes drains but not enrichers, and workers don't register `evlogFastify` at all — a `host` enricher would be a worker-side no-op. Events that already carry a host (e.g. `system.snapshot`, which sets it at the call site) pass through unchanged.
 - Sampling: info sampled per `AP_SAMPLE_RATE_INFO`; warn/error always kept; extra keep rules for `status ≥ 400` and `duration > 2000ms`.
 - Field-naming schema is a hard contract — see `packages/server/CLAUDE.md` "Structured Logging Field Schema". One concept = one dotted path (`flowRun.id`, `piece.name`, `job.type`), durations end in `Ms`, bytes in `Bytes`, reserved keys are auto-populated.
 

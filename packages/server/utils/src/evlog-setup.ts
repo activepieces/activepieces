@@ -1,18 +1,21 @@
 import os from 'os'
-import { auditEnricher, auditRedactPreset, enricherPlugin, initLogger, RedactConfig } from 'evlog'
-import { defineEnricher } from 'evlog/toolkit'
+import { auditEnricher, auditRedactPreset, DrainContext, enricherPlugin, initLogger, RedactConfig } from 'evlog'
 import { apLogger, ApLogger } from './ap-logger'
 import { evlogDrains, EvlogDrainConfig } from './evlog-drains'
 
 const HOSTNAME = os.hostname()
 
-const hostEnricher = defineEnricher<string>({
-    name: 'host',
-    field: 'host',
-    compute: () => HOSTNAME,
-})
+function wrapDrainWithHost(
+    inner: (ctx: DrainContext) => void | Promise<void>,
+): (ctx: DrainContext) => Promise<void> {
+    return async (ctx: DrainContext) => {
+        if (ctx.event.host === undefined) {
+            ctx.event.host = HOSTNAME
+        }
+        await inner(ctx)
+    }
+}
 
-// Module-level flush function; replaced each time init() is called.
 let activeFlusher: (() => Promise<void>) = async () => undefined
 
 // Evlog does not support trace/fatal natively; map to nearest equivalents.
@@ -134,6 +137,8 @@ function init({ params }: { params: EvlogSetupParams }): ApLogger {
     const resolved = evlogDrains.resolve({ config: params.drainConfig })
     activeFlusher = resolved.flush
 
+    const drainWithHost = resolved.drain ? wrapDrainWithHost(resolved.drain) : undefined
+
     initLogger({
         env: { service: params.drainConfig.serviceName, version: params.version, environment: params.environment },
         pretty: params.logPretty ?? false,
@@ -150,13 +155,8 @@ function init({ params }: { params: EvlogSetupParams }): ApLogger {
             ],
         },
         redact: REDACT_CONFIG,
-        drain: resolved.drain,
-        // Fills audit.context (requestId, traceId, ip, userAgent) on audit-bearing
-        // events only; all other events pass through untouched.
-        plugins: [
-            enricherPlugin('audit-context', auditEnricher()),
-            enricherPlugin('host', hostEnricher),
-        ],
+        drain: drainWithHost,
+        plugins: [enricherPlugin('audit-context', auditEnricher())],
     })
 
     apLogger.setCurrentLevel(mappedLevel)
@@ -171,6 +171,7 @@ async function flush(): Promise<void> {
 export const evlogSetup = {
     init,
     flush,
+    wrapDrainWithHost,
 }
 
 export type EvlogSetupParams = {
