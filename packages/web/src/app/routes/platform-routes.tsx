@@ -350,7 +350,7 @@ export const platformRoutes = [
     path: '/platform/security/project-roles',
     element: (
       <PlatformLayout>
-        <PageTitle title="Project Roles">
+        <PageTitle title="Roles & access">
           <SuspenseWrapper>
             <ProjectRolePage />
           </SuspenseWrapper>
