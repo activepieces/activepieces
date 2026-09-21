@@ -67,7 +67,10 @@ export function ProjectRolesList({
               className="cursor-pointer hover:bg-accent/50"
               onClick={() => setOpenedRole(role)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
+                if (
+                  event.target === event.currentTarget &&
+                  (event.key === 'Enter' || event.key === ' ')
+                ) {
                   event.preventDefault();
                   setOpenedRole(role);
                 }
