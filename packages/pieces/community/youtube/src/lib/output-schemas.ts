@@ -125,6 +125,8 @@ const fullThumbnailSetFields: Fields = [
   ...basicThumbnailSetFields,
   { key: 'standard', label: 'Standard', children: thumbnailFields },
   { key: 'maxres', label: 'Max Resolution', children: thumbnailFields },
+  { key: 'fhd', label: 'Full HD', children: thumbnailFields },
+  { key: 'qhd', label: 'Quad HD', children: thumbnailFields },
 ];
 
 const pageInfoFields: Fields = [
@@ -153,7 +155,7 @@ const searchItemFields: Fields = [
   ] },
 ];
 
-const playlistItemFields: Fields = [
+const playlistItemSnippetFields: Fields = [
   { key: 'kind', label: 'Kind' },
   { key: 'etag', label: 'ETag' },
   { key: 'id', label: 'Playlist Item ID' },
@@ -173,6 +175,10 @@ const playlistItemFields: Fields = [
     ] },
     { key: 'thumbnails', label: 'Thumbnails', children: fullThumbnailSetFields },
   ] },
+];
+
+const playlistItemFields: Fields = [
+  ...playlistItemSnippetFields,
   { key: 'contentDetails', label: 'Content Details', children: [
     { key: 'videoId', label: 'Video ID' },
     { key: 'videoPublishedAt', label: 'Video Published At', format: 'datetime' },
@@ -203,10 +209,13 @@ const captionItemFields: Fields = [
 ];
 
 
-const videoItemFields: Fields = [
+const videoIdentityFields: Fields = [
   { key: 'kind', label: 'Kind' },
   { key: 'etag', label: 'ETag' },
   { key: 'id', label: 'Video ID' },
+];
+
+const videoSnippetField: Fields = [
   { key: 'snippet', label: 'Snippet', children: [
     { key: 'publishedAt', label: 'Published At', format: 'datetime' },
     { key: 'channelId', label: 'Channel ID' },
@@ -224,6 +233,9 @@ const videoItemFields: Fields = [
     ] },
     { key: 'thumbnails', label: 'Thumbnails', children: fullThumbnailSetFields },
   ] },
+];
+
+const videoContentDetailsField: Fields = [
   { key: 'contentDetails', label: 'Content Details', children: [
     { key: 'duration', label: 'Duration (ISO 8601)' },
     { key: 'dimension', label: 'Dimension' },
@@ -232,12 +244,18 @@ const videoItemFields: Fields = [
     { key: 'licensedContent', label: 'Licensed Content', format: 'boolean' },
     { key: 'projection', label: 'Projection' },
   ] },
+];
+
+const videoStatisticsField: Fields = [
   { key: 'statistics', label: 'Statistics', children: [
     { key: 'viewCount', label: 'View Count' },
     { key: 'likeCount', label: 'Like Count' },
     { key: 'favoriteCount', label: 'Favorite Count' },
     { key: 'commentCount', label: 'Comment Count' },
   ] },
+];
+
+const videoStatusField: Fields = [
   { key: 'status', label: 'Status', children: [
     { key: 'uploadStatus', label: 'Upload Status' },
     { key: 'privacyStatus', label: 'Privacy Status' },
@@ -245,7 +263,29 @@ const videoItemFields: Fields = [
     { key: 'embeddable', label: 'Embeddable', format: 'boolean' },
     { key: 'publicStatsViewable', label: 'Public Stats Viewable', format: 'boolean' },
     { key: 'madeForKids', label: 'Made For Kids', format: 'boolean' },
+    { key: 'selfDeclaredMadeForKids', label: 'Self-Declared Made For Kids', format: 'boolean' },
   ] },
+];
+
+const videoItemFields: Fields = [
+  ...videoIdentityFields,
+  ...videoSnippetField,
+  ...videoContentDetailsField,
+  ...videoStatisticsField,
+  ...videoStatusField,
+];
+
+const videoSnippetStatusFields: Fields = [
+  ...videoIdentityFields,
+  ...videoSnippetField,
+  ...videoStatusField,
+];
+
+const videoChartItemFields: Fields = [
+  ...videoIdentityFields,
+  ...videoSnippetField,
+  ...videoContentDetailsField,
+  ...videoStatisticsField,
 ];
 
 const channelItemFields: Fields = [
@@ -278,7 +318,7 @@ const channelItemFields: Fields = [
   ] },
 ];
 
-const playlistFields: Fields = [
+const playlistSnippetStatusFields: Fields = [
   { key: 'kind', label: 'Kind' },
   { key: 'etag', label: 'ETag' },
   { key: 'id', label: 'Playlist ID' },
@@ -294,17 +334,19 @@ const playlistFields: Fields = [
     ] },
     { key: 'thumbnails', label: 'Thumbnails', children: fullThumbnailSetFields },
   ] },
-  { key: 'contentDetails', label: 'Content Details', children: [
-    { key: 'itemCount', label: 'Item Count', format: 'number' },
-  ] },
   { key: 'status', label: 'Status', children: [
     { key: 'privacyStatus', label: 'Privacy Status' },
   ] },
 ];
 
-const commentSnippetFields: Fields = [
-  { key: 'channelId', label: 'Channel ID' },
-  { key: 'videoId', label: 'Video ID' },
+const playlistFields: Fields = [
+  ...playlistSnippetStatusFields,
+  { key: 'contentDetails', label: 'Content Details', children: [
+    { key: 'itemCount', label: 'Item Count', format: 'number' },
+  ] },
+];
+
+const commentBodySnippetFields: Fields = [
   { key: 'textDisplay', label: 'Text (HTML)', format: 'html' },
   { key: 'textOriginal', label: 'Text' },
   { key: 'authorDisplayName', label: 'Author' },
@@ -318,6 +360,23 @@ const commentSnippetFields: Fields = [
   { key: 'updatedAt', label: 'Updated At', format: 'datetime' },
 ];
 
+const commentSnippetFields: Fields = [
+  { key: 'channelId', label: 'Channel ID' },
+  { key: 'videoId', label: 'Video ID' },
+  ...commentBodySnippetFields,
+];
+
+const replyCommentSnippetFields: Fields = [
+  { key: 'parentId', label: 'Parent Comment ID' },
+  ...commentSnippetFields,
+];
+
+const replyInsertSnippetFields: Fields = [
+  { key: 'parentId', label: 'Parent Comment ID' },
+  { key: 'channelId', label: 'Channel ID' },
+  ...commentBodySnippetFields,
+];
+
 const commentResourceFields: Fields = [
   { key: 'kind', label: 'Kind' },
   { key: 'etag', label: 'ETag' },
@@ -325,7 +384,21 @@ const commentResourceFields: Fields = [
   { key: 'snippet', label: 'Snippet', children: commentSnippetFields },
 ];
 
-const commentThreadFields: Fields = [
+const replyCommentResourceFields: Fields = [
+  { key: 'kind', label: 'Kind' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'id', label: 'Comment ID' },
+  { key: 'snippet', label: 'Snippet', children: replyCommentSnippetFields },
+];
+
+const replyInsertResourceFields: Fields = [
+  { key: 'kind', label: 'Kind' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'id', label: 'Comment ID' },
+  { key: 'snippet', label: 'Snippet', children: replyInsertSnippetFields },
+];
+
+const commentThreadInsertFields: Fields = [
   { key: 'kind', label: 'Kind' },
   { key: 'etag', label: 'ETag' },
   { key: 'id', label: 'Thread ID' },
@@ -337,10 +410,29 @@ const commentThreadFields: Fields = [
     { key: 'totalReplyCount', label: 'Reply Count', format: 'number' },
     { key: 'topLevelComment', label: 'Top Level Comment', children: commentResourceFields },
   ] },
+];
+
+const commentThreadFields: Fields = [
+  ...commentThreadInsertFields,
   { key: 'replies', label: 'Replies', children: [
-    { key: 'comments', label: 'Comments', listItems: commentResourceFields, labelKey: 'id' },
+    { key: 'comments', label: 'Comments', listItems: replyCommentResourceFields, labelKey: 'id' },
   ] },
 ];
+
+const videoRatingItemFields: Fields = [
+  { key: 'videoId', label: 'Video ID' },
+  { key: 'rating', label: 'Rating' },
+];
+
+const undescribedItemsEnvelope = ({ label }: { label: string }): OutputSchema => ({
+  fields: [
+    { key: 'kind', label: 'Kind' },
+    { key: 'etag', label: 'ETag' },
+    { key: 'nextPageToken', label: 'Next Page Token' },
+    { key: 'pageInfo', label: 'Page Info', children: pageInfoFields },
+    { key: 'items', label },
+  ],
+});
 
 const listEnvelope = ({
   label,
@@ -424,3 +516,93 @@ export const listCommentsOutputSchema: OutputSchema = listEnvelope({
   itemLabelKey: 'id',
   withPrevPageToken: false,
 });
+
+export const createPlaylistOutputSchema: OutputSchema = {
+  fields: playlistSnippetStatusFields,
+};
+
+export const updatePlaylistOutputSchema: OutputSchema = {
+  fields: playlistSnippetStatusFields,
+};
+
+export const addVideoToPlaylistOutputSchema: OutputSchema = {
+  fields: playlistItemSnippetFields,
+};
+
+export const updateVideoMetadataOutputSchema: OutputSchema = {
+  fields: videoSnippetStatusFields,
+};
+
+export const postVideoCommentOutputSchema: OutputSchema = {
+  fields: commentThreadInsertFields,
+};
+
+export const replyToCommentOutputSchema: OutputSchema = {
+  fields: replyInsertResourceFields,
+};
+
+export const getVideoRatingOutputSchema: OutputSchema = listEnvelope({
+  label: 'Ratings',
+  itemFields: videoRatingItemFields,
+  itemLabelKey: 'videoId',
+  withPageInfo: false,
+  withNextPageToken: false,
+  withPrevPageToken: false,
+});
+
+export const listTrendingVideosOutputSchema: OutputSchema = listEnvelope({
+  label: 'Videos',
+  itemFields: videoChartItemFields,
+  itemLabelKey: 'id',
+  withPrevPageToken: false,
+});
+
+export const listChannelVideosOutputSchema: OutputSchema = listEnvelope({
+  label: 'Channel Videos',
+  itemFields: playlistItemFields,
+  itemLabelKey: 'id',
+  withPrevPageToken: false,
+});
+
+export const listChannelActivitiesOutputSchema: OutputSchema =
+  undescribedItemsEnvelope({ label: 'Activities' });
+
+export const listSubscriptionsOutputSchema: OutputSchema =
+  undescribedItemsEnvelope({ label: 'Subscriptions' });
+
+export const deletePlaylistOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'playlistId', label: 'Playlist ID' },
+  ],
+};
+
+export const removeVideoFromPlaylistOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'playlistItemId', label: 'Playlist Item ID' },
+  ],
+};
+
+export const deleteCommentOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'commentId', label: 'Comment ID' },
+  ],
+};
+
+export const rateVideoOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'videoId', label: 'Video ID' },
+    { key: 'rating', label: 'Rating' },
+  ],
+};
+
+export const setCommentModerationStatusOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'success', label: 'Success', format: 'boolean' },
+    { key: 'commentIds', label: 'Comment IDs' },
+    { key: 'moderationStatus', label: 'Moderation Status' },
+  ],
+};
