@@ -1,7 +1,8 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, toError } from '@activepieces/core-utils'
 import { EngineOperationType, EngineResponseStatus, ExecuteTriggerResponse, FlowVersion, PollingJobData, RunEnvironment, StreamStepProgress, TriggerHookType, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../types'
+import { summarizeEngineError } from '../utils/engine-error-summary'
 import { recordTriggerRun } from '../utils/trigger-run-recorder'
 import { getWebhookUrl } from '../utils/webhook-url'
 
@@ -9,6 +10,12 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
     jobType: WorkerJobType.EXECUTE_POLLING,
     async execute(ctx: JobContext, data: PollingJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().TRIGGER_TIMEOUT_SECONDS
+
+        const pollingLogFields = {
+            flow: { id: data.flowId },
+            flowVersion: { id: data.flowVersionId },
+            project: { id: data.projectId },
+        }
 
         const resolved = await ctx.resolver.resolve({ platformId: data.platformId, publicApiUrl: ctx.publicApiUrl, engineToken: ctx.engineToken, flow: { id: data.flowId, versionId: data.flowVersionId, projectId: data.projectId } })
 
@@ -60,13 +67,22 @@ export const executePollingJob: JobHandler<PollingJobData, FireAndForgetJobResul
                     })
                 }
             }
+            else {
+                const failureFields = { ...pollingLogFields, engine: { status: result.status, error: summarizeEngineError({ error: result.error }) } }
+                if (result.status === EngineResponseStatus.USER_FAILURE) {
+                    ctx.log.warn(failureFields, 'Polling trigger hook failed, no flow run created')
+                }
+                else {
+                    ctx.log.error(failureFields, 'Polling trigger hook failed, no flow run created')
+                }
+            }
 
             await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: result.status })
 
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: result.logs }
         }
         catch (e) {
-            ctx.log.error({ error: String(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
+            ctx.log.error({ ...pollingLogFields, error: toError(e) }, 'Polling trigger failed, will retry on next scheduled cycle')
             await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: EngineResponseStatus.INTERNAL_ERROR })
             return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
         }
