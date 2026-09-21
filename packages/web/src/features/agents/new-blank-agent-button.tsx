@@ -75,7 +75,7 @@ type NewBlankAgentButtonProps = {
   projects: Project[];
   pending: boolean;
   onCreate: (projectId: string) => void;
-  variant?: 'outline';
+  variant?: 'outline' | 'default';
   size?: 'sm';
   className?: string;
   icon: ReactNode;

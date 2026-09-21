@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { PlusIcon } from '@/components/icons/plus';
@@ -26,6 +26,7 @@ import {
 import { chatApi } from '@/features/chat/lib/chat-api';
 import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CHAT_PROMPT_QUERY_PARAM } from '@/lib/route-utils';
 
 import { AIChatBox } from './ai-chat-box';
 import { ConversationSidebarToggle } from './components/conversation-sidebar-toggle';
@@ -40,6 +41,10 @@ export function ChatWithAIPage() {
   const { conversationId: urlConversationId } = useParams<{
     conversationId: string;
   }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [initialPrompt] = useState(
+    () => searchParams.get(CHAT_PROMPT_QUERY_PARAM) ?? undefined,
+  );
   const [resetKey, setResetKey] = useState(0);
   const [pendingConversationId, setPendingConversationId] = useState<
     string | null
@@ -61,6 +66,15 @@ export function ChatWithAIPage() {
     chatApi.recordLanding().catch(() => undefined);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!searchParams.has(CHAT_PROMPT_QUERY_PARAM)) {
+      return;
+    }
+    const withoutPrompt = new URLSearchParams(searchParams);
+    withoutPrompt.delete(CHAT_PROMPT_QUERY_PARAM);
+    setSearchParams(withoutPrompt, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarPinned((prev) => {
@@ -329,6 +343,7 @@ export function ChatWithAIPage() {
           <AIChatBox
             key={`${selectedConversationId ?? 'new'}-${resetKey}`}
             incognito={false}
+            initialPrompt={initialPrompt}
             conversationId={selectedConversationId}
             onTitleUpdate={handleTitleUpdate}
             onConversationCreated={handleConversationCreated}

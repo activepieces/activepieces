@@ -13,6 +13,7 @@ import {
 } from '@activepieces/shared';
 
 import { formatUtils } from '@/lib/format-utils';
+import { CHAT_PROMPT_QUERY_PARAM, CHAT_ROUTE } from '@/lib/route-utils';
 
 import {
   AnyToolPart,
@@ -567,6 +568,12 @@ function sanitizeTitle(title: string): string {
   return title.replace(/[*_`~#]/g, '').trim();
 }
 
+function promptLink(prompt: string): string {
+  return `${CHAT_ROUTE}?${CHAT_PROMPT_QUERY_PARAM}=${encodeURIComponent(
+    prompt,
+  )}`;
+}
+
 function reopensSameConversation({
   current,
   next,
@@ -579,6 +586,7 @@ function reopensSameConversation({
 
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
+  promptLink,
   reopensSameConversation,
   sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>

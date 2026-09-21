@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -53,6 +53,7 @@ import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -74,6 +75,7 @@ export function AIChatBox({
     <ChatStoreProvider>
       <ChatBoxContent
         incognito={incognito}
+        initialPrompt={initialPrompt}
         agentId={agentId}
         builder={builder}
         onTurnEnd={onTurnEnd}
@@ -90,6 +92,7 @@ export function AIChatBox({
 
 function ChatBoxContent({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -180,6 +183,19 @@ function ChatBoxContent({
     },
     [sendMessage],
   );
+
+  const sentInitialPrompt = useRef(false);
+
+  useEffect(() => {
+    const shouldSendInitialPrompt =
+      initialPrompt !== undefined &&
+      initialPrompt.trim().length > 0 &&
+      !initialConversationId &&
+      !sentInitialPrompt.current;
+    if (!shouldSendInitialPrompt) return;
+    sentInitialPrompt.current = true;
+    handleSend(initialPrompt).catch(() => undefined);
+  }, [initialPrompt, initialConversationId, handleSend]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -509,6 +525,7 @@ function computeClaimedBuildIds(
 
 type AIChatBoxProps = {
   incognito: boolean;
+  initialPrompt?: string;
   agentId?: string;
   builder?: boolean;
   onTurnEnd?: () => void;
