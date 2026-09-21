@@ -2,31 +2,6 @@ import { AppConnectionType, AppConnectionValueForAuthProperty } from '@activepie
 import { AuthenticationType } from '@activepieces/pieces-common';
 import type { zendeskAuth } from '../auth';
 
-export type ZendeskAuthValue = AppConnectionValueForAuthProperty<typeof zendeskAuth>;
-
-type ZendeskCustomAuthValue = {
-  type: AppConnectionType.CUSTOM_AUTH;
-  props: {
-    email: string;
-    token: string;
-    subdomain: string;
-  };
-};
-
-type ZendeskOAuth2AuthValue = {
-  type: AppConnectionType.OAUTH2 | AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
-  access_token: string;
-  props?: {
-    subdomain: string;
-  };
-};
-
-type ZendeskAuth = ZendeskCustomAuthValue | ZendeskOAuth2AuthValue;
-
-function isCustomAuth(auth: ZendeskAuth): auth is ZendeskCustomAuthValue {
-  return auth.type === AppConnectionType.CUSTOM_AUTH;
-}
-
 export function getZendeskSubdomain(auth: ZendeskAuthValue): string {
   const value = auth as ZendeskAuth;
   if (isCustomAuth(value)) {
@@ -61,3 +36,28 @@ export function getZendeskAuthorizationHeader(auth: ZendeskAuthValue): string {
   }
   return `Bearer ${value.access_token}`;
 }
+
+function isCustomAuth(auth: ZendeskAuth): auth is ZendeskCustomAuthValue {
+  return auth.type === AppConnectionType.CUSTOM_AUTH;
+}
+
+type ZendeskCustomAuthValue = {
+  type: AppConnectionType.CUSTOM_AUTH;
+  props: {
+    email: string;
+    token: string;
+    subdomain: string;
+  };
+};
+
+type ZendeskOAuth2AuthValue = {
+  type: AppConnectionType.OAUTH2 | AppConnectionType.CLOUD_OAUTH2 | AppConnectionType.PLATFORM_OAUTH2;
+  access_token: string;
+  props?: {
+    subdomain: string;
+  };
+};
+
+type ZendeskAuth = ZendeskCustomAuthValue | ZendeskOAuth2AuthValue;
+
+export type ZendeskAuthValue = AppConnectionValueForAuthProperty<typeof zendeskAuth>;
