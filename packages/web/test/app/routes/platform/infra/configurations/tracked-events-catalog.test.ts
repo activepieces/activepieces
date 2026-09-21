@@ -46,6 +46,6 @@ describe('trackedEventsCatalog', () => {
 
     expect(groupIds).not.toContain('emailCodes');
     expect(groupIds).not.toContain('accounts');
-    expect(groupIds).toEqual(['flows', 'mcp']);
+    expect(groupIds).toEqual(['flows', 'mcp', 'platformAdmin']);
   });
 });

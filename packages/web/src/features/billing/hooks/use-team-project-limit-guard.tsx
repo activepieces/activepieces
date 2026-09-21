@@ -4,10 +4,13 @@ import {
   ApFlagId,
   ProjectType,
   ProjectWithLimits,
+  TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, LayoutGrid } from 'lucide-react';
+import { useEffect } from 'react';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,6 +37,7 @@ export const useTeamProjectLimitGuard = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const { openDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const { capture } = useTelemetry();
 
   const limit = platform.plan.billedTeamProjectsLimit;
   const teamProjectsUsed = projects.filter(
@@ -48,9 +52,36 @@ export const useTeamProjectLimitGuard = ({
       isCommunity={edition === ApEdition.COMMUNITY}
       onClose={onClose}
       onExplorePlans={() => {
+        capture({
+          name: TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED,
+          payload: {
+            feature: PLATFORM_FEATURES.projects.featureKey,
+            tier: PLATFORM_FEATURES.projects.tier,
+            surface: 'limit',
+          },
+        });
         onClose();
         openDialog();
       }}
+      onContactSales={() =>
+        capture({
+          name: TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED,
+          payload: {
+            feature: PLATFORM_FEATURES.projects.featureKey,
+            surface: 'limit',
+          },
+        })
+      }
+      onLimitShown={() =>
+        capture({
+          name: TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED,
+          payload: {
+            limit: 'teamProjects',
+            used: teamProjectsUsed,
+            allowed: limit ?? null,
+          },
+        })
+      }
     />
   );
 
@@ -66,8 +97,14 @@ function TeamProjectLimitContent({
   isCommunity,
   onClose,
   onExplorePlans,
+  onContactSales,
+  onLimitShown,
 }: TeamProjectLimitContentProps) {
   const feature = PLATFORM_FEATURES.projects;
+  useEffect(() => {
+    onLimitShown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const isFirstTeamProject = limit === 0;
   const showBenefits = isPlatformAdmin && isFirstTeamProject;
 
@@ -115,7 +152,9 @@ function TeamProjectLimitContent({
               {t('Cancel')}
             </Button>
             {isCommunity ? (
-              <RequestTrial featureKey={feature.featureKey} />
+              <span onClickCapture={onContactSales}>
+                <RequestTrial featureKey={feature.featureKey} />
+              </span>
             ) : (
               <Button type="button" onClick={onExplorePlans}>
                 {t('Explore plans')}
@@ -138,4 +177,6 @@ type TeamProjectLimitContentProps = {
   isCommunity: boolean;
   onClose: () => void;
   onExplorePlans: () => void;
+  onContactSales: () => void;
+  onLimitShown: () => void;
 };

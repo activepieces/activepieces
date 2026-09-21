@@ -3,7 +3,7 @@ import {
   TelemetryEventName,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Layers, LucideIcon, Mail, User, Workflow } from 'lucide-react';
+import { Layers, LucideIcon, Mail, Shield, User, Workflow } from 'lucide-react';
 
 const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
   [TelemetryEventName.SIGNED_UP]: {
@@ -86,6 +86,26 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'mcp',
     label: t('MCP tool called'),
   },
+  [TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED]: {
+    group: 'platformAdmin',
+    label: t('Opened a platform administration page'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_GATE_BLOCKED]: {
+    group: 'platformAdmin',
+    label: t('Used a control your plan does not include'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_UPGRADE_CLICKED]: {
+    group: 'platformAdmin',
+    label: t('Opened the upgrade options from a locked feature'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_SALES_CONTACTED]: {
+    group: 'platformAdmin',
+    label: t('Started a sales enquiry from a locked feature'),
+  },
+  [TelemetryEventName.PLATFORM_ADMIN_LIMIT_REACHED]: {
+    group: 'platformAdmin',
+    label: t('Reached a plan limit'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {
@@ -95,6 +115,11 @@ const buildGroups = (): TrackedEventGroup[] => {
     { id: 'emailCodes', title: t('Emailed sign-in codes'), icon: Mail },
     { id: 'flows', title: t('Flows and the builder'), icon: Workflow },
     { id: 'mcp', title: t('MCP'), icon: Layers },
+    {
+      id: 'platformAdmin',
+      title: t('Platform administration'),
+      icon: Shield,
+    },
   ];
   return definitions
     .map((definition) => ({
@@ -112,7 +137,12 @@ const buildGroups = (): TrackedEventGroup[] => {
 
 export const trackedEventsCatalog = { buildEventLabels, buildGroups };
 
-export type TrackedEventGroupId = 'accounts' | 'emailCodes' | 'flows' | 'mcp';
+export type TrackedEventGroupId =
+  | 'accounts'
+  | 'emailCodes'
+  | 'flows'
+  | 'mcp'
+  | 'platformAdmin';
 
 export type TrackedEvent = {
   group: TrackedEventGroupId;
