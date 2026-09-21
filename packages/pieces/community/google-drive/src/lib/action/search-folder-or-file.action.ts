@@ -66,9 +66,9 @@ export const googleDriveSearchFolder = createAction({
     const drive = googleDrive({ version: 'v3', auth: authClient });
     const operator = context.propsValue.operator ?? 'contains';
     const queryTerm = context.propsValue.queryTerm ?? 'name';
-    let finalQuery = `${queryTerm} ${operator} '${context.propsValue.query}'`;
+    let finalQuery = `${queryTerm} ${operator} '${common.escapeDriveQueryLiteral(context.propsValue.query)}'`;
     if (context.propsValue.parentFolder) {
-      finalQuery = `${finalQuery} and '${context.propsValue.parentFolder}' in parents`;
+      finalQuery = `${finalQuery} and '${common.escapeDriveQueryLiteral(context.propsValue.parentFolder)}' in parents`;
     }
 
     const type = context.propsValue.type ?? 'all';
