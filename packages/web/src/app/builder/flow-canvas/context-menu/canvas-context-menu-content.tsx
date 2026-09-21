@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   FlowAction,
   FlowActionType,
@@ -99,7 +100,8 @@ export const CanvasContextMenuContent = ({
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === FlowActionType.ROUTER &&
+    !isNil(firstSelectedStep) &&
+    flowStructureUtil.isBranchedAction(firstSelectedStep) &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsCofBranchChild =
