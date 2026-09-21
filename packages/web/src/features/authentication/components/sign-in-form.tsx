@@ -104,8 +104,6 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             break;
           }
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
-            // /verify-email cannot see the OAuth from=, so remember it here
-            // exactly as the sign-up form does.
             pendingRedirect.remember(searchParams.get(FROM_QUERY_PARAM));
             setShowCheckYourEmailNote(true);
             break;

@@ -39,13 +39,9 @@ function McpAuthorizePage() {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [authorized, setAuthorized] = useState(false);
-  // Seeded from the browser clock, so it only drives the notice: a fast clock
-  // must not lock the user out of a request the server would still accept.
   const [requestExpired, setRequestExpired] = useState(
     expiresAt !== null && expiresAt * 1000 <= Date.now(),
   );
-  // Set only when the server itself rejected the request; this is what gates
-  // the buttons, because every further click could only fail the same way.
   const [requestRejected, setRequestRejected] = useState(false);
   const debouncedSetSearchValue = useDebouncedCallback(setSearchValue, 300);
   const markRejectedOnInvalidRequest = (error: unknown) => {
@@ -138,9 +134,6 @@ function McpAuthorizePage() {
   }
 
   const switchAccount = () => {
-    // A full reload, not a client-side navigate: the query cache is a module
-    // singleton and would otherwise hand the previous account's projects to
-    // whoever signs in next.
     authenticationSession.clearSession();
     window.location.href = signInPath;
   };
