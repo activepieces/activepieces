@@ -6,7 +6,7 @@ import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
-const VISIBLE_ROUTES = 4;
+const VISIBLE_ROUTES = 5;
 
 export const AiRouterRoutes = ({ output }: AiRouterRoutesProps) => {
   const ranked = rankRoutes(output);
@@ -34,7 +34,7 @@ export const AiRouterRoutes = ({ output }: AiRouterRoutesProps) => {
             </span>
           </TextWithTooltip>
           <Progress
-            value={route.percent}
+            value={route.percent ?? 0}
             className="h-1.5 grow"
             indicatorClassName={cn({ 'bg-muted-foreground': !route.chosen })}
           />
@@ -44,7 +44,7 @@ export const AiRouterRoutes = ({ output }: AiRouterRoutesProps) => {
               'text-muted-foreground': !route.chosen,
             })}
           >
-            {route.percent}%
+            {isNil(route.percent) ? '—' : `${route.percent}%`}
           </span>
         </div>
       ))}
@@ -58,37 +58,43 @@ export const AiRouterRoutes = ({ output }: AiRouterRoutesProps) => {
 };
 
 const AiRouterOutput = z.object({
-  choice: z.string(),
+  branches: z.array(
+    z.object({ branchName: z.string(), evaluation: z.boolean() }),
+  ),
   probabilities: z.record(z.string(), z.unknown()).optional(),
 });
 
 function rankRoutes(output: unknown): RankedRoute[] | undefined {
   const parsed = AiRouterOutput.safeParse(output);
-  if (!parsed.success || isNil(parsed.data.probabilities)) {
+  if (!parsed.success) {
     return undefined;
   }
-  const { choice, probabilities } = parsed.data;
-  const ranked = Object.entries(probabilities)
-    .flatMap(([name, probability]) =>
-      typeof probability === 'number'
-        ? [
-            {
-              name,
-              percent: Math.round(probability * 100),
-              chosen: name === choice,
-            },
-          ]
-        : [],
-    )
-    .sort((a, b) => b.percent - a.percent);
-  return ranked.length === 0 ? undefined : ranked;
+  const { branches, probabilities } = parsed.data;
+  if (isNil(probabilities)) {
+    return undefined;
+  }
+  const ranked = branches.map((branch) => {
+    const probability = probabilities[branch.branchName];
+    return {
+      name: branch.branchName,
+      percent:
+        typeof probability === 'number'
+          ? Math.round(probability * 100)
+          : undefined,
+      chosen: branch.evaluation,
+    };
+  });
+  if (ranked.every((route) => isNil(route.percent))) {
+    return undefined;
+  }
+  return ranked.sort((a, b) => (b.percent ?? -1) - (a.percent ?? -1));
 }
 
 export const aiRouterRoutesUtils = { rankRoutes };
 
 type RankedRoute = {
   name: string;
-  percent: number;
+  percent: number | undefined;
   chosen: boolean;
 };
 

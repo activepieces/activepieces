@@ -1,9 +1,9 @@
-import { AiRouterEvaluationError, ChooseAiRouteResponse } from '@activepieces/shared'
+import { AiRouterEvaluationError, AiRouterMatchMode, ChooseAiRouteResponse } from '@activepieces/shared'
 
 const TIMEOUT_MS = 10_000
 
 export const aiRouterApi = {
-    async choose({ apiUrl, engineToken, state, question, options }: ChooseParams): Promise<ChooseAiRouteResponse> {
+    async choose({ apiUrl, engineToken, state, question, options, matchMode }: ChooseParams): Promise<ChooseAiRouteResponse> {
         const url = `${apiUrl}v1/engine/ai-router`
         const startedAt = Date.now()
         const response = await global.fetch(url, {
@@ -12,7 +12,7 @@ export const aiRouterApi = {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${engineToken}`,
             },
-            body: JSON.stringify({ state, question, options }),
+            body: JSON.stringify({ state, question, options, matchMode }),
             signal: AbortSignal.timeout(TIMEOUT_MS),
         }).catch((error: unknown) => {
             const timedOut = error instanceof Error && error.name === 'TimeoutError'
@@ -40,4 +40,5 @@ type ChooseParams = {
     state: string
     question: string
     options: Record<string, string>
+    matchMode: AiRouterMatchMode
 }

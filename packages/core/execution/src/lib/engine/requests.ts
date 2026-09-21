@@ -3,6 +3,7 @@ import { RunInternalError } from '../flow-run/execution/execution-output'
 import { FlowRunStatus } from '../flow-run/execution/flow-execution'
 import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
+import { AiRouterMatchMode } from '../flows/actions/action'
 import { StepRunResponse } from '../flows/sample-data'
 import { StreamStepProgress } from './engine-operation'
 
@@ -86,12 +87,13 @@ export const ChooseAiRouteRequest = z.object({
     state: z.string(),
     question: z.string(),
     options: z.record(z.string(), z.string()),
+    matchMode: z.enum(AiRouterMatchMode),
 })
 
 export type ChooseAiRouteRequest = z.infer<typeof ChooseAiRouteRequest>
 
 export const ChooseAiRouteResponse = z.object({
-    choice: z.string(),
+    matched: z.array(z.string()),
     probabilities: z.record(z.string(), z.number()).optional(),
 })
 

@@ -285,6 +285,11 @@ export const RouterActionSettingsWithValidation = z.object({
 
 export type RouterActionSettings = z.infer<typeof RouterActionSettings>
 
+export enum AiRouterMatchMode {
+    BEST_MATCH = 'BEST_MATCH',
+    ALL_MATCHES = 'ALL_MATCHES',
+}
+
 export const AiRouterBranchesSchema = (addMinLength: boolean) =>
     z.array(
         z.union([
@@ -306,6 +311,7 @@ export const AiRouterActionSettings = z.object({
     text: z.string(),
     question: z.string(),
     branches: AiRouterBranchesSchema(false),
+    matchMode: z.enum(AiRouterMatchMode),
     minConfidence: z.number().min(0).max(1).optional(),
 })
 
@@ -313,6 +319,7 @@ export const AiRouterActionSettingsWithValidation = z.object({
     text: z.string().min(1, formErrors.required),
     question: z.string().min(1, formErrors.required),
     branches: AiRouterBranchesSchema(true),
+    matchMode: z.enum(AiRouterMatchMode),
     minConfidence: z.number().min(0).max(1).optional(),
 }).superRefine((settings, ctx) => {
     const seen = new Set<string>()

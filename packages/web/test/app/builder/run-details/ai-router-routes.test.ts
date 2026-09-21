@@ -4,9 +4,18 @@ import { aiRouterRoutesUtils } from '@/app/builder/run-details/ai-router-routes'
 
 const { rankRoutes } = aiRouterRoutesUtils;
 
+function branch(branchName: string, evaluation: boolean) {
+  return { branchName, branchIndex: 0, evaluation };
+}
+
 describe('rankRoutes', () => {
-  it('sorts routes by probability and marks the chosen one', () => {
+  it('sorts routes by probability and marks the one that ran', () => {
     const ranked = rankRoutes({
+      branches: [
+        branch('Billing', true),
+        branch('Technical', false),
+        branch('Sales', false),
+      ],
       choice: 'Billing',
       probabilities: { Sales: 0.03, Billing: 0.91, Technical: 0.06 },
     });
@@ -18,38 +27,71 @@ describe('rankRoutes', () => {
     ]);
   });
 
-  it('marks the chosen route even when another scored higher', () => {
+  it('marks what ran, not what the model answered', () => {
     const ranked = rankRoutes({
-      choice: 'Otherwise',
-      probabilities: { Technical: 0.38, Otherwise: 0.55 },
+      branches: [branch('Billing', false), branch('Otherwise', true)],
+      choice: 'Billing',
+      probabilities: { Billing: 0.4, Otherwise: 0.6 },
     });
 
-    expect(ranked?.[0]).toEqual({
-      name: 'Otherwise',
-      percent: 55,
-      chosen: true,
-    });
+    expect(ranked?.find((route) => route.chosen)?.name).toBe('Otherwise');
+    expect(ranked?.find((route) => route.name === 'Billing')?.chosen).toBe(
+      false,
+    );
   });
 
-  it('returns nothing when the model gave no distribution', () => {
-    expect(rankRoutes({ choice: 'Billing' })).toBeUndefined();
+  it('marks every route that ran when several did', () => {
+    const ranked = rankRoutes({
+      branches: [
+        branch('Billing', true),
+        branch('Sales', true),
+        branch('Technical', false),
+      ],
+      probabilities: { Billing: 0.9, Sales: 0.7, Technical: 0.05 },
+    });
+
+    expect(ranked?.filter((route) => route.chosen).map((r) => r.name)).toEqual([
+      'Billing',
+      'Sales',
+    ]);
+  });
+
+  it('shows an unscored route that ran, and sorts it last', () => {
+    const ranked = rankRoutes({
+      branches: [branch('Billing', false), branch('Otherwise', true)],
+      probabilities: { Billing: 0.2 },
+    });
+
+    expect(ranked).toEqual([
+      { name: 'Billing', percent: 20, chosen: false },
+      { name: 'Otherwise', percent: undefined, chosen: true },
+    ]);
+  });
+
+  it('returns nothing when no route carries a usable probability', () => {
+    const branches = [branch('Billing', true)];
+    expect(rankRoutes({ branches })).toBeUndefined();
+    expect(rankRoutes({ branches, probabilities: {} })).toBeUndefined();
     expect(
-      rankRoutes({ choice: 'Billing', probabilities: {} }),
+      rankRoutes({ branches, probabilities: { Billing: 'high' } }),
     ).toBeUndefined();
   });
 
   it('returns nothing for an output that is not an ai router result', () => {
     expect(rankRoutes(undefined)).toBeUndefined();
     expect(rankRoutes('No output')).toBeUndefined();
-    expect(rankRoutes({ branches: [] })).toBeUndefined();
+    expect(rankRoutes({ choice: 'Billing' })).toBeUndefined();
   });
 
-  it('ignores non numeric probabilities rather than rendering NaN', () => {
+  it('ignores a non numeric probability rather than rendering NaN', () => {
     const ranked = rankRoutes({
-      choice: 'Billing',
+      branches: [branch('Billing', true), branch('Broken', false)],
       probabilities: { Billing: 1, Broken: 'high' },
     });
 
-    expect(ranked).toEqual([{ name: 'Billing', percent: 100, chosen: true }]);
+    expect(ranked).toEqual([
+      { name: 'Billing', percent: 100, chosen: true },
+      { name: 'Broken', percent: undefined, chosen: false },
+    ]);
   });
 });

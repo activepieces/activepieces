@@ -1,4 +1,4 @@
-import { FlowAction, FlowRunStatus, StepOutputStatus } from '@activepieces/shared'
+import { AiRouterMatchMode, FlowAction, FlowRunStatus, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildAiRouter, buildPieceAction, generateMockEngineConstants } from './test-helper'
@@ -41,7 +41,7 @@ describe('ai router', () => {
     })
 
     it('runs only the route the model chose', async () => {
-        answerWith({ choice: 'Billing', probabilities: { Billing: 0.91, Technical: 0.09 } })
+        answerWith({ matched: ['Billing'], probabilities: { Billing: 0.91, Technical: 0.09 } })
 
         const result = await execute(buildAiRouter({
             routes: [{ branchName: 'Billing', description: 'Payments' }, { branchName: 'Technical', description: 'Bugs' }],
@@ -65,7 +65,7 @@ describe('ai router', () => {
     })
 
     it('sends every route as a named criterion, fallback included', async () => {
-        const calls = answerWith({ choice: 'Otherwise' })
+        const calls = answerWith({ matched: ['Otherwise'] })
 
         await execute(buildAiRouter({
             routes: [{ branchName: 'Billing', description: 'Payments' }],
@@ -76,6 +76,7 @@ describe('ai router', () => {
         expect(calls[0]).toEqual({
             state: 'My card was charged twice',
             question: 'Which team should handle this?',
+            matchMode: AiRouterMatchMode.BEST_MATCH,
             options: {
                 Billing: 'Payments',
                 Otherwise: 'Anything that fits none of the other routes',
@@ -84,7 +85,7 @@ describe('ai router', () => {
     })
 
     it('takes the fallback when the answer is below the confidence floor', async () => {
-        answerWith({ choice: 'Billing', probabilities: { Billing: 0.4, Otherwise: 0.6 } })
+        answerWith({ matched: ['Billing'], probabilities: { Billing: 0.4, Otherwise: 0.6 } })
 
         const result = await execute(buildAiRouter({
             routes: [{ branchName: 'Billing', description: 'Payments' }],
@@ -99,7 +100,7 @@ describe('ai router', () => {
     })
 
     it('runs no route when the answer is below the floor and there is no fallback', async () => {
-        answerWith({ choice: 'Billing', probabilities: { Billing: 0.4 } })
+        answerWith({ matched: ['Billing'], probabilities: { Billing: 0.4 } })
 
         const result = await execute(buildAiRouter({
             routes: [{ branchName: 'Billing', description: 'Payments' }],
@@ -115,7 +116,7 @@ describe('ai router', () => {
     })
 
     it('ignores the floor when the model returns no probabilities', async () => {
-        answerWith({ choice: 'Billing' })
+        answerWith({ matched: ['Billing'] })
 
         const result = await execute(buildAiRouter({
             routes: [{ branchName: 'Billing', description: 'Payments' }],
@@ -129,7 +130,7 @@ describe('ai router', () => {
     })
 
     it('falls back when the model names a route that does not exist', async () => {
-        answerWith({ choice: 'Refunds' })
+        answerWith({ matched: ['Refunds'] })
 
         const result = await execute(buildAiRouter({
             routes: [{ branchName: 'Billing', description: 'Payments' }],
@@ -153,5 +154,90 @@ describe('ai router', () => {
         expect(result.steps.ai_router.status).toBe(StepOutputStatus.FAILED)
         expect(result.steps.billing).toBeUndefined()
         expect(result.steps.otherwise).toBeUndefined()
+    })
+
+    describe('taking every route that applies', () => {
+        const allMatches = AiRouterMatchMode.ALL_MATCHES
+
+        it('runs every route the model affirmed', async () => {
+            answerWith({ matched: ['Billing', 'Sales'], probabilities: { Billing: 0.9, Sales: 0.7, Technical: 0.05 } })
+
+            const result = await execute(buildAiRouter({
+                matchMode: allMatches,
+                routes: [{ branchName: 'Billing', description: 'Payments' }, { branchName: 'Technical', description: 'Bugs' }, { branchName: 'Sales', description: 'Pricing' }],
+                fallback: { branchName: 'Otherwise', description: 'Anything else' },
+                children: [mapperStep('billing'), mapperStep('technical'), mapperStep('sales'), mapperStep('otherwise')],
+            }))
+
+            expect(result.steps.billing.output).toEqual({ key: 3 })
+            expect(result.steps.sales.output).toEqual({ key: 3 })
+            expect(result.steps.technical).toBeUndefined()
+            expect(result.steps.otherwise).toBeUndefined()
+            expect(result.steps.ai_router.output).not.toHaveProperty('choice')
+        })
+
+        it('never asks about the fallback route', async () => {
+            const calls = answerWith({ matched: ['Billing'] })
+
+            await execute(buildAiRouter({
+                matchMode: allMatches,
+                routes: [{ branchName: 'Billing', description: 'Payments' }],
+                fallback: { branchName: 'Otherwise', description: 'Anything else' },
+                children: [mapperStep('billing'), mapperStep('otherwise')],
+            }))
+
+            expect(calls[0]).toEqual({
+                state: 'My card was charged twice',
+                question: 'Which team should handle this?',
+                matchMode: allMatches,
+                options: { Billing: 'Payments' },
+            })
+        })
+
+        it('runs the fallback only when nothing matched', async () => {
+            answerWith({ matched: [] })
+
+            const result = await execute(buildAiRouter({
+                matchMode: allMatches,
+                routes: [{ branchName: 'Billing', description: 'Payments' }, { branchName: 'Sales', description: 'Pricing' }],
+                fallback: { branchName: 'Otherwise', description: 'Anything else' },
+                children: [mapperStep('billing'), mapperStep('sales'), mapperStep('otherwise')],
+            }))
+
+            expect(result.steps.billing).toBeUndefined()
+            expect(result.steps.sales).toBeUndefined()
+            expect(result.steps.otherwise.output).toEqual({ key: 3 })
+        })
+
+        it('drops individual routes that fall below the floor', async () => {
+            answerWith({ matched: ['Billing', 'Sales'], probabilities: { Billing: 0.95, Sales: 0.4 } })
+
+            const result = await execute(buildAiRouter({
+                matchMode: allMatches,
+                minConfidence: 0.7,
+                routes: [{ branchName: 'Billing', description: 'Payments' }, { branchName: 'Sales', description: 'Pricing' }],
+                fallback: { branchName: 'Otherwise', description: 'Anything else' },
+                children: [mapperStep('billing'), mapperStep('sales'), mapperStep('otherwise')],
+            }))
+
+            expect(result.steps.billing.output).toEqual({ key: 3 })
+            expect(result.steps.sales).toBeUndefined()
+            expect(result.steps.otherwise).toBeUndefined()
+        })
+
+        it('runs the fallback when the floor rejects every route', async () => {
+            answerWith({ matched: ['Billing'], probabilities: { Billing: 0.4 } })
+
+            const result = await execute(buildAiRouter({
+                matchMode: allMatches,
+                minConfidence: 0.7,
+                routes: [{ branchName: 'Billing', description: 'Payments' }],
+                fallback: { branchName: 'Otherwise', description: 'Anything else' },
+                children: [mapperStep('billing'), mapperStep('otherwise')],
+            }))
+
+            expect(result.steps.billing).toBeUndefined()
+            expect(result.steps.otherwise.output).toEqual({ key: 3 })
+        })
     })
 })

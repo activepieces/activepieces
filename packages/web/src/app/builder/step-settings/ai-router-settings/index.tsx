@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   AiRouterAction,
+  AiRouterMatchMode,
   BranchExecutionType,
   FlowActionType,
   FlowOperationRequest,
@@ -22,6 +23,13 @@ import {
   FormMessage,
 } from '../../../../components/ui/form';
 import { Label } from '../../../../components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../components/ui/select';
 import { Textarea } from '../../../../components/ui/textarea';
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../../flow-canvas/utils/flow-canvas-utils';
@@ -210,6 +218,43 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             ></TextInputWithMentions>
             <span className="text-xs text-muted-foreground">
               {t('One question, answered by exactly one route below.')}
+            </span>
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="settings.matchMode"
+        render={({ field }) => (
+          <FormItem className="flex flex-col gap-1">
+            <Label>{t('Match')}</Label>
+            <Select
+              disabled={readonly}
+              value={field.value}
+              onValueChange={(value) => {
+                field.onChange(value);
+                form.trigger();
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t('Match')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={AiRouterMatchMode.BEST_MATCH}>
+                  {t('The best route')}
+                </SelectItem>
+                <SelectItem value={AiRouterMatchMode.ALL_MATCHES}>
+                  {t('Every route that applies')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-xs text-muted-foreground">
+              {field.value === AiRouterMatchMode.ALL_MATCHES
+                ? t(
+                    'Asks the model once per route, so it costs more than picking one.',
+                  )
+                : t('Exactly one route runs.')}
             </span>
           </FormItem>
         )}

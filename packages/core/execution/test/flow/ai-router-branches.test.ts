@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BranchExecutionType, FlowActionType } from '../../src/lib/flows/actions/action'
+import { AiRouterMatchMode, BranchExecutionType, FlowActionType } from '../../src/lib/flows/actions/action'
 import { FlowVersion, FlowVersionState } from '../../src/lib/flows/flow-version'
 import { flowOperations, FlowOperationType, StepLocationRelativeToParent } from '../../src/lib/flows/operations'
 import { flowStructureUtil } from '../../src/lib/flows/util/flow-structure-util'
@@ -32,6 +32,7 @@ function flowWithAiRouter(): FlowVersion {
                 settings: {
                     text: '',
                     question: '',
+                    matchMode: AiRouterMatchMode.BEST_MATCH,
                     branches: [
                         { branchType: BranchExecutionType.CONDITION, branchName: 'Route 1', description: '' },
                         { branchType: BranchExecutionType.FALLBACK, branchName: 'Otherwise', description: 'else' },

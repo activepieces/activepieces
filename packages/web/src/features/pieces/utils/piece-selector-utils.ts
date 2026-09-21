@@ -22,6 +22,7 @@ import {
   StepSettings,
   RouterActionSettingsWithValidation,
   AiRouterActionSettingsWithValidation,
+  AiRouterMatchMode,
   FlowTriggerType,
   PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
@@ -252,6 +253,7 @@ const getDefaultStepValues = ({
           settings: aiRouterSettingsOverride(overrideDefaultSettings) ?? {
             text: '',
             question: '',
+            matchMode: AiRouterMatchMode.BEST_MATCH,
             branches: [
               {
                 branchType: BranchExecutionType.CONDITION,

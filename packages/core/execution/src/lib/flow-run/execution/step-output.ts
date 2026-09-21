@@ -140,7 +140,7 @@ RouterStepResult
 
 type AiRouterStepResult = {
     branches: BranchResult[]
-    choice: string
+    choice?: string
     probabilities?: Record<string, number>
 }
 

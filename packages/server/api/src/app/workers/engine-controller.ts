@@ -106,6 +106,7 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
             state: request.body.state,
             question: request.body.question,
             options: request.body.options,
+            matchMode: request.body.matchMode,
         })
     })
 

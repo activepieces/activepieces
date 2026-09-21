@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { AiRouterAction, AiRouterActionSettings, AiRouterStepOutput, BranchExecutionType, ChooseAiRouteResponse } from '@activepieces/shared'
+import { AiRouterAction, AiRouterActionSettings, AiRouterMatchMode, AiRouterStepOutput, BranchExecutionType, ChooseAiRouteResponse } from '@activepieces/shared'
 import { aiRouterApi } from '../api/ai-router-api'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
@@ -33,6 +33,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             })
         }
         const { censoredInput, resolvedInput } = resolved
+        const bestMatch = resolvedInput.matchMode === AiRouterMatchMode.BEST_MATCH
 
         const { data: answer, error: answerError } = await utils.tryCatchAndThrowOnEngineError(() =>
             aiRouterApi.choose({
@@ -40,7 +41,8 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
                 engineToken: constants.engineToken,
                 state: asPlainText(resolvedInput.text),
                 question: asPlainText(resolvedInput.question),
-                options: toOptions(resolvedInput.branches),
+                options: toOptions(askableBranches(resolvedInput)),
+                matchMode: resolvedInput.matchMode,
             }),
         )
         if (answerError) {
@@ -53,8 +55,10 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             })
         }
 
-        const chosen = chosenBranchName({ answer, branches: resolvedInput.branches, minConfidence: resolvedInput.minConfidence })
-        const evaluations = resolvedInput.branches.map((branch) => branch.branchName === chosen)
+        const confident = confidentRoutes({ answer, minConfidence: resolvedInput.minConfidence })
+        const evaluations = bestMatch
+            ? bestMatchEvaluations({ branches: resolvedInput.branches, confident })
+            : allMatchesEvaluations({ branches: resolvedInput.branches, confident })
 
         const stepOutput = AiRouterStepOutput.init({
             input: censoredInput,
@@ -64,7 +68,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
                 branchIndex: index + 1,
                 evaluation: evaluations[index],
             })),
-            choice: chosen ?? answer.choice,
+            ...(bestMatch ? { choice: chosenName({ branches: resolvedInput.branches, evaluations }) ?? answer.matched[0] } : {}),
             ...(isNil(answer.probabilities) ? {} : { probabilities: answer.probabilities }),
         }).setDuration(performance.now() - stepStartTime)
 
@@ -74,9 +78,16 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             constants,
             stepOutput,
             evaluations,
-            stopAfterFirstMatch: true,
+            stopAfterFirstMatch: bestMatch,
         })
     },
+}
+
+function askableBranches(settings: AiRouterActionSettings): AiRouterActionSettings['branches'] {
+    if (settings.matchMode === AiRouterMatchMode.BEST_MATCH) {
+        return settings.branches
+    }
+    return settings.branches.filter((branch) => branch.branchType !== BranchExecutionType.FALLBACK)
 }
 
 function toOptions(branches: AiRouterActionSettings['branches']): Record<string, string> {
@@ -97,17 +108,34 @@ function criterionOf(branch: AiRouterActionSettings['branches'][number]): string
     return branch.branchType === BranchExecutionType.FALLBACK ? FALLBACK_CRITERION : branch.branchName
 }
 
-function chosenBranchName({ answer, branches, minConfidence }: ChosenBranchNameParams): string | undefined {
+function confidentRoutes({ answer, minConfidence }: { answer: ChooseAiRouteResponse, minConfidence: number | undefined }): string[] {
+    if (isNil(minConfidence)) {
+        return answer.matched
+    }
+    return answer.matched.filter((route) => {
+        const confidence = answer.probabilities?.[route]
+        return isNil(confidence) || confidence >= minConfidence
+    })
+}
+
+function bestMatchEvaluations({ branches, confident }: EvaluationsParams): boolean[] {
     const fallbackName = branches.find((branch) => branch.branchType === BranchExecutionType.FALLBACK)?.branchName
-    const known = branches.some((branch) => branch.branchName === answer.choice)
-    if (!known) {
-        return fallbackName
-    }
-    const confidence = answer.probabilities?.[answer.choice]
-    if (isNil(minConfidence) || isNil(confidence) || confidence >= minConfidence) {
-        return answer.choice
-    }
-    return fallbackName
+    const answered = confident[0]
+    const known = !isNil(answered) && branches.some((branch) => branch.branchName === answered)
+    const chosen = known ? answered : fallbackName
+    return branches.map((branch) => branch.branchName === chosen)
+}
+
+function allMatchesEvaluations({ branches, confident }: EvaluationsParams): boolean[] {
+    const matched = new Set(confident)
+    const withoutFallback = branches.map((branch) => branch.branchType !== BranchExecutionType.FALLBACK && matched.has(branch.branchName))
+    const nothingMatched = withoutFallback.every((match) => !match)
+    return branches.map((branch, index) => branch.branchType === BranchExecutionType.FALLBACK ? nothingMatched : withoutFallback[index])
+}
+
+function chosenName({ branches, evaluations }: { branches: AiRouterActionSettings['branches'], evaluations: boolean[] }): string | undefined {
+    const index = evaluations.findIndex((evaluation) => evaluation)
+    return index === -1 ? undefined : branches[index].branchName
 }
 
 function asPlainText(value: unknown): string {
@@ -117,8 +145,7 @@ function asPlainText(value: unknown): string {
     return JSON.stringify(value) ?? ''
 }
 
-type ChosenBranchNameParams = {
-    answer: ChooseAiRouteResponse
+type EvaluationsParams = {
     branches: AiRouterActionSettings['branches']
-    minConfidence: number | undefined
+    confident: string[]
 }

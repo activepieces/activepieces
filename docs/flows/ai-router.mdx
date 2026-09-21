@@ -55,7 +55,45 @@ Never ask the model whether 500 is bigger than 499.
 | **Question** | One question, answered by exactly one route. |
 | **Routes** | Each route's **name** is a possible answer; its **description** tells the model when to pick it. |
 | **Otherwise** | Always present, always last. Edit its description like any other route. |
+| **Match** | Take the best route, or every route that applies. |
 | **Confidence floor** | Optional. Below it, the flow takes the Otherwise route. |
+
+## One route, or every route that applies
+
+**Match** decides how many routes run.
+
+**The best route** (the default) asks one question and exactly one route runs. Use it when the routes
+are alternatives — a ticket goes to one team.
+
+**Every route that applies** runs each route that fits, and the Otherwise route only when none did.
+Use it when the routes are independent — one message can be *both* a billing question *and* an
+angry customer.
+
+```
+Input   {{trigger.body}}
+Question   What does this message need?
+Match   Every route that applies
+
+Routes
+  Refund        Wants money back
+  Escalate      Angry, threatening to churn, or asking for a manager
+  Log feedback  Mentions a feature or a complaint about the product
+  Otherwise     Nothing above applies
+```
+
+`"I want a refund and honestly I'm done with you"` runs **Refund** and **Escalate**, and skips the
+other two.
+
+Two things to know before you switch:
+
+- It **asks the model once per route**, so a 6-route step is 6 questions instead of 1. They go in one
+  request, but it is not free.
+- It does **not** send Otherwise to the model. There is no forced choice to decline from — every
+  route can simply answer no — so Otherwise is decided here rather than by the model, and its
+  description is unused in this mode.
+
+A confidence floor works per route here: a route the model affirmed but was only 40% sure about is
+dropped, and if the floor rejects every route, Otherwise runs.
 
 ## Write route descriptions, not prompts
 
@@ -74,7 +112,7 @@ Billing     If the customer seems to be talking about anything financial in natu
 ```
 </CodeGroup>
 
-## Otherwise is a real route
+## Otherwise is a real route (best-route mode)
 
 Give it a description. It is sent to the model as a genuine option, not used as a leftover bucket,
 and that is what lets the router decline rather than guess.

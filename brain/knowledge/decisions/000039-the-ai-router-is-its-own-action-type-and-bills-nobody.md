@@ -58,8 +58,18 @@ A failed or timed-out call **fails the step**. It never quietly takes the fallba
 refund down the wrong branch because a model timed out is a correctness bug that looks like normal
 operation.
 
-The step has **no `executionType`**: a choice answer names exactly one branch, so all-match has no
-meaning. That is a simplification the AI router earns and the Router cannot have.
+The step started with **no `executionType`**, on the reasoning that a choice answer names exactly one
+branch so all-match had no meaning. That held only while the step asked one `choice` question. It now
+carries `matchMode`: `BEST_MATCH` asks one `choice` question and exactly one route runs, while
+`ALL_MATCHES` asks one `boolean` question per route — in a single request, since the gateway's
+`questions` field is a record — and every affirmed route runs. The fallback rule mirrors the Router's
+exactly: it runs iff no other route did.
+
+The two modes differ in a way that is easy to get wrong: **`ALL_MATCHES` never sends the fallback to
+the model.** There is no forced choice to decline from, so booleans can all be false on their own and
+the fallback is computed locally. The measured "give the model an explicit `Otherwise` criterion or
+`hi` routes to Sales at 0.87" finding therefore applies to `BEST_MATCH` only. `ALL_MATCHES` also
+costs one question per route instead of one per step, which is the honest trade for fan-out.
 
 `AI_MATCHES` (PR #15666) is parked. If it ever merges, the product carries two AI branching concepts
 and that needs its own call.
