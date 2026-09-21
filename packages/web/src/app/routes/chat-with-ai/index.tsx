@@ -1,10 +1,10 @@
-import { SeekPage } from '@activepieces/core-utils';
+import { isNil, isObject, SeekPage } from '@activepieces/core-utils';
 import { AgentConversation } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Ellipsis, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { PlusIcon } from '@/components/icons/plus';
@@ -24,10 +24,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
-import {
-  CHAT_PROMPT_QUERY_PARAM,
-  chatUtils,
-} from '@/features/chat/lib/chat-utils';
+import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 import { AIChatBox } from './ai-chat-box';
@@ -43,10 +40,12 @@ export function ChatWithAIPage() {
   const { conversationId: urlConversationId } = useParams<{
     conversationId: string;
   }>();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [initialPrompt] = useState(
-    () => searchParams.get(CHAT_PROMPT_QUERY_PARAM) ?? undefined,
-  );
+  const location = useLocation();
+  const handedOverPrompt =
+    isObject(location.state) && typeof location.state.prompt === 'string'
+      ? location.state.prompt
+      : undefined;
+  const [initialPrompt, setInitialPrompt] = useState(handedOverPrompt);
   const [resetKey, setResetKey] = useState(0);
   const [pendingConversationId, setPendingConversationId] = useState<
     string | null
@@ -70,13 +69,11 @@ export function ChatWithAIPage() {
   }, []);
 
   useEffect(() => {
-    if (!searchParams.has(CHAT_PROMPT_QUERY_PARAM)) {
+    if (isNil(handedOverPrompt)) {
       return;
     }
-    const withoutPrompt = new URLSearchParams(searchParams);
-    withoutPrompt.delete(CHAT_PROMPT_QUERY_PARAM);
-    setSearchParams(withoutPrompt, { replace: true });
-  }, [searchParams, setSearchParams]);
+    navigate(location.pathname, { replace: true, state: null });
+  }, [handedOverPrompt, location.pathname, navigate]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarPinned((prev) => {
@@ -346,6 +343,7 @@ export function ChatWithAIPage() {
             key={`${selectedConversationId ?? 'new'}-${resetKey}`}
             incognito={false}
             initialPrompt={initialPrompt}
+            onInitialPromptSent={() => setInitialPrompt(undefined)}
             conversationId={selectedConversationId}
             onTitleUpdate={handleTitleUpdate}
             onConversationCreated={handleConversationCreated}

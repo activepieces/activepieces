@@ -54,6 +54,7 @@ import { getTextFromParts } from './lib/message-parsers';
 export function AIChatBox({
   incognito,
   initialPrompt,
+  onInitialPromptSent,
   agentId,
   builder,
   onTurnEnd,
@@ -76,6 +77,7 @@ export function AIChatBox({
       <ChatBoxContent
         incognito={incognito}
         initialPrompt={initialPrompt}
+        onInitialPromptSent={onInitialPromptSent}
         agentId={agentId}
         builder={builder}
         onTurnEnd={onTurnEnd}
@@ -93,6 +95,7 @@ export function AIChatBox({
 function ChatBoxContent({
   incognito,
   initialPrompt,
+  onInitialPromptSent,
   agentId,
   builder,
   onTurnEnd,
@@ -194,8 +197,9 @@ function ChatBoxContent({
       !sentInitialPrompt.current;
     if (!shouldSendInitialPrompt) return;
     sentInitialPrompt.current = true;
+    onInitialPromptSent?.();
     handleSend(initialPrompt).catch(() => undefined);
-  }, [initialPrompt, initialConversationId, handleSend]);
+  }, [initialPrompt, initialConversationId, handleSend, onInitialPromptSent]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -526,6 +530,7 @@ function computeClaimedBuildIds(
 type AIChatBoxProps = {
   incognito: boolean;
   initialPrompt?: string;
+  onInitialPromptSent?: () => void;
   agentId?: string;
   builder?: boolean;
   onTurnEnd?: () => void;
