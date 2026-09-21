@@ -3,21 +3,26 @@ import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema } from './tool-primitives'
 
-export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor }: {
+export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     accountAlreadyChosenFor?: (pieceName: string) => boolean
+    connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
 }): ToolSet {
-    function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
+    async function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): Promise<{ content: { type: string, text: string }[] } | undefined> {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
-        if (isNil(accountAlreadyChosenFor) || !accountAlreadyChosenFor(normalizePieceName(piece))) {
+        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+        if (!isNil(accountAlreadyChosenFor) && accountAlreadyChosenFor(normalizePieceName(piece))) {
+            return { content: [{ type: 'text', text: `This agent already runs on the ${displayName} account its author chose, so there is nothing to connect or reconnect here and this card was not shown. Use the ${displayName} tool. If it fails, say exactly what failed — do not describe it as a connection problem unless the failure says the credentials were rejected.` }] }
+        }
+        const chosenEarlier = isNil(connectionChosenEarlierFor) ? null : await connectionChosenEarlierFor(normalizePieceName(piece))
+        if (isNil(chosenEarlier)) {
             return undefined
         }
-        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
-        return { content: [{ type: 'text', text: `This agent already runs on the ${displayName} account its author chose, so there is nothing to connect or reconnect here and this card was not shown. Use the ${displayName} tool. If it fails, say exactly what failed — do not describe it as a connection problem unless the failure says the credentials were rejected.` }] }
+        return { content: [{ type: 'text', text: `The user already picked the ${displayName} account "${chosenEarlier.label}" earlier in this conversation, so the card was not shown again. Use connectionExternalId "${chosenEarlier.externalId}" and carry on without asking. Only show the card again if they ask to switch accounts.` }] }
     }
 
     function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
@@ -26,10 +31,10 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
-        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined
+        refuseWhen?: (input: Record<string, unknown>) => Promise<{ content: { type: string, text: string }[] } | undefined>
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
-            const refusal = refuseWhen?.(input)
+            const refusal = await refuseWhen?.(input)
             if (!isNil(refusal)) {
                 return refusal
             }
