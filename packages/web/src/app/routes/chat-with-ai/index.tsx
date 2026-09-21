@@ -86,6 +86,7 @@ export function ChatWithAIPage() {
   const selectedConversationId = urlConversationId ?? null;
 
   const handleNewChat = useCallback(() => {
+    setInitialPrompt(undefined);
     setResetKey((k) => k + 1);
     setPendingConversationId(null);
     setConversationTitle(null);
@@ -107,6 +108,7 @@ export function ChatWithAIPage() {
 
   const handleConversationCreated = useCallback(
     (conversationId: string) => {
+      setInitialPrompt(undefined);
       setPendingConversationId(conversationId);
       window.history.replaceState(null, '', `/chat/${conversationId}`);
       void queryClient.invalidateQueries({
@@ -343,7 +345,6 @@ export function ChatWithAIPage() {
             key={`${selectedConversationId ?? 'new'}-${resetKey}`}
             incognito={false}
             initialPrompt={initialPrompt}
-            onInitialPromptSent={() => setInitialPrompt(undefined)}
             conversationId={selectedConversationId}
             onTitleUpdate={handleTitleUpdate}
             onConversationCreated={handleConversationCreated}
