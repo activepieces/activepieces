@@ -10,8 +10,8 @@ function wrapDrainWithHost(
     inner: (ctx: DrainContext) => void | Promise<void>,
 ): (ctx: DrainContext) => Promise<void> {
     return async (ctx: DrainContext) => {
-        if (isNil(ctx.event.host)) {
-            ctx.event.host = HOSTNAME
+        if (isNil(ctx.event['host'])) {
+            ctx.event['host'] = HOSTNAME
         }
         await inner(ctx)
     }
