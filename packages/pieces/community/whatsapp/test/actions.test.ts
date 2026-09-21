@@ -19,12 +19,32 @@ import { listPhoneNumbers } from '../src/lib/actions/list-phone-numbers';
 import { sendMessage } from '../src/lib/actions/send-message';
 import { sendMedia } from '../src/lib/actions/send-media';
 import { sendTemplate } from '../src/lib/actions/send-template';
+import { inputUtils } from '../src/lib/common/inputs';
 
 const AUTH = { type: 'CUSTOM_AUTH', props: { access_token: 'tok', businessAccountId: 'WABA' } };
 const SEND_RESPONSE = { messaging_product: 'whatsapp', contacts: [{ input: '1', wa_id: '1' }], messages: [{ id: 'wamid.NEW' }] };
 const BASE = { phone_number_id: 'PN', to: '962782550213' };
 
 const requests: HttpRequest[] = [];
+
+function objectAt({ value, path }: ObjectAtParams): Record<string, unknown> {
+	const found = path.split('.').reduce<unknown>((current, segment) => {
+		if (inputUtils.isRecord(current)) return current[segment];
+		if (Array.isArray(current)) return current[Number(segment)];
+		return undefined;
+	}, value);
+	if (!inputUtils.isRecord(found)) {
+		throw new Error(`expected an object at ${path}`);
+	}
+	return found;
+}
+
+function bufferBody(value: unknown): Buffer {
+	if (!Buffer.isBuffer(value)) {
+		throw new Error('expected a Buffer request body');
+	}
+	return value;
+}
 
 function context<T extends Record<string, unknown>>(propsValue: T) {
 	return { ...createMockActionContext({ propsValue }), auth: AUTH };
@@ -141,7 +161,7 @@ describe('Send Interactive Buttons', () => {
 
 	test('omits header and footer when not provided and accepts the array as a JSON string', async () => {
 		await sendInteractiveButtons.run(context({ ...BASE, body: 'Pick', buttons: JSON.stringify(buttons), header_type: 'none' }));
-		const interactive = (requests[0].body as { interactive: Record<string, unknown> }).interactive;
+		const interactive = objectAt({ value: requests[0].body, path: 'interactive' });
 		expect(interactive).not.toHaveProperty('header');
 		expect(interactive).not.toHaveProperty('footer');
 		expect(interactive.action).toEqual({ buttons: [{ type: 'reply', reply: { id: 'yes', title: 'Yes' } }, { type: 'reply', reply: { id: 'no', title: 'No' } }] });
@@ -187,7 +207,7 @@ describe('Send Interactive List', () => {
 				action: { button: 'Open', sections: [{ title: 'Options', rows: [{ id: 'r1', title: 'Row one', description: 'first' }, { id: 'r2', title: 'Row two' }] }] },
 			},
 		});
-		const secondRow = (requests[0].body as { interactive: { action: { sections: { rows: Record<string, unknown>[] }[] } } }).interactive.action.sections[0].rows[1];
+		const secondRow = objectAt({ value: requests[0].body, path: 'interactive.action.sections.0.rows.1' });
 		expect(secondRow).not.toHaveProperty('description');
 	});
 
@@ -233,7 +253,7 @@ describe('Send Location', () => {
 	test('sends coordinates as strings and omits empty name/address', async () => {
 		await sendLocation.run(context({ ...BASE, latitude: 31.9539, longitude: 35.9106 }));
 		expect(requests[0].body).toMatchObject({ type: 'location', location: { latitude: '31.9539', longitude: '35.9106' } });
-		expect((requests[0].body as { location: Record<string, unknown> }).location).not.toHaveProperty('name');
+		expect(objectAt({ value: requests[0].body, path: 'location' })).not.toHaveProperty('name');
 		await sendLocation.run(context({ ...BASE, latitude: 0, longitude: -0.5, name: 'Null Island', address: 'Ocean' }));
 		expect(requests[1].body).toMatchObject({ location: { latitude: '0', longitude: '-0.5', name: 'Null Island', address: 'Ocean' } });
 	});
@@ -306,7 +326,7 @@ describe('Upload Media', () => {
 		const contentType = String(requests[0].headers?.['Content-Type']);
 		expect(contentType).toMatch(/^multipart\/form-data; boundary=----ActivepiecesWhatsApp[0-9a-f]{24}$/);
 		const boundary = contentType.split('boundary=')[1];
-		const body = (requests[0].body as Buffer).toString('utf8');
+		const body = bufferBody(requests[0].body).toString('utf8');
 		expect(body).toContain(`--${boundary}\r\nContent-Disposition: form-data; name="messaging_product"\r\n\r\nwhatsapp\r\n`);
 		expect(body).toContain(`--${boundary}\r\nContent-Disposition: form-data; name="type"\r\n\r\nimage/png\r\n`);
 		expect(body).toContain(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="a.png"\r\nContent-Type: image/png\r\n\r\npng-bytes\r\n`);
@@ -378,3 +398,5 @@ describe('Business profile', () => {
 		expect(requests[1].body).toEqual({ messaging_product: 'whatsapp', about: 'Hi', websites: ['https://a.test'] });
 	});
 });
+
+type ObjectAtParams = { value: unknown; path: string };

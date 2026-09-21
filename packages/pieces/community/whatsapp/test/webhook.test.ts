@@ -6,8 +6,12 @@ import { ChangeValue, IncomingMessage, MessageStatus, whatsappWebhook } from '..
 
 const METADATA = { display_phone_number: '15551394669', phone_number_id: '1285944454608901' };
 
-function wabaBody(changes: { field: string; value: Record<string, unknown> }[], entryId = 'waba-1') {
+function wabaBody({ changes, entryId = 'waba-1' }: WabaBodyParams) {
 	return { object: 'whatsapp_business_account', entry: [{ id: entryId, changes }] };
+}
+
+function sign({ secret, body }: SignParams): string {
+	return `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
 }
 
 function textMessage(overrides: Partial<IncomingMessage> = {}): IncomingMessage {
@@ -40,10 +44,12 @@ describe('extractChanges', () => {
 	});
 
 	test('keeps only changes for the requested field and attaches the WABA id', () => {
-		const body = wabaBody([
-			{ field: 'messages', value: { messages: [textMessage()] } },
-			{ field: 'message_template_status_update', value: { event: 'APPROVED' } },
-		]);
+		const body = wabaBody({
+			changes: [
+				{ field: 'messages', value: { messages: [textMessage()] } },
+				{ field: 'message_template_status_update', value: { event: 'APPROVED' } },
+			],
+		});
 		const messages = whatsappWebhook.extractChanges({ body, field: 'messages' });
 		const templates = whatsappWebhook.extractChanges({ body, field: 'message_template_status_update' });
 		expect(messages).toHaveLength(1);
@@ -272,7 +278,6 @@ describe('handleHandshake', () => {
 
 describe('delivery signature', () => {
 	const raw = JSON.stringify({ object: 'whatsapp_business_account', entry: [] });
-	const sign = (secret: string, body: string) => `sha256=${createHmac('sha256', secret).update(body).digest('hex')}`;
 
 	test('without an app secret every delivery is accepted, as before', () => {
 		expect(whatsappWebhook.isSignedByMeta({ appSecret: undefined, headers: {}, rawBody: raw })).toBe(true);
@@ -280,15 +285,18 @@ describe('delivery signature', () => {
 	});
 
 	test('with an app secret a valid signature over the raw body is required', () => {
-		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw) }, rawBody: raw })).toBe(true);
-		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw) }, rawBody: Buffer.from(raw) })).toBe(true);
-		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('other', raw) }, rawBody: raw })).toBe(false);
-		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw + ' ') }, rawBody: raw })).toBe(false);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign({ secret: 's3cret', body: raw }) }, rawBody: raw })).toBe(true);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign({ secret: 's3cret', body: raw }) }, rawBody: Buffer.from(raw) })).toBe(true);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign({ secret: 'other', body: raw }) }, rawBody: raw })).toBe(false);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign({ secret: 's3cret', body: raw + ' ' }) }, rawBody: raw })).toBe(false);
 	});
 
 	test('a missing header, wrong prefix or missing raw body is rejected when a secret is set', () => {
 		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: {}, rawBody: raw })).toBe(false);
 		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': 'sha1=abc' }, rawBody: raw })).toBe(false);
-		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign('s3cret', raw) }, rawBody: undefined })).toBe(false);
+		expect(whatsappWebhook.isSignedByMeta({ appSecret: 's3cret', headers: { 'x-hub-signature-256': sign({ secret: 's3cret', body: raw }) }, rawBody: undefined })).toBe(false);
 	});
 });
+
+type WabaBodyParams = { changes: { field: string; value: Record<string, unknown> }[]; entryId?: string };
+type SignParams = { secret: string; body: string };
