@@ -1,5 +1,9 @@
 import { isNil } from '@activepieces/core-utils';
-import { FlowOperationType } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowActionType,
+  FlowOperationType,
+} from '@activepieces/shared';
 import { useTranslation } from 'react-i18next';
 
 import { CardListItemSkeleton } from '@/components/custom/card-list';
@@ -10,6 +14,7 @@ import {
   PieceSelectorOperation,
   stepUtils,
 } from '@/features/pieces';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIPieceActionsList } from './ai-actions-list';
@@ -17,6 +22,14 @@ import { AIPieceActionsList } from './ai-actions-list';
 const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
   const { t } = useTranslation();
   const { selectedTab } = usePieceSelectorTabs();
+  const { data: aiRouterEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.AI_ROUTER_ENABLED,
+  );
+  const coreItems = aiRouterEnabled
+    ? stepUtils
+        .coreActionsMetadata()
+        .filter((step) => step.type === FlowActionType.AI_ROUTER)
+    : [];
   const { pieceModel, isLoading, isError } = piecesHooks.usePiece({
     name: '@activepieces/piece-ai',
     projectId: authenticationSession.getProjectId() ?? undefined,
@@ -44,11 +57,23 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
     isNil(pieceModel) ||
     Object.keys(pieceModel.actions).length === 0
   ) {
+    if (coreItems.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full w-full">
+          <p className="text-sm text-muted-foreground">
+            {t('AI piece is not available for this platform')}
+          </p>
+        </div>
+      );
+    }
     return (
-      <div className="flex items-center justify-center h-full w-full">
-        <p className="text-sm text-muted-foreground">
-          {t('AI piece is not available for this platform')}
-        </p>
+      <div className="w-full">
+        <AIPieceActionsList
+          stepMetadataWithSuggestions={coreItems[0]}
+          hidePieceIconAndDescription={false}
+          operation={operation}
+          coreItems={coreItems}
+        />
       </div>
     );
   }
@@ -70,6 +95,7 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
         stepMetadataWithSuggestions={pieceMetadataWithSuggestion}
         hidePieceIconAndDescription={false}
         operation={operation}
+        coreItems={coreItems}
       />
     </div>
   );

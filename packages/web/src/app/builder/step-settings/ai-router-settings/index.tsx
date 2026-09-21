@@ -171,7 +171,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     <>
       <FormField
         control={control}
-        name="settings.input"
+        name="settings.text"
         render={({ field }) => (
           <FormItem className="flex flex-col gap-1">
             <Label>{t('Input')}</Label>

@@ -603,7 +603,7 @@ export const formUtils = {
         return AiRouterActionSchema.omit({ settings: true }).extend(
           z.object({
             settings: z.object({
-              input: z.string().min(1, formErrors.required),
+              text: z.string().min(1, formErrors.required),
               question: z.string().min(1, formErrors.required),
               branches: AiRouterBranchesSchema(true),
               minConfidence: z.number().min(0).max(1).optional(),

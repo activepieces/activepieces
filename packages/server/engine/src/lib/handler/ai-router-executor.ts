@@ -36,7 +36,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             aiRouterApi.choose({
                 apiUrl: constants.internalApiUrl,
                 engineToken: constants.engineToken,
-                state: asPlainText(resolvedInput.input),
+                state: asPlainText(resolvedInput.text),
                 question: asPlainText(resolvedInput.question),
                 options: toOptions(resolvedInput.branches),
             }),

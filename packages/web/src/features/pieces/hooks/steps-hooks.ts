@@ -1,5 +1,6 @@
 import { LocalesEnum, isNil } from '@activepieces/core-utils';
 import {
+  ApFlagId,
   FlowAction,
   FlowActionType,
   FlowTriggerType,
@@ -9,6 +10,7 @@ import {
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
@@ -54,6 +56,9 @@ export const stepsHooks = {
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
     const { i18n } = useTranslation();
     const projectId = authenticationSession.getProjectId() ?? undefined;
+    const { data: aiRouterEnabled } = flagsHooks.useFlag<boolean>(
+      ApFlagId.AI_ROUTER_ENABLED,
+    );
     const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: [
         'pieces-metadata',
@@ -61,6 +66,7 @@ export const stepsHooks = {
         type,
         projectId,
         i18n.language,
+        aiRouterEnabled,
       ],
       queryFn: async () => {
         const pieces = await piecesApi.list({
@@ -93,6 +99,10 @@ export const stepsHooks = {
           case 'action': {
             const filteredCoreActions = stepUtils
               .coreActionsMetadata()
+              .filter(
+                (step) =>
+                  aiRouterEnabled || step.type !== FlowActionType.AI_ROUTER,
+              )
               .filter((step) => passSearch(searchQuery, step));
             return [...filteredCoreActions, ...piecesMetadata];
           }

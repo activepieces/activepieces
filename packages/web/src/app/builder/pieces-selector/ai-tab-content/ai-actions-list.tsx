@@ -12,6 +12,7 @@ import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   PieceSelectorOperation,
+  PrimitiveStepMetadata,
   StepMetadataWithSuggestions,
   usePieceSearchContext,
 } from '@/features/pieces';
@@ -26,6 +27,7 @@ type AIPieceActionsListProps = {
   hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions;
   operation: PieceSelectorOperation;
+  coreItems?: PrimitiveStepMetadata[];
 };
 
 const ACTION_ICON_MAP: Record<string, string> = {
@@ -42,6 +44,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
   stepMetadataWithSuggestions,
   hidePieceIconAndDescription,
   operation,
+  coreItems = [],
 }) => {
   const { capture } = useTelemetry();
   const { searchQuery } = usePieceSearchContext();
@@ -60,6 +63,21 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
   return (
     <ScrollArea className="h-full" viewPortClassName="h-full">
       <div className="grid grid-cols-3 p-2 gap-3 min-w-[350px]">
+        {coreItems.map((coreItem) => (
+          <AIActionItem
+            key={coreItem.type}
+            item={coreItem}
+            hidePieceIconAndDescription={hidePieceIconAndDescription}
+            stepMetadataWithSuggestions={coreItem}
+            onClick={() => {
+              handleAddingOrUpdatingStep({
+                pieceSelectorItem: coreItem,
+                operation,
+                selectStepAfter: true,
+              });
+            }}
+          />
+        ))}
         {aiActions.map((item, index) => {
           const actionIcon =
             item.type === FlowActionType.PIECE

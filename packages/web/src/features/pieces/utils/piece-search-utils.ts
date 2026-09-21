@@ -22,7 +22,8 @@ const isFlowController = (stepMetadata: StepMetadata) => {
   }
   return (
     stepMetadata.type === FlowActionType.LOOP_ON_ITEMS ||
-    stepMetadata.type === FlowActionType.ROUTER
+    stepMetadata.type === FlowActionType.ROUTER ||
+    stepMetadata.type === FlowActionType.AI_ROUTER
   );
 };
 
@@ -67,7 +68,7 @@ const isAiAndAgentPiece = (stepMetadata: StepMetadata) => {
       ].includes(category as PieceCategory),
     );
   }
-  return false;
+  return stepMetadata.type === FlowActionType.AI_ROUTER;
 };
 
 const isUtilityPiece = (metadata: StepMetadata) =>

@@ -31,6 +31,7 @@ export const stepUtils = {
       coreStepMetadata[FlowActionType.CODE],
       coreStepMetadata[FlowActionType.LOOP_ON_ITEMS],
       coreStepMetadata[FlowActionType.ROUTER],
+      coreStepMetadata[FlowActionType.AI_ROUTER],
     ];
   },
   getKeys(

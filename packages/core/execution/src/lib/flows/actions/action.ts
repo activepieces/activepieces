@@ -303,14 +303,14 @@ export const AiRouterBranchesSchema = (addMinLength: boolean) =>
 
 export const AiRouterActionSettings = z.object({
     ...commonActionSettings,
-    input: z.string(),
+    text: z.string(),
     question: z.string(),
     branches: AiRouterBranchesSchema(false),
     minConfidence: z.number().min(0).max(1).optional(),
 })
 
 export const AiRouterActionSettingsWithValidation = z.object({
-    input: z.string().min(1, formErrors.required),
+    text: z.string().min(1, formErrors.required),
     question: z.string().min(1, formErrors.required),
     branches: AiRouterBranchesSchema(true),
     minConfidence: z.number().min(0).max(1).optional(),
