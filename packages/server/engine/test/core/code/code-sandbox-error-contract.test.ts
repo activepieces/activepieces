@@ -22,6 +22,8 @@ const THROWING_BODIES: ThrowingBody[] = [
     { label: 'an Error carrying own properties', body: 'const e = new Error("Card declined"); e.code = "X"; throw e', message: 'Card declined' },
     { label: 'an Error whose message is JSON', body: 'throw new Error(JSON.stringify({ code: 42 }))', message: '{"code":42}' },
     { label: 'a thrown string', body: 'throw "boom"', message: 'boom' },
+    { label: 'a user-defined Error subclass', body: 'class PaymentError extends Error { constructor(m) { super(m); this.name = "PaymentError" } } throw new PaymentError("Card declined")', message: 'Card declined', errorName: 'PaymentError' },
+    { label: 'a rejected promise', body: 'await Promise.reject(new Error("Card declined"))', message: 'Card declined' },
 ]
 
 async function resolveStepError({ sandbox, wrap, extension, body }: ResolveStepErrorParams): Promise<FriendlyPieceError> {
