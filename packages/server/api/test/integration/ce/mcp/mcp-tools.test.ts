@@ -9,6 +9,7 @@ import { AppSystemProp } from '../../../../src/app/helper/system/system-props'
 import { apBuildFlowTool } from '../../../../src/app/mcp/tools/ap-build-flow'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apFlowStructureTool } from '../../../../src/app/mcp/tools/ap-flow-structure'
+import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
 import { apResearchPiecesTool } from '../../../../src/app/mcp/tools/ap-research-pieces'
 import { apAddStepTool } from '../../../../src/app/mcp/tools/ap-add-step'
 import { apUpdateStepTool } from '../../../../src/app/mcp/tools/ap-update-step'
@@ -2399,6 +2400,7 @@ describe('MCP Tools integration', () => {
             triggers: {},
         })
         await db.save('piece_metadata', privatePiece)
+        await pieceCache(mockLog).invalidate()
 
         const result = await apResearchPiecesTool(mcp, mockLog).execute({
             searchQuery: 'private-custom',

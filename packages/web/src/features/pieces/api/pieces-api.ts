@@ -31,6 +31,7 @@ export const piecesApi = {
       locale: request.locale ?? undefined,
       projectId: request.projectId ?? undefined,
       audience: request.audience ?? undefined,
+      excludeTranslations: true,
     });
   },
   options<
