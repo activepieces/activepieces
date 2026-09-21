@@ -56,8 +56,8 @@ export const outlookPermanentlyDeleteMessageAction = createAction({
 				messageId,
 			};
 		} catch (error) {
-			const status = outlookAtomicCommon.graphStatusCode(error);
-			const retryableAsUserPath = prefix === '/me' && (status === 400 || status === 404);
+			const retryableAsUserPath =
+				prefix === '/me' && outlookAtomicCommon.isUnsupportedMePathError(error);
 
 			if (!retryableAsUserPath) {
 				throw outlookAtomicCommon.graphError({
@@ -93,7 +93,9 @@ export const outlookPermanentlyDeleteMessageAction = createAction({
 			} catch (fallbackError) {
 				throw outlookAtomicCommon.graphError({
 					error: fallbackError,
-					operation: 'Permanently deleting the Outlook message',
+					operation: `Permanently deleting the Outlook message (retried against /users/{id} after the /me path was rejected with: ${outlookAtomicCommon.graphErrorDetail(
+						error,
+					)})`,
 				});
 			}
 		}

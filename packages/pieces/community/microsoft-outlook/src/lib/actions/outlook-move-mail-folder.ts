@@ -14,7 +14,7 @@ export const outlookMoveMailFolderAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Reparents a mail folder, moving it with its messages and sub-folders under a different destination folder. Use Copy Mail Folder to duplicate instead of relocating, and Rename Mail Folder to change only its name. Not idempotent: once moved, the same call repeated against the old parent no longer applies.',
+			'Reparents a mail folder, moving it with its messages and sub-folders under a different destination folder. Use Copy Mail Folder to duplicate instead of relocating, and Rename Mail Folder to change only its name. The move issues the folder a new ID: carry newFolderId forward into later steps, not the folderId that was passed in. Not idempotent: once moved, the same call repeated against the old parent no longer applies.',
 		idempotent: false,
 	},
 	props: {
@@ -44,6 +44,7 @@ export const outlookMoveMailFolderAction = createAction({
 			return {
 				success: true,
 				folderId,
+				newFolderId: moved?.id ?? null,
 				destinationFolderId,
 				folder: moved,
 			};

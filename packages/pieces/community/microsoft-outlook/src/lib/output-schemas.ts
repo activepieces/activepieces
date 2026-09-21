@@ -112,6 +112,11 @@ const focusedInboxOverrideFields: OutputSchema['fields'] = [
   { key: 'senderEmailAddress', label: 'Sender', children: plainEmailAddressFields },
 ];
 
+const deltaRemovalFields: OutputSchema['fields'] = [
+  { key: 'removed', label: 'Removed', format: 'boolean' },
+  { key: 'removedReason', label: 'Removal Reason' },
+];
+
 const paginationFields: OutputSchema['fields'] = [
   { key: 'count', label: 'Count', format: 'number' },
   { key: 'hasMore', label: 'Has More', format: 'boolean' },
@@ -196,7 +201,7 @@ export const outlookListMessagesDeltaActionOutputSchema: OutputSchema = {
       key: 'changes',
       label: 'Changed Messages',
       labelKey: 'subject',
-      listItems: graphMessageFields,
+      listItems: [...messageSummaryFields, ...deltaRemovalFields],
     },
     ...paginationFields,
     { key: 'deltaLink', label: 'Delta Link', format: 'url' },
@@ -284,7 +289,10 @@ export const outlookListMessageAttachmentsActionOutputSchema: OutputSchema = {
       key: 'attachments',
       label: 'Attachments',
       labelKey: 'name',
-      listItems: graphAttachmentFields,
+      listItems: [
+        ...graphAttachmentFields,
+        { key: 'attachmentType', label: 'Attachment Type' },
+      ],
     },
     { key: 'count', label: 'Count', format: 'number' },
   ],
@@ -312,9 +320,8 @@ export const outlookDownloadMessageAttachmentActionOutputSchema: OutputSchema = 
 export const outlookAddMessageAttachmentActionOutputSchema: OutputSchema = {
   fields: [
     ...graphAttachmentFields,
-    { key: 'contentId', label: 'Content ID' },
-    { key: 'contentLocation', label: 'Content Location' },
-    { key: 'contentBytes', label: 'Content Bytes' },
+    { key: 'attachmentType', label: 'Attachment Type' },
+    { key: 'messageId', label: 'Message ID' },
   ],
 };
 
@@ -354,7 +361,7 @@ export const outlookListMailFoldersDeltaActionOutputSchema: OutputSchema = {
       key: 'changes',
       label: 'Changed Folders',
       labelKey: 'displayName',
-      listItems: fullMailFolderFields,
+      listItems: [...fullMailFolderFields, ...deltaRemovalFields],
     },
     ...paginationFields,
     { key: 'deltaLink', label: 'Delta Link', format: 'url' },
@@ -383,6 +390,7 @@ export const outlookMoveMailFolderActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },
     { key: 'folderId', label: 'Folder ID' },
+    { key: 'newFolderId', label: 'New Folder ID' },
     { key: 'destinationFolderId', label: 'Destination Folder ID' },
     { key: 'folder', label: 'Folder', children: fullMailFolderFields },
   ],
@@ -476,6 +484,10 @@ export const outlookSendEmailActionOutputSchema: OutputSchema = {
 };
 
 export const outlookSendDraftActionOutputSchema: OutputSchema = { fields: dispatchResultFields };
+
+export const outlookReplyToMessageActionOutputSchema: OutputSchema = {
+  fields: dispatchResultFields,
+};
 
 export const outlookReplyAllToMessageActionOutputSchema: OutputSchema = {
   fields: dispatchResultFields,

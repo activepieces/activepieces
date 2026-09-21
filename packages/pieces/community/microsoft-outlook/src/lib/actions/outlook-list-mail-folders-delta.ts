@@ -15,7 +15,7 @@ export const outlookListMailFoldersDeltaAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Returns the mail folders created, renamed or removed since a previous delta link, plus a fresh delta link for the next call. Use this to keep a folder tree in sync instead of re-listing it; it pairs with List Message Changes (Delta) for messages. Read-only and safe to retry.',
+			'Returns the mail folders created, renamed or removed since a previous delta link, plus a fresh delta link for the next call. Use this to keep a folder tree in sync instead of re-listing it; it pairs with List Message Changes (Delta) for messages. Each change carries a removed flag: when it is true the folder was deleted and only its id and removedReason are meaningful. Read-only and safe to retry.',
 		idempotent: true,
 	},
 	props: {
@@ -40,7 +40,9 @@ export const outlookListMailFoldersDeltaAction = createAction({
 				.headers({ Prefer: 'odata.maxpagesize=50' })
 				.get();
 
-			const changes = (response.value ?? []) as MailFolder[];
+			const changes = ((response.value ?? []) as MailFolder[]).map((change) =>
+				outlookAtomicCommon.withDeltaRemoval(change),
+			);
 			const nextLink = response['@odata.nextLink'] as string | undefined;
 			const nextDeltaLink = response['@odata.deltaLink'] as string | undefined;
 

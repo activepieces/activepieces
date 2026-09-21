@@ -13,7 +13,7 @@ export const outlookCreateFocusedInboxOverrideAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Pins future mail from one sender address to the Focused or the Other tab. Microsoft upserts by sender address: if an override already exists for that address, its classification and name are updated instead of a duplicate being created. Idempotent for that reason. Use Update Focused Inbox Override when you already hold an override ID.',
+			'Pins future mail from one sender address to the Focused or the Other tab. Microsoft upserts by sender address: if an override already exists for that address, its classification is updated instead of a duplicate being created, and the stored display name is left untouched unless Sender Display Name is supplied. Idempotent for that reason. Use Update Focused Inbox Override when you already hold an override ID.',
 		idempotent: true,
 	},
 	props: {
@@ -51,7 +51,7 @@ export const outlookCreateFocusedInboxOverrideAction = createAction({
 			return await client.api(`${prefix}/inferenceClassification/overrides`).post({
 				classifyAs,
 				senderEmailAddress: {
-					name: senderName ?? senderEmailAddress,
+					...(senderName ? { name: senderName } : {}),
 					address: senderEmailAddress,
 				},
 			});

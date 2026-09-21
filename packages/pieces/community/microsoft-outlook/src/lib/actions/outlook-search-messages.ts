@@ -49,7 +49,7 @@ export const outlookSearchMessagesAction = createAction({
 			: `${prefix}/messages`;
 
 		const top = Math.min(Math.max(maxResults ?? 25, 1), 1000);
-		const url = `${basePath}?$search="${searchQuery}"&$top=${top}`;
+		const url = `${basePath}?$search=${encodeURIComponent(`"${searchQuery}"`)}&$top=${top}`;
 
 		try {
 			const response: PageCollection = await client

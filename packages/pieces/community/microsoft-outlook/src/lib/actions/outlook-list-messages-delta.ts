@@ -15,7 +15,7 @@ export const outlookListMessagesDeltaAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Returns the messages added, changed or removed in one mail folder since a previous delta link, plus a fresh delta link for the next call. Use this for incremental sync instead of re-listing a folder; a first call without a delta link returns the current contents. Delta payloads omit message bodies and attachments, so follow up with Get Message for full content. Read-only and safe to retry.',
+			'Returns the messages added, changed or removed in one mail folder since a previous delta link, plus a fresh delta link for the next call. Use this for incremental sync instead of re-listing a folder; a first call without a delta link returns the current contents. Each change carries a removed flag: when it is true the item was deleted and only its id and removedReason are meaningful. Delta payloads omit message bodies and attachments, so follow up with Get Message for full content. Read-only and safe to retry.',
 		idempotent: true,
 	},
 	props: {
@@ -49,7 +49,9 @@ export const outlookListMessagesDeltaAction = createAction({
 				.headers({ Prefer: 'odata.maxpagesize=50' })
 				.get();
 
-			const changes = (response.value ?? []) as Message[];
+			const changes = ((response.value ?? []) as Message[]).map((change) =>
+				outlookAtomicCommon.withDeltaRemoval(change),
+			);
 			const nextLink = response['@odata.nextLink'] as string | undefined;
 			const nextDeltaLink = response['@odata.deltaLink'] as string | undefined;
 

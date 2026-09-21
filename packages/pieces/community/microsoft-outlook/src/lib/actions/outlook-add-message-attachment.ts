@@ -13,7 +13,7 @@ export const outlookAddMessageAttachmentAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Attaches one file to an existing draft message and returns the created attachment. Only meaningful on drafts, and only for files under 3 MB; larger files need an upload session, which this piece does not expose yet. Pair it with Create Draft and Send Draft. Not idempotent: each call adds another attachment, even with the same file name.',
+			'Attaches one file to an existing draft message and returns the created attachment metadata without echoing the file bytes back. Only meaningful on drafts, and only for files under 3 MB; larger files need an upload session, which this piece does not expose yet. Pair it with Create Draft and Send Draft. Not idempotent: each call adds another attachment, even with the same file name.',
 		idempotent: false,
 	},
 	props: {
@@ -42,7 +42,7 @@ export const outlookAddMessageAttachmentAction = createAction({
 		const prefix = outlookCommon.mailboxPrefix(context.auth);
 
 		try {
-			return await client
+			const attachment = await client
 				.api(
 					`${prefix}/messages/${outlookAtomicCommon.encodeGraphId(messageId)}/attachments`,
 				)
@@ -51,6 +51,17 @@ export const outlookAddMessageAttachmentAction = createAction({
 					name: fileName || file.filename,
 					contentBytes: file.base64,
 				});
+
+			return {
+				messageId,
+				id: attachment?.['id'] ?? null,
+				name: attachment?.['name'] ?? null,
+				contentType: attachment?.['contentType'] ?? null,
+				size: attachment?.['size'] ?? null,
+				isInline: attachment?.['isInline'] ?? null,
+				lastModifiedDateTime: attachment?.['lastModifiedDateTime'] ?? null,
+				attachmentType: attachment?.['@odata.type'] ?? null,
+			};
 		} catch (error) {
 			throw outlookAtomicCommon.graphError({
 				error,

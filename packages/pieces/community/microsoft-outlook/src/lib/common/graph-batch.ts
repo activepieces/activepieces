@@ -91,6 +91,4 @@ export type GraphBatchResponse = {
 	headers?: Record<string, string>;
 };
 
-export const graphBatchLimit = batchChunkSize;
-
 export { runGraphBatch, describeBatchFailure };

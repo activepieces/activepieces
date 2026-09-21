@@ -126,6 +126,12 @@ export const outlookUpdateMessageAction = createAction({
 
 		const changesCategories = categoriesToAdd.length > 0 || categoriesToRemove.length > 0;
 
+		if (Object.keys(payload).length === 0 && !changesCategories) {
+			throw new Error(
+				'Updating the Outlook message failed: no fields were supplied, so there is nothing to change.',
+			);
+		}
+
 		try {
 			if (changesCategories) {
 				const current = await client.api(`${path}?$select=id,categories`).get();
@@ -136,17 +142,8 @@ export const outlookUpdateMessageAction = createAction({
 				payload.categories = merged;
 			}
 
-			if (Object.keys(payload).length === 0) {
-				throw new Error(
-					'Updating the Outlook message failed: no fields were supplied, so there is nothing to change.',
-				);
-			}
-
 			return await client.api(path).headers(outlookAtomicCommon.textBodyHeaders).patch(payload);
 		} catch (error) {
-			if (error instanceof Error && error.message.startsWith('Updating the Outlook message')) {
-				throw error;
-			}
 			throw outlookAtomicCommon.graphError({ error, operation: 'Updating the Outlook message' });
 		}
 	},

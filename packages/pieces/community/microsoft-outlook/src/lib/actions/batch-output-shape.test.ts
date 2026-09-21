@@ -25,12 +25,6 @@ function run(action: { run: (context: never) => Promise<unknown> }, propsValue: 
 	return action.run({ auth, propsValue } as never);
 }
 
-/**
- * Both batch atomics must report per-item outcomes the same way: a `succeeded`
- * list of OBJECTS keyed by `messageId`, a `failed` list of objects, and the
- * three counts. A bare string[] on either one breaks the shared contract an
- * agent relies on when it reads one batch action after another.
- */
 describe('outlook batch actions share one output contract', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();

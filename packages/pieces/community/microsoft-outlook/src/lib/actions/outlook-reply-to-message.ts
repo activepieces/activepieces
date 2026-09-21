@@ -3,7 +3,7 @@ import { Message } from '@microsoft/microsoft-graph-types';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookAtomicCommon } from '../common/atomic-common';
 import { outlookCommon } from '../common/client';
-import { outlookSendDraftActionOutputSchema } from '../output-schemas';
+import { outlookReplyToMessageActionOutputSchema } from '../output-schemas';
 
 export const outlookReplyToMessageAction = createAction({
 	auth: microsoftOutlookAuth,
@@ -33,7 +33,7 @@ export const outlookReplyToMessageAction = createAction({
 			required: false,
 		}),
 	},
-	outputSchema: outlookSendDraftActionOutputSchema,
+	outputSchema: outlookReplyToMessageActionOutputSchema,
 	async run(context) {
 		const { messageId, comment } = context.propsValue;
 		const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];

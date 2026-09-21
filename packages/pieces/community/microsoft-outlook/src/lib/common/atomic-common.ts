@@ -44,6 +44,39 @@ function graphStatusCode(error: unknown): number | undefined {
 	return undefined;
 }
 
+function graphErrorCode(error: unknown): string | undefined {
+	if (typeof error === 'object' && error !== null && 'code' in error) {
+		const code = (error as { code?: unknown }).code;
+		if (typeof code === 'string') {
+			return code;
+		}
+	}
+	return undefined;
+}
+
+function isUnsupportedMePathError(error: unknown): boolean {
+	const code = graphErrorCode(error) ?? '';
+	const unsupportedCodes = [
+		'BadRequest',
+		'RequestBroker--ParseUri',
+		'ResourceNotFound',
+		'ErrorInvalidUser',
+		'MailboxNotEnabledForRESTAPI',
+	];
+	return unsupportedCodes.some((candidate) => code === candidate);
+}
+
+function withDeltaRemoval<T extends object>(
+	change: T & { '@removed'?: { reason?: string } },
+): Omit<T, '@removed'> & { removed: boolean; removedReason: string | null } {
+	const { '@removed': removal, ...rest } = change;
+	return {
+		...rest,
+		removed: removal !== undefined,
+		removedReason: removal?.reason ?? null,
+	};
+}
+
 function graphErrorDetail(error: unknown): string {
 	if (typeof error === 'object' && error !== null) {
 		const parts: string[] = [];
@@ -106,5 +139,9 @@ export const outlookAtomicCommon = {
 	isGovernmentCloud,
 	encodeGraphId,
 	graphStatusCode,
+	graphErrorCode,
+	graphErrorDetail,
+	isUnsupportedMePathError,
+	withDeltaRemoval,
 	graphError,
 };

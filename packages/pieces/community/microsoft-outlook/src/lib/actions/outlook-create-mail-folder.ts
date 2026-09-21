@@ -15,7 +15,7 @@ export const outlookCreateMailFolderAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Creates a mail folder at the top level or under a parent folder. It first lists the sibling folders and returns the existing folder with created set to false when one already carries the same display name, so no duplicate folder is ever created. Idempotent: repeat calls return the same folder.',
+			'Creates a mail folder at the top level or under a parent folder. It first queries the sibling folders by exact display name and returns the existing folder with created set to false when one already carries the same display name, so no duplicate folder is ever created. Idempotent: repeat calls return the same folder.',
 		idempotent: true,
 	},
 	props: {
@@ -40,15 +40,19 @@ export const outlookCreateMailFolderAction = createAction({
 			? `${prefix}/mailFolders/${outlookAtomicCommon.encodeGraphId(parentFolderId)}/childFolders`
 			: `${prefix}/mailFolders`;
 
+		const wantedName = displayName.trim();
+
 		try {
 			const siblings: PageCollection = await client
 				.api(
-					`${collectionPath}?includeHiddenFolders=true&$select=${outlookAtomicCommon.mailFolderSelect}&$top=100`,
+					`${collectionPath}?includeHiddenFolders=true&$select=${
+						outlookAtomicCommon.mailFolderSelect
+					}&$filter=${encodeURIComponent(`displayName eq '${wantedName.replace(/'/g, "''")}'`)}`,
 				)
 				.get();
 
 			const existing = ((siblings.value ?? []) as MailFolder[]).find(
-				(folder) => (folder.displayName ?? '').toLowerCase() === displayName.trim().toLowerCase(),
+				(folder) => (folder.displayName ?? '').toLowerCase() === wantedName.toLowerCase(),
 			);
 
 			if (existing) {

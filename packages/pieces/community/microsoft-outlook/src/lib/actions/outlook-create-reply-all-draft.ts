@@ -2,7 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { microsoftOutlookAuth } from '../common/auth';
 import { outlookAtomicCommon } from '../common/atomic-common';
 import { outlookCommon } from '../common/client';
-import { outlookMessageActionOutputSchema } from '../output-schemas';
+import { outlookDraftMessageActionOutputSchema } from '../output-schemas';
 
 export const outlookCreateReplyAllDraftAction = createAction({
 	auth: microsoftOutlookAuth,
@@ -28,7 +28,7 @@ export const outlookCreateReplyAllDraftAction = createAction({
 			required: false,
 		}),
 	},
-	outputSchema: outlookMessageActionOutputSchema,
+	outputSchema: outlookDraftMessageActionOutputSchema,
 	async run(context) {
 		const { messageId, comment } = context.propsValue;
 
