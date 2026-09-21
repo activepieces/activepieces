@@ -1,5 +1,5 @@
 import { ProjectRole } from '@activepieces/core-utils';
-import { ProjectMemberWithUser } from '@activepieces/shared';
+import { isNil, ProjectMemberWithUser } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, Loader2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -37,16 +37,20 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
     );
   }
 
+  const isComplete = isNil(data?.next);
   const projectCount = new Set(members.map((member) => member.project.id)).size;
+  const peopleCount = projectRole.userCount ?? members.length;
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-baseline justify-between gap-4">
         <p className="text-sm text-muted-foreground">
-          {t('hasThisRoleInProjects', { count: projectCount })}
+          {isComplete
+            ? t('hasThisRoleInProjects', { count: projectCount })
+            : t('showingFirstPeople', { count: members.length })}
         </p>
         <p className="text-sm text-muted-foreground">
-          {t('rolePeopleCount', { count: members.length })}
+          {t('rolePeopleCount', { count: peopleCount })}
         </p>
       </div>
       <div className="flex flex-col">

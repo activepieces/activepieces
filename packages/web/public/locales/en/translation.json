@@ -743,6 +743,7 @@
   "Every permission is listed; tick to add, untick to take away.": "Every permission is listed; tick to add, untick to take away.",
   "Role name": "Role name",
   "hasThisRoleInProjects": "{count, plural, =1 {Has this role in 1 project} other {Has this role in # projects}}",
+  "showingFirstPeople": "{count, plural, =1 {Showing the first person} other {Showing the first # people}}",
   "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.": "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
   "people": "people",
   "What new members get, and what each role can do.": "What new members get, and what each role can do.",
