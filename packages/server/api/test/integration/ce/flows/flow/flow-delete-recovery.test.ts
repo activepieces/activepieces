@@ -147,6 +147,43 @@ describe('Flow deletion recovery', () => {
         expect(triggerSource).toBeNull()
     })
 
+    it('moves a swept flow to the back of the queue so a failing one cannot starve the rest', async () => {
+        const ctx = await createTestContext(app!)
+        const mockFlow = createMockFlow({
+            projectId: ctx.project.id,
+            status: FlowStatus.DISABLED,
+            operationStatus: FlowOperationStatus.DELETING,
+        })
+        await db.save('flow', mockFlow)
+        const mockVersion = createMockFlowVersion({ flowId: mockFlow.id })
+        await db.save('flow_version', mockVersion)
+        await db.update('flow', mockFlow.id, { publishedVersionId: mockVersion.id })
+        await db.save('trigger_source', {
+            id: apId(),
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            flowId: mockFlow.id,
+            flowVersionId: apId(),
+            projectId: ctx.project.id,
+            pieceName: '@activepieces/piece-schedule',
+            pieceVersion: '0.1.0',
+            triggerName: 'every_hour',
+            type: TriggerStrategy.POLLING,
+            simulate: false,
+            schedule: null,
+        })
+        await db.update('flow', mockFlow.id, { updated: dayjs().subtract(2, 'hour').toISOString() })
+
+        await flowBackgroundJobs(app!.log).strandedDeletionSweepHandler()
+        const afterFirstSweep = await db.findOneByOrFail<Flow>('flow', { id: mockFlow.id })
+
+        await flowBackgroundJobs(app!.log).strandedDeletionSweepHandler()
+        const afterSecondSweep = await db.findOneByOrFail<Flow>('flow', { id: mockFlow.id })
+
+        expect(dayjs(afterFirstSweep.updated).isAfter(dayjs().subtract(1, 'minute'))).toBe(true)
+        expect(dayjs(afterSecondSweep.updated).isSame(afterFirstSweep.updated)).toBe(true)
+    })
+
     it('leaves a recently requested deletion to its own job', async () => {
         const ctx = await createTestContext(app!)
         const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })

@@ -87,10 +87,17 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
             .orderBy('flow.updated', 'ASC')
             .take(STRANDED_DELETION_BATCH_SIZE)
             .getMany()
-        if (strandedFlows.length > 0) {
-            log.warn({ flowCount: strandedFlows.length }, '[strandedDeletionSweepHandler] Re-enqueueing stranded flow deletions')
+        if (strandedFlows.length === 0) {
+            return
         }
+        log.warn({ flowCount: strandedFlows.length }, '[strandedDeletionSweepHandler] Re-enqueueing stranded flow deletions')
         await Promise.all(strandedFlows.map((flow) => flowService(log).addDeleteFlowJob(flow)))
+        await flowRepo()
+            .createQueryBuilder()
+            .update()
+            .set({ updated: () => 'NOW()' })
+            .whereInIds(strandedFlows.map((flow) => flow.id))
+            .execute()
     },
 
 })
