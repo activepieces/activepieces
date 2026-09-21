@@ -63,7 +63,7 @@ export const deletePermission = createAction({
         const response_permissions_list = await drive.permissions.list({
             fileId: fileId,
             fields: 'permissions(id, emailAddress, role)',
-            
+            supportsAllDrives: true,
         });
 
         if (response_permissions_list.data.permissions) {
@@ -73,6 +73,7 @@ export const deletePermission = createAction({
                     await drive.permissions.delete({
                         fileId: fileId,
                         permissionId: permission.id ? permission.id : '',
+                        supportsAllDrives: true,
                     });
                     return {removed: true, message: 'Permission removed'};
                 }
