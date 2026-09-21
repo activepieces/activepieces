@@ -1,5 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from 'node:child_process'
 import { nanoid } from 'nanoid'
+import { sandboxError, SandboxErrorPayload } from './sandbox-error'
 
 export const deno = {
     /**
@@ -40,7 +41,7 @@ export const deno = {
                 }
 
                 if (resultJson === null) {
-                    reject(buildError({ message: `Deno process exited with code ${code} and signal ${signal} without returning a result`, stdout: userOutput, stderr: capturedStderr }))
+                    reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} without returning a result`, stdout: userOutput, stderr: capturedStderr }))
                     return
                 }
 
@@ -49,17 +50,17 @@ export const deno = {
                     message = JSON.parse(resultJson)
                 }
                 catch {
-                    reject(buildError({ message: 'Deno process returned a malformed result', stdout: userOutput, stderr: capturedStderr }))
+                    reject(sandboxError.build({ error: 'Deno process returned a malformed result', stdout: userOutput, stderr: capturedStderr }))
                     return
                 }
 
                 if (!message.success) {
-                    reject(buildError({ message: message.error, stdout: userOutput, stderr: capturedStderr }))
+                    reject(sandboxError.build({ error: message.error, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else if (code !== 0) {
                     // e.g. an unhandled rejection fired after the result was printed — deno exits
                     // non-zero, so the run must fail even though a success marker exists.
-                    reject(buildError({ message: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
+                    reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
                 }
                 else {
                     resolve(message.result)
@@ -72,7 +73,7 @@ export const deno = {
                     return
                 }
                 settled = true
-                reject(buildError({ message: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: capturedStdout, stderr: capturedStderr }))
+                reject(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: capturedStdout, stderr: capturedStderr }))
             })
         })
     },
@@ -166,12 +167,13 @@ function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermissio
 
 function buildRunProgram({ body, marker }: { body: string, marker: string }): string {
     return `
+${sandboxError.payloadSource}
 try {
 ${body}
     console.log(${JSON.stringify(marker)} + JSON.stringify({ success: true, result: result ?? null }));
 }
 catch (error) {
-    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: false, error: (error && error.stack) || String(error) }));
+    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: false, error: toErrorPayload(error) }));
     Deno.exit(1);
 }
 `
@@ -187,17 +189,6 @@ function extractResult(stdout: string, marker: string): { userOutput: string, re
     const resultJson = newline === -1 ? after : after.slice(0, newline)
     const trailing = newline === -1 ? '' : after.slice(newline + 1)
     return { userOutput: stdout.slice(0, idx) + trailing, resultJson }
-}
-
-function buildError({ message, stdout, stderr }: BuildErrorParams): Error {
-    const parts: string[] = [message ?? 'Code execution failed']
-    if (stdout.trim()) {
-        parts.push(`\n--- stdout ---\n${stdout.trim()}`)
-    }
-    if (stderr.trim()) {
-        parts.push(`\n--- stderr ---\n${stderr.trim()}`)
-    }
-    return new Error(parts.join(''))
 }
 
 const DEFAULT_MEMORY_LIMIT_MB = 128
@@ -240,17 +231,11 @@ type NodeApis = {
     fs: typeof import('node:fs/promises')
 }
 
-type BuildErrorParams = {
-    message: string
-    stdout: string
-    stderr: string
-}
-
 type DenoResultMessage = {
     success: true
     result: unknown
 } | {
     success: false
-    error: string
+    error: SandboxErrorPayload
 }
 
