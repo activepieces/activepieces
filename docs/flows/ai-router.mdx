@@ -1,0 +1,85 @@
+---
+title: "AI Router"
+description: "Ask one question and send the flow down the matching branch"
+icon: "shuffle"
+---
+
+A normal [Router](/flows/building-flows) asks you to write a condition for every branch. The AI
+Router inverts that: you write **one question**, and each branch is **one possible answer**.
+
+```
+Input      {{trigger.body.message}}
+Question   Which team should handle this?
+
+Routes
+  Billing      Payments, invoices, refunds
+  Technical    Bugs, errors, something not working
+  Sales        Pricing questions, upgrades
+  Otherwise    Anything that fits none of the routes above
+```
+
+One model call decides, and exactly one route runs.
+
+## Fields
+
+| Field | What it does |
+|---|---|
+| **Input** | The text the model reads. Reference a previous step, e.g. `{{trigger.body.message}}`. |
+| **Question** | One question, answered by exactly one route. |
+| **Routes** | Each route's **name** is a possible answer; its **description** tells the model when to pick it. |
+| **Otherwise** | Always present, always last. Edit its description like any other route. |
+| **Confidence floor** | Optional. Below it, the flow takes the Otherwise route. |
+
+## Write route descriptions, not prompts
+
+The description is the whole instruction the model gets for that route. Short and concrete beats
+long and careful:
+
+<CodeGroup>
+```text Good
+Billing     Payments, invoices, refunds, double charges
+Technical   Bugs, errors, something not working
+```
+
+```text Worse
+Billing     If the customer seems to be talking about anything financial in nature,
+            including but not limited to payments, you should probably pick this one
+```
+</CodeGroup>
+
+## Otherwise is a real route
+
+Give it a description. It is sent to the model as a genuine option, not used as a leftover bucket,
+and that is what lets the router decline rather than guess.
+
+The difference is large. With `Billing / Technical / Sales` and no Otherwise description, the input
+`"hi"` is routed to **Sales** — confidently, and past any threshold you would have set. Add
+*"Anything that fits none of the routes above"* and `"hi"` goes to **Otherwise** instead, while a
+clear billing message still goes to Billing.
+
+## Reading a run
+
+The run detail shows how sure the model was across every route, not just the one it picked:
+
+```
+Billing     ████████████░░   91%
+Technical   █░░░░░░░░░░░░░    6%
+Sales       ░░░░░░░░░░░░░░    3%
+```
+
+A route picked at 91% and one picked at 34% look identical in a normal run log. Use the spread to
+tell a routing rule you can trust from one you cannot, and tighten the descriptions that come out
+close.
+
+## When a call fails
+
+The step **fails**. It does not quietly take the Otherwise route, because sending a refund down the
+wrong branch because a model timed out is a bug that looks like normal operation. A failed step is
+visible in the run and can be retried.
+
+## Self-hosting
+
+The AI Router runs on a key the instance holds, so there is no connection to set up and no AI credit
+is consumed. Set `AP_AI_GATEWAY_API_KEY` (see
+[environment variables](/install/reference/environment-variables)). Leave it unset and the step
+simply does not appear in the step list.

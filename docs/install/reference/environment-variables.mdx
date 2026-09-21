@@ -291,4 +291,5 @@ through the MCP server. See [Tool Search](/mcp/tool-search) for how it works.
 | Variable | Description | Default |
 |---|---|---|
 | `AP_TOOL_SEARCH_ENABLED` | Registers the `ap_search_actions` and `ap_search_triggers` MCP tools. Read live, so flipping it takes effect without a restart. | `false` |
+| `AP_AI_GATEWAY_API_KEY` | Vercel AI Gateway key that funds the [AI Router](/flows/ai-router) step. The instance pays for these calls, so no project connection and no AI credit is involved. Leave it unset and the AI Router simply does not appear in the step list. | `None` |
 | `AP_OPENAI_API_KEY` | OpenAI API key that funds tool-search embeddings (indexing and queries). When unset, the platform's OpenAI [AI provider](/admin-guide/guides/setup-ai-providers) is used instead; with neither, tool search serves keyword matches rather than semantic ones. | `None` |
