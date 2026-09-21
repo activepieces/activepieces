@@ -227,9 +227,10 @@ The check covers the two public doors — password sign-up and Sign in with
 Google — and skips accounts a platform provisions itself through SSO (SAML) or
 embedding (managed authentication), since those are vouched for by the platform.
 A Google sign-up costs a credit only the first time an address is seen. A refused
-Google sign-up answers `DOMAIN_NOT_ALLOWED` and the sign-in page says so; there
-is nothing to hide there, because the member has already proven they own the
-account.
+Google sign-up answers exactly like a failed Google token exchange
+(`INVALID_CREDENTIALS`) and the page shows a generic "Sign-in failed", so the
+response never says *why*; as on the email path, the server log is the only
+record.
 
 ZeroBounce resolves DNS from the public internet. If your members' mail domains
 are only resolvable inside your own network, leave the key unset.

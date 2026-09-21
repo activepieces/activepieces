@@ -76,16 +76,14 @@ afterEach(() => {
 
 describe('Federated Authentication API', () => {
     describe('Claim Endpoint', () => {
-        it('refuses a Google sign-up whose domain cannot receive mail, says so, and creates nothing', async () => {
+        it('refuses a Google sign-up whose domain cannot receive mail exactly like a failed token exchange, and creates nothing', async () => {
             const answer = answersAboutTheAddress({ status: 'invalid', sub_status: 'no_dns_entries' })
 
             const response = await claimWithGoogle()
 
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            expect(response?.json()).toEqual({
-                code: 'DOMAIN_NOT_ALLOWED',
-                params: { domain: 'fresh-tenant.example' },
-            })
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+            expect(response?.json()?.code).toBe('INVALID_CREDENTIALS')
+            expect(response?.json()?.params).toBeNull()
             expect(answer).toHaveBeenCalledTimes(1)
             expect(await storedIdentity()).toBeNull()
         })
@@ -96,15 +94,15 @@ describe('Federated Authentication API', () => {
 
             const response = await claimWithGoogle()
 
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
-            expect(response?.json()?.code).toBe('DOMAIN_NOT_ALLOWED')
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
+            expect(response?.json()?.code).toBe('INVALID_CREDENTIALS')
             expect(await storedIdentity()).toBeNull()
 
             answer.mockClear()
             googleAccount.email = 'user02@throwaway.example'
             const secondResponse = await claimWithGoogle()
 
-            expect(secondResponse?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(secondResponse?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
             expect(answer).not.toHaveBeenCalled()
         })
 

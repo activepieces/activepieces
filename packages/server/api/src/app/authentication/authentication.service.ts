@@ -283,8 +283,8 @@ function refusedSignUpError({ email, provider }: SignUpParams): ActivepiecesErro
         })
     }
     return new ActivepiecesError({
-        code: ErrorCode.DOMAIN_NOT_ALLOWED,
-        params: { domain: normalizedEmail.split('@')[1] },
+        code: ErrorCode.INVALID_CREDENTIALS,
+        params: null,
     })
 }
 

@@ -56,8 +56,8 @@ const RedirectPage: React.FC = React.memo(() => {
                 'Please ask your administrator to add you to the organization.',
               ),
             });
-          } else if (errorCode === ErrorCode.DOMAIN_NOT_ALLOWED) {
-            toast(t('Email domain is disallowed'));
+          } else if (errorCode === ErrorCode.INVALID_CREDENTIALS) {
+            toast(t('Sign-in failed'));
           } else {
             internalErrorToast();
           }
