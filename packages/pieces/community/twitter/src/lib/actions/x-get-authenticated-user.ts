@@ -32,9 +32,9 @@ export const xGetAuthenticatedUser = createAction({
       return await userClient.v2.me({
         'user.fields': twitterFieldSets.user,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw twitterHelpers.buildError({
-        error,
+        error: twitterHelpers.asTwitterError(error),
         notFoundHint: 'the authenticated account could not be resolved.',
       });
     }

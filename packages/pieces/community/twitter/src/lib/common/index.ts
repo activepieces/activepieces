@@ -22,6 +22,13 @@ function describeStatus({
   return undefined;
 }
 
+function asTwitterError(value: unknown): TwitterErrorLike {
+  if (typeof value === 'object' && value !== null) {
+    return value;
+  }
+  return { message: String(value) };
+}
+
 function buildError({
   error,
   notFoundHint,
@@ -73,6 +80,7 @@ export const twitterCommon = {
 
 export const twitterHelpers = {
   buildError,
+  asTwitterError,
 };
 
 export const twitterFieldSets = {
