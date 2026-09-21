@@ -95,26 +95,6 @@ const PlatformConnectionsPage = React.lazy(
   () => import('./platform/connections'),
 );
 
-function useAdminPageViewed() {
-  const { capture } = useTelemetry();
-  const { pathname } = useLocation();
-  const locked = useInsideFeatureSample();
-  const page =
-    matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname;
-  useEffect(() => {
-    capture({
-      name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
-      payload: { page, locked },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, locked]);
-}
-
-function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  useAdminPageViewed();
-  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
-}
-
 const HEALTH_TAB_PATHS = { system: '', runs: 'runs', queue: 'queue' };
 const WORKERS_TAB_PATHS = { health: '', 'worker-groups': 'groups' };
 const AI_TAB_PATHS = { providers: '', capabilities: 'capabilities' };
@@ -578,3 +558,23 @@ export const platformRoutes = [
     '/platform/infrastructure/*',
   ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
 ];
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  useAdminPageViewed();
+  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
+}
+
+function useAdminPageViewed() {
+  const { capture } = useTelemetry();
+  const { pathname } = useLocation();
+  const locked = useInsideFeatureSample();
+  const page =
+    matchRoutes(platformRoutes, pathname)?.[0]?.route.path ?? pathname;
+  useEffect(() => {
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
+      payload: { page, locked },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, locked]);
+}
