@@ -1,4 +1,12 @@
 {
+  "Answers yes to (AI)": "Answers yes to (AI)",
+  "50% — maybe": "50% — maybe",
+  "70% — likely": "70% — likely",
+  "90% — very likely": "90% — very likely",
+  "Question": "Question",
+  "Take this branch": "Take this branch",
+  "Yes or no, about the value above. \"Is this above our refund limit?\"": "Yes or no, about the value above. \"Is this above our refund limit?\"",
+  "Below this, the branch is skipped.": "Below this, the branch is skipped.",
   "Request approval": "Request approval",
   "Sensitive Project": "Sensitive Project",
   "When enabled, publishing flows in this project requires approval.": "When enabled, publishing flows in this project requires approval.",
