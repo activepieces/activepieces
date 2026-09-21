@@ -41,7 +41,7 @@ export const outlookListMessagesDeltaAction = createAction({
 
 		const url = deltaLink
 			? deltaLink
-			: `${prefix}/mailFolders/${outlookAtomicCommon.encodeGraphId(folderId)}/messages/delta`;
+			: `${prefix}/mailFolders/${outlookAtomicCommon.encodeGraphId(folderId)}/messages/delta?$select=${outlookAtomicCommon.messageSelect}`;
 
 		try {
 			const response: PageCollection = await client
