@@ -22,7 +22,7 @@ export const projectRoleQueries = {
       queryFn: () =>
         projectRoleApi.listProjectMembers(roleId!, {
           cursor: undefined,
-          limit: 10,
+          limit: 100,
         }),
       enabled: enabled && !!roleId,
     }),

@@ -17,7 +17,6 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
-import { ProjectRoleUsersSheet } from './project-role-users-table';
 import { RoleAvatar } from './role-avatar';
 import { roleCopy } from './role-copy';
 
@@ -28,8 +27,7 @@ export function ProjectRolesList({
   refetch,
 }: ProjectRolesListProps) {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [openedRole, setOpenedRole] = useState<ProjectRole | null>(null);
-  const [peopleRole, setPeopleRole] = useState<ProjectRole | null>(null);
+  const [opened, setOpened] = useState<OpenedRole | null>(null);
 
   if (isLoading) {
     return <SkeletonList numberOfItems={3} className="w-full h-[60px]" />;
@@ -65,11 +63,11 @@ export function ProjectRolesList({
               role="button"
               tabIndex={0}
               className="cursor-pointer hover:bg-accent/50"
-              onClick={() => setOpenedRole(role)}
+              onClick={() => setOpened({ role, tab: 'permissions' })}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  setOpenedRole(role);
+                  setOpened({ role, tab: 'permissions' });
                 }
               }}
             >
@@ -97,7 +95,7 @@ export function ProjectRolesList({
                       className="text-primary hover:underline underline-offset-4"
                       onClick={(event) => {
                         event.stopPropagation();
-                        setPeopleRole(role);
+                        setOpened({ role, tab: 'people' });
                       }}
                     >
                       {t('rolePeopleCount', { count: role.userCount })}
@@ -115,37 +113,33 @@ export function ProjectRolesList({
           'Press a row to open the role. Press the people count to see who has it. Edit and delete live inside the role, so the list stays quiet.',
         )}
       </p>
-      {openedRole && (
+      {opened && (
         <ProjectRoleDialog
-          key={openedRole.id}
+          key={`${opened.role.id}-${opened.tab}`}
           mode="edit"
-          projectRole={openedRole}
+          projectRole={opened.role}
           platformId={platform.id}
+          initialTab={opened.tab}
           open={true}
           onOpenChange={(open) => {
             if (!open) {
-              setOpenedRole(null);
+              setOpened(null);
             }
           }}
           onSave={() => {
-            setOpenedRole(null);
+            setOpened(null);
             refetch();
           }}
-          disabled={openedRole.type === RoleType.DEFAULT}
         />
       )}
-      <ProjectRoleUsersSheet
-        projectRole={peopleRole}
-        isOpen={peopleRole !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPeopleRole(null);
-          }
-        }}
-      />
     </div>
   );
 }
+
+type OpenedRole = {
+  role: ProjectRole;
+  tab: 'permissions' | 'people';
+};
 
 type ProjectRolesListProps = {
   projectRoles: SeekPage<ProjectRole> | undefined;
