@@ -12,26 +12,26 @@ export const updateGlance = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Silently update the Pushover glance widget on the recipient devices without sending a notification. Use it for a continuously refreshed status number or line of text, and use Send Push Message when the person should actually be alerted. At least one of title, text, subtext, count or percent is required. Fields persist between calls: omit a field to leave its current value alone, and send an empty string only when you deliberately want to clear it. A registered widget is required and the Apple Watch is the only supported widget, so a success response on an account without one proves the call shape only. Safe to retry: the same values converge on the same widget state.',
+      'Silently update the Pushover glance widget on the recipient devices without sending a notification. Use it for a continuously refreshed status number or line of text, and use Send Push Message when the person should actually be alerted. At least one of title, text, subtext, count or percent is required. Fields persist between calls: omit a field to leave its current value alone. This action only sets field values and cannot clear a field once it has one. A registered widget is required and the Apple Watch is the only supported widget, so a success response on an account without one proves the call shape only. Safe to retry: the same values converge on the same widget state.',
     idempotent: true,
   },
   props: {
     title: Property.ShortText({
       displayName: 'Title',
       description:
-        'Short description of the data, maximum 100 characters. Omit to leave unchanged; send an empty string to clear it.',
+        'Short description of the data, maximum 100 characters. Omit to leave unchanged. Values cannot be cleared once set.',
       required: false,
     }),
     text: Property.ShortText({
       displayName: 'Text',
       description:
-        'Main line of text, maximum 100 characters. Omit to leave unchanged; send an empty string to clear it.',
+        'Main line of text, maximum 100 characters. Omit to leave unchanged. Values cannot be cleared once set.',
       required: false,
     }),
     subtext: Property.ShortText({
       displayName: 'Subtext',
       description:
-        'Second line of text, maximum 100 characters. Omit to leave unchanged; send an empty string to clear it.',
+        'Second line of text, maximum 100 characters. Omit to leave unchanged. Values cannot be cleared once set.',
       required: false,
     }),
     count: Property.Number({
@@ -55,9 +55,9 @@ export const updateGlance = createAction({
   },
   async run({ auth, propsValue }) {
     const fields = {
-      ...(propsValue.title !== undefined ? { title: propsValue.title } : {}),
-      ...(propsValue.text !== undefined ? { text: propsValue.text } : {}),
-      ...(propsValue.subtext !== undefined
+      ...(isFilled(propsValue.title) ? { title: propsValue.title } : {}),
+      ...(isFilled(propsValue.text) ? { text: propsValue.text } : {}),
+      ...(isFilled(propsValue.subtext)
         ? { subtext: propsValue.subtext }
         : {}),
       ...(propsValue.count !== undefined ? { count: propsValue.count } : {}),
@@ -83,3 +83,7 @@ export const updateGlance = createAction({
     });
   },
 });
+
+function isFilled(value: string | undefined): value is string {
+  return value !== undefined && value.length > 0;
+}

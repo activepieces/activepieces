@@ -28,7 +28,7 @@ export const getReceiptStatus = createAction({
   async run({ auth, propsValue }) {
     return await pushoverApiCall({
       method: HttpMethod.GET,
-      resourceUri: `/receipts/${propsValue.receipt}.json`,
+      resourceUri: `/receipts/${encodeURIComponent(propsValue.receipt)}.json`,
       queryParams: { token: auth.props.api_token },
       errorHint:
         'Receipts expire after about one week and only exist for priority 2 notifications.',

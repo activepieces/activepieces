@@ -28,7 +28,7 @@ export const cancelEmergencyRetries = createAction({
   async run({ auth, propsValue }) {
     return await pushoverApiCall({
       method: HttpMethod.POST,
-      resourceUri: `/receipts/${propsValue.receipt}/cancel.json`,
+      resourceUri: `/receipts/${encodeURIComponent(propsValue.receipt)}/cancel.json`,
       body: { token: auth.props.api_token },
       errorHint:
         'Receipts expire after about one week and only exist for priority 2 notifications.',

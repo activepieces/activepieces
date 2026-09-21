@@ -28,7 +28,7 @@ export const getDeliveryGroup = createAction({
   async run({ auth, propsValue }) {
     return await pushoverApiCall({
       method: HttpMethod.GET,
-      resourceUri: `/groups/${propsValue.group_key}.json`,
+      resourceUri: `/groups/${encodeURIComponent(propsValue.group_key)}.json`,
       queryParams: { token: auth.props.api_token },
       errorHint: GROUP_OWNERSHIP_HINT,
     });

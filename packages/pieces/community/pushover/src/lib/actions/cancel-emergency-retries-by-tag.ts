@@ -20,7 +20,7 @@ export const cancelEmergencyRetriesByTag = createAction({
     tag: Property.ShortText({
       displayName: 'Tag',
       description:
-        'A single tag that was supplied in the Tags parameter at send time, for example deploy.',
+        'A single tag that was supplied in the Tags parameter at send time, for example deploy. One tag only, with no spaces or slashes.',
       required: true,
     }),
   },
@@ -28,7 +28,7 @@ export const cancelEmergencyRetriesByTag = createAction({
   async run({ auth, propsValue }) {
     return await pushoverApiCall({
       method: HttpMethod.POST,
-      resourceUri: `/receipts/cancel_by_tag/${propsValue.tag}.json`,
+      resourceUri: `/receipts/cancel_by_tag/${encodeURIComponent(propsValue.tag)}.json`,
       body: { token: auth.props.api_token },
     });
   },

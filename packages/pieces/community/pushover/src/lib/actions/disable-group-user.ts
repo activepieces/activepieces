@@ -34,7 +34,7 @@ export const disableGroupUser = createAction({
   async run({ auth, propsValue }) {
     return await pushoverApiCall({
       method: HttpMethod.POST,
-      resourceUri: `/groups/${propsValue.group_key}/disable_user.json`,
+      resourceUri: `/groups/${encodeURIComponent(propsValue.group_key)}/disable_user.json`,
       body: {
         token: auth.props.api_token,
         user: propsValue.user,

@@ -30,20 +30,17 @@ export const sendPushMessageOutputSchema: OutputSchema = {
     {
       key: 'status',
       label: 'Status',
-      value: 'status',
       format: 'number',
       description: '1 when Pushover accepted the notification. Any other value means it was rejected.',
     },
     {
       key: 'request',
       label: 'Request ID',
-      value: 'request',
       description: 'Pushover\'s identifier for this request, worth quoting when reporting a delivery problem.',
     },
     {
       key: 'receipt',
       label: 'Receipt',
-      value: 'receipt',
       description:
         'Only returned at emergency priority (2). Pass it to Get Emergency Receipt Status or Cancel Emergency Retries.',
     },

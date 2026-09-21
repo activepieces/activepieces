@@ -7,7 +7,7 @@ import { removeUserFromGroupOutputSchema } from '../output-schemas';
 export const removeUserFromGroup = createAction({
   auth: pushoverAuth,
   name: 'remove_user_from_group',
-  classification: 'DESTRUCTIVE',
+  classification: 'WRITE',
   displayName: 'Remove User from Delivery Group',
   description: 'Permanently remove a member from a Pushover delivery group',
   audience: 'ai',
@@ -34,7 +34,7 @@ export const removeUserFromGroup = createAction({
   async run({ auth, propsValue }) {
     return await pushoverApiCall({
       method: HttpMethod.POST,
-      resourceUri: `/groups/${propsValue.group_key}/remove_user.json`,
+      resourceUri: `/groups/${encodeURIComponent(propsValue.group_key)}/remove_user.json`,
       body: {
         token: auth.props.api_token,
         user: propsValue.user,

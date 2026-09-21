@@ -33,7 +33,7 @@ export const renameDeliveryGroup = createAction({
   async run({ auth, propsValue }) {
     return await pushoverApiCall({
       method: HttpMethod.POST,
-      resourceUri: `/groups/${propsValue.group_key}/rename.json`,
+      resourceUri: `/groups/${encodeURIComponent(propsValue.group_key)}/rename.json`,
       body: {
         token: auth.props.api_token,
         name: propsValue.name,
