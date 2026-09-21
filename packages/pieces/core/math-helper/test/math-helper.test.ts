@@ -155,4 +155,18 @@ describe('generateRandom', () => {
     });
     expect(await generateRandom.run(ctx)).toBe(7);
   });
+
+  test('throws when the range holds no whole number', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 1.2, second_number: 1.8 },
+    });
+    await expect(generateRandom.run(ctx)).rejects.toThrow();
+  });
+
+  test('throws when both bounds are the same decimal', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 2.5, second_number: 2.5 },
+    });
+    await expect(generateRandom.run(ctx)).rejects.toThrow();
+  });
 });
