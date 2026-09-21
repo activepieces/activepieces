@@ -21,7 +21,7 @@ export function UsageTab({ platform, info }: UsageTabProps) {
             <TooltipTrigger asChild>
               <Info className="size-3.5 text-muted-foreground cursor-help" />
             </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-[240px]">
+            <TooltipContent side="right" className="max-w-60">
               <p className="text-sm">
                 {t('Usage figures may be a few minutes out of date.')}
               </p>

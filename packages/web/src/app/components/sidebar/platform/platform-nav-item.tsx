@@ -66,7 +66,7 @@ export function PlatformNavSubItem({
   return (
     <SidebarMenuItem>
       <div className="flex items-stretch">
-        <div className="ml-[15.6px] mr-1 w-px shrink-0 bg-sidebar-border" />
+        <div className="ml-4 mr-1 w-px shrink-0 bg-sidebar-border" />
         <SidebarMenuButton
           className={cn('h-7 flex-1', {
             'bg-sidebar-accent hover:bg-sidebar-accent!': active,

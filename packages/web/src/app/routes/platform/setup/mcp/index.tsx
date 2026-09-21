@@ -150,7 +150,7 @@ function McpSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="w-full mx-auto max-w-[1198px] py-6">
+    <div className="w-full mx-auto max-w-page-band py-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-medium">{t('Platform MCP Server')}</h1>
         <div className="text-sm text-muted-foreground">{description}</div>
