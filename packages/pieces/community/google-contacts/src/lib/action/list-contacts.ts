@@ -10,7 +10,7 @@ const maxPages = 10;
 export const googleContactsListContactsAction = createAction({
   auth: googleContactsAuth,
   name: 'list_contacts',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Contacts',
   description: 'List the contacts of the connected Google account.',
   audience: 'ai',

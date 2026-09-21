@@ -43,8 +43,6 @@ export const googleContactsDeleteContactPhotoAction = createAction({
         operation: 'Delete Contact Photo',
       });
     }
-    // People wraps the refreshed contact as `{ person: {...} }` here; unwrap it so this step
-    // returns a bare Person like every other person-returning action in the piece.
     const person = googleContactsApi.readRecord({
       source: response,
       path: ['person'],

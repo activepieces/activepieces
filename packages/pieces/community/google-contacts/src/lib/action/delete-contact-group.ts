@@ -7,7 +7,7 @@ import { deleteContactGroupOutputSchema } from '../output-schemas';
 export const googleContactsDeleteContactGroupAction = createAction({
   auth: googleContactsAuth,
   name: 'delete_contact_group',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Contact Group',
   description: 'Delete a user-created contact group.',
   audience: 'ai',

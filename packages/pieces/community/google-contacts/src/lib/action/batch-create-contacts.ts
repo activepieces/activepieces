@@ -90,21 +90,41 @@ export const googleContactsBatchCreateContactsAction = createAction({
         operation: 'Batch Create Contacts',
       });
     }
-    const items = googleContactsApi
-      .readArray({ source: response, path: ['createdPeople'] })
-      .map((item, index) => ({
-        resourceName: `Contact ${index + 1}`,
-        response: item,
-      }));
-    const { succeeded, failed } = googleContactsApi.splitItemResponses({
-      items,
-      payloadKey: 'person',
+    const created = googleContactsApi.readArray({
+      source: response,
+      path: ['createdPeople'],
     });
+    const succeeded = created
+      .map((item, index) => ({ item, index }))
+      .filter((entry) => !googleContactsApi.isFailedItem({ response: entry.item }))
+      .map((entry) => {
+        const payload = googleContactsApi.readValue({
+          source: entry.item,
+          path: ['person'],
+        });
+        return {
+          requestIndex: entry.index + 1,
+          resourceName: googleContactsApi.readString({
+            source: payload,
+            path: ['resourceName'],
+          }),
+          contact: googleContactsPerson.summarizePerson({ person: payload }),
+        };
+      });
+    const failed = created
+      .map((item, index) => ({ item, index }))
+      .filter((entry) => googleContactsApi.isFailedItem({ response: entry.item }))
+      .map((entry) => ({
+        requestIndex: entry.index + 1,
+        status: googleContactsApi.describeStatus({
+          status: googleContactsApi.readValue({
+            source: entry.item,
+            path: ['status'],
+          }),
+        }),
+      }));
     return {
-      succeeded: succeeded.map((item) => ({
-        resourceName: item.resourceName,
-        contact: googleContactsPerson.summarizePerson({ person: item.payload }),
-      })),
+      succeeded,
       failed,
       succeededCount: succeeded.length,
       failedCount: failed.length,

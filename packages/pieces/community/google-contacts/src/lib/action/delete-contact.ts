@@ -7,7 +7,7 @@ import { deleteContactOutputSchema } from '../output-schemas';
 export const googleContactsDeleteContactAction = createAction({
   auth: googleContactsAuth,
   name: 'delete_contact',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Contact',
   description: 'Permanently delete a contact by its resource name.',
   audience: 'ai',

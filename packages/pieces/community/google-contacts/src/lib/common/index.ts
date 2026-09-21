@@ -76,7 +76,7 @@ function buildUrl({
 }): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(queryParams ?? {})) {
-    if (value !== undefined && value !== '') {
+    if (value !== undefined) {
       search.append(key, value);
     }
   }
@@ -130,11 +130,28 @@ function readArray({ source, path }: { source: unknown; path: string[] }): unkno
   return Array.isArray(value) ? value : [];
 }
 
+function parseStringList({ value, label }: { value: string; label: string }): unknown[] {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    throw new Error(`${label} must be a list of strings.`);
+  }
+  throw new Error(`${label} must be a list of strings.`);
+}
+
 function toStringList({ value, label }: { value: unknown; label: string }): string[] {
-  if (!Array.isArray(value)) {
+  if (value === undefined || value === null) {
     return [];
   }
-  return value.map((item) => {
+  const entries =
+    typeof value === 'string' ? parseStringList({ value, label }) : value;
+  if (!Array.isArray(entries)) {
+    throw new Error(`${label} must be a list of strings.`);
+  }
+  return entries.map((item) => {
     if (typeof item !== 'string' || item.trim().length === 0) {
       throw new Error(`${label} must be a list of non-empty strings.`);
     }
@@ -322,4 +339,5 @@ export const googleContactsApi = {
   assertBatchSize,
   splitItemResponses,
   describeStatus,
+  isFailedItem,
 };

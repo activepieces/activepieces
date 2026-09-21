@@ -10,7 +10,7 @@ const maxPages = 10;
 export const googleContactsListContactGroupsAction = createAction({
   auth: googleContactsAuth,
   name: 'list_contact_groups',
-  classification: 'READ',
+  classification: 'SEARCH',
   displayName: 'List Contact Groups',
   description: 'List every contact group of the connected Google account.',
   audience: 'ai',
@@ -57,6 +57,10 @@ export const googleContactsListContactGroupsAction = createAction({
         operation: 'List Contact Groups',
       });
     }
-    return { contactGroups: groups, count: groups.length };
+    return {
+      contactGroups: groups,
+      count: groups.length,
+      hasMore: pageToken !== undefined,
+    };
   },
 });

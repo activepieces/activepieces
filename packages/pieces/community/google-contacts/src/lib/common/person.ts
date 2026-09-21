@@ -1,47 +1,23 @@
 import { googleContactsApi } from './index';
 
-const nameKeys = [
-  'givenName',
-  'middleName',
-  'familyName',
-  'honorificPrefix',
-  'honorificSuffix',
-  'phoneticGivenName',
-  'phoneticMiddleName',
-  'phoneticFamilyName',
-];
-
-const organizationKeys = ['name', 'title', 'department'];
-
-function pickKeys({
-  source,
-  keys,
-}: {
-  source: Record<string, unknown> | undefined;
-  keys: string[];
-}): Record<string, unknown> {
-  if (source === undefined) {
-    return {};
-  }
-  const kept = Object.entries(source).filter(
-    ([key, value]) => keys.includes(key) && value !== undefined && value !== null
-  );
-  return Object.fromEntries(kept);
-}
-
-function firstRecordOf({
+function mergeFirstEntry({
   current,
   group,
+  overrides,
+  defaults,
 }: {
   current: Record<string, unknown> | undefined;
   group: string;
-}): Record<string, unknown> | undefined {
+  overrides: Record<string, unknown>;
+  defaults?: Record<string, unknown>;
+}): unknown[] {
   const entries = googleContactsApi.readArray({ source: current, path: [group] });
   const head = entries[0];
-  if (typeof head !== 'object' || head === null || Array.isArray(head)) {
-    return undefined;
-  }
-  return Object.fromEntries(Object.entries(head));
+  const base =
+    typeof head === 'object' && head !== null && !Array.isArray(head)
+      ? Object.fromEntries(Object.entries(head))
+      : {};
+  return [{ ...defaults, ...base, ...overrides }, ...entries.slice(1)];
 }
 
 function buildPerson({
@@ -59,23 +35,24 @@ function buildPerson({
     input.middleName !== undefined ||
     input.lastName !== undefined;
   if (nameSupplied) {
-    const base = pickKeys({
-      source: firstRecordOf({ current, group: 'names' }),
-      keys: nameKeys,
-    });
-    person['names'] = [
-      {
-        ...base,
+    person['names'] = mergeFirstEntry({
+      current,
+      group: 'names',
+      overrides: {
         ...(input.firstName === undefined ? {} : { givenName: input.firstName }),
         ...(input.middleName === undefined ? {} : { middleName: input.middleName }),
         ...(input.lastName === undefined ? {} : { familyName: input.lastName }),
       },
-    ];
+    });
     fields.push('names');
   }
 
   if (input.nickname !== undefined) {
-    person['nicknames'] = [{ value: input.nickname }];
+    person['nicknames'] = mergeFirstEntry({
+      current,
+      group: 'nicknames',
+      overrides: { value: input.nickname },
+    });
     fields.push('nicknames');
   }
 
@@ -92,24 +69,24 @@ function buildPerson({
   const organizationSupplied =
     input.company !== undefined || input.jobTitle !== undefined;
   if (organizationSupplied) {
-    const base = pickKeys({
-      source: firstRecordOf({ current, group: 'organizations' }),
-      keys: organizationKeys,
-    });
-    person['organizations'] = [
-      {
-        ...base,
+    person['organizations'] = mergeFirstEntry({
+      current,
+      group: 'organizations',
+      overrides: {
         ...(input.company === undefined ? {} : { name: input.company }),
         ...(input.jobTitle === undefined ? {} : { title: input.jobTitle }),
       },
-    ];
+    });
     fields.push('organizations');
   }
 
   if (input.biography !== undefined) {
-    person['biographies'] = [
-      { value: input.biography, contentType: 'TEXT_PLAIN' },
-    ];
+    person['biographies'] = mergeFirstEntry({
+      current,
+      group: 'biographies',
+      overrides: { value: input.biography },
+      defaults: { contentType: 'TEXT_PLAIN' },
+    });
     fields.push('biographies');
   }
 
