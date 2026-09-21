@@ -24,9 +24,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { chatApi } from '@/features/chat/lib/chat-api';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
+import {
+  CHAT_PROMPT_QUERY_PARAM,
+  chatUtils,
+} from '@/features/chat/lib/chat-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { CHAT_PROMPT_QUERY_PARAM } from '@/lib/route-utils';
 
 import { AIChatBox } from './ai-chat-box';
 import { ConversationSidebarToggle } from './components/conversation-sidebar-toggle';

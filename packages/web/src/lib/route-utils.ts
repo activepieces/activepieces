@@ -45,4 +45,3 @@ export const determineDefaultRoute = ({
 export const TRIAL_KEY_QUERY_PARAM = 'licenseKey';
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
 export const NEW_TABLE_QUERY_PARAM = 'newTable';
-export const CHAT_PROMPT_QUERY_PARAM = 'prompt';
