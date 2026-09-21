@@ -1,16 +1,18 @@
-import { apId, chunk, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
-import { wideEvent } from '@activepieces/server-utils'
+import { apId, chunk, isNil, sanitizeObjectForPostgresql, spreadIfDefined } from '@activepieces/core-utils'
+import { apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, BarrierPolicy, barrierReleasesOnLastPendingSignal, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager } from 'typeorm'
+import { EntityManager, FindOptionsWhere, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
+import { distributedStore } from '../database/redis-connections'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
 import { platformConfigurationService } from '../platform/platform-configuration.service'
 import { barrierQueue } from './barrier-queue'
+import { BarrierFanOutPayload, barrierSourceKey } from './barrier-queue-factory'
 import { resumeService } from './resume-service'
 import { WaitpointEntity } from './waitpoint-entity'
 import { WaitpointSignalEntity } from './waitpoint-signal-entity'
@@ -22,8 +24,12 @@ const signalRepo = repoFactory(WaitpointSignalEntity)
 
 export const barrierService = (log: FastifyBaseLogger) => ({
     async create(params: CreateBarrierParams): Promise<CreateBarrierResult> {
+        const maxSignals = await platformConfigurationService(log).maxBarrierSignals({ platformId: params.platformId })
+        const batchSize = clampBatchSize({ itemCount: params.fanOut?.items.length ?? 0, requested: params.fanOut?.batchSize ?? 1, maxSignals })
+        const batches = isNil(params.fanOut) ? [] : chunk(params.fanOut.items, batchSize)
         const labels = params.signalLabels ?? []
-        await assertSignalCountWithinLimit({ signalCount: labels.length, platformId: params.platformId, log })
+        const signalCount = isNil(params.fanOut) ? labels.length : batches.length
+        assertSignalCountWithinLimit({ signalCount, maxSignals })
         const flowRun = await flowRunRepo().findOneByOrFail({ id: params.flowRunId, projectId: params.projectId })
 
         const creation = await transaction(async (entityManager) => {
@@ -57,7 +63,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
                 deadLetteredAt: null,
             }
             await repo.createQueryBuilder().insert().into('waitpoint').values(barrier).execute()
-            const signals = buildPendingSignals({ barrierId: barrier.id, projectId: params.projectId, labels })
+            const signals = buildPendingSignals({ barrierId: barrier.id, projectId: params.projectId, signalCount, labels, fanOut: !isNil(params.fanOut) })
             for (const rows of chunk(signals, SIGNAL_INSERT_BATCH_SIZE)) {
                 await signalRepo(entityManager).createQueryBuilder().insert().into('waitpoint_signal').values(rows).execute()
             }
@@ -65,6 +71,11 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         })
 
         if (creation.inserted) {
+            if (!isNil(params.fanOut)) {
+                const payload: BarrierFanOutPayload = { entryStepName: params.fanOut.entryStepName, seedSteps: params.fanOut.seedSteps, batches }
+                await distributedStore.put(barrierSourceKey(creation.barrier.id), payload, SOURCE_TTL_SECONDS)
+                await barrierQueue(log).addFanOutDispatch({ barrierId: creation.barrier.id, projectId: params.projectId })
+            }
             if (!isNil(creation.barrier.resumeDateTime)) {
                 await waitpointTimeoutJob.schedule({
                     flowRunId: params.flowRunId,
@@ -77,7 +88,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
             await barrierQueue(log).enqueueEvaluation({ barrierId: creation.barrier.id, projectId: params.projectId })
         }
 
-        return { barrier: creation.barrier, signals: creation.signals, signalCount: creation.signals.length }
+        return { barrier: creation.barrier, signals: creation.signals, signalCount: creation.signals.length, batchSize }
     },
 
     async findById({ barrierId, projectId }: FindByIdParams): Promise<Waitpoint | null> {
@@ -86,6 +97,34 @@ export const barrierService = (log: FastifyBaseLogger) => ({
 
     async findSignalById({ signalId, projectId }: FindSignalByIdParams): Promise<WaitpointSignal | null> {
         return signalRepo().findOneBy({ id: signalId, projectId })
+    },
+
+    async listUnclaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<WaitpointSignal[]> {
+        return signalRepo().find({
+            where: unclaimedSignalWhere({ barrierId, projectId }),
+            order: { sequence: 'ASC' },
+        })
+    },
+
+    async claimSignal({ signalId, refId, projectId }: ClaimSignalParams): Promise<boolean> {
+        const claimed = await signalRepo().query(
+            'UPDATE waitpoint_signal SET "refId" = $1, "updated" = now() WHERE "id" = $2 AND "projectId" = $3 AND "refId" IS NULL AND "status" = $4 RETURNING "id"',
+            [refId, signalId, projectId, BarrierSignalStatus.PENDING],
+        )
+        return Array.isArray(claimed) && claimed.length > 0
+    },
+
+    async releaseClaim({ signalId, refId, projectId }: ClaimSignalParams): Promise<void> {
+        await signalRepo().update({ id: signalId, refId, projectId }, { refId: null })
+    },
+
+    async countClaimedSignals({ barrierId, projectId }: BarrierScopeParams): Promise<number> {
+        return signalRepo().countBy({ waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: Not(IsNull()) })
+    },
+
+    async markUnclaimedNotDispatched({ barrierId, projectId }: BarrierScopeParams): Promise<number> {
+        const result = await signalRepo().update(unclaimedSignalWhere({ barrierId, projectId }), { status: BarrierSignalStatus.NOT_DISPATCHED })
+        return result.affected ?? 0
     },
 
     async receiveSignal(params: ReceiveSignalParams): Promise<WaitpointSignal | null> {
@@ -109,6 +148,7 @@ export const barrierService = (log: FastifyBaseLogger) => ({
 
     async release({ barrier, timedOut, releaseReason }: ReleaseParams): Promise<BarrierSummary | null> {
         const summary = await closeBarrier({ barrier, timedOut })
+        await distributedStore.delete(barrierSourceKey(barrier.id))
         const finalSummary = summary ?? readStoredSummary(await waitpointRepo().findOneBy({ id: barrier.id }))
         if (isNil(finalSummary)) {
             return null
@@ -155,6 +195,12 @@ async function applySignalOutcome({ signalId, refId, projectId, status, result, 
 
     const decidedRows: unknown[] = updateResult.raw ?? []
     if (decidedRows.length === 0) {
+        log.warn({
+            ...spreadIfDefined('flowRun', isNil(refId) ? undefined : { id: refId }),
+            ...spreadIfDefined('signal', isNil(signalId) ? undefined : { id: signalId }),
+            project: { id: projectId },
+            outcome: status,
+        }, '[barrierService#applySignalOutcome] No signal row matched this outcome, so it is being dropped; the barrier was released or the row was never claimed by this ref')
         return null
     }
     const signal = await signalRepo().findOneBy({ ...identity, projectId })
@@ -165,9 +211,9 @@ async function applySignalOutcome({ signalId, refId, projectId, status, result, 
     return signal
 }
 
-function buildPendingSignals({ barrierId, projectId, labels }: BuildPendingSignalsParams): WaitpointSignal[] {
+function buildPendingSignals({ barrierId, projectId, signalCount, labels, fanOut }: BuildPendingSignalsParams): WaitpointSignal[] {
     const now = new Date().toISOString()
-    return labels.map((label) => ({
+    return Array.from({ length: signalCount }, (_, index) => ({
         id: apId(),
         created: now,
         updated: now,
@@ -175,10 +221,14 @@ function buildPendingSignals({ barrierId, projectId, labels }: BuildPendingSigna
         projectId,
         status: BarrierSignalStatus.PENDING,
         refId: null,
-        sequence: null,
-        label,
+        sequence: fanOut ? index : null,
+        label: labels[index] ?? null,
         result: null,
     }))
+}
+
+function unclaimedSignalWhere({ barrierId, projectId }: BarrierScopeParams): FindOptionsWhere<WaitpointSignal> {
+    return { waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING, refId: IsNull() }
 }
 
 async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<BarrierSummary | null> {
@@ -254,8 +304,12 @@ async function buildSummary({ barrierId, projectId, timedOut, entityManager }: B
     }
 }
 
-async function assertSignalCountWithinLimit({ signalCount, platformId, log }: AssertSignalCountWithinLimitParams): Promise<void> {
-    const maxSignals = await platformConfigurationService(log).maxBarrierSignals({ platformId })
+function clampBatchSize({ itemCount, requested, maxSignals }: ClampBatchSizeParams): number {
+    const minimumBatchSize = Math.ceil(itemCount / maxSignals)
+    return Math.max(requested, minimumBatchSize, 1)
+}
+
+function assertSignalCountWithinLimit({ signalCount, maxSignals }: AssertSignalCountWithinLimitParams): void {
     if (signalCount > maxSignals) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
@@ -279,6 +333,8 @@ function readStoredSummary(waitpoint: Waitpoint | null): BarrierSummary | null {
 
 const SIGNAL_INSERT_BATCH_SIZE = 500
 
+const SOURCE_TTL_SECONDS = apDayjsDuration(1, 'day').asSeconds()
+
 export type BarrierReleaseReason = 'predicate' | 'timeout'
 
 export type CreateBarrierParams = {
@@ -292,12 +348,19 @@ export type CreateBarrierParams = {
     httpRequestId?: string
     policy?: BarrierPolicy
     signalLabels?: (string | null)[]
+    fanOut?: {
+        entryStepName: string
+        batchSize: number
+        items: unknown[]
+        seedSteps: Record<string, unknown>
+    }
 }
 
 export type CreateBarrierResult = {
     barrier: Waitpoint
     signals: WaitpointSignal[]
     signalCount: number
+    batchSize: number
 }
 
 export type ReceiveSignalParams = {
@@ -327,6 +390,17 @@ type ApplySignalOutcomeParams = ReceiveSignalParams & {
 
 type FindSignalByIdParams = {
     signalId: string
+    projectId: string
+}
+
+type BarrierScopeParams = {
+    barrierId: string
+    projectId: string
+}
+
+type ClaimSignalParams = {
+    signalId: string
+    refId: string
     projectId: string
 }
 
@@ -369,13 +443,20 @@ type BuildSummaryParams = CountSignalsByStatusParams & {
 type BuildPendingSignalsParams = {
     barrierId: string
     projectId: string
+    signalCount: number
     labels: (string | null)[]
+    fanOut: boolean
+}
+
+type ClampBatchSizeParams = {
+    itemCount: number
+    requested: number
+    maxSignals: number
 }
 
 type AssertSignalCountWithinLimitParams = {
     signalCount: number
-    platformId: string
-    log: FastifyBaseLogger
+    maxSignals: number
 }
 
 type DefaultBarrierDeadlineParams = {
