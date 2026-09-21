@@ -94,6 +94,8 @@ describe('translated catalogue cache stays correct', () => {
         await get('/api/v1/pieces?locale=de&sortBy=UPDATED&orderBy=DESC')
         await get('/api/v1/pieces?locale=de&categories=PRODUCTIVITY')
         await get('/api/v1/pieces?locale=de&includeHidden=true')
+        await get('/api/v1/pieces?locale=de&suggestionType=ACTION_AND_TRIGGER')
+        await get('/api/v1/pieces?locale=junk&suggestionType=ACTION')
         const plainB = await get('/api/v1/pieces?locale=de')
 
         expect(plainB.body.map((p: any) => p.name)).toEqual(plainA.body.map((p: any) => p.name))
@@ -160,6 +162,82 @@ describe('translated catalogue cache stays correct', () => {
         const afterwards = await get('/api/v1/pieces?locale=de')
         expect(afterwards.body.map((p: any) => p.name)).toContain('piece-race-two')
         expect(afterwards.body).toHaveLength(42)
+    })
+
+    it('treats an unrecognised locale as English instead of minting a cache entry', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'piece-locale-bound', displayName: 'Bound', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+            i18n: {
+                [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' },
+                [LocalesEnum.CHINESE_TRADITIONAL]: { 'Send a message': '傳送訊息' },
+            },
+        }))
+        await pieceCache(app.log!).invalidate()
+
+        const english = await get('/api/v1/pieces?locale=en')
+        for (const locale of ['', 'xx', 'junk-1', 'junk-2', 'en-US', 'de-DE', 'zh-tw', 'ZH-TW', '__proto__']) {
+            const unrecognised = await get(`/api/v1/pieces?locale=${encodeURIComponent(locale)}`)
+            expect(unrecognised.sha).toBe(english.sha)
+        }
+
+        expect((await get('/api/v1/pieces?locale=de')).body[0].description).toBe('Eine Nachricht senden')
+        expect((await get('/api/v1/pieces?locale=zh-TW')).body[0].description).toBe('傳送訊息')
+        expect((await get('/api/v1/pieces?locale=en')).sha).toBe(english.sha)
+    })
+
+    it('serves props-translated suggestions from the cache, before and after an invalidation', async () => {
+        const withProps = (description: string) => createMockPieceMetadata({
+            name: 'piece-suggest', displayName: 'Suggest', description,
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+            actions: {
+                send: {
+                    name: 'send', displayName: 'Send', description: 'Send a message', requireAuth: false,
+                    props: { channel: { displayName: 'Channel', description: 'The channel', required: false, type: 'SHORT_TEXT' } },
+                },
+            },
+            i18n: {
+                [LocalesEnum.GERMAN]: {
+                    'Send a message': 'Eine Nachricht senden', 'Send': 'Senden',
+                    'Channel': 'Kanal', 'The channel': 'Der Kanal',
+                },
+            },
+        })
+        await db.save('piece_metadata', withProps('Send a message'))
+        await pieceCache(app.log!).invalidate()
+
+        const url = '/api/v1/pieces?locale=de&suggestionType=ACTION_AND_TRIGGER'
+        const first = await get(url)
+        const action = first.body[0].suggestedActions[0]
+        expect(action.displayName).toBe('Senden')
+        expect(action.props.channel.displayName).toBe('Kanal')
+        expect(action.props.channel.description).toBe('Der Kanal')
+        expect((await get(url)).sha).toBe(first.sha)
+
+        expect((await get('/api/v1/pieces?locale=de')).body[0].description).toBe('Eine Nachricht senden')
+
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'piece-suggest-two', displayName: 'Suggest Two', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+            i18n: { [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' } },
+        }))
+        await pieceCache(app.log!).invalidate()
+
+        const afterwards = await get(url)
+        expect(afterwards.body.map((p: any) => p.name).sort()).toEqual(['piece-suggest', 'piece-suggest-two'])
+        const refreshed = afterwards.body.find((p: any) => p.name === 'piece-suggest')
+        expect(refreshed.suggestedActions[0].props.channel.displayName).toBe('Kanal')
+    })
+
+    it('serves concurrent first-time suggestion requests consistently', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'piece-suggest-conc', displayName: 'Conc', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+            i18n: { [LocalesEnum.GERMAN]: { 'Send a message': 'Eine Nachricht senden' } },
+        }))
+        await pieceCache(app.log!).invalidate()
+        const results = await Promise.all(Array.from({ length: 12 }, () => get('/api/v1/pieces?locale=de&suggestionType=ACTION')))
+        expect(new Set(results.map(r => r.sha)).size).toBe(1)
     })
 
     it('reflects a piece created through the service without a manual invalidate', async () => {

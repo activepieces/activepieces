@@ -1,4 +1,4 @@
-import { ActivepiecesError, ErrorCode, isEmpty, isNil, LocalesEnum } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isEmpty, isNil } from '@activepieces/core-utils'
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { ALL_PRINCIPAL_TYPES, ApEdition, EngineResponse, GetPieceRequestParams, GetPieceRequestQuery, GetPieceRequestWithScopeParams, ListPiecesRequestQuery, PieceAudienceFilter, PieceCategory, PieceOptionRequest, Principal, PrincipalType, RegistryPiecesRequestQuery, SampleDataFileType, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -56,13 +56,10 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
             sortBy: query.sortBy,
             orderBy: query.orderBy,
             suggestionType: query.suggestionType,
-            locale: query.locale as LocalesEnum | undefined,
+            locale: query.locale,
             audience: query.audience,
         })
-        return pieceMetadataSummary.map((piece) => ({
-            ...piece,
-            i18n: undefined,
-        }))
+        return pieceMetadataSummary
     })
 
     app.get(
@@ -80,11 +77,12 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
-                locale: req.query.locale as LocalesEnum | undefined,
+                locale: req.query.locale,
+                includeTranslations: !req.query.excludeTranslations,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })
-            return { ...filterModelActionsByAudience(visiblePiece, req.query.audience), i18n: undefined }
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 
@@ -101,11 +99,12 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 platformId,
                 name: decodedName,
                 version,
-                locale: req.query.locale as LocalesEnum | undefined,
+                locale: req.query.locale,
+                includeTranslations: !req.query.excludeTranslations,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })
-            return { ...filterModelActionsByAudience(visiblePiece, req.query.audience), i18n: undefined }
+            return filterModelActionsByAudience(visiblePiece, req.query.audience)
         },
     )
 

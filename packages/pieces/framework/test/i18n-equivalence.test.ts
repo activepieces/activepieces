@@ -140,6 +140,47 @@ describe('translatePiece copy-on-write', () => {
     expect(summary.actions.act.displayName).toEqual('Jetzt handeln')
   })
 
+  it('partitions the full path set into the summary and suggestion halves', () => {
+    const summary = pieceTranslation.pathsForSummary
+    const suggestions = pieceTranslation.pathsForSuggestions
+    expect(summary.filter(p => suggestions.includes(p))).toEqual([])
+    expect([...summary, ...suggestions].sort()).toEqual([...pieceTranslation.pathsToValuesToTranslate].sort())
+  })
+
+  it('summary then suggestions equals one pass over the full path set', () => {
+    for (const fixture of fixtures) {
+      for (const locale of [DE, LocalesEnum.FRENCH, LocalesEnum.CHINESE_TRADITIONAL]) {
+        const raw = JSON.stringify(fixture)
+        const onePass = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale } as never)
+        const summary = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale, paths: pieceTranslation.pathsForSummary } as never)
+        const twoPass = pieceTranslation.translatePiece({ piece: summary, locale, paths: pieceTranslation.pathsForSuggestions } as never)
+        expect(JSON.stringify(twoPass)).toEqual(JSON.stringify(onePass))
+      }
+    }
+  })
+
+  it('never translates a value that is itself a translation key', () => {
+    const piece = {
+      name: 'chained', displayName: 'Chained', description: 'Name',
+      actions: {
+        act: {
+          name: 'act', displayName: 'Name', description: 'Name', requireAuth: false,
+          props: { field: prop('Name', 'Name') },
+        },
+      },
+      triggers: {},
+      i18n: { [DE]: { 'Name': 'Nom', 'Nom': 'Nombre' } },
+    }
+    const raw = JSON.stringify(piece)
+    const onePass = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale: DE } as never) as never as Record<string, never>
+    const summary = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale: DE, paths: pieceTranslation.pathsForSummary } as never)
+    const twoPass = pieceTranslation.translatePiece({ piece: summary, locale: DE, paths: pieceTranslation.pathsForSuggestions } as never) as never as Record<string, never>
+
+    expect(onePass.actions.act.displayName).toEqual('Nom')
+    expect(onePass.actions.act.props.field.displayName).toEqual('Nom')
+    expect(JSON.stringify(twoPass)).toEqual(JSON.stringify(onePass))
+  })
+
   it('translates the summary paths identically to the full path set', () => {
     const piece = fixtures.find(f => f.name === 'options-arrays')!
     const raw = JSON.stringify(piece)

@@ -77,7 +77,7 @@ describe('custom pieces per platform', () => {
 
     it('single piece: a platform user gets an OFFICIAL piece translated', async () => {
         const { a, tokenA } = await scenario()
-        const r = await get(`/api/v1/pieces/@ap/official?locale=de&projectId=${a.mockProject.id}`, tokenA)
+        const r = await get(`/api/v1/pieces/@ap/official?locale=de&excludeTranslations=true&projectId=${a.mockProject.id}`, tokenA)
         expect(r.status).toBe(200)
         expect(r.body.description).toBe('Eine Nachricht senden')
         expect(r.body.i18n).toBeUndefined()
@@ -85,7 +85,7 @@ describe('custom pieces per platform', () => {
 
     it('single piece: a platform user gets their OWN CUSTOM piece translated', async () => {
         const { a, tokenA } = await scenario()
-        const r = await get(`/api/v1/pieces/@ap/custom-a?locale=de&projectId=${a.mockProject.id}`, tokenA)
+        const r = await get(`/api/v1/pieces/@ap/custom-a?locale=de&excludeTranslations=true&projectId=${a.mockProject.id}`, tokenA)
         expect(r.status).toBe(200)
         expect(r.body.description).toBe('Eine Nachricht senden')
         expect(r.body.i18n).toBeUndefined()
@@ -107,7 +107,7 @@ describe('custom pieces per platform', () => {
         const token = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id }, projectId: a.mockProject.id })
 
         for (const name of ['unscoped-official', 'unscoped-custom']) {
-            const r = await get(`/api/v1/pieces/${name}?locale=de&projectId=${a.mockProject.id}`, token)
+            const r = await get(`/api/v1/pieces/${name}?locale=de&excludeTranslations=true&projectId=${a.mockProject.id}`, token)
             expect(r.status).toBe(200)
             expect(r.body.description).toBe('Eine Nachricht senden')
             expect(r.body.i18n).toBeUndefined()
@@ -117,11 +117,40 @@ describe('custom pieces per platform', () => {
     it('single piece: an English request is unaffected and carries no i18n', async () => {
         const { a, tokenA } = await scenario()
         for (const name of ['@ap/official', '@ap/custom-a']) {
-            const r = await get(`/api/v1/pieces/${name}?locale=en&projectId=${a.mockProject.id}`, tokenA)
+            const r = await get(`/api/v1/pieces/${name}?locale=en&excludeTranslations=true&projectId=${a.mockProject.id}`, tokenA)
             expect(r.status).toBe(200)
             expect(r.body.description).toBe('Send a message')
             expect(r.body.i18n).toBeUndefined()
         }
+    })
+
+    it('single piece: the translations ship by default, which is how self-hosters sync them', async () => {
+        const { a, tokenA } = await scenario()
+        for (const name of ['@ap/official', '@ap/custom-a']) {
+            const r = await get(`/api/v1/pieces/${name}?projectId=${a.mockProject.id}`, tokenA)
+            expect(r.status).toBe(200)
+            expect(r.body.description).toBe('Send a message')
+            expect(r.body.i18n).toEqual({ [LocalesEnum.GERMAN]: DE })
+        }
+    })
+
+    it('single piece: a translated response still carries every locale, not only the one asked for', async () => {
+        const a = await mockAndSaveBasicSetup()
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'multi-locale', displayName: 'Multi', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY, platformId: undefined,
+            i18n: { [LocalesEnum.GERMAN]: DE, [LocalesEnum.FRENCH]: { 'Send a message': 'Envoyer un message' } },
+        }))
+        await pieceCache(log).invalidate()
+        const token = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id }, projectId: a.mockProject.id })
+
+        const r = await get(`/api/v1/pieces/multi-locale?locale=de&projectId=${a.mockProject.id}`, token)
+        expect(r.status).toBe(200)
+        expect(r.body.description).toBe('Eine Nachricht senden')
+        expect(r.body.i18n).toEqual({
+            [LocalesEnum.GERMAN]: DE,
+            [LocalesEnum.FRENCH]: { 'Send a message': 'Envoyer un message' },
+        })
     })
 
     it('single piece: a platform user cannot read another platform custom piece', async () => {

@@ -77,6 +77,7 @@ export const GetPieceRequestQuery = z.object({
     projectId: z.string().optional(),
     locale: z.string().optional(),
     audience: z.nativeEnum(PieceAudienceFilter).optional(),
+    excludeTranslations: OptionalBooleanFromQuery,
 })
 
 export type GetPieceRequestQuery = z.infer<typeof GetPieceRequestQuery>

@@ -89,6 +89,15 @@ export const pieceTranslation = {
     "actions.*.description",
     "triggers.*.displayName",
     "triggers.*.description"
+  ],
+
+  pathsForSuggestions: [
+    "actions.*.props.*.displayName",
+    "actions.*.props.*.description",
+    "actions.*.props.*.options.options.*.label",
+    "triggers.*.props.*.displayName",
+    "triggers.*.props.*.description",
+    "triggers.*.props.*.options.options.*.label"
   ]
 }
 
