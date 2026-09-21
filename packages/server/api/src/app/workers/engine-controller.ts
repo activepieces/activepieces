@@ -1,8 +1,9 @@
 
-import { FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { EvaluateAiConditionRequest, EvaluateAiConditionResponse, FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiConditionService } from '../ai/ai-condition.service'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { fileService } from '../file/file.service'
@@ -93,6 +94,13 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send()
     })
 
+    app.post('/ai-condition', AiConditionRequest, async (request) => {
+        return aiConditionService(request.log).evaluate({
+            text: request.body.text,
+            question: request.body.question,
+        })
+    })
+
     app.post('/flow-response', FlowResponseRequest, async (request, reply) => {
         await engineRunCallbackService(request.log).sendFlowResponse({
             request: request.body,
@@ -170,5 +178,17 @@ const FlowResponseRequest = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const AiConditionRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        body: EvaluateAiConditionRequest,
+        response: {
+            [StatusCodes.OK]: EvaluateAiConditionResponse,
+        },
     },
 }

@@ -171,6 +171,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
 | `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
 | `AP_AI_CREDIT_USD_VALUE` | Dollar value of one AI credit. A call on the Activepieces AI provider is billed the dollar cost the provider reports for it, divided by this. A call on your own API key is billed one flat credit and ignores this. | `0.0005` |
+| `AP_AI_GATEWAY_API_KEY` | Vercel AI Gateway key used for AI router conditions. The instance pays for these calls, so no project connection or AI credit is involved. Leave it unset and the AI condition simply does not appear in the router's condition list. | `None` |
 | `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` | Maximum size (KB) of a single value written by the Store piece or `context.store`. Larger writes are rejected with HTTP 413. | `512` |
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
 | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |

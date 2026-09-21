@@ -1,5 +1,7 @@
 import {
+  ApFlagId,
   BranchOperator,
+  DEFAULT_AI_CONDITION_THRESHOLD,
   textConditions,
   singleValueConditions,
   RouterAction,
@@ -13,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { InvalidStepIcon } from '../../../../components/custom/alert-icon';
 import {
@@ -47,13 +50,26 @@ const textToBranchOperation: Record<BranchOperator, string> = {
   [BranchOperator.LIST_IS_NOT_EMPTY]: t('Is not empty (List)'),
   [BranchOperator.EXISTS]: t('Exists'),
   [BranchOperator.DOES_NOT_EXIST]: t('Does not exist'),
+  [BranchOperator.AI_MATCHES]: t('Answers yes to (AI)'),
 };
-const operationOptions = Object.keys(textToBranchOperation).map((operator) => {
-  return {
-    label: textToBranchOperation[operator as BranchOperator],
-    value: operator,
-  };
-});
+
+const CONFIDENCE_OPTIONS = [
+  { value: String(DEFAULT_AI_CONDITION_THRESHOLD), label: t('50% — maybe') },
+  { value: '0.7', label: t('70% — likely') },
+  { value: '0.9', label: t('90% — very likely') },
+];
+
+const operationOptionsFor = (aiRouterEnabled: boolean) =>
+  Object.keys(textToBranchOperation)
+    .filter(
+      (operator) => aiRouterEnabled || operator !== BranchOperator.AI_MATCHES,
+    )
+    .map((operator) => {
+      return {
+        label: textToBranchOperation[operator as BranchOperator],
+        value: operator,
+      };
+    });
 
 type BranchSingleConditionProps = {
   showDelete: boolean;
@@ -73,6 +89,9 @@ const BranchSingleCondition = ({
   branchIndex,
 }: BranchSingleConditionProps) => {
   const form = useFormContext<RouterAction>();
+  const { data: aiRouterEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.AI_ROUTER_ENABLED,
+  );
 
   const condition = useWatch({
     control: form.control,
@@ -83,6 +102,7 @@ const BranchSingleCondition = ({
     condition.operator && textConditions.includes(condition?.operator);
   const isSingleValueCondition =
     condition.operator && singleValueConditions.includes(condition?.operator);
+  const isAiCondition = condition.operator === BranchOperator.AI_MATCHES;
   const isInvalid = isSingleValueCondition
     ? condition.firstValue.length === 0
     : condition.firstValue.length === 0 ||
@@ -132,7 +152,7 @@ const BranchSingleCondition = ({
               <SearchableSelect
                 disabled={readonly}
                 value={field.value}
-                options={operationOptions}
+                options={operationOptionsFor(aiRouterEnabled ?? false)}
                 placeholder={''}
                 onChange={(e) => {
                   if (
@@ -160,7 +180,16 @@ const BranchSingleCondition = ({
             control={form.control}
             render={({ field }) => (
               <FormItem className="flex flex-col gap-1">
-                <Label>{t('Second value')}</Label>
+                <Label>
+                  {isAiCondition ? t('Question') : t('Second value')}
+                </Label>
+                {isAiCondition && (
+                  <span className="text-xs text-muted-foreground">
+                    {t(
+                      'Yes or no, about the value above. "Is this above our refund limit?"',
+                    )}
+                  </span>
+                )}
                 <TextInputWithMentions
                   disabled={readonly}
                   initialValue={field.value || ''}
@@ -169,6 +198,30 @@ const BranchSingleCondition = ({
                     form.trigger();
                   }}
                 ></TextInputWithMentions>
+              </FormItem>
+            )}
+          />
+        )}
+        {isAiCondition && (
+          <FormField
+            name={`settings.branches.${branchIndex}.conditions.${groupIndex}.${conditionIndex}.threshold`}
+            control={form.control}
+            render={({ field }) => (
+              <FormItem className="flex flex-col gap-1">
+                <Label>{t('Take this branch')}</Label>
+                <span className="text-xs text-muted-foreground">
+                  {t('Below this, the branch is skipped.')}
+                </span>
+                <SearchableSelect
+                  disabled={readonly}
+                  value={String(field.value ?? DEFAULT_AI_CONDITION_THRESHOLD)}
+                  options={CONFIDENCE_OPTIONS}
+                  placeholder={''}
+                  onChange={(value) => {
+                    field.onChange(Number(value));
+                    form.trigger();
+                  }}
+                />
               </FormItem>
             )}
           />
