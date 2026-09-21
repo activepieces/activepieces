@@ -576,18 +576,12 @@ export const flowService = (log: FastifyBaseLogger) => ({
             id,
             projectId,
         })
-        if (flow.operationStatus !== FlowOperationStatus.NONE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
-                params: {
-                    message: `Flow ${id} is already being ${flow.operationStatus}`,
-                },
-            })
-        }
         await this.addDeleteFlowJob(flow)
-        await flowRepo().update(id, {
+        await flowRepo().update({ id, projectId }, {
+            status: FlowStatus.DISABLED,
             operationStatus: FlowOperationStatus.DELETING,
         })
+        await flowExecutionCache(log).invalidate(id)
         log.info({ flow: { id }, project: { id: projectId } }, 'Flow deletion requested')
         if (!isNil(deletedFlow)) {
             flowSideEffects(log).onDeleted({

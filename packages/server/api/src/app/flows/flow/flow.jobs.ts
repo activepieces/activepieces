@@ -1,4 +1,5 @@
 import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { FlowOperationStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
@@ -9,10 +10,13 @@ import { flowVersionRepo } from '../flow-version/flow-version.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
 import { flowRepo } from './flow.repo'
+import { flowService } from './flow.service'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
 const BATCH_SIZE = 1000
+const STRANDED_DELETION_AGE_MINUTES = 15
+const STRANDED_DELETION_BATCH_SIZE = 100
 
 export async function batchDeleteByFlowId(flowId: string): Promise<void> {
     while (true) {
@@ -73,6 +77,20 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         await batchDeleteByFlowId(flow.id)
         await flowRepo().delete({ id: flow.id })
         await flowExecutionCache(log).invalidate(flow.id)
+    },
+
+    strandedDeletionSweepHandler: async () => {
+        const strandedFlows = await flowRepo()
+            .createQueryBuilder('flow')
+            .where('flow."operationStatus" = :deleting', { deleting: FlowOperationStatus.DELETING })
+            .andWhere('flow.updated < NOW() - make_interval(mins => :mins)', { mins: STRANDED_DELETION_AGE_MINUTES })
+            .orderBy('flow.updated', 'ASC')
+            .take(STRANDED_DELETION_BATCH_SIZE)
+            .getMany()
+        if (strandedFlows.length > 0) {
+            log.warn({ flowCount: strandedFlows.length }, '[strandedDeletionSweepHandler] Re-enqueueing stranded flow deletions')
+        }
+        await Promise.all(strandedFlows.map((flow) => flowService(log).addDeleteFlowJob(flow)))
     },
 
 })

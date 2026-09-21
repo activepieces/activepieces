@@ -106,6 +106,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             columns: ['projectId', 'externalId'],
             unique: true,
         },
+        {
+            name: 'idx_flow_deleting_updated',
+            columns: ['updated'],
+            where: `"operationStatus" = '${FlowOperationStatus.DELETING}'`,
+        },
     ],
     relations: {
         runs: {
