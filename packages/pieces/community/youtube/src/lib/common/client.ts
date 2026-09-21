@@ -22,7 +22,8 @@ function describeFailure({
     case 404:
       return `YouTube could not find the resource for ${operation}. Check the identifier and that the connected account can access it.`;
     case 409:
-      return `YouTube reported a conflict for ${operation}. The resource changed since it was read; re-read it and try again.`;
+    case 412:
+      return `YouTube refused ${operation} because the resource was modified after this step read it. Nothing was changed. Re-run the step to pick up the current values and apply the change again.`;
     case 429:
       return `YouTube rate limited ${operation}. Wait before retrying.`;
     default:
@@ -37,12 +38,20 @@ async function sendRequest<T>({
   operation,
   queryParams,
   body,
+  ifMatch,
 }: YoutubeRequestParams): Promise<T> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${accessToken}`,
+  };
+  if (ifMatch !== undefined && ifMatch !== '') {
+    headers['If-Match'] = ifMatch;
+  }
+
   try {
     const response = await httpClient.sendRequest<T>({
       method,
       url: `${YOUTUBE_API_BASE_URL}${path}`,
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers,
       queryParams,
       body,
     });
@@ -80,4 +89,5 @@ export type YoutubeRequestParams = {
   operation: string;
   queryParams?: QueryParams;
   body?: unknown;
+  ifMatch?: string;
 };

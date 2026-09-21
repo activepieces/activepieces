@@ -313,6 +313,7 @@ export const youtubeUpdateVideoMetadataAction = createAction({
       operation: 'Update Video Metadata',
       queryParams: { part: parts.join(',') },
       body,
+      ifMatch: current.etag,
     });
   },
 });
@@ -344,6 +345,7 @@ type VideoStatusPayload = {
 type VideoListResponse = {
   items?: {
     id: string;
+    etag?: string;
     snippet?: {
       title?: string;
       description?: string;

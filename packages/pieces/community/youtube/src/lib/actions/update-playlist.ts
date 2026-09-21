@@ -153,6 +153,7 @@ export const youtubeUpdatePlaylistAction = createAction({
       operation: 'Update Playlist',
       queryParams: { part: 'snippet,status' },
       body,
+      ifMatch: current.etag,
     });
   },
 });
@@ -173,6 +174,7 @@ type PlaylistUpdatePayload = {
 type PlaylistListResponse = {
   items?: {
     id: string;
+    etag?: string;
     snippet?: {
       title?: string;
       description?: string;
