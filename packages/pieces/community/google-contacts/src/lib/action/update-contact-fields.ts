@@ -14,7 +14,7 @@ export const googleContactsUpdateContactFieldsAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates an existing Google Contacts person, changing only the fields you supply and leaving every other field untouched. It reads the contact first, so it resolves the required etag and field mask itself — you never pass them. Supply the opaque resourceName from List Contacts or Search Contacts. Email and phone lists replace the stored list for that field wholesale; first/middle/last name and company/job title are merged over the current values. Safe to retry: re-applying the same values converges, and a concurrent edit surfaces as a re-read-and-retry error.',
+      'Updates an existing Google Contacts person, changing only the fields you supply and leaving every other field untouched. It reads the contact first, so it resolves the required etag and field mask itself — you never pass them. Supply the opaque resourceName from List Contacts or Search Contacts. A non-empty email or phone list replaces the stored list for that field wholesale; first/middle/last name and company/job title are merged over the current values. Leaving a list empty does NOT clear it, because the platform cannot distinguish an untouched list from an emptied one: to remove every email address or every phone number, including the last one, set clearEmails or clearPhoneNumbers to true. Setting a clear flag while also supplying a non-empty list for the same field is rejected. Safe to retry: re-applying the same values converges, and a concurrent edit surfaces as a re-read-and-retry error.',
     idempotent: true,
   },
   outputSchema: updateContactFieldsOutputSchema,
@@ -44,14 +44,28 @@ export const googleContactsUpdateContactFieldsAction = createAction({
     emails: Property.Array({
       displayName: 'Email Addresses',
       description:
-        'Array of email address strings, for example ["ada@example.com"]. Replaces every email address stored on the contact. Leave empty to keep the stored addresses.',
+        'Array of email address strings, for example ["ada@example.com"]. Replaces every email address stored on the contact. Leaving it empty keeps the stored addresses; it does not clear them, because an untouched list and an emptied one cannot be told apart. Use Clear Email Addresses to remove them.',
       required: false,
+    }),
+    clearEmails: Property.Checkbox({
+      displayName: 'Clear Email Addresses',
+      description:
+        'Remove every email address from the contact, including the last one. This is the only way to clear them. Cannot be combined with a non-empty Email Addresses list.',
+      required: false,
+      defaultValue: false,
     }),
     phoneNumbers: Property.Array({
       displayName: 'Phone Numbers',
       description:
-        'Array of phone number strings, for example ["+1 555 0100"]. Replaces every phone number stored on the contact. Leave empty to keep the stored numbers.',
+        'Array of phone number strings, for example ["+1 555 0100"]. Replaces every phone number stored on the contact. Leaving it empty keeps the stored numbers; it does not clear them, because an untouched list and an emptied one cannot be told apart. Use Clear Phone Numbers to remove them.',
       required: false,
+    }),
+    clearPhoneNumbers: Property.Checkbox({
+      displayName: 'Clear Phone Numbers',
+      description:
+        'Remove every phone number from the contact, including the last one. This is the only way to clear them. Cannot be combined with a non-empty Phone Numbers list.',
+      required: false,
+      defaultValue: false,
     }),
     company: Property.ShortText({
       displayName: 'Company',
@@ -68,19 +82,35 @@ export const googleContactsUpdateContactFieldsAction = createAction({
   },
   async run(context) {
     const resourceName = context.propsValue.resourceName.trim();
+    const clearEmails = context.propsValue.clearEmails === true;
+    const clearPhoneNumbers = context.propsValue.clearPhoneNumbers === true;
+    const emails = googleContactsApi.toStringList({
+      value: context.propsValue.emails,
+      label: 'Email Addresses',
+    });
+    const phoneNumbers = googleContactsApi.toStringList({
+      value: context.propsValue.phoneNumbers,
+      label: 'Phone Numbers',
+    });
+    if (clearEmails && emails.length > 0) {
+      throw new Error(
+        'Clear Email Addresses removes every email address, so it cannot be combined with an Email Addresses list. Either clear the list or turn the checkbox off.'
+      );
+    }
+    if (clearPhoneNumbers && phoneNumbers.length > 0) {
+      throw new Error(
+        'Clear Phone Numbers removes every phone number, so it cannot be combined with a Phone Numbers list. Either clear the list or turn the checkbox off.'
+      );
+    }
     const input = {
       firstName: context.propsValue.firstName,
       middleName: context.propsValue.middleName,
       lastName: context.propsValue.lastName,
       nickname: context.propsValue.nickname,
-      emails: googleContactsApi.toStringList({
-        value: context.propsValue.emails,
-        label: 'Email Addresses',
-      }),
-      phoneNumbers: googleContactsApi.toStringList({
-        value: context.propsValue.phoneNumbers,
-        label: 'Phone Numbers',
-      }),
+      emails,
+      phoneNumbers,
+      clearEmails,
+      clearPhoneNumbers,
       company: context.propsValue.company,
       jobTitle: context.propsValue.jobTitle,
       biography: context.propsValue.biography,

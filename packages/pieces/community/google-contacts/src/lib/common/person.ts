@@ -56,12 +56,18 @@ function buildPerson({
     fields.push('nicknames');
   }
 
-  if (input.emails !== undefined && input.emails.length > 0) {
+  if (input.clearEmails === true) {
+    person['emailAddresses'] = [];
+    fields.push('emailAddresses');
+  } else if (input.emails !== undefined && input.emails.length > 0) {
     person['emailAddresses'] = input.emails.map((value) => ({ value }));
     fields.push('emailAddresses');
   }
 
-  if (input.phoneNumbers !== undefined && input.phoneNumbers.length > 0) {
+  if (input.clearPhoneNumbers === true) {
+    person['phoneNumbers'] = [];
+    fields.push('phoneNumbers');
+  } else if (input.phoneNumbers !== undefined && input.phoneNumbers.length > 0) {
     person['phoneNumbers'] = input.phoneNumbers.map((value) => ({ value }));
     fields.push('phoneNumbers');
   }
@@ -143,6 +149,8 @@ export type ContactInput = {
   nickname?: string;
   emails?: string[];
   phoneNumbers?: string[];
+  clearEmails?: boolean;
+  clearPhoneNumbers?: boolean;
   company?: string;
   jobTitle?: string;
   biography?: string;
