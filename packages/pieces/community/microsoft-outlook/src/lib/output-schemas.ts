@@ -212,7 +212,7 @@ export const outlookGetMessageMimeActionOutputSchema: OutputSchema = {
   fields: [
     { key: 'messageId', label: 'Message ID' },
     { key: 'file', label: 'File', format: 'url' },
-    { key: 'mimeContent', label: 'MIME Content' },
+    { key: 'fileName', label: 'File Name' },
     { key: 'contentType', label: 'Content Type' },
     { key: 'size', label: 'Size', format: 'filesize' },
   ],

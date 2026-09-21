@@ -14,7 +14,7 @@ export const outlookGetMessageMimeAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Returns the raw RFC-822 MIME source of one Outlook message, including full internet headers, and stores it as an .eml file. Use this for header analysis, archival or forensic inspection; use Get Message when the parsed fields are enough. Read-only and safe to retry.',
+			'Stores the raw RFC-822 MIME source of one Outlook message, including full internet headers, as a byte-exact .eml file and returns that file plus its size. The content is not returned inline, because MIME can carry 8-bit and non-UTF-8 bytes that no text field round-trips; read the file when you need the headers. Use this for archival or forensic inspection; use Get Message when the parsed fields are enough. Read-only and safe to retry.',
 		idempotent: true,
 	},
 	props: {
@@ -32,23 +32,24 @@ export const outlookGetMessageMimeAction = createAction({
 		const prefix = outlookCommon.mailboxPrefix(context.auth);
 
 		try {
-			const raw = await client
+			const bytes = await client
 				.api(`${prefix}/messages/${outlookAtomicCommon.encodeGraphId(messageId)}/$value`)
-				.responseType(ResponseType.TEXT)
+				.responseType(ResponseType.ARRAYBUFFER)
 				.get();
 
-			const mimeContent = typeof raw === 'string' ? raw : String(raw);
+			const buffer = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+			const fileName = 'message.eml';
 
 			const file = await context.files.write({
-				fileName: 'message.eml',
-				data: Buffer.from(mimeContent, 'utf-8'),
+				fileName,
+				data: buffer,
 			});
 
 			return {
 				messageId,
+				fileName,
 				contentType: 'message/rfc822',
-				size: Buffer.byteLength(mimeContent, 'utf-8'),
-				mimeContent,
+				size: buffer.length,
 				file,
 			};
 		} catch (error) {
