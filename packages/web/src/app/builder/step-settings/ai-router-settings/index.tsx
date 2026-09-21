@@ -16,7 +16,11 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 
-import { FormField, FormItem } from '../../../../components/ui/form';
+import {
+  FormField,
+  FormItem,
+  FormMessage,
+} from '../../../../components/ui/form';
 import { Label } from '../../../../components/ui/label';
 import { Textarea } from '../../../../components/ui/textarea';
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -24,12 +28,6 @@ import { flowCanvasUtils } from '../../flow-canvas/utils/flow-canvas-utils';
 import { TextInputWithMentions } from '../../piece-properties/text-input-with-mentions';
 import { BranchesList } from '../router-settings/branches-list';
 import BranchesToolbar from '../router-settings/branches-toolbar';
-
-const CONFIDENCE_OPTIONS = [
-  { value: '0.5', label: t('50% — maybe') },
-  { value: '0.7', label: t('70% — likely') },
-  { value: '0.9', label: t('90% — very likely') },
-];
 
 export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
   const [
@@ -51,6 +49,11 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
     state.removeOperationListener,
   ]);
   const { fitView } = useReactFlow();
+  const confidenceOptions = [
+    { value: '0.5', label: t('50% — maybe') },
+    { value: '0.7', label: t('70% — likely') },
+    { value: '0.9', label: t('90% — very likely') },
+  ];
 
   const form =
     useFormContext<Omit<AiRouterAction, 'children' | 'nextAction'>>();
@@ -161,6 +164,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             <span className="text-xs text-muted-foreground">
               {t('The model reads this to decide. Be specific, not long.')}
             </span>
+            <FormMessage />
           </FormItem>
         )}
       />
@@ -294,7 +298,8 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             <SearchableSelect
               disabled={readonly}
               value={isNil(field.value) ? undefined : String(field.value)}
-              options={CONFIDENCE_OPTIONS}
+              options={confidenceOptions}
+              showDeselect={true}
               placeholder={t('No floor')}
               onChange={(value) => {
                 field.onChange(isNil(value) ? undefined : Number(value));

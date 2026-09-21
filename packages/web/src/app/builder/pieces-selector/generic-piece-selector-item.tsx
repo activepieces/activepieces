@@ -79,7 +79,7 @@ const GenericActionOrTriggerItem = ({
             {item.type === FlowActionType.AI_ROUTER && (
               <Badge
                 variant="secondary"
-                className="shrink-0 px-1.5 py-0 text-[10px] font-normal"
+                className="shrink-0 px-1.5 py-0 text-xss font-normal"
               >
                 {t('AI')}
               </Badge>
@@ -91,7 +91,7 @@ const GenericActionOrTriggerItem = ({
                     pieceSelectorItemInfo.classification
                   ].variant
                 }
-                className="shrink-0 px-1.5 py-0 text-[10px] font-normal"
+                className="shrink-0 px-1.5 py-0 text-xss font-normal"
               >
                 {ACTION_CLASSIFICATION_BADGES[
                   pieceSelectorItemInfo.classification

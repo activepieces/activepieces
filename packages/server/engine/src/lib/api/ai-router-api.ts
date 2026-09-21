@@ -1,4 +1,4 @@
-import { ChooseAiRouteResponse, EngineGenericError } from '@activepieces/shared'
+import { AiRouterEvaluationError, ChooseAiRouteResponse } from '@activepieces/shared'
 
 const TIMEOUT_MS = 10_000
 
@@ -19,16 +19,16 @@ export const aiRouterApi = {
             const reason = timedOut
                 ? `did not answer within ${TIMEOUT_MS} ms`
                 : `could not be reached (${String(error)})`
-            throw new EngineGenericError('AiRouterEvaluationError', `${url} ${reason} after ${Date.now() - startedAt} ms`)
+            throw new AiRouterEvaluationError({ message: `${url} ${reason} after ${Date.now() - startedAt} ms`, cause: error })
         })
 
         if (!response.ok) {
-            throw new EngineGenericError('AiRouterEvaluationError', `${url} answered ${response.status} ${response.statusText} after ${Date.now() - startedAt} ms`)
+            throw new AiRouterEvaluationError({ message: `${url} answered ${response.status} after ${Date.now() - startedAt} ms` })
         }
 
         const parsed = ChooseAiRouteResponse.safeParse(await response.json())
         if (!parsed.success) {
-            throw new EngineGenericError('AiRouterEvaluationError', `${url} answered with an unexpected body after ${Date.now() - startedAt} ms`)
+            throw new AiRouterEvaluationError({ message: `${url} answered with an unexpected body after ${Date.now() - startedAt} ms` })
         }
         return parsed.data
     },

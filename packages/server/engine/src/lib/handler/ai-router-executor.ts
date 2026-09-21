@@ -6,6 +6,8 @@ import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
 import { executeBranches } from './branch-execution'
 
+const FALLBACK_CRITERION = 'Anything that fits none of the other routes'
+
 export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
     async handle({
         action,
@@ -62,7 +64,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
                 branchIndex: index + 1,
                 evaluation: evaluations[index],
             })),
-            choice: chosen,
+            choice: chosen ?? answer.choice,
             ...(isNil(answer.probabilities) ? {} : { probabilities: answer.probabilities }),
         }).setDuration(performance.now() - stepStartTime)
 
@@ -81,23 +83,31 @@ function toOptions(branches: AiRouterActionSettings['branches']): Record<string,
     const options: Record<string, string> = {}
     for (const branch of branches) {
         if (isNil(options[branch.branchName])) {
-            options[branch.branchName] = branch.description ?? branch.branchName
+            options[branch.branchName] = criterionOf(branch)
         }
     }
     return options
 }
 
-function chosenBranchName({ answer, branches, minConfidence }: ChosenBranchNameParams): string {
+function criterionOf(branch: AiRouterActionSettings['branches'][number]): string {
+    const description = branch.description?.trim()
+    if (!isNil(description) && description.length > 0) {
+        return description
+    }
+    return branch.branchType === BranchExecutionType.FALLBACK ? FALLBACK_CRITERION : branch.branchName
+}
+
+function chosenBranchName({ answer, branches, minConfidence }: ChosenBranchNameParams): string | undefined {
     const fallbackName = branches.find((branch) => branch.branchType === BranchExecutionType.FALLBACK)?.branchName
     const known = branches.some((branch) => branch.branchName === answer.choice)
     if (!known) {
-        return fallbackName ?? answer.choice
+        return fallbackName
     }
     const confidence = answer.probabilities?.[answer.choice]
     if (isNil(minConfidence) || isNil(confidence) || confidence >= minConfidence) {
         return answer.choice
     }
-    return fallbackName ?? answer.choice
+    return fallbackName
 }
 
 function asPlainText(value: unknown): string {

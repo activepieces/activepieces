@@ -146,3 +146,8 @@ export class SSRFBlockedError extends ExecutionError {
         )
     }
 }
+export class AiRouterEvaluationError extends ExecutionError {
+    constructor({ message, cause }: { message: string, cause?: unknown }) {
+        super('AiRouterEvaluationError', formatMessage(message), ExecutionErrorType.USER, cause)
+    }
+}

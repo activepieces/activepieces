@@ -1,5 +1,5 @@
 import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError, ChooseAiRouteRequest, ChooseAiRouteResponse, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ChooseAiRouteRequest, ChooseAiRouteResponse, ErrorCode, isNil, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
@@ -21,7 +21,7 @@ export const aiRouterService = (log: FastifyBaseLogger) => ({
         }
 
         const startedAt = Date.now()
-        const response = await safeHttp.axios.post<GatewayEvaluationResponse>(
+        const { data: response, error } = await tryCatch(() => safeHttp.axios.post<GatewayEvaluationResponse>(
             GATEWAY_EVALUATION_URL,
             {
                 state,
@@ -39,17 +39,25 @@ export const aiRouterService = (log: FastifyBaseLogger) => ({
                     'ai-gateway-protocol-version': GATEWAY_PROTOCOL_VERSION,
                 },
             },
-        )
+        ))
+        const durationMs = Date.now() - startedAt
+        if (error) {
+            log.warn({ durationMs, reason: error.message }, 'The AI router gateway call failed')
+            throw new ActivepiecesError({
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
+                params: { message: `The AI router gateway did not answer after ${durationMs} ms` },
+            })
+        }
 
         const answer = response.data.answers[QUESTION_KEY]
         if (isNil(answer) || isNil(answer.choice)) {
             throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
+                code: ErrorCode.ENGINE_OPERATION_FAILURE,
                 params: { message: 'The AI router model did not answer the routing question' },
             })
         }
 
-        log.info({ choice: answer.choice, durationMs: Date.now() - startedAt }, 'Chose an AI router route')
+        log.info({ choice: answer.choice, durationMs }, 'Chose an AI router route')
         return {
             choice: answer.choice,
             ...(isNil(answer.probabilities) ? {} : { probabilities: answer.probabilities }),

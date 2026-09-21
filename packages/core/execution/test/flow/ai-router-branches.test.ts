@@ -92,14 +92,21 @@ describe('branch operations on an AI_ROUTER', () => {
     })
 
     it('duplicates a route carrying its description, not conditions', () => {
-        const flowVersion = flowOperations.apply(flowWithAiRouter(), {
+        const base = flowWithAiRouter()
+        routerOf(base).settings.branches[0] = { branchType: BranchExecutionType.CONDITION, branchName: 'Route 1', description: 'payments and refunds' }
+
+        const flowVersion = flowOperations.apply(base, {
             type: FlowOperationType.DUPLICATE_BRANCH,
             request: { stepName: 'step_1', branchIndex: 0 },
         })
 
         const router = routerOf(flowVersion)
         expect(router.settings.branches.map((branch) => branch.branchName)).toEqual(['Route 1', 'Route 1 Copy', 'Otherwise'])
-        expect(router.settings.branches[1]).not.toHaveProperty('conditions')
+        expect(router.settings.branches[1]).toEqual({
+            branchType: BranchExecutionType.CONDITION,
+            branchName: 'Route 1 Copy',
+            description: 'payments and refunds',
+        })
         expect(router.children).toHaveLength(3)
     })
 

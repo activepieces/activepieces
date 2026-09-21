@@ -2,6 +2,7 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { z } from 'zod';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
@@ -22,14 +23,16 @@ export const AiRouterRoutes = ({ output }: AiRouterRoutesProps) => {
       </span>
       {shown.map((route) => (
         <div key={route.name} className="flex items-center gap-3">
-          <span
-            className={cn('text-sm w-32 shrink-0 truncate', {
-              'font-medium text-primary': route.chosen,
-              'text-muted-foreground': !route.chosen,
-            })}
-          >
-            {route.name}
-          </span>
+          <TextWithTooltip tooltipMessage={route.name}>
+            <span
+              className={cn('text-sm w-32 shrink-0 truncate block', {
+                'font-medium text-primary': route.chosen,
+                'text-muted-foreground': !route.chosen,
+              })}
+            >
+              {route.name}
+            </span>
+          </TextWithTooltip>
           <Progress
             value={route.percent}
             className="h-1.5 grow"

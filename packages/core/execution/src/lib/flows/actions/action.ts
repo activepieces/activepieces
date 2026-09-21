@@ -320,7 +320,7 @@ export const AiRouterActionSettingsWithValidation = z.object({
         const name = branch.branchName.trim().toLowerCase()
         if (seen.has(name)) {
             ctx.addIssue({
-                code: z.ZodIssueCode.custom,
+                code: 'custom',
                 message: formErrors.duplicateRouteName,
                 path: ['branches', index, 'branchName'],
             })

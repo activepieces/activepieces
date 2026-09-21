@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { BranchCondition, BranchedAction, BranchExecutionType, FlowAction } from '../actions/action'
+import { BranchCondition, BranchedAction, BranchExecutionType, FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { addActionUtils } from './add-action-util'
@@ -33,11 +33,12 @@ function _duplicateStep(stepName: string, flowVersion: FlowVersion): FlowOperati
 }
 
 function branchShapeOf(router: BranchedAction, childIndex: number): { conditions?: BranchCondition[][], description?: string } {
-    const branch = router.settings.branches[childIndex]
-    if (branch.branchType !== BranchExecutionType.CONDITION) {
-        return {}
+    if (router.type === FlowActionType.AI_ROUTER) {
+        const branch = router.settings.branches[childIndex]
+        return branch.branchType === BranchExecutionType.CONDITION ? { description: branch.description } : {}
     }
-    return 'description' in branch ? { description: branch.description } : { conditions: branch.conditions }
+    const branch = router.settings.branches[childIndex]
+    return branch.branchType === BranchExecutionType.CONDITION ? { conditions: branch.conditions } : {}
 }
 
 function _duplicateBranch(

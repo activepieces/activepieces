@@ -1,7 +1,6 @@
 import {
   Metadata,
   extractMustacheTokens,
-  formErrors,
   isNil,
   parseToJsonIfPossible,
 } from '@activepieces/core-utils';
@@ -17,7 +16,7 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AiRouterActionSchema,
-  AiRouterBranchesSchema,
+  AiRouterActionSettingsWithValidation,
   AppConnectionScope,
   AppConnectionType,
   CodeActionSchema,
@@ -601,14 +600,7 @@ export const formUtils = {
         );
       case FlowActionType.AI_ROUTER:
         return AiRouterActionSchema.omit({ settings: true }).extend(
-          z.object({
-            settings: z.object({
-              text: z.string().min(1, formErrors.required),
-              question: z.string().min(1, formErrors.required),
-              branches: AiRouterBranchesSchema(true),
-              minConfidence: z.number().min(0).max(1).optional(),
-            }),
-          }).shape,
+          z.object({ settings: AiRouterActionSettingsWithValidation }).shape,
         );
       case FlowActionType.CODE:
         return CodeActionSchema;
