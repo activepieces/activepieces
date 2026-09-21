@@ -41,11 +41,10 @@ export function ChatWithAIPage() {
     conversationId: string;
   }>();
   const location = useLocation();
-  const handedOverPrompt =
+  const initialPrompt =
     isObject(location.state) && typeof location.state.prompt === 'string'
       ? location.state.prompt
       : undefined;
-  const [initialPrompt, setInitialPrompt] = useState(handedOverPrompt);
   const [resetKey, setResetKey] = useState(0);
   const [pendingConversationId, setPendingConversationId] = useState<
     string | null
@@ -69,11 +68,11 @@ export function ChatWithAIPage() {
   }, []);
 
   useEffect(() => {
-    if (isNil(handedOverPrompt)) {
+    if (isNil(initialPrompt)) {
       return;
     }
     navigate(location.pathname, { replace: true, state: null });
-  }, [handedOverPrompt, location.pathname, navigate]);
+  }, [initialPrompt, location.pathname, navigate]);
 
   const toggleSidebar = useCallback(() => {
     setSidebarPinned((prev) => {
@@ -343,7 +342,6 @@ export function ChatWithAIPage() {
             key={`${selectedConversationId ?? 'new'}-${resetKey}`}
             incognito={false}
             initialPrompt={initialPrompt}
-            onInitialPromptSent={() => setInitialPrompt(undefined)}
             conversationId={selectedConversationId}
             onTitleUpdate={handleTitleUpdate}
             onConversationCreated={handleConversationCreated}
