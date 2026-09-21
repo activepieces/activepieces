@@ -1,8 +1,11 @@
 import { agentToolPhases } from '@activepieces/shared'
-import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
+import { tool, ToolExecutionOptions } from 'ai'
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
+import { agentWorkerTools } from '../../../src/lib/execute/jobs/ee/agent/agent-worker-tools'
 
 const { taintsTurn } = agentToolPhases
+const options: ToolExecutionOptions<undefined> = { toolCallId: 'call-1', messages: [] }
 
 describe('taintsTurn', () => {
     it.each([
@@ -38,43 +41,30 @@ describe('taintsTurn', () => {
 })
 
 describe('wrapToolsWithTaint', () => {
-    const wrapOne = ({ name }: { name: string }) => {
+    const runWrapped = async (name: string) => {
         const taintState = { tainted: false }
-        const taintedWhenToolRan: boolean[] = []
+        let taintedDuringRun = false
         const wrapped = agentWorkerTools.wrapToolsWithTaint({
             tools: {
-                [name]: {
+                [name]: tool({
+                    inputSchema: z.object({}),
                     execute: async () => {
-                        taintedWhenToolRan.push(taintState.tainted)
-                        return 'ok'
+                        taintedDuringRun = taintState.tainted
+                        return 'ran'
                     },
-                },
-            } as never,
+                }),
+            },
             taintState,
         })
-        return { taintState, wrapped, taintedWhenToolRan }
+        const result = await wrapped[name].execute?.({}, options)
+        return { taintedDuringRun, tainted: taintState.tainted, result }
     }
 
-    it('taints before the tool runs, not after, so a same-batch agent edit cannot slip through', async () => {
-        const { taintState, wrapped, taintedWhenToolRan } = wrapOne({ name: 'ap_explore_data' })
-
-        await wrapped['ap_explore_data'].execute?.({}, {} as never)
-
-        expect(taintedWhenToolRan).toEqual([true])
-        expect(taintState.tainted).toBe(true)
+    it('taints before the tool body runs, so a same-batch agent edit cannot slip through', async () => {
+        expect(await runWrapped('ap_explore_data')).toEqual({ taintedDuringRun: true, tainted: true, result: 'ran' })
     })
 
     it('leaves the turn clean for a catalog tool, so the agent can still be built', async () => {
-        const { taintState, wrapped } = wrapOne({ name: 'ap_research_pieces' })
-
-        await wrapped['ap_research_pieces'].execute?.({}, {} as never)
-
-        expect(taintState.tainted).toBe(false)
-    })
-
-    it('still returns what the wrapped tool returned', async () => {
-        const { wrapped } = wrapOne({ name: 'ap_research_pieces' })
-
-        expect(await wrapped['ap_research_pieces'].execute?.({}, {} as never)).toBe('ok')
+        expect(await runWrapped('ap_research_pieces')).toEqual({ taintedDuringRun: false, tainted: false, result: 'ran' })
     })
 })
