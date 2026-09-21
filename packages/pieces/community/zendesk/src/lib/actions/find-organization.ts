@@ -3,11 +3,11 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 
 export const findOrganizationAction = createAction({
   auth: zendeskAuth,
@@ -160,13 +160,9 @@ export const findOrganizationAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
+        url: `${getZendeskBaseUrl(authentication)}/search.json?${searchParams.toString()}`,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
       });
 
       const responseBody = response.body as {
