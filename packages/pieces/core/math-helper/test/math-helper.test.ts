@@ -127,4 +127,32 @@ describe('generateRandom', () => {
     expect(result).toBeLessThanOrEqual(10);
   });
 
+  test('stays inside decimal bounds', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 1.5, second_number: 3.5 },
+    });
+    for (let i = 0; i < 50; i++) {
+      const result = await generateRandom.run(ctx);
+      expect(result).toBeGreaterThanOrEqual(2);
+      expect(result).toBeLessThanOrEqual(3);
+    }
+  });
+
+  test('accepts reversed bounds', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 10, second_number: 1 },
+    });
+    for (let i = 0; i < 50; i++) {
+      const result = await generateRandom.run(ctx);
+      expect(result).toBeGreaterThanOrEqual(1);
+      expect(result).toBeLessThanOrEqual(10);
+    }
+  });
+
+  test('returns the bound when both are equal', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 7, second_number: 7 },
+    });
+    expect(await generateRandom.run(ctx)).toBe(7);
+  });
 });
