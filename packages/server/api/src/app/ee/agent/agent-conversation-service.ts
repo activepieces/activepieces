@@ -150,6 +150,7 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
                 'agent_conversation.projectId',
                 'agent_conversation.agentId',
                 'agent_conversation.flowRunId',
+                'agent_conversation.aiCredits',
                 'agent_conversation.title',
                 'agent_conversation.modelName',
                 'agent_conversation.status',
@@ -165,6 +166,27 @@ export const agentConversationService = (log: FastifyBaseLogger) => ({
             flow: isNil(run.flowRunId) ? null : flowByRunId.get(run.flowRunId) ?? null,
         }))
         return paginationHelper.createPage(withFlow, paginationCursor)
+    },
+
+    async getAgentRunOrThrow({ id, projectId }: { id: string, projectId: string }): Promise<AgentRunListItem & { agentId: string }> {
+        const run = await agentHelpers.conversationRepo().findOne({
+            where: { id, projectId, source: AgentRunSource.FLOW_STEP },
+            select: [
+                'id', 'created', 'updated', 'platformId', 'projectId', 'userId',
+                'agentId', 'flowRunId', 'aiCredits', 'source', 'title',
+                'modelName', 'status', 'activeRunId', 'uiMessages', 'summary',
+                'summarizedUpToIndex',
+            ],
+        })
+        if (isNil(run) || isNil(run.agentId)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENTITY_NOT_FOUND, params: { entityId: id, entityType: 'AgentConversation' } })
+        }
+        const flowByRunId = await flowReferencesFor([run])
+        return {
+            ...run,
+            agentId: run.agentId,
+            flow: isNil(run.flowRunId) ? null : flowByRunId.get(run.flowRunId) ?? null,
+        }
     },
 
     async getConversationOrThrow({ id, platformId, userId }: ConversationIdentifier): Promise<AgentConversation> {

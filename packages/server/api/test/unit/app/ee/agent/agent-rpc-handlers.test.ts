@@ -1,5 +1,5 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/core-utils'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetFlowRun, mockResumeFromWaitpoint } = vi.hoisted(() => ({
     mockGetFlowRun: vi.fn(),
@@ -95,7 +95,7 @@ vi.mock('../../../../../src/app/mcp/mcp-server-builder', async (importOriginal) 
 
 vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     ...(await importOriginal<Record<string, unknown>>()),
-    agentAiUtils: { createChatModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
+    aiUtils: { createModel: () => ({}), toStorageEmbedding: (embedding: number[]) => embedding.slice(0, 768) },
 }))
 
 type QueryBuilderMock = {
@@ -135,14 +135,15 @@ vi.mock('../../../../../src/app/ee/agent/chat-analytics-sync', () => ({
     chatAnalyticsTelemetry: () => ({ sendConversationUpdate: mockSendConversationUpdate }),
 }))
 
-vi.mock('../../../../../src/app/ee/agent/chat-usage-tracker', () => ({
-    chatUsageTracker: () => ({ track: mockTrack }),
+vi.mock('../../../../../src/app/ee/agent/chat-tool-billing', () => ({
+    chatToolBilling: { chargeForLatestTurn: mockTrack },
 }))
+
+const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
 const noopLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
 
 async function callUpdateChatProgress(input: { conversationId: string, runId?: string, uiMessages: unknown[], messages?: unknown[] }): Promise<void> {
-    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
     await agentRpcHandlers(noopLogger as never).updateAgentProgress(input)
 }
 
@@ -182,7 +183,6 @@ describe('agentRpcHandlers.updateAgentProgress — incremental LLM message persi
 })
 
 async function callSaveChatMessages(input: { conversationId: string, runId?: string, messages: unknown[], uiMessages: unknown[] }): Promise<void> {
-    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
     await agentRpcHandlers(noopLogger as never).saveAgentMessages(input as never)
 }
 
@@ -270,7 +270,6 @@ describe('agentRpcHandlers.saveAgentMessages — billing a row the run no longer
 })
 
 async function callExecuteAgentTool(input: { toolName: string, source: string }): Promise<unknown> {
-    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
     return agentRpcHandlers(noopLogger as never).executeAgentTool({
         toolName: input.toolName,
         toolInput: {},
@@ -298,7 +297,6 @@ describe('agentRpcHandlers.executeAgentTool — chat-only tools are refused off 
 })
 
 async function callUpdateProjectContext(input: { conversationId: string, runId?: string, projectId: string | null }): Promise<void> {
-    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
     await agentRpcHandlers(noopLogger as never).updateProjectContext(input as never)
 }
 
@@ -342,7 +340,6 @@ describe('agentRpcHandlers.updateProjectContext — a flow-step run stays in its
 })
 
 async function callGetAgentConfigFor(input: Record<string, unknown>): Promise<unknown> {
-    const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
     return agentRpcHandlers(noopLogger as never).getAgentConfig(input as never)
 }
 
@@ -371,7 +368,7 @@ describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conver
     })
 
     it('does not create a second row when the run is retried', async () => {
-        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', messages: [] })
+        mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'owner-1', messages: [] })
 
         await callGetAgentConfigFor({
             conversationId: 'conv-1', platformId: 'plat-1', userId: 'owner-1',
@@ -385,7 +382,6 @@ describe('agentRpcHandlers.getAgentConfig — a flow-step run creates its conver
 
 describe('agentRpcHandlers.executeAgentTool — the owner\'s own memory is not a flow-step target', () => {
     it('refuses ap_remember for a flow-step run', async () => {
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
         await expect(agentRpcHandlers(noopLogger as never).executeAgentTool({
             toolName: 'ap_remember',
@@ -406,7 +402,6 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
         mockResolveInput.mockClear()
         mockFindOne.mockResolvedValue(conversation)
         mockGetOneWithoutValue.mockResolvedValue({ id: 'ac-1', externalId: 'conn-1', displayName: 'Sales Inbox' })
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executePieceTool({
             conversationId: 'conv-1',
             toolName: 'send_email',
@@ -442,11 +437,18 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
 })
 
 describe('agentRpcHandlers.executeFlowTool — only a flow-step run may call a flow tool, scoped to its own project', () => {
+    // runFlowTool primes the conversation lookups for the whole describe; without this the
+    // primed value outlives it and a later describe resolves someone else's conversation.
+    afterEach(() => {
+        mockFindOne.mockResolvedValue(null)
+        mockFindOneBy.mockResolvedValue(null)
+    })
+
     async function runFlowTool(conversation: unknown, flowId = 'flow-1', flowVersionId?: string) {
         mockRunFlowAsTool.mockClear()
         mockGetOnePopulated.mockClear()
         mockFindOneBy.mockResolvedValue(conversation)
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
+        mockFindOne.mockResolvedValue(conversation)
         return agentRpcHandlers(noopLogger as never).executeFlowTool({
             conversationId: 'conv-1',
             toolName: 'run_subflow',
@@ -555,7 +557,6 @@ describe('agentRpcHandlers.updateFlowStepProgress — only a flow-step run may r
         mockGetFlowRun.mockClear()
         mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
         mockFindOne.mockResolvedValue(conversation)
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).updateFlowStepProgress({ conversationId: `conv-${++progressConversation}`, flowRunId: 'run-1', output: { steps: [] }, sequence: 1 })
     }
 
@@ -588,7 +589,6 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         mockGetFlowRun.mockClear()
         mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
         mockFindOneBy.mockResolvedValue(conversation)
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).resumeFlowStep({
             conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: { success: true },
         })
@@ -610,7 +610,6 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         mockGetFlowRun.mockClear()
         mockGetFlowRun.mockResolvedValue(null)
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
         await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
             conversationId: 'conv-1', flowRunId: 'run-gone', waitpointId: 'wp-1', output: { success: true },
@@ -623,7 +622,6 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         mockGetFlowRun.mockClear()
         mockGetFlowRun.mockResolvedValue(null)
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own' })
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
         await agentRpcHandlers(noopLogger as never).resumeFlowStep({
             conversationId: 'conv-1', flowRunId: 'run-elsewhere', waitpointId: 'wp-1', output: {},
@@ -639,7 +637,6 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: { entityType: 'flow_run', entityId: 'run-1', message: 'Flow run not found' },
         }))
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
         await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
             conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
@@ -653,7 +650,6 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
             code: ErrorCode.ENTITY_NOT_FOUND,
             params: { entityType: 'waitpoint', entityId: 'wp-1', message: 'Waitpoint not found' },
         }))
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
         await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
             conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
@@ -664,7 +660,6 @@ describe('agentRpcHandlers.resumeFlowStep — only a flow-step run may release a
         mockGetFlowRun.mockResolvedValue({ id: 'run-1' })
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1' })
         mockResumeFromWaitpoint.mockRejectedValueOnce(new Error('lock timed out'))
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
         await expect(agentRpcHandlers(noopLogger as never).resumeFlowStep({
             conversationId: 'conv-1', flowRunId: 'run-1', waitpointId: 'wp-1', output: {},
@@ -703,7 +698,6 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — only a flow-step run may
         mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
         mockKbSearch.mockClear().mockResolvedValue([])
         mockFindOneBy.mockResolvedValue(conversation)
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         return agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
             conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
         })
@@ -737,7 +731,6 @@ describe('agentRpcHandlers.executeKnowledgeBaseTool — an oversized embedding i
         mockGetFileOrThrow.mockClear().mockResolvedValue({ id: 'kb-1' })
         mockKbSearch.mockClear().mockResolvedValue([])
         mockFindOneBy.mockResolvedValue({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-own', platformId: 'plat-1' })
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
 
         await agentRpcHandlers(noopLogger as never).executeKnowledgeBaseTool({
             conversationId: 'conv-1', toolName: 'search_kb', knowledgeBaseFileId: 'kb-1', query: 'anything',
@@ -756,7 +749,6 @@ describe('agentRpcHandlers.executePieceTool — which account a configured actio
         mockGetOneWithoutValue.mockClear()
         mockFindOne.mockResolvedValue(AGENT_CHAT)
         mockGetOneWithoutValue.mockResolvedValue(pinnedExists ? { id: 'ac-1', externalId: PINNED, displayName: 'Sales Inbox' } : null)
-        const { agentRpcHandlers } = await import('../../../../../src/app/ee/agent/agent-rpc-handlers')
         const response = await agentRpcHandlers(noopLogger as never).executePieceTool({
             conversationId: 'conv-1',
             toolName: 'gmail-send_email',

@@ -3,7 +3,7 @@ import { AgentConversationStatus, AgentRunSource, FileCompression, FileType, Hea
 import { FastifyBaseLogger } from 'fastify'
 import { agentHelpers } from '.././agent-helpers'
 import { chatAnalyticsTelemetry } from '.././chat-analytics-sync'
-import { chatUsageTracker } from '.././chat-usage-tracker'
+import { chatToolBilling } from '.././chat-tool-billing'
 import { fileService } from '../../../file/file.service'
 import { filesService } from '../../../file/files-service'
 import { rejectedPromiseHandler } from '../../../helper/promise-handler'
@@ -86,7 +86,7 @@ export const conversationRpc = (log: FastifyBaseLogger) => ({
             const conversation = await agentHelpers.conversationRepo().findOneBy({ id: input.conversationId })
             if (conversation) {
                 chatAnalyticsTelemetry(log).sendConversationUpdate({ conversation })
-                rejectedPromiseHandler(chatUsageTracker(log).track({ conversation, runId: input.runId }), log)
+                rejectedPromiseHandler(chatToolBilling.chargeForLatestTurn({ conversation, runId: input.runId, log }), log)
             }
         }
     },

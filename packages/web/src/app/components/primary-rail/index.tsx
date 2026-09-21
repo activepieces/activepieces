@@ -33,7 +33,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -74,7 +73,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import AccountSettingsDialog from '../account-settings';
+import { AccountSettingsDialog } from '../account-settings';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
@@ -673,7 +672,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { reset } = useTelemetry();
   const navigate = useNavigate();
 
   if (!user) {
@@ -683,7 +681,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
-    reset();
     navigate('/sign-in');
   };
 

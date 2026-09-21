@@ -16,7 +16,6 @@ import { agentHelpers } from './agent-helpers'
 import { agentMemoryAi } from './agent-memory-ai'
 import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
-import { chatPlanGrant } from './chat-plan-grant'
 import { chatRolloutService } from './chat-rollout-service'
 import { agentPrompt } from './prompt/agent-prompt'
 import { findConnectionsForPiece } from './tools/agent-tools'
@@ -60,6 +59,21 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             cursor: request.query.cursor,
             limit: request.query.limit ?? 20,
         })
+    })
+
+    app.get('/conversations/runs/:id', GetAgentRunRoute, async (request) => {
+        const readerId = await securityHelper.getUserIdFromRequest(request)
+        assertNotNullOrUndefined(readerId, 'userId')
+        const run = await agentConversationService(request.log).getAgentRunOrThrow({
+            id: request.params.id,
+            projectId: request.projectId,
+        })
+        await agentService(request.log).getOneOrThrow({
+            id: run.agentId,
+            projectId: request.projectId,
+            userId: readerId,
+        })
+        return run
     })
 
     app.get('/conversations/:id', GetConversationRoute, async (request) => {
@@ -136,15 +150,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         await assertAgentMessageRateLimitNotExceeded({ platformId, userId, log })
 
         // Cloud rollout: count this user as a distinct chatter (no-op off cloud, deduped).
-        const { needsCreditDecision } = await chatRolloutService.recordChatted({ userId, platformId })
+        await chatRolloutService.recordChatted({ userId, platformId })
         // Refresh the console rollout funnel snapshot (chatted count just changed).
         chatAnalyticsTelemetry(log).sendRolloutFunnelUpdate()
-        if (needsCreditDecision) {
-            const { error } = await tryCatch(() => chatPlanGrant.grant({ userId, platformId, log }))
-            if (!isNil(error)) {
-                log.warn({ error, platform: { id: platformId }, user: { id: userId } }, '[agentConversationController] Chat plan grant failed; continuing to the credit gate')
-            }
-        }
 
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
@@ -454,6 +462,23 @@ const ListAgentRunsRoute = {
 }
 
 const CONVERSATION_PARAMS = z.object({ id: z.string() })
+
+const GetAgentRunRoute = {
+    config: {
+        security: securityAccess.project(
+            CHAT_PRINCIPALS,
+            Permission.READ_AGENT,
+            { type: ProjectResourceType.QUERY },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Read one unattended run a flow step made, without being able to continue it',
+        params: CONVERSATION_PARAMS,
+        querystring: z.object({ projectId: z.string() }),
+    },
+}
 
 const GetConversationRoute = {
     config: {
