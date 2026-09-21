@@ -5,7 +5,7 @@ import { DeleteBranchRequest } from '.'
 
 function _deleteBranch(flowVersion: FlowVersion, request: DeleteBranchRequest): FlowVersion {
     return flowStructureUtil.transferFlow(flowVersion, (parentStep) => {
-        if (parentStep.name !== request.stepName || parentStep.type !== FlowActionType.ROUTER) {
+        if (parentStep.name !== request.stepName || !flowStructureUtil.isBranchedAction(parentStep)) {
             return parentStep
         }
         const routerAction = parentStep as RouterAction

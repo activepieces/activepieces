@@ -69,6 +69,7 @@ export const AddBranchRequest = z.object({
     branchIndex: z.number(),
     stepName: z.string(),
     conditions: z.array(z.array(BranchCondition)).optional(),
+    description: z.string().optional(),
     branchName: z.string(),
 })
 export const MoveBranchRequest = z.object({

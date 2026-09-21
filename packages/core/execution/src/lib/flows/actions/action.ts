@@ -291,7 +291,7 @@ export const AiRouterBranchesSchema = (addMinLength: boolean) =>
             z.object({
                 branchType: z.literal(BranchExecutionType.CONDITION),
                 branchName: z.string(),
-                description: addMinLength ? z.string().min(1, formErrors.required) : z.string(),
+                description: addMinLength ? z.string().min(1, formErrors.required) : z.string().optional(),
             }),
             z.object({
                 branchType: z.literal(BranchExecutionType.FALLBACK),
