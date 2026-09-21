@@ -20,6 +20,33 @@ Routes
 
 One model call decides, and exactly one route runs.
 
+## Which router do you want?
+
+The AI Router reads. The normal [Router](/flows/building-flows) compares. Reach for the AI Router
+the moment you catch yourself typing a fifth `OR contains "…"`.
+
+**Use the normal Router for** exact field values, numbers and dates, comparing two dynamic values
+against each other (`{{step.total}} > {{step.limit}}`), "does this field exist", anything inside a
+big loop, and anything that has to be auditable or reproducible — compliance gates, billing tiers,
+approval thresholds. It is free, instant and gives the same answer forever. It is also the only one
+that can run **several branches at once**; the AI Router always takes exactly one.
+
+**Use the AI Router for** anything a human typed. Intent, topic, sentiment, urgency, "is this worth
+a call". It routes `"i got billed 2x lol wtf"` and `"Mi tarjeta fue cobrada dos veces"` to Billing
+without you listing a single keyword in either language.
+
+**Most real flows use both.** Let the AI Router take the judgement and put a normal Router inside
+the branch for the facts:
+
+```
+AI Router — "Which team should handle this?"
+├── Billing ──▶ Router — "Over $500?" ──▶ approval / auto-refund
+├── Technical ─▶ create an issue
+└── Otherwise ─▶ human review
+```
+
+Never ask the model whether 500 is bigger than 499.
+
 ## Fields
 
 | Field | What it does |
