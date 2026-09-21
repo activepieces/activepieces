@@ -26,6 +26,18 @@ const phoneFields: OutputSchema['fields'] = [
   { key: 'primary', label: 'Primary', value: 'metadata.primary', format: 'boolean' },
 ];
 
+const nicknameFields: OutputSchema['fields'] = [
+  { key: 'value', label: 'Nickname' },
+  { key: 'primary', label: 'Primary', value: 'metadata.primary', format: 'boolean' },
+];
+
+const biographyFields: OutputSchema['fields'] = [
+  { key: 'value', label: 'Notes' },
+  // TEXT_PLAIN or TEXT_HTML; the piece always writes TEXT_PLAIN but reads whatever is stored.
+  { key: 'contentType', label: 'Content Type' },
+  { key: 'primary', label: 'Primary', value: 'metadata.primary', format: 'boolean' },
+];
+
 const organizationFields: OutputSchema['fields'] = [
   { key: 'name', label: 'Company' },
   { key: 'title', label: 'Job Title' },
@@ -87,6 +99,8 @@ const personFields: OutputSchema['fields'] = [
     labelKey: 'value',
     listItems: phoneFields,
   },
+  { key: 'nicknames', label: 'Nicknames', labelKey: 'value', listItems: nicknameFields },
+  { key: 'biographies', label: 'Notes', labelKey: 'value', listItems: biographyFields },
   {
     key: 'organizations',
     label: 'Organizations',
@@ -103,6 +117,44 @@ const personFields: OutputSchema['fields'] = [
     listItems: membershipFields,
   },
   { key: 'metadata', label: 'Metadata', children: metadataFields },
+];
+
+// The flattened contact that `summarizePerson` builds: one row per contact with the primary
+// name, organization and update time lifted out of People's repeated-field structure. Emails
+// and phone numbers are plain string arrays here, not objects.
+const contactSummaryFields: OutputSchema['fields'] = [
+  { key: 'resourceName', label: 'Resource Name' },
+  { key: 'etag', label: 'ETag' },
+  { key: 'displayName', label: 'Display Name' },
+  { key: 'givenName', label: 'First Name' },
+  { key: 'familyName', label: 'Last Name' },
+  { key: 'emails', label: 'Email Addresses' },
+  { key: 'phoneNumbers', label: 'Phone Numbers' },
+  { key: 'company', label: 'Company' },
+  { key: 'jobTitle', label: 'Job Title' },
+  { key: 'updateTime', label: 'Last Updated', format: 'datetime' },
+];
+
+// The flattened contact group that `summarizeGroup` builds. `memberResourceNames` is only
+// populated when the caller asked for members (Max Members above zero); it is an empty array
+// otherwise, and always empty on List Contact Groups.
+const contactGroupSummaryFields: OutputSchema['fields'] = [
+  { key: 'resourceName', label: 'Resource Name' },
+  // System groups carry no etag, so this is blank on contactGroups/myContacts and friends.
+  { key: 'etag', label: 'ETag' },
+  { key: 'name', label: 'Name' },
+  { key: 'formattedName', label: 'Formatted Name' },
+  { key: 'groupType', label: 'Group Type' },
+  { key: 'memberCount', label: 'Member Count', format: 'number' },
+  { key: 'memberResourceNames', label: 'Member Resource Names' },
+];
+
+// Every batch action splits its per-item responses the same way: a whole-call HTTP success can
+// still carry per-item failures, so the failed collection is always surfaced next to the
+// succeeded one with the reason Google gave for each rejected item.
+const batchFailureFields: OutputSchema['fields'] = [
+  { key: 'resourceName', label: 'Resource Name' },
+  { key: 'status', label: 'Failure Reason' },
 ];
 
 export const addContactOutputSchema: OutputSchema = {
@@ -131,4 +183,206 @@ export const searchContactsOutputSchema: OutputSchema = {
 // The polling trigger emits one person per run, so its payload is a person record directly.
 export const newOrUpdatedContactOutputSchema: OutputSchema = {
   fields: personFields,
+};
+
+export const createContactOutputSchema: OutputSchema = {
+  fields: personFields,
+};
+
+export const getContactOutputSchema: OutputSchema = {
+  fields: personFields,
+};
+
+export const updateContactFieldsOutputSchema: OutputSchema = {
+  fields: personFields,
+};
+
+export const listContactsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'contacts',
+      label: 'Contacts',
+      labelKey: 'displayName',
+      listItems: contactSummaryFields,
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+    // True when Google still had pages left after Max Results was reached.
+    { key: 'hasMore', label: 'Has More', format: 'boolean' },
+  ],
+};
+
+export const searchContactsAtomicOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'results',
+      label: 'Matching Contacts',
+      labelKey: 'displayName',
+      listItems: contactSummaryFields,
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
+export const deleteContactOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+    { key: 'resourceName', label: 'Resource Name' },
+  ],
+};
+
+export const batchGetContactsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'succeeded',
+      label: 'Contacts Read',
+      labelKey: 'contact.displayName',
+      listItems: [
+        { key: 'resourceName', label: 'Resource Name' },
+        { key: 'contact', label: 'Contact', children: contactSummaryFields },
+        // The untouched Person object; Batch Update Contacts takes these back verbatim.
+        { key: 'person', label: 'Full Person', children: personFields },
+      ],
+    },
+    {
+      key: 'failed',
+      label: 'Failures',
+      labelKey: 'resourceName',
+      listItems: batchFailureFields,
+    },
+    { key: 'succeededCount', label: 'Succeeded Count', format: 'number' },
+    { key: 'failedCount', label: 'Failed Count', format: 'number' },
+  ],
+};
+
+export const batchCreateContactsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'succeeded',
+      label: 'Contacts Created',
+      labelKey: 'contact.displayName',
+      listItems: [
+        // Created people have no requested resource name, so this is the created contact's own.
+        { key: 'resourceName', label: 'Resource Name' },
+        { key: 'contact', label: 'Contact', children: contactSummaryFields },
+      ],
+    },
+    {
+      key: 'failed',
+      label: 'Failures',
+      labelKey: 'resourceName',
+      listItems: batchFailureFields,
+    },
+    { key: 'succeededCount', label: 'Succeeded Count', format: 'number' },
+    { key: 'failedCount', label: 'Failed Count', format: 'number' },
+    { key: 'requestedCount', label: 'Requested Count', format: 'number' },
+  ],
+};
+
+export const batchUpdateContactsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'succeeded',
+      label: 'Contacts Updated',
+      labelKey: 'contact.displayName',
+      listItems: [
+        { key: 'resourceName', label: 'Resource Name' },
+        { key: 'contact', label: 'Contact', children: contactSummaryFields },
+        { key: 'person', label: 'Full Person', children: personFields },
+      ],
+    },
+    {
+      key: 'failed',
+      label: 'Failures',
+      labelKey: 'resourceName',
+      listItems: batchFailureFields,
+    },
+    { key: 'succeededCount', label: 'Succeeded Count', format: 'number' },
+    { key: 'failedCount', label: 'Failed Count', format: 'number' },
+    // The single field mask derived from the submitted people and applied to all of them.
+    { key: 'updateMask', label: 'Update Mask' },
+  ],
+};
+
+// People answers both photo steps with `{ person: {...} }`, but the actions unwrap it so they
+// return a bare Person like every other person-returning step in the piece.
+export const updateContactPhotoOutputSchema: OutputSchema = {
+  fields: personFields,
+};
+
+export const deleteContactPhotoOutputSchema: OutputSchema = {
+  fields: personFields,
+};
+
+export const listContactGroupsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'contactGroups',
+      label: 'Contact Groups',
+      labelKey: 'formattedName',
+      listItems: contactGroupSummaryFields,
+    },
+    { key: 'count', label: 'Count', format: 'number' },
+  ],
+};
+
+export const getContactGroupOutputSchema: OutputSchema = {
+  fields: contactGroupSummaryFields,
+};
+
+export const updateContactGroupOutputSchema: OutputSchema = {
+  fields: contactGroupSummaryFields,
+};
+
+export const batchGetContactGroupsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'succeeded',
+      label: 'Contact Groups Read',
+      labelKey: 'formattedName',
+      listItems: contactGroupSummaryFields,
+    },
+    {
+      key: 'failed',
+      label: 'Failures',
+      labelKey: 'resourceName',
+      listItems: batchFailureFields,
+    },
+    { key: 'succeededCount', label: 'Succeeded Count', format: 'number' },
+    { key: 'failedCount', label: 'Failed Count', format: 'number' },
+  ],
+};
+
+export const createContactGroupOutputSchema: OutputSchema = {
+  fields: [
+    // False when a group with that name already existed and was returned instead.
+    { key: 'created', label: 'Created', format: 'boolean' },
+    {
+      key: 'contactGroup',
+      label: 'Contact Group',
+      children: contactGroupSummaryFields,
+    },
+  ],
+};
+
+export const deleteContactGroupOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+    { key: 'resourceName', label: 'Resource Name' },
+    // Mirrors the Also Delete Contacts input, so a run records whether members were removed too.
+    { key: 'deletedContacts', label: 'Contacts Also Deleted', format: 'boolean' },
+  ],
+};
+
+export const modifyContactGroupMembersOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'resourceName', label: 'Contact Group Resource Name' },
+    { key: 'added', label: 'Added Contacts' },
+    { key: 'removed', label: 'Removed Contacts' },
+    { key: 'notFoundResourceNames', label: 'Not Found Contacts' },
+    // Google refuses to strip a contact's last group membership; those names land here.
+    {
+      key: 'canNotRemoveLastContactGroupResourceNames',
+      label: 'Cannot Remove Last Group',
+    },
+  ],
 };
