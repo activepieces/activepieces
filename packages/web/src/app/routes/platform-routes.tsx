@@ -18,33 +18,6 @@ import {
   adminPagesUtils,
 } from './platform/admin-pages';
 
-function useAdminPageViewed({
-  page,
-  surface,
-}: {
-  page: string;
-  surface: { tab: string | null; locked: boolean } | null;
-}) {
-  const { capture } = useTelemetry();
-  const tab = surface?.tab ?? null;
-  const locked = surface?.locked ?? false;
-  const viewed = surface !== null;
-  useEffect(() => {
-    if (!viewed) {
-      return;
-    }
-    capture({
-      name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
-      payload: { page, tab, locked },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, tab, locked, viewed]);
-}
-
-function SuspenseWrapper({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
-}
-
 export function AdminRoute({ page }: { page: AdminPageSpec }) {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -166,3 +139,30 @@ export const platformRoutes = [
       ),
   })),
 ];
+
+function SuspenseWrapper({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
+}
+
+function useAdminPageViewed({
+  page,
+  surface,
+}: {
+  page: string;
+  surface: { tab: string | null; locked: boolean } | null;
+}) {
+  const { capture } = useTelemetry();
+  const tab = surface?.tab ?? null;
+  const locked = surface?.locked ?? false;
+  const viewed = surface !== null;
+  useEffect(() => {
+    if (!viewed) {
+      return;
+    }
+    capture({
+      name: TelemetryEventName.PLATFORM_ADMIN_PAGE_VIEWED,
+      payload: { page, tab, locked },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, tab, locked, viewed]);
+}
