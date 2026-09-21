@@ -5,10 +5,9 @@ import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
 import { CheckCircle, FolderKanban, Lock, Plug, Workflow } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { userApi } from '@/api/user-api';
 import { FullLogo } from '@/components/custom/full-logo';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +21,7 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { MultiSelectFilter } from '@/features/automations/components/multi-select-filter';
+import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
@@ -31,7 +31,6 @@ import { PermissionItem } from './permission-item';
 function McpAuthorizePage() {
   const [searchParams] = useSearchParams();
   const authRequestId = searchParams.get('authRequestId');
-  const navigate = useNavigate();
   const { clientName, isPlatformScoped, expiresAt } =
     decodeJwtPayload(authRequestId);
   const [selectedProjectId, setSelectedProjectId] = useState<
@@ -40,13 +39,23 @@ function McpAuthorizePage() {
   const [searchValue, setSearchValue] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [authorized, setAuthorized] = useState(false);
+  // Seeded from the browser clock, so it only drives the notice: a fast clock
+  // must not lock the user out of a request the server would still accept.
   const [requestExpired, setRequestExpired] = useState(
     expiresAt !== null && expiresAt * 1000 <= Date.now(),
   );
+  // Set only when the server itself rejected the request; this is what gates
+  // the buttons, because every further click could only fail the same way.
+  const [requestRejected, setRequestRejected] = useState(false);
   const debouncedSetSearchValue = useDebouncedCallback(setSearchValue, 300);
-  const markExpiredOnBadRequest = (error: unknown) => {
-    if (api.isError(error) && error.response?.status === 400) {
-      setRequestExpired(true);
+  const markRejectedOnInvalidRequest = (error: unknown) => {
+    if (
+      api.isError(error) &&
+      error.response?.status === 400 &&
+      (error.response.data as { error?: string } | undefined)?.error ===
+        'invalid_request'
+    ) {
+      setRequestRejected(true);
     }
   };
   const isLoggedIn =
@@ -71,11 +80,9 @@ function McpAuthorizePage() {
     enabled: isLoggedIn && !!authRequestId && !isPlatformScoped,
   });
 
-  const { data: currentUser } = useQuery({
-    queryKey: ['mcp-authorize-user', currentUserId],
-    queryFn: () => userApi.getUserById(currentUserId ?? ''),
-    enabled: isLoggedIn && !!currentUserId,
-  });
+  const { data: currentUser } = userHooks.useUserById(
+    isLoggedIn ? currentUserId : null,
+  );
 
   useEffect(() => {
     if (expiresAt === null || requestExpired) {
@@ -102,7 +109,7 @@ function McpAuthorizePage() {
       window.location.href = data.redirectUrl;
       setAuthorized(true);
     },
-    onError: markExpiredOnBadRequest,
+    onError: markRejectedOnInvalidRequest,
   });
 
   const denyMutation = useMutation({
@@ -111,7 +118,7 @@ function McpAuthorizePage() {
     onSuccess: (data) => {
       window.location.href = data.redirectUrl;
     },
-    onError: markExpiredOnBadRequest,
+    onError: markRejectedOnInvalidRequest,
   });
 
   const { projectsMap, options } = useMemo(() => {
@@ -131,8 +138,11 @@ function McpAuthorizePage() {
   }
 
   const switchAccount = () => {
+    // A full reload, not a client-side navigate: the query cache is a module
+    // singleton and would otherwise hand the previous account's projects to
+    // whoever signs in next.
     authenticationSession.clearSession();
-    navigate(signInPath);
+    window.location.href = signInPath;
   };
 
   const handleAuthorize = () => {
@@ -258,10 +268,14 @@ function McpAuthorizePage() {
           )}
 
           {(requestExpired ||
+            requestRejected ||
             approveMutation.isError ||
             denyMutation.isError) && (
             <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
-              {requestExpired
+              {requestRejected ||
+              (requestExpired &&
+                !approveMutation.isError &&
+                !denyMutation.isError)
                 ? t(
                     'This request has expired. Go back to {client} and start the connection again.',
                     { client: clientName },
@@ -276,7 +290,7 @@ function McpAuthorizePage() {
               variant="outline"
               className="flex-1"
               loading={denyMutation.isPending}
-              disabled={requestExpired}
+              disabled={requestRejected}
               onClick={() => denyMutation.mutate({ authRequestId })}
             >
               {t('Deny')}
@@ -286,7 +300,7 @@ function McpAuthorizePage() {
               className="flex-1"
               loading={approveMutation.isPending}
               disabled={
-                requestExpired || (!isPlatformScoped && !selectedProjectId)
+                requestRejected || (!isPlatformScoped && !selectedProjectId)
               }
               onClick={handleAuthorize}
             >
