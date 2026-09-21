@@ -1,6 +1,7 @@
 import {
   Metadata,
   extractMustacheTokens,
+  formErrors,
   isNil,
   parseToJsonIfPossible,
 } from '@activepieces/core-utils';
@@ -15,6 +16,8 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  AiRouterActionSchema,
+  AiRouterBranchesSchema,
   AppConnectionScope,
   AppConnectionType,
   CodeActionSchema,
@@ -593,6 +596,17 @@ export const formUtils = {
             settings: z.object({
               branches: RouterBranchesSchema(true),
               executionType: z.enum(RouterExecutionType),
+            }),
+          }).shape,
+        );
+      case FlowActionType.AI_ROUTER:
+        return AiRouterActionSchema.omit({ settings: true }).extend(
+          z.object({
+            settings: z.object({
+              input: z.string().min(1, formErrors.required),
+              question: z.string().min(1, formErrors.required),
+              branches: AiRouterBranchesSchema(true),
+              minConfidence: z.number().min(0).max(1).optional(),
             }),
           }).shape,
         );
