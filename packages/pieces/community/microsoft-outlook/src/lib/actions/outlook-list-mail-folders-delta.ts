@@ -15,14 +15,13 @@ export const outlookListMailFoldersDeltaAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Returns the mail folders created, renamed or removed since a previous delta link, plus a fresh delta link for the next call. Use this to keep a folder tree in sync instead of re-listing it; it pairs with List Message Changes (Delta) for messages. Each change carries a removed flag: when it is true the folder was deleted and only its id and removedReason are meaningful. Read-only and safe to retry.',
+			'Returns the mail folders created, renamed or removed since a previous delta link, plus a fresh delta link for the next call. Use this to keep a folder tree in sync instead of re-listing it; it pairs with List Message Changes (Delta) for messages. The delta link must be one this action returned on the same connection: any other URL is rejected instead of being followed. Each change carries a removed flag: when it is true the folder was deleted and only its id and removedReason are meaningful. Read-only and safe to retry.',
 		idempotent: true,
 	},
 	props: {
 		deltaLink: Property.ShortText({
 			displayName: 'Delta Link',
-			description:
-				'The deltaLink returned by a previous run. Leave empty to start a new sync from the current folder tree.',
+			description: `The deltaLink returned by a previous run. Leave empty to start a new sync from the current folder tree. ${outlookAtomicCommon.deltaLinkHint}`,
 			required: false,
 		}),
 	},
@@ -32,7 +31,16 @@ export const outlookListMailFoldersDeltaAction = createAction({
 
 		const client = outlookCommon.createClient(context.auth);
 		const prefix = outlookCommon.mailboxPrefix(context.auth);
-		const url = deltaLink ? deltaLink : `${prefix}/mailFolders/delta`;
+		const operation = 'Listing the Outlook mail folder changes';
+		const expectedPath = `${prefix}/mailFolders/delta`;
+		const url = deltaLink
+			? outlookAtomicCommon.resolveDeltaUrl({
+					auth: context.auth,
+					deltaLink,
+					expectedPath,
+					operation,
+				})
+			: expectedPath;
 
 		try {
 			const response: PageCollection = await client
@@ -54,10 +62,7 @@ export const outlookListMailFoldersDeltaAction = createAction({
 				deltaLink: nextDeltaLink ?? null,
 			};
 		} catch (error) {
-			throw outlookAtomicCommon.graphError({
-				error,
-				operation: 'Listing the Outlook mail folder changes',
-			});
+			throw outlookAtomicCommon.graphError({ error, operation });
 		}
 	},
 });

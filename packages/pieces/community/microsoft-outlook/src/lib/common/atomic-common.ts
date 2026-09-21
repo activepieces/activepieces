@@ -1,4 +1,5 @@
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { getGraphBaseUrl, getMicrosoftCloudFromAuth } from './microsoft-cloud';
 
 const textBodyHeaders: Record<string, string> = {
 	Prefer: 'outlook.body-content-type="text"',
@@ -14,6 +15,9 @@ const attachmentSelect = 'id,name,contentType,size,isInline,lastModifiedDateTime
 
 const wellKnownFolderHint =
 	'Accepts a mail folder ID or a well-known name such as inbox, drafts, sentitems, deleteditems, archive or junkemail.';
+
+const deltaLinkHint =
+	'It must be a delta link returned by this action on this connection; links pointing at another mailbox or endpoint are rejected.';
 
 const messageIdHint =
 	'Outlook message ID. Resolve one with List Messages, Search Messages or Get Message.';
@@ -127,6 +131,100 @@ function graphError({ error, operation }: { error: unknown; operation: string })
 	return new Error(`${operation} failed. ${detail}`);
 }
 
+const GRAPH_API_VERSIONS = ['v1.0', 'beta'];
+
+const DELTA_LINK_SEGMENT_WILDCARD = '*';
+
+function pathSegments(path: string): string[] {
+	return path
+		.split('?')[0]
+		.split('/')
+		.filter((segment) => segment.length > 0)
+		.map((segment) => {
+			try {
+				return decodeURIComponent(segment);
+			} catch {
+				return segment;
+			}
+		});
+}
+
+function segmentsMatchPattern({
+	segments,
+	pattern,
+}: {
+	segments: string[];
+	pattern: string[];
+}): boolean {
+	if (segments.length !== pattern.length) {
+		return false;
+	}
+	return pattern.every((expected, index) =>
+		expected === DELTA_LINK_SEGMENT_WILDCARD
+			? segments[index].length > 0
+			: segments[index] === expected,
+	);
+}
+
+function resolveDeltaUrl({
+	auth,
+	deltaLink,
+	expectedPath,
+	operation,
+}: {
+	auth: OAuth2PropertyValue;
+	deltaLink: string;
+	expectedPath: string;
+	operation: string;
+}): string {
+	const candidate = deltaLink.trim();
+	const expectedOrigin = new URL(getGraphBaseUrl(getMicrosoftCloudFromAuth(auth))).origin;
+	const expectedPattern = pathSegments(expectedPath);
+	const expectation = `Expected an absolute URL on ${expectedOrigin} whose path is /{${GRAPH_API_VERSIONS.join(
+		'|',
+	)}}/${expectedPattern.join('/')}. Only pass a delta link that this action returned.`;
+
+	let parsed: URL;
+	try {
+		parsed = new URL(candidate);
+	} catch {
+		throw new InvalidDeltaLinkError(
+			`${operation} failed: the supplied delta link is not an absolute URL. ${expectation}`,
+		);
+	}
+
+	if (parsed.origin !== expectedOrigin) {
+		throw new InvalidDeltaLinkError(
+			`${operation} failed: the supplied delta link points at ${parsed.origin}, which is not the Microsoft Graph endpoint of this connection. ${expectation}`,
+		);
+	}
+
+	const segments = pathSegments(parsed.pathname);
+
+	if (segments.length === 0 || !GRAPH_API_VERSIONS.includes(segments[0])) {
+		throw new InvalidDeltaLinkError(
+			`${operation} failed: the supplied delta link does not target a supported Microsoft Graph API version. ${expectation}`,
+		);
+	}
+
+	if (!segmentsMatchPattern({ segments: segments.slice(1), pattern: expectedPattern })) {
+		throw new InvalidDeltaLinkError(
+			`${operation} failed: the supplied delta link addresses /${segments
+				.slice(1)
+				.join('/')}, which is outside the mailbox and endpoint this action is configured for. ${expectation}`,
+		);
+	}
+
+	return parsed.toString();
+}
+
+export class InvalidDeltaLinkError extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = 'InvalidDeltaLinkError';
+	}
+}
+
 export const outlookAtomicCommon = {
 	textBodyHeaders,
 	messageSelect,
@@ -143,5 +241,7 @@ export const outlookAtomicCommon = {
 	graphErrorDetail,
 	isUnsupportedMePathError,
 	withDeltaRemoval,
+	resolveDeltaUrl,
+	deltaLinkHint,
 	graphError,
 };

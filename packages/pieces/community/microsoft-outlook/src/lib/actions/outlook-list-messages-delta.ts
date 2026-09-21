@@ -15,7 +15,7 @@ export const outlookListMessagesDeltaAction = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Returns the messages added, changed or removed in one mail folder since a previous delta link, plus a fresh delta link for the next call. Use this for incremental sync instead of re-listing a folder; a first call without a delta link returns the current contents. Each change carries a removed flag: when it is true the item was deleted and only its id and removedReason are meaningful. Delta payloads omit message bodies and attachments, so follow up with Get Message for full content. Read-only and safe to retry.',
+			'Returns the messages added, changed or removed in one mail folder since a previous delta link, plus a fresh delta link for the next call. Use this for incremental sync instead of re-listing a folder; a first call without a delta link returns the current contents. The delta link must be one this action returned on the same connection: any other URL is rejected instead of being followed. Each change carries a removed flag: when it is true the item was deleted and only its id and removedReason are meaningful. Delta payloads omit message bodies and attachments, so follow up with Get Message for full content. Read-only and safe to retry.',
 		idempotent: true,
 	},
 	props: {
@@ -27,8 +27,7 @@ export const outlookListMessagesDeltaAction = createAction({
 		}),
 		deltaLink: Property.ShortText({
 			displayName: 'Delta Link',
-			description:
-				'The deltaLink returned by a previous run. Leave empty to start a new sync from the current folder state.',
+			description: `The deltaLink returned by a previous run. Leave empty to start a new sync from the current folder state. ${outlookAtomicCommon.deltaLinkHint}`,
 			required: false,
 		}),
 	},
@@ -39,8 +38,14 @@ export const outlookListMessagesDeltaAction = createAction({
 		const client = outlookCommon.createClient(context.auth);
 		const prefix = outlookCommon.mailboxPrefix(context.auth);
 
+		const operation = 'Listing Outlook message changes';
 		const url = deltaLink
-			? deltaLink
+			? outlookAtomicCommon.resolveDeltaUrl({
+					auth: context.auth,
+					deltaLink,
+					expectedPath: `${prefix}/mailFolders/*/messages/delta`,
+					operation,
+				})
 			: `${prefix}/mailFolders/${outlookAtomicCommon.encodeGraphId(folderId)}/messages/delta?$select=${outlookAtomicCommon.messageSelect}`;
 
 		try {
@@ -63,10 +68,7 @@ export const outlookListMessagesDeltaAction = createAction({
 				deltaLink: nextDeltaLink ?? null,
 			};
 		} catch (error) {
-			throw outlookAtomicCommon.graphError({
-				error,
-				operation: 'Listing Outlook message changes',
-			});
+			throw outlookAtomicCommon.graphError({ error, operation });
 		}
 	},
 });
