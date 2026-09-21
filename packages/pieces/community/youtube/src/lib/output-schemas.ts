@@ -591,6 +591,10 @@ export const deleteCommentOutputSchema: OutputSchema = {
   ],
 };
 
+export const downloadCaptionTrackOutputSchema: OutputSchema = {
+  fields: [{ key: 'caption', label: 'Caption Text' }],
+};
+
 export const rateVideoOutputSchema: OutputSchema = {
   fields: [
     { key: 'success', label: 'Success', format: 'boolean' },

@@ -1,9 +1,11 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { youtubeAuth } from '../common/auth';
+import { downloadCaptionTrackOutputSchema } from '../output-schemas';
 import { youtubeDownloadCaptionAction } from './download-caption';
 
 export const youtubeDownloadCaptionTrackAction = createAction({
   auth: youtubeAuth,
+  outputSchema: downloadCaptionTrackOutputSchema,
   name: 'download_caption_track',
   classification: 'READ',
   displayName: 'Download Caption Track',
@@ -16,5 +18,7 @@ export const youtubeDownloadCaptionTrackAction = createAction({
     idempotent: true,
   },
   props: youtubeDownloadCaptionAction.props,
-  run: youtubeDownloadCaptionAction.run,
+  run: async (context) => ({
+    caption: await youtubeDownloadCaptionAction.run(context),
+  }),
 });
