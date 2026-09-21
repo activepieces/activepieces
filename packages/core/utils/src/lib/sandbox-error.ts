@@ -13,9 +13,13 @@ export const sandboxError = {
 
     payloadSource: `const toErrorPayload = (value) => {
     try {
-        return value instanceof Error
-            ? { message: value.message, name: value.name, stack: value.stack }
-            : { message: String(value) }
+        if (value instanceof Error) {
+            return { message: value.message, name: value.name, stack: value.stack }
+        }
+        if (typeof value === 'string') {
+            return { message: value }
+        }
+        return { message: JSON.stringify(value) ?? String(value) }
     }
     catch {
         return { message: 'Code execution failed' }

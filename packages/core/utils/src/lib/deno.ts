@@ -168,12 +168,24 @@ function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermissio
 function buildRunProgram({ body, marker }: { body: string, marker: string }): string {
     return `
 ${sandboxError.payloadSource}
+let settled = false;
+const emit = (payload) => {
+    if (settled) return;
+    settled = true;
+    console.log(${JSON.stringify(marker)} + JSON.stringify(payload));
+};
+globalThis.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    emit({ success: false, error: toErrorPayload(event.reason) });
+    Deno.exit(1);
+});
 try {
 ${body}
-    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: true, result: result ?? null }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    emit({ success: true, result: result ?? null });
 }
 catch (error) {
-    console.log(${JSON.stringify(marker)} + JSON.stringify({ success: false, error: toErrorPayload(error) }));
+    emit({ success: false, error: toErrorPayload(error) });
     Deno.exit(1);
 }
 `

@@ -24,6 +24,8 @@ const THROWING_BODIES: ThrowingBody[] = [
     { label: 'a thrown string', body: 'throw "boom"', message: 'boom' },
     { label: 'a user-defined Error subclass', body: 'class PaymentError extends Error { constructor(m) { super(m); this.name = "PaymentError" } } throw new PaymentError("Card declined")', message: 'Card declined', errorName: 'PaymentError' },
     { label: 'a rejected promise', body: 'await Promise.reject(new Error("Card declined"))', message: 'Card declined' },
+    { label: 'a promise left unhandled after the step returns', body: 'Promise.reject(new Error("late boom")); return 1', message: 'late boom' },
+    { label: 'a thrown number', body: 'throw 42', message: '42' },
 ]
 
 async function resolveStepError({ sandbox, wrap, extension, body }: ResolveStepErrorParams): Promise<FriendlyPieceError> {
@@ -57,6 +59,12 @@ describe('code sandbox error contract', () => {
 
         expect(stepError.message).toBe('Card declined')
         expect(stepError.raw).toContain('noisy')
+    })
+
+    it.each(CHILD_PROCESS_SANDBOXES)('keeps the fields of a thrown non-Error object on $name', async ({ sandbox, wrap, extension }) => {
+        const stepError = await resolveStepError({ sandbox, wrap, extension, body: 'throw { code: "CARD_DECLINED", amount: 42 }' })
+
+        expect(stepError.message).toBe('{"code":"CARD_DECLINED","amount":42}')
     })
 
     it.each(CHILD_PROCESS_SANDBOXES)('falls back instead of losing the failure when reading the thrown value throws on $name', async ({ sandbox, wrap, extension }) => {
