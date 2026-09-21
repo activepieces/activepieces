@@ -49,6 +49,25 @@ const CHAT_HIDDEN_TOOL_NAMES = new Set<string>([
     'ap_setup_guide',
 ])
 
+/**
+ * Tools whose results are Activepieces' own catalog, never third-party content, so
+ * running one does not close the turn to saved-agent edits. Everything else taints,
+ * unknown names included: a new tool is never silently exempt. Keep the dynamic-props
+ * tools out of here (`ap_get_piece_props`, `ap_resolve_property_*`) — given `auth` they
+ * call the third-party API and hand back remote data.
+ */
+const CATALOG_ONLY_TOOL_NAMES = new Set<string>([
+    'ap_research_pieces',
+    'ap_search_actions',
+    'ap_search_triggers',
+    'ap_list_connections',
+    'ap_list_ai_models',
+])
+
+function taintsTurn(toolName: string): boolean {
+    return !CATALOG_ONLY_TOOL_NAMES.has(toolName)
+}
+
 function activeToolsForPhase({ phase, allToolNames }: {
     phase: AgentPhase
     allToolNames: string[]
@@ -79,4 +98,5 @@ export const agentToolPhases = {
     activeToolsForPhase,
     isBuildOnlyTool,
     isAgentHiddenTool,
+    taintsTurn,
 }
