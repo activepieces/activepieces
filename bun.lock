@@ -904,7 +904,7 @@
     },
     "packages/pieces/community/aws-bedrock": {
       "name": "@activepieces/piece-aws-bedrock",
-      "version": "0.3.1",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6963,7 +6963,7 @@
     },
     "packages/pieces/community/pinterest": {
       "name": "@activepieces/piece-pinterest",
-      "version": "0.1.9",
+      "version": "0.1.8",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10054,7 +10054,7 @@
     },
     "packages/pieces/community/zagomail": {
       "name": "@activepieces/piece-zagomail",
-      "version": "0.1.7",
+      "version": "0.1.6",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
