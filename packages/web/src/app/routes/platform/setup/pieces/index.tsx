@@ -20,7 +20,6 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { RequestTrial } from '@/app/components/request-trial';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
 import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
@@ -32,6 +31,7 @@ import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RequestTrial } from '@/features/billing';
 import { oauthAppsQueries } from '@/features/connections';
 import {
   InstallPieceDialog,
