@@ -61,9 +61,60 @@ async function seedRun({ ctx, agentId, source, projectId, title }: {
     return id
 }
 
+function getRun(ctx: TestContext, runId: string, projectId?: string) {
+    return ctx.get(`/v1/agents/conversations/runs/${runId}?projectId=${projectId ?? ctx.project.id}`)
+}
+
 function listRuns(ctx: TestContext, agentId: string, projectId?: string) {
     return ctx.get(`/v1/agents/conversations/runs?projectId=${projectId ?? ctx.project.id}&agentId=${agentId}`)
 }
+
+describe('reading one unattended run', () => {
+    it('returns the run so it can be read without being able to continue it', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const runId = await seedRun({ ctx, agentId: agent.id, source: AgentRunSource.FLOW_STEP, title: 'Swept the inbox' })
+
+        const response = await getRun(ctx, runId)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().id).toBe(runId)
+        expect(response.json().title).toBe('Swept the inbox')
+    })
+
+    it('never hands back the raw model transcript, only the curated one the UI shows', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const runId = await seedRun({ ctx, agentId: agent.id, source: AgentRunSource.FLOW_STEP })
+
+        const response = await getRun(ctx, runId)
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        expect(response.json().messages).toBeUndefined()
+        expect(response.json()).toHaveProperty('uiMessages')
+    })
+
+    it('refuses a chat conversation, so this is not a way around the rule that chat history stays private', async () => {
+        const ctx = await context()
+        const agent = await createAgent(ctx)
+        const chatId = await seedRun({ ctx, agentId: agent.id, source: AgentRunSource.CHAT, title: 'A private chat' })
+
+        const response = await getRun(ctx, chatId)
+
+        expect(response.statusCode).toBe(StatusCodes.NOT_FOUND)
+    })
+
+    it('refuses a run that belongs to another project', async () => {
+        const ctx = await context()
+        const other = await context()
+        const agent = await createAgent(other)
+        const runId = await seedRun({ ctx: other, agentId: agent.id, source: AgentRunSource.FLOW_STEP })
+
+        const response = await getRun(ctx, runId)
+
+        expect(response.statusCode).not.toBe(StatusCodes.OK)
+    })
+})
 
 describe('the runs a flow step made with an agent', () => {
     it('lists the unattended runs, which is the half of the history nobody could see', async () => {

@@ -13,8 +13,10 @@ const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
-const PlatformConfigurationsPage = React.lazy(
-  () => import('./platform/infra/configurations'),
+const PlatformConfigurationsPage = React.lazy(() =>
+  import('./platform/infra/configurations').then((m) => ({
+    default: m.ConfigurationsPage,
+  })),
 );
 const TriggerHealthPage = React.lazy(() => import('./platform/infra/triggers'));
 const SettingsWorkersPage = React.lazy(

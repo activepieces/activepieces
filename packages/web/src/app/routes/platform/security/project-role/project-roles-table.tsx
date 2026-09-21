@@ -12,6 +12,8 @@ import {
 import { useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Item,
   ItemActions,
@@ -20,9 +22,7 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from '@/components/custom/item';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { projectRoleMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';

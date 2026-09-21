@@ -2,14 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { buildFlowOriginContextBlock, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
 import { assertNotNullOrUndefined } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  userId,
-  username,
-  blocks,
-  mentionOriginFlow,
-  iconEmoji,
-} from '../common/props';
+import { profilePicture, userId, username, blocks, mentionOriginFlow, iconEmoji, unfurlLinks } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { chatPostMessageOutputSchema } from '../output-schemas';
@@ -28,8 +21,7 @@ export const slackSendDirectMessageAction = createAction({
     userId: userId(true),
     text: Property.LongText({
       displayName: 'Message',
-      description:
-        'The text of your message. Renders as a section above any Block Kit blocks, and is used as the notification fallback. Leave empty to send blocks only.',
+      description: 'Slack mrkdwn is supported. Empty sends blocks only.',
       required: false,
     }),
     username,
@@ -37,12 +29,7 @@ export const slackSendDirectMessageAction = createAction({
     iconEmoji,
     mentionOriginFlow,
     blocks,
-    unfurlLinks: Property.Checkbox({
-      displayName: 'Unfurl Links',
-      description: 'Enable link unfurling for this message',
-      required: false,
-      defaultValue: true,
-    }),
+    unfurlLinks,
   },
   async run(context) {
     const token = getBotToken(context.auth as SlackAuthValue);
