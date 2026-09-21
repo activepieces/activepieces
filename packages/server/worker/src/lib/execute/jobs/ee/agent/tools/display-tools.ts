@@ -3,13 +3,14 @@ import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 import { GateDecision, gateNoResponseMessage, normalizePieceName, questionTextSchema, questionTitleSchema, richOptionSchema } from './tool-primitives'
 
-export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor }: {
+export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onConnectionSelected, onConnectorReconnected, onGateOpened, accountAlreadyChosenFor, connectionChosenEarlierFor }: {
     waitForApproval: (params: { gateId: string, timeoutMs?: number }) => Promise<GateDecision>
     displayToolTimeoutMs: number
     onConnectionSelected?: (params: { pieceName: string, connectionExternalId: string, label: string, projectId: string }) => Promise<void>
     onConnectorReconnected?: (connectorUuid: string) => void
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     accountAlreadyChosenFor?: (pieceName: string) => boolean
+    connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
 }): ToolSet {
     function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
@@ -20,16 +21,29 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         return { content: [{ type: 'text', text: `This agent already runs on the ${displayName} account its author chose, so there is nothing to connect or reconnect here and this card was not shown. Use the ${displayName} tool. If it fails, say exactly what failed — do not describe it as a connection problem unless the failure says the credentials were rejected.` }] }
     }
 
+    async function refuseIfPickedEarlierInConversation(input: Record<string, unknown>): Promise<{ content: { type: string, text: string }[] } | undefined> {
+        if (input['switchAccount'] === true) {
+            return undefined
+        }
+        const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
+        const chosenEarlier = isNil(connectionChosenEarlierFor) ? null : await connectionChosenEarlierFor(normalizePieceName(piece))
+        if (isNil(chosenEarlier)) {
+            return undefined
+        }
+        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
+        return { content: [{ type: 'text', text: `The user already picked the ${displayName} account "${chosenEarlier.label}" earlier in this conversation, so the card was not shown again. Use connectionExternalId "${chosenEarlier.externalId}" and carry on without asking. If they ask to use a different account, call this again with switchAccount true.` }] }
+    }
+
     function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
         dismissMessage: string | ((input: Record<string, unknown>) => string)
         successKey?: string
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
-        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined
+        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined | Promise<{ content: { type: string, text: string }[] } | undefined>
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
-            const refusal = refuseWhen?.(input)
+            const refusal = await refuseWhen?.(input)
             if (!isNil(refusal)) {
                 return refusal
             }
@@ -113,10 +127,11 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             inputSchema: z.object({
                 piece: z.string().describe('Piece short name'),
                 displayName: z.string().describe('Human-readable piece name'),
+                switchAccount: z.boolean().optional().describe('Set when the user asked to use a different account, so the card is shown again instead of reusing the one they already picked'),
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_picker',
-                refuseWhen: refuseIfAccountAlreadyChosen,
+                refuseWhen: async (input) => refuseIfAccountAlreadyChosen(input) ?? await refuseIfPickedEarlierInConversation(input),
                 dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
