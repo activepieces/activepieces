@@ -63,7 +63,7 @@ export const commonProps = {
 				}
 
 				cursor = nextCursor(response.body);
-			} while (cursor && options.length < DROPDOWN_MAX_OPTIONS);
+			} while (cursor);
 
 			return {
 				disabled: false,
@@ -210,7 +210,7 @@ export function phoneNumberDropdown<R extends boolean>({ required }: { required:
 				}
 
 				cursor = nextCursor(response.body);
-			} while (cursor && options.length < DROPDOWN_MAX_OPTIONS);
+			} while (cursor);
 
 			return {
 				disabled: false,
@@ -223,7 +223,6 @@ export function phoneNumberDropdown<R extends boolean>({ required }: { required:
 export const WHATSAPP_API_BASE = 'https://graph.facebook.com/v23.0';
 
 const DROPDOWN_PAGE_SIZE = 100;
-const DROPDOWN_MAX_OPTIONS = 1000;
 
 type GraphPage<T> = {
 	data?: T[];
