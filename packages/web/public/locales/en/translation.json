@@ -673,6 +673,7 @@
   "On": "On",
   "Off": "Off",
   "Required by other tools — always enabled": "Required by other tools — always enabled",
+  "You can see these tools, but your role cannot change them.": "You can see these tools, but your role cannot change them.",
   "Select all in {{category}}": "Select all in {{category}}",
   "always enabled": "always enabled",
   "{firstName} {lastName} role has become {roleName}": "{firstName} {lastName} role has become {roleName}",

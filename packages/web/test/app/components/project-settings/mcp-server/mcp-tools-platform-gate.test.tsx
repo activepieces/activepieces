@@ -71,6 +71,7 @@ function render(props: Partial<Parameters<typeof McpTools>[0]> = {}) {
     root.render(
       <McpTools
         disabledTools={[]}
+        canWrite={true}
         isPending={false}
         onUpdateDisabledTools={() => undefined}
         {...props}

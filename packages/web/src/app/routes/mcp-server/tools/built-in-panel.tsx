@@ -6,6 +6,7 @@ export function BuiltInPanel({
   disabledTools,
   platformDisabledTools,
   projectId,
+  canWrite,
   isPending,
   onUpdateDisabledTools,
 }: BuiltInPanelProps) {
@@ -20,6 +21,7 @@ export function BuiltInPanel({
         key={projectId}
         disabledTools={disabledTools}
         platformDisabledTools={platformDisabledTools}
+        canWrite={canWrite}
         isPending={isPending}
         onUpdateDisabledTools={onUpdateDisabledTools}
       />
@@ -31,6 +33,7 @@ type BuiltInPanelProps = {
   disabledTools: string[] | null;
   platformDisabledTools: string[];
   projectId: string | null;
+  canWrite: boolean;
   isPending: boolean;
   onUpdateDisabledTools: (tools: string[]) => void;
 };
