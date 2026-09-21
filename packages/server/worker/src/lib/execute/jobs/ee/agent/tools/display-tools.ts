@@ -12,7 +12,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     accountAlreadyChosenFor?: (pieceName: string) => boolean
     connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
 }): ToolSet {
-    async function refuseIfAuthorPinnedAccount(input: Record<string, unknown>): Promise<{ content: { type: string, text: string }[] } | undefined> {
+    function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
         if (isNil(accountAlreadyChosenFor) || !accountAlreadyChosenFor(normalizePieceName(piece))) {
             return undefined
@@ -22,10 +22,6 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     }
 
     async function refuseIfPickedEarlierInConversation(input: Record<string, unknown>): Promise<{ content: { type: string, text: string }[] } | undefined> {
-        const authorPinned = await refuseIfAuthorPinnedAccount(input)
-        if (!isNil(authorPinned)) {
-            return authorPinned
-        }
         if (input['switchAccount'] === true) {
             return undefined
         }
@@ -44,7 +40,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         toolName: string
         getDisplayName?: (input: Record<string, unknown>) => string
         onApproved?: (params: { input: Record<string, unknown>, payload?: Record<string, unknown> }) => Promise<Record<string, unknown>>
-        refuseWhen?: (input: Record<string, unknown>) => Promise<{ content: { type: string, text: string }[] } | undefined>
+        refuseWhen?: (input: Record<string, unknown>) => { content: { type: string, text: string }[] } | undefined | Promise<{ content: { type: string, text: string }[] } | undefined>
     }) {
         return async (input: Record<string, unknown>, options: ToolExecutionOptions<undefined>) => {
             const refusal = await refuseWhen?.(input)
@@ -84,7 +80,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_required',
-                refuseWhen: refuseIfAuthorPinnedAccount,
+                refuseWhen: refuseIfAccountAlreadyChosen,
                 dismissMessage: 'The user chose not to connect this service. Stop and ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"',
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
@@ -135,7 +131,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_picker',
-                refuseWhen: refuseIfPickedEarlierInConversation,
+                refuseWhen: async (input) => refuseIfAccountAlreadyChosen(input) ?? await refuseIfPickedEarlierInConversation(input),
                 dismissMessage: (input) => `The user chose not to select a ${typeof input['displayName'] === 'string' ? input['displayName'] : 'service'} account. Do not pick one on their behalf. Ask: "Would you like me to continue building with a placeholder you can connect later, or would you prefer to stop here?"`,
                 onApproved: async ({ input, payload = {} }) => {
                     const connectionExternalId = payload['connectionExternalId']
