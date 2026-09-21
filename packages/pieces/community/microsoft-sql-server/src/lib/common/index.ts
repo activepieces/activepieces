@@ -37,6 +37,9 @@ function buildConfig({
     database,
     user,
     password,
+    tenant_id,
+    client_id,
+    client_secret,
     encrypt,
     trust_server_certificate,
     certificate,
@@ -79,6 +82,39 @@ function buildConfig({
       };
     }
     return parsed;
+  }
+
+  if (tenant_id || client_id || client_secret) {
+    if (!tenant_id || !client_id || !client_secret) {
+      throw new Error(
+        'Tenant ID, Client ID and Client Secret are all required to authenticate with Microsoft Entra ID.'
+      );
+    }
+    if (!host) {
+      throw new Error(
+        'Host is required to authenticate with Microsoft Entra ID.'
+      );
+    }
+    return {
+      server: host,
+      port: port ? Number(port) : DEFAULT_PORT,
+      database: database || undefined,
+      connectionTimeout: TIMEOUT_MS,
+      requestTimeout,
+      authentication: {
+        type: 'azure-active-directory-service-principal-secret',
+        options: {
+          clientId: client_id,
+          clientSecret: client_secret,
+          tenantId: tenant_id,
+        },
+      },
+      options: {
+        encrypt: encrypt ?? true,
+        trustServerCertificate: trust_server_certificate ?? false,
+        cryptoCredentialsDetails,
+      },
+    };
   }
 
   if (!host || !user || !password) {
