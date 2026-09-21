@@ -39,6 +39,7 @@ import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
 import { isRunAgent } from '../test-step/agent-test-step';
 
+import { AiRouterRoutes } from './ai-router-routes';
 import { truncatedInputUtils } from './truncated-input-utils';
 
 type RunActiveTab = 'input' | 'output' | 'timeline';
@@ -270,7 +271,11 @@ export const FlowStepInputOutput = () => {
               />
             </TabsContent>
           )}
-          <TabsContent value="output">
+          <TabsContent value="output" className="flex flex-col gap-3">
+            {selectedStep.type === FlowActionType.AI_ROUTER &&
+              !isStepRunning && (
+                <AiRouterRoutes output={selectedStepOutput.output} />
+              )}
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
             ) : slicedOutputRef ? (
