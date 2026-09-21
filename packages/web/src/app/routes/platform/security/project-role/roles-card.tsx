@@ -1,4 +1,5 @@
 import { ProjectRole, SeekPage } from '@activepieces/core-utils';
+import { isNil } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -26,7 +27,8 @@ export function RolesCard({
   const { platform } = platformHooks.useCurrentPlatform();
   const [activeTab, setActiveTab] = useState<RolesTab>('project');
 
-  const projectRolesCount = projectRoles?.data.length ?? 0;
+  const projectRolesCount =
+    isLoading || isError ? null : projectRoles?.data.length ?? 0;
   const platformRolesCount = roleCopy.platformRoles().length;
 
   const newRoleButton = !platform.plan.customRolesEnabled ? (
@@ -70,7 +72,11 @@ export function RolesCard({
           <TabsList>
             <TabsTrigger value="project" className="gap-2">
               {t('Project roles')}
-              <span className="text-muted-foreground">{projectRolesCount}</span>
+              {!isNil(projectRolesCount) && (
+                <span className="text-muted-foreground">
+                  {projectRolesCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="platform" className="gap-2">
               {t('Platform roles')}
