@@ -12,7 +12,7 @@ export const sapSuccessFactorsSaml2Oauth = createPiece({
   auth: successFactorsAuth,
   minimumSupportedRelease: '0.87.0',
   authors: ['kevinvyang-bit'],
-  categories: [PieceCategory.PRODUCTIVITY],
+  categories: [PieceCategory.HUMAN_RESOURCES],
   actions: [
     getUser,
     createCustomApiCallAction({
