@@ -7,37 +7,39 @@ export const deletePermission = createAction({
     auth: googleDriveAuth,
     name: 'delete_permissions',
     classification: 'DESTRUCTIVE',
-    description: 'Removes a role from an user for a file or folder',
+    description: "Remove a person's role from a file or folder.",
     audience: 'human',
     aiMetadata: { description: 'Revokes a specific role from a user (matched by email and role) on a Drive file or folder. Use to unshare or downgrade access for someone. Requires the file/folder ID, the user email, and the role to remove. Idempotent: if no matching permission exists, the call is a no-op.', idempotent: true },
-    displayName: 'Delete permissions',
+    displayName: 'Remove Access',
     props: {
         fileId: Property.ShortText({
             displayName: 'File or Folder ID',
-            description: 'The ID of the file or folder to update permissions for',
+            description: "The ID from the item's Drive URL or an earlier step.",
             required: true,
+            placeholder: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
         }),
         user_email: Property.ShortText({
-            displayName: 'User email',
-            description: 'The email address of the user to update permissions for',
+            displayName: 'User Email',
+            description: 'The person whose access is removed.',
             required: true,
-        }),  
+            placeholder: 'name@example.com',
+        }),
         permission_name : Property.StaticDropdown({
             displayName: 'Role',
-            description: 'The role to remove from user.',
+            description: 'The role to remove. Other roles the person has stay.',
             required: true,
             options: {
             options: [
                 {
-                    label: 'Organizer',
+                    label: 'Manager',
                     value: 'organizer',
                 },
                 {
-                    label: 'File Organizer',
+                    label: 'Content Manager',
                     value: 'fileOrganizer',
                 },
                 {
-                    label: 'Writer',
+                    label: 'Editor',
                     value: 'writer',
                 },
                 {
@@ -45,10 +47,10 @@ export const deletePermission = createAction({
                     value: 'commenter',
                 },
                 {
-                    label: 'Reader',
+                    label: 'Viewer',
                     value: 'reader',
                 },
-                
+
             ]
             }
         }),

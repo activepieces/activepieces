@@ -8,27 +8,27 @@ export const googleDriveSearchFolder = createAction({
   auth: googleDriveAuth,
   name: 'search-folder',
   classification: 'SEARCH',
-  displayName: 'Search',
-  description: 'Search a Google Drive folder for files/sub-folders',
+  displayName: 'Find File or Folder',
+  description: 'Find files or folders by name, content or type.',
   audience: 'human',
   aiMetadata: { description: 'Searches Google Drive for files or folders matching a name, full-text, or MIME-type query, optionally scoped to a parent folder and filtered to files or folders only. Use to resolve a file/folder ID from a human-readable name before acting on it. Read-only and idempotent.', idempotent: true },
   props: {
     queryTerm: Property.StaticDropdown({
-      displayName: 'Query Term',
-      description: 'The Query term or field of file/folder to search upon.',
+      displayName: 'Search By',
+      description: 'Match the file name, the text inside it, or its type.',
       defaultValue: 'name',
       options: {
         options: [
-          { label: 'File name', value: 'name' },
-          { label: 'Full text search', value: 'fullText' },
-          { label: 'Content type', value: 'mimeType' },
+          { label: 'File Name', value: 'name' },
+          { label: 'Text Inside the File', value: 'fullText' },
+          { label: 'File Type', value: 'mimeType' },
         ],
       },
       required: true,
     }),
     operator: Property.StaticDropdown({
-      displayName: 'Operator',
-      description: 'The operator to create criteria.',
+      displayName: 'Match',
+      description: 'Contains finds partial matches; Equals needs the exact value.',
       required: true,
       options: {
         options: [
@@ -39,24 +39,28 @@ export const googleDriveSearchFolder = createAction({
       defaultValue: 'contains',
     }),
     query: Property.ShortText({
-      displayName: 'Value',
-      description: 'Value of the field of file/folder to search for.',
+      displayName: 'Search Text',
+      description: 'The name, text or type to look for.',
       required: true,
+      placeholder: 'Quarterly report',
     }),
     type: Property.StaticDropdown({
-      displayName: 'File Type',
-      description: '(Optional) Choose between files and folders.',
+      displayName: 'Show',
+      description: 'Return everything, only files or only folders.',
       required: false,
       options: {
         options: [
-          { label: 'All', value: 'all' },
-          { label: 'Files', value: 'file' },
-          { label: 'Folders', value: 'folder' },
+          { label: 'Files and Folders', value: 'all' },
+          { label: 'Files Only', value: 'file' },
+          { label: 'Folders Only', value: 'folder' },
         ],
       },
       defaultValue: 'all',
     }),
-    parentFolder: common.properties.parentFolder,
+    parentFolder: common.parentFolderDropdown({
+      displayName: 'Search in Folder',
+      description: 'Leave empty to search all of Drive. Type to search by folder name.',
+    }),
     include_team_drives: common.properties.include_team_drives,
   },
   outputSchema: searchFolderActionOutputSchema,
