@@ -81,3 +81,18 @@ export type UpdateRunProgressRequest = {
         output: StepOutput
     }
 }
+
+export const ChooseAiRouteRequest = z.object({
+    state: z.string(),
+    question: z.string(),
+    options: z.record(z.string(), z.string()),
+})
+
+export type ChooseAiRouteRequest = z.infer<typeof ChooseAiRouteRequest>
+
+export const ChooseAiRouteResponse = z.object({
+    choice: z.string(),
+    probabilities: z.record(z.string(), z.number()).optional(),
+})
+
+export type ChooseAiRouteResponse = z.infer<typeof ChooseAiRouteResponse>

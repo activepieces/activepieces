@@ -57,6 +57,7 @@ export const stepUtils = {
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {
       case FlowActionType.ROUTER:
+      case FlowActionType.AI_ROUTER:
       case FlowActionType.LOOP_ON_ITEMS:
       case FlowActionType.CODE:
       case FlowTriggerType.EMPTY:
@@ -178,6 +179,14 @@ function buildCoreStepMetadata(): Record<
       logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
       description: t('Split your flow into branches depending on condition(s)'),
       type: FlowActionType.ROUTER,
+    },
+    [FlowActionType.AI_ROUTER]: {
+      displayName: t('AI Router'),
+      logoUrl: 'https://cdn.activepieces.com/pieces/new-core/utility-ai.svg',
+      description: t(
+        'Ask one question and send the flow down the matching branch',
+      ),
+      type: FlowActionType.AI_ROUTER,
     },
     [FlowTriggerType.EMPTY]: {
       displayName: t('Empty Trigger'),

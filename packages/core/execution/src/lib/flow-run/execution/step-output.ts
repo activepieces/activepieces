@@ -138,6 +138,25 @@ RouterStepResult
     }
 }
 
+type AiRouterStepResult = {
+    branches: BranchResult[]
+    choice: string
+    probabilities?: Record<string, number>
+}
+
+export class AiRouterStepOutput extends GenericStepOutput<
+FlowActionType.AI_ROUTER,
+AiRouterStepResult
+> {
+    static init({ input }: { input: unknown }): AiRouterStepOutput {
+        return new AiRouterStepOutput({
+            type: FlowActionType.AI_ROUTER,
+            input,
+            status: StepOutputStatus.SUCCEEDED,
+        })
+    }
+}
+
 export type LoopStepResult = {
     item: unknown
     index: number

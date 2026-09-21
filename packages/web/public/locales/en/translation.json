@@ -1,4 +1,5 @@
 {
+  "duplicateRouteName": "Route names must be unique",
   "Request approval": "Request approval",
   "Sensitive Project": "Sensitive Project",
   "When enabled, publishing flows in this project requires approval.": "When enabled, publishing flows in this project requires approval.",

@@ -1,8 +1,9 @@
 
-import { FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { ChooseAiRouteRequest, ChooseAiRouteResponse, FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
+import { aiRouterService } from '../ai/ai-router.service'
 import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authorization'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { fileService } from '../file/file.service'
@@ -100,6 +101,14 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send()
     })
 
+    app.post('/ai-router', AiRouterRequest, async (request) => {
+        return aiRouterService(request.log).choose({
+            state: request.body.state,
+            question: request.body.question,
+            options: request.body.options,
+        })
+    })
+
 }
 
 
@@ -170,5 +179,17 @@ const FlowResponseRequest = {
     },
     schema: {
         body: SendFlowResponseRequest,
+    },
+}
+
+const AiRouterRequest = {
+    config: {
+        security: securityAccess.engine(),
+    },
+    schema: {
+        body: ChooseAiRouteRequest,
+        response: {
+            [StatusCodes.OK]: ChooseAiRouteResponse,
+        },
     },
 }

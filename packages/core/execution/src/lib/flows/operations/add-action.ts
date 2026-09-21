@@ -36,6 +36,15 @@ function createAction(request: UpdateActionRequest, {
             }
 
             break
+        case FlowActionType.AI_ROUTER:
+            action = {
+                ...baseProperties,
+                type: FlowActionType.AI_ROUTER,
+                settings: request.settings,
+                children: request.settings.branches.map(() => null),
+            }
+
+            break
         case FlowActionType.LOOP_ON_ITEMS:
             action = {
                 ...baseProperties,
