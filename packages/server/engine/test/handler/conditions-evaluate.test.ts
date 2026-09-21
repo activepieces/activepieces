@@ -369,6 +369,22 @@ describe('Branch evaluateConditions', () => {
             await expect(evaluateConditions({ conditionGroups: [[aiCondition()]], constants: TEST_CONSTANTS })).rejects.toMatchObject({ name: 'AiConditionEvaluationError' })
         })
 
+        test('should send a non-string resolved value as text rather than failing validation', async () => {
+            const fetchMock = respondWith(0.9)
+            global.fetch = fetchMock
+            const condition = {
+                firstValue: { total: 400, currency: 'GBP' },
+                secondValue: 'Is this above our policy limit?',
+                operator: BranchOperator.AI_MATCHES,
+            } as unknown as BranchCondition
+
+            await evaluateConditions({ conditionGroups: [[condition]], constants: TEST_CONSTANTS })
+
+            const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+            expect(body.text).toEqual('{"total":400,"currency":"GBP"}')
+            expect(typeof body.text).toEqual('string')
+        })
+
         test('should not call the model when a cheaper condition in the same group already failed', async () => {
             const fetchMock = respondWith(0.99)
             global.fetch = fetchMock

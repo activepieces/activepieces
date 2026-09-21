@@ -72,8 +72,8 @@ async function evaluateCondition({ condition, constants }: EvaluateConditionPara
         return aiConditionApi.matches({
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
-            text: condition.firstValue,
-            question: condition.secondValue,
+            text: asPlainText(condition.firstValue),
+            question: asPlainText(condition.secondValue),
             ...spreadIfDefined('threshold', condition.threshold),
         })
     }
@@ -121,7 +121,11 @@ async function handleRouterExecution({ action, executionState, constants, censor
     const stepStartTime = performance.now()
 
     const { data: evaluatedConditionsWithoutFallback, error: conditionError } = await utils.tryCatchAndThrowOnEngineError(
-        () => evaluateBranches({ branches: resolvedInput.branches, constants }),
+        () => evaluateBranches({
+            branches: resolvedInput.branches,
+            constants,
+            stopAtFirstMatch: routerExecutionType === RouterExecutionType.EXECUTE_FIRST_MATCH,
+        }),
     )
     if (conditionError) {
         return failStep({
@@ -187,12 +191,20 @@ async function handleRouterExecution({ action, executionState, constants, censor
     return executionStateResult
 }
 
-async function evaluateBranches({ branches, constants }: EvaluateBranchesParams): Promise<boolean[]> {
+async function evaluateBranches({ branches, constants, stopAtFirstMatch }: EvaluateBranchesParams): Promise<boolean[]> {
     const evaluations: boolean[] = []
+    let matched = false
     for (const branch of branches) {
-        const evaluation = branch.branchType === BranchExecutionType.FALLBACK
-            ? true
-            : await evaluateConditions({ conditionGroups: branch.conditions, constants })
+        if (branch.branchType === BranchExecutionType.FALLBACK) {
+            evaluations.push(true)
+            continue
+        }
+        if (matched && stopAtFirstMatch) {
+            evaluations.push(false)
+            continue
+        }
+        const evaluation = await evaluateConditions({ conditionGroups: branch.conditions, constants })
+        matched = matched || evaluation
         evaluations.push(evaluation)
     }
     return evaluations
@@ -204,6 +216,13 @@ function toConditionValues(condition: BranchCondition): ConditionValues {
         secondValue: 'secondValue' in condition ? condition.secondValue : undefined,
         caseSensitive: 'caseSensitive' in condition ? condition.caseSensitive : undefined,
     }
+}
+
+function asPlainText(value: unknown): string {
+    if (typeof value === 'string') {
+        return value
+    }
+    return JSON.stringify(value) ?? ''
 }
 
 function text(value: unknown, { caseSensitive }: ConditionValues): string {
@@ -281,4 +300,5 @@ type EvaluateConditionParams = {
 type EvaluateBranchesParams = {
     branches: RouterActionSettings['branches']
     constants: AiConditionConstants
+    stopAtFirstMatch: boolean
 }
