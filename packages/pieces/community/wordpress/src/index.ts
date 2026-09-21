@@ -25,7 +25,7 @@ Connect with a WordPress **application password**:
 2. Under **Application Passwords**, type a name and click **Add New Application Password**.
 3. Copy the generated password and paste it below together with your username.
 
-Application passwords need WordPress 5.6 or newer and HTTPS. On older or HTTP-only sites, install the [Basic Auth plugin](https://github.com/WP-API/Basic-Auth) and use your login password instead.
+Your site must use HTTPS: the password travels with every request. On WordPress older than 5.6, install the [Basic Auth plugin](https://github.com/WP-API/Basic-Auth) and use your login password instead, still over HTTPS.
 `;
 
 export const wordpressAuth = PieceAuth.CustomAuth({
