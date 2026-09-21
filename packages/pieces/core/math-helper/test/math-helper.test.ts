@@ -108,6 +108,13 @@ describe('modulo', () => {
     });
     expect(await modulo.run(ctx)).toBe(-1);
   });
+
+  test('throws on zero divisor', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { first_number: 10, second_number: 0 },
+    });
+    await expect(modulo.run(ctx)).rejects.toThrow();
+  });
 });
 
 describe('generateRandom', () => {
