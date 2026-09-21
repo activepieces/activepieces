@@ -1,4 +1,5 @@
 import os from 'os'
+import { isNil } from '@activepieces/core-utils'
 import { auditEnricher, auditRedactPreset, DrainContext, enricherPlugin, initLogger, RedactConfig } from 'evlog'
 import { apLogger, ApLogger } from './ap-logger'
 import { evlogDrains, EvlogDrainConfig } from './evlog-drains'
@@ -9,7 +10,7 @@ function wrapDrainWithHost(
     inner: (ctx: DrainContext) => void | Promise<void>,
 ): (ctx: DrainContext) => Promise<void> {
     return async (ctx: DrainContext) => {
-        if (ctx.event.host === undefined) {
+        if (isNil(ctx.event.host)) {
             ctx.event.host = HOSTNAME
         }
         await inner(ctx)
