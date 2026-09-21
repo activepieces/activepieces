@@ -64,6 +64,24 @@ meaning. That is a simplification the AI router earns and the Router cannot have
 `AI_MATCHES` (PR #15666) is parked. If it ever merges, the product carries two AI branching concepts
 and that needs its own call.
 
+**The AI router will never absorb the Router, and the reason is worth knowing before someone
+proposes it.** The two differ in *evaluator*, not interface: determinism, zero cost and zero latency
+are properties of not calling a model. You can get "same answer usually"; you cannot get "same answer
+forever", because the model version lives outside the flow and a vendor upgrade can re-route a
+historical case. Temperature, seeds and caching do not change that. So anything a human must defend
+years later — compliance gates, billing tiers, approval thresholds — stays on the Router permanently.
+
+The gaps that *are* reachable, and how, so the design does not get re-derived: **fan-out** by a
+match-mode toggle (one `choice` question → one route, N `boolean` questions → every route that
+applies, which is the Router's first-match/all-match concept and the cheapest of the three);
+**facts** (thresholds, exists, two-value comparisons) by an optional one-line deterministic *guard*
+per route, evaluated first so guarded-out routes never reach the criteria map; **multi-dimensional
+routing** by asking several questions in one call and matching routes on combinations, which the
+gateway's plural `questions` record already supports and which the Router cannot do on meaning at
+all. The guiding line is that the model turns unbounded text into a small enumerated value and
+everything after that is data. The standing risk on guards is that a nested condition builder inside
+a route rebuilds the Router twice and loses the pitch — one guard, one line, no AND/OR groups.
+
 The MCP flow-building tools still only understand `ROUTER`. They degrade rather than break —
 `ap_update_branch` reports the step is not a router, `ap_flow_structure` omits branch detail — because
 letting the agent create an AI router without settings support would let it build broken steps.
