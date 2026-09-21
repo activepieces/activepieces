@@ -35,7 +35,7 @@ function AdminRoute({ page }: { page: AdminPageSpec }) {
     );
   }
 
-  const tabs = adminPagesUtils.visibleTabs(page, context);
+  const tabs = adminPagesUtils.visibleTabs({ page, context });
   const requested = searchParams.get('tab');
   const Overview = page.overview;
   if (Overview !== undefined && requested === null) {

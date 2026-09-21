@@ -130,33 +130,39 @@ function visibleNavPages(context: AdminPageContext) {
   );
 }
 
-function visibleTabs(page: AdminPage, context: AdminPageContext) {
+function visibleTabs({ page, context }: PageInContext) {
   return (page.tabs ?? []).filter((tab) => tab.isHidden?.(context) !== true);
 }
 
-function navTabs(page: AdminPage, context: AdminPageContext) {
-  return visibleTabs(page, context).filter((tab) => tab.hideInNav !== true);
+function navTabs({ page, context }: PageInContext) {
+  return visibleTabs({ page, context }).filter((tab) => tab.hideInNav !== true);
 }
 
-function activeTabId(
-  page: AdminPage,
-  context: AdminPageContext,
-  requested: string | null,
-) {
+function activeTabId({
+  page,
+  context,
+  requested,
+}: PageInContext & { requested: string | null }) {
   if (requested !== null) {
     return requested;
   }
   if (page.overview !== undefined) {
     return null;
   }
-  return visibleTabs(page, context)[0]?.id ?? null;
+  return visibleTabs({ page, context })[0]?.id ?? null;
 }
 
-function isCrowned(page: AdminNavPage, context: AdminPageContext) {
+function isCrowned({
+  page,
+  context,
+}: {
+  page: AdminNavPage;
+  context: AdminPageContext;
+}) {
   if (page.nav.isLocked?.(context) === true) {
     return true;
   }
-  const tabs = visibleTabs(page, context);
+  const tabs = visibleTabs({ page, context });
   return (
     tabs.length > 0 && tabs.every((tab) => tab.isLocked?.(context) === true)
   );
@@ -200,7 +206,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'users',
     path: '/platform/users',
     title: 'Users & access',
-    description: "Who's on your platform and what they can touch.",
     overview: UsersOverview,
     nav: { label: 'Users & access', icon: UsersIcon },
     tabs: [
@@ -223,7 +228,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'connections',
     path: '/platform/connections',
     title: 'Connections',
-    description: 'The credentials your flows use to talk to other apps.',
     overview: ConnectionsOverview,
     nav: { label: 'Connections', icon: UnplugIcon },
     tabs: [
@@ -244,7 +248,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'ai',
     path: '/platform/setup/ai',
     title: 'AI Center & MCP',
-    description: 'AI providers, models and the platform MCP server.',
     overview: AiOverview,
     nav: { label: 'AI Center & MCP', icon: SparklesIcon },
     tabs: [
@@ -266,7 +269,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'pieces',
     path: '/platform/setup/pieces',
     title: 'Pieces',
-    description: 'The pieces your users can build with.',
     nav: {
       label: 'Pieces',
       icon: PuzzleIcon,
@@ -301,7 +303,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'general',
     path: '/platform/setup/general',
     title: 'General',
-    description: 'Your platform name, branding and general settings.',
     component: GeneralPage,
     nav: { label: 'General', icon: SettingsIcon },
   },
@@ -320,7 +321,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'security',
     path: '/platform/security',
     title: 'Security',
-    description: 'API access, secrets and the audit trail.',
     overview: SecurityOverview,
     nav: {
       label: 'Security',
@@ -357,8 +357,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'billing',
     path: '/platform/setup/billing',
     title: 'Billing & usage',
-    description:
-      'For questions about billing contact us at support@activepieces.com',
     overview: BillingOverview,
     nav: {
       label: 'Billing & usage',
@@ -374,8 +372,6 @@ export const ADMIN_PAGES: AdminPage[] = [
     id: 'infrastructure',
     path: '/platform/infrastructure',
     title: 'Infrastructure',
-    description:
-      'Health of the app, workers, queues and triggers running your automations.',
     overview: InfrastructureOverview,
     nav: { label: 'Infrastructure', icon: ServerIcon },
     tabs: [
@@ -472,6 +468,11 @@ export const ADMIN_REDIRECTS: AdminRedirect[] = [
   },
 ];
 
+type PageInContext = {
+  page: AdminPage;
+  context: AdminPageContext;
+};
+
 export type AdminPageContext = {
   plan: PlatformWithoutSensitiveData['plan'];
   edition: ApEdition | null;
@@ -499,7 +500,6 @@ export type AdminPage = {
   id: string;
   path: string;
   title: string;
-  description?: string;
   component?: ComponentType;
   overview?: ComponentType;
   tabs?: AdminPageTabSpec[];

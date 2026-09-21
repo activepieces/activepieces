@@ -67,13 +67,13 @@ export function PlatformSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {pages.map((page) => {
-                  const tabs = adminPagesUtils.navTabs(page, context);
+                  const tabs = adminPagesUtils.navTabs({ page, context });
                   const isActivePage = page.id === activeId;
-                  const activeTabId = adminPagesUtils.activeTabId(
+                  const activeTabId = adminPagesUtils.activeTabId({
                     page,
                     context,
-                    requestedTabId,
-                  );
+                    requested: requestedTabId,
+                  });
                   return (
                     <Fragment key={page.id}>
                       <PlatformNavItem
@@ -84,7 +84,7 @@ export function PlatformSidebar() {
                           isActivePage &&
                           !tabs.some((tab) => tab.id === activeTabId)
                         }
-                        crowned={adminPagesUtils.isCrowned(page, context)}
+                        crowned={adminPagesUtils.isCrowned({ page, context })}
                       />
                       {tabs.map((tab) => (
                         <PlatformNavSubItem

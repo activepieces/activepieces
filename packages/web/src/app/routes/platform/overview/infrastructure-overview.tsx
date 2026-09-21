@@ -39,7 +39,10 @@ export function InfrastructureOverview() {
   const showConfigurations =
     infrastructurePage !== undefined &&
     adminPagesUtils
-      .visibleTabs(infrastructurePage, { plan: platform.plan, edition })
+      .visibleTabs({
+        page: infrastructurePage,
+        context: { plan: platform.plan, edition },
+      })
       .some((tab) => tab.id === 'configurations');
   const statusError =
     isHealthError || isWorkersError
