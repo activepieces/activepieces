@@ -281,7 +281,7 @@ export const batchUpdateContactsOutputSchema: OutputSchema = {
     },
     { key: 'succeededCount', label: 'Succeeded Count', format: 'number' },
     { key: 'failedCount', label: 'Failed Count', format: 'number' },
-    { key: 'updateMask', label: 'Update Mask' },
+    { key: 'updateMasks', label: 'Update Masks' },
   ],
 };
 
