@@ -97,7 +97,10 @@ export const newFile = createTrigger({
     mimeType: 'image/png',
     id: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
     name: 'google-drive.png',
-    link: 'https://cdn.activepieces.com/pieces/google-drive.png'
+    webViewLink:
+      'https://drive.google.com/file/d/1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5/view?usp=drivesdk',
+    createdTime: '2026-08-20T09:12:44.000Z',
+    modifiedTime: '2026-08-20T09:12:44.000Z',
   },
 });
 
