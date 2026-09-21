@@ -67,7 +67,7 @@ function buildConfig({
     const entra = trimmed.match(/Authentication\s*=\s*(Active Directory[^;]*)/i);
     if (entra) {
       throw new Error(
-        `The Connection String field does not support "${entra[1].trim()}". Copy the ADO.NET (SQL authentication) string from the Azure portal instead and fill in the Username and Password fields, or clear the Connection String and fill in Host, Tenant ID, Client ID and Client Secret to authenticate with Microsoft Entra ID.`
+        `The Connection String field does not support "${entra[1].trim()}". Copy the ADO.NET (SQL authentication) string from the Azure portal instead and replace the credentials inside that string, including the {your_password} placeholder, or clear the Connection String and fill in Host, Tenant ID, Client ID and Client Secret to authenticate with Microsoft Entra ID.`
       );
     }
     const parsed = sql.ConnectionPool.parseConnectionString(trimmed);
