@@ -10,7 +10,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
     onConnectorReconnected?: (connectorUuid: string) => void
     onGateOpened?: (params: { gateId: string, toolName: string, displayName: string, toolInput: Record<string, unknown> }) => Promise<void>
     accountAlreadyChosenFor?: (pieceName: string) => boolean
-    connectionChosenEarlierFor?: (pieceName: string) => Promise<{ externalId: string, label: string } | null>
+    connectionChosenEarlierFor?: (pieceName: string) => Promise<string | null>
 }): ToolSet {
     function refuseIfAccountAlreadyChosen(input: Record<string, unknown>): { content: { type: string, text: string }[] } | undefined {
         const piece = typeof input['piece'] === 'string' ? input['piece'] : ''
@@ -30,8 +30,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
         if (isNil(chosenEarlier)) {
             return undefined
         }
-        const displayName = typeof input['displayName'] === 'string' ? input['displayName'] : piece
-        return { content: [{ type: 'text', text: `The user already picked the ${displayName} account "${chosenEarlier.label}" earlier in this conversation, so the card was not shown again. Use connectionExternalId "${chosenEarlier.externalId}" and carry on without asking. If they ask to use a different account, call this again with switchAccount true.` }] }
+        return { content: [{ type: 'text', text: `The user already picked an account for this earlier in the conversation, so the card was not shown again. Use connectionExternalId "${chosenEarlier}" and carry on. If they ask for a different account, call this again with switchAccount true.` }] }
     }
 
     function blockingExecute({ dismissMessage, successKey, toolName, getDisplayName, onApproved, refuseWhen }: {
@@ -127,7 +126,7 @@ export function createDisplayTools({ waitForApproval, displayToolTimeoutMs, onCo
             inputSchema: z.object({
                 piece: z.string().describe('Piece short name'),
                 displayName: z.string().describe('Human-readable piece name'),
-                switchAccount: z.boolean().optional().describe('Set when the user asked to use a different account, so the card is shown again instead of reusing the one they already picked'),
+                switchAccount: z.boolean().optional().describe('Set when the user asked for a different account, so the card is shown again'),
             }),
             execute: blockingExecute({
                 toolName: 'ap_show_connection_picker',

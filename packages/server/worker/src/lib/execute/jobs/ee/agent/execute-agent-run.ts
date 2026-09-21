@@ -619,7 +619,7 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         connectionChosenEarlierFor: async (pieceName) => {
             const inThisRun = selectedConnectionByPiece.get(pieceName)
             if (!isNil(inThisRun)) {
-                return { externalId: inThisRun, label: inThisRun }
+                return inThisRun
             }
             const { data: stored } = await tryCatch(() => ctx.apiClient.executeAgentTool({
                 toolName: '__get_selected_connection',
@@ -630,10 +630,8 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
             if (!isObject(selected) || typeof selected['externalId'] !== 'string') {
                 return null
             }
-            const externalId = selected['externalId']
-            const label = selected['label']
-            selectedConnectionByPiece.set(pieceName, externalId)
-            return { externalId, label: typeof label === 'string' ? label : externalId }
+            selectedConnectionByPiece.set(pieceName, selected['externalId'])
+            return selected['externalId']
         },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
