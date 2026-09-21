@@ -18,6 +18,10 @@ const MAX_ERROR_DETAIL_LENGTH = 400;
 
 const ERROR_BODY_METADATA_KEYS = new Set(['status', 'request', 'receipt']);
 
+const DATA_URI_PREFIX_PATTERN = /^data:[^;,]*;base64,/;
+
+const WHITESPACE_PATTERN = /\s+/g;
+
 export async function pushoverApiCall<T extends HttpMessageBody>({
   method,
   resourceUri,
@@ -112,7 +116,7 @@ export function buildMessageBody({
   }
   if (
     isPresent(attachmentBase64) &&
-    Math.floor((attachmentBase64.length * 3) / 4) > PUSHOVER_MAX_ATTACHMENT_BYTES
+    decodedBase64ByteLength(attachmentBase64) > PUSHOVER_MAX_ATTACHMENT_BYTES
   ) {
     throw new Error(
       `The attachment decodes to more than the Pushover limit of ${PUSHOVER_MAX_ATTACHMENT_BYTES} bytes (5 MB). Resize or recompress the image before sending.`
@@ -139,6 +143,18 @@ export function buildMessageBody({
     ...(priorityNumber === 2 ? { retry, expire } : {}),
     ...(priorityNumber !== 2 && isPresent(ttl) ? { ttl } : {}),
   };
+}
+
+function decodedBase64ByteLength(attachmentBase64: string): number {
+  const payload = attachmentBase64
+    .replace(DATA_URI_PREFIX_PATTERN, '')
+    .replace(WHITESPACE_PATTERN, '');
+  const paddingLength = payload.endsWith('==')
+    ? 2
+    : payload.endsWith('=')
+    ? 1
+    : 0;
+  return Math.floor((payload.length * 3) / 4) - paddingLength;
 }
 
 function isPresent<T>(value: T | undefined | null): value is T {
