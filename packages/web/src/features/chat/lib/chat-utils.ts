@@ -567,10 +567,6 @@ function sanitizeTitle(title: string): string {
   return title.replace(/[*_`~#]/g, '').trim();
 }
 
-function promptLink(prompt: string): string {
-  return `/chat?${CHAT_PROMPT_QUERY_PARAM}=${encodeURIComponent(prompt)}`;
-}
-
 function reopensSameConversation({
   current,
   next,
@@ -581,11 +577,8 @@ function reopensSameConversation({
   return current === next;
 }
 
-export const CHAT_PROMPT_QUERY_PARAM = 'prompt';
-
 export const chatUtils = {
   newChatEvent: 'ap:new-chat',
-  promptLink,
   reopensSameConversation,
   sanitizeTitle,
   formatToolLabel: ({ part }: { part: AnyToolPart }) =>

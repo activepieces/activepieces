@@ -49,9 +49,9 @@ import {
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
 import { NewBlankAgentButton } from '@/features/agents/new-blank-agent-button';
-import { chatUtils } from '@/features/chat/lib/chat-utils';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import {
@@ -166,11 +166,14 @@ const AgentsPageContent = () => {
     if (trimmed.length === 0) {
       return;
     }
-    navigate(
-      chatUtils.promptLink(
-        t('Build me an agent for this: {task}', { task: trimmed }),
-      ),
-    );
+    if (projectFiltered && viewProjectId !== project.id) {
+      projectCollectionUtils.setCurrentProject(viewProjectId);
+    }
+    navigate(CHAT_ROUTE, {
+      state: {
+        prompt: t('Build me an agent for this: {task}', { task: trimmed }),
+      },
+    });
   };
 
   const createBlankAgent = (projectId: string) => {
