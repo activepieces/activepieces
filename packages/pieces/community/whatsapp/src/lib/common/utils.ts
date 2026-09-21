@@ -36,17 +36,16 @@ export const commonProps = {
 
 			const options: DropdownOption<string>[] = [];
 
-			let hasMore = false;
-			let cursor;
+			let cursor: string | undefined;
 
 			do {
 				const qs: QueryParams = {
 					fields: 'id,name,language',
-					limit: '1',
+					limit: String(DROPDOWN_PAGE_SIZE),
 				};
 				if (cursor) qs['after'] = cursor;
 
-				const response = await httpClient.sendRequest({
+				const response = await httpClient.sendRequest<GraphPage<MessageTemplateRow>>({
 					method: HttpMethod.GET,
 					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/message_templates`,
 					authentication: {
@@ -56,19 +55,15 @@ export const commonProps = {
 					queryParams: qs,
 				});
 
-				for (const template of response.body.data) {
+				for (const template of response.body.data ?? []) {
 					options.push({
-						label: `${template.name as string} (${template.language as string})`,
-						value: template.id as string,
+						label: `${template.name} (${template.language})`,
+						value: template.id,
 					});
 				}
 
-				if (response.body.paging.next) {
-					(hasMore = true), (cursor = response.body.paging.cursors.after);
-				} else {
-					hasMore = false;
-				}
-			} while (hasMore);
+				cursor = nextCursor(response.body);
+			} while (cursor && options.length < DROPDOWN_MAX_OPTIONS);
 
 			return {
 				disabled: false,
@@ -164,6 +159,10 @@ export const commonProps = {
 };
 
 
+function nextCursor<T>(page: GraphPage<T>): string | undefined {
+	return page.paging?.next ? page.paging.cursors?.after : undefined;
+}
+
 export function phoneNumberDropdown<R extends boolean>({ required }: { required: R }) {
 	return Property.Dropdown({
 		auth: whatsappAuth,
@@ -184,17 +183,16 @@ export function phoneNumberDropdown<R extends boolean>({ required }: { required:
 
 			const options: DropdownOption<string>[] = [];
 
-			let hasMore = false;
-			let cursor;
+			let cursor: string | undefined;
 
 			do {
 				const qs: QueryParams = {
 					fields: 'verified_name,id,display_phone_number',
-					limit: '1',
+					limit: String(DROPDOWN_PAGE_SIZE),
 				};
 				if (cursor) qs['after'] = cursor;
 
-				const response = await httpClient.sendRequest({
+				const response = await httpClient.sendRequest<GraphPage<PhoneNumberRow>>({
 					method: HttpMethod.GET,
 					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/phone_numbers`,
 					authentication: {
@@ -204,21 +202,15 @@ export function phoneNumberDropdown<R extends boolean>({ required }: { required:
 					queryParams: qs,
 				});
 
-				for (const phoneNumber of response.body.data) {
+				for (const phoneNumber of response.body.data ?? []) {
 					options.push({
-						label: `${phoneNumber.verified_name as string} : ${
-							phoneNumber.display_phone_number as string
-						}`,
-						value: phoneNumber.id as string,
+						label: `${phoneNumber.verified_name} : ${phoneNumber.display_phone_number}`,
+						value: phoneNumber.id,
 					});
 				}
 
-				if (response.body.paging.next) {
-					(hasMore = true), (cursor = response.body.paging.cursors.after);
-				} else {
-					hasMore = false;
-				}
-			} while (hasMore);
+				cursor = nextCursor(response.body);
+			} while (cursor && options.length < DROPDOWN_MAX_OPTIONS);
 
 			return {
 				disabled: false,
@@ -229,3 +221,14 @@ export function phoneNumberDropdown<R extends boolean>({ required }: { required:
 }
 
 export const WHATSAPP_API_BASE = 'https://graph.facebook.com/v23.0';
+
+const DROPDOWN_PAGE_SIZE = 100;
+const DROPDOWN_MAX_OPTIONS = 1000;
+
+type GraphPage<T> = {
+	data?: T[];
+	paging?: { next?: string; cursors?: { after?: string } };
+};
+
+type PhoneNumberRow = { id: string; verified_name: string; display_phone_number: string };
+type MessageTemplateRow = { id: string; name: string; language: string };
