@@ -49,7 +49,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
 }): ToolSet {
     const runUnlessTainted = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => {
         if (taintState.tainted) {
-            return { error: 'You read the user\'s data earlier in this reply, so you cannot change a saved agent in the same reply. Say what you would have changed, and offer to do it if they send that request on its own. Next time, make the agent change before reading their data, not after. The Configure panel is the other way.' }
+            return { error: 'You read the user\'s data earlier in this reply, so you cannot change a saved agent in the same reply. Change the agent before reading their data, not after. Say what you would have changed, and offer to do it if they send that request on its own. The Configure panel is the other way.' }
         }
         return executeTool(toolName, toolInput)
     }
@@ -63,7 +63,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
         }),
 
         ap_add_agent_tool: tool({
-            description: 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection) — neither of those blocks this tool. Reading the user\'s own data does block it, so add the tools before any such read in this reply. Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.',
+            description: 'Give a saved agent piece actions it can call, so it can do the work rather than only reason about it. Look them up first (ap_research_pieces for the piece and action names, ap_list_connections for the connection). Pass every action for one piece in a single call — one call per piece, never several at once for the same agent.',
             inputSchema: z.object({
                 agentId: z.string().optional().describe('The id returned by ap_list_agents, ap_create_agent or ap_update_agent. Leave it out when you are changing the agent this conversation belongs to'),
                 pieceName: z.string().describe('Full piece name, e.g. "@activepieces/piece-gmail"'),
@@ -104,7 +104,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
         }),
 
         ap_create_agent: tool({
-            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. Call this BEFORE you read any of the user\'s data in this reply: once you have read their mail, rows, records or a web page, this tool is refused until their next message, and you will be stuck describing the agent instead of making one. Stand it up from what they told you, then read their data and refine it with ap_update_agent on the next turn.',
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. Call it before you read any of the user\'s data in this reply: afterwards it is refused until their next message, so stand the agent up first and refine it with ap_update_agent once you have looked at their data.',
             inputSchema: z.object({
                 displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
                 instructions: z.string().describe('The agent\'s standing brief, in second person'),
