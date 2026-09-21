@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { Goodmem, NotFoundError } from '@pairsystems/goodmem';
 import { createGoodmemClient } from '../client';
 import { goodmemAuth } from '../auth';
 
@@ -36,39 +37,82 @@ export const getMemory = createAction({
     if (!includeContent) {
       return { success: true, memory };
     }
-    try {
-      const { bytes, response } = await client.memories.contentWithResponse(
-        memoryId
-      );
-      const contentType =
-        response.headers.get('content-type') ?? memory.contentType;
-      if (
-        contentType?.toLowerCase().startsWith('text/') ||
-        contentType?.toLowerCase().includes('json') ||
-        contentType?.toLowerCase().includes('xml')
-      ) {
-        const charset =
-          contentType?.match(/;\s*charset\s*=\s*"?([^";\s]+)/i)?.[1] ?? 'utf-8';
-        return {
-          success: true,
-          memory,
-          content: new TextDecoder(charset, { fatal: true }).decode(bytes),
-          contentType,
-        };
-      }
-      const filename = memory.metadata?.['filename'];
-      const file = await context.files.write({
-        fileName: typeof filename === 'string' ? filename : memoryId,
-        data: Buffer.from(bytes),
-      });
-      return { success: true, memory, file, contentType };
-    } catch (error) {
-      return {
-        success: true,
-        partial: true,
-        memory,
-        contentError: error instanceof Error ? error.message : String(error),
-      };
+    const download = await fetchContent({ client, memoryId });
+    if (!download.ok) {
+      return { success: true, partial: true, memory, contentError: download.error };
     }
+    const contentType =
+      download.response.headers.get('content-type') ?? memory.contentType;
+    if (isTextual(contentType)) {
+      const decoded = decodeText({ bytes: download.bytes, contentType });
+      if (!decoded.ok) {
+        return { success: true, partial: true, memory, contentError: decoded.error };
+      }
+      return { success: true, memory, content: decoded.content, contentType };
+    }
+    const filename = memory.metadata?.['filename'];
+    const file = await context.files.write({
+      fileName: typeof filename === 'string' ? filename : memoryId,
+      data: Buffer.from(download.bytes),
+    });
+    return { success: true, memory, file, contentType };
   },
 });
+
+async function fetchContent({
+  client,
+  memoryId,
+}: {
+  client: Goodmem;
+  memoryId: string;
+}): Promise<ContentResult> {
+  try {
+    const { bytes, response } = await client.memories.contentWithResponse(
+      memoryId
+    );
+    return { ok: true, bytes, response };
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return { ok: false, error: error.message };
+    }
+    throw error;
+  }
+}
+
+function isTextual(contentType: string | undefined): boolean {
+  const lowered = contentType?.toLowerCase();
+  return Boolean(
+    lowered &&
+      (lowered.startsWith('text/') ||
+        lowered.includes('json') ||
+        lowered.includes('xml'))
+  );
+}
+
+function decodeText({
+  bytes,
+  contentType,
+}: {
+  bytes: Uint8Array;
+  contentType: string | undefined;
+}): DecodeResult {
+  const charset =
+    contentType?.match(/;\s*charset\s*=\s*"?([^";\s]+)/i)?.[1] ?? 'utf-8';
+  try {
+    return {
+      ok: true,
+      content: new TextDecoder(charset, { fatal: true }).decode(bytes),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+type ContentResult =
+  | { ok: true; bytes: Uint8Array; response: Response }
+  | { ok: false; error: string };
+
+type DecodeResult = { ok: true; content: string } | { ok: false; error: string };

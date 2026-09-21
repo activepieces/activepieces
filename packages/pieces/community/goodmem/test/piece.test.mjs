@@ -516,6 +516,50 @@ test('failed content download retains metadata and reports partial results', asy
   });
 });
 
+for (const { status, label } of [
+  { status: 500, label: 'server error' },
+  { status: 401, label: 'authentication failure' },
+]) {
+  test(`content download ${label} fails the get-memory step`, async () => {
+    await withServer({
+      handler: (request) =>
+        request.url.endsWith('/content')
+          ? { status, body: { message: label } }
+          : { body: memory },
+      exercise: async ({ auth }) => {
+        await assert.rejects(
+          invoke({ name: 'get_memory', props: { memoryId }, auth }),
+          (error) => error.statusCode === status
+        );
+      },
+    });
+  });
+}
+
+test('file storage failure fails the get-memory step', async () => {
+  await withServer({
+    handler: (request) =>
+      request.url.endsWith('/content')
+        ? { type: 'application/pdf', body: Buffer.from('%PDF-binary') }
+        : { body: memory },
+    exercise: async ({ auth }) => {
+      await assert.rejects(
+        invoke({
+          name: 'get_memory',
+          props: { memoryId },
+          auth,
+          files: {
+            write: async () => {
+              throw new Error('storage unavailable');
+            },
+          },
+        }),
+        /storage unavailable/
+      );
+    },
+  });
+});
+
 test('metadata filtering reaches the SDK without requiring models', async () => {
   const filter = "CAST(val('$.tenant') AS text) = 'alpha'";
   await withServer({
