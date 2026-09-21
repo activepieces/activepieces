@@ -69,9 +69,13 @@ export function OverviewCard({
         </div>
       )}
       <div className="text-sm text-muted-foreground">
-        {isError
-          ? t('Trouble loading {entity}', { entity: errorEntity ?? title })
-          : description}
+        {isLoading ? (
+          <Skeleton className="h-4 w-32" />
+        ) : isError ? (
+          t('Trouble loading {entity}', { entity: errorEntity ?? title })
+        ) : (
+          description
+        )}
       </div>
     </Link>
   );

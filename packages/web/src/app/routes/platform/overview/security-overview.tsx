@@ -29,6 +29,8 @@ export function SecurityOverview() {
     listForPlatform: true,
   });
 
+  const keysKnown =
+    platform.plan.apiKeysEnabled && !isLoadingKeys && !isKeysError;
   const keyCount = apiKeys?.data.length ?? 0;
   const secretCount = secretManagers?.length ?? 0;
   const domains = platform.allowedAuthDomains ?? [];
@@ -121,9 +123,11 @@ export function SecurityOverview() {
             </OverviewRowLink>
           </OverviewRow>
           <OverviewRow
-            tone={keyCount === 0 ? 'ok' : 'warn'}
+            tone={!keysKnown ? 'off' : keyCount === 0 ? 'ok' : 'warn'}
             label={
-              keyCount === 0
+              !keysKnown
+                ? t('API keys')
+                : keyCount === 0
                 ? t('No API keys issued')
                 : t(
                     '{count, plural, =1 {# API key is} other {# API keys are}} active',
@@ -131,7 +135,7 @@ export function SecurityOverview() {
                   )
             }
           >
-            {keyCount === 0 ? t('Nothing to rotate') : undefined}
+            {keysKnown && keyCount === 0 ? t('Nothing to rotate') : undefined}
           </OverviewRow>
           <OverviewRow
             tone={platform.plan.auditLogEnabled ? 'ok' : 'off'}

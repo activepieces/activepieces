@@ -88,9 +88,11 @@ export function InfrastructureOverview() {
           description={
             health === undefined
               ? ''
-              : isUpToDate
+              : !needsAttention
               ? t('All checks passed')
-              : t('Version behind latest; see release notes')
+              : !isUpToDate
+              ? t('Version behind latest; see release notes')
+              : t('Some checks are failing')
           }
         />
         <OverviewCard

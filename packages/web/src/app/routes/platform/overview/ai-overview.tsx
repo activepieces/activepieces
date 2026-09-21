@@ -1,6 +1,7 @@
 import { AIProviderName } from '@activepieces/core-utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
+import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { SUPPORTED_AI_PROVIDERS } from '@/features/agents';
@@ -166,7 +167,7 @@ export function AiOverview() {
             }
           >
             <Button variant="outline" size="sm" asChild>
-              <a href="/platform/setup/ai?tab=providers">{t('Change')}</a>
+              <Link to="/platform/setup/ai?tab=providers">{t('Change')}</Link>
             </Button>
           </OverviewRow>
         </OverviewRows>
