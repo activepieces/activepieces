@@ -3,7 +3,7 @@ import {
   AgentListSort,
   AgentSummary,
   ColorName,
-  MAX_DRAFT_PROMPT_LENGTH,
+  DEFAULT_AGENT_MAX_STEPS,
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -12,13 +12,10 @@ import {
   ChevronsUpDown,
   LayoutGrid,
   List,
-  Pencil,
   Plus,
   Search,
   SearchX,
-  Settings2,
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -51,18 +48,14 @@ import {
   agentsQueries,
   useAgentsAvailable,
 } from '@/features/agents/hooks/agents-hooks';
-import { createAgentUtils } from '@/features/agents/lib/create-agent-utils';
 import { NewBlankAgentButton } from '@/features/agents/new-blank-agent-button';
-import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { getProjectName, projectCollectionUtils } from '@/features/projects';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
-import { api } from '@/lib/api';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { CHAT_ROUTE } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
 import {
-  acceptsDraftPrompt,
   showsAgentList,
-  shownDestination,
   showsFirstRun,
   showsNoMatchNotice,
 } from './lib/agents-list-state';
@@ -124,18 +117,13 @@ const AgentsPageContent = () => {
   const [sort, setSort] = useState<AgentListSort>(AgentListSort.UPDATED);
   const [prompt, setPrompt] = useState('');
   const [viewProjectId, setViewProjectId] = useState<string>(ALL_PROJECTS);
-  const [pickedProjectId, setPickedProjectId] = useState<string | null>(null);
-  const [buildingInProjectId, setBuildingInProjectId] = useState<string | null>(
-    null,
-  );
   const navigate = useNavigate();
   const { project } = projectCollectionUtils.useCurrentProject();
   const { data: allProjects } = projectCollectionUtils.useAll();
+  const { platform } = platformHooks.useCurrentPlatform();
   const agentsAvailable = useAgentsAvailable();
-  const isPlatformAdmin = useIsPlatformAdmin();
+  const chatEnabled = platform.plan.chatEnabled;
   const projectFiltered = viewProjectId !== ALL_PROJECTS;
-  const createInProjectId =
-    pickedProjectId ?? (projectFiltered ? viewProjectId : project.id);
   const [debouncedSearch] = useDebounce(search.trim(), 300);
   const {
     data,
@@ -158,31 +146,10 @@ const AgentsPageContent = () => {
     [data],
   );
 
-  const draftAgent = agentsMutations.useDraftAgent();
   const createAgent = agentsMutations.useCreateAgent({
     onSuccess: (agent) =>
       navigate(`/projects/${agent.projectId}/agents/${agent.id}`),
     onError: () => undefined,
-  });
-  const {
-    data: chatProvider,
-    isLoading: isLoadingProvider,
-    isError: providerLookupFailed,
-  } = aiProviderQueries.useChatProvider(createInProjectId);
-  const { data: projectProviders } =
-    aiProviderQueries.useProjectAiProviders(createInProjectId);
-  const needsProvider =
-    !isLoadingProvider && !providerLookupFailed && chatProvider === undefined;
-  const chatIsOffOnEveryProvider =
-    needsProvider && (projectProviders?.length ?? 0) > 0;
-  const isBuilding = draftAgent.isPending || createAgent.isPending;
-  const destinationReadinessUnknown = isLoadingProvider;
-  const buildError = draftAgent.error ?? createAgent.error ?? null;
-
-  const shownDestinationId = shownDestination({
-    isBuilding,
-    buildingIn: buildingInProjectId,
-    picked: createInProjectId,
   });
 
   const projectOptions = useMemo(
@@ -194,50 +161,38 @@ const AgentsPageContent = () => {
     [allProjects],
   );
 
-  const buildAgent = (text?: string) => {
+  const askChat = (text?: string) => {
     const trimmed = (text ?? prompt).trim();
-    if (
-      !acceptsDraftPrompt({
-        prompt: trimmed,
-        isBuilding,
-        readinessUnknown: destinationReadinessUnknown,
-      })
-    ) {
+    if (trimmed.length === 0) {
       return;
     }
-    setPrompt(trimmed);
-    const destination = createInProjectId;
-    setBuildingInProjectId(destination);
-    draftAgent.mutate(
-      { projectId: destination, prompt: trimmed },
-      {
-        onSuccess: (draft) =>
-          createAgent.mutate(
-            createAgentUtils.buildCreateRequest({
-              draft,
-              projectId: destination,
-            }),
-          ),
+    if (projectFiltered && viewProjectId !== project.id) {
+      projectCollectionUtils.setCurrentProject(viewProjectId);
+    }
+    navigate(CHAT_ROUTE, {
+      state: {
+        prompt: t('Build me an agent for this: {task}', { task: trimmed }),
       },
-    );
+    });
   };
 
   const createBlankAgent = (projectId: string) => {
     if (createAgent.isPending) {
       return;
     }
-    createAgent.mutate(
-      createAgentUtils.buildCreateRequest({
-        draft: {
-          displayName: t('New agent'),
-          description: '',
-          icon: AgentIcon.BOT,
-          color: ColorName.PURPLE,
-          instructions: '',
-        },
-        projectId,
-      }),
-    );
+    createAgent.mutate({
+      projectId,
+      displayName: t('New agent'),
+      description: null,
+      icon: AgentIcon.BOT,
+      color: ColorName.PURPLE,
+      draft: {
+        instructions: '',
+        maxSteps: DEFAULT_AGENT_MAX_STEPS,
+        tools: [],
+        structuredOutput: [],
+      },
+    });
   };
 
   const projectDotColorFor = (agent: AgentSummary) =>
@@ -247,8 +202,6 @@ const AgentsPageContent = () => {
 
   const openAgent = (agent: AgentSummary) =>
     navigate(`/projects/${agent.projectId}/agents/${agent.id}`);
-
-  const hasPrompt = prompt.trim().length > 0;
 
   const projectById = useMemo(
     () => new Map((allProjects ?? []).map((entry) => [entry.id, entry])),
@@ -262,230 +215,170 @@ const AgentsPageContent = () => {
     projectFiltered,
   });
 
+  const showsHero = chatEnabled || firstRun;
+
   return (
     <div className="flex min-h-full w-full flex-col">
-      <section
-        className={cn(
-          'flex flex-col items-center gap-2 px-12 pt-8',
-          firstRun &&
-            'relative flex-1 justify-center gap-3 overflow-hidden py-16',
-        )}
-      >
-        {firstRun && (
-          <>
-            <div
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[520px] -translate-x-1/2 -translate-y-[230px]"
-              style={{
-                backgroundImage:
-                  'radial-gradient(ellipse at center, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0) 70%)',
-              }}
-            />
-            <AgentTrioMark className="mb-[22px]" />
-          </>
-        )}
-        <h1
+      {showsHero && (
+        <section
           className={cn(
-            'text-2xl leading-[30px] tracking-[-0.01em]',
+            'flex flex-col items-center gap-2 px-12 pt-8',
             firstRun &&
-              'text-[32px] font-bold leading-[38px] tracking-[-0.02em]',
+              'relative flex-1 justify-center gap-3 overflow-hidden py-16',
           )}
         >
-          {isBuilding
-            ? t('Building your agent')
-            : chatIsOffOnEveryProvider
-            ? t('No provider is turned on for chat')
-            : needsProvider
-            ? t('Agents need an AI provider')
-            : firstRun
-            ? t('Create your first agent')
-            : t('What should your agent do?')}
-        </h1>
-        <p
-          className={cn(
-            'text-[15px] leading-[18px] text-muted-foreground',
-            firstRun && 'max-w-[468px] text-center text-base leading-6',
+          {firstRun && (
+            <>
+              <div
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[520px] -translate-x-1/2 -translate-y-[230px]"
+                style={{
+                  backgroundImage:
+                    'radial-gradient(ellipse at center, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0) 70%)',
+                }}
+              />
+              <AgentTrioMark className="mb-[22px]" />
+            </>
           )}
-        >
-          {chatIsOffOnEveryProvider
-            ? t(
-                'Your project has a provider, but writing an agent for you needs one turned on for chat.',
-              )
-            : needsProvider
-            ? t('Add a provider once, then I can build agents from a sentence.')
-            : isBuilding
-            ? t('Picking the tools and writing its instructions')
-            : firstRun
-            ? t(
-                'Your most reliable teammate for getting work done, powered by your tools and guided by your words.',
-              )
-            : t(
-                "An agent is an assistant with instructions and tools. Describe the job and I'll write both.",
-              )}
-        </p>
-        {needsProvider &&
-          (isPlatformAdmin ? (
-            <Button
-              className="mt-4 gap-2"
-              onClick={() => navigate('/platform/setup/ai')}
-            >
-              <Settings2 size={16} />
-              {chatIsOffOnEveryProvider
-                ? t('Turn on a provider for chat')
-                : t('Connect an AI provider')}
-            </Button>
-          ) : (
-            <p className="mt-4 text-[13px] leading-4 text-muted-foreground">
-              {chatIsOffOnEveryProvider
-                ? t('Ask your platform admin to turn on a provider for chat.')
-                : t('Ask your platform admin to connect an AI provider.')}
-            </p>
-          ))}
-        {chatIsOffOnEveryProvider && (
-          <NewBlankAgentButton
-            projects={allProjects ?? []}
-            pending={createAgent.isPending}
-            onCreate={createBlankAgent}
-            className="mt-4 gap-2"
-            icon={<Pencil size={16} />}
-            label={t('Write one by hand instead')}
-          />
-        )}
-        <div
-          className={cn(
-            'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border bg-muted ps-5 pe-2 py-2 transition-colors',
-            isBuilding ? 'border-primary/40' : 'border-border',
-            needsProvider && 'hidden',
-            firstRun &&
-              'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-background px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
-          )}
-        >
-          <Textarea
-            value={prompt}
-            minRows={1}
-            maxRows={8}
-            maxLength={MAX_DRAFT_PROMPT_LENGTH}
-            disabled={isBuilding}
-            onChange={(event) => setPrompt(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                buildAgent();
-              }
-            }}
-            placeholder={
-              firstRun
-                ? t(
-                    'Describe a task for your agent… e.g. research our competitors and send me a weekly brief',
-                  )
-                : t('Draft weekly launch posts and file them in Notion…')
-            }
+          <h1
             className={cn(
-              'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-neutral-400',
-              firstRun && 'min-h-11 px-1 py-1 text-[15px] leading-[22px]',
-            )}
-          />
-          <div className={cn(firstRun && 'flex justify-end')}>
-            <Button
-              size="icon"
-              loading={isBuilding || destinationReadinessUnknown}
-              onClick={() => buildAgent()}
-              className={cn(
-                'size-10 shrink-0 rounded-full',
-                firstRun && 'size-9',
-              )}
-            >
-              <ArrowUp size={16} strokeWidth={2.2} />
-            </Button>
-          </div>
-        </div>
-        <AnimatePresence initial={false}>
-          {!needsProvider && hasPrompt && (allProjects ?? []).length > 1 && (
-            <motion.div
-              className="overflow-hidden"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
-              <div className="mt-[10px] flex items-center gap-1.5 text-[13px] leading-4 text-muted-foreground">
-                <span>{t('New agents go to')}</span>
-                <SearchableSelect
-                  value={shownDestinationId}
-                  onChange={(value) => setPickedProjectId(value)}
-                  options={projectOptions}
-                  disabled={isBuilding}
-                  placeholder={t('Search projects')}
-                  contentWidth="260px"
-                  triggerClassName="h-7 w-auto max-w-[220px] gap-1 border-0 bg-transparent px-1.5 text-[13px] font-medium shadow-none hover:bg-accent"
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        {buildError !== null && (
-          <p className="max-w-[680px] text-center text-[13px] leading-4 text-destructive">
-            {api.extractServerErrorMessage(
-              buildError,
-              t("That didn't work. Try describing the agent another way."),
-            )}
-          </p>
-        )}
-        {!needsProvider && (
-          <div
-            className={cn(
-              'mt-[14px] flex flex-wrap items-center justify-center gap-2',
-              firstRun && 'mt-[22px] flex-col gap-[14px]',
+              'text-2xl leading-[30px] tracking-[-0.01em]',
+              firstRun &&
+                'text-[32px] font-bold leading-[38px] tracking-[-0.02em]',
             )}
           >
-            <span
-              className={cn(
-                'text-[13px] leading-4 text-muted-foreground',
-                firstRun && 'font-medium',
-              )}
-            >
-              {firstRun ? t('Popular starting points') : t('Try:')}
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-[10px]">
-              {firstRun
-                ? TEMPLATE_STARTERS.map((starter) => (
-                    <button
-                      key={starter.label}
-                      type="button"
-                      disabled={isBuilding || destinationReadinessUnknown}
-                      onClick={() => buildAgent(t(starter.prompt))}
-                      className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-neutral-700 transition-colors hover:bg-accent disabled:opacity-50"
-                    >
-                      <span
-                        aria-hidden
-                        className="size-[11px] shrink-0 rounded-sm"
-                        style={{ backgroundColor: starter.dot }}
-                      />
-                      {t(starter.label)}
-                    </button>
-                  ))
-                : SUGGESTIONS.map((suggestion) => (
-                    <button
-                      key={suggestion}
-                      type="button"
-                      disabled={isBuilding || destinationReadinessUnknown}
-                      onClick={() => buildAgent(t(suggestion))}
-                      className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent disabled:opacity-50"
-                    >
-                      {t(suggestion)}
-                    </button>
-                  ))}
-            </div>
-          </div>
-        )}
-      </section>
+            {firstRun
+              ? t('Create your first agent')
+              : t('What should your agent do?')}
+          </h1>
+          <p
+            className={cn(
+              'text-[15px] leading-[18px] text-muted-foreground',
+              firstRun && 'max-w-[468px] text-center text-base leading-6',
+            )}
+          >
+            {firstRun
+              ? t(
+                  'An agent follows instructions you write and does the work using the apps you have connected.',
+                )
+              : t(
+                  "An agent is an assistant with instructions and tools. Describe the job and I'll write both.",
+                )}
+          </p>
+          {!chatEnabled ? (
+            <NewBlankAgentButton
+              projects={allProjects ?? []}
+              pending={createAgent.isPending}
+              onCreate={createBlankAgent}
+              variant="default"
+              className="mt-6 gap-2"
+              icon={<Plus size={16} />}
+              label={t('New agent')}
+            />
+          ) : (
+            <>
+              <div
+                className={cn(
+                  'mt-4 flex min-h-14 w-full max-w-[680px] items-end gap-3.5 rounded-[28px] border border-border bg-muted ps-5 pe-2 py-2 transition-colors',
+                  firstRun &&
+                    'relative mt-6 max-w-[632px] flex-col items-stretch gap-4 rounded-xl bg-background px-[18px] pb-[14px] pt-[18px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]',
+                )}
+              >
+                <Textarea
+                  value={prompt}
+                  minRows={1}
+                  maxRows={8}
+                  onChange={(event) => setPrompt(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      askChat();
+                    }
+                  }}
+                  placeholder={
+                    firstRun
+                      ? t(
+                          'Describe a task for your agent… e.g. research our competitors and send me a weekly brief',
+                        )
+                      : t('Draft weekly launch posts and file them in Notion…')
+                  }
+                  className={cn(
+                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-neutral-400',
+                    firstRun && 'min-h-11 px-1 py-1 text-[15px] leading-[22px]',
+                  )}
+                />
+                <div className={cn(firstRun && 'flex justify-end')}>
+                  <Button
+                    size="icon"
+                    onClick={() => askChat()}
+                    className={cn(
+                      'size-10 shrink-0 rounded-full',
+                      firstRun && 'size-9',
+                    )}
+                  >
+                    <ArrowUp size={16} strokeWidth={2.2} />
+                  </Button>
+                </div>
+              </div>
+              <div
+                className={cn(
+                  'mt-[14px] flex flex-wrap items-center justify-center gap-2',
+                  firstRun && 'mt-[22px] flex-col gap-[14px]',
+                )}
+              >
+                <span
+                  className={cn(
+                    'text-[13px] leading-4 text-muted-foreground',
+                    firstRun && 'font-medium',
+                  )}
+                >
+                  {firstRun ? t('Popular starting points') : t('Try:')}
+                </span>
+                <div className="flex flex-wrap items-center justify-center gap-[10px]">
+                  {firstRun
+                    ? TEMPLATE_STARTERS.map((starter) => (
+                        <button
+                          key={starter.label}
+                          type="button"
+                          onClick={() => askChat(t(starter.prompt))}
+                          className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-neutral-700 transition-colors hover:bg-accent"
+                        >
+                          <span
+                            aria-hidden
+                            className="size-[11px] shrink-0 rounded-sm"
+                            style={{ backgroundColor: starter.dot }}
+                          />
+                          {t(starter.label)}
+                        </button>
+                      ))
+                    : SUGGESTIONS.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => askChat(t(suggestion))}
+                          className="rounded-full border border-border px-3 py-[5px] text-[13px] leading-4 transition-colors hover:bg-accent"
+                        >
+                          {t(suggestion)}
+                        </button>
+                      ))}
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {showsAgentList({
         listLoading: isLoading,
         hasList: data !== undefined,
         firstRun,
       }) && (
-        <section className="flex w-full flex-col gap-5 px-12 pt-11 pb-12">
+        <section
+          className={cn(
+            'flex w-full flex-col gap-5 px-12 pb-12 pt-11',
+            !chatEnabled && 'pt-8',
+          )}
+        >
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-baseline gap-2">
               <h2 className="text-xl font-semibold leading-6 tracking-[-0.01em]">
@@ -606,6 +499,7 @@ const AgentsPageContent = () => {
             }) ? (
               <AgentsEmptyState
                 narrowedByProject={search.trim().length === 0}
+                chatEnabled={chatEnabled}
               />
             ) : null
           ) : layout === 'list' ? (
@@ -645,8 +539,10 @@ const AgentsPageContent = () => {
 
 const AgentsEmptyState = ({
   narrowedByProject,
+  chatEnabled,
 }: {
   narrowedByProject: boolean;
+  chatEnabled: boolean;
 }) => (
   <Empty className="min-h-[240px]">
     <EmptyHeader className="max-w-xl">
@@ -660,7 +556,9 @@ const AgentsEmptyState = ({
       </EmptyTitle>
       <EmptyDescription>
         {narrowedByProject
-          ? t('Describe one above, or pick another project.')
+          ? chatEnabled
+            ? t('Describe one above, or pick another project.')
+            : t('Add one with New agent, or pick another project.')
           : t('Try another name, or clear the search.')}
       </EmptyDescription>
     </EmptyHeader>
