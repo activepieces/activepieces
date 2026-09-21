@@ -31,7 +31,7 @@ const hasNextLink = (paging: AclPaging | undefined): boolean | null => {
   return paging.links.some((link) => link.rel === 'next');
 };
 
-const chunk = <T>(values: T[], size: number): T[][] => {
+const chunk = <T>({ values, size }: { values: T[]; size: number }): T[][] => {
   const chunks: T[][] = [];
   for (let index = 0; index < values.length; index += size) {
     chunks.push(values.slice(index, index + size));
@@ -133,7 +133,7 @@ export const listManagedOrganizations = createAction({
 
       const ids = rows.map((row) => organizationIdOf(String(row.organization_urn)));
       const results: OrganizationLookupResults = {};
-      for (const idChunk of chunk(ids, LOOKUP_CHUNK_SIZE)) {
+      for (const idChunk of chunk({ values: ids, size: LOOKUP_CHUNK_SIZE })) {
         const lookup = await linkedinRawGet<OrganizationLookupResponse>({
           accessToken,
           resource: 'the names of the administered organizations',

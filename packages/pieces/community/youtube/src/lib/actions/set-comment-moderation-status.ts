@@ -8,7 +8,7 @@ export const youtubeSetCommentModerationStatusAction = createAction({
   auth: youtubeAuth,
   outputSchema: setCommentModerationStatusOutputSchema,
   name: 'set_comment_moderation_status',
-  classification: 'DESTRUCTIVE',
+  classification: 'WRITE',
   displayName: 'Set Comment Moderation Status',
   description:
     'Publish, hold for review, or reject comments on the connected account videos.',
