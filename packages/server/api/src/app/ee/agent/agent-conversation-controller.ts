@@ -61,6 +61,21 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         })
     })
 
+    app.get('/conversations/runs/:id', GetAgentRunRoute, async (request) => {
+        const readerId = await securityHelper.getUserIdFromRequest(request)
+        assertNotNullOrUndefined(readerId, 'userId')
+        const run = await agentConversationService(request.log).getAgentRunOrThrow({
+            id: request.params.id,
+            projectId: request.projectId,
+        })
+        await agentService(request.log).getOneOrThrow({
+            id: run.agentId,
+            projectId: request.projectId,
+            userId: readerId,
+        })
+        return run
+    })
+
     app.get('/conversations/:id', GetConversationRoute, async (request) => {
         return agentConversationService(request.log).getConversationOrThrow({
             id: request.params.id,
@@ -447,6 +462,23 @@ const ListAgentRunsRoute = {
 }
 
 const CONVERSATION_PARAMS = z.object({ id: z.string() })
+
+const GetAgentRunRoute = {
+    config: {
+        security: securityAccess.project(
+            CHAT_PRINCIPALS,
+            Permission.READ_AGENT,
+            { type: ProjectResourceType.QUERY },
+        ),
+    },
+    schema: {
+        tags: ['agents'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Read one unattended run a flow step made, without being able to continue it',
+        params: CONVERSATION_PARAMS,
+        querystring: z.object({ projectId: z.string() }),
+    },
+}
 
 const GetConversationRoute = {
     config: {

@@ -4,9 +4,10 @@ import { CheckCircle, LockIcon, MailIcon, Earth } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
+import { Badge } from '@/components/ui/badge';
 import {
   Item,
   ItemMedia,
@@ -14,8 +15,7 @@ import {
   ItemTitle,
   ItemDescription,
   ItemActions,
-} from '@/components/custom/item';
-import { Badge } from '@/components/ui/badge';
+} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import { ssoMutations } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';

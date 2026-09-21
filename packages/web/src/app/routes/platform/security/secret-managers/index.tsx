@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
