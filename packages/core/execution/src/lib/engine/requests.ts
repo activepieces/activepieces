@@ -43,6 +43,17 @@ export const UpdateStepProgressRequest = z.object({
 })
 export type UpdateStepProgressRequest = z.infer<typeof UpdateStepProgressRequest>
 
+export const EvaluateAiConditionRequest = z.object({
+    text: z.string(),
+    question: z.string(),
+})
+export type EvaluateAiConditionRequest = z.infer<typeof EvaluateAiConditionRequest>
+
+export const EvaluateAiConditionResponse = z.object({
+    probability: z.number(),
+})
+export type EvaluateAiConditionResponse = z.infer<typeof EvaluateAiConditionResponse>
+
 export const FileTransportQueryParams = z.object({
     token: z.string(),
 })

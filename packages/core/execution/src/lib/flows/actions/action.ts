@@ -134,6 +134,7 @@ export enum BranchOperator {
     LIST_IS_NOT_EMPTY = 'LIST_IS_NOT_EMPTY',
     EXISTS = 'EXISTS',
     DOES_NOT_EXIST = 'DOES_NOT_EXIST',
+    AI_MATCHES = 'AI_MATCHES',
 }
 
 export const singleValueConditions = [
@@ -183,6 +184,10 @@ const BranchOperatorDateLiterals = [
     z.literal(BranchOperator.DATE_IS_AFTER),
 ] as const
 
+const BranchOperatorAiLiterals = [
+    z.literal(BranchOperator.AI_MATCHES),
+] as const
+
 const BranchOperatorSingleValueLiterals = [
     z.literal(BranchOperator.EXISTS),
     z.literal(BranchOperator.DOES_NOT_EXIST),
@@ -224,12 +229,22 @@ function buildBranchSingleValueConditionValid(addMinLength: boolean) {
     })
 }
 
+function buildBranchAiConditionValid(addMinLength: boolean) {
+    return z.object({
+        firstValue: addMinLength ? z.string().min(1) : z.string(),
+        secondValue: addMinLength ? z.string().min(1) : z.string(),
+        threshold: z.number().min(0).max(1).optional(),
+        operator: z.union(BranchOperatorAiLiterals),
+    })
+}
+
 function buildBranchConditionValid(addMinLength: boolean) {
     return z.union([
         buildBranchTextConditionValid(addMinLength),
         buildBranchNumberConditionValid(addMinLength),
         buildBranchDateConditionValid(addMinLength),
         buildBranchSingleValueConditionValid(addMinLength),
+        buildBranchAiConditionValid(addMinLength),
     ])
 }
 
@@ -248,6 +263,11 @@ export type BranchNumberCondition = z.infer<typeof BranchNumberCondition>
 
 export const BranchDateCondition = buildBranchDateConditionValid(false)
 export type BranchDateCondition = z.infer<typeof BranchDateCondition>
+
+export const BranchAiCondition = buildBranchAiConditionValid(false)
+export type BranchAiCondition = z.infer<typeof BranchAiCondition>
+
+export const DEFAULT_AI_CONDITION_THRESHOLD = 0.5
 
 export const BranchSingleValueCondition =
   buildBranchSingleValueConditionValid(false)

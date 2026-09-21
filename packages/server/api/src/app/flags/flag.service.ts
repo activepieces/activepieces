@@ -87,6 +87,12 @@ export const flagService = (log: FastifyBaseLogger) => ({
                 updated,
             },
             {
+                id: ApFlagId.AI_ROUTER_ENABLED,
+                value: !isNil(system.get(AppSystemProp.AI_GATEWAY_API_KEY)),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_ALERTS,
                 value: system.getEdition() !== ApEdition.COMMUNITY,
                 created,

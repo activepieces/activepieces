@@ -1,5 +1,5 @@
 import { ActivepiecesAiBilling, aiChargeFor, AIProviderName, isNil, observedProviderFetch, ProviderOutcomeReporter, spreadIfDefined } from '@activepieces/core-utils';
-import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
+import { CloudflareGatewayMetadata, createCloudflareGatewayModel, createGatewayEvaluationModel, createImageModel, createLanguageModel } from '@activepieces/ai-providers';
 import { AI_PROVIDER_CAPABILITIES, AiProviderCredentials, AIWebSearchMode, getEffectiveProviderAndModel } from '@activepieces/shared';
 import { anthropic } from '@ai-sdk/anthropic'
 import { createAzure } from '@ai-sdk/azure'
@@ -290,6 +290,7 @@ const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
 
 export const aiUtils = {
     createModel,
+    createGatewayEvaluationModel,
     createModelForImages,
     createEmbeddingModel,
     toStorageEmbedding,

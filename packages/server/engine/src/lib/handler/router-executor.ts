@@ -1,7 +1,8 @@
-import { isNil, tryCatchSync } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined, tryCatchSync } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { BranchCondition, BranchExecutionType, BranchOperator, EngineGenericError, FlowRunStatus, RouterAction, RouterActionSettings, RouterExecutionType, RouterStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs, { Dayjs } from 'dayjs'
+import { aiConditionApi } from '../api/ai-condition-api'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
 import { EngineConstants } from './context/engine-constants'
@@ -44,20 +45,46 @@ export const routerExecuter: BaseExecutor<RouterAction> = {
     },
 }
 
-export function evaluateConditions(conditionGroups: BranchCondition[][]): boolean {
-    return conditionGroups.some((conditionGroup) => conditionGroup.every((condition) => {
-        if (isNil(condition.operator)) {
-            throw new EngineGenericError('OperatorNotSetError', 'The operator is required but found to be undefined')
-        }
-        const evaluate = CONDITION_EVALUATORS[condition.operator]
-        if (isNil(evaluate)) {
+export async function evaluateConditions({ conditionGroups, constants }: EvaluateConditionsParams): Promise<boolean> {
+    for (const conditionGroup of conditionGroups) {
+        if (await evaluateConditionGroup({ conditionGroup, constants })) {
             return true
         }
-        return evaluate(toConditionValues(condition))
-    }))
+    }
+    return false
 }
 
-const CONDITION_EVALUATORS: Record<BranchOperator, (condition: ConditionValues) => boolean> = {
+async function evaluateConditionGroup({ conditionGroup, constants }: EvaluateConditionGroupParams): Promise<boolean> {
+    for (const condition of conditionGroup) {
+        const matched = await evaluateCondition({ condition, constants })
+        if (!matched) {
+            return false
+        }
+    }
+    return true
+}
+
+async function evaluateCondition({ condition, constants }: EvaluateConditionParams): Promise<boolean> {
+    if (isNil(condition.operator)) {
+        throw new EngineGenericError('OperatorNotSetError', 'The operator is required but found to be undefined')
+    }
+    if (condition.operator === BranchOperator.AI_MATCHES) {
+        return aiConditionApi.matches({
+            apiUrl: constants.internalApiUrl,
+            engineToken: constants.engineToken,
+            text: condition.firstValue,
+            question: condition.secondValue,
+            ...spreadIfDefined('threshold', condition.threshold),
+        })
+    }
+    const evaluate: ConditionEvaluator | undefined = CONDITION_EVALUATORS[condition.operator]
+    if (isNil(evaluate)) {
+        throw new EngineGenericError('UnknownOperatorError', `The operator ${condition.operator} is not supported by this engine version`)
+    }
+    return evaluate(toConditionValues(condition))
+}
+
+const CONDITION_EVALUATORS: Record<SynchronousBranchOperator, ConditionEvaluator> = {
     [BranchOperator.TEXT_CONTAINS]: (c) => text(c.firstValue, c).includes(text(c.secondValue, c)),
     [BranchOperator.TEXT_DOES_NOT_CONTAIN]: (c) => !text(c.firstValue, c).includes(text(c.secondValue, c)),
     [BranchOperator.TEXT_EXACTLY_MATCHES]: (c) => text(c.firstValue, c) === text(c.secondValue, c),
@@ -93,9 +120,18 @@ async function handleRouterExecution({ action, executionState, constants, censor
 }): Promise<FlowExecutorContext> {
     const stepStartTime = performance.now()
 
-    const evaluatedConditionsWithoutFallback = resolvedInput.branches.map((branch) => {
-        return branch.branchType === BranchExecutionType.FALLBACK ? true : evaluateConditions(branch.conditions)
-    })
+    const { data: evaluatedConditionsWithoutFallback, error: conditionError } = await utils.tryCatchAndThrowOnEngineError(
+        () => evaluateBranches({ branches: resolvedInput.branches, constants }),
+    )
+    if (conditionError) {
+        return failStep({
+            action,
+            executionState,
+            stepOutput: RouterStepOutput.init({ input: censoredInput }),
+            error: conditionError,
+            durationMs: performance.now() - stepStartTime,
+        })
+    }
 
     const evaluatedConditions = resolvedInput.branches.map((branch, index) => {
         if (branch.branchType === BranchExecutionType.CONDITION) {
@@ -149,6 +185,17 @@ async function handleRouterExecution({ action, executionState, constants, censor
     }
 
     return executionStateResult
+}
+
+async function evaluateBranches({ branches, constants }: EvaluateBranchesParams): Promise<boolean[]> {
+    const evaluations: boolean[] = []
+    for (const branch of branches) {
+        const evaluation = branch.branchType === BranchExecutionType.FALLBACK
+            ? true
+            : await evaluateConditions({ conditionGroups: branch.conditions, constants })
+        evaluations.push(evaluation)
+    }
+    return evaluations
 }
 
 function toConditionValues(condition: BranchCondition): ConditionValues {
@@ -205,4 +252,33 @@ type ConditionValues = {
     firstValue: string
     secondValue?: string
     caseSensitive?: boolean
+}
+
+type ConditionEvaluator = (condition: ConditionValues) => boolean
+
+type SynchronousBranchOperator = Exclude<BranchOperator, BranchOperator.AI_MATCHES>
+
+type AiConditionConstants = {
+    internalApiUrl: string
+    engineToken: string
+}
+
+type EvaluateConditionsParams = {
+    conditionGroups: BranchCondition[][]
+    constants: AiConditionConstants
+}
+
+type EvaluateConditionGroupParams = {
+    conditionGroup: BranchCondition[]
+    constants: AiConditionConstants
+}
+
+type EvaluateConditionParams = {
+    condition: BranchCondition
+    constants: AiConditionConstants
+}
+
+type EvaluateBranchesParams = {
+    branches: RouterActionSettings['branches']
+    constants: AiConditionConstants
 }
