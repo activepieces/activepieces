@@ -32,6 +32,10 @@ function asSuppliedText(value: string | undefined): string | undefined {
   return value === undefined || value === '' ? undefined : value;
 }
 
+function isChosen(selection: string | undefined): boolean {
+  return selection !== undefined && selection !== 'unchanged';
+}
+
 export const youtubeUpdateVideoMetadataAction = createAction({
   auth: youtubeAuth,
   outputSchema: updateVideoMetadataOutputSchema,
@@ -163,6 +167,26 @@ export const youtubeUpdateVideoMetadataAction = createAction({
       madeForKids,
     } = context.propsValue;
 
+    const snippetTouched =
+      asSuppliedText(title) !== undefined ||
+      asSuppliedText(description) !== undefined ||
+      asSuppliedText(categoryId) !== undefined ||
+      asSuppliedText(defaultLanguage) !== undefined ||
+      isChosen(tagsMode);
+
+    const statusTouched =
+      isChosen(privacyStatus) ||
+      isChosen(license) ||
+      isChosen(embeddable) ||
+      isChosen(publicStatsViewable) ||
+      isChosen(madeForKids);
+
+    if (!snippetTouched && !statusTouched) {
+      throw new Error(
+        'Nothing to update. Supply at least one field to change on the video.'
+      );
+    }
+
     const existing = await youtubeClient.sendRequest<VideoListResponse>({
       accessToken,
       method: HttpMethod.GET,
@@ -178,95 +202,108 @@ export const youtubeUpdateVideoMetadataAction = createAction({
       );
     }
 
-    const mergedTitle = asSuppliedText(title) ?? current.snippet?.title;
-    const mergedCategoryId =
-      asSuppliedText(categoryId) ?? current.snippet?.categoryId;
+    const parts: string[] = [];
+    const body: VideoUpdatePayload = { id: videoId };
 
-    if (!mergedTitle) {
-      throw new Error(
-        'YouTube requires a video title on every update. Provide a Title because the existing video has none.'
-      );
+    if (snippetTouched) {
+      const mergedTitle = asSuppliedText(title) ?? current.snippet?.title;
+      const mergedCategoryId =
+        asSuppliedText(categoryId) ?? current.snippet?.categoryId;
+
+      if (!mergedTitle) {
+        throw new Error(
+          'YouTube requires a video title on every update. Provide a Title because the existing video has none.'
+        );
+      }
+      if (!mergedCategoryId) {
+        throw new Error(
+          'YouTube requires a category ID on every update. Provide a Category ID because the existing video has none.'
+        );
+      }
+
+      const snippet: VideoSnippetPayload = {
+        title: mergedTitle,
+        categoryId: mergedCategoryId,
+      };
+
+      const mergedDescription =
+        asSuppliedText(description) ?? current.snippet?.description;
+      if (mergedDescription !== undefined) {
+        snippet.description = mergedDescription;
+      }
+
+      const mergedLanguage =
+        asSuppliedText(defaultLanguage) ?? current.snippet?.defaultLanguage;
+      if (mergedLanguage !== undefined) {
+        snippet.defaultLanguage = mergedLanguage;
+      }
+
+      if (tagsMode === 'clear') {
+        snippet.tags = [];
+      } else if (tagsMode === 'replace') {
+        snippet.tags = (tags ?? []).map((tag) => String(tag));
+      } else if (current.snippet?.tags !== undefined) {
+        snippet.tags = current.snippet.tags;
+      }
+
+      body.snippet = snippet;
+      parts.push('snippet');
     }
-    if (!mergedCategoryId) {
-      throw new Error(
-        'YouTube requires a category ID on every update. Provide a Category ID because the existing video has none.'
-      );
-    }
 
-    const snippet: VideoSnippetPayload = {
-      title: mergedTitle,
-      categoryId: mergedCategoryId,
-    };
+    if (statusTouched) {
+      const status: VideoStatusPayload = {};
 
-    const mergedDescription =
-      asSuppliedText(description) ?? current.snippet?.description;
-    if (mergedDescription !== undefined) {
-      snippet.description = mergedDescription;
-    }
-
-    const mergedLanguage =
-      asSuppliedText(defaultLanguage) ?? current.snippet?.defaultLanguage;
-    if (mergedLanguage !== undefined) {
-      snippet.defaultLanguage = mergedLanguage;
-    }
-
-    if (tagsMode === 'clear') {
-      snippet.tags = [];
-    } else if (tagsMode === 'replace') {
-      snippet.tags = (tags ?? []).map((tag) => String(tag));
-    } else if (current.snippet?.tags !== undefined) {
-      snippet.tags = current.snippet.tags;
-    }
-
-    const status: VideoStatusPayload = {};
-
-    const mergedPrivacy =
-      privacyStatus && privacyStatus !== 'unchanged'
+      const mergedPrivacy = isChosen(privacyStatus)
         ? privacyStatus
         : current.status?.privacyStatus;
-    if (mergedPrivacy !== undefined) {
-      status.privacyStatus = mergedPrivacy;
-    }
+      if (mergedPrivacy !== undefined) {
+        status.privacyStatus = mergedPrivacy;
+      }
 
-    const mergedLicense =
-      license && license !== 'unchanged' ? license : current.status?.license;
-    if (mergedLicense !== undefined) {
-      status.license = mergedLicense;
-    }
+      const mergedLicense = isChosen(license)
+        ? license
+        : current.status?.license;
+      if (mergedLicense !== undefined) {
+        status.license = mergedLicense;
+      }
 
-    const mergedEmbeddable = resolveTriState({
-      selection: embeddable,
-      current: current.status?.embeddable,
-    });
-    if (mergedEmbeddable !== undefined) {
-      status.embeddable = mergedEmbeddable;
-    }
+      const mergedEmbeddable = resolveTriState({
+        selection: embeddable,
+        current: current.status?.embeddable,
+      });
+      if (mergedEmbeddable !== undefined) {
+        status.embeddable = mergedEmbeddable;
+      }
 
-    const mergedPublicStatsViewable = resolveTriState({
-      selection: publicStatsViewable,
-      current: current.status?.publicStatsViewable,
-    });
-    if (mergedPublicStatsViewable !== undefined) {
-      status.publicStatsViewable = mergedPublicStatsViewable;
-    }
+      const mergedPublicStatsViewable = resolveTriState({
+        selection: publicStatsViewable,
+        current: current.status?.publicStatsViewable,
+      });
+      if (mergedPublicStatsViewable !== undefined) {
+        status.publicStatsViewable = mergedPublicStatsViewable;
+      }
 
-    const mergedMadeForKids = resolveTriState({
-      selection: madeForKids,
-      current: current.status?.selfDeclaredMadeForKids,
-    });
-    if (mergedMadeForKids !== undefined) {
-      status.selfDeclaredMadeForKids = mergedMadeForKids;
-    }
+      const mergedMadeForKids = resolveTriState({
+        selection: madeForKids,
+        current: current.status?.selfDeclaredMadeForKids,
+      });
+      if (mergedMadeForKids !== undefined) {
+        status.selfDeclaredMadeForKids = mergedMadeForKids;
+      }
 
-    if (
-      current.status?.publishAt !== undefined &&
-      status.privacyStatus === 'private'
-    ) {
-      status.publishAt = current.status.publishAt;
-    }
+      if (
+        current.status?.publishAt !== undefined &&
+        status.privacyStatus === 'private'
+      ) {
+        status.publishAt = current.status.publishAt;
+      }
 
-    if (current.status?.containsSyntheticMedia !== undefined) {
-      status.containsSyntheticMedia = current.status.containsSyntheticMedia;
+      if (current.status?.containsSyntheticMedia !== undefined) {
+        status.containsSyntheticMedia = current.status.containsSyntheticMedia;
+      }
+
+      body.status = status;
+      parts.push('status');
     }
 
     return youtubeClient.sendRequest({
@@ -274,8 +311,8 @@ export const youtubeUpdateVideoMetadataAction = createAction({
       method: HttpMethod.PUT,
       path: '/videos',
       operation: 'Update Video Metadata',
-      queryParams: { part: 'snippet,status' },
-      body: { id: videoId, snippet, status },
+      queryParams: { part: parts.join(',') },
+      body,
     });
   },
 });
@@ -286,6 +323,12 @@ type VideoSnippetPayload = {
   description?: string;
   defaultLanguage?: string;
   tags?: string[];
+};
+
+type VideoUpdatePayload = {
+  id: string;
+  snippet?: VideoSnippetPayload;
+  status?: VideoStatusPayload;
 };
 
 type VideoStatusPayload = {
