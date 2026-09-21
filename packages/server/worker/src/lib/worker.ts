@@ -38,7 +38,7 @@ let inFlightJobs = 0
 const DRAIN_TIMEOUT_MS = 25_000
 
 // Sandbox memory/state is UI-only telemetry (the workers page). Computing it needs a full
-// process-table scan (si.processes()), so it must NOT run on the poll hot path — sampling it on
+// process-table scan (/proc on Linux), so it must NOT run on the poll hot path — sampling it on
 // every poll pegged worker CPU and collapsed throughput (~7x, #13497). Sample it on a slow
 // interval instead and have buildMachineInfo() read the cached snapshot.
 let cachedSandboxInfo: SandboxInformation[] = []

@@ -21,6 +21,9 @@ RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bulls
 # node base image wipes /var/cache/apt anyway, and a persisted /var/lib/apt/lists goes stale
 # against rotated bullseye-security packages, failing the build with hash/size fetch errors.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
+# tini is the container init: without it node runs as PID 1, and a killed isolate box whose
+# parent died gets reparented to node, which never wait()s it — a zombie per job that
+# eventually blows the process table (issue #15616). tini reaps those orphans.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         openssh-client \
@@ -35,7 +38,8 @@ RUN apt-get update && \
         curl \
         ca-certificates \
         iptables \
-        libcap2 && \
+        libcap2 \
+        tini && \
     rm -rf /var/lib/apt/lists/*
 
 # Download, extract, and clean up bun in a single layer so the zip never ships
@@ -162,5 +166,5 @@ LABEL service=activepieces
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
     CMD [ "$AP_CONTAINER_TYPE" = "WORKER" ] && exit 0 || curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["tini", "--", "./docker-entrypoint.sh"]
 EXPOSE 80

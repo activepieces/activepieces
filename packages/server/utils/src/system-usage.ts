@@ -7,6 +7,7 @@ import si from 'systeminformation'
 import { fileSystemUtils } from './file-system-utils'
 
 const MAX_REASONABLE_MEMORY_BYTES = 4 * 1024 ** 4 // 4 TiB
+const PROC_SCAN_CONCURRENCY = 256
 
 let prevCpuUsage = process.cpuUsage()
 let prevTimestamp = Date.now()
@@ -209,32 +210,118 @@ export const systemUsage = {
         if (pids.length === 0) {
             return result
         }
-        // si.processes() walks the whole process table — do it once for all pids, never per-pid.
-        const { data, error } = await tryCatch(() => si.processes())
-        if (error || !data) {
+        const processTable = await readProcessTable()
+        if (!processTable) {
             for (const pid of pids) {
                 result.set(pid, 0)
             }
             return result
         }
-        const childrenByParent = new Map<number, number[]>()
-        const rssBytesByPid = new Map<number, number>()
-        for (const proc of data.list) {
-            rssBytesByPid.set(proc.pid, proc.memRss * 1024)
-            const siblings = childrenByParent.get(proc.parentPid) ?? []
-            siblings.push(proc.pid)
-            childrenByParent.set(proc.parentPid, siblings)
-        }
         for (const pid of pids) {
-            result.set(pid, sumProcessTreeRssBytes({ rootPid: pid, rssBytesByPid, childrenByParent }))
+            result.set(pid, sumProcessTreeRssBytes({ rootPid: pid, ...processTable }))
         }
         return result
     },
 }
 
+async function readProcessTable(): Promise<ProcessTable | null> {
+    const procTable = await readProcessTableFromProc()
+    if (procTable) {
+        return procTable
+    }
+    if (process.platform === 'linux') {
+        return null
+    }
+    return readProcessTableFromSystemInformation()
+}
+
+async function readProcessTableFromProc(): Promise<ProcessTable | null> {
+    if (process.platform !== 'linux') {
+        return null
+    }
+    const { data: entries, error } = await tryCatch(() => fs.promises.readdir('/proc'))
+    if (error || !entries) {
+        return null
+    }
+    const pids = entries
+        .filter((entry) => /^\d+$/.test(entry))
+        .map((entry) => Number(entry))
+    const statuses = await mapWithConcurrency({ items: pids, concurrency: PROC_SCAN_CONCURRENCY, fn: readProcessStatus })
+    const rssBytesByPid = new Map<number, number>()
+    const childrenByParent = new Map<number, number[]>()
+    for (const status of statuses) {
+        if (!status) {
+            continue
+        }
+        rssBytesByPid.set(status.pid, status.rssBytes)
+        const siblings = childrenByParent.get(status.ppid) ?? []
+        siblings.push(status.pid)
+        childrenByParent.set(status.ppid, siblings)
+    }
+    return { rssBytesByPid, childrenByParent }
+}
+
+async function readProcessTableFromSystemInformation(): Promise<ProcessTable | null> {
+    const { data, error } = await tryCatch(() => si.processes())
+    if (error || !data) {
+        return null
+    }
+    const rssBytesByPid = new Map<number, number>()
+    const childrenByParent = new Map<number, number[]>()
+    for (const proc of data.list) {
+        rssBytesByPid.set(proc.pid, proc.memRss * 1024)
+        const siblings = childrenByParent.get(proc.parentPid) ?? []
+        siblings.push(proc.pid)
+        childrenByParent.set(proc.parentPid, siblings)
+    }
+    return { rssBytesByPid, childrenByParent }
+}
+
+async function readProcessStatus(pid: number): Promise<ProcessStatus | null> {
+    const { data, error } = await tryCatch(() => fs.promises.readFile(`/proc/${pid}/status`, 'utf8'))
+    if (error || !data) {
+        return null
+    }
+    return parseProcessStatus(pid, data)
+}
+
+function parseProcessStatus(pid: number, content: string): ProcessStatus {
+    const ppidMatch = /^PPid:\s+(\d+)/m.exec(content)
+    const rssMatch = /^VmRSS:\s+(\d+)/m.exec(content)
+    return {
+        pid,
+        ppid: ppidMatch ? Number(ppidMatch[1]) : 0,
+        rssBytes: (rssMatch ? Number(rssMatch[1]) : 0) * 1024,
+    }
+}
+
+async function mapWithConcurrency<T, R>({ items, concurrency, fn }: { items: T[], concurrency: number, fn: (item: T) => Promise<R> }): Promise<R[]> {
+    const results: R[] = new Array(items.length)
+    let nextIndex = 0
+    const worker = async () => {
+        while (nextIndex < items.length) {
+            const index = nextIndex
+            nextIndex += 1
+            results[index] = await fn(items[index])
+        }
+    }
+    const workerCount = Math.min(concurrency, items.length)
+    await Promise.all(Array.from({ length: workerCount }, () => worker()))
+    return results
+}
+
 type CpuCounters = { steal: number, total: number }
 type CfsCounters = { throttled: number, periods: number }
 export type CpuPressure = { cpuStealPercentage?: number, cpuThrottledPercentage?: number }
+type ProcessTable = {
+    rssBytesByPid: Map<number, number>
+    childrenByParent: Map<number, number[]>
+}
+type ProcessStatus = {
+    pid: number
+    ppid: number
+    rssBytes: number
+}
 
 function sumProcessTreeRssBytes({ rootPid, rssBytesByPid, childrenByParent }: { rootPid: number, rssBytesByPid: Map<number, number>, childrenByParent: Map<number, number[]> }): number {
     let total = 0

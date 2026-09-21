@@ -5,6 +5,7 @@ vi.mock('fs', () => ({
     default: {
         promises: {
             readFile: vi.fn(),
+            readdir: vi.fn(),
         },
     },
 }))
@@ -33,6 +34,7 @@ import { fileSystemUtils } from '../src/file-system-utils'
 
 const mockFileExists = vi.mocked(fileSystemUtils.fileExists)
 const mockReadFile = vi.mocked(fs.promises.readFile)
+const mockReaddir = vi.mocked(fs.promises.readdir)
 const mockMem = vi.mocked(si.mem)
 const mockProcesses = vi.mocked(si.processes)
 const mockCheckDiskSpace = vi.mocked(checkDiskSpace)
@@ -279,14 +281,75 @@ describe('getProcessTreeMemoryBytesByPids', () => {
         mockProcesses.mockResolvedValue({ list } as never)
     }
 
+    function stubLinuxPlatform() {
+        vi.stubGlobal('process', { ...process, platform: 'linux' })
+    }
+
+    function stubNonLinuxPlatform() {
+        vi.stubGlobal('process', { ...process, platform: 'win32' })
+    }
+
+    function mockProcStatusFiles(files: Record<string, { ppid: number, vmRssKb: number }>) {
+        const entries = Object.keys(files).map((pid) => String(pid))
+        mockReaddir.mockResolvedValue(['self', 'cpuinfo', ...entries])
+        mockReadFile.mockImplementation(async (path: unknown) => {
+            if (typeof path !== 'string') throw new Error('ENOENT')
+            const match = path.match(/^\/proc\/(\d+)\/status$/)
+            if (!match) throw new Error('ENOENT')
+            const status = files[match[1]]
+            if (!status) throw new Error('ENOENT')
+            return `Name:\tprocess\nPPid:\t${status.ppid}\nVmRSS:\t${status.vmRssKb} kB\n`
+        })
+    }
+
     it('returns an empty map without scanning when given no pids', async () => {
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([])
         expect(result.size).toBe(0)
         expect(mockProcesses).not.toHaveBeenCalled()
     })
 
-    it('sums the rss of each pid and its descendants (memRss is KiB)', async () => {
-        // 100 -> 200 -> 300, and an unrelated 999. memRss is in KiB, summed as bytes.
+    it('sums the rss of each pid and its descendants on linux by reading /proc directly', async () => {
+        stubLinuxPlatform()
+        // 100 -> 200 -> 300, and an unrelated 999. VmRSS is in KiB, summed as bytes.
+        mockProcStatusFiles({
+            '100': { ppid: 1, vmRssKb: 10 },
+            '200': { ppid: 100, vmRssKb: 20 },
+            '300': { ppid: 200, vmRssKb: 30 },
+            '999': { ppid: 1, vmRssKb: 50 },
+        })
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 999])
+        expect(result.get(100)).toBe((10 + 20 + 30) * 1024)
+        expect(result.get(999)).toBe(50 * 1024)
+        expect(mockProcesses).not.toHaveBeenCalled()
+        vi.unstubAllGlobals()
+    })
+
+    it('skips vanished processes and non-numeric /proc entries on linux', async () => {
+        stubLinuxPlatform()
+        // 400 vanished between readdir and readFile; self and cpuinfo are not pids.
+        mockReaddir.mockResolvedValue(['100', '400', 'self', 'cpuinfo'])
+        mockReadFile.mockImplementation(async (path: unknown) => {
+            if (path === '/proc/100/status') return 'Name:\tprocess\nPPid:\t1\nVmRSS:\t10 kB\n'
+            throw new Error('ENOENT')
+        })
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100])
+        expect(result.get(100)).toBe(10 * 1024)
+        expect(mockProcesses).not.toHaveBeenCalled()
+        vi.unstubAllGlobals()
+    })
+
+    it('maps every pid to 0 when /proc is unreadable on linux, never falling back to systeminformation', async () => {
+        stubLinuxPlatform()
+        mockReaddir.mockRejectedValue(new Error('readdir failed'))
+        const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
+        expect(result.get(100)).toBe(0)
+        expect(result.get(200)).toBe(0)
+        expect(mockProcesses).not.toHaveBeenCalled()
+        vi.unstubAllGlobals()
+    })
+
+    it('sums the rss of each pid and its descendants via systeminformation on non-linux (memRss is KiB)', async () => {
+        stubNonLinuxPlatform()
         mockProcessList([
             { pid: 100, parentPid: 1, memRss: 10 },
             { pid: 200, parentPid: 100, memRss: 20 },
@@ -296,21 +359,27 @@ describe('getProcessTreeMemoryBytesByPids', () => {
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 999])
         expect(result.get(100)).toBe((10 + 20 + 30) * 1024)
         expect(result.get(999)).toBe(50 * 1024)
+        expect(mockReaddir).not.toHaveBeenCalled()
+        vi.unstubAllGlobals()
     })
 
     it('scans the process table only once for many pids', async () => {
+        stubNonLinuxPlatform()
         mockProcessList([
             { pid: 100, parentPid: 1, memRss: 10 },
             { pid: 200, parentPid: 1, memRss: 20 },
         ])
         await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
         expect(mockProcesses).toHaveBeenCalledTimes(1)
+        vi.unstubAllGlobals()
     })
 
     it('maps every pid to 0 when the scan fails', async () => {
+        stubNonLinuxPlatform()
         mockProcesses.mockRejectedValue(new Error('scan failed'))
         const result = await systemUsage.getProcessTreeMemoryBytesByPids([100, 200])
         expect(result.get(100)).toBe(0)
         expect(result.get(200)).toBe(0)
+        vi.unstubAllGlobals()
     })
 })
