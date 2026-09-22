@@ -44,12 +44,12 @@ const JsonViewer = React.memo(
     hideHeader = false,
     className,
   }: JsonViewerProps) => {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const json = useMemo(() => {
       return removeUndefined(unclearJson);
     }, [unclearJson]);
 
-    const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
+    const viewerTheme = resolvedTheme === 'dark' ? 'bright' : 'rjv-default';
     const handleCopy = () => {
       navigator.clipboard.writeText(JSON.stringify(json, null, 2));
       toast.success(t('Copied to clipboard'), {

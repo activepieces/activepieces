@@ -32,11 +32,11 @@ export const UNSAVED_CHANGES_TOAST = {
 };
 
 function Toaster({ ...props }: ToasterProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
 
   return (
     <Sonner
-      theme={theme as ToasterProps['theme']}
+      theme={resolvedTheme}
       className="toaster group"
       expand={true}
       toastOptions={{

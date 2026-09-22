@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import './styles/globals.css';
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 /* Paths are relative to this file, not /fonts/, so Vite fingerprints them. */
 @font-face {
@@ -45,6 +45,276 @@
   }
 }
 
+/*
+ * TIER 1 — PRIMITIVES
+ *
+ * Raw ramps. Eleven steps, one shared shape, every value in OKLCH. Components
+ * do not reference these directly except through `ink`, which is the one ramp
+ * that is genuinely a scale rather than a meaning. Everything with a hue goes
+ * through the roles in the `@theme inline` block below, because a hue always
+ * means something and the meaning is what the call site should name.
+ */
+@theme {
+  --color-success-50: oklch(97.9% 0.021 166.113);
+  --color-success-100: oklch(95% 0.052 163.051);
+  --color-success-200: oklch(90.5% 0.093 164.15);
+  --color-success-300: oklch(84.5% 0.143 164.978);
+  --color-success-400: oklch(76.5% 0.177 163.223);
+  --color-success-500: oklch(69.6% 0.17 162.48);
+  --color-success-600: oklch(59.6% 0.145 163.225);
+  --color-success-700: oklch(50.8% 0.118 165.612);
+  --color-success-800: oklch(43.2% 0.095 166.913);
+  --color-success-900: oklch(37.8% 0.077 168.94);
+  --color-success-950: oklch(26.2% 0.051 172.552);
+
+  --color-warning-50: oklch(98.7% 0.022 95.277);
+  --color-warning-100: oklch(96.2% 0.059 95.617);
+  --color-warning-200: oklch(92.4% 0.12 95.746);
+  --color-warning-300: oklch(87.9% 0.169 91.605);
+  --color-warning-400: oklch(82.8% 0.189 84.429);
+  --color-warning-500: oklch(76.9% 0.188 70.08);
+  --color-warning-600: oklch(66.6% 0.179 58.318);
+  --color-warning-700: oklch(55.5% 0.163 48.998);
+  --color-warning-800: oklch(47.3% 0.137 46.201);
+  --color-warning-900: oklch(41.4% 0.112 45.904);
+  --color-warning-950: oklch(27.9% 0.077 45.635);
+
+  --color-destructive-50: oklch(97.1% 0.013 17.38);
+  --color-destructive-100: oklch(93.6% 0.032 17.717);
+  --color-destructive-200: oklch(88.5% 0.062 18.334);
+  --color-destructive-300: oklch(80.8% 0.114 19.571);
+  --color-destructive-400: oklch(70.4% 0.191 22.216);
+  --color-destructive-500: oklch(63.7% 0.237 25.331);
+  --color-destructive-600: oklch(57.7% 0.245 27.325);
+  --color-destructive-700: oklch(50.5% 0.213 27.518);
+  --color-destructive-800: oklch(44.4% 0.177 26.899);
+  --color-destructive-900: oklch(39.6% 0.141 25.723);
+  --color-destructive-950: oklch(25.8% 0.092 26.042);
+}
+
+/*
+ * TIER 2 — ROLES
+ *
+ * The vocabulary components actually write. Every intent — primary, success,
+ * warning, destructive, neutral — exposes the same six slots:
+ *
+ *   {intent}           solid fill that carries text on it   (buttons)
+ *   on-{intent}        the text and icons sitting on it
+ *   {intent}-surface   tinted ground                        (badges, banners)
+ *   {intent}-ink       coloured text, on that ground or the page
+ *   {intent}-line      borders and dividers for the intent
+ *   {intent}-mark      a coloured mark with no text on it   (dots, meters)
+ *
+ * `mark` is separate from the solid fill on purpose: a status dot wants the
+ * vivid 500, but a button with a white label cannot have 500, because white on
+ * any 500 in this palette lands between 2.1:1 and 3.8:1.
+ *
+ * A role never needs a `dark:` twin — the whole of dark mode is the
+ * [data-theme='dark'] binding block.
+ */
+@theme inline {
+  --color-ink-50: var(--ink-50);
+  --color-ink-100: var(--ink-100);
+  --color-ink-150: var(--ink-150);
+  --color-ink-200: var(--ink-200);
+  --color-ink-300: var(--ink-300);
+  --color-ink-400: var(--ink-400);
+  --color-ink-500: var(--ink-500);
+  --color-ink-600: var(--ink-600);
+  --color-ink-700: var(--ink-700);
+  --color-ink-800: var(--ink-800);
+  --color-ink-900: var(--ink-900);
+  --color-ink-950: var(--ink-950);
+
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-primary-950: var(--primary-950);
+
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-on-solid: var(--on-solid);
+  --color-on-inverse: var(--on-inverse);
+
+  /*
+   * Two jobs that were sharing one muted grey, which is why call sites picked
+   * between them by eye:
+   *
+   *   ink-muted   secondary TEXT someone is expected to read — help text,
+   *               timestamps, counts, metadata. Owes 4.5:1.
+   *   ink-subtle  decoration — chevrons, empty-state glyphs, disabled marks.
+   *               Owes 3:1 at most; it is not carrying information alone.
+   */
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-fill: var(--fill);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-primary-surface: var(--primary-surface);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-line: var(--primary-line);
+  --color-primary-mark: var(--primary-mark);
+
+  --color-success: var(--success);
+  --color-on-success: var(--on-success);
+  --color-success-surface: var(--success-surface);
+  --color-success-ink: var(--success-ink);
+  --color-success-line: var(--success-line);
+  --color-success-mark: var(--success-mark);
+
+  --color-warning: var(--warning);
+  --color-on-warning: var(--on-warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-ink: var(--warning-ink);
+  --color-warning-line: var(--warning-line);
+  --color-warning-mark: var(--warning-mark);
+
+  --color-destructive: var(--destructive);
+  --color-on-destructive: var(--on-destructive);
+  --color-destructive-surface: var(--destructive-surface);
+  --color-destructive-ink: var(--destructive-ink);
+  --color-destructive-line: var(--destructive-line);
+  --color-destructive-mark: var(--destructive-mark);
+
+  /*
+   * neutral — the fifth intent. "Exists, but isn't doing anything": skipped,
+   * deactivated, not configured, queued, idle. It is grey, but it is not
+   * `ink`: ink is the furniture, neutral is a status that happens to render
+   * grey, and keeping it named means an inactive badge is one token rather
+   * than an ink step nobody can later tell apart from ordinary muted text.
+   */
+  --color-neutral-surface: var(--neutral-surface);
+  --color-neutral-ink: var(--neutral-ink);
+  --color-neutral-line: var(--neutral-line);
+  --color-neutral-mark: var(--neutral-mark);
+  --color-neutral: var(--neutral);
+  --color-on-neutral: var(--on-neutral);
+
+  --color-swatch-1-mark: var(--swatch-1-mark);
+  --color-swatch-1-surface: var(--swatch-1-surface);
+  --color-swatch-1-ink: var(--swatch-1-ink);
+  --color-swatch-1-line: var(--swatch-1-line);
+  --color-swatch-1-on: var(--swatch-1-on);
+  --color-swatch-2-mark: var(--swatch-2-mark);
+  --color-swatch-2-surface: var(--swatch-2-surface);
+  --color-swatch-2-ink: var(--swatch-2-ink);
+  --color-swatch-2-line: var(--swatch-2-line);
+  --color-swatch-2-on: var(--swatch-2-on);
+  --color-swatch-3-mark: var(--swatch-3-mark);
+  --color-swatch-3-surface: var(--swatch-3-surface);
+  --color-swatch-3-ink: var(--swatch-3-ink);
+  --color-swatch-3-line: var(--swatch-3-line);
+  --color-swatch-3-on: var(--swatch-3-on);
+  --color-swatch-4-mark: var(--swatch-4-mark);
+  --color-swatch-4-surface: var(--swatch-4-surface);
+  --color-swatch-4-ink: var(--swatch-4-ink);
+  --color-swatch-4-line: var(--swatch-4-line);
+  --color-swatch-4-on: var(--swatch-4-on);
+  --color-swatch-5-mark: var(--swatch-5-mark);
+  --color-swatch-5-surface: var(--swatch-5-surface);
+  --color-swatch-5-ink: var(--swatch-5-ink);
+  --color-swatch-5-line: var(--swatch-5-line);
+  --color-swatch-5-on: var(--swatch-5-on);
+  --color-swatch-6-mark: var(--swatch-6-mark);
+  --color-swatch-6-surface: var(--swatch-6-surface);
+  --color-swatch-6-ink: var(--swatch-6-ink);
+  --color-swatch-6-line: var(--swatch-6-line);
+  --color-swatch-6-on: var(--swatch-6-on);
+  --color-swatch-7-mark: var(--swatch-7-mark);
+  --color-swatch-7-surface: var(--swatch-7-surface);
+  --color-swatch-7-ink: var(--swatch-7-ink);
+  --color-swatch-7-line: var(--swatch-7-line);
+  --color-swatch-7-on: var(--swatch-7-on);
+  --color-swatch-8-mark: var(--swatch-8-mark);
+  --color-swatch-8-surface: var(--swatch-8-surface);
+  --color-swatch-8-ink: var(--swatch-8-ink);
+  --color-swatch-8-line: var(--swatch-8-line);
+  --color-swatch-8-on: var(--swatch-8-on);
+  --color-swatch-9-mark: var(--swatch-9-mark);
+  --color-swatch-9-surface: var(--swatch-9-surface);
+  --color-swatch-9-ink: var(--swatch-9-ink);
+  --color-swatch-9-line: var(--swatch-9-line);
+  --color-swatch-9-on: var(--swatch-9-on);
+  --color-swatch-10-mark: var(--swatch-10-mark);
+  --color-swatch-10-surface: var(--swatch-10-surface);
+  --color-swatch-10-ink: var(--swatch-10-ink);
+  --color-swatch-10-line: var(--swatch-10-line);
+  --color-swatch-10-on: var(--swatch-10-on);
+  --color-swatch-11-mark: var(--swatch-11-mark);
+  --color-swatch-11-surface: var(--swatch-11-surface);
+  --color-swatch-11-ink: var(--swatch-11-ink);
+  --color-swatch-11-line: var(--swatch-11-line);
+  --color-swatch-11-on: var(--swatch-11-on);
+  --color-swatch-12-mark: var(--swatch-12-mark);
+  --color-swatch-12-surface: var(--swatch-12-surface);
+  --color-swatch-12-ink: var(--swatch-12-ink);
+  --color-swatch-12-line: var(--swatch-12-line);
+  --color-swatch-12-on: var(--swatch-12-on);
+
+  --color-chart-line: var(--chart-line);
+  --color-chart-seq-1: var(--chart-seq-1);
+  --color-chart-seq-2: var(--chart-seq-2);
+  --color-chart-seq-3: var(--chart-seq-3);
+  --color-chart-seq-4: var(--chart-seq-4);
+  --color-chart-seq-5: var(--chart-seq-5);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-progress: var(--sidebar-progress);
+
+  --color-builder-background: var(--builder-background);
+  --color-builder-background-pattern: var(--builder-background-pattern);
+  --color-canvas: var(--canvas);
+  --color-canvas-pattern: var(--canvas-pattern);
+  --color-canvas-edge: var(--canvas-edge);
+  --color-canvas-edge-selected: var(--canvas-edge-selected);
+  --color-canvas-selection-surface: var(--canvas-selection-surface);
+  --color-canvas-selection-line: var(--canvas-selection-line);
+  --color-canvas-mask: var(--canvas-mask);
+  --color-scrim: var(--scrim);
+  --color-light-blue: var(--light-blue);
+}
+
 @theme {
   --ease-*: initial;
   --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
@@ -55,83 +325,6 @@
 
   --transition-duration-1500: 1500ms;
 
-  --color-light-blue: hsl(var(--light-blue));
-
-  --color-warning-50: hsl(var(--warning-50));
-  --color-warning-100: hsl(var(--warning-100));
-  --color-warning-200: hsl(var(--warning-200));
-  --color-warning-300: hsl(var(--warning-300));
-  --color-warning-400: hsl(var(--warning-400));
-  --color-warning-500: hsl(var(--warning-500));
-  --color-warning-600: hsl(var(--warning-600));
-  --color-warning-700: hsl(var(--warning-700));
-  --color-warning-800: hsl(var(--warning-800));
-  --color-warning-900: hsl(var(--warning-900));
-  --color-warning-950: hsl(var(--warning-950));
-  --color-warning: hsl(var(--warning));
-
-  --color-border: var(--border);
-
-  --color-sidebar: var(--sidebar-background);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: hsl(var(--sidebar-primary));
-  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-progress: var(--sidebar-progress);
-
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-
-  --color-primary-100: hsl(var(--primary-100));
-  --color-primary-300: hsl(var(--primary-300));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  --color-success-50: hsl(var(--success-50));
-  --color-success-100: hsl(var(--success-100));
-  --color-success-200: hsl(var(--success-200));
-  --color-success-300: hsl(var(--success-300));
-  --color-success-400: hsl(var(--success-400));
-  --color-success-500: hsl(var(--success-500));
-  --color-success-600: hsl(var(--success-600));
-  --color-success-700: hsl(var(--success-700));
-  --color-success-800: hsl(var(--success-800));
-  --color-success-900: hsl(var(--success-900));
-  --color-success-950: hsl(var(--success-950));
-  --color-success: hsl(var(--success));
-
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-
-  --color-destructive-50: hsl(var(--destructive-50));
-  --color-destructive-100: hsl(var(--destructive-100));
-  --color-destructive-200: hsl(var(--destructive-200));
-  --color-destructive-300: hsl(var(--destructive-300));
-  --color-destructive-400: hsl(var(--destructive-400));
-  --color-destructive-500: hsl(var(--destructive-500));
-  --color-destructive-600: hsl(var(--destructive-600));
-  --color-destructive-700: hsl(var(--destructive-700));
-  --color-destructive-800: hsl(var(--destructive-800));
-  --color-destructive-900: hsl(var(--destructive-900));
-  --color-destructive-950: hsl(var(--destructive-950));
-  --color-destructive: hsl(var(--destructive));
-
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--foreground);
-
-  --color-card: var(--background);
-  --color-card-foreground: var(--foreground);
 
   --radius-lg: 0.75rem;
   --radius-md: calc(var(--radius) - 2px);
@@ -164,16 +357,17 @@
     'Liberation Mono', monospace;
   --font-mono--font-feature-settings: 'calt' 0;
   --font-serif: 'Sentient', ui-serif, Georgia, serif;
-  --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.3);
+  --shadow-step-container: 0px 0px 22px
+    color-mix(in oklab, var(--border), transparent 70%);
   --shadow-add-button: var(--add-button-shadow);
   --color-builder-background: var(--builder-background);
   --color-builder-background-pattern: var(--builder-background-pattern);
   @keyframes primary-color-pulse {
     from {
-      color: hsl(var(--primary));
+      color: var(--primary);
     }
     to {
-      color: hsl(var(--primary) / 0.7);
+      color: color-mix(in oklab, var(--primary), transparent 30%);
     }
   }
   @keyframes accordion-down {
@@ -202,7 +396,7 @@
   }
   @keyframes highlight {
     0% {
-      background-color: hsl(var(--primary-100));
+      background-color: var(--primary-100);
     }
     100% {
       background-color: var(--color-secondary);
@@ -410,7 +604,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-border, currentcolor);
   }
 }
 
@@ -438,147 +632,452 @@
     margin: 0;
   }
 
+  /*
+   * TIER 3 — LIGHT BINDINGS
+   *
+   * ink — the neutral, leaning a few thousandths of chroma toward the brand
+   * hue rather than being a pure grey. Every grey in the app is very slightly
+   * violet, at hue 296 — the same hue as the primary ramp. Far below the
+   * threshold where you would call it "coloured", comfortably above the one
+   * where you notice the temperature, and it is what stops the greys and the
+   * accent reading as two unrelated palettes.
+   *
+   * ink-500 sits at L 51.5% rather than slate's 55.4% because this is the
+   * muted-text role and 55.4% measures under 4.5:1 on white. ink-900 and
+   * ink-950 carry reduced chroma because the slate values leave sRGB there,
+   * and an out-of-gamut near-black is gamut-mapped in a direction nobody
+   * chose. 150 exists because hairlines wanted a step between 100 and 200.
+   */
   :root {
-    --background: theme('colors.white');
-    --foreground: theme('colors.neutral.950');
-    --popover: theme('colors.white');
+    --ink-50: oklch(98.4% 0.003 296);
+    --ink-100: oklch(96.8% 0.007 296);
+    --ink-150: oklch(94.6% 0.005 296);
+    --ink-200: oklch(92.9% 0.013 296);
+    --ink-300: oklch(86.9% 0.022 296);
+    --ink-400: oklch(70.4% 0.04 296);
+    --ink-500: oklch(51.5% 0.046 296);
+    --ink-600: oklch(44.6% 0.043 296);
+    --ink-700: oklch(37.2% 0.044 296);
+    --ink-800: oklch(27.9% 0.041 296);
+    --ink-900: oklch(20.8% 0.036 296);
+    --ink-950: oklch(12.9% 0.023 296);
 
-    --secondary: theme('colors.black');
-    --secondary-foreground: theme('colors.white');
+    /*
+     * primary — violet, and the only chromatic ramp the app calls its own.
+     * One ramp, one name, covering every job the accent has: the forward
+     * action, the focus ring, checked controls, "in progress", "selected".
+     * The steps are Tailwind violet; several sit a shade outside sRGB on
+     * purpose, which is how Tailwind v4 ships its palettes — a P3 display
+     * gets the vivid colour and sRGB gets a mapped one.
+     *
+     * The platform's own primaryColor overwrites these at runtime; see
+     * brandRamp in @activepieces/shared.
+     */
+    --primary-50: oklch(96.9% 0.016 293.76);
+    --primary-100: oklch(94.3% 0.029 294.59);
+    --primary-200: oklch(89.4% 0.057 293.28);
+    --primary-300: oklch(81.1% 0.111 293.57);
+    --primary-400: oklch(70.2% 0.183 293.54);
+    --primary-500: oklch(60.6% 0.25 292.72);
+    --primary-600: oklch(54.1% 0.281 293.01);
+    --primary-700: oklch(49.1% 0.27 292.58);
+    --primary-800: oklch(43.2% 0.232 292.76);
+    --primary-900: oklch(38% 0.189 293.75);
+    --primary-950: oklch(28.3% 0.141 291.09);
 
-    --muted: theme('colors.neutral.100');
-    --muted-foreground: theme('colors.neutral.500');
-
-    --accent: theme('colors.neutral.50');
-    --accent-foreground: theme('colors.neutral.900');
-
-    --border: theme('colors.neutral.200');
-    --input: theme('colors.neutral.200');
-
-    --ring: theme('colors.neutral.400');
     --radius: 0.5rem;
 
-    --primary-100: 257 75% 85%;
-    --primary: 257 74% 57%;
-    --primary-300: 257 74% 25%;
-    --primary-foreground: 210 20% 98%;
+    --surface: var(--ink-50);
+    --surface-raised: oklch(100% 0 0);
+    --surface-sunken: var(--ink-50);
+    --surface-overlay: oklch(100% 0 0);
+    --on-solid: var(--ink-50);
 
-    /* Success — Emerald */
-    --success-50: 152 81% 96%;
-    --success-100: 149 80% 90%;
-    --success-200: 156 84% 80%;
-    --success-300: 161 71% 67%;
-    --success-400: 160 60% 52%;
-    --success-500: 160 84% 39%;
-    --success-600: 161 94% 30%;
-    --success-700: 163 88% 24%;
-    --success-800: 163 88% 20%;
-    --success-900: 164 86% 17%;
-    --success-950: 166 92% 10%;
-    --success: var(--success-500);
+    /*
+     * The deliberately-opposite surface: floating selection bars, undo
+     * toasts, the chart tooltip. It is a role rather than `bg-ink-950`
+     * because the ink ramp inverts, and a bar written as `bg-ink-950` becomes
+     * near-white in dark mode.
+     */
+    --surface-inverse: var(--ink-950);
+    --on-inverse: var(--ink-50);
 
-    /* Destructive — Rose */
-    --destructive-50: 356 100% 97%;
-    --destructive-100: 356 100% 95%;
-    --destructive-200: 353 98% 90%;
-    --destructive-300: 353 96% 82%;
-    --destructive-400: 351 95% 72%;
-    --destructive-500: 350 89% 60%;
-    --destructive-600: 347 77% 50%;
-    --destructive-700: 345 83% 41%;
-    --destructive-800: 343 80% 35%;
-    --destructive-900: 342 75% 30%;
-    --destructive-950: 341 84% 17%;
-    --destructive: var(--destructive-500);
+    --ink-muted: var(--ink-500);
+    --ink-subtle: var(--ink-400);
 
-    /* Warning — Amber */
-    --warning-50: 48 100% 96%;
-    --warning-100: 48 96% 89%;
-    --warning-200: 48 97% 77%;
-    --warning-300: 46 97% 65%;
-    --warning-400: 43 97% 56%;
-    --warning-500: 38 92% 50%;
-    --warning-600: 32 95% 44%;
-    --warning-700: 26 90% 37%;
-    --warning-800: 23 83% 31%;
-    --warning-900: 22 78% 26%;
-    --warning-950: 21 77% 15%;
-    --warning: var(--warning-500);
+    /*
+     * fill — a subtle filled chip, tile, hovered row or selected list item.
+     * It has to be a role rather than `bg-ink-100`, because in the dark theme
+     * a card IS ink-100: every such fill would land on a ground of exactly
+     * its own value and vanish. `--muted` points here too.
+     */
+    --fill: var(--ink-100);
 
-    --add-button-shadow: 0px 0px 0px 6px hsl(var(--primary-100));
+    /*
+     * The accent. `--primary` is a literal rather than a ramp step because
+     * the identity is a fixed brand colour, not "whatever violet-600 happens
+     * to be". It measures 5.49:1 against white, so the white label clears AA
+     * with room. Hover goes DARKER in both themes: every step brighter than
+     * the fill weakens the white label.
+     */
+    --primary: oklch(54.7% 0.2281 295.76);
+    --primary-hover: var(--primary-700);
+    --on-primary: oklch(100% 0 0);
+    --primary-surface: var(--fill);
+    --primary-ink: var(--primary-700);
+    --primary-line: var(--primary-200);
+    --primary-mark: var(--primary-500);
 
-    --light-blue: 214 16% 70%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --neutral: var(--ink-700);
+    --on-neutral: var(--on-solid);
+    --neutral-surface: var(--fill);
+    --neutral-ink: var(--ink-700);
+    --neutral-line: var(--ink-200);
+    --neutral-mark: var(--ink-400);
 
-    --sidebar-background: theme('colors.neutral.50');
-    --sidebar-foreground: theme('colors.neutral.950');
-    --sidebar-primary: 257 74% 57%;
-    --sidebar-primary-foreground: theme('colors.neutral.50');
-    --sidebar-accent: color-mix(
-      in srgb,
-      theme('colors.neutral.200') 60%,
-      transparent
+    --success: var(--color-success-700);
+    --on-success: var(--on-solid);
+    --success-surface: var(--fill);
+    --success-ink: var(--color-success-700);
+    --success-line: var(--color-success-200);
+    --success-mark: var(--color-success-500);
+
+    --warning: var(--color-warning-700);
+    --on-warning: var(--on-solid);
+    --warning-surface: var(--fill);
+    --warning-ink: var(--color-warning-700);
+    --warning-line: var(--color-warning-200);
+    --warning-mark: var(--color-warning-500);
+
+    --destructive: var(--color-destructive-700);
+    --on-destructive: var(--on-solid);
+    --destructive-surface: var(--fill);
+    --destructive-ink: var(--color-destructive-700);
+    --destructive-line: var(--color-destructive-200);
+    --destructive-mark: var(--color-destructive-500);
+
+    /*
+     * A sequential scale says "more is further from the page". On white that
+     * means darker; on near-black it means brighter. The steps therefore run
+     * in opposite directions per theme — a chart written as a literal 300→700
+     * gradient inverts its own meaning in the dark, quietly.
+     */
+    --chart-line: var(--primary-600);
+    --chart-seq-1: var(--primary-300);
+    --chart-seq-2: var(--primary-400);
+    --chart-seq-3: var(--primary-500);
+    --chart-seq-4: var(--primary-600);
+    --chart-seq-5: var(--primary-700);
+
+    /*
+     * swatch — a categorical set for colouring things, not states. Twelve
+     * hues 30° apart anchored on the accent, each at one lightness and one
+     * chroma so no member shouts louder than another. Charts sample it rather
+     * than inventing their own five: a series and the entity it represents
+     * should not be two different greens.
+     */
+    --swatch-1-mark: oklch(52% 0.158 293.01);
+    --swatch-1-surface: oklch(95.5% 0.042 293.01);
+    --swatch-1-ink: oklch(45.5% 0.128 293.01);
+    --swatch-1-line: oklch(88.5% 0.062 293.01);
+    --swatch-1-on: oklch(100% 0 0);
+    --swatch-2-mark: oklch(52% 0.158 323.01);
+    --swatch-2-surface: oklch(95.5% 0.042 323.01);
+    --swatch-2-ink: oklch(45.5% 0.128 323.01);
+    --swatch-2-line: oklch(88.5% 0.062 323.01);
+    --swatch-2-on: oklch(100% 0 0);
+    --swatch-3-mark: oklch(52% 0.158 353.01);
+    --swatch-3-surface: oklch(95.5% 0.042 353.01);
+    --swatch-3-ink: oklch(45.5% 0.128 353.01);
+    --swatch-3-line: oklch(88.5% 0.062 353.01);
+    --swatch-3-on: oklch(100% 0 0);
+    --swatch-4-mark: oklch(52% 0.158 23.01);
+    --swatch-4-surface: oklch(95.5% 0.042 23.01);
+    --swatch-4-ink: oklch(45.5% 0.128 23.01);
+    --swatch-4-line: oklch(88.5% 0.062 23.01);
+    --swatch-4-on: oklch(100% 0 0);
+    --swatch-5-mark: oklch(52% 0.158 53.01);
+    --swatch-5-surface: oklch(95.5% 0.042 53.01);
+    --swatch-5-ink: oklch(45.5% 0.128 53.01);
+    --swatch-5-line: oklch(88.5% 0.062 53.01);
+    --swatch-5-on: oklch(100% 0 0);
+    --swatch-6-mark: oklch(52% 0.158 83.01);
+    --swatch-6-surface: oklch(95.5% 0.042 83.01);
+    --swatch-6-ink: oklch(45.5% 0.128 83.01);
+    --swatch-6-line: oklch(88.5% 0.062 83.01);
+    --swatch-6-on: oklch(100% 0 0);
+    --swatch-7-mark: oklch(52% 0.158 113.01);
+    --swatch-7-surface: oklch(95.5% 0.042 113.01);
+    --swatch-7-ink: oklch(45.5% 0.128 113.01);
+    --swatch-7-line: oklch(88.5% 0.062 113.01);
+    --swatch-7-on: oklch(100% 0 0);
+    --swatch-8-mark: oklch(52% 0.158 143.01);
+    --swatch-8-surface: oklch(95.5% 0.042 143.01);
+    --swatch-8-ink: oklch(45.5% 0.128 143.01);
+    --swatch-8-line: oklch(88.5% 0.062 143.01);
+    --swatch-8-on: oklch(100% 0 0);
+    --swatch-9-mark: oklch(52% 0.158 173.01);
+    --swatch-9-surface: oklch(95.5% 0.042 173.01);
+    --swatch-9-ink: oklch(45.5% 0.128 173.01);
+    --swatch-9-line: oklch(88.5% 0.062 173.01);
+    --swatch-9-on: oklch(100% 0 0);
+    --swatch-10-mark: oklch(52% 0.158 203.01);
+    --swatch-10-surface: oklch(95.5% 0.042 203.01);
+    --swatch-10-ink: oklch(45.5% 0.128 203.01);
+    --swatch-10-line: oklch(88.5% 0.062 203.01);
+    --swatch-10-on: oklch(100% 0 0);
+    --swatch-11-mark: oklch(52% 0.158 233.01);
+    --swatch-11-surface: oklch(95.5% 0.042 233.01);
+    --swatch-11-ink: oklch(45.5% 0.128 233.01);
+    --swatch-11-line: oklch(88.5% 0.062 233.01);
+    --swatch-11-on: oklch(100% 0 0);
+    --swatch-12-mark: oklch(52% 0.158 263.01);
+    --swatch-12-surface: oklch(95.5% 0.042 263.01);
+    --swatch-12-ink: oklch(45.5% 0.128 263.01);
+    --swatch-12-line: oklch(88.5% 0.062 263.01);
+    --swatch-12-on: oklch(100% 0 0);
+
+    --chart-1: var(--swatch-1-mark);
+    --chart-2: var(--swatch-5-mark);
+    --chart-3: var(--swatch-9-mark);
+    --chart-4: var(--swatch-3-mark);
+    --chart-5: var(--swatch-7-mark);
+
+    --background: var(--surface);
+    --foreground: var(--ink-950);
+    --card: var(--surface-raised);
+    --card-foreground: var(--ink-950);
+    --popover: var(--surface-overlay);
+    --popover-foreground: var(--ink-950);
+    --primary-foreground: var(--on-primary);
+    --secondary: var(--ink-100);
+    --secondary-foreground: var(--ink-900);
+    --muted: var(--fill);
+    --muted-foreground: var(--ink-500);
+    --accent: var(--ink-100);
+    --accent-foreground: var(--ink-900);
+    --border: var(--ink-200);
+    --input: var(--ink-200);
+
+    /*
+     * Focus takes a DARKER step than the fill does — 600 rather than 500. A
+     * ring is a hairline with nothing inside it, so it owes the full 3:1
+     * against the page on its own; the fill gets away with less because a
+     * padded text label identifies it without needing its boundary.
+     */
+    --ring: var(--primary-600);
+
+    --sidebar: var(--ink-100);
+    --sidebar-foreground: var(--ink-950);
+    --sidebar-primary: var(--ink-900);
+    --sidebar-primary-foreground: var(--on-solid);
+    --sidebar-accent: var(--ink-200);
+    --sidebar-accent-foreground: var(--ink-900);
+    --sidebar-border: var(--ink-200);
+    --sidebar-ring: var(--ink-400);
+    --sidebar-progress: var(--ink-400);
+
+    /*
+     * The flow canvas — the one surface that is not a document. It sits below
+     * the page rather than on it, so nodes read as objects on a table rather
+     * than rows in a list. Its ground is tinted at the ink hue, not left
+     * neutral, because a canvas next to a tinted page is exactly where a
+     * stray hue shows.
+     */
+    --canvas: oklch(98.8% 0.002 296);
+    --canvas-pattern: var(--ink-400);
+    --canvas-edge: var(--ink-300);
+    --canvas-edge-selected: var(--primary-mark);
+    --canvas-selection-surface: color-mix(
+      in oklab,
+      var(--primary-mark),
+      transparent 82%
     );
-    --sidebar-accent-foreground: theme('colors.neutral.900');
-    --sidebar-border: theme('colors.neutral.200');
-    --sidebar-ring: theme('colors.neutral.400');
-    --sidebar-progress: 0 0% 50%;
-    --builder-background: #fbfbfb;
-    --builder-background-pattern: #b2b2b2;
+    --canvas-selection-line: var(--primary-mark);
+    --canvas-mask: oklch(0% 0 0 / 5.5%);
+    --scrim: oklch(0% 0 0 / 50%);
+
+    --builder-background: var(--canvas);
+    --builder-background-pattern: var(--canvas-pattern);
+    --light-blue: var(--ink-400);
+    --add-button-shadow: 0 0 0 6px var(--primary-100);
   }
 
-  .dark {
-    --background: theme('colors.neutral.950');
-    --foreground: theme('colors.neutral.50');
-    --popover: theme('colors.neutral.800');
-    --muted: theme('colors.neutral.800');
-    --muted-foreground: theme('colors.neutral.400');
+  /*
+   * DARK — two different mechanisms, on purpose.
+   *
+   * The ink ramp INVERTS: ink-50 becomes the near-black the page sits on and
+   * ink-950 the near-white the text is set in, so every `text-ink-500` and
+   * `border-ink-150` lands at the right relative weight without a single
+   * component being touched. That only works because ink is a scale of
+   * distance-from-the-page, and distance is theme-independent.
+   *
+   * The hue ramps DO NOT invert — a dark red is not the dark-mode version of
+   * a light red. Instead the roles rebind to different steps: surfaces move
+   * to the fill, ink to 300, solids to 400. That is why the hue ramps need no
+   * per-step dark overrides at all.
+   */
+  [data-theme='dark'] {
+    --ink-50: oklch(17% 0.012 296);
+    --ink-100: oklch(21% 0.014 296);
+    --ink-150: oklch(25% 0.014 296);
+    --ink-200: oklch(29% 0.015 296);
+    --ink-300: oklch(38% 0.018 296);
+    --ink-400: oklch(56% 0.028 296);
+    --ink-500: oklch(68% 0.031 296);
+    --ink-600: oklch(77% 0.028 296);
+    --ink-700: oklch(85% 0.022 296);
+    --ink-800: oklch(91% 0.016 296);
+    --ink-900: oklch(96% 0.008 296);
+    --ink-950: oklch(99% 0.003 296);
 
-    --secondary: theme('colors.neutral.800');
-    --secondary-foreground: theme('colors.neutral.50');
+    /*
+     * The page is the ground; raised surfaces lift toward the light rather
+     * than staying white, which would glare. `surface-sunken` cannot go below
+     * the page in the dark — there is nowhere below near-black — so it lifts
+     * a little instead and the rail reads as a recess by its border.
+     */
+    --surface: var(--ink-50);
+    --surface-raised: var(--ink-100);
+    --surface-sunken: var(--ink-50);
+    --surface-overlay: var(--ink-150);
+    --on-solid: var(--ink-50);
 
-    --accent: theme('colors.neutral.700');
-    --accent-foreground: theme('colors.neutral.50');
+    /* Not ink-950 here — that inverts to near-white. A toast in the dark is a
+       lifted grey that the coloured marks still read against. */
+    --surface-inverse: var(--ink-200);
+    --on-inverse: var(--ink-950);
 
-    --primary-100: 210 80% 40%;
-    --primary: 210 90% 50%;
-    --primary-300: 210 100% 85%;
-    --primary-foreground: 210 90% 98%;
+    /* ink-500 clears 4.5:1 on every surface in this theme; ink-400 does not,
+       which is the whole reason the two are separate roles. */
+    --ink-muted: var(--ink-500);
+    --ink-subtle: var(--ink-400);
 
-    --success: var(--success-400);
-    --destructive: var(--destructive-400);
+    /* One step further from the card here — see the note in the light block. */
+    --fill: var(--ink-200);
 
-    --warning: var(--warning-400);
+    /* No `--primary` override: the fill is the brand colour in both themes,
+       so hover has somewhere to go and the white label stays correct. */
+    --primary-surface: var(--fill);
+    --primary-ink: var(--primary-300);
+    --primary-line: var(--primary-800);
+    --primary-mark: var(--primary-400);
 
-    --border: hsla(0, 0%, 100%, 0.08);
-    --input: hsla(0, 0%, 100%, 0.08);
+    --neutral: var(--ink-700);
+    --neutral-surface: var(--fill);
+    --neutral-ink: var(--ink-700);
+    --neutral-line: var(--ink-300);
+    --neutral-mark: var(--ink-400);
 
-    --ring: theme('colors.neutral.500');
-    --radius: 0.5rem;
+    --success: var(--color-success-400);
+    --success-surface: var(--fill);
+    --success-ink: var(--color-success-300);
+    --success-line: var(--color-success-800);
+    --success-mark: var(--color-success-400);
 
-    --add-button-shadow: 0 0 0 6px hsl(var(--primary-100) / 0.4);
+    --warning: var(--color-warning-400);
+    --warning-surface: var(--fill);
+    --warning-ink: var(--color-warning-300);
+    --warning-line: var(--color-warning-800);
+    --warning-mark: var(--color-warning-400);
 
-    --chart-1: 210 85% 55%;
-    --chart-2: 160 80% 50%;
-    --chart-3: 35 90% 55%;
-    --chart-4: 280 75% 65%;
-    --chart-5: 340 80% 60%;
+    --destructive: var(--color-destructive-400);
+    --destructive-surface: var(--fill);
+    --destructive-ink: var(--color-destructive-300);
+    --destructive-line: var(--color-destructive-800);
+    --destructive-mark: var(--color-destructive-400);
 
-    --sidebar-background: theme('colors.neutral.800');
-    --sidebar-foreground: theme('colors.neutral.50');
-    --sidebar-primary: 210 85% 65%;
-    --sidebar-primary-foreground: 210 90% 98%;
-    --sidebar-accent: theme('colors.neutral.700');
-    --sidebar-accent-foreground: theme('colors.neutral.50');
-    --sidebar-border: hsla(0, 0%, 100%, 0.08);
-    --sidebar-ring: theme('colors.neutral.600');
-    --sidebar-progress: 210 15% 40%;
-    --builder-background: hsla(0, 0%, 9%, 1);
-    --builder-background-pattern: hsla(0, 0%, 45%, 1);
+    /* Brighter is "more" here; the sequence runs the other way. */
+    --chart-line: var(--primary-400);
+    --chart-seq-1: var(--primary-700);
+    --chart-seq-2: var(--primary-600);
+    --chart-seq-3: var(--primary-500);
+    --chart-seq-4: var(--primary-400);
+    --chart-seq-5: var(--primary-300);
+
+    --swatch-1-mark: oklch(70% 0.158 293.01);
+    --swatch-1-surface: oklch(26.2% 0.052 293.01);
+    --swatch-1-ink: oklch(81.5% 0.108 293.01);
+    --swatch-1-line: oklch(38.5% 0.072 293.01);
+    --swatch-1-on: oklch(0% 0 0);
+    --swatch-2-mark: oklch(70% 0.158 323.01);
+    --swatch-2-surface: oklch(26.2% 0.052 323.01);
+    --swatch-2-ink: oklch(81.5% 0.108 323.01);
+    --swatch-2-line: oklch(38.5% 0.072 323.01);
+    --swatch-2-on: oklch(0% 0 0);
+    --swatch-3-mark: oklch(70% 0.158 353.01);
+    --swatch-3-surface: oklch(26.2% 0.052 353.01);
+    --swatch-3-ink: oklch(81.5% 0.108 353.01);
+    --swatch-3-line: oklch(38.5% 0.072 353.01);
+    --swatch-3-on: oklch(0% 0 0);
+    --swatch-4-mark: oklch(70% 0.158 23.01);
+    --swatch-4-surface: oklch(26.2% 0.052 23.01);
+    --swatch-4-ink: oklch(81.5% 0.108 23.01);
+    --swatch-4-line: oklch(38.5% 0.072 23.01);
+    --swatch-4-on: oklch(0% 0 0);
+    --swatch-5-mark: oklch(70% 0.158 53.01);
+    --swatch-5-surface: oklch(26.2% 0.052 53.01);
+    --swatch-5-ink: oklch(81.5% 0.108 53.01);
+    --swatch-5-line: oklch(38.5% 0.072 53.01);
+    --swatch-5-on: oklch(0% 0 0);
+    --swatch-6-mark: oklch(70% 0.158 83.01);
+    --swatch-6-surface: oklch(26.2% 0.052 83.01);
+    --swatch-6-ink: oklch(81.5% 0.108 83.01);
+    --swatch-6-line: oklch(38.5% 0.072 83.01);
+    --swatch-6-on: oklch(0% 0 0);
+    --swatch-7-mark: oklch(70% 0.158 113.01);
+    --swatch-7-surface: oklch(26.2% 0.052 113.01);
+    --swatch-7-ink: oklch(81.5% 0.108 113.01);
+    --swatch-7-line: oklch(38.5% 0.072 113.01);
+    --swatch-7-on: oklch(0% 0 0);
+    --swatch-8-mark: oklch(70% 0.158 143.01);
+    --swatch-8-surface: oklch(26.2% 0.052 143.01);
+    --swatch-8-ink: oklch(81.5% 0.108 143.01);
+    --swatch-8-line: oklch(38.5% 0.072 143.01);
+    --swatch-8-on: oklch(0% 0 0);
+    --swatch-9-mark: oklch(70% 0.158 173.01);
+    --swatch-9-surface: oklch(26.2% 0.052 173.01);
+    --swatch-9-ink: oklch(81.5% 0.108 173.01);
+    --swatch-9-line: oklch(38.5% 0.072 173.01);
+    --swatch-9-on: oklch(0% 0 0);
+    --swatch-10-mark: oklch(70% 0.158 203.01);
+    --swatch-10-surface: oklch(26.2% 0.052 203.01);
+    --swatch-10-ink: oklch(81.5% 0.108 203.01);
+    --swatch-10-line: oklch(38.5% 0.072 203.01);
+    --swatch-10-on: oklch(0% 0 0);
+    --swatch-11-mark: oklch(70% 0.158 233.01);
+    --swatch-11-surface: oklch(26.2% 0.052 233.01);
+    --swatch-11-ink: oklch(81.5% 0.108 233.01);
+    --swatch-11-line: oklch(38.5% 0.072 233.01);
+    --swatch-11-on: oklch(0% 0 0);
+    --swatch-12-mark: oklch(70% 0.158 263.01);
+    --swatch-12-surface: oklch(26.2% 0.052 263.01);
+    --swatch-12-ink: oklch(81.5% 0.108 263.01);
+    --swatch-12-line: oklch(38.5% 0.072 263.01);
+    --swatch-12-on: oklch(0% 0 0);
+
+    --chart-1: var(--swatch-1-mark);
+    --chart-2: var(--swatch-5-mark);
+    --chart-3: var(--swatch-9-mark);
+    --chart-4: var(--swatch-3-mark);
+    --chart-5: var(--swatch-7-mark);
+
+    --secondary: var(--ink-200);
+    --accent: var(--ink-200);
+
+    /* The rail is the page ground in the dark; the active item lifts off it. */
+    --sidebar: var(--ink-100);
+    --sidebar-accent: var(--ink-200);
+
+    /* The canvas cannot go lighter than the page in the dark, so it becomes
+       the page and the nodes lift off it instead. Both veils go heavier: a
+       dark ground needs more dimming to read as dimmed at all. */
+    --canvas: var(--ink-50);
+    --canvas-pattern: var(--ink-300);
+    --canvas-mask: oklch(0% 0 0 / 80%);
+    --scrim: oklch(0% 0 0 / 70%);
+
+    color-scheme: dark;
   }
 }
 
@@ -654,13 +1153,13 @@
   }
 
   .react-flow {
-    --xy-edge-stroke: rgba(163, 163, 163, 0.5) !important;
+    --xy-edge-stroke: var(--canvas-edge) !important;
     --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7 !important;
     --selection-border-default: 0px solid #b1b1b7 !important;
     --node-border-default: 0px solid #b1b1b7 !important;
-    --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
-    --xy-selection-background-color-default: hsl(
-      var(--primary-100) / 0.25
+    --xy-selection-border-default: 1px dotted var(--canvas-selection-line) !important;
+    --xy-selection-background-color-default: var(
+      --canvas-selection-surface
     ) !important;
     --xy-resize-background-color: transparent !important;
     .react-flow__resize-control.handle {
@@ -955,8 +1454,8 @@
   text-decoration: var(--shiki-light-text-decoration);
 }
 
-.dark .shiki,
-.dark .shiki span {
+[data-theme='dark'] .shiki,
+[data-theme='dark'] .shiki span {
   color: var(--shiki-dark);
   background-color: var(--shiki-dark-bg);
   font-style: var(--shiki-dark-font-style);
