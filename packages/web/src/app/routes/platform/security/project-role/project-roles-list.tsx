@@ -105,26 +105,25 @@ export function ProjectRolesList({
                       : t('Custom')}
                   </Badge>
                 </ItemTitle>
-                <ItemDescription>
-                  {description}
-                  {description && !isNil(role.userCount) && ' · '}
-                  {!isNil(role.userCount) &&
-                    (role.userCount === 0 ? (
-                      <span>{t('rolePeopleCount', { count: 0 })}</span>
-                    ) : (
-                      <button
-                        type="button"
-                        className="text-primary underline-offset-4 hover:underline"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setOpened({ role, tab: 'people' });
-                        }}
-                      >
-                        {t('rolePeopleCount', { count: role.userCount })}
-                      </button>
-                    ))}
-                </ItemDescription>
+                <ItemDescription>{description}</ItemDescription>
               </ItemContent>
+              {!isNil(role.userCount) &&
+                (role.userCount === 0 ? (
+                  <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+                    {t('rolePeopleCount', { count: 0 })}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="shrink-0 text-sm tabular-nums text-primary underline-offset-4 hover:underline"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setOpened({ role, tab: 'people' });
+                    }}
+                  >
+                    {t('rolePeopleCount', { count: role.userCount })}
+                  </button>
+                ))}
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </Item>
           );
