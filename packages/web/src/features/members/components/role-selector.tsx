@@ -23,7 +23,7 @@ interface RoleSelectorProps {
   onValueChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  roles?: Array<{ name: string }>;
+  roles?: Array<{ name: string; permissions?: string[] }>;
   isLoading?: boolean;
   isAssigningRole?: boolean;
 }
@@ -60,7 +60,12 @@ export const RoleSelector = ({
     : roles.map((role) => ({
         value: role.name,
         label: role.name,
-        description: getProjectRoleDescription(role.name),
+        description: role.permissions
+          ? roleCopy.projectRoleSummary({
+              name: role.name,
+              permissions: role.permissions,
+            })
+          : getProjectRoleDescription(role.name),
       }));
 
   const selectedRole = options.find((r) => r.value === value);

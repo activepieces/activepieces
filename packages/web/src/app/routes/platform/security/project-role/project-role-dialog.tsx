@@ -23,6 +23,11 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { roleCopy } from '@/features/members/lib/role-copy';
+import {
+  ROLE_BASES,
+  RoleBase,
+  rolePermissionModel,
+} from '@/features/members/lib/role-permissions';
 import { projectRoleMutations } from '@/features/platform-admin';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -30,7 +35,6 @@ import { cn } from '@/lib/utils';
 import { PermissionGrid } from './permission-grid';
 import { RoleAvatar } from './role-avatar';
 import { RolePeopleTab } from './role-people-tab';
-import { ROLE_BASES, RoleBase, rolePermissionModel } from './role-permissions';
 
 export const ProjectRoleDialog = ({
   mode,

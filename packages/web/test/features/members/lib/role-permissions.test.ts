@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   PermissionRow,
   rolePermissionModel,
-} from '@/app/routes/platform/security/project-role/role-permissions';
+} from '@/features/members/lib/role-permissions';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
 

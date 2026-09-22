@@ -1,14 +1,13 @@
 import { t } from 'i18next';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { cn } from '@/lib/utils';
-
 import {
   PermissionColumn,
   PermissionGroup,
   PermissionRow,
   rolePermissionModel,
-} from './role-permissions';
+} from '@/features/members/lib/role-permissions';
+import { cn } from '@/lib/utils';
 
 export function PermissionGrid({
   permissions,
