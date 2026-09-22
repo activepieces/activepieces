@@ -304,7 +304,9 @@ function withToolTimeouts({ mcpToolSet, brokenConnectors, taintState, getSelecte
                 if (toolConnectorUuid !== null && brokenConnectors.has(toolConnectorUuid)) {
                     return buildReconnectGuidance({ connectorUuid: toolConnectorUuid, alreadyFlagged: true })
                 }
-                taintState.tainted = true
+                if (agentToolPhases.taintsTurn(name)) {
+                    taintState.tainted = true
+                }
                 const { data: toolResult, error } = await tryCatch(() => agentWorkerTools.withToolTimeout({
                     fn: (timeoutSignal) => originalExecute(args, options ? { ...options, abortSignal: timeoutSignal } : undefined),
                     timeoutMs: agentWorkerTools.TOOL_EXECUTION_TIMEOUT_MS,

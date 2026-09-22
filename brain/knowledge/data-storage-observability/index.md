@@ -34,6 +34,10 @@ Security-relevant actions persisted to `audit_event`, queryable by platform admi
 
 Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. minutesSaved = runs × flow.timeSavedPerRun. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled` — NOT in CE. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
 
+### Logging & Metrics (evlog)
+
+All structured logging goes through **evlog** — one wide event per unit of work, one remote drain (Axiom / HyperDX / Loki / Better Stack / OTLP; first match wins). Metrics on ClickStack are **log-based**: dashboards and alerts query numeric fields (`durationMs`, `memRssMb`, `eventLoopDelayP99Ms`) on wide events. Both API and worker emit a 60s `system.snapshot` event with process RSS / heap / event-loop lag so those charts exist at all. BullMQ queue depth is the one signal exported as a **native OTLP gauge** (`bullmq.job.count`), because per-queue-per-state cardinality would bloat wide events. Worker CPU / RAM travels in-band on the poll healthcheck (not to ClickStack) and surfaces on `GET /v1/health/system`.
+
 ### Product Telemetry
 
 Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Infrastructure > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
@@ -52,6 +56,14 @@ Gotchas:
 - **Every event name must carry a user-facing description, and two gates enforce it.** `tracked-events-catalog.ts` (web, under the Configurations route) is a `Record<TelemetryEventName, …>` powering the in-app "Events we track" dialog, so a new enum member fails `tsc` until it is described, and a test under `packages/web/test/` fails CI for the same reason (web typecheck does not run in CI — see the CI page). The catalog's labels are display text only; they are never the emitted name. Which events the dialog *shows* is derived from `CLOUD_ONLY_TELEMETRY_EVENTS`, not marked by hand, so a new account event is hidden automatically and a group whose events are all Cloud-only disappears.
 - **Names and emails only ever leave on Cloud, and one helper is the whole reason.** `pickTelemetryPii` returns `{}` unless `edition === ApEdition.CLOUD`, and both the `signed.up` payload and `identify` build their PII by spreading it — so on CE and EE those events carry a user id and nothing personal, while on Cloud they carry email, first name and last name. Reviewers reading the payload type see the fields and reasonably conclude they are always sent; the gate is one spread away in the call site, not in the type. Since [000034](../decisions/000034-account-and-sign-in-telemetry-is-cloud-only.md) the question is moot for account events, which never leave a self-hosted instance at all; `pickTelemetryPii` still governs what `identify` carries, and `identify` still runs there.
 - **Pre-login capture happens only on `cloud.activepieces.com`** — the browser cannot read a platform's row before a session exists, so that hostname is the whole of the exception (see the decision). `canary.activepieces.com` and the `*.preview.activepieces.dev` envs are therefore excluded, which means **the pre-login funnel cannot be exercised on canary or a preview environment** — verify it on `cloud.activepieces.com`, or add the host.
+
+### Sign-up Attribution
+
+The web stashes the marketing params a visitor arrived with (`utm_*`, `gclid`, `fbclid`, `ref`, `ap_cta`, `ap_landing`, `ap_referrer`, `ap_sid`; contract in `attribution.ts` in shared) in local storage at boot and sends them as `attribution` on `SignUpRequest`, `VerifyEmailCodeRequest`, `CompleteSignUpRequest` and `ClaimTokenRequest`. The auth services return `{ response, signedUp }`; `signedUp` comes from `createPlatformWithProject`'s `provisioned` flag and from `getOrCreateWithProject`'s `created` flag. Only when it is true does the controller call `telemetry(log).identifySignUp`, which writes `signup_method` (`SignUpMethod`) and the attribution as PostHog `$set_once` person properties, so later logins never overwrite them.
+
+Gotchas:
+- The Google `USER_SIGNED_UP` audit event is gated on `signedUp` too; before that it fired on every login.
+- SAML users are never stamped: they are provisioned by their platform admin, not by a campaign link.
 
 ### Flow Failure Alerts (EE)
 
@@ -73,3 +85,4 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 - **Knowledge Base** — documents chunked into vector embeddings for AI search
 - **Analytics** — usage reporting
 - **Audit Logs** — the persisted security-action record
+- **Logging & Metrics (evlog)** — wide events, drains, log-based metrics, `system.snapshot`, OTLP queue gauge

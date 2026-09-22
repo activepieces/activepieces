@@ -37,7 +37,7 @@ export const createClickupTaskComment = createAction({
     if (!assignee_id) {
       const user_request = await callClickUpApi(
         HttpMethod.GET,
-        `/user`,
+        `user`,
         getAccessTokenOrThrow(configValue.auth),
         {}
       );
@@ -51,7 +51,7 @@ export const createClickupTaskComment = createAction({
 
     const response = await callClickUpApi(
       HttpMethod.POST,
-      `/task/${task_id}/comment`,
+      `task/${task_id}/comment`,
       getAccessTokenOrThrow(configValue.auth),
       {
         comment_text: comment,

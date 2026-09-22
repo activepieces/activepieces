@@ -2,18 +2,34 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { askOpenRouterAction } from './lib/actions/ask-open-router';
+import { getCreditsAction } from './lib/actions/get-credits.action';
+import { getCurrentKeyAction } from './lib/actions/get-current-key.action';
+import { listEmbeddingModelsAction } from './lib/actions/list-embedding-models.action';
+import { listModelEndpointsAction } from './lib/actions/list-model-endpoints.action';
+import { listModelsAction } from './lib/actions/list-models.action';
+import { listProvidersAction } from './lib/actions/list-providers.action';
+import { listUserModelsAction } from './lib/actions/list-user-models.action';
 import { openRouterAuth } from './lib/auth';
 
 export const openRouter = createPiece({
   displayName: 'OpenRouter',
   description: 'Use any AI model to generate code, text, or images via OpenRouter.ai.',
   auth: openRouterAuth,
-  minimumSupportedRelease: '0.88.2',
+
+  minimumSupportedRelease: '0.87.0',
+
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ["Salem-Alaa","kishanprmr","MoShizzle","abuaboud"],
   actions: [
     askOpenRouterAction,
+    listModelsAction,
+    listEmbeddingModelsAction,
+    listUserModelsAction,
+    listModelEndpointsAction,
+    listProvidersAction,
+    getCreditsAction,
+    getCurrentKeyAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://openrouter.ai/api/v1',
       auth: openRouterAuth,
