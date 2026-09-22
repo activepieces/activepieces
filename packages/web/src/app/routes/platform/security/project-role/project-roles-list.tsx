@@ -19,7 +19,6 @@ import { roleCopy } from '@/features/members/lib/role-copy';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 import { RoleAvatar } from './role-avatar';
-import { rolePermissionModel } from './role-permissions';
 
 export function ProjectRolesList({
   projectRoles,
@@ -56,14 +55,10 @@ export function ProjectRolesList({
     <div className="flex flex-col gap-3">
       <ItemGroup className="gap-2">
         {roles.map((role) => {
-          const description =
-            roleCopy.projectRoleDescription(role.name) ??
-            t('permissionsCount', {
-              granted: rolePermissionModel.grantedBoxes({
-                permissions: role.permissions,
-              }),
-              total: rolePermissionModel.totalBoxes(),
-            });
+          const description = roleCopy.projectRoleSummary({
+            name: role.name,
+            permissions: role.permissions,
+          });
           return (
             <Item
               key={role.id}
