@@ -1,4 +1,5 @@
-import { AiRouterEvaluationError, AiRouterMatchMode, ChooseAiRouteResponse } from '@activepieces/shared'
+import { AiRouterEvaluationError, AiRouterMatchMode, ChooseAiRouteResponse, tryCatch } from '@activepieces/shared'
+import { z } from 'zod'
 
 const TIMEOUT_MS = 10_000
 
@@ -23,7 +24,8 @@ export const aiRouterApi = {
         })
 
         if (!response.ok) {
-            throw new AiRouterEvaluationError({ message: `${url} answered ${response.status} after ${Date.now() - startedAt} ms` })
+            const reason = await apiErrorReason(response)
+            throw new AiRouterEvaluationError({ message: `${url} answered ${response.status} after ${Date.now() - startedAt} ms${reason}` })
         }
 
         const parsed = ChooseAiRouteResponse.safeParse(await response.json())
@@ -33,6 +35,14 @@ export const aiRouterApi = {
         return parsed.data
     },
 }
+
+async function apiErrorReason(response: Response): Promise<string> {
+    const { data } = await tryCatch(() => response.json())
+    const parsed = ApiErrorBody.safeParse(data)
+    return parsed.success ? `: ${parsed.data.params.message}` : ''
+}
+
+const ApiErrorBody = z.object({ params: z.object({ message: z.string() }) })
 
 type ChooseParams = {
     apiUrl: string

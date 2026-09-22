@@ -92,8 +92,8 @@ Two things to know before you switch:
   route can simply answer no — so Otherwise is decided here rather than by the model, and its
   description is unused in this mode.
 
-A confidence floor works per route here: a route the model affirmed but was only 40% sure about is
-dropped, and if the floor rejects every route, Otherwise runs.
+A confidence floor works per route here: a route the model affirmed at 60% is dropped by a 70%
+floor, and if the floor rejects every route, Otherwise runs.
 
 ## Write route descriptions, not prompts
 

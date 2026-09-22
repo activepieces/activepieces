@@ -8,6 +8,7 @@ const GATEWAY_EVALUATION_URL = 'https://ai-gateway.vercel.sh/v4/ai/evaluation-mo
 const GATEWAY_MODEL_ID = 'typesafe-ai/jev'
 const GATEWAY_PROTOCOL_VERSION = '0.0.1'
 const CHOICE_KEY = 'route'
+const APPLIES_THRESHOLD = 0.5
 const TIMEOUT_MS = 8_000
 
 export const aiRouterService = (log: FastifyBaseLogger) => ({
@@ -88,19 +89,15 @@ function readChoiceAnswer(data: GatewayEvaluationResponse): ChooseAiRouteRespons
 
 function readBooleanAnswers({ data, keyToRoute }: ReadBooleanAnswersParams): ChooseAiRouteResponse | undefined {
     const entries = Object.entries(keyToRoute).flatMap(([key, route]) => {
-        const answer = data.answers[key]
-        return isNil(answer) || isNil(answer.answer) ? [] : [{ route, yes: answer.answer, probability: answer.probability }]
+        const probability = data.answers[key]?.probability
+        return isNil(probability) ? [] : [{ route, probability }]
     })
     if (entries.length === 0) {
         return undefined
     }
-    const probabilities = Object.fromEntries(entries.flatMap(({ route, yes, probability }) => {
-        const confidence = isNil(probability) ? undefined : (yes ? probability : 1 - probability)
-        return isNil(confidence) ? [] : [[route, confidence]]
-    }))
     return {
-        matched: entries.filter(({ yes }) => yes).map(({ route }) => route),
-        ...(Object.keys(probabilities).length === 0 ? {} : { probabilities }),
+        matched: entries.filter(({ probability }) => probability >= APPLIES_THRESHOLD).map(({ route }) => route),
+        probabilities: Object.fromEntries(entries.map(({ route, probability }) => [route, probability])),
     }
 }
 
@@ -120,7 +117,6 @@ type GatewayEvaluationResponse = {
     answers: Record<string, {
         choice?: string
         probabilities?: Record<string, number>
-        answer?: boolean
         probability?: number
     } | undefined>
 }

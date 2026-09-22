@@ -52,7 +52,7 @@ describe('aiRouterService in best-match mode', () => {
 
 describe('aiRouterService in all-matches mode', () => {
     it('asks one boolean question per route in a single request', async () => {
-        post.mockResolvedValue({ data: { answers: { r0: { answer: true, probability: 0.9 }, r1: { answer: false, probability: 0.8 } } } })
+        post.mockResolvedValue({ data: { answers: { r0: { probability: 0.9 }, r1: { probability: 0.2 } } } })
 
         const answer = await service().choose({
             state: 'charged twice',
@@ -69,8 +69,8 @@ describe('aiRouterService in all-matches mode', () => {
         expect(answer.matched).toEqual(['Billing'])
     })
 
-    it('reports confidence that the route applies, not confidence in the answer', async () => {
-        post.mockResolvedValue({ data: { answers: { r0: { answer: false, probability: 0.8 } } } })
+    it('reports the probability that the route applies and does not match below one half', async () => {
+        post.mockResolvedValue({ data: { answers: { r0: { probability: 0.2 } } } })
 
         const answer = await service().choose({
             state: 'x', question: 'q', options: { Billing: 'Payments' }, matchMode: AiRouterMatchMode.ALL_MATCHES,
@@ -81,7 +81,7 @@ describe('aiRouterService in all-matches mode', () => {
     })
 
     it('returns no matches when the model said no to everything', async () => {
-        post.mockResolvedValue({ data: { answers: { r0: { answer: false }, r1: { answer: false } } } })
+        post.mockResolvedValue({ data: { answers: { r0: { probability: 0.1 }, r1: { probability: 0.3 } } } })
 
         const answer = await service().choose({
             state: 'x', question: 'q', options: { Billing: 'Payments', Sales: 'Pricing' }, matchMode: AiRouterMatchMode.ALL_MATCHES,
@@ -90,8 +90,8 @@ describe('aiRouterService in all-matches mode', () => {
         expect(answer.matched).toEqual([])
     })
 
-    it('fails when the model answered none of the boolean questions', async () => {
-        post.mockResolvedValue({ data: { answers: {} } })
+    it('fails when no boolean answer carries a probability', async () => {
+        post.mockResolvedValue({ data: { answers: { r0: { answer: true } } } })
 
         await expect(service().choose({
             state: 'x', question: 'q', options: { Billing: 'Payments' }, matchMode: AiRouterMatchMode.ALL_MATCHES,
