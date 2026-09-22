@@ -196,9 +196,12 @@ const DynamicPropertiesImplementation = React.memo(
           },
           onRevalidateFailed: (error) => {
             console.error(error);
-            if (panelIsOpen.current) {
-              internalErrorToast();
+            const supersededOrClosed =
+              requestId !== optionsRequestId.current || !panelIsOpen.current;
+            if (supersededOrClosed) {
+              return;
             }
+            internalErrorToast();
           },
         },
         {
