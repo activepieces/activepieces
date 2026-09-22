@@ -1130,6 +1130,25 @@ describe('multi-approval confirm page', () => {
         expect(response.statusCode).toBe(400)
     })
 
+    it('counts a line break in a form-posted reason once, the way the textarea limit does', async () => {
+        const { flowRun, created, signals } = await createApprovalBarrier()
+        const lines = ['line one', 'line two', 'line three']
+        const lastLine = 'x'.repeat(MAX_SIGNAL_REASON_LENGTH - lines.join('\n').length - 1)
+        const typedReason = [...lines, lastLine].join('\n')
+
+        const response = await app.inject({
+            method: 'POST',
+            url: `/api/v1/flow-runs/${flowRun.id}/signals/${signals[0].id}/confirm?action=approve`,
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            payload: `reason=${encodeURIComponent(typedReason.replace(/\n/g, '\r\n'))}`,
+        })
+
+        expect(typedReason).toHaveLength(MAX_SIGNAL_REASON_LENGTH)
+        expect(response.statusCode).toBe(200)
+        const stored = (await listSignals(created.barrier.id)).find((signal) => signal.id === signals[0].id)
+        expect(stored?.result).toMatchObject({ reason: typedReason })
+    })
+
     it('stores a reason carrying a NUL byte sanitised rather than failing the write', async () => {
         const { flowRun, created, signals } = await createApprovalBarrier()
 

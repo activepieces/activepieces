@@ -226,11 +226,11 @@ function isReasonMissing({ reasonRequiredOn, approved, reason }: IsReasonMissing
 }
 
 function readReason(body: unknown): string | undefined {
-    if (isNil(body) || typeof body !== 'object') {
+    const parsed = SignalDecisionBody.safeParse(body)
+    if (!parsed.success || isNil(parsed.data.reason)) {
         return undefined
     }
-    const reason = (body as Record<string, unknown>).reason
-    return typeof reason === 'string' ? reason : undefined
+    return parsed.data.reason.replace(/\r\n/g, '\n')
 }
 
 function reasonTooLongMessage(): string {
@@ -360,6 +360,10 @@ const ConfirmSignalRequest = {
         }),
     },
 }
+
+const SignalDecisionBody = z.object({
+    reason: z.string().optional(),
+})
 
 const V0ResumeFlowRunRequest = {
     config: {
