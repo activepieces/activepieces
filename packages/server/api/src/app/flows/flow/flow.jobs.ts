@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, tryCatch } from '@activepieces/core-utils'
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
 import { Flow, FlowOperationStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -14,8 +14,7 @@ import { flowRepo } from './flow.repo'
 const waitpointRepo = repoFactory(WaitpointEntity)
 
 const BATCH_SIZE = 1000
-const TOMBSTONE_AGE_MINUTES = 60
-const TOMBSTONE_REAP_LIMIT = 5
+const TOMBSTONE_REAP_LIMIT = 50
 
 export async function batchDeleteByFlowId(flowId: string): Promise<void> {
     while (true) {
@@ -77,12 +76,11 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
     },
 
     reapTombstonedFlows: async () => {
-        const tombstoned = await flowRepo()
-            .createQueryBuilder('flow')
-            .where('flow."operationStatus" = :deleting', { deleting: FlowOperationStatus.DELETING })
-            .andWhere('flow.updated < NOW() - make_interval(mins => :mins)', { mins: TOMBSTONE_AGE_MINUTES })
-            .take(TOMBSTONE_REAP_LIMIT)
-            .getMany()
+        const tombstoned = await flowRepo().find({
+            where: { operationStatus: FlowOperationStatus.DELETING },
+            order: { updated: 'ASC' },
+            take: TOMBSTONE_REAP_LIMIT,
+        })
         if (tombstoned.length === 0) {
             return
         }
@@ -92,7 +90,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 await flowSideEffects(log).preDelete({ flowToDelete: flow })
                 await removeFlowAndItsData({ flow, log })
             })
-            if (error !== null) {
+            if (!isNil(error)) {
                 log.error({ error, flow: { id: flow.id } }, '[reapTombstonedFlows] Could not reclaim flow')
             }
         }

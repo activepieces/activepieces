@@ -1,4 +1,4 @@
-import { isNil, PlatformId, ProjectId } from '@activepieces/core-utils'
+import { PlatformId, ProjectId } from '@activepieces/core-utils'
 import { ApplicationEventName, FileType, Flow, FlowOperationRequest, FlowOperationType, FlowStatus, FlowVersion, PopulatedFlow } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { applicationEvents, MetaInformation } from '../../helper/application-events'
@@ -38,9 +38,6 @@ export const flowSideEffects = (log: FastifyBaseLogger) => ({
     },
 
     async preDelete({ flowToDelete }: PreDeleteParams): Promise<void> {
-        if (isNil(flowToDelete.publishedVersionId)) {
-            return
-        }
         await triggerSourceService(log).disable({
             flowId: flowToDelete.id,
             projectId: flowToDelete.projectId,

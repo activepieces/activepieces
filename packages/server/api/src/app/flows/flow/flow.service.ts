@@ -29,8 +29,6 @@ import { flowRepo } from './flow.repo'
 
 
 
-const DELETE_FLOW_JOB_ATTEMPTS = 10
-
 const notDeleting = { operationStatus: Not(FlowOperationStatus.DELETING) }
 
 export const flowService = (log: FastifyBaseLogger) => ({
@@ -125,7 +123,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        const queryBuilder = flowRepo().createQueryBuilder('ff').where({ operationStatus: Not(FlowOperationStatus.DELETING) })
+        const queryBuilder = flowRepo().createQueryBuilder('ff').where(notDeleting)
 
         if (projectIds) {
             queryBuilder.andWhere({ projectId: In(projectIds) })
@@ -286,18 +284,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         entityManager,
         includeDeleting = false,
     }: GetOnePopulatedParams): Promise<PopulatedFlow | null> {
-        const flow = await flowRepo(entityManager).findOne({
-            where: {
-                id,
-                projectId,
-                ...(includeDeleting ? {} : notDeleting),
-            },
-        })
-
-        const projectExists = await projectService(log).exists({
-            projectId,
-        })
-        if (isNil(flow) || !projectExists) {
+        const flow = await this.getOne({ id, projectId, entityManager, includeDeleting })
+        if (isNil(flow)) {
             return null
         }
 
@@ -325,24 +313,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async getOnePopulatedOrThrow({
-        id,
-        projectId,
-        versionId,
-        removeConnectionsName = false,
-        removeSampleData = false,
-        entityManager,
-        includeDeleting = false,
-    }: GetOnePopulatedParams): Promise<PopulatedFlow> {
-        const flow = await this.getOnePopulated({
-            id,
-            projectId,
-            versionId,
-            removeConnectionsName,
-            removeSampleData,
-            entityManager,
-            includeDeleting,
-        })
+    async getOnePopulatedOrThrow(params: GetOnePopulatedParams): Promise<PopulatedFlow> {
+        const flow = await this.getOnePopulated(params)
 
         assertFlowIsNotNull(flow)
         return flow
@@ -704,8 +676,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 date: apDayjs(),
             },
             customConfig: {
-                attempts: DELETE_FLOW_JOB_ATTEMPTS,
-                removeOnFail: false,
                 backoff: {
                     type: 'exponential',
                     delay: apDayjsDuration(5, 'second').asMilliseconds(),

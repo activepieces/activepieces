@@ -115,7 +115,7 @@ describe('Flow deletion recovery', () => {
     it('reaps a flow whose delete job was lost, without a user asking again', async () => {
         const ctx = await createTestContext(app!)
         const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
-        await db.update('flow', flow.id, { updated: dayjs().subtract(1, 'hour').toISOString() })
+        await db.update('flow', flow.id, { updated: dayjs().subtract(1, 'day').toISOString() })
 
         await flowBackgroundJobs(app!.log).reapTombstonedFlows()
 
@@ -207,12 +207,28 @@ describe('Flow deletion recovery', () => {
         expect(response?.json().externalId).toBe(flow.externalId)
     })
 
-    it('leaves a recently requested deletion to its own job', async () => {
+    it('is safe to tear the trigger source down twice', async () => {
+        const ctx = await createTestContext(app!)
+        const { flowId } = await savePollingFlowWithLiveTrigger(ctx, { status: FlowStatus.DISABLED })
+        const flowToDelete = await db.findOneByOrFail<Flow>('flow', { id: flowId })
+
+        await flowSideEffects(app!.log).preDelete({ flowToDelete })
+        const afterFirst = await db.findBy('trigger_source', { flowId })
+
+        await flowSideEffects(app!.log).preDelete({ flowToDelete })
+        const afterSecond = await db.findBy('trigger_source', { flowId })
+
+        expect(afterFirst).toHaveLength(0)
+        expect(afterSecond).toHaveLength(0)
+    })
+
+    it('reclaims a just-requested deletion rather than waiting on a clock', async () => {
         const ctx = await createTestContext(app!)
         const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
 
         await flowBackgroundJobs(app!.log).reapTombstonedFlows()
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
 
-        expect(await db.findOneBy<Flow>('flow', { id: flow.id })).not.toBeNull()
+        expect(await db.findOneBy<Flow>('flow', { id: flow.id })).toBeNull()
     })
 })
