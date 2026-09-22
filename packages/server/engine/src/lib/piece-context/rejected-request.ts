@@ -4,13 +4,14 @@ import { z } from 'zod'
 
 export async function throwForRejectedRequest({ response, name, summary }: ThrowForRejectedRequestParams): Promise<never> {
     const parsed = await readRejectionBody(response)
+    const statusSummary = `${summary}: ${response.status} ${response.statusText}`
     if (parsed?.code === ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED) {
         throw new PausedFlowTimeoutError(undefined, parsed.params?.pauseTimeoutDays)
     }
-    if (response.status >= 400 && response.status < 500) {
-        throw new WaitpointRejectedError(parsed?.params?.message ?? parsed?.message ?? `${summary}: ${response.status} ${response.statusText}`)
+    if (parsed?.code === ErrorCode.VALIDATION) {
+        throw new WaitpointRejectedError(parsed.params?.message ?? statusSummary)
     }
-    throw new EngineGenericError(name, `${summary}: ${response.status} ${response.statusText}`)
+    throw new EngineGenericError(name, statusSummary)
 }
 
 const rejectionBodySchema = z.object({
@@ -19,7 +20,6 @@ const rejectionBodySchema = z.object({
         message: z.string().optional(),
         pauseTimeoutDays: z.number().optional(),
     }).optional(),
-    message: z.string().optional(),
 })
 
 async function readRejectionBody(response: Response): Promise<RejectionBody | null> {
