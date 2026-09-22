@@ -20,6 +20,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { ProjectRoleDialog } from './project-role-dialog';
 import { RoleAvatar } from './role-avatar';
 import { roleCopy } from './role-copy';
+import { rolePermissionModel } from './role-permissions';
 
 export function ProjectRolesList({
   projectRoles,
@@ -57,7 +58,14 @@ export function ProjectRolesList({
     <div className="flex flex-col gap-3">
       <ItemGroup className="gap-2">
         {roles.map((role) => {
-          const description = roleCopy.builtInProjectRoleDescription(role.name);
+          const description =
+            roleCopy.builtInProjectRoleDescription(role.name) ??
+            t('permissionsCount', {
+              granted: rolePermissionModel.grantedBoxes({
+                permissions: role.permissions,
+              }),
+              total: rolePermissionModel.totalBoxes(),
+            });
           return (
             <Item
               key={role.id}
@@ -100,18 +108,21 @@ export function ProjectRolesList({
                 <ItemDescription>
                   {description}
                   {description && !isNil(role.userCount) && ' · '}
-                  {!isNil(role.userCount) && (
-                    <button
-                      type="button"
-                      className="text-primary hover:underline underline-offset-4"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setOpened({ role, tab: 'people' });
-                      }}
-                    >
-                      {t('rolePeopleCount', { count: role.userCount })}
-                    </button>
-                  )}
+                  {!isNil(role.userCount) &&
+                    (role.userCount === 0 ? (
+                      <span>{t('rolePeopleCount', { count: 0 })}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="text-primary underline-offset-4 hover:underline"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpened({ role, tab: 'people' });
+                        }}
+                      >
+                        {t('rolePeopleCount', { count: role.userCount })}
+                      </button>
+                    ))}
                 </ItemDescription>
               </ItemContent>
               <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
@@ -119,11 +130,6 @@ export function ProjectRolesList({
           );
         })}
       </ItemGroup>
-      <p className="text-xs text-muted-foreground">
-        {t(
-          'Press a row to open the role. Press the people count to see who has it. Edit and delete live inside the role, so the list stays quiet.',
-        )}
-      </p>
       {opened && (
         <ProjectRoleDialog
           key={`${opened.role.id}-${opened.tab}`}

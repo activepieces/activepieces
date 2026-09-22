@@ -35,8 +35,10 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-muted-foreground">
         <Users className="size-10" />
-        <p className="text-sm font-medium">{t('No users found')}</p>
-        <p className="text-xs">{t('Start by assigning users to this role')}</p>
+        <p className="text-sm font-medium">{t('Nobody has this role yet')}</p>
+        <p className="text-xs">
+          {t('People get it when they are added to a project with this role.')}
+        </p>
       </div>
     );
   }

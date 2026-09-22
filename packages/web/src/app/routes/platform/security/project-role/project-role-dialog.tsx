@@ -1,6 +1,6 @@
 import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { MoreHorizontal, Trash, Type } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash, Type } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -53,7 +53,7 @@ export const ProjectRoleDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="flex h-[min(38rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex h-[min(36rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
           mode={mode}
@@ -87,6 +87,7 @@ function RoleDialogBody({
       rolePermissionModel.basePermissions({ base: 'Viewer' }),
   );
   const [isRenaming, setIsRenaming] = useState(false);
+  const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const [tab, setTab] = useState<RoleDialogTab>(initialTab);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -106,12 +107,13 @@ function RoleDialogBody({
 
   const granted = rolePermissionModel.grantedBoxes({ permissions });
   const total = rolePermissionModel.totalBoxes();
+  const showsActions =
+    isCreate || isRenaming || (isEditingPermissions && tab === 'permissions');
   const isDirty =
-    !isBuiltIn &&
-    !isCreate &&
-    (name !== projectRole?.name ||
-      !samePermissions(permissions, projectRole?.permissions ?? []));
-  const canSubmit = name.trim().length > 0 && !isSaving;
+    name !== projectRole?.name ||
+    !samePermissions(permissions, projectRole?.permissions ?? []);
+  const canSubmit =
+    name.trim().length > 0 && !isSaving && (isCreate || isDirty);
 
   const changeBase = (nextBase: RoleBase) => {
     setBase(nextBase);
@@ -130,14 +132,14 @@ function RoleDialogBody({
   };
 
   const counter = (
-    <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+    <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground min-[380px]:inline">
       {t('grantedCount', { granted, total })}
     </span>
   );
 
   return (
     <>
-      <header className="flex shrink-0 items-center gap-3 border-b py-4 pr-14 pl-6">
+      <header className="flex shrink-0 items-center gap-3 border-b py-4 pr-12 pl-6">
         {!isCreate && projectRole && (
           <RoleAvatar
             name={projectRole.name}
@@ -167,7 +169,7 @@ function RoleDialogBody({
               />
             </>
           ) : (
-            <DialogTitle className="flex min-w-0 items-center gap-2 text-lg">
+            <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-lg">
               <span className="truncate">{projectRole?.name}</span>
               <Badge
                 variant={isBuiltIn ? 'accent' : 'inverted'}
@@ -192,6 +194,13 @@ function RoleDialogBody({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onSelect={() => setIsEditingPermissions(true)}
+                disabled={isEditingPermissions}
+              >
+                <Pencil className="size-4" />
+                {t('Edit permissions')}
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setIsRenaming(true)}>
                 <Type className="size-4" />
                 {t('Rename')}
@@ -270,32 +279,37 @@ function RoleDialogBody({
           }
           className="flex min-h-0 flex-1 flex-col gap-0"
         >
-          <TabsList
-            variant="outline"
-            className="w-full shrink-0 justify-start gap-1 border-b px-6"
-          >
-            <TabsTrigger variant="outline" value="permissions">
-              {t('Permissions')}
-            </TabsTrigger>
-            <TabsTrigger variant="outline" value="people" className="gap-2">
-              {t('People')}
-              <span className="tabular-nums text-muted-foreground">
-                {projectRole?.userCount ?? 0}
-              </span>
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex shrink-0 items-center justify-between gap-4 border-b px-6">
+            <TabsList variant="outline" className="gap-6">
+              <TabsTrigger
+                variant="outline"
+                value="permissions"
+                className="px-0 py-3"
+              >
+                {t('Permissions')}
+              </TabsTrigger>
+              <TabsTrigger
+                variant="outline"
+                value="people"
+                className="gap-2 px-0 py-3"
+              >
+                {t('People')}
+                <span className="tabular-nums text-muted-foreground">
+                  {projectRole?.userCount ?? 0}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+            {tab === 'permissions' && counter}
+          </div>
           <TabsContent
             value="permissions"
             className="mt-0 flex min-h-0 flex-1 flex-col"
           >
-            <div className="flex shrink-0 justify-end px-6 pt-4 pb-3">
-              {counter}
-            </div>
             <ScrollArea className="min-h-0 flex-1">
-              <div className="px-6 pb-4">
+              <div className="px-6 pt-4 pb-4">
                 <PermissionGrid
                   permissions={permissions}
-                  readOnly={Boolean(isBuiltIn)}
+                  readOnly={!isEditingPermissions}
                   onPermissionsChange={setPermissions}
                 />
               </div>
@@ -326,7 +340,7 @@ function RoleDialogBody({
                   'Flow status has no view-only level, so it has no View box.',
                 ))}
         </p>
-        {(isCreate || isDirty) && (
+        {showsActions && (
           <div className="flex shrink-0 items-center gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
               {t('Cancel')}

@@ -34,7 +34,8 @@ export function PermissionGrid({
       <ColumnHeader className={headerClassName} />
       {columnGroups.map((group) => (
         <div key={group.key} className="flex flex-col">
-          <p className="pt-3 pb-1 text-xss font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="flex items-center gap-2 pt-3 pb-1 text-xss font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="size-1.5 shrink-0" />
             {group.label}
           </p>
           {group.rows.map((row) => (
@@ -53,7 +54,7 @@ export function PermissionGrid({
               <span className="flex min-w-0 flex-1 items-baseline gap-2 text-sm">
                 <span className="truncate">{row.label}</span>
                 {row.viewAlwaysOn && (
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                  <span className="hidden shrink-0 text-xs text-muted-foreground min-[380px]:inline">
                     {t('view always on')}
                   </span>
                 )}

@@ -15,7 +15,7 @@ export function RoleAvatar({ name, tone, className }: RoleAvatarProps) {
     <span
       aria-hidden
       className={cn(
-        'flex size-9 shrink-0 items-center justify-center rounded-lg text-base font-semibold',
+        'flex size-9 shrink-0 items-center justify-center rounded-lg text-base font-medium leading-none',
         toneClasses[tone],
         className,
       )}
