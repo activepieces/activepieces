@@ -8,60 +8,148 @@ icon: "webhook"
 
 ## Overview
 
-Event Streaming forwards platform [audit events](/admin-guide/security/audit-logs/overview) to a webhook URL of your choice. The most common pattern is to point that webhook at a flow inside Activepieces — your flow then routes each event to the channel you care about (Slack, Gmail, Microsoft Teams, custom HTTP, etc.).
+Event Streaming forwards platform [audit events](/admin-guide/security/audit-logs/overview) to a webhook URL of your choice. Two patterns are common:
+
+- **Point it at a flow inside Activepieces.** Your flow then routes each event to the channel you care about (Slack, Gmail, Microsoft Teams, custom HTTP, etc.).
+- **Point it at an observability tool.** Pick a preset for Grafana Loki, Datadog, Splunk, Elasticsearch, and others, and Activepieces reshapes each event into that tool's ingest format before sending it.
 
 Use it to react to flow run failures, new sign-ins, project releases, or any other audit event with the alerting tool of your choice.
 
 ## Quick start
 
-The fastest way to get going is the **Generate handler flow** button in the New destination dialog. It builds a webhook-triggered flow with one router branch per event you select, plus a nested branch for failed runs when you pick `flow.run.finished`.
+Creating a destination is a three-step page: **Connection**, **Events**, and **Mapping**.
 
-1. Open **Platform Admin → Event Streaming**.
-2. Click **New Destination**, pick the events you want to handle, and click **Generate handler flow**.
-![Create event destination](/resources/screenshots/event-destination.png)
-3. The flow lands in your personal project with a webhook trigger and a router branch per selected event. Sample data is pre-baked so you can hit Test right away, you can add a router step under any event branch to check for specific projects/flows ids.
+1. Open **Platform Admin → Event Streaming** and click **New Destination**.
+2. **Connection** — pick a destination type, give the destination a name, paste the endpoint URL, and add any headers the endpoint needs.
+3. **Events** — select the events to forward. If you do not have an endpoint yet, click **Generate handler flow** here and Activepieces builds one for you (see below).
+4. **Mapping** — review the payload template, and use **Send test event** to fire a sample of any selected event.
+5. Click **Create destination**.
+
+### Generate a handler flow
+
+If you want the events handled inside Activepieces, click **Generate handler flow** on the Events step. It builds a webhook-triggered flow with one router branch per event you selected, plus a nested branch for failed runs when you pick `flow.run.finished`, and fills the endpoint URL in for you.
+
 ![Event destination handler flow](/resources/screenshots/event-destination-flow.png)
-4. Customize the branches with whatever pieces you like — Slack, Gmail, Microsoft Teams, custom HTTP, and so on.
-5. Publish the flow, then go back to the New destination dialog and click **Create** to save the destination.
-6. Use the **Test webhook** dropdown in the dialog to fire a sample of any selected event and confirm the round-trip.
+
+The flow lands in your personal project with sample data pre-baked, so you can hit Test right away. Add a router step under any event branch to check for specific project or flow ids, customize the branches with whatever pieces you like, then publish the flow and save the destination.
+
+## Destination types
+
+Each destination has a type. The type selects a **preset**: a set of default headers and a default payload template written for that tool's ingest API.
+
+| Type | Sends to | Reference |
+| --- | --- | --- |
+| Custom JSON | Any endpoint | Posts the raw event, unchanged |
+| Grafana Loki | `/loki/api/v1/push` | [Loki HTTP API](https://grafana.com/docs/loki/latest/reference/loki-http-api/#ingest-logs) |
+| Datadog | Logs intake | [Send logs](https://docs.datadoghq.com/api/latest/logs/#send-logs) |
+| PostHog | Capture API | [Capture](https://posthog.com/docs/api/capture) |
+| Splunk HEC | HTTP Event Collector | [Format events for HEC](https://docs.splunk.com/Documentation/Splunk/latest/Data/FormateventsforHTTPEventCollector) |
+| Elasticsearch | Index API | [Index a document](https://www.elastic.co/docs/api/doc/elasticsearch/operation/operation-index) |
+| Sumo Logic | HTTP source | [Upload logs](https://help.sumologic.com/docs/send-data/hosted-collectors/http-source/logs-metrics/upload-logs/) |
+| New Relic Logs | Log API | [Log API](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/) |
+| Axiom | Ingest API | [Ingest](https://axiom.co/docs/restapi/ingest) |
+| Better Stack | Logs API | [HTTP REST API](https://betterstack.com/docs/logs/http-rest-api/) |
+
+Picking a preset prefills its headers and its payload template. Both stay fully editable — the preset is a starting point, not a lock. Use **Reset to preset** on the Mapping step to go back to the default template.
+
+<Note>
+A preset fills in the header **names** the tool needs, but never a secret. Paste your own API key or token into the value before saving.
+</Note>
+
+## Headers
+
+Add any headers the endpoint requires — an `Authorization` bearer token, a `DD-API-KEY`, an `X-Scope-OrgID`, and so on. `Content-Type: application/json` is sent by default, so you only need to add it if the endpoint wants something else.
+
+Header values are **encrypted at rest and write-only**. When you reopen a destination, saved keys are listed with an empty value and the placeholder *Hidden — type to replace*:
+
+- Leave a value empty to keep the stored value.
+- Type a new value to replace it.
+- Delete the whole row to remove the header.
+
+The API behaves the same way: `GET` returns each header key with a `null` value, and sending `null` for a key on update keeps whatever is stored.
+
+A stored value is bound to the URL it was saved against. **If you change the URL, you must re-enter every header value in the same save** — the form marks the values it needs, and the API answers `400` if an update changes the URL while keeping a stored value. This is what makes "write-only" true: without it, anyone who can edit a destination could point it at their own endpoint and have the next audit event deliver the secret for them.
+
+<Warning>
+The payload template is **not** a place for a credential. Unlike headers, it is stored unencrypted, `GET /v1/event-destinations` returns it verbatim, and **Send test event** echoes the rendered body back to the browser. Put secrets in headers.
+</Warning>
+
+## Payload shape
+
+### Without a payload template
+
+A destination with an empty payload template — which is what **Custom JSON** gives you, and what every destination created before payload templates existed has — posts the raw audit event as the JSON body:
+
+- `action` — the event name (for example `flow.run.finished`).
+- `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
+- `id`, `created`, `updated` — event identifiers and timestamps.
+- `platformId`, `projectId` — context fields present on every event.
+- `userId`, `userEmail`, `ip`, `projectDisplayName` — who did it and where from. These are filled in for events that come from a user request. The four `flow.run.*` events are emitted by a worker rather than a request, so they carry none of these four fields.
+
+### With a payload template
+
+A payload template is a JSON object. Activepieces walks it and renders every string leaf against the event, then posts the result. Keys, structure, arrays, numbers, and booleans are sent as written.
+
+Inside a string leaf you can use:
+
+- **A token**, `{{ action }}` or `{{ data.flowRun.status }}`, which reads a field off the event.
+- **A [formula](/flows/formula-reference)**, such as `to_epoch({{ created }};"s")` or `combine({{ action }};to_json({{ data }});" ")`, using the same function library as flows.
+
+Here is the Grafana Loki preset, as an example:
+
+```json
+{
+  "streams": [
+    {
+      "stream": { "app": "activepieces", "event": "{{ action }}" },
+      "values": [
+        [
+          "combine(to_epoch({{ created }});\"000000\")",
+          "combine({{ action }};to_json({{ data }});\" \")"
+        ]
+      ]
+    }
+  ]
+}
+```
+
+**Types are preserved when the whole leaf is one expression.** A leaf that is exactly one token or exactly one function call keeps the value's native JSON type — a number stays a number, an object stays an object, and a field that is missing on this event becomes `null`. As soon as the leaf contains anything else, it is treated as text and everything in it is interpolated into a string. Two consequences worth knowing:
+
+- Pad a leaf with a space, `" {{ data.flowRun.duration }} "`, to force a number to be sent as a string.
+- To place an object inside a sentence, wrap it in `to_json(...)` rather than dropping the token into the text. `"{{ action }} {{ data }}"` stringifies the object badly; `combine({{ action }};to_json({{ data }});" ")` does not.
+
+<Note>
+A template expression that fails to render does not drop the event. Activepieces logs a warning, sends `null` in that position, and delivers the rest of the body — losing an audit record to a typo in a template would be worse.
+</Note>
+
+## Test, enable, and disable
+
+**Send test event** on the Mapping step builds a sample of the event you choose, renders it through the current template, and delivers it. It reports the HTTP status code, the round-trip time, and the exact body that was sent, so you can confirm the shape before you save.
+
+A test never reads a stored header value. It sends only the values typed into the form, so on a saved destination you must retype a secret to test with it. The button stays disabled, with a note, while any header value is blank.
+
+Each destination has an **Enabled** switch on the listing page. A disabled destination keeps its configuration but receives nothing.
 
 ## Available events
 
 You can subscribe a destination to any audit event — flow lifecycle, run status, folder/connection changes, user activity, and platform admin actions. See the [Audit Log Events catalog](/admin-guide/security/audit-logs/overview#event-catalog) for the full list and per-event payload details.
 
-## Use your own webhook URL
-
-If you already have a webhook URL — or you want to point Event Streaming at a SIEM, data warehouse, or any other external system — you can skip the handler flow and configure the destination by hand:
-
-1. Go to **Platform Admin → Event Streaming**.
-2. Click **New Destination**.
-3. Select the **Events** you want to forward.
-4. Paste your **Webhook URL** (must be a valid HTTPS endpoint).
-5. Use the **Test webhook** dropdown to fire a sample payload for any selected event.
-6. Click **Create** to save.
-
-## Payload shape
-
-Every event is delivered as an HTTP POST with a JSON body. The top-level fields are:
-
-- `action` — the event name (for example `flow.run.finished`).
-- `data` — event-specific payload, including details like the flow id, run id, status, or affected user.
-- `id`, `created`, `updated` — event identifiers and timestamps.
-- `platformId`, `projectId`, `userId` — context fields shared across all events.
-
 ## Requirements
 
-- **Enterprise Edition**: Event Streaming requires an enterprise plan with Audit Logs enabled.
+- **Enterprise Edition**: Event Streaming requires an enterprise plan with Event Streaming enabled.
 - **Platform admin**: only platform admins can configure destinations.
-- **HTTPS endpoint**: webhook URLs must use HTTPS.
+- **HTTPS endpoint**: use HTTPS for any external endpoint. Audit events carry user emails and IP addresses, and Activepieces does not reject an `http://` URL for you.
 - **Publicly accessible**: external endpoints must be reachable from your Activepieces server. Handler flows on this same instance are delivered internally, so they work even when the instance is not publicly reachable (for example, behind an internal load balancer).
 
 ## Troubleshooting
 
-- **Events not received**: for external endpoints, verify they are reachable from your server and return 2xx status codes. For a handler flow on this instance, make sure the flow is published and enabled.
-- **Test fails**: check that your URL is valid and uses HTTPS.
+- **Events not received**: check the destination is enabled. For external endpoints, verify they are reachable from your server and return 2xx status codes. For a handler flow on this instance, make sure the flow is published and enabled.
+- **Test fails**: check that your URL is valid and uses HTTPS. The test reports the status code and body returned by the endpoint, which usually names the problem.
 - **Missing events**: make sure the event type is selected in your destination configuration.
+- **A field arrives as `null`**: the field is not on that event. The four `flow.run.*` events carry no `userId`, `userEmail`, `ip`, or `projectDisplayName`, because a worker emits them rather than a user request.
+- **A field arrives as `"[object Object]"`**: an object token was used inside a longer string. Wrap it in `to_json(...)` instead.
 
 ## See also
 
 - [Audit Logs](/admin-guide/security/audit-logs/overview) — view every event recorded on your platform
+- [Formula reference](/flows/formula-reference) — every function available inside a payload template

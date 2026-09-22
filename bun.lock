@@ -139,7 +139,7 @@
     },
     "packages/core/formula": {
       "name": "@activepieces/core-formula",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "dependencies": {
         "dayjs": "1.11.9",
         "expr-eval": "2.0.2",
@@ -165,7 +165,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.174.0",
+      "version": "0.175.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",

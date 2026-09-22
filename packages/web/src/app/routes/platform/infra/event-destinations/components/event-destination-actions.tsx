@@ -2,6 +2,7 @@ import { EventDestination } from '@activepieces/shared';
 import { t } from 'i18next';
 import { MoreVertical, Pencil, Trash } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -13,8 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
-
-import { EventDestinationDialog } from './event-destination-dialog';
 
 const EventDestinationActions = ({
   destination,
@@ -36,16 +35,14 @@ const EventDestinationActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <EventDestinationDialog destination={destination}>
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-              }}
+          <DropdownMenuItem asChild>
+            <Link
+              to={`/platform/infrastructure/event-destinations/${destination.id}`}
             >
               <Pencil className="h-4 w-4 mr-2" />
               {t('Edit')}
-            </DropdownMenuItem>
-          </EventDestinationDialog>
+            </Link>
+          </DropdownMenuItem>
 
           <ConfirmationDeleteDialog
             title={t('Delete destination')}

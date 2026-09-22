@@ -12,6 +12,9 @@ const SettingsUsage = React.lazy(() => import('./platform/usage'));
 const EventDestinationsPage = React.lazy(
   () => import('./platform/infra/event-destinations'),
 );
+const EventDestinationFormPage = React.lazy(
+  () => import('./platform/infra/event-destinations/destination-form'),
+);
 const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
 const PlatformConfigurationsPage = React.lazy(() =>
   import('./platform/infra/configurations').then((m) => ({
@@ -423,6 +426,30 @@ export const platformRoutes = [
         <PageTitle title="Event Streaming">
           <SuspenseWrapper>
             <EventDestinationsPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/event-destinations/new',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="New Destination">
+          <SuspenseWrapper>
+            <EventDestinationFormPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/event-destinations/:id',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Edit Destination">
+          <SuspenseWrapper>
+            <EventDestinationFormPage />
           </SuspenseWrapper>
         </PageTitle>
       </PlatformLayout>
