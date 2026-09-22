@@ -24,12 +24,18 @@ const jwtConnection = {
   },
 };
 
-function makeStore(initial: Record<string, unknown> = {}) {
+function makeStore(
+  initial: Record<string, unknown> = {},
+  options: { failPut?: boolean } = {}
+) {
   const data: Record<string, unknown> = { ...initial };
   return {
     data,
     get: async (key: string) => (key in data ? data[key] : undefined),
     put: async (key: string, value: unknown) => {
+      if (options.failPut) {
+        throw new Error('store unavailable');
+      }
       data[key] = value;
       return value;
     },
@@ -109,6 +115,53 @@ describe('onEnable', () => {
     expect(store.data).toEqual({ postiz_webhook_id: 'webhook-9' });
   });
 
+  it('reuses the stored webhook on republish instead of registering a second one', async () => {
+    sendRequest
+      .mockResolvedValueOnce(response({ login: true }, { auth: 'header-token' }))
+      .mockResolvedValueOnce(response({ id: 'webhook-9' }));
+    const store = makeStore({ postiz_webhook_id: 'webhook-9' });
+
+    await newPost.onEnable(hookContext({ auth: jwtConnection, store }));
+
+    expect(sendRequest).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        body: expect.objectContaining({ id: 'webhook-9', url: WEBHOOK_URL }),
+      })
+    );
+    expect(store.data).toEqual({ postiz_webhook_id: 'webhook-9' });
+  });
+
+  it('sends no id on a first enable, so Postiz creates the webhook', async () => {
+    sendRequest
+      .mockResolvedValueOnce(response({ login: true }, { auth: 'header-token' }))
+      .mockResolvedValueOnce(response({ id: 'webhook-9' }));
+
+    await newPost.onEnable(hookContext({ auth: jwtConnection }));
+
+    const body = sendRequest.mock.calls[1][0].body;
+    expect(body).not.toHaveProperty('id');
+  });
+
+  it('deletes the webhook it just created when the id cannot be stored', async () => {
+    sendRequest
+      .mockResolvedValueOnce(response({ login: true }, { auth: 'header-token' }))
+      .mockResolvedValueOnce(response({ id: 'webhook-9' }))
+      .mockResolvedValueOnce(response({ login: true }, { auth: 'header-token' }))
+      .mockResolvedValueOnce(response({}));
+    const store = makeStore({}, { failPut: true });
+
+    await expect(
+      newPost.onEnable(hookContext({ auth: jwtConnection, store }))
+    ).rejects.toThrow('store unavailable');
+
+    expect(sendRequest).toHaveBeenNthCalledWith(4, {
+      method: 'DELETE',
+      url: 'https://api.postiz.com/webhooks/webhook-9',
+      headers: { auth: 'header-token' },
+    });
+  });
+
   it('reads the session token from the auth header when Postiz sends one', async () => {
     sendRequest
       .mockResolvedValueOnce(response({ login: true }, { auth: 'header-token' }))
@@ -159,13 +212,13 @@ describe('onDisable', () => {
     expect(store.data).toEqual({});
   });
 
-  it('still clears the stored id when Postiz has already dropped the webhook', async () => {
-    sendRequest.mockRejectedValue(new Error('Request failed with status code 404'));
+  it('keeps the stored id when the deletion fails, so the next enable reuses it', async () => {
+    sendRequest.mockRejectedValue(new Error('Request failed with status code 500'));
     const store = makeStore({ postiz_webhook_id: 'webhook-9' });
 
     await newPost.onDisable(hookContext({ auth: jwtConnection, store }));
 
-    expect(store.data).toEqual({});
+    expect(store.data).toEqual({ postiz_webhook_id: 'webhook-9' });
   });
 });
 

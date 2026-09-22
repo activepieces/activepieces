@@ -13,14 +13,16 @@ const WEBHOOK_ID_STORE_KEY = 'postiz_webhook_id';
 const SAMPLE_LOOKBACK_DAYS = 30;
 const SAMPLE_LIMIT = 5;
 
-async function createWebhook({
+async function upsertWebhook({
   auth,
   webhookUrl,
   flowId,
+  knownWebhookId,
 }: {
   auth: PostizAuthValue;
   webhookUrl: string;
   flowId: string;
+  knownWebhookId: string | undefined;
 }): Promise<string> {
   const token = await postizAuthHelpers.login(auth);
   const { data: response, error } = await tryCatch(() =>
@@ -29,6 +31,7 @@ async function createWebhook({
       url: `${postizAuthHelpers.instanceApiUrl(auth)}/webhooks`,
       headers: { auth: token },
       body: {
+        ...(knownWebhookId ? { id: knownWebhookId } : {}),
         name: `Activepieces (${flowId})`,
         url: webhookUrl,
         integrations: [],
@@ -41,6 +44,21 @@ async function createWebhook({
     );
   }
   return response.body.id;
+}
+
+async function deleteWebhook({
+  auth,
+  webhookId,
+}: {
+  auth: PostizAuthValue;
+  webhookId: string;
+}): Promise<void> {
+  const token = await postizAuthHelpers.login(auth);
+  await httpClient.sendRequest({
+    method: HttpMethod.DELETE,
+    url: `${postizAuthHelpers.instanceApiUrl(auth)}/webhooks/${webhookId}`,
+    headers: { auth: token },
+  });
 }
 
 function toPublishedPost(post: PostizWebhookPost) {
@@ -102,12 +120,22 @@ Postiz only delivers to public HTTPS URLs, so this trigger needs an Activepieces
     if (!postizAuthHelpers.isJwtAuth(context.auth)) {
       return;
     }
-    const webhookId = await createWebhook({
+    const knownWebhookId = await context.store.get<string>(
+      WEBHOOK_ID_STORE_KEY
+    );
+    const webhookId = await upsertWebhook({
       auth: context.auth,
       webhookUrl: context.webhookUrl,
       flowId: context.flows.current.id,
+      knownWebhookId: knownWebhookId ?? undefined,
     });
-    await context.store.put(WEBHOOK_ID_STORE_KEY, webhookId);
+    const { error } = await tryCatch(() =>
+      context.store.put(WEBHOOK_ID_STORE_KEY, webhookId)
+    );
+    if (error) {
+      await tryCatch(() => deleteWebhook({ auth: context.auth, webhookId }));
+      throw error;
+    }
   },
   async onDisable(context) {
     const webhookId = await context.store.get<string>(WEBHOOK_ID_STORE_KEY);
@@ -115,16 +143,12 @@ Postiz only delivers to public HTTPS URLs, so this trigger needs an Activepieces
       return;
     }
     if (postizAuthHelpers.isJwtAuth(context.auth)) {
-      await tryCatch(async () => {
-        const token = await postizAuthHelpers.login(context.auth);
-        await httpClient.sendRequest({
-          method: HttpMethod.DELETE,
-          url: `${postizAuthHelpers.instanceApiUrl(
-            context.auth
-          )}/webhooks/${webhookId}`,
-          headers: { auth: token },
-        });
-      });
+      const { error } = await tryCatch(() =>
+        deleteWebhook({ auth: context.auth, webhookId })
+      );
+      if (error) {
+        return;
+      }
     }
     await context.store.delete(WEBHOOK_ID_STORE_KEY);
   },
