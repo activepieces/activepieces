@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import {
   AiRouterAction,
+  AiRouterMatchMode,
   BranchExecutionType,
   CodeAction,
   EmptyTrigger,
@@ -51,6 +52,7 @@ const createAiRouter = (): AiRouterAction => ({
   settings: {
     text: '{{trigger.body.message}}',
     question: 'Which team?',
+    matchMode: AiRouterMatchMode.BEST_MATCH,
     branches: [
       {
         branchType: BranchExecutionType.CONDITION,
