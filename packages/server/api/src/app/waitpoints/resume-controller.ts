@@ -54,7 +54,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply })
         }
@@ -69,7 +70,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId/sync', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: waitpoint.workerHandlerId ?? waitpoint.id })
         }
@@ -82,7 +84,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 async function serveConfirmationPage({ flowRunId, waitpointId, url, queryParams, log, reply }: ConfirmationPageParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId: flowRun.projectId })
     const isOpen = !isNil(waitpoint) && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
     if (!isOpen) {
         await replyWithHtml({ reply, html: Mustache.render(STATUS_HTML_TEMPLATE, buildThemeView({ theme, extra: { title: ALREADY_TITLE, message: ALREADY_MESSAGE, success: false } })) })
