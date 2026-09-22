@@ -3,7 +3,7 @@ import autocannon from 'autocannon';
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { Project } from '@activepieces/shared';
+import type { Project } from '@activepieces/shared';
 
 const BENCHMARK_DOC = 'Load-test a deployment\'s sync-webhook path, auto-discover its shape, and attribute latency (queue-wait vs service-time) against the recommended setup.';
 

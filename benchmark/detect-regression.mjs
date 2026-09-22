@@ -8,7 +8,7 @@ const args = Object.fromEntries(
     }, []),
 )
 
-const required = ['current', 'history', 'label', 'runUrl']
+const required = ['current', 'label', 'runUrl']
 for (const key of required) {
     if (!args[key]) {
         console.error(`missing --${key}`)
@@ -21,9 +21,13 @@ const CONSECUTIVE = Number(args.consecutive ?? 1)
 const WEBHOOK_URL = process.env.BETTERSTACK_WEBHOOK_URL
 
 const DIMENSIONS = [
-    { name: 'latency p90', unit: 's', get: (r) => r.latency.p90Sec },
-    { name: 'latency p99', unit: 's', get: (r) => r.latency.p99Sec },
-    { name: 'throughput', unit: 'req/s', get: (r) => r.throughput.reqSec, invert: true },
+    { name: 'client p90', unit: 'ms', get: (r) => r.latency?.p90Ms ?? 0 },
+    { name: 'client p99', unit: 'ms', get: (r) => r.latency?.p99Ms ?? 0 },
+    { name: 'throughput', unit: 'req/s', get: (r) => r.throughput?.reqSec ?? 0, invert: true },
+    { name: 'queue wait p90', unit: 'ms', get: (r) => r.timeline?.queueWaitP90Ms ?? 0 },
+    { name: 'service p90', unit: 'ms', get: (r) => r.timeline?.serviceP90Ms ?? 0 },
+    { name: 'provision p50', unit: 'ms', get: (r) => r.timeline?.provisionP50Ms ?? 0 },
+    { name: 'boot p50', unit: 'ms', get: (r) => r.timeline?.bootP50Ms ?? 0 },
     { name: 'worker cpu p95', unit: '%', get: (r) => r.resources?.worker?.cpuPct?.p95 ?? 0 },
     { name: 'worker mem max', unit: 'MB', get: (r) => r.resources?.worker?.memMb?.max ?? 0 },
     { name: 'app cpu p95', unit: '%', get: (r) => r.resources?.app?.cpuPct?.p95 ?? 0 },
@@ -31,7 +35,7 @@ const DIMENSIONS = [
 ]
 
 const current = JSON.parse(readFileSync(args.current, 'utf8'))
-const historyPaths = args.history.split(',').filter(Boolean)
+const historyPaths = (args.history ?? '').split(',').filter(Boolean)
 const history = historyPaths.map((p) => JSON.parse(readFileSync(p, 'utf8')))
 
 function median(values) {
