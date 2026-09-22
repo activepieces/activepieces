@@ -66,7 +66,7 @@ async function createFlowRunAndWaitpoint(params: {
 }
 
 async function queueTerminalStatus({ flowRunId, projectId }: { flowRunId: string, projectId: string }) {
-    await distributedStore.merge(redisMetadataKey(flowRunId), {
+    await distributedStore.merge(redisMetadataKey({ projectId, runId: flowRunId }), {
         id: flowRunId,
         projectId,
         status: FlowRunStatus.CANCELED,

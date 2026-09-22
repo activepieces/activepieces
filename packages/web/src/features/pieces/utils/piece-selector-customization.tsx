@@ -262,5 +262,3 @@ export type ResolvedPieceSelectorTab = {
   name: string;
   icon: React.ReactNode;
 };
-
-export type { PieceSelectorTabConfig };

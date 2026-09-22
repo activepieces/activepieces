@@ -140,3 +140,63 @@ export const createVideoActionOutputSchema: OutputSchema = {
     },
   ],
 };
+
+export const generateImageActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'imageFile',
+      label: 'Image File URL',
+      value: '',
+      format: 'url',
+    },
+  ],
+};
+
+export const listModelsActionOutputSchema: OutputSchema = {
+  itemLabel: '{name}',
+  fields: [
+    {
+      key: 'models',
+      label: 'Models',
+      value: '',
+      listItems: [
+        { key: 'name', label: 'Model Name' },
+        { key: 'displayName', label: 'Display Name' },
+        { key: 'description', label: 'Description' },
+        { key: 'version', label: 'Version' },
+        { key: 'inputTokenLimit', label: 'Input Token Limit', format: 'number' },
+        { key: 'outputTokenLimit', label: 'Output Token Limit', format: 'number' },
+        { key: 'supportedGenerationMethods', label: 'Supported Methods' },
+      ],
+    },
+  ],
+};
+
+export const generateEmbeddingsActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'embedding',
+      label: 'Embedding Vector',
+    },
+    {
+      key: 'dimensions',
+      label: 'Dimensions',
+      format: 'number',
+    },
+  ],
+};
+
+export const countTokensActionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'totalTokens',
+      label: 'Total Tokens',
+      format: 'number',
+    },
+    {
+      key: 'cachedContentTokenCount',
+      label: 'Cached Content Token Count',
+      format: 'number',
+    },
+  ],
+};

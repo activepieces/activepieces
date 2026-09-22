@@ -113,7 +113,7 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
         resumePayload: { body, headers, queryParams },
     })
     if (!acceptsHtml(headers)) {
-        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, discarded: await responseWasDiscarded({ flowRunId, waitpointId, stale, log }) })
         return
     }
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
@@ -129,7 +129,7 @@ async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryP
         waitpointId,
         resumePayload: { body, headers, queryParams },
     })
-    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, discarded: await responseWasDiscarded({ flowRunId, waitpointId, stale, log }) })
 }
 
 async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: AsyncResumeHandlerParams & { correlationId: string }): Promise<void> {
@@ -157,6 +157,18 @@ async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, l
         correlationId,
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
+}
+
+/**
+ * A stale resume means the waitpoint is gone — which is equally what a SUCCEEDED delivery
+ * looks like once its HTTP response is lost and the caller retries. Only the absence of a
+ * consumption marker proves nobody ever accepted this response.
+ */
+async function responseWasDiscarded({ flowRunId, waitpointId, stale, log }: ResponseWasDiscardedParams): Promise<boolean> {
+    if (!stale) {
+        return false
+    }
+    return !(await resumeService(log).waitpointWasConsumed({ waitpointId, flowRunId }))
 }
 
 async function resolveResumePageTheme({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<ResumePageTheme> {
@@ -311,6 +323,13 @@ const STATUS_HTML_TEMPLATE = `<!DOCTYPE html>
 </div>
 </body>
 </html>`
+
+type ResponseWasDiscardedParams = {
+    flowRunId: string
+    waitpointId: string
+    stale: boolean
+    log: FastifyBaseLogger
+}
 
 type ConfirmationPageParams = {
     flowRunId: string

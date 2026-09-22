@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ApFlagId, AuthenticationResponse, OtpType, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ApFlagId, OtpType, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -10,7 +10,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { platformService } from '../platform/platform.service'
 import { userService } from '../user/user-service'
 import { userInvitationsService } from '../user-invitations/user-invitation.service'
-import { authenticationUtils } from './authentication-utils'
+import { AuthenticationResult, authenticationUtils } from './authentication-utils'
 import { authenticationService } from './authentication.service'
 import { signupNames } from './lib/signup-names'
 import { turnstile } from './lib/turnstile'
@@ -63,7 +63,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async verifyCode({ email, code, platformId }: VerifyCodeParams): Promise<AuthenticationResponse> {
+    async verifyCode({ email, code, platformId }: VerifyCodeParams): Promise<AuthenticationResult> {
         const identity = await userIdentityService(log).getIdentityByEmail(email)
         if (isNil(identity)) {
             throw new ActivepiecesError({ code: ErrorCode.INVALID_OTP, params: {} })
@@ -102,34 +102,36 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
                     params: { message: 'User is not invited to the platform' },
                 })
             }
-            const user = await userService(log).getOrCreateWithProject({
+            const { user, created } = await userService(log).getOrCreateWithProject({
                 identity: verifiedIdentity,
                 platformId,
             })
             await userInvitationsService(log).provisionUserInvitation({ email })
-            return authenticationUtils(log).getProjectAndToken({
+            const response = await authenticationUtils(log).getProjectAndToken({
                 userId: user.id,
                 platformId,
                 projectId: null,
             })
+            return { response, signedUp: created }
         }
 
         if (!isNil(preferredPlatformId)) {
             await assertPlatformAuthIsOpenTo({ email, platformId: preferredPlatformId, log })
-            const user = await userService(log).getOrCreateWithProject({
+            const { user, created } = await userService(log).getOrCreateWithProject({
                 identity: verifiedIdentity,
                 platformId: preferredPlatformId,
             })
-            return authenticationUtils(log).getProjectAndToken({
+            const response = await authenticationUtils(log).getProjectAndToken({
                 userId: user.id,
                 platformId: preferredPlatformId,
                 projectId: null,
             })
+            return { response, signedUp: created }
         }
         return authenticationUtils(log).provisionOrOnboard({ identityId: verifiedIdentity.id })
     },
 
-    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<CompleteSignUpResult> {
+    async completeSignUp({ identityId, fullName }: CompleteSignUpParams): Promise<AuthenticationResult & { provider: UserIdentityProvider }> {
         const identity = await userIdentityService(log).getOneOrFail({ id: identityId })
         const { firstName, lastName } = signupNames.splitFullName({ fullName, email: identity.email })
         const writeNames = async (): Promise<void> => {
@@ -143,7 +145,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
             callerTokenVersion: undefined,
             beforeProvision: writeNames,
         })
-        return { response, signedUp: provisioned }
+        return { response, signedUp: provisioned, provider: identity.provider }
     },
 })
 
@@ -193,11 +195,6 @@ type RequestCodeParams = {
     platformId: string | null
     captchaToken: string | undefined
     remoteIp: string | undefined
-}
-
-type CompleteSignUpResult = {
-    response: AuthenticationResponse
-    signedUp: boolean
 }
 
 type CompleteSignUpParams = {

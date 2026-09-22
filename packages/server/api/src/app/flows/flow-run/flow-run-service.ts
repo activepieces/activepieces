@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
-import { apDayjs, wideEvent } from '@activepieces/server-utils'
+import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
 import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
@@ -26,6 +26,7 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 import { runsMetadataQueue } from './flow-runs-queue'
 
 const CANCELLABLE_STATUSES: FlowRunStatus[] = [FlowRunStatus.PAUSED, FlowRunStatus.QUEUED]
+const PARENT_BOUND_RETRY_BACKOFF_MS = apDayjsDuration(30, 'second').asMilliseconds()
 
 
 export const WEBHOOK_TIMEOUT_MS = system.getNumberOrThrow(AppSystemProp.WEBHOOK_TIMEOUT_SECONDS) * 1000
@@ -648,10 +649,12 @@ export async function addToQueue(params: AddToQueueParams, log: FastifyBaseLogge
             executionType: ExecutionType.BEGIN,
             executeTrigger: params.executeTrigger,
         }
+    const aParentIsBlockedOnThisRun = params.flowRun.failParentOnFailure && !isNil(params.flowRun.parentRunId)
     await jobQueue(log).add({
         id: params.jobId ?? params.flowRun.id,
         type: JobType.ONE_TIME,
         data,
+        retryBackoffMs: aParentIsBlockedOnThisRun ? PARENT_BOUND_RETRY_BACKOFF_MS : undefined,
     })
     return params.flowRun
 }

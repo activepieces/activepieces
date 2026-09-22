@@ -211,6 +211,29 @@ export const listBroadcastsOutputSchema: OutputSchema = {
   ],
 };
 
+export const getBroadcastOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'id', label: 'Broadcast ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'segment_id', label: 'Segment ID' },
+    { key: 'topic_id', label: 'Topic ID' },
+    { key: 'from', label: 'From' },
+    { key: 'subject', label: 'Subject' },
+    { key: 'reply_to', label: 'Reply To' },
+    { key: 'preview_text', label: 'Preview Text' },
+    { key: 'html', label: 'HTML Body', format: 'html' },
+    { key: 'text', label: 'Text Body' },
+    { key: 'status', label: 'Status' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'scheduled_at', label: 'Scheduled At', format: 'datetime' },
+    { key: 'sent_at', label: 'Sent At', format: 'datetime' },
+  ],
+};
+
+export const updateBroadcastOutputSchema: OutputSchema = {
+  fields: [{ key: 'id', label: 'Broadcast ID' }],
+};
+
 export const getContactOutputSchema: OutputSchema = {
   fields: [
     { key: 'id', label: 'Contact ID' },
