@@ -18,7 +18,7 @@ export const getWordPressPost = createAction({
   name: 'get_post',
   classification: 'READ',
   description: 'Fetch one post by its ID',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Fetches a single WordPress post by its numeric post ID via the REST API. Use it to read the current content, status, or metadata of a known post before acting on it. Requires the post ID; read-only and idempotent.', idempotent: true },
   displayName: 'Get Post Details',
   outputSchema: getPostActionOutputSchema,
