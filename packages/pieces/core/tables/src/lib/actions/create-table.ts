@@ -15,6 +15,7 @@ export const createTable = createAction({
     name: Property.ShortText({
       displayName: 'Table Name',
       required: true,
+      placeholder: 'Customers',
     }),
     fields: Property.Array({
       displayName: 'Fields',
@@ -24,6 +25,7 @@ export const createTable = createAction({
         name: Property.ShortText({
           displayName: 'Field Name',
           required: true,
+          placeholder: 'Email',
         }),
         type: Property.StaticDropdown({
           displayName: 'Type',
@@ -41,8 +43,9 @@ export const createTable = createAction({
         }),
         options: Property.ShortText({
           displayName: 'Options',
-          description: 'Comma-separated options, used only when Type is Single Select.',
+          description: 'Only used when Type is Single Select.',
           required: false,
+          placeholder: 'Low, Medium, High',
         }),
       },
     }),
