@@ -55,6 +55,19 @@ async function createFlowRun(params?: { status?: FlowRunStatus }) {
 
 describe('Waitpoint service', () => {
     describe('createForPause', () => {
+        it('should write a fresh timed waitpoint row only once', async () => {
+            const { flowRun } = await createFlowRun()
+            const { waitpoint } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+
+            const stored = await db.findOneByOrFail<{ created: string, updated: string }>('waitpoint', { id: waitpoint.id })
+            expect(new Date(stored.updated).getTime()).toBe(new Date(stored.created).getTime())
+        })
+
         it('should create a PENDING waitpoint when none exists', async () => {
             const { flowRun } = await createFlowRun()
 
@@ -205,7 +218,7 @@ describe('Waitpoint service', () => {
 
         it('should give each waitpoint of one run its own resume job id', async () => {
             const { flowRun } = await createFlowRun()
-            const upsertJobSpy = vi.fn()
+            const upsertJobSpy = vi.fn().mockResolvedValue({ status: 'added' })
             vi.spyOn(systemJobModule, 'systemJobsSchedule').mockImplementation((log) => ({
                 ...originalSystemJobsSchedule(log),
                 upsertJob: upsertJobSpy,
@@ -513,6 +526,23 @@ describe('Waitpoint service', () => {
 
             expect(result.inserted).toBe(true)
             expect(result.waitpoint.type).toBe(PauseType.DELAY)
+        })
+
+        it('should remove the timeout job of a timed waitpoint it deletes', async () => {
+            const { flowRun } = await createFlowRun()
+            const { waitpoint } = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'delay_step',
+                type: PauseType.DELAY,
+                resumeDateTime: new Date(Date.now() + 60000).toISOString(),
+            })
+            const jobId = systemJobIds.resumeDelay({ waitpointId: waitpoint.id })
+            expect(await originalSystemJobsSchedule(app.log).getJob(jobId)).toBeDefined()
+
+            await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
+
+            expect(await originalSystemJobsSchedule(app.log).getJob(jobId)).toBeUndefined()
         })
     })
 
