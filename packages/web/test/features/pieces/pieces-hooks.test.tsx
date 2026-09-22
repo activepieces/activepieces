@@ -133,28 +133,11 @@ describe('usePieceOptions caching', () => {
     queryClient.clear();
   });
 
-  it.each([
-    ['serves a repeated dynamic property from cache', PropertyType.DYNAMIC, OPTIONS_REQUEST, OPTIONS_REQUEST, 1],
-    [
-      'refetches a dynamic property when a refresher changes',
-      PropertyType.DYNAMIC,
-      OPTIONS_REQUEST,
-      { ...OPTIONS_REQUEST, input: { authType: 'BEARER_TOKEN' } },
-      2,
-    ],
-    ['never caches dropdowns, whose options are live data', PropertyType.DROPDOWN, OPTIONS_REQUEST, OPTIONS_REQUEST, 2],
-    [
-      'never caches a dynamic property that reads a connection',
-      PropertyType.DYNAMIC,
-      CONNECTED_OPTIONS_REQUEST,
-      CONNECTED_OPTIONS_REQUEST,
-      2,
-    ],
-  ])('%s', async (_case, propertyType, firstRequest, secondRequest, expectedCalls) => {
+  function renderOptions() {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
-    const { result } = renderHook(
+    return renderHook(
       () =>
         piecesHooks.usePieceOptions({
           onSuccess: () => undefined,
@@ -163,11 +146,73 @@ describe('usePieceOptions caching', () => {
         }),
       { wrapper },
     );
+  }
 
-    await result.current.mutateAsync({ request: firstRequest, propertyType });
-    await result.current.mutateAsync({ request: secondRequest, propertyType });
+  it('serves a repeated dynamic property from cache without blocking on the network', async () => {
+    const { result } = renderOptions();
 
-    expect(options).toHaveBeenCalledTimes(expectedCalls);
+    const first = await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+    });
+    options.mockResolvedValue({ type: PropertyType.DYNAMIC, options: { added: {} } });
+    const second = await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+    });
+
+    expect(second).toStrictEqual(first);
+  });
+
+  it('always revalidates, so a schema that changed upstream is reported back', async () => {
+    const { result } = renderOptions();
+    const revalidated: unknown[] = [];
+
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+    });
+    const changed = { type: PropertyType.DYNAMIC, options: { newField: {} } };
+    options.mockResolvedValue(changed);
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+      onRevalidated: (data) => revalidated.push(data),
+    });
+    await vi.waitFor(() => expect(revalidated).toHaveLength(1));
+
+    expect(options).toHaveBeenCalledTimes(2);
+    expect(revalidated[0]).toStrictEqual(changed);
+  });
+
+  it('refetches a dynamic property when a refresher changes', async () => {
+    const { result } = renderOptions();
+
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+    });
+    await result.current.mutateAsync({
+      request: { ...OPTIONS_REQUEST, input: { authType: 'BEARER_TOKEN' } },
+      propertyType: PropertyType.DYNAMIC,
+    });
+
+    expect(options).toHaveBeenCalledTimes(2);
+  });
+
+  it('never serves dropdowns from cache, whose options are live data', async () => {
+    const { result } = renderOptions();
+
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DROPDOWN,
+    });
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DROPDOWN,
+    });
+
+    expect(options).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -180,9 +225,4 @@ const OPTIONS_REQUEST = {
   actionOrTriggerName: 'send_request',
   propertyName: 'authFields',
   input: { authType: 'BASIC' },
-};
-
-const CONNECTED_OPTIONS_REQUEST = {
-  ...OPTIONS_REQUEST,
-  input: { ...OPTIONS_REQUEST.input, auth: "{{connections['zendesk']}}" },
 };

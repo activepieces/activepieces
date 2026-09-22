@@ -63,6 +63,7 @@ const DynamicPropertiesImplementation = React.memo(
       undefined,
     );
     const optionsRequestId = useRef(0);
+    const appliedOptions = useRef<PiecePropertyMap | undefined>(undefined);
     const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
       DynamicPropertiesContext,
     );
@@ -128,6 +129,33 @@ const DynamicPropertiesImplementation = React.memo(
       }
       previousRefresherValues.current = refresherValues;
       const requestId = ++optionsRequestId.current;
+      const applySchema = (
+        options: PiecePropertyMap,
+        existingInput: Record<string, unknown>,
+      ) => {
+        const defaultValue = formUtils.getDefaultValueForProperties({
+          props: options,
+          existingInput,
+          propertySettings: props.propertySettings ?? {},
+        });
+        appliedOptions.current = options;
+        setPropertyMap(options);
+        const schemaWithoutDropdownOptions =
+          removeOptionsFromDropdownPropertiesSchema(options);
+        props.updateFormSchema?.(propertyPath, schemaWithoutDropdownOptions);
+
+        if (!readonly && props.updatePropertySettingsSchema) {
+          props.updatePropertySettingsSchema(
+            schemaWithoutDropdownOptions,
+            props.propertyName,
+            form,
+          );
+        }
+        form.setValue(propertyPath, defaultValue, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      };
       const restoreLastKnownValue = () => {
         if (!isNil(lastKnownValue.current)) {
           form.setValue(propertyPath, lastKnownValue.current, {
@@ -148,36 +176,22 @@ const DynamicPropertiesImplementation = React.memo(
             flowId: flowVersion.flowId,
           },
           propertyType: PropertyType.DYNAMIC,
+          onRevalidated: (response) => {
+            if (requestId !== optionsRequestId.current) {
+              return;
+            }
+            if (deepEqual(response.options, appliedOptions.current)) {
+              return;
+            }
+            applySchema(response.options, form.getValues(propertyPath) ?? {});
+          },
         },
         {
           onSuccess: (response) => {
             if (requestId !== optionsRequestId.current) {
               return;
             }
-            const defaultValue = formUtils.getDefaultValueForProperties({
-              props: response.options,
-              existingInput: lastKnownValue.current ?? {},
-              propertySettings: props.propertySettings ?? {},
-            });
-            setPropertyMap(response.options);
-            const schemaWithoutDropdownOptions =
-              removeOptionsFromDropdownPropertiesSchema(response.options);
-            props.updateFormSchema?.(
-              propertyPath,
-              schemaWithoutDropdownOptions,
-            );
-
-            if (!readonly && props.updatePropertySettingsSchema) {
-              props.updatePropertySettingsSchema(
-                schemaWithoutDropdownOptions,
-                props.propertyName,
-                form,
-              );
-            }
-            form.setValue(propertyPath, defaultValue, {
-              shouldValidate: true,
-              shouldDirty: true,
-            });
+            applySchema(response.options, lastKnownValue.current ?? {});
           },
           onError: () => {
             if (requestId !== optionsRequestId.current) {

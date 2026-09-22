@@ -8,7 +8,6 @@ import {
 import {
   AddPieceRequestBody,
   ApEdition,
-  AUTHENTICATION_PROPERTY_NAME,
   FlowActionType,
   flowPieceUtil,
   PieceOptionRequest,
@@ -412,23 +411,32 @@ export const piecesHooks = {
     return useMutation<
       ExecutePropsResult<T>,
       Error,
-      { request: PieceOptionRequest; propertyType: T }
+      {
+        request: PieceOptionRequest;
+        propertyType: T;
+        onRevalidated?: (data: ExecutePropsResult<T>) => void;
+      }
     >({
-      mutationFn: async ({ request, propertyType }) => {
+      mutationFn: async ({ request, propertyType, onRevalidated }) => {
         onMutate();
-        const readsConnection = !isNil(
-          request.input?.[AUTHENTICATION_PROPERTY_NAME],
-        );
-        const cacheable =
-          propertyType === PropertyType.DYNAMIC && !readsConnection;
-        if (!cacheable) {
+        if (propertyType !== PropertyType.DYNAMIC) {
           return piecesApi.options(request, propertyType);
         }
-        return queryClient.fetchQuery({
-          queryKey: ['piece-options', request],
+        const queryKey = ['piece-options', request];
+        const alreadyResolved =
+          queryClient.getQueryData<ExecutePropsResult<T>>(queryKey);
+        const revalidated = queryClient.fetchQuery({
+          queryKey,
           queryFn: () => piecesApi.options(request, propertyType),
-          staleTime: DYNAMIC_PROPERTIES_STALE_TIME_MS,
+          staleTime: 0,
         });
+        if (isNil(alreadyResolved)) {
+          return revalidated;
+        }
+        revalidated
+          .then((fresh) => onRevalidated?.(fresh))
+          .catch(() => undefined);
+        return alreadyResolved;
       },
       onSuccess,
       onError,
@@ -668,5 +676,4 @@ function piecesQueryOptions({
 }
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
-const DYNAMIC_PROPERTIES_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
