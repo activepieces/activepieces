@@ -89,6 +89,22 @@ Clearing a description from this action is therefore no longer possible; that is
 
 Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
 
+#### Airtable's Update Record writes only the fields you turn on, and Clean Record is gone
+
+"Update Airtable Record" listed every field of the table and wrote every one that was not empty. That made clearing a field impossible, and it also wrote a value to checkbox columns nobody had touched: a checkbox in a step form has no empty state, so the builder stored `false` for it and the step sent that `false` on every run, unticking the box in Airtable.
+
+Each field now carries its own toggle. Only the fields you turn on are written, and a field you turn on and leave empty is cleared — `false` for a checkbox, an empty list for a multiple select, a linked record or an attachment, and empty for everything else. A field you leave turned off is never sent.
+
+"Clean Record" existed only to clear fields, which the toggles now do in the same step, so it is removed. An agent that cleared a field with it can pass `null` to "Update Record", which already accepts it. A flow that still holds a Clean Record step keeps running on the piece version it was built with; moving that step to `1.0.0` is refused, because the action no longer exists there.
+
+The piece is at `1.0.0`. A step stays on the version it was built with until someone moves it.
+
+#### What you need to do
+
+Nothing until you move an Airtable step to `1.0.0`. When you do, the builder resets that step's settings, as it does for any major piece upgrade: reconfigure the step, and turn on the fields it should write. A step on `1.0.0` with no field turned on writes nothing.
+
+Replace every "Clean Record" step with "Update Airtable Record": turn on the fields to clear, and leave their values empty.
+
 ## 0.91.0
 
 ### What has changed?

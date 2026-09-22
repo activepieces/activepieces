@@ -8,7 +8,7 @@ export const airtableCreateTableAiAction = createAction({
   auth: airtableAuth,
   name: 'create_table_ai',
   classification: 'WRITE',
-  displayName: 'Create Table (Agent)',
+  displayName: 'Create Table',
   description: 'Create a new table in an existing base.',
   audience: 'ai',
   outputSchema: createTableAiActionOutputSchema,
@@ -21,7 +21,7 @@ export const airtableCreateTableAiAction = createAction({
     base_id: Property.ShortText({
       displayName: 'Base ID',
       description:
-        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases (Agent).',
+        'The Airtable base ID (e.g. "appXXXXXXXXXXXXXX"). Resolve it with List Bases.',
       required: true,
     }),
     name: Property.ShortText({
