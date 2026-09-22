@@ -1,15 +1,18 @@
 import { AIProviderName } from '@activepieces/core-utils'
+import { AIProviderModelType } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockGetChatProvider, mockGetConfigOrThrow } = vi.hoisted(() => ({
+const { mockGetChatProvider, mockGetConfigOrThrow, mockListModels } = vi.hoisted(() => ({
     mockGetChatProvider: vi.fn().mockResolvedValue(null),
     mockGetConfigOrThrow: vi.fn(),
+    mockListModels: vi.fn().mockResolvedValue([]),
 }))
 
 vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
     aiProviderService: () => ({
         getChatProvider: mockGetChatProvider,
         getConfigOrThrow: mockGetConfigOrThrow,
+        listModels: mockListModels,
     }),
 }))
 
@@ -92,5 +95,54 @@ describe('resolveFastModel', () => {
         const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, scope, runModelId: 'anthropic/claude-opus-4.8', log })
 
         expect(model).toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
+    })
+})
+
+describe('resolveChatModelId', () => {
+    const bedrockKey = { provider: AIProviderName.BEDROCK, configId: 'config-1', auth: { accessKeyId: 'a', secretAccessKey: 's' }, config: { region: 'us-east-1' }, modelScope: 'all' as const, modelIds: [] }
+    const text = (id: string) => ({ id, name: id, type: AIProviderModelType.TEXT })
+
+    const resolve = ({ selectedModel }: { selectedModel: string | null }) =>
+        agentHelpers.resolveChatModelId({ platformId, providerConfig: bedrockKey, selectedModel, scope, log })
+
+    beforeEach(() => {
+        mockListModels.mockClear().mockResolvedValue([])
+    })
+
+    it('never asks the provider when our own catalogue already answers', async () => {
+        const anthropicKey = { ...bedrockKey, provider: AIProviderName.ANTHROPIC, config: {} }
+
+        await expect(agentHelpers.resolveChatModelId({ platformId, providerConfig: anthropicKey, selectedModel: 'smart', scope, log })).resolves.toBe('claude-sonnet-4-6')
+        expect(mockListModels).not.toHaveBeenCalled()
+    })
+
+    it('runs a chat tier on a model the key actually serves', async () => {
+        mockListModels.mockResolvedValue([text('amazon.titan-text-express-v1')])
+
+        await expect(resolve({ selectedModel: 'smart' })).resolves.toBe('amazon.titan-text-express-v1')
+        expect(mockListModels).toHaveBeenCalledWith({ platformId, provider: AIProviderName.BEDROCK, scope, configId: 'config-1' })
+    })
+
+    it('keeps the tier meaningful when the provider hosts the model that tier names', async () => {
+        mockListModels.mockResolvedValue([
+            text('amazon.titan-text-express-v1'),
+            text('global.anthropic.claude-haiku-4-5-20251001-v1:0'),
+            text('global.anthropic.claude-sonnet-4-6-20250101-v1:0'),
+        ])
+
+        await expect(resolve({ selectedModel: 'fast' })).resolves.toBe('global.anthropic.claude-haiku-4-5-20251001-v1:0')
+        await expect(resolve({ selectedModel: 'smart' })).resolves.toBe('global.anthropic.claude-sonnet-4-6-20250101-v1:0')
+    })
+
+    it('honours a model the user picked over the tier default', async () => {
+        mockListModels.mockResolvedValue([text('amazon.titan-text-express-v1'), text('mistral.mistral-large-2407-v1:0')])
+
+        await expect(resolve({ selectedModel: 'mistral.mistral-large-2407-v1:0' })).resolves.toBe('mistral.mistral-large-2407-v1:0')
+    })
+
+    it('never answers with a model the key does not serve', async () => {
+        mockListModels.mockResolvedValue([{ id: 'amazon.titan-image-generator-v1', name: 'Titan Image', type: AIProviderModelType.IMAGE }])
+
+        await expect(resolve({ selectedModel: 'smart' })).rejects.toMatchObject({ error: { code: 'ENTITY_NOT_FOUND' } })
     })
 })

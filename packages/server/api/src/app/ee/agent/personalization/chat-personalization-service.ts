@@ -252,7 +252,7 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
         ])
         const providerName = provider.provider
         const webSearch = enabledTools.data?.webSearch ?? null
-        const modelId = agentHelpers.resolveModelIdForProvider({ provider: providerName, selectedModel: null, config: provider.config, modelScope: provider.modelScope, modelIds: provider.modelIds })
+        const modelId = await agentHelpers.resolveChatModelId({ platformId, providerConfig: provider, selectedModel: null, scope: PERSONALIZATION_PROVIDER_SCOPE, log })
         return {
             claimed: true,
             credentials: provider,

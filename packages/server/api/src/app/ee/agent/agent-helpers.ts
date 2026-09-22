@@ -1,7 +1,7 @@
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -143,6 +143,28 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
             ? `the ${provider} AI provider is not configured on this platform`
             : `no ${provider} AI provider key is available to this project`)
     }
+}
+
+async function resolveChatModelId({ platformId, providerConfig, selectedModel, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, selectedModel: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string> {
+    const { provider, config, modelScope, modelIds, configId } = providerConfig
+    const { data, error } = tryCatchSync(() => agentModelResolution.resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }))
+    if (!isNil(data)) {
+        return data
+    }
+    const keyServesNoKnownModel = error instanceof ActivepiecesError && error.error.code === ErrorCode.ENTITY_NOT_FOUND
+    if (!keyServesNoKnownModel) {
+        throw error
+    }
+    const offered = await aiProviderService(log).listModels({ platformId, provider, scope, configId })
+    const textModels = offered.filter((model) => model.type === AIProviderModelType.TEXT)
+    if (textModels.length === 0) {
+        throw error
+    }
+    const tier = agentModelResolution.resolveTier({ tierId: selectedModel })
+    const picked = textModels.find((model) => model.id === selectedModel)
+        ?? textModels.find((model) => model.id.includes(tier.nativeModelId))
+        ?? textModels[0]
+    return picked.id
 }
 
 async function resolveFastModel({ platformId, provider, providerConfigId, scope, runModelId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, runModelId?: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
@@ -308,6 +330,7 @@ export const agentHelpers = {
     assertRunProviderConfigured,
     ...agentModelResolution,
     resolveFastModel,
+    resolveChatModelId,
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,
