@@ -185,6 +185,31 @@ describe('usePieceOptions caching', () => {
     expect(revalidated[0]).toStrictEqual(changed);
   });
 
+  it('reports a failed revalidation instead of silently keeping the cached schema', async () => {
+    const { result } = renderOptions();
+    const failures: Error[] = [];
+
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+    });
+    options.mockRejectedValue(new Error('options endpoint is down'));
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+      onRevalidateFailed: (error) => failures.push(error),
+    });
+    await vi.waitFor(() => expect(failures).toHaveLength(1));
+
+    options.mockResolvedValue({ type: PropertyType.DYNAMIC, options: {} });
+    await result.current.mutateAsync({
+      request: OPTIONS_REQUEST,
+      propertyType: PropertyType.DYNAMIC,
+    });
+
+    expect(options).toHaveBeenCalledTimes(3);
+  });
+
   it('refetches a dynamic property when a refresher changes', async () => {
     const { result } = renderOptions();
 

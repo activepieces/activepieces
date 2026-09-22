@@ -415,9 +415,15 @@ export const piecesHooks = {
         request: PieceOptionRequest;
         propertyType: T;
         onRevalidated?: (data: ExecutePropsResult<T>) => void;
+        onRevalidateFailed?: (error: Error) => void;
       }
     >({
-      mutationFn: async ({ request, propertyType, onRevalidated }) => {
+      mutationFn: async ({
+        request,
+        propertyType,
+        onRevalidated,
+        onRevalidateFailed,
+      }) => {
         onMutate();
         if (propertyType !== PropertyType.DYNAMIC) {
           return piecesApi.options(request, propertyType);
@@ -433,9 +439,10 @@ export const piecesHooks = {
         if (isNil(alreadyResolved)) {
           return revalidated;
         }
-        revalidated
-          .then((fresh) => onRevalidated?.(fresh))
-          .catch(() => undefined);
+        revalidated.then(onRevalidated).catch((error: Error) => {
+          queryClient.removeQueries({ queryKey, exact: true });
+          onRevalidateFailed?.(error);
+        });
         return alreadyResolved;
       },
       onSuccess,

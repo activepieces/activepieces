@@ -5,7 +5,7 @@ import {
   PropertySettings,
 } from '@activepieces/shared';
 import deepEqual from 'deep-equal';
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import { useFormContext, UseFormReturn, useWatch } from 'react-hook-form';
 import { useDeepCompareEffectNoCheck } from 'use-deep-compare-effect';
 
@@ -64,6 +64,13 @@ const DynamicPropertiesImplementation = React.memo(
     );
     const optionsRequestId = useRef(0);
     const appliedOptions = useRef<PiecePropertyMap | undefined>(undefined);
+    const panelIsOpen = useRef(true);
+    useEffect(() => {
+      panelIsOpen.current = true;
+      return () => {
+        panelIsOpen.current = false;
+      };
+    }, []);
     const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
       DynamicPropertiesContext,
     );
@@ -177,13 +184,21 @@ const DynamicPropertiesImplementation = React.memo(
           },
           propertyType: PropertyType.DYNAMIC,
           onRevalidated: (response) => {
-            if (requestId !== optionsRequestId.current) {
+            const supersededOrClosed =
+              requestId !== optionsRequestId.current || !panelIsOpen.current;
+            if (supersededOrClosed) {
               return;
             }
             if (deepEqual(response.options, appliedOptions.current)) {
               return;
             }
             applySchema(response.options, form.getValues(propertyPath) ?? {});
+          },
+          onRevalidateFailed: (error) => {
+            console.error(error);
+            if (panelIsOpen.current) {
+              internalErrorToast();
+            }
           },
         },
         {
