@@ -44,11 +44,7 @@ export function RolesCard({
       </TooltipContent>
     </Tooltip>
   ) : (
-    <ProjectRoleDialog
-      mode="create"
-      onSave={() => refetch()}
-      platformId={platform.id}
-    >
+    <ProjectRoleDialog mode="create" onSave={() => refetch()}>
       <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
         {t('New role')}
       </AnimatedIconButton>

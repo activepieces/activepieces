@@ -1,6 +1,5 @@
-import { cn } from '@/lib/utils';
-
 import { RoleTone } from '@/features/members/lib/role-copy';
+import { cn } from '@/lib/utils';
 
 const toneClasses: Record<RoleTone, string> = {
   brand: 'bg-primary/10 text-primary',

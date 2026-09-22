@@ -22,13 +22,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { roleCopy } from '@/features/members/lib/role-copy';
 import { projectRoleMutations } from '@/features/platform-admin';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { PermissionGrid } from './permission-grid';
 import { RoleAvatar } from './role-avatar';
-import { roleCopy } from '@/features/members/lib/role-copy';
 import { RolePeopleTab } from './role-people-tab';
 import { ROLE_BASES, RoleBase, rolePermissionModel } from './role-permissions';
 
@@ -101,16 +101,18 @@ function RoleDialogBody({
             : t('Could not save the role. Try again.'),
         ),
     });
-  const { mutate: deleteRole } = projectRoleMutations.useDeleteProjectRole({
-    onSuccess: onSaved,
-  });
+  const { mutateAsync: deleteRole } = projectRoleMutations.useDeleteProjectRole(
+    {
+      onSuccess: onSaved,
+    },
+  );
 
   const granted = rolePermissionModel.grantedBoxes({ permissions });
   const total = rolePermissionModel.totalBoxes();
   const showsActions =
     isCreate || isRenaming || (isEditingPermissions && tab === 'permissions');
   const isDirty =
-    name !== projectRole?.name ||
+    name.trim() !== projectRole?.name ||
     !samePermissions(permissions, projectRole?.permissions ?? []);
   const canSubmit =
     name.trim().length > 0 && !isSaving && (isCreate || isDirty);
@@ -217,7 +219,12 @@ function RoleDialogBody({
                 )}
                 entityName={`${t('Project Role')} ${projectRole.name}`}
                 buttonText={t('Delete role')}
-                mutationFn={async () => deleteRole(projectRole.name)}
+                onError={() =>
+                  setSaveError(t('Could not delete the role. Try again.'))
+                }
+                mutationFn={async () => {
+                  await deleteRole(projectRole.name);
+                }}
               >
                 <DropdownMenuItem
                   variant="destructive"
@@ -379,7 +386,6 @@ type RoleDialogBodyProps = {
 type ProjectRoleDialogProps = {
   mode: 'create' | 'edit';
   projectRole?: ProjectRole;
-  platformId: string;
   onSave: () => void;
   children?: ReactNode;
   open?: boolean;

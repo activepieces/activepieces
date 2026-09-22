@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { roleCopy } from '@/features/members/lib/role-copy';
-import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 import { RoleAvatar } from './role-avatar';
@@ -28,7 +27,6 @@ export function ProjectRolesList({
   isError,
   refetch,
 }: ProjectRolesListProps) {
-  const { platform } = platformHooks.useCurrentPlatform();
   const [opened, setOpened] = useState<OpenedRole | null>(null);
 
   if (isLoading) {
@@ -125,7 +123,6 @@ export function ProjectRolesList({
           key={`${opened.role.id}-${opened.tab}`}
           mode="edit"
           projectRole={opened.role}
-          platformId={platform.id}
           initialTab={opened.tab}
           open={true}
           onOpenChange={(open) => {
