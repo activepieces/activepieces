@@ -506,7 +506,8 @@ async function enrichWithKeysIfNeeded({ providerId, platformId, log }: { provide
             })
             const rawAuth: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
             await aiProviderRepo().update({ id: providerId, platformId }, { auth: await encryptUtils.encryptObject(rawAuth) })
-            return rawAuth
+            const persisted = await getRowByIdOrThrow({ platformId, configId: providerId })
+            return encryptUtils.decryptObject<AIProviderAuthConfig>(persisted.auth)
         },
     })
 }

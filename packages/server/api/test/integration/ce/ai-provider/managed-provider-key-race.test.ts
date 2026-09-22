@@ -98,6 +98,19 @@ describe('managed AI provider key provisioning', () => {
         expect(await readPersistedApiKey(ctx.platform.id)).toBe('sk-or-1')
     })
 
+    it('does not hand back a key that was not persisted when the row is deleted mid-mint', async () => {
+        vi.spyOn(openRouterApi, 'createKey').mockImplementation(async () => {
+            await db.delete('ai_provider', (await db.findOneByOrFail<{ id: string }>('ai_provider', {
+                platformId: ctx.platform.id,
+                provider: AIProviderName.ACTIVEPIECES,
+            })).id)
+            return { key: 'sk-or-1', data: mockOpenRouterKey('hash-1') }
+        })
+
+        await expect(aiProviderService(app.log).getOrCreateActivePiecesProviderAuthConfig(ctx.platform.id)).rejects.toThrow()
+        expect(await readPersistedApiKey(ctx.platform.id)).toBeUndefined()
+    })
+
     it('does not mint again once the platform already has a managed key', async () => {
         const createKey = vi.spyOn(openRouterApi, 'createKey').mockImplementation(slowMintingKeys())
 
