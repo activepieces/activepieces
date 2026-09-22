@@ -440,7 +440,6 @@ import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-
 import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
 import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
 import { AddMcpOAuthCodeNonce1851000000000 } from './migration/postgres/1851000000000-AddMcpOAuthCodeNonce'
-import { AddFlowDeletingUpdatedIndex1854000000000 } from './migration/postgres/1854000000000-AddFlowDeletingUpdatedIndex'
 import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -897,7 +896,6 @@ export const getMigrations = (): (new () => Migration)[] => {
         NullOrphanFolderReferences1846000000000,
         AddAgentConversationAiCredits1850000000000,
         AddMcpOAuthCodeNonce1851000000000,
-        AddFlowDeletingUpdatedIndex1854000000000,
         FlowExternalIdUniqueIgnoresDeleting1855000000000,
     ]
     return migrations

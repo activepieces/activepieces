@@ -282,19 +282,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteFlowHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.HARD_DELETE_PROJECT, (data) => platformProjectBackgroundJobs(app.log).hardDeleteProjectHandler(data))
 
-    systemJobHandlers.registerJobHandler(SystemJobName.STRANDED_FLOW_DELETION_SWEEP, () => flowBackgroundJobs(app.log).strandedDeletionSweepHandler())
-    await systemJobsSchedule(app.log).upsertJob({
-        job: {
-            name: SystemJobName.STRANDED_FLOW_DELETION_SWEEP,
-            data: {},
-            jobId: SystemJobName.STRANDED_FLOW_DELETION_SWEEP,
-        },
-        schedule: {
-            type: 'repeated',
-            cron: '*/15 * * * *',
-        },
-    })
-
     systemJobHandlers.registerJobHandler(SystemJobName.CHAT_STALE_SWEEP, async () => {
         await agentHelpers.recoverAllStaleStreamingConversations({ log: app.log })
     })

@@ -112,12 +112,12 @@ describe('Flow deletion recovery', () => {
         expect(await waitForRowToDisappear(flow.id)).toBeNull()
     })
 
-    it('sweeps a flow whose delete job was lost, without a user asking again', async () => {
+    it('reaps a flow whose delete job was lost, without a user asking again', async () => {
         const ctx = await createTestContext(app!)
         const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
         await db.update('flow', flow.id, { updated: dayjs().subtract(1, 'hour').toISOString() })
 
-        await flowBackgroundJobs(app!.log).strandedDeletionSweepHandler()
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
 
         expect(await waitForRowToDisappear(flow.id)).toBeNull()
     })
@@ -147,22 +147,22 @@ describe('Flow deletion recovery', () => {
         expect(triggerSource).toBeNull()
     })
 
-    it('moves a swept flow to the back of the queue so a failing one cannot starve the rest', async () => {
+    it('keeps reaping the rest when one flow cannot be reclaimed', async () => {
         const ctx = await createTestContext(app!)
-        const mockFlow = createMockFlow({
+        const doomed = createMockFlow({
             projectId: ctx.project.id,
             status: FlowStatus.DISABLED,
             operationStatus: FlowOperationStatus.DELETING,
         })
-        await db.save('flow', mockFlow)
-        const mockVersion = createMockFlowVersion({ flowId: mockFlow.id })
-        await db.save('flow_version', mockVersion)
-        await db.update('flow', mockFlow.id, { publishedVersionId: mockVersion.id })
+        await db.save('flow', doomed)
+        const doomedVersion = createMockFlowVersion({ flowId: doomed.id })
+        await db.save('flow_version', doomedVersion)
+        await db.update('flow', doomed.id, { publishedVersionId: doomedVersion.id })
         await db.save('trigger_source', {
             id: apId(),
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
-            flowId: mockFlow.id,
+            flowId: doomed.id,
             flowVersionId: apId(),
             projectId: ctx.project.id,
             pieceName: '@activepieces/piece-schedule',
@@ -172,16 +172,14 @@ describe('Flow deletion recovery', () => {
             simulate: false,
             schedule: null,
         })
-        await db.update('flow', mockFlow.id, { updated: dayjs().subtract(2, 'hour').toISOString() })
+        const healthy = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+        await db.update('flow', doomed.id, { updated: dayjs().subtract(2, 'hour').toISOString() })
+        await db.update('flow', healthy.id, { updated: dayjs().subtract(2, 'hour').toISOString() })
 
-        await flowBackgroundJobs(app!.log).strandedDeletionSweepHandler()
-        const afterFirstSweep = await db.findOneByOrFail<Flow>('flow', { id: mockFlow.id })
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
 
-        await flowBackgroundJobs(app!.log).strandedDeletionSweepHandler()
-        const afterSecondSweep = await db.findOneByOrFail<Flow>('flow', { id: mockFlow.id })
-
-        expect(dayjs(afterFirstSweep.updated).isAfter(dayjs().subtract(1, 'minute'))).toBe(true)
-        expect(dayjs(afterSecondSweep.updated).isSame(afterFirstSweep.updated)).toBe(true)
+        expect(await db.findOneBy<Flow>('flow', { id: healthy.id })).toBeNull()
+        expect(await db.findOneBy<Flow>('flow', { id: doomed.id })).not.toBeNull()
     })
 
     it('is gone to every reader the moment the request returns, not when the job lands', async () => {
@@ -213,7 +211,7 @@ describe('Flow deletion recovery', () => {
         const ctx = await createTestContext(app!)
         const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
 
-        await flowBackgroundJobs(app!.log).strandedDeletionSweepHandler()
+        await flowBackgroundJobs(app!.log).reapTombstonedFlows()
 
         expect(await db.findOneBy<Flow>('flow', { id: flow.id })).not.toBeNull()
     })
