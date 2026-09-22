@@ -41,22 +41,20 @@ export class AddWaitpointDeadLetteredAt1857000000000 implements Migration {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        const concurrently = isPGlite() ? '' : 'CONCURRENTLY'
-
-        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_signal_ref_id"`)
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_waitpoint_signal_ref_id"')
         await queryRunner.query(`
-            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_signal_ref_id"
+            CREATE INDEX IF NOT EXISTS "idx_waitpoint_signal_ref_id"
             ON "waitpoint_signal" ("refId", "projectId")
         `)
 
         await queryRunner.query(`
-            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_pending_resume_date_time"
+            CREATE INDEX IF NOT EXISTS "idx_waitpoint_pending_resume_date_time"
             ON "waitpoint" ("resumeDateTime")
             WHERE "status" = 'PENDING' AND "resumeDateTime" IS NOT NULL
         `)
 
-        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_undelivered_barrier"`)
-        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_live_deadline"`)
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_waitpoint_undelivered_barrier"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_waitpoint_live_deadline"')
         await queryRunner.query('ALTER TABLE "waitpoint" DROP COLUMN IF EXISTS "deadLetteredAt"')
     }
 }
