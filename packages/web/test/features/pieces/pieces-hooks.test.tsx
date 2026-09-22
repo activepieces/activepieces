@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
+import {
+  PieceMetadataModelSummary,
+  PropertyType,
+} from '@activepieces/pieces-framework';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
@@ -30,10 +33,12 @@ vi.mock('@/features/pieces/stores/piece-selector-tabs-provider', () => ({
 }));
 
 const list = vi.fn();
+const options = vi.fn();
 vi.mock('@/features/pieces/api/pieces-api', () => ({
   piecesApi: {
     list: (request: { projectId?: string; searchQuery?: string }) =>
       list(request),
+    options: (...args: unknown[]) => options(...args),
   },
 }));
 
@@ -113,4 +118,58 @@ const PROJECT_B = 'project_b';
 type HookProps = {
   projectId: string;
   searchQuery?: string;
+};
+
+describe('usePieceOptions caching', () => {
+  let queryClient: QueryClient;
+
+  beforeEach(() => {
+    options.mockReset();
+    options.mockResolvedValue({ type: PropertyType.DYNAMIC, options: {} });
+    queryClient = new QueryClient();
+  });
+
+  afterEach(() => {
+    queryClient.clear();
+  });
+
+  it.each([
+    ['serves a repeated dynamic property from cache', PropertyType.DYNAMIC, OPTIONS_REQUEST, 1],
+    [
+      'refetches a dynamic property when a refresher changes',
+      PropertyType.DYNAMIC,
+      { ...OPTIONS_REQUEST, input: { authType: 'BEARER_TOKEN' } },
+      2,
+    ],
+    ['never caches dropdowns, whose options are live data', PropertyType.DROPDOWN, OPTIONS_REQUEST, 2],
+  ])('%s', async (_case, propertyType, secondRequest, expectedCalls) => {
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () =>
+        piecesHooks.usePieceOptions({
+          onSuccess: () => undefined,
+          onError: () => undefined,
+          onMutate: () => undefined,
+        }),
+      { wrapper },
+    );
+
+    await result.current.mutateAsync({ request: OPTIONS_REQUEST, propertyType });
+    await result.current.mutateAsync({ request: secondRequest, propertyType });
+
+    expect(options).toHaveBeenCalledTimes(expectedCalls);
+  });
+});
+
+const OPTIONS_REQUEST = {
+  projectId: PROJECT_A,
+  flowId: 'flow-1',
+  flowVersionId: 'flow-version-1',
+  pieceName: '@activepieces/piece-http',
+  pieceVersion: '0.11.11',
+  actionOrTriggerName: 'send_request',
+  propertyName: 'authFields',
+  input: { authType: 'BASIC' },
 };

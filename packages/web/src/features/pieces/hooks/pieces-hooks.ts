@@ -25,6 +25,7 @@ import {
   usePrefetchQuery,
   useQueries,
   useQuery,
+  useQueryClient,
 } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo } from 'react';
@@ -406,6 +407,7 @@ export const piecesHooks = {
     onError: (error: Error) => void;
     onMutate: () => void;
   }) => {
+    const queryClient = useQueryClient();
     return useMutation<
       ExecutePropsResult<T>,
       Error,
@@ -413,7 +415,14 @@ export const piecesHooks = {
     >({
       mutationFn: async ({ request, propertyType }) => {
         onMutate();
-        return piecesApi.options(request, propertyType);
+        if (propertyType !== PropertyType.DYNAMIC) {
+          return piecesApi.options(request, propertyType);
+        }
+        return queryClient.fetchQuery({
+          queryKey: ['piece-options', request],
+          queryFn: () => piecesApi.options(request, propertyType),
+          staleTime: DYNAMIC_PROPERTIES_STALE_TIME_MS,
+        });
       },
       onSuccess,
       onError,
@@ -653,4 +662,5 @@ function piecesQueryOptions({
 }
 
 const SEARCH_RESULTS_STALE_TIME_MS = 5 * 60 * 1000;
+const DYNAMIC_PROPERTIES_STALE_TIME_MS = 5 * 60 * 1000;
 const PROJECT_ID_KEY_INDEX = 1;
