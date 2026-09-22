@@ -156,7 +156,7 @@ export function PlatformSidebar() {
         },
         {
           to: '/platform/security/project-roles',
-          label: t('Roles & access'),
+          label: t('Roles & Access'),
           icon: Settings2Icon,
           locked: !platform.plan.projectRolesEnabled,
         },

@@ -17,14 +17,14 @@ const ProjectRolePage = () => {
     <LockedFeatureGuard
       featureKey="TEAM"
       locked={!platform.plan.projectRolesEnabled}
-      lockTitle={t('Roles & access')}
+      lockTitle={t('Roles & Access')}
       lockDescription={t(
         'Define custom roles and permissions to control what your team members can access and modify',
       )}
       lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
     >
       <CenteredPage
-        title={t('Roles & access')}
+        title={t('Roles & Access')}
         description={t('What new members get, and what each role can do.')}
         widthClassName="max-w-[70rem]"
       >

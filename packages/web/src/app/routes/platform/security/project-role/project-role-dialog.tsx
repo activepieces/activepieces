@@ -53,7 +53,7 @@ export const ProjectRoleDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="flex h-[min(36rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="@container flex h-[min(36rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
           mode={mode}
@@ -132,7 +132,7 @@ function RoleDialogBody({
   };
 
   const counter = (
-    <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground min-[380px]:inline">
+    <span className="hidden shrink-0 text-sm tabular-nums text-muted-foreground @min-[24rem]:inline">
       {t('grantedCount', { granted, total })}
     </span>
   );
@@ -195,7 +195,10 @@ function RoleDialogBody({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem
-                onSelect={() => setIsEditingPermissions(true)}
+                onSelect={() => {
+                  setIsEditingPermissions(true);
+                  setTab('permissions');
+                }}
                 disabled={isEditingPermissions}
               >
                 <Pencil className="size-4" />

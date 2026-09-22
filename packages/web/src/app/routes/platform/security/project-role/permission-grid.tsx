@@ -54,7 +54,7 @@ export function PermissionGrid({
               <span className="flex min-w-0 flex-1 items-baseline gap-2 text-sm">
                 <span className="truncate">{row.label}</span>
                 {row.viewAlwaysOn && (
-                  <span className="hidden shrink-0 text-xs text-muted-foreground min-[380px]:inline">
+                  <span className="hidden shrink-0 text-xs text-muted-foreground @max-[38rem]:inline @min-[48rem]:inline">
                     {t('view always on')}
                   </span>
                 )}
@@ -85,12 +85,12 @@ export function PermissionGrid({
   );
 
   return (
-    <div className="grid grid-cols-1 gap-x-8 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-x-8 @min-[38rem]:grid-cols-2">
       {renderColumn(groups.filter((group) => group.key === 'build'))}
       {renderColumn(
         groups.filter((group) => group.key !== 'build'),
-        'md:border-l md:border-border/60 md:pl-8',
-        'hidden md:flex',
+        '@min-[38rem]:border-l @min-[38rem]:border-border/60 @min-[38rem]:pl-8',
+        'hidden @min-[38rem]:flex',
       )}
     </div>
   );

@@ -85,7 +85,13 @@ export function RolesCard({
               </span>
             </TabsTrigger>
           </TabsList>
-          {activeTab === 'project' && newRoleButton}
+          {activeTab === 'project' ? (
+            newRoleButton
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              {t("Built in \u2014 platform roles can't be added or changed.")}
+            </p>
+          )}
         </div>
         <TabsContent value="project">
           <ProjectRolesList
