@@ -79,6 +79,16 @@ const handWrittenTemplate = {
   },
 };
 
+const templateWithMalformedRows = {
+  name: 'Customers',
+  externalId: 'customers',
+  fields: [{ name: 'Email', type: 'TEXT', externalId: 'email' }],
+  data: {
+    type: 'CSV',
+    rows: [{ fieldId: 'email', value: 'a@b.com' }],
+  },
+};
+
 const gitSyncTableState = {
   id: 'table-2',
   name: 'Leads',
@@ -141,6 +151,18 @@ describe('tableHooks.importTableIntoExisting', () => {
     await tableHooks
       .importTableIntoExisting({
         template: wrapAsDialogDoes(templateWithDropdownMissingData),
+        existingTableId: 'existing-1',
+      })
+      .catch(() => undefined);
+
+    expect(tablesApi.clear).not.toHaveBeenCalled();
+    expect(fieldsApi.delete).not.toHaveBeenCalled();
+  });
+
+  it('does not clear the table when data rows are not arrays of cells', async () => {
+    await tableHooks
+      .importTableIntoExisting({
+        template: wrapAsDialogDoes(templateWithMalformedRows),
         existingTableId: 'existing-1',
       })
       .catch(() => undefined);

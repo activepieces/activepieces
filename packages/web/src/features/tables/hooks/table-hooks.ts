@@ -8,6 +8,7 @@ import {
 } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { z } from 'zod';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
@@ -239,6 +240,11 @@ export const tableHooks = {
 function parseTemplateTables(template: SharedTemplate): TableTemplate[] {
   const tables = template.tables ?? [];
   const parsed = TableTemplate.pick({ name: true, fields: true })
+    .extend({
+      data: z
+        .object({ rows: z.array(z.array(z.object({ fieldId: z.string() }))) })
+        .nullish(),
+    })
     .array()
     .safeParse(tables);
   if (!parsed.success) {
