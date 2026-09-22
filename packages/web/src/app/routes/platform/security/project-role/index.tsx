@@ -27,6 +27,7 @@ const ProjectRolePage = () => {
         title={t('Roles & Access')}
         description={t('What new members get, and what each role can do.')}
         widthClassName="max-w-[70rem]"
+        className="min-h-full bg-muted/50 dark:bg-background"
       >
         <RolesCard
           projectRoles={data}
