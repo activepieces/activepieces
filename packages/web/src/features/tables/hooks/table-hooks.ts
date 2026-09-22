@@ -1,4 +1,5 @@
 import {
+  CreateFieldRequest,
   FieldType,
   SharedTemplate,
   TableTemplate,
@@ -92,7 +93,7 @@ export const tableHooks = {
     existingTableId: string;
     maxRecords?: number;
   }): Promise<Table> => {
-    const tables = template.tables || [];
+    const tables = parseTemplateTables(template);
     if (tables.length === 0) {
       throw new Error('Template has no tables');
     }
@@ -103,6 +104,10 @@ export const tableHooks = {
     }
 
     const tableTemplate = tables[0];
+    const fieldsToCreate = parseFieldsToCreate({
+      tableTemplate,
+      tableId: existingTableId,
+    });
 
     const [, existingFields] = await Promise.all([
       tablesApi.clear(existingTableId),
@@ -117,18 +122,7 @@ export const tableHooks = {
       name: tableTemplate.name,
     });
 
-    await Promise.all(
-      tableTemplate.fields.map((fieldState, position) =>
-        fieldsApi.create({
-          name: fieldState.name,
-          type: fieldState.type as any,
-          tableId: existingTableId,
-          data: fieldState.data as any,
-          externalId: fieldState.externalId,
-          position,
-        }),
-      ),
-    );
+    await Promise.all(fieldsToCreate.map((field) => fieldsApi.create(field)));
 
     if (tableTemplate.data && tableTemplate.data.rows.length > 0) {
       const createdFields = await fieldsApi.list({ tableId: existingTableId });
@@ -186,26 +180,19 @@ export const tableHooks = {
       tableTemplate: TableTemplate;
     }> = [];
 
-    for (const template of templates) {
-      const tables = template.tables || [];
-      if (tables.length === 0) {
-        continue;
-      }
+    for (const tableTemplate of templates.flatMap(parseTemplateTables)) {
+      const table = await tablesApi.create({
+        projectId,
+        name: tableTemplate.name,
+        externalId: tableTemplate.externalId,
+        fields: tableTemplate.fields,
+        folderId: targetFolderId,
+      });
 
-      for (const tableTemplate of tables) {
-        const table = await tablesApi.create({
-          projectId,
-          name: tableTemplate.name,
-          externalId: tableTemplate.externalId,
-          fields: tableTemplate.fields,
-          folderId: targetFolderId,
-        });
-
-        allTablesToImport.push({
-          table,
-          tableTemplate,
-        });
-      }
+      allTablesToImport.push({
+        table,
+        tableTemplate,
+      });
     }
 
     const importPromises = allTablesToImport.map(
@@ -248,3 +235,34 @@ export const tableHooks = {
     return await Promise.all(importPromises);
   },
 };
+
+function parseTemplateTables(template: SharedTemplate): TableTemplate[] {
+  const tables = template.tables ?? [];
+  const parsed = TableTemplate.pick({ name: true, fields: true })
+    .array()
+    .safeParse(tables);
+  if (!parsed.success) {
+    throw new Error('Template tables are not in a valid format');
+  }
+  return tables;
+}
+
+function parseFieldsToCreate({
+  tableTemplate,
+  tableId,
+}: {
+  tableTemplate: TableTemplate;
+  tableId: string;
+}): CreateFieldRequest[] {
+  const fields = CreateFieldRequest.array().safeParse(
+    tableTemplate.fields.map((field, position) => ({
+      ...field,
+      tableId,
+      position,
+    })),
+  );
+  if (!fields.success) {
+    throw new Error('Template fields are not in a valid format');
+  }
+  return fields.data;
+}
