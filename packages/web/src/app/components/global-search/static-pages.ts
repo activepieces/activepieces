@@ -135,7 +135,7 @@ export const STATIC_PAGES: StaticPage[] = [
     requiresPlatformAdmin: true,
   },
   {
-    id: 'page-platform-roles-and-access',
+    id: 'page-platform-project-roles',
     label: 'Platform Admin — Roles & Access',
     href: '/platform/security/roles-and-access',
     icon: Settings2Icon,
