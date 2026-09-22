@@ -12,12 +12,14 @@ export class FlowExternalIdUniqueIgnoresDeleting1855000000000 implements Migrati
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const concurrently = isPGlite() ? '' : 'CONCURRENTLY '
-        await queryRunner.query('DROP INDEX IF EXISTS "idx_flow_project_id_external_id"')
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_flow_project_id_external_id_partial"')
         await queryRunner.query(`
-            CREATE UNIQUE INDEX ${concurrently}IF NOT EXISTS "idx_flow_project_id_external_id"
+            CREATE UNIQUE INDEX ${concurrently}"idx_flow_project_id_external_id_partial"
             ON "flow" ("projectId", "externalId")
             WHERE "operationStatus" != 'DELETING'
         `)
+        await queryRunner.query('DROP INDEX IF EXISTS "idx_flow_project_id_external_id"')
+        await queryRunner.query('ALTER INDEX "idx_flow_project_id_external_id_partial" RENAME TO "idx_flow_project_id_external_id"')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
