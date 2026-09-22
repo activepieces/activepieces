@@ -283,7 +283,10 @@ for i in $(seq 1 "$FLOW_ENABLE_TIMEOUT"); do
   sleep 1
 done
 
-echo "Setup complete. Flow ID: $FLOW_ID" >&2
+BENCH_PROJECT_ID_FILE="${BENCH_PROJECT_ID_FILE:-/tmp/bench-project-id}"
+printf '%s' "$PROJECT_ID" > "$BENCH_PROJECT_ID_FILE"
+echo "Project ID written to $BENCH_PROJECT_ID_FILE" >&2
 
-# Output only the flow ID to stdout
+echo "Setup complete. Flow ID: $FLOW_ID  Project ID: $PROJECT_ID" >&2
+
 echo "$FLOW_ID"

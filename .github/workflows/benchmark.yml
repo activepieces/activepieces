@@ -79,6 +79,10 @@ jobs:
           echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
           echo "Flow ID: $FLOW_ID"
           test -f /tmp/bench-api-key || { echo "ERROR: /tmp/bench-api-key missing"; exit 1; }
+          test -f /tmp/bench-project-id || { echo "ERROR: /tmp/bench-project-id missing"; exit 1; }
+          PROJECT_ID=$(cat /tmp/bench-project-id)
+          echo "project_id=$PROJECT_ID" >> "$GITHUB_OUTPUT"
+          echo "Project ID: $PROJECT_ID"
 
       - name: Load bench API key (masked)
         run: |
@@ -107,6 +111,8 @@ jobs:
             --url http://localhost:8080 \
             --requests "${TOTAL_REQUESTS}" \
             --concurrency ${{ matrix.workers }} \
+            --project-id "${{ steps.setup.outputs.project_id }}" \
+            --flow-id "${{ steps.setup.outputs.flow_id }}" \
             --json > /tmp/report.json
           echo "--- run summary ---"
           jq '.runs[0].summary, .runs[0].timeline' /tmp/report.json
