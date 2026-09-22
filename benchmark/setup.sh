@@ -81,6 +81,26 @@ echo "Signed up. Project: $PROJECT_ID" >&2
 
 AUTH="Authorization: Bearer $TOKEN"
 
+# Provision a platform API key for the benchmark CLI.
+# The key value is only returned on creation and is written to a file with mode 600
+# so it never lands in the workflow log via stdout capture.
+BENCH_API_KEY_FILE="${BENCH_API_KEY_FILE:-/tmp/bench-api-key}"
+echo "Creating platform API key for benchmark CLI..." >&2
+API_KEY_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/api-keys" \
+  -H "Content-Type: application/json" \
+  -H "$AUTH" \
+  -d '{"displayName":"benchmark-cli"}')
+BENCH_API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.value // empty')
+if [ -z "$BENCH_API_KEY" ] || [ "$BENCH_API_KEY" = "null" ]; then
+  echo "ERROR: Failed to create API key" >&2
+  echo "$API_KEY_RESPONSE" >&2
+  exit 1
+fi
+umask 077
+printf '%s' "$BENCH_API_KEY" > "$BENCH_API_KEY_FILE"
+chmod 600 "$BENCH_API_KEY_FILE"
+echo "API key written to $BENCH_API_KEY_FILE (mode 600)" >&2
+
 # Create flow
 echo "Creating flow..." >&2
 FLOW_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/flows" \
