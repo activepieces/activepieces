@@ -19,6 +19,7 @@ import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/re
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
 import { BARRIER_RECOVERY_CURSOR_KEY, DEADLINE_SWEEP_CURSOR_KEY, sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
+import { waitpointTimeoutJob } from '../../../../../src/app/waitpoints/waitpoint-timeout-job'
 import { Waitpoint, WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
 import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
@@ -904,6 +905,26 @@ describe('barrier deadline', () => {
         const summary = await readSummary(barrier.id)
         expect(summary.timedOut).toBe(true)
         expect(summary.stillRunning).toBe(2)
+    })
+
+    it('leaves a deadline job that is running right now to finish, without a warning', async () => {
+        const { flowRun, barrier } = await createOverdueBarrier()
+        const jobId = systemJobIds.resumeDelay({ waitpointId: barrier.id })
+        const lockKey = `bull:system-job-queue:${jobId}:lock`
+        const redis = await redisConnections.useExisting()
+        await redis.set(lockKey, 'held-by-the-worker-running-this-job')
+        const warn = vi.spyOn(app.log, 'warn')
+
+        try {
+            await waitpointTimeoutJob.remove({ waitpointId: barrier.id, flowRunId: flowRun.id, log: app.log })
+
+            expect(warn).not.toHaveBeenCalled()
+            expect(await systemJobsSchedule(app.log).getJob(jobId)).toBeDefined()
+        }
+        finally {
+            vi.restoreAllMocks()
+            await redis.del(lockKey)
+        }
     })
 })
 

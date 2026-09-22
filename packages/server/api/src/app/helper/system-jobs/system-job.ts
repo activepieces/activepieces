@@ -124,16 +124,16 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
     },
 
     async removeJob({ jobId }): Promise<void> {
-        const job = await systemJobsQueue.getJob(jobId)
-        if (isNil(job)) {
-            return
-        }
-        const { error } = await tryCatch(async () => job.remove())
+        const { data: removed, error } = await tryCatch(async () => systemJobsQueue.remove(jobId))
         if (!isNil(error)) {
-            log.warn({ jobId, error }, '[systemJob#removeJob] Could not remove job')
+            log.warn({ job: { id: jobId }, error }, '[systemJob#removeJob] Could not remove job')
             return
         }
-        log.info({ jobId }, '[systemJob#removeJob] Job removed')
+        if (removed === 0) {
+            log.info({ job: { id: jobId } }, '[systemJob#removeJob] Job is running, left to finish')
+            return
+        }
+        log.debug({ job: { id: jobId } }, '[systemJob#removeJob] Job removed or already gone')
     },
 
     async close(): Promise<void> {
