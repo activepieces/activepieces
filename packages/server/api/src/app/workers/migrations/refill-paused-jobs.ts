@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In, MoreThan } from 'typeorm'
+import { In, IsNull, MoreThan, Not } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
@@ -11,6 +11,7 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { systemJobIds, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { WaitpointEntity } from '../../waitpoints/waitpoint-entity'
+import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { jobQueue } from '../job-queue/job-queue'
 
 const REFILL_PAUSED_RUNS_KEY = 'refill_paused_runs_v7'
@@ -41,14 +42,19 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
         }
 
         const flowRunIds = pausedRuns.map(r => r.id)
-        const waitpoints = await waitpointRepo().findBy({ flowRunId: In(flowRunIds) })
-        const waitpointByRunId = Object.fromEntries(waitpoints.map(w => [w.flowRunId, w]))
+        const delayWaitpoints = await waitpointRepo().findBy({
+            flowRunId: In(flowRunIds),
+            type: PauseType.DELAY,
+            status: WaitpointStatus.PENDING,
+            resumeDateTime: Not(IsNull()),
+        })
+        const pausedRunById = Object.fromEntries(pausedRuns.map(run => [run.id, run]))
 
         let migratedCount = 0
 
-        for (const pausedRun of pausedRuns) {
-            const waitpoint = waitpointByRunId[pausedRun.id]
-            if (isNil(waitpoint) || waitpoint.type !== PauseType.DELAY || isNil(waitpoint.resumeDateTime)) {
+        for (const waitpoint of delayWaitpoints) {
+            const pausedRun = pausedRunById[waitpoint.flowRunId]
+            if (isNil(pausedRun) || isNil(waitpoint.resumeDateTime)) {
                 continue
             }
             if (dayjs(pausedRun.created).isBefore(dayjs().subtract(executionRetentionDays, 'day'))) {

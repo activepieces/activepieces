@@ -11,6 +11,7 @@ import { projectService } from '../../project/project-service'
 import { resumeService } from '../../waitpoints/resume-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { legacyRedisMetadataKey, QueueName, redisMetadataKey, runsMetadataDeduplicationId, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
+import { jobFailureLogger } from '../../workers/job-queue/job-failure-logger'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -165,6 +166,20 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                 autorun: true,
             },
         )
+
+        runsMetadataWorker.on('failed', (job, err) => {
+            const attemptsUsed = job?.attemptsMade ?? 0
+            const maxAttempts = job?.opts?.attempts ?? 1
+            if (attemptsUsed >= maxAttempts) {
+                jobFailureLogger.logJobFailed({
+                    queueName: QueueName.RUNS_METADATA,
+                    jobId: job?.id,
+                    jobType: job?.name ?? 'update-run-metadata',
+                    error: err,
+                    log,
+                })
+            }
+        })
 
         await runsMetadataWorker.waitUntilReady()
     },
