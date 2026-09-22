@@ -14,12 +14,12 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 import { ProjectRoleUsersSheet } from './project-role-users-table';
 import { RoleAvatar } from './role-avatar';
-import { roleCopy } from './role-copy';
 
 export function ProjectRolesList({
   projectRoles,
@@ -56,30 +56,24 @@ export function ProjectRolesList({
     <div className="flex flex-col gap-3">
       <ItemGroup className="gap-2">
         {roles.map((role) => {
-          const description = roleCopy.builtInProjectRoleDescription(role.name);
+          const description = roleCopy.projectRoleDescription(role.name);
           return (
             <Item
               key={role.id}
               variant="outline"
               size="sm"
-              role="button"
-              tabIndex={0}
-              className="cursor-pointer hover:bg-accent/50"
-              onClick={() => setOpenedRole(role)}
-              onKeyDown={(event) => {
-                if (
-                  event.target === event.currentTarget &&
-                  (event.key === 'Enter' || event.key === ' ')
-                ) {
-                  event.preventDefault();
-                  setOpenedRole(role);
-                }
-              }}
+              className="relative hover:bg-accent/50"
             >
               <RoleAvatar name={role.name} />
               <ItemContent>
                 <ItemTitle>
-                  {role.name}
+                  <button
+                    type="button"
+                    className="text-left after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                    onClick={() => setOpenedRole(role)}
+                  >
+                    {role.name}
+                  </button>
                   <Badge
                     variant={
                       role.type === RoleType.DEFAULT ? 'accent' : 'inverted'
@@ -97,11 +91,8 @@ export function ProjectRolesList({
                   {!isNil(role.userCount) && (
                     <button
                       type="button"
-                      className="text-primary hover:underline underline-offset-4"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setPeopleRole(role);
-                      }}
+                      className="relative z-10 text-primary underline-offset-4 hover:underline"
+                      onClick={() => setPeopleRole(role)}
                     >
                       {t('rolePeopleCount', { count: role.userCount })}
                     </button>
