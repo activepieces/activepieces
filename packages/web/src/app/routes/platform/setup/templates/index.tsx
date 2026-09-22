@@ -8,7 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,

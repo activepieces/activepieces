@@ -5,10 +5,10 @@ import { Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
-import { ItemGroup } from '@/components/custom/item';
 import { PlusIcon } from '@/components/icons/plus';
+import { ItemGroup } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
