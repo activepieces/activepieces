@@ -779,17 +779,17 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
+export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
+    if (!createdTime) return false
+    return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
+}
+
 function settingsOfStepUnderTest({ flowVersion, stepNameToTest }: SettingsOfStepUnderTestParams): unknown {
     const stepUnderTest = flowStructureUtil.getStep(stepNameToTest, flowVersion.trigger)
     if (isNil(stepUnderTest)) {
         return undefined
     }
     return flowStructureUtil.getAllChildSteps(stepUnderTest).map((step) => step.settings)
-}
-
-export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
-    if (!createdTime) return false
-    return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
 }
 
 type SettingsOfStepUnderTestParams = {
