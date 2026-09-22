@@ -16,14 +16,6 @@ export const extractText = createAction({
       required: true,
     }),
   },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true
-    },
-  },
   async run(context) {
     const file = context.propsValue.file;
     const pdf = await getDocumentProxy(new Uint8Array(file.data.buffer));

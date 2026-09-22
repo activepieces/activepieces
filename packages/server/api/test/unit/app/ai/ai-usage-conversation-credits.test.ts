@@ -1,4 +1,4 @@
-import { ActivepiecesAiBillingScope, AIProviderName, apId } from '@activepieces/core-utils'
+import { ActivepiecesAiConsumerSource, AiChargeBasis, AIProviderName, apId } from '@activepieces/core-utils'
 import { ReportAiUsageRequest } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -33,7 +33,7 @@ function reportOf(billing: ReportAiUsageRequest['billing']): ReportAiUsageReques
         provider: AIProviderName.ACTIVEPIECES,
         modelId: 'anthropic/claude-sonnet-4.6',
         idempotencyKey: apId(),
-        usage: { type: 'observed-cost', costUsd: 0.005 },
+        usage: { type: AiChargeBasis.PROVIDER_REPORTED_COST, costUsd: 0.005 },
     }
 }
 
@@ -48,7 +48,7 @@ describe('aiUsageService.report — the conversation credit total', () => {
 
     it('adds what a conversation-scoped call cost to that conversation, so a run shows its own total', async () => {
         await aiUsageService(noopLogger as never).report(reportOf({
-            scope: ActivepiecesAiBillingScope.CONVERSATION,
+            source: ActivepiecesAiConsumerSource.CHAT,
             platformId: 'platform-1',
             projectId: 'project-1',
             conversationId: 'conversation-1',
@@ -59,7 +59,7 @@ describe('aiUsageService.report — the conversation credit total', () => {
 
     it('accumulates rather than replaces, so several calls in one turn all count', async () => {
         const billing = {
-            scope: ActivepiecesAiBillingScope.CONVERSATION,
+            source: ActivepiecesAiConsumerSource.CHAT,
             platformId: 'platform-1',
             projectId: 'project-1',
             conversationId: 'conversation-1',
@@ -71,11 +71,12 @@ describe('aiUsageService.report — the conversation credit total', () => {
         expect(addConversationCredits).toHaveBeenLastCalledWith({ conversationId: 'conversation-1', credits: 10 })
     })
 
-    it('leaves a flow run alone, since the total belongs to a conversation', async () => {
+    it('leaves an ai step in a flow alone, since the total belongs to a conversation', async () => {
         await aiUsageService(noopLogger as never).report(reportOf({
-            scope: ActivepiecesAiBillingScope.PROJECT,
+            source: ActivepiecesAiConsumerSource.AI_STEP_IN_FLOW,
             platformId: 'platform-1',
             projectId: 'project-1',
+            flowRun: { flowId: 'flow-1', flowRunId: 'run-1' },
         }))
 
         expect(addConversationCredits).not.toHaveBeenCalled()
@@ -85,7 +86,7 @@ describe('aiUsageService.report — the conversation credit total', () => {
         addConversationCredits.mockRejectedValue(new Error('conversation is gone'))
 
         await aiUsageService(noopLogger as never).report(reportOf({
-            scope: ActivepiecesAiBillingScope.CONVERSATION,
+            source: ActivepiecesAiConsumerSource.CHAT,
             platformId: 'platform-1',
             projectId: 'project-1',
             conversationId: 'conversation-1',

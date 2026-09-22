@@ -17,14 +17,6 @@ export const textToPdf = createAction({
       required: true,
     }),
   },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   async run(context) {
     const text = context.propsValue.text;
 
