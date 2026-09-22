@@ -55,19 +55,16 @@ const polling: Polling<
       q: search_term,
     };
 
+    let url = `${googleCalendarCommon.baseUrl}/calendars/${calendar_id}/events`;
     if (event_types && event_types.length > 0) {
-      event_types.forEach((type) => {
-        if (!queryParams.eventTypes) {
-          queryParams.eventTypes = type;
-        } else {
-          queryParams.eventTypes += '&eventTypes=' + type;
-        }
-      });
+      url += `?${event_types
+        .map((type) => `eventTypes=${encodeURIComponent(type)}`)
+        .join('&')}`;
     }
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${googleCalendarCommon.baseUrl}/calendars/${calendar_id}/events`,
+      url,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
         token: await getAccessToken(auth),
@@ -147,18 +144,18 @@ export const newEventMatchingSearch = createTrigger({
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     search_term: Property.ShortText({
       displayName: 'Search Term',
-      description:
-        'The keyword(s) to search for in new events (searches across title, description, location, and attendees by default).',
+      description: 'Matched against title, description, location and guests.',
       required: true,
     }),
     event_types: Property.StaticMultiSelectDropdown({
       displayName: 'Event Types',
-      description: 'Filter by specific event types (optional)',
+      description: 'Leave empty to include every type.',
       required: false,
+      advanced: true,
       options: {
         options: [
-          { label: 'Default Events', value: 'default' },
-          { label: 'Birthday Events', value: 'birthday' },
+          { label: 'Default', value: 'default' },
+          { label: 'Birthday', value: 'birthday' },
           { label: 'Focus Time', value: 'focusTime' },
           { label: 'Out of Office', value: 'outOfOffice' },
           { label: 'Working Location', value: 'workingLocation' },
@@ -167,10 +164,10 @@ export const newEventMatchingSearch = createTrigger({
       },
     }),
     search_fields: Property.StaticMultiSelectDropdown({
-      displayName: 'Search In Fields',
-      description:
-        "Specify which fields to search in (leave empty to use Google's default search across all fields)",
+      displayName: 'Search In',
+      description: 'Leave empty to search every field.',
       required: false,
+      advanced: true,
       options: {
         options: [
           { label: 'Event Title/Summary', value: 'summary' },

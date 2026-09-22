@@ -89,5 +89,3 @@ export const LockedFeatureGuard = ({
     </div>
   );
 };
-
-export default LockedFeatureGuard;

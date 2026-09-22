@@ -54,7 +54,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply })
         }
@@ -69,7 +70,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId/sync', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: waitpoint.workerHandlerId ?? waitpoint.id })
         }
@@ -82,7 +84,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 async function serveConfirmationPage({ flowRunId, waitpointId, url, queryParams, log, reply }: ConfirmationPageParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId: flowRun.projectId })
     const isOpen = !isNil(waitpoint) && waitpoint.status === WaitpointStatus.PENDING && flowRun.status === FlowRunStatus.PAUSED
     if (!isOpen) {
         await replyWithHtml({ reply, html: Mustache.render(STATUS_HTML_TEMPLATE, buildThemeView({ theme, extra: { title: ALREADY_TITLE, message: ALREADY_MESSAGE, success: false } })) })
@@ -111,7 +113,7 @@ async function handleConfirmResume({ flowRunId, waitpointId, action, body, heade
         resumePayload: { body, headers, queryParams },
     })
     if (!acceptsHtml(headers)) {
-        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+        await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, discarded: await responseWasDiscarded({ flowRunId, waitpointId, stale, log }) })
         return
     }
     const theme = await resolveResumePageTheme({ projectId: flowRun.projectId, log })
@@ -127,7 +129,7 @@ async function handleAsyncResume({ flowRunId, waitpointId, body, headers, queryP
         waitpointId,
         resumePayload: { body, headers, queryParams },
     })
-    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE })
+    await reply.send({ message: stale ? EXPIRED_MESSAGE : RECORDED_MESSAGE, discarded: await responseWasDiscarded({ flowRunId, waitpointId, stale, log }) })
 }
 
 async function handleSyncResume({ flowRunId, waitpointId, body, headers, queryParams, log, reply, correlationId }: AsyncResumeHandlerParams & { correlationId: string }): Promise<void> {
@@ -155,6 +157,18 @@ async function handleLegacySyncResume({ flowRunId, body, headers, queryParams, l
         correlationId,
     })
     await reply.status(response.status).headers(response.headers).send(response.body)
+}
+
+/**
+ * A stale resume means the waitpoint is gone — which is equally what a SUCCEEDED delivery
+ * looks like once its HTTP response is lost and the caller retries. Only the absence of a
+ * consumption marker proves nobody ever accepted this response.
+ */
+async function responseWasDiscarded({ flowRunId, waitpointId, stale, log }: ResponseWasDiscardedParams): Promise<boolean> {
+    if (!stale) {
+        return false
+    }
+    return !(await resumeService(log).waitpointWasConsumed({ waitpointId, flowRunId }))
 }
 
 async function resolveResumePageTheme({ projectId, log }: { projectId: string, log: FastifyBaseLogger }): Promise<ResumePageTheme> {
@@ -309,6 +323,13 @@ const STATUS_HTML_TEMPLATE = `<!DOCTYPE html>
 </div>
 </body>
 </html>`
+
+type ResponseWasDiscardedParams = {
+    flowRunId: string
+    waitpointId: string
+    stale: boolean
+    log: FastifyBaseLogger
+}
 
 type ConfirmationPageParams = {
     flowRunId: string

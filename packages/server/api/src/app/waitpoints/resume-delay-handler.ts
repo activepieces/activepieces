@@ -24,7 +24,7 @@ export async function handleResumeDelayWaitpoint({ data, log }: HandleResumeDela
             '[RESUME_DELAY_WAITPOINT] Flow not PAUSED, skipping')
         return
     }
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: data.waitpointId, flowRunId: data.flowRunId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: data.waitpointId, flowRunId: data.flowRunId, projectId: flowRun.projectId })
     if (isNil(waitpoint) || waitpoint.status !== WaitpointStatus.PENDING) {
         log.info({ flowRun: { id: data.flowRunId }, waitpoint: { id: data.waitpointId }, waitpointStatus: waitpoint?.status },
             '[RESUME_DELAY_WAITPOINT] Waitpoint no longer PENDING (stale timer from completed/deleted waitpoint), skipping')

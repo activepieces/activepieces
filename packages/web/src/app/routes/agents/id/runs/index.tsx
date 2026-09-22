@@ -2,9 +2,16 @@ import { isNil } from '@activepieces/core-utils';
 import { AgentRunListItem } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Activity, Bot, Clock, History, Workflow } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  Activity,
+  Bot,
+  Clock,
+  History,
+  Coins,
+  Hourglass,
+  Workflow,
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
@@ -14,8 +21,9 @@ import { StatusIconWithText } from '@/components/custom/status-icon-with-text';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
 import { agentRunUtils } from '@/features/agents/lib/agent-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
-import { authenticationSession } from '@/lib/authentication-session';
-import { useNewWindow } from '@/lib/navigation-utils';
+import { formatUtils } from '@/lib/format-utils';
+
+import { RunDetailPanel } from './run-detail-panel';
 
 type AgentRunsProps = {
   agentId: string;
@@ -23,24 +31,7 @@ type AgentRunsProps = {
 
 export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   const { project } = projectCollectionUtils.useCurrentProject();
-  const navigate = useNavigate();
-  const openNewWindow = useNewWindow();
-  const openFlowRun = useCallback(
-    (run: AgentRunListItem, newWindow: boolean) => {
-      if (isNil(run.flow)) {
-        return;
-      }
-      const to = authenticationSession.appendProjectRoutePrefix(
-        `/runs/${run.flow.flowRunId}`,
-      );
-      if (newWindow) {
-        openNewWindow(to);
-        return;
-      }
-      navigate(to);
-    },
-    [navigate, openNewWindow],
-  );
+  const [openRunId, setOpenRunId] = useState<string | null>(null);
   const {
     data: runs,
     isLoading,
@@ -57,12 +48,19 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
           <DataTableColumnHeader column={column} title={t('Run')} icon={Bot} />
         ),
         cell: ({ row }) => (
-          <div className="flex items-center gap-2 text-left">
+          <button
+            type="button"
+            className="flex items-center gap-2 text-left hover:underline"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenRunId(row.original.id);
+            }}
+          >
             <TruncatedColumnTextValue
               value={row.original.title ?? t('Untitled run')}
               className="max-w-[260px] 2xl:max-w-[420px]"
             />
-          </div>
+          </button>
         ),
       },
       {
@@ -81,16 +79,9 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
             return <span className="text-muted-foreground">{'\u2014'}</span>;
           }
           return (
-            <Link
-              to={authenticationSession.appendProjectRoutePrefix(
-                `/runs/${flow.flowRunId}`,
-              )}
-              className="flex items-center gap-2 text-left hover:underline"
-              onClick={(e) => e.stopPropagation()}
-              onAuxClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex items-center gap-2 text-left">
               <TruncatedColumnTextValue value={flow.displayName} />
-            </Link>
+            </div>
           );
         },
       },
@@ -120,6 +111,43 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         },
       },
       {
+        accessorKey: 'updated',
+        size: 140,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Duration')}
+            icon={Hourglass}
+          />
+        ),
+        cell: ({ row }) => {
+          const durationMs = agentRunUtils.getDurationMs(row.original);
+          return (
+            <span className="text-left text-muted-foreground">
+              {isNil(durationMs)
+                ? '\u2014'
+                : formatUtils.formatDuration(durationMs, true)}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: 'aiCredits',
+        size: 130,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Credits')}
+            icon={Coins}
+          />
+        ),
+        cell: ({ row }) => (
+          <span className="text-left text-muted-foreground">
+            {isNil(row.original.aiCredits) ? '\u2014' : row.original.aiCredits}
+          </span>
+        ),
+      },
+      {
         accessorKey: 'created',
         header: ({ column }) => (
           <DataTableColumnHeader
@@ -140,7 +168,7 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
   );
 
   return (
-    <div className="flex h-full w-full flex-col pt-2">
+    <div className="flex h-full w-full min-w-0 flex-col">
       <DataTable
         columns={columns}
         page={runs}
@@ -148,14 +176,14 @@ export const AgentRuns = ({ agentId }: AgentRunsProps) => {
         isError={isError}
         errorStateEntity={t('runs')}
         onRetry={refetch}
-        onRowClick={(row, newWindow) => openFlowRun(row, newWindow)}
-        getRowClassName={(row) => (isNil(row.flow) ? 'cursor-default' : '')}
+        onRowClick={(row) => setOpenRunId(row.id)}
         emptyStateIcon={<History className="size-14" />}
         emptyStateTextTitle={t('No flow has run this agent yet')}
         emptyStateTextDescription={t(
           'Add a Run Agent step to a flow and pick this agent. Every run it makes on its own shows up here.',
         )}
       />
+      <RunDetailPanel runId={openRunId} onClose={() => setOpenRunId(null)} />
     </div>
   );
 };

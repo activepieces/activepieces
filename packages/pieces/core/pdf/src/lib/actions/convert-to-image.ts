@@ -92,14 +92,6 @@ export const convertToImage = createAction({
             defaultValue: 'multiple',
         }),
     },
-    errorHandlingOptions: {
-        continueOnFailure: {
-            defaultValue: false,
-        },
-        retryOnFailure: {
-            hide: true
-        },
-    },
     async run(context) {
         const file = context.propsValue.file;
         const returnConcatenatedImage = context.propsValue.imageOutputType === 'single';
