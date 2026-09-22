@@ -11,7 +11,7 @@ export const wooAiCreateOrder = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a new order from product ids and quantities, optionally for a customer and with a status; get product ids from list_products (a variation id can be used as the product id), customer ids from list_customers and payment method names from list_payment_gateways. Status processing or completed reduces stock and emails the customer, while pending (the default) does neither. Each call creates a separate order.',
+      'Creates a new order from product ids and quantities, optionally for a customer, with a status, and with a payment gateway; get product ids from list_products (a variation id can be used as the product id), customer ids from list_customers, and payment gateways from list_payment_gateways, passing the gateway id as Payment Method ID and its title as Payment Method Title. Status processing or completed reduces stock and emails the customer, while pending (the default) does neither. Each call creates a separate order.',
     idempotent: false,
   },
   auth: wooAuth,
