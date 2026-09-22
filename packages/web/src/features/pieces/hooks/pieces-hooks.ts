@@ -1,4 +1,4 @@
-import { LocalesEnum } from '@activepieces/core-utils';
+import { isNil, LocalesEnum } from '@activepieces/core-utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -8,6 +8,7 @@ import {
 import {
   AddPieceRequestBody,
   ApEdition,
+  AUTHENTICATION_PROPERTY_NAME,
   FlowActionType,
   flowPieceUtil,
   PieceOptionRequest,
@@ -415,7 +416,12 @@ export const piecesHooks = {
     >({
       mutationFn: async ({ request, propertyType }) => {
         onMutate();
-        if (propertyType !== PropertyType.DYNAMIC) {
+        const readsConnection = !isNil(
+          request.input?.[AUTHENTICATION_PROPERTY_NAME],
+        );
+        const cacheable =
+          propertyType === PropertyType.DYNAMIC && !readsConnection;
+        if (!cacheable) {
           return piecesApi.options(request, propertyType);
         }
         return queryClient.fetchQuery({

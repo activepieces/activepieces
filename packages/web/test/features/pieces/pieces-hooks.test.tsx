@@ -134,15 +134,23 @@ describe('usePieceOptions caching', () => {
   });
 
   it.each([
-    ['serves a repeated dynamic property from cache', PropertyType.DYNAMIC, OPTIONS_REQUEST, 1],
+    ['serves a repeated dynamic property from cache', PropertyType.DYNAMIC, OPTIONS_REQUEST, OPTIONS_REQUEST, 1],
     [
       'refetches a dynamic property when a refresher changes',
       PropertyType.DYNAMIC,
+      OPTIONS_REQUEST,
       { ...OPTIONS_REQUEST, input: { authType: 'BEARER_TOKEN' } },
       2,
     ],
-    ['never caches dropdowns, whose options are live data', PropertyType.DROPDOWN, OPTIONS_REQUEST, 2],
-  ])('%s', async (_case, propertyType, secondRequest, expectedCalls) => {
+    ['never caches dropdowns, whose options are live data', PropertyType.DROPDOWN, OPTIONS_REQUEST, OPTIONS_REQUEST, 2],
+    [
+      'never caches a dynamic property that reads a connection',
+      PropertyType.DYNAMIC,
+      CONNECTED_OPTIONS_REQUEST,
+      CONNECTED_OPTIONS_REQUEST,
+      2,
+    ],
+  ])('%s', async (_case, propertyType, firstRequest, secondRequest, expectedCalls) => {
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
@@ -156,7 +164,7 @@ describe('usePieceOptions caching', () => {
       { wrapper },
     );
 
-    await result.current.mutateAsync({ request: OPTIONS_REQUEST, propertyType });
+    await result.current.mutateAsync({ request: firstRequest, propertyType });
     await result.current.mutateAsync({ request: secondRequest, propertyType });
 
     expect(options).toHaveBeenCalledTimes(expectedCalls);
@@ -172,4 +180,9 @@ const OPTIONS_REQUEST = {
   actionOrTriggerName: 'send_request',
   propertyName: 'authFields',
   input: { authType: 'BASIC' },
+};
+
+const CONNECTED_OPTIONS_REQUEST = {
+  ...OPTIONS_REQUEST,
+  input: { ...OPTIONS_REQUEST.input, auth: "{{connections['zendesk']}}" },
 };
