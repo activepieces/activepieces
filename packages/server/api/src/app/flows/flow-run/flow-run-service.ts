@@ -375,7 +375,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             streamStepProgress: StreamStepProgress.WEBSOCKET,
-            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
+            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow({ projectId, flowVersion, type: SampleDataFileType.OUTPUT }) : undefined,
         }, log)
     },
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
