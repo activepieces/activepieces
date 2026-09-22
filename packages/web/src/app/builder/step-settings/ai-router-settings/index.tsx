@@ -149,6 +149,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
       BranchExecutionType.FALLBACK;
     return (
       <FormField
+        key={`route-${selectedBranchIndex}-description`}
         control={control}
         name={`settings.branches.${selectedBranchIndex}.description`}
         render={({ field }) => (
