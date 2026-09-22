@@ -87,12 +87,6 @@ export class OutsetaClient {
       body,
     });
 
-    if (response.status < 200 || response.status >= 300) {
-      throw new Error(
-        `Outseta API error (${response.status}): ${JSON.stringify(response.body)}`
-      );
-    }
-
     return response.body;
   }
 }
