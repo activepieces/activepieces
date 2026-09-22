@@ -347,7 +347,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/project-roles',
+    path: '/platform/security/roles-and-access',
     element: (
       <PlatformLayout>
         <PageTitle title="Roles & access">
@@ -357,6 +357,10 @@ export const platformRoutes = [
         </PageTitle>
       </PlatformLayout>
     ),
+  },
+  {
+    path: '/platform/security/project-roles',
+    element: <Navigate to="/platform/security/roles-and-access" replace />,
   },
   {
     path: '/platform/infrastructure',
