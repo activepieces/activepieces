@@ -21,12 +21,14 @@ async function discoverAndRegister({ serverUrl, redirectUrl }: DiscoverAndRegist
         throw invalidConnection(`${authorizationServer} issues public OAuth2 clients (no client secret), which is not supported yet. Provide a Client ID and Client Secret manually instead.`)
     }
 
+    const resource = canonicalResourceUri(serverUrl)
     return {
-        authUrl: withResourceIndicator({ authorizationEndpoint: metadata.authorization_endpoint, serverUrl }),
+        authUrl: withResourceIndicator({ authorizationEndpoint: metadata.authorization_endpoint, resource }),
         tokenUrl: metadata.token_endpoint,
         scopes: (metadata.scopes_supported ?? []).join(' '),
         clientId: client.client_id,
         clientSecret: client.client_secret,
+        resource,
     }
 }
 
@@ -85,9 +87,9 @@ async function registerClient({ registrationEndpoint, redirectUrl, scope }: Regi
     return response.data
 }
 
-function withResourceIndicator({ authorizationEndpoint, serverUrl }: WithResourceIndicatorParams): string {
+function withResourceIndicator({ authorizationEndpoint, resource }: WithResourceIndicatorParams): string {
     const url = new URL(authorizationEndpoint)
-    url.searchParams.set('resource', canonicalResourceUri(serverUrl))
+    url.searchParams.set('resource', resource)
     return url.toString()
 }
 
@@ -126,7 +128,7 @@ type RegisterClientParams = {
 
 type WithResourceIndicatorParams = {
     authorizationEndpoint: string
-    serverUrl: string
+    resource: string
 }
 
 export type DiscoveredOAuth2Client = {
@@ -135,6 +137,7 @@ export type DiscoveredOAuth2Client = {
     scopes: string
     clientId: string
     clientSecret: string
+    resource: string
 }
 
 type ProtectedResourceMetadata = {

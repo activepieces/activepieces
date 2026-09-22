@@ -376,6 +376,9 @@ async function openPopup({
         { ...props, ...result.discovered.props },
         { shouldValidate: true },
       );
+      form.setValue('request.value.resource', result.discovered.resource, {
+        shouldValidate: true,
+      });
     }
   } catch (error: unknown) {
     const apError = api.isError(error)

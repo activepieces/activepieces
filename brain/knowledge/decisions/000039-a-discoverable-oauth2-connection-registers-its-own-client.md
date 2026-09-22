@@ -57,8 +57,23 @@ props, doesn't even apply to `http-oauth2`'s identical `'{authUrl}'` template �
 touched.
 
 `http-oauth2` has the identical manual-entry problem and can adopt the same descriptor. Reconnecting
-registers a fresh client and orphans the previous one on the authorization server. RFC 8707
-`resource` is sent on the authorize request only (baked into the discovered URL's query string);
-putting it on the token and refresh requests needs a field on `OAuth2RequestBody`, threading through
-three claim sites, and persisting it for refresh. Self-hosters pointing at an internal MCP server hit
+registers a fresh client and orphans the previous one on the authorization server.
+
+RFC 8707 `resource` was initially sent on the authorize request only; a later pass threaded it
+through the token and refresh requests too (`OAuth2RequestBody`, both `credentials-oauth2-service.ts`
+paths, persisted on the connection value). This wasn't a net-new class of gap — `pieceAuth.extra`
+(a static per-piece query-param map) already had the identical limitation: spread into
+`buildAuthorizationUrl`'s query params, never referenced in `credentials-oauth2-service.ts`. No
+piece before this one ever needed a value on both legs, because no existing piece's authorization
+server issues tokens for more than one resource server — the gap was real in shape but dormant until
+an AS-multiplexing case (MCP servers sharing one Auth0/Okta tenant) actually exercised it. The fix
+threads `resource` through `commonOAuth2ValueProps`, shared by all three OAuth2 connection types
+(`OAUTH2`, `CLOUD_OAUTH2`, `PLATFORM_OAUTH2`) for consistency with how `props`/`code_challenge`/
+`scope` are already uniform there — but only the plain `OAUTH2` branch ever populates it in practice,
+since `CLOUD_OAUTH2`/`PLATFORM_OAUTH2` use a platform-admin-configured predefined app, and no piece
+today has both a predefined app and `discovery` set. The other two call sites are consistent, not
+currently exercised — narrowing `resource` to just `UpsertOAuth2Request` was considered and rejected
+in favor of matching the existing uniform-field pattern.
+
+Self-hosters pointing at an internal MCP server hit
 `safeHttp`'s SSRF filter and must set `AP_SSRF_ALLOW_LIST`.

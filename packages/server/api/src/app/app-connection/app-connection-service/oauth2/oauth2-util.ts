@@ -258,6 +258,7 @@ const discoverOAuth2Client = async ({ pieceAuth, props, redirectUrl }: DiscoverO
         },
         client_id: client.clientId,
         client_secret: client.clientSecret,
+        resource: client.resource,
     }
 }
 

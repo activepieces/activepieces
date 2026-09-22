@@ -60,6 +60,7 @@ const commonOAuth2ValueProps = {
     code_challenge: z.string().optional(),
     scope: z.string(),
     authorization_method: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
+    resource: z.string().optional(),
 }
 export const UpsertPlatformOAuth2Request = z.object({
     ...commonAuthProps,
@@ -193,6 +194,7 @@ export const GetOAuth2AuthorizationUrlResponse = z.object({
         props: z.record(z.string(), z.unknown()),
         client_id: z.string(),
         client_secret: z.string(),
+        resource: z.string(),
     }).optional(),
 })
 export type GetOAuth2AuthorizationUrlResponse = z.infer<typeof GetOAuth2AuthorizationUrlResponse>
