@@ -61,7 +61,7 @@ export function ClientInstructions({
                 controls
                 preload="metadata"
                 playsInline
-                className="w-full rounded-md border bg-black"
+                className="w-full rounded-md border bg-surface-inverse"
               />
             </div>
           )}

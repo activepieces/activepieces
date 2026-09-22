@@ -72,7 +72,7 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
   };
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-white">
+    <div className="relative h-dvh w-full overflow-hidden bg-background">
       <AuthBackdrop />
       <div
         aria-hidden
@@ -84,7 +84,7 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
           ref={panelRef}
           role="dialog"
           aria-label={t('Sign in or create your account')}
-          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-black/[0.06] bg-background shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_12px_-4px_rgba(16,24,40,0.06),0_24px_40px_-12px_rgba(16,24,40,0.14),0_56px_80px_-32px_rgba(16,24,40,0.16)]"
+          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-border bg-background shadow-over"
         >
           <AuthDrawerBody initialMode={initialMode} />
         </section>

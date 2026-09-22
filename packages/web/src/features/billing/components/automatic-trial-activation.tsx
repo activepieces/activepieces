@@ -140,8 +140,8 @@ const TrialActivationScreen = ({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-builder-background px-6 py-12',
-        '[background-image:radial-gradient(var(--builder-background-pattern)_1px,transparent_0)] [background-size:22px_22px]',
+        'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-canvas px-6 py-12',
+        '[background-image:radial-gradient(var(--canvas-pattern)_1px,transparent_0)] [background-size:22px_22px]',
       )}
     >
       <canvas

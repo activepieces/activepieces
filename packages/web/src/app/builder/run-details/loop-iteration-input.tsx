@@ -225,7 +225,7 @@ const LoopIterationInputButton = ({
         e.stopPropagation();
         onChange((currentIndex + (isIncreasing ? 2 : 0)).toString());
       }}
-      className="hover:bg-builder-background size-6"
+      className="hover:bg-canvas size-6"
       size="icon"
     >
       {isIncreasing ? (

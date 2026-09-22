@@ -80,12 +80,12 @@ const TRIO: TrioGlyph[] = [
   },
   {
     shape: 'roundedSquare',
-    fill: 'hsl(var(--primary))',
+    fill: 'var(--primary)',
     size: 84,
     left: 76,
     top: 6,
     rotate: 0,
-    shadow: '0 5px 11px hsl(var(--primary) / 0.36)',
+    shadow: '0 5px 11px color-mix(in oklab, var(--primary), transparent 64%)',
   },
 ];
 

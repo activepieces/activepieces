@@ -62,7 +62,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
             ) : (
               <Copy
                 className={`w-4 h-4 ${
-                  resolvedTheme === 'dark' ? 'text-white' : 'text-black'
+                  'text-foreground'
                 }`}
               />
             )}

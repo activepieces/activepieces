@@ -100,7 +100,7 @@ export function ManageMemoriesDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl gap-5" overlayClassName="bg-black/20">
+      <DialogContent className="max-w-xl gap-5" overlayClassName="bg-scrim/40">
         <ManageMemoriesContent key={open ? 'open' : 'closed'} />
       </DialogContent>
     </Dialog>

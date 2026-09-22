@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import './styles/globals.css';
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *:not([data-theme='light'], [data-theme='light'] *)));
 
 /* Paths are relative to this file, not /fonts/, so Vite fingerprints them. */
 @font-face {
@@ -302,8 +302,6 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-progress: var(--sidebar-progress);
 
-  --color-builder-background: var(--builder-background);
-  --color-builder-background-pattern: var(--builder-background-pattern);
   --color-canvas: var(--canvas);
   --color-canvas-pattern: var(--canvas-pattern);
   --color-canvas-edge: var(--canvas-edge);
@@ -360,8 +358,20 @@
   --shadow-step-container: 0px 0px 22px
     color-mix(in oklab, var(--border), transparent 70%);
   --shadow-add-button: var(--add-button-shadow);
-  --color-builder-background: var(--builder-background);
-  --color-builder-background-pattern: var(--builder-background-pattern);
+
+  /*
+   * One level of indirection, and it is load-bearing.
+   *
+   * Tailwind expands a `--shadow-*` theme key into the utility's `--tw-shadow`
+   * literally, so a dark-mode override of `--shadow-edge` itself never lands.
+   * Pointing each key at a plain custom property fixes it: the utility carries
+   * `var(--edge)`, which resolves per theme at runtime.
+   */
+  --shadow-edge: var(--edge);
+  --shadow-edge-hover: var(--edge-hover);
+  --shadow-rest: var(--rest);
+  --shadow-lift: var(--lift);
+  --shadow-over: var(--over);
   @keyframes primary-color-pulse {
     from {
       color: var(--primary);
@@ -648,8 +658,9 @@
    * and an out-of-gamut near-black is gamut-mapped in a direction nobody
    * chose. 150 exists because hairlines wanted a step between 100 and 200.
    */
-  :root {
-    --ink-50: oklch(98.4% 0.003 296);
+  :root,
+  [data-theme='light'] {
+    --ink-50: oklch(98.4% 0.009 296);
     --ink-100: oklch(96.8% 0.007 296);
     --ink-150: oklch(94.6% 0.005 296);
     --ink-200: oklch(92.9% 0.013 296);
@@ -897,10 +908,32 @@
     --canvas-mask: oklch(0% 0 0 / 5.5%);
     --scrim: oklch(0% 0 0 / 50%);
 
-    --builder-background: var(--canvas);
-    --builder-background-pattern: var(--canvas-pattern);
     --light-blue: var(--ink-400);
     --add-button-shadow: 0 0 0 6px var(--primary-100);
+
+    /*
+     * Elevation, on a light ground: a shadow the page can actually receive.
+     * Each cast is the ink near-black at a low alpha rather than pure black,
+     * so a shadow carries the same faint violet as everything else.
+     */
+    --cast-06: color-mix(in oklab, var(--ink-950), transparent 94%);
+    --cast-08: color-mix(in oklab, var(--ink-950), transparent 92%);
+    --cast-10: color-mix(in oklab, var(--ink-950), transparent 90%);
+    --cast-20: color-mix(in oklab, var(--ink-950), transparent 80%);
+
+    --edge: 0 0 0 1px var(--ink-200);
+    --edge-hover:
+      0 0 0 1px var(--cast-20), 0 2px 4px -1px var(--cast-08),
+      0 4px 8px -2px var(--cast-06);
+    --rest:
+      0 0 0 1px var(--cast-06), 0 1px 3px 0 var(--cast-08),
+      0 1px 2px -1px var(--cast-06);
+    --lift:
+      0 0 0 1px var(--cast-10), 0 2px 4px -2px var(--cast-08),
+      0 8px 16px -6px var(--cast-08);
+    --over:
+      0 0 0 1px var(--cast-10), 0 4px 8px -4px var(--cast-10),
+      0 16px 32px -12px var(--cast-20);
   }
 
   /*
@@ -1076,6 +1109,24 @@
     --canvas-pattern: var(--ink-300);
     --canvas-mask: oklch(0% 0 0 / 80%);
     --scrim: oklch(0% 0 0 / 70%);
+
+    /*
+     * Elevation by light, not by shadow. A drop shadow on a dark surface has
+     * no lighter ground to fall on, so what lifts a surface here is a
+     * hairline of white at low alpha.
+     */
+    --cast-06: oklch(100% 0 0 / 4%);
+    --cast-08: oklch(100% 0 0 / 6%);
+    --cast-10: oklch(100% 0 0 / 9%);
+    --cast-20: oklch(0% 0 0 / 45%);
+
+    --edge: 0 0 0 1px var(--ink-200);
+    --edge-hover: 0 0 0 1px oklch(100% 0 0 / 16%);
+    --rest:
+      0 0 0 1px color-mix(in oklab, var(--foreground), transparent 90%),
+      0 1px 2px 0 oklch(0% 0 0 / 5%);
+    --lift: 0 0 0 1px var(--cast-10), 0 8px 16px -6px oklch(0% 0 0 / 40%);
+    --over: 0 0 0 1px var(--cast-10), 0 16px 32px -12px oklch(0% 0 0 / 55%);
 
     color-scheme: dark;
   }

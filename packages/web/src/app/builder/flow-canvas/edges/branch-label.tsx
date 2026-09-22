@@ -108,7 +108,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
       }}
     >
       <div
-        className="bg-builder-background pointer-events-auto"
+        className="bg-canvas pointer-events-auto"
         style={{
           paddingTop: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
           paddingBottom: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',

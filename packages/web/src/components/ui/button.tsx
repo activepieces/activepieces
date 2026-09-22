@@ -18,7 +18,7 @@ const buttonVariants = cva(
         secondary:
           'text-secondary-foreground bg-secondary enabled:hover:bg-secondary/80 enabled:hover:text-secondary-foreground',
         destructive:
-          'bg-destructive text-white enabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
+          'bg-destructive text-on-destructive enabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
         outline:
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
         accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
@@ -111,7 +111,7 @@ function renderButtonContent(
           withCtrl={true}
           className={cn({
             'text-primary-foreground/70': variant === 'default',
-            'text-white/70': variant === 'destructive',
+            'text-on-destructive/70': variant === 'destructive',
           })}
         />
       </div>

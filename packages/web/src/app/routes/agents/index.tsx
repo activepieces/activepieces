@@ -234,7 +234,7 @@ const AgentsPageContent = () => {
                 className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[520px] -translate-x-1/2 -translate-y-[230px]"
                 style={{
                   backgroundImage:
-                    'radial-gradient(ellipse at center, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0) 70%)',
+                    'radial-gradient(ellipse at center, color-mix(in oklab, var(--primary), transparent 90%) 0%, transparent 70%)',
                 }}
               />
               <AgentTrioMark className="mb-[22px]" />

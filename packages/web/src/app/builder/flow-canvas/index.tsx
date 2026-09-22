@@ -205,7 +205,7 @@ export const FlowCanvas = React.memo(
     return (
       <div
         ref={containerRef}
-        className="size-full relative overflow-hidden z-30 bg-builder-background"
+        className="size-full relative overflow-hidden z-30 bg-canvas"
         onMouseMove={(event) => {
           const cursorPosition = { x: event.clientX, y: event.clientY };
           setCursorPosition(cursorPosition);
@@ -215,7 +215,7 @@ export const FlowCanvas = React.memo(
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               key={`canvas-${canvasOrientation}`}
-              className="bg-builder-background"
+              className="bg-canvas"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
                 reactFlowStore.getState().unselectNodesAndEdges();
@@ -252,8 +252,8 @@ export const FlowCanvas = React.memo(
                 gap={10}
                 size={1}
                 variant={BackgroundVariant.Dots}
-                bgColor={`var(--builder-background)`}
-                color={`var(--builder-background-pattern)`}
+                bgColor={`var(--canvas)`}
+                color={`var(--canvas-pattern)`}
               />
               <Minimap key={graphKey} />
             </ReactFlow>

@@ -63,7 +63,7 @@ const AboveTriggerButton = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="bg-builder-background">
+        <div className="bg-canvas">
           <Button
             variant="ghost"
             className={cn(

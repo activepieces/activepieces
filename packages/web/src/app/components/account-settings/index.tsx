@@ -91,8 +91,8 @@ export function AccountSettingsDialog({
                   disableTooltip
                   imageUrl={user?.imageUrl}
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera className="h-5 w-5 text-white" />
+                <div className="absolute inset-0 flex items-center justify-center bg-scrim rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="h-5 w-5 text-on-inverse" />
                 </div>
                 <input
                   ref={fileInputRef}

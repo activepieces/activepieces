@@ -148,7 +148,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
               <CartesianGrid
                 vertical={false}
                 strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
+                stroke="var(--border)"
               />
               <XAxis
                 dataKey="date"
@@ -156,7 +156,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
                     month: 'short',
@@ -168,7 +168,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 width={40}
                 tickFormatter={(value) =>
                   formatUtils.formatNumberCompact(value as number)
