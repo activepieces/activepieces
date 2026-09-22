@@ -178,7 +178,7 @@ describe('Flow deletion recovery', () => {
 
         await flowBackgroundJobs(app!.log).reapTombstonedFlows()
 
-        expect(await db.findOneBy<Flow>('flow', { id: healthy.id })).toBeNull()
+        expect(await waitForRowToDisappear(healthy.id)).toBeNull()
         expect(await db.findOneBy<Flow>('flow', { id: doomed.id })).not.toBeNull()
     })
 
@@ -207,6 +207,26 @@ describe('Flow deletion recovery', () => {
         expect(response?.json().externalId).toBe(flow.externalId)
     })
 
+    it('survives concurrent deletes and a reaper pass racing the same flow', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx)
+
+        const responses = await Promise.all([
+            ctx.delete(`/v1/flows/${flow.id}`),
+            ctx.delete(`/v1/flows/${flow.id}`),
+            ctx.delete(`/v1/flows/${flow.id}`),
+            flowBackgroundJobs(app!.log).reapTombstonedFlows(),
+        ])
+
+        for (const response of responses.slice(0, 3)) {
+            expect(response).not.toBeUndefined()
+            expect([StatusCodes.NO_CONTENT, StatusCodes.NOT_FOUND]).toContain((response as { statusCode: number }).statusCode)
+        }
+        expect(await waitForRowToDisappear(flow.id)).toBeNull()
+        expect(await db.findBy('flow_version', { flowId: flow.id })).toHaveLength(0)
+        expect(await db.findBy('trigger_source', { flowId: flow.id })).toHaveLength(0)
+    })
+
     it('is safe to tear the trigger source down twice', async () => {
         const ctx = await createTestContext(app!)
         const { flowId } = await savePollingFlowWithLiveTrigger(ctx, { status: FlowStatus.DISABLED })
@@ -229,6 +249,6 @@ describe('Flow deletion recovery', () => {
         await flowBackgroundJobs(app!.log).reapTombstonedFlows()
         await flowBackgroundJobs(app!.log).reapTombstonedFlows()
 
-        expect(await db.findOneBy<Flow>('flow', { id: flow.id })).toBeNull()
+        expect(await waitForRowToDisappear(flow.id)).toBeNull()
     })
 })

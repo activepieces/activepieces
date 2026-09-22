@@ -1,5 +1,5 @@
-import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/core-utils'
-import { Flow, FlowOperationStatus } from '@activepieces/shared'
+import { assertNotNullOrUndefined } from '@activepieces/core-utils'
+import { FlowOperationStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
@@ -10,6 +10,7 @@ import { flowVersionRepo } from '../flow-version/flow-version.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
 import { flowRepo } from './flow.repo'
+import { flowService } from './flow.service'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
@@ -72,7 +73,9 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 preDeleteDone: true,
             })
         }
-        await removeFlowAndItsData({ flow, log })
+        await batchDeleteByFlowId(flow.id)
+        await flowRepo().delete({ id: flow.id })
+        await flowExecutionCache(log).invalidate(flow.id)
     },
 
     reapTombstonedFlows: async () => {
@@ -84,22 +87,8 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         if (tombstoned.length === 0) {
             return
         }
-        log.warn({ flowCount: tombstoned.length }, '[reapTombstonedFlows] Reclaiming flows whose deletion never finished')
-        for (const flow of tombstoned) {
-            const { error } = await tryCatch(async () => {
-                await flowSideEffects(log).preDelete({ flowToDelete: flow })
-                await removeFlowAndItsData({ flow, log })
-            })
-            if (!isNil(error)) {
-                log.error({ error, flow: { id: flow.id } }, '[reapTombstonedFlows] Could not reclaim flow')
-            }
-        }
+        log.warn({ flowCount: tombstoned.length }, '[reapTombstonedFlows] Re-queueing deletions that never finished')
+        await Promise.all(tombstoned.map((flow) => flowService(log).addDeleteFlowJob(flow)))
     },
 
 })
-
-const removeFlowAndItsData = async ({ flow, log }: { flow: Flow, log: FastifyBaseLogger }): Promise<void> => {
-    await batchDeleteByFlowId(flow.id)
-    await flowRepo().delete({ id: flow.id })
-    await flowExecutionCache(log).invalidate(flow.id)
-}

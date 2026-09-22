@@ -552,12 +552,12 @@ export const flowService = (log: FastifyBaseLogger) => ({
             projectId,
             includeDeleting: true,
         })
-        await this.addDeleteFlowJob(flow)
         await flowRepo().update({ id, projectId }, {
             status: FlowStatus.DISABLED,
             operationStatus: FlowOperationStatus.DELETING,
         })
         await flowExecutionCache(log).invalidate(id)
+        await this.addDeleteFlowJob(flow)
         log.info({ flow: { id }, project: { id: projectId } }, 'Flow deletion requested')
         if (!isNil(deletedFlow)) {
             flowSideEffects(log).onDeleted({
