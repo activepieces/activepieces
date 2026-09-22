@@ -6,6 +6,8 @@ import { t } from 'i18next';
 import { Split } from 'lucide-react';
 import { Control } from 'react-hook-form';
 
+import { FormField, FormItem, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Item,
   ItemMedia,
@@ -13,9 +15,7 @@ import {
   ItemTitle,
   ItemDescription,
   ItemActions,
-} from '@/components/custom/item';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+} from '@/components/ui/item';
 
 export const LimitsSection = ({ control, disabled }: LimitsSectionProps) => {
   return (
