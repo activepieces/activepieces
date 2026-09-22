@@ -1,10 +1,13 @@
-import { McpAuthType, McpProtocol, PieceAuth, Property } from '@activepieces/pieces-framework';
+import {
+  McpAuthType,
+  McpProtocol,
+  OAuth2GrantType,
+  PieceAuth,
+  Property,
+} from '@activepieces/pieces-framework';
 
-export const mcpClientAuth = PieceAuth.CustomAuth({
-  description:
-    'Connect to an external MCP server. Fill only the fields relevant to the chosen authentication method.',
-  required: true,
-  props: {
+function serverConnectionProps() {
+  return {
     serverUrl: Property.ShortText({
       displayName: 'Server URL',
       description: 'The MCP server endpoint, e.g. https://example.com/mcp',
@@ -22,6 +25,16 @@ export const mcpClientAuth = PieceAuth.CustomAuth({
         ],
       },
     }),
+  };
+}
+
+export const mcpClientAuth = PieceAuth.CustomAuth({
+  displayName: 'API Key / Headers',
+  description:
+    'Connect to an external MCP server. Fill only the fields relevant to the chosen authentication method.',
+  required: true,
+  props: {
+    ...serverConnectionProps(),
     authType: Property.StaticDropdown({
       displayName: 'Authentication',
       required: true,
@@ -47,7 +60,8 @@ export const mcpClientAuth = PieceAuth.CustomAuth({
     }),
     apiKeyHeader: Property.ShortText({
       displayName: 'API Key Header Name',
-      description: 'Header carrying the API key, e.g. "x-api-key". Used when Authentication is "API Key".',
+      description:
+        'Header carrying the API key, e.g. "x-api-key". Used when Authentication is "API Key".',
       required: false,
     }),
     headers: Property.LongText({
@@ -58,3 +72,46 @@ export const mcpClientAuth = PieceAuth.CustomAuth({
     }),
   },
 });
+
+export const mcpOAuth2Auth = PieceAuth.OAuth2({
+  displayName: 'OAuth2',
+  description: `Connect to an external MCP server that authenticates via OAuth2.
+
+Enter the server URL and click Connect — the OAuth2 endpoints are read from the server's own metadata and a client is registered automatically.
+
+If the server doesn't publish that metadata, or doesn't support Dynamic Client Registration, the fields to fill in by hand appear instead.`,
+  authUrl: '{authUrl}',
+  tokenUrl: '{tokenUrl}',
+  required: true,
+  scope: '{scopes}'.split(' '),
+  grantType: OAuth2GrantType.AUTHORIZATION_CODE,
+  pkce: true,
+  pkceMethod: 'S256',
+  discovery: {
+    serverUrlProp: 'serverUrl',
+    authUrlProp: 'authUrl',
+    tokenUrlProp: 'tokenUrl',
+    scopesProp: 'scopes',
+  },
+  props: {
+    ...serverConnectionProps(),
+    authUrl: Property.ShortText({
+      displayName: 'Authorize URL',
+      required: true,
+      description: "The authorization server's `authorization_endpoint`.",
+    }),
+    tokenUrl: Property.ShortText({
+      displayName: 'Token URL',
+      required: true,
+      description: "The authorization server's `token_endpoint`.",
+    }),
+    scopes: Property.ShortText({
+      displayName: 'Scopes (whitespace separated)',
+      required: false,
+      description:
+        "The authorization server's `scopes_supported`, if it requires specific scopes.",
+    }),
+  },
+});
+
+export const mcpAuth = [mcpClientAuth, mcpOAuth2Auth];

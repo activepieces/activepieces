@@ -4,19 +4,19 @@ import {
   InputPropertyMap,
   Property,
 } from '@activepieces/pieces-framework';
-import { mcpClientAuth } from '../auth';
+import { mcpAuth } from '../auth';
 import { mcpClient, McpToolInfo } from '../common/client';
 
 export const callTool = createAction({
-  auth: mcpClientAuth,
+  auth: mcpAuth,
   name: 'call-tool',
   displayName: 'Call Tool',
   description: 'Invoke a specific tool on an external MCP server and return its result.',
   audience: 'both',
   aiMetadata: { description: 'Invokes one named tool on the connected external MCP server with arguments matching that tool\'s own input schema; the tool list and its input fields are discovered live from the server, so what is callable varies by which MCP server the connection points at. Use it to call a third-party MCP tool deterministically as a flow step instead of delegating the choice to an LLM. Requires the exact tool name the server exposes, and it fails when the server flags the result as an error. Not idempotent: the effect depends on the remote tool invoked, which may create or mutate data on every call.', idempotent: false },
   props: {
-    tool: Property.Dropdown<string, true, typeof mcpClientAuth>({
-      auth: mcpClientAuth,
+    tool: Property.Dropdown<string, true, typeof mcpAuth>({
+      auth: mcpAuth,
       displayName: 'Tool',
       description: 'The tool to call. The list is loaded from the MCP server.',
       required: true,
@@ -26,7 +26,7 @@ export const callTool = createAction({
           return { disabled: true, placeholder: 'Connect an MCP server first', options: [] };
         }
         try {
-          const tools = await mcpClient.listTools(auth.props);
+          const tools = await mcpClient.listTools(auth);
           return { options: tools.map((tool) => ({ label: tool.name, value: tool.name })) };
         } catch (error) {
           return {
@@ -38,7 +38,7 @@ export const callTool = createAction({
       },
     }),
     args: Property.DynamicProperties({
-      auth: mcpClientAuth,
+      auth: mcpAuth,
       displayName: 'Tool Inputs',
       required: false,
       refreshers: ['tool'],
@@ -47,7 +47,7 @@ export const callTool = createAction({
           return {};
         }
         try {
-          const tools = await mcpClient.listTools(auth.props);
+          const tools = await mcpClient.listTools(auth);
           const selected = tools.find((candidate) => candidate.name === tool);
           return schemaToProps(selected?.inputSchema);
         } catch {
@@ -58,7 +58,7 @@ export const callTool = createAction({
   },
   async run(context) {
     const { tool, args } = context.propsValue;
-    const client = await mcpClient.connect(context.auth.props);
+    const client = await mcpClient.connect(context.auth);
     try {
       const result = await client.callTool({ name: tool, arguments: args ?? {} });
       if (isErrorResult(result)) {
