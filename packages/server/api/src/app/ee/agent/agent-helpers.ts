@@ -145,23 +145,13 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     }
 }
 
-async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
+async function resolveFastModel({ platformId, provider, providerConfigId, scope, runModelId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, runModelId?: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const modelId = agentModelResolution.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
-    return {
-        model: aiUtils.createModel({
-            credentials: providerConfig,
-            modelId,
-            platformId,
-            providerConfigId: providerConfig.configId,
-        }),
-        modelId,
-        provider: providerConfig.provider,
-    }
-}
-
-async function resolveFastModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
-    return (await resolveTierModel({ platformId, tierId: FAST_TIER_ID, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })).model
+    const { provider: resolvedProvider, config, modelScope, modelIds, configId } = providerConfig
+    const modelId = isNil(runModelId)
+        ? agentModelResolution.resolveModelIdForProvider({ provider: resolvedProvider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
+        : agentModelResolution.resolveFastModelId({ provider: resolvedProvider, config, modelScope, modelIds, runModelId })
+    return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: configId })
 }
 
 
@@ -318,7 +308,6 @@ export const agentHelpers = {
     assertRunProviderConfigured,
     ...agentModelResolution,
     resolveFastModel,
-    resolveTierModel,
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,

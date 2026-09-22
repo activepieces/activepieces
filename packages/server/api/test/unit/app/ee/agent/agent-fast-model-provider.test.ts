@@ -62,4 +62,35 @@ describe('resolveFastModel', () => {
 
         expect(model).toMatchObject({ credentials: { provider: AIProviderName.ANTHROPIC }, modelId: 'claude-haiku-4-5' })
     })
+
+    describe('on a provider we ship no curated model list for', () => {
+        const runModelId = 'global.anthropic.claude-haiku-4-5-20251001-v1:0'
+
+        beforeEach(() => {
+            mockGetConfigOrThrow.mockResolvedValue({
+                provider: AIProviderName.BEDROCK,
+                configId: 'config-1',
+                auth: { accessKeyId: 'a', secretAccessKey: 's' },
+                config: { region: 'us-east-1' },
+            })
+        })
+
+        it('fills a configured action\'s inputs on the model the turn already runs on', async () => {
+            const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, runModelId, log })
+
+            expect(model).toMatchObject({ credentials: { provider: AIProviderName.BEDROCK }, modelId: runModelId })
+        })
+
+        it('still refuses when the caller has no model to lend it', async () => {
+            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, log })).rejects.toMatchObject({
+                error: { code: 'ENTITY_NOT_FOUND' },
+            })
+        })
+    })
+
+    it('keeps the cheaper fast model when the provider offers one, rather than borrowing the turn\'s', async () => {
+        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, scope, runModelId: 'anthropic/claude-opus-4.8', log })
+
+        expect(model).toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
+    })
 })

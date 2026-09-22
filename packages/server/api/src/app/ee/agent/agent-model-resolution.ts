@@ -88,7 +88,11 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
 }
 
 function resolveFastModelId({ provider, config, modelScope, modelIds, runModelId }: { provider: AIProviderName, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[], runModelId: string }): string {
-    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds }))
+    const { data, error } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds }))
+    const keyServesNoFastModel = isNil(error) || (error instanceof ActivepiecesError && error.error.code === ErrorCode.ENTITY_NOT_FOUND)
+    if (!keyServesNoFastModel) {
+        throw error
+    }
     return data ?? runModelId
 }
 
