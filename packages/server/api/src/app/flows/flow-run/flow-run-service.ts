@@ -780,7 +780,10 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
 }
 
 function settingsOfStepUnderTest({ flowVersion, stepNameToTest }: SettingsOfStepUnderTestParams): unknown {
-    const stepUnderTest = flowStructureUtil.getStepOrThrow(stepNameToTest, flowVersion.trigger)
+    const stepUnderTest = flowStructureUtil.getStep(stepNameToTest, flowVersion.trigger)
+    if (isNil(stepUnderTest)) {
+        return undefined
+    }
     return flowStructureUtil.getAllChildSteps(stepUnderTest).map((step) => step.settings)
 }
 

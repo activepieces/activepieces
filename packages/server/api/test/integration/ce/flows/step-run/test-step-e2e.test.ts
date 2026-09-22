@@ -37,7 +37,7 @@ beforeAll(async () => {
 }, 30_000)
 
 afterAll(async () => {
-    worker.stop()
+    await worker.stop()
     await app.close()
 }, 15_000)
 
@@ -155,5 +155,25 @@ describe('Test step with narrowed sample data', () => {
 
         expect(result.status).toBe(FlowRunStatus.SUCCEEDED)
         expect(result.steps?.['step_2']?.output).toStrictEqual({ echoed: 'from-step-1' })
+    }, 180_000)
+
+    it('still queues a tracked run when the step under test no longer exists', async () => {
+        const { mockProject } = await mockAndSaveBasicSetup()
+        const mockFlow = createMockFlow({ projectId: mockProject.id })
+        await db.save('flow', mockFlow)
+        const mockFlowVersion = createMockFlowVersion({
+            flowId: mockFlow.id,
+            state: FlowVersionState.DRAFT,
+        })
+        await db.save('flow_version', mockFlowVersion)
+
+        const flowRun = await flowRunService(app.log).test({
+            projectId: mockProject.id,
+            flowVersionId: mockFlowVersion.id,
+            stepNameToTest: 'deleted_step',
+            triggeredBy: undefined,
+        })
+
+        expect(flowRun.id).toBeDefined()
     }, 180_000)
 })
