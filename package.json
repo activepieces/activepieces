@@ -1,11 +1,12 @@
 {
   "name": "activepieces",
-  "version": "0.89.0",
+  "version": "0.92.0",
   "packageManager": "bun@1.4.0",
   "trustedDependencies": [
     "sqlite3",
     "isolated-vm",
-    "redis-memory-server"
+    "redis-memory-server",
+    "deno"
   ],
   "redisMemoryServer": {
     "version": "8.8.1"
@@ -32,7 +33,7 @@
     "lint-pieces": "turbo run lint --filter='@activepieces/piece-*'",
     "lint-affected": "turbo run lint --affected",
     "lint-dev": "turbo run lint --filter='!@activepieces/piece-*' --force -- --fix",
-    "test-unit": "turbo run test --filter=@activepieces/engine --filter=@activepieces/shared --filter=@activepieces/sandbox --filter=@activepieces/core-utils --filter=@activepieces/core-execution --filter=@activepieces/server-utils --filter=@activepieces/pieces-framework --filter=web --filter=worker --filter=ee-embed-sdk",
+    "test-unit": "turbo run test $(npx tsx tools/scripts/test-filters.ts) && turbo run test-unit --filter=api",
     "test-api": "turbo run check-migrations test-ce test-ee test-cloud --filter=api --concurrency=1",
     "agent-evals": "set -a && . ./.env.dev && set +a && tsx --tsconfig packages/server/worker/test/lib/agent-eval/cli/tsconfig.json packages/server/worker/test/lib/agent-eval/cli/index.ts",
     "agent-evals:ci": "if [ -f ./.env.dev ]; then set -a && . ./.env.dev && set +a; fi && vitest run --dir packages/server/worker/test/lib/agent-eval",
@@ -53,7 +54,8 @@
     "bump-translated-pieces": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-translated-pieces.ts",
     "bump-all-pieces-patch-version": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/pieces/bump-all-pieces-patch-version.ts",
     "security:sla": "npx ts-node --project tools/tsconfig.tools.json tools/scripts/security/sla-report.ts",
-    "sync-model-catalog": "npx tsx tools/scripts/sync-model-catalog.ts"
+    "sync-model-catalog": "npx tsx tools/scripts/sync-model-catalog.ts",
+    "knip": "knip --workspace packages/web"
   },
   "private": true,
   "dependencies": {
@@ -94,6 +96,7 @@
     "i18next-parser": "9.3.0",
     "inquirer": "8.2.7",
     "jsonc-eslint-parser": "2.4.1",
+    "knip": "6.35.1",
     "lint-staged": "15.2.9",
     "prettier": "2.8.4",
     "semver": "7.6.0",
@@ -138,6 +141,6 @@
   "resolutions": {
     "rollup": "npm:@rollup/wasm-node",
     "axios": "1.18.0",
-    "nanoid": "3.3.17"
+    "nanoid": "3.3.18"
   }
 }

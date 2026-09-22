@@ -12,7 +12,7 @@ import { billingQueries } from '@/features/billing';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-import LockedFeatureGuard from './locked-feature-guard';
+import { LockedFeatureGuard } from './locked-feature-guard';
 
 const LOCK_DOCUMENTATION_URL =
   'https://www.activepieces.com/docs/install/configuration/overview#enterprise-edition-optional';

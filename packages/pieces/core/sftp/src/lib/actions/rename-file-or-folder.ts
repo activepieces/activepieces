@@ -5,6 +5,7 @@ import Client from 'ssh2-sftp-client';
 import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { getSftpError } from './common';
+import { renameFileOrFolderActionOutputSchema } from '../output-schemas';
 
 async function renameFTP(client: FTPClient, oldPath: string, newPath: string) {
   await client.rename(oldPath, newPath);
@@ -41,6 +42,7 @@ export const renameFileOrFolderAction = createAction({
         'The new path of the file or folder e.g. `./myfolder/new-name.mp3`',
     }),
   },
+  outputSchema: renameFileOrFolderActionOutputSchema,
   async run(context) {
     const client = await getClient(context.auth.props);
     const oldPath = context.propsValue.oldPath;

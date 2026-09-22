@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   Agent,
+  AgentConversationStatus,
   AgentListSort,
-  ApFlagId,
   CreateAgentRequest,
-  DraftAgentRequest,
   MoveAgentRequest,
   Permission,
   UpdateAgentRequest,
@@ -14,27 +14,23 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { agentsApi } from '../api/agents';
 
 const AGENTS_KEY = 'agents';
 
-export const useAgentsEnabled = (): boolean => {
-  const { data: agentsEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_ENABLED,
-  );
-  return agentsEnabled === true;
-};
-
 export const useAgentsAvailable = (): boolean => {
-  const releaseEnabled = useAgentsEnabled();
   const { platform } = platformHooks.useCurrentPlatform();
-  return releaseEnabled && platform.plan.agentsEnabled;
+  return platform.plan.agentsEnabled;
 };
 
 export const useAgentsNavVisible = (): boolean => {
@@ -44,6 +40,8 @@ export const useAgentsNavVisible = (): boolean => {
 };
 
 const AGENTS_PAGE_SIZE = 100;
+const AGENT_RUNS_ACTIVE_POLL_MS = 5 * 1000;
+const AGENT_RUNS_IDLE_POLL_MS = 15 * 1000;
 
 export const agentsQueries = {
   useAgents: ({
@@ -75,7 +73,6 @@ export const agentsQueries = {
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       enabled,
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
   useMovePreview: ({
     id,
@@ -104,8 +101,48 @@ export const agentsQueries = {
       queryKey: [AGENTS_KEY, 'one', id, includeUsage ? 'usage' : 'plain'],
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
-      meta: { showErrorDialog: !includeUsage, loadSubsetOptions: {} },
     }),
+  useAgentRun: ({
+    runId,
+    projectId,
+  }: {
+    runId: string | null;
+    projectId: string;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'run', runId],
+      enabled: !isNil(runId),
+      queryFn: () => agentsApi.getRun(runId ?? '', projectId),
+    }),
+  useAgentRuns: ({
+    agentId,
+    projectId,
+  }: {
+    agentId: string;
+    projectId: string;
+  }) => {
+    const [searchParams] = useSearchParams();
+    const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+    const limit = searchParams.get(LIMIT_QUERY_PARAM);
+    return useQuery({
+      queryKey: [AGENTS_KEY, 'runs', agentId, cursor, limit],
+      queryFn: () =>
+        agentsApi.listRuns({
+          agentId,
+          projectId,
+          cursor: cursor ?? undefined,
+          limit: limit === null ? undefined : parseInt(limit),
+        }),
+      refetchInterval: (query) => {
+        const stillRunning = query.state.data?.data.some(
+          (run) => run.status === AgentConversationStatus.STREAMING,
+        );
+        return stillRunning === true
+          ? AGENT_RUNS_ACTIVE_POLL_MS
+          : AGENT_RUNS_IDLE_POLL_MS;
+      },
+    });
+  },
 };
 
 export const agentsMutations = {
@@ -153,9 +190,4 @@ export const agentsMutations = {
       },
     });
   },
-  useDraftAgent: () =>
-    useMutation({
-      mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),
-      onError: () => undefined,
-    }),
 };

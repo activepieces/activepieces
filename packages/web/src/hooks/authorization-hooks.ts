@@ -45,3 +45,11 @@ export const useIsPlatformAdmin = () => {
   const platformRole = userHooks.getCurrentUserPlatformRole();
   return platformRole === PlatformRole.ADMIN;
 };
+
+export const useIsPlatformPrivileged = () => {
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+  return (
+    platformRole === PlatformRole.ADMIN ||
+    platformRole === PlatformRole.OPERATOR
+  );
+};

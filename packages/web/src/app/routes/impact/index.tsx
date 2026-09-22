@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
@@ -50,10 +50,11 @@ export default function ImpactPage() {
   const activeTab = (searchParams.get('tab') as TabValue) || 'analytics';
 
   const { data: projects } = projectCollectionUtils.useAll();
-  const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(
-    selectedTimePeriod,
-    selectedProjectId,
-  );
+  const { data, isLoading, isError } =
+    platformAnalyticsHooks.useAnalyticsTimeBased(
+      selectedTimePeriod,
+      selectedProjectId,
+    );
 
   const { mutate: refreshAnalytics } =
     platformAnalyticsHooks.useRefreshAnalytics();
@@ -222,6 +223,7 @@ export default function ImpactPage() {
             <FlowsDetails
               report={report}
               isLoading={isLoading}
+              isError={isError}
               projects={projects}
             />
           </TabsContent>

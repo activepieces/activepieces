@@ -494,6 +494,9 @@
       "@activepieces/piece-frill": [
         "packages/pieces/community/frill/src/index.ts"
       ],
+      "@activepieces/piece-floqer": [
+        "packages/pieces/community/floqer/src/index.ts"
+      ],
       "@activepieces/piece-flow-helper": [
         "packages/pieces/community/flow-helper/src/index.ts"
       ],
@@ -508,6 +511,9 @@
       ],
       "@activepieces/piece-formbricks": [
         "packages/pieces/community/formbricks/src/index.ts"
+      ],
+      "@activepieces/piece-formio": [
+        "packages/pieces/community/formio/src/index.ts"
       ],
       "@activepieces/piece-forms": ["packages/pieces/core/forms/src/index.ts"],
       "@activepieces/piece-formstack": [
@@ -904,6 +910,9 @@
       "@activepieces/piece-nifty": [
         "packages/pieces/community/nifty/src/index.ts"
       ],
+      "@activepieces/piece-ninety": [
+        "packages/pieces/community/ninety/src/index.ts"
+      ],
       "@activepieces/piece-ninjapipe": [
         "packages/pieces/community/ninjapipe/src/index.ts"
       ],
@@ -1148,6 +1157,9 @@
       ],
       "@activepieces/piece-saastic": [
         "packages/pieces/community/saastic/src/index.ts"
+      ],
+      "@activepieces/piece-sage-accounting": [
+        "packages/pieces/community/sage-accounting/src/index.ts"
       ],
       "@activepieces/piece-saleor": [
         "packages/pieces/community/saleor/src/index.ts"

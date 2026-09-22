@@ -1,6 +1,7 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   AIProviderAuthConfig,
+  AiProviderKeyStatus,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
@@ -27,10 +28,9 @@ export const aiProviderQueries = {
     useQuery({
       queryKey: aiProviderKeys.configs,
       queryFn: () => aiProviderApi.listConfigs(),
-      meta: { showErrorDialog: true, loadSubsetOptions: {} },
     }),
-  useProjectAiProviders: (forProjectId?: string) => {
-    const projectId = forProjectId ?? authenticationSession.getProjectId();
+  useProjectAiProviders: () => {
+    const projectId = authenticationSession.getProjectId();
     return useQuery({
       queryKey: aiProviderKeys.forProject(projectId),
       queryFn: () =>
@@ -38,15 +38,19 @@ export const aiProviderQueries = {
       enabled: !isNil(projectId),
     });
   },
-  useChatProvider: (forProjectId?: string) => {
+  useChatProvider: () => {
     const { data: providers, ...rest } =
-      aiProviderQueries.useProjectAiProviders(forProjectId);
+      aiProviderQueries.useProjectAiProviders();
     return { ...rest, data: providers?.find((p) => p.enabledForChat) };
   },
 };
 
 export const aiProviderMutations = {
-  useRecheckAiProvider: ({ onSuccess }: { onSuccess: () => void }) => {
+  useRecheckAiProvider: ({
+    onSuccess,
+  }: {
+    onSuccess: (result: { status: AiProviderKeyStatus }) => void;
+  }) => {
     return useMutation({
       mutationFn: (providerId: string) => aiProviderApi.recheck(providerId),
       onSuccess,

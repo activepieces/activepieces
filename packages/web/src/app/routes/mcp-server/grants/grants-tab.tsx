@@ -14,14 +14,14 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/custom/empty';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/empty';
 import { platformUserHooks } from '@/features/platform-admin/hooks/platform-user-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { userHooks } from '@/hooks/user-hooks';
@@ -59,9 +59,8 @@ export function GrantsTab() {
     request.memberIds !== undefined ||
     request.clientKeys !== undefined;
 
-  const { data, isLoading, isError } = mcpGrantsQueries.useGrants({
+  const { data, isLoading, isError, refetch } = mcpGrantsQueries.useGrants({
     request,
-    showErrorDialog: true,
   });
   const revoke = mcpGrantsMutations.useRevoke();
 
@@ -106,6 +105,9 @@ export function GrantsTab() {
         columns={columns}
         page={data}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('connected clients')}
+        onRetry={refetch}
         filters={buildFilters({ projects, members: users?.data ?? [] })}
         selectColumn={true}
         bordered={true}
@@ -120,7 +122,7 @@ export function GrantsTab() {
               <ConfirmationDeleteDialog
                 title={t('Revoke access')}
                 message={t(
-                  'Revoking {entityName}. Access ends within 15 minutes. The client will ask to sign in again.',
+                  'Revoking {entityName}. Access ends immediately. The client will ask to sign in again.',
                   { entityName: t('revokedGrants', { count: rows.length }) },
                 )}
                 entityName={t('revokedGrants', { count: rows.length })}

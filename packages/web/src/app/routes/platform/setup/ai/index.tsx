@@ -8,7 +8,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 
-import LockedFeatureGuard from '../../../../components/locked-feature-guard';
+import { LockedFeatureGuard } from '../../../../components/locked-feature-guard';
 
 import { CapabilitiesTab } from './capabilities-tab';
 import { ProvidersTab } from './providers-tab';
@@ -104,8 +104,8 @@ function AICenter() {
         </TabsList>
       </aside>
       <div className="flex-1 min-w-0 overflow-auto">
-        <div className="w-full max-w-6xl px-8 py-6">
-          <TabsContent value="providers" className="mt-0">
+        <div className="flex min-h-full w-full max-w-6xl flex-col px-8 py-6">
+          <TabsContent value="providers" className="mt-0 flex flex-1 flex-col">
             <ProvidersTab />
           </TabsContent>
           {capabilitiesEnabled && (

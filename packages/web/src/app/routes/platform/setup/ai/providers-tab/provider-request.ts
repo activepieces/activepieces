@@ -41,6 +41,17 @@ function buildCreateRequest({
           secretAccessKey: value('secretAccessKey'),
         },
       };
+    case AIProviderName.VERTEX:
+      return {
+        provider,
+        displayName,
+        config: {
+          project: value('project'),
+          region: value('region'),
+          models,
+        },
+        auth: { serviceAccountJson: value('serviceAccountJson') },
+      };
     case AIProviderName.CLOUDFLARE_GATEWAY:
       return {
         provider,

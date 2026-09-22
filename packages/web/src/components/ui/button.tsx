@@ -106,7 +106,14 @@ function renderButtonContent(
     return (
       <div className="flex justify-center items-center gap-2">
         {children}
-        <Shortcut shortcutKey={keyboardShortcut} withCtrl={true} />
+        <Shortcut
+          shortcutKey={keyboardShortcut}
+          withCtrl={true}
+          className={cn({
+            'text-primary-foreground/70': variant === 'default',
+            'text-white/70': variant === 'destructive',
+          })}
+        />
       </div>
     );
   }
@@ -128,7 +135,11 @@ function Button({
 }: ButtonProps) {
   const Comp = asChild ? Slot.Root : 'button';
 
-  useKeyboardShortcut(keyboardShortcut, disabled, onKeyboardShortcut);
+  useKeyboardShortcut(
+    keyboardShortcut,
+    disabled || loading,
+    onKeyboardShortcut,
+  );
 
   return (
     <Comp

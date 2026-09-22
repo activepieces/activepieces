@@ -13,12 +13,11 @@ import { mcpGrantsApi } from './mcp-grants-api';
 const GRANTS_QUERY_KEY = ['mcp-oauth-grants'];
 
 export const mcpGrantsQueries = {
-  useGrants({ request, showErrorDialog }: UseGrantsParams) {
+  useGrants({ request }: UseGrantsParams) {
     return useQuery({
       queryKey: [...GRANTS_QUERY_KEY, request],
       queryFn: () => mcpGrantsApi.list(request),
       placeholderData: keepPreviousData,
-      meta: { showErrorDialog, loadSubsetOptions: {} },
     });
   },
 };
@@ -29,7 +28,7 @@ export const mcpGrantsMutations = {
     return useMutation({
       mutationFn: (ids: string[]) => mcpGrantsApi.revoke({ ids }),
       onSuccess: () => {
-        toast.success(t('Access ends within 15 minutes.'));
+        toast.success(t('Access ended. The client will ask to sign in again.'));
         queryClient.invalidateQueries({ queryKey: GRANTS_QUERY_KEY });
       },
       onError: () => {
@@ -41,5 +40,4 @@ export const mcpGrantsMutations = {
 
 type UseGrantsParams = {
   request: ListMcpOAuthGrantsRequestQuery;
-  showErrorDialog: boolean;
 };

@@ -21,7 +21,7 @@ import {
 } from '../common/broadcasts';
 import { Broadcast } from '../common/types';
 import { BROADCASTS_API_ENDPOINT } from '../common/constants';
-import { fetchBroadcasts } from '../common/service';
+import { buildQueryParams, fetchBroadcasts } from '../common/service';
 
 export const listBroadcasts = createAction({
   auth: convertkitAuth,
@@ -131,13 +131,9 @@ export const getBroadcastById = createAction({
     const { broadcastId } = context.propsValue;
     const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}`;
 
-    const body = {
-      api_secret: context.auth.secret_text,
-    };
-
     const request: HttpRequest = {
       url,
-      body,
+      queryParams: buildQueryParams(context.auth.secret_text),
       method: HttpMethod.GET,
     };
     const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(
@@ -242,13 +238,9 @@ export const broadcastStats = createAction({
     const { broadcastId } = context.propsValue;
     const url = `${BROADCASTS_API_ENDPOINT}/${broadcastId}/stats`;
 
-    const body = {
-      api_secret: context.auth.secret_text,
-    };
-
     const request: HttpRequest = {
       url,
-      body,
+      queryParams: buildQueryParams(context.auth.secret_text),
       method: HttpMethod.GET,
     };
     const response = await httpClient.sendRequest<{ broadcast: Broadcast }>(

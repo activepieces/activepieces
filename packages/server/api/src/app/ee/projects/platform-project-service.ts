@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, UserId } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, Metadata, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, UserId } from '@activepieces/core-utils'
 import { apDayjs } from '@activepieces/server-utils'
 import { AppConnectionScope, PiecesFilterType, PrincipalType, Project, ProjectType, ProjectWithLimits, UpdateProjectPlatformRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -16,8 +16,11 @@ import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { applyProjectsAccessFilters, projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
+import { getPlatformGroupQueueName, getProjectGroupQueueName, QueueName } from '../../workers/job'
+import { platformQueueMigrationService } from '../../workers/platform-queue-migration.service'
 import { concurrencyPoolService } from '../platform/concurrency-pool/concurrency-pool.service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
+import { workerGroupService } from '../platform/platform-plan/worker-group.service'
 import { projectMemberService } from './project-members/project-member.service'
 import { ProjectPlanEntity } from './project-plan/project-plan.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
@@ -79,6 +82,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                 externalId: params.externalId,
                 metadata: params.metadata,
                 maxConcurrentJobs: params.maxConcurrentJobs,
+                sensitive: params.sensitive,
                 type: ProjectType.TEAM,
                 callPostCreateHooks: false,
                 entityManager,
@@ -192,6 +196,16 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         })
         if (resolvedPoolId !== undefined) {
             await concurrencyPoolService(log).assignProject({ projectId, poolId: resolvedPoolId })
+        }
+        const previousGroupId = project.workerGroupId ?? null
+        if (platformPlan.workerGroupsEnabled && workerGroupId !== undefined && previousGroupId !== workerGroupId) {
+            await migrateJobsToNewGroupQueue({
+                projectId,
+                platformId: project.platformId,
+                fromGroupId: previousGroupId,
+                toGroupId: workerGroupId,
+                log,
+            })
         }
         return this.getWithPlanAndUsageOrThrow(projectId)
     },
@@ -331,6 +345,31 @@ async function resolvePoolId({ platformId, projectId, maxConcurrentJobs, log }: 
     return undefined
 }
 
+async function migrateJobsToNewGroupQueue({ projectId, platformId, fromGroupId, toGroupId, log }: MigrateJobsToNewGroupQueueParams): Promise<void> {
+    const ungroupedQueueName = await resolveUngroupedQueueName({ platformId, log })
+    const { error } = await tryCatch(() => platformQueueMigrationService(log).migrateProjectJobs({
+        fromQueueName: isNil(fromGroupId) ? ungroupedQueueName : getProjectGroupQueueName(fromGroupId),
+        toQueueName: isNil(toGroupId) ? ungroupedQueueName : getProjectGroupQueueName(toGroupId),
+        projectId,
+    }))
+    if (error) {
+        log.error({ project: { id: projectId }, platform: { id: platformId }, error }, '[platformProjectService#update] Failed to migrate waiting jobs to the new worker group queue')
+    }
+}
+
+async function resolveUngroupedQueueName({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<string> {
+    const platformGroupId = await workerGroupService(log).getWorkerGroupId({ platformId })
+    return isNil(platformGroupId) ? QueueName.WORKER_JOBS : getPlatformGroupQueueName(platformGroupId)
+}
+
+type MigrateJobsToNewGroupQueueParams = {
+    projectId: string
+    platformId: string
+    fromGroupId: string | null
+    toGroupId: string | null
+    log: FastifyBaseLogger
+}
+
 type ResolvePoolIdParams = {
     platformId: string
     projectId: string
@@ -384,6 +423,7 @@ type CreateProjectParams = {
     maxConcurrentJobs?: number
     globalConnectionExternalIds?: string[]
     alertReceiverEmail?: string | null
+    sensitive?: boolean
 }
 
 type DeleteProjectParams = {

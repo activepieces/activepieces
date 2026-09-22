@@ -92,14 +92,6 @@ export const extractPdfPages = createAction({
       required: true,
     }),
   },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   async run(context) {
     try {
       const srcDoc = await PDFDocument.load(context.propsValue.file.data as any);

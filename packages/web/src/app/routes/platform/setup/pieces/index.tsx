@@ -22,6 +22,7 @@ import { toast } from 'sonner';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { RequestTrial } from '@/app/components/request-trial';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
+import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
@@ -54,6 +55,7 @@ const PiecesListTab = () => {
     pieces,
     refetch: refetchPieces,
     isLoading,
+    isError,
   } = piecesHooks.usePieces({
     searchQuery,
     includeHidden: true,
@@ -198,8 +200,12 @@ const PiecesListTab = () => {
         previous: null,
       }}
       isLoading={isLoading}
+      isError={isError}
+      errorStateEntity={t('pieces')}
+      onRetry={refetchPieces}
       toolbarButtons={[
         <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
+        <DownloadPiecesReportButton key="download-report" />,
         <SyncPiecesButton key="sync" />,
         <InstallPieceDialog
           key="install"

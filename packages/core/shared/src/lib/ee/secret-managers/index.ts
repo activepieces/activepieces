@@ -19,8 +19,6 @@ export const SecretManagerEntitySchema = z.object({
     auth: Nullable(SecretManagerConfigSchema),
 })
 
-export type SecretManager = z.infer<typeof SecretManagerEntitySchema>
-
 const SecretManagerConnectionBase = {
     ...BaseModelSchema,
     platformId: z.string(),

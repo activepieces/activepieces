@@ -1,4 +1,4 @@
-import { AIProviderName, isNil } from '@activepieces/core-utils'
+import { AIProviderName, isNil, unique } from '@activepieces/core-utils'
 import * as z from 'zod/mini'
 
 export enum AIProviderModelType {
@@ -23,6 +23,11 @@ const GoogleProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
 const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
 const MistralProviderAuthConfig = BaseAIProviderAuthConfig
+
+export const VertexProviderAuthConfig = z.object({
+    serviceAccountJson: z.string().check(z.minLength(1)),
+})
+export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
@@ -76,6 +81,13 @@ export const BedrockProviderConfig = z.object({
 })
 export type BedrockProviderConfig = z.infer<typeof BedrockProviderConfig>
 
+export const VertexProviderConfig = z.object({
+    project: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    region: z.string().check(z.regex(/^[a-z0-9][a-z0-9-]{0,62}$/)),
+    models: z.array(ProviderModelConfig),
+})
+export type VertexProviderConfig = z.infer<typeof VertexProviderConfig>
+
 export const OpenAiCompatibleVendorConfig = z.object({})
 export type OpenAiCompatibleVendorConfig = z.infer<typeof OpenAiCompatibleVendorConfig>
 
@@ -89,6 +101,7 @@ export const AIProviderAuthConfig = z.union([
     OpenAICompatibleProviderAuthConfig,
     ActivePiecesProviderAuthConfig,
     BedrockProviderAuthConfig,
+    VertexProviderAuthConfig,
     MistralProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = z.infer<typeof AIProviderAuthConfig>
@@ -98,6 +111,7 @@ export const AIProviderConfig = z.union([
     OpenAICompatibleProviderConfig,
     CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    VertexProviderConfig,
     BedrockProviderConfig,
     AnthropicProviderConfig,
     GoogleProviderConfig,
@@ -220,14 +234,17 @@ const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
 
 const OPENAI_CHAT_MODELS = ['gpt-5.5', 'gpt-5.4-mini', 'gpt-5.4-nano', 'gpt-4.1', 'gpt-4.1-mini'] as const
 const ANTHROPIC_CHAT_MODELS = ['claude-sonnet-4-6', 'claude-opus-4-7', 'claude-haiku-4-5'] as const
-const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-haiku-4.5'] as const
+const ANTHROPIC_OPENROUTER_CHAT_MODELS = ['claude-sonnet-4.6', 'claude-opus-4.7', 'claude-opus-4.8', 'claude-haiku-4.5'] as const
 const GOOGLE_CHAT_MODELS = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-3.7-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] as const
 const X_AI_OPENROUTER_CHAT_MODELS = ['grok-4.20'] as const
+
+const REASONING_OPTIONAL_CHAT_MODELS: readonly string[] = ANTHROPIC_OPENROUTER_CHAT_MODELS.map((model) => `${AIProviderName.ANTHROPIC}/${model}`)
 
 export const ALLOWED_CHAT_MODELS_BY_PROVIDER: Partial<Record<AIProviderName, readonly string[]>> = {
     [AIProviderName.OPENAI]: OPENAI_CHAT_MODELS,
     [AIProviderName.ANTHROPIC]: ANTHROPIC_CHAT_MODELS,
     [AIProviderName.GOOGLE]: GOOGLE_CHAT_MODELS,
+    [AIProviderName.VERTEX]: GOOGLE_CHAT_MODELS,
     [AIProviderName.ACTIVEPIECES]: [
         ...ANTHROPIC_OPENROUTER_CHAT_MODELS.map((m) => `${AIProviderName.ANTHROPIC}/${m}`),
         ...OPENAI_CHAT_MODELS.map((m) => `${AIProviderName.OPENAI}/${m}`),
@@ -260,11 +277,30 @@ function getCuratedChatModels({ provider }: { provider: AIProviderName }): { id:
     return curatedIds.map((id) => ({ id, label: CHAT_MODEL_LABELS[id] ?? id }))
 }
 
+function canDisableReasoning({ modelId }: { modelId: string }): boolean {
+    return REASONING_OPTIONAL_CHAT_MODELS.includes(modelId)
+}
+
+function managedChatModelIds(): string[] {
+    return unique([
+        ...ALLOWED_CHAT_MODELS_BY_PROVIDER[AIProviderName.ACTIVEPIECES] ?? [],
+        ...ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.modelId),
+    ])
+}
+
+function isManagedChatModelId({ modelId }: { modelId: string }): boolean {
+    return managedChatModelIds().includes(modelId)
+}
+
+function curatedChatModelIds(): string[] {
+    return unique([
+        ...ACTIVEPIECES_CHAT_TIERS.flatMap((tier) => [tier.id, tier.modelId]),
+        ...Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).flatMap((curatedIds) => curatedIds ?? []),
+    ])
+}
+
 function isCuratedChatModelId({ modelId }: { modelId: string }): boolean {
-    if (ACTIVEPIECES_CHAT_TIERS.some((tier) => tier.id === modelId)) {
-        return true
-    }
-    return Object.values(ALLOWED_CHAT_MODELS_BY_PROVIDER).some((curatedIds) => curatedIds.includes(modelId))
+    return curatedChatModelIds().includes(modelId)
 }
 
 const DEFAULT_MAX_CONTEXT_TOKENS = 128_000
@@ -274,6 +310,7 @@ const PROVIDER_MAX_CONTEXT_TOKENS: Partial<Record<AIProviderName, number>> = {
     [AIProviderName.ANTHROPIC]: 200_000,
     [AIProviderName.GOOGLE]: 1_048_576,
     [AIProviderName.BEDROCK]: 200_000,
+    [AIProviderName.VERTEX]: 1_048_576,
     [AIProviderName.AZURE]: 128_000,
     [AIProviderName.OPENROUTER]: 128_000,
     [AIProviderName.ACTIVEPIECES]: 200_000,
@@ -332,14 +369,22 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
 }
 
 export const ACTIVEPIECES_CHAT_TIERS = [
-    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', thinkingBudget: 5_000, creditWeight: 2 },
-    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000, creditWeight: 10 },
-    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000, creditWeight: 20 },
+    { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-haiku-4.5', nativeModelId: 'claude-haiku-4-5', thinkingBudget: 5_000 },
+    { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', nativeModelId: 'claude-sonnet-4-6', thinkingBudget: 10_000 },
+    { id: 'premium', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', nativeModelId: 'claude-opus-4-7', thinkingBudget: 20_000 },
 ] as const
 
 export const DEFAULT_CHAT_TIER_ID = 'smart' as const
 
 export type ActivepiecesChatTier = typeof ACTIVEPIECES_CHAT_TIERS[number]
+
+export const ACTIVEPIECES_IMAGE_TIERS = [
+    { id: 'fast', label: 'Fast', modelId: 'google/gemini-3.1-flash-lite-image' },
+    { id: 'smart', label: 'Expert', modelId: 'google/gemini-3.1-flash-image' },
+    { id: 'premium', label: 'Heavy', modelId: 'google/gemini-3-pro-image' },
+] as const
+
+export type ActivepiecesImageTier = typeof ACTIVEPIECES_IMAGE_TIERS[number]
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
@@ -350,6 +395,7 @@ export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabili
     [AIProviderName.CLOUDFLARE_GATEWAY]: buildProviderCapabilities(AIProviderName.CLOUDFLARE_GATEWAY),
     [AIProviderName.CUSTOM]: buildProviderCapabilities(AIProviderName.CUSTOM),
     [AIProviderName.BEDROCK]: buildProviderCapabilities(AIProviderName.BEDROCK),
+    [AIProviderName.VERTEX]: buildProviderCapabilities(AIProviderName.VERTEX),
     [AIProviderName.MISTRAL]: buildProviderCapabilities(AIProviderName.MISTRAL),
     [AIProviderName.ACTIVEPIECES]: buildProviderCapabilities(AIProviderName.ACTIVEPIECES),
     [AIProviderName.XAI]: buildProviderCapabilities(AIProviderName.XAI),
@@ -364,6 +410,9 @@ export const aiProviderUtils = {
     getMaxContextTokens,
     getCuratedChatModels,
     isCuratedChatModelId,
+    managedChatModelIds,
+    isManagedChatModelId,
+    canDisableReasoning,
 }
 
 export const AI_PROVIDER_ENTITY_TYPES = {

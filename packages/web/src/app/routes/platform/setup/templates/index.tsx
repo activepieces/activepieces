@@ -8,7 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import {
   DataTable,
@@ -37,10 +37,9 @@ const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const [searchParams] = useSearchParams();
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
-    meta: { showErrorDialog: true, loadSubsetOptions: {} },
     queryFn: () => {
       return templatesApi.list({
         type: TemplateType.CUSTOM,
@@ -233,6 +232,9 @@ const PlatformTemplatesPage = () => {
           page={data}
           hidePagination={true}
           isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('templates')}
+          onRetry={refetch}
           bulkActions={bulkActions}
           toolbarButtons={toolbarButtons}
           actions={[
