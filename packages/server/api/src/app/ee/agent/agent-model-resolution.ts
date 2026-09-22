@@ -87,8 +87,9 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-function resolveFastModelId({ provider, config, modelScope, modelIds }: { provider: AIProviderName, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
-    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
+function resolveFastModelId({ provider, config, modelScope, modelIds, runModelId }: { provider: AIProviderName, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[], runModelId: string }): string {
+    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds }))
+    return data ?? runModelId
 }
 
 export const agentModelResolution = {

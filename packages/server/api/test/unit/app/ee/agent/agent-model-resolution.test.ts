@@ -106,11 +106,30 @@ describe('resolveModelIdForProvider', () => {
         expect(error).toBeInstanceOf(ActivepiecesError)
         expect(String(error)).not.toContain('claude')
     })
+})
+
+describe('resolveFastModelId', () => {
+    const runModelId = 'eu.anthropic.claude-sonnet-4-5-20250929-v1:0'
 
     it('resolves the fast round to a model the provider offers', () => {
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ANTHROPIC })).toBe('claude-haiku-4-5')
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.OPENAI })).toBe('gpt-5.5')
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ACTIVEPIECES })).toBe('anthropic/claude-haiku-4.5')
+        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ANTHROPIC, runModelId })).toBe('claude-haiku-4-5')
+        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.OPENAI, runModelId })).toBe('gpt-5.5')
+        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ACTIVEPIECES, runModelId })).toBe('anthropic/claude-haiku-4.5')
+    })
+
+    it('runs the fast round on the model the turn already uses when the provider has no catalogue', () => {
+        for (const provider of [AIProviderName.BEDROCK, AIProviderName.AZURE, AIProviderName.MISTRAL, AIProviderName.XAI]) {
+            expect(agentModelResolution.resolveFastModelId({ provider, runModelId }), provider).toBe(runModelId)
+        }
+    })
+
+    it('runs the fast round on the turn model when the key allow-list excludes every fast candidate', () => {
+        expect(agentModelResolution.resolveFastModelId({
+            provider: AIProviderName.GOOGLE,
+            modelScope: 'selected',
+            modelIds: ['a-model-this-provider-does-not-offer'],
+            runModelId,
+        })).toBe(runModelId)
     })
 })
 
