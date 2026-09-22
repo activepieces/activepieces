@@ -119,10 +119,10 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
               branchName: `${branch.branchName} Copy`,
             });
           } else {
-            insert(updatedStep.settings.branches.length - 1, {
+            insert(operation.request.branchIndex, {
               branchType: BranchExecutionType.CONDITION,
-              branchName: `Route ${updatedStep.settings.branches.length}`,
-              description: '',
+              branchName: operation.request.branchName,
+              description: operation.request.description ?? '',
             });
           }
           form.trigger();
