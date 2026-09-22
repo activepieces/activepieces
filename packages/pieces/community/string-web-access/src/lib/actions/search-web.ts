@@ -12,7 +12,7 @@ export const searchWeb = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Runs a web search through String Web Access and returns the organic results with position, title, URL, display URL and snippet. Use when you need to discover URLs for a question; follow it with Fetch URL to read a result. The engine can be Google, Bing, DuckDuckGo, Brave or Mojeek, and results can be localized by country and language. Read-only and safe to repeat.',
+      'Runs a web search through String Web Access and returns the organic results with position, title, URL, display URL and snippet. Use when you need to discover URLs for a question; follow it with Fetch URL to read a result. The engine can be Google, DuckDuckGo, Brave or Mojeek, and results can be localized by country and language. Read-only and safe to repeat.',
     idempotent: true,
   },
   props: {
@@ -21,7 +21,7 @@ export const searchWeb = createAction({
       description: 'What to search for.',
       required: true,
     }),
-    engine: Property.StaticDropdown<'google' | 'bing' | 'duckduckgo' | 'brave' | 'mojeek'>({
+    engine: Property.StaticDropdown<'google' | 'duckduckgo' | 'brave' | 'mojeek'>({
       displayName: 'Engine',
       description: 'Which search engine to query.',
       required: false,
@@ -30,7 +30,6 @@ export const searchWeb = createAction({
         disabled: false,
         options: [
           { label: 'Google', value: 'google' },
-          { label: 'Bing', value: 'bing' },
           { label: 'DuckDuckGo', value: 'duckduckgo' },
           { label: 'Brave', value: 'brave' },
           { label: 'Mojeek', value: 'mojeek' },
