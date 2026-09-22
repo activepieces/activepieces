@@ -108,6 +108,11 @@ async function countPendingEvaluations({ queue, barrierId }: { queue: Queue<Barr
     return jobs.filter((job) => job.data.barrierId === barrierId).length
 }
 
+async function drainEvaluations(queue: Queue<BarrierJobData>): Promise<void> {
+    const jobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'paused'])
+    await Promise.all(jobs.map((job) => job.remove()))
+}
+
 async function closeWithoutConsuming(barrierId: string) {
     await databaseConnection().getRepository('waitpoint').update({ id: barrierId }, {
         status: WaitpointStatus.COMPLETED,
@@ -280,6 +285,65 @@ describe('signal identity', () => {
         const reread = (await listSignals(barrier.id)).find((row) => row.id === signal.id)
         expect(reread.status).toBe(BarrierSignalStatus.SUCCEEDED)
     })
+
+    it('hands a refId outcome to every barrier holding a signal for that refId', async () => {
+        const queue = barrierQueue(app.log).get()
+        await queue.pause()
+        try {
+            const refId = apId()
+            const first = await createBarrierAwaiting({ refId })
+            const second = await createBarrierAwaiting({ refId })
+            await drainEvaluations(queue)
+            await barrierQueue(app.log).clearEvaluationDedupKey(first.id)
+            await barrierQueue(app.log).clearEvaluationDedupKey(second.id)
+
+            const matched = await barrierService(app.log).receiveSignal({ refId, projectId: ctx.project.id, status: BarrierSignalStatus.SUCCEEDED })
+
+            expect(matched).toBe(true)
+            for (const barrier of [first, second]) {
+                const [signal] = await listSignals(barrier.id)
+                expect(signal.status).toBe(BarrierSignalStatus.SUCCEEDED)
+                expect(await countPendingEvaluations({ queue, barrierId: barrier.id })).toBe(1)
+            }
+        }
+        finally {
+            await drainEvaluations(queue)
+            await queue.resume()
+        }
+    })
+
+    it('refuses a decision once its barrier has closed, so it cannot land after the summary was taken', async () => {
+        const queue = barrierQueue(app.log).get()
+        await queue.pause()
+        try {
+            const { flowRun } = await createParentRun()
+            const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+            const [signal] = await listSignals(barrier.id)
+            await db.update('waitpoint', barrier.id, { status: WaitpointStatus.COMPLETED })
+
+            const recorded = await barrierService(app.log).recordDecision({
+                barrierId: barrier.id,
+                signalId: signal.id,
+                projectId: ctx.project.id,
+                status: BarrierSignalStatus.SUCCEEDED,
+            })
+
+            expect(recorded).toBe(false)
+            const [reread] = await listSignals(barrier.id)
+            expect(reread.status).toBe(BarrierSignalStatus.PENDING)
+        }
+        finally {
+            await drainEvaluations(queue)
+            await queue.resume()
+        }
+    })
+
+    async function createBarrierAwaiting({ refId }: { refId: string }): Promise<Waitpoint> {
+        const { flowRun } = await createParentRun(FlowRunStatus.RUNNING)
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['child-run'] })
+        await databaseConnection().getRepository('waitpoint_signal').update({ waitpointId: barrier.id }, { refId })
+        return barrier
+    }
 })
 
 describe('evaluation coalescing', () => {
@@ -584,11 +648,6 @@ describe('barrier deadline', () => {
         await db.update('waitpoint', barrier.id, { updated: dayjs().subtract(staleByMinutes, 'minute').toISOString() })
         await dropResumeJobs(flowRun.id)
         return { flowRun, barrier }
-    }
-
-    async function drainEvaluations(queue: Queue<BarrierJobData>): Promise<void> {
-        const jobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'paused'])
-        await Promise.all(jobs.map((job) => job.remove()))
     }
 
     async function createOverdueBarrier({ overdueByMinutes = 5 }: { overdueByMinutes?: number } = {}) {

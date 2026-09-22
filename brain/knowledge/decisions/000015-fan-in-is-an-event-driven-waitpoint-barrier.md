@@ -49,8 +49,11 @@ all, purely because child rows appear later than the dispatch that created them.
   machine producers; the confirm link goes through `recordDecision`, whose `UPDATE` carries
   `AND status = PENDING` and answers "already responded" when it matches nothing. A double-click, an email
   client prefetching on hover, or two people on a shared inbox must not silently flip a recorded approve into
-  a reject. Both paths are a single `UPDATE … RETURNING`: the previous read-then-`save()` also *re-inserted* a
-  signal row that the release had already deleted, because TypeORM's `save()` inserts when the row is gone.
+  a reject. Both paths write with an `UPDATE … RETURNING "waitpointId"`, never read-then-`save()`, which
+  *re-inserted* a signal row the release had already deleted. `recordDecision` also takes `FOR SHARE` on the
+  barrier first, so `closeBarrier`'s `FOR UPDATE` waits for it: a decision is either counted in the summary or
+  refused, never dropped between the count and the signal delete. `receiveSignal` takes no lock; a machine
+  signal that commits during a close can miss the summary, which "last write wins" already accepts.
 - **The deadline is set at create and nothing moves it.** The floor rule needs an evaluation to fire; a
   barrier nobody ever signals gets none, so the deadline is the only thing between "the producer died hard"
   and a run paused until retention deletes it. Seal does not touch it — the clamp with no requested value

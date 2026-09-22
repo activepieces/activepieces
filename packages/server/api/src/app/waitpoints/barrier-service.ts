@@ -1,9 +1,10 @@
-import { apId, chunk, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
+import { apId, chunk, isNil, sanitizeObjectForPostgresql, tryCatch, unique } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, BarrierPolicy, barrierReleasesOnLastPendingSignal, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager } from 'typeorm'
+import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
@@ -88,12 +89,39 @@ export const barrierService = (log: FastifyBaseLogger) => ({
         return signalRepo().findOneBy({ id: signalId, projectId })
     },
 
-    async receiveSignal(params: ReceiveSignalParams): Promise<WaitpointSignal | null> {
-        return applySignalOutcome({ ...params, requirePending: false, log })
+    async receiveSignal({ signalId, refId, projectId, status, result }: ReceiveSignalParams): Promise<boolean> {
+        if (isNil(signalId) && isNil(refId)) {
+            return false
+        }
+        const identity: SignalIdentity = isNil(signalId) ? { refId } : { id: signalId }
+        const barrierIds = await updateSignalOutcome({ where: { ...identity, projectId }, status, result })
+        await Promise.all(barrierIds.map((barrierId) => barrierQueue(log).enqueueEvaluation({ barrierId, projectId })))
+        return barrierIds.length > 0
     },
 
-    async recordDecision(params: RecordDecisionParams): Promise<WaitpointSignal | null> {
-        return applySignalOutcome({ ...params, requirePending: true, log })
+    async recordDecision({ barrierId, signalId, projectId, status, result }: RecordDecisionParams): Promise<boolean> {
+        const recorded = await transaction(async (entityManager) => {
+            const openBarrier = await waitpointRepo(entityManager)
+                .createQueryBuilder('waitpoint')
+                .setLock('pessimistic_read')
+                .where({ id: barrierId, projectId, type: PauseType.BARRIER, status: WaitpointStatus.PENDING })
+                .getOne()
+            if (isNil(openBarrier)) {
+                return false
+            }
+            const decidedBarrierIds = await updateSignalOutcome({
+                where: { id: signalId, waitpointId: barrierId, projectId, status: BarrierSignalStatus.PENDING },
+                status,
+                result,
+                entityManager,
+            })
+            return decidedBarrierIds.length > 0
+        })
+        if (!recorded) {
+            return false
+        }
+        await barrierQueue(log).enqueueEvaluation({ barrierId, projectId })
+        return true
     },
 
     async releaseIfReady({ barrierId, projectId }: ReleaseIfReadyParams): Promise<void> {
@@ -137,12 +165,8 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function applySignalOutcome({ signalId, refId, projectId, status, result, requirePending, log }: ApplySignalOutcomeParams): Promise<WaitpointSignal | null> {
-    if (isNil(signalId) && isNil(refId)) {
-        return null
-    }
-    const identity: SignalIdentity = isNil(signalId) ? { refId } : { id: signalId }
-    const updateResult = await signalRepo()
+async function updateSignalOutcome({ where, status, result, entityManager }: UpdateSignalOutcomeParams): Promise<string[]> {
+    const updateResult = await signalRepo(entityManager)
         .createQueryBuilder()
         .update()
         .set({
@@ -150,24 +174,10 @@ async function applySignalOutcome({ signalId, refId, projectId, status, result, 
             result: () => 'CAST(:signalResult AS jsonb)',
         })
         .setParameter('signalResult', isNil(result) ? null : JSON.stringify(sanitizeObjectForPostgresql(result)))
-        .where({
-            ...identity,
-            projectId,
-            ...(requirePending ? { status: BarrierSignalStatus.PENDING } : {}),
-        })
-        .returning(['id'])
+        .where(where)
+        .returning(['waitpointId'])
         .execute()
-
-    const decidedRows: unknown[] = updateResult.raw ?? []
-    if (decidedRows.length === 0) {
-        return null
-    }
-    const signal = await signalRepo().findOneBy({ ...identity, projectId })
-    if (isNil(signal)) {
-        return null
-    }
-    await barrierQueue(log).enqueueEvaluation({ barrierId: signal.waitpointId, projectId: signal.projectId })
-    return signal
+    return unique(UpdatedSignalRows.parse(updateResult.raw ?? []).map((row) => row.waitpointId))
 }
 
 function buildPendingSignals({ barrierId, projectId, labels }: BuildPendingSignalsParams): WaitpointSignal[] {
@@ -289,6 +299,8 @@ function defaultBarrierDeadline({ flowRunCreated }: DefaultBarrierDeadlineParams
 
 const SIGNAL_INSERT_BATCH_SIZE = 500
 
+const UpdatedSignalRows = z.array(z.object({ waitpointId: z.string() }))
+
 export type BarrierReleaseReason = 'predicate' | 'timeout'
 
 export type CreateBarrierParams = {
@@ -319,6 +331,7 @@ export type ReceiveSignalParams = {
 }
 
 export type RecordDecisionParams = {
+    barrierId: string
     signalId: string
     projectId: string
     status: BarrierSignalStatus
@@ -330,9 +343,15 @@ type SignalIdentity = {
     refId?: string
 }
 
-type ApplySignalOutcomeParams = ReceiveSignalParams & {
-    requirePending: boolean
-    log: FastifyBaseLogger
+type UpdateSignalOutcomeParams = {
+    where: SignalIdentity & {
+        projectId: string
+        waitpointId?: string
+        status?: BarrierSignalStatus
+    }
+    status: BarrierSignalStatus
+    result?: Record<string, unknown>
+    entityManager?: EntityManager
 }
 
 type FindSignalByIdParams = {

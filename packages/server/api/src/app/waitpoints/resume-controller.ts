@@ -182,12 +182,13 @@ async function handleSignalDecision({ flowRunId, signalId, action, body, headers
     }
 
     const recorded = await barrierService(log).recordDecision({
+        barrierId: open.barrier.id,
         signalId,
         projectId,
         status: approved ? BarrierSignalStatus.SUCCEEDED : BarrierSignalStatus.REJECTED,
         result: { outcome: approved ? 'approved' : 'rejected', reason: reason ?? null, decidedBy: open.signal.label },
     })
-    if (isNil(recorded)) {
+    if (!recorded) {
         await respondToSignalDecision({ reply, headers, projectId, log, status: StatusCodes.OK, extra: ALREADY_RESPONDED })
         return
     }
