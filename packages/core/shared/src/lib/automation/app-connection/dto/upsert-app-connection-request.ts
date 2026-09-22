@@ -189,6 +189,11 @@ export type GetOAuth2AuthorizationUrlRequestBody = z.infer<typeof GetOAuth2Autho
 export const GetOAuth2AuthorizationUrlResponse = z.object({
     authorizationUrl: z.string(),
     codeVerifier: z.string().optional(),
+    discovered: z.object({
+        props: z.record(z.string(), z.unknown()),
+        client_id: z.string(),
+        client_secret: z.string(),
+    }).optional(),
 })
 export type GetOAuth2AuthorizationUrlResponse = z.infer<typeof GetOAuth2AuthorizationUrlResponse>
 
