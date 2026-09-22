@@ -29,6 +29,7 @@ A built-in relational database inside Activepieces: users store structured data 
 - The per-create `field.validateCount()` check alone races on bulk paths: all concurrent creates read the same pre-save count and pass. Bulk/import paths (`table.create` with fields, project-state/project-replace apply) MUST call it once up front with the batch size **before** their `Promise.all`.
 - Concurrent field reorders are last-write-wins, same as rename — no distributed lock. Reordering *existing* fields through project-release apply is not supported: `FieldState` carries no position, so array order only applies to newly created fields.
 - The web client stores positional `cell.fieldIndex` references, so it must remap every record's cells when fields move.
+- JSON import into an existing table is client-orchestrated and **not transactional**: `tableHooks.importTableIntoExisting` clears records, deletes fields, renames, then recreates through four separate HTTP calls, so anything that fails midway leaves the table gutted with no undo. Everything checkable must therefore be checked *before* the first `tablesApi.clear()` — the file is parsed with `TableTemplate` and each field with `CreateFieldRequest` (which catches unknown field types and dropdowns with no options, both of which the server would otherwise reject only after the wipe). Never move a validation step below that line.
 
 ### Key files
 Entry point: `tablesModule`, registered in `packages/server/api/src/app/app.ts` and mounting the three controllers under `/v1/tables`, `/v1/fields`, `/v1/records`.
