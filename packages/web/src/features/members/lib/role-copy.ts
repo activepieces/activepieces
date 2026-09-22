@@ -11,11 +11,11 @@ const BUILT_IN_ORDER: string[] = [
 function projectRoleDescription(roleName: string): string | null {
   switch (roleName) {
     case DefaultProjectRole.ADMIN:
-      return t('Manage project settings, members, connections, and git sync');
+      return t('Full access');
     case DefaultProjectRole.EDITOR:
-      return t('Build, publish, and manage flows');
+      return t('Builds and runs flows');
     case DefaultProjectRole.VIEWER:
-      return t('View flows and monitor run history');
+      return t('View only');
     default:
       return null;
   }
