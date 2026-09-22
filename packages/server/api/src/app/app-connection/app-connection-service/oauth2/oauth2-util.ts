@@ -78,13 +78,15 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         const pieceAuth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2) : pieceMetadata.auth
         assertNotNullOrUndefined(pieceAuth, 'auth')
         switch (pieceAuth.type) {
-            case PropertyType.OAUTH2:
+            case PropertyType.OAUTH2: {
+                const templateProps = backfillOptionalProps(props, pieceAuth.props)
                 assertPlaceholdersResolved({
                     templates: [pieceAuth.tokenUrl, ...pieceAuth.scope],
-                    props,
+                    props: templateProps,
                     authProps: pieceAuth.props,
                 })
-                return resolveValueFromProps(props, pieceAuth.tokenUrl)
+                return resolveValueFromProps(templateProps, pieceAuth.tokenUrl)
+            }
             default:
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_APP_CONNECTION,
@@ -131,13 +133,14 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             })
             : discovered.client_id
         const selectedScopes = resolveSelectedScopes(scopes, pieceAuth.scope)
+        const templateProps = backfillOptionalProps(resolvedProps, pieceAuth.props)
         assertPlaceholdersResolved({
             templates: [pieceAuth.authUrl, ...selectedScopes],
-            props: resolvedProps,
+            props: templateProps,
             authProps: pieceAuth.props,
         })
-        const authUrl = resolveValueFromProps(resolvedProps, pieceAuth.authUrl)
-        const scope = resolveValueFromProps(resolvedProps, selectedScopes.join(' '))
+        const authUrl = resolveValueFromProps(templateProps, pieceAuth.authUrl)
+        const scope = resolveValueFromProps(templateProps, selectedScopes.join(' '))
 
         const queryParams: Record<string, string> = {
             response_type: 'code',
@@ -256,6 +259,20 @@ const discoverOAuth2Client = async ({ pieceAuth, props, redirectUrl }: DiscoverO
         client_id: client.clientId,
         client_secret: client.clientSecret,
     }
+}
+
+// `resolveValueFromProps` only substitutes a `{key}` placeholder when `key` is present in
+// `props`; an optional prop the caller never supplied is absent, not empty, and would
+// otherwise leak through as the literal `{key}` text (e.g. a bare `scope={scopes}`).
+const backfillOptionalProps = (props: Record<string, unknown> | undefined, authProps: OAuth2Props | undefined): Record<string, unknown> => {
+    const declaredProps = authProps ?? {}
+    const backfilled = { ...(props ?? {}) }
+    Object.entries(declaredProps).forEach(([key, prop]) => {
+        if (prop.required === false && isNil(backfilled[key])) {
+            backfilled[key] = ''
+        }
+    })
+    return backfilled
 }
 
 const assertPlaceholdersResolved = ({ templates, props, authProps }: AssertPlaceholdersResolvedParams): void => {
