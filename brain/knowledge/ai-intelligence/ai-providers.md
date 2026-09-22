@@ -164,3 +164,4 @@ Entry point: `aiProviderModule`, registered in `packages/server/api/src/app/app.
 - `packages/web/src/features/agents/ai-model/` — model selector used in agent step settings
 
 Paths verified 2026-07-26.
+- **`OPENROUTER_PROVISION_KEY` is a management key and cannot make inference calls; only the per-platform keys it mints can.** OpenRouter states it outright: management keys are for creating, listing, updating and deleting other keys and are rejected by every completion or decisions endpoint. So "we already have an OpenRouter key" is true for provisioning and false for anything that needs to call a model at the instance level (the AI Router's Jev call, for example): that needs an ordinary inference key from the same account, created in the dashboard or via the same `POST /keys` the instance already uses, with a credit `limit`. Reusing a platform's managed key instead is possible but bills that platform's AI credits and exists only where `aiCreditsEnabled` is on.
