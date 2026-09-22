@@ -45,6 +45,17 @@ exactly the code this design set out not to touch.
 
 ## Consequences
 
+Fully backward compatible, confirmed by checking every gate rather than assuming: `discovery` is
+`undefined` for every piece except `mcp-client` (grepped `packages/pieces/community/*` for it), so
+`discoverOAuth2Client` returns `undefined` on its first line and `buildAuthorizationUrl` falls
+through to the original code unchanged; every web-side branch (`isClientSecretValid`, `isPropsValid`,
+hiding Client ID/Secret, `hiddenPropNames`) is gated on the same flag and collapses to its original
+condition too. The one shared-code change, `assertPlaceholdersResolved` skipping `required: false`
+props, doesn't even apply to `http-oauth2`'s identical `'{authUrl}'` template — its `scopes` prop is
+`required: true`. Already-claimed connections on any piece are entirely unaffected: refresh reads
+`token_url`/`client_id`/`client_secret`/`props` off the *stored* value, and that code path was never
+touched.
+
 `http-oauth2` has the identical manual-entry problem and can adopt the same descriptor. Reconnecting
 registers a fresh client and orphans the previous one on the authorization server. RFC 8707
 `resource` is sent on the authorize request only (baked into the discovered URL's query string);
