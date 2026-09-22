@@ -501,6 +501,19 @@ describe('undelivered resume recovery', () => {
         expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
     })
 
+    it('fails the evaluation when the re-dispatch fails, so the queue spends its remaining attempts', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await closeWithoutConsuming(barrier.id)
+        await dropResumeJobs(flowRun.id)
+        await db.update('waitpoint', barrier.id, { flowRunId: apId() })
+
+        await expect(releaseIfReady(barrier.id)).rejects.toThrow()
+
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.COMPLETED)
+    })
+
     it('enqueues nothing when recovery runs a second time on a consumed barrier', async () => {
         const { flowRun } = await createParentRun()
         const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
