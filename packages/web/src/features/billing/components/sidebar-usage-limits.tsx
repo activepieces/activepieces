@@ -73,7 +73,6 @@ export const SidebarUsageLimits = React.memo(() => {
     creditsNextResetAt: usage.creditsNextResetAt,
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
-    isPaid,
     dateFormat: BILLING_DATE_FORMAT,
   });
   return (

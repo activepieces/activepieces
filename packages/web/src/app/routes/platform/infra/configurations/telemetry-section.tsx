@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Activity, Server } from 'lucide-react';
 import { Control } from 'react-hook-form';
 
+import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import {
   Item,
   ItemMedia,
@@ -10,8 +11,7 @@ import {
   ItemTitle,
   ItemDescription,
   ItemActions,
-} from '@/components/custom/item';
-import { FormField, FormItem, FormMessage } from '@/components/ui/form';
+} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 
 import { TrackedEventsDialog } from './tracked-events-dialog';

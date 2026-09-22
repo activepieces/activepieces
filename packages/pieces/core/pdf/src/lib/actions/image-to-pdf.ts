@@ -18,14 +18,6 @@ export const imageToPdf = createAction({
 			required: true,
 		}),
 	},
-	errorHandlingOptions: {
-		continueOnFailure: {
-			defaultValue: false,
-		},
-		retryOnFailure: {
-			hide: true,
-		},
-	},
 	async run(context) {
 		try {
 			const image = context.propsValue.image;

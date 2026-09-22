@@ -41,8 +41,6 @@ export const ConfigurationsPage = () => {
   return <ConfigurationsContent configuration={configuration} />;
 };
 
-export default ConfigurationsPage;
-
 const ConfigurationsContent = ({
   configuration,
 }: ConfigurationsContentProps) => {
