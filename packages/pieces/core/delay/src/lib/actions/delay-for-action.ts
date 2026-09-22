@@ -19,6 +19,7 @@ enum TimeUnit {
 // that a real run would reject.
 const propsSchema = {
   delayFor: z.number().check(z.minimum(0)),
+  unit: z.nullish(z.enum(TimeUnit)),
 };
 
 export const delayForAction = createAction({
@@ -37,12 +38,13 @@ export const delayForAction = createAction({
     },
   },
   props: {
-    markdown: Property.MarkDown({
-      value: markdownDescription,
+    delayFor: Property.Number({
+      displayName: 'Amount',
+      required: true,
+      defaultValue: 5,
     }),
     unit: Property.StaticDropdown({
       displayName: 'Unit',
-      description: 'The unit of time to delay the execution of the next action',
       required: true,
       options: {
         options: [
@@ -54,11 +56,8 @@ export const delayForAction = createAction({
       },
       defaultValue: TimeUnit.SECONDS,
     }),
-    delayFor: Property.Number({
-      displayName: 'Amount',
-      description:
-        'The number of units to delay the execution of the next action',
-      required: true,
+    markdown: Property.MarkDown({
+      value: markdownDescription,
     }),
   },
   outputSchema: delayForActionOutputSchema,
@@ -73,7 +72,6 @@ export const delayForAction = createAction({
         success: true,
       };
     } else if (delayInMs > 1 * 10 * 1000) {
-      // use flow pause
       const currentTime = new Date();
       const futureTime = new Date(currentTime.getTime() + delayInMs);
       const waitpoint = await ctx.run.createWaitpoint({
@@ -83,7 +81,6 @@ export const delayForAction = createAction({
       ctx.run.waitForWaitpoint(waitpoint.id);
       return {};
     } else {
-      // use setTimeout
       await new Promise((resolve) => setTimeout(resolve, delayInMs));
       return {
         delayForInMs: delayInMs,
