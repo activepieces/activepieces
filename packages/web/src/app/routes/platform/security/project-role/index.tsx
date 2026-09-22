@@ -26,6 +26,7 @@ const ProjectRolePage = () => {
       <CenteredPage
         title={t('Roles & access')}
         description={t('What new members get, and what each role can do.')}
+        widthClassName="max-w-4xl"
       >
         <RolesCard
           projectRoles={data}
