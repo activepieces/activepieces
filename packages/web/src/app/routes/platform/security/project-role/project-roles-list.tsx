@@ -62,7 +62,7 @@ export function ProjectRolesList({
               key={role.id}
               variant="outline"
               size="sm"
-              className="relative hover:bg-accent/50"
+              className="relative cursor-pointer hover:bg-accent/50 focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50"
             >
               <RoleAvatar name={role.name} />
               <ItemContent>
