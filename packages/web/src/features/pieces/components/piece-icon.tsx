@@ -1,7 +1,7 @@
 import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
-import { ImageWithColorBackground } from '@/components/custom/image-with-color-background';
+import ImageWithFallback from '@/components/custom/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -74,7 +74,7 @@ const PieceIcon = React.memo(
             style={background ? { backgroundColor: background } : undefined}
           >
             {logoUrl ? (
-              <ImageWithColorBackground
+              <ImageWithFallback
                 src={logoUrl}
                 alt={displayName}
                 className={cn(

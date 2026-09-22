@@ -40,13 +40,13 @@ export const colorsUtils = {
   loadImage,
   useAverageColorInImage: ({
     imgUrl,
-    transparency,
+    strength,
   }: {
     imgUrl: string;
-    transparency: number;
+    strength: number;
   }) => {
     const { data } = useQuery({
-      queryKey: ['averageColorInImage', imgUrl, transparency],
+      queryKey: ['averageColorInImage', imgUrl, strength],
       queryFn: async () => {
         const img = await loadImage(imgUrl);
         const color = await colorsUtils.fac.getColorAsync(img, {
@@ -56,7 +56,7 @@ export const colorsUtils = {
         if (colorsUtils.isGrayColor(r, g, b)) {
           return null;
         }
-        return `color-mix(in srgb, rgb(${r},${g},${b}) ${transparency}%, var(--surface-raised) 92%)`;
+        return `color-mix(in oklab, rgb(${r},${g},${b}) ${strength}%, var(--surface-raised))`;
       },
     });
     return data;

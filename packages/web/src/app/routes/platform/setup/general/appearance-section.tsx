@@ -26,6 +26,8 @@ import { Switch } from '@/components/ui/switch';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
+import { BrandColorPreview } from './brand-color-preview';
+
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const branding = flagsHooks.useWebsiteBranding();
@@ -178,6 +180,7 @@ export const AppearanceSection = () => {
                     ></ColorPicker>
                     <FormMessage />
                   </div>
+                  <BrandColorPreview color={field.value} />
                 </FormItem>
               )}
             />

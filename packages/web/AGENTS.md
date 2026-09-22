@@ -114,14 +114,33 @@ else should ever be computed from their colour at a call site.
 These are the only places raw colour values remain, and each is outside the system rather than
 behind on it:
 
-- **PNG exports** (`flow-screenshot-utils.ts`, `impact-utils.ts`) — a downloaded image wants a
-  light ground whatever the app theme is.
+- **PNG exports** — `EXPORT_BACKGROUND` in `impact-utils.ts` and the fallback in
+  `flow-screenshot-utils.ts`. A downloaded image wants a light ground whatever the app theme is.
 - **Illustration** — the doodle palettes in `flow-build-card.tsx`, and `#fff` stops inside SVG
   luminance masks, which must be white to work as masks.
 - **Colour-picker defaults** — stored data, not UI colour.
-- **The paid-plan card** in `current-subscription-card.tsx` — its text sits on a fixed light
-  background image, so it needs a dark ink that does not invert. The artwork needs a dark
-  treatment; until it has one, the raw class is the honest answer.
+- **User-content previews** — the `bg-white` on the SVG and HTML preview frames. They render
+  content authored against a white page.
+
+### Colour sampled from images
+
+One place still derives colour from pixels: the **flow builder minimap**, where each block is
+filled with the average colour of its step's logo so a long flow stays readable at thumbnail
+size. That is wayfinding the token system cannot do, so it stays — but it composites through
+`--surface-raised` and falls back to `--neutral-mark`, so it resolves per theme like everything
+else.
+
+It used to happen in two more places, and both are gone:
+
+- Template card gradients sampled every piece logo through a canvas. They are now a two-swatch
+  gradient seeded off the template's first piece — deterministic, theme-aware, and 140 fewer
+  lines.
+- Piece logos sat on a 10% wash of their own average colour. At icon sizes a multi-hue logo on a
+  tint of itself is where contrast goes, and a near-black mark like Zendesk's landed on a dark
+  square in dark mode. Logos now sit on a neutral chip.
+
+Do not reintroduce either. If a surface needs to be "coloured per thing", that is what the
+twelve-hue swatch set and `swatchUtils.varsForSeed` are for.
 
 ## Components
 

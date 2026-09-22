@@ -1,5 +1,5 @@
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { ImageWithColorBackground } from '@/components/custom/image-with-color-background';
+import ImageWithFallback from '@/components/custom/image-with-fallback';
 import { cn } from '@/lib/utils';
 
 const StepNodeLogo = ({
@@ -21,16 +21,14 @@ const StepNodeLogo = ({
         'opacity-80': isSkipped,
       })}
     >
-      <ImageWithColorBackground
+      <ImageWithFallback
         src={logoUrl}
         alt={displayName}
         key={logoUrl + displayName}
-        border={true}
-        className={cn({
+        className={cn('bg-surface-raised border border-border/50 rounded-lg', {
           'w-9 h-9 p-2': !isHorizontal,
           'w-12 h-12 p-2.5': isHorizontal,
         })}
-        roundedCorner={true}
       />
     </div>
   );

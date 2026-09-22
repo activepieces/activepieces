@@ -47,7 +47,6 @@ const ImageWithFallback = ({
               'opacity-0': isLoading,
               'opacity-100': !isLoading,
             },
-            className,
           )}
           {...rest}
         />
