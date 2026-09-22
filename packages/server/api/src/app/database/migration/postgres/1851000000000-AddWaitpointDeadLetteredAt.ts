@@ -24,6 +24,12 @@ export class AddWaitpointDeadLetteredAt1851000000000 implements Migration {
             WHERE "status" = 'PENDING' AND "resumeDateTime" IS NOT NULL AND "deadLetteredAt" IS NULL
         `)
 
+        await queryRunner.query(`
+            CREATE INDEX ${concurrently} IF NOT EXISTS "idx_waitpoint_undelivered_barrier"
+            ON "waitpoint" ("updated", "id")
+            WHERE "type" = 'BARRIER' AND "status" = 'COMPLETED'
+        `)
+
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_pending_resume_date_time"`)
 
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_signal_ref_id"`)
@@ -49,6 +55,7 @@ export class AddWaitpointDeadLetteredAt1851000000000 implements Migration {
             WHERE "status" = 'PENDING' AND "resumeDateTime" IS NOT NULL
         `)
 
+        await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_undelivered_barrier"`)
         await queryRunner.query(`DROP INDEX ${concurrently} IF EXISTS "idx_waitpoint_live_deadline"`)
         await queryRunner.query('ALTER TABLE "waitpoint" DROP COLUMN IF EXISTS "deadLetteredAt"')
     }

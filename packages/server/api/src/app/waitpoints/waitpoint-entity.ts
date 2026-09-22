@@ -93,6 +93,11 @@ export const WaitpointEntity = new EntitySchema<WaitpointSchema>({
             columns: ['resumeDateTime', 'id'],
             where: '"status" = \'PENDING\' AND "resumeDateTime" IS NOT NULL AND "deadLetteredAt" IS NULL',
         },
+        {
+            name: 'idx_waitpoint_undelivered_barrier',
+            columns: ['updated', 'id'],
+            where: '"type" = \'BARRIER\' AND "status" = \'COMPLETED\'',
+        },
     ],
     relations: {
         project: {

@@ -1,5 +1,5 @@
 import { chunk, isNil } from '@activepieces/core-utils'
-import { FlowRunStatus } from '@activepieces/shared'
+import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In, LessThanOrEqual } from 'typeorm'
@@ -7,6 +7,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { distributedStore } from '../database/redis-connections'
 import { systemJobIds } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { barrierService } from './barrier-service'
 import { WaitpointEntity } from './waitpoint-entity'
 import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { Waitpoint, WaitpointStatus } from './waitpoint-types'
@@ -38,7 +39,37 @@ export async function sweepOverdueDeadlines({ log, pageSize, maxPages }: SweepOv
             resumeFrom: sweep.resumeFrom,
         }, '[sweepOverdueDeadlines] Spent the per-tick budget without reaching the end of the overdue backlog; the next tick carries on from where this one stopped rather than re-reading the rows it already classified')
     }
+
+    await redeliverUndeliveredBarriers({ log })
     return sweep.armed
+}
+
+async function redeliverUndeliveredBarriers({ log }: RedeliverUndeliveredBarriersParams): Promise<void> {
+    const undelivered = await findUndeliveredBarriers({ staleBefore: dayjs().subtract(UNDELIVERED_BARRIER_GRACE_MINUTES, 'minute').toISOString() })
+    if (undelivered.length === 0) {
+        return
+    }
+    log.warn({
+        undeliveredCount: undelivered.length,
+        sample: undelivered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((barrier) => barrier.id),
+    }, '[sweepOverdueDeadlines] Found barriers closed but never delivered, so the release that closed them died before dispatching; re-dispatching their stored summaries')
+    for (const barrier of undelivered) {
+        await barrierService(log).releaseIfReady({ barrierId: barrier.id, projectId: barrier.projectId })
+    }
+}
+
+async function findUndeliveredBarriers({ staleBefore }: FindUndeliveredBarriersParams): Promise<Waitpoint[]> {
+    return waitpointRepo()
+        .createQueryBuilder('waitpoint')
+        .innerJoin('flow_run', 'flowRun', '"flowRun"."id" = "waitpoint"."flowRunId"')
+        .where('"waitpoint"."type" = :type', { type: PauseType.BARRIER })
+        .andWhere('"waitpoint"."status" = :status', { status: WaitpointStatus.COMPLETED })
+        .andWhere('"waitpoint"."updated" < :staleBefore', { staleBefore })
+        .andWhere('"flowRun"."status" = :runStatus', { runStatus: FlowRunStatus.PAUSED })
+        .orderBy('"waitpoint"."updated"', 'ASC')
+        .addOrderBy('"waitpoint"."id"', 'ASC')
+        .limit(MAX_REDELIVERED_PER_TICK)
+        .getMany()
 }
 
 async function runSweepPages({ log, pageSize, maxPages }: RunSweepPagesParams): Promise<SweepOutcome> {
@@ -183,6 +214,8 @@ const MAX_ARMED_PER_TICK = 500
 const DEADLINE_PROBE_CHUNK_SIZE = 50
 const DEAD_LETTER_SAMPLE_SIZE = 10
 const DEADLINE_SWEEP_CURSOR_TTL_SECONDS = 600
+const UNDELIVERED_BARRIER_GRACE_MINUTES = 2
+const MAX_REDELIVERED_PER_TICK = 100
 
 export const DEADLINE_SWEEP_CURSOR_KEY = 'waitpoint:deadline-sweep:cursor'
 
@@ -190,6 +223,14 @@ type SweepOverdueDeadlinesParams = {
     log: FastifyBaseLogger
     pageSize?: number
     maxPages?: number
+}
+
+type RedeliverUndeliveredBarriersParams = {
+    log: FastifyBaseLogger
+}
+
+type FindUndeliveredBarriersParams = {
+    staleBefore: string
 }
 
 type RunSweepPagesParams = {

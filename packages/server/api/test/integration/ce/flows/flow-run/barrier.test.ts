@@ -601,6 +601,31 @@ describe('barrier deadline', () => {
         expect(await listSignals(barrier.id)).toHaveLength(0)
     })
 
+    it('re-dispatches a barrier the sweep finds closed but never delivered', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await closeWithoutConsuming(barrier.id)
+        await db.update('waitpoint', barrier.id, { updated: dayjs().subtract(10, 'minute').toISOString() })
+        await dropResumeJobs(flowRun.id)
+
+        await sweepOverdueDeadlines({ log: app.log })
+
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(1)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+    })
+
+    it('leaves a barrier closed moments ago to the release that closed it', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await closeWithoutConsuming(barrier.id)
+        await dropResumeJobs(flowRun.id)
+
+        await sweepOverdueDeadlines({ log: app.log })
+
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.COMPLETED)
+    })
+
     it('does not report a barrier whose deadline job is still live as re-armed', async () => {
         const { barrier } = await createOverdueBarrier()
 
