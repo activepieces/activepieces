@@ -90,14 +90,16 @@ const gitSyncTableState = {
 
 describe('tableHooks.importTableIntoExisting', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     tablesApi.clear.mockResolvedValue(undefined);
     tablesApi.update.mockResolvedValue(undefined);
     tablesApi.getById.mockResolvedValue({ id: 'existing-1' });
     fieldsApi.delete.mockResolvedValue(undefined);
     fieldsApi.create.mockResolvedValue(undefined);
     recordsApi.create.mockResolvedValue([]);
-    fieldsApi.list.mockResolvedValue([{ id: 'field-1', externalId: 'email' }]);
+    fieldsApi.list
+      .mockResolvedValueOnce([{ id: 'old-field-1', externalId: 'email' }])
+      .mockResolvedValue([{ id: 'new-field-1', externalId: 'email' }]);
   });
 
   it('does not clear the table or delete fields when the file is not a table template', async () => {
@@ -154,6 +156,7 @@ describe('tableHooks.importTableIntoExisting', () => {
     });
 
     expect(tablesApi.clear).toHaveBeenCalledWith('existing-1');
+    expect(fieldsApi.delete).toHaveBeenCalledWith('old-field-1');
     expect(tablesApi.update).toHaveBeenCalledWith('existing-1', {
       name: 'Customers',
     });
@@ -162,7 +165,7 @@ describe('tableHooks.importTableIntoExisting', () => {
     );
     expect(recordsApi.create).toHaveBeenCalledWith({
       tableId: 'existing-1',
-      records: [[{ fieldId: 'field-1', value: 'a@b.com' }]],
+      records: [[{ fieldId: 'new-field-1', value: 'a@b.com' }]],
     });
   });
 
@@ -175,7 +178,7 @@ describe('tableHooks.importTableIntoExisting', () => {
     expect(tablesApi.clear).toHaveBeenCalledWith('existing-1');
     expect(recordsApi.create).toHaveBeenCalledWith({
       tableId: 'existing-1',
-      records: [[{ fieldId: 'field-1', value: 42 }]],
+      records: [[{ fieldId: 'new-field-1', value: 42 }]],
     });
   });
 
@@ -192,7 +195,7 @@ describe('tableHooks.importTableIntoExisting', () => {
 
 describe('tableHooks.importTablesFromTemplates', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     tablesApi.create.mockResolvedValue({ id: 'new-1' });
     recordsApi.create.mockResolvedValue([]);
     fieldsApi.list.mockResolvedValue([{ id: 'field-1', externalId: 'email' }]);
