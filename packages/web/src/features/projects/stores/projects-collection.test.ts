@@ -92,6 +92,101 @@ function idsFrom(
   return ([...collection.values()] as ProjectWithLimits[]).map((p) => p.id);
 }
 
+describe('buildProjectUpdatePayload', () => {
+  let buildProjectUpdatePayload: typeof import('./project-collection').buildProjectUpdatePayload;
+
+  beforeEach(async () => {
+    ({ buildProjectUpdatePayload } = await import('./project-collection'));
+  });
+
+  it('returns an empty payload when nothing changed', () => {
+    const original = makeProject('p1', ProjectType.TEAM, 'owner');
+    const modified = { ...original };
+    expect(buildProjectUpdatePayload({ original, modified })).toEqual({});
+  });
+
+  it('sends only sensitive when the sensitive toggle alone changed', () => {
+    const original = makeProject('p1', ProjectType.TEAM, 'owner');
+    const modified = { ...original, sensitive: true };
+    expect(buildProjectUpdatePayload({ original, modified })).toEqual({
+      sensitive: true,
+    });
+  });
+
+  it('sends displayName and sensitive together when both changed', () => {
+    const original = makeProject('p1', ProjectType.TEAM, 'owner', 'Old');
+    const modified = { ...original, displayName: 'New', sensitive: true };
+    expect(buildProjectUpdatePayload({ original, modified })).toEqual({
+      displayName: 'New',
+      sensitive: true,
+    });
+  });
+
+  it('normalizes externalId: null becomes undefined', () => {
+    const original = makeProject('p1', ProjectType.TEAM, 'owner');
+    const modified = { ...original, externalId: 'ext-1' };
+    expect(buildProjectUpdatePayload({ original, modified })).toEqual({
+      externalId: 'ext-1',
+    });
+    const cleared = {
+      ...makeProject('p1', ProjectType.TEAM, 'owner'),
+      externalId: 'ext-1',
+    };
+    const clearedModified = { ...cleared, externalId: null };
+    expect(
+      buildProjectUpdatePayload({
+        original: cleared,
+        modified: clearedModified,
+      }),
+    ).toEqual({ externalId: undefined });
+  });
+
+  it('normalizes externalId: empty string becomes undefined', () => {
+    const original = {
+      ...makeProject('p1', ProjectType.TEAM, 'owner'),
+      externalId: 'ext-1',
+    };
+    const modified = { ...original, externalId: '   ' };
+    expect(buildProjectUpdatePayload({ original, modified })).toEqual({
+      externalId: undefined,
+    });
+  });
+
+  it('normalizes metadata: null becomes undefined', () => {
+    const withMeta = {
+      ...makeProject('p1', ProjectType.TEAM, 'owner'),
+      metadata: { foo: 'bar' },
+    };
+    const clearedMeta = { ...withMeta, metadata: null };
+    expect(
+      buildProjectUpdatePayload({ original: withMeta, modified: clearedMeta }),
+    ).toEqual({ metadata: undefined });
+  });
+
+  it('sends every changed field in one payload', () => {
+    const original = makeProject('p1', ProjectType.TEAM, 'owner', 'Old');
+    const modified = {
+      ...original,
+      displayName: 'New',
+      releasesEnabled: true,
+      notifyFlowOwnerOnFailure: true,
+      icon: { color: 'RED' as never },
+      maxConcurrentJobs: 5,
+      workerGroupId: 'wg-1',
+      sensitive: true,
+    };
+    expect(buildProjectUpdatePayload({ original, modified })).toEqual({
+      displayName: 'New',
+      releasesEnabled: true,
+      notifyFlowOwnerOnFailure: true,
+      icon: { color: 'RED' },
+      maxConcurrentJobs: 5,
+      workerGroupId: 'wg-1',
+      sensitive: true,
+    });
+  });
+});
+
 describe('getProjectName', () => {
   let getProjectName: (p: ProjectWithLimits) => string;
 

@@ -26,6 +26,37 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 const collectionQueryClient = new QueryClient();
 
+export const buildProjectUpdatePayload = ({
+  original,
+  modified,
+}: {
+  original: ProjectWithLimits;
+  modified: ProjectWithLimits;
+}): UpdateProjectPlatformRequest => {
+  const payload: UpdateProjectPlatformRequest = {};
+  for (const key of Object.keys(UpdateProjectPlatformRequest.shape)) {
+    const originalValue = Reflect.get(original, key);
+    const modifiedValue = Reflect.get(modified, key);
+    if (originalValue === modifiedValue) {
+      continue;
+    }
+    Object.assign(payload, {
+      [key]: normalizeProjectUpdateField(key, modifiedValue),
+    });
+  }
+  return payload;
+};
+
+const normalizeProjectUpdateField = (key: string, value: unknown): unknown => {
+  if (key === 'externalId') {
+    return typeof value === 'string' && value.trim() !== '' ? value : undefined;
+  }
+  if (key === 'metadata') {
+    return value ?? undefined;
+  }
+  return value;
+};
+
 export const projectCollection = createCollection<ProjectWithLimits, string>(
   queryCollectionOptions({
     queryKey: ['projects'],
@@ -44,45 +75,7 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        // Only send fields that actually changed, so e.g. a name/icon edit never
-        // re-writes maxConcurrentJobs/workerGroupId (which are edited elsewhere).
-        const request: UpdateProjectPlatformRequest = {};
-        if (modified.displayName !== original.displayName) {
-          request.displayName = modified.displayName;
-        }
-        if (modified.metadata !== original.metadata) {
-          request.metadata = modified.metadata ?? undefined;
-        }
-        if (modified.releasesEnabled !== original.releasesEnabled) {
-          request.releasesEnabled = modified.releasesEnabled;
-        }
-        if (
-          modified.notifyFlowOwnerOnFailure !==
-          original.notifyFlowOwnerOnFailure
-        ) {
-          request.notifyFlowOwnerOnFailure = modified.notifyFlowOwnerOnFailure;
-        }
-        if (modified.externalId !== original.externalId) {
-          request.externalId =
-            !isNil(modified.externalId) && modified.externalId.trim() !== ''
-              ? modified.externalId
-              : undefined;
-        }
-        if (modified.icon !== original.icon) {
-          request.icon = modified.icon;
-        }
-        if (modified.plan !== original.plan) {
-          request.plan = modified.plan;
-        }
-        if (modified.maxConcurrentJobs !== original.maxConcurrentJobs) {
-          request.maxConcurrentJobs = modified.maxConcurrentJobs;
-        }
-        if (modified.workerGroupId !== original.workerGroupId) {
-          request.workerGroupId = modified.workerGroupId;
-        }
-        if (modified.sensitive !== original.sensitive) {
-          request.sensitive = modified.sensitive;
-        }
+        const request = buildProjectUpdatePayload({ original, modified });
         if (Object.keys(request).length === 0) {
           continue;
         }
