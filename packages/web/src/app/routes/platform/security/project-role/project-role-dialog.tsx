@@ -219,9 +219,6 @@ function RoleDialogBody({
                 )}
                 entityName={`${t('Project Role')} ${projectRole.name}`}
                 buttonText={t('Delete role')}
-                onError={() =>
-                  setSaveError(t('Could not delete the role. Try again.'))
-                }
                 mutationFn={async () => {
                   await deleteRole(projectRole.name);
                 }}
