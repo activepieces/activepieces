@@ -103,7 +103,7 @@ jobs:
       - name: Run benchmark (activepieces CLI)
         run: |
           set -o pipefail
-          bun run packages/cli/src/index.ts benchmark \
+          bun run packages/cli/src/benchmark-only.ts \
             --url http://localhost:8080 \
             --requests "${TOTAL_REQUESTS}" \
             --concurrency ${{ matrix.workers }} \
