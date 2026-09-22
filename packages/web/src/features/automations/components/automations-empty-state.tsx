@@ -338,7 +338,7 @@ export const AutomationsEmptyState = ({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               {t('Templates For You')}
-              <Sparkles className="h-4 w-4 text-yellow-500" />
+              <Sparkles className="h-4 w-4 text-swatch-6-mark" />
             </h2>
             <button
               onClick={handleViewAllTemplates}

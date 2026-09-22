@@ -8,10 +8,10 @@ const cardVariants = cva('rounded-lg border bg-background text-foreground', {
     variant: {
       default: 'shadow-xs',
       interactive:
-        'cursor-pointer hover:border-gray-400 transition-colors duration-200 flex flex-col justify-between',
+        'cursor-pointer hover:border-ink-400 transition-colors duration-200 flex flex-col justify-between',
     },
     isSelected: {
-      true: 'border-gray-400',
+      true: 'border-ink-400',
       false: '',
     },
   },

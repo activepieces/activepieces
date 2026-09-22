@@ -63,7 +63,7 @@ export function McpReconnectCard({
             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
             className="flex shrink-0 items-center justify-center"
           >
-            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <Check className="h-5 w-5 text-success-ink" />
           </motion.span>
         ) : !opened ? (
           <Button

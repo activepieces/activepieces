@@ -124,11 +124,11 @@ export default function TriggerHealthPage() {
       case STATUS.SUCCESS:
         return <CheckCircle size={16} className="text-success-700" />;
       case STATUS.WARNING:
-        return <AlertCircle size={16} className="text-amber-700" />;
+        return <AlertCircle size={16} className="text-warning-ink" />;
       case STATUS.FAULT:
         return <XCircle size={16} className="text-destructive" />;
       default:
-        return <AlertCircle size={16} className="text-gray-500" />;
+        return <AlertCircle size={16} className="text-ink-subtle" />;
     }
   };
 
@@ -137,11 +137,11 @@ export default function TriggerHealthPage() {
       case STATUS.SUCCESS:
         return 'text-success-700';
       case STATUS.WARNING:
-        return 'text-amber-700';
+        return 'text-warning-ink';
       case STATUS.FAULT:
         return 'text-destructive';
       default:
-        return 'text-gray-600';
+        return 'text-ink-muted';
     }
   };
 

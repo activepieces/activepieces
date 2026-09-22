@@ -43,7 +43,7 @@ export const TeamProjectAlerts = () => {
   return (
     <>
       <Alert variant="default">
-        <Bell className="inline w-4 h-4 text-amber-900" />
+        <Bell className="inline w-4 h-4 text-warning-ink" />
         <div className="flex flex-col gap-1">
           <AlertTitle>{t('Frequency')}</AlertTitle>
           <AlertDescription className="text-sm">

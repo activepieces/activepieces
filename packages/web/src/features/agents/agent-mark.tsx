@@ -62,7 +62,7 @@ const SIZES = {
 const TRIO: TrioGlyph[] = [
   {
     shape: 'circle',
-    fill: '#0D9488',
+    fill: 'var(--swatch-9-mark)',
     size: 72,
     left: 20,
     top: 24,
@@ -71,7 +71,7 @@ const TRIO: TrioGlyph[] = [
   },
   {
     shape: 'hexagon',
-    fill: '#D97706',
+    fill: 'var(--swatch-6-mark)',
     size: 74,
     left: 146,
     top: 22,
@@ -129,7 +129,7 @@ export const AgentMark = ({
 }: AgentMarkProps) => (
   <div
     className={cn(
-      'flex shrink-0 items-center justify-center border border-[#E7E7EA] bg-background',
+      'flex shrink-0 items-center justify-center border border-border bg-background',
       SIZES[size].box,
     )}
   >

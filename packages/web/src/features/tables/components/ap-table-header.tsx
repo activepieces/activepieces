@@ -230,7 +230,7 @@ export function ApTableHeader({
         </div>
       )}
       {lockedBy && (
-        <div className="flex items-center gap-1.5 border border-warning/50 rounded-md px-2.5 py-1 text-sm text-warning-700 dark:text-warning-300">
+        <div className="flex items-center gap-1.5 border border-warning-line rounded-md px-2.5 py-1 text-sm text-warning-ink">
           <Lock className="size-3.5 shrink-0" />
           <span>
             {t('{name} is editing', { name: lockedBy.userDisplayName })}

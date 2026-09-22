@@ -79,7 +79,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
       >
         <button
           className={cn(
-            'group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid  -translate-x-[60%] -translate-y-[60%] p-0.75',
+            'group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-surface-raised border border-solid  -translate-x-[60%] -translate-y-[60%] p-0.75',
             FocusedBorderClassName[note.color],
           )}
         ></button>
@@ -223,30 +223,30 @@ type NoteContentProps = {
 
 const NoteColorVariantClassName = {
   [NoteColorVariant.YELLOW]:
-    'dark:bg-[oklch(0.3052_0.0455_83.74)] dark:text-[oklch(0.8826_0.1328_86.23)] bg-[oklch(0.9638_0.0522_92.93)] text-[oklch(0.4784_0.1089_63.21)]',
+    'bg-swatch-6-surface text-swatch-6-ink',
   [NoteColorVariant.ORANGE]:
-    'dark:bg-[oklch(0.2968_0.0566_51.71)] dark:text-[oklch(0.8717_0.0836_58.75)] text-[oklch(0.4905_0.140461_44.9084)] bg-[oklch(0.9583_0.0245_61.65)]',
+    'bg-swatch-5-surface text-swatch-5-ink',
   [NoteColorVariant.RED]:
-    'dark:bg-[oklch(0.3046_0.0779_7.16)] dark:text-[oklch(0.9002_0.052_18.16)] bg-[oklch(0.956_0.0218_17.54)] text-[oklch(0.5141_0.1849_26.72)]',
+    'bg-swatch-4-surface text-swatch-4-ink',
   [NoteColorVariant.GREEN]:
-    'dark:bg-[oklch(0.3411_0.0464_168.94)] dark:text-[oklch(0.9025_0.0888_163.86)] text-[oklch(0.5208_0.115675_161.168)] bg-[oklch(0.9667_0.0353_162.37)]',
+    'bg-swatch-8-surface text-swatch-8-ink',
   [NoteColorVariant.BLUE]:
-    'dark:bg-[oklch(0.3086_0.0738_264.7)] dark:text-[oklch(0.8746_0.061_264.64)] bg-[oklch(0.9474_0.0249_263.33)] text-[oklch(0.4975_0.1752_261.14)]',
+    'bg-swatch-11-surface text-swatch-11-ink',
   [NoteColorVariant.PURPLE]:
-    'dark:bg-[oklch(0.2936_0.1027_291.89)] dark:text-[oklch(0.8565_0.0834_300.16)] text-[oklch(0.4647_0.186_293.18)] bg-[oklch(0.9633_0.0206_301.15)]',
+    'bg-swatch-1-surface text-swatch-1-ink',
 };
 
 const FocusedBorderClassName = {
   [NoteColorVariant.YELLOW]:
-    'dark:group-focus-within:text-[oklch(0.8826_0.1328_86.23)] group-focus-within:border-[oklch(0.4784_0.1089_63.21)]',
+    'group-focus-within:border-swatch-6-mark',
   [NoteColorVariant.ORANGE]:
-    'dark:group-focus-within:text-[oklch(0.8717_0.0836_58.75)] group-focus-within:border-[oklch(0.4905_0.140461_44.9084)]',
+    'group-focus-within:border-swatch-5-mark',
   [NoteColorVariant.RED]:
-    'dark:group-focus-within:text-[oklch(0.9002_0.052_18.16)] group-focus-within:border-[oklch(0.5141_0.1849_26.72)]',
+    'group-focus-within:border-swatch-4-mark',
   [NoteColorVariant.GREEN]:
-    'dark:group-focus-within:text-[oklch(0.9025_0.0888_163.86)] group-focus-within:border-[oklch(0.5208_0.115675_161.168)]',
+    'group-focus-within:border-swatch-8-mark',
   [NoteColorVariant.BLUE]:
-    'dark:group-focus-within:text-[oklch(0.8746_0.061_264.64)] group-focus-within:border-[oklch(0.4975_0.1752_261.14)]',
+    'group-focus-within:border-swatch-11-mark',
   [NoteColorVariant.PURPLE]:
-    'dark:group-focus-within:text-[oklch(0.8565_0.0834_300.16)] group-focus-within:border-[oklch(0.4647_0.186_293.18)]',
+    'group-focus-within:border-swatch-1-mark',
 };

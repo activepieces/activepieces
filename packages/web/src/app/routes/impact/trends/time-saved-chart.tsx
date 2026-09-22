@@ -29,7 +29,7 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
       subtitle={t('Track how much time your automations are saving')}
       tooltipLabel={t('Time Saved')}
       dataKey="minutesSaved"
-      color="#10b981"
+      color="var(--chart-2)"
       gradientId="fillTimeSaved"
       chartData={chartData}
       isLoading={!report}

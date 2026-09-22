@@ -19,14 +19,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/format-utils';
 
 const SERIES: Array<{ status: FlowRunStatus; label: string; color: string }> = [
-  { status: FlowRunStatus.SUCCEEDED, label: 'Succeeded', color: '#22c55e' },
-  { status: FlowRunStatus.FAILED, label: 'Failed', color: '#f59e0b' },
+  { status: FlowRunStatus.SUCCEEDED, label: 'Succeeded', color: 'var(--success-mark)' },
+  { status: FlowRunStatus.FAILED, label: 'Failed', color: 'var(--warning-mark)' },
   {
     status: FlowRunStatus.INTERNAL_ERROR,
     label: 'Internal error',
-    color: '#ef4444',
+    color: 'var(--destructive-mark)',
   },
-  { status: FlowRunStatus.CANCELED, label: 'Cancelled', color: '#9ca3af' },
+  { status: FlowRunStatus.CANCELED, label: 'Cancelled', color: 'var(--neutral-mark)' },
 ];
 
 type StatusLineChartProps = {

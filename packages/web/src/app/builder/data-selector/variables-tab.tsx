@@ -128,7 +128,7 @@ const VariablesTab = () => {
                 }}
                 className={cn(
                   'group w-full max-w-full select-none focus:outline-hidden',
-                  'hover:bg-accent dark:hover:bg-accent/20 focus:bg-accent focus:bg-opacity-75',
+                  'hover:bg-accent focus:bg-accent focus:bg-opacity-75',
                   'cursor-pointer flex items-center gap-3 px-5 py-3',
                 )}
               >

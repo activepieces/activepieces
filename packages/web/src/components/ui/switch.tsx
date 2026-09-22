@@ -48,7 +48,7 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          'pointer-events-none flex items-center justify-center bg-background dark:bg-foreground ring-0 transition-transform data-[state=unchecked]:translate-x-0',
+          'pointer-events-none flex items-center justify-center bg-on-primary ring-0 transition-transform data-[state=unchecked]:translate-x-0',
           'shadow-[0_1px_2px_rgba(15,23,42,0.18)]',
           variant === 'square' ? 'rounded-sm' : 'rounded-full',
           THUMB_SIZE_CLASSES[size],

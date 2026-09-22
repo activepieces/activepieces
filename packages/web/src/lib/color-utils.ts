@@ -56,7 +56,7 @@ export const colorsUtils = {
         if (colorsUtils.isGrayColor(r, g, b)) {
           return null;
         }
-        return `color-mix(in srgb, rgb(${r},${g},${b}) ${transparency}%, #fff 92%)`;
+        return `color-mix(in srgb, rgb(${r},${g},${b}) ${transparency}%, var(--surface-raised) 92%)`;
       },
     });
     return data;

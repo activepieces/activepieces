@@ -47,7 +47,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                 <div
                   className={cn(
                     'relative border rounded-md p-4 pt-12',
-                    resolvedTheme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
+                    'bg-fill',
                   )}
                 >
                   <ReactCodeMirror
@@ -76,7 +76,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                     readOnly={true}
                     extensions={extensions}
                   />
-                  <div className="absolute top-4 left-5 text-xs text-gray-500">
+                  <div className="absolute top-4 left-5 text-xs text-ink-muted">
                     <div className="flex items-center gap-1">
                       <CodeIcon className="size-3" />
                       <span>{match[1]}</span>
@@ -84,14 +84,14 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                   </div>
                   <CopyCode
                     textToCopy={String(children).trim()}
-                    className="absolute top-2 right-2 text-xs text-gray-500"
+                    className="absolute top-2 right-2 text-xs text-ink-muted"
                   />
                 </div>
               ) : (
                 <code
                   className={cn(
                     className,
-                    'bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                    'bg-fill px-[6px] py-[2px] rounded-xs font-mono text-sm',
                   )}
                   {...props}
                 >

@@ -35,7 +35,7 @@ const ImageWithColorBackground = ({
             setBackgroundColor(null);
           } else {
             setBackgroundColor(
-              `color-mix(in srgb, rgb(${r},${g},${b}) 10%, #fff 92%)`,
+              `color-mix(in srgb, rgb(${r},${g},${b}) 10%, var(--surface-raised) 92%)`,
             );
           }
         })
@@ -61,7 +61,7 @@ const ImageWithColorBackground = ({
     <span
       className={cn('relative inline-block h-full w-full', className, {
         'bg-background': backgroundColor === null,
-        'border border-border/50 dark:bg-foreground/10':
+        'border border-border/50':
           backgroundColor === null && border,
         'rounded-lg': roundedCorner,
       })}

@@ -131,7 +131,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
                 </FormItem>
               )}
             />
-            <div className="text-sm text-gray-500 mt-2">
+            <div className="text-sm text-ink-muted mt-2">
               {t(
                 'Enter a commit message to describe the changes you want to push.',
               )}

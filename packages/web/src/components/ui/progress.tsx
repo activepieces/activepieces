@@ -41,9 +41,9 @@ function usageIndicatorClass(ratio: number): string {
     return 'bg-destructive';
   }
   if (ratio >= 0.7) {
-    return 'bg-amber-500';
+    return 'bg-warning-mark';
   }
-  return 'bg-blue-600';
+  return 'bg-primary-mark';
 }
 
 function usageTrackClass(ratio: number): string {
@@ -51,9 +51,9 @@ function usageTrackClass(ratio: number): string {
     return 'bg-destructive/15';
   }
   if (ratio >= 0.7) {
-    return 'bg-amber-500/15';
+    return 'bg-warning-mark/15';
   }
-  return 'bg-blue-600/15';
+  return 'bg-primary-mark/15';
 }
 
 export { Progress, usageIndicatorClass, usageTrackClass };

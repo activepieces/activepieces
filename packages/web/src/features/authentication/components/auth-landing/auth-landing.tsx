@@ -77,7 +77,7 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
       <div
         aria-hidden
         onClick={nudgePanel}
-        className="absolute inset-0 z-40 cursor-default bg-neutral-50/78 backdrop-blur-[2.8px]"
+        className="absolute inset-0 z-40 cursor-default bg-background/80 backdrop-blur-[2.8px]"
       />
       <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
         <section

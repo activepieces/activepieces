@@ -54,7 +54,7 @@ export const ProjectAvatar = ({
           showBackground ? 'rounded-tr-md' : ''
         } ${showDetails ? 'py-6' : ''}`}
         style={{
-          backgroundColor: showBackground ? '#f3f4f6' : 'transparent',
+          backgroundColor: showBackground ? 'var(--fill)' : 'transparent',
         }}
       >
         <Avatar
@@ -64,8 +64,8 @@ export const ProjectAvatar = ({
             showDetails ? 'mb-3' : ''
           }`}
           style={{
-            backgroundColor: '#9ca3af',
-            color: '#ffffff',
+            backgroundColor: 'var(--neutral-mark)',
+            color: 'var(--on-neutral)',
           }}
         >
           <span className={currentSize.text}>
@@ -102,7 +102,7 @@ export const ProjectAvatar = ({
       } ${showDetails ? 'py-6' : ''}`}
       style={{
         backgroundColor: showBackground
-          ? PROJECT_COLOR_PALETTE[iconColor].color + '26'
+          ? `color-mix(in oklab, ${PROJECT_COLOR_PALETTE[iconColor].color}, transparent 85%)`
           : 'transparent',
       }}
     >

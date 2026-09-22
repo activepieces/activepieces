@@ -16,7 +16,7 @@ import { AgentActionsMenu } from './agent-actions-menu';
 import { AgentMark } from './agent-mark';
 import { AgentToolStack } from './agent-tool-stack';
 
-const PRIVATE_DOT_COLOR = '#A3A3A3';
+const PRIVATE_DOT_COLOR = 'var(--neutral-mark)';
 
 export const AgentTable = ({
   agents,

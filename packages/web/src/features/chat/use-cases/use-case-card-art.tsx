@@ -198,28 +198,28 @@ type InkName = 'purple' | 'blue' | 'teal' | 'orange' | 'sunflower' | 'pink';
 
 const INKS: Record<InkName, UseCaseTheme> = {
   purple: {
-    ink: 'text-[#765BA7] dark:text-[#A98FD6]',
-    ring: 'hover:ring-[#765BA7]/40 dark:hover:ring-[#A98FD6]/45',
+    ink: 'text-swatch-1-ink',
+    ring: 'hover:ring-swatch-1-mark/40',
   },
   blue: {
-    ink: 'text-[#0078BF] dark:text-[#57ABE8]',
-    ring: 'hover:ring-[#0078BF]/40 dark:hover:ring-[#57ABE8]/45',
+    ink: 'text-swatch-11-ink',
+    ring: 'hover:ring-swatch-11-mark/40',
   },
   teal: {
-    ink: 'text-[#00838A] dark:text-[#35B5B0]',
-    ring: 'hover:ring-[#00838A]/40 dark:hover:ring-[#35B5B0]/45',
+    ink: 'text-swatch-9-ink',
+    ring: 'hover:ring-swatch-9-mark/40',
   },
   orange: {
-    ink: 'text-[#F0602F] dark:text-[#FF8E5E]',
-    ring: 'hover:ring-[#F0602F]/40 dark:hover:ring-[#FF8E5E]/45',
+    ink: 'text-swatch-5-ink',
+    ring: 'hover:ring-swatch-5-mark/40',
   },
   sunflower: {
-    ink: 'text-[#D69A00] dark:text-[#F5B93D]',
-    ring: 'hover:ring-[#D69A00]/40 dark:hover:ring-[#F5B93D]/45',
+    ink: 'text-swatch-6-ink',
+    ring: 'hover:ring-swatch-6-mark/40',
   },
   pink: {
-    ink: 'text-[#E3399B] dark:text-[#FF7AC1]',
-    ring: 'hover:ring-[#E3399B]/40 dark:hover:ring-[#FF7AC1]/45',
+    ink: 'text-swatch-2-ink',
+    ring: 'hover:ring-swatch-2-mark/40',
   },
 };
 
@@ -250,6 +250,6 @@ const CARD_INKS: Record<string, InkName> = {
 };
 
 const CARD_SURFACE =
-  'bg-[#FAF8F3] ring-[#EAE5DA] dark:bg-white/[0.03] dark:ring-white/10';
+  'bg-fill ring-border';
 
 export const useCaseCardArt = { resolveTheme, CARD_SURFACE };

@@ -101,51 +101,51 @@ type ProjectColor = z.infer<typeof ProjectColor>
 
 export const PROJECT_COLOR_PALETTE: Record<ColorName, ProjectColor> = {
     [ColorName.RED]: {
-        textColor: '#ffffff',
-        color: '#ef4444',
+        textColor: 'var(--swatch-4-on)',
+        color: 'var(--swatch-4-mark)',
     },
     [ColorName.BLUE]: {
-        textColor: '#ffffff',
-        color: '#3b82f6',
+        textColor: 'var(--swatch-11-on)',
+        color: 'var(--swatch-11-mark)',
     },
     [ColorName.YELLOW]: {
-        textColor: '#ffffff',
-        color: '#eab308',
+        textColor: 'var(--swatch-7-on)',
+        color: 'var(--swatch-7-mark)',
     },
     [ColorName.PURPLE]: {
-        textColor: '#ffffff',
-        color: '#a855f7',
+        textColor: 'var(--swatch-1-on)',
+        color: 'var(--swatch-1-mark)',
     },
     [ColorName.GREEN]: {
-        textColor: '#ffffff',
-        color: '#22c55e',
+        textColor: 'var(--swatch-8-on)',
+        color: 'var(--swatch-8-mark)',
     },
     [ColorName.PINK]: {
-        textColor: '#ffffff',
-        color: '#f472b6',
+        textColor: 'var(--swatch-3-on)',
+        color: 'var(--swatch-3-mark)',
     },
     [ColorName.VIOLET]: {
-        textColor: '#ffffff',
-        color: '#9333ea',
+        textColor: 'var(--swatch-2-on)',
+        color: 'var(--swatch-2-mark)',
     },
     [ColorName.ORANGE]: {
-        textColor: '#ffffff',
-        color: '#f97316',
+        textColor: 'var(--swatch-6-on)',
+        color: 'var(--swatch-6-mark)',
     },
     [ColorName.DARK_GREEN]: {
-        textColor: '#ffffff',
-        color: '#15803d',
+        textColor: 'var(--swatch-9-on)',
+        color: 'var(--swatch-9-mark)',
     },
     [ColorName.CYAN]: {
-        textColor: '#ffffff',
-        color: '#06b6d4',
+        textColor: 'var(--swatch-10-on)',
+        color: 'var(--swatch-10-mark)',
     },
     [ColorName.LAVENDER]: {
-        textColor: '#ffffff',
-        color: '#8b5cf6',
+        textColor: 'var(--swatch-12-on)',
+        color: 'var(--swatch-12-mark)',
     },
     [ColorName.DEEP_ORANGE]: {
-        textColor: '#ffffff',
-        color: '#ea580c',
+        textColor: 'var(--swatch-5-on)',
+        color: 'var(--swatch-5-mark)',
     },
 }

@@ -22,7 +22,7 @@ export function RunsChart({ report }: RunsChartProps) {
       subtitle={t('Track your automation execution trends')}
       tooltipLabel={t('Runs')}
       dataKey="runs"
-      color="#8b5cf6"
+      color="var(--chart-1)"
       gradientId="fillRuns"
       chartData={chartData}
       isLoading={!report}

@@ -49,8 +49,7 @@ export const CurrentSubscriptionCard = ({
     <div
       className={cn(
         'flex flex-col gap-4 rounded-xl border border-primary/20 p-5',
-        'bg-gradient-to-r from-amber-50 to-primary/10',
-        'dark:border-primary/20 dark:from-muted/40 dark:to-primary/10',
+        'bg-gradient-to-r from-warning-surface to-primary/10',
       )}
     >
       <span className="text-sm text-muted-foreground">{t('Current plan')}</span>

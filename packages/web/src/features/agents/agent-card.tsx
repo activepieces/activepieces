@@ -16,7 +16,7 @@ type AgentCardProps = {
   onClick: () => void;
 };
 
-const PRIVATE_DOT_COLOR = '#A3A3A3';
+const PRIVATE_DOT_COLOR = 'var(--neutral-mark)';
 
 const AgentChip = ({
   label,

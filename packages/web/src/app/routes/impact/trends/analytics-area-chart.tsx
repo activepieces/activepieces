@@ -162,7 +162,7 @@ export function AnalyticsAreaChart({
                   r: 5,
                   fill: color,
                   strokeWidth: 2,
-                  stroke: '#fff',
+                  stroke: 'var(--surface-raised)',
                 }}
               />
             </AreaChart>

@@ -144,7 +144,7 @@ export function MultiQuestionForm({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <Check className="size-4 text-green-600 dark:text-green-400" />
+        <Check className="size-4 text-success-ink" />
         <span>{t('Answers submitted')}</span>
       </motion.div>
     );
@@ -480,7 +480,7 @@ function ChoiceBody({
             <Input
               ref={customAnswerInputRef}
               id={fieldId}
-              className="h-auto flex-1 min-w-0 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:border-0 dark:bg-transparent"
+              className="h-auto flex-1 min-w-0 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:border-0"
               placeholder={t('Type your answer...')}
               value={isCustomTextActive ? answer : ''}
               onFocus={() => {

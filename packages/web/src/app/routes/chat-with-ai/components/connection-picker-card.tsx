@@ -64,7 +64,7 @@ function SelectedState({
             border={false}
             showTooltip={false}
           />
-          <div className="absolute -bottom-0.5 -right-0.5 bg-green-500 rounded-full p-0.5">
+          <div className="absolute -bottom-0.5 -right-0.5 bg-success-mark rounded-full p-0.5">
             <Check className="h-2 w-2 text-white" />
           </div>
         </div>

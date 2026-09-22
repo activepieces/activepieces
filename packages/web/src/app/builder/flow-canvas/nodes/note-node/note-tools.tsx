@@ -58,12 +58,12 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
 };
 
 const NoteColorPickerClassName = {
-  [NoteColorVariant.YELLOW]: 'bg-amber-400',
-  [NoteColorVariant.ORANGE]: 'bg-orange-400',
-  [NoteColorVariant.RED]: 'bg-red-400',
-  [NoteColorVariant.GREEN]: 'bg-green-400',
-  [NoteColorVariant.BLUE]: 'bg-blue-400',
-  [NoteColorVariant.PURPLE]: 'bg-purple-400',
+  [NoteColorVariant.YELLOW]: 'bg-swatch-6-mark',
+  [NoteColorVariant.ORANGE]: 'bg-swatch-5-mark',
+  [NoteColorVariant.RED]: 'bg-swatch-4-mark',
+  [NoteColorVariant.GREEN]: 'bg-swatch-8-mark',
+  [NoteColorVariant.BLUE]: 'bg-swatch-11-mark',
+  [NoteColorVariant.PURPLE]: 'bg-swatch-1-mark',
 };
 
 const NoteColorPicker = ({

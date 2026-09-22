@@ -74,7 +74,7 @@ export function DailyHealthStrip({ onSeeRuns }: DailyHealthStripProps) {
                       className={cn(
                         'flex-1 h-full rounded-sm transition-colors',
                         healthy
-                          ? 'bg-emerald-500 hover:bg-emerald-600'
+                          ? 'bg-success-mark hover:bg-success'
                           : 'bg-destructive hover:bg-destructive/80',
                       )}
                     />

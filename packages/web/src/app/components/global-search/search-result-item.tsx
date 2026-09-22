@@ -48,7 +48,7 @@ function ItemIcon({
 
   if (type === 'flow') {
     return (
-      <span className="[&_svg]:text-violet-500! shrink-0">
+      <span className="[&_svg]:text-primary-mark! shrink-0">
         <WorkflowIcon className="size-4" />
       </span>
     );
@@ -56,7 +56,7 @@ function ItemIcon({
 
   if (type === 'table') {
     return (
-      <span className="[&_svg]:text-emerald-500! shrink-0">
+      <span className="[&_svg]:text-success-mark! shrink-0">
         <TableIcon className="size-4" />
       </span>
     );
@@ -172,7 +172,7 @@ export function SearchResultRow({
         <HighlightText text={item.label} query={query ?? ''} />
       </span>
       {item.status === 'ENABLED' && (
-        <span className="shrink-0 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-medium text-green-600">
+        <span className="shrink-0 rounded-full bg-success-surface px-1.5 py-0.5 text-[10px] font-medium text-success-ink">
           {t('Live')}
         </span>
       )}

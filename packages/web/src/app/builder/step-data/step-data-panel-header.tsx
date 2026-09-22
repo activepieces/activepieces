@@ -62,7 +62,7 @@ const StepDataPanelStatusBadge = ({
     return (
       <div className="flex items-center gap-1.5 text-sm">
         <StepStatusIcon status={StepOutputStatus.FAILED} size="4.5" />
-        <span className="text-destructive-700 dark:text-destructive-200 font-medium">
+        <span className="text-destructive-ink font-medium">
           {viewMode === 'run' ? t('Failed') : t('Test Failed')}
         </span>
       </div>

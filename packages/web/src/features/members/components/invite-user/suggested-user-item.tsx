@@ -93,7 +93,7 @@ function EmailStatusSuggestionItem({
         return {
           label: isPlatformInvite ? t('New User') : t('New Member'),
           className:
-            'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-900',
+            'text-primary-ink bg-primary-surface border-primary-line',
           disabled: false,
         };
       case 'has-access':

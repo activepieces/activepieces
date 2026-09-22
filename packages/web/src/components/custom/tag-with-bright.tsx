@@ -1,6 +1,7 @@
 import { LineChart, Clock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { brandColors } from '@activepieces/shared';
 
 type TagWithBrightProps = {
   index?: number;
@@ -37,7 +38,7 @@ export const TagWithBright = ({
         }`}
         style={{
           backgroundColor: color,
-          color: '#000000',
+          color: brandColors.onPrimaryFor({ hex: color }),
         }}
       >
         <span

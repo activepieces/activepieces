@@ -56,7 +56,7 @@ export function InternalErrorsTable({
           <Skeleton className="h-24 w-full" />
         ) : errors.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
-            <CircleCheck className="size-8 text-emerald-500" />
+            <CircleCheck className="size-8 text-success-mark" />
             <p className="text-sm">{t('No internal errors in this period')}</p>
           </div>
         ) : (

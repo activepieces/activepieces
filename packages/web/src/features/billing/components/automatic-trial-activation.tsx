@@ -349,7 +349,13 @@ const CONFETTI_OPTIONS: confetti.Options = {
   scalar: 0.85,
   shapes: ['square'],
   origin: { x: 0.5, y: 0.44 },
-  colors: ['#8142E3', '#B592F0', '#10b981', '#f59e0b', '#0a0a0a'],
+  colors: [
+    'var(--primary-mark)',
+    'var(--swatch-2-mark)',
+    'var(--swatch-8-mark)',
+    'var(--swatch-6-mark)',
+    'var(--swatch-11-mark)',
+  ],
   disableForReducedMotion: true,
 };
 

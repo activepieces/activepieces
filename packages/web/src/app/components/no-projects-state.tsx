@@ -46,7 +46,7 @@ const MascotIllustration = () => {
           height="24"
           rx="6"
           transform="rotate(-12 42 46)"
-          className="fill-emerald-200 stroke-emerald-400"
+          className="fill-success-surface stroke-success-mark"
           strokeWidth="1.5"
         />
         <rect
@@ -56,7 +56,7 @@ const MascotIllustration = () => {
           height="22"
           rx="6"
           transform="rotate(15 151 41)"
-          className="fill-amber-200 stroke-amber-400"
+          className="fill-warning-surface stroke-warning-mark"
           strokeWidth="1.5"
         />
 

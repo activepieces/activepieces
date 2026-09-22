@@ -122,7 +122,7 @@ const RoleCell = ({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-4 w-4 text-orange-700 absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
+              <Info className="h-4 w-4 text-warning-ink absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6" />
             </TooltipTrigger>
             <TooltipContent>
               <p>{t('Pending Invitation')}</p>
@@ -255,7 +255,7 @@ export const membersTableColumns = ({
             />
             <div className="flex flex-col gap-1 min-w-0">
               <TextWithTooltip tooltipMessage={email}>
-                <p className="text-sm text-orange-700">{email}</p>
+                <p className="text-sm text-warning-ink">{email}</p>
               </TextWithTooltip>
             </div>
           </div>

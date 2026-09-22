@@ -59,7 +59,7 @@ export function ChatCard({ children, className }: ChatCardProps) {
   return (
     <motion.div
       className={cn(
-        'rounded-2xl border border-border/60 bg-background p-4 shadow-lg dark:bg-neutral-900 backdrop-blur-sm transition-colors',
+        'rounded-2xl border border-border/60 bg-card p-4 shadow-lg backdrop-blur-sm transition-colors',
         className,
       )}
       initial={{ opacity: 0, y: 16, scale: 0.98 }}
@@ -218,7 +218,7 @@ export function ChatAnswerInputRow({
       <Input
         ref={inputRef}
         id={fieldId}
-        className="h-auto flex-1 min-w-0 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:border-0 dark:bg-transparent"
+        className="h-auto flex-1 min-w-0 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0 focus-visible:border-0"
         placeholder={placeholder}
         value={value}
         onFocus={onFocus}

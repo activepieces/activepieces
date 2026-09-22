@@ -115,7 +115,7 @@ function ActionGroupColumn({
           </TextWithTooltip>
         ))}
         {group.classification === 'DESTRUCTIVE' && (
-          <p className="px-2 pt-1.5 text-xs text-destructive-700 dark:text-destructive-300">
+          <p className="px-2 pt-1.5 text-xs text-destructive-ink">
             {t('Can delete or overwrite data in {pieceName}.', {
               pieceName: pieceDisplayName,
             })}
@@ -130,14 +130,14 @@ const CLASSIFICATION_TONES: Record<ActionClassification, ClassificationTone> = {
   READ: { label: 'text-foreground', count: 'accent' },
   SEARCH: { label: 'text-foreground', count: 'accent' },
   WRITE: {
-    label: 'text-warning-700 dark:text-warning-300',
+    label: 'text-warning-ink',
     count: 'warning',
   },
   DESTRUCTIVE: {
-    label: 'text-destructive-700 dark:text-destructive-300',
+    label: 'text-destructive-ink',
     count: 'destructive',
     frame:
-      'gap-0.5 rounded-md border border-destructive-200 bg-destructive-50 py-1.5 dark:border-destructive-900 dark:bg-destructive-950/30',
+      'gap-0.5 rounded-md border border-destructive-line bg-destructive-surface py-1.5',
   },
 };
 

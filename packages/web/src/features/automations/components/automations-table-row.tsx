@@ -151,7 +151,7 @@ export const AutomationsTableRow = ({
                   className={cn(
                     'h-4 w-4',
                     isPinned
-                      ? 'text-yellow-500 fill-yellow-500'
+                      ? 'text-swatch-6-mark fill-swatch-6-mark'
                       : 'text-muted-foreground/40 hover:text-muted-foreground',
                   )}
                 />
@@ -373,11 +373,11 @@ export const AutomationsTableRow = ({
 const RowItemIcon = ({ item }: { item: TreeItem }) => {
   switch (item.type) {
     case 'folder':
-      return <Folder className="h-4 w-4 text-gray-400 fill-gray-400" />;
+      return <Folder className="h-4 w-4 text-ink-subtle fill-ink-subtle" />;
     case 'flow':
       return <Workflow className="h-4 w-4 text-primary" />;
     default:
-      return <Table2 className="h-4 w-4 text-emerald-500" />;
+      return <Table2 className="h-4 w-4 text-swatch-8-mark" />;
   }
 };
 

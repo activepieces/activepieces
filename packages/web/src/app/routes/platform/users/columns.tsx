@@ -51,7 +51,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           {isInvitation && (
             <Tooltip>
               <TooltipTrigger>
-                <Info className="h-4 w-4 text-orange-700" />
+                <Info className="h-4 w-4 text-warning-ink" />
               </TooltipTrigger>
               <TooltipContent>
                 <p>{t('Pending Invitation')}</p>
@@ -60,7 +60,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
           )}
           <div
             className={`flex flex-col gap-0.5 ${
-              isInvitation ? 'text-orange-700' : ''
+              isInvitation ? 'text-warning-ink' : ''
             }`}
           >
             {showEmail && (
@@ -179,7 +179,7 @@ export const createUsersTableColumns = (): ColumnDefWithAccessorKey[] => [
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
-        return <div className="text-left text-orange-700">{t('Pending')}</div>;
+        return <div className="text-left text-warning-ink">{t('Pending')}</div>;
       }
       return (
         <div className="text-left">

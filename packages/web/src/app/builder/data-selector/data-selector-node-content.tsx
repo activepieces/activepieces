@@ -97,7 +97,7 @@ const DataSelectorNodeContent = ({
       aria-expanded={isExpandable ? expanded : undefined}
       className={cn(
         'w-full max-w-full relative select-none focus:outline-hidden cursor-pointer group transition-colors',
-        'hover:bg-accent/60 focus:bg-accent dark:hover:bg-accent/20',
+        'hover:bg-accent/60 focus:bg-accent',
       )}
       data-depth={depth}
     >

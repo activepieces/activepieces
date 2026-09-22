@@ -42,7 +42,13 @@ export function UserAvatar({
     <Avatar
       name={email}
       size={size}
-      colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
+      colors={[
+        'var(--swatch-1-mark)',
+        'var(--swatch-3-mark)',
+        'var(--swatch-5-mark)',
+        'var(--swatch-8-mark)',
+        'var(--swatch-11-mark)',
+      ]}
       variant="beam"
       square
       className={cn('rounded-full', className)}
