@@ -1,6 +1,48 @@
 import { HttpError, HttpMethod, httpClient } from '@activepieces/pieces-common';
 import { isNil, Property } from '@activepieces/pieces-framework';
 
+export const gmbApi = {
+  request,
+  paginate,
+  locationReadMask:
+    'name,title,storeCode,languageCode,phoneNumbers,categories,storefrontAddress,websiteUri,regularHours,specialHours,serviceArea,labels,latlng,openInfo,metadata,profile',
+  resourceNames: { accountName, v1Location, v4Location, childId, reviewUrl },
+  props: {
+    accountId: () =>
+      Property.ShortText({
+        displayName: 'Account ID',
+        description: 'The account id, e.g. 123 or accounts/123. Get it from the name field returned by List Accounts (list-accounts).',
+        required: true,
+      }),
+    locationId: () =>
+      Property.ShortText({
+        displayName: 'Location ID',
+        description: 'The location id, e.g. 456 or locations/456. Get it from the name field returned by List Locations (list-locations).',
+        required: true,
+      }),
+    reviewId: () =>
+      Property.ShortText({
+        displayName: 'Review ID',
+        description: 'The reviewId field returned by List Reviews (list-reviews), or the full review name.',
+        required: true,
+      }),
+    maxResults: () =>
+      Property.Number({
+        displayName: 'Maximum Results',
+        description: 'Stop after this many items. Larger values are fetched over several requests.',
+        required: false,
+        defaultValue: 100,
+      }),
+  },
+  hosts: {
+    accountManagement: 'https://mybusinessaccountmanagement.googleapis.com/v1',
+    businessInformation: 'https://mybusinessbusinessinformation.googleapis.com/v1',
+    v4: 'https://mybusiness.googleapis.com/v4',
+    verifications: 'https://mybusinessverifications.googleapis.com/v1',
+  },
+};
+
+
 async function request<T>({ accessToken, method, url, query, body }: RequestParams): Promise<T> {
   const queryString = isNil(query) ? '' : query.toString();
   try {
@@ -118,46 +160,6 @@ function reviewUrl({ account_id, location_id, review_id }: { account_id: string;
   return `https://mybusiness.googleapis.com/v4/${parent}/reviews/${encodeURIComponent(review)}`;
 }
 
-export const gmbApi = {
-  request,
-  paginate,
-  locationReadMask:
-    'name,title,storeCode,languageCode,phoneNumbers,categories,storefrontAddress,websiteUri,regularHours,specialHours,serviceArea,labels,latlng,openInfo,metadata,profile',
-  resourceNames: { accountName, v1Location, v4Location, childId, reviewUrl },
-  props: {
-    accountId: () =>
-      Property.ShortText({
-        displayName: 'Account ID',
-        description: 'The account id, e.g. 123 or accounts/123. Get it from the name field returned by List Accounts (list-accounts).',
-        required: true,
-      }),
-    locationId: () =>
-      Property.ShortText({
-        displayName: 'Location ID',
-        description: 'The location id, e.g. 456 or locations/456. Get it from the name field returned by List Locations (list-locations).',
-        required: true,
-      }),
-    reviewId: () =>
-      Property.ShortText({
-        displayName: 'Review ID',
-        description: 'The reviewId field returned by List Reviews (list-reviews), or the full review name.',
-        required: true,
-      }),
-    maxResults: () =>
-      Property.Number({
-        displayName: 'Maximum Results',
-        description: 'Stop after this many items. Larger values are fetched over several requests.',
-        required: false,
-        defaultValue: 100,
-      }),
-  },
-  hosts: {
-    accountManagement: 'https://mybusinessaccountmanagement.googleapis.com/v1',
-    businessInformation: 'https://mybusinessbusinessinformation.googleapis.com/v1',
-    v4: 'https://mybusiness.googleapis.com/v4',
-    verifications: 'https://mybusinessverifications.googleapis.com/v1',
-  },
-};
 
 type RequestParams = {
   accessToken: string;
@@ -187,3 +189,4 @@ type VendorError = {
   status: string | undefined;
   reasons: string[];
 };
+
