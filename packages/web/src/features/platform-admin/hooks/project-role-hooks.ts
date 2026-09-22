@@ -29,7 +29,7 @@ export const projectRoleQueries = {
 };
 
 export const projectRoleMutations = {
-  useUpsertProjectRole: ({ onSave }: { onSave: () => void }) => {
+  useUpsertProjectRole: ({ onSave, onError }: UpsertProjectRoleHandlers) => {
     return useMutation({
       mutationFn: async ({
         mode,
@@ -49,7 +49,11 @@ export const projectRoleMutations = {
         }
       },
       onSuccess: onSave,
-      onError: () => {
+      onError: (error) => {
+        if (onError) {
+          onError(error);
+          return;
+        }
         toast.error(t('Role name already exists'), {
           duration: 3000,
         });
@@ -68,6 +72,11 @@ export const projectRoleMutations = {
       },
     });
   },
+};
+
+type UpsertProjectRoleHandlers = {
+  onSave: () => void;
+  onError?: (error: unknown) => void;
 };
 
 type UpsertProjectRoleParams = {

@@ -1,6 +1,6 @@
-import { ProjectRole, RoleType } from '@activepieces/core-utils';
+import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { MoreHorizontal, Pencil, Trash, Type } from 'lucide-react';
+import { MoreHorizontal, Trash, Type } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
@@ -23,10 +23,12 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectRoleMutations } from '@/features/platform-admin';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 import { PermissionGrid } from './permission-grid';
 import { RoleAvatar } from './role-avatar';
+import { roleCopy } from './role-copy';
 import { RolePeopleTab } from './role-people-tab';
 import { ROLE_BASES, RoleBase, rolePermissionModel } from './role-permissions';
 
@@ -51,7 +53,7 @@ export const ProjectRoleDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="w-full max-w-4xl gap-0 p-0">
+      <DialogContent className="flex h-[min(38rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
           mode={mode}
@@ -84,19 +86,32 @@ function RoleDialogBody({
     projectRole?.permissions ??
       rolePermissionModel.basePermissions({ base: 'Viewer' }),
   );
-  const [isEditingPermissions, setIsEditingPermissions] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [tab, setTab] = useState<RoleDialogTab>(initialTab);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { mutate: upsertRole, isPending: isSaving } =
-    projectRoleMutations.useUpsertProjectRole({ onSave: onSaved });
+    projectRoleMutations.useUpsertProjectRole({
+      onSave: onSaved,
+      onError: (error) =>
+        setSaveError(
+          isCreate && api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
+            ? t('A role with this name already exists.')
+            : t('Could not save the role. Try again.'),
+        ),
+    });
   const { mutate: deleteRole } = projectRoleMutations.useDeleteProjectRole({
     onSuccess: onSaved,
   });
 
-  const isEditable = isCreate || isEditingPermissions;
-  const hasUnsavedIntent = isCreate || isEditingPermissions || isRenaming;
   const granted = rolePermissionModel.grantedBoxes({ permissions });
   const total = rolePermissionModel.totalBoxes();
+  const isDirty =
+    !isBuiltIn &&
+    !isCreate &&
+    (name !== projectRole?.name ||
+      !samePermissions(permissions, projectRole?.permissions ?? []));
+  const canSubmit = name.trim().length > 0 && !isSaving;
 
   const changeBase = (nextBase: RoleBase) => {
     setBase(nextBase);
@@ -104,19 +119,31 @@ function RoleDialogBody({
   };
 
   const submit = () => {
+    setSaveError(null);
     upsertRole({
       mode,
       roleId: projectRole?.id,
-      name,
+      name: name.trim(),
       permissions,
       type: RoleType.CUSTOM,
     });
   };
 
+  const counter = (
+    <span className="shrink-0 text-sm tabular-nums text-muted-foreground">
+      {t('grantedCount', { granted, total })}
+    </span>
+  );
+
   return (
     <>
-      <div className="flex items-start gap-3 border-b px-6 py-4">
-        {!isCreate && projectRole && <RoleAvatar name={projectRole.name} />}
+      <header className="flex shrink-0 items-center gap-3 border-b py-4 pr-14 pl-6">
+        {!isCreate && projectRole && (
+          <RoleAvatar
+            name={projectRole.name}
+            tone={roleCopy.projectRoleTone(projectRole.name)}
+          />
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {isCreate && (
             <p className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
@@ -131,17 +158,20 @@ function RoleDialogBody({
               <Input
                 autoFocus
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  setSaveError(null);
+                }}
                 placeholder={t('Role name')}
-                className="max-w-sm"
+                className="h-9 max-w-xs"
               />
             </>
           ) : (
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              {projectRole?.name}
+            <DialogTitle className="flex min-w-0 items-center gap-2 text-lg">
+              <span className="truncate">{projectRole?.name}</span>
               <Badge
                 variant={isBuiltIn ? 'accent' : 'inverted'}
-                className="text-xss uppercase tracking-wider"
+                className="shrink-0 text-xss uppercase tracking-wider"
               >
                 {isBuiltIn ? t('Built in') : t('Custom')}
               </Badge>
@@ -150,69 +180,49 @@ function RoleDialogBody({
           <DialogDescription className={cn('text-sm', !isBuiltIn && 'sr-only')}>
             {isBuiltIn
               ? t("Built-in roles can't be changed")
-              : t(
-                  'Every permission is listed; tick to add, untick to take away.',
-                )}
+              : t('Tick to add a permission, untick to take it away.')}
           </DialogDescription>
         </div>
         {!isCreate && !isBuiltIn && projectRole && (
-          <div className="flex shrink-0 items-center gap-2">
-            {!isEditingPermissions && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsEditingPermissions(true)}
-              >
-                <Pencil className="size-4" />
-                {t('Edit')}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="size-8 shrink-0 p-0">
+                <MoreHorizontal className="size-4" />
+                <span className="sr-only">{t('More')}</span>
               </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="size-8 p-0">
-                  <MoreHorizontal className="size-4" />
-                  <span className="sr-only">{t('More')}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setIsRenaming(true)}>
+                <Type className="size-4" />
+                {t('Rename')}
+              </DropdownMenuItem>
+              <ConfirmationDeleteDialog
+                isDanger={true}
+                title={t('Delete role')}
+                message={t(
+                  'Deleting this role will remove {count} project member(s) and all associated invitations.',
+                  { count: projectRole.userCount },
+                )}
+                entityName={`${t('Project Role')} ${projectRole.name}`}
+                buttonText={t('Delete role')}
+                mutationFn={async () => deleteRole(projectRole.name)}
+              >
                 <DropdownMenuItem
-                  onSelect={() => setIsEditingPermissions(true)}
+                  variant="destructive"
+                  onSelect={(event) => event.preventDefault()}
                 >
-                  <Pencil className="size-4" />
-                  {t('Edit permissions')}
+                  <Trash className="size-4" />
+                  {t('Delete role')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setIsRenaming(true)}>
-                  <Type className="size-4" />
-                  {t('Rename')}
-                </DropdownMenuItem>
-                <ConfirmationDeleteDialog
-                  isDanger={true}
-                  title={t('Delete role')}
-                  message={t(
-                    'Deleting this role will remove {count} project member(s) and all associated invitations.',
-                    { count: projectRole.userCount },
-                  )}
-                  entityName={`${t('Project Role')} ${projectRole.name}`}
-                  buttonText={t('Delete role')}
-                  mutationFn={async () => deleteRole(projectRole.name)}
-                >
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onSelect={(event) => event.preventDefault()}
-                  >
-                    <Trash className="size-4" />
-                    {t('Delete role')}
-                  </DropdownMenuItem>
-                </ConfirmationDeleteDialog>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+              </ConfirmationDeleteDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
-      </div>
+      </header>
 
       {isCreate ? (
-        <div className="flex flex-col gap-4 px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 px-6 pt-4 pb-3">
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">
                 {t('Based on')}
@@ -236,81 +246,108 @@ function RoleDialogBody({
                 ))}
               </div>
             </div>
-            <GrantedCounter granted={granted} total={total} />
+            {counter}
           </div>
-          <ScrollArea className="max-h-[52vh] pr-4">
-            <PermissionGrid
-              permissions={permissions}
-              readOnly={false}
-              changedRowKeys={rolePermissionModel.changedRowKeys({
-                permissions,
-                base,
-              })}
-              onPermissionsChange={setPermissions}
-            />
+          <ScrollArea className="min-h-0 flex-1">
+            <div className="px-6 pb-4">
+              <PermissionGrid
+                permissions={permissions}
+                readOnly={false}
+                changedRowKeys={rolePermissionModel.changedRowKeys({
+                  permissions,
+                  base,
+                })}
+                onPermissionsChange={setPermissions}
+              />
+            </div>
           </ScrollArea>
         </div>
       ) : (
-        <Tabs defaultValue={initialTab} className="px-6 pb-2">
-          <TabsList variant="outline" className="border-b w-full justify-start">
+        <Tabs
+          value={tab}
+          onValueChange={(value) =>
+            setTab(value === 'people' ? 'people' : 'permissions')
+          }
+          className="flex min-h-0 flex-1 flex-col gap-0"
+        >
+          <TabsList
+            variant="outline"
+            className="w-full shrink-0 justify-start gap-1 border-b px-6"
+          >
             <TabsTrigger variant="outline" value="permissions">
               {t('Permissions')}
             </TabsTrigger>
             <TabsTrigger variant="outline" value="people" className="gap-2">
               {t('People')}
-              <span className="text-muted-foreground">
+              <span className="tabular-nums text-muted-foreground">
                 {projectRole?.userCount ?? 0}
               </span>
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="permissions" className="flex flex-col gap-3">
-            <div className="flex justify-end">
-              <GrantedCounter granted={granted} total={total} />
+          <TabsContent
+            value="permissions"
+            className="mt-0 flex min-h-0 flex-1 flex-col"
+          >
+            <div className="flex shrink-0 justify-end px-6 pt-4 pb-3">
+              {counter}
             </div>
-            <ScrollArea className="max-h-[52vh] pr-4">
-              <PermissionGrid
-                permissions={permissions}
-                readOnly={!isEditable}
-                onPermissionsChange={setPermissions}
-              />
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="px-6 pb-4">
+                <PermissionGrid
+                  permissions={permissions}
+                  readOnly={Boolean(isBuiltIn)}
+                  onPermissionsChange={setPermissions}
+                />
+              </div>
             </ScrollArea>
           </TabsContent>
-          <TabsContent value="people">
+          <TabsContent value="people" className="mt-0 min-h-0 flex-1">
             {projectRole && <RolePeopleTab projectRole={projectRole} />}
           </TabsContent>
         </Tabs>
       )}
 
-      {hasUnsavedIntent && (
-        <div className="flex items-center justify-end gap-2 border-t px-6 py-3">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t('Cancel')}
-          </Button>
-          <Button
-            type="button"
-            disabled={name.trim().length === 0 || isSaving}
-            onClick={submit}
-          >
-            {isCreate ? t('Create role') : t('Save changes')}
-          </Button>
-        </div>
-      )}
+      <footer className="flex shrink-0 flex-wrap items-center justify-end gap-x-6 gap-y-2 border-t px-6 py-3">
+        <p
+          role={saveError ? 'alert' : undefined}
+          className={cn(
+            'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
+            saveError
+              ? 'font-medium text-destructive'
+              : 'text-muted-foreground',
+          )}
+        >
+          {saveError ??
+            (!isCreate && tab === 'people'
+              ? t(
+                  "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
+                )
+              : t(
+                  'Flow status has no view-only level, so it has no View box.',
+                ))}
+        </p>
+        {(isCreate || isDirty) && (
+          <div className="flex shrink-0 items-center gap-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t('Cancel')}
+            </Button>
+            <Button type="button" disabled={!canSubmit} onClick={submit}>
+              {isCreate ? t('Create role') : t('Save changes')}
+            </Button>
+          </div>
+        )}
+      </footer>
     </>
   );
 }
 
-function GrantedCounter({ granted, total }: GrantedCounterProps) {
-  return (
-    <span className="text-sm text-muted-foreground">
-      {t('grantedCount', { granted, total })}
-    </span>
-  );
+function samePermissions(left: string[], right: string[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+  const rightSet = new Set(right);
+  return left.every((permission) => rightSet.has(permission));
 }
-
-type GrantedCounterProps = {
-  granted: number;
-  total: number;
-};
 
 type RoleDialogTab = 'permissions' | 'people';
 

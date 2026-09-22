@@ -1,5 +1,12 @@
+import { ProjectRole, RoleType } from '@activepieces/core-utils';
 import { DefaultProjectRole, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
+
+const BUILT_IN_ORDER: string[] = [
+  DefaultProjectRole.ADMIN,
+  DefaultProjectRole.EDITOR,
+  DefaultProjectRole.VIEWER,
+];
 
 function builtInProjectRoleDescription(roleName: string): string | null {
   switch (roleName) {
@@ -14,22 +21,68 @@ function builtInProjectRoleDescription(roleName: string): string | null {
   }
 }
 
+function projectRoleTone(roleName: string): RoleTone {
+  switch (roleName) {
+    case DefaultProjectRole.ADMIN:
+      return 'brand';
+    case DefaultProjectRole.EDITOR:
+      return 'info';
+    case DefaultProjectRole.VIEWER:
+      return 'neutral';
+    default:
+      return 'custom';
+  }
+}
+
+function platformRoleTone(role: PlatformRole): RoleTone {
+  switch (role) {
+    case PlatformRole.ADMIN:
+      return 'brand';
+    case PlatformRole.OPERATOR:
+      return 'info';
+    default:
+      return 'neutral';
+  }
+}
+
+function sortProjectRoles({ roles }: { roles: ProjectRole[] }): ProjectRole[] {
+  return [...roles].sort((left, right) => {
+    const leftRank = builtInRank(left);
+    const rightRank = builtInRank(right);
+    if (leftRank !== rightRank) {
+      return leftRank - rightRank;
+    }
+    return left.name.localeCompare(right.name);
+  });
+}
+
+function builtInRank(role: ProjectRole): number {
+  if (role.type !== RoleType.DEFAULT) {
+    return BUILT_IN_ORDER.length;
+  }
+  const index = BUILT_IN_ORDER.indexOf(role.name);
+  return index === -1 ? BUILT_IN_ORDER.length - 1 : index;
+}
+
 function platformRoles(): PlatformRoleSummary[] {
   return [
     {
       role: PlatformRole.ADMIN,
+      tone: platformRoleTone(PlatformRole.ADMIN),
       label: t('Admin'),
       description: t('Every project as Admin, plus this console'),
       isDefaultForNewMembers: false,
     },
     {
       role: PlatformRole.OPERATOR,
+      tone: platformRoleTone(PlatformRole.OPERATOR),
       label: t('Operator'),
       description: t('Every project as Editor, no console'),
       isDefaultForNewMembers: false,
     },
     {
       role: PlatformRole.MEMBER,
+      tone: platformRoleTone(PlatformRole.MEMBER),
       label: t('Member'),
       description: t("Own project, plus the projects they're added to"),
       isDefaultForNewMembers: true,
@@ -37,10 +90,18 @@ function platformRoles(): PlatformRoleSummary[] {
   ];
 }
 
-export const roleCopy = { builtInProjectRoleDescription, platformRoles };
+export const roleCopy = {
+  builtInProjectRoleDescription,
+  projectRoleTone,
+  sortProjectRoles,
+  platformRoles,
+};
+
+export type RoleTone = 'brand' | 'info' | 'neutral' | 'custom';
 
 export type PlatformRoleSummary = {
   role: PlatformRole;
+  tone: RoleTone;
   label: string;
   description: string;
   isDefaultForNewMembers: boolean;

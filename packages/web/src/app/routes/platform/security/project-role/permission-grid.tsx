@@ -28,9 +28,10 @@ export function PermissionGrid({
   const renderColumn = (
     columnGroups: PermissionGroup[],
     className?: string,
+    headerClassName?: string,
   ) => (
     <div className={cn('flex flex-col', className)}>
-      <ColumnHeader />
+      <ColumnHeader className={headerClassName} />
       {columnGroups.map((group) => (
         <div key={group.key} className="flex flex-col">
           <p className="pt-3 pb-1 text-xss font-medium uppercase tracking-wider text-muted-foreground">
@@ -83,24 +84,25 @@ export function PermissionGrid({
   );
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-1 gap-x-8 md:grid-cols-2">
-        {renderColumn(groups.filter((group) => group.key === 'build'))}
-        {renderColumn(
-          groups.filter((group) => group.key !== 'build'),
-          'md:border-l md:border-border/60 md:pl-8',
-        )}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {t('Flow status has no view-only level, so it has no View box.')}
-      </p>
+    <div className="grid grid-cols-1 gap-x-8 md:grid-cols-2">
+      {renderColumn(groups.filter((group) => group.key === 'build'))}
+      {renderColumn(
+        groups.filter((group) => group.key !== 'build'),
+        'md:border-l md:border-border/60 md:pl-8',
+        'hidden md:flex',
+      )}
     </div>
   );
 }
 
-function ColumnHeader() {
+function ColumnHeader({ className }: { className?: string }) {
   return (
-    <div className="flex items-center gap-2 border-b border-border/60 pb-1">
+    <div
+      className={cn(
+        'flex items-center gap-2 border-b border-border/60 pb-1',
+        className,
+      )}
+    >
       <span className="size-1.5 shrink-0" />
       <span className="flex-1" />
       <span className="w-12 shrink-0 text-center text-xss font-medium uppercase tracking-wider text-muted-foreground">

@@ -5,6 +5,7 @@ import { ChevronRight, Shield } from 'lucide-react';
 import { useState } from 'react';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Badge } from '@/components/ui/badge';
 import {
   Item,
@@ -37,7 +38,9 @@ export function ProjectRolesList({
     return <DataFetchErrorState entity={t('roles')} onRetry={refetch} />;
   }
 
-  const roles = projectRoles?.data ?? [];
+  const roles = roleCopy.sortProjectRoles({
+    roles: projectRoles?.data ?? [],
+  });
 
   if (roles.length === 0) {
     return (
@@ -62,7 +65,7 @@ export function ProjectRolesList({
               size="sm"
               role="button"
               tabIndex={0}
-              className="cursor-pointer hover:bg-accent/50"
+              className="cursor-pointer flex-nowrap hover:bg-accent/50"
               onClick={() => setOpened({ role, tab: 'permissions' })}
               onKeyDown={(event) => {
                 if (
@@ -74,15 +77,20 @@ export function ProjectRolesList({
                 }
               }}
             >
-              <RoleAvatar name={role.name} />
-              <ItemContent>
-                <ItemTitle>
-                  {role.name}
+              <RoleAvatar
+                name={role.name}
+                tone={roleCopy.projectRoleTone(role.name)}
+              />
+              <ItemContent className="min-w-0">
+                <ItemTitle className="min-w-0 max-w-full">
+                  <TextWithTooltip tooltipMessage={role.name}>
+                    <span className="truncate">{role.name}</span>
+                  </TextWithTooltip>
                   <Badge
                     variant={
                       role.type === RoleType.DEFAULT ? 'accent' : 'inverted'
                     }
-                    className="text-xss uppercase tracking-wider"
+                    className="shrink-0 text-xss uppercase tracking-wider"
                   >
                     {role.type === RoleType.DEFAULT
                       ? t('Built in')

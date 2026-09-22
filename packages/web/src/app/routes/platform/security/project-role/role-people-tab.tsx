@@ -15,21 +15,25 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (isError) {
-    return <DataFetchErrorState entity={t('people')} onRetry={refetch} />;
+    return (
+      <div className="flex h-full items-center justify-center px-6">
+        <DataFetchErrorState entity={t('people')} onRetry={refetch} />
+      </div>
+    );
   }
 
   const members = data?.data ?? [];
 
   if (members.length === 0) {
     return (
-      <div className="flex h-64 flex-col items-center justify-center gap-2 text-muted-foreground">
+      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-muted-foreground">
         <Users className="size-10" />
         <p className="text-sm font-medium">{t('No users found')}</p>
         <p className="text-xs">{t('Start by assigning users to this role')}</p>
@@ -42,34 +46,29 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   const peopleCount = projectRole.userCount ?? members.length;
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-baseline justify-between gap-4">
+    <div className="flex h-full flex-col">
+      <div className="flex shrink-0 flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-6 pt-4 pb-3">
         <p className="text-sm text-muted-foreground">
           {isComplete
             ? t('hasThisRoleInProjects', { count: projectCount })
             : t('showingFirstPeople', { count: members.length })}
         </p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm tabular-nums text-muted-foreground">
           {t('rolePeopleCount', { count: peopleCount })}
         </p>
       </div>
-      <div className="flex flex-col">
-        <div className="flex items-center gap-4 border-b pb-1 text-xss font-medium uppercase tracking-wider text-muted-foreground">
-          <span className="flex-1">{t('Name')}</span>
-          <span className="w-56 shrink-0">{t('Email')}</span>
-          <span className="w-44 shrink-0">{t('Project')}</span>
-        </div>
-        <ScrollArea className="max-h-72">
+      <div className="flex shrink-0 items-center gap-4 border-b px-6 pb-2 text-xss font-medium uppercase tracking-wider text-muted-foreground">
+        <span className="flex-1">{t('Name')}</span>
+        <span className="hidden w-56 shrink-0 sm:block">{t('Email')}</span>
+        <span className="w-32 shrink-0 sm:w-44">{t('Project')}</span>
+      </div>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="px-6">
           {members.map((member) => (
             <PersonRow key={member.id} member={member} />
           ))}
-        </ScrollArea>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {t(
-          "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
-        )}
-      </p>
+        </div>
+      </ScrollArea>
     </div>
   );
 }
@@ -86,14 +85,14 @@ function PersonRow({ member }: { member: ProjectMemberWithUser }) {
           size={24}
           disableTooltip
         />
-        <span className="truncate text-sm">{fullName}</span>
+        <span className="min-w-0 truncate text-sm">{fullName}</span>
       </span>
-      <span className="w-56 shrink-0 truncate text-sm text-muted-foreground">
+      <span className="hidden w-56 shrink-0 truncate text-sm text-muted-foreground sm:block">
         {member.user.email}
       </span>
       <Link
         to={`/projects/${member.project.id}/settings/team`}
-        className="flex w-44 shrink-0 items-center gap-1 text-sm text-primary hover:underline underline-offset-4"
+        className="flex w-32 shrink-0 items-center gap-1 text-sm text-primary underline-offset-4 hover:underline sm:w-44"
       >
         <span className="truncate">{member.project.displayName}</span>
         <ArrowUpRight className="size-3.5 shrink-0" />
