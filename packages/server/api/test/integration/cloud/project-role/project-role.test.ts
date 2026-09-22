@@ -126,6 +126,22 @@ describe('Project Role API', () => {
             expect(stillThere?.name).toBe(renamed.name)
         })
 
+        it('should refuse a rename that differs from a taken name only by case', async () => {
+            const ctx = await createTestContext(app!)
+
+            const taken = createMockProjectRole({ platformId: ctx.platform.id, name: 'Manager' })
+            const renamed = createMockProjectRole({ platformId: ctx.platform.id, name: 'Engineer' })
+            await db.save('project_role', taken)
+            await db.save('project_role', renamed)
+
+            const request: UpdateProjectRoleRequestBody = { name: 'MANAGER' }
+            const response = await ctx.post(`/v1/project-roles/${renamed.id}`, request as unknown as Record<string, unknown>)
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            const stillThere = await db.findOneBy('project_role', { id: renamed.id }) as ProjectRole | null
+            expect(stillThere?.name).toBe(renamed.name)
+        })
+
         it('should allow saving a role under the name it already has', async () => {
             const ctx = await createTestContext(app!)
 
