@@ -3,9 +3,10 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
+import { databaseConnection } from './app/database/database-connection'
 import { distributedLock } from './app/database/redis-connections'
 import { system } from './app/helper/system/system'
-import { AppSystemProp } from './app/helper/system/system-props'
+import { AppSystemProp, ContainerType } from './app/helper/system/system-props'
 import { setupServer } from './app/server'
 
 const start = async (app: FastifyInstance): Promise<void> => {
@@ -54,12 +55,18 @@ function setupTimeZone(): void {
 
 const main = async (): Promise<void> => {
     setupTimeZone()
-    if (system.isApp()) {
+    const containerType = system.getOrThrow<ContainerType>(AppSystemProp.CONTAINER_TYPE)
+    if (containerType === ContainerType.MIGRATION || system.isApp()) {
         await distributedLock(system.globalLogger()).runExclusive({
             key: 'database-migration-lock',
             timeoutInSeconds: dayjs.duration(10, 'minutes').asSeconds(),
             fn: async () => initializeDatabase({ runMigrations: true }),
         })
+    }
+    if (containerType === ContainerType.MIGRATION) {
+        await databaseConnection().destroy()
+        await evlogSetup.flush()
+        process.exit(0)
     }
     const app = await setupServer()
 

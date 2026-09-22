@@ -150,6 +150,7 @@ export enum ContainerType {
     WORKER = 'WORKER',
     APP = 'APP',
     WORKER_AND_APP = 'WORKER_AND_APP',
+    MIGRATION = 'MIGRATION',
 }
 
 export const environmentVariables = {

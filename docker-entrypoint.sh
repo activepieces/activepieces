@@ -37,6 +37,9 @@ case "$AP_CONTAINER_TYPE" in
     WORKER)
         exec node --enable-source-maps "$WORKER_SCRIPT"
         ;;
+    MIGRATION)
+        exec node --enable-source-maps "$APP_SCRIPT"
+        ;;
     WORKER_AND_APP)
         AP_CONTAINER_TYPE=APP node --enable-source-maps "$APP_SCRIPT" &
         app_pid=$!
