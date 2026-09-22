@@ -184,6 +184,31 @@ describe('Flow deletion recovery', () => {
         expect(dayjs(afterSecondSweep.updated).isSame(afterFirstSweep.updated)).toBe(true)
     })
 
+    it('is gone to every reader the moment the request returns, not when the job lands', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+
+        const opened = await ctx.get(`/v1/flows/${flow.id}`)
+        const listed = await ctx.get('/v1/flows', { projectId: ctx.project.id })
+
+        expect(opened?.statusCode).toBe(StatusCodes.NOT_FOUND)
+        expect(listed?.json().data.map((f: Flow) => f.id)).not.toContain(flow.id)
+    })
+
+    it('frees the external id so the flow can be recreated while the tombstone lingers', async () => {
+        const ctx = await createTestContext(app!)
+        const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })
+
+        const response = await ctx.post('/v1/flows', {
+            displayName: 'recreated',
+            projectId: ctx.project.id,
+            externalId: flow.externalId,
+        }, { query: { projectId: ctx.project.id } })
+
+        expect(response?.statusCode).toBe(StatusCodes.CREATED)
+        expect(response?.json().externalId).toBe(flow.externalId)
+    })
+
     it('leaves a recently requested deletion to its own job', async () => {
         const ctx = await createTestContext(app!)
         const flow = await savePublishedFlow(ctx, { operationStatus: FlowOperationStatus.DELETING })

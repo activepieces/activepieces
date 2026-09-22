@@ -4,8 +4,8 @@ import { AppSystemProp } from '../../../helper/system/system-props'
 import { DatabaseType } from '../../database-type'
 import { Migration } from '../../migration'
 
-export class AddFlowDeletingUpdatedIndex1852000000000 implements Migration {
-    name = 'AddFlowDeletingUpdatedIndex1852000000000'
+export class AddFlowDeletingUpdatedIndex1854000000000 implements Migration {
+    name = 'AddFlowDeletingUpdatedIndex1854000000000'
     breaking = false
     release = '0.92.0'
     transaction = false
