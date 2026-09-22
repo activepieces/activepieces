@@ -75,8 +75,8 @@ export const projectRoleService = {
         })
         if (projectRoleExists) {
             throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: { entityType: 'project_role', entityId: params.name, message: 'Project Role name already exists' },
+                code: ErrorCode.VALIDATION,
+                params: { message: `Project role name already exists: ${params.name}` },
             })
         }
 
@@ -88,6 +88,15 @@ export const projectRoleService = {
     },
 
     async update(params: UpdateParams): Promise<ProjectRole> {
+        if (!isNil(params.name)) {
+            const existing = await this.getOne({ name: params.name, platformId: params.platformId })
+            if (!isNil(existing) && existing.id !== params.id) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: { message: `Project role name already exists: ${params.name}` },
+                })
+            }
+        }
         await projectRoleRepo().update({
             id: params.id,
             platformId: params.platformId,

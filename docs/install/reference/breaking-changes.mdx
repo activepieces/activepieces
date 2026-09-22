@@ -8,6 +8,24 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Project role names must be unique per platform
+
+Nothing stopped two project roles on the same platform sharing a name. That mattered because a role is deleted by name: `DELETE /v1/project-roles/:name` removed every row with that name, and the cascade took each of their project member assignments with it. Deleting one of two roles called `Contractor` silently deleted the other and unassigned everybody holding it.
+
+Creating a role already refused a duplicate name, but renaming one did not, so a rename was enough to get into that state. Renaming now refuses too, and both refusals return `409 Conflict` with code `VALIDATION`. Creating a duplicate previously returned `404` with code `ENTITY_NOT_FOUND`, which was wrong for a name clash.
+
+#### What you need to do
+
+Nothing, unless you already have duplicates. The upgrade adds a unique index on `("platformId", "name")` for platform-owned roles, and any existing duplicates are renamed first, oldest kept as-is and the rest suffixed ` (2)`, ` (3)` and so on. Member assignments are untouched — no role is deleted to make room.
+
+Check afterwards whether any role gained a suffix and rename it to something meaningful:
+
+```sql
+SELECT id, name FROM project_role WHERE name LIKE '% (%)';
+```
+
+If you call the API, a duplicate name now fails with `409` rather than `404` on create, and rename can fail where it previously succeeded.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.

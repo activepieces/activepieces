@@ -96,7 +96,7 @@ function RoleDialogBody({
       onSave: onSaved,
       onError: (error) =>
         setSaveError(
-          isCreate && api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
+          api.isApError(error, ErrorCode.VALIDATION)
             ? t('A role with this name already exists.')
             : t('Could not save the role. Try again.'),
         ),

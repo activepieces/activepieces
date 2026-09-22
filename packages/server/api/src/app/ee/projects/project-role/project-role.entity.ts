@@ -12,6 +12,14 @@ export type ProjectRoleSchema = ProjectRole & {
 
 export const ProjectRoleEntity = new EntitySchema<ProjectRoleSchema>({
     name: 'project_role',
+    indices: [
+        {
+            name: 'idx_project_role_platform_id_name',
+            columns: ['platformId', 'name'],
+            unique: true,
+            where: '"platformId" IS NOT NULL',
+        },
+    ],
     columns: {
         ...BaseColumnSchemaPart,
         name: {

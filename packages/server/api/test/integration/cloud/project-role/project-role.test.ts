@@ -110,6 +110,34 @@ describe('Project Role API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })
 
+        it('should refuse a rename onto a name another role already holds', async () => {
+            const ctx = await createTestContext(app!)
+
+            const taken = createMockProjectRole({ platformId: ctx.platform.id })
+            const renamed = createMockProjectRole({ platformId: ctx.platform.id })
+            await db.save('project_role', taken)
+            await db.save('project_role', renamed)
+
+            const request: UpdateProjectRoleRequestBody = { name: taken.name }
+            const response = await ctx.post(`/v1/project-roles/${renamed.id}`, request as unknown as Record<string, unknown>)
+
+            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
+            const stillThere = await db.findOneBy('project_role', { id: renamed.id }) as ProjectRole | null
+            expect(stillThere?.name).toBe(renamed.name)
+        })
+
+        it('should allow saving a role under the name it already has', async () => {
+            const ctx = await createTestContext(app!)
+
+            const projectRole = createMockProjectRole({ platformId: ctx.platform.id })
+            await db.save('project_role', projectRole)
+
+            const request: UpdateProjectRoleRequestBody = { name: projectRole.name, permissions: ['read'] }
+            const response = await ctx.post(`/v1/project-roles/${projectRole.id}`, request as unknown as Record<string, unknown>)
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+        })
+
         it('should fail to update if user is not platform owner', async () => {
             const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
