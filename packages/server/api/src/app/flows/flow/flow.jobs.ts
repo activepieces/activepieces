@@ -14,8 +14,8 @@ import { flowRepo } from './flow.repo'
 const waitpointRepo = repoFactory(WaitpointEntity)
 
 const BATCH_SIZE = 1000
-const TOMBSTONE_AGE_MINUTES = 15
-const TOMBSTONE_REAP_LIMIT = 50
+const TOMBSTONE_AGE_MINUTES = 60
+const TOMBSTONE_REAP_LIMIT = 5
 
 export async function batchDeleteByFlowId(flowId: string): Promise<void> {
     while (true) {
