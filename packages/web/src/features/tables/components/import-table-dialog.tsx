@@ -155,10 +155,10 @@ const ImportTableDialog = ({
     const parsedContent = JSON.parse(fileContent);
 
     let template: SharedTemplate;
-    if ('tables' in parsedContent && Array.isArray(parsedContent.tables)) {
-      template = parsedContent as SharedTemplate;
+    if (Array.isArray(parsedContent?.tables)) {
+      template = parsedContent;
     } else {
-      const singleTableTemplate = parsedContent as TableTemplate;
+      const singleTableTemplate: TableTemplate = parsedContent;
       template = {
         name: singleTableTemplate.name,
         type: parsedContent.type,
@@ -436,10 +436,8 @@ const ImportTableDialog = ({
 
             {serverError && (
               <div className=" flex items-center justify-between">
-                <div className="text-destructive">
-                  {t(
-                    'An unexpected error occurred while importing the file, please hit the copy error and send it to support',
-                  )}
+                <div className="text-destructive break-words">
+                  {serverError}
                 </div>
                 <div className="min-w-4">
                   <CopyButton

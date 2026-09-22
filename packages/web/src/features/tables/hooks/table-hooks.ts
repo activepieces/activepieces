@@ -1,4 +1,5 @@
 import {
+  CreateFieldRequest,
   FieldType,
   SharedTemplate,
   TableTemplate,
@@ -6,7 +7,9 @@ import {
   UncategorizedFolderId,
 } from '@activepieces/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { t } from 'i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { z } from 'zod';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { NEW_TABLE_QUERY_PARAM } from '@/lib/route-utils';
@@ -92,17 +95,10 @@ export const tableHooks = {
     existingTableId: string;
     maxRecords?: number;
   }): Promise<Table> => {
-    const tables = template.tables || [];
-    if (tables.length === 0) {
-      throw new Error('Template has no tables');
-    }
-    if (tables.length > 1) {
-      throw new Error(
-        'Template must contain exactly one table when importing into existing table',
-      );
-    }
-
-    const tableTemplate = tables[0];
+    const tableTemplate = parseTableToImport({
+      template,
+      tableId: existingTableId,
+    });
 
     const [, existingFields] = await Promise.all([
       tablesApi.clear(existingTableId),
@@ -118,16 +114,7 @@ export const tableHooks = {
     });
 
     await Promise.all(
-      tableTemplate.fields.map((fieldState, position) =>
-        fieldsApi.create({
-          name: fieldState.name,
-          type: fieldState.type as any,
-          tableId: existingTableId,
-          data: fieldState.data as any,
-          externalId: fieldState.externalId,
-          position,
-        }),
-      ),
+      tableTemplate.fields.map((field) => fieldsApi.create(field)),
     );
 
     if (tableTemplate.data && tableTemplate.data.rows.length > 0) {
@@ -248,3 +235,31 @@ export const tableHooks = {
     return await Promise.all(importPromises);
   },
 };
+
+function parseTableToImport({
+  template,
+  tableId,
+}: {
+  template: SharedTemplate;
+  tableId: string;
+}) {
+  const tables = template.tables ?? [];
+  if (tables.length !== 1) {
+    throw new Error(t('Select a JSON file that contains exactly one table'));
+  }
+
+  const parsedTable = TableTemplate.safeParse(tables[0]);
+  const parsedFields = z.array(CreateFieldRequest).safeParse(
+    parsedTable.data?.fields.map((field, position) => ({
+      ...field,
+      tableId,
+      position,
+    })),
+  );
+  const isTableTemplate = parsedTable.success && parsedFields.success;
+  if (!isTableTemplate) {
+    throw new Error(t('The selected file is not a valid table template'));
+  }
+
+  return { ...parsedTable.data, fields: parsedFields.data };
+}
