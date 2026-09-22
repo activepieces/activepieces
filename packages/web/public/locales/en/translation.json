@@ -20,7 +20,7 @@
   "No floor": "No floor",
   "Below this, the flow takes the Otherwise route.": "Below this, the flow takes the Otherwise route.",
   "AI Router": "AI Router",
-  "Ask one question and a purpose-built evaluation model picks the route": "Ask one question and a purpose-built evaluation model picks the route",
+  "Ask one question and Jev, an evaluation model, picks the route": "Ask one question and Jev, an evaluation model, picks the route",
   "Question": "Question",
   "duplicateRouteName": "Route names must be unique",
   "Request approval": "Request approval",

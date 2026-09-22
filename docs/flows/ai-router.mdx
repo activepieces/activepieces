@@ -1,6 +1,6 @@
 ---
 title: "AI Router"
-description: "Ask one question and a purpose-built evaluation model picks the route"
+description: "Ask one question and Jev, an evaluation model, picks the route"
 icon: "shuffle"
 ---
 
@@ -18,7 +18,8 @@ Routes
   Otherwise    Anything that fits none of the routes above
 ```
 
-One model call decides, and exactly one route runs.
+One request decides. Jev, an evaluation model built to judge text rather than generate it, makes
+the call. By default exactly one route runs; switch **Match** to run every route that applies.
 
 ## Which router do you want?
 
@@ -28,8 +29,7 @@ the moment you catch yourself typing a fifth `OR contains "…"`.
 **Use the normal Router for** exact field values, numbers and dates, comparing two dynamic values
 against each other (`{{step.total}} > {{step.limit}}`), "does this field exist", anything inside a
 big loop, and anything that has to be auditable or reproducible — compliance gates, billing tiers,
-approval thresholds. It is free, instant and gives the same answer forever. It is also the only one
-that can run **several branches at once**; the AI Router always takes exactly one.
+approval thresholds. It is free, instant and gives the same answer forever.
 
 **Use the AI Router for** anything a human typed. Intent, topic, sentiment, urgency, "is this worth
 a call". It routes `"i got billed 2x lol wtf"` and `"Mi tarjeta fue cobrada dos veces"` to Billing
@@ -52,11 +52,11 @@ Never ask the model whether 500 is bigger than 499.
 | Field | What it does |
 |---|---|
 | **Input** | The text the model reads. Reference a previous step, e.g. `{{trigger.body.message}}`. |
-| **Question** | One question, answered by exactly one route. |
+| **Question** | One question. With the default match, exactly one route answers it. |
 | **Routes** | Each route's **name** is a possible answer; its **description** tells the model when to pick it. |
 | **Otherwise** | Always present, always last. Edit its description like any other route. |
 | **Match** | Take the best route, or every route that applies. |
-| **Confidence floor** | Optional. Below it, the flow takes the Otherwise route. |
+| **Confidence floor** | Optional. Below it, the flow takes the Otherwise route, and the run detail says so. |
 
 ## One route, or every route that applies
 
@@ -132,9 +132,19 @@ Technical   █░░░░░░░░░░░░░    6%
 Sales       ░░░░░░░░░░░░░░    3%
 ```
 
-A route picked at 91% and one picked at 34% look identical in a normal run log. Use the spread to
-tell a routing rule you can trust from one you cannot, and tighten the descriptions that come out
-close.
+The route that ran is marked. A route picked at 91% and one picked at 34% look identical in a
+normal run log. Use the spread to tell a routing rule you can trust from one you cannot, and tighten
+the descriptions that come out close.
+
+When a confidence floor sends the run to Otherwise, the run detail says which route fell short:
+
+```
+Billing     ████████░░░░░░   63%
+Technical   ████░░░░░░░░░░   33%
+Otherwise   █░░░░░░░░░░░░░    4%
+
+Billing scored 63%, under your 70% floor, so Otherwise ran
+```
 
 ## When a call fails
 
@@ -144,7 +154,7 @@ visible in the run and can be retried.
 
 ## Self-hosting
 
-The AI Router runs on a key the instance holds, so there is no connection to set up and no AI credit
-is consumed. Set `AP_AI_GATEWAY_API_KEY` (see
-[environment variables](/install/reference/environment-variables)). Leave it unset and the step
-simply does not appear in the step list.
+The AI Router reaches Jev through the Vercel AI Gateway with a key the instance holds, so there is no
+connection to set up and no AI credit is consumed. Set `AP_AI_GATEWAY_API_KEY` to a Vercel AI
+Gateway key (see [environment variables](/install/reference/environment-variables)). Leave it unset
+and the step does not appear in the step list.

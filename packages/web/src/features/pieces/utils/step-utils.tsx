@@ -183,9 +183,9 @@ function buildCoreStepMetadata(): Record<
     },
     [FlowActionType.AI_ROUTER]: {
       displayName: t('AI Router'),
-      logoUrl: 'https://cdn.activepieces.com/pieces/new-core/utility-ai.svg',
+      logoUrl: 'https://cdn.activepieces.com/pieces/ai_router.png',
       description: t(
-        'Ask one question and a purpose-built evaluation model picks the route',
+        'Ask one question and Jev, an evaluation model, picks the route',
       ),
       type: FlowActionType.AI_ROUTER,
     },
