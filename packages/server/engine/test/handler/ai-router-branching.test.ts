@@ -84,6 +84,20 @@ describe('ai router', () => {
         })
     })
 
+    it('sends a route named after an inherited object property', async () => {
+        const calls = answerWith({ matched: ['constructor'] })
+
+        await execute(buildAiRouter({
+            routes: [{ branchName: 'constructor', description: 'Building work' }, { branchName: 'toString', description: 'Text' }],
+            fallback: { branchName: 'Otherwise' },
+            children: [mapperStep('constructor_route'), mapperStep('to_string'), mapperStep('otherwise')],
+        }))
+
+        expect(calls[0]).toMatchObject({
+            options: { constructor: 'Building work', toString: 'Text' },
+        })
+    })
+
     it('takes the fallback when the answer is below the confidence floor', async () => {
         answerWith({ matched: ['Billing'], probabilities: { Billing: 0.4, Otherwise: 0.6 } })
 

@@ -94,7 +94,7 @@ function askableBranches({ branches, bestMatch }: { branches: AiRouterActionSett
 function toOptions(branches: AiRouterActionSettings['branches']): Record<string, string> {
     const options: Record<string, string> = {}
     for (const branch of branches) {
-        if (isNil(options[branch.branchName])) {
+        if (!Object.hasOwn(options, branch.branchName)) {
             options[branch.branchName] = criterionOf(branch)
         }
     }
