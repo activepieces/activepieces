@@ -7,6 +7,9 @@ on:
         description: 'Total number of requests for hey'
         required: false
         default: '500'
+  schedule:
+    - cron: '0 3 * * *'
+
 jobs:
   benchmark:
     runs-on: depot-ubuntu-24.04-16
@@ -20,7 +23,9 @@ jobs:
       AP_S3_ENDPOINT: ${{ secrets.AP_S3_ENDPOINT }}
       AP_S3_REGION: ${{ secrets.AP_S3_REGION }}
       AP_S3_USE_SIGNED_URLS: ${{ secrets.AP_S3_USE_SIGNED_URLS }}
+      TOTAL_REQUESTS: ${{ inputs.total_requests || '500' }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - apps: 1
@@ -66,19 +71,19 @@ jobs:
           echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
           echo "Flow ID: $FLOW_ID"
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: '1.22'
-          cache: false
-
-      - name: Install hey
-        run: go install github.com/rakyll/hey@latest
+      - name: Install hey (pinned release binary)
+        run: |
+          curl -sSL -o /usr/local/bin/hey \
+            https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64
+          chmod +x /usr/local/bin/hey
+          hey -h 2>&1 | head -1 || true
 
       - name: Warmup
         run: |
           echo "Running warmup: 500 requests, ${{ matrix.workers }} concurrency"
-          hey -n 500 -c ${{ matrix.workers }} -t 60 \
+          hey -n 500 \
+              -c ${{ matrix.workers }} \
+              -t 60 \
               -m POST \
               -H "Content-Type: application/json" \
               -d '{"test":true}' \
@@ -86,11 +91,25 @@ jobs:
               | tail -5
           echo "Warmup complete"
 
+      - name: Start docker stats capture
+        run: |
+          rm -f /tmp/stats.jsonl
+          echo "capturing docker stats every 2s until bench-running is removed"
+          touch /tmp/bench-running
+          (
+            while [ -f /tmp/bench-running ]; do
+              docker stats --no-stream --format '{{json .}}' \
+                >> /tmp/stats.jsonl 2>/dev/null || true
+              sleep 2
+            done
+          ) &
+          echo "STATS_PID=$!" >> "$GITHUB_ENV"
+
       - name: Run benchmark
         run: |
-          echo "Running benchmark: ${{ inputs.total_requests }} requests, ${{ matrix.workers }} concurrency (= workers), ${{ matrix.apps }} apps"
+          echo "Running benchmark: ${TOTAL_REQUESTS} requests, ${{ matrix.workers }} concurrency (= workers), ${{ matrix.apps }} apps"
           echo "---"
-          hey -n ${{ inputs.total_requests }} \
+          hey -n "${TOTAL_REQUESTS}" \
               -c ${{ matrix.workers }} \
               -t 60 \
               -m POST \
@@ -99,19 +118,87 @@ jobs:
               "http://localhost:8080/api/v1/webhooks/${{ steps.setup.outputs.flow_id }}/sync" \
               | tee /tmp/hey-output.txt
 
-      - name: Parse results
+      - name: Stop docker stats capture
+        if: always()
+        run: |
+          rm -f /tmp/bench-running
+          # give the loop up to 3s to exit cleanly
+          for _ in 1 2 3; do
+            if ! kill -0 "${STATS_PID:-0}" 2>/dev/null; then break; fi
+            sleep 1
+          done
+          kill "${STATS_PID:-0}" 2>/dev/null || true
+          wc -l /tmp/stats.jsonl || true
+
+      - name: Combine results
         run: |
           chmod +x benchmark/parse.sh
-          benchmark/parse.sh /tmp/hey-output.txt /tmp/results.json
+          benchmark/parse.sh /tmp/hey-output.txt /tmp/hey.json
+          node benchmark/aggregate-stats.mjs /tmp/stats.jsonl > /tmp/stats.json
+          node benchmark/combine-results.mjs \
+            --hey /tmp/hey.json \
+            --stats /tmp/stats.json \
+            --sha "${{ github.sha }}" \
+            --label "${{ matrix.label }}" \
+            --runId "${{ github.run_id }}" \
+            --out /tmp/result.json
+          cat /tmp/result.json
 
-      - name: Upload results
+      - name: Upload result to S3 (scheduled runs only)
+        if: github.event_name == 'schedule'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AP_S3_REGION }}
+        run: |
+          DATE=$(date -u +%Y%m%d)
+          SHA_SHORT="${GITHUB_SHA:0:7}"
+          KEY="bench/${DATE}-${SHA_SHORT}-${{ matrix.label }}.json"
+          aws --endpoint-url "${{ secrets.AP_S3_ENDPOINT }}" \
+              s3 cp /tmp/result.json "s3://${{ secrets.AP_S3_BUCKET }}/${KEY}"
+          echo "Uploaded s3://${{ secrets.AP_S3_BUCKET }}/${KEY}"
+
+      - name: Detect regression against trailing 14 runs (scheduled runs only)
+        if: github.event_name == 'schedule'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AP_S3_REGION }}
+          BETTERSTACK_WEBHOOK_URL: ${{ secrets.BETTERSTACK_WEBHOOK_URL }}
+        run: |
+          mkdir -p /tmp/history
+          # List last 15 keys for this label (includes today's, we filter it out below)
+          KEYS=$(aws --endpoint-url "${{ secrets.AP_S3_ENDPOINT }}" \
+                    s3 ls "s3://${{ secrets.AP_S3_BUCKET }}/bench/" \
+                | awk '{print $4}' | grep "${{ matrix.label }}\.json$" \
+                | sort | tail -15)
+          echo "History keys:"
+          echo "$KEYS"
+          TODAY_KEY="$(date -u +%Y%m%d)-${GITHUB_SHA:0:7}-${{ matrix.label }}.json"
+          HISTORY_PATHS=""
+          for key in $KEYS; do
+            [ "$key" = "$TODAY_KEY" ] && continue
+            aws --endpoint-url "${{ secrets.AP_S3_ENDPOINT }}" \
+                s3 cp "s3://${{ secrets.AP_S3_BUCKET }}/bench/$key" "/tmp/history/$key" >/dev/null
+            HISTORY_PATHS="${HISTORY_PATHS}${HISTORY_PATHS:+,}/tmp/history/$key"
+          done
+          node benchmark/detect-regression.mjs \
+            --current /tmp/result.json \
+            --history "$HISTORY_PATHS" \
+            --label "${{ matrix.label }}" \
+            --runUrl "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Upload artifact (always)
         if: always()
         uses: actions/upload-artifact@v6
         with:
           name: benchmark-results-${{ matrix.label }}
           path: |
             /tmp/hey-output.txt
-            /tmp/results.json
+            /tmp/hey.json
+            /tmp/stats.json
+            /tmp/stats.jsonl
+            /tmp/result.json
 
       - name: Show container logs on failure
         if: failure()
@@ -137,21 +224,23 @@ jobs:
         run: |
           echo "## Benchmark Results Comparison" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Configuration | Throughput (req/s) | Mean Latency | P50 | P99 | Fastest | Slowest | 200 OK |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Config | Throughput | p50 | p90 | p99 | Worker mem max | Worker cpu p95 | App mem max |" >> "$GITHUB_STEP_SUMMARY"
           echo "|---|---|---|---|---|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
 
           for dir in /tmp/results/benchmark-results-*/; do
             label=$(basename "$dir" | sed 's/benchmark-results-//')
-            json="$dir/results.json"
+            json="$dir/result.json"
             if [ -f "$json" ]; then
-              throughput=$(jq -r '.throughput' "$json")
-              mean=$(jq -r '.mean_latency' "$json")
-              p50=$(jq -r '.p50' "$json")
-              p99=$(jq -r '.p99' "$json")
-              fastest=$(jq -r '.fastest' "$json")
-              slowest=$(jq -r '.slowest' "$json")
-              ok=$(jq -r '.ok_count' "$json")
-              echo "| $label | $throughput | ${mean}s | ${p50}s | ${p99}s | ${fastest}s | ${slowest}s | $ok |" >> "$GITHUB_STEP_SUMMARY"
+              throughput=$(jq -r '.throughput.reqSec' "$json")
+              p50=$(jq -r '.latency.p50Sec' "$json")
+              p90=$(jq -r '.latency.p90Sec' "$json")
+              p99=$(jq -r '.latency.p99Sec' "$json")
+              wmem=$(jq -r '.resources.worker.memMb.max // 0' "$json")
+              wcpu=$(jq -r '.resources.worker.cpuPct.p95 // 0' "$json")
+              amem=$(jq -r '.resources.app.memMb.max // 0' "$json")
+              printf "| %s | %s req/s | %ss | %ss | %ss | %s MB | %s%% | %s MB |\n" \
+                "$label" "$throughput" "$p50" "$p90" "$p99" "$wmem" "$wcpu" "$amem" \
+                >> "$GITHUB_STEP_SUMMARY"
             else
               echo "| $label | N/A | N/A | N/A | N/A | N/A | N/A | N/A |" >> "$GITHUB_STEP_SUMMARY"
             fi
