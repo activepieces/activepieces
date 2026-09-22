@@ -1,8 +1,8 @@
-import { apId, FlowRunId, isNil } from '@activepieces/core-utils'
+import { apId, FlowRunId, isNil, tryCatch } from '@activepieces/core-utils'
 import { EngineHttpResponse, ExecutionType, FlowRun, FlowRunStatus, isFlowRunStateTerminal, ResumeReason, RunEnvironment, StreamStepProgress } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { distributedLock } from '../database/redis-connections'
+import { distributedLock, distributedStore } from '../database/redis-connections'
 import { addToQueue, findFlowRunOrThrow, flowRunService, WEBHOOK_TIMEOUT_MS } from '../flows/flow-run/flow-run-service'
 import { flowRunSideEffects } from '../flows/flow-run/flow-run-side-effects'
 import { projectService } from '../project/project-service'
@@ -29,6 +29,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
             resumePayload: resumePayload ?? null,
             workerHandlerId,
             onReady: async (waitpoint) => {
+                await recordWaitpointConsumed({ waitpointId, log })
                 await enqueueResume({
                     flowRun,
                     waitpoint,
@@ -47,7 +48,6 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                     log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeFromWaitpointWithoutLock] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; consuming waitpoint and enqueuing resume')
                     // Consume the stale COMPLETED waitpoint under the lock so it cannot
                     // poison the next createForPause call on a subsequent loop iteration
-                    await waitpointService(log).delete({ id: latestWaitpoint.id })
                     await enqueueResume({
                         flowRun: currentFlowRun,
                         waitpoint: latestWaitpoint,
@@ -55,11 +55,26 @@ export const resumeService = (log: FastifyBaseLogger) => ({
                         workerHandlerId,
                         httpRequestId,
                     }, log)
+                    await recordWaitpointConsumed({ waitpointId: latestWaitpoint.id, log })
+                    await waitpointService(log).delete({ id: latestWaitpoint.id })
                 }
             }
         }
 
         return { flowRun, stale: !processed }
+    },
+
+    async waitpointWasConsumed({ waitpointId, flowRunId }: WaitpointWasConsumedParams): Promise<boolean> {
+        const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+        if (!isNil(waitpoint)) {
+            return waitpoint.status === WaitpointStatus.COMPLETED
+        }
+        const { data, error } = await tryCatch(() => distributedStore.get<boolean>(waitpointConsumedKey(waitpointId)))
+        if (error) {
+            log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#waitpointWasConsumed] Could not read the consumption marker, assuming the response was delivered')
+            return true
+        }
+        return data === true
     },
 
     async legacyResume({ flowRunId, resumePayload, workerHandlerId }: LegacyResumeParams): Promise<ResumeFromWaitpointResult> {
@@ -128,6 +143,15 @@ export const resumeService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function recordWaitpointConsumed({ waitpointId, log }: RecordWaitpointConsumedParams): Promise<void> {
+    const { error } = await tryCatch(() => distributedStore.put(waitpointConsumedKey(waitpointId), true, WAITPOINT_CONSUMED_TTL_SECONDS))
+    if (isNil(error)) {
+        return
+    }
+    log.error({ waitpoint: { id: waitpointId }, error: String(error) }, '[resumeService#recordWaitpointConsumed] Could not record the consumption marker, rolling the resume back so the caller can retry')
+    throw error
+}
+
 async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger): Promise<void> {
     const { flowRun, waitpoint, resumePayload, workerHandlerId, httpRequestId } = params
     const platformId = await projectService(log).getPlatformId(flowRun.projectId)
@@ -148,6 +172,19 @@ async function enqueueResume(params: EnqueueResumeParams, log: FastifyBaseLogger
         jobId: `${flowRun.id}-resume-${waitpointId}`,
     }, log)
     await flowRunSideEffects(log).onResume({ flowRun, platformId })
+}
+
+const WAITPOINT_CONSUMED_TTL_SECONDS = 3600
+const waitpointConsumedKey = (waitpointId: string): string => `waitpoint_consumed:${waitpointId}`
+
+type WaitpointWasConsumedParams = {
+    waitpointId: string
+    flowRunId: string
+}
+
+type RecordWaitpointConsumedParams = {
+    waitpointId: string
+    log: FastifyBaseLogger
 }
 
 type SyncResumePayload = {

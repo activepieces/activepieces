@@ -12,7 +12,7 @@ import { zombiePollingInterceptor } from './interceptors/zombie-polling-intercep
 import { jobAssignmentTracker } from './job-assignment-tracker'
 import { jobFailureLogger } from './job-failure-logger'
 import { InterceptorVerdict, JobInterceptor } from './job-interceptor'
-import { isUserInteractionJobData } from './job-queue'
+import { callerWaitingForResponse } from './job-queue'
 import { createQueueDispatcher, QueueDispatcher } from './queue-dispatcher'
 
 const DRAIN_DELAY_SECONDS = 15
@@ -159,6 +159,7 @@ async function tryDequeue(worker: BullMQWorker, queueName: string, log: FastifyB
         jobId,
         jobData: migratedData,
         attempsStarted: job.attemptsMade,
+        lastAttempt: job.attemptsMade + 1 >= (job.opts.attempts ?? 1),
         engineToken,
         token,
         queueName,
@@ -252,17 +253,17 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         }
 
         const jobData = JobData.parse(job.data)
-        const userJobData = isUserInteractionJobData(jobData) ? jobData : null
+        const waitingCaller = callerWaitingForResponse(jobData)
 
         const { error } = await tryCatch(async () => {
             if (input.status === EngineResponseStatus.INTERNAL_ERROR) {
-                if (userJobData) {
+                if (waitingCaller) {
                     // User-interaction jobs (piece-metadata extraction, validation, property/auth, trigger
                     // hooks) are synchronous request/response — the caller awaits the result with a timeout.
                     // Return the error to that caller and COMPLETE the job instead of moving it to failed: the
                     // exponential-backoff retry only fires long after the caller has timed out, so it serves no
                     // one and just piles up dead jobs in the failed queue.
-                    await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+                    await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                         status: EngineResponseStatus.INTERNAL_ERROR,
                         response: undefined,
                         error: input.errorMessage ?? 'Internal error',
@@ -288,8 +289,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
             }
 
             await job.moveToCompleted({ response: input.response ?? undefined }, input.token, false)
-            if (userJobData) {
-                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+            if (waitingCaller) {
+                await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                     status: input.status,
                     response: input.response,
                     error: input.errorMessage,
@@ -299,8 +300,8 @@ export const jobBroker = (log: FastifyBaseLogger) => ({
         })
         if (error) {
             log.error({ job: { id: input.jobId }, error: String(error), originalError: input.errorMessage }, '[jobBroker] Failed to move job to final state — leaving for stalled-scan recovery')
-            if (userJobData) {
-                await engineResponseWatcher(log).publish(userJobData.webserverId, userJobData.requestId, {
+            if (waitingCaller) {
+                await engineResponseWatcher(log).publish(waitingCaller.webserverId, waitingCaller.requestId, {
                     status: EngineResponseStatus.INTERNAL_ERROR,
                     response: undefined,
                     error: String(error),

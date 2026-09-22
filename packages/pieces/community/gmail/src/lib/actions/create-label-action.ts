@@ -9,12 +9,7 @@ export const gmailCreateLabelAction = createAction({
   classification: 'WRITE',
   displayName: 'Create Label',
   description: 'Create a new label in the mailbox.',
-  audience: 'both',
-  aiMetadata: {
-    description:
-      'Creates a new user label in the mailbox with the given name. Look it up first with List Labels to avoid attempting to create a duplicate. Idempotent: false — each call creates a new label, and a duplicate name fails the request rather than reusing the existing label.',
-    idempotent: false,
-  },
+  audience: 'human',
   props: {
     name: Property.ShortText({
       displayName: 'Label Name',

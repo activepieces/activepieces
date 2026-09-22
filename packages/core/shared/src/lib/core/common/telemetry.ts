@@ -1,6 +1,7 @@
 import type { RunEnvironment } from '@activepieces/core-execution'
 import type { FlowId, ProjectId, UserId } from '@activepieces/core-utils'
 import type { McpId } from '../../automation/mcp/mcp'
+import type { AttributionParams } from './attribution'
 
 type SignedUp = {
     userId: UserId
@@ -16,17 +17,8 @@ type SignedIn = {
 }
 
 type SignUpSubmitted = {
-    method: 'email'
-    utm_source?: string
-    utm_medium?: string
-    utm_campaign?: string
-    utm_term?: string
-    utm_content?: string
-    gclid?: string
-    fbclid?: string
-    ref?: string
-    ap_cta?: string
-}
+    method: 'password' | 'email_code'
+} & AttributionParams
 
 type SignUpFailed = {
     errorCode: string

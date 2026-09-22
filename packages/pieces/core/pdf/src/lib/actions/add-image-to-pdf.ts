@@ -58,14 +58,6 @@ export const addImageToPdf = createAction({
       },
     }),
   },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   async run(context) {
     try {
       const file = context.propsValue.file;

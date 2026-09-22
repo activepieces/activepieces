@@ -180,5 +180,3 @@ export const ProjectDashboardLayoutHeader = () => {
 };
 
 ProjectDashboardLayoutHeader.displayName = 'ProjectDashboardLayoutHeader';
-
-export default ProjectDashboardLayoutHeader;

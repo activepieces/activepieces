@@ -87,11 +87,35 @@ describe('classifyAgentRunError', () => {
     })
 
     it('never blames the user for the managed key, which is ours and fails everyone at once', () => {
-        for (const statusCode of [401, 403]) {
-            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
-            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.OPENAI)).toBe('user')
+        for (const statusCode of [401, 403, 404]) {
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.ACTIVEPIECES), String(statusCode)).toBe('internal')
+            expect(classify(apiError({ statusCode, message: 'Unauthorized' }), AIProviderName.OPENAI), String(statusCode)).toBe('user')
         }
-        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.ACTIVEPIECES)).toBe('user')
+    })
+
+    it('calls a model missing from our own catalog our problem, since the customer never chose that key', () => {
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.ACTIVEPIECES)).toBe('internal')
+        expect(classify(apiError({ statusCode: 404, message: 'No endpoints found' }), AIProviderName.OPENAI)).toBe('user')
+    })
+
+    it('reads a billing exhaustion out of a 429 even when the provider only has one word for it', () => {
+        const googleBilling = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Billing has not been enabled for this project","details":[{"quotaValue":"0"}]}}',
+        })
+
+        expect(classify(googleBilling, AIProviderName.GOOGLE)).toBe('credit')
+    })
+
+    it('still treats an ordinary per-minute 429 as something to retry, not a bill to pay', () => {
+        const googleThrottle = apiError({
+            statusCode: 429,
+            message: 'Quota exceeded',
+            responseBody: '{"error":{"status":"RESOURCE_EXHAUSTED","message":"Quota exceeded for quota metric Generate Content API requests per minute"}}',
+        })
+
+        expect(classify(googleThrottle, AIProviderName.GOOGLE)).not.toBe('credit')
     })
 
     it('reads billing exhaustion out of a 429 body, which the provider marks retryable', () => {

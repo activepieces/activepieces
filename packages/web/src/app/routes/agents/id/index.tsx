@@ -1,31 +1,41 @@
 import { isNil, unique } from '@activepieces/core-utils';
 import { Agent, AgentToolType } from '@activepieces/shared';
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronLeft, SearchX, Settings2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  History,
+  MessageSquare,
+  SearchX,
+  Settings2,
+} from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
 import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { AIChatBox } from '@/app/routes/chat-with-ai/ai-chat-box';
-import { ConversationsToggle } from '@/app/routes/chat-with-ai/components/conversations-toggle';
-import { ConversationList } from '@/app/routes/chat-with-ai/conversation-list';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from '@/components/custom/empty';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/empty';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAgentsAvailable } from '@/features/agents';
-import { AgentChatWelcome } from '@/features/agents/agent-chat-welcome';
 import { AgentMark } from '@/features/agents/agent-mark';
 import { agentsQueries } from '@/features/agents/hooks/agents-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
+import { AgentChatView } from './agent-chat-view';
 import { AgentConfigurePanel } from './configure-panel';
+import { AgentRuns } from './runs';
 
 const pieceDisplayName = (pieceName: string): string =>
   pieceName.replace('@activepieces/piece-', '');
@@ -52,6 +62,8 @@ const buildCapabilityNote = (agent: Agent): string => {
 type OpenPanel = 'conversations' | 'configure' | 'none';
 
 const CONVERSATION_QUERY_PARAM = 'conversation';
+const RUNS_TAB = 'runs';
+const CHAT_TAB = 'chat';
 const SLIDING_ASIDE =
   'shrink-0 overflow-hidden border-border transition-[width] duration-200 ease-out';
 
@@ -74,10 +86,10 @@ const AgentEditorSkeleton = () => (
 const AgentEditorContent = () => {
   const navigate = useNavigate();
   const { agentId } = useParams<{ agentId: string }>();
+  const { pathname } = useLocation();
   const agentsAvailable = useAgentsAvailable();
   const [openPanel, setOpenPanel] = useState<OpenPanel>();
   const [configureMounted, setConfigureMounted] = useState(false);
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const conversationId =
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
@@ -97,6 +109,22 @@ const AgentEditorContent = () => {
   const openConversation = (nextConversationId: string) => {
     setOpenedConversationId(nextConversationId);
     writeConversationParam(nextConversationId);
+  };
+  const runsOpen = pathname.endsWith(`/${RUNS_TAB}`);
+  const showTab = (nextTab: string) => {
+    const suffix = nextTab === RUNS_TAB ? `/${RUNS_TAB}` : '';
+    const carried = new URLSearchParams();
+    const openedConversation =
+      openedConversationId ?? searchParams.get(CONVERSATION_QUERY_PARAM);
+    if (!isNil(openedConversation)) {
+      carried.set(CONVERSATION_QUERY_PARAM, openedConversation);
+    }
+    const query = carried.toString();
+    navigate(
+      authenticationSession.appendProjectRoutePrefix(
+        `/agents/${agentId}${suffix}${query.length > 0 ? `?${query}` : ''}`,
+      ),
+    );
   };
   const startNewConversation = () => {
     setOpenedConversationId(undefined);
@@ -153,7 +181,12 @@ const AgentEditorContent = () => {
   return (
     <div className="flex h-full w-full">
       <div className="flex min-w-0 grow flex-col">
-        <div className="flex h-[60px] shrink-0 items-center gap-3 border-b border-border px-5">
+        <div
+          className={cn(
+            'flex h-[60px] shrink-0 items-center gap-3 px-5',
+            !runsOpen && 'border-b border-border',
+          )}
+        >
           <button
             type="button"
             aria-label={t('Back to agents')}
@@ -171,6 +204,30 @@ const AgentEditorContent = () => {
               {agent.description ?? t('No description yet')}
             </span>
           </div>
+          <Tabs
+            value={runsOpen ? RUNS_TAB : CHAT_TAB}
+            onValueChange={showTab}
+            className="h-full self-stretch"
+          >
+            <TabsList variant="outline" className="h-full gap-1">
+              <TabsTrigger
+                value={CHAT_TAB}
+                variant="outline"
+                className="h-full rounded-none"
+              >
+                <MessageSquare className="mr-2 size-4" />
+                {t('Chat')}
+              </TabsTrigger>
+              <TabsTrigger
+                value={RUNS_TAB}
+                variant="outline"
+                className="h-full rounded-none"
+              >
+                <History className="mr-2 size-4" />
+                {t('Runs')}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
           {!configureOpen && (
             <div className="flex min-w-0 shrink items-center gap-2">
               <Button
@@ -186,56 +243,22 @@ const AgentEditorContent = () => {
           )}
         </div>
         <div className="flex min-h-0 grow">
-          <aside
-            className={cn(
-              SLIDING_ASIDE,
-              'border-r',
-              conversationsOpen ? 'w-[220px]' : 'w-[46px]',
-            )}
-          >
-            {conversationsOpen ? (
-              <div className="flex h-full w-[220px] flex-col">
-                <ConversationList
-                  agentId={agent.id}
-                  selectedId={openedConversationId ?? conversationId ?? null}
-                  onSelect={openConversation}
-                  onNewChat={startNewConversation}
-                  onCollapse={() => setOpenPanel('none')}
-                />
-              </div>
-            ) : (
-              <div className="flex h-full w-[46px] shrink-0 flex-col items-center pt-3">
-                <ConversationsToggle
-                  open={false}
-                  onClick={() => setOpenPanel('conversations')}
-                />
-              </div>
-            )}
-          </aside>
-          <div className="flex min-h-0 min-w-0 grow flex-col">
-            <AIChatBox
-              key={openedConversationId ?? `new-${freshConversations}`}
-              incognito={false}
-              agentId={agent.id}
-              conversationId={openedConversationId ?? null}
-              onConversationCreated={writeConversationParam}
-              onTurnEnd={() =>
-                void queryClient.invalidateQueries({
-                  queryKey: ['agents', 'one', agent.id],
-                })
-              }
-              placeholder={t('Ask {name}...', { name: agent.displayName })}
+          {runsOpen ? (
+            <AgentRuns agentId={agent.id} />
+          ) : (
+            <AgentChatView
+              agent={agent}
+              conversationsOpen={conversationsOpen}
+              openedConversationId={openedConversationId ?? conversationId}
+              freshConversations={freshConversations}
               footerNote={buildCapabilityNote(agent)}
-              emptyState={
-                <AgentChatWelcome
-                  displayName={agent.displayName}
-                  description={agent.description ?? null}
-                  icon={agent.icon}
-                  color={agent.color}
-                />
-              }
+              onSelectConversation={openConversation}
+              onNewConversation={startNewConversation}
+              onCollapseConversations={() => setOpenPanel('none')}
+              onExpandConversations={() => setOpenPanel('conversations')}
+              onConversationCreated={writeConversationParam}
             />
-          </div>
+          )}
         </div>
       </div>
       <aside

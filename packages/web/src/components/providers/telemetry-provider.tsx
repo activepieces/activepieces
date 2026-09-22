@@ -14,7 +14,6 @@ import { useEmbedding } from '@/components/providers/embed-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformConfigurationHooks } from '@/hooks/platform-configuration-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { CLOUD_HOSTNAME, isRunningCloudInDevMode } from '@/lib/api';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -99,8 +98,6 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     // Tag events so the shared project separates product from marketing traffic.
     posthog.register({ source_site: 'product' });
 
-    acquisitionUtils.stashAcquisitionParams();
-
     if (isCloud && isInRecordingSample(posthog.get_distinct_id())) {
       posthog.startSessionRecording();
     }
@@ -147,29 +144,20 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
     const currentVersion = flagCurrentVersion || UNKNOWN_FLAG_VALUE;
     const environment = flagEnvironment || UNKNOWN_FLAG_VALUE;
 
-    posthog.identify(
-      currentUser.id,
-      {
-        ...pickTelemetryPii({
-          edition: edition ?? ApEdition.COMMUNITY,
-          email: currentUser.email,
-          firstName: currentUser.firstName,
-          lastName: currentUser.lastName,
-        }),
-        activepiecesVersion: currentVersion,
-        activepiecesEnvironment: environment,
-      },
-      acquisitionUtils.getAcquisitionParams(),
-    );
+    posthog.identify(currentUser.id, {
+      ...pickTelemetryPii({
+        edition: edition ?? ApEdition.COMMUNITY,
+        email: currentUser.email,
+        firstName: currentUser.firstName,
+        lastName: currentUser.lastName,
+      }),
+      activepiecesVersion: currentVersion,
+      activepiecesEnvironment: environment,
+    });
 
     if (currentUser.platformId) {
       posthog.group('platform', currentUser.platformId);
     }
-  };
-
-  const reset = () => {
-    posthog.reset();
-    identifiedKey.current = null;
   };
 
   const capture = (event: TelemetryEvent) => {
@@ -183,7 +171,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   };
 
   return (
-    <TelemetryContext.Provider value={{ capture, reset }}>
+    <TelemetryContext.Provider value={{ capture }}>
       {children}
     </TelemetryContext.Provider>
   );
@@ -203,12 +191,10 @@ function isInRecordingSample(distinctId: string): boolean {
 
 interface TelemetryContextType {
   capture: (event: TelemetryEvent) => void;
-  reset: () => void;
 }
 
 const TelemetryContext = React.createContext<TelemetryContextType>({
   capture: () => {},
-  reset: () => {},
 });
 
 export const useTelemetry = () => React.useContext(TelemetryContext);

@@ -9,14 +9,6 @@ export const getFileName = createAction({
   description: 'Get the name of a file',
   aiMetadata: { description: 'Returns only the file name of an input file, without reading or decoding its contents. Use it when the name itself is what you need - to build a path, log it, or branch on the extension - and prefer Read File to get the content or Check File Type to resolve the MIME type. Requires a file input; read-only and idempotent.', idempotent: true },
   outputSchema: getFileNameActionOutputSchema,
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   props: {
     file: Property.File({
       displayName: 'File',

@@ -1,8 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   Agent,
+  AgentConversationStatus,
   AgentListSort,
   CreateAgentRequest,
-  DraftAgentRequest,
   MoveAgentRequest,
   Permission,
   UpdateAgentRequest,
@@ -13,7 +14,12 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 
+import {
+  CURSOR_QUERY_PARAM,
+  LIMIT_QUERY_PARAM,
+} from '@/components/custom/data-table';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -34,6 +40,8 @@ export const useAgentsNavVisible = (): boolean => {
 };
 
 const AGENTS_PAGE_SIZE = 100;
+const AGENT_RUNS_ACTIVE_POLL_MS = 5 * 1000;
+const AGENT_RUNS_IDLE_POLL_MS = 15 * 1000;
 
 export const agentsQueries = {
   useAgents: ({
@@ -94,6 +102,47 @@ export const agentsQueries = {
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
     }),
+  useAgentRun: ({
+    runId,
+    projectId,
+  }: {
+    runId: string | null;
+    projectId: string;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'run', runId],
+      enabled: !isNil(runId),
+      queryFn: () => agentsApi.getRun(runId ?? '', projectId),
+    }),
+  useAgentRuns: ({
+    agentId,
+    projectId,
+  }: {
+    agentId: string;
+    projectId: string;
+  }) => {
+    const [searchParams] = useSearchParams();
+    const cursor = searchParams.get(CURSOR_QUERY_PARAM);
+    const limit = searchParams.get(LIMIT_QUERY_PARAM);
+    return useQuery({
+      queryKey: [AGENTS_KEY, 'runs', agentId, cursor, limit],
+      queryFn: () =>
+        agentsApi.listRuns({
+          agentId,
+          projectId,
+          cursor: cursor ?? undefined,
+          limit: limit === null ? undefined : parseInt(limit),
+        }),
+      refetchInterval: (query) => {
+        const stillRunning = query.state.data?.data.some(
+          (run) => run.status === AgentConversationStatus.STREAMING,
+        );
+        return stillRunning === true
+          ? AGENT_RUNS_ACTIVE_POLL_MS
+          : AGENT_RUNS_IDLE_POLL_MS;
+      },
+    });
+  },
 };
 
 export const agentsMutations = {
@@ -141,9 +190,4 @@ export const agentsMutations = {
       },
     });
   },
-  useDraftAgent: () =>
-    useMutation({
-      mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),
-      onError: () => undefined,
-    }),
 };
