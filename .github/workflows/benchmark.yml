@@ -73,13 +73,16 @@ jobs:
 
       - name: Install hey (pinned release binary)
         run: |
-          curl -sSL -o /usr/local/bin/hey \
-            https://hey-release.s3.us-east-2.amazonaws.com/hey_linux_amd64
+          set -euo pipefail
+          curl -sSLf -o /usr/local/bin/hey \
+            https://github.com/rakyll/hey/releases/download/v0.1.4/hey_linux_amd64
           chmod +x /usr/local/bin/hey
+          file /usr/local/bin/hey
           hey -h 2>&1 | head -1 || true
 
       - name: Warmup
         run: |
+          set -o pipefail
           echo "Running warmup: 500 requests, ${{ matrix.workers }} concurrency"
           hey -n 500 \
               -c ${{ matrix.workers }} \
@@ -107,6 +110,7 @@ jobs:
 
       - name: Run benchmark
         run: |
+          set -o pipefail
           echo "Running benchmark: ${TOTAL_REQUESTS} requests, ${{ matrix.workers }} concurrency (= workers), ${{ matrix.apps }} apps"
           echo "---"
           hey -n "${TOTAL_REQUESTS}" \
