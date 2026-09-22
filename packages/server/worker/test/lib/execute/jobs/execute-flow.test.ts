@@ -233,6 +233,55 @@ describe('executeFlowJob', () => {
             )
         })
 
+        it('reports a missing action-piece bundle (404) as FAILED anchored on the owning action step', async () => {
+            // The unavailable piece belongs to step_1 (Slack Action). Anchoring on the trigger
+            // would mislead run dialogs, alerts, and "jump to failed step" — the fix walks the
+            // flow_version tree and matches on (pieceName, pieceVersion).
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(new ActivepiecesError({
+                code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                params: { pieceName: '@activepieces/piece-slack', pieceVersion: '~0.2.0', status: 404 },
+            }))
+
+            const result = await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(result.status).toBe(EngineResponseStatus.OK)
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.FAILED,
+                    failedStep: expect.objectContaining({
+                        name: 'step_1',
+                        displayName: 'Slack Action',
+                        message: expect.stringContaining('@activepieces/piece-slack'),
+                    }),
+                    workerHandlerId: 'server-1',
+                    httpRequestId: 'req-1',
+                }),
+            )
+        })
+
+        it('falls back to the trigger step when no step in the flow matches the missing piece', async () => {
+            const ctx = makeMockContext()
+            ctx.runtime.execute = vi.fn().mockRejectedValue(new ActivepiecesError({
+                code: ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE,
+                params: { pieceName: 'url-crawl', pieceVersion: '0.2.2', status: 404 },
+            }))
+
+            const result = await executeFlowJob.execute(ctx, syncJobData())
+
+            expect(result.status).toBe(EngineResponseStatus.OK)
+            expect(ctx.apiClient.uploadRunLog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    status: FlowRunStatus.FAILED,
+                    failedStep: expect.objectContaining({
+                        name: 'trigger_1',
+                        displayName: 'Gmail Trigger',
+                        message: expect.stringContaining('url-crawl'),
+                    }),
+                }),
+            )
+        })
+
         it('reports an engine INTERNAL_ERROR with both ids', async () => {
             const ctx = makeMockContext()
             ctx.runtime.execute = vi.fn().mockResolvedValue({ status: EngineResponseStatus.INTERNAL_ERROR, error: 'boom', timings: {} })

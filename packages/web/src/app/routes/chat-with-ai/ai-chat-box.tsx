@@ -9,7 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { AlertTriangle, RefreshCw, Square } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   ChatContainerContent,
@@ -32,6 +32,7 @@ import { usePersonalization } from '@/features/chat/lib/use-personalization';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 
 import { AssistantMessage } from './components/assistant-message';
 import { ChatBottomBar } from './components/chat-bottom-bar';
@@ -52,6 +53,7 @@ import { getTextFromParts } from './lib/message-parsers';
 
 export function AIChatBox({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -73,6 +75,7 @@ export function AIChatBox({
     <ChatStoreProvider>
       <ChatBoxContent
         incognito={incognito}
+        initialPrompt={isLoadingProviders ? undefined : initialPrompt}
         agentId={agentId}
         builder={builder}
         onTurnEnd={onTurnEnd}
@@ -89,6 +92,7 @@ export function AIChatBox({
 
 function ChatBoxContent({
   incognito,
+  initialPrompt,
   agentId,
   builder,
   onTurnEnd,
@@ -179,6 +183,19 @@ function ChatBoxContent({
     },
     [sendMessage],
   );
+
+  const sentInitialPrompt = useRef(false);
+
+  useEffect(() => {
+    const shouldSendInitialPrompt =
+      initialPrompt !== undefined &&
+      initialPrompt.trim().length > 0 &&
+      !initialConversationId &&
+      !sentInitialPrompt.current;
+    if (!shouldSendInitialPrompt) return;
+    sentInitialPrompt.current = true;
+    handleSend(initialPrompt).catch(() => undefined);
+  }, [initialPrompt, initialConversationId, handleSend]);
 
   const handleRetry = useCallback(() => {
     const lastUser = messages.findLast((m) => m.role === 'user');
@@ -289,7 +306,13 @@ function ChatBoxContent({
     <div className="flex flex-col h-full flex-1 min-w-0">
       <AnimatePresence mode="wait">
         {isEmpty ? (
-          <div key="empty-state" className="flex-1 overflow-y-auto min-h-0">
+          <div
+            key="empty-state"
+            className={cn(
+              'flex-1 overflow-y-auto min-h-0',
+              showPersonalizationDonut && 'pb-14',
+            )}
+          >
             {emptyState ??
               (showOnboardingCard ? (
                 <OnboardingWelcome />
@@ -311,7 +334,7 @@ function ChatBoxContent({
             transition={{ duration: 0.25 }}
           >
             <ChatContainerRoot
-              className="flex-1 relative h-full"
+              className="flex-1 relative h-full px-3 sm:px-6"
               style={{
                 maskImage:
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
@@ -319,7 +342,7 @@ function ChatBoxContent({
                   'linear-gradient(to bottom, black 0%, black calc(100% - 12px), transparent 100%)',
               }}
             >
-              <ChatContainerContent className="max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-4 gap-0 min-h-full">
+              <ChatContainerContent className="max-w-3xl mx-auto pt-8 pb-4 gap-0 min-h-full">
                 {isLoadingHistory && <MessageSkeletons />}
 
                 {messages.map((msg, idx) => {
@@ -502,6 +525,7 @@ function computeClaimedBuildIds(
 
 type AIChatBoxProps = {
   incognito: boolean;
+  initialPrompt?: string;
   agentId?: string;
   builder?: boolean;
   onTurnEnd?: () => void;

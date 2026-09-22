@@ -8,56 +8,297 @@ icon: "hammer"
 
 ### What has changed?
 
-#### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
+#### The AI provider config endpoint is removed
 
-Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
+`GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.
 
-The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and neither checkbox defaults to off any more, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
-
-The `Attributes` field used to come pre-filled with nine empty values (`FIRST_NAME`, `LAST_NAME`, `SMS`, `CIV`, `DOB`, `ADDRESS`, `ZIP_CODE`, `CITY`, `AREA`). Because they were sent on every call, running the step overwrote whatever those attributes held in Brevo with empty strings. The default is removed, and only the attributes you list are written.
-
-`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. A stored numeric id is still sent exactly as before, so existing steps keep working unchanged.
-
-The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses` list. Brevo expects a list of sender email addresses here, not a true or false, and rejects a boolean outright with *"Invalid smtpBlacklistSender format"* — so ticking that checkbox always failed the step, and leaving it clear did nothing at all. The field never worked. It is now a list of addresses, which Brevo accepts, and any value your step already had is ignored rather than sent.
+The route only ever accepted an engine token, so it was never reachable with a user token, an API key or from the browser. `GET /v1/ai-providers` and `GET /v1/ai-providers/:provider/models` are unchanged.
 
 #### What you need to do
 
-Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
+Nothing on a normal upgrade. Every flow is moved to the AI piece version that runs on the worker the first time its version is read, before it can run.
 
-#### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
+If you serve pieces from your own registry, make sure it carries the AI piece at `0.11.0` or later. A flow left on an earlier version would still try to fetch its provider credentials over this endpoint and fail.
 
-An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
+#### AI steps are billed on what each call costs, not on a fixed price per model
 
-Both hardcoded limits are gone. All of them now follow `AP_FLOW_TIMEOUT_SECONDS`, the same setting that bounds a flow run, which defaults to 600 seconds. An action run therefore gets the same budget as a flow step.
+The managed Activepieces AI provider used to charge a fixed number of credits per model per step, taken from a table calibrated at roughly a thousand tokens per call. A short call was charged about right; a long one was charged the same as a short one while costing us many times more.
 
-The limit going up is the change to be aware of: a slow or hung action now occupies a worker slot for up to `AP_FLOW_TIMEOUT_SECONDS` instead of 120 seconds, and action runs are not covered by the per-project concurrency limiter. On a small worker pool, several slow actions can hold execution capacity for longer than they used to.
+Every managed AI call is now billed on the dollar cost the provider reports for that call, converted at `AP_AI_CREDIT_USD_VALUE` (default `0.0005`, so one credit is a twentieth of a cent of model spend). A call on your own API key is billed a flat one credit per model call. Tool calls stay at one credit each.
 
-#### What you need to do
+This changes what the same flow costs in both directions. A short prompt on an expensive model gets much cheaper; a long document through Extract Structured Data gets dearer. The credit cost shown in the model picker and in the credits breakdown is gone, because there is no longer a fixed number to show.
 
-Nothing to configure or migrate, and no new environment variable — a default installation gets the fix with no action. Two things to consider if they apply to you. If you raised `AP_FLOW_TIMEOUT_SECONDS` for long flows, note that agent tools, chat actions and MCP action runs now inherit that same ceiling; lower it if you do not want them held that long. If you put Activepieces behind a reverse proxy and use MCP `ap_run_action`, an action that runs past the proxy's read timeout (nginx defaults to 60 seconds, Cloudflare to 100) returns a gateway error to the MCP client while the action keeps running — raise `proxy_read_timeout` if you rely on long action runs over MCP.
-
-#### A Run Agent step whose turn dies now fails its flow run
-
-A Run Agent step whose turn died — no AI provider configured for the chosen vendor, a revoked API key, a model the provider no longer serves — used to report success. The step returned the failed agent result rather than raising it, so the step read SUCCEEDED, the run completed SUCCEEDED, and later steps acted on a payload that carried the failure inside it. Such a run is now FAILED, and the agent's error message is the step's error.
-
-Two cases are deliberately unaffected, because the agent did produce usable output:
-
-- A turn that finished but had a single tool call error. The agent may have recovered from it and reported on it, so those runs keep succeeding exactly as before.
-- A turn that was cut short by the output limit or the run's usage budget. It still returns the work it completed, and the flow still continues.
+A step or a chat turn on your own API key costs the same as it did: one credit, plus one per tool call. An agent still counts as one credit however many times it goes back to the model.
 
 #### What you need to do
 
-Nothing to configure or migrate, and no new environment variable. Two things to check if either applies to you. If a flow relied on continuing past a dead agent step, tick **Continue on failure** on that step — it now takes effect, where previously the step never failed for it to apply to. If a flow branches on the agent result (a Router reading the step's `status`), that branch no longer runs when the turn dies, because the step raises instead of returning; move that handling onto the step's failure path.
+Nothing to configure. Self-hosters who want a different conversion rate can set `AP_AI_CREDIT_USD_VALUE` to the dollar value of one credit.
 
-If you alert on run status, expect agent flows that were silently completing on a misconfigured provider to start showing as failed. That is the misconfiguration surfacing, not new breakage.
+#### AI steps now consume credits on your own API key too
 
-#### Workers no longer pre-warm the flow cache on startup by default
+`POST /v1/ai/execute` refuses to start an AI step when the platform is out of credits, whatever provider the step uses. Previously only the managed Activepieces provider was gated, so a platform that had exhausted its credits kept running AI steps as long as they used its own key.
 
-Since v0.86.1 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before v0.86.1.
+Credits are only enforced where a billing provider is configured, so a Community self-host is unaffected.
 
 #### What you need to do
 
-Nothing, unless you want to keep the pre-v0.88 warm-up behaviour. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
+Nothing, unless you run AI steps on your own provider key on a platform that sits at zero credits. Those steps now fail with a credits error instead of running. Top up, or raise the plan's credit allowance.
+
+#### Files passed to an AI step are capped at `AP_MAX_FILE_SIZE_MB`
+
+Extract Structured Data and Generate Image used to read file inputs straight from the flow's memory, so no Activepieces-side size limit applied. Those files are now stored and fetched by the worker that runs the model, which puts them under the same per-file limit as every other file the engine writes: `AP_MAX_FILE_SIZE_MB`, 25 MB by default.
+
+The limit is per file, not per step, so several large files in one step are fine as long as each is under it. On Activepieces Cloud the limit is 10 MB and is not configurable.
+
+#### What you need to do
+
+Nothing unless an AI step handles files larger than 25 MB. Those steps now fail with a size error naming the limit. Raise `AP_MAX_FILE_SIZE_MB` on a self-hosted installation if you need more.
+
+#### Applying a release or a project replace now updates changed connection references
+
+Applying a release (Environments / Git Sync) or running Project Replace used to keep whatever connection the destination step already pointed at. A step whose connection changed in the source silently kept the old one, and the connection the release created for it stayed unreferenced with status `MISSING`. Two things change:
+
+- A changed connection reference is now a change the diff sees, so a flow whose only edit is its connection is applied instead of being reported as unchanged.
+- The destination's connection is kept only when the incoming step carries no connection of its own, and only when the step is still the same piece. Swapping a step to a different piece no longer grafts the old piece's connection onto it.
+
+Connection secrets still never cross instances. Only the reference travels, and a reference to a connection that does not exist in the destination yet lands as a `MISSING` connection for someone to authorize there.
+
+#### What you need to do
+
+Nothing on upgrade if your source project is the source of truth for connections, which is the intended model. If instead you deliberately re-point a step in the destination project at a different connection than the source uses, that re-point is now overwritten on the next apply. Either point the source at the connection you want, or clear the connection on the source step so the destination wiring is preserved.
+
+#### Seven actions are no longer offered to agents
+
+The Pinterest piece advertised its six original actions to AI agents as `audience: 'both'`, but they identify boards and Pins through dynamic dropdowns that an agent has no way to drive. They are now `human`, alongside the Trello `add_card_attachment` action, whose only input is a file an agent cannot produce.
+
+An agent that currently holds one of these tools stops seeing it. Every one has a replacement among the new agent actions that takes plain IDs instead: Create Pin from Media, Create New Board, Update Board Details, Delete Pin by ID, Search Boards, Search Pins, and Add Card Attachment from URL.
+
+The flow builder is unaffected. All seven actions keep working exactly as before for human users, and no saved step changes.
+
+#### What you need to do
+
+Nothing for flows. If you have an agent configured with one of the seven actions above, point it at the corresponding agent action listed there. MCP clients should refresh their tool list.
+
+#### Pinterest Update Board can no longer clear a description
+
+Update Board and its agent twin Update Board Details treat a blank or whitespace-only description as "keep the current one", matching the help text the field always carried. Previously a blank description was sent to Pinterest and wiped the board's description on every run.
+
+Clearing a description from this action is therefore no longer possible; that is the intended reading. A call that supplies only a blank description now fails with "At least one field (name, description, or privacy) must be provided to update the board." instead of silently doing nothing.
+
+#### What you need to do
+
+Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
+
+## 0.91.0
+
+### What has changed?
+
+#### WhatsScale media actions take a file input, capping media at the instance file-size limit
+
+The 17 WhatsScale actions that send media — image, video, document and audio sends across the contact, group, channel and CRM-contact variants, plus the image and video Status posts — used to take a plain text URL and hand it straight to WhatsScale, which fetched it itself. Those fields are now file inputs: the engine resolves whatever you pass (a URL, or a file from a previous step) into a file, stores it on your instance, and gives WhatsScale that copy to fetch.
+
+The field keys are unchanged (`imageUrl`, `videoUrl`, `documentUrl`, `audioUrl`), so existing flows keep their configured value and a stored URL still works. Two behaviour changes come with the new path:
+
+- **Media is now capped by `AP_MAX_FILE_SIZE_MB` — 10 MB on Cloud, 25 MB by default self-hosted.** The file travels through your instance instead of going vendor-to-vendor, so a URL pointing at something larger than that limit now fails where it previously sent. This mostly affects video and document sends. Streaming does not lift the ceiling: writing into storage is counted against the cap either way, and producing a URL for WhatsScale to fetch requires writing into storage. See [Limits](/install/reference/limits).
+- **The URL WhatsScale fetches is now one your instance serves.** It is a signed, expiring link on your public API URL. An instance that is not reachable from the internet cannot hand WhatsScale a URL it can fetch, so media sends need a publicly resolvable `AP_FRONTEND_URL` on self-hosted installs.
+
+#### What you need to do
+
+Nothing if your media is comfortably under the cap and your instance is reachable from the internet. On Cloud that cap is 10 MB, so check any flow that forwards video or large documents.
+
+If you send files larger than the cap on a self-hosted install, raise `AP_MAX_FILE_SIZE_MB` to cover the largest media you send and redeploy. On Cloud the 10 MB cap is not configurable. If your instance is not publicly reachable, keep media sends on a host that is, or leave these actions unused; there is no way for WhatsScale to fetch a file from a private address.
+
+#### WhatsScale "Add a Tag to a CRM Contact" now takes a list of tags
+
+The two add-tag actions ("Add Tags to a CRM Contact" and its By-ID twin) accepted a single tag in a text field named `tag`. They now accept a list, in a field named `tags`, and send one request per tag so existing tags are kept.
+
+Because the field was renamed, **a step configured before this release loses its tag value** and shows "Tags" as an empty required field. The field could not keep its old name: a stored single string does not validate as a list.
+
+Adding several tags is **not atomic** — each tag is its own request, so a failure part-way through leaves the earlier tags applied. Re-running is safe: adding a tag a contact already has converges on the same set.
+
+#### What you need to do
+
+Re-enter the tag on any flow that uses either add-tag action, as a list entry rather than free text. The removal actions are unchanged and still take one tag at a time.
+
+#### A custom AI provider is now checked when you save it
+
+The custom OpenAI-compatible provider accepted any text as its base URL and as its API key header name. A config that cannot be used saved without complaint and then failed on every run that used it, with a message from the HTTP layer rather than from Activepieces: a header name of `authorization: bearer` produced *"Headers.append: is an invalid header name"*, and a base URL that will not parse produced *"Invalid URL"*.
+
+Saving now fails with a message naming the field to fix. Nothing changes for a provider whose config already works, and no stored config is altered or re-checked in place.
+
+#### What you need to do
+
+Nothing, unless you have a custom AI provider whose base URL or API key header is malformed. Those already fail at run time. The next time you save that provider you will be told which field is wrong: enter the header name on its own, such as `Authorization`, with its value in the API key field, and give the base URL in full including the scheme, such as `https://api.example.com/v1`.
+
+#### Agent steps on Activepieces AI credits are limited to the models Activepieces offers
+
+The managed Activepieces AI provider used to accept any model id a flow named, because it serves the OpenRouter catalogue unfiltered and nothing checked the value server-side. The model picker only ever offered the three chat tiers, but the API took `modelName` as free text, so a flow, a saved agent, or a direct call to `POST /v1/agents/runs` could run any model OpenRouter publishes on Activepieces' own key.
+
+An agent step, saved agent, or agent run that names a model outside the offered list now fails with a `VALIDATION` error that lists the models available to it, instead of running a model nobody selected. Bring-your-own keys are unaffected: an OpenRouter, OpenAI, Anthropic, or custom provider key can still name any model it pays for.
+
+#### What you need to do
+
+Nothing, if your agent steps use the model picker. If a flow, a saved agent, or an API call names a model id directly while running on Activepieces AI credits, switch it to one of the offered models or to your own provider key. The error message lists the available ids.
+
+#### The legacy product-embed connection-key and app-credential endpoints are removed
+
+The original product-embed flow is gone. It let a host application store per-project OAuth client credentials and a public key, then mint an app connection by presenting a token signed with the matching private key. These endpoints are removed:
+
+- `GET`, `POST` and `DELETE` `/v1/connection-keys/app-connections`
+- `GET`, `POST` and `DELETE` `/v1/connection-keys`
+- `GET`, `POST` and `DELETE` `/v1/app-credentials`
+
+They were registered on the Cloud edition only, so a self-hosted installation never served them, on either Community or Enterprise. The user interface that drove them was removed several releases ago and no SDK or documented flow referenced them. They now return `404`.
+
+The current embedding stack is unaffected: signing keys, managed authentication, JWT user provisioning and the embed SDK are a separate feature and continue to work unchanged.
+
+#### What you need to do
+
+Nothing for a self-hosted installation, and no environment variable or migration. The `app_credential` and `connection_key` tables are left in place by this release and are simply no longer read; a later release drops them.
+
+If you call one of the endpoints above against Activepieces Cloud, move to the current embedding flow, which provisions users and connections through a platform signing key. See [Embedding](/embedding/overview).
+
+#### Kimai connections now authenticate with an API token instead of a username and API password
+
+Kimai is deprecating its legacy `X-AUTH-USER` / `X-AUTH-TOKEN` authentication (API passwords), with removal planned no later than July 2026 — see [Kimai's announcement](https://www.kimai.org/en/blog/2026/removing-api-passwords). The Kimai piece's connection now sends `Authorization: Bearer <token>` instead, matching Kimai's current API. This also fixes the Activity dropdown on the Create Timesheet action, which ignored the selected project because it tried to filter on a GET request body that the piece's HTTP client cannot send.
+
+The connection's `Username` and `API Password` fields are removed and replaced with a single `API Token` field.
+
+#### What you need to do
+
+Only if you have an existing Kimai connection. Reconnect it: in your Kimai instance, generate an API token from your user profile's "API Access" page, then re-enter your Kimai connection in Activepieces with the Server URL and that token. Existing connections using the old username/API-password fields will fail to authenticate until reconnected.
+
+#### Worker group runs no longer fall back to shared workers
+
+Runs for a project assigned to a worker group used to fall back to the shared queue whenever the group had no online workers, so shared workers would execute them. Runs now always stay on the group's dedicated queue (`project-<group-name>-jobs`) and wait there until a worker carrying the matching `AP_WORKER_GROUP_ID` connects — shared workers never pick them up.
+
+#### What you need to do
+
+If you assign projects to worker groups, keep at least one worker online per assigned group. If a group is down, reassign the project to another group or unassign it (set its `workerGroupId` to `null`) — any assignment change moves the project's waiting runs to the new queue.
+
+## 0.90.4
+
+### What has changed?
+
+#### Telemetry moves from `AP_TELEMETRY_ENABLED` to the platform admin UI
+
+Product analytics used to be governed only by the `AP_TELEMETRY_ENABLED` environment variable, read once when the app started. It is now a per-platform setting stored in the database, editable at **Platform → Infrastructure → Configurations**.
+
+Upgrading does not change what you collect. Each platform's setting is created the first time it is read, taking `AP_TELEMETRY_ENABLED` as its value, so an instance running with `AP_TELEMETRY_ENABLED=false` stays opted out — on an existing install and on a brand-new one alike.
+
+After a platform's setting exists, the environment variable no longer governs it. Editing the variable has no effect on that platform, and switching the toggle on in the UI turns product analytics on even if the variable still reads `false`.
+
+The setting is per platform, so on an instance hosting several platforms each one is controlled separately. The page is hidden on Activepieces Cloud.
+
+#### What you need to do
+
+Nothing, if you want to keep collecting what you collect today, and nothing if you rely on `AP_TELEMETRY_ENABLED=false` — that value is carried into each platform's setting as it is created. What changes is that the variable becomes a starting value rather than a permanent lock: once a platform has a setting, an admin can switch product analytics on from the UI regardless of what the variable says. If that matters to you, restrict who holds platform-admin rights.
+
+## 0.90.1
+
+### What has changed?
+
+#### AWS connections using the IAM Role / OIDC method are now verified against AWS before they save
+
+Saving an AWS connection (Bedrock, S3, Secrets Manager) with the **IAM Role / OIDC** method previously only checked that the Role ARN was well formed, so any well-formed ARN saved with status "Connected" even when the role did not exist or could not be assumed. The connection now performs the same `sts:AssumeRoleWithWebIdentity` call the flow makes at runtime, and the save fails with the AWS error when the role cannot be assumed.
+
+Two consequences. A connection that was accepted before is now rejected if its IAM OIDC provider, trust policy, or `AP_FRONTEND_URL` issuer is not set up correctly. And because the save now calls AWS, an instance with no outbound access to `sts.<region>.amazonaws.com` cannot create these connections at all.
+
+The region on these connections is also validated against the AWS region format at both save time and every flow step (the region flows into the STS endpoint hostname, so the check is enforced everywhere it is used). The STS call now times out after 10 seconds instead of waiting for the job timeout.
+
+#### What you need to do
+
+Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it. Existing saved connections keep working and are not revalidated automatically — pressing **Recheck** on a connection whose trust policy is wrong will now move it to an error state, which reflects what already happens when a flow runs.
+
+## 0.90.0
+
+### What has changed?
+
+#### Front's Attachments field takes files instead of URLs
+
+The Front piece's Send Message, Send Reply, Create Draft and Create Draft Reply actions described `Attachments` as a list of attachment URLs and sent those strings inside a JSON body. Front only accepts attachments on a `multipart/form-data` request, as the bytes of the file, so it took the message and dropped the attachments — HTTP 202, no error, no attachment. The field is now a list of files, the same shape the Gmail and Discord pieces use, and the request is sent as multipart when a message carries attachments.
+
+A URL is still all you need to supply: the engine downloads it and hands the piece the resolved file. A step that already holds a file — an earlier download, a trigger's attachment — can be wired straight in. An entry whose file cannot be resolved is skipped rather than failing the send.
+
+#### What you need to do
+
+Re-pick the attachment in any Front step that used the field. The stored value is a plain string and the field now holds a file, so it does not carry across. A flow that never set Attachments is unaffected and keeps its JSON request path. Nothing to configure on the server, and no new environment variable.
+
+#### A file URL that fails to download is no longer treated as a file
+
+Any piece property that takes a file also accepts a URL, and the engine buffered whatever came back from that URL without checking the response status. A 4xx or 5xx produced a file named after the URL whose contents were the server's error page, and a piece could not tell that apart from the real thing — an expired signed link became an email with the storage provider's XML error attached. A failed download now fails the step, which is what the streaming path already did.
+
+#### What you need to do
+
+Nothing to configure. A flow that was silently passing on error pages will start failing at that step instead, and the fix is the URL itself — usually a link that has expired or that the instance is not authorized to read.
+
+#### Signing in with an emailed code is now offered on Activepieces Cloud only
+
+`POST /v1/authentication/otp/request` and `POST /v1/authentication/otp/verify` are no longer served on a self-hosted
+instance. They return `404`, and the sign-in card no longer offers the "email me a code" step — it opens on the
+password form instead. Versions 0.88.2 through 0.89.0 did serve them on any edition with SMTP configured.
+`POST /v1/authentication/complete-sign-up` is unaffected and still served everywhere.
+
+A six-digit code is a million possibilities, so what keeps guessing it expensive is the captcha in front of the
+request endpoint. Cloudflare Turnstile is opt-in and unset out of the box, so a self-hosted instance served both
+endpoints with nothing in front of them. Rather than require a Cloudflare account to make a sign-in method safe,
+that method is no longer served where the captcha is not there.
+
+On Cloud the same rule now applies: the routes exist only when both `AP_TURNSTILE_SITE_KEY` and
+`AP_TURNSTILE_SECRET_KEY` are set. Without them the instance starts normally and simply does not offer emailed
+codes. Activepieces Cloud has both configured, so nothing changes for it — the code step stays on the sign-in card
+and accounts that use it keep signing in exactly as before.
+
+#### What you need to do
+
+Nothing, if your users sign in with a password or with Google — those paths are unchanged, and so are `/sign-up`,
+`/sign-in` and `/switch-platform`.
+
+**If you ran 0.88.2–0.89.0 with SMTP configured, assume some accounts were created through the code flow.** Those
+accounts hold a random password nobody was ever shown, so removing the code flow removes the only way they could
+sign in. There is no reliable marker for them in the database — a verified code deletes its `otp` row — so treat any
+`EMAIL`-provider account whose owner cannot recall setting a password as one of them.
+
+On **Enterprise**, send those users through **Forgot password** once to set a password; that flow needs the same SMTP
+you already have configured.
+
+On **Community** there is no way back in the product. Password reset lives in the enterprise module, which Community
+does not register, so `POST /v1/authn/local/reset-password` is not served — and nothing else writes a password on any
+edition, as there is no change-password endpoint. Do not be misled by the first half of that flow appearing to work:
+`POST /v1/otp` **is** served on Community and answers `204`, but Community sends no OTP email of any type except a
+login code, so no reset mail ever arrives. Set a password for each affected account directly —
+`UPDATE user_identity SET password = '<bcrypt hash>' WHERE email = '…'` — and hand it to its owner over a channel you
+trust, since they cannot change it themselves afterwards. Do this **before** you upgrade if you can, so nobody is
+locked out in between.
+
+If you script or test the sign-in page, note that the emailed-code step is gone and the two endpoints above
+answer `404`.
+
+#### A failed run on a synchronous webhook answers with 500 instead of 408 after the full timeout
+
+A `/sync` webhook call whose flow run fails used to hold the connection open for the whole `AP_WEBHOOK_TIMEOUT_SECONDS` (30 seconds by default) and then answer `408 Request Timeout` with an empty body, no matter how quickly the run had actually failed. Nothing reported a terminal run status back to the waiting request, so the caller only ever saw the timeout fallback.
+
+A run that ends in `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED` or `LOG_SIZE_EXCEEDED` now answers immediately with `500` and a body of `{"message": "The flow has failed and there is no response returned"}`. For `FAILED`, `INTERNAL_ERROR` and `MEMORY_LIMIT_EXCEEDED` this restores the behaviour from before 0.80.0, where they answered `500` (`TIMEOUT` answered `504` then; it is `500` now, like the rest). `LOG_SIZE_EXCEEDED` never had a response of its own in any earlier release, so it gains one here.
+
+Between 0.80.0 and 0.85.x the same failures answered `204 No Content` rather than `408`, which many HTTP clients read as success. If you integrated against an Activepieces in that range and concluded a synchronous webhook "returns 204 when it fails", that is the behaviour being replaced.
+
+Two cases are deliberately unchanged. A run that succeeds without reaching a Return Response step still waits out the timeout and answers `408`, exactly as it did before 0.80.0. A run blocked on credits still answers `402` before it starts.
+
+#### What you need to do
+
+Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
+
+## 0.89.0
+
+### What has changed?
+
+#### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
+
+The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.
+
+#### What you need to do
+
+Nothing for catalog pieces — oracle-database is the only piece that forks a sibling file, and this change fixes it (0.1.13). If you build custom pieces and one references `__dirname`, either declare the runtime-loaded file in `bundleForkedEntries` (see [Bundling Pieces](/build-pieces/misc/bundling-pieces)) or remove the `__dirname` usage. Already-published pieces keep working; the check runs at build time only.
 
 #### A new workspace is named after the company in the sign-up email
 
@@ -71,51 +312,13 @@ This only affects platforms created from here on. Existing platforms keep their 
 
 Nothing. No configuration, no new environment variable, and nothing to migrate. If you script or test first-run sign-up and assert on the generated platform or project name, update that assertion: a work-domain address no longer yields `"<FirstName>'s Platform"`.
 
-#### Piece builds fail when piece code uses `__dirname` without declaring `bundleForkedEntries`
+#### Workers no longer pre-warm the flow cache on startup by default
 
-The piece bundler now emits files a piece loads by path at runtime (for example a `child_process.fork` target) beside the main bundle, when they are declared in a `bundleForkedEntries` array in the piece's `package.json`, and it keeps dependencies that only those files import in the published manifest. Because an undeclared `__dirname`-relative file access always breaks after publishing — this is exactly how `@activepieces/piece-oracle-database` 0.1.11/0.1.12 shipped with every new connection failing — the build now fails loudly when a piece's source references `__dirname` and declares no forked entries. Previously such a piece built successfully and shipped broken.
-
-#### What you need to do
-
-Nothing for catalog pieces — oracle-database is the only piece that forks a sibling file, and this change fixes it (0.1.13). If you build custom pieces and one references `__dirname`, either declare the runtime-loaded file in `bundleForkedEntries` (see [Bundling Pieces](/build-pieces/misc/bundling-pieces)) or remove the `__dirname` usage. Already-published pieces keep working; the check runs at build time only.
-
-#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
-
-Two changes to the MCP OAuth endpoints:
-
-- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
-- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
+Since 0.86.2 every worker pre-filled its local piece and code cache on startup by resolving and compiling every enabled flow on the platform. That warm-up costs memory and CPU proportional to the number of enabled flows: on instances with many flows it pinned each worker at its CPU limit for the duration and spiked memory enough to OOM-kill small workers, especially during upgrades when all workers restart at once. The warm-up is now opt-in behind the new `AP_PREWARM_CACHE_ON_STARTUP` worker environment variable, which defaults to `false`. When disabled, caches fill lazily on each flow's first run after a worker starts, exactly as they did before 0.86.2.
 
 #### What you need to do
 
-Nothing for already-connected clients. A client's authentication method is read from the row it registered with, so existing registrations are untouched, including the ones created before this fix that hold a secret while recorded as public. Those keep working whether or not they send it.
-
-Claude, Cursor and anything else built on the MCP SDK are unaffected: the SDK stores and sends the `client_secret` it is given, and it never calls the revocation endpoint. A confidential client's secret is accepted from either the request body or the `Authorization: Basic` header, so a client is never rejected for choosing one over the other.
-
-If you maintain your own MCP OAuth client, check two things before upgrading: that it sends `client_id` when it revokes a token, and that it stores and presents the `client_secret` that `/register` returns. Note that disconnecting and re-adding an MCP server creates a fresh registration, so an existing user meets the new behaviour when they reconnect rather than at upgrade.
-
-#### Agent steps move from the flow engine to the server
-
-An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes. This upgrade rewrites every existing agent step to the new version.
-
-The step's inputs and its output shape are unchanged, so anything reading the step's result or its structured output keeps working. Sub-flow, MCP server, knowledge base and piece action tools all run on the new path.
-
-Two differences are worth knowing before you upgrade:
-
-- **Web search is no longer a step setting.** It follows what the platform has configured rather than a per-step toggle. A step that had it switched on keeps working; the stored value is ignored.
-- **Max steps is honoured up to a ceiling.** The value you set still applies, but the server caps a single run at 50 turns. A step configured above that runs 50.
-
-#### What you need to do
-
-Nothing on upgrade. Check any agent step that relied on the per-step web search toggle, or that set max steps above 50, since those now follow the platform and the server ceiling.
-
-#### The container no longer bundles PM2 — crashes exit the container
-
-The Docker image used to run the app and worker under PM2, which restarted a crashed process *inside* the container. PM2 is removed; the entrypoint now launches the processes with plain `node`. When a process crashes (or is OOM-killed), the container exits instead of silently recycling the process in place, and your orchestrator restarts it.
-
-#### What you need to do
-
-Nothing if you deploy with Docker Compose, Kubernetes/Helm, or any orchestrator that already restarts failed containers (all official deployments do). If you run the image with a bare `docker run` and relied on PM2 to keep the container alive across process crashes, add a restart policy: `docker run --restart unless-stopped ...`.
+Nothing, unless you want to keep the warm-up behaviour of 0.86.2 through 0.88.4. Set `AP_PREWARM_CACHE_ON_STARTUP=true` on your worker containers to restore it — recommended only if your instance has a modest number of enabled flows and your workers have memory headroom. See [Environment Variables](/install/reference/environment-variables) for details.
 
 #### The Microsoft Teams Bot piece no longer needs a server-side installation record
 
@@ -133,6 +336,71 @@ If you already have a flow using **Microsoft Teams Bot** piece version `0.0.2`, 
 
 Optionally repoint the **Messaging endpoint** on your Azure Bot resource from `/api/v1/teams-bot/webhook` to `/api/v1/app-events/microsoft-teams-bot`; an endpoint left on the old path returns 404 and is otherwise harmless. If you call `/v1/teams-bot/send` directly from your own code, switch to the piece's **Send Channel Message as Bot** action.
 
+#### Brevo's Create or Update Contact stops clearing blacklist flags and attributes it was not given
+
+Four changes to the Brevo (formerly Sendinblue) piece's Create or Update Contact action alter what an existing, unchanged step does.
+
+The action used to strip every falsy value from the request before sending it, so `Email Blacklisted` and `SMS Blacklisted` could be switched on but never switched back off — the `false` was dropped and the contact stayed blacklisted with no error. Those flags are now sent when you set them, and neither checkbox defaults to off any more, so a checkbox you never touched is omitted from the request instead of quietly un-blacklisting the contact on every run.
+
+The `Attributes` field used to come pre-filled with nine empty values (`FIRST_NAME`, `LAST_NAME`, `SMS`, `CIV`, `DOB`, `ADDRESS`, `ZIP_CODE`, `CITY`, `AREA`). Because they were sent on every call, running the step overwrote whatever those attributes held in Brevo with empty strings. The default is removed, and only the attributes you list are written.
+
+`List IDs` was a free-text list of numbers and is now a dropdown of the lists in your account. A stored numeric id is still sent exactly as before, so existing steps keep working unchanged.
+
+The `SMTP Blacklist Sender` checkbox is replaced by a `Blocked Sender Addresses` list. Brevo expects a list of sender email addresses here, not a true or false, and rejects a boolean outright with *"Invalid smtpBlacklistSender format"* — so ticking that checkbox always failed the step, and leaving it clear did nothing at all. The field never worked. It is now a list of addresses, which Brevo accepts, and any value your step already had is ignored rather than sent.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no existing step stops working. Review any flow whose Create or Update Contact step relied on the old behaviour: a step that was silently wiping attributes will now leave them intact, and a step you were relying on to blacklist contacts must have the checkbox explicitly ticked. To block a sender for a contact, list that sender's address in `Blocked Sender Addresses` — it must be an active sender in your Brevo account, or Brevo answers *"One of the sender is invalid or inactive"*.
+
+#### A Run Agent step whose turn dies now fails its flow run
+
+A Run Agent step whose turn died — no AI provider configured for the chosen vendor, a revoked API key, a model the provider no longer serves — used to report success. The step returned the failed agent result rather than raising it, so the step read SUCCEEDED, the run completed SUCCEEDED, and later steps acted on a payload that carried the failure inside it. Such a run is now FAILED, and the agent's error message is the step's error.
+
+Two cases are deliberately unaffected, because the agent did produce usable output:
+
+- A turn that finished but had a single tool call error. The agent may have recovered from it and reported on it, so those runs keep succeeding exactly as before.
+- A turn that was cut short by the output limit or the run's usage budget. It still returns the work it completed, and the flow still continues.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable. Two things to check if either applies to you. If a flow relied on continuing past a dead agent step, tick **Continue on failure** on that step — it now takes effect, where previously the step never failed for it to apply to. If a flow branches on the agent result (a Router reading the step's `status`), that branch no longer runs when the turn dies, because the step raises instead of returning; move that handling onto the step's failure path.
+
+If you alert on run status, expect agent flows that were silently completing on a misconfigured provider to start showing as failed. That is the misconfiguration surfacing, not new breakage.
+
+#### `AP_FLOW_TIMEOUT_SECONDS` now also bounds a single action run
+
+An action run — an agent's configured piece tool, a chat action, or MCP `ap_run_action` — used to be capped at a hardcoded 120 seconds, and a flow run started as an MCP tool at a hardcoded 300 seconds. Neither could be changed. Any agent tool whose action took longer than a minute failed outright with `RPC [executePieceTool] failed (timeout: 60000ms)`, because a second hardcoded limit in the worker cut it off first.
+
+Both hardcoded limits are gone. All of them now follow `AP_FLOW_TIMEOUT_SECONDS`, the same setting that bounds a flow run, which defaults to 600 seconds. An action run therefore gets the same budget as a flow step.
+
+The limit going up is the change to be aware of: a slow or hung action now occupies a worker slot for up to `AP_FLOW_TIMEOUT_SECONDS` instead of 120 seconds, and action runs are not covered by the per-project concurrency limiter. On a small worker pool, several slow actions can hold execution capacity for longer than they used to.
+
+#### What you need to do
+
+Nothing to configure or migrate, and no new environment variable — a default installation gets the fix with no action. Two things to consider if they apply to you. If you raised `AP_FLOW_TIMEOUT_SECONDS` for long flows, note that agent tools, chat actions and MCP action runs now inherit that same ceiling; lower it if you do not want them held that long. If you put Activepieces behind a reverse proxy and use MCP `ap_run_action`, an action that runs past the proxy's read timeout (nginx defaults to 60 seconds, Cloudflare to 100) returns a gateway error to the MCP client while the action keeps running — raise `proxy_read_timeout` if you rely on long action runs over MCP.
+
+#### Sign-up addresses are checked with ZeroBounce instead of a bundled blocklist
+
+The bundled list of disposable-email domains introduced in 0.88.2 is gone. Sign-up now asks ZeroBounce about the address, on every password sign-up and on the emailed-code path only when the address has no account yet, and refuses it when ZeroBounce reports it as disposable, a spam trap, abusive, or on a global suppression list. The refusal is silent, so the response looks the same as a successful one. When ZeroBounce cannot be reached, or the key is invalid or out of credits, the address is let through and the reason is logged.
+
+The check runs only when `AP_ZEROBOUNCE_API_KEY` is set. `AP_ALLOW_DISPOSABLE_EMAILS` is removed; the key is the switch. An instance without a key accepts throwaway addresses again, as it did before 0.88.2.
+
+#### What you need to do
+
+Nothing, unless you relied on the 0.88.2 blocklist to keep throwaway addresses out. To keep refusing them, create a ZeroBounce account and set `AP_ZEROBOUNCE_API_KEY` on the app container. Remove `AP_ALLOW_DISPOSABLE_EMAILS` from your configuration if you set it; it is ignored. See [Environment Variables](/install/reference/environment-variables).
+
+## 0.88.2
+
+### What has changed?
+
+#### The container no longer bundles PM2 — crashes exit the container
+
+The Docker image used to run the app and worker under PM2, which restarted a crashed process *inside* the container. PM2 is removed; the entrypoint now launches the processes with plain `node`. When a process crashes (or is OOM-killed), the container exits instead of silently recycling the process in place, and your orchestrator restarts it.
+
+#### What you need to do
+
+Nothing if you deploy with Docker Compose, Kubernetes/Helm, or any orchestrator that already restarts failed containers (all official deployments do). If you run the image with a bare `docker run` and relied on PM2 to keep the container alive across process crashes, add a restart policy: `docker run --restart unless-stopped ...`.
+
 #### Table record filters compare date columns chronologically
 
 The `gt`, `gte`, `lt` and `lte` operators on `GET /v1/records` used to parse every cell value as a number. On a Date column that meant `2026-08-12T14:30:00Z` was read as `2026`, so two dates in the same year always compared equal and a range filter matched nothing. Those four operators now compare Date and Date & Time columns as instants.
@@ -143,35 +411,40 @@ This affects the Tables piece's Find Records action and any direct API call that
 
 Nothing on upgrade. Re-check any flow or API integration that filters a Date column with `gt`, `gte`, `lt` or `lte` — it now returns the rows the filter actually describes, which may be more or fewer than before.
 
-#### A failed run on a synchronous webhook answers with 500 instead of 408 after the full timeout
+#### Official piece bundles are served from npm again by default
 
-A `/sync` webhook call whose flow run fails used to hold the connection open for the whole `AP_WEBHOOK_TIMEOUT_SECONDS` (30 seconds by default) and then answer `408 Request Timeout` with an empty body, no matter how quickly the run had actually failed. Nothing reported a terminal run status back to the waiting request, so the caller only ever saw the timeout fallback.
-
-A run that ends in `FAILED`, `INTERNAL_ERROR`, `TIMEOUT`, `MEMORY_LIMIT_EXCEEDED` or `LOG_SIZE_EXCEEDED` now answers immediately with `500` and a body of `{"message": "The flow has failed and there is no response returned"}`. For `FAILED`, `INTERNAL_ERROR` and `MEMORY_LIMIT_EXCEEDED` this restores the behaviour from before 0.80.0, where they answered `500` (`TIMEOUT` answered `504` then; it is `500` now, like the rest). `LOG_SIZE_EXCEEDED` never had a response of its own in any earlier release, so it gains one here.
-
-Between 0.80.0 and 0.85.x the same failures answered `204 No Content` rather than `408`, which many HTTP clients read as success. If you integrated against an Activepieces in that range and concluded a synchronous webhook "returns 204 when it fails", that is the behaviour being replaced.
-
-Two cases are deliberately unchanged. A run that succeeds without reaching a Return Response step still waits out the timeout and answers `408`, exactly as it did before 0.80.0. A run blocked on credits still answers `402` before it starts.
+`AP_USE_CDN_FOR_BUNDLES` goes back to defaulting to `false`, reversing the change in 0.87.0. Official piece bundles are downloaded from `registry.npmjs.org` instead of `cdn.activepieces.com`. When the flag is switched on, the CDN serves the repackaged, self-contained tarballs from `https://cdn.activepieces.com/pieces/bundled/`. The same release stops mirroring bundles into your own S3 bucket: a bundle that was copied there is no longer served from it, and every download goes to npm or the CDN.
 
 #### What you need to do
 
-Nothing to configure or migrate. If you have a caller or reverse proxy that treats `408` as the signal for a failed synchronous flow, or retry logic keyed on `408`, switch it to `5xx` — a failed run no longer produces a `408`, and the reply now arrives in seconds rather than after the timeout.
+If your network policy restricts outbound traffic, allow `registry.npmjs.org`: it is the default source, and it stays the fallback for any bundle the CDN does not have even when `AP_USE_CDN_FOR_BUNDLES=true`. Set the flag to `true` to prefer the CDN, and allow `cdn.activepieces.com` as well in that case. Otherwise nothing.
 
-#### AWS connections using the IAM Role / OIDC method are now verified against AWS before they save
+#### MCP OAuth: revoking a token requires a client identity, and registration issues a usable secret
 
-Saving an AWS connection (Bedrock, S3, Secrets Manager) with the **IAM Role / OIDC** method previously only checked that the Role ARN was well formed, so any well-formed ARN saved with status "Connected" even when the role did not exist or could not be assumed. The connection now performs the same `sts:AssumeRoleWithWebIdentity` call the flow makes at runtime, and the save fails with the AWS error when the role cannot be assumed.
+Two changes to the MCP OAuth endpoints:
 
-Two consequences. A connection that was accepted before is now rejected if its IAM OIDC provider, trust policy, or `AP_FRONTEND_URL` issuer is not set up correctly. And because the save now calls AWS, an instance with no outbound access to `sts.<region>.amazonaws.com` cannot create these connections at all.
-
-The region on these connections is also validated against the AWS region format at both save time and every flow step (the region flows into the STS endpoint hostname, so the check is enforced everywhere it is used). The STS call now times out after 10 seconds instead of waiting for the job timeout.
+- `POST /revoke` used to revoke a refresh token for a caller that presented no client identity at all, so anyone who learned a refresh token could disconnect its owner. It now requires the request to identify the client, and a confidential client to authenticate, per RFC 7009. A revocation that sends only `token` now returns `400 invalid_client`.
+- Dynamic client registration (`POST /register`) that omits `token_endpoint_auth_method` now records the client as `client_secret_basic` and issues a client secret, per RFC 7591. It previously issued a secret but recorded the client as public, so that secret was never checked. A client registered from now on must present it when calling `/token` and `/revoke`. Concretely: a client that omits `token_endpoint_auth_method` **and** discards the `client_secret` it is handed now gets `400 invalid_client` at `/token`, where it previously succeeded. Such a client must either store and send that secret, or register explicitly with `token_endpoint_auth_method: "none"` to stay public.
 
 #### What you need to do
 
-Only if you use the IAM Role / OIDC method on an AWS piece. Allow outbound HTTPS to `sts.<region>.amazonaws.com` from the machine running the worker, and make sure `AP_FRONTEND_URL` matches the Provider URL of your IAM OIDC identity provider, since the issuer in the signed token is derived from it. Existing saved connections keep working and are not revalidated automatically — pressing **Recheck** on a connection whose trust policy is wrong will now move it to an error state, which reflects what already happens when a flow runs.
+Nothing for already-connected clients. A client's authentication method is read from the row it registered with, so existing registrations are untouched, including the ones created before this fix that hold a secret while recorded as public. Those keep working whether or not they send it.
 
-## 0.88.2
+Claude, Cursor and anything else built on the MCP SDK are unaffected: the SDK stores and sends the `client_secret` it is given, and it never calls the revocation endpoint. A confidential client's secret is accepted from either the request body or the `Authorization: Basic` header, so a client is never rejected for choosing one over the other.
 
-### What has changed?
+If you maintain your own MCP OAuth client, check two things before upgrading: that it sends `client_id` when it revokes a token, and that it stores and presents the `client_secret` that `/register` returns. Note that disconnecting and re-adding an MCP server creates a fresh registration, so an existing user meets the new behaviour when they reconnect rather than at upgrade.
+
+#### Disposable email addresses can no longer sign up
+
+Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
+
+#### What you need to do
+
+Only if your members sign up with addresses from a disposable email provider. On 0.88.2 through 0.88.4, set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
+
+<Note>
+Superseded in 0.89.0: the bundled blocklist was replaced by a ZeroBounce check that runs only when `AP_ZEROBOUNCE_API_KEY` is set, and `AP_ALLOW_DISPOSABLE_EMAILS` is no longer read. See the 0.89.0 entry.
+</Note>
 
 #### Sign-in and sign-up are one screen, and an emailed code signs people in wherever SMTP is configured
 
@@ -215,74 +488,28 @@ Nothing, and no new configuration: the key is derived from a secret your instanc
 
 Rolling back costs at most the codes issued after the deploy: the older build cannot read those, so whoever holds one asks for a fresh code. Nothing is rewritten and nothing is deleted, so no cleanup is needed either way.
 
-#### Front's Attachments field takes files instead of URLs
+## 0.88.0
 
-The Front piece's Send Message, Send Reply, Create Draft and Create Draft Reply actions described `Attachments` as a list of attachment URLs and sent those strings inside a JSON body. Front only accepts attachments on a `multipart/form-data` request, as the bytes of the file, so it took the message and dropped the attachments — HTTP 202, no error, no attachment. The field is now a list of files, the same shape the Gmail and Discord pieces use, and the request is sent as multipart when a message carries attachments.
+### What has changed?
 
-A URL is still all you need to supply: the engine downloads it and hands the piece the resolved file. A step that already holds a file — an earlier download, a trigger's attachment — can be wired straight in. An entry whose file cannot be resolved is skipped rather than failing the send.
+#### Agent steps move from the flow engine to the server
 
-#### What you need to do
+An agent step used to run its loop inside the engine, holding a worker for as long as the agent took. It now pauses the flow, runs on the server, and resumes when the agent finishes. This upgrade rewrites every existing agent step to the new version.
 
-Re-pick the attachment in any Front step that used the field. The stored value is a plain string and the field now holds a file, so it does not carry across. A flow that never set Attachments is unaffected and keeps its JSON request path. Nothing to configure on the server, and no new environment variable.
+The step's inputs and its output shape are unchanged, so anything reading the step's result or its structured output keeps working. Sub-flow, MCP server, knowledge base and piece action tools all run on the new path.
 
-#### A file URL that fails to download is no longer treated as a file
+Two differences are worth knowing before you upgrade:
 
-Any piece property that takes a file also accepts a URL, and the engine buffered whatever came back from that URL without checking the response status. A 4xx or 5xx produced a file named after the URL whose contents were the server's error page, and a piece could not tell that apart from the real thing — an expired signed link became an email with the storage provider's XML error attached. A failed download now fails the step, which is what the streaming path already did.
-
-#### What you need to do
-
-Nothing to configure. A flow that was silently passing on error pages will start failing at that step instead, and the fix is the URL itself — usually a link that has expired or that the instance is not authorized to read.
-
-#### Signing in with an emailed code is now offered on Activepieces Cloud only
-
-`POST /v1/authentication/otp/request` and `POST /v1/authentication/otp/verify` are no longer served on a self-hosted
-instance. They return `404`, and the sign-in card no longer offers the "email me a code" step — it opens on the
-password form instead. Versions 0.88.2 through 0.88.4 did serve them on any edition with SMTP configured.
-`POST /v1/authentication/complete-sign-up` is unaffected and still served everywhere.
-
-A six-digit code is a million possibilities, so what keeps guessing it expensive is the captcha in front of the
-request endpoint. Cloudflare Turnstile is opt-in and unset out of the box, so a self-hosted instance served both
-endpoints with nothing in front of them. Rather than require a Cloudflare account to make a sign-in method safe,
-that method is no longer served where the captcha is not there.
-
-On Cloud the same rule now applies: the routes exist only when both `AP_TURNSTILE_SITE_KEY` and
-`AP_TURNSTILE_SECRET_KEY` are set. Without them the instance starts normally and simply does not offer emailed
-codes. Activepieces Cloud has both configured, so nothing changes for it — the code step stays on the sign-in card
-and accounts that use it keep signing in exactly as before.
+- **Web search is no longer a step setting.** It follows what the platform has configured rather than a per-step toggle. A step that had it switched on keeps working; the stored value is ignored.
+- **Max steps is honoured up to a ceiling.** The value you set still applies, but the server caps a single run at 50 turns. A step configured above that runs 50.
 
 #### What you need to do
 
-Nothing, if your users sign in with a password or with Google — those paths are unchanged, and so are `/sign-up`,
-`/sign-in` and `/switch-platform`.
-
-**If you ran 0.88.2–0.88.4 with SMTP configured, assume some accounts were created through the code flow.** Those
-accounts hold a random password nobody was ever shown, so removing the code flow removes the only way they could
-sign in. There is no reliable marker for them in the database — a verified code deletes its `otp` row — so treat any
-`EMAIL`-provider account whose owner cannot recall setting a password as one of them.
-
-On **Enterprise**, send those users through **Forgot password** once to set a password; that flow needs the same SMTP
-you already have configured.
-
-On **Community** there is no way back in the product. Password reset lives in the enterprise module, which Community
-does not register, so `POST /v1/authn/local/reset-password` is not served — and nothing else writes a password on any
-edition, as there is no change-password endpoint. Do not be misled by the first half of that flow appearing to work:
-`POST /v1/otp` **is** served on Community and answers `204`, but Community sends no OTP email of any type except a
-login code, so no reset mail ever arrives. Set a password for each affected account directly —
-`UPDATE user_identity SET password = '<bcrypt hash>' WHERE email = '…'` — and hand it to its owner over a channel you
-trust, since they cannot change it themselves afterwards. Do this **before** you upgrade if you can, so nobody is
-locked out in between.
-
-If you script or test the sign-in page, note that the emailed-code step is gone and the two endpoints above
-answer `404`.
-
+Nothing on upgrade. Check any agent step that relied on the per-step web search toggle, or that set max steps above 50, since those now follow the platform and the server ceiling.
 
 ## 0.87.0
 
 ### What has changed?
-
-#### Disposable email addresses can no longer sign up
-
-Sign-up now refuses addresses from throwaway providers such as `mailinator.com` and `guerrillamail.com`, on both the emailed-code flow and the password form. Federated sign-in (Google, SAML, JWT), managed authentication and SCIM provisioning are unaffected, since those addresses come from an identity provider you already trust.
 
 #### Plans and credits are now managed by our billing service
 
@@ -300,17 +527,21 @@ When a platform has no credits left, new production runs are recorded with the `
 In the AI piece, picking the Activepieces-provided AI now lists only the named tiers (Fast, Expert, Heavy) rather than the full upstream model catalogue. Existing steps keep running on the model they already have, but that model no longer appears in the dropdown, so re-saving the step moves it onto one of the tiers.
 
 ### Do you need to take action?
-- Only if your members sign up with addresses from a disposable email provider. Set `AP_ALLOW_DISPOSABLE_EMAILS=true` to keep accepting them.
 - Only if you run the Enterprise edition without a license key. Enter your key so your contracted limits apply instead of the free plan's.
 - Only if you call `GET /v1/license-keys/:licenseKey` or `POST /v1/license-keys/verify`. Both are removed — use `POST /v1/platform-billing/activate` instead.
 - Only if you read `SHOW_BILLING_PAGE`, `CAN_BUY_ACTIVE_FLOWS`, `CAN_BUY_AI_CREDITS` or `SHOW_BILLING_LIMITS_ON_SIDEBAR` from `GET /v1/flags`. They no longer exist.
 - Only if a flow uses Activepieces-provided AI on a model outside the Fast/Expert/Heavy tiers. Choose a tier the next time you edit that step.
 - No database action is required. The migration only adds columns and leaves the existing ones in place.
+
 #### Official piece bundles are served from the Activepieces CDN by default
 `AP_USE_CDN_FOR_BUNDLES` now defaults to `true`. When an official piece bundle is not already cached in your own S3 bucket, the engine is redirected to `cdn.activepieces.com` for the tarball instead of `registry.npmjs.org`. If the CDN does not have that piece version, the download falls back to npm automatically, so installs keep working either way. Custom pieces and pieces from a private registry never use the CDN and are unaffected.
 
 ### Do you need to take action?
 - Only if your network policy restricts outbound traffic. Allow `cdn.activepieces.com`, or set `AP_USE_CDN_FOR_BUNDLES=false` to keep serving official bundles from npm.
+
+<Note>
+Reverted in 0.88.2: `AP_USE_CDN_FOR_BUNDLES` defaults to `false` again, so official bundles are served from npm by default. Set it to `true` to opt back into the CDN. The S3 cache mentioned above was removed in the same release.
+</Note>
 
 ## 0.86.0
 
@@ -329,6 +560,10 @@ Each piece is now built into a single self-contained bundle — its own code, th
 The `AP_PRE_WARM_CACHE` environment variable no longer exists. It used to make a worker install pieces into its cache on startup. The worker is now its own sandbox and fills its cache lazily on first use, so the flag has no effect and setting it does nothing. Cache warmth now comes from running long-lived worker replicas rather than an up-front install step.
 
 The up-front install is no longer needed because piece installs are now fast: each piece is a self-contained bundle fetched as a single file. If you have S3 enabled, official piece bundles are cached to your S3 bucket on first use and served from there via signed links — so when your bucket is co-located in the same region as your workers, subsequent installs are a low-latency download from a nearby object store instead of a registry round-trip.
+
+<Note>
+Removed in 0.88.2: bundles are no longer mirrored into your S3 bucket. Every download goes to npm or, with `AP_USE_CDN_FOR_BUNDLES=true`, to the CDN.
+</Note>
 
 ### Do you need to take action?
 - Only if you set up Google SSO from the admin panel. Move your Google OAuth2 credentials into the `AP_GOOGLE_CLIENT_ID` and `AP_GOOGLE_CLIENT_SECRET` environment variables.

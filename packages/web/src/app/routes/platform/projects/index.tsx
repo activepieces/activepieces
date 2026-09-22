@@ -9,13 +9,15 @@ import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Item,
   ItemMedia,
@@ -23,9 +25,7 @@ import {
   ItemTitle,
   ItemDescription,
   ItemActions,
-} from '@/components/custom/item';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -345,6 +345,7 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
+                    sensitive: row.sensitive,
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);

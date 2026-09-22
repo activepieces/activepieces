@@ -10,6 +10,13 @@ ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     REDISMS_VERSION=7.4.2
 
+# bullseye LTS ended 2026-08-31: deb.debian.org's index and pool now drift (404s on fetch), and
+# archive.debian.org has not picked bullseye up yet. Pin apt to a dated snapshot.debian.org
+# mirror (frozen, so Release files expire — hence Check-Valid-Until off) until the base image
+# moves to bookworm.
+RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bullseye main\ndeb http://snapshot.debian.org/archive/debian-security/20260825T000000Z bullseye-security main\n' > /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99snapshot
+
 # Install all system dependencies in a single layer. No apt cache mounts: docker-clean in the
 # node base image wipes /var/cache/apt anyway, and a persisted /var/lib/apt/lists goes stale
 # against rotated bullseye-security packages, failing the build with hash/size fetch errors.
@@ -44,6 +51,20 @@ RUN export ARCH=$(uname -m) && \
     rm -rf bun.zip bun-* && \
     bun --version
 
+# Download deno (the code-sandbox runtime) — pinned to match the `deno` npm dep.
+# The forked engine resolves it via AP_DENO_PATH, so no PATH lookup is needed.
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-x86_64-unknown-linux-gnu.zip -o deno.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/denoland/deno/releases/download/v2.9.3/deno-aarch64-unknown-linux-gnu.zip -o deno.zip; \
+    fi && \
+    unzip deno.zip -d /usr/local/bin && \
+    chmod +x /usr/local/bin/deno && \
+    rm -f deno.zip && \
+    deno --version
+ENV AP_DENO_PATH=/usr/local/bin/deno
+
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
@@ -53,7 +74,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 # Install isolated-vm globally (needed for sandboxes)
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    cd /usr/src && bun install isolated-vm@6.0.2
+    cd /usr/src && bun install isolated-vm@6.2.0
 
 ### STAGE 1: Build ###
 FROM base AS build
@@ -72,7 +93,7 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 COPY . .
 
 # Build frontend, engine, server API, and worker
-RUN npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
+RUN NODE_OPTIONS=--max-old-space-size=4096 npx turbo run build --filter=web --filter=@activepieces/engine --filter=api --filter=worker
 
 # The web build emits hidden source maps (vite build.sourcemap='hidden') used to
 # symbolicate production stack traces in Sentry/BetterStack error tracking. Upload

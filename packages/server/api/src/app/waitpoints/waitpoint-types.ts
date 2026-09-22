@@ -4,6 +4,7 @@ import { BarrierPolicy, BarrierSignalStatus, FlowRunStatus, PauseType, RespondRe
 enum WaitpointStatus {
     PENDING = 'PENDING',
     COMPLETED = 'COMPLETED',
+    CONSUMED = 'CONSUMED',
 }
 
 enum WaitpointVersionEnum {
@@ -91,6 +92,7 @@ type HandleResumeSignalParams = {
 
 type FindPendingByVersionParams = {
     flowRunId: ApId
+    projectId: ApId
     version: WaitpointVersion
 }
 

@@ -16,19 +16,29 @@ import { foldersApi } from '@/features/folders/api/folders-api';
 import { tablesApi } from '@/features/tables/api/tables-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { AutomationsFilters, FolderContent } from '../lib/types';
+import {
+  AutomationsFilters,
+  AutomationsSort,
+  FolderContent,
+} from '../lib/types';
 import {
   buildFilteredTreeItems,
   buildTreeItems,
   DEFAULT_PAGE_SIZE,
   FOLDER_PAGE_SIZE,
   hasNonFolderFilters,
+  ROOT_ITEMS_LIMIT,
 } from '../lib/utils';
 
-export function useAutomationsData(
-  filters: AutomationsFilters,
-  pinnedList?: string[],
-) {
+export function useAutomationsData({
+  filters,
+  pinnedList,
+  sort,
+}: {
+  filters: AutomationsFilters;
+  pinnedList?: string[];
+  sort: AutomationsSort;
+}) {
   const { projectId: projectIdFromUrl } = useParams<{ projectId: string }>();
   const projectId = projectIdFromUrl ?? authenticationSession.getProjectId()!;
   const queryClient = useQueryClient();
@@ -54,17 +64,23 @@ export function useAutomationsData(
 
   const folderIds = foldersQuery.data?.map((f) => f.id).join(',') ?? '';
 
+  const hasConnectionFilter = filters.connectionFilter.length > 0;
+  const skipFlows =
+    filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
+  const skipTables =
+    (filters.typeFilter.length > 0 && !filters.typeFilter.includes('table')) ||
+    hasConnectionFilter;
+
   const folderCounts = useMemo(() => {
     const folders = foldersQuery.data ?? [];
     return new Map(
       folders.map((folder) => [
         folder.id,
-        hideTables
-          ? folder.numberOfFlows
-          : folder.numberOfFlows + folder.numberOfTables,
+        (skipFlows ? 0 : folder.numberOfFlows) +
+          (hideTables || skipTables ? 0 : folder.numberOfTables),
       ]),
     );
-  }, [foldersQuery.data, hideTables]);
+  }, [foldersQuery.data, hideTables, skipFlows, skipTables]);
 
   const folderContentsQuery = useQuery<FolderContentsMap>({
     queryKey: ['all-folder-contents', projectId, folderIds, hideTables],
@@ -94,28 +110,24 @@ export function useAutomationsData(
     refetchOnMount: 'always',
   });
 
-  const skipFlows =
-    filters.typeFilter.length > 0 && !filters.typeFilter.includes('flow');
-  const skipTables =
-    filters.typeFilter.length > 0 && !filters.typeFilter.includes('table');
-
   const rootFlowsQuery = useQuery({
-    queryKey: ['root-flows', projectId, filters],
+    queryKey: ['root-flows', projectId, filters, sort],
     queryFn: () =>
       flowsApi.list({
         projectId,
         folderId: isFiltered ? undefined : UncategorizedFolderId,
-        limit: 1000,
+        limit: ROOT_ITEMS_LIMIT,
         cursor: undefined,
         name: filters.searchTerm || undefined,
         status:
           filters.statusFilter.length > 0
             ? (filters.statusFilter as FlowStatus[])
             : undefined,
-        connectionExternalIds:
-          filters.connectionFilter.length > 0
-            ? filters.connectionFilter
-            : undefined,
+        connectionExternalIds: hasConnectionFilter
+          ? filters.connectionFilter
+          : undefined,
+        sortBy: sort === 'default' ? undefined : 'NAME',
+        order: sortOrder(sort),
       }),
     enabled: !skipFlows,
     staleTime: STALE_TIME,
@@ -123,14 +135,16 @@ export function useAutomationsData(
   });
 
   const rootTablesQuery = useQuery({
-    queryKey: ['root-tables', projectId, filters],
+    queryKey: ['root-tables', projectId, filters, sort],
     queryFn: () =>
       tablesApi.list({
         projectId,
         folderId: isFiltered ? undefined : UncategorizedFolderId,
-        limit: 1000,
+        limit: ROOT_ITEMS_LIMIT,
         cursor: undefined,
         name: filters.searchTerm || undefined,
+        sortBy: sort === 'default' ? undefined : 'NAME',
+        order: sortOrder(sort),
       }),
     enabled: !skipTables && !hideTables,
     staleTime: STALE_TIME,
@@ -180,7 +194,20 @@ export function useAutomationsData(
     let folders = foldersQuery.data ?? [];
     let rootFlows = rootFlowsQuery.data?.data ?? [];
     let rootTables = rootTablesQuery.data?.data ?? [];
-    const folderContents = folderContentsQuery.data ?? new Map();
+    const folderContents = filterFolderContents({
+      folderContents: folderContentsQuery.data ?? new Map(),
+      skipFlows,
+      skipTables,
+      connectionFilter: filters.connectionFilter,
+    });
+    const effectiveFolderCounts = hasConnectionFilter
+      ? new Map(
+          [...folderContents].map(([folderId, content]) => [
+            folderId,
+            content.flows.length + content.tables.length,
+          ]),
+        )
+      : folderCounts;
 
     const hasFolderFilter = filters.folderFilter.length > 0;
 
@@ -195,18 +222,19 @@ export function useAutomationsData(
         );
       }
 
-      const { items, totalItems } = buildFilteredTreeItems(
-        rootFlows,
-        rootTables,
+      const { items, totalItems } = buildFilteredTreeItems({
+        flows: rootFlows,
+        tables: rootTables,
         folders,
         folderVisibleCounts,
-        rootPage,
+        page: rootPage,
         pageSize,
         pinnedList,
-        filters.searchTerm,
+        searchTerm: filters.searchTerm,
         folderContents,
-        folderCounts,
-      );
+        folderCounts: effectiveFolderCounts,
+        sort,
+      });
       return { treeItems: items, totalPageItems: totalItems };
     }
 
@@ -217,7 +245,7 @@ export function useAutomationsData(
       rootTables = [];
     }
 
-    const { items, totalRootItems } = buildTreeItems(
+    const { items, totalRootItems } = buildTreeItems({
       folders,
       rootFlows,
       rootTables,
@@ -227,7 +255,8 @@ export function useAutomationsData(
       rootPage,
       pageSize,
       pinnedList,
-    );
+      sort,
+    });
 
     return { treeItems: items, totalPageItems: totalRootItems };
   }, [
@@ -242,7 +271,12 @@ export function useAutomationsData(
     isFiltered,
     filters.searchTerm,
     filters.folderFilter,
+    filters.connectionFilter,
+    hasConnectionFilter,
     pinnedList,
+    sort,
+    skipFlows,
+    skipTables,
   ]);
 
   const hasFolderFilter = filters.folderFilter.length > 0;
@@ -316,6 +350,17 @@ export function useAutomationsData(
   };
 }
 
+function sortOrder(sort: AutomationsSort): 'ASC' | 'DESC' | undefined {
+  switch (sort) {
+    case 'name-asc':
+      return 'ASC';
+    case 'name-desc':
+      return 'DESC';
+    case 'default':
+      return undefined;
+  }
+}
+
 type FolderContentsMap = Map<string, FolderContent>;
 
 function buildFolderContentsMap(
@@ -337,6 +382,37 @@ function buildFolderContentsMap(
     }
   });
   return map;
+}
+
+function filterFolderContents({
+  folderContents,
+  skipFlows,
+  skipTables,
+  connectionFilter,
+}: {
+  folderContents: FolderContentsMap;
+  skipFlows: boolean;
+  skipTables: boolean;
+  connectionFilter: string[];
+}): FolderContentsMap {
+  if (!skipFlows && !skipTables && connectionFilter.length === 0) {
+    return folderContents;
+  }
+  const connectionSet = new Set(connectionFilter);
+  const keepFlow = (flow: PopulatedFlow) =>
+    connectionSet.size === 0 ||
+    flow.version.connectionIds.some((connectionId) =>
+      connectionSet.has(connectionId),
+    );
+  return new Map(
+    [...folderContents].map(([folderId, content]) => [
+      folderId,
+      {
+        flows: skipFlows ? [] : content.flows.filter(keepFlow),
+        tables: skipTables ? [] : content.tables,
+      },
+    ]),
+  );
 }
 
 function emptyTablePage(): SeekPage<Table> {

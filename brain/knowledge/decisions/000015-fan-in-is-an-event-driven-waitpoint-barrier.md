@@ -14,7 +14,7 @@ producer's ordinal), nullable `label` (the human name in the summary) and a smal
 Release is an **unconditional floor rule**: a sealed barrier releases once no signal is still `PENDING`. No
 configuration can produce a hang; `policy` only ever releases *sooner* — `requiredSuccesses` (K-of-N
 approvals) and `releaseOnFirstFailure` (veto). Evaluation is a coalesced `BarrierJobName.EVALUATE` job on a
-dedicated `BARRIER_JOBS` queue, deduplicated on the barrier id, owned by the waitpoints module. Counts are
+dedicated `BARRIER_EVALUATION` queue, deduplicated on the barrier id, owned by the waitpoints module. Counts are
 taken once, from a single `GROUP BY status`, and handed to a pure predicate. Signals are deleted on release,
 in the same transaction that completes the waitpoint — summary first, then complete, then delete.
 
@@ -51,7 +51,7 @@ all, purely because child rows appear later than the dispatch that created them.
   already returns the ceiling, and a shorter deadline is a `policy` input, so both are known at create.
 - **Evaluation must be coalesced, and coalescing must not swallow its own last signal.** At 10 000 signals,
   evaluating per signal is ~100M row reads. BullMQ holds a deduplication key while the job is queued *and*
-  active, so the handler's **first statement** is `clearEvaluationDeduplication`, and every producer commits
+  active, so the handler's **first statement** is `clearEvaluationDedupKey`, and every producer commits
   its signal row **before** enqueuing. Otherwise the final signal lands while the job meant to see it is
   already running, its enqueue is dropped as a duplicate, and the barrier waits out its deadline holding a
   run that was ready to resume.
@@ -61,6 +61,31 @@ all, purely because child rows appear later than the dispatch that created them.
   `shouldReleaseBarrier({ policy, sealed, counts })` takes counts rather than issuing its own queries, so one
   `GROUP BY status` replaces up to three round-trips and the policy matrix is unit-testable without a
   database.
+- **Identity is path-keyed, and that needed no new column.** The engine sends `loop_1:3/loop_2:0/approval`
+  in the existing `stepName` field, which is only ever an identity key inside `waitpoint-service`. Which
+  fixes a live bug on the way past: a delay or approval **inside a loop** used to reuse one waitpoint row
+  across every iteration, so iteration 2 found iteration 1's COMPLETED row in `createForPause`'s
+  pre-completed check and skipped its pause entirely.
+- **Two per-run waitpoint reads stopped being sound and were fixed here.** `getByFlowRunId` became
+  `findCompletedWaitpointIfRunIsIdle` — **null when any PENDING row exists for the run**, else the newest COMPLETED
+  one — because per-iteration rows mean a run can hold a COMPLETED leftover *and* an open PENDING pause at
+  once, and both callers delete the row they find and enqueue a resume. `findNonFanInByFlowRunId` became
+  `findSubflowWaitpoint` and prefers PENDING, newest first. `findPendingByVersion` is **still** unsound
+  for parallel branches; nothing here creates that case.
+- **The resume guards moved to the entry point rather than becoming a flag.** `resumeFromWaitpoint`
+  **refuses barriers, always** — by addressed waitpoint type, or, on the by-run legacy routes, by "does this
+  run hold any PENDING barrier". Every unscoped route goes through it, so there is no `false` to forget and
+  no parameter to default wrong. What the guard is *not* is structural: `resumeTrusted` and
+  `resumeTrustedWithoutLock` are ordinary public members of `resumeService`, one `if` away from the guard
+  they skip. `flow-runs-queue`'s pre-completed recovery calls the unlocked variant from outside the module,
+  so a module-private `resumeTrusted` would not have worked as written. Treated as acceptable because the
+  reachable surface — the HTTP routes — is closed; if a third caller appears, make the boundary real rather
+  than adding a second convention.
+- **`release` is what happens to a barrier; `resume` is what happens to a run.** The two verbs sit one layer
+  apart — `barrierService.release` closes the barrier, then asks `resumeService` to resume the run — so a
+  `resumeService.releaseBarrier` named the wrong layer and hid that the same method also serves plain `DELAY`
+  and `WEBHOOK` waitpoints, which is exactly what `flow-runs-queue` calls it for. It is `resumeTrusted`:
+  resume, skipping the barrier guard, because the caller is internal rather than an HTTP route.
 - **An external actor never addresses the waitpoint.** Their link carries a **signal id** on
   `/v1/flow-runs/:id/signals/:signalId/confirm` — in the path, not the query string, because `resumePayload`
   is built from `{ body, headers, queryParams }` and persisted with the run. The link must never carry
@@ -76,7 +101,7 @@ all, purely because child rows appear later than the dispatch that created them.
 - **The machinery ships able to carry K-of-N approvals; no approval piece is rewired yet.** Per-signal links
   and `reasonRequiredOn` exist now because retrofitting them means another migration.
 - **`policy` carries no deadline override.** The plan allowed "or the policy's shorter value"; nothing
-  produces one, so `resolveDeadline()` is `now + AP_PAUSED_FLOW_TIMEOUT_DAYS` and takes no arguments. Add the
+  produces one, so `defaultBarrierDeadline()` is `now + AP_PAUSED_FLOW_TIMEOUT_DAYS` and takes no arguments. Add the
   field when a caller for it exists, not before.
 - **The 2 000-character reason bound stays a handler check, not a request schema.** The confirm route is
   `app.all` serving an HTML form: a Zod `body` schema would also apply to the GET that renders the page, and

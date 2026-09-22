@@ -1,0 +1,253 @@
+import type { ChildProcessWithoutNullStreams } from 'node:child_process'
+import { nanoid } from 'nanoid'
+import { sandboxError, SandboxErrorPayload } from './sandbox-error'
+
+export const deno = {
+    /**
+     * Runs a program body in a one-shot Deno process. The body must assign its
+     * output to a `result` variable. Resolves with the result, or rejects with
+     * an Error carrying the process stdout/stderr.
+     */
+    async run({ body, permissions, cwd, memoryLimitMb = DEFAULT_MEMORY_LIMIT_MB, allowReadPaths = [], resolveNodeModules = false, env = {}, denoDirBase }: DenoProgramParams): Promise<unknown> {
+        const marker = newResultMarker()
+        const { child, denoPath, denoDir } = await spawnDeno({ entry: '-', permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase })
+        child.stdin.end(buildRunProgram({ body, marker }))
+
+        return new Promise((resolve, reject) => {
+            let capturedStdout = ''
+            let capturedStderr = ''
+            let settled = false
+
+            child.stdout.on('data', (data: Buffer) => {
+                capturedStdout += data.toString()
+            })
+
+            child.stderr.on('data', (data: Buffer) => {
+                const text = data.toString()
+                capturedStderr += text
+                console.error(text.trimEnd())
+            })
+
+            child.on('close', (code, signal) => {
+                void removeDenoDir(denoDir)
+                if (settled) {
+                    return
+                }
+                settled = true
+
+                const { userOutput, resultJson } = extractResult(capturedStdout, marker)
+                if (userOutput.trim()) {
+                    console.log(userOutput.trimEnd())
+                }
+
+                if (resultJson === null) {
+                    reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} without returning a result`, stdout: userOutput, stderr: capturedStderr }))
+                    return
+                }
+
+                let message: DenoResultMessage
+                try {
+                    message = JSON.parse(resultJson)
+                }
+                catch {
+                    reject(sandboxError.build({ error: 'Deno process returned a malformed result', stdout: userOutput, stderr: capturedStderr }))
+                    return
+                }
+
+                if (!message.success) {
+                    reject(sandboxError.build({ error: message.error, stdout: userOutput, stderr: capturedStderr }))
+                }
+                else if (code !== 0) {
+                    // e.g. an unhandled rejection fired after the result was printed — deno exits
+                    // non-zero, so the run must fail even though a success marker exists.
+                    reject(sandboxError.build({ error: `Deno process exited with code ${code} and signal ${signal} after producing a result`, stdout: userOutput, stderr: capturedStderr }))
+                }
+                else {
+                    resolve(message.result)
+                }
+            })
+
+            child.on('error', (error) => {
+                void removeDenoDir(denoDir)
+                if (settled) {
+                    return
+                }
+                settled = true
+                reject(sandboxError.build({ error: `Failed to spawn deno (${denoPath}): ${error.message}`, stdout: capturedStdout, stderr: capturedStderr }))
+            })
+        })
+    },
+
+}
+
+// Loaded lazily so this module stays importable from browser bundles — the
+// barrel re-exports it into web and piece builds, which must never resolve
+// node builtins at load time.
+let nodeApisCache: NodeApis | null = null
+async function getNodeApis(): Promise<NodeApis> {
+    if (nodeApisCache === null) {
+        const [childProcess, os, fs] = await Promise.all([
+            import('node:child_process'),
+            import('node:os'),
+            import('node:fs/promises'),
+        ])
+        nodeApisCache = { childProcess, os, fs }
+    }
+    return nodeApisCache
+}
+
+async function removeDenoDir(denoDir: string): Promise<void> {
+    const { fs } = await getNodeApis()
+    await fs.rm(denoDir, { recursive: true, force: true }).catch(() => undefined)
+}
+
+function newResultMarker(): string {
+    return `__AP_DENO_RESULT_${nanoid()}__` // Random so it's not guessable and potentially printed by user code
+}
+
+async function spawnDeno({ entry, permissions, cwd, memoryLimitMb, allowReadPaths, resolveNodeModules, env, denoDirBase }: SpawnDenoParams): Promise<{ child: ChildProcessWithoutNullStreams, denoPath: string, denoDir: string }> {
+    const { childProcess, os, fs } = await getNodeApis()
+    const denoPath = resolveDenoPath()
+    const denoDir = await fs.mkdtemp(`${denoDirBase ?? os.tmpdir()}/ap-deno-`)
+    const child = childProcess.spawn(denoPath, [
+        'run',
+        '--quiet',
+        '--no-prompt',
+        '--no-config',
+        '--no-lock',
+        '--no-remote',
+        resolveNodeModules ? '--node-modules-dir=manual' : '--no-npm',
+        `--v8-flags=--max-old-space-size=${memoryLimitMb}`,
+        ...toPermissionFlags({ permissions, tmpDir: os.tmpdir() }),
+        ...permissions.includes(DenoPermission.ALL) ? [] : allowReadPaths.map((path) => `--allow-read=${path}`),
+        entry,
+    ], {
+        cwd,
+        env: {
+            PATH: process.env['PATH'] ?? '',
+            ...env,
+            DENO_DIR: denoDir,
+        },
+        stdio: ['pipe', 'pipe', 'pipe'],
+    })
+    return { child, denoPath, denoDir }
+}
+
+function resolveDenoPath(): string {
+    if (process.env['AP_DENO_PATH'] === undefined) {
+        throw new Error('AP_DENO_PATH is not set: point it at the deno binary to run the code sandbox')
+    }
+    return process.env['AP_DENO_PATH']
+}
+
+function toPermissionFlags({ permissions, tmpDir }: { permissions: DenoPermission[], tmpDir: string }): string[] {
+    if (permissions.includes(DenoPermission.ALL)) {
+        return ['-A']
+    }
+    return permissions.flatMap((permission) => {
+        switch (permission) {
+            case DenoPermission.NET:
+                return ['--allow-net']
+            case DenoPermission.ENV:
+                return ['--allow-env']
+            case DenoPermission.RUN:
+                return ['--allow-run']
+            case DenoPermission.SYS:
+                return ['--allow-sys']
+            case DenoPermission.WRITE_TMP:
+                return [`--allow-write=${tmpDir}`]
+            case DenoPermission.READ_TMP:
+                return [`--allow-read=${tmpDir}`]
+            case DenoPermission.ALL:
+            default:
+                return []
+        }
+    })
+}
+
+function buildRunProgram({ body, marker }: { body: string, marker: string }): string {
+    return `
+${sandboxError.payloadSource}
+let settled = false;
+const emit = (payload) => {
+    if (settled) return;
+    settled = true;
+    console.log(${JSON.stringify(marker)} + JSON.stringify(payload));
+};
+globalThis.addEventListener('unhandledrejection', (event) => {
+    event.preventDefault();
+    emit({ success: false, error: toErrorPayload(event.reason) });
+    Deno.exit(1);
+});
+try {
+${body}
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    emit({ success: true, result: result ?? null });
+}
+catch (error) {
+    emit({ success: false, error: toErrorPayload(error) });
+    Deno.exit(1);
+}
+`
+}
+
+function extractResult(stdout: string, marker: string): { userOutput: string, resultJson: string | null } {
+    const idx = stdout.lastIndexOf(marker)
+    if (idx === -1) {
+        return { userOutput: stdout, resultJson: null }
+    }
+    const after = stdout.slice(idx + marker.length)
+    const newline = after.indexOf('\n')
+    const resultJson = newline === -1 ? after : after.slice(0, newline)
+    const trailing = newline === -1 ? '' : after.slice(newline + 1)
+    return { userOutput: stdout.slice(0, idx) + trailing, resultJson }
+}
+
+const DEFAULT_MEMORY_LIMIT_MB = 128
+
+export enum DenoPermission {
+    ALL = 'ALL',
+    NET = 'NET',
+    ENV = 'ENV',
+    RUN = 'RUN',
+    SYS = 'SYS',
+    WRITE_TMP = 'WRITE_TMP',
+    READ_TMP = 'READ_TMP',
+}
+
+type DenoProgramParams = {
+    body: string
+    permissions: DenoPermission[]
+    cwd?: string
+    memoryLimitMb?: number
+    allowReadPaths?: string[]
+    resolveNodeModules?: boolean
+    env?: Record<string, string>
+    denoDirBase?: string
+}
+
+type SpawnDenoParams = {
+    entry: string
+    permissions: DenoPermission[]
+    cwd?: string
+    memoryLimitMb: number
+    allowReadPaths: string[]
+    resolveNodeModules: boolean
+    env: Record<string, string>
+    denoDirBase?: string
+}
+
+type NodeApis = {
+    childProcess: typeof import('node:child_process')
+    os: typeof import('node:os')
+    fs: typeof import('node:fs/promises')
+}
+
+type DenoResultMessage = {
+    success: true
+    result: unknown
+} | {
+    success: false
+    error: SandboxErrorPayload
+}
+

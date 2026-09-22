@@ -45,8 +45,8 @@ export function EmptyState({
 
   if (incognito) {
     return (
-      <div className="flex min-h-full flex-col justify-center pt-8 pb-6">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+      <div className="flex min-h-full flex-col justify-center px-3 pt-8 pb-6 sm:px-6">
+        <div className="max-w-3xl mx-auto w-full">
           <Greeting firstName={firstName} incognito />
         </div>
       </div>
@@ -54,8 +54,8 @@ export function EmptyState({
   }
 
   return (
-    <div className="flex min-h-full flex-col pt-12 sm:pt-16 pb-6">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 w-full">
+    <div className="flex min-h-full flex-col px-3 pt-12 pb-6 sm:px-6 sm:pt-16">
+      <div className="max-w-3xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10">
           <div className="min-w-0 sm:flex-1 sm:max-w-md">
             <Greeting firstName={firstName} incognito={false} />
@@ -325,6 +325,7 @@ function ExampleCards({
               card={card}
               delay={0.15 + i * 0.08}
               onSelect={onSuggestionClick}
+              className="min-w-[150px] flex-1 basis-0"
             />
           ))}
         </CardCarousel>

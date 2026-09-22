@@ -8,7 +8,7 @@ export const clearSheetAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'clear_sheet',
 	classification: 'DESTRUCTIVE',
-	description: 'Clears all rows on an existing sheet.',
+	description: 'Clear every row on a worksheet, keeping the worksheet itself.',
 	audience: 'human',
 	aiMetadata: {
 		description:
@@ -20,8 +20,8 @@ export const clearSheetAction = createAction({
 		...commonProps,
 		is_first_row_headers: isFirstRowHeaderProp(),
 		headerRow: Property.Number({
-			displayName: 'Header Row Number',
-			description: 'Enter the row number where your column headers are located (usually row 1).',
+			displayName: 'Header Row',
+			description: 'The row that contains the column names.',
 			required: true,
 			defaultValue: 1,
 		}),

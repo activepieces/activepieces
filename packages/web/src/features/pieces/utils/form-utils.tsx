@@ -1,5 +1,6 @@
 import {
   Metadata,
+  extractMustacheTokens,
   isNil,
   parseToJsonIfPossible,
 } from '@activepieces/core-utils';
@@ -105,14 +106,36 @@ function parseDynamicValue({
 }: {
   property: PieceProperty;
   value: unknown;
-}): unknown[] | boolean | undefined {
+}): unknown {
   const parsed = parseToJsonIfPossible(value);
+  const isExpression =
+    typeof value === 'string' && extractMustacheTokens(value).length > 0;
   switch (property.type) {
     case PropertyType.MULTI_SELECT_DROPDOWN:
     case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-      return Array.isArray(parsed) ? parsed : undefined;
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+      return isExpression ? value : undefined;
     case PropertyType.CHECKBOX:
-      return typeof parsed === 'boolean' ? parsed : undefined;
+      if (typeof parsed === 'boolean') {
+        return parsed;
+      }
+      return isExpression ? value : undefined;
+    case PropertyType.DROPDOWN:
+    case PropertyType.STATIC_DROPDOWN: {
+      if (typeof value === 'number') {
+        return value;
+      }
+      if (typeof value !== 'string' || value === '') {
+        return undefined;
+      }
+      const restoredJsonStringifiedValue =
+        /^\s*[[{]/.test(value) && parsed !== value;
+      return restoredJsonStringifiedValue ? parsed : value;
+    }
+    case PropertyType.COLOR:
+      return typeof value === 'string' && value !== '' ? value : undefined;
     default:
       return undefined;
   }
@@ -622,9 +645,4 @@ export const formUtils = {
   buildConnectionSchema,
   getDefaultPropertyValue,
   parseDynamicValue,
-};
-
-export type BuildConnectionSchemaOptions = {
-  isGlobalConnection: boolean;
-  showConnectionNameField: boolean;
 };

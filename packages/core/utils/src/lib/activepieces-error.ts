@@ -39,6 +39,7 @@ export type ApErrorParams =
     | JobRemovalFailureErrorParams
     | OpenAiFailedErrorParams
     | PauseMetadataMissingErrorParams
+    | PausedFlowTimeoutExceededParams
     | PermissionDeniedErrorParams
     | QuotaExceededParams
     | FeatureDisabledErrorParams
@@ -85,6 +86,7 @@ export type ApErrorParams =
     | DoesNotMeetBusinessRequirementsParams
     | PieceSyncNotSupportedErrorParams
     | SandboxLogSizeExceededParams
+    | PieceBundleNotAvailableParams
     | SecretManagerConnectionFailedParams
     | SecretManagerGetSecretFailedParams
     | SecretManagerKeyNotSecretParams
@@ -116,6 +118,12 @@ export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EX
     standardOutput: string
     standardError: string
     neverStarted?: boolean
+}>
+
+export type PieceBundleNotAvailableParams = BaseErrorParams<ErrorCode.PIECE_BUNDLE_NOT_AVAILABLE, {
+    pieceName: string
+    pieceVersion: string
+    status: number
 }>
 
 export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
@@ -341,6 +349,11 @@ ErrorCode.PAUSE_METADATA_MISSING,
 Record<string, never>
 >
 
+export type PausedFlowTimeoutExceededParams = BaseErrorParams<ErrorCode.PAUSED_FLOW_TIMEOUT_EXCEEDED, {
+    pauseTimeoutDays: number
+    flowRunId: string
+}>
+
 export type InvalidApiKeyParams = BaseErrorParams<
 ErrorCode.INVALID_API_KEY,
 Record<string, never>
@@ -539,6 +552,7 @@ export enum ErrorCode {
     SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
     SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
     SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
+    PIECE_BUNDLE_NOT_AVAILABLE = 'PIECE_BUNDLE_NOT_AVAILABLE',
     SANDBOX_CAPACITY_EXCEEDED = 'SANDBOX_CAPACITY_EXCEEDED',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
@@ -563,6 +577,7 @@ export enum ErrorCode {
     JOB_REMOVAL_FAILURE = 'JOB_REMOVAL_FAILURE',
     OPEN_AI_FAILED = 'OPEN_AI_FAILED',
     PAUSE_METADATA_MISSING = 'PAUSE_METADATA_MISSING',
+    PAUSED_FLOW_TIMEOUT_EXCEEDED = 'PAUSED_FLOW_TIMEOUT_EXCEEDED',
     PERMISSION_DENIED = 'PERMISSION_DENIED',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
