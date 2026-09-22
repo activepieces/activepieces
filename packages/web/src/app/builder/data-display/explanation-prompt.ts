@@ -1,4 +1,8 @@
-import { FriendlyPieceError, isNil } from '@activepieces/core-utils';
+import {
+  FriendlyPieceError,
+  isNil,
+  tryCatchSync,
+} from '@activepieces/core-utils';
 
 const MAX_BODY_PAYLOAD_CHARS = 4000;
 const MAX_PROPERTY_VALUE_CHARS = 400;
@@ -7,7 +11,8 @@ const REDACTED_PLACEHOLDER = '[REDACTED]';
 const SECRET_KEY_REGEX =
   /^(authorization|cookie|set-cookie|password|new[_-]?password|current[_-]?password|token|access[_-]?token|refresh[_-]?token|id[_-]?token|api[_-]?key|x[_-]?api[_-]?key|secret|client[_-]?secret|private[_-]?key|bearer|x[_-]?auth)$/i;
 
-const URL_SECRET_PARAM_REGEX = /([?&#])([A-Za-z0-9_.-]+)=([^&#\s"'<>\\)\]}]*)/g;
+const URL_SECRET_PARAM_REGEX =
+  /([?&#])([A-Za-z0-9_.%-]+)=([^&#\s"'<>\\)\]}]*)/g;
 
 const URL_USERINFO_REGEX = /([a-z][a-z0-9+.-]*:\/\/)([^/?#\s"'<>@\\]+)@/gi;
 
@@ -42,6 +47,11 @@ const redactSecrets = (value: unknown, depth = 0): unknown => {
   return value;
 };
 
+const decodeParamKey = (key: string): string => {
+  const { data } = tryCatchSync(() => decodeURIComponent(key));
+  return isNil(data) ? key : data;
+};
+
 const redactUrlSecrets = (value: string): string =>
   value
     .replace(
@@ -52,7 +62,7 @@ const redactUrlSecrets = (value: string): string =>
         key: string,
         paramValue: string,
       ): string =>
-        SECRET_KEY_REGEX.test(key) && paramValue.length > 0
+        SECRET_KEY_REGEX.test(decodeParamKey(key)) && paramValue.length > 0
           ? `${delimiter}${key}=${REDACTED_PLACEHOLDER}`
           : match,
     )

@@ -128,6 +128,18 @@ describe('explanationPromptUtils.build - url secrets', () => {
     expect(prompt).not.toContain('SECRET');
   });
 
+  it('redacts a secret param whose name is percent-encoded', () => {
+    const prompt = buildWithUrl('https://example.com/api?api%5Fkey=SECRET');
+
+    expect(prompt).not.toContain('SECRET');
+  });
+
+  it('leaves a param whose name holds a malformed escape untouched', () => {
+    const prompt = buildWithUrl('https://example.com/api?a%ZZb=KEPT');
+
+    expect(prompt).toContain('a%ZZb=KEPT');
+  });
+
   it('redacts a secret in a payload nested deeper than the object walk', () => {
     const prompt = build(
       buildError({
