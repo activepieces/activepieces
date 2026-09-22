@@ -51,6 +51,7 @@ export async function sweepOverdueDeadlines({ log, pageSize, maxPages, maxRedeli
             stopReason: sweep.stopReason,
             deadlineBacklogCarried: !isNil(sweep.resumeFrom),
             barriersEnqueuedCount: redelivery.enqueued,
+            barriersEnqueueFailedCount: redelivery.enqueueFailed,
             barrierBacklogCarried: redelivery.backlogCarried,
         },
     })
@@ -66,27 +67,28 @@ async function redeliverUndeliveredBarriers({ log, maxRedelivered }: RedeliverUn
     })
     if (undelivered.length === 0) {
         await rememberBarrierCursor(undefined)
-        return { enqueued: 0, backlogCarried: false }
+        return { enqueued: 0, enqueueFailed: 0, backlogCarried: false }
     }
     log.warn({
         undeliveredCount: undelivered.length,
         resumedFrom: cursor,
         sample: undelivered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((barrier) => barrier.id),
     }, '[redeliverUndeliveredBarriers] Found barriers closed but never delivered, so the release that closed them died before dispatching; handing each one back to the barrier queue, which owns the retries')
-    const enqueued = await enqueueBarrierEvaluations({ undelivered, log })
+    const { enqueued, enqueueFailed } = await enqueueBarrierEvaluations({ undelivered, log })
     const backlogCarried = undelivered.length >= maxRedelivered
     const resumeFrom = backlogCarried ? toBarrierCursor(undelivered[undelivered.length - 1]) : undefined
     await rememberBarrierCursor(resumeFrom)
     if (!isNil(resumeFrom)) {
         log.warn({
             enqueuedCount: enqueued,
+            enqueueFailedCount: enqueueFailed,
             resumeFrom,
         }, '[redeliverUndeliveredBarriers] Filled the per-tick batch without reaching the end of the undelivered barriers; the next tick carries on past them rather than re-reading the same oldest rows every minute')
     }
-    return { enqueued, backlogCarried }
+    return { enqueued, enqueueFailed, backlogCarried }
 }
 
-async function enqueueBarrierEvaluations({ undelivered, log }: EnqueueBarrierEvaluationsParams): Promise<number> {
+async function enqueueBarrierEvaluations({ undelivered, log }: EnqueueBarrierEvaluationsParams): Promise<EnqueueOutcome> {
     const outcomes = await Promise.all(undelivered.map(async (barrier) => {
         const { error } = await tryCatch(() => barrierQueue(log).enqueueEvaluation({ barrierId: barrier.id, projectId: barrier.projectId }))
         if (!isNil(error)) {
@@ -95,7 +97,8 @@ async function enqueueBarrierEvaluations({ undelivered, log }: EnqueueBarrierEva
         }
         return true
     }))
-    return outcomes.filter(Boolean).length
+    const enqueued = outcomes.filter(Boolean).length
+    return { enqueued, enqueueFailed: outcomes.length - enqueued }
 }
 
 async function findUndeliveredBarriers({ staleBefore, cursor, limit }: FindUndeliveredBarriersParams): Promise<Waitpoint[]> {
@@ -298,7 +301,13 @@ type RedeliverUndeliveredBarriersParams = {
 
 type RedeliveryOutcome = {
     enqueued: number
+    enqueueFailed: number
     backlogCarried: boolean
+}
+
+type EnqueueOutcome = {
+    enqueued: number
+    enqueueFailed: number
 }
 
 type EnqueueBarrierEvaluationsParams = {

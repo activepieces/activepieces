@@ -1,4 +1,5 @@
 import { apId, isNil } from '@activepieces/core-utils'
+import { wideEvent } from '@activepieces/server-utils'
 import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import dayjs from 'dayjs'
@@ -724,6 +725,7 @@ describe('barrier deadline', () => {
                 return realBarrierQueue(log).enqueueEvaluation(params)
             },
         }))
+        const sweepFields = vi.spyOn(wideEvent, 'set')
 
         try {
             await sweepOverdueDeadlines({ log: app.log })
@@ -732,6 +734,12 @@ describe('barrier deadline', () => {
             expect(await countPendingEvaluations({ queue, barrierId: healthy.id })).toBe(1)
             expect(await readStatus(broken.id)).toBe(WaitpointStatus.COMPLETED)
             expect(await readStatus(healthy.id)).toBe(WaitpointStatus.COMPLETED)
+            expect(sweepFields).toHaveBeenCalledWith(expect.objectContaining({
+                waitpointSweep: expect.objectContaining({
+                    barriersEnqueuedCount: 1,
+                    barriersEnqueueFailedCount: 1,
+                }),
+            }))
         }
         finally {
             vi.restoreAllMocks()
