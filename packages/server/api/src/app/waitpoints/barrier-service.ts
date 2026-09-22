@@ -217,6 +217,7 @@ async function redeliverClosedBarrier({ barrier, log }: RedeliverClosedBarrierPa
     }))
     if (!isNil(error)) {
         log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[barrierService#redeliverClosedBarrier] Re-dispatching a closed barrier failed')
+        throw error
     }
 }
 
