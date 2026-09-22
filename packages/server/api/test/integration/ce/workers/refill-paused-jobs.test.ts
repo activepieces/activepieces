@@ -4,8 +4,9 @@ import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { redisConnections } from '../../../../src/app/database/redis-connections'
+import { systemJobIds } from '../../../../src/app/helper/system-jobs/common'
 import { systemJobsSchedule } from '../../../../src/app/helper/system-jobs/system-job'
-import { resumeDelayJobId, waitpointService } from '../../../../src/app/waitpoints/waitpoint-service'
+import { waitpointService } from '../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../src/app/waitpoints/waitpoint-types'
 import { refillPausedRuns } from '../../../../src/app/workers/migrations/refill-paused-jobs'
 import { db } from '../../../helpers/db'
@@ -82,7 +83,7 @@ async function createPendingDelay({ flowRunId, stepName }: { flowRunId: string, 
 
 async function loseScheduledTimers({ waitpointIds }: { waitpointIds: string[] }): Promise<void> {
     for (const waitpointId of waitpointIds) {
-        const job = await systemJobsSchedule(app.log).getJob(resumeDelayJobId(waitpointId))
+        const job = await systemJobsSchedule(app.log).getJob(systemJobIds.resumeDelay({ waitpointId }))
         await job?.remove()
     }
     const redis = await redisConnections.useExisting()
@@ -90,7 +91,7 @@ async function loseScheduledTimers({ waitpointIds }: { waitpointIds: string[] })
 }
 
 async function timerIsArmed({ waitpointId }: { waitpointId: string }): Promise<boolean> {
-    const job = await systemJobsSchedule(app.log).getJob(resumeDelayJobId(waitpointId))
+    const job = await systemJobsSchedule(app.log).getJob(systemJobIds.resumeDelay({ waitpointId }))
     return !isNilJob(job)
 }
 

@@ -3,14 +3,14 @@ import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, Not } from 'typeorm'
+import { z } from 'zod'
 import { repoFactory } from '../core/db/repo-factory'
 import { transaction } from '../core/db/transaction'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
-import { SystemJobName } from '../helper/system-jobs/common'
-import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { WaitpointEntity } from './waitpoint-entity'
+import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { CompleteParams, CompleteResult, CreateForPauseParams, CreateForPauseResult, FindPendingByVersionParams, HandleResumeSignalParams, Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
@@ -63,20 +63,25 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         else {
             log.info({ flowRun: { id: params.flowRunId }, existingStatus: waitpoint.status }, '[waitpointService#createForPause] Waitpoint already exists')
         }
-        if (!isNil(resumeDateTime)) {
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                    data: { flowRunId: params.flowRunId, projectId: params.projectId, waitpointId: waitpoint.id },
-                    jobId: resumeDelayJobId(waitpoint.id),
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(resumeDateTime),
-                },
-            })
+        if (isNil(resumeDateTime)) {
+            return { inserted, waitpoint }
         }
-        return { inserted, waitpoint }
+        const { status } = await waitpointTimeoutJob.schedule({
+            flowRunId: params.flowRunId,
+            projectId: params.projectId,
+            waitpointId: waitpoint.id,
+            resumeDateTime,
+            log,
+        })
+        const revivesDeadLetteredDeadline = status === 'retried' || !isNil(waitpoint.deadLetteredAt)
+        if (!revivesDeadLetteredDeadline) {
+            return { inserted, waitpoint }
+        }
+        await waitpointRepo().update({ id: waitpoint.id, projectId: params.projectId }, { deadLetteredAt: null })
+        if (!isNil(waitpoint.deadLetteredAt)) {
+            log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: params.flowRunId } }, '[waitpointService#createForPause] Re-armed a dead-lettered deadline, so the sweep covers it again')
+        }
+        return { inserted, waitpoint: { ...waitpoint, deadLetteredAt: null } }
     },
 
     async complete(params: CompleteParams): Promise<CompleteResult> {
@@ -135,6 +140,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Waitpoint was already delivered, ignoring')
                 return false
             }
+            await waitpointTimeoutJob.remove({ waitpointId, flowRunId, log })
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Resume triggered')
             return true
         }
@@ -207,20 +213,18 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async delete({ id, projectId }: DeleteWaitpointParams): Promise<void> {
-        await waitpointRepo().delete({ id, projectId })
-        log.info({ waitpoint: { id } }, '[waitpointService#delete] Waitpoint deleted')
-    },
-
     async deleteByFlowRunId({ flowRunId, projectId }: DeleteByFlowRunIdParams): Promise<void> {
-        await waitpointRepo().delete({ flowRunId, projectId })
+        const result = await waitpointRepo()
+            .createQueryBuilder()
+            .delete()
+            .where({ flowRunId, projectId })
+            .returning(['id', 'resumeDateTime'])
+            .execute()
+        const timed = DeletedWaitpointRows.parse(result.raw ?? []).filter((waitpoint) => !isNil(waitpoint.resumeDateTime))
+        await Promise.all(timed.map((waitpoint) => waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })))
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
-
-export function resumeDelayJobId(waitpointId: string): string {
-    return `resume-delay-${waitpointId}`
-}
 
 function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRunId }: ClampWaitpointResumeDeadlineParams): string | undefined {
     const pauseTimeoutDays = system.getNumberOrThrow(AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS)
@@ -237,6 +241,11 @@ function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRun
     return requested
 }
 
+const DeletedWaitpointRows = z.array(z.object({
+    id: z.string(),
+    resumeDateTime: z.coerce.date().nullable(),
+}))
+
 type PausedDelivery = 'dispatched' | 'already-delivered' | 'unknown-waitpoint'
 
 type ClampWaitpointResumeDeadlineParams = {
@@ -244,6 +253,11 @@ type ClampWaitpointResumeDeadlineParams = {
     type: `${PauseType}`
     flowRunCreated: string
     flowRunId: string
+}
+
+type DeleteByFlowRunIdParams = {
+    flowRunId: string
+    projectId: string
 }
 
 type HasPendingBarrierParams = {
@@ -273,16 +287,6 @@ type FindUndeliveredCompletedWaitpointParams = {
 }
 
 type FindSubflowWaitpointParams = {
-    flowRunId: string
-    projectId: string
-}
-
-type DeleteWaitpointParams = {
-    id: string
-    projectId: string
-}
-
-type DeleteByFlowRunIdParams = {
     flowRunId: string
     projectId: string
 }
