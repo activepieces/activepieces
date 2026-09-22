@@ -59,7 +59,7 @@ const commonOAuth2ValueProps = {
     code: z.string().min(1),
     code_challenge: z.string().optional(),
     scope: z.string(),
-    authorization_method: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
+    authorization_method: z.enum(OAuth2AuthorizationMethod).optional(),
     resource: z.string().optional(),
 }
 export const UpsertPlatformOAuth2Request = z.object({
@@ -100,9 +100,9 @@ export const UpsertOAuth2Request = z.object({
     value: z.object({
         ...commonOAuth2ValueProps,
         client_secret: z.string().min(1),
-        grant_type: z.nativeEnum(OAuth2GrantType).optional(),
+        grant_type: z.enum(OAuth2GrantType).optional(),
         props: z.record(z.string(), z.any()).optional(),
-        authorization_method: z.nativeEnum(OAuth2AuthorizationMethod).optional(),
+        authorization_method: z.enum(OAuth2AuthorizationMethod).optional(),
         redirect_url: z.string().min(1),
         type: z.literal(AppConnectionType.OAUTH2),
     }),
