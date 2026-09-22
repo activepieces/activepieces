@@ -1,6 +1,7 @@
 export * from './lib/core/common/telemetry'
 export * from './lib/core/common/telemetry-pii'
 export * from './lib/core/common/attribution'
+export * from './lib/core/common/brand-colors'
 export * from './lib/core/authentication/dto/authentication-response'
 export * from './lib/core/authentication/dto/sign-up-request'
 export * from './lib/core/authentication/dto/sign-in-request'

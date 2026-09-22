@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import * as RippleHook from 'use-ripple-hook';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { brandColors } from '@activepieces/shared';
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
   undefined,
@@ -47,12 +48,16 @@ export function ThemeProvider({
       return;
     }
     document.title = branding.websiteName;
-    document.documentElement.style.setProperty(
-      '--primary',
-      branding.colors.primary.default,
-    );
     setFavicon(branding.logos.favIconUrl);
-  }, [branding]);
+
+    const variables = brandColors.cssVariables({
+      primaryColor: branding.colors.primary.default,
+      theme: resolvedTheme,
+    });
+    Object.entries(variables).forEach(([name, value]) => {
+      document.documentElement.style.setProperty(name, value);
+    });
+  }, [branding, resolvedTheme]);
 
   const value = {
     preference,
