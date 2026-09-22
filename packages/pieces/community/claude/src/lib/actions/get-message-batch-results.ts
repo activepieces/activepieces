@@ -32,6 +32,9 @@ export const getMessageBatchResultsAction = createAction({
   async run(context) {
     const anthropic = new Anthropic({ apiKey: context.auth.secret_text });
     const maxResults = context.propsValue.maxResults ?? DEFAULT_MAX_RESULTS;
+    if (!Number.isInteger(maxResults) || maxResults <= 0) {
+      throw new Error('Max Results must be a positive integer.');
+    }
     const decoder = await anthropic.messages.batches.results(context.propsValue.messageBatchId);
 
     const results = [];
