@@ -7,9 +7,9 @@ const REDACTED_PLACEHOLDER = '[REDACTED]';
 const SECRET_KEY_REGEX =
   /^(authorization|cookie|set-cookie|password|new[_-]?password|current[_-]?password|token|access[_-]?token|refresh[_-]?token|id[_-]?token|api[_-]?key|x[_-]?api[_-]?key|secret|client[_-]?secret|private[_-]?key|bearer|x[_-]?auth)$/i;
 
-const URL_IN_TEXT_REGEX = /\b[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+/gi;
+const URL_SECRET_PARAM_REGEX = /([?&#])([A-Za-z0-9_.-]+)=([^&#\s"'<>\\)\]}]*)/g;
 
-const URL_TRAILING_PUNCTUATION_REGEX = /[.,;:!?)\]}]+$/;
+const URL_USERINFO_REGEX = /([a-z][a-z0-9+.-]*:\/\/)([^/?#\s"'<>@\\]+)@/gi;
 
 const SECRET_PROPERTY_TYPES = new Set([
   'SECRET_TEXT',
@@ -21,56 +21,7 @@ const SECRET_PROPERTY_TYPES = new Set([
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   !isNil(value) && typeof value === 'object' && !Array.isArray(value);
 
-const findSecretParams = (params: URLSearchParams): string[] =>
-  Array.from(params.keys()).filter((key) => SECRET_KEY_REGEX.test(key));
-
-const redactUrl = (url: string): string | null => {
-  try {
-    const parsed = new URL(url);
-    const secretQueryKeys = findSecretParams(parsed.searchParams);
-    for (const key of secretQueryKeys) {
-      parsed.searchParams.set(key, REDACTED_PLACEHOLDER);
-    }
-    const fragment = new URLSearchParams(parsed.hash.slice(1));
-    const secretFragmentKeys = findSecretParams(fragment);
-    for (const key of secretFragmentKeys) {
-      fragment.set(key, REDACTED_PLACEHOLDER);
-    }
-    if (secretFragmentKeys.length > 0) {
-      parsed.hash = fragment.toString();
-    }
-    const hasUserInfo =
-      parsed.username.length > 0 || parsed.password.length > 0;
-    if (hasUserInfo) {
-      parsed.username = REDACTED_PLACEHOLDER;
-      parsed.password = REDACTED_PLACEHOLDER;
-    }
-    const redacted =
-      secretQueryKeys.length > 0 ||
-      secretFragmentKeys.length > 0 ||
-      hasUserInfo;
-    return redacted ? parsed.toString() : url;
-  } catch {
-    return null;
-  }
-};
-
-const redactUrlSecrets = (value: string): string => {
-  const asWholeUrl = redactUrl(value);
-  if (asWholeUrl !== null) {
-    return asWholeUrl;
-  }
-  return value.replace(URL_IN_TEXT_REGEX, (match) => {
-    const trailing = URL_TRAILING_PUNCTUATION_REGEX.exec(match)?.[0] ?? '';
-    const redacted = redactUrl(match.slice(0, match.length - trailing.length));
-    return redacted === null ? match : `${redacted}${trailing}`;
-  });
-};
-
 const redactSecrets = (value: unknown, depth = 0): unknown => {
-  if (typeof value === 'string') {
-    return redactUrlSecrets(value);
-  }
   if (depth > 8) {
     return value;
   }
@@ -91,6 +42,22 @@ const redactSecrets = (value: unknown, depth = 0): unknown => {
   return value;
 };
 
+const redactUrlSecrets = (value: string): string =>
+  value
+    .replace(
+      URL_SECRET_PARAM_REGEX,
+      (
+        match: string,
+        delimiter: string,
+        key: string,
+        paramValue: string,
+      ): string =>
+        SECRET_KEY_REGEX.test(key) && paramValue.length > 0
+          ? `${delimiter}${key}=${REDACTED_PLACEHOLDER}`
+          : match,
+    )
+    .replace(URL_USERINFO_REGEX, `$1${REDACTED_PLACEHOLDER}@`);
+
 const truncateForPrompt = (
   value: unknown,
   maxChars = MAX_BODY_PAYLOAD_CHARS,
@@ -98,8 +65,9 @@ const truncateForPrompt = (
   if (isNil(value)) {
     return '';
   }
-  const serialized =
-    typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  const serialized = redactUrlSecrets(
+    typeof value === 'string' ? value : JSON.stringify(value, null, 2),
+  );
   if (serialized.length <= maxChars) {
     return serialized;
   }
@@ -190,18 +158,16 @@ const buildContextBlock = ({
   context,
 }: BuildExplanationPromptParams): string => {
   const sanitizedError: Record<string, unknown> = {
-    message: redactSecrets(error.message),
+    message: error.message,
     ...(isNil(error.errorName) ? {} : { errorName: error.errorName }),
     ...(isNil(error.status) ? {} : { httpStatus: error.status }),
-    ...(isNil(error.apiMessage)
-      ? {}
-      : { apiMessage: redactSecrets(error.apiMessage) }),
+    ...(isNil(error.apiMessage) ? {} : { apiMessage: error.apiMessage }),
     ...(isNil(error.requestMethod)
       ? {}
       : { requestMethod: error.requestMethod }),
     ...(isNil(error.requestUrl)
       ? {}
-      : { requestUrl: redactSecrets(error.requestUrl) }),
+      : { requestUrl: redactUrlSecrets(error.requestUrl) }),
     ...(isNil(error.requestBody)
       ? {}
       : { requestBody: redactSecrets(error.requestBody) }),
