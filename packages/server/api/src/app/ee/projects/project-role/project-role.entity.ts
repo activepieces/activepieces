@@ -18,6 +18,7 @@ export const ProjectRoleEntity = new EntitySchema<ProjectRoleSchema>({
             columns: ['platformId', 'name'],
             unique: true,
             where: '"platformId" IS NOT NULL',
+            synchronize: false,
         },
     ],
     columns: {
