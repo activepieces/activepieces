@@ -16,9 +16,9 @@ Creating a role already refused a duplicate name, but renaming one did not, so a
 
 #### What you need to do
 
-Nothing, unless you already have duplicates. The upgrade adds a unique index on `("platformId", "name")` for platform-owned roles, and any existing duplicates are renamed first, oldest kept as-is and the rest suffixed ` (2)`, ` (3)` and so on. Member assignments are untouched — no role is deleted to make room.
+Nothing, unless you already have duplicates. The upgrade adds a unique index on `("platformId", "name")` for platform-owned roles, and renames any existing duplicates first. Whichever copy has the most members keeps the name — so the role people actually hold is the one that stays recognisable — and the rest are suffixed ` (2)`, ` (3)` and so on, skipping any suffix already in use. Creation time only breaks a tie on member count. Member assignments are untouched: no role is deleted to make room.
 
-Check afterwards whether any role gained a suffix and rename it to something meaningful:
+Afterwards you may want to give any renamed role a meaningful name. There is no marker distinguishing a name the upgrade generated from one you chose, so this lists candidates rather than confirmed renames — a role you had already called `Reporting (2)` will show up too:
 
 ```sql
 SELECT id, name FROM project_role WHERE name LIKE '% (%)';
