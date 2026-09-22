@@ -32,7 +32,7 @@ async function discoverAndRegister({ serverUrl, redirectUrl }: DiscoverAndRegist
 
 // An MCP server that skips RFC 9728 is its own authorization server.
 async function resolveAuthorizationServer(serverUrl: string): Promise<string> {
-    const url = parseServerUrl(serverUrl)
+    const url = parseUrl(serverUrl)
     const resourcePath = url.pathname === '/' ? '' : url.pathname
     const metadata = await fetchFirst<ProtectedResourceMetadata>([
         `${url.origin}/.well-known/oauth-protected-resource${resourcePath}`,
@@ -42,12 +42,13 @@ async function resolveAuthorizationServer(serverUrl: string): Promise<string> {
 }
 
 async function fetchAuthorizationServerMetadata(authorizationServer: string): Promise<AuthorizationServerMetadata> {
-    // ponytail: assumes the issuer has no path component, true of every deployment seen
-    // so far; RFC 8414 also allows inserting that path before the well-known suffix.
-    const origin = authorizationServer.replace(/\/$/, '')
+    const issuer = parseUrl(authorizationServer)
+    const path = issuer.pathname === '/' ? '' : issuer.pathname.replace(/\/$/, '')
     const candidates = [
-        `${origin}/.well-known/oauth-authorization-server`,
-        `${origin}/.well-known/openid-configuration`,
+        // RFC 8414: the well-known suffix goes between the host and the issuer's path.
+        `${issuer.origin}/.well-known/oauth-authorization-server${path}`,
+        // OpenID Connect Discovery 1.0: the opposite order — suffix appended after the path.
+        `${issuer.origin}${path}/.well-known/openid-configuration`,
     ]
     const metadata = await fetchFirst<AuthorizationServerMetadata>(candidates)
     if (isNil(metadata) || isNil(metadata.authorization_endpoint) || isNil(metadata.token_endpoint)) {
@@ -91,16 +92,16 @@ function withResourceIndicator({ authorizationEndpoint, serverUrl }: WithResourc
 }
 
 function canonicalResourceUri(serverUrl: string): string {
-    const url = parseServerUrl(serverUrl)
+    const url = parseUrl(serverUrl)
     return `${url.origin}${url.pathname}`.replace(/\/$/, '')
 }
 
-function parseServerUrl(serverUrl: string): URL {
-    const { data: url, error } = tryCatchSync(() => new URL(serverUrl))
-    if (!isNil(error) || isNil(url)) {
-        throw invalidConnection(`"${serverUrl}" is not a valid server URL.`)
+function parseUrl(url: string): URL {
+    const { data: parsed, error } = tryCatchSync(() => new URL(url))
+    if (!isNil(error) || isNil(parsed)) {
+        throw invalidConnection(`"${url}" is not a valid URL.`)
     }
-    return url
+    return parsed
 }
 
 function invalidConnection(error: string): ActivepiecesError {

@@ -87,6 +87,28 @@ describe('oauth2Discovery.discoverAndRegister', () => {
         expect(result.tokenUrl).toBe('https://as.example.com/token')
     })
 
+    it('inserts the rfc 8414 well-known suffix before the issuer path, not after (Okta/Keycloak-shaped issuers)', async () => {
+        serve({
+            'https://mcp.example.com/.well-known/oauth-protected-resource/mcp': { authorization_servers: ['https://as.example.com/realms/demo'] },
+            'https://as.example.com/.well-known/oauth-authorization-server/realms/demo': AUTHORIZATION_SERVER_METADATA,
+        })
+
+        const result = await oauth2Discovery.discoverAndRegister({ serverUrl: SERVER_URL, redirectUrl: REDIRECT_URL })
+
+        expect(result.tokenUrl).toBe('https://as.example.com/token')
+    })
+
+    it('appends the openid-configuration well-known suffix after the issuer path', async () => {
+        serve({
+            'https://mcp.example.com/.well-known/oauth-protected-resource/mcp': { authorization_servers: ['https://as.example.com/realms/demo'] },
+            'https://as.example.com/realms/demo/.well-known/openid-configuration': AUTHORIZATION_SERVER_METADATA,
+        })
+
+        const result = await oauth2Discovery.discoverAndRegister({ serverUrl: SERVER_URL, redirectUrl: REDIRECT_URL })
+
+        expect(result.tokenUrl).toBe('https://as.example.com/token')
+    })
+
     it('treats the server as its own authorization server when it publishes no protected-resource document', async () => {
         serve({
             'https://mcp.example.com/.well-known/oauth-authorization-server': AUTHORIZATION_SERVER_METADATA,
