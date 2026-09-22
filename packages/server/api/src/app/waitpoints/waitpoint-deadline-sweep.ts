@@ -1,4 +1,5 @@
 import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
+import { wideEvent } from '@activepieces/server-utils'
 import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -7,14 +8,14 @@ import { repoFactory } from '../core/db/repo-factory'
 import { distributedStore } from '../database/redis-connections'
 import { systemJobIds } from '../helper/system-jobs/common'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { barrierService } from './barrier-service'
+import { barrierQueue } from './barrier-queue'
 import { WaitpointEntity } from './waitpoint-entity'
 import { waitpointTimeoutJob } from './waitpoint-timeout-job'
 import { Waitpoint, WaitpointStatus } from './waitpoint-types'
 
 const waitpointRepo = repoFactory(WaitpointEntity)
 
-export async function sweepOverdueDeadlines({ log, pageSize, maxPages }: SweepOverdueDeadlinesParams): Promise<string[]> {
+export async function sweepOverdueDeadlines({ log, pageSize, maxPages, maxRedelivered }: SweepOverdueDeadlinesParams): Promise<string[]> {
     const sweep = await runSweepPages({
         log,
         pageSize: pageSize ?? SCAN_PAGE_SIZE,
@@ -40,39 +41,99 @@ export async function sweepOverdueDeadlines({ log, pageSize, maxPages }: SweepOv
         }, '[sweepOverdueDeadlines] Spent the per-tick budget without reaching the end of the overdue backlog; the next tick carries on from where this one stopped rather than re-reading the rows it already classified')
     }
 
-    await redeliverUndeliveredBarriers({ log })
+    const redelivery = await redeliverUndeliveredBarriers({ log, maxRedelivered: maxRedelivered ?? MAX_REDELIVERED_PER_TICK })
+
+    wideEvent.set({
+        waitpointSweep: {
+            scannedCount: sweep.scannedCount,
+            armedCount: sweep.armed.length,
+            deadLetteredCount: sweep.deadLettered.length,
+            stopReason: sweep.stopReason,
+            deadlineBacklogCarried: !isNil(sweep.resumeFrom),
+            barriersEnqueuedCount: redelivery.enqueued,
+            barrierBacklogCarried: redelivery.backlogCarried,
+        },
+    })
     return sweep.armed
 }
 
-async function redeliverUndeliveredBarriers({ log }: RedeliverUndeliveredBarriersParams): Promise<void> {
-    const undelivered = await findUndeliveredBarriers({ staleBefore: dayjs().subtract(UNDELIVERED_BARRIER_GRACE_MINUTES, 'minute').toISOString() })
+async function redeliverUndeliveredBarriers({ log, maxRedelivered }: RedeliverUndeliveredBarriersParams): Promise<RedeliveryOutcome> {
+    const cursor = await readBarrierCursor()
+    const undelivered = await findUndeliveredBarriers({
+        staleBefore: dayjs().subtract(UNDELIVERED_BARRIER_GRACE_MINUTES, 'minute').toISOString(),
+        cursor,
+        limit: maxRedelivered,
+    })
     if (undelivered.length === 0) {
-        return
+        await rememberBarrierCursor(undefined)
+        return { enqueued: 0, backlogCarried: false }
     }
     log.warn({
         undeliveredCount: undelivered.length,
+        resumedFrom: cursor,
         sample: undelivered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((barrier) => barrier.id),
-    }, '[sweepOverdueDeadlines] Found barriers closed but never delivered, so the release that closed them died before dispatching; re-dispatching their stored summaries')
-    for (const barrier of undelivered) {
-        const { error } = await tryCatch(() => barrierService(log).releaseIfReady({ barrierId: barrier.id, projectId: barrier.projectId }))
-        if (!isNil(error)) {
-            log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[sweepOverdueDeadlines] Re-dispatching an undelivered barrier failed, so the rest of this batch carries on and the next tick tries it again')
-        }
+    }, '[redeliverUndeliveredBarriers] Found barriers closed but never delivered, so the release that closed them died before dispatching; handing each one back to the barrier queue, which owns the retries')
+    const enqueued = await enqueueBarrierEvaluations({ undelivered, log })
+    const backlogCarried = undelivered.length >= maxRedelivered
+    const resumeFrom = backlogCarried ? toBarrierCursor(undelivered[undelivered.length - 1]) : undefined
+    await rememberBarrierCursor(resumeFrom)
+    if (!isNil(resumeFrom)) {
+        log.warn({
+            enqueuedCount: enqueued,
+            resumeFrom,
+        }, '[redeliverUndeliveredBarriers] Filled the per-tick batch without reaching the end of the undelivered barriers; the next tick carries on past them rather than re-reading the same oldest rows every minute')
     }
+    return { enqueued, backlogCarried }
 }
 
-async function findUndeliveredBarriers({ staleBefore }: FindUndeliveredBarriersParams): Promise<Waitpoint[]> {
-    return waitpointRepo()
+async function enqueueBarrierEvaluations({ undelivered, log }: EnqueueBarrierEvaluationsParams): Promise<number> {
+    const outcomes = await Promise.all(undelivered.map(async (barrier) => {
+        const { error } = await tryCatch(() => barrierQueue(log).enqueueEvaluation({ barrierId: barrier.id, projectId: barrier.projectId }))
+        if (!isNil(error)) {
+            log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[redeliverUndeliveredBarriers] Could not hand an undelivered barrier back to the queue, so the rest of this batch carries on and the next tick tries it again')
+            return false
+        }
+        return true
+    }))
+    return outcomes.filter(Boolean).length
+}
+
+async function findUndeliveredBarriers({ staleBefore, cursor, limit }: FindUndeliveredBarriersParams): Promise<Waitpoint[]> {
+    const query = waitpointRepo()
         .createQueryBuilder('waitpoint')
         .innerJoin('flow_run', 'flowRun', '"flowRun"."id" = "waitpoint"."flowRunId"')
         .where('"waitpoint"."type" = :type', { type: PauseType.BARRIER })
         .andWhere('"waitpoint"."status" = :status', { status: WaitpointStatus.COMPLETED })
         .andWhere('"waitpoint"."updated" < :staleBefore', { staleBefore })
         .andWhere('"flowRun"."status" = :runStatus', { runStatus: FlowRunStatus.PAUSED })
+    if (!isNil(cursor)) {
+        query.andWhere('("waitpoint"."updated", "waitpoint"."id") > (:cursorUpdated, :cursorId)', {
+            cursorUpdated: cursor.updated,
+            cursorId: cursor.id,
+        })
+    }
+    return query
         .orderBy('"waitpoint"."updated"', 'ASC')
         .addOrderBy('"waitpoint"."id"', 'ASC')
-        .limit(MAX_REDELIVERED_PER_TICK)
+        .limit(limit)
         .getMany()
+}
+
+async function readBarrierCursor(): Promise<BarrierRecoveryCursor | undefined> {
+    const stored = await distributedStore.get<BarrierRecoveryCursor>(BARRIER_RECOVERY_CURSOR_KEY)
+    return stored ?? undefined
+}
+
+async function rememberBarrierCursor(cursor: BarrierRecoveryCursor | undefined): Promise<void> {
+    if (isNil(cursor)) {
+        await distributedStore.delete(BARRIER_RECOVERY_CURSOR_KEY)
+        return
+    }
+    await distributedStore.put(BARRIER_RECOVERY_CURSOR_KEY, cursor, DEADLINE_SWEEP_CURSOR_TTL_SECONDS)
+}
+
+function toBarrierCursor(barrier: Waitpoint): BarrierRecoveryCursor {
+    return { updated: barrier.updated, id: barrier.id }
 }
 
 async function runSweepPages({ log, pageSize, maxPages }: RunSweepPagesParams): Promise<SweepOutcome> {
@@ -221,19 +282,39 @@ const UNDELIVERED_BARRIER_GRACE_MINUTES = 2
 const MAX_REDELIVERED_PER_TICK = 100
 
 export const DEADLINE_SWEEP_CURSOR_KEY = 'waitpoint:deadline-sweep:cursor'
+export const BARRIER_RECOVERY_CURSOR_KEY = 'waitpoint:barrier-recovery:cursor'
 
 type SweepOverdueDeadlinesParams = {
     log: FastifyBaseLogger
     pageSize?: number
     maxPages?: number
+    maxRedelivered?: number
 }
 
 type RedeliverUndeliveredBarriersParams = {
+    log: FastifyBaseLogger
+    maxRedelivered: number
+}
+
+type RedeliveryOutcome = {
+    enqueued: number
+    backlogCarried: boolean
+}
+
+type EnqueueBarrierEvaluationsParams = {
+    undelivered: Waitpoint[]
     log: FastifyBaseLogger
 }
 
 type FindUndeliveredBarriersParams = {
     staleBefore: string
+    cursor: BarrierRecoveryCursor | undefined
+    limit: number
+}
+
+type BarrierRecoveryCursor = {
+    updated: string
+    id: string
 }
 
 type RunSweepPagesParams = {

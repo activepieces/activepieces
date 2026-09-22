@@ -11,12 +11,12 @@ import { systemJobsSchedule } from '../../../../../src/app/helper/system-jobs/sy
 import { platformConfigurationService } from '../../../../../src/app/platform/platform-configuration.service'
 import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
+import * as barrierQueueModule from '../../../../../src/app/waitpoints/barrier-queue'
 import { BarrierJobData } from '../../../../../src/app/waitpoints/barrier-queue-factory'
-import * as barrierServiceModule from '../../../../../src/app/waitpoints/barrier-service'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
-import { DEADLINE_SWEEP_CURSOR_KEY, sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
+import { BARRIER_RECOVERY_CURSOR_KEY, DEADLINE_SWEEP_CURSOR_KEY, sweepOverdueDeadlines } from '../../../../../src/app/waitpoints/waitpoint-deadline-sweep'
 import { waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { Waitpoint, WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
@@ -571,9 +571,23 @@ describe('signal count limit', () => {
 
 describe('barrier deadline', () => {
     beforeEach(async () => {
-        await distributedStore.delete(DEADLINE_SWEEP_CURSOR_KEY)
+        await distributedStore.delete([DEADLINE_SWEEP_CURSOR_KEY, BARRIER_RECOVERY_CURSOR_KEY])
         await databaseConnection().query('DELETE FROM "waitpoint"')
     })
+
+    async function createUndeliveredBarrier({ staleByMinutes }: { staleByMinutes: number }) {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await closeWithoutConsuming(barrier.id)
+        await db.update('waitpoint', barrier.id, { updated: dayjs().subtract(staleByMinutes, 'minute').toISOString() })
+        await dropResumeJobs(flowRun.id)
+        return { flowRun, barrier }
+    }
+
+    async function drainEvaluations(queue: Queue<BarrierJobData>): Promise<void> {
+        const jobs = await queue.getJobs(['waiting', 'delayed', 'prioritized', 'paused'])
+        await Promise.all(jobs.map((job) => job.remove()))
+    }
 
     async function createOverdueBarrier({ overdueByMinutes = 5 }: { overdueByMinutes?: number } = {}) {
         const { flowRun } = await createParentRun()
@@ -606,74 +620,124 @@ describe('barrier deadline', () => {
         const armed = await sweepOverdueDeadlines({ log: app.log })
         expect(armed).toContain(barrier.id)
 
-        await handleResumeDelayWaitpoint({
-            data: { flowRunId: flowRun.id, projectId: ctx.project.id, waitpointId: barrier.id },
-            log: app.log,
-        })
+        await waitFor(async () => await readStatus(barrier.id) === WaitpointStatus.CONSUMED)
 
-        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
         expect(await listSignals(barrier.id)).toHaveLength(0)
+        expect(await listResumeJobs(flowRun.id)).not.toHaveLength(0)
     })
 
-    it('re-dispatches a barrier the sweep finds closed but never delivered', async () => {
-        const { flowRun } = await createParentRun()
-        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
-        await closeWithoutConsuming(barrier.id)
-        await db.update('waitpoint', barrier.id, { updated: dayjs().subtract(10, 'minute').toISOString() })
-        await dropResumeJobs(flowRun.id)
+    it('hands a barrier it finds closed but never delivered back to the barrier queue, which then delivers it', async () => {
+        const queue = barrierQueue(app.log).get()
+        await queue.pause()
 
-        await sweepOverdueDeadlines({ log: app.log })
+        try {
+            const { flowRun, barrier } = await createUndeliveredBarrier({ staleByMinutes: 10 })
+            await drainEvaluations(queue)
 
-        expect(await listResumeJobs(flowRun.id)).toHaveLength(1)
-        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+            await sweepOverdueDeadlines({ log: app.log })
+
+            expect(await countPendingEvaluations({ queue, barrierId: barrier.id })).toBe(1)
+
+            await barrierService(app.log).releaseIfReady({ barrierId: barrier.id, projectId: ctx.project.id })
+
+            expect(await listResumeJobs(flowRun.id)).toHaveLength(1)
+            expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+        }
+        finally {
+            await drainEvaluations(queue)
+            await queue.resume()
+        }
     })
 
     it('leaves a barrier closed moments ago to the release that closed it', async () => {
-        const { flowRun } = await createParentRun()
-        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
-        await closeWithoutConsuming(barrier.id)
-        await dropResumeJobs(flowRun.id)
+        const queue = barrierQueue(app.log).get()
+        await queue.pause()
 
-        await sweepOverdueDeadlines({ log: app.log })
+        try {
+            const { flowRun } = await createParentRun()
+            const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+            await closeWithoutConsuming(barrier.id)
+            await dropResumeJobs(flowRun.id)
+            await drainEvaluations(queue)
 
-        expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
-        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.COMPLETED)
+            await sweepOverdueDeadlines({ log: app.log })
+
+            expect(await countPendingEvaluations({ queue, barrierId: barrier.id })).toBe(0)
+            expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
+            expect(await readStatus(barrier.id)).toBe(WaitpointStatus.COMPLETED)
+        }
+        finally {
+            await drainEvaluations(queue)
+            await queue.resume()
+        }
     })
 
-    it('carries on through the batch when one undelivered barrier cannot be re-dispatched', async () => {
-        const { flowRun: brokenRun } = await createParentRun()
-        const { barrier: broken } = await createBarrier({ flowRunId: brokenRun.id, signalLabels: ['a@example.com'] })
-        const { flowRun: healthyRun } = await createParentRun()
-        const { barrier: healthy } = await createBarrier({ flowRunId: healthyRun.id, signalLabels: ['b@example.com'] })
-        await closeWithoutConsuming(broken.id)
-        await closeWithoutConsuming(healthy.id)
-        await db.update('waitpoint', broken.id, { updated: dayjs().subtract(20, 'minute').toISOString() })
-        await db.update('waitpoint', healthy.id, { updated: dayjs().subtract(10, 'minute').toISOString() })
-        await dropResumeJobs(brokenRun.id)
-        await dropResumeJobs(healthyRun.id)
+    it('carries its cursor past barriers it could not hand back, so a newer one is still recovered', async () => {
+        const queue = barrierQueue(app.log).get()
+        await queue.pause()
+        const { barrier: poisoned } = await createUndeliveredBarrier({ staleByMinutes: 20 })
+        const { barrier: healthy } = await createUndeliveredBarrier({ staleByMinutes: 10 })
+        await drainEvaluations(queue)
 
-        const realBarrierService = barrierServiceModule.barrierService
-        vi.spyOn(barrierServiceModule, 'barrierService').mockImplementation((log) => ({
-            ...realBarrierService(log),
-            releaseIfReady: async (params) => {
-                if (params.barrierId === broken.id) {
-                    throw new Error('re-dispatch failed')
+        const realBarrierQueue = barrierQueueModule.barrierQueue
+        vi.spyOn(barrierQueueModule, 'barrierQueue').mockImplementation((log) => ({
+            ...realBarrierQueue(log),
+            enqueueEvaluation: async (params) => {
+                if (params.barrierId === poisoned.id) {
+                    throw new Error('enqueue failed')
                 }
-                return realBarrierService(log).releaseIfReady(params)
+                return realBarrierQueue(log).enqueueEvaluation(params)
+            },
+        }))
+
+        try {
+            await sweepOverdueDeadlines({ log: app.log, maxRedelivered: 1 })
+
+            expect(await countPendingEvaluations({ queue, barrierId: poisoned.id })).toBe(0)
+            expect(await countPendingEvaluations({ queue, barrierId: healthy.id })).toBe(0)
+
+            await sweepOverdueDeadlines({ log: app.log, maxRedelivered: 1 })
+
+            expect(await countPendingEvaluations({ queue, barrierId: healthy.id })).toBe(1)
+        }
+        finally {
+            vi.restoreAllMocks()
+            await drainEvaluations(queue)
+            await queue.resume()
+        }
+    })
+
+    it('carries on through the batch when one undelivered barrier cannot be handed back', async () => {
+        const queue = barrierQueue(app.log).get()
+        await queue.pause()
+        const { barrier: broken } = await createUndeliveredBarrier({ staleByMinutes: 20 })
+        const { barrier: healthy } = await createUndeliveredBarrier({ staleByMinutes: 10 })
+        await drainEvaluations(queue)
+
+        const realBarrierQueue = barrierQueueModule.barrierQueue
+        vi.spyOn(barrierQueueModule, 'barrierQueue').mockImplementation((log) => ({
+            ...realBarrierQueue(log),
+            enqueueEvaluation: async (params) => {
+                if (params.barrierId === broken.id) {
+                    throw new Error('enqueue failed')
+                }
+                return realBarrierQueue(log).enqueueEvaluation(params)
             },
         }))
 
         try {
             await sweepOverdueDeadlines({ log: app.log })
+
+            expect(await countPendingEvaluations({ queue, barrierId: broken.id })).toBe(0)
+            expect(await countPendingEvaluations({ queue, barrierId: healthy.id })).toBe(1)
+            expect(await readStatus(broken.id)).toBe(WaitpointStatus.COMPLETED)
+            expect(await readStatus(healthy.id)).toBe(WaitpointStatus.COMPLETED)
         }
         finally {
             vi.restoreAllMocks()
+            await drainEvaluations(queue)
+            await queue.resume()
         }
-
-        expect(await readStatus(broken.id)).toBe(WaitpointStatus.COMPLETED)
-        expect(await listResumeJobs(brokenRun.id)).toHaveLength(0)
-        expect(await readStatus(healthy.id)).toBe(WaitpointStatus.CONSUMED)
-        expect(await listResumeJobs(healthyRun.id)).toHaveLength(1)
     })
 
     it('does not report a barrier whose deadline job is still live as re-armed', async () => {
