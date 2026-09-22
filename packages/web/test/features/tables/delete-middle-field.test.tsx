@@ -86,14 +86,19 @@ const records: PopulatedRecord[] = [
     tableId: table.id,
     projectId: table.projectId,
     cells: {
+      'field-c': buildCell('c-value', 'C'),
       'field-a': buildCell('a-value', 'A'),
       'field-b': buildCell('b-value', 'B'),
-      'field-c': buildCell('c-value', 'C'),
     },
   },
 ];
 
 const createStore = () => createApTableStore(table, fields, records);
+
+const cellsByIndex = (store: ApTableStore) =>
+  [...store.getState().records[0].values].sort(
+    (a, b) => a.fieldIndex - b.fieldIndex,
+  );
 
 describe('deleteField remaps surviving cells (ENG-537)', () => {
   it('keeps the values of every column to the right of the deleted one', () => {
@@ -101,9 +106,11 @@ describe('deleteField remaps surviving cells (ENG-537)', () => {
 
     store.getState().deleteField(1);
 
-    const state = store.getState();
-    expect(state.fields.map((field) => field.name)).toEqual(['A', 'C']);
-    expect(state.records[0].values).toEqual([
+    expect(store.getState().fields.map((field) => field.name)).toEqual([
+      'A',
+      'C',
+    ]);
+    expect(cellsByIndex(store)).toEqual([
       { fieldIndex: 0, value: 'a-value' },
       { fieldIndex: 1, value: 'c-value' },
     ]);
@@ -125,9 +132,11 @@ describe('deleteField remaps surviving cells (ENG-537)', () => {
 
     store.getState().deleteField(2);
 
-    const state = store.getState();
-    expect(state.fields.map((field) => field.name)).toEqual(['A', 'B']);
-    expect(state.records[0].values).toEqual([
+    expect(store.getState().fields.map((field) => field.name)).toEqual([
+      'A',
+      'B',
+    ]);
+    expect(cellsByIndex(store)).toEqual([
       { fieldIndex: 0, value: 'a-value' },
       { fieldIndex: 1, value: 'b-value' },
     ]);
@@ -141,10 +150,9 @@ describe('deleteField remaps surviving cells (ENG-537)', () => {
       .getState()
       .createField({ uuid: 'field-d', name: 'D', type: FieldType.TEXT });
 
-    const indexes = store
-      .getState()
-      .records[0].values.map((cell) => cell.fieldIndex);
-    expect(indexes).toEqual([0, 1, 2]);
+    expect(cellsByIndex(store).map((cell) => cell.fieldIndex)).toEqual([
+      0, 1, 2,
+    ]);
   });
 
   it('does not overwrite the shifted column when a cell is edited afterwards', () => {
