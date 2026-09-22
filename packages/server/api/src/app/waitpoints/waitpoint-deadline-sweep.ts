@@ -1,4 +1,4 @@
-import { chunk, isNil } from '@activepieces/core-utils'
+import { chunk, isNil, tryCatch } from '@activepieces/core-utils'
 import { FlowRunStatus, PauseType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -54,7 +54,10 @@ async function redeliverUndeliveredBarriers({ log }: RedeliverUndeliveredBarrier
         sample: undelivered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((barrier) => barrier.id),
     }, '[sweepOverdueDeadlines] Found barriers closed but never delivered, so the release that closed them died before dispatching; re-dispatching their stored summaries')
     for (const barrier of undelivered) {
-        await barrierService(log).releaseIfReady({ barrierId: barrier.id, projectId: barrier.projectId })
+        const { error } = await tryCatch(() => barrierService(log).releaseIfReady({ barrierId: barrier.id, projectId: barrier.projectId }))
+        if (!isNil(error)) {
+            log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[sweepOverdueDeadlines] Re-dispatching an undelivered barrier failed, so the rest of this batch carries on and the next tick tries it again')
+        }
     }
 }
 

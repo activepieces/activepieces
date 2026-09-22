@@ -12,6 +12,7 @@ import { platformConfigurationService } from '../../../../../src/app/platform/pl
 import { jobQueue } from '../../../../../src/app/workers/job-queue/job-queue'
 import { barrierQueue } from '../../../../../src/app/waitpoints/barrier-queue'
 import { BarrierJobData } from '../../../../../src/app/waitpoints/barrier-queue-factory'
+import * as barrierServiceModule from '../../../../../src/app/waitpoints/barrier-service'
 import { barrierService } from '../../../../../src/app/waitpoints/barrier-service'
 import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/resume-delay-handler'
 import { resumeService } from '../../../../../src/app/waitpoints/resume-service'
@@ -637,6 +638,42 @@ describe('barrier deadline', () => {
 
         expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
         expect(await readStatus(barrier.id)).toBe(WaitpointStatus.COMPLETED)
+    })
+
+    it('carries on through the batch when one undelivered barrier cannot be re-dispatched', async () => {
+        const { flowRun: brokenRun } = await createParentRun()
+        const { barrier: broken } = await createBarrier({ flowRunId: brokenRun.id, signalLabels: ['a@example.com'] })
+        const { flowRun: healthyRun } = await createParentRun()
+        const { barrier: healthy } = await createBarrier({ flowRunId: healthyRun.id, signalLabels: ['b@example.com'] })
+        await closeWithoutConsuming(broken.id)
+        await closeWithoutConsuming(healthy.id)
+        await db.update('waitpoint', broken.id, { updated: dayjs().subtract(20, 'minute').toISOString() })
+        await db.update('waitpoint', healthy.id, { updated: dayjs().subtract(10, 'minute').toISOString() })
+        await dropResumeJobs(brokenRun.id)
+        await dropResumeJobs(healthyRun.id)
+
+        const realBarrierService = barrierServiceModule.barrierService
+        vi.spyOn(barrierServiceModule, 'barrierService').mockImplementation((log) => ({
+            ...realBarrierService(log),
+            releaseIfReady: async (params) => {
+                if (params.barrierId === broken.id) {
+                    throw new Error('re-dispatch failed')
+                }
+                return realBarrierService(log).releaseIfReady(params)
+            },
+        }))
+
+        try {
+            await sweepOverdueDeadlines({ log: app.log })
+        }
+        finally {
+            vi.restoreAllMocks()
+        }
+
+        expect(await readStatus(broken.id)).toBe(WaitpointStatus.COMPLETED)
+        expect(await listResumeJobs(brokenRun.id)).toHaveLength(0)
+        expect(await readStatus(healthy.id)).toBe(WaitpointStatus.CONSUMED)
+        expect(await listResumeJobs(healthyRun.id)).toHaveLength(1)
     })
 
     it('does not report a barrier whose deadline job is still live as re-armed', async () => {
