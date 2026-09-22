@@ -24,7 +24,7 @@ import { PropertyGroupTabs } from './property-group-tabs';
 export const GenericPropertiesForm = React.memo(
   ({
     markdownVariables,
-    props,
+    props: allProps,
     propertySettings,
     prefixValue,
     disabled,
@@ -32,7 +32,9 @@ export const GenericPropertiesForm = React.memo(
     onValueChange,
     dynamicPropsInfo,
     propertyGroups,
+    hiddenPropNames,
   }: GenericPropertiesFormProps) => {
+    const props = omitProps(allProps, hiddenPropNames);
     const form = useFormContext();
     const groupByPropName = buildGroupByPropName(propertyGroups);
     const renderedGroups = new Set<string>();
@@ -155,6 +157,18 @@ export const GenericPropertiesForm = React.memo(
 
 GenericPropertiesForm.displayName = 'GenericFormComponent';
 
+function omitProps<T extends GenericPropertiesFormProps['props']>(
+  props: T,
+  hiddenPropNames: string[] | undefined,
+): T {
+  if (!hiddenPropNames || hiddenPropNames.length === 0) {
+    return props;
+  }
+  return Object.fromEntries(
+    Object.entries(props).filter(([name]) => !hiddenPropNames.includes(name)),
+  ) as T;
+}
+
 function buildGroupByPropName(
   propertyGroups: PropertyGroup[] | undefined,
 ): Map<string, PropertyGroup> {
@@ -180,4 +194,6 @@ type GenericPropertiesFormProps = {
   dynamicPropsInfo: SelectGenericFormComponentForPropertyParams['dynamicPropsInfo'];
   /**groups multiple props into a single widget (e.g. tabbed recipients) */
   propertyGroups?: PropertyGroup[];
+  /**props the caller fills in itself, so the user never sees them */
+  hiddenPropNames?: string[];
 };

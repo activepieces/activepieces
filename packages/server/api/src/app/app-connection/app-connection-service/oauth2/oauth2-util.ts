@@ -1,12 +1,13 @@
 import { createHash, randomBytes } from 'crypto'
 import { ActivepiecesError, assertNotNullOrUndefined, deleteProps, ErrorCode, isNil, PlatformId, unique } from '@activepieces/core-utils'
-import { OAuth2Props, PropertyType } from '@activepieces/pieces-framework'
+import { OAuth2Property, OAuth2Props, PropertyType } from '@activepieces/pieces-framework'
 import { AppConnection, AppConnectionType, BaseOAuth2ConnectionValue, GetOAuth2AuthorizationUrlResponse, OAuth2GrantType, resolveValueFromProps } from '@activepieces/shared'
 import { isAxiosError } from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { secretManagersService } from '../../../ee/secret-managers/secret-managers.service'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
+import { oauth2Discovery } from './oauth2-discovery'
 
 export const oauth2Util = (log: FastifyBaseLogger) => ({
     formatOAuth2Response: (response: Omit<BaseOAuth2ConnectionValue, 'claimed_at'>): BaseOAuth2ConnectionValue => {
@@ -77,13 +78,15 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         const pieceAuth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2) : pieceMetadata.auth
         assertNotNullOrUndefined(pieceAuth, 'auth')
         switch (pieceAuth.type) {
-            case PropertyType.OAUTH2:
+            case PropertyType.OAUTH2: {
+                const templateProps = backfillOptionalProps(props, pieceAuth.props)
                 assertPlaceholdersResolved({
                     templates: [pieceAuth.tokenUrl, ...pieceAuth.scope],
-                    props,
+                    props: templateProps,
                     authProps: pieceAuth.props,
                 })
-                return resolveValueFromProps(props, pieceAuth.tokenUrl)
+                return resolveValueFromProps(templateProps, pieceAuth.tokenUrl)
+            }
             default:
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_APP_CONNECTION,
@@ -119,20 +122,25 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             })
         }
 
-        const resolvedClientId = await secretManagersService(log).resolveString({
-            key: clientId,
-            platformId,
-            throwOnFailure: true,
-            projectIds: projectId ? [projectId] : undefined,
-        })
+        const discovered = await discoverOAuth2Client({ pieceAuth, props, redirectUrl })
+        const resolvedProps = isNil(discovered) ? props : { ...props, ...discovered.props }
+        const resolvedClientId = isNil(discovered)
+            ? await secretManagersService(log).resolveString({
+                key: clientId,
+                platformId,
+                throwOnFailure: true,
+                projectIds: projectId ? [projectId] : undefined,
+            })
+            : discovered.client_id
         const selectedScopes = resolveSelectedScopes(scopes, pieceAuth.scope)
+        const templateProps = backfillOptionalProps(resolvedProps, pieceAuth.props)
         assertPlaceholdersResolved({
             templates: [pieceAuth.authUrl, ...selectedScopes],
-            props,
+            props: templateProps,
             authProps: pieceAuth.props,
         })
-        const authUrl = resolveValueFromProps(props, pieceAuth.authUrl)
-        const scope = resolveValueFromProps(props, selectedScopes.join(' '))
+        const authUrl = resolveValueFromProps(templateProps, pieceAuth.authUrl)
+        const scope = resolveValueFromProps(templateProps, selectedScopes.join(' '))
 
         const queryParams: Record<string, string> = {
             response_type: 'code',
@@ -177,6 +185,7 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         return {
             authorizationUrl: url.toString(),
             codeVerifier,
+            ...(isNil(discovered) ? {} : { discovered }),
         }
     },
     removeRefreshTokenAndClientSecret: (connection: AppConnection): AppConnection => {
@@ -223,6 +232,50 @@ const resolveSelectedScopes = (requested: string[] | undefined, allowed: string[
     return requested
 }
 
+const discoverOAuth2Client = async ({ pieceAuth, props, redirectUrl }: DiscoverOAuth2ClientParams): Promise<DiscoveredOAuth2Props | undefined> => {
+    const discovery = pieceAuth.discovery
+    if (isNil(discovery)) {
+        return undefined
+    }
+    const alreadyFilledIn = String(props?.[discovery.authUrlProp] ?? '').trim() !== ''
+    if (alreadyFilledIn) {
+        return undefined
+    }
+    const serverUrl = props?.[discovery.serverUrlProp]
+    if (typeof serverUrl !== 'string' || serverUrl.trim() === '') {
+        const label = pieceAuth.props?.[discovery.serverUrlProp]?.displayName ?? discovery.serverUrlProp
+        throw new ActivepiecesError({
+            code: ErrorCode.INVALID_APP_CONNECTION,
+            params: { error: `missing required connection settings: ${label}` },
+        })
+    }
+    const client = await oauth2Discovery.discoverAndRegister({ serverUrl, redirectUrl })
+    return {
+        props: {
+            [discovery.authUrlProp]: client.authUrl,
+            [discovery.tokenUrlProp]: client.tokenUrl,
+            ...(isNil(discovery.scopesProp) ? {} : { [discovery.scopesProp]: client.scopes }),
+        },
+        client_id: client.clientId,
+        client_secret: client.clientSecret,
+        resource: client.resource,
+    }
+}
+
+// `resolveValueFromProps` only substitutes a `{key}` placeholder when `key` is present in
+// `props`; an optional prop the caller never supplied is absent, not empty, and would
+// otherwise leak through as the literal `{key}` text (e.g. a bare `scope={scopes}`).
+const backfillOptionalProps = (props: Record<string, unknown> | undefined, authProps: OAuth2Props | undefined): Record<string, unknown> => {
+    const declaredProps = authProps ?? {}
+    const backfilled = { ...(props ?? {}) }
+    Object.entries(declaredProps).forEach(([key, prop]) => {
+        if (prop.required === false && isNil(backfilled[key])) {
+            backfilled[key] = ''
+        }
+    })
+    return backfilled
+}
+
 const assertPlaceholdersResolved = ({ templates, props, authProps }: AssertPlaceholdersResolvedParams): void => {
     const declaredProps = authProps ?? {}
     const missing = unique(
@@ -230,6 +283,7 @@ const assertPlaceholdersResolved = ({ templates, props, authProps }: AssertPlace
             .flatMap(template => [...template.matchAll(/\{([A-Za-z0-9_]+)\}/g)])
             .map(match => match[1])
             .filter(key => !isNil(declaredProps[key]))
+            .filter(key => declaredProps[key].required !== false)
             .filter(key => {
                 const value = props?.[key]
                 return isNil(value) || String(value).trim() === ''
@@ -250,6 +304,14 @@ type AssertPlaceholdersResolvedParams = {
     props: Record<string, unknown> | undefined
     authProps: OAuth2Props | undefined
 }
+
+type DiscoverOAuth2ClientParams = {
+    pieceAuth: OAuth2Property<OAuth2Props>
+    props: Record<string, unknown> | undefined
+    redirectUrl: string
+}
+
+type DiscoveredOAuth2Props = NonNullable<GetOAuth2AuthorizationUrlResponse['discovered']>
 
 type BuildAuthorizationUrlParams = {
     platformId: PlatformId

@@ -42,7 +42,10 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             if (request.codeVerifier) {
                 body.code_verifier = request.codeVerifier
             }
-           
+            if (request.resource) {
+                body.resource = request.resource
+            }
+
             const headers: Record<string, string> = {
                 'content-type': 'application/x-www-form-urlencoded',
                 accept: 'application/json',
@@ -78,6 +81,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
                 grant_type: grantType,
                 props: request.props,
                 authorization_method: authorizationMethod,
+                resource: request.resource,
             }
         }
         catch (e: unknown) {
@@ -143,6 +147,9 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
             default:
                 throw new Error(`Unknown grant type: ${grantType}`)
         }
+        if (appConnection.resource) {
+            body.resource = appConnection.resource
+        }
 
         const headers: Record<string, string> = {
             'content-type': 'application/x-www-form-urlencoded',
@@ -176,6 +183,7 @@ export const credentialsOauth2Service = (log: FastifyBaseLogger): OAuth2Service<
         return {
             ...mergedObject,
             props: appConnection.props,
+            resource: appConnection.resource,
         }
     },
 })

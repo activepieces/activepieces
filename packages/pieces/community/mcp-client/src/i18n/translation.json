@@ -1,5 +1,6 @@
 {
   "Call tools on an external MCP server deterministically, without an LLM.": "Call tools on an external MCP server deterministically, without an LLM.",
+  "API Key / Headers": "API Key / Headers",
   "Server URL": "Server URL",
   "Transport": "Transport",
   "Authentication": "Authentication",
@@ -7,6 +8,10 @@
   "API Key": "API Key",
   "API Key Header Name": "API Key Header Name",
   "Custom Headers": "Custom Headers",
+  "OAuth2": "OAuth2",
+  "Authorize URL": "Authorize URL",
+  "Token URL": "Token URL",
+  "Scopes (whitespace separated)": "Scopes (whitespace separated)",
   "The MCP server endpoint, e.g. https://example.com/mcp": "The MCP server endpoint, e.g. https://example.com/mcp",
   "Used when Authentication is \"Bearer Token\".": "Used when Authentication is \"Bearer Token\".",
   "Used when Authentication is \"API Key\".": "Used when Authentication is \"API Key\".",
@@ -21,5 +26,9 @@
   "Invoke a specific tool on an external MCP server and return its result.": "Invoke a specific tool on an external MCP server and return its result.",
   "Tool": "Tool",
   "Tool Inputs": "Tool Inputs",
-  "The tool to call. The list is loaded from the MCP server.": "The tool to call. The list is loaded from the MCP server."
+  "The tool to call. The list is loaded from the MCP server.": "The tool to call. The list is loaded from the MCP server.",
+  "Connect to an external MCP server that authenticates via OAuth2.\n\nEnter the server URL and click Connect — the OAuth2 endpoints are read from the server's own metadata and a client is registered automatically.\n\nIf the server doesn't publish that metadata, or doesn't support Dynamic Client Registration, the fields to fill in by hand appear instead.": "Connect to an external MCP server that authenticates via OAuth2.\n\nEnter the server URL and click Connect — the OAuth2 endpoints are read from the server's own metadata and a client is registered automatically.\n\nIf the server doesn't publish that metadata, or doesn't support Dynamic Client Registration, the fields to fill in by hand appear instead.",
+  "The authorization server's `authorization_endpoint`.": "The authorization server's `authorization_endpoint`.",
+  "The authorization server's `token_endpoint`.": "The authorization server's `token_endpoint`.",
+  "The authorization server's `scopes_supported`, if it requires specific scopes.": "The authorization server's `scopes_supported`, if it requires specific scopes."
 }
