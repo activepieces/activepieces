@@ -154,6 +154,42 @@ jobs:
               s3 cp /tmp/result.json "s3://${{ secrets.AP_S3_BUCKET }}/${KEY}"
           echo "Uploaded s3://${{ secrets.AP_S3_BUCKET }}/${KEY}"
 
+      - name: Insert result into ClickHouse (scheduled runs only)
+        if: github.event_name == 'schedule'
+        env:
+          CH_HOST: ${{ secrets.CLICKHOUSE_CI_HOST }}
+          CH_USER: ${{ secrets.CLICKHOUSE_CI_USER }}
+          CH_PASS: ${{ secrets.CLICKHOUSE_CI_PASSWORD }}
+        run: |
+          set -o pipefail
+          ROW=$(jq -c '{
+            ts: (.meta.ts | fromdateiso8601),
+            sha: .meta.sha,
+            label: .meta.label,
+            run_id: (.meta.runId | tonumber),
+            p50_ms: .latency.p50Ms,
+            p90_ms: .latency.p90Ms,
+            p99_ms: .latency.p99Ms,
+            mean_ms: .latency.meanMs,
+            req_sec: .throughput.reqSec,
+            queue_p90_ms: .timeline.queueWaitP90Ms,
+            service_p90_ms: .timeline.serviceP90Ms,
+            provision_p50_ms: .timeline.provisionP50Ms,
+            boot_p50_ms: .timeline.bootP50Ms,
+            app_cpu_p95: (.resources.app.cpuPct.p95 // 0),
+            app_mem_max_mb: (.resources.app.memMb.max // 0),
+            worker_cpu_p95: (.resources.worker.cpuPct.p95 // 0),
+            worker_mem_max_mb: (.resources.worker.memMb.max // 0),
+            raw: tojson
+          }' /tmp/result.json)
+          echo "Row (raw omitted):"
+          echo "$ROW" | jq 'del(.raw)'
+          printf '%s\n' "$ROW" | curl -sS --fail-with-body \
+            --user "$CH_USER:$CH_PASS" \
+            --data-binary @- \
+            "https://$CH_HOST:8443/?query=INSERT+INTO+bench.results+FORMAT+JSONEachRow"
+          echo "ClickHouse insert OK"
+
       - name: Detect regression against trailing 14 runs (scheduled runs only)
         if: github.event_name == 'schedule'
         env:
