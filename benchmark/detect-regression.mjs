@@ -16,8 +16,8 @@ for (const key of required) {
     }
 }
 
-const THRESHOLD_PCT = Number(args.threshold ?? 25)
-const CONSECUTIVE = Number(args.consecutive ?? 3)
+const THRESHOLD_PCT = Number(args.threshold ?? 5)
+const CONSECUTIVE = Number(args.consecutive ?? 1)
 const WEBHOOK_URL = process.env.BETTERSTACK_WEBHOOK_URL
 
 const DIMENSIONS = [
@@ -54,10 +54,11 @@ for (const dim of DIMENSIONS) {
     const baseline = median(historyValues)
     const pct = shiftPct({ current: currentValue, baseline, invert: dim.invert })
 
-    const recentValues = history.slice(-Math.max(0, CONSECUTIVE - 1)).map(dim.get)
+    const priorNeeded = Math.max(0, CONSECUTIVE - 1)
+    const recentValues = priorNeeded > 0 ? history.slice(-priorNeeded).map(dim.get) : []
     const recentShifts = recentValues.map((v) => shiftPct({ current: v, baseline, invert: dim.invert }))
     const consecutiveBreach = pct > THRESHOLD_PCT
-        && recentShifts.length >= CONSECUTIVE - 1
+        && recentShifts.length >= priorNeeded
         && recentShifts.every((s) => s > THRESHOLD_PCT)
 
     results.push({ name: dim.name, unit: dim.unit, currentValue, baseline, pct, breach: consecutiveBreach })
@@ -74,8 +75,9 @@ const summary = {
 }
 process.stdout.write(JSON.stringify(summary, null, 2) + '\n')
 
-if (history.length < CONSECUTIVE) {
-    console.error(`History has ${history.length} entries (< ${CONSECUTIVE}); need more baselines before firing.`)
+const MIN_HISTORY = Math.max(3, CONSECUTIVE)
+if (history.length < MIN_HISTORY) {
+    console.error(`History has ${history.length} entries (< ${MIN_HISTORY}); need more baselines before firing.`)
     process.exit(0)
 }
 
