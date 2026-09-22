@@ -57,6 +57,11 @@ export function PermissionGrid({
                     {t('view always on')}
                   </span>
                 )}
+                {!row.view && (
+                  <span className="hidden shrink-0 text-xs text-muted-foreground @max-[38rem]:inline @min-[48rem]:inline">
+                    {t('no view-only level')}
+                  </span>
+                )}
               </span>
               <Box
                 permission={row.view}
@@ -124,13 +129,17 @@ function Box({
 }: BoxProps) {
   return (
     <span className="flex w-12 shrink-0 justify-center">
-      {permission && (
+      {permission ? (
         <Checkbox
           checked={checked}
           disabled={disabled}
           aria-label={label}
           onCheckedChange={(value) => onCheckedChange(value === true)}
         />
+      ) : (
+        <span aria-hidden className="text-xs text-muted-foreground">
+          &mdash;
+        </span>
       )}
     </span>
   );

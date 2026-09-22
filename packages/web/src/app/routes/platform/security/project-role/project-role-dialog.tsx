@@ -120,6 +120,13 @@ function RoleDialogBody({
     !samePermissions(permissions, projectRole?.permissions ?? []);
   const canSubmit =
     name.trim().length > 0 && !isSaving && (isCreate || isDirty);
+  const footerNote =
+    saveError ??
+    (!isCreate && tab === 'people'
+      ? t(
+          "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
+        )
+      : null);
 
   const changeBase = (nextBase: RoleBase) => {
     setBase(nextBase);
@@ -333,24 +340,21 @@ function RoleDialogBody({
       )}
 
       <footer className="flex shrink-0 flex-wrap items-center justify-end gap-x-6 gap-y-2 border-t px-6 py-3">
-        <p
-          role={saveError ? 'alert' : undefined}
-          className={cn(
-            'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
-            saveError
-              ? 'font-medium text-destructive'
-              : 'text-muted-foreground',
-          )}
-        >
-          {saveError ??
-            (!isCreate && tab === 'people'
-              ? t(
-                  "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
-                )
-              : t(
-                  'Flow status has no view-only level, so it has no View box.',
-                ))}
-        </p>
+        {footerNote ? (
+          <p
+            role={saveError ? 'alert' : undefined}
+            className={cn(
+              'min-w-0 basis-full text-xs sm:flex-1 sm:basis-auto',
+              saveError
+                ? 'font-medium text-destructive'
+                : 'text-muted-foreground',
+            )}
+          >
+            {footerNote}
+          </p>
+        ) : (
+          <span className="hidden sm:block sm:flex-1" />
+        )}
         {showsActions && (
           <div className="flex shrink-0 items-center gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
