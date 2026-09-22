@@ -1,4 +1,4 @@
-import { apId } from '@activepieces/core-utils'
+import { apId, isNil } from '@activepieces/core-utils'
 import { BarrierSignalStatus, BarrierSummary, ErrorCode, FlowRunStatus, FlowVersionState, MAX_SIGNAL_REASON_LENGTH, PauseType, RunEnvironment } from '@activepieces/shared'
 import { Queue } from 'bullmq'
 import dayjs from 'dayjs'
@@ -153,6 +153,19 @@ const PAUSE_TIMEOUT_DAYS = Number(process.env.AP_PAUSED_FLOW_TIMEOUT_DAYS ?? '30
 async function readStatus(barrierId: string): Promise<WaitpointStatus> {
     const barrier = await db.findOneByOrFail<{ status: WaitpointStatus }>('waitpoint', { id: barrierId })
     return barrier.status
+}
+
+async function recoverUndeliveredResume(flowRunId: string) {
+    const undelivered = await waitpointService(app.log).findUndeliveredCompletedWaitpoint({ flowRunId, projectId: ctx.project.id })
+    if (isNil(undelivered)) {
+        return null
+    }
+    await resumeService(app.log).resumeTrustedWithoutLock({
+        flowRunId,
+        waitpointId: undelivered.id,
+        resumePayload: undelivered.resumePayload,
+    })
+    return undelivered
 }
 
 describe('barrier release predicate', () => {
@@ -438,6 +451,84 @@ describe('resume guards', () => {
         })
 
         expect(stale).toBe(false)
+    })
+
+    it('refuses a trusted resume of a barrier that was already delivered', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await releaseNow(barrier)
+        await dropResumeJobs(flowRun.id)
+
+        const { stale } = await resumeService(app.log).resumeTrustedWithoutLock({
+            flowRunId: flowRun.id,
+            waitpointId: barrier.id,
+            resumePayload: { body: { forged: true }, headers: {}, queryParams: {} },
+        })
+
+        expect(stale).toBe(true)
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+    })
+
+    it('does not dispatch a second resume for a barrier that was already consumed', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await releaseNow(barrier)
+        await dropResumeJobs(flowRun.id)
+
+        const { stale } = await resumeService(app.log).resumeFromWaitpoint({
+            flowRunId: flowRun.id,
+            waitpointId: barrier.id,
+            resumePayload: { body: { forged: true } },
+        })
+
+        expect(stale).toBe(true)
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+    })
+})
+
+describe('undelivered resume recovery', () => {
+    it('dispatches the resume for a waitpoint that was already completed before the run reached PAUSED', async () => {
+        const { flowRun } = await createParentRun()
+        const { waitpoint } = await waitpointService(app.log).createForPause({
+            flowRunId: flowRun.id,
+            projectId: ctx.project.id,
+            stepName: 'approval',
+            type: PauseType.WEBHOOK,
+            version: 'V1',
+        })
+        await completeWithoutConsuming(waitpoint.id)
+        await dropResumeJobs(flowRun.id)
+
+        await recoverUndeliveredResume(flowRun.id)
+
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(1)
+        expect(await db.findOneBy('waitpoint', { id: waitpoint.id })).toBeNull()
+    })
+
+    it('still resumes when the release that closed the barrier died before dispatching', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await closeWithoutConsuming(barrier.id)
+        await dropResumeJobs(flowRun.id)
+
+        await releaseIfReady(barrier.id)
+
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(1)
+        expect(await readStatus(barrier.id)).toBe(WaitpointStatus.CONSUMED)
+    })
+
+    it('enqueues nothing when recovery runs a second time on a consumed barrier', async () => {
+        const { flowRun } = await createParentRun()
+        const { barrier } = await createBarrier({ flowRunId: flowRun.id, signalLabels: ['a@example.com'] })
+        await releaseNow(barrier)
+        await dropResumeJobs(flowRun.id)
+
+        await releaseIfReady(barrier.id)
+
+        expect(await recoverUndeliveredResume(flowRun.id)).toBeNull()
+        expect(await listResumeJobs(flowRun.id)).toHaveLength(0)
     })
 })
 

@@ -65,7 +65,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleAsyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply })
         }
@@ -80,7 +81,8 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
     app.all('/:id/requests/:requestId/sync', V0ResumeFlowRunRequest, async (req, reply) => {
         const headers = req.headers as Record<string, string>
         const queryParams = req.query as Record<string, string>
-        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: req.params.id, version: 'V0' })
+        const flowRun = await findFlowRunOrThrow(req.params.id)
+        const waitpoint = await waitpointService(req.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: flowRun.projectId, version: 'V0' })
         if (waitpoint) {
             await handleSyncResume({ flowRunId: req.params.id, waitpointId: waitpoint.id, body: req.body, headers, queryParams, log: req.log, reply, correlationId: waitpoint.workerHandlerId ?? waitpoint.id })
         }
@@ -92,7 +94,7 @@ export const resumeController: FastifyPluginAsyncZod = async (app) => {
 
 async function serveConfirmationPage({ flowRunId, waitpointId, url, queryParams, log, reply }: ConfirmationPageParams): Promise<void> {
     const flowRun = await findFlowRunOrThrow(flowRunId)
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId: flowRun.projectId })
     const isOpen = !isNil(waitpoint) && waitpoint.type !== PauseType.BARRIER && waitpoint.status === WaitpointStatus.PENDING && isResumableRunStatus(flowRun.status)
     if (!isOpen) {
         await replyWithAlreadyResponded({ projectId: flowRun.projectId, log, reply })
@@ -200,7 +202,7 @@ async function resolveOpenSignal({ flowRunId, signalId, projectId, flowRunStatus
     if (isNil(signal) || signal.status !== BarrierSignalStatus.PENDING) {
         return null
     }
-    const barrier = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: signal.waitpointId, flowRunId })
+    const barrier = await waitpointService(log).findByIdAndFlowRunId({ waitpointId: signal.waitpointId, flowRunId, projectId })
     if (isNil(barrier) || barrier.type !== PauseType.BARRIER || barrier.status !== WaitpointStatus.PENDING) {
         return null
     }

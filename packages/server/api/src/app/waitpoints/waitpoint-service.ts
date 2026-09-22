@@ -18,6 +18,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
         const preCompleted = await waitpointRepo().findOneBy({
             flowRunId: params.flowRunId,
+            projectId: params.projectId,
             stepName: params.stepName,
             status: WaitpointStatus.COMPLETED,
         })
@@ -53,7 +54,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             .orIgnore()
             .execute()
 
-        const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
+        const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, projectId: params.projectId, stepName: params.stepName })
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
@@ -109,7 +110,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const { flowRunId, waitpointId, flowRunStatus, projectId, resumePayload, workerHandlerId, onReady } = params
 
         if (flowRunStatus === FlowRunStatus.PAUSED) {
-            const waitpoint = await transaction(async (entityManager) => {
+            const delivery = await transaction<PausedDelivery>(async (entityManager) => {
                 const repo = waitpointRepo(entityManager)
                 const found = await repo
                     .createQueryBuilder('waitpoint')
@@ -117,17 +118,24 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     .where({ id: waitpointId, flowRunId, projectId })
                     .getOne()
                 if (isNil(found)) {
-                    return null
+                    return 'unknown-waitpoint'
+                }
+                if (found.status === WaitpointStatus.CONSUMED) {
+                    return 'already-delivered'
                 }
                 await onReady(found)
                 await this.consume({ waitpoint: found, entityManager })
-                return found
+                return 'dispatched'
             })
-            if (isNil(waitpoint)) {
+            if (delivery === 'unknown-waitpoint') {
                 log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
                 return false
             }
-            await waitpointTimeoutJob.remove({ waitpointId: waitpoint.id, flowRunId, log })
+            if (delivery === 'already-delivered') {
+                log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Waitpoint was already delivered, ignoring')
+                return false
+            }
+            await waitpointTimeoutJob.remove({ waitpointId, flowRunId, log })
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Resume triggered')
             return true
         }
@@ -146,14 +154,14 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return false
     },
 
-    async findPendingByVersion({ flowRunId, version }: FindPendingByVersionParams): Promise<Waitpoint | null> {
+    async findPendingByVersion({ flowRunId, projectId, version }: FindPendingByVersionParams): Promise<Waitpoint | null> {
         return waitpointRepo().findOne({
-            where: { flowRunId, status: WaitpointStatus.PENDING, version },
+            where: { flowRunId, projectId, status: WaitpointStatus.PENDING, version },
         })
     },
 
-    async findByIdAndFlowRunId({ waitpointId, flowRunId }: { waitpointId: string, flowRunId: string }): Promise<Waitpoint | null> {
-        return waitpointRepo().findOneBy({ id: waitpointId, flowRunId })
+    async findByIdAndFlowRunId({ waitpointId, flowRunId, projectId }: FindByIdAndFlowRunIdParams): Promise<Waitpoint | null> {
+        return waitpointRepo().findOneBy({ id: waitpointId, flowRunId, projectId })
     },
 
     async findUndeliveredCompletedWaitpoint({ flowRunId, projectId }: FindUndeliveredCompletedWaitpointParams): Promise<Waitpoint | null> {
@@ -232,6 +240,8 @@ function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRun
     return requested
 }
 
+type PausedDelivery = 'dispatched' | 'already-delivered' | 'unknown-waitpoint'
+
 type ClampWaitpointResumeDeadlineParams = {
     requested: string | undefined
     type: `${PauseType}`
@@ -259,6 +269,12 @@ type ConsumeParams = {
     entityManager?: EntityManager
 }
 
+type FindByIdAndFlowRunIdParams = {
+    waitpointId: string
+    flowRunId: string
+    projectId: string
+}
+
 type FindUndeliveredCompletedWaitpointParams = {
     flowRunId: string
     projectId: string
@@ -273,3 +289,4 @@ type DeleteWaitpointParams = {
     id: string
     projectId: string
 }
+

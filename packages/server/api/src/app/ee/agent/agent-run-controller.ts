@@ -124,7 +124,7 @@ async function resolvePublishedAgent({ projectId, externalId, flowRunId, waitpoi
     log: FastifyBaseLogger
 }): Promise<{ id: string, config: AgentConfig }> {
     const flowRun = await flowRunService(log).getOneOrThrow({ id: flowRunId, projectId })
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId })
     if (isNil(waitpoint)) {
         throw new ActivepiecesError({ code: ErrorCode.VALIDATION, params: { message: 'That waitpoint does not belong to this run, so there is no step to run an agent for' } })
     }

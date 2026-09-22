@@ -93,6 +93,7 @@ type HandleResumeSignalParams = {
 
 type FindPendingByVersionParams = {
     flowRunId: ApId
+    projectId: ApId
     version: WaitpointVersion
 }
 

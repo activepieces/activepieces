@@ -1,4 +1,4 @@
-import { apId, chunk, isNil, sanitizeObjectForPostgresql } from '@activepieces/core-utils'
+import { apId, chunk, isNil, sanitizeObjectForPostgresql, tryCatch } from '@activepieces/core-utils'
 import { wideEvent } from '@activepieces/server-utils'
 import { ActivepiecesError, BarrierPolicy, barrierReleasesOnLastPendingSignal, BarrierSignalCounts, BarrierSignalStatus, BarrierSummary, ErrorCode, MAX_INLINE_BARRIER_SIGNALS, PauseType, RespondResponse, shouldReleaseBarrier, WaitpointVersion } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -28,13 +28,13 @@ export const barrierService = (log: FastifyBaseLogger) => ({
 
         const creation = await transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
-            const existing = await repo.findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
+            const existing = await repo.findOneBy({ flowRunId: params.flowRunId, projectId: params.projectId, stepName: params.stepName })
             if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
                 log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id } }, '[barrierService#create] Barrier already open for this step, reusing it')
-                return { inserted: false, barrier: existing, signals: await signalRepo(entityManager).findBy({ waitpointId: existing.id }) }
+                return { inserted: false, barrier: existing, signals: await signalRepo(entityManager).findBy({ waitpointId: existing.id, projectId: params.projectId }) }
             }
             if (!isNil(existing)) {
-                await repo.delete({ id: existing.id })
+                await repo.delete({ id: existing.id, projectId: params.projectId })
             }
             const now = dayjs().toISOString()
             const barrier: Waitpoint = {
@@ -97,8 +97,15 @@ export const barrierService = (log: FastifyBaseLogger) => ({
     },
 
     async releaseIfReady({ barrierId, projectId }: ReleaseIfReadyParams): Promise<void> {
-        const barrier = await waitpointRepo().findOneBy({ id: barrierId, projectId, type: PauseType.BARRIER, status: WaitpointStatus.PENDING })
+        const barrier = await waitpointRepo().findOneBy({ id: barrierId, projectId, type: PauseType.BARRIER })
         if (isNil(barrier)) {
+            return
+        }
+        if (barrier.status === WaitpointStatus.COMPLETED) {
+            await redeliverClosedBarrier({ barrier, log })
+            return
+        }
+        if (barrier.status !== WaitpointStatus.PENDING) {
             return
         }
         if (!await isReadyToRelease({ barrier, projectId })) {
@@ -185,7 +192,7 @@ async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<
         const lockedBarrier = await repo
             .createQueryBuilder('waitpoint')
             .setLock('pessimistic_write')
-            .where({ id: barrier.id, status: WaitpointStatus.PENDING })
+            .where({ id: barrier.id, projectId: barrier.projectId, status: WaitpointStatus.PENDING })
             .getOne()
         if (isNil(lockedBarrier)) {
             return null
@@ -199,6 +206,18 @@ async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<
         await signalRepo(entityManager).delete({ waitpointId: lockedBarrier.id, projectId: lockedBarrier.projectId })
         return summary
     })
+}
+
+async function redeliverClosedBarrier({ barrier, log }: RedeliverClosedBarrierParams): Promise<void> {
+    log.warn({ waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[barrierService#redeliverClosedBarrier] Barrier was closed but never delivered; re-dispatching the persisted summary')
+    const { error } = await tryCatch(() => resumeService(log).resumeTrusted({
+        flowRunId: barrier.flowRunId,
+        waitpointId: barrier.id,
+        resumePayload: barrier.resumePayload,
+    }))
+    if (!isNil(error)) {
+        log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[barrierService#redeliverClosedBarrier] Re-dispatching a closed barrier failed')
+    }
 }
 
 async function isReadyToRelease({ barrier, projectId }: IsReadyToReleaseParams): Promise<boolean> {
@@ -339,6 +358,11 @@ type ReleaseParams = {
 type CloseBarrierParams = {
     barrier: Waitpoint
     timedOut: boolean
+}
+
+type RedeliverClosedBarrierParams = {
+    barrier: Waitpoint
+    log: FastifyBaseLogger
 }
 
 type IsReadyToReleaseParams = {
