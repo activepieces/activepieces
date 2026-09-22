@@ -124,6 +124,17 @@ describe('Sample data scope for property resolution', () => {
         expect(Object.keys(sampleData).sort()).toStrictEqual(expectedStepNames)
     })
 
+    it('reads a step under test together with the steps inside it', async () => {
+        const sampleData = await sampleDataService(app.log).getSampleDataForFlow({
+            projectId,
+            flowVersion,
+            type: SampleDataFileType.OUTPUT,
+            referencedBy: [{ items: '{{trigger.rows}}' }, { input: { url: '{{step_1.body}}' } }],
+        })
+
+        expect(Object.keys(sampleData).sort()).toStrictEqual(['step_1', 'trigger'])
+    })
+
     it('still reads every step for a whole-flow read', async () => {
         const sampleData = await sampleDataService(app.log).getSampleDataForFlow({
             projectId,
