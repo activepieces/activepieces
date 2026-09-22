@@ -110,7 +110,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         const { flowRunId, waitpointId, flowRunStatus, projectId, resumePayload, workerHandlerId, onReady } = params
 
         if (flowRunStatus === FlowRunStatus.PAUSED) {
-            const waitpoint = await transaction(async (entityManager) => {
+            const delivery = await transaction<PausedDelivery>(async (entityManager) => {
                 const repo = waitpointRepo(entityManager)
                 const found = await repo
                     .createQueryBuilder('waitpoint')
@@ -118,14 +118,21 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                     .where({ id: waitpointId, flowRunId, projectId })
                     .getOne()
                 if (isNil(found)) {
-                    return null
+                    return 'unknown-waitpoint'
+                }
+                if (found.status === WaitpointStatus.CONSUMED) {
+                    return 'already-delivered'
                 }
                 await onReady(found)
                 await this.consume({ waitpoint: found, entityManager })
-                return found
+                return 'dispatched'
             })
-            if (isNil(waitpoint)) {
+            if (delivery === 'unknown-waitpoint') {
                 log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Stale waitpointId, ignoring')
+                return false
+            }
+            if (delivery === 'already-delivered') {
+                log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Waitpoint was already delivered, ignoring')
                 return false
             }
             log.info({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[waitpointService#handleResumeSignal] Resume triggered')
@@ -229,6 +236,8 @@ function clampWaitpointResumeDeadline({ requested, type, flowRunCreated, flowRun
     }
     return requested
 }
+
+type PausedDelivery = 'dispatched' | 'already-delivered' | 'unknown-waitpoint'
 
 type ClampWaitpointResumeDeadlineParams = {
     requested: string | undefined
