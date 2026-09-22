@@ -56,18 +56,17 @@ sidebars only. The rail imports neither.
   Worth rendering platform-specific item chrome in the platform sidebar instead, rather than growing the
   shared primitive for one consumer.
 - **`/platform` redirects without `replace`, so Back lands you right back on it.** Every other admin
-  redirect (`/platform/setup`, `/platform/security`, `/platform/infrastructure`, `/platform/setup/branding`,
-  `/platform/setup/ai-capabilities`) passes `replace` to `<Navigate>`, but the one on `/platform` does not,
-  so it pushes a history entry and the browser Back button re-enters the redirect instead of leaving the
-  admin. Anyone who opens platform admin from a link to `/platform` rather than a specific page is stuck
-  going forward. Preserved deliberately while the routes were being derived from a registry, so fixing it
-  is a one-word change wherever that redirect is declared.
+  redirect passes `replace` to `<Navigate>`, but the one on `/platform` in `platform-routes.tsx` does not,
+  so the browser Back button re-enters the redirect instead of leaving the admin. A one-word fix.
 
-- **Four platform admin pages already carry their own tabs, so they cannot become tabs of something else without nesting two deep.** `setup/pieces` (Pieces, Piece sets, plus a `piece-sets/:id` child route), `infra/workers` (Health, Worker groups), `infra/health` (System, Runs, Queue) and `setup/mcp` (Connection, Tools). Any plan that groups admin pages under a parent has to answer this for each of them, and the answer decides the item count more than the grouping does: leaving all four as their own nav items lands around seventeen, folding them in lands around thirteen but puts a second tab row inside a tab. Count `TabsTrigger` occurrences per page before promising a number, because the mockups that drive this work are drawn from the nav and cannot see the second level.
+- **Admin sections are routes, not tabs.** Pieces, Workers, Health, AI Center and MCP Server used to switch
+  sections with in-page tabs; each section is now a sidebar sub-item with its own path, and
+  `LegacyTabRedirect` rewrites an old `?tab=` link to that path (MCP's tabs never had one). A new section gets a route and a
+  sub-item, plus an entry in the page's `*_TAB_PATHS` map if it replaces a tab.
 
-- **The active item is a bare prefix match with no query-string awareness.** `pathname.startsWith(item.to)`,
-  plus an optional `isActive` override that the platform sidebar never passes. Any nav that needs to
-  distinguish tabs of one page has to pass that override, because `?tab=` is invisible to the default.
+- **The active item is a `matchPath` on the pathname, so query strings never count.** A parent row is
+  active for any path under it; a sub-item that shares its parent's path needs `end: true`, or it stays lit
+  on every sibling. See `isRouteActive` in `ap-sidebar-item`.
 
 ## Key files
 

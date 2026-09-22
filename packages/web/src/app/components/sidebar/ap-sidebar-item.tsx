@@ -1,42 +1,40 @@
-import { LockKeyhole } from 'lucide-react';
+import { t } from 'i18next';
+import { ChevronDown, ChevronRight, Crown } from 'lucide-react';
 import React, { ComponentType, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, matchPath, useLocation } from 'react-router-dom';
 
-import { Dot } from '@/components/custom/dot';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { cn } from '@/lib/utils';
 
-export type SidebarItemType = {
-  to: string;
-  label: string;
-  type: 'link';
-  icon?: ComponentType<{ className?: string }>;
-  notification?: boolean;
-  locked?: boolean;
-  newWindow?: boolean;
-  isActive?: (pathname: string) => boolean;
-  isSubItem?: boolean;
-  show?: boolean;
-  hasPermission?: boolean;
-  onClick?: () => void;
-  badge?: string;
-  iconClassName?: string;
-  highlight?: boolean;
-};
-
 export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const { state } = useSidebar();
   const iconRef = useRef<AnimatedIconHandle | null>(null);
   const [isHovered, setIsHovered] = useState(false);
-  const isLinkActive =
-    location.pathname.startsWith(item.to) || item.isActive?.(location.pathname);
+  const pathname = location.pathname;
+  const isLinkActive = isRouteActive({ pathname, to: item.to });
   const isCollapsed = state === 'collapsed';
+  const subItems = item.subItems ?? [];
+  const hasSubItems = subItems.length > 0;
+  const showSubItems = hasSubItems && isLinkActive && !isCollapsed;
+  const isSubItemLocked = (subItem: SidebarSubItemType) =>
+    Boolean(item.locked) || Boolean(subItem.locked);
+  const isCrowned = hasSubItems
+    ? subItems.every(isSubItemLocked)
+    : Boolean(item.locked);
+  const isRowHighlighted = !hasSubItems && isLinkActive;
+
+  const keepSearchWithinSection = (to: string) =>
+    hasSubItems && isLinkActive && location.search
+      ? `${to}${location.search}`
+      : to;
 
   useEffect(() => {
     if (isHovered) {
@@ -48,53 +46,142 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
   const button = (
     <SidebarMenuButton
-      className={cn(
-        { 'bg-sidebar-accent hover:bg-sidebar-accent!': isLinkActive },
-        item.highlight && !isLinkActive && 'hover:bg-sidebar-accent/60',
-      )}
-      onClick={() => {
-        item.onClick?.();
-        navigate(item.to);
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      asChild
+      className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
+        'bg-sidebar-accent hover:bg-sidebar-accent!': isRowHighlighted,
+        'text-sidebar-foreground/60': item.locked,
+      })}
     >
-      {item.icon && renderIcon(item.icon, iconRef, item.iconClassName)}
-      {!isCollapsed && (
-        <span className={cn('text-sm', { 'font-semibold': isLinkActive })}>
-          {item.label}
-        </span>
-      )}
-      {!isCollapsed && item.badge && (
-        <span className="ml-auto text-[10px] font-medium text-primary">
-          {item.badge}
-        </span>
-      )}
-      {!isCollapsed && item.locked && !item.badge && (
-        <LockKeyhole className="size-3.5! ml-auto" />
-      )}
-      {item.notification && !item.locked && (
-        <Dot
-          variant="destructive"
-          className="absolute right-1 top-2 transform -translate-y-1/2 size-2 rounded-full"
-        />
-      )}
+      <Link
+        to={keepSearchWithinSection(item.to)}
+        aria-current={isRowHighlighted ? 'page' : undefined}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {item.icon && renderIcon({ Icon: item.icon, ref: iconRef })}
+        {!isCollapsed && (
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span
+              className={cn('truncate', { 'font-medium': isRowHighlighted })}
+            >
+              {item.label}
+            </span>
+            {isCrowned && <CrownMark />}
+          </span>
+        )}
+        {!isCollapsed && hasSubItems && (
+          <span className="ml-auto flex shrink-0 items-center gap-1.5">
+            {isLinkActive ? (
+              <ChevronDown
+                aria-hidden
+                className="size-4! text-sidebar-foreground/60"
+              />
+            ) : (
+              <ChevronRight
+                aria-hidden
+                className="size-4! text-sidebar-foreground/60"
+              />
+            )}
+          </span>
+        )}
+      </Link>
     </SidebarMenuButton>
   );
 
-  return <SidebarMenuItem>{button}</SidebarMenuItem>;
+  return (
+    <SidebarMenuItem>
+      {button}
+      {showSubItems && (
+        <SidebarMenuSub className="mx-0 ml-7 border-0 px-0 py-1">
+          {subItems.map((subItem) => {
+            const shut = isSubItemLocked(subItem);
+            const subItemActive = isRouteActive({
+              pathname,
+              to: subItem.to,
+              end: subItem.end,
+            });
+            return (
+              <SidebarMenuSubItem key={subItem.to}>
+                <SidebarMenuSubButton
+                  asChild
+                  isActive={subItemActive}
+                  className="h-8"
+                >
+                  <Link
+                    to={keepSearchWithinSection(subItem.to)}
+                    aria-current={subItemActive ? 'page' : undefined}
+                  >
+                    <span
+                      className={cn('flex min-w-0 items-center gap-1.5', {
+                        'text-sidebar-foreground/60': shut,
+                      })}
+                    >
+                      <span className="truncate">{subItem.label}</span>
+                      {shut && !isCrowned && <CrownMark />}
+                    </span>
+                  </Link>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            );
+          })}
+        </SidebarMenuSub>
+      )}
+    </SidebarMenuItem>
+  );
 };
 
-function renderIcon(
-  Icon: ComponentType<{ className?: string }>,
-  ref: React.RefObject<AnimatedIconHandle | null>,
-  iconClassName?: string,
-) {
+function CrownMark() {
+  return (
+    <>
+      <Crown
+        aria-hidden
+        className="size-3.5! shrink-0 text-sidebar-foreground/50"
+      />
+      <span className="sr-only">{t('Requires a plan upgrade')}</span>
+    </>
+  );
+}
+
+function isRouteActive({
+  pathname,
+  to,
+  end = false,
+}: {
+  pathname: string;
+  to: string;
+  end?: boolean;
+}) {
+  return matchPath({ path: to, end }, pathname) !== null;
+}
+
+function renderIcon({
+  Icon,
+  ref,
+}: {
+  Icon: ComponentType<{ className?: string }>;
+  ref: React.RefObject<AnimatedIconHandle | null>;
+}) {
   return React.createElement(Icon, {
-    className: cn('size-4 pointer-events-none', iconClassName),
+    className: 'size-5 shrink-0 pointer-events-none',
     ref,
   } as { className: string });
 }
+
+export type SidebarSubItemType = {
+  to: string;
+  label: string;
+  end?: boolean;
+  locked?: boolean;
+};
+
+export type SidebarItemType = {
+  to: string;
+  label: string;
+  type: 'link';
+  icon?: ComponentType<{ className?: string }>;
+  locked?: boolean;
+  subItems?: SidebarSubItemType[];
+};
 
 type AnimatedIconHandle = {
   startAnimation: () => void;

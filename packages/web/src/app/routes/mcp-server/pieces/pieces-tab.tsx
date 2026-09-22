@@ -32,7 +32,7 @@ import { ProjectPicker } from './project-picker';
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
 const COLLAPSED_ROW_HEIGHT = 50;
-const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
+const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces/piece-sets';
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {

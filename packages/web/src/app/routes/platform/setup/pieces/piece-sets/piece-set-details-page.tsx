@@ -61,7 +61,7 @@ const PieceSetDetailsPage = () => {
   };
 
   if (!platform.plan.managePiecesEnabled) {
-    return <Navigate to="/platform/setup/pieces?tab=piece-sets" replace />;
+    return <Navigate to="/platform/setup/pieces/piece-sets" replace />;
   }
 
   if (isLoading || !pieceSet) {
@@ -80,7 +80,7 @@ const PieceSetDetailsPage = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/platform/setup/pieces?tab=piece-sets')}
+              onClick={() => navigate('/platform/setup/pieces/piece-sets')}
               className="p-1 h-auto"
             >
               <ArrowLeft className="size-4" />
