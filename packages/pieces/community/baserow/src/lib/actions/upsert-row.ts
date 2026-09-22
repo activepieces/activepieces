@@ -74,7 +74,7 @@ export const upsertRowAction = createAction({
         'The value to search for (exact match). If a row with this value is found it will be updated; otherwise a new row is created.',
       required: true,
     }),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({ required: true, withLinkBy: true }),
     create_missing_select_options: Property.Checkbox({
       displayName: 'Create missing select options',
       description:

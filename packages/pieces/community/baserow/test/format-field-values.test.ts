@@ -132,6 +132,47 @@ describe('formatFieldValues', () => {
       expect(result).toEqual({ date_debut: '2026-09-09T15:30:00.000Z' });
     });
   });
+
+  describe('collaborator fields', () => {
+    it('accepts numeric user IDs, as numbers or text', () => {
+      const result = formatFieldValues({
+        input: { assignes: [5, '7', ' 9 '] },
+        fields: [collaboratorField({ name: 'assignes' })],
+        skipEmpty: true,
+      });
+
+      expect(result).toEqual({ assignes: [{ id: 5 }, { id: 7 }, { id: 9 }] });
+    });
+
+    it('reads the id out of collaborators copied from another Baserow row', () => {
+      const result = formatFieldValues({
+        input: { assignes: [{ id: 3, name: 'Jean' }] },
+        fields: [collaboratorField({ name: 'assignes' })],
+        skipEmpty: true,
+      });
+
+      expect(result).toEqual({ assignes: [{ id: 3 }] });
+    });
+
+    it('rejects anything that is not a user ID instead of guessing', () => {
+      const fields = [collaboratorField({ name: 'assignes' })];
+
+      expect(() =>
+        formatFieldValues({ input: { assignes: ['jean@exemple.fr'] }, fields, skipEmpty: true })
+      ).toThrow('Field "assignes": "jean@exemple.fr" is not a Baserow user ID');
+      expect(() =>
+        formatFieldValues({ input: { assignes: ['7-jean'] }, fields, skipEmpty: true })
+      ).toThrow('is not a Baserow user ID');
+    });
+
+    it('leaves the field untouched when every value is blank, but clears it for Clean Row', () => {
+      const fields = [collaboratorField({ name: 'assignes' })];
+      const input = { assignes: ['', null] };
+
+      expect(formatFieldValues({ input, fields, skipEmpty: true })).toEqual({});
+      expect(formatFieldValues({ input, fields, skipEmpty: false })).toEqual({ assignes: [] });
+    });
+  });
 });
 
 function linkField({ name }: { name: string }): BaserowField {
@@ -142,6 +183,14 @@ function linkField({ name }: { name: string }): BaserowField {
     link_row_related_field_id: 2,
     link_row_table: 1140768,
     link_row_related_field: 2,
+  };
+}
+
+function collaboratorField({ name }: { name: string }): BaserowField {
+  return {
+    ...commonField({ name }),
+    type: BaserowFieldType.MULTIPLE_COLLABORATORS,
+    notify_user_when_added: false,
   };
 }
 

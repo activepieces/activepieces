@@ -75,13 +75,15 @@ export function formatFieldValues({
           result[key] = field.date_include_time ? value : toDateOnly(value);
         }
         break;
-      case BaserowFieldType.MULTIPLE_COLLABORATORS:
-        if (Array.isArray(value) && value.length > 0) {
-          result[key] = value.map((id: string) => ({ id: parseInt(id, 10) }));
-        } else {
-          result[key] = [];
+      case BaserowFieldType.MULTIPLE_COLLABORATORS: {
+        const collaborators = toFieldItems({ value, objectKey: 'id' }).map((item) => ({
+          id: toCollaboratorId({ fieldName: key, item }),
+        }));
+        if (collaborators.length > 0 || !skipEmpty) {
+          result[key] = collaborators;
         }
         break;
+      }
       case BaserowFieldType.SINGLE_SELECT:
         if (
           value === null ||
@@ -191,41 +193,57 @@ function toLinkedRowReferences({
   value: unknown;
   linkBy: BaserowLinkBy;
 }): number[] | string[] {
-  const items = (Array.isArray(value) ? value.flat() : [value])
-    .map((item) => unwrapLinkedRow({ item, linkBy }))
-    .filter((item) => !isBlankLinkItem(item));
-  if (linkBy === BaserowLinkBy.PRIMARY_FIELD_VALUE) {
+  const byPrimaryFieldValue = linkBy === BaserowLinkBy.PRIMARY_FIELD_VALUE;
+  const items = toFieldItems({ value, objectKey: byPrimaryFieldValue ? 'value' : 'id' });
+  if (byPrimaryFieldValue) {
     return items.map((item) => (typeof item === 'string' ? item.trim() : String(item)));
   }
   return items.map((item) => toRowId({ fieldName, item }));
 }
 
-function unwrapLinkedRow({
-  item,
-  linkBy,
+function toFieldItems({
+  value,
+  objectKey,
 }: {
-  item: unknown;
-  linkBy: BaserowLinkBy;
-}): unknown {
+  value: unknown;
+  objectKey: string;
+}): unknown[] {
+  return (Array.isArray(value) ? value.flat() : [value])
+    .map((item) => unwrapObjectValue({ item, key: objectKey }))
+    .filter((item) => !isBlankItem(item));
+}
+
+function unwrapObjectValue({ item, key }: { item: unknown; key: string }): unknown {
   if (typeof item !== 'object' || item === null) return item;
-  const key = linkBy === BaserowLinkBy.PRIMARY_FIELD_VALUE ? 'value' : 'id';
   return key in item ? Reflect.get(item, key) : item;
 }
 
-function isBlankLinkItem(item: unknown): boolean {
+function isBlankItem(item: unknown): boolean {
   if (item === null || item === undefined) return true;
   return typeof item === 'string' && item.trim().length === 0;
 }
 
 function toRowId({ fieldName, item }: { fieldName: string; item: unknown }): number {
-  const candidate = typeof item === 'string' ? item.trim() : item;
-  const rowId = typeof candidate === 'string' && /^\d+$/.test(candidate) ? Number(candidate) : candidate;
-  if (typeof rowId === 'number' && Number.isSafeInteger(rowId) && rowId > 0) {
-    return rowId;
-  }
+  const rowId = asPositiveInteger(item);
+  if (rowId !== undefined) return rowId;
   throw new Error(
     `Field "${fieldName}": "${String(item)}" is not a row ID. To link rows by the value of the linked table's primary field, set "${fieldName} — Link by" to "Primary field value".`
   );
+}
+
+function toCollaboratorId({ fieldName, item }: { fieldName: string; item: unknown }): number {
+  const userId = asPositiveInteger(item);
+  if (userId !== undefined) return userId;
+  throw new Error(
+    `Field "${fieldName}": "${String(item)}" is not a Baserow user ID. Collaborator fields accept numeric user IDs only — a name or an email cannot be resolved.`
+  );
+}
+
+function asPositiveInteger(item: unknown): number | undefined {
+  const candidate = typeof item === 'string' ? item.trim() : item;
+  const parsed = typeof candidate === 'string' && /^\d+$/.test(candidate) ? Number(candidate) : candidate;
+  if (typeof parsed === 'number' && Number.isSafeInteger(parsed) && parsed > 0) return parsed;
+  return undefined;
 }
 
 function toDateOnly(value: unknown): unknown {
@@ -311,7 +329,7 @@ export const baserowCommon = {
         };
       },
     }),
-  tableFields: (required = true) =>
+  tableFields: ({ required, withLinkBy }: { required: boolean; withLinkBy: boolean }) =>
     Property.DynamicProperties({
       auth: baserowAuth,
       displayName: 'Table Fields',
@@ -378,6 +396,7 @@ Check that your Baserow connection still has access to this table, then reselect
                   required: false,
                   description: `Rows of table ${field.link_row_table_id} to link to, as row IDs or primary field values depending on "${field.name} — Link by".`,
                 });
+                if (!withLinkBy) break;
                 fields[linkByKey(field.name)] = Property.StaticDropdown({
                   displayName: `${field.name} — Link by`,
                   description:

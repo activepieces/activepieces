@@ -18,7 +18,7 @@ export const cleanRowAction = createAction({
   props: {
     table_id: baserowCommon.tableId(),
     row_id: baserowCommon.rowId(),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({ required: true, withLinkBy: false }),
   },
   async run(context) {
     const { table_id, row_id } = context.propsValue as {

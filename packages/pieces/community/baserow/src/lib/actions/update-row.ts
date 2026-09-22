@@ -23,7 +23,7 @@ export const updateRowAction = createAction({
   props: {
     table_id: baserowCommon.tableId(),
     row_id: baserowCommon.rowId(),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({ required: true, withLinkBy: true }),
     create_missing_select_options: Property.Checkbox({
       displayName: 'Create missing select options',
       description:

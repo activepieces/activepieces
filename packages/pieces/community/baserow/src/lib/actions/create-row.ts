@@ -21,7 +21,7 @@ export const createRowAction = createAction({
   auth: baserowAuth,
   props: {
     table_id: baserowCommon.tableId(),
-    table_fields: baserowCommon.tableFields(true),
+    table_fields: baserowCommon.tableFields({ required: true, withLinkBy: true }),
     create_missing_select_options: Property.Checkbox({
       displayName: 'Create missing select options',
       description:
