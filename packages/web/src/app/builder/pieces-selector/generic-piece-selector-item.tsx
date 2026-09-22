@@ -1,5 +1,4 @@
 import { FlowActionType, FlowTriggerType } from '@activepieces/shared';
-import { t } from 'i18next';
 
 import { CardListItem } from '@/components/custom/card-list';
 import { Badge } from '@/components/ui/badge';
@@ -76,14 +75,6 @@ const GenericActionOrTriggerItem = ({
             >
               {pieceSelectorItemInfo.displayName}
             </div>
-            {item.type === FlowActionType.AI_ROUTER && (
-              <Badge
-                variant="secondary"
-                className="shrink-0 px-1.5 py-0 text-xss font-normal"
-              >
-                {t('AI')}
-              </Badge>
-            )}
             {pieceSelectorItemInfo.classification && (
               <Badge
                 variant={

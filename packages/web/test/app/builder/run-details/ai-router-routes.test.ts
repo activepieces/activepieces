@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { aiRouterRoutesUtils } from '@/app/builder/run-details/ai-router-routes';
 
-const { rankRoutes } = aiRouterRoutesUtils;
+const { rankRoutes, floorExplanation } = aiRouterRoutesUtils;
 
 function branch(branchName: string, evaluation: boolean) {
   return { branchName, branchIndex: 0, evaluation };
@@ -93,5 +93,43 @@ describe('rankRoutes', () => {
       { name: 'Billing', percent: 100, chosen: true },
       { name: 'Broken', percent: undefined, chosen: false },
     ]);
+  });
+});
+
+describe('floorExplanation', () => {
+  const ranked = [
+    { name: 'Route 1', percent: 63, chosen: false },
+    { name: 'Route 2', percent: 33, chosen: false },
+    { name: 'Otherwise', percent: 4, chosen: true },
+  ];
+
+  it('explains why the fallback ran when the top route is under the floor', () => {
+    expect(floorExplanation({ input: { minConfidence: 0.9 }, ranked })).toEqual(
+      {
+        route: 'Route 1',
+        percent: 63,
+        floor: 90,
+        fallback: 'Otherwise',
+      },
+    );
+  });
+
+  it('says nothing without a floor, in all-matches mode, or when the top route ran', () => {
+    expect(floorExplanation({ input: {}, ranked })).toBeUndefined();
+    expect(
+      floorExplanation({
+        input: { minConfidence: 0.9, matchMode: 'ALL_MATCHES' },
+        ranked,
+      }),
+    ).toBeUndefined();
+    expect(
+      floorExplanation({
+        input: { minConfidence: 0.5 },
+        ranked: [
+          { name: 'Route 1', percent: 63, chosen: true },
+          { name: 'Otherwise', percent: 4, chosen: false },
+        ],
+      }),
+    ).toBeUndefined();
   });
 });

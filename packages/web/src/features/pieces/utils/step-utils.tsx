@@ -185,7 +185,7 @@ function buildCoreStepMetadata(): Record<
       displayName: t('AI Router'),
       logoUrl: 'https://cdn.activepieces.com/pieces/new-core/utility-ai.svg',
       description: t(
-        'Ask one question and send the flow down the matching branch',
+        'Ask one question and a purpose-built evaluation model picks the route',
       ),
       type: FlowActionType.AI_ROUTER,
     },

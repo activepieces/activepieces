@@ -157,7 +157,7 @@ export const TestSampleDataViewer = React.memo(
             ) : activeTab === 'Output' && !errorMessage ? (
               <div className="flex flex-col gap-3">
                 {currentStep?.type === FlowActionType.AI_ROUTER && (
-                  <AiRouterRoutes output={outputData} />
+                  <AiRouterRoutes output={outputData} input={sampleDataInput} />
                 )}
                 <SmartOutputViewer
                   json={outputData}

@@ -19,8 +19,8 @@ const JAPANESE_BUNDLE = {
   'Split your flow into branches depending on condition(s)':
     '条件に応じてフローを分岐します',
   'AI Router': 'AI ルーター',
-  'Ask one question and send the flow down the matching branch':
-    '1つの質問をして、一致する分岐にフローを送ります',
+  'Ask one question and a purpose-built evaluation model picks the route':
+    '1つの質問をすると、専用の評価モデルがルートを選びます',
   'Empty Trigger': '空のトリガー',
 };
 

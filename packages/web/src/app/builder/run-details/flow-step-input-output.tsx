@@ -274,7 +274,10 @@ export const FlowStepInputOutput = () => {
           <TabsContent value="output" className="flex flex-col gap-3">
             {selectedStep.type === FlowActionType.AI_ROUTER &&
               !isStepRunning && (
-                <AiRouterRoutes output={selectedStepOutput.output} />
+                <AiRouterRoutes
+                  output={selectedStepOutput.output}
+                  input={selectedStepOutput.input}
+                />
               )}
             {isStepRunning ? (
               <StepOutputSkeleton className="p-4" />
