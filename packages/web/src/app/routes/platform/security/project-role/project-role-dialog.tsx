@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 
 import { PermissionGrid } from './permission-grid';
 import { RoleAvatar } from './role-avatar';
-import { roleCopy } from './role-copy';
+import { roleCopy } from '@/features/members/lib/role-copy';
 import { RolePeopleTab } from './role-people-tab';
 import { ROLE_BASES, RoleBase, rolePermissionModel } from './role-permissions';
 

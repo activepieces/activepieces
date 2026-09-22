@@ -15,11 +15,11 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
+import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 import { ProjectRoleDialog } from './project-role-dialog';
 import { RoleAvatar } from './role-avatar';
-import { roleCopy } from './role-copy';
 import { rolePermissionModel } from './role-permissions';
 
 export function ProjectRolesList({
@@ -59,7 +59,7 @@ export function ProjectRolesList({
       <ItemGroup className="gap-2">
         {roles.map((role) => {
           const description =
-            roleCopy.builtInProjectRoleDescription(role.name) ??
+            roleCopy.projectRoleDescription(role.name) ??
             t('permissionsCount', {
               granted: rolePermissionModel.grantedBoxes({
                 permissions: role.permissions,
@@ -71,19 +71,7 @@ export function ProjectRolesList({
               key={role.id}
               variant="outline"
               size="sm"
-              role="button"
-              tabIndex={0}
-              className="cursor-pointer flex-nowrap hover:bg-accent/50"
-              onClick={() => setOpened({ role, tab: 'permissions' })}
-              onKeyDown={(event) => {
-                if (
-                  event.target === event.currentTarget &&
-                  (event.key === 'Enter' || event.key === ' ')
-                ) {
-                  event.preventDefault();
-                  setOpened({ role, tab: 'permissions' });
-                }
-              }}
+              className="relative flex-nowrap hover:bg-accent/50"
             >
               <RoleAvatar
                 name={role.name}
@@ -91,9 +79,15 @@ export function ProjectRolesList({
               />
               <ItemContent className="min-w-0">
                 <ItemTitle className="min-w-0 max-w-full">
-                  <TextWithTooltip tooltipMessage={role.name}>
-                    <span className="truncate">{role.name}</span>
-                  </TextWithTooltip>
+                  <button
+                    type="button"
+                    className="min-w-0 text-left after:absolute after:inset-0 after:content-['']"
+                    onClick={() => setOpened({ role, tab: 'permissions' })}
+                  >
+                    <TextWithTooltip tooltipMessage={role.name}>
+                      <span className="block truncate">{role.name}</span>
+                    </TextWithTooltip>
+                  </button>
                   <Badge
                     variant={
                       role.type === RoleType.DEFAULT ? 'accent' : 'inverted'
@@ -115,11 +109,8 @@ export function ProjectRolesList({
                 ) : (
                   <button
                     type="button"
-                    className="shrink-0 text-sm tabular-nums text-primary underline-offset-4 hover:underline"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setOpened({ role, tab: 'people' });
-                    }}
+                    className="relative z-10 shrink-0 text-sm tabular-nums text-primary underline-offset-4 hover:underline"
+                    onClick={() => setOpened({ role, tab: 'people' })}
                   >
                     {t('rolePeopleCount', { count: role.userCount })}
                   </button>

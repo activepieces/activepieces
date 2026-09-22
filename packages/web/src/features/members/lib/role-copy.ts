@@ -8,14 +8,14 @@ const BUILT_IN_ORDER: string[] = [
   DefaultProjectRole.VIEWER,
 ];
 
-function builtInProjectRoleDescription(roleName: string): string | null {
+function projectRoleDescription(roleName: string): string | null {
   switch (roleName) {
     case DefaultProjectRole.ADMIN:
-      return t('Full access');
+      return t('Manage project settings, members, connections, and git sync');
     case DefaultProjectRole.EDITOR:
-      return t('Builds and runs flows');
+      return t('Build, publish, and manage flows');
     case DefaultProjectRole.VIEWER:
-      return t('View only');
+      return t('View flows and monitor run history');
     default:
       return null;
   }
@@ -34,15 +34,38 @@ function projectRoleTone(roleName: string): RoleTone {
   }
 }
 
-function platformRoleTone(role: PlatformRole): RoleTone {
-  switch (role) {
-    case PlatformRole.ADMIN:
-      return 'brand';
-    case PlatformRole.OPERATOR:
-      return 'info';
-    default:
-      return 'neutral';
-  }
+function platformRoles({
+  personalProjectsEnabled,
+}: PlatformRolesParams): PlatformRoleSummary[] {
+  return [
+    {
+      role: PlatformRole.ADMIN,
+      tone: 'brand',
+      label: t('Admin'),
+      description: t('Full access to all projects and platform settings'),
+      isDefaultForNewMembers: false,
+    },
+    {
+      role: PlatformRole.OPERATOR,
+      tone: 'info',
+      label: t('Operator'),
+      description: t(
+        'Access and edit flows in all projects, no platform settings',
+      ),
+      isDefaultForNewMembers: false,
+    },
+    {
+      role: PlatformRole.MEMBER,
+      tone: 'neutral',
+      label: t('Member'),
+      description: personalProjectsEnabled
+        ? t(
+            "Access to personal project and any team projects they're invited to",
+          )
+        : t("Access to the team projects they're invited to"),
+      isDefaultForNewMembers: true,
+    },
+  ];
 }
 
 function sortProjectRoles({ roles }: { roles: ProjectRole[] }): ProjectRole[] {
@@ -64,37 +87,11 @@ function builtInRank(role: ProjectRole): number {
   return index === -1 ? BUILT_IN_ORDER.length - 1 : index;
 }
 
-function platformRoles(): PlatformRoleSummary[] {
-  return [
-    {
-      role: PlatformRole.ADMIN,
-      tone: platformRoleTone(PlatformRole.ADMIN),
-      label: t('Admin'),
-      description: t('Every project as Admin, plus this console'),
-      isDefaultForNewMembers: false,
-    },
-    {
-      role: PlatformRole.OPERATOR,
-      tone: platformRoleTone(PlatformRole.OPERATOR),
-      label: t('Operator'),
-      description: t('Every project as Editor, no console'),
-      isDefaultForNewMembers: false,
-    },
-    {
-      role: PlatformRole.MEMBER,
-      tone: platformRoleTone(PlatformRole.MEMBER),
-      label: t('Member'),
-      description: t("Own project, plus the projects they're added to"),
-      isDefaultForNewMembers: true,
-    },
-  ];
-}
-
 export const roleCopy = {
-  builtInProjectRoleDescription,
+  projectRoleDescription,
   projectRoleTone,
-  sortProjectRoles,
   platformRoles,
+  sortProjectRoles,
 };
 
 export type RoleTone = 'brand' | 'info' | 'neutral' | 'custom';
@@ -105,4 +102,8 @@ export type PlatformRoleSummary = {
   label: string;
   description: string;
   isDefaultForNewMembers: boolean;
+};
+
+type PlatformRolesParams = {
+  personalProjectsEnabled: boolean;
 };

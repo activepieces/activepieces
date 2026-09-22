@@ -16,7 +16,8 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { PlatformRolesList } from './platform-roles-list';
 import { ProjectRoleDialog } from './project-role-dialog';
 import { ProjectRolesList } from './project-roles-list';
-import { roleCopy } from './role-copy';
+
+const PLATFORM_ROLE_COUNT = 3;
 
 export function RolesCard({
   projectRoles,
@@ -29,7 +30,7 @@ export function RolesCard({
 
   const projectRolesCount =
     isLoading || isError ? null : projectRoles?.data.length ?? 0;
-  const platformRolesCount = roleCopy.platformRoles().length;
+  const platformRolesCount = PLATFORM_ROLE_COUNT;
 
   const newRoleButton = !platform.plan.customRolesEnabled ? (
     <Tooltip>
