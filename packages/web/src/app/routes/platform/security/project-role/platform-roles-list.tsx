@@ -29,7 +29,7 @@ export function PlatformRolesList() {
               key={platformRole.role}
               variant="outline"
               size="sm"
-              className="flex-nowrap"
+              className="flex-nowrap bg-background dark:bg-muted/50"
             >
               <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
               <ItemContent className="min-w-0">

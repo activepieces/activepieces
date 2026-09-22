@@ -13,6 +13,7 @@ export const CenteredPage = ({
   footer,
   children,
   widthClassName = 'max-w-[40rem]',
+  className,
 }: {
   title: string;
   description?: React.ReactNode;
@@ -20,6 +21,7 @@ export const CenteredPage = ({
   footer?: React.ReactNode;
   children: React.ReactNode;
   widthClassName?: string;
+  className?: string;
 }) => {
   const header = (
     <>
@@ -38,7 +40,7 @@ export const CenteredPage = ({
 
   if (!footer) {
     return (
-      <div className={cn(GUTTER, 'py-6')}>
+      <div className={cn(GUTTER, 'py-6', className)}>
         <div className={cn('w-full mx-auto', widthClassName)}>
           {header}
           {children}
