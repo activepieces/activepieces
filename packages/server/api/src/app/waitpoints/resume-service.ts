@@ -56,7 +56,7 @@ export const resumeService = (log: FastifyBaseLogger) => ({
         if (processed) {
             const currentFlowRun = await findFlowRunOrThrow(flowRunId)
             if (currentFlowRun.status === FlowRunStatus.PAUSED) {
-                const addressedWaitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+                const addressedWaitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId: currentFlowRun.projectId })
                 if (!isNil(addressedWaitpoint) && addressedWaitpoint.status === WaitpointStatus.COMPLETED) {
                     log.info({ flowRun: { id: flowRunId } }, '[resumeService#resumeTrustedWithoutLock] Race detected: metadata worker wrote PAUSED after callback completed waitpoint; consuming waitpoint and enqueuing resume')
                     await waitpointService(log).consume({ waitpoint: addressedWaitpoint })
@@ -189,7 +189,7 @@ async function hasPendingTerminalStatus({ flowRunId }: HasPendingTerminalStatusP
 }
 
 async function wouldResumeABarrier({ flowRunId, waitpointId, projectId, log }: WouldResumeABarrierParams): Promise<boolean> {
-    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId })
+    const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId })
     if (isNil(waitpoint)) {
         return waitpointService(log).hasBarrier({ flowRunId, projectId })
     }

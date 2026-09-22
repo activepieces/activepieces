@@ -25,13 +25,13 @@ export const barrierService = (log: FastifyBaseLogger) => ({
 
         const creation = await transaction(async (entityManager) => {
             const repo = waitpointRepo(entityManager)
-            const existing = await repo.findOneBy({ flowRunId: params.flowRunId, stepName: params.stepName })
+            const existing = await repo.findOneBy({ flowRunId: params.flowRunId, projectId: params.projectId, stepName: params.stepName })
             if (!isNil(existing) && existing.status === WaitpointStatus.PENDING) {
                 log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id: existing.id } }, '[barrierService#create] Barrier already open for this step, reusing it')
-                return { inserted: false, barrier: existing, signals: await signalRepo(entityManager).findBy({ waitpointId: existing.id }) }
+                return { inserted: false, barrier: existing, signals: await signalRepo(entityManager).findBy({ waitpointId: existing.id, projectId: params.projectId }) }
             }
             if (!isNil(existing)) {
-                await repo.delete({ id: existing.id })
+                await repo.delete({ id: existing.id, projectId: params.projectId })
             }
             const now = dayjs().toISOString()
             const barrier: Waitpoint = {
@@ -150,7 +150,7 @@ async function closeBarrier({ barrier, timedOut }: CloseBarrierParams): Promise<
         const lockedBarrier = await repo
             .createQueryBuilder('waitpoint')
             .setLock('pessimistic_write')
-            .where({ id: barrier.id, status: WaitpointStatus.PENDING })
+            .where({ id: barrier.id, projectId: barrier.projectId, status: WaitpointStatus.PENDING })
             .getOne()
         if (isNil(lockedBarrier)) {
             return null

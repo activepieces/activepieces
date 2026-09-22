@@ -6,7 +6,7 @@ import { handleResumeDelayWaitpoint } from '../../../../../src/app/waitpoints/re
 import { resumeDelayJobId, waitpointService } from '../../../../../src/app/waitpoints/waitpoint-service'
 import { WaitpointStatus } from '../../../../../src/app/waitpoints/waitpoint-types'
 import { db } from '../../../../helpers/db'
-import { createMockFlow, createMockFlowRun, createMockFlowVersion } from '../../../../helpers/mocks'
+import { createMockFlow, createMockFlowRun, createMockFlowVersion, mockAndSaveBasicSetup } from '../../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../../helpers/test-setup'
 
@@ -128,6 +128,31 @@ describe('Waitpoint service', () => {
             expect(result.inserted).toBe(false)
             expect(result.waitpoint.status).toBe(WaitpointStatus.COMPLETED)
             expect(result.waitpoint.resumePayload).toEqual({ body: { data: 'test' } })
+        })
+
+        it('should not hand back a pre-completed waitpoint from another project', async () => {
+            const { flowRun } = await createFlowRun({ status: FlowRunStatus.RUNNING })
+            const { mockProject: otherProject } = await mockAndSaveBasicSetup()
+
+            const pause = await waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })
+            await waitpointService(app.log).complete({
+                flowRunId: flowRun.id,
+                projectId: ctx.project.id,
+                waitpointId: pause.waitpoint.id,
+                resumePayload: { body: { data: 'test' } },
+            })
+
+            await expect(waitpointService(app.log).createForPause({
+                flowRunId: flowRun.id,
+                projectId: otherProject.id,
+                stepName: 'approval',
+                type: PauseType.WEBHOOK,
+            })).rejects.toThrow()
         })
 
         it('should correctly map DELAY pause fields', async () => {
@@ -448,7 +473,7 @@ describe('Waitpoint service', () => {
                 type: PauseType.WEBHOOK,
             })
 
-            await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+            await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
 
             const deleted = await db.findOneBy('waitpoint', { flowRunId: flowRun.id })
             expect(deleted).toBeNull()
@@ -747,7 +772,7 @@ describe('Waitpoint service', () => {
             const staleWaitpointId = delayPause.waitpoint.id
 
             // Simulate: delay resolved early, flow continued and paused on approval (new waitpoint)
-            await waitpointService(app.log).deleteByFlowRunId(flowRun.id)
+            await waitpointService(app.log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: ctx.project.id })
             const approvalPause = await waitpointService(app.log).createForPause({
                 flowRunId: flowRun.id,
                 projectId: ctx.project.id,
@@ -816,7 +841,7 @@ describe('Waitpoint service', () => {
                 workerHandlerId: null,
             })
 
-            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: ctx.project.id, version: 'V0' })
             expect(result).not.toBeNull()
             expect(result!.flowRunId).toBe(flowRun.id)
             expect(result!.version).toBe('V0')
@@ -837,7 +862,7 @@ describe('Waitpoint service', () => {
                 workerHandlerId: null,
             })
 
-            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: ctx.project.id, version: 'V0' })
             expect(result).toBeNull()
         })
 
@@ -856,7 +881,7 @@ describe('Waitpoint service', () => {
                 workerHandlerId: null,
             })
 
-            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, version: 'V0' })
+            const result = await waitpointService(app.log).findPendingByVersion({ flowRunId: flowRun.id, projectId: ctx.project.id, version: 'V0' })
             expect(result).toBeNull()
         })
     })

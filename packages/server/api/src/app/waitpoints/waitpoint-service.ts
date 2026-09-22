@@ -19,6 +19,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
     async createForPause(params: CreateForPauseParams): Promise<CreateForPauseResult> {
         const preCompleted = await waitpointRepo().findOneBy({
             flowRunId: params.flowRunId,
+            projectId: params.projectId,
             stepName: params.stepName,
             status: WaitpointStatus.COMPLETED,
         })
@@ -54,7 +55,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             .orIgnore()
             .execute()
 
-        const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, stepName: params.stepName })
+        const waitpoint = await waitpointRepo().findOneByOrFail({ flowRunId: params.flowRunId, projectId: params.projectId, stepName: params.stepName })
         const inserted = waitpoint.id === id
         if (inserted) {
             log.info({ flowRun: { id: params.flowRunId }, waitpoint: { id } }, '[waitpointService#createForPause] Waitpoint created')
@@ -85,7 +86,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             const pending = await repo
                 .createQueryBuilder('waitpoint')
                 .setLock('pessimistic_write')
-                .where({ id: params.waitpointId, flowRunId: params.flowRunId, status: WaitpointStatus.PENDING })
+                .where({ id: params.waitpointId, flowRunId: params.flowRunId, projectId: params.projectId, status: WaitpointStatus.PENDING })
                 .getOne()
 
             if (isNil(pending)) {
@@ -114,7 +115,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
                 const found = await repo
                     .createQueryBuilder('waitpoint')
                     .setLock('pessimistic_write')
-                    .where({ id: waitpointId, flowRunId })
+                    .where({ id: waitpointId, flowRunId, projectId })
                     .getOne()
                 if (isNil(found)) {
                     return null
@@ -145,14 +146,14 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         return false
     },
 
-    async findPendingByVersion({ flowRunId, version }: FindPendingByVersionParams): Promise<Waitpoint | null> {
+    async findPendingByVersion({ flowRunId, projectId, version }: FindPendingByVersionParams): Promise<Waitpoint | null> {
         return waitpointRepo().findOne({
-            where: { flowRunId, status: WaitpointStatus.PENDING, version },
+            where: { flowRunId, projectId, status: WaitpointStatus.PENDING, version },
         })
     },
 
-    async findByIdAndFlowRunId({ waitpointId, flowRunId }: { waitpointId: string, flowRunId: string }): Promise<Waitpoint | null> {
-        return waitpointRepo().findOneBy({ id: waitpointId, flowRunId })
+    async findByIdAndFlowRunId({ waitpointId, flowRunId, projectId }: FindByIdAndFlowRunIdParams): Promise<Waitpoint | null> {
+        return waitpointRepo().findOneBy({ id: waitpointId, flowRunId, projectId })
     },
 
     async findUndeliveredCompletedWaitpoint({ flowRunId, projectId }: FindUndeliveredCompletedWaitpointParams): Promise<Waitpoint | null> {
@@ -161,7 +162,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             return null
         }
         return waitpointRepo().findOne({
-            where: { flowRunId, status: WaitpointStatus.COMPLETED },
+            where: { flowRunId, projectId, status: WaitpointStatus.COMPLETED },
             order: { created: 'DESC' },
         })
     },
@@ -181,7 +182,7 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
             log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: waitpoint.flowRunId } }, '[waitpointService#consume] Barrier kept as CONSUMED so the run stays barrier-owned until it ends')
             return
         }
-        await repo.delete({ id: waitpoint.id })
+        await repo.delete({ id: waitpoint.id, projectId: waitpoint.projectId })
         log.info({ waitpoint: { id: waitpoint.id }, flowRun: { id: waitpoint.flowRunId } }, '[waitpointService#consume] Waitpoint consumed and deleted')
     },
 
@@ -204,8 +205,8 @@ export const waitpointService = (log: FastifyBaseLogger) => ({
         log.info({ waitpoint: { id } }, '[waitpointService#delete] Waitpoint deleted')
     },
 
-    async deleteByFlowRunId(flowRunId: string): Promise<void> {
-        await waitpointRepo().delete({ flowRunId })
+    async deleteByFlowRunId({ flowRunId, projectId }: DeleteByFlowRunIdParams): Promise<void> {
+        await waitpointRepo().delete({ flowRunId, projectId })
         log.info({ flowRun: { id: flowRunId } }, '[waitpointService#deleteByFlowRunId] Waitpoint deleted')
     },
 })
@@ -251,6 +252,12 @@ type ConsumeParams = {
     entityManager?: EntityManager
 }
 
+type FindByIdAndFlowRunIdParams = {
+    waitpointId: string
+    flowRunId: string
+    projectId: string
+}
+
 type FindUndeliveredCompletedWaitpointParams = {
     flowRunId: string
     projectId: string
@@ -263,5 +270,10 @@ type FindSubflowWaitpointParams = {
 
 type DeleteWaitpointParams = {
     id: string
+    projectId: string
+}
+
+type DeleteByFlowRunIdParams = {
+    flowRunId: string
     projectId: string
 }
