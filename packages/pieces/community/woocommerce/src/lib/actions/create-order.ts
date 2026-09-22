@@ -14,7 +14,7 @@ export const wooCreateOrder = createAction({
   classification: 'WRITE',
   displayName: 'Create Order',
   description: 'Create an order with one or more line items',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a new order in a WooCommerce store from a list of product IDs and quantities, with an optional customer, status, and billing email. Use when an agent needs to place an order on a customer behalf. Not idempotent: each call creates a separate order.',
