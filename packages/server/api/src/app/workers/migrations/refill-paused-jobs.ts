@@ -8,9 +8,8 @@ import { redisConnections } from '../../database/redis-connections'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
-import { systemJobIds, SystemJobName } from '../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { WaitpointEntity } from '../../waitpoints/waitpoint-entity'
+import { waitpointTimeoutJob } from '../../waitpoints/waitpoint-timeout-job'
 import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { jobQueue } from '../job-queue/job-queue'
 
@@ -70,16 +69,12 @@ export const refillPausedRuns = (log: FastifyBaseLogger) => ({
                 log.error({ error: e, pausedRunId: pausedRun.id }, '[refillPausedRuns] Error removing job')
             }
 
-            await systemJobsSchedule(log).upsertJob({
-                job: {
-                    name: SystemJobName.RESUME_DELAY_WAITPOINT,
-                    data: { flowRunId: pausedRun.id, projectId: pausedRun.projectId, waitpointId: waitpoint.id },
-                    jobId: systemJobIds.resumeDelay({ waitpointId: waitpoint.id }),
-                },
-                schedule: {
-                    type: 'one-time',
-                    date: dayjs(waitpoint.resumeDateTime),
-                },
+            await waitpointTimeoutJob.schedule({
+                flowRunId: pausedRun.id,
+                projectId: pausedRun.projectId,
+                waitpointId: waitpoint.id,
+                resumeDateTime: waitpoint.resumeDateTime,
+                log,
             })
             migratedCount++
         }

@@ -30,7 +30,7 @@ export async function sweepOverdueDeadlines({ log, pageSize, maxPages, maxRedeli
             deadLetteredCount: sweep.deadLettered.length,
             scannedCount: sweep.scannedCount,
             sample: sweep.deadLettered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((waitpoint) => waitpoint.id),
-        }, '[sweepOverdueDeadlines] Deadlines exhausted their attempts and leave the scan for good rather than spending its budget every tick; their runs stay paused until someone intervenes')
+        }, '[sweepOverdueDeadlines] Dead-lettered deadlines whose jobs exhausted their attempts; their runs stay paused')
     }
     if (!isNil(sweep.resumeFrom)) {
         log.warn({
@@ -38,7 +38,7 @@ export async function sweepOverdueDeadlines({ log, pageSize, maxPages, maxRedeli
             scannedCount: sweep.scannedCount,
             armedCount: sweep.armed.length,
             resumeFrom: sweep.resumeFrom,
-        }, '[sweepOverdueDeadlines] Spent the per-tick budget without reaching the end of the overdue backlog; the next tick carries on from where this one stopped rather than re-reading the rows it already classified')
+        }, '[sweepOverdueDeadlines] Tick budget spent before the end of the backlog; the next tick resumes from the cursor')
     }
 
     const redelivery = await redeliverUndeliveredBarriers({ log, maxRedelivered: maxRedelivered ?? MAX_REDELIVERED_PER_TICK })
@@ -73,7 +73,7 @@ async function redeliverUndeliveredBarriers({ log, maxRedelivered }: RedeliverUn
         undeliveredCount: undelivered.length,
         resumedFrom: cursor,
         sample: undelivered.slice(0, DEAD_LETTER_SAMPLE_SIZE).map((barrier) => barrier.id),
-    }, '[redeliverUndeliveredBarriers] Found barriers closed but never delivered, so the release that closed them died before dispatching; handing each one back to the barrier queue, which owns the retries')
+    }, '[redeliverUndeliveredBarriers] Found closed barriers that were never delivered; handing them to the barrier queue')
     const { enqueued, enqueueFailed } = await enqueueBarrierEvaluations({ undelivered, log })
     const backlogCarried = undelivered.length >= maxRedelivered
     const resumeFrom = backlogCarried ? toBarrierCursor(undelivered[undelivered.length - 1]) : undefined
@@ -83,7 +83,7 @@ async function redeliverUndeliveredBarriers({ log, maxRedelivered }: RedeliverUn
             enqueuedCount: enqueued,
             enqueueFailedCount: enqueueFailed,
             resumeFrom,
-        }, '[redeliverUndeliveredBarriers] Filled the per-tick batch without reaching the end of the undelivered barriers; the next tick carries on past them rather than re-reading the same oldest rows every minute')
+        }, '[redeliverUndeliveredBarriers] Batch full before the end of the backlog; the next tick resumes from the cursor')
     }
     return { enqueued, enqueueFailed, backlogCarried }
 }
@@ -92,7 +92,7 @@ async function enqueueBarrierEvaluations({ undelivered, log }: EnqueueBarrierEva
     const outcomes = await Promise.all(undelivered.map(async (barrier) => {
         const { error } = await tryCatch(() => barrierQueue(log).enqueueEvaluation({ barrierId: barrier.id, projectId: barrier.projectId }))
         if (!isNil(error)) {
-            log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[redeliverUndeliveredBarriers] Could not hand an undelivered barrier back to the queue, so the rest of this batch carries on and the next tick tries it again')
+            log.error({ error, waitpoint: { id: barrier.id }, flowRun: { id: barrier.flowRunId } }, '[redeliverUndeliveredBarriers] Could not enqueue an undelivered barrier; the next tick retries it')
             return false
         }
         return true

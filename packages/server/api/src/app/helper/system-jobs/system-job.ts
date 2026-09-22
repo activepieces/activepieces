@@ -110,8 +110,8 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             await systemJobsQueue.add(job.name, job.data, configureJobOptions({ date: schedule.date, jobId: job.jobId, customConfig }))
             return { status: 'added' }
         }
-        log.warn({ jobName: job.name, jobId: job.jobId, existingDelay: existingJob.opts.delay },
-            '[systemJob#upsertJob] A one-time job already exists under this id; the requested schedule was dropped and the existing one stands')
+        log.warn({ job: { id: job.jobId, type: job.name }, existingDelayMs: existingJob.opts.delay },
+            '[systemJob#upsertJob] A one-time job already exists under this id; kept its schedule')
         return { status: 'kept' }
     },
 

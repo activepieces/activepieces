@@ -7,7 +7,7 @@ import { Migration } from '../../migration'
 export class AddWaitpointDeadLetteredAt1857000000000 implements Migration {
     name = 'AddWaitpointDeadLetteredAt1857000000000'
     breaking = false
-    release = '0.91.0'
+    release = '0.92.0'
     transaction = false
 
     public async up(queryRunner: QueryRunner): Promise<void> {
