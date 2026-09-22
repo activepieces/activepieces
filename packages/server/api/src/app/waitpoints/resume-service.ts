@@ -14,7 +14,11 @@ import { Waitpoint, WaitpointResumePayload, WaitpointStatus } from './waitpoint-
 export const resumeService = (log: FastifyBaseLogger) => ({
     async resumeFromWaitpoint({ flowRunId, waitpointId, resumePayload, workerHandlerId, httpRequestId }: ResumeFromWaitpointParams): Promise<ResumeFromWaitpointResult> {
         const flowRun = await findFlowRunOrThrow(flowRunId)
-        if (await wouldResumeABarrier({ flowRunId, waitpointId, projectId: flowRun.projectId, log })) {
+        const addressed = await addressedWaitpointIsBarrier({ flowRunId, waitpointId, projectId: flowRun.projectId, log })
+        const refuse = addressed === 'no-such-waitpoint'
+            ? await waitpointService(log).hasBarrier({ flowRunId, projectId: flowRun.projectId })
+            : addressed
+        if (refuse) {
             log.warn({ flowRun: { id: flowRunId }, waitpoint: { id: waitpointId } }, '[resumeService#resumeFromWaitpoint] Refused an external resume of a barrier; only the barrier predicate and its deadline may release it')
             return { flowRun, stale: true }
         }
@@ -188,10 +192,10 @@ async function hasPendingTerminalStatus({ flowRunId }: HasPendingTerminalStatusP
     return isFlowRunStateTerminal({ status: pending.status, ignoreInternalError: false })
 }
 
-async function wouldResumeABarrier({ flowRunId, waitpointId, projectId, log }: WouldResumeABarrierParams): Promise<boolean> {
+async function addressedWaitpointIsBarrier({ flowRunId, waitpointId, projectId, log }: AddressedWaitpointIsBarrierParams): Promise<AddressedWaitpointVerdict> {
     const waitpoint = await waitpointService(log).findByIdAndFlowRunId({ waitpointId, flowRunId, projectId })
     if (isNil(waitpoint)) {
-        return waitpointService(log).hasBarrier({ flowRunId, projectId })
+        return 'no-such-waitpoint'
     }
     return waitpoint.type === PauseType.BARRIER
 }
@@ -249,7 +253,9 @@ type HasPendingTerminalStatusParams = {
     flowRunId: FlowRunId
 }
 
-type WouldResumeABarrierParams = {
+type AddressedWaitpointVerdict = boolean | 'no-such-waitpoint'
+
+type AddressedWaitpointIsBarrierParams = {
     flowRunId: FlowRunId
     waitpointId: string
     projectId: string
