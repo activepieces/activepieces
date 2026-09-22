@@ -29,15 +29,6 @@ jobs:
       matrix:
         include:
           - apps: 1
-            workers: 2
-            label: "1app-2workers"
-          - apps: 2
-            workers: 4
-            label: "2app-4workers"
-          - apps: 3
-            workers: 6
-            label: "3app-6workers"
-          - apps: 1
             workers: 4
             label: "1app-4workers"
           - apps: 2
@@ -140,22 +131,21 @@ jobs:
             --out /tmp/result.json
           cat /tmp/result.json
 
-      - name: Upload result to S3 (scheduled runs only)
+      - name: Detect regression against trailing 14 runs (scheduled runs only)
         if: github.event_name == 'schedule'
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AP_S3_REGION }}
+          CH_HOST: ${{ secrets.CLICKHOUSE_CI_HOST }}
+          CH_USER: ${{ secrets.CLICKHOUSE_CI_USER }}
+          CH_PASS: ${{ secrets.CLICKHOUSE_CI_PASSWORD }}
+          BETTERSTACK_WEBHOOK_URL: ${{ secrets.BETTERSTACK_WEBHOOK_URL }}
         run: |
-          DATE=$(date -u +%Y%m%d)
-          SHA_SHORT="${GITHUB_SHA:0:7}"
-          KEY="bench/${DATE}-${SHA_SHORT}-${{ matrix.label }}.json"
-          aws --endpoint-url "${{ secrets.AP_S3_ENDPOINT }}" \
-              s3 cp /tmp/result.json "s3://${{ secrets.AP_S3_BUCKET }}/${KEY}"
-          echo "Uploaded s3://${{ secrets.AP_S3_BUCKET }}/${KEY}"
+          node benchmark/detect-regression.mjs \
+            --current /tmp/result.json \
+            --label "${{ matrix.label }}" \
+            --runUrl "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Insert result into ClickHouse (scheduled runs only)
-        if: github.event_name == 'schedule'
+        if: always() && github.event_name == 'schedule'
         env:
           CH_HOST: ${{ secrets.CLICKHOUSE_CI_HOST }}
           CH_USER: ${{ secrets.CLICKHOUSE_CI_USER }}
@@ -189,35 +179,6 @@ jobs:
             --data-binary @- \
             "https://$CH_HOST:8443/?query=INSERT+INTO+bench.results+FORMAT+JSONEachRow"
           echo "ClickHouse insert OK"
-
-      - name: Detect regression against trailing 14 runs (scheduled runs only)
-        if: github.event_name == 'schedule'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AP_S3_REGION }}
-          BETTERSTACK_WEBHOOK_URL: ${{ secrets.BETTERSTACK_WEBHOOK_URL }}
-        run: |
-          mkdir -p /tmp/history
-          KEYS=$(aws --endpoint-url "${{ secrets.AP_S3_ENDPOINT }}" \
-                    s3 ls "s3://${{ secrets.AP_S3_BUCKET }}/bench/" \
-                | awk '{print $4}' | grep "${{ matrix.label }}\.json$" \
-                | sort | tail -15)
-          echo "History keys:"
-          echo "$KEYS"
-          TODAY_KEY="$(date -u +%Y%m%d)-${GITHUB_SHA:0:7}-${{ matrix.label }}.json"
-          HISTORY_PATHS=""
-          for key in $KEYS; do
-            [ "$key" = "$TODAY_KEY" ] && continue
-            aws --endpoint-url "${{ secrets.AP_S3_ENDPOINT }}" \
-                s3 cp "s3://${{ secrets.AP_S3_BUCKET }}/bench/$key" "/tmp/history/$key" >/dev/null
-            HISTORY_PATHS="${HISTORY_PATHS}${HISTORY_PATHS:+,}/tmp/history/$key"
-          done
-          node benchmark/detect-regression.mjs \
-            --current /tmp/result.json \
-            --history "$HISTORY_PATHS" \
-            --label "${{ matrix.label }}" \
-            --runUrl "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Upload artifact (always)
         if: always()
