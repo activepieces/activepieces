@@ -35,6 +35,7 @@ type Waitpoint = {
     resumePayload: WaitpointResumePayload | null
     sealed: boolean
     policy: BarrierPolicy | null
+    deadLetteredAt: string | null
 }
 
 type WaitpointSignal = {

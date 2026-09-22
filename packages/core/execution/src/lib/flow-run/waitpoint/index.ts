@@ -68,6 +68,7 @@ export const BarrierCreatedState = z.object({
         label: z.string().nullable(),
         confirmUrl: z.string(),
     })).optional(),
+    signalsTruncated: z.boolean().optional(),
 })
 export type BarrierCreatedState = z.infer<typeof BarrierCreatedState>
 
@@ -102,6 +103,8 @@ export const BarrierSummary = z.object({
 export type BarrierSummary = z.infer<typeof BarrierSummary>
 
 export const MAX_INLINE_BARRIER_SIGNALS = 100
+
+export const MAX_SIGNAL_REASON_LENGTH = 2000
 
 export const UNFAVOURABLE_SIGNAL_STATUSES = [
     BarrierSignalStatus.FAILED,
