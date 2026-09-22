@@ -133,6 +133,12 @@ const batchFailureFields: OutputSchema['fields'] = [
   { key: 'status', label: 'Failure Reason' },
 ];
 
+const batchUpdateFailureFields: OutputSchema['fields'] = [
+  { key: 'resourceName', label: 'Resource Name' },
+  { key: 'status', label: 'Failure Reason' },
+  { key: 'updateMask', label: 'Field Groups Not Applied' },
+];
+
 const batchCreateFailureFields: OutputSchema['fields'] = [
   { key: 'requestIndex', label: 'Request Index', format: 'number' },
   { key: 'status', label: 'Failure Reason' },
@@ -277,7 +283,7 @@ export const batchUpdateContactsOutputSchema: OutputSchema = {
       key: 'failed',
       label: 'Failures',
       labelKey: 'resourceName',
-      listItems: batchFailureFields,
+      listItems: batchUpdateFailureFields,
     },
     { key: 'succeededCount', label: 'Succeeded Count', format: 'number' },
     { key: 'failedCount', label: 'Failed Count', format: 'number' },

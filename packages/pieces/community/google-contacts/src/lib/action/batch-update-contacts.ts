@@ -68,7 +68,7 @@ export const googleContactsBatchUpdateContactsAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates up to 200 Google Contacts people in one call. Feed it the full Person objects returned by Batch Get Contacts, each still carrying its own resourceName and etag, with the values you want changed edited in place. The people are grouped by which field groups they carry and one request is issued per group, so a person carrying only a phone number and a person carrying only an email can be updated together; each request uses the field mask of its own group. Within a group the mask is applied to every person in it, so never hand-build partial Person objects here — a group a person no longer carries is erased on that person. Prefer Update Contact Fields for a single contact. Read the failed collection: a whole-call success can still hide per-contact failures, including stale-etag rejections. Every submitted person must carry at least one updatable field group. Safe to retry once the people have been re-read.',
+      'Updates up to 200 Google Contacts people in one call. Feed it the full Person objects returned by Batch Get Contacts, each still carrying its own resourceName and etag, with the values you want changed edited in place. The people are grouped by which field groups they carry and one request is issued per group, so a person carrying only a phone number and a person carrying only an email can be updated together; each request uses the field mask of its own group. Within a group the mask is applied to every person in it, so never hand-build partial Person objects here — a group a person no longer carries is erased on that person. Prefer Update Contact Fields for a single contact. Because the work is split across requests, this action can partially apply: one group can be written while another is rejected outright. It therefore does not throw when a request fails — it records every contact in that request under failed and carries on. Never treat a returned result as wholesale success and never assume an absent error means everything applied; always read failed and failedCount, which also cover per-contact rejections such as stale etags. Every submitted person must carry at least one updatable field group. Before retrying, re-read the people so the already-updated ones carry fresh etags.',
     idempotent: true,
   },
   outputSchema: batchUpdateContactsOutputSchema,
@@ -106,7 +106,7 @@ export const googleContactsBatchUpdateContactsAction = createAction({
     const groups = groupBySignature({ parsed });
     const succeeded: { resourceName: string; contact: Record<string, unknown>; person: unknown }[] =
       [];
-    const failed: unknown[] = [];
+    const failed: { resourceName: string; status: string; updateMask: string }[] = [];
     for (const group of groups) {
       let response: Record<string, unknown>;
       try {
@@ -121,10 +121,14 @@ export const googleContactsBatchUpdateContactsAction = createAction({
           },
         });
       } catch (error) {
-        throw googleContactsApi.toApiError({
+        const status = googleContactsApi.toApiError({
           error,
           operation: `Batch Update Contacts (field mask ${group.updateMask})`,
-        });
+        }).message;
+        for (const resourceName of Object.keys(group.contacts)) {
+          failed.push({ resourceName, status, updateMask: group.updateMask });
+        }
+        continue;
       }
       const updateResult = googleContactsApi.readRecord({
         source: response,
@@ -144,7 +148,13 @@ export const googleContactsBatchUpdateContactsAction = createAction({
           person: item.payload,
         });
       }
-      failed.push(...split.failed);
+      for (const item of split.failed) {
+        failed.push({
+          resourceName: item.resourceName,
+          status: item.status,
+          updateMask: group.updateMask,
+        });
+      }
     }
     return {
       succeeded,
