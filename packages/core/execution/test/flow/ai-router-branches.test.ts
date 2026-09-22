@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AiRouterMatchMode, BranchExecutionType, FlowActionType } from '../../src/lib/flows/actions/action'
 import { FlowVersion, FlowVersionState } from '../../src/lib/flows/flow-version'
-import { flowOperations, FlowOperationType, StepLocationRelativeToParent } from '../../src/lib/flows/operations'
+import { flowOperations, FlowOperationType, StepLocationRelativeToParent, UpdateActionRequest } from '../../src/lib/flows/operations'
 import { flowStructureUtil } from '../../src/lib/flows/util/flow-structure-util'
 import { FlowTriggerType } from '../../src/lib/flows/triggers/trigger'
 
@@ -109,6 +109,51 @@ describe('branch operations on an AI_ROUTER', () => {
             description: 'payments and refunds',
         })
         expect(router.children).toHaveLength(3)
+    })
+
+    it('can still be saved when it predates a newer settings field', () => {
+        const legacy = {
+            name: 'step_1',
+            displayName: 'AI Router',
+            valid: false,
+            skip: false,
+            type: FlowActionType.AI_ROUTER,
+            settings: {
+                text: 'x',
+                question: 'q',
+                branches: [
+                    { branchType: BranchExecutionType.CONDITION, branchName: 'Route 1', description: 'Payments' },
+                    { branchType: BranchExecutionType.FALLBACK, branchName: 'Otherwise', description: 'else' },
+                ],
+            },
+        }
+
+        const parsed = UpdateActionRequest.safeParse(legacy)
+        expect(parsed.success).toBe(true)
+    })
+
+    it('keeps a route description through an update', () => {
+        const flowVersion = flowOperations.apply(flowWithAiRouter(), {
+            type: FlowOperationType.UPDATE_ACTION,
+            request: {
+                name: 'step_1',
+                displayName: 'AI Router',
+                valid: false,
+                skip: false,
+                type: FlowActionType.AI_ROUTER,
+                settings: {
+                    text: 'x',
+                    question: 'q',
+                    matchMode: AiRouterMatchMode.BEST_MATCH,
+                    branches: [
+                        { branchType: BranchExecutionType.CONDITION, branchName: 'Route 1', description: 'Payments and refunds' },
+                        { branchType: BranchExecutionType.FALLBACK, branchName: 'Otherwise', description: 'else' },
+                    ],
+                },
+            },
+        })
+
+        expect(routerOf(flowVersion).settings.branches[0].description).toBe('Payments and refunds')
     })
 
     it('keeps branches and children in lockstep across move and delete', () => {

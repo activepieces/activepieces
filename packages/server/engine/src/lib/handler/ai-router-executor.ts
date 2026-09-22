@@ -33,7 +33,8 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             })
         }
         const { censoredInput, resolvedInput } = resolved
-        const bestMatch = resolvedInput.matchMode === AiRouterMatchMode.BEST_MATCH
+        const matchMode = resolvedInput.matchMode ?? AiRouterMatchMode.BEST_MATCH
+        const bestMatch = matchMode === AiRouterMatchMode.BEST_MATCH
 
         const { data: answer, error: answerError } = await utils.tryCatchAndThrowOnEngineError(() =>
             aiRouterApi.choose({
@@ -41,8 +42,8 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
                 engineToken: constants.engineToken,
                 state: asPlainText(resolvedInput.text),
                 question: asPlainText(resolvedInput.question),
-                options: toOptions(askableBranches(resolvedInput)),
-                matchMode: resolvedInput.matchMode,
+                options: toOptions(askableBranches({ branches: resolvedInput.branches, bestMatch })),
+                matchMode,
             }),
         )
         if (answerError) {
@@ -83,11 +84,11 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
     },
 }
 
-function askableBranches(settings: AiRouterActionSettings): AiRouterActionSettings['branches'] {
-    if (settings.matchMode === AiRouterMatchMode.BEST_MATCH) {
-        return settings.branches
+function askableBranches({ branches, bestMatch }: { branches: AiRouterActionSettings['branches'], bestMatch: boolean }): AiRouterActionSettings['branches'] {
+    if (bestMatch) {
+        return branches
     }
-    return settings.branches.filter((branch) => branch.branchType !== BranchExecutionType.FALLBACK)
+    return branches.filter((branch) => branch.branchType !== BranchExecutionType.FALLBACK)
 }
 
 function toOptions(branches: AiRouterActionSettings['branches']): Record<string, string> {

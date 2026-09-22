@@ -231,7 +231,7 @@ export const AiRouterSettings = memo(({ readonly }: { readonly: boolean }) => {
             <Label>{t('Match')}</Label>
             <Select
               disabled={readonly}
-              value={field.value}
+              value={field.value ?? AiRouterMatchMode.BEST_MATCH}
               onValueChange={(value) => {
                 field.onChange(value);
                 form.trigger();
