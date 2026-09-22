@@ -30,16 +30,27 @@ import {
 
 export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventParams): ApplicationEvent => {
     const isoNow = new Date().toISOString()
-    const baseEnvelope = {
+    const project = { displayName: 'Dream Department' }
+    const user = {
+        id: apId(),
+        email: 'sample@example.com',
+        firstName: 'Sample',
+        lastName: 'User',
+    }
+    const workerEnvelope = {
         id: apId(),
         created: isoNow,
         updated: isoNow,
-        ip: '127.0.0.1',
         platformId,
         projectId,
-        userId: apId(),
     }
-    const project = { displayName: 'Dream Department' }
+    const baseEnvelope = {
+        ...workerEnvelope,
+        ip: '127.0.0.1',
+        userId: user.id,
+        userEmail: user.email,
+        projectDisplayName: project.displayName,
+    }
     const flow = { id: apId(), externalId: apId(), created: isoNow, updated: isoNow }
     const flowVersion = {
         id: apId(),
@@ -48,12 +59,6 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         created: isoNow,
         updated: isoNow,
     }
-    const user = {
-        id: apId(),
-        email: 'sample@example.com',
-        firstName: 'Sample',
-        lastName: 'User',
-    }
 
     switch (event) {
         case ApplicationEventName.FLOW_RUN_STARTED:
@@ -61,7 +66,7 @@ export const buildMockEvent = ({ event, platformId, projectId }: BuildMockEventP
         case ApplicationEventName.FLOW_RUN_RESUMED:
         case ApplicationEventName.FLOW_RUN_RETRIED: {
             const mock: FlowRunEvent = {
-                ...baseEnvelope,
+                ...workerEnvelope,
                 action: event,
                 data: {
                     flowRun: {

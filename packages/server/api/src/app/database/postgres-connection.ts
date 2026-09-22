@@ -445,6 +445,7 @@ import { AddMcpOAuthCodeNonce1851000000000 } from './migration/postgres/18510000
 import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
 import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000000000-AddFlowTombstoneIndex'
 import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
+import { AddEventDestinationMapping1852000000000 } from './migration/postgres/1852000000000-AddEventDestinationMapping'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -905,6 +906,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         FlowExternalIdUniqueIgnoresDeleting1855000000000,
         AddFlowTombstoneIndex1856000000000,
         AddWaitpointDeadLetteredAt1857000000000,
+        AddEventDestinationMapping1852000000000,
     ]
     return migrations
 }

@@ -364,6 +364,69 @@ describe('to_date', () => {
         expect(result('to_date("not-a-date")')).toBe(''))
 })
 
+describe('to_json', () => {
+    it('serialises an object so it can sit inside a sentence', () =>
+        expect(result('to_json({{ data }})', { data: { flowId: 'a1', status: 'SUCCEEDED' } }))
+            .toBe('{"flowId":"a1","status":"SUCCEEDED"}'))
+    it('serialises a list', () =>
+        expect(result('to_json({{ items }})', { items: [1, 2, 3] })).toBe('[1,2,3]'))
+    it('returns empty for a missing value rather than the text null', () =>
+        expect(result('to_json({{ nothing }})')).toBe(''))
+    it('builds a log line that keeps the JSON inside the string', () =>
+        expect(result('combine({{ action }};to_json({{ data }});" ")', { action: 'flow.created', data: { id: 'a1' } }))
+            .toBe('flow.created {"id":"a1"}'))
+})
+
+describe('isSingleExpression', () => {
+    it('accepts a leaf that is only one token', () =>
+        expect(formulaEvaluator.isSingleExpression('{{ created }}')).toBe(true))
+    it('accepts a leaf that is only one known function call', () =>
+        expect(formulaEvaluator.isSingleExpression('to_epoch({{ created }};"s")')).toBe(true))
+    it('rejects a token with text around it', () =>
+        expect(formulaEvaluator.isSingleExpression('event {{ action }}')).toBe(false))
+    it('rejects two tokens', () =>
+        expect(formulaEvaluator.isSingleExpression('{{ action }}{{ id }}')).toBe(false))
+    it('rejects a call followed by text', () =>
+        expect(formulaEvaluator.isSingleExpression('to_epoch({{ created }}) ns')).toBe(false))
+    it('rejects an unknown function name', () =>
+        expect(formulaEvaluator.isSingleExpression('to_parquet({{ created }})')).toBe(false))
+    it('rejects plain text', () =>
+        expect(formulaEvaluator.isSingleExpression('activepieces')).toBe(false))
+    it('rejects a padded token, which is how a user forces a string', () =>
+        expect(formulaEvaluator.isSingleExpression(' {{ created }} ')).toBe(false))
+    it('rejects a padded function call for the same reason', () =>
+        expect(formulaEvaluator.isSingleExpression(' to_epoch({{ created }}) ')).toBe(false))
+    it('rejects prose that happens to start with a function name', () =>
+        expect(formulaEvaluator.isSingleExpression('trim(this is my text)')).toBe(false))
+    it('rejects prose in a second argument', () =>
+        expect(formulaEvaluator.isSingleExpression('replace(hello world)')).toBe(false))
+    it('accepts an unquoted argument that carries no spaces', () =>
+        expect(formulaEvaluator.isSingleExpression('format_date({{ created }};YYYY-MM-DD)')).toBe(true))
+    it('accepts a call whose arguments are literals', () =>
+        expect(formulaEvaluator.isSingleExpression('add(1;2)')).toBe(true))
+    it('accepts a nested call with no arguments', () =>
+        expect(formulaEvaluator.isSingleExpression('to_epoch(now())')).toBe(true))
+})
+
+describe('to_epoch', () => {
+    it('defaults to milliseconds', () =>
+        expect(result('to_epoch("2025-01-15T00:00:00Z")')).toBe(1736899200000))
+    it('accepts an explicit milliseconds unit', () =>
+        expect(result('to_epoch("2025-01-15T00:00:00Z";"milliseconds")')).toBe(1736899200000))
+    it('returns whole seconds for the seconds unit', () =>
+        expect(result('to_epoch("2025-01-15T00:00:00Z";"s")')).toBe(1736899200))
+    it('rejects an unknown unit rather than guessing milliseconds', () =>
+        expect(result('to_epoch("2025-01-15T00:00:00Z";"fortnights")')).toBe(''))
+    it('returns empty for invalid input', () =>
+        expect(result('to_epoch("not-a-date")')).toBe(''))
+    it('builds a nanosecond timestamp when combined with padding', () =>
+        expect(result('combine(to_epoch("2025-01-15T00:00:00Z");"000000")')).toBe('1736899200000000000'))
+    it('treats a numeric input as an epoch in milliseconds rather than a year 1743 date', () =>
+        expect(result('to_epoch({{ created }})', { created: 1736899200000 })).toBe(1736899200000))
+    it('converts a numeric epoch to seconds', () =>
+        expect(result('to_epoch({{ created }};"s")', { created: 1736899200000 })).toBe(1736899200))
+})
+
 describe('add_minutes', () => {
     it('adds minutes to datetime', () => {
         const r = result('format_time(add_minutes("2024-01-01T10:00:00";45))') as string

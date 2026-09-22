@@ -1,5 +1,6 @@
-import { apId, Cursor, isNil, partition, PlatformId, ProjectId, SeekPage, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, Cursor, ErrorCode, isNil, partition, PlatformId, ProjectId, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, spreadIfNotUndefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { safeHttp } from '@activepieces/server-utils'
+import { AgentRunSource, ApplicationEvent, ApplicationEventName, buildMockEvent, CreatePlatformEventDestinationRequestBody, DestinationType, EventDestination, EventDestinationHeaders, EventDestinationHeadersRequest, EventDestinationMapper, EventDestinationScope, EventPayload, FlowRunEvent, LATEST_JOB_DATA_SCHEMA_VERSION, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { ArrayContains, FindOptionsWhere } from 'typeorm'
@@ -7,15 +8,22 @@ import { repoFactory } from '../core/db/repo-factory'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
 import { applicationEvents } from '../helper/application-events'
 import { domainHelper } from '../helper/domain-helper'
+import { EncryptedObject, encryptUtils } from '../helper/encryption'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { system } from '../helper/system/system'
+import { AppSystemProp } from '../helper/system/system-props'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { jobQueue, JobType } from '../workers/job-queue/job-queue'
+import { renderEventBody } from './event-body-renderer'
+import { eventDestinationHooks } from './event-destinations-hooks'
 import {
     EventDestinationEntity,
+    EventDestinationRow,
     EventDestinationSchema,
+    StoredEventDestinationHeaders,
 } from './event-destinations.entity'
 
 const eventDestinationRepo = repoFactory<EventDestinationSchema>(
@@ -32,6 +40,8 @@ const FLOW_RUN_EVENT_ACTIONS: ReadonlySet<ApplicationEventName> = new Set([
 ])
 
 const WEBHOOK_PATH_MARKER = '/v1/webhooks/'
+
+const MILLISECONDS_PER_SECOND = 1000
 
 export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
@@ -50,11 +60,8 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    create: async (
-        request: CreatePlatformEventDestinationRequestBody,
-        platformId: string,
-    ): Promise<EventDestination> => {
-        const entity: EventDestination = {
+    create: async ({ request, platformId }: CreateParams): Promise<EventDestination> => {
+        const entity: EventDestinationRow = {
             id: apId(),
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
@@ -62,12 +69,39 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             scope: EventDestinationScope.PLATFORM,
             events: request.events,
             url: request.url,
+            name: request.name ?? null,
+            type: request.type ?? DestinationType.CUSTOM,
+            enabled: request.enabled ?? true,
+            mapper: isNil(request.mapper) ? null : sanitizeObjectForPostgresql(request.mapper),
+            headers: await toStoredHeaders({ requested: request.headers, stored: {} }),
         }
-        return eventDestinationRepo().save(entity)
+        const saved = await eventDestinationRepo().save(entity)
+        return maskHeaders({ row: saved, log })
     },
     update: async ({ id, platformId, request }: UpdateParams): Promise<EventDestination> => {
-        await eventDestinationRepo().update({ id, platformId }, request)
-        return eventDestinationRepo().findOneByOrFail({ id, platformId })
+        const stored = await eventDestinationRepo().findOneByOrFail({ id, platformId })
+        const { headers: requestedHeaders, ...rest } = request
+        const sanitizedRest = isNil(rest.mapper) ? rest : { ...rest, mapper: sanitizeObjectForPostgresql(rest.mapper) }
+        const storedHeaderCiphertexts = parseStoredHeaders({ headers: stored.headers, destinationId: stored.id, log })
+        assertUrlChangeRebindsStoredHeaders({
+            requested: requestedHeaders,
+            stored: storedHeaderCiphertexts,
+            urlChanged: rest.url !== stored.url,
+        })
+        const headers = requestedHeaders === undefined
+            ? undefined
+            : await toStoredHeaders({
+                requested: requestedHeaders,
+                stored: storedHeaderCiphertexts,
+            })
+        await eventDestinationRepo().save({
+            id: stored.id,
+            ...sanitizedRest,
+            ...spreadIfNotUndefined('headers', headers),
+            updated: new Date().toISOString(),
+        })
+        const updated = await eventDestinationRepo().findOneByOrFail({ id, platformId })
+        return maskHeaders({ row: updated, log })
     },
     delete: async ({ id, platformId }: DeleteParams): Promise<void> => {
         await eventDestinationRepo().delete({
@@ -97,8 +131,9 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             })
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
+        const masked = data.map((row) => maskHeaders({ row, log }))
 
-        return paginationHelper.createPage<EventDestination>(data, cursor)
+        return paginationHelper.createPage<EventDestination>(masked, cursor)
     },
     trigger: async ({ projectId, event }: TriggerParams): Promise<void> => {
         const platformId = event.platformId
@@ -106,6 +141,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             platformId,
             events: ArrayContains([event.action]),
             scope: EventDestinationScope.PLATFORM,
+            enabled: true,
         }]
         const broadcastToProject = !isNil(projectId) && PROJECT_SCOPE_EVENTS.includes(event.action)
         if (broadcastToProject) {
@@ -114,13 +150,26 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 projectId,
                 events: ArrayContains([event.action]),
                 scope: EventDestinationScope.PROJECT,
+                enabled: true,
             })
         }
         const destinations = await eventDestinationRepo().findBy(conditions)
         if (destinations.length === 0) {
             return
         }
-        const enrichedEvent = await enrichFlowRunEvent({ event, log })
+        const { data: entitled, error: entitlementError } = await tryCatch(() => eventDestinationHooks.get(log).isDeliveryEntitled({ platformId }))
+        if (!isNil(entitlementError)) {
+            log.warn({ error: entitlementError, platform: { id: platformId } }, 'Failed to resolve event streaming entitlement, dropping the event')
+            return
+        }
+        if (!entitled) {
+            return
+        }
+        const { data: enrichment, error: enrichmentError } = await tryCatch(() => enrichFlowRunEvent({ event, log }))
+        if (!isNil(enrichmentError)) {
+            log.warn({ error: enrichmentError, platform: { id: platformId } }, 'Failed to enrich flow run event, sending the raw event')
+        }
+        const enrichedEvent = enrichment ?? event
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
         })
@@ -131,7 +180,7 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
             event: enrichedEvent,
             log,
         })
-        await Promise.all(destinationsToDispatch.map(({ destination, internalFlowId }) =>
+        await Promise.all(destinationsToDispatch.map(async ({ destination, internalFlowId }) =>
             dispatchEventToDestination({
                 log,
                 platformId,
@@ -139,31 +188,116 @@ export const eventDestinationService = (log: FastifyBaseLogger) => ({
                 destinationId: destination.id,
                 destinationUrl: destination.url,
                 internalFlowId,
-                event: enrichedEvent,
+                body: renderEventBody({
+                    mapper: destination.mapper,
+                    event: enrichedEvent,
+                    destinationId: destination.id,
+                    log,
+                }),
             }),
         ))
     },
-    test: async ({ platformId, projectId, url, event }: TestParams): Promise<void> => {
+    resolveDeliveryHeaders: async ({ platformId, destinationId }: ResolveDeliveryHeadersParams): Promise<EventDestinationHeaders | null> => {
+        const destination = await eventDestinationRepo().findOneBy({ id: destinationId, platformId })
+        if (isNil(destination)) {
+            return null
+        }
+        return decryptHeaders({ headers: destination.headers, destinationId: destination.id, log })
+    },
+    test: async ({ platformId, projectId, url, event, mapper, headers }: TestParams): Promise<TestPlatformEventDestinationResponse> => {
         const eventToTest = event ?? ApplicationEventName.FLOW_CREATED
         const mockEvent = buildMockEvent({ event: eventToTest, platformId, projectId })
+        const renderedBody = renderEventBody({ mapper, event: mockEvent, log })
+        const resolvedHeaders = headers ?? {}
         const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
             path: 'v1/webhooks',
         })
-        await dispatchEventToDestination({
-            log,
-            platformId,
-            projectId,
-            destinationId: apId(),
+        const internalFlowId = matchInternalWebhookFlowId({
             destinationUrl: url,
-            internalFlowId: matchInternalWebhookFlowId({
-                destinationUrl: url,
-                webhookUrlPrefix,
-            }),
-            event: mockEvent,
+            webhookUrlPrefix,
         })
+        const startedAt = Date.now()
+        const outcome = isNil(internalFlowId)
+            ? await postToDestination({ url, body: renderedBody, headers: resolvedHeaders })
+            : await dispatchToInternalFlow({
+                log,
+                destinationId: apId(),
+                destinationUrl: url,
+                flowId: internalFlowId,
+                body: renderedBody,
+            })
+        return {
+            renderedBody,
+            durationMs: Date.now() - startedAt,
+            ...outcome,
+        }
     },
 })
 
+
+function parseStoredHeaders({ headers, destinationId, log }: ParseStoredHeadersParams): StoredEventDestinationHeaders {
+    if (isNil(headers)) {
+        return {}
+    }
+    const parsed = StoredEventDestinationHeaders.safeParse(headers)
+    if (!parsed.success) {
+        log.warn({ destination: { id: destinationId } }, '[eventDestinationService#parseStoredHeaders] Stored headers are unreadable and are treated as empty')
+        return {}
+    }
+    return parsed.data
+}
+
+function assertUrlChangeRebindsStoredHeaders({ requested, stored, urlChanged }: AssertUrlChangeRebindsStoredHeadersParams): void {
+    const storedNames = Object.keys(stored)
+    if (!urlChanged || storedNames.length === 0) {
+        return
+    }
+    const carriedOverNames = requested === undefined
+        ? storedNames
+        : storedNames.filter((name) => !isNil(requested) && name in requested && isNil(requested[name]))
+    if (carriedOverNames.length === 0) {
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.EVENT_DESTINATION_URL_CHANGE_REQUIRES_HEADERS,
+        params: { headerNames: carriedOverNames },
+    })
+}
+
+async function toStoredHeaders({ requested, stored }: ToStoredHeadersParams): Promise<StoredEventDestinationHeaders | null> {
+    if (isNil(requested)) {
+        return null
+    }
+    const entries = await Promise.all(
+        Object.entries(requested).map(async ([key, value]): Promise<[string, EncryptedObject] | null> => {
+            if (!isNil(value)) {
+                return [key, await encryptUtils.encryptString(value)]
+            }
+            const keptCiphertext = stored[key]
+            return isNil(keptCiphertext) ? null : [key, keptCiphertext]
+        }),
+    )
+    const resolved = entries.filter((entry): entry is [string, EncryptedObject] => !isNil(entry))
+    return resolved.length === 0 ? null : Object.fromEntries(resolved)
+}
+
+async function decryptHeaders({ headers, destinationId, log }: DecryptHeadersParams): Promise<EventDestinationHeaders> {
+    const stored = parseStoredHeaders({ headers, destinationId, log })
+    const entries = await Promise.all(
+        Object.entries(stored).map(async ([key, value]): Promise<[string, string]> => [key, await encryptUtils.decryptString(value)]),
+    )
+    return Object.fromEntries(entries)
+}
+
+function maskHeaders({ row, log }: MaskHeadersParams): EventDestination {
+    const keys = Object.keys(parseStoredHeaders({ headers: row.headers, destinationId: row.id, log }))
+    return {
+        ...row,
+        headers: keys.length === 0
+            ? null
+            : Object.fromEntries(keys.map((key) => [key, null])),
+    }
+}
 
 const dispatchEventToDestination = async ({
     log,
@@ -172,7 +306,7 @@ const dispatchEventToDestination = async ({
     destinationId,
     destinationUrl,
     internalFlowId,
-    event,
+    body,
 }: DispatchEventParams): Promise<void> => {
     if (!isNil(internalFlowId)) {
         await dispatchToInternalFlow({
@@ -180,7 +314,7 @@ const dispatchEventToDestination = async ({
             destinationId,
             destinationUrl,
             flowId: internalFlowId,
-            event,
+            body,
         })
         return
     }
@@ -193,10 +327,26 @@ const dispatchEventToDestination = async ({
             projectId,
             webhookId: destinationId,
             webhookUrl: destinationUrl,
-            payload: event,
+            payload: body,
             jobType: WorkerJobType.EVENT_DESTINATION,
         },
     })
+}
+
+const postToDestination = async ({ url, body, headers }: PostToDestinationParams): Promise<DeliveryOutcome> => {
+    const timeoutInSeconds = system.getNumberOrThrow(AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS)
+    const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
+        url,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        data: body,
+        timeout: timeoutInSeconds * MILLISECONDS_PER_SECOND,
+        validateStatus: () => true,
+    }))
+    if (error !== null) {
+        return { error: error.message }
+    }
+    return { status: response.status }
 }
 
 const dispatchToInternalFlow = async ({
@@ -204,8 +354,8 @@ const dispatchToInternalFlow = async ({
     destinationId,
     destinationUrl,
     flowId,
-    event,
-}: DispatchToInternalFlowParams): Promise<void> => {
+    body,
+}: DispatchToInternalFlowParams): Promise<DeliveryOutcome> => {
     const routeSuffix = webhookRouteSuffix({ destinationUrl, flowId })
     const isDraftOrTest = routeSuffix.startsWith('/draft') || routeSuffix === '/test'
     const { data: response, error } = await tryCatch(async () => webhookService.handleWebhook({
@@ -221,7 +371,7 @@ const dispatchToInternalFlow = async ({
         flowVersionToRun: isDraftOrTest
             ? WebhookFlowVersionToRun.LATEST
             : WebhookFlowVersionToRun.LOCKED_FALL_BACK_TO_LATEST,
-        data: () => Promise.resolve(buildInternalWebhookPayload({ destinationUrl, event })),
+        data: () => Promise.resolve(buildInternalWebhookPayload({ destinationUrl, body })),
         execute: routeSuffix !== '/test',
         failParentOnFailure: false,
     }))
@@ -231,7 +381,7 @@ const dispatchToInternalFlow = async ({
             flow: { id: flowId },
             error: error.message,
         }, '[eventDestinationService#dispatchToInternalFlow] Failed to dispatch the event to the internal handler flow')
-        return
+        return { error: error.message }
     }
     if (response.status >= StatusCodes.BAD_REQUEST) {
         log.error({
@@ -240,14 +390,17 @@ const dispatchToInternalFlow = async ({
             response: { status: response.status },
         }, '[eventDestinationService#dispatchToInternalFlow] Internal handler flow did not accept the event — the flow may be deleted or disabled')
     }
+    return { status: response.status }
 }
 
-const buildInternalWebhookPayload = ({ destinationUrl, event }: BuildInternalWebhookPayloadParams): EventPayload => {
+const buildInternalWebhookPayload = ({ destinationUrl, body }: BuildInternalWebhookPayloadParams): EventPayload => {
     const { data: url } = tryCatchSync(() => new URL(destinationUrl))
     return {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: event,
+        headers: {
+            'content-type': 'application/json',
+        },
+        body,
         queryParams: isNil(url) ? {} : Object.fromEntries(url.searchParams),
     }
 }
@@ -346,6 +499,7 @@ const enrichFlowRunEvent = async ({ event, log }: EnrichFlowRunEventParams): Pro
     ])
     return {
         ...event,
+        ...spreadIfDefined('projectDisplayName', project?.displayName ?? event.projectDisplayName),
         data: {
             ...event.data,
             flowRun: {
@@ -385,8 +539,37 @@ const webhookRouteSuffix = ({ destinationUrl, flowId }: WebhookRouteSuffixParams
 }
 
 
+type ParseStoredHeadersParams = {
+    headers: StoredEventDestinationHeaders | null
+    destinationId: string
+    log: FastifyBaseLogger
+}
+
+type AssertUrlChangeRebindsStoredHeadersParams = {
+    requested: EventDestinationHeadersRequest | null | undefined
+    stored: StoredEventDestinationHeaders
+    urlChanged: boolean
+}
+
+type ToStoredHeadersParams = {
+    requested: EventDestinationHeadersRequest | null | undefined
+    stored: StoredEventDestinationHeaders
+}
+
+type DecryptHeadersParams = ParseStoredHeadersParams
+
+type MaskHeadersParams = {
+    row: EventDestinationRow
+    log: FastifyBaseLogger
+}
+
 type DeleteParams = {
     id: string
+    platformId: string
+}
+
+type CreateParams = {
+    request: CreatePlatformEventDestinationRequestBody
     platformId: string
 }
 
@@ -412,6 +595,19 @@ type TestParams = {
     projectId?: ProjectId
     url: string
     event?: ApplicationEventName
+    mapper?: EventDestinationMapper | null
+    headers?: EventDestinationHeaders | null
+}
+
+type DeliveryOutcome = {
+    status?: number
+    error?: string
+}
+
+type PostToDestinationParams = {
+    url: string
+    body: unknown
+    headers: EventDestinationHeaders
 }
 
 type EnrichFlowRunEventParams = {
@@ -447,7 +643,12 @@ type DispatchEventParams = {
     destinationId: string
     destinationUrl: string
     internalFlowId: string | null
-    event: ApplicationEvent
+    body: unknown
+}
+
+type ResolveDeliveryHeadersParams = {
+    platformId: PlatformId
+    destinationId: string
 }
 
 type DispatchToInternalFlowParams = {
@@ -455,12 +656,12 @@ type DispatchToInternalFlowParams = {
     destinationId: string
     destinationUrl: string
     flowId: string
-    event: ApplicationEvent
+    body: unknown
 }
 
 type BuildInternalWebhookPayloadParams = {
     destinationUrl: string
-    event: ApplicationEvent
+    body: unknown
 }
 
 type ExtractWebhookFlowIdCandidateParams = {

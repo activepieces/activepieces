@@ -1,4 +1,4 @@
-import { tryCatch } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
 import { EngineResponseStatus, EventDestinationJobData, WorkerJobType } from '@activepieces/shared'
 import { workerSettings } from '../../config/worker-settings'
@@ -9,10 +9,21 @@ export const eventDestinationJob: JobHandler<EventDestinationJobData, FireAndFor
     async execute(ctx: JobContext, data: EventDestinationJobData): Promise<FireAndForgetJobResult> {
         const timeoutInSeconds = workerSettings.getSettings().EVENT_DESTINATION_TIMEOUT_SECONDS
 
+        const resolved = await ctx.apiClient.resolveEventDestinationHeaders({
+            platformId: data.platformId,
+            destinationId: data.webhookId,
+        })
+        if (isNil(resolved)) {
+            ctx.log.warn({
+                webhook: { id: data.webhookId },
+            }, 'Event destination disappeared before delivery, dropping the event')
+            return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK }
+        }
+
         const { data: response, error } = await tryCatch(() => safeHttp.axios.request({
             url: data.webhookUrl,
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...resolved.headers },
             data: data.payload,
             timeout: timeoutInSeconds * 1000,
             validateStatus: () => true,
