@@ -53,6 +53,14 @@ Gotchas:
 - **Names and emails only ever leave on Cloud, and one helper is the whole reason.** `pickTelemetryPii` returns `{}` unless `edition === ApEdition.CLOUD`, and both the `signed.up` payload and `identify` build their PII by spreading it — so on CE and EE those events carry a user id and nothing personal, while on Cloud they carry email, first name and last name. Reviewers reading the payload type see the fields and reasonably conclude they are always sent; the gate is one spread away in the call site, not in the type. Since [000034](../decisions/000034-account-and-sign-in-telemetry-is-cloud-only.md) the question is moot for account events, which never leave a self-hosted instance at all; `pickTelemetryPii` still governs what `identify` carries, and `identify` still runs there.
 - **Pre-login capture happens only on `cloud.activepieces.com`** — the browser cannot read a platform's row before a session exists, so that hostname is the whole of the exception (see the decision). `canary.activepieces.com` and the `*.preview.activepieces.dev` envs are therefore excluded, which means **the pre-login funnel cannot be exercised on canary or a preview environment** — verify it on `cloud.activepieces.com`, or add the host.
 
+### Sign-up Attribution
+
+The web stashes the marketing params a visitor arrived with (`utm_*`, `gclid`, `fbclid`, `ref`, `ap_cta`, `ap_landing`, `ap_referrer`, `ap_sid`; contract in `attribution.ts` in shared) in local storage at boot and sends them as `attribution` on `SignUpRequest`, `VerifyEmailCodeRequest`, `CompleteSignUpRequest` and `ClaimTokenRequest`. The auth services return `{ response, signedUp }`; `signedUp` comes from `createPlatformWithProject`'s `provisioned` flag and from `getOrCreateWithProject`'s `created` flag. Only when it is true does the controller call `telemetry(log).identifySignUp`, which writes `signup_method` (`SignUpMethod`) and the attribution as PostHog `$set_once` person properties, so later logins never overwrite them.
+
+Gotchas:
+- The Google `USER_SIGNED_UP` audit event is gated on `signedUp` too; before that it fired on every login.
+- SAML users are never stamped: they are provisioned by their platform admin, not by a campaign link.
+
 ### Flow Failure Alerts (EE)
 
 Email on flow-run failure. First failure per flowVersion per 24h window sends; rest suppressed via Redis counter `flow_fail_count:<flowVersionId>` (1-day TTL). Personal projects: single owner-only receiver toggle; team projects: any number of receivers. Platform admins can bulk sub/unsub across projects (max 5 concurrent). Receivers stored/compared lowercase. Edition check (`paidEditions`) in service, no plan flag. No Issues feature — email links straight to the run page. EE/Cloud only.

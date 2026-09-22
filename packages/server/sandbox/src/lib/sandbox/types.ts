@@ -55,7 +55,6 @@ export type SandboxInitOptions = {
     basePath: string
     command?: string[]
     baseMounts?: SandboxMount[]
-    wsRpcPort?: number
 }
 
 export type SandboxOptions = {

@@ -33,5 +33,3 @@ export const GeneralPage = () => {
     </CenteredPage>
   );
 };
-
-export default GeneralPage;

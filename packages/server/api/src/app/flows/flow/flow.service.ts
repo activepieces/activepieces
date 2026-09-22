@@ -230,9 +230,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }))
         return paginationHelper.createPage(populatedFlows, isNil(sortBy) ? paginationResult.cursor : null)
     },
-    async exists(id: FlowId): Promise<boolean> {
+    async exists({ id, projectId }: FlowExistsParams): Promise<boolean> {
         return flowRepo().existsBy({
             id,
+            projectId,
         })
     },
     async getOneById(id: string): Promise<Flow | null> {
@@ -404,10 +405,14 @@ export const flowService = (log: FastifyBaseLogger) => ({
             }
 
             case FlowOperationType.CHANGE_FOLDER: {
-                await flowRepo().update(id, {
-                    folderId: operation.request.folderId,
+                const folderId = operation.request.folderId === UncategorizedFolderId ? null : operation.request.folderId
+                if (!isNil(folderId)) {
+                    await flowFolderService(log).getOneOrThrow({ projectId, folderId })
+                }
+                await flowRepo().update({ id, projectId }, {
+                    folderId,
                 })
-                log.info({ flow: { id }, folderId: operation.request.folderId }, 'Flow moved to folder')
+                log.info({ flow: { id }, folderId }, 'Flow moved to folder')
                 break
             }
 
@@ -548,6 +553,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
     },
 
     async setPublishedVersion({ flow, lockedVersion, entityManager }: SetPublishedVersionParams): Promise<void> {
+        await flowPublishHooks.get(log).assertReferencesResolve({
+            projectId: flow.projectId,
+            agentExternalIds: lockedVersion.agentIds ?? [],
+            entityManager,
+        })
         await flowRepo(entityManager).update({ id: flow.id }, {
             publishedVersionId: lockedVersion.id,
             status: FlowStatus.DISABLED,
@@ -823,6 +833,7 @@ async function applyStatusChange(params: {
 
 export const getFolderIdFromRequest = async ({ projectId, folderId, folderName, log }: { projectId: string, folderId: string | undefined, folderName: string | undefined, log: FastifyBaseLogger }) => {
     if (folderId) {
+        await flowFolderService(log).getOneOrThrow({ projectId, folderId })
         return folderId
     }
     if (folderName) {
@@ -945,7 +956,7 @@ type UpdatePublishedVersionIdParams = {
 type SetPublishedVersionParams = {
     flow: Flow
     lockedVersion: FlowVersion
-    entityManager?: EntityManager
+    entityManager: EntityManager
 }
 
 type DeleteParams = EventEmissionParams & {
@@ -970,6 +981,11 @@ type LockFlowVersionIfNotLockedParams = {
     platformId: PlatformId
     entityManager: EntityManager
     log: FastifyBaseLogger
+}
+
+type FlowExistsParams = {
+    id: FlowId
+    projectId: ProjectId
 }
 
 type ExistsByProjectAndStatusParams = {

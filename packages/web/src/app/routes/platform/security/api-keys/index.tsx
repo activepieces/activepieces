@@ -3,19 +3,10 @@ import { t } from 'i18next';
 import { Key, MoreHorizontal, Trash } from 'lucide-react';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { NewApiKeyDialog } from '@/app/routes/platform/security/api-keys/new-api-key-dialog';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemGroup,
-  ItemMedia,
-  ItemTitle,
-} from '@/components/custom/item';
 import { PlusIcon } from '@/components/icons/plus';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +15,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi, apiKeyQueries } from '@/features/platform-admin';

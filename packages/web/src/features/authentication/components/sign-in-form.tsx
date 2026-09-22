@@ -23,6 +23,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -140,7 +141,9 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
       name: TelemetryEventName.SIGN_IN_SUBMITTED,
       payload: { method: 'email' },
     });
-    mutate(data);
+    // On Cloud a password sign-up is only provisioned on this first sign-in
+    // (after the verification email), so the stashed attribution rides along.
+    mutate({ ...data, attribution: acquisitionUtils.getAcquisitionParams() });
   };
 
   return (

@@ -21,8 +21,9 @@ export const newMessageInChannelTrigger = createTrigger({
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
 		ignoreBots: Property.Checkbox({
-			displayName: 'Ignore Bot Messages ?',
-			required: true,
+			displayName: 'Ignore Bot Messages',
+			description: 'Skip messages posted by bots and apps.',
+			required: false,
 			defaultValue: false,
 		}),
 	},

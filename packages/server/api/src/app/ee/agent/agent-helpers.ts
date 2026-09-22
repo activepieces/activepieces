@@ -1,6 +1,7 @@
-import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, ProviderOutcomeReporter, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
-import { agentAiUtils } from '@activepieces/server-utils'
-import { AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { aiUtils } from '@activepieces/server-utils'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -144,25 +145,15 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     }
 }
 
-function reportKeyOutcome({ platformId, providerId, log }: { platformId: string, providerId: string, log: FastifyBaseLogger }): ProviderOutcomeReporter {
-    return async (signal) => {
-        const { error } = await tryCatch(() => aiProviderService(log).recordKeyObservation({ platformId, providerId, signal }))
-        if (!isNil(error)) {
-            log.warn({ error, aiProvider: { id: providerId } }, '[agentHelpers#reportKeyOutcome] Could not record key status')
-        }
-    }
-}
-
 async function resolveTierModel({ platformId, tierId, provider, providerConfigId, scope, log }: { platformId: string, tierId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: LanguageModel, modelId: string, provider: AIProviderName }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
     const modelId = agentModelResolution.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel: tierId, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
     return {
-        model: agentAiUtils.createChatModel({
-            provider: providerConfig.provider,
-            auth: providerConfig.auth,
-            config: providerConfig.config,
+        model: aiUtils.createModel({
+            credentials: providerConfig,
             modelId,
-            onOutcome: reportKeyOutcome({ platformId, providerId: providerConfig.configId, log }),
+            platformId,
+            providerConfigId: providerConfig.configId,
         }),
         modelId,
         provider: providerConfig.provider,
@@ -174,13 +165,13 @@ async function resolveFastModel({ platformId, provider, providerConfigId, scope,
 }
 
 
-async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
+async function resolveEmbeddingModel({ platformId, provider, providerConfigId, scope, billing, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, billing?: ActivepiecesAiBilling, log: FastifyBaseLogger }): Promise<{ model: EmbeddingModel, providerOptions: SharedV3ProviderOptions }> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    return agentAiUtils.createEmbeddingModel({
-        provider: providerConfig.provider,
-        auth: providerConfig.auth,
-        config: providerConfig.config,
-        onOutcome: reportKeyOutcome({ platformId, providerId: providerConfig.configId, log }),
+    return aiUtils.createEmbeddingModel({
+        credentials: providerConfig,
+        platformId,
+        providerConfigId: providerConfig.configId,
+        ...spreadIfDefined('billing', billing),
     })
 }
 
@@ -286,6 +277,18 @@ async function saveUserMemory({ platformId, userId, instructions, memories, base
     })
 }
 
+function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfigFields {
+    return {
+        tools: config.tools,
+        structuredOutput: config.structuredOutput,
+        maxSteps: config.maxSteps,
+        modelName: config.modelName ?? null,
+        ...spreadIfDefined('provider', config.provider ?? undefined),
+        ...spreadIfDefined('providerConfigId', config.providerConfigId ?? undefined),
+        promptOverride: { system: config.instructions },
+    }
+}
+
 async function agentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<boolean> {
     const { data: plan, error } = await tryCatch(() => platformPlanService(log).getOrCreateForPlatform(platformId))
     if (!isNil(error) || isNil(plan)) {
@@ -295,8 +298,20 @@ async function agentsSurfaceAvailable({ platformId, log }: { platformId: string,
     return plan.agentsEnabled
 }
 
+async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+    if (!plan.agentsEnabled) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: { message: 'This step runs a saved agent, and agents are not available on this platform' },
+        })
+    }
+}
+
 export const agentHelpers = {
+    jobFieldsFromConfig,
     agentsSurfaceAvailable,
+    assertAgentsSurfaceAvailable,
     getConversationOrThrow,
     getUserProjects,
     resolveChatProvider,
@@ -318,3 +333,5 @@ export const agentHelpers = {
     mergeMemories,
     saveUserMemory,
 }
+
+type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>

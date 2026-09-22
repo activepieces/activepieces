@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { createAudienceOutputSchema } from '../output-schemas';
 
 export const createAudience = createAction({
@@ -20,17 +21,12 @@ export const createAudience = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest<{
+    const response = await resendClient.sendRequest<{
       object: string;
       id: string;
       name: string;
       created_at: string;
-    }>({
-      method: HttpMethod.POST,
-      url: 'https://api.resend.com/audiences',
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-      body: { name: propsValue.name },
-    });
-    return response.body;
+    }>({ auth: auth.secret_text, method: HttpMethod.POST, path: '/audiences', body: { name: propsValue.name } });
+    return response;
   },
 });

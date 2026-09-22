@@ -16,14 +16,6 @@ export const pdfPageCount = createAction({
       required: true,
     }),
   },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
   async run({ propsValue }) {
     try {
       const pdfDoc = await PDFDocument.load(propsValue.file.data as any);

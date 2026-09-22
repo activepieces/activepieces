@@ -58,7 +58,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         log.info({ count: invitations.length }, '[provisionUserInvitation] list invitations')
         for (const invitation of invitations) {
             log.info({ invitation }, '[provisionUserInvitation] provision')
-            const user = await userService(log).getOrCreateWithProject({
+            const { user } = await userService(log).getOrCreateWithProject({
                 identity,
                 platformId: invitation.platformId,
             })

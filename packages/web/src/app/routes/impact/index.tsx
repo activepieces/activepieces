@@ -7,7 +7,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
 
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
