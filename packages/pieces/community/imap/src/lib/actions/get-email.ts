@@ -5,7 +5,7 @@ import {
   performImapOperation,
   withMailboxLock,
   selectedMailbox,
-  assertUidValidity,
+  assertOptionalUidValidity,
   parseSingleUid,
   flagsToArray,
   mapParsedAddresses,
@@ -29,7 +29,7 @@ export const getEmail = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Fetches and parses one email by UID: headers, text and HTML bodies, flags, and attachments saved as files. Use after search_emails to read a specific message. The message is not marked as read. Messages over 25 MB are refused. Read-only, safe to retry.',
+      'Fetches and parses one email by UID: headers, text and HTML bodies, flags, and attachments saved as files. Use after search_emails to read a specific message. The message is not marked as read. Pass the uid_validity from the same search_emails call so a stale UID is reported instead of returning an unrelated email. Messages over 25 MB are refused. Read-only, safe to retry.',
     idempotent: true,
   },
   props: {
@@ -42,7 +42,7 @@ export const getEmail = createAction({
       description: 'UID from search_emails in the same folder.',
       required: true,
     }),
-    uid_validity: uidValidityProp(),
+    uid_validity: uidValidityProp({ required: false }),
   },
   outputSchema: getEmailOutputSchema,
   async run({ auth, propsValue, files }) {
@@ -54,7 +54,7 @@ export const getEmail = createAction({
         folder,
         readOnly: true,
         run: async () => {
-          assertUidValidity({ client, expected: propsValue.uid_validity });
+          assertOptionalUidValidity({ client, expected: propsValue.uid_validity });
           const mailbox = selectedMailbox({ client });
           const meta = await client.fetchOne(
             String(uid),

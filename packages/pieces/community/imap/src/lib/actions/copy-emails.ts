@@ -19,7 +19,7 @@ export const copyEmails = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Copies one or more emails by UID from a source folder into an existing target folder, leaving the originals in place. Use move_emails to relocate instead of duplicate. UIDs that no longer exist are reported, not failed. Not idempotent: every call adds another copy.',
+      'Copies one or more emails by UID from a source folder into an existing target folder, leaving the originals in place. Use move_emails to relocate instead of duplicate. uid_validity is required and must come from the search_emails call that produced these UIDs; a mismatch fails the call so stale UIDs cannot copy the wrong emails. UIDs that no longer exist are reported, not failed. Not idempotent: every call adds another copy.',
     idempotent: false,
   },
   props: {
@@ -33,7 +33,7 @@ export const copyEmails = createAction({
       description: 'Existing folder path from list_folders to copy the emails into.',
       required: true,
     }),
-    uid_validity: uidValidityProp(),
+    uid_validity: uidValidityProp({ required: true }),
   },
   outputSchema: copyEmailsOutputSchema,
   async run({ auth, propsValue }) {

@@ -24,7 +24,7 @@ export const deleteEmails = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Permanently deletes (expunges) one or more emails by UID; this cannot be undone. Prefer trash_emails unless permanent removal is explicitly wanted, for example emptying mail that is already in Trash. On Gmail, deleting from a label folder only removes that label. Refuses on servers without UIDPLUS, where it would expunge other messages too. Not idempotent: a repeat call reports the UIDs as not found.',
+      'Permanently deletes (expunges) one or more emails by UID; this cannot be undone. Prefer trash_emails unless permanent removal is explicitly wanted, for example emptying mail that is already in Trash. On Gmail, deleting from a label folder only removes that label. Refuses on servers without UIDPLUS, where it would expunge other messages too. uid_validity is required and must come from the search_emails call that produced these UIDs; a mismatch fails the call so stale UIDs cannot delete the wrong emails. Not idempotent: a repeat call reports the UIDs as not found.',
     idempotent: false,
   },
   props: {
@@ -33,7 +33,7 @@ export const deleteEmails = createAction({
       description: 'Folder path from list_folders that contains the emails.',
     }),
     uids: uidsProp(),
-    uid_validity: uidValidityProp(),
+    uid_validity: uidValidityProp({ required: true }),
   },
   outputSchema: deleteEmailsOutputSchema,
   async run({ auth, propsValue }) {

@@ -54,7 +54,7 @@ export const updateEmailFlags = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes flags on one or more emails in a folder: read/unread, flagged/unflagged, answered, and custom keywords (labels). Only the options you set are changed; everything else is left untouched. Use trash_emails or delete_emails to remove messages instead. Sets a target state, so it is safe to retry.',
+      'Changes flags on one or more emails in a folder: read/unread, flagged/unflagged, answered, and custom keywords (labels). Only the options you set are changed; everything else is left untouched. Use trash_emails or delete_emails to remove messages instead. uid_validity is required and must come from the search_emails call that produced these UIDs; a mismatch fails the call so stale UIDs cannot re-flag the wrong emails. Sets a target state, so it is safe to retry.',
     idempotent: true,
   },
   props: {
@@ -63,7 +63,7 @@ export const updateEmailFlags = createAction({
       description: 'Folder path from list_folders that contains the emails.',
     }),
     uids: uidsProp(),
-    uid_validity: uidValidityProp(),
+    uid_validity: uidValidityProp({ required: true }),
     read: Property.StaticDropdown({
       displayName: 'Read Status',
       description: 'Leave empty to keep the current read status.',

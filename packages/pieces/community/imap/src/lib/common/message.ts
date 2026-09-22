@@ -123,18 +123,33 @@ function assertUidValidity({
   expected,
 }: {
   client: ImapFlow;
-  expected: string | undefined;
+  expected: string;
 }): void {
-  const trimmed = expected?.trim();
+  const trimmed = expected.trim();
   if (!trimmed) {
-    return;
+    throw new ImapError(
+      'uid_validity is required so stale UIDs cannot target the wrong emails. Re-run search_emails on this folder and pass the uid_validity it returns.'
+    );
   }
   const actual = selectedMailbox({ client }).uidValidity.toString();
   if (actual !== trimmed) {
     throw new ImapError(
-      `UIDs are stale: the folder UIDVALIDITY is now ${actual}, not ${trimmed}. Re-run search_emails.`
+      `The folder UIDVALIDITY changed from ${trimmed} to ${actual}, so the supplied UIDs are stale and may now identify different emails. Nothing was changed. Re-run search_emails on this folder to get fresh UIDs and uid_validity, then retry.`
     );
   }
+}
+
+function assertOptionalUidValidity({
+  client,
+  expected,
+}: {
+  client: ImapFlow;
+  expected: string | undefined;
+}): void {
+  if (!expected?.trim()) {
+    return;
+  }
+  assertUidValidity({ client, expected });
 }
 
 async function partitionExistingUids({
@@ -246,7 +261,7 @@ async function transferInFolder({
   sourceFolder: string;
   targetFolder: string;
   uids: number[];
-  uidValidity: string | undefined;
+  uidValidity: string;
   mode: 'move' | 'copy';
 }): Promise<TransferOutput> {
   if (samePath({ a: sourceFolder, b: targetFolder })) {
@@ -358,12 +373,13 @@ const uidsProp = () =>
     required: true,
   });
 
-const uidValidityProp = () =>
+const uidValidityProp = <T extends boolean>({ required }: { required: T }) =>
   Property.ShortText({
     displayName: 'UID Validity',
-    description:
-      'Optional uid_validity returned by search_emails. When set and the folder has changed, the call fails instead of acting on stale UIDs.',
-    required: false,
+    description: required
+      ? 'The uid_validity returned by the search_emails call that produced these UIDs. If the folder UIDVALIDITY has changed the UIDs are stale and the call fails instead of acting on unrelated emails.'
+      : 'The uid_validity returned by search_emails. When set and the folder has changed, the call fails instead of reading a stale UID.',
+    required,
   });
 
 type EmailAddress = { name: string; address: string };
@@ -419,6 +435,7 @@ export {
   parseSingleUid,
   selectedMailbox,
   assertUidValidity,
+  assertOptionalUidValidity,
   partitionExistingUids,
   assertFolderExists,
   assertUidPlusForDelete,
