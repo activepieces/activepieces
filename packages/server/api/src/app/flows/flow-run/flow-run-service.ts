@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, Cursor, ErrorCode, FlowId, FlowRunId, FlowVersionId, isNil, PlatformId, ProjectId, SeekPage } from '@activepieces/core-utils'
 import { apDayjs, apDayjsDuration, wideEvent } from '@activepieces/server-utils'
-import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
+import { ExecuteFlowJobData, ExecutionType, ExecutioOutputFile, FileCompression, FileType, FlowRetryStrategy, FlowRun, FlowRunCountByStatus, FlowRunStatus, FlowRunWithRetryError, flowStructureUtil, FlowVersion, GenericStepOutput, isFlowRunStateTerminal, JobPayload, LATEST_JOB_DATA_SCHEMA_VERSION, logSerializer, LogSliceRef, ResumeReason, RunEnvironment, RunInternalError, SampleDataFileType, StepOutput, StepOutputStatus, StepOutputType, StreamStepProgress, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
 import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
@@ -375,7 +375,12 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             platformId: await projectService(log).getPlatformId(projectId),
             executeTrigger: false,
             streamStepProgress: StreamStepProgress.WEBSOCKET,
-            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow(projectId, flowVersion, SampleDataFileType.OUTPUT) : undefined,
+            sampleData: !isNil(stepNameToTest) ? await sampleDataService(log).getSampleDataForFlow({
+                projectId,
+                flowVersion,
+                type: SampleDataFileType.OUTPUT,
+                referencedBy: settingsOfStepUnderTest({ flowVersion, stepNameToTest }),
+            }) : undefined,
         }, log)
     },
     async startManualTrigger({ projectId, flowVersionId, triggeredBy }: StartManualTriggerParams): Promise<FlowRun> {
@@ -777,6 +782,19 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
 export function isOutsideRetentionWindow(createdTime: string, retentionDays: number): boolean {
     if (!createdTime) return false
     return apDayjs(createdTime).add(retentionDays, 'day').isBefore(apDayjs())
+}
+
+function settingsOfStepUnderTest({ flowVersion, stepNameToTest }: SettingsOfStepUnderTestParams): unknown {
+    const stepUnderTest = flowStructureUtil.getStep(stepNameToTest, flowVersion.trigger)
+    if (isNil(stepUnderTest)) {
+        return undefined
+    }
+    return flowStructureUtil.getAllChildSteps(stepUnderTest).map((step) => step.settings)
+}
+
+type SettingsOfStepUnderTestParams = {
+    flowVersion: FlowVersion
+    stepNameToTest: string
 }
 
 type CreateParams = {
