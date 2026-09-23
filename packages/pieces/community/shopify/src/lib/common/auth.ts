@@ -129,7 +129,9 @@ export const shopifyDevDashboardAuth = PieceAuth.OAuth2({
     } catch (e) {
       return {
         valid: false,
-        error: devDashboardValidationError((e as HttpError).response?.status),
+        error: devDashboardValidationError(
+          e instanceof HttpError ? e.response.status : undefined,
+        ),
       };
     }
   },
@@ -137,7 +139,14 @@ export const shopifyDevDashboardAuth = PieceAuth.OAuth2({
 
 export const shopifyAuth = [shopifyAdminTokenAuth, shopifyDevDashboardAuth];
 
-export type ShopifyAuth = AppConnectionValueForAuthProperty<typeof shopifyAuth>;
+export const shopifyAuthHelpers = {
+  getShopName,
+  getAccessToken,
+  getBaseUrl: (auth: ShopifyAuth) => getBaseUrl(getShopName(auth)),
+  getAuthHeaders: (auth: ShopifyAuth) => ({
+    'X-Shopify-Access-Token': getAccessToken(auth),
+  }),
+};
 
 function devDashboardValidationError(status: number | undefined): string {
   switch (status) {
@@ -167,11 +176,4 @@ function getAccessToken(auth: ShopifyAuth): string {
   return auth.access_token;
 }
 
-export const shopifyAuthHelpers = {
-  getShopName,
-  getAccessToken,
-  getBaseUrl: (auth: ShopifyAuth) => getBaseUrl(getShopName(auth)),
-  getAuthHeaders: (auth: ShopifyAuth) => ({
-    'X-Shopify-Access-Token': getAccessToken(auth),
-  }),
-};
+export type ShopifyAuth = AppConnectionValueForAuthProperty<typeof shopifyAuth>;
