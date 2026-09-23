@@ -11,10 +11,21 @@ const EXCLUDE_PATTERNS: RegExp[] = [
     /(^|\/)dist\//,
 ]
 
+// Test code, wherever it lives. This bucket is listed first so a test file is charged here
+// instead of the product area it covers: a budget that counts tests taxes the PR for adding them.
+const TEST_PATTERNS: RegExp[] = [
+    /\.(test|spec)\.[cm]?[jt]sx?$/,
+    /(^|\/)(test|tests|__tests__|__mocks__|__snapshots__)\//,
+    /(^|\/)(vitest|jest|playwright|checkly)\.config\.[cm]?[jt]s$/,
+    /^packages\/tests-e2e\//,
+    /^smoke-test\//,
+]
+
 // First matching bucket wins; `budget: null` means the area is exempt (measured, never gated).
 // packages/pieces is exempt on purpose: line count can't tell a cohesive new piece from a
 // codemod or a schema dump, and pieces are @pieces-owned, self-contained, and low blast radius.
 const BUCKETS: SizeBucket[] = [
+    { name: 'tests', tests: TEST_PATTERNS, budget: null },
     {
         name: 'engine / worker / execution',
         tests: [/^packages\/server\/engine\//, /^packages\/server\/worker\//, /^packages\/core\/execution\//],

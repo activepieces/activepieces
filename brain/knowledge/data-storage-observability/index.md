@@ -34,6 +34,10 @@ Security-relevant actions persisted to `audit_event`, queryable by platform admi
 
 Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. minutesSaved = runs × flow.timeSavedPerRun. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled` — NOT in CE. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
 
+### Logging & Metrics (evlog)
+
+All structured logging goes through **evlog** — one wide event per unit of work, one remote drain (Axiom / HyperDX / Loki / Better Stack / OTLP; first match wins). Metrics on ClickStack are **log-based**: dashboards and alerts query numeric fields (`durationMs`, `memRssMb`, `eventLoopDelayP99Ms`) on wide events. Both API and worker emit a 60s `system.snapshot` event with process RSS / heap / event-loop lag so those charts exist at all. BullMQ queue depth is the one signal exported as a **native OTLP gauge** (`bullmq.job.count`), because per-queue-per-state cardinality would bloat wide events. Worker CPU / RAM travels in-band on the poll healthcheck (not to ClickStack) and surfaces on `GET /v1/health/system`.
+
 ### Product Telemetry
 
 Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Infrastructure > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
@@ -81,3 +85,4 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 - **Knowledge Base** — documents chunked into vector embeddings for AI search
 - **Analytics** — usage reporting
 - **Audit Logs** — the persisted security-action record
+- **Logging & Metrics (evlog)** — wide events, drains, log-based metrics, `system.snapshot`, OTLP queue gauge
