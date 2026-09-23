@@ -19,7 +19,7 @@ export const getScheduledPostsAction = createAction({
   outputSchema: scheduledPostsOutputSchema,
   props: {
     pageId: facebookPagesCommon.pageId,
-    limit: facebookPagesCommon.limit({ max: 100 }),
+    limit: facebookPagesCommon.limit,
     after: facebookPagesCommon.after,
   },
   async run({ auth, propsValue }) {

@@ -66,11 +66,13 @@ export const pageDetailsOutputSchema: OutputSchema = {
     { key: 'link', label: 'Link', format: 'url' },
     { key: 'website', label: 'Website', format: 'url' },
     { key: 'phone', label: 'Phone' },
+    { key: 'emails', label: 'Emails' },
     { key: 'single_line_address', label: 'Address' },
     { key: 'followers_count', label: 'Followers', format: 'number' },
     { key: 'verification_status', label: 'Verification Status' },
     { key: 'is_published', label: 'Published', format: 'boolean' },
     { key: 'picture_url', label: 'Profile Picture', value: 'picture.data.url', format: 'image' },
+    { key: 'cover_url', label: 'Cover Photo', value: 'cover.source', format: 'image' },
   ],
 };
 

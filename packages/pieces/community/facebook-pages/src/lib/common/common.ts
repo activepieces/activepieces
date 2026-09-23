@@ -64,7 +64,7 @@ function toCursorPage<T>({ response }: { response: GraphList<T> }) {
 
 function cursorQuery({ limit, after }: { limit?: number; after?: string }): Record<string, string | undefined> {
   return {
-    limit: String(limit ?? 25),
+    limit: String(Math.min(MAX_PAGE_LIMIT, Math.max(1, Math.floor(limit ?? DEFAULT_PAGE_LIMIT)))),
     after: isProvided(after) ? after.trim() : undefined,
   };
 }
@@ -96,6 +96,11 @@ function compactQuery({ query }: { query: Record<string, string | undefined> }):
     Object.entries(query).filter((entry): entry is [string, string] => entry[1] !== undefined && entry[1] !== '')
   );
 }
+
+const GRAPH_API_URL = 'https://graph.facebook.com/v23.0';
+const DEFAULT_PAGE_LIMIT = 25;
+const MAX_PAGE_LIMIT = 100;
+const MIN_SCHEDULE_LEAD_MS = 10 * 60 * 1000;
 
 export const facebookPagesCommon = {
   page: Property.Dropdown<FacebookPageDropdown, true, typeof facebookPagesAuth>({
@@ -161,13 +166,15 @@ export const facebookPagesCommon = {
       'The post ID in PageID_PostID format, as returned in post_id by Create Page Photo Post, in id by Create Page Post, or by Get Page Posts. A photo or video ID is not a post ID.',
     required: true,
   }),
-  limit: ({ max }: { max: number }) =>
-    Property.Number({
-      displayName: 'Limit',
-      description: `Maximum number of items to return in this page (up to ${max}).`,
-      required: false,
-      defaultValue: 25,
-    }),
+  limit: Property.Number({
+    displayName: 'Limit',
+    description: `Maximum number of items to return in this page (1 to ${MAX_PAGE_LIMIT}).`,
+    required: false,
+    defaultValue: DEFAULT_PAGE_LIMIT,
+    min: 1,
+    max: MAX_PAGE_LIMIT,
+    step: 1,
+  }),
   after: Property.ShortText({
     displayName: 'After Cursor',
     description: 'The next_cursor value from a previous call, to fetch the next page.',
@@ -190,8 +197,6 @@ export const facebookPagesCommon = {
   isProvided,
 };
 
-const GRAPH_API_URL = 'https://graph.facebook.com/v23.0';
-const MIN_SCHEDULE_LEAD_MS = 10 * 60 * 1000;
 
 type GraphRequest = {
   accessToken: string;

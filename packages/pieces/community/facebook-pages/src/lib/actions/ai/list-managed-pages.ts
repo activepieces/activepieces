@@ -18,7 +18,7 @@ export const listManagedPagesAction = createAction({
   },
   outputSchema: listManagedPagesOutputSchema,
   props: {
-    limit: facebookPagesCommon.limit({ max: 100 }),
+    limit: facebookPagesCommon.limit,
     after: facebookPagesCommon.after,
   },
   async run({ auth, propsValue }) {

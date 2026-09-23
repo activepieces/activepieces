@@ -19,7 +19,7 @@ export const getPageVideosAction = createAction({
   outputSchema: pageVideosOutputSchema,
   props: {
     pageId: facebookPagesCommon.pageId,
-    limit: facebookPagesCommon.limit({ max: 100 }),
+    limit: facebookPagesCommon.limit,
     after: facebookPagesCommon.after,
   },
   async run({ auth, propsValue }) {
