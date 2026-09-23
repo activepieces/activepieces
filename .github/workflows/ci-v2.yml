@@ -113,11 +113,13 @@ jobs:
       - name: Check new migrations are rollback-safe
         run: npx tsx tools/scripts/check-migration-rollback.ts
 
+  # The api e2e tests import the worker's source, and the worker resolves @activepieces/sandbox
+  # through its built dist, so the api jobs build worker too and also run when worker is affected.
   api-tests:
     name: api (${{ matrix.name }})
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.all == 'true' || contains(needs.changes.outputs.packages, '"api"')
+    if: needs.changes.outputs.all == 'true' || contains(needs.changes.outputs.packages, '"api"') || contains(needs.changes.outputs.packages, '"worker"')
     strategy:
       fail-fast: false
       matrix:
@@ -153,7 +155,7 @@ jobs:
           turbo-s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
           turbo-s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
 
-      - run: npx turbo run ${{ matrix.tasks }} --filter=api
+      - run: npx turbo run build ${{ matrix.tasks }} --filter=api --filter=worker
 
   # Only the tool-search integration tests, against real PostgreSQL + pgvector. The api-tests
   # matrix runs them on PGLITE, which papers over node-postgres driver behaviour.

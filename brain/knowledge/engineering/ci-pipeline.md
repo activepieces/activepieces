@@ -21,6 +21,9 @@ The PR checks that decide whether a change builds and passes tests. Lives in `.g
 - Api integration tests boot the full server once per test file (`pool: forks`, isolated). The number of test files is the CI cost driver: 122 files in June 2026 → 310 in September moved the test step from 6 to 19 minutes on one runner.
 - The GitHub org is on the free plan: 20 concurrent jobs org-wide, all workflows included. More jobs per PR means queueing at busy hours. `cancel-in-progress` per PR number keeps superseded runs from holding slots.
 - api's `test` script runs ce+ee+cloud serially. Any `turbo run test` over many packages must exclude api (`--filter='!api'`; `tools/scripts/test-filters.ts` does the same).
+- The api e2e tests (`execute-flow-e2e`, `test-step-e2e`, `piece-options-e2e`) import the worker's source, and `worker.ts` imports `@activepieces/sandbox`, which resolves to `packages/server/sandbox/dist`. A job that builds only api fails those three files with "Failed to resolve entry for package @activepieces/sandbox". The api jobs build `worker` as well and also run when worker is affected.
+- A cache saved during a pull request run is visible only to that PR and to nothing else. Caches every PR should hit (bun downloads, the compiled Redis binary) must be created on `main`; `warm-ci-cache.yml` does that on every push to main.
+- Two turbo invocations running at the same time in one job race on `cache: false` builds: the old `ci.yml` failed `api#build` with "@activepieces/shared has no exported member" for a member that exists, because a second invocation was rewriting `shared/dist` while api's tsc read it. One invocation per job.
 - `TURBO_SCM_BASE` must be `origin/<base branch>` in CI. turbo's default base is `main`, which a CI checkout does not have, so without it every run degrades to "everything affected".
 
 ## Key files
