@@ -46,6 +46,7 @@ export AP_API_KEY
 echo "Flow ID: $FLOW_ID  Project ID: $PROJECT_ID"
 
 echo "=== Benchmark ($TOTAL_REQUESTS requests, $WORKER_REPLICAS concurrency) ==="
+set +e
 bun run packages/cli/src/benchmark-only.ts \
   --url http://localhost:8080 \
   --requests "$TOTAL_REQUESTS" \
@@ -53,7 +54,10 @@ bun run packages/cli/src/benchmark-only.ts \
   --project-id "$PROJECT_ID" \
   --flow-id "$FLOW_ID" \
   --json > /tmp/report.json
+RC=$?
+set -e
 
 echo "=== Summary ==="
-jq '.runs[0].summary, .runs[0].timeline' /tmp/report.json
+jq '.runs[0].summary, .runs[0].timeline' /tmp/report.json 2>/dev/null || echo "(no valid report at /tmp/report.json)"
 echo "Full report saved to /tmp/report.json"
+exit $RC

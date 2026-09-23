@@ -1,3 +1,18 @@
+# Prod-mirror bench stack — matches Kamal shared-05cpu tier per-container caps.
+#
+#   Container caps (per replica), pinned to disjoint cores so an app-CPU
+#   regression can never starve workers by fighting for the same cores:
+#     app     → 2 vCPU / 4 GB, cpuset 0-5   (fits up to 3 replicas × 2 vCPU)
+#     worker  → 0.5 vCPU / 1 GB, cpuset 6-11 (fits up to 12 replicas × 0.5 vCPU)
+#
+#   Runner has 16 vCPU; cores 12-15 stay unpartitioned for postgres, redis,
+#   nginx, minio, autocannon and the kernel. Verify at runtime with
+#   `docker inspect <container> --format '{{.HostConfig.CpuQuota}}/{{.HostConfig.CpuPeriod}} {{.HostConfig.CpusetCpus}}'`
+#   or the "Verify container caps" workflow step.
+#
+# APP_REPLICAS / WORKER_REPLICAS / AP_REUSE_SANDBOX / AP_EXECUTION_MODE /
+# AP_WORKER_CONCURRENCY are set per-cell by the workflow matrix.
+
 services:
   nginx:
     image: nginx:1.25
@@ -32,7 +47,8 @@ services:
       AP_JWT_SECRET: benchmark-secret-key-for-testing
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
       AP_FRONTEND_URL: http://172.30.0.10:80
-      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_CODE_ONLY}
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
+      AP_NETWORK_MODE: UNRESTRICTED
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_ENVIRONMENT: prod
@@ -49,6 +65,7 @@ services:
       AP_S3_ENDPOINT: ${AP_S3_ENDPOINT:-}
       AP_S3_REGION: ${AP_S3_REGION:-}
       AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
+    cpuset: "0-5"
     deploy:
       replicas: ${APP_REPLICAS:-1}
       resources:
@@ -68,7 +85,12 @@ services:
       AP_FRONTEND_URL: http://172.30.0.10:80
       AP_JWT_SECRET: benchmark-secret-key-for-testing
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
-      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_CODE_ONLY}
+      AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
+      AP_NETWORK_MODE: UNRESTRICTED
+      AP_REUSE_SANDBOX: ${AP_REUSE_SANDBOX:-false}
+      AP_PRE_WARM_CACHE: 'true'
+      AP_PROJECT_WORKER: 'false'
+      NODE_OPTIONS: --max-old-space-size=768
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_POSTGRES_DATABASE: activepieces
@@ -78,7 +100,7 @@ services:
       AP_POSTGRES_PORT: 5432
       AP_LOG_LEVEL: error
       AP_TELEMETRY_ENABLED: false
-      AP_WORKER_CONCURRENCY: ${AP_WORKER_CONCURRENCY:-}
+      AP_WORKER_CONCURRENCY: ${AP_WORKER_CONCURRENCY:-1}
       AP_FILE_STORAGE_LOCATION: ${AP_FILE_STORAGE_LOCATION:-DB}
       AP_S3_BUCKET: ${AP_S3_BUCKET:-}
       AP_S3_ACCESS_KEY_ID: ${AP_S3_ACCESS_KEY_ID:-}
@@ -87,6 +109,7 @@ services:
       AP_S3_REGION: ${AP_S3_REGION:-}
       AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
     privileged: true
+    cpuset: "6-11"
     deploy:
       replicas: ${WORKER_REPLICAS:-2}
       resources:
