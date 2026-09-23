@@ -16,7 +16,9 @@ to `/v1/engine/ai-router`, the API picks the provider and gates credits, the wor
 bills it. The key is the managed Activepieces provider where credits are on, else the admin's own
 OpenRouter row; the step has no provider or model picker and appears in the picker only when the
 project's provider list contains one of the two. Billing is decision 000037 unchanged: observed
-`usage.cost` on the managed key, one fixed credit on an own key.
+`usage.cost` on the managed key, one fixed credit on an own key. In the picker it sits in the Utility
+tab under **Flow Controller** beside the Router, never in the AI tab: it is a branching step that
+happens to use a model, and `isAiAndAgentPiece` says so by returning false for every core type.
 
 ## Context
 

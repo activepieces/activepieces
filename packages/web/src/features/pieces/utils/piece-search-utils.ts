@@ -68,7 +68,7 @@ const isAiAndAgentPiece = (stepMetadata: StepMetadata) => {
       ].includes(category as PieceCategory),
     );
   }
-  return stepMetadata.type === FlowActionType.AI_ROUTER;
+  return false;
 };
 
 const isUtilityPiece = (metadata: StepMetadata) =>

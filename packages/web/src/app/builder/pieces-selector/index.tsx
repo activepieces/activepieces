@@ -29,7 +29,6 @@ import {
   PieceSearchProvider,
   usePieceSearchContext,
   piecesHooks,
-  stepUtils,
 } from '@/features/pieces';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -160,14 +159,10 @@ const PieceSelectorContent = ({
   };
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const aiRouterEnabled = stepUtils.hasAiRouterProvider(aiProviders);
   const hasAiPieceActions =
     !isNil(aiProviders) && aiProviders.length > 0 && !isAiPieceUnavailable;
   const tabsList = pieceSelectorCustomization.buildResolvedTabs({
-    availableBuiltinTabs: getTabsList(
-      operation.type,
-      hasAiPieceActions || aiRouterEnabled === true,
-    ),
+    availableBuiltinTabs: getTabsList(operation.type, hasAiPieceActions),
     config: platform.pieceSelectorConfig,
   });
   const firstTab = tabsList[0];
