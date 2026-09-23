@@ -44,11 +44,15 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        await api.post<ProjectWithLimits>(`/v1/projects/${original.id}`, {
+        const request: UpdateProjectPlatformRequest = {
           ...modified,
           metadata: modified.metadata ?? undefined,
           externalId: modified.externalId?.trim() || undefined,
-        });
+        };
+        await api.post<ProjectWithLimits>(
+          `/v1/projects/${original.id}`,
+          request,
+        );
       }
     },
     onInsert: async ({ transaction }) => {
