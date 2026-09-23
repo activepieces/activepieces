@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Chatting with an agent refuses when one of its flow tools points at a missing flow
+
+A saved agent's FLOW tools were never resolved on the standalone chat surface, so the agent was told it had no such tool and answered around it, with no error anywhere. Chat now resolves them the way the `Run Agent` flow step already did.
+
+That also means the step's existing refusal now reaches chat. Nothing stops a flow being deleted while an agent still lists it as a tool, and an agent left in that state used to keep chatting with the tool quietly missing. Sending it a message now fails with `An agent cannot use flow tool(s) <name>: the referenced flow was not found in this project`.
+
+#### What you need to do
+
+Nothing on a normal upgrade — an agent whose flows all still exist gains its tools and behaves the same otherwise. If an agent does refuse, open it, remove the flow tool whose flow is gone from the Configure panel, and publish. The error names the tool.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.

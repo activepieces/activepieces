@@ -1,15 +1,18 @@
-import { AIProviderName, ErrorCode } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, ColorName } from '@activepieces/shared'
+import { AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
+import { AgentIcon, AgentRunSource, AgentToolType, ColorName, Flow, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, McpPropertyType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
+import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
-import { mockAndSaveAIProvider } from '../../../helpers/mocks'
+import { createMockFlow, createMockFlowVersion, mockAndSaveAIProvider } from '../../../helpers/mocks'
 import { createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
 let app: FastifyInstance
+
+const originalJobQueue = jobQueueModule.jobQueue
 
 const CONVERSATIONS_URL = '/v1/agents/conversations'
 const CONFIGURED_MODEL = 'anthropic/claude-haiku-4.5'
@@ -172,3 +175,98 @@ describe('the model an agent answers on', () => {
         expect(response.statusCode).toBe(StatusCodes.OK)
     })
 })
+
+describe('the flow tools a chat turn hands to the worker', () => {
+    let addSpy: ReturnType<typeof vi.fn>
+
+    beforeEach(() => {
+        addSpy = vi.fn()
+        vi.spyOn(jobQueueModule, 'jobQueue').mockImplementation((log) => ({
+            ...originalJobQueue(log),
+            add: addSpy,
+        }))
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('resolves a configured flow tool, the only shape the worker can run one from', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const { flow, flowVersion } = await seedMcpToolFlow(ctx)
+        const agent = await createAgent(ctx, {
+            provider: AIProviderName.OPENROUTER,
+            modelName: CONFIGURED_MODEL,
+            tools: [{ type: AgentToolType.FLOW, toolName: 'check_order_status', externalFlowId: flow.externalId }],
+        })
+        const conversation = await startConversation(ctx, agent.id)
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'Where is order 12345?' })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const job = addSpy.mock.calls.map(([call]) => call).find((call) => call.data.jobType === WorkerJobType.EXECUTE_AGENT_RUN)
+        expect(job.data.flowTools).toEqual([{
+            toolName: 'check_order_status',
+            flowId: flow.id,
+            flowVersionId: flowVersion.id,
+            description: TOOL_DESCRIPTION,
+            inputSchema: expect.objectContaining({
+                properties: expect.objectContaining({ orderNumber: expect.anything() }),
+            }),
+            returnsResponse: true,
+        }])
+    })
+
+    it('refuses the turn when a configured flow tool names a flow this project does not have', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, {
+            provider: AIProviderName.OPENROUTER,
+            modelName: CONFIGURED_MODEL,
+            tools: [{ type: AgentToolType.FLOW, toolName: 'check_order_status', externalFlowId: apId() }],
+        })
+        const conversation = await startConversation(ctx, agent.id)
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'Where is order 12345?' })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        expect(response.json().params.message).toContain('the referenced flow was not found in this project')
+        expect(addSpy).not.toHaveBeenCalled()
+    })
+})
+
+async function seedMcpToolFlow(ctx: TestContext): Promise<{ flow: Flow, flowVersion: FlowVersion }> {
+    const flow = createMockFlow({ projectId: ctx.project.id, status: FlowStatus.ENABLED })
+    await db.save('flow', flow)
+    const flowVersion = createMockFlowVersion({
+        flowId: flow.id,
+        updatedBy: ctx.user.id,
+        state: FlowVersionState.LOCKED,
+        valid: true,
+        trigger: {
+            type: FlowTriggerType.PIECE,
+            name: 'trigger',
+            displayName: 'MCP Tool',
+            valid: true,
+            lastUpdatedDate: new Date().toISOString(),
+            settings: {
+                pieceName: '@activepieces/piece-mcp',
+                pieceVersion: '0.0.21',
+                triggerName: 'mcp_tool',
+                propertySettings: {},
+                input: {
+                    toolName: 'check_order_status',
+                    toolDescription: TOOL_DESCRIPTION,
+                    inputSchema: [{ name: 'orderNumber', type: McpPropertyType.TEXT, required: true, description: 'The order number' }],
+                    returnsResponse: true,
+                },
+            },
+        },
+    })
+    await db.save('flow_version', flowVersion)
+    await db.update('flow', flow.id, { publishedVersionId: flowVersion.id })
+    return { flow, flowVersion }
+}
+
+const TOOL_DESCRIPTION = 'Look up the delivery status of a customer order.'

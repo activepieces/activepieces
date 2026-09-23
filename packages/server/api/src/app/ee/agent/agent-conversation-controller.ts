@@ -202,14 +202,20 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
             conversationProjectId: conversation.projectId ?? null,
             projects: await agentHelpers.getUserProjects({ platformId, userId, log }),
         })
+        const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
         await agentHelpers.assertRunProviderConfigured({
             platformId,
             log,
-            scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }),
+            scope: runScope,
             ...spreadIfDefined('provider', agentConfig?.provider ?? undefined),
             ...spreadIfDefined('providerConfigId', agentConfig?.providerConfigId ?? undefined),
         })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
+
+        const carriesConfiguredTools = !isNil(agentConfig) && !isBuilder
+        const flowTools = carriesConfiguredTools
+            ? await agentHelpers.resolveFlowTools({ projectId: runScope.projectId, tools: agentConfig.tools, log: runLog })
+            : []
 
         await jobQueue(runLog).add({
             id: apId(),
@@ -225,10 +231,11 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 userMessage: content,
                 modelName: conversation.modelName ?? null,
                 files,
+                flowTools,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),
-                ...(isNil(agentConfig) || isBuilder ? {} : agentHelpers.jobFieldsFromConfig({ config: agentConfig })),
+                ...(carriesConfiguredTools ? agentHelpers.jobFieldsFromConfig({ config: agentConfig }) : {}),
             },
         })
         runLog.info({ job: { type: WorkerJobType.EXECUTE_AGENT_RUN } }, '[agentConversationController] Enqueued chat agent job')
