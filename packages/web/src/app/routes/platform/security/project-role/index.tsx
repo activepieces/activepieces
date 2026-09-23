@@ -1,9 +1,10 @@
 import { t } from 'i18next';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { projectRoleQueries } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
+
+import { sampleData } from '../../sample-data';
 
 import { RolesCard } from './roles-card';
 
@@ -12,30 +13,22 @@ const ProjectRolePage = () => {
 
   const { data, isLoading, isError, refetch } =
     projectRoleQueries.useProjectRoles(platform.plan.projectRolesEnabled);
+  const isSample = !platform.plan.projectRolesEnabled;
+  const roles = isSample ? sampleData.projectRolesPage() : data;
 
   return (
-    <LockedFeatureGuard
-      featureKey="TEAM"
-      locked={!platform.plan.projectRolesEnabled}
-      lockTitle={t('Roles & access')}
-      lockDescription={t(
-        'Define custom roles and permissions to control what your team members can access and modify',
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/roles.mp4"
+    <CenteredPage
+      title={t('Roles & access')}
+      description={t('What new members get, and what each role can do.')}
+      widthClassName="max-w-4xl"
     >
-      <CenteredPage
-        title={t('Roles & access')}
-        description={t('What new members get, and what each role can do.')}
-        widthClassName="max-w-4xl"
-      >
-        <RolesCard
-          projectRoles={data}
-          isLoading={isLoading}
-          isError={isError}
-          refetch={refetch}
-        />
-      </CenteredPage>
-    </LockedFeatureGuard>
+      <RolesCard
+        projectRoles={roles}
+        isLoading={isSample ? false : isLoading}
+        isError={isSample ? false : isError}
+        refetch={refetch}
+      />
+    </CenteredPage>
   );
 };
 

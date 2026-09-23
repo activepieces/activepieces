@@ -1,435 +1,123 @@
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 import React, { Suspense } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 
+import { FeatureSample } from '@/app/components/feature-sample';
 import { PageTitle } from '@/app/components/page-title';
 import { RouteLoadingBar } from '@/components/custom/route-loading-bar';
-import { Error, Success } from '@/features/billing';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 
 import { PlatformLayout } from '../components/platform-layout';
 
-const SettingsBilling = React.lazy(() => import('./platform/billing'));
-const SettingsUsage = React.lazy(() => import('./platform/usage'));
-const EventDestinationsPage = React.lazy(
-  () => import('./platform/infra/event-destinations'),
-);
-const SettingsHealthPage = React.lazy(() => import('./platform/infra/health'));
-const PlatformConfigurationsPage = React.lazy(() =>
-  import('./platform/infra/configurations').then((m) => ({
-    default: m.ConfigurationsPage,
-  })),
-);
-const TriggerHealthPage = React.lazy(() => import('./platform/infra/triggers'));
-const SettingsWorkersPage = React.lazy(
-  () => import('./platform/infra/workers'),
-);
-const ProjectsPage = React.lazy(() => import('./platform/projects'));
-const ApiKeysPage = React.lazy(() =>
-  import('./platform/security/api-keys').then((m) => ({
-    default: m.ApiKeysPage,
-  })),
-);
-const AuditLogsPage = React.lazy(
-  () => import('./platform/security/audit-logs'),
-);
-const ProjectRolePage = React.lazy(() =>
-  import('./platform/security/project-role').then((m) => ({
-    default: m.ProjectRolePage,
-  })),
-);
-const SecretManagersPage = React.lazy(
-  () => import('./platform/security/secret-managers'),
-);
-const EmbedPage = React.lazy(() =>
-  import('./platform/security/embed').then((m) => ({
-    default: m.EmbedPage,
-  })),
-);
-const SSOPage = React.lazy(() =>
-  import('./platform/security/sso').then((m) => ({ default: m.SSOPage })),
-);
-const AIProvidersPage = React.lazy(() => import('./platform/setup/ai'));
-const PlatformMcpPage = React.lazy(() => import('./platform/setup/mcp'));
-const GeneralPage = React.lazy(() =>
-  import('./platform/setup/general').then((m) => ({
-    default: m.GeneralPage,
-  })),
-);
-const GlobalConnectionsTable = React.lazy(() =>
-  import('./platform/setup/connections').then((m) => ({
-    default: m.GlobalConnectionsTable,
-  })),
-);
-const PlatformPiecesPage = React.lazy(() =>
-  import('./platform/setup/pieces').then((m) => ({
-    default: m.PlatformPiecesPage,
-  })),
-);
-const PieceSetDetailsPage = React.lazy(() =>
-  import('./platform/setup/pieces/piece-sets/piece-set-details-page').then(
-    (m) => ({ default: m.PieceSetDetailsPage }),
-  ),
-);
-const PlatformTemplatesPage = React.lazy(() =>
-  import('./platform/setup/templates').then((m) => ({
-    default: m.PlatformTemplatesPage,
-  })),
-);
-const UsersPage = React.lazy(() => import('./platform/users'));
-const PlatformConnectionsPage = React.lazy(
-  () => import('./platform/connections'),
-);
+import {
+  ADMIN_PAGES,
+  ADMIN_REDIRECTS,
+  AdminPage as AdminPageSpec,
+  adminPagesUtils,
+} from './platform/admin-pages';
 
 function SuspenseWrapper({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={<RouteLoadingBar />}>{children}</Suspense>;
 }
 
+function AdminRoute({ page }: { page: AdminPageSpec }) {
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const [searchParams] = useSearchParams();
+  const context = { plan: platform.plan, edition };
+
+  const Page = page.component;
+  if (Page !== undefined) {
+    return (
+      <FeatureSample
+        locked={page.sample === true && page.nav?.isLocked?.(context) === true}
+        title={page.teaser?.title ?? page.nav?.label ?? page.title}
+        description={page.teaser?.description}
+        tier={page.teaser?.tier}
+        documentationUrl={page.teaser?.documentationUrl}
+        featureKey={page.teaser?.featureKey}
+        showContactSales={page.teaser?.showContactSales}
+      >
+        <SuspenseWrapper>
+          <Page />
+        </SuspenseWrapper>
+      </FeatureSample>
+    );
+  }
+
+  const tabs = adminPagesUtils.visibleTabs({ page, context });
+  const requested = searchParams.get('tab');
+  const Overview = page.overview;
+  if (Overview !== undefined && requested === null) {
+    return (
+      <FeatureSample
+        locked={page.sample === true && page.nav?.isLocked?.(context) === true}
+        title={page.teaser?.title ?? page.nav?.label ?? page.title}
+        description={page.teaser?.description}
+        tier={page.teaser?.tier}
+        documentationUrl={page.teaser?.documentationUrl}
+        featureKey={page.teaser?.featureKey}
+        showContactSales={page.teaser?.showContactSales}
+      >
+        <SuspenseWrapper>
+          <Overview />
+        </SuspenseWrapper>
+      </FeatureSample>
+    );
+  }
+
+  const requestedTab = tabs.find((tab) => tab.id === requested);
+  if (requested !== null && requestedTab === undefined) {
+    return <Navigate to={page.path} replace />;
+  }
+  const activeTab = requestedTab ?? tabs[0];
+  if (activeTab === undefined) {
+    return null;
+  }
+
+  const TabContent = activeTab.component;
+  return (
+    <FeatureSample
+      locked={
+        activeTab.sample === true && activeTab.isLocked?.(context) === true
+      }
+      title={activeTab.teaser?.title ?? activeTab.label}
+      description={activeTab.teaser?.description}
+      tier={activeTab.teaser?.tier}
+      documentationUrl={activeTab.teaser?.documentationUrl}
+      featureKey={activeTab.teaser?.featureKey}
+      showContactSales={activeTab.teaser?.showContactSales}
+    >
+      <SuspenseWrapper>
+        <TabContent />
+      </SuspenseWrapper>
+    </FeatureSample>
+  );
+}
+
 export const platformRoutes = [
-  {
-    path: '/platform',
+  ...ADMIN_PAGES.map((page) => ({
+    path: page.path,
     element: (
       <PlatformLayout>
-        <PageTitle title="Platform">
-          <Navigate to="/platform/projects" />
+        <PageTitle title={page.title}>
+          <AdminRoute page={page} />
         </PageTitle>
       </PlatformLayout>
     ),
-  },
-  {
-    path: '/platform/projects',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Projects">
-          <SuspenseWrapper>
-            <ProjectsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/users',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Users">
-          <SuspenseWrapper>
-            <UsersPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/connections',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Connections">
-          <SuspenseWrapper>
-            <PlatformConnectionsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Setup">
-          <Navigate to="/platform/setup/ai" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/ai',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="AI Center">
-          <SuspenseWrapper>
-            <AIProvidersPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/ai-capabilities',
-    element: <Navigate to="/platform/setup/ai?tab=capabilities" replace />,
-  },
-  {
-    path: '/platform/setup/mcp',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="MCP Server">
-          <SuspenseWrapper>
-            <PlatformMcpPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/pieces',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Pieces">
-          <SuspenseWrapper>
-            <PlatformPiecesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/pieces/piece-sets/:id',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Piece Set">
-          <SuspenseWrapper>
-            <PieceSetDetailsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/connections',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Connections">
-          <SuspenseWrapper>
-            <GlobalConnectionsTable />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/templates',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Templates">
-          <SuspenseWrapper>
-            <PlatformTemplatesPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/general',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="General">
-          <SuspenseWrapper>
-            <GeneralPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/branding',
-    element: <Navigate to="/platform/setup/general" replace />,
-  },
-  {
-    path: '/platform/setup/billing',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <SuspenseWrapper>
-            <SettingsBilling />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/usage',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Usage">
-          <SuspenseWrapper>
-            <SettingsUsage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing/success',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Success />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing/error',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Error />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Security">
-          <Navigate to="/platform/security/audit-logs" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/api-keys',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="API Keys">
-          <SuspenseWrapper>
-            <ApiKeysPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/secret-managers',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Secret managers">
-          <SuspenseWrapper>
-            <SecretManagersPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/audit-logs',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Audit Logs">
-          <SuspenseWrapper>
-            <AuditLogsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/embed',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Embedding">
-          <SuspenseWrapper>
-            <EmbedPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/sso',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="SSO">
-          <SuspenseWrapper>
-            <SSOPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/roles-and-access',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Roles & access">
-          <SuspenseWrapper>
-            <ProjectRolePage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles',
-    element: <Navigate to="/platform/security/roles-and-access" replace />,
-  },
-  {
-    path: '/platform/infrastructure',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Infrastructure">
-          <Navigate to="/platform/infrastructure/workers" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/workers',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Workers">
-          <SuspenseWrapper>
-            <SettingsWorkersPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/health',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Health">
-          <SuspenseWrapper>
-            <SettingsHealthPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/configurations',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Configurations">
-          <SuspenseWrapper>
-            <PlatformConfigurationsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/triggers',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Trigger Health">
-          <SuspenseWrapper>
-            <TriggerHealthPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/event-destinations',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Event Streaming">
-          <SuspenseWrapper>
-            <EventDestinationsPage />
-          </SuspenseWrapper>
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
+  })),
+  ...ADMIN_REDIRECTS.map(({ from, to, title, replace = true }) => ({
+    path: from,
+    element:
+      title === undefined ? (
+        <Navigate to={to} replace={replace} />
+      ) : (
+        <PlatformLayout>
+          <PageTitle title={title}>
+            <Navigate to={to} replace={replace} />
+          </PageTitle>
+        </PlatformLayout>
+      ),
+  })),
 ];

@@ -10,8 +10,8 @@ import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { resumeService } from '../../waitpoints/resume-service'
 import { waitpointService } from '../../waitpoints/waitpoint-service'
-import { WaitpointStatus } from '../../waitpoints/waitpoint-types'
 import { legacyRedisMetadataKey, QueueName, redisMetadataKey, runsMetadataDeduplicationId, RunsMetadataJobData, RunsMetadataQueueConfig, runsMetadataQueueFactory, RunsMetadataUpsertData } from '../../workers/job'
+import { jobFailureLogger } from '../../workers/job-queue/job-failure-logger'
 import { flowService } from '../flow/flow.service'
 import { flowRunRepo } from './flow-run-service'
 import { flowRunSideEffects } from './flow-run-side-effects'
@@ -138,14 +138,12 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                             }
 
                             if (savedFlowRun.status === FlowRunStatus.PAUSED) {
-                                const latestWaitpoint = await waitpointService(log).getByFlowRunId(savedFlowRun.id)
-                                const isPreCompleted = !isNil(latestWaitpoint)
-                                    && latestWaitpoint.status === WaitpointStatus.COMPLETED
-                                if (isPreCompleted) {
-                                    await resumeService(log).resumeFromWaitpointWithoutLock({
+                                const undeliveredWaitpoint = await waitpointService(log).findUndeliveredCompletedWaitpoint({ flowRunId: savedFlowRun.id, projectId: savedFlowRun.projectId })
+                                if (!isNil(undeliveredWaitpoint)) {
+                                    await resumeService(log).resumeTrustedWithoutLock({
                                         flowRunId: savedFlowRun.id,
-                                        waitpointId: latestWaitpoint.id,
-                                        resumePayload: latestWaitpoint.resumePayload,
+                                        waitpointId: undeliveredWaitpoint.id,
+                                        resumePayload: undeliveredWaitpoint.resumePayload,
                                     })
                                 }
                             }
@@ -168,6 +166,20 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                 autorun: true,
             },
         )
+
+        runsMetadataWorker.on('failed', (job, err) => {
+            const attemptsUsed = job?.attemptsMade ?? 0
+            const maxAttempts = job?.opts?.attempts ?? 1
+            if (attemptsUsed >= maxAttempts) {
+                jobFailureLogger.logJobFailed({
+                    queueName: QueueName.RUNS_METADATA,
+                    jobId: job?.id,
+                    jobType: job?.name ?? 'update-run-metadata',
+                    error: err,
+                    log,
+                })
+            }
+        })
 
         await runsMetadataWorker.waitUntilReady()
     },
@@ -261,7 +273,7 @@ export async function markParentRunAsFailed({
         queryParams: {},
     }
 
-    const existingWaitpoint = await waitpointService(log).getByFlowRunId(parentRunId)
+    const existingWaitpoint = await waitpointService(log).findSubflowWaitpoint({ flowRunId: parentRunId, projectId: flowRun.projectId })
     const result = await waitpointService(log).complete({
         flowRunId: parentRunId,
         projectId: flowRun.projectId,
