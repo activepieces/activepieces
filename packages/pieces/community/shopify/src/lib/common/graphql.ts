@@ -2954,6 +2954,412 @@ function metafieldOwnerTypeProp({
   });
 }
 
+function mapMarketingEvent(event: GqlMarketingEvent) {
+  return {
+    id: event.id,
+    legacy_resource_id: event.legacyResourceId ?? null,
+    type: event.type ?? null,
+    remote_id: event.remoteId ?? null,
+    description: event.description ?? null,
+    marketing_channel_type: event.marketingChannelType ?? null,
+    source_and_medium: event.sourceAndMedium ?? null,
+    channel_handle: event.channelHandle ?? null,
+    started_at: event.startedAt ?? null,
+    ended_at: event.endedAt ?? null,
+    scheduled_to_end_at: event.scheduledToEndAt ?? null,
+    manage_url: event.manageUrl ?? null,
+    preview_url: event.previewUrl ?? null,
+    utm_campaign: event.utmCampaign ?? null,
+    utm_medium: event.utmMedium ?? null,
+    utm_source: event.utmSource ?? null,
+    app_id: event.app?.id ?? null,
+    app_title: event.app?.title ?? null,
+  };
+}
+
+function mapMarketingActivity(activity: GqlMarketingActivity) {
+  return {
+    id: activity.id,
+    title: activity.title ?? null,
+    status: activity.status ?? null,
+    status_label: activity.statusLabel ?? null,
+    tactic: activity.tactic ?? null,
+    marketing_channel_type: activity.marketingChannelType ?? null,
+    source_and_medium: activity.sourceAndMedium ?? null,
+    is_external: activity.isExternal ?? null,
+    hierarchy_level: activity.hierarchyLevel ?? null,
+    parent_remote_id: activity.parentRemoteId ?? null,
+    parent_activity_id: activity.parentActivityId ?? null,
+    url_parameter_value: activity.urlParameterValue ?? null,
+    activity_list_url: activity.activityListUrl ?? null,
+    utm_campaign: activity.utmParameters?.campaign ?? null,
+    utm_source: activity.utmParameters?.source ?? null,
+    utm_medium: activity.utmParameters?.medium ?? null,
+    budget_type: activity.budget?.budgetType ?? null,
+    budget_amount: activity.budget?.total?.amount ?? null,
+    budget_currency_code: activity.budget?.total?.currencyCode ?? null,
+    ad_spend_amount: activity.adSpend?.amount ?? null,
+    ad_spend_currency_code: activity.adSpend?.currencyCode ?? null,
+    marketing_event_id: activity.marketingEvent?.id ?? null,
+    remote_id: activity.marketingEvent?.remoteId ?? null,
+    manage_url: activity.marketingEvent?.manageUrl ?? null,
+    preview_url: activity.marketingEvent?.previewUrl ?? null,
+    started_at: activity.marketingEvent?.startedAt ?? null,
+    ended_at: activity.marketingEvent?.endedAt ?? null,
+    scheduled_to_end_at: activity.marketingEvent?.scheduledToEndAt ?? null,
+    status_transitioned_at: activity.statusTransitionedAt ?? null,
+    created_at: activity.createdAt ?? null,
+    updated_at: activity.updatedAt ?? null,
+  };
+}
+
+function mapMarketingEngagement(engagement: GqlMarketingEngagement) {
+  return {
+    occurred_on: engagement.occurredOn ?? null,
+    utc_offset: engagement.utcOffset ?? null,
+    channel_handle: engagement.channelHandle ?? null,
+    marketing_activity_id: engagement.marketingActivity?.id ?? null,
+    marketing_activity_title: engagement.marketingActivity?.title ?? null,
+    impressions_count: engagement.impressionsCount ?? null,
+    views_count: engagement.viewsCount ?? null,
+    clicks_count: engagement.clicksCount ?? null,
+    shares_count: engagement.sharesCount ?? null,
+    favorites_count: engagement.favoritesCount ?? null,
+    comments_count: engagement.commentsCount ?? null,
+    unsubscribes_count: engagement.unsubscribesCount ?? null,
+    complaints_count: engagement.complaintsCount ?? null,
+    fails_count: engagement.failsCount ?? null,
+    sends_count: engagement.sendsCount ?? null,
+    unique_views_count: engagement.uniqueViewsCount ?? null,
+    unique_clicks_count: engagement.uniqueClicksCount ?? null,
+    sessions_count: engagement.sessionsCount ?? null,
+    orders: engagement.orders ?? null,
+    first_time_customers: engagement.firstTimeCustomers ?? null,
+    returning_customers: engagement.returningCustomers ?? null,
+    primary_conversions: engagement.primaryConversions ?? null,
+    all_conversions: engagement.allConversions ?? null,
+    ad_spend_amount: engagement.adSpend?.amount ?? null,
+    ad_spend_currency_code: engagement.adSpend?.currencyCode ?? null,
+    sales_amount: engagement.sales?.amount ?? null,
+    sales_currency_code: engagement.sales?.currencyCode ?? null,
+  };
+}
+
+function mapScriptTag(tag: GqlScriptTag) {
+  return {
+    id: tag.id,
+    legacy_resource_id: tag.legacyResourceId ?? null,
+    src: tag.src ?? null,
+    display_scope: tag.displayScope ?? null,
+    cache: tag.cache ?? null,
+    created_at: tag.createdAt ?? null,
+    updated_at: tag.updatedAt ?? null,
+  };
+}
+
+function mapEvent(event: GqlEvent) {
+  return {
+    id: event.id,
+    event_type: event.__typename ?? null,
+    action: event.action ?? null,
+    message: event.message ?? null,
+    secondary_message: event.secondaryMessage ?? null,
+    raw_message: event.rawMessage ?? null,
+    subject_id: event.subjectId ?? null,
+    subject_type: event.subjectType ?? null,
+    author: event.author ?? null,
+    app_title: event.appTitle ?? null,
+    attribute_to_app: event.attributeToApp ?? null,
+    attribute_to_user: event.attributeToUser ?? null,
+    critical_alert: event.criticalAlert ?? null,
+    edited: event.edited ?? null,
+    created_at: event.createdAt ?? null,
+  };
+}
+
+function mapBulkOperation(operation: GqlBulkOperation) {
+  return {
+    id: operation.id,
+    status: operation.status ?? null,
+    type: operation.type ?? null,
+    error_code: operation.errorCode ?? null,
+    created_at: operation.createdAt ?? null,
+    completed_at: operation.completedAt ?? null,
+    object_count: operation.objectCount ?? null,
+    root_object_count: operation.rootObjectCount ?? null,
+    file_size: operation.fileSize ?? null,
+    url: operation.url ?? null,
+    partial_data_url: operation.partialDataUrl ?? null,
+    query: operation.query ?? null,
+  };
+}
+
+function mapCurrencySetting(setting: GqlCurrencySetting) {
+  return {
+    currency_code: setting.currencyCode ?? null,
+    currency_name: setting.currencyName ?? null,
+    enabled: setting.enabled ?? null,
+    manual_rate: setting.manualRate ?? null,
+    rate_updated_at: setting.rateUpdatedAt ?? null,
+  };
+}
+
+function mapShopPolicy(policy: GqlShopPolicy) {
+  return {
+    id: policy.id,
+    type: policy.type ?? null,
+    title: policy.title ?? null,
+    url: policy.url ?? null,
+    body: policy.body ?? null,
+    created_at: policy.createdAt ?? null,
+    updated_at: policy.updatedAt ?? null,
+  };
+}
+
+function mapLocale(locale: GqlLocale) {
+  return {
+    iso_code: locale.isoCode ?? null,
+    name: locale.name ?? null,
+  };
+}
+
+function mapDomain(domain: GqlDomain) {
+  return {
+    id: domain.id,
+    host: domain.host ?? null,
+    url: domain.url ?? null,
+    ssl_enabled: domain.sslEnabled ?? null,
+    default_locale: domain.localization?.defaultLocale ?? null,
+    alternate_locales: domain.localization?.alternateLocales ?? [],
+    country: domain.localization?.country ?? null,
+    web_presence_id: domain.marketWebPresence?.id ?? null,
+    web_presence_subfolder_suffix: domain.marketWebPresence?.subfolderSuffix ?? null,
+    web_presence_root_urls: (domain.marketWebPresence?.rootUrls ?? []).map((root) => ({
+      locale: root.locale ?? null,
+      url: root.url ?? null,
+    })),
+  };
+}
+
+function mapCustomerAccountPage(page: GqlCustomerAccountPage) {
+  return {
+    id: page.id,
+    page_kind: page.__typename ?? null,
+    handle: page.handle ?? null,
+    title: page.title ?? null,
+    default_cursor: page.defaultCursor ?? null,
+    page_type: page.pageType ?? null,
+    app_extension_uuid: page.appExtensionUuid ?? null,
+  };
+}
+
+function mapConsentPolicy(policy: GqlConsentPolicy) {
+  return {
+    id: policy.id,
+    country_code: policy.countryCode ?? null,
+    region_code: policy.regionCode ?? null,
+    consent_required: policy.consentRequired ?? null,
+    data_sale_opt_out_required: policy.dataSaleOptOutRequired ?? null,
+    shop_id: policy.shopId ?? null,
+  };
+}
+
+function mapConsentPolicyRegion(region: GqlConsentPolicyRegion) {
+  return {
+    country_code: region.countryCode ?? null,
+    region_code: region.regionCode ?? null,
+  };
+}
+
+function mapCatalog(catalog: GqlCatalog) {
+  return {
+    id: catalog.id,
+    catalog_type: catalog.__typename ?? null,
+    title: catalog.title ?? null,
+    status: catalog.status ?? null,
+    price_list_id: catalog.priceList?.id ?? null,
+    price_list_name: catalog.priceList?.name ?? null,
+    price_list_currency: catalog.priceList?.currency ?? null,
+    publication_id: catalog.publication?.id ?? null,
+    markets_count: catalog.marketsCount?.count ?? null,
+    company_locations_count: catalog.companyLocationsCount?.count ?? null,
+  };
+}
+
+function mapBusinessEntity(entity: GqlBusinessEntity) {
+  return {
+    id: entity.id,
+    display_name: entity.displayName ?? null,
+    company_name: entity.companyName ?? null,
+    primary: entity.primary ?? null,
+    archived: entity.archived ?? null,
+    legal_entity_id: entity.legalEntityId ?? null,
+    address1: entity.address?.address1 ?? null,
+    address2: entity.address?.address2 ?? null,
+    city: entity.address?.city ?? null,
+    province: entity.address?.province ?? null,
+    zip: entity.address?.zip ?? null,
+    country_code: entity.address?.countryCode ?? null,
+  };
+}
+
+function mapPaymentTermsTemplate(template: GqlPaymentTermsTemplate) {
+  return {
+    id: template.id,
+    name: template.name ?? null,
+    translated_name: template.translatedName ?? null,
+    description: template.description ?? null,
+    due_in_days: template.dueInDays ?? null,
+    payment_terms_type: template.paymentTermsType ?? null,
+  };
+}
+
+function mapDispute(dispute: GqlDispute) {
+  return {
+    id: dispute.id,
+    legacy_resource_id: dispute.legacyResourceId ?? null,
+    status: dispute.status ?? null,
+    type: dispute.type ?? null,
+    reason: dispute.reasonDetails?.reason ?? null,
+    network_reason_code: dispute.reasonDetails?.networkReasonCode ?? null,
+    amount: dispute.amount?.amount ?? null,
+    currency_code: dispute.amount?.currencyCode ?? null,
+    initiated_at: dispute.initiatedAt ?? null,
+    evidence_due_by: dispute.evidenceDueBy ?? null,
+    evidence_sent_on: dispute.evidenceSentOn ?? null,
+    finalized_on: dispute.finalizedOn ?? null,
+    order_id: dispute.order?.id ?? null,
+    order_name: dispute.order?.name ?? null,
+  };
+}
+
+function mapShopPayReceipt(receipt: GqlShopPayReceipt) {
+  return {
+    token: receipt.token ?? null,
+    source_identifier: receipt.sourceIdentifier ?? null,
+    created_at: receipt.createdAt ?? null,
+    processing_state: receipt.processingStatus?.state ?? null,
+    processing_message: receipt.processingStatus?.message ?? null,
+    processing_error_code: receipt.processingStatus?.errorCode ?? null,
+    order_id: receipt.order?.id ?? null,
+    order_name: receipt.order?.name ?? null,
+    presentment_currency: receipt.paymentRequest?.presentmentCurrency ?? null,
+    total: receipt.paymentRequest?.total?.amount ?? null,
+    subtotal: receipt.paymentRequest?.subtotal?.amount ?? null,
+    total_tax: receipt.paymentRequest?.totalTax?.amount ?? null,
+  };
+}
+
+function mapWebPresence(presence: GqlWebPresence) {
+  return {
+    id: presence.id,
+    kind: presence.domain ? 'domain' : 'subfolder',
+    subfolder_suffix: presence.subfolderSuffix ?? null,
+    domain_id: presence.domain?.id ?? null,
+    domain_host: presence.domain?.host ?? null,
+    domain_url: presence.domain?.url ?? null,
+    default_locale: presence.defaultLocale?.locale ?? null,
+    root_urls: (presence.rootUrls ?? []).map((root) => ({
+      locale: root.locale ?? null,
+      url: root.url ?? null,
+    })),
+  };
+}
+
+function mapSavedSearch(search: GqlSavedSearch) {
+  return {
+    id: search.id,
+    name: search.name ?? null,
+    query: search.query ?? null,
+    search_terms: search.searchTerms ?? null,
+    resource_type: search.resourceType ?? null,
+  };
+}
+
+function buildMoneyInput({
+  amount,
+  currency,
+  label,
+}: {
+  amount: number | undefined | null;
+  currency: string | undefined | null;
+  label: string;
+}): { amount: string; currencyCode: string } | undefined {
+  if (amount === undefined || amount === null) {
+    return undefined;
+  }
+  if (!Number.isFinite(amount) || amount < 0) {
+    throw new Error(`${label} must be 0 or more. Nothing was changed.`);
+  }
+  const code = nonEmpty(currency)?.toUpperCase();
+  if (!code || !/^[A-Z]{3}$/.test(code)) {
+    throw new Error(`${label} needs currency set to a 3-letter ISO code such as "USD". Nothing was changed.`);
+  }
+  return { amount: String(amount), currencyCode: code };
+}
+
+function buildUtm({
+  campaign,
+  source,
+  medium,
+}: {
+  campaign: string | undefined | null;
+  source: string | undefined | null;
+  medium: string | undefined | null;
+}): { campaign: string; source: string; medium: string } | undefined {
+  const values = { campaign: nonEmpty(campaign), source: nonEmpty(source), medium: nonEmpty(medium) };
+  const given = Object.values(values).filter((value) => value !== undefined).length;
+  if (given === 0) {
+    return undefined;
+  }
+  if (values.campaign === undefined || values.source === undefined || values.medium === undefined) {
+    throw new Error('UTM parameters go together: set utm_campaign, utm_source and utm_medium, or none of them. Nothing was changed.');
+  }
+  return { campaign: values.campaign, source: values.source, medium: values.medium };
+}
+
+function readMarketingActivityTarget({
+  marketingActivityId,
+  remoteId,
+}: {
+  marketingActivityId: string | undefined | null;
+  remoteId: string | undefined | null;
+}): { marketingActivityId?: string; remoteId?: string } {
+  const id = nonEmpty(marketingActivityId);
+  const remote = nonEmpty(remoteId);
+  if (id && remote) {
+    throw new Error('Pass either marketing_activity_id or remote_id, not both. Nothing was changed.');
+  }
+  if (id) {
+    return { marketingActivityId: toGid({ type: 'MarketingActivity', id }) };
+  }
+  if (remote) {
+    return { remoteId: remote };
+  }
+  throw new Error('Pass marketing_activity_id or remote_id to say which marketing activity to use. Nothing was changed.');
+}
+
+function staticChoiceProp({
+  displayName,
+  description,
+  required,
+  values,
+}: {
+  displayName: string;
+  description: string;
+  required: boolean;
+  values: string[];
+}) {
+  return Property.StaticDropdown({
+    displayName,
+    description,
+    required,
+    options: {
+      options: values.map((value) => ({ label: value, value })),
+    },
+  });
+}
+
 const MONEY_FIELDS = 'shopMoney { amount currencyCode }';
 
 const MONEY_WITH_PRESENTMENT_FIELDS =
@@ -3226,6 +3632,81 @@ const MAX_METAFIELDS_PER_CALL = 25;
 
 const MAX_THEME_FILES_PER_CALL = 50;
 
+const MARKETING_EVENT_FIELDS =
+  'id legacyResourceId type remoteId description marketingChannelType sourceAndMedium channelHandle startedAt endedAt scheduledToEndAt manageUrl previewUrl utmCampaign utmMedium utmSource app { id title }';
+
+const MARKETING_ACTIVITY_FIELDS = `id title status statusLabel tactic marketingChannelType sourceAndMedium isExternal hierarchyLevel parentRemoteId parentActivityId urlParameterValue activityListUrl statusTransitionedAt createdAt updatedAt utmParameters { campaign source medium } budget { budgetType total { amount currencyCode } } adSpend { amount currencyCode } marketingEvent { id remoteId manageUrl previewUrl startedAt endedAt scheduledToEndAt }`;
+
+const MARKETING_ENGAGEMENT_FIELDS =
+  'occurredOn utcOffset channelHandle impressionsCount viewsCount clicksCount sharesCount favoritesCount commentsCount unsubscribesCount complaintsCount failsCount sendsCount uniqueViewsCount uniqueClicksCount sessionsCount orders firstTimeCustomers returningCustomers primaryConversions allConversions adSpend { amount currencyCode } sales { amount currencyCode } marketingActivity { id title }';
+
+const SCRIPT_TAG_FIELDS = 'id legacyResourceId src displayScope cache createdAt updatedAt';
+
+const EVENT_FIELDS =
+  '__typename id action message createdAt appTitle attributeToApp attributeToUser criticalAlert ... on BasicEvent { subjectId subjectType author secondaryMessage } ... on CommentEvent { rawMessage edited }';
+
+const BULK_OPERATION_FIELDS =
+  'id status type errorCode createdAt completedAt objectCount rootObjectCount fileSize url partialDataUrl query';
+
+const CURRENCY_SETTING_FIELDS = 'currencyCode currencyName enabled manualRate rateUpdatedAt';
+
+const SHOP_POLICY_FIELDS = 'id type title url body createdAt updatedAt';
+
+const LOCALE_FIELDS = 'isoCode name';
+
+const DOMAIN_FIELDS =
+  'id host url sslEnabled localization { defaultLocale alternateLocales country } marketWebPresence { id subfolderSuffix rootUrls { locale url } }';
+
+const CUSTOMER_ACCOUNT_PAGE_FIELDS =
+  '__typename id handle title defaultCursor ... on CustomerAccountNativePage { pageType } ... on CustomerAccountAppExtensionPage { appExtensionUuid }';
+
+const CONSENT_POLICY_FIELDS = 'id countryCode regionCode consentRequired dataSaleOptOutRequired shopId';
+
+const CONSENT_POLICY_REGION_FIELDS = 'countryCode regionCode';
+
+const CATALOG_FIELDS =
+  '__typename id title status priceList { id name currency } publication { id } ... on MarketCatalog { marketsCount { count } } ... on CompanyLocationCatalog { companyLocationsCount { count } }';
+
+const BUSINESS_ENTITY_FIELDS =
+  'id displayName companyName primary archived legalEntityId address { address1 address2 city province zip countryCode }';
+
+const PAYMENT_TERMS_TEMPLATE_FIELDS = 'id name translatedName description dueInDays paymentTermsType';
+
+const DISPUTE_FIELDS =
+  'id legacyResourceId status type initiatedAt evidenceDueBy evidenceSentOn finalizedOn amount { amount currencyCode } reasonDetails { reason networkReasonCode } order { id name }';
+
+const SHOP_PAY_RECEIPT_FIELDS =
+  'token sourceIdentifier createdAt processingStatus { state message errorCode } order { id name } paymentRequest { presentmentCurrency total { amount currencyCode } subtotal { amount currencyCode } totalTax { amount currencyCode } }';
+
+const WEB_PRESENCE_FIELDS =
+  'id subfolderSuffix domain { id host url } defaultLocale { locale } rootUrls { locale url }';
+
+const SAVED_SEARCH_FIELDS = 'id name query searchTerms resourceType';
+
+const MARKETING_TACTICS = [
+  'ABANDONED_CART',
+  'AD',
+  'AFFILIATE',
+  'LINK',
+  'LOYALTY',
+  'MESSAGE',
+  'NEWSLETTER',
+  'NOTIFICATION',
+  'POST',
+  'RETARGETING',
+  'TRANSACTIONAL',
+  'STOREFRONT_APP',
+  'SEO',
+];
+
+const MARKETING_CHANNELS = ['SEARCH', 'DISPLAY', 'SOCIAL', 'EMAIL', 'REFERRAL'];
+
+const MARKETING_EXTERNAL_STATUSES = ['ACTIVE', 'INACTIVE', 'PAUSED', 'SCHEDULED', 'DELETED_EXTERNALLY', 'UNDEFINED'];
+
+const MARKETING_HIERARCHY_LEVELS = ['CAMPAIGN', 'AD_GROUP', 'AD'];
+
+const MARKETING_BUDGET_TYPES = ['DAILY', 'LIFETIME'];
+
 
 export const shopifyFields = {
   MONEY_FIELDS,
@@ -3293,6 +3774,31 @@ export const shopifyFields = {
   METAFIELD_OWNER_TYPES,
   MAX_METAFIELDS_PER_CALL,
   MAX_THEME_FILES_PER_CALL,
+  MARKETING_EVENT_FIELDS,
+  MARKETING_ACTIVITY_FIELDS,
+  MARKETING_ENGAGEMENT_FIELDS,
+  SCRIPT_TAG_FIELDS,
+  EVENT_FIELDS,
+  BULK_OPERATION_FIELDS,
+  CURRENCY_SETTING_FIELDS,
+  SHOP_POLICY_FIELDS,
+  LOCALE_FIELDS,
+  DOMAIN_FIELDS,
+  CUSTOMER_ACCOUNT_PAGE_FIELDS,
+  CONSENT_POLICY_FIELDS,
+  CONSENT_POLICY_REGION_FIELDS,
+  CATALOG_FIELDS,
+  BUSINESS_ENTITY_FIELDS,
+  PAYMENT_TERMS_TEMPLATE_FIELDS,
+  DISPUTE_FIELDS,
+  SHOP_PAY_RECEIPT_FIELDS,
+  WEB_PRESENCE_FIELDS,
+  SAVED_SEARCH_FIELDS,
+  MARKETING_TACTICS,
+  MARKETING_CHANNELS,
+  MARKETING_EXTERNAL_STATUSES,
+  MARKETING_HIERARCHY_LEVELS,
+  MARKETING_BUDGET_TYPES,
 };
 
 export const shopifyGraphqlClient = {
@@ -3346,6 +3852,9 @@ export const shopifyValues = {
   requireGid,
   legacyIdFilter,
   joinSearch,
+  buildMoneyInput,
+  buildUtm,
+  readMarketingActivityTarget,
 };
 
 export const shopifyMappers = {
@@ -3405,6 +3914,26 @@ export const shopifyMappers = {
   mapStandardMetafieldTemplate,
   mapMetaobject,
   mapMetaobjectDefinition,
+  mapMarketingEvent,
+  mapMarketingActivity,
+  mapMarketingEngagement,
+  mapScriptTag,
+  mapEvent,
+  mapBulkOperation,
+  mapCurrencySetting,
+  mapShopPolicy,
+  mapLocale,
+  mapDomain,
+  mapCustomerAccountPage,
+  mapConsentPolicy,
+  mapConsentPolicyRegion,
+  mapCatalog,
+  mapBusinessEntity,
+  mapPaymentTermsTemplate,
+  mapDispute,
+  mapShopPayReceipt,
+  mapWebPresence,
+  mapSavedSearch,
 };
 
 export const shopifyProps = {
@@ -3424,6 +3953,7 @@ export const shopifyProps = {
   fulfillmentOrderLineItems: fulfillmentOrderLineItemsProp,
   idList: idListProp,
   metafieldOwnerType: metafieldOwnerTypeProp,
+  staticChoice: staticChoiceProp,
 };
 
 export type ShopifyGraphqlParams = {
@@ -4507,4 +5037,276 @@ export type GqlMetaobjectDefinition = {
     required?: boolean | null;
     type?: { name?: string | null } | null;
   }[] | null;
+};
+
+export type GqlMarketingEvent = {
+  id: string;
+  legacyResourceId?: string | null;
+  type?: string | null;
+  remoteId?: string | null;
+  description?: string | null;
+  marketingChannelType?: string | null;
+  sourceAndMedium?: string | null;
+  channelHandle?: string | null;
+  startedAt?: string | null;
+  endedAt?: string | null;
+  scheduledToEndAt?: string | null;
+  manageUrl?: string | null;
+  previewUrl?: string | null;
+  utmCampaign?: string | null;
+  utmMedium?: string | null;
+  utmSource?: string | null;
+  app?: { id?: string | null; title?: string | null } | null;
+};
+
+export type GqlMarketingActivity = {
+  id: string;
+  title?: string | null;
+  status?: string | null;
+  statusLabel?: string | null;
+  tactic?: string | null;
+  marketingChannelType?: string | null;
+  sourceAndMedium?: string | null;
+  isExternal?: boolean | null;
+  hierarchyLevel?: string | null;
+  parentRemoteId?: string | null;
+  parentActivityId?: string | null;
+  urlParameterValue?: string | null;
+  activityListUrl?: string | null;
+  statusTransitionedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  utmParameters?: { campaign?: string | null; source?: string | null; medium?: string | null } | null;
+  budget?: { budgetType?: string | null; total?: GqlMoneyV2 | null } | null;
+  adSpend?: GqlMoneyV2 | null;
+  marketingEvent?: {
+    id?: string | null;
+    remoteId?: string | null;
+    manageUrl?: string | null;
+    previewUrl?: string | null;
+    startedAt?: string | null;
+    endedAt?: string | null;
+    scheduledToEndAt?: string | null;
+  } | null;
+};
+
+export type GqlMarketingEngagement = {
+  occurredOn?: string | null;
+  utcOffset?: string | null;
+  channelHandle?: string | null;
+  impressionsCount?: number | null;
+  viewsCount?: number | null;
+  clicksCount?: number | null;
+  sharesCount?: number | null;
+  favoritesCount?: number | null;
+  commentsCount?: number | null;
+  unsubscribesCount?: number | null;
+  complaintsCount?: number | null;
+  failsCount?: number | null;
+  sendsCount?: number | null;
+  uniqueViewsCount?: number | null;
+  uniqueClicksCount?: number | null;
+  sessionsCount?: number | null;
+  orders?: string | null;
+  firstTimeCustomers?: string | null;
+  returningCustomers?: string | null;
+  primaryConversions?: string | null;
+  allConversions?: string | null;
+  adSpend?: GqlMoneyV2 | null;
+  sales?: GqlMoneyV2 | null;
+  marketingActivity?: { id?: string | null; title?: string | null } | null;
+};
+
+export type GqlScriptTag = {
+  id: string;
+  legacyResourceId?: string | null;
+  src?: string | null;
+  displayScope?: string | null;
+  cache?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type GqlEvent = {
+  __typename?: string | null;
+  id: string;
+  action?: string | null;
+  message?: string | null;
+  secondaryMessage?: string | null;
+  rawMessage?: string | null;
+  subjectId?: string | null;
+  subjectType?: string | null;
+  author?: string | null;
+  appTitle?: string | null;
+  attributeToApp?: boolean | null;
+  attributeToUser?: boolean | null;
+  criticalAlert?: boolean | null;
+  edited?: boolean | null;
+  createdAt?: string | null;
+};
+
+export type GqlBulkOperation = {
+  id: string;
+  status?: string | null;
+  type?: string | null;
+  errorCode?: string | null;
+  createdAt?: string | null;
+  completedAt?: string | null;
+  objectCount?: string | null;
+  rootObjectCount?: string | null;
+  fileSize?: string | null;
+  url?: string | null;
+  partialDataUrl?: string | null;
+  query?: string | null;
+};
+
+export type GqlCurrencySetting = {
+  currencyCode?: string | null;
+  currencyName?: string | null;
+  enabled?: boolean | null;
+  manualRate?: string | null;
+  rateUpdatedAt?: string | null;
+};
+
+export type GqlShopPolicy = {
+  id: string;
+  type?: string | null;
+  title?: string | null;
+  url?: string | null;
+  body?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type GqlLocale = {
+  isoCode?: string | null;
+  name?: string | null;
+};
+
+export type GqlDomain = {
+  id: string;
+  host?: string | null;
+  url?: string | null;
+  sslEnabled?: boolean | null;
+  localization?: {
+    defaultLocale?: string | null;
+    alternateLocales?: string[] | null;
+    country?: string | null;
+  } | null;
+  marketWebPresence?: {
+    id?: string | null;
+    subfolderSuffix?: string | null;
+    rootUrls?: { locale?: string | null; url?: string | null }[] | null;
+  } | null;
+};
+
+export type GqlCustomerAccountPage = {
+  __typename?: string | null;
+  id: string;
+  handle?: string | null;
+  title?: string | null;
+  defaultCursor?: string | null;
+  pageType?: string | null;
+  appExtensionUuid?: string | null;
+};
+
+export type GqlConsentPolicy = {
+  id: string;
+  countryCode?: string | null;
+  regionCode?: string | null;
+  consentRequired?: boolean | null;
+  dataSaleOptOutRequired?: boolean | null;
+  shopId?: string | null;
+};
+
+export type GqlConsentPolicyRegion = {
+  countryCode?: string | null;
+  regionCode?: string | null;
+};
+
+export type GqlCatalog = {
+  __typename?: string | null;
+  id: string;
+  title?: string | null;
+  status?: string | null;
+  priceList?: { id?: string | null; name?: string | null; currency?: string | null } | null;
+  publication?: { id?: string | null } | null;
+  marketsCount?: GqlCount | null;
+  companyLocationsCount?: GqlCount | null;
+};
+
+export type GqlBusinessEntity = {
+  id: string;
+  displayName?: string | null;
+  companyName?: string | null;
+  primary?: boolean | null;
+  archived?: boolean | null;
+  legalEntityId?: string | null;
+  address?: {
+    address1?: string | null;
+    address2?: string | null;
+    city?: string | null;
+    province?: string | null;
+    zip?: string | null;
+    countryCode?: string | null;
+  } | null;
+};
+
+export type GqlPaymentTermsTemplate = {
+  id: string;
+  name?: string | null;
+  translatedName?: string | null;
+  description?: string | null;
+  dueInDays?: number | null;
+  paymentTermsType?: string | null;
+};
+
+export type GqlDispute = {
+  id: string;
+  legacyResourceId?: string | null;
+  status?: string | null;
+  type?: string | null;
+  initiatedAt?: string | null;
+  evidenceDueBy?: string | null;
+  evidenceSentOn?: string | null;
+  finalizedOn?: string | null;
+  amount?: GqlMoneyV2 | null;
+  reasonDetails?: { reason?: string | null; networkReasonCode?: string | null } | null;
+  order?: { id?: string | null; name?: string | null } | null;
+};
+
+export type GqlShopPayReceipt = {
+  token?: string | null;
+  sourceIdentifier?: string | null;
+  createdAt?: string | null;
+  processingStatus?: { state?: string | null; message?: string | null; errorCode?: string | null } | null;
+  order?: { id?: string | null; name?: string | null } | null;
+  paymentRequest?: {
+    presentmentCurrency?: string | null;
+    total?: GqlMoneyV2 | null;
+    subtotal?: GqlMoneyV2 | null;
+    totalTax?: GqlMoneyV2 | null;
+  } | null;
+};
+
+export type GqlWebPresence = {
+  id: string;
+  subfolderSuffix?: string | null;
+  domain?: { id?: string | null; host?: string | null; url?: string | null } | null;
+  defaultLocale?: { locale?: string | null } | null;
+  rootUrls?: { locale?: string | null; url?: string | null }[] | null;
+};
+
+export type GqlSavedSearch = {
+  id: string;
+  name?: string | null;
+  query?: string | null;
+  searchTerms?: string | null;
+  resourceType?: string | null;
+};
+
+export type GqlStagedTarget = {
+  url?: string | null;
+  resourceUrl?: string | null;
+  parameters?: { name: string; value: string }[] | null;
 };

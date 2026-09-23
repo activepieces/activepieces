@@ -38,18 +38,21 @@ import { shopifyAiArchiveOrder } from './lib/actions/ai/archive-order';
 import { shopifyAiAttachVariantMedia } from './lib/actions/ai/attach-variant-media';
 import { shopifyAiBulkDeleteMetaobjects } from './lib/actions/ai/bulk-delete-metaobjects';
 import { shopifyAiCalculateRefund } from './lib/actions/ai/calculate-refund';
+import { shopifyAiCancelBulkOperation } from './lib/actions/ai/cancel-bulk-operation';
 import { shopifyAiCancelFulfillmentOrder } from './lib/actions/ai/cancel-fulfillment-order';
 import { shopifyAiCancelFulfillment } from './lib/actions/ai/cancel-fulfillment';
 import { shopifyAiCaptureOrderPayment } from './lib/actions/ai/capture-order-payment';
 import { shopifyAiCompleteDraftOrder } from './lib/actions/ai/complete-draft-order';
 import { shopifyAiCountAbandonedCheckouts } from './lib/actions/ai/count-abandoned-checkouts';
 import { shopifyAiCountBlogs } from './lib/actions/ai/count-blogs';
+import { shopifyAiCountCatalogs } from './lib/actions/ai/count-catalogs';
 import { shopifyAiCountCollections } from './lib/actions/ai/count-collections';
 import { shopifyAiCountCustomerSegments } from './lib/actions/ai/count-customer-segments';
 import { shopifyAiCountCustomers } from './lib/actions/ai/count-customers';
 import { shopifyAiCountDiscountCodes } from './lib/actions/ai/count-discount-codes';
 import { shopifyAiCountDiscounts } from './lib/actions/ai/count-discounts';
 import { shopifyAiCountDraftOrders } from './lib/actions/ai/count-draft-orders';
+import { shopifyAiCountEvents } from './lib/actions/ai/count-events';
 import { shopifyAiCountGiftCards } from './lib/actions/ai/count-gift-cards';
 import { shopifyAiCountLocations } from './lib/actions/ai/count-locations';
 import { shopifyAiCountPages } from './lib/actions/ai/count-pages';
@@ -67,6 +70,7 @@ import { shopifyAiCreateFreeShippingDiscountCode } from './lib/actions/ai/create
 import { shopifyAiCreateFulfillmentTrackingEvent } from './lib/actions/ai/create-fulfillment-tracking-event';
 import { shopifyAiCreateFulfillment } from './lib/actions/ai/create-fulfillment';
 import { shopifyAiCreateGiftCard } from './lib/actions/ai/create-gift-card';
+import { shopifyAiCreateMarketingEngagement } from './lib/actions/ai/create-marketing-engagement';
 import { shopifyAiCreateOrderRiskAssessment } from './lib/actions/ai/create-order-risk-assessment';
 import { shopifyAiCreateOrderWithLineItems } from './lib/actions/ai/create-order-with-line-items';
 import { shopifyAiCreatePage } from './lib/actions/ai/create-page';
@@ -74,6 +78,7 @@ import { shopifyAiCreateProductOptions } from './lib/actions/ai/create-product-o
 import { shopifyAiCreateProductRecord } from './lib/actions/ai/create-product-record';
 import { shopifyAiCreateProductVariants } from './lib/actions/ai/create-product-variants';
 import { shopifyAiCreateRefund } from './lib/actions/ai/create-refund';
+import { shopifyAiCreateScriptTag } from './lib/actions/ai/create-script-tag';
 import { shopifyAiCreateSmartCollection } from './lib/actions/ai/create-smart-collection';
 import { shopifyAiCreateTheme } from './lib/actions/ai/create-theme';
 import { shopifyAiCreateUrlRedirect } from './lib/actions/ai/create-url-redirect';
@@ -88,6 +93,7 @@ import { shopifyAiDeleteCustomer } from './lib/actions/ai/delete-customer';
 import { shopifyAiDeleteDiscountRedeemCodes } from './lib/actions/ai/delete-discount-redeem-codes';
 import { shopifyAiDeleteDiscount } from './lib/actions/ai/delete-discount';
 import { shopifyAiDeleteDraftOrder } from './lib/actions/ai/delete-draft-order';
+import { shopifyAiDeleteExternalMarketingActivity } from './lib/actions/ai/delete-external-marketing-activity';
 import { shopifyAiDeleteFulfillmentService } from './lib/actions/ai/delete-fulfillment-service';
 import { shopifyAiDeleteMetafields } from './lib/actions/ai/delete-metafields';
 import { shopifyAiDeleteMetaobjectDefinition } from './lib/actions/ai/delete-metaobject-definition';
@@ -98,9 +104,12 @@ import { shopifyAiDeleteProductMedia } from './lib/actions/ai/delete-product-med
 import { shopifyAiDeleteProductOptions } from './lib/actions/ai/delete-product-options';
 import { shopifyAiDeleteProductVariants } from './lib/actions/ai/delete-product-variants';
 import { shopifyAiDeleteProduct } from './lib/actions/ai/delete-product';
+import { shopifyAiDeleteSavedSearch } from './lib/actions/ai/delete-saved-search';
+import { shopifyAiDeleteScriptTag } from './lib/actions/ai/delete-script-tag';
 import { shopifyAiDeleteThemeFiles } from './lib/actions/ai/delete-theme-files';
 import { shopifyAiDeleteTheme } from './lib/actions/ai/delete-theme';
 import { shopifyAiDeleteUrlRedirect } from './lib/actions/ai/delete-url-redirect';
+import { shopifyAiDeleteWebPresence } from './lib/actions/ai/delete-web-presence';
 import { shopifyAiDetachVariantMedia } from './lib/actions/ai/detach-variant-media';
 import { shopifyAiDuplicateProduct } from './lib/actions/ai/duplicate-product';
 import { shopifyAiEnableStandardMetaobjectDefinition } from './lib/actions/ai/enable-standard-metaobject-definition';
@@ -109,13 +118,17 @@ import { shopifyAiGenerateCustomerActivationUrl } from './lib/actions/ai/generat
 import { shopifyAiGetAbandonment } from './lib/actions/ai/get-abandonment';
 import { shopifyAiGetArticle } from './lib/actions/ai/get-article';
 import { shopifyAiGetBlog } from './lib/actions/ai/get-blog';
+import { shopifyAiGetBulkOperation } from './lib/actions/ai/get-bulk-operation';
+import { shopifyAiGetBusinessEntity } from './lib/actions/ai/get-business-entity';
 import { shopifyAiGetCheckoutAbandonment } from './lib/actions/ai/get-checkout-abandonment';
 import { shopifyAiGetCollectionByHandle } from './lib/actions/ai/get-collection-by-handle';
 import { shopifyAiGetCollection } from './lib/actions/ai/get-collection';
 import { shopifyAiGetCustomerProfile } from './lib/actions/ai/get-customer-profile';
 import { shopifyAiGetDiscountRedeemCodeBulkCreation } from './lib/actions/ai/get-discount-redeem-code-bulk-creation';
 import { shopifyAiGetDiscount } from './lib/actions/ai/get-discount';
+import { shopifyAiGetDomain } from './lib/actions/ai/get-domain';
 import { shopifyAiGetDraftOrder } from './lib/actions/ai/get-draft-order';
+import { shopifyAiGetEvent } from './lib/actions/ai/get-event';
 import { shopifyAiGetFulfillmentDetails } from './lib/actions/ai/get-fulfillment-details';
 import { shopifyAiGetFulfillmentOrder } from './lib/actions/ai/get-fulfillment-order';
 import { shopifyAiGetGiftCard } from './lib/actions/ai/get-gift-card';
@@ -123,6 +136,7 @@ import { shopifyAiGetGrantedAccessScopes } from './lib/actions/ai/get-granted-ac
 import { shopifyAiGetInventoryItem } from './lib/actions/ai/get-inventory-item';
 import { shopifyAiGetJob } from './lib/actions/ai/get-job';
 import { shopifyAiGetLocation } from './lib/actions/ai/get-location';
+import { shopifyAiGetMarketingEvent } from './lib/actions/ai/get-marketing-event';
 import { shopifyAiGetMetafieldDefinition } from './lib/actions/ai/get-metafield-definition';
 import { shopifyAiGetMetafield } from './lib/actions/ai/get-metafield';
 import { shopifyAiGetMetaobject } from './lib/actions/ai/get-metaobject';
@@ -137,6 +151,8 @@ import { shopifyAiGetProductMedia } from './lib/actions/ai/get-product-media';
 import { shopifyAiGetProductVariantDetails } from './lib/actions/ai/get-product-variant-details';
 import { shopifyAiGetPublication } from './lib/actions/ai/get-publication';
 import { shopifyAiGetRefund } from './lib/actions/ai/get-refund';
+import { shopifyAiGetScriptTag } from './lib/actions/ai/get-script-tag';
+import { shopifyAiGetShopBillingPreferences } from './lib/actions/ai/get-shop-billing-preferences';
 import { shopifyAiGetShop } from './lib/actions/ai/get-shop';
 import { shopifyAiGetThemeFile } from './lib/actions/ai/get-theme-file';
 import { shopifyAiGetTheme } from './lib/actions/ai/get-theme';
@@ -146,22 +162,32 @@ import { shopifyAiListAbandonedCheckouts } from './lib/actions/ai/list-abandoned
 import { shopifyAiListArticleAuthors } from './lib/actions/ai/list-article-authors';
 import { shopifyAiListArticleTags } from './lib/actions/ai/list-article-tags';
 import { shopifyAiListArticles } from './lib/actions/ai/list-articles';
+import { shopifyAiListAvailableLocales } from './lib/actions/ai/list-available-locales';
 import { shopifyAiListBlogs } from './lib/actions/ai/list-blogs';
+import { shopifyAiListBulkOperations } from './lib/actions/ai/list-bulk-operations';
+import { shopifyAiListBusinessEntities } from './lib/actions/ai/list-business-entities';
 import { shopifyAiListCarrierServices } from './lib/actions/ai/list-carrier-services';
+import { shopifyAiListCatalogs } from './lib/actions/ai/list-catalogs';
 import { shopifyAiListCollectionProducts } from './lib/actions/ai/list-collection-products';
 import { shopifyAiListComments } from './lib/actions/ai/list-comments';
+import { shopifyAiListConsentPolicies } from './lib/actions/ai/list-consent-policies';
+import { shopifyAiListConsentPolicyRegions } from './lib/actions/ai/list-consent-policy-regions';
+import { shopifyAiListCustomerAccountPages } from './lib/actions/ai/list-customer-account-pages';
 import { shopifyAiListCustomerAddresses } from './lib/actions/ai/list-customer-addresses';
 import { shopifyAiListCustomerOrders } from './lib/actions/ai/list-customer-orders';
 import { shopifyAiListDeliveryProfiles } from './lib/actions/ai/list-delivery-profiles';
 import { shopifyAiListDiscountRedeemCodes } from './lib/actions/ai/list-discount-redeem-codes';
 import { shopifyAiListDiscounts } from './lib/actions/ai/list-discounts';
 import { shopifyAiListDraftOrders } from './lib/actions/ai/list-draft-orders';
+import { shopifyAiListEnabledCurrencies } from './lib/actions/ai/list-enabled-currencies';
+import { shopifyAiListEvents } from './lib/actions/ai/list-events';
 import { shopifyAiListFulfillmentEvents } from './lib/actions/ai/list-fulfillment-events';
 import { shopifyAiListFulfillmentOrderMoveLocations } from './lib/actions/ai/list-fulfillment-order-move-locations';
 import { shopifyAiListFulfillmentServices } from './lib/actions/ai/list-fulfillment-services';
 import { shopifyAiListInventoryItems } from './lib/actions/ai/list-inventory-items';
 import { shopifyAiListInventoryLevels } from './lib/actions/ai/list-inventory-levels';
 import { shopifyAiListLocations } from './lib/actions/ai/list-locations';
+import { shopifyAiListMarketingEvents } from './lib/actions/ai/list-marketing-events';
 import { shopifyAiListMetafieldDefinitionTypes } from './lib/actions/ai/list-metafield-definition-types';
 import { shopifyAiListMetafieldDefinitions } from './lib/actions/ai/list-metafield-definitions';
 import { shopifyAiListMetafields } from './lib/actions/ai/list-metafields';
@@ -172,15 +198,22 @@ import { shopifyAiListOrderFulfillments } from './lib/actions/ai/list-order-fulf
 import { shopifyAiListOrderRefunds } from './lib/actions/ai/list-order-refunds';
 import { shopifyAiListOrderTransactions } from './lib/actions/ai/list-order-transactions';
 import { shopifyAiListPages } from './lib/actions/ai/list-pages';
+import { shopifyAiListPaymentDisputes } from './lib/actions/ai/list-payment-disputes';
+import { shopifyAiListPaymentTermsTemplates } from './lib/actions/ai/list-payment-terms-templates';
 import { shopifyAiListProductMedia } from './lib/actions/ai/list-product-media';
 import { shopifyAiListProductVariants } from './lib/actions/ai/list-product-variants';
 import { shopifyAiListPublications } from './lib/actions/ai/list-publications';
 import { shopifyAiListSalesChannels } from './lib/actions/ai/list-sales-channels';
+import { shopifyAiListSavedSearches } from './lib/actions/ai/list-saved-searches';
+import { shopifyAiListScriptTags } from './lib/actions/ai/list-script-tags';
+import { shopifyAiListShopPayPaymentRequestReceipts } from './lib/actions/ai/list-shop-pay-payment-request-receipts';
+import { shopifyAiListShopPolicies } from './lib/actions/ai/list-shop-policies';
 import { shopifyAiListStandardMetafieldDefinitionTemplates } from './lib/actions/ai/list-standard-metafield-definition-templates';
 import { shopifyAiListTenderTransactions } from './lib/actions/ai/list-tender-transactions';
 import { shopifyAiListThemeFiles } from './lib/actions/ai/list-theme-files';
 import { shopifyAiListThemes } from './lib/actions/ai/list-themes';
 import { shopifyAiListUrlRedirects } from './lib/actions/ai/list-url-redirects';
+import { shopifyAiListWebPresences } from './lib/actions/ai/list-web-presences';
 import { shopifyAiMarkCommentNotSpam } from './lib/actions/ai/mark-comment-not-spam';
 import { shopifyAiMarkCommentSpam } from './lib/actions/ai/mark-comment-spam';
 import { shopifyAiMarkOrderAsPaid } from './lib/actions/ai/mark-order-as-paid';
@@ -208,6 +241,8 @@ import { shopifyAiSetFulfillmentOrdersDeadline } from './lib/actions/ai/set-fulf
 import { shopifyAiSetInventoryQuantities } from './lib/actions/ai/set-inventory-quantities';
 import { shopifyAiSetMetafields } from './lib/actions/ai/set-metafields';
 import { shopifyAiSetProduct } from './lib/actions/ai/set-product';
+import { shopifyAiStartBulkMutation } from './lib/actions/ai/start-bulk-mutation';
+import { shopifyAiStartBulkQuery } from './lib/actions/ai/start-bulk-query';
 import { shopifyAiStartOrderCancellation } from './lib/actions/ai/start-order-cancellation';
 import { shopifyAiUnarchiveOrder } from './lib/actions/ai/unarchive-order';
 import { shopifyAiUnpublishResource } from './lib/actions/ai/unpublish-resource';
@@ -218,6 +253,7 @@ import { shopifyAiUpdateCollection } from './lib/actions/ai/update-collection';
 import { shopifyAiUpdateCustomerAddress } from './lib/actions/ai/update-customer-address';
 import { shopifyAiUpdateCustomerProfile } from './lib/actions/ai/update-customer-profile';
 import { shopifyAiUpdateDraftOrder } from './lib/actions/ai/update-draft-order';
+import { shopifyAiUpdateExternalMarketingActivity } from './lib/actions/ai/update-external-marketing-activity';
 import { shopifyAiUpdateFreeShippingDiscountCode } from './lib/actions/ai/update-free-shipping-discount-code';
 import { shopifyAiUpdateFulfillmentTracking } from './lib/actions/ai/update-fulfillment-tracking';
 import { shopifyAiUpdateGiftCard } from './lib/actions/ai/update-gift-card';
@@ -229,8 +265,10 @@ import { shopifyAiUpdateProductFields } from './lib/actions/ai/update-product-fi
 import { shopifyAiUpdateProductMedia } from './lib/actions/ai/update-product-media';
 import { shopifyAiUpdateProductOption } from './lib/actions/ai/update-product-option';
 import { shopifyAiUpdateProductVariants } from './lib/actions/ai/update-product-variants';
+import { shopifyAiUpdateScriptTag } from './lib/actions/ai/update-script-tag';
 import { shopifyAiUpdateTheme } from './lib/actions/ai/update-theme';
 import { shopifyAiUpdateUrlRedirect } from './lib/actions/ai/update-url-redirect';
+import { shopifyAiUpsertExternalMarketingActivity } from './lib/actions/ai/upsert-external-marketing-activity';
 import { shopifyAiUpsertMetaobject } from './lib/actions/ai/upsert-metaobject';
 import { shopifyAiUpsertThemeFiles } from './lib/actions/ai/upsert-theme-files';
 import { shopifyAiVoidOrderTransaction } from './lib/actions/ai/void-order-transaction';
@@ -289,18 +327,21 @@ export const shopify = createPiece({
     shopifyAiAttachVariantMedia,
     shopifyAiBulkDeleteMetaobjects,
     shopifyAiCalculateRefund,
+    shopifyAiCancelBulkOperation,
     shopifyAiCancelFulfillmentOrder,
     shopifyAiCancelFulfillment,
     shopifyAiCaptureOrderPayment,
     shopifyAiCompleteDraftOrder,
     shopifyAiCountAbandonedCheckouts,
     shopifyAiCountBlogs,
+    shopifyAiCountCatalogs,
     shopifyAiCountCollections,
     shopifyAiCountCustomerSegments,
     shopifyAiCountCustomers,
     shopifyAiCountDiscountCodes,
     shopifyAiCountDiscounts,
     shopifyAiCountDraftOrders,
+    shopifyAiCountEvents,
     shopifyAiCountGiftCards,
     shopifyAiCountLocations,
     shopifyAiCountPages,
@@ -318,6 +359,7 @@ export const shopify = createPiece({
     shopifyAiCreateFulfillmentTrackingEvent,
     shopifyAiCreateFulfillment,
     shopifyAiCreateGiftCard,
+    shopifyAiCreateMarketingEngagement,
     shopifyAiCreateOrderRiskAssessment,
     shopifyAiCreateOrderWithLineItems,
     shopifyAiCreatePage,
@@ -325,6 +367,7 @@ export const shopify = createPiece({
     shopifyAiCreateProductRecord,
     shopifyAiCreateProductVariants,
     shopifyAiCreateRefund,
+    shopifyAiCreateScriptTag,
     shopifyAiCreateSmartCollection,
     shopifyAiCreateTheme,
     shopifyAiCreateUrlRedirect,
@@ -339,6 +382,7 @@ export const shopify = createPiece({
     shopifyAiDeleteDiscountRedeemCodes,
     shopifyAiDeleteDiscount,
     shopifyAiDeleteDraftOrder,
+    shopifyAiDeleteExternalMarketingActivity,
     shopifyAiDeleteFulfillmentService,
     shopifyAiDeleteMetafields,
     shopifyAiDeleteMetaobjectDefinition,
@@ -349,9 +393,12 @@ export const shopify = createPiece({
     shopifyAiDeleteProductOptions,
     shopifyAiDeleteProductVariants,
     shopifyAiDeleteProduct,
+    shopifyAiDeleteSavedSearch,
+    shopifyAiDeleteScriptTag,
     shopifyAiDeleteThemeFiles,
     shopifyAiDeleteTheme,
     shopifyAiDeleteUrlRedirect,
+    shopifyAiDeleteWebPresence,
     shopifyAiDetachVariantMedia,
     shopifyAiDuplicateProduct,
     shopifyAiEnableStandardMetaobjectDefinition,
@@ -360,13 +407,17 @@ export const shopify = createPiece({
     shopifyAiGetAbandonment,
     shopifyAiGetArticle,
     shopifyAiGetBlog,
+    shopifyAiGetBulkOperation,
+    shopifyAiGetBusinessEntity,
     shopifyAiGetCheckoutAbandonment,
     shopifyAiGetCollectionByHandle,
     shopifyAiGetCollection,
     shopifyAiGetCustomerProfile,
     shopifyAiGetDiscountRedeemCodeBulkCreation,
     shopifyAiGetDiscount,
+    shopifyAiGetDomain,
     shopifyAiGetDraftOrder,
+    shopifyAiGetEvent,
     shopifyAiGetFulfillmentDetails,
     shopifyAiGetFulfillmentOrder,
     shopifyAiGetGiftCard,
@@ -374,6 +425,7 @@ export const shopify = createPiece({
     shopifyAiGetInventoryItem,
     shopifyAiGetJob,
     shopifyAiGetLocation,
+    shopifyAiGetMarketingEvent,
     shopifyAiGetMetafieldDefinition,
     shopifyAiGetMetafield,
     shopifyAiGetMetaobject,
@@ -388,6 +440,8 @@ export const shopify = createPiece({
     shopifyAiGetProductVariantDetails,
     shopifyAiGetPublication,
     shopifyAiGetRefund,
+    shopifyAiGetScriptTag,
+    shopifyAiGetShopBillingPreferences,
     shopifyAiGetShop,
     shopifyAiGetThemeFile,
     shopifyAiGetTheme,
@@ -397,22 +451,32 @@ export const shopify = createPiece({
     shopifyAiListArticleAuthors,
     shopifyAiListArticleTags,
     shopifyAiListArticles,
+    shopifyAiListAvailableLocales,
     shopifyAiListBlogs,
+    shopifyAiListBulkOperations,
+    shopifyAiListBusinessEntities,
     shopifyAiListCarrierServices,
+    shopifyAiListCatalogs,
     shopifyAiListCollectionProducts,
     shopifyAiListComments,
+    shopifyAiListConsentPolicies,
+    shopifyAiListConsentPolicyRegions,
+    shopifyAiListCustomerAccountPages,
     shopifyAiListCustomerAddresses,
     shopifyAiListCustomerOrders,
     shopifyAiListDeliveryProfiles,
     shopifyAiListDiscountRedeemCodes,
     shopifyAiListDiscounts,
     shopifyAiListDraftOrders,
+    shopifyAiListEnabledCurrencies,
+    shopifyAiListEvents,
     shopifyAiListFulfillmentEvents,
     shopifyAiListFulfillmentOrderMoveLocations,
     shopifyAiListFulfillmentServices,
     shopifyAiListInventoryItems,
     shopifyAiListInventoryLevels,
     shopifyAiListLocations,
+    shopifyAiListMarketingEvents,
     shopifyAiListMetafieldDefinitionTypes,
     shopifyAiListMetafieldDefinitions,
     shopifyAiListMetafields,
@@ -423,15 +487,22 @@ export const shopify = createPiece({
     shopifyAiListOrderRefunds,
     shopifyAiListOrderTransactions,
     shopifyAiListPages,
+    shopifyAiListPaymentDisputes,
+    shopifyAiListPaymentTermsTemplates,
     shopifyAiListProductMedia,
     shopifyAiListProductVariants,
     shopifyAiListPublications,
     shopifyAiListSalesChannels,
+    shopifyAiListSavedSearches,
+    shopifyAiListScriptTags,
+    shopifyAiListShopPayPaymentRequestReceipts,
+    shopifyAiListShopPolicies,
     shopifyAiListStandardMetafieldDefinitionTemplates,
     shopifyAiListTenderTransactions,
     shopifyAiListThemeFiles,
     shopifyAiListThemes,
     shopifyAiListUrlRedirects,
+    shopifyAiListWebPresences,
     shopifyAiMarkCommentNotSpam,
     shopifyAiMarkCommentSpam,
     shopifyAiMarkOrderAsPaid,
@@ -459,6 +530,8 @@ export const shopify = createPiece({
     shopifyAiSetInventoryQuantities,
     shopifyAiSetMetafields,
     shopifyAiSetProduct,
+    shopifyAiStartBulkMutation,
+    shopifyAiStartBulkQuery,
     shopifyAiStartOrderCancellation,
     shopifyAiUnarchiveOrder,
     shopifyAiUnpublishResource,
@@ -469,6 +542,7 @@ export const shopify = createPiece({
     shopifyAiUpdateCustomerAddress,
     shopifyAiUpdateCustomerProfile,
     shopifyAiUpdateDraftOrder,
+    shopifyAiUpdateExternalMarketingActivity,
     shopifyAiUpdateFreeShippingDiscountCode,
     shopifyAiUpdateFulfillmentTracking,
     shopifyAiUpdateGiftCard,
@@ -480,8 +554,10 @@ export const shopify = createPiece({
     shopifyAiUpdateProductMedia,
     shopifyAiUpdateProductOption,
     shopifyAiUpdateProductVariants,
+    shopifyAiUpdateScriptTag,
     shopifyAiUpdateTheme,
     shopifyAiUpdateUrlRedirect,
+    shopifyAiUpsertExternalMarketingActivity,
     shopifyAiUpsertMetaobject,
     shopifyAiUpsertThemeFiles,
     shopifyAiVoidOrderTransaction,
