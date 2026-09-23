@@ -4,8 +4,11 @@ import { mailerLiteAuth } from '../auth';
 import { mailerLiteApi } from '../common/client';
 import { campaignWriteOutputSchema } from '../output-schemas';
 
-function toIdList(value: unknown[] | undefined): string[] {
-	return (value ?? []).map((item) => String(item).trim()).filter((item) => item.length > 0);
+function toIdList(value: unknown): string[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+	return value.map((item) => String(item).trim()).filter((item) => item.length > 0);
 }
 
 export const createCampaignDraftAction = createAction({

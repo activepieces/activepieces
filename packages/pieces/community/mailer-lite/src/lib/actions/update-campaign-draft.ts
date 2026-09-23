@@ -35,8 +35,8 @@ function currentIds({ current, kind }: { current: Record<string, unknown>; kind:
 	return fromFilter.length > 0 ? fromFilter : idsOf(current[kind]);
 }
 
-function toIdList(value: unknown[] | undefined): string[] | undefined {
-	if (value === undefined || value === null) {
+function toIdList(value: unknown): string[] | undefined {
+	if (!Array.isArray(value)) {
 		return undefined;
 	}
 	const ids = value.map((item) => String(item).trim()).filter((item) => item.length > 0);
