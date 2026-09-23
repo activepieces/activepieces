@@ -3,10 +3,6 @@ import { z } from 'zod'
 
 export { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderCredentials, aiProviderCredentials, AIProviderModelType, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, ProviderModelConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
 
-function strictAuth<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.ZodObject<Shape, z.core.$strict> {
-    return z.strictObject(schema.shape)
-}
-
 const ProviderConfigUnion = z.discriminatedUnion('provider', [
     z.object({
         displayName: z.string().min(1),
@@ -254,6 +250,10 @@ export function getEffectiveProviderAndModel({
         return { provider, model }
     }
     return { provider: mapped, model: split.model }
+}
+
+function strictAuth<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.ZodObject<Shape, z.core.$strict> {
+    return z.strictObject(schema.shape)
 }
 
 const CF_GATEWAY_SUBMODEL_TO_PROVIDER: Record<string, AIProviderName> = {
