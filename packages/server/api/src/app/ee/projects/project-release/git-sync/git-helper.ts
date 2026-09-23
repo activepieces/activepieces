@@ -36,7 +36,7 @@ async function createGitRepoAndReturnPaths(
     assertSafeSlug(gitRepo.slug)
     const tmpFolder = path.join('/', 'tmp', 'repo', gitRepo.projectId)
     try {
-        await fs.rmdir(tmpFolder, { recursive: true })
+        await fs.rm(tmpFolder, { recursive: true, force: true })
     }
     catch (e) {
         // ignore
@@ -92,7 +92,7 @@ async function initGitRepo(
             allowUnsafeSshCommand: true,
             allowUnsafeProtocolOverride: true,
         },
-    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no`)
+    }).env('GIT_SSH_COMMAND', `ssh -i ${keyPath} -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10`)
     await git.init()
     await git.addConfig('core.symlinks', 'false')
     await git.addConfig('protocol.file.allow', 'never')
@@ -151,7 +151,7 @@ async function validateConnection(request: ConfigureRepoRequest): Promise<void> 
         })
     }
     finally {
-        await fs.rmdir(tmpFolder, { recursive: true })
-        await fs.unlink(keyPath)
+        await fs.rm(tmpFolder, { recursive: true, force: true })
+        await fs.rm(keyPath, { force: true })
     }
 }
