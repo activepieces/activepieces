@@ -160,6 +160,7 @@
     'Apple Color Emoji', 'Segoe UI Emoji', Segoe UI Symbol, 'Noto Color Emoji';
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas,
     'Liberation Mono', monospace;
+  --font-mono--font-feature-settings: 'calt' 0;
   --font-serif: 'Sentient', ui-serif, Georgia, serif;
   --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.3);
   --shadow-add-button: var(--add-button-shadow);
