@@ -40,7 +40,11 @@ import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
+import {
+  FROM_QUERY_PARAM,
+  pendingRedirect,
+  useRedirectAfterLogin,
+} from '@/lib/navigation-utils';
 
 import { authMutations } from '../hooks/auth-hooks';
 import { captchaUtils } from '../utils/captcha-utils';
@@ -98,6 +102,10 @@ const SignUpForm = ({
   const redirectAfterLogin = useRedirectAfterLogin();
   const navigate = useNavigate();
   const { capture } = useTelemetry();
+  const askToCheckEmail = () => {
+    pendingRedirect.remember(searchParams.get(FROM_QUERY_PARAM));
+    setShowCheckYourEmailNote(true);
+  };
 
   const { mutate, isPending } = authMutations.useSignUp({
     onSuccess: (data) => {
@@ -110,7 +118,7 @@ const SignUpForm = ({
         }
         redirectAfterLogin();
       } else {
-        setShowCheckYourEmailNote(true);
+        askToCheckEmail();
       }
     },
     onError: (error) => {
@@ -139,7 +147,7 @@ const SignUpForm = ({
         }
         switch (errorCode) {
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
-            setShowCheckYourEmailNote(true);
+            askToCheckEmail();
             break;
           }
           case ErrorCode.INVITATION_ONLY_SIGN_UP: {

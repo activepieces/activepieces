@@ -165,7 +165,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.178.0",
+      "version": "0.180.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -518,7 +518,7 @@
     },
     "packages/pieces/community/amazon-bedrock": {
       "name": "@activepieces/piece-amazon-bedrock",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3830,7 +3830,7 @@
     },
     "packages/pieces/community/google-drive": {
       "name": "@activepieces/piece-google-drive",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
