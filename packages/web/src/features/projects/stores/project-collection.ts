@@ -44,22 +44,11 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        const request: UpdateProjectPlatformRequest = {
-          displayName: modified.displayName,
+        await api.post<ProjectWithLimits>(`/v1/projects/${original.id}`, {
+          ...modified,
           metadata: modified.metadata ?? undefined,
-          releasesEnabled: modified.releasesEnabled,
-          notifyFlowOwnerOnFailure: modified.notifyFlowOwnerOnFailure,
           externalId: modified.externalId?.trim() || undefined,
-          icon: modified.icon,
-          plan: modified.plan,
-          maxConcurrentJobs: modified.maxConcurrentJobs,
-          workerGroupId: modified.workerGroupId,
-          sensitive: modified.sensitive,
-        };
-        await api.post<ProjectWithLimits>(
-          `/v1/projects/${original.id}`,
-          request,
-        );
+        });
       }
     },
     onInsert: async ({ transaction }) => {
