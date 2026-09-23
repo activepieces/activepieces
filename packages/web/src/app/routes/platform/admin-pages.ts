@@ -238,7 +238,7 @@ export const ADMIN_PAGES: AdminPage[] = [
       },
       {
         id: 'roles',
-        label: 'Project roles',
+        label: 'Roles',
         component: ProjectRolePage,
         isLocked: ({ plan }) => !plan.projectRolesEnabled,
         sample: true,
