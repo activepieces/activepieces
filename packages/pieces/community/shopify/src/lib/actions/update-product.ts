@@ -6,7 +6,7 @@ import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
 export const updateProductAction = createAction({
   auth: shopifyAuth,
   name: 'update_product',
-  classification: 'WRITE',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Product',
   description: 'Update an existing product.',
   audience: 'both',
