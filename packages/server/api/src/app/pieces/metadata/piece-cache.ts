@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { apId } from '@activepieces/core-utils'
 import { ApEnvironment, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -7,59 +7,62 @@ import { system } from '../../helper/system/system'
 import { AppSystemProp } from '../../helper/system/system-props'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { loadDevPiecesIfEnabled } from './utils'
+import { createGenerationMemo } from './utils/generation-memo'
 
 const repo = repoFactory(PieceMetadataEntity)
 const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 const isTestingEnvironment = environment === ApEnvironment.TESTING
+const INSTANCE_ID = apId()
+const GENERATION_MAX_AGE_MS = 10 * 60 * 1000
+const PIECE_CACHE_INVALIDATION_CHANNEL = 'piece-registry-invalidation'
 
-let cachedRegistry: PieceRegistryEntry[] | null = null
-let registryGeneration = 0
+let generation = 0
+let generationStartedAt = performance.now()
+const persistedRegistry = createGenerationMemo<PieceRegistryEntry[]>({ currentGeneration: currentPieceGeneration })
 
 export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
             log.info('[pieceCache] Registry cache initialized')
-            cachedRegistry = null
-            registryGeneration++
+            advanceGeneration()
             if (!isTestingEnvironment) {
-                await pubsub.subscribe(PIECE_REGISTRY_INVALIDATION_CHANNEL, () => {
-                    cachedRegistry = null
-                    registryGeneration++
-                    log.debug('[pieceCache] Registry invalidated via pubsub')
+                await pubsub.subscribe(PIECE_CACHE_INVALIDATION_CHANNEL, (sender) => {
+                    if (sender === INSTANCE_ID) {
+                        return
+                    }
+                    advanceGeneration()
+                    log.debug('[pieceCache] Invalidated via pubsub')
                 })
             }
         },
 
         async loadRegistry(): Promise<PieceRegistryEntry[]> {
-            const persistedRegistry = await loadPersistedRegistry()
+            const persisted = isTestingEnvironment
+                ? await fetchRegistryFromDB()
+                : await persistedRegistry.get({ key: 'registry', load: fetchRegistryFromDB })
             const devPieces = (await loadDevPiecesIfEnabled(log)).map(toRegistryEntry)
-            return [...persistedRegistry, ...devPieces]
+            return [...persisted, ...devPieces]
         },
 
         async invalidate(): Promise<void> {
-            cachedRegistry = null
-            registryGeneration++
+            advanceGeneration()
             if (!isTestingEnvironment) {
-                await pubsub.publish(PIECE_REGISTRY_INVALIDATION_CHANNEL, '1')
+                await pubsub.publish(PIECE_CACHE_INVALIDATION_CHANNEL, INSTANCE_ID)
             }
         },
     }
 }
 
-async function loadPersistedRegistry(): Promise<PieceRegistryEntry[]> {
-    if (isTestingEnvironment) {
-        return fetchRegistryFromDB()
+export function currentPieceGeneration(): number {
+    if (performance.now() - generationStartedAt > GENERATION_MAX_AGE_MS) {
+        advanceGeneration()
     }
-    if (!isNil(cachedRegistry)) {
-        return cachedRegistry
-    }
-    const startGeneration = registryGeneration
-    const result = await fetchRegistryFromDB()
-    if (registryGeneration !== startGeneration) {
-        return loadPersistedRegistry()
-    }
-    cachedRegistry = result
-    return result
+    return generation
+}
+
+function advanceGeneration(): void {
+    generation++
+    generationStartedAt = performance.now()
 }
 
 function toRegistryEntry(piece: PieceMetadataSchema): PieceRegistryEntry {
@@ -79,12 +82,6 @@ async function fetchRegistryFromDB(): Promise<PieceRegistryEntry[]> {
         .select(['pm."name"', 'pm."version"', 'pm."platformId"', 'pm."pieceType"', 'pm."minimumSupportedRelease"', 'pm."maximumSupportedRelease"'])
         .getRawMany<PieceRegistryEntry>()
 }
-
-export function currentPieceGeneration(): number {
-    return registryGeneration
-}
-
-export const PIECE_REGISTRY_INVALIDATION_CHANNEL = 'piece-registry-invalidation'
 
 export type PieceRegistryEntry = {
     platformId?: string

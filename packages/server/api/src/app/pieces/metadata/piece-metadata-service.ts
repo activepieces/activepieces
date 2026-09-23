@@ -44,7 +44,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             return params.includeHidden || isNil(policy) ? summaries : policy.filterComponents(summaries)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
-            const registry = filterRegistry(await loadRegistry(log), {
+            const registry = filterRegistry(await pieceCache(log).loadRegistry(), {
                 release: params.release,
                 platformId: params.platformId,
             })
@@ -170,6 +170,9 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
 
         async bulkDelete(pieces: { name: string, version: string }[]): Promise<void> {
+            if (pieces.length === 0) {
+                return
+            }
             await Promise.all(pieces.map((piece) =>
                 pieceRepos().delete({ name: piece.name, version: piece.version }),
             ))
@@ -340,7 +343,7 @@ const findExactVersion = async (
     const { name, version, platformId } = params
     const versionToSearch = findNextExcludedVersion(version)
     const currentRelease = apVersionUtil.getCurrentRelease()
-    const registry = filterRegistry(await loadRegistry(log), { release: currentRelease, platformId })
+    const registry = filterRegistry(await pieceCache(log).loadRegistry(), { release: currentRelease, platformId })
     const matchingRegistryEntries = registry.filter((entry) => {
         if (entry.name !== name) {
             return false
@@ -604,10 +607,6 @@ function dedupe<T>(key: string, fn: () => Promise<T>): Promise<T> {
     })()
     inflightFetches.set(key, promise)
     return promise
-}
-
-function loadRegistry(log: FastifyBaseLogger): Promise<PieceRegistryEntry[]> {
-    return dedupe('registry-load', () => pieceCache(log).loadRegistry())
 }
 
 function filterRegistry(registry: PieceRegistryEntry[], params: { release: string | undefined, platformId: string | undefined }): PieceRegistryEntry[] {
