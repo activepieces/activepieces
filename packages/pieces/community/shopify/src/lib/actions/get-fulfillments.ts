@@ -5,9 +5,10 @@ import { getFulfillments } from '../common';
 export const getFulfillmentsAction = createAction({
   auth: shopifyAuth,
   name: 'get_fulfillments',
+  classification: 'SEARCH',
   displayName: 'Get Fulfillments',
   description: `Get an order's fulfillments.`,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: "List the fulfillments (shipments) recorded for a specific Shopify order, given the order ID. Use to find fulfillment IDs and shipment status, e.g. before posting a Create Fulfillment Event. Read-only and idempotent.", idempotent: true },
   props: {
     orderId: Property.Number({

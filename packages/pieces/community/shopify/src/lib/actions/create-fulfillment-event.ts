@@ -6,9 +6,10 @@ import { ShopifyFulfillmentEventStatuses } from '../common/types';
 export const createFulfillmentEventAction = createAction({
   auth: shopifyAuth,
   name: 'create_fulfillment_event',
+  classification: 'WRITE',
   displayName: 'Create Fulfillment Event',
   description: 'Create a new fulfillment event.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Record a tracking-status event (e.g. in transit, delivered) on an existing fulfillment within an order. Use to post shipment progress updates; requires the order ID, fulfillment ID, and a status. Each call appends a new event, so repeating it adds duplicate events.', idempotent: false },
   props: {
     orderId: Property.Number({

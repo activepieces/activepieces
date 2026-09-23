@@ -1825,6 +1825,760 @@ function toGidList({ type, value }: { type: string; value: unknown }): string[] 
   return ids.map((id) => toGid({ type, id }));
 }
 
+function mapFulfillmentOrder(order: GqlFulfillmentOrder) {
+  const destination = order.destination;
+  const lineItems = order.lineItems;
+  return {
+    id: order.id,
+    status: order.status ?? null,
+    request_status: order.requestStatus ?? null,
+    order_id: order.orderId ?? null,
+    order_name: order.orderName ?? null,
+    created_at: order.createdAt ?? null,
+    updated_at: order.updatedAt ?? null,
+    fulfill_at: order.fulfillAt ?? null,
+    fulfill_by: order.fulfillBy ?? null,
+    assigned_location_id: order.assignedLocation?.location?.id ?? null,
+    assigned_location_name: order.assignedLocation?.name ?? null,
+    destination_first_name: destination?.firstName ?? null,
+    destination_last_name: destination?.lastName ?? null,
+    destination_company: destination?.company ?? null,
+    destination_address1: destination?.address1 ?? null,
+    destination_address2: destination?.address2 ?? null,
+    destination_city: destination?.city ?? null,
+    destination_province: destination?.province ?? null,
+    destination_zip: destination?.zip ?? null,
+    destination_country_code: destination?.countryCode ?? null,
+    destination_phone: destination?.phone ?? null,
+    destination_email: destination?.email ?? null,
+    delivery_method_type: order.deliveryMethod?.methodType ?? null,
+    delivery_method_name: order.deliveryMethod?.presentedName ?? null,
+    holds: (order.fulfillmentHolds ?? []).map((hold) => ({
+      id: hold.id,
+      reason: hold.reason ?? null,
+      reason_notes: hold.reasonNotes ?? null,
+      display_reason: hold.displayReason ?? null,
+      handle: hold.handle ?? null,
+      held_by_requesting_app: hold.heldByRequestingApp ?? null,
+    })),
+    supported_actions: (order.supportedActions ?? [])
+      .map((entry) => entry.action ?? null)
+      .filter((action): action is string => action !== null),
+    line_items: (lineItems?.nodes ?? []).map((item) => ({
+      id: item.id,
+      sku: item.sku ?? null,
+      product_title: item.productTitle ?? null,
+      variant_title: item.variantTitle ?? null,
+      total_quantity: item.totalQuantity ?? null,
+      remaining_quantity: item.remainingQuantity ?? null,
+      requires_shipping: item.requiresShipping ?? null,
+      line_item_id: item.lineItem?.id ?? null,
+      variant_id: item.variant?.id ?? null,
+      inventory_item_id: item.inventoryItemId ?? null,
+    })),
+    line_items_truncated: lineItems?.pageInfo?.hasNextPage ?? false,
+  };
+}
+
+function mapFulfillmentOrderOrNull(order: GqlFulfillmentOrder | null | undefined) {
+  return order ? mapFulfillmentOrder(order) : null;
+}
+
+function mapFulfillmentSummary(fulfillment: GqlFulfillment) {
+  const tracking = fulfillment.trackingInfo ?? [];
+  return {
+    id: fulfillment.id,
+    legacy_resource_id: fulfillment.legacyResourceId ?? null,
+    name: fulfillment.name ?? null,
+    status: fulfillment.status ?? null,
+    display_status: fulfillment.displayStatus ?? null,
+    created_at: fulfillment.createdAt ?? null,
+    updated_at: fulfillment.updatedAt ?? null,
+    in_transit_at: fulfillment.inTransitAt ?? null,
+    delivered_at: fulfillment.deliveredAt ?? null,
+    estimated_delivery_at: fulfillment.estimatedDeliveryAt ?? null,
+    total_quantity: fulfillment.totalQuantity ?? null,
+    requires_shipping: fulfillment.requiresShipping ?? null,
+    tracking_company: tracking[0]?.company ?? null,
+    tracking_numbers: tracking
+      .map((entry) => entry.number ?? null)
+      .filter((value): value is string => value !== null),
+    tracking_urls: tracking
+      .map((entry) => entry.url ?? null)
+      .filter((value): value is string => value !== null),
+    location_id: fulfillment.location?.id ?? null,
+    location_name: fulfillment.location?.name ?? null,
+    service_id: fulfillment.service?.id ?? null,
+    service_name: fulfillment.service?.serviceName ?? null,
+    order_id: fulfillment.order?.id ?? null,
+    order_name: fulfillment.order?.name ?? null,
+  };
+}
+
+function mapFulfillment(fulfillment: GqlFulfillment) {
+  const origin = fulfillment.originAddress;
+  const lineItems = fulfillment.fulfillmentLineItems;
+  return {
+    ...mapFulfillmentSummary(fulfillment),
+    origin_address1: origin?.address1 ?? null,
+    origin_address2: origin?.address2 ?? null,
+    origin_city: origin?.city ?? null,
+    origin_zip: origin?.zip ?? null,
+    origin_province_code: origin?.provinceCode ?? null,
+    origin_country_code: origin?.countryCode ?? null,
+    line_items: (lineItems?.nodes ?? []).map((item) => ({
+      id: item.id,
+      quantity: item.quantity ?? null,
+      line_item_id: item.lineItem?.id ?? null,
+      title: item.lineItem?.title ?? null,
+      sku: item.lineItem?.sku ?? null,
+    })),
+    line_items_truncated: lineItems?.pageInfo?.hasNextPage ?? false,
+  };
+}
+
+function mapFulfillmentEvent(event: GqlFulfillmentEvent) {
+  return {
+    id: event.id,
+    status: event.status ?? null,
+    message: event.message ?? null,
+    happened_at: event.happenedAt ?? null,
+    created_at: event.createdAt ?? null,
+    estimated_delivery_at: event.estimatedDeliveryAt ?? null,
+    address1: event.address1 ?? null,
+    city: event.city ?? null,
+    province: event.province ?? null,
+    country: event.country ?? null,
+    zip: event.zip ?? null,
+    latitude: event.latitude ?? null,
+    longitude: event.longitude ?? null,
+  };
+}
+
+function mapFulfillmentService(service: GqlFulfillmentService) {
+  return {
+    id: service.id,
+    handle: service.handle ?? null,
+    service_name: service.serviceName ?? null,
+    type: service.type ?? null,
+    callback_url: service.callbackUrl ?? null,
+    inventory_management: service.inventoryManagement ?? null,
+    tracking_support: service.trackingSupport ?? null,
+    requires_shipping_method: service.requiresShippingMethod ?? null,
+    location_id: service.location?.id ?? null,
+    location_name: service.location?.name ?? null,
+  };
+}
+
+function mapCarrierService(service: GqlCarrierService) {
+  return {
+    id: service.id,
+    name: service.name ?? null,
+    formatted_name: service.formattedName ?? null,
+    active: service.active ?? null,
+    callback_url: service.callbackUrl ?? null,
+    supports_service_discovery: service.supportsServiceDiscovery ?? null,
+  };
+}
+
+function mapDeliveryProfile(profile: GqlDeliveryProfile) {
+  const groups = profile.profileLocationGroups ?? [];
+  return {
+    id: profile.id,
+    name: profile.name ?? null,
+    default: profile.default ?? null,
+    version: profile.version ?? null,
+    active_method_definitions_count: profile.activeMethodDefinitionsCount ?? null,
+    locations_without_rates_count: profile.locationsWithoutRatesCount ?? null,
+    origin_location_count: profile.originLocationCount ?? null,
+    zone_country_count: profile.zoneCountryCount ?? null,
+    product_variants_count: profile.productVariantsCount?.count ?? null,
+    location_groups: groups.map((group) => ({
+      location_group_id: group.locationGroup?.id ?? null,
+      locations_count: group.locationGroup?.locationsCount?.count ?? null,
+      zones: (group.locationGroupZones?.nodes ?? []).map((entry) => ({
+        zone_id: entry.zone?.id ?? null,
+        zone_name: entry.zone?.name ?? null,
+        countries: (entry.zone?.countries ?? []).map((country) =>
+          country.code?.restOfWorld ? 'REST_OF_WORLD' : country.code?.countryCode ?? country.name ?? null
+        ),
+        rates: (entry.methodDefinitions?.nodes ?? []).map((method) => ({
+          id: method.id,
+          name: method.name ?? null,
+          active: method.active ?? null,
+          description: method.description ?? null,
+          price: method.rateProvider?.price?.amount ?? null,
+          currency_code: method.rateProvider?.price?.currencyCode ?? null,
+          carrier_service_id: method.rateProvider?.carrierService?.id ?? null,
+          carrier_service_name: method.rateProvider?.carrierService?.name ?? null,
+        })),
+        rates_truncated: entry.methodDefinitions?.pageInfo?.hasNextPage ?? false,
+      })),
+      zones_truncated: group.locationGroupZones?.pageInfo?.hasNextPage ?? false,
+    })),
+  };
+}
+
+function mapGiftCard(card: GqlGiftCard) {
+  return {
+    id: card.id,
+    last_characters: card.lastCharacters ?? null,
+    masked_code: card.maskedCode ?? null,
+    enabled: card.enabled ?? null,
+    is_redeemable: card.isRedeemable ?? null,
+    deactivated_at: card.deactivatedAt ?? null,
+    expires_on: card.expiresOn ?? null,
+    balance: card.balance?.amount ?? null,
+    initial_value: card.initialValue?.amount ?? null,
+    currency_code: card.balance?.currencyCode ?? card.initialValue?.currencyCode ?? null,
+    note: card.note ?? null,
+    template_suffix: card.templateSuffix ?? null,
+    customer_id: card.customer?.id ?? null,
+    customer_name: card.customer?.displayName ?? null,
+    order_id: card.order?.id ?? null,
+    order_name: card.order?.name ?? null,
+    recipient_id: card.recipientAttributes?.recipient?.id ?? null,
+    recipient_name: card.recipientAttributes?.recipient?.displayName ?? null,
+    recipient_preferred_name: card.recipientAttributes?.preferredName ?? null,
+    recipient_message: card.recipientAttributes?.message ?? null,
+    send_notification_at: card.recipientAttributes?.sendNotificationAt ?? null,
+    created_at: card.createdAt ?? null,
+    updated_at: card.updatedAt ?? null,
+  };
+}
+
+function mapDiscountNode(node: GqlDiscountNode) {
+  const discount: GqlDiscount = node.discount ?? {};
+  const typename = discount.__typename ?? null;
+  const method = discountMethod(typename);
+  const value = discount.customerGets?.value;
+  const effect = value?.effect;
+  const items = discount.customerGets?.items;
+  const minimum = discount.minimumRequirement;
+  const context = discount.context;
+  const destination = discount.destinationSelection;
+  const buysValue = discount.customerBuys?.value;
+  const buysItems = discount.customerBuys?.items;
+  const marketIds = (context?.markets?.nodes ?? []).map((market) => market.id);
+  return {
+    id: typedDiscountId({ id: node.id, method }),
+    method,
+    discount_type: typename,
+    title: discount.title ?? null,
+    status: discount.status ?? null,
+    summary: discount.summary ?? null,
+    starts_at: discount.startsAt ?? null,
+    ends_at: discount.endsAt ?? null,
+    created_at: discount.createdAt ?? null,
+    updated_at: discount.updatedAt ?? null,
+    usage_count: discount.asyncUsageCount ?? null,
+    discount_classes: discount.discountClasses ?? [],
+    tags: discount.tags ?? [],
+    combines_with_product_discounts: discount.combinesWith?.productDiscounts ?? null,
+    combines_with_order_discounts: discount.combinesWith?.orderDiscounts ?? null,
+    combines_with_shipping_discounts: discount.combinesWith?.shippingDiscounts ?? null,
+    applies_once_per_customer: discount.appliesOncePerCustomer ?? null,
+    usage_limit: discount.usageLimit ?? null,
+    codes_count: discount.codesCount?.count ?? null,
+    codes: (discount.codes?.nodes ?? [])
+      .map((entry) => entry.code ?? null)
+      .filter((code): code is string => code !== null),
+    eligibility: discountEligibility(context?.__typename),
+    customer_ids: (context?.customers ?? []).map((customer) => customer.id),
+    segment_ids: (context?.segments ?? []).map((segment) => segment.id),
+    market_ids: marketIds,
+    markets_truncated: (context?.marketsCount ?? 0) > marketIds.length,
+    value_type: discountValueType(value?.__typename),
+    percentage: toPercent(value?.percentage ?? effect?.percentage),
+    amount: value?.amount?.amount ?? effect?.amount?.amount ?? null,
+    amount_currency: value?.amount?.currencyCode ?? effect?.amount?.currencyCode ?? null,
+    applies_on_each_item: value?.appliesOnEachItem ?? null,
+    quantity: value?.quantity?.quantity ?? null,
+    applies_to: discountAppliesTo(items?.__typename),
+    product_ids: (items?.products?.nodes ?? []).map((product) => product.id),
+    variant_ids: (items?.productVariants?.nodes ?? []).map((variant) => variant.id),
+    collection_ids: (items?.collections?.nodes ?? []).map((collection) => collection.id),
+    items_truncated: discountItemsTruncated(items),
+    buys_type: discountBuysType(buysValue?.__typename),
+    buys_quantity: buysValue?.quantity ?? null,
+    buys_amount: buysValue?.amount ?? null,
+    buys_applies_to: discountAppliesTo(buysItems?.__typename),
+    buys_product_ids: (buysItems?.products?.nodes ?? []).map((product) => product.id),
+    buys_variant_ids: (buysItems?.productVariants?.nodes ?? []).map((variant) => variant.id),
+    buys_collection_ids: (buysItems?.collections?.nodes ?? []).map((collection) => collection.id),
+    buys_items_truncated: discountItemsTruncated(buysItems),
+    minimum_quantity: minimum?.greaterThanOrEqualToQuantity ?? null,
+    minimum_subtotal: minimum?.greaterThanOrEqualToSubtotal?.amount ?? null,
+    minimum_subtotal_currency: minimum?.greaterThanOrEqualToSubtotal?.currencyCode ?? null,
+    maximum_shipping_price: discount.maximumShippingPrice?.amount ?? null,
+    destination_all_countries: destination?.allCountries ?? null,
+    destination_countries: destination?.countries ?? [],
+    uses_per_order_limit: discount.usesPerOrderLimit ?? null,
+  };
+}
+
+function mapDiscountRedeemCode(code: GqlDiscountRedeemCode) {
+  return {
+    id: code.id ?? null,
+    code: code.code ?? null,
+    usage_count: code.asyncUsageCount ?? null,
+    created_by_app_id: code.createdBy?.id ?? null,
+    created_by_app_title: code.createdBy?.title ?? null,
+  };
+}
+
+function mapDiscountBulkCreation(creation: GqlDiscountRedeemCodeBulkCreation | null | undefined) {
+  return {
+    bulk_creation_id: creation?.id ?? null,
+    done: creation?.done ?? false,
+    codes_count: creation?.codesCount ?? null,
+    imported_count: creation?.importedCount ?? null,
+    failed_count: creation?.failedCount ?? null,
+    created_at: creation?.createdAt ?? null,
+    discount_id: creation?.discountCode?.id ?? null,
+  };
+}
+
+function discountMethod(typename: string | null): 'code' | 'automatic' | null {
+  if (typename?.startsWith('DiscountCode')) {
+    return 'code';
+  }
+  if (typename?.startsWith('DiscountAutomatic')) {
+    return 'automatic';
+  }
+  return null;
+}
+
+function discountEligibility(typename: string | null | undefined): string | null {
+  const map: Record<string, string> = {
+    DiscountBuyerSelectionAll: 'ALL',
+    DiscountCustomers: 'CUSTOMERS',
+    DiscountCustomerSegments: 'SEGMENTS',
+    DiscountMarkets: 'MARKETS',
+  };
+  return typename ? map[typename] ?? null : null;
+}
+
+function discountValueType(typename: string | null | undefined): string | null {
+  const map: Record<string, string> = {
+    DiscountPercentage: 'PERCENTAGE',
+    DiscountAmount: 'FIXED_AMOUNT',
+    DiscountOnQuantity: 'QUANTITY',
+  };
+  return typename ? map[typename] ?? null : null;
+}
+
+function discountBuysType(typename: string | null | undefined): string | null {
+  const map: Record<string, string> = {
+    DiscountQuantity: 'QUANTITY',
+    DiscountPurchaseAmount: 'AMOUNT',
+  };
+  return typename ? map[typename] ?? null : null;
+}
+
+function discountItemsTruncated(items: GqlDiscountItems | null | undefined): boolean {
+  return (
+    (items?.products?.pageInfo?.hasNextPage ?? false) ||
+    (items?.productVariants?.pageInfo?.hasNextPage ?? false) ||
+    (items?.collections?.pageInfo?.hasNextPage ?? false)
+  );
+}
+
+function clearableValue<T>({
+  value,
+  clear,
+  valueName,
+  clearName,
+}: {
+  value: T | undefined;
+  clear: boolean | undefined;
+  valueName: string;
+  clearName: string;
+}): T | null | undefined {
+  if (clear !== true) {
+    return value;
+  }
+  if (value !== undefined) {
+    throw new Error(`Choose either ${valueName} or ${clearName}, not both. Nothing was changed.`);
+  }
+  return null;
+}
+
+function discountAppliesTo(typename: string | null | undefined): string | null {
+  const map: Record<string, string> = {
+    AllDiscountItems: 'ALL',
+    DiscountProducts: 'PRODUCTS',
+    DiscountCollections: 'COLLECTIONS',
+  };
+  return typename ? map[typename] ?? null : null;
+}
+
+function toPercent(fraction: number | null | undefined): number | null {
+  if (fraction === null || fraction === undefined) {
+    return null;
+  }
+  return Math.round(fraction * 10000) / 100;
+}
+
+function typedDiscountId({
+  id,
+  method,
+}: {
+  id: string;
+  method: 'code' | 'automatic' | null;
+}): string {
+  const match = /^gid:\/\/shopify\/DiscountNode\/(\d+)$/.exec(id);
+  if (!match || method === null) {
+    return id;
+  }
+  return `gid://shopify/${method === 'code' ? 'DiscountCodeNode' : 'DiscountAutomaticNode'}/${match[1]}`;
+}
+
+function readDiscountId({
+  value,
+  allow,
+}: {
+  value: string | undefined | null;
+  allow: DiscountIdKind[];
+}): { id: string; kind: DiscountIdKind; numericId: string } {
+  const text = nonEmpty(value);
+  if (!text) {
+    throw new Error('Provide the discount id.');
+  }
+  const match = /^gid:\/\/shopify\/(DiscountCodeNode|DiscountAutomaticNode|DiscountNode)\/(\d+)$/.exec(text);
+  if (!match) {
+    throw new Error(
+      `"${text}" is not a full discount id. A plain number is ambiguous because code and automatic discounts are different objects; pass the full id such as "gid://shopify/DiscountCodeNode/123" or "gid://shopify/DiscountAutomaticNode/456" returned by list_discounts, get_discount or find_discount_by_code. Nothing was changed.`
+    );
+  }
+  const kind = DISCOUNT_ID_KINDS[match[1]];
+  if (!allow.includes(kind)) {
+    throw new Error(
+      `"${text}" is ${kind === 'automatic' ? 'an automatic discount' : 'a code discount'}, but this action works only on ${allow.includes('code') ? 'code discounts (gid://shopify/DiscountCodeNode/…)' : 'automatic discounts (gid://shopify/DiscountAutomaticNode/…)'}. Nothing was changed.`
+    );
+  }
+  return { id: text, kind, numericId: match[2] };
+}
+
+function toDiscountCodeNodeId(value: string | undefined | null): string {
+  const { kind, id, numericId } = readDiscountId({ value, allow: ['code', 'node'] });
+  return kind === 'node' ? `gid://shopify/DiscountCodeNode/${numericId}` : id;
+}
+
+function buildDiscountValue({
+  valueType,
+  value,
+  appliesOnEachItem,
+}: {
+  valueType: string | undefined;
+  value: number | undefined;
+  appliesOnEachItem: boolean | undefined;
+}): Record<string, unknown> | undefined {
+  if (valueType === undefined && value === undefined) {
+    if (appliesOnEachItem !== undefined) {
+      throw new Error('applies_on_each_item needs value_type FIXED_AMOUNT and a value. Nothing was changed.');
+    }
+    return undefined;
+  }
+  if (valueType === undefined || value === undefined) {
+    throw new Error('Set both value_type and value together. Nothing was changed.');
+  }
+  if (valueType === 'PERCENTAGE') {
+    if (!(value > 0 && value <= 100)) {
+      throw new Error('A percentage value must be above 0 and at most 100, for example 15 for 15% off. Nothing was changed.');
+    }
+    if (appliesOnEachItem !== undefined) {
+      throw new Error('applies_on_each_item applies only to FIXED_AMOUNT discounts. Nothing was changed.');
+    }
+    return { percentage: Math.round(value * 100) / 10000 };
+  }
+  if (valueType === 'FIXED_AMOUNT') {
+    if (!(value > 0)) {
+      throw new Error('A fixed amount must be above 0, for example 10 for 10.00 off in the shop currency. Nothing was changed.');
+    }
+    return compact({
+      discountAmount: compact({ amount: String(value), appliesOnEachItem }),
+    });
+  }
+  throw new Error(`Unknown value_type "${valueType}". Use PERCENTAGE or FIXED_AMOUNT.`);
+}
+
+function buildDiscountItems({
+  appliesTo,
+  productIdsToAdd,
+  productIdsToRemove,
+  variantIdsToAdd,
+  variantIdsToRemove,
+  collectionIdsToAdd,
+  collectionIdsToRemove,
+}: {
+  appliesTo: string | undefined;
+  productIdsToAdd: unknown;
+  productIdsToRemove: unknown;
+  variantIdsToAdd: unknown;
+  variantIdsToRemove: unknown;
+  collectionIdsToAdd: unknown;
+  collectionIdsToRemove: unknown;
+}): Record<string, unknown> | undefined {
+  const products = compact({
+    productsToAdd: toGidList({ type: 'Product', value: productIdsToAdd }),
+    productsToRemove: toGidList({ type: 'Product', value: productIdsToRemove }),
+    productVariantsToAdd: toGidList({ type: 'ProductVariant', value: variantIdsToAdd }),
+    productVariantsToRemove: toGidList({ type: 'ProductVariant', value: variantIdsToRemove }),
+  });
+  const collections = compact({
+    add: toGidList({ type: 'Collection', value: collectionIdsToAdd }),
+    remove: toGidList({ type: 'Collection', value: collectionIdsToRemove }),
+  });
+  const hasProducts = Object.keys(products).length > 0;
+  const hasCollections = Object.keys(collections).length > 0;
+  if (hasProducts && hasCollections) {
+    throw new Error('A discount applies to products or to collections, not both. Nothing was changed.');
+  }
+  const target = appliesTo ?? (hasProducts ? 'PRODUCTS' : hasCollections ? 'COLLECTIONS' : undefined);
+  if (target === undefined) {
+    return undefined;
+  }
+  if (target === 'ALL') {
+    if (hasProducts || hasCollections) {
+      throw new Error('applies_to ALL cannot be combined with product, variant or collection ids. Nothing was changed.');
+    }
+    return { all: true };
+  }
+  if (target === 'PRODUCTS') {
+    if (hasCollections) {
+      throw new Error('applies_to PRODUCTS takes product or variant ids, not collection ids. Nothing was changed.');
+    }
+    if (!hasProducts) {
+      throw new Error('applies_to PRODUCTS needs at least one product or variant id. Nothing was changed.');
+    }
+    return { products };
+  }
+  if (target === 'COLLECTIONS') {
+    if (hasProducts) {
+      throw new Error('applies_to COLLECTIONS takes collection ids, not product ids. Nothing was changed.');
+    }
+    if (!hasCollections) {
+      throw new Error('applies_to COLLECTIONS needs at least one collection id. Nothing was changed.');
+    }
+    return { collections };
+  }
+  throw new Error(`Unknown applies_to "${target}". Use ALL, PRODUCTS or COLLECTIONS.`);
+}
+
+function buildDiscountContext({
+  eligibility,
+  customerIdsToAdd,
+  customerIdsToRemove,
+  segmentIdsToAdd,
+  segmentIdsToRemove,
+}: {
+  eligibility: string | undefined;
+  customerIdsToAdd: unknown;
+  customerIdsToRemove: unknown;
+  segmentIdsToAdd: unknown;
+  segmentIdsToRemove: unknown;
+}): Record<string, unknown> | undefined {
+  const customers = compact({
+    add: toGidList({ type: 'Customer', value: customerIdsToAdd }),
+    remove: toGidList({ type: 'Customer', value: customerIdsToRemove }),
+  });
+  const segments = compact({
+    add: toGidList({ type: 'Segment', value: segmentIdsToAdd }),
+    remove: toGidList({ type: 'Segment', value: segmentIdsToRemove }),
+  });
+  const hasCustomers = Object.keys(customers).length > 0;
+  const hasSegments = Object.keys(segments).length > 0;
+  if (hasCustomers && hasSegments) {
+    throw new Error('Eligibility is either specific customers or customer segments, not both. Nothing was changed.');
+  }
+  const target = eligibility ?? (hasCustomers ? 'CUSTOMERS' : hasSegments ? 'SEGMENTS' : undefined);
+  if (target === undefined) {
+    return undefined;
+  }
+  if (target === 'ALL') {
+    if (hasCustomers || hasSegments) {
+      throw new Error('eligibility ALL cannot be combined with customer or segment ids. Nothing was changed.');
+    }
+    return { all: 'ALL' };
+  }
+  if (target === 'CUSTOMERS') {
+    if (!hasCustomers || hasSegments) {
+      throw new Error('eligibility CUSTOMERS needs customer ids (and no segment ids). Nothing was changed.');
+    }
+    return { customers };
+  }
+  if (target === 'SEGMENTS') {
+    if (!hasSegments || hasCustomers) {
+      throw new Error('eligibility SEGMENTS needs segment ids (and no customer ids). Nothing was changed.');
+    }
+    return { customerSegments: segments };
+  }
+  throw new Error(`Unknown eligibility "${target}". Use ALL, CUSTOMERS or SEGMENTS.`);
+}
+
+function buildMinimumRequirement({
+  kind,
+  value,
+}: {
+  kind: string | undefined;
+  value: number | undefined;
+}): Record<string, unknown> | undefined {
+  if (kind === undefined) {
+    if (value !== undefined) {
+      throw new Error('Set minimum_requirement (SUBTOTAL or QUANTITY) together with minimum_value. Nothing was changed.');
+    }
+    return undefined;
+  }
+  if (kind === 'NONE') {
+    return {
+      quantity: { greaterThanOrEqualToQuantity: null },
+      subtotal: { greaterThanOrEqualToSubtotal: null },
+    };
+  }
+  if (value === undefined || !(value > 0)) {
+    throw new Error('minimum_value must be above 0 when a minimum requirement is set. Nothing was changed.');
+  }
+  if (kind === 'SUBTOTAL') {
+    return { subtotal: { greaterThanOrEqualToSubtotal: String(value) } };
+  }
+  if (kind === 'QUANTITY') {
+    if (!Number.isInteger(value)) {
+      throw new Error('A minimum quantity must be a whole number. Nothing was changed.');
+    }
+    return { quantity: { greaterThanOrEqualToQuantity: String(value) } };
+  }
+  throw new Error(`Unknown minimum_requirement "${kind}". Use NONE, SUBTOTAL or QUANTITY.`);
+}
+
+function buildCombinesWith({
+  productDiscounts,
+  orderDiscounts,
+  shippingDiscounts,
+}: {
+  productDiscounts: boolean | undefined;
+  orderDiscounts: boolean | undefined;
+  shippingDiscounts: boolean | undefined;
+}): Record<string, boolean> | undefined {
+  const values = [productDiscounts, orderDiscounts, shippingDiscounts];
+  if (values.every((entry) => entry === undefined)) {
+    return undefined;
+  }
+  if (productDiscounts === undefined || orderDiscounts === undefined || shippingDiscounts === undefined) {
+    throw new Error(
+      'combinesWith is replaced as a whole: set all three of combines_with_product_discounts, combines_with_order_discounts and combines_with_shipping_discounts. Nothing was changed.'
+    );
+  }
+  return { productDiscounts, orderDiscounts, shippingDiscounts };
+}
+
+function buildFulfillmentOrderLineItems(value: unknown): Record<string, unknown>[] | undefined {
+  const records = readRecords(value);
+  if (records.length === 0) {
+    return undefined;
+  }
+  return records.map((record) => {
+    const id = readText(record['fulfillment_order_line_item_id']);
+    const quantity = readNumber(record['quantity']);
+    if (!id || quantity === undefined || !Number.isInteger(quantity) || quantity < 1) {
+      throw new Error(
+        'Every line item needs a fulfillment_order_line_item_id and a whole-number quantity of 1 or more. Nothing was changed.'
+      );
+    }
+    return {
+      id: toGid({ type: 'FulfillmentOrderLineItem', id }),
+      quantity,
+    };
+  });
+}
+
+function nonEmptyList(value: unknown): string[] | undefined {
+  const list = readStringList(value);
+  return list && list.length > 0 ? list : undefined;
+}
+
+function readIsoDate(value: string | undefined | null): string | undefined {
+  const text = nonEmpty(value);
+  if (text === undefined) {
+    return undefined;
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    throw new Error(`"${text}" is not a date in the form YYYY-MM-DD. Nothing was changed.`);
+  }
+  return text;
+}
+
+function discountFragments({
+  types,
+  detail,
+}: {
+  types: string[];
+  detail: boolean;
+}): string {
+  return types
+    .map((type) => `... on ${type} { ${discountTypeFields({ type, detail })} }`)
+    .join(' ');
+}
+
+function discountTypeFields({ type, detail }: { type: string; detail: boolean }): string {
+  const kind = type.replace(/^Discount(Code|Automatic)/, '');
+  const parts = [DISCOUNT_COMMON_FIELDS];
+  if (kind !== 'App') {
+    parts.push('summary');
+  }
+  if (type.startsWith('DiscountCode')) {
+    parts.push(detail ? DISCOUNT_CODE_DETAIL_FIELDS : DISCOUNT_CODE_SUMMARY_FIELDS);
+  }
+  if (detail && (kind === 'Basic' || kind === 'Bxgy')) {
+    parts.push(DISCOUNT_CUSTOMER_GETS_FIELDS);
+  }
+  if (detail && (kind === 'Basic' || kind === 'FreeShipping')) {
+    parts.push(DISCOUNT_MINIMUM_FIELDS);
+  }
+  if (detail && kind === 'FreeShipping') {
+    parts.push(DISCOUNT_SHIPPING_FIELDS);
+  }
+  if (detail && kind === 'Bxgy') {
+    parts.push('usesPerOrderLimit', DISCOUNT_CUSTOMER_BUYS_FIELDS);
+  }
+  return parts.join(' ');
+}
+
+function fulfillmentOrderLineItemsProp({ description }: { description: string }) {
+  return Property.Array({
+    displayName: 'Line Items',
+    description,
+    required: false,
+    properties: {
+      fulfillment_order_line_item_id: Property.ShortText({
+        displayName: 'Fulfillment Order Line Item ID',
+        description:
+          'The fulfillment order line item id from list_order_fulfillment_orders or get_fulfillment_order (line_items[].id), for example "gid://shopify/FulfillmentOrderLineItem/1234". This is not the order line item id.',
+        required: true,
+      }),
+      quantity: Property.Number({
+        displayName: 'Quantity',
+        description: 'How many units of this line item, 1 or more and at most its remaining_quantity.',
+        required: true,
+      }),
+    },
+  });
+}
+
+function idListProp({
+  displayName,
+  description,
+}: {
+  displayName: string;
+  description: string;
+}) {
+  return Property.Array({
+    displayName,
+    description,
+    required: false,
+  });
+}
+
 const MONEY_FIELDS = 'shopMoney { amount currencyCode }';
 
 const MONEY_WITH_PRESENTMENT_FIELDS =
@@ -1941,6 +2695,90 @@ const MANUAL_SELECTION_SOURCE_TITLE = 'Selected products';
 
 const CONDITIONS_SOURCE_TITLE = 'Product conditions';
 
+const FULFILLMENT_ORDER_LINE_ITEM_LIMIT = 50;
+
+const FULFILLMENT_ORDER_FIELDS = `id status requestStatus createdAt updatedAt fulfillAt fulfillBy orderId orderName assignedLocation { name location { id name } } destination { firstName lastName company address1 address2 city province zip countryCode phone email } deliveryMethod { methodType presentedName } fulfillmentHolds { id reason reasonNotes displayReason handle heldByRequestingApp } supportedActions { action } lineItems(first: ${FULFILLMENT_ORDER_LINE_ITEM_LIMIT}) { pageInfo { hasNextPage } nodes { id sku productTitle variantTitle totalQuantity remainingQuantity requiresShipping inventoryItemId lineItem { id } variant { id } } }`;
+
+const FULFILLMENT_SUMMARY_FIELDS =
+  'id legacyResourceId name status displayStatus createdAt updatedAt inTransitAt deliveredAt estimatedDeliveryAt totalQuantity requiresShipping trackingInfo(first: 10) { company number url } location { id name } service { id serviceName } order { id name }';
+
+const FULFILLMENT_FIELDS = `${FULFILLMENT_SUMMARY_FIELDS} originAddress { address1 address2 city zip provinceCode countryCode } fulfillmentLineItems(first: 50) { pageInfo { hasNextPage } nodes { id quantity lineItem { id title sku } } }`;
+
+const FULFILLMENT_EVENT_FIELDS =
+  'id status message happenedAt createdAt estimatedDeliveryAt address1 city province country zip latitude longitude';
+
+const FULFILLMENT_SERVICE_FIELDS =
+  'id handle serviceName type callbackUrl inventoryManagement trackingSupport requiresShippingMethod location { id name }';
+
+const CARRIER_SERVICE_FIELDS =
+  'id name formattedName active callbackUrl supportsServiceDiscovery';
+
+const DELIVERY_PROFILE_FIELDS =
+  'id name default version activeMethodDefinitionsCount locationsWithoutRatesCount originLocationCount zoneCountryCount productVariantsCount { count } profileLocationGroups { locationGroup { id locationsCount { count } } locationGroupZones(first: 2) { pageInfo { hasNextPage } nodes { zone { id name countries { name code { countryCode restOfWorld } } } methodDefinitions(first: 3) { pageInfo { hasNextPage } nodes { id name active description rateProvider { __typename ... on DeliveryRateDefinition { price { amount currencyCode } } ... on DeliveryParticipant { carrierService { id name } } } } } } } }';
+
+const GIFT_CARD_FIELDS =
+  'id lastCharacters maskedCode enabled isRedeemable deactivatedAt expiresOn createdAt updatedAt note templateSuffix balance { amount currencyCode } initialValue { amount currencyCode } customer { id displayName } order { id name } recipientAttributes { preferredName message sendNotificationAt recipient { id displayName } }';
+
+const DISCOUNT_MARKETS_LIMIT = 10;
+
+const DISCOUNT_COMMON_FIELDS = `title status startsAt endsAt createdAt updatedAt asyncUsageCount discountClasses tags combinesWith { productDiscounts orderDiscounts shippingDiscounts } context { __typename ... on DiscountBuyerSelectionAll { all } ... on DiscountCustomers { customers { id } } ... on DiscountCustomerSegments { segments { id } } ... on DiscountMarkets { marketsCount markets(first: ${DISCOUNT_MARKETS_LIMIT}) { nodes { id } } } }`;
+
+const DISCOUNT_ITEMS_FIELDS =
+  'items { __typename ... on DiscountProducts { products(first: 25) { pageInfo { hasNextPage } nodes { id } } productVariants(first: 25) { pageInfo { hasNextPage } nodes { id } } } ... on DiscountCollections { collections(first: 25) { pageInfo { hasNextPage } nodes { id } } } }';
+
+const DISCOUNT_CUSTOMER_BUYS_FIELDS = `customerBuys { value { __typename ... on DiscountQuantity { quantity } ... on DiscountPurchaseAmount { amount } } ${DISCOUNT_ITEMS_FIELDS} }`;
+
+const DISCOUNT_CODE_SUMMARY_FIELDS =
+  'appliesOncePerCustomer usageLimit codesCount { count } codes(first: 1) { nodes { code } }';
+
+const DISCOUNT_CODE_DETAIL_FIELDS =
+  'appliesOncePerCustomer usageLimit codesCount { count } codes(first: 10) { nodes { code } }';
+
+const DISCOUNT_CUSTOMER_GETS_FIELDS = `customerGets { value { __typename ... on DiscountPercentage { percentage } ... on DiscountAmount { amount { amount currencyCode } appliesOnEachItem } ... on DiscountOnQuantity { quantity { quantity } effect { __typename ... on DiscountPercentage { percentage } ... on DiscountAmount { amount { amount currencyCode } } } } } ${DISCOUNT_ITEMS_FIELDS} }`;
+
+const DISCOUNT_MINIMUM_FIELDS =
+  'minimumRequirement { __typename ... on DiscountMinimumQuantity { greaterThanOrEqualToQuantity } ... on DiscountMinimumSubtotal { greaterThanOrEqualToSubtotal { amount currencyCode } } }';
+
+const DISCOUNT_SHIPPING_FIELDS =
+  'maximumShippingPrice { amount currencyCode } destinationSelection { __typename ... on DiscountCountries { countries } ... on DiscountCountryAll { allCountries } }';
+
+const CODE_DISCOUNT_TYPES = [
+  'DiscountCodeBasic',
+  'DiscountCodeBxgy',
+  'DiscountCodeFreeShipping',
+  'DiscountCodeApp',
+];
+
+const AUTOMATIC_DISCOUNT_TYPES = [
+  'DiscountAutomaticBasic',
+  'DiscountAutomaticBxgy',
+  'DiscountAutomaticFreeShipping',
+  'DiscountAutomaticApp',
+];
+
+const DISCOUNT_SUMMARY_FIELDS = `__typename ${discountFragments({
+  types: [...CODE_DISCOUNT_TYPES, ...AUTOMATIC_DISCOUNT_TYPES],
+  detail: false,
+})}`;
+
+const DISCOUNT_DETAIL_FIELDS = `__typename ${discountFragments({
+  types: [...CODE_DISCOUNT_TYPES, ...AUTOMATIC_DISCOUNT_TYPES],
+  detail: true,
+})}`;
+
+const CODE_DISCOUNT_DETAIL_FIELDS = `__typename ${discountFragments({
+  types: CODE_DISCOUNT_TYPES,
+  detail: true,
+})}`;
+
+const DISCOUNT_ID_KINDS: Record<string, DiscountIdKind> = {
+  DiscountCodeNode: 'code',
+  DiscountAutomaticNode: 'automatic',
+  DiscountNode: 'node',
+};
+
+const MAX_REDEEM_CODES_PER_CALL = 250;
+
 
 export const shopifyFields = {
   MONEY_FIELDS,
@@ -1974,6 +2812,19 @@ export const shopifyFields = {
   TAXONOMY_CATEGORY_FIELDS,
   MANUAL_SELECTION_SOURCE_TITLE,
   CONDITIONS_SOURCE_TITLE,
+  FULFILLMENT_ORDER_FIELDS,
+  FULFILLMENT_SUMMARY_FIELDS,
+  FULFILLMENT_FIELDS,
+  FULFILLMENT_EVENT_FIELDS,
+  FULFILLMENT_SERVICE_FIELDS,
+  CARRIER_SERVICE_FIELDS,
+  DELIVERY_PROFILE_FIELDS,
+  GIFT_CARD_FIELDS,
+  DISCOUNT_SUMMARY_FIELDS,
+  DISCOUNT_DETAIL_FIELDS,
+  CODE_DISCOUNT_DETAIL_FIELDS,
+  CODE_DISCOUNT_TYPES,
+  MAX_REDEEM_CODES_PER_CALL,
 };
 
 export const shopifyGraphqlClient = {
@@ -2012,6 +2863,17 @@ export const shopifyValues = {
   sharedConditionsSources,
   findExplicitConditionsSource,
   groupVariantMedia,
+  readDiscountId,
+  toDiscountCodeNodeId,
+  buildDiscountValue,
+  buildDiscountItems,
+  buildDiscountContext,
+  buildMinimumRequirement,
+  buildCombinesWith,
+  buildFulfillmentOrderLineItems,
+  readIsoDate,
+  nonEmptyList,
+  clearableValue,
 };
 
 export const shopifyMappers = {
@@ -2041,6 +2903,18 @@ export const shopifyMappers = {
   mapPublication,
   mapChannel,
   mapTaxonomyCategory,
+  mapFulfillmentOrder,
+  mapFulfillmentOrderOrNull,
+  mapFulfillmentSummary,
+  mapFulfillment,
+  mapFulfillmentEvent,
+  mapFulfillmentService,
+  mapCarrierService,
+  mapDeliveryProfile,
+  mapGiftCard,
+  mapDiscountNode,
+  mapDiscountRedeemCode,
+  mapDiscountBulkCreation,
 };
 
 export const shopifyProps = {
@@ -2057,6 +2931,8 @@ export const shopifyProps = {
   conditions: conditionsProp,
   collectionSortOrder: collectionSortOrderProp,
   productStatus: productStatusProp,
+  fulfillmentOrderLineItems: fulfillmentOrderLineItemsProp,
+  idList: idListProp,
 };
 
 export type ShopifyGraphqlParams = {
@@ -2650,3 +3526,285 @@ export type GqlJob = {
   id?: string | null;
   done?: boolean | null;
 };
+
+export type GqlRef = {
+  id: string;
+  name?: string | null;
+};
+
+export type GqlFulfillmentOrder = {
+  id: string;
+  status?: string | null;
+  requestStatus?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  fulfillAt?: string | null;
+  fulfillBy?: string | null;
+  orderId?: string | null;
+  orderName?: string | null;
+  assignedLocation?: { name?: string | null; location?: GqlRef | null } | null;
+  destination?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    company?: string | null;
+    address1?: string | null;
+    address2?: string | null;
+    city?: string | null;
+    province?: string | null;
+    zip?: string | null;
+    countryCode?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
+  deliveryMethod?: { methodType?: string | null; presentedName?: string | null } | null;
+  fulfillmentHolds?: GqlFulfillmentHold[] | null;
+  supportedActions?: { action?: string | null }[] | null;
+  lineItems?: GqlConnection<{
+    id: string;
+    sku?: string | null;
+    productTitle?: string | null;
+    variantTitle?: string | null;
+    totalQuantity?: number | null;
+    remainingQuantity?: number | null;
+    requiresShipping?: boolean | null;
+    inventoryItemId?: string | null;
+    lineItem?: { id: string } | null;
+    variant?: { id: string } | null;
+  }> | null;
+};
+
+export type GqlFulfillmentHold = {
+  id: string;
+  reason?: string | null;
+  reasonNotes?: string | null;
+  displayReason?: string | null;
+  handle?: string | null;
+  heldByRequestingApp?: boolean | null;
+};
+
+export type GqlFulfillment = {
+  id: string;
+  legacyResourceId?: string | null;
+  name?: string | null;
+  status?: string | null;
+  displayStatus?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  inTransitAt?: string | null;
+  deliveredAt?: string | null;
+  estimatedDeliveryAt?: string | null;
+  totalQuantity?: number | null;
+  requiresShipping?: boolean | null;
+  trackingInfo?: { company?: string | null; number?: string | null; url?: string | null }[] | null;
+  location?: GqlRef | null;
+  service?: { id: string; serviceName?: string | null } | null;
+  order?: GqlRef | null;
+  originAddress?: {
+    address1?: string | null;
+    address2?: string | null;
+    city?: string | null;
+    zip?: string | null;
+    provinceCode?: string | null;
+    countryCode?: string | null;
+  } | null;
+  fulfillmentLineItems?: GqlConnection<{
+    id: string;
+    quantity?: number | null;
+    lineItem?: { id: string; title?: string | null; sku?: string | null } | null;
+  }> | null;
+};
+
+export type GqlFulfillmentEvent = {
+  id: string;
+  status?: string | null;
+  message?: string | null;
+  happenedAt?: string | null;
+  createdAt?: string | null;
+  estimatedDeliveryAt?: string | null;
+  address1?: string | null;
+  city?: string | null;
+  province?: string | null;
+  country?: string | null;
+  zip?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
+
+export type GqlFulfillmentService = {
+  id: string;
+  handle?: string | null;
+  serviceName?: string | null;
+  type?: string | null;
+  callbackUrl?: string | null;
+  inventoryManagement?: boolean | null;
+  trackingSupport?: boolean | null;
+  requiresShippingMethod?: boolean | null;
+  location?: GqlRef | null;
+};
+
+export type GqlCarrierService = {
+  id: string;
+  name?: string | null;
+  formattedName?: string | null;
+  active?: boolean | null;
+  callbackUrl?: string | null;
+  supportsServiceDiscovery?: boolean | null;
+};
+
+export type GqlDeliveryProfile = {
+  id: string;
+  name?: string | null;
+  default?: boolean | null;
+  version?: number | null;
+  activeMethodDefinitionsCount?: number | null;
+  locationsWithoutRatesCount?: number | null;
+  originLocationCount?: number | null;
+  zoneCountryCount?: number | null;
+  productVariantsCount?: GqlCount | null;
+  profileLocationGroups?: {
+    locationGroup?: { id: string; locationsCount?: GqlCount | null } | null;
+    locationGroupZones?: GqlConnection<{
+      zone?: {
+        id: string;
+        name?: string | null;
+        countries?: {
+          name?: string | null;
+          code?: { countryCode?: string | null; restOfWorld?: boolean | null } | null;
+        }[] | null;
+      } | null;
+      methodDefinitions?: GqlConnection<{
+        id: string;
+        name?: string | null;
+        active?: boolean | null;
+        description?: string | null;
+        rateProvider?: {
+          __typename?: string;
+          price?: GqlMoneyV2 | null;
+          carrierService?: GqlRef | null;
+        } | null;
+      }> | null;
+    }> | null;
+  }[] | null;
+};
+
+export type GqlGiftCard = {
+  id: string;
+  lastCharacters?: string | null;
+  maskedCode?: string | null;
+  enabled?: boolean | null;
+  isRedeemable?: boolean | null;
+  deactivatedAt?: string | null;
+  expiresOn?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  note?: string | null;
+  templateSuffix?: string | null;
+  balance?: GqlMoneyV2 | null;
+  initialValue?: GqlMoneyV2 | null;
+  customer?: { id: string; displayName?: string | null } | null;
+  order?: GqlRef | null;
+  recipientAttributes?: {
+    preferredName?: string | null;
+    message?: string | null;
+    sendNotificationAt?: string | null;
+    recipient?: { id: string; displayName?: string | null } | null;
+  } | null;
+};
+
+export type GqlDiscountNode = {
+  id: string;
+  discount?: GqlDiscount | null;
+};
+
+export type GqlDiscount = {
+  __typename?: string;
+  title?: string | null;
+  status?: string | null;
+  summary?: string | null;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  asyncUsageCount?: number | null;
+  discountClasses?: string[] | null;
+  tags?: string[] | null;
+  combinesWith?: {
+    productDiscounts?: boolean | null;
+    orderDiscounts?: boolean | null;
+    shippingDiscounts?: boolean | null;
+  } | null;
+  context?: {
+    __typename?: string;
+    customers?: { id: string }[] | null;
+    segments?: { id: string }[] | null;
+    marketsCount?: number | null;
+    markets?: GqlConnection<{ id: string }> | null;
+  } | null;
+  appliesOncePerCustomer?: boolean | null;
+  usageLimit?: number | null;
+  codesCount?: GqlCount | null;
+  codes?: GqlConnection<GqlDiscountRedeemCode> | null;
+  customerGets?: {
+    value?: GqlDiscountValue | null;
+    items?: GqlDiscountItems | null;
+  } | null;
+  customerBuys?: {
+    value?: {
+      __typename?: string;
+      quantity?: string | null;
+      amount?: string | null;
+    } | null;
+    items?: GqlDiscountItems | null;
+  } | null;
+  minimumRequirement?: {
+    __typename?: string;
+    greaterThanOrEqualToQuantity?: string | null;
+    greaterThanOrEqualToSubtotal?: GqlMoneyV2 | null;
+  } | null;
+  maximumShippingPrice?: GqlMoneyV2 | null;
+  destinationSelection?: {
+    __typename?: string;
+    countries?: string[] | null;
+    allCountries?: boolean | null;
+  } | null;
+  usesPerOrderLimit?: number | null;
+};
+
+export type GqlDiscountItems = {
+  __typename?: string;
+  products?: GqlConnection<{ id: string }> | null;
+  productVariants?: GqlConnection<{ id: string }> | null;
+  collections?: GqlConnection<{ id: string }> | null;
+};
+
+export type GqlDiscountValue = {
+  __typename?: string;
+  percentage?: number | null;
+  amount?: GqlMoneyV2 | null;
+  appliesOnEachItem?: boolean | null;
+  quantity?: { quantity?: string | null } | null;
+  effect?: {
+    __typename?: string;
+    percentage?: number | null;
+    amount?: GqlMoneyV2 | null;
+  } | null;
+};
+
+export type GqlDiscountRedeemCode = {
+  id?: string | null;
+  code?: string | null;
+  asyncUsageCount?: number | null;
+  createdBy?: { id?: string | null; title?: string | null } | null;
+};
+
+export type GqlDiscountRedeemCodeBulkCreation = {
+  id?: string | null;
+  done?: boolean | null;
+  codesCount?: number | null;
+  importedCount?: number | null;
+  failedCount?: number | null;
+  createdAt?: string | null;
+  discountCode?: { id: string } | null;
+};
+
+export type DiscountIdKind = 'code' | 'automatic' | 'node';
