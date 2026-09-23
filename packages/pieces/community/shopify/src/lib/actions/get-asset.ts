@@ -5,9 +5,10 @@ import { getAsset } from '../common';
 export const getAssetAction = createAction({
   auth: shopifyAuth,
   name: 'get_asset',
+  classification: 'READ',
   displayName: 'Get Asset',
   description: `Get a theme's asset.`,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: "Fetch a single asset (e.g. a template, snippet, or stylesheet) from a Shopify theme by asset key and theme ID. Use to read theme file contents; both the asset key and theme ID are required. Read-only and idempotent.", idempotent: true },
   props: {
     key: Property.ShortText({

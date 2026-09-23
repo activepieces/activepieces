@@ -8,11 +8,11 @@ export const shopifyAiAddTags = createAction({
   name: 'add_tags',
   classification: 'WRITE',
   displayName: 'Add Tags',
-  description: 'Add tags to an order, draft order, customer or product.',
+  description: 'Add tags to an order, draft order, customer, product or blog article.',
   audience: 'ai',
   aiMetadata: {
     description:
-      'Adds one or more tags to an order, draft order, customer or product while keeping its existing tags; prefer this over sending a full tag list to an update action. Adding a tag that is already present changes nothing, so repeating is safe. Returns the resulting tag list.',
+      'Adds one or more tags to an order, draft order, customer, product or blog article while keeping its existing tags; prefer this over sending a full tag list to an update action. Adding a tag that is already present changes nothing, so repeating is safe. Returns the resulting tag list. Blog articles need the write_content access scope.',
     idempotent: true,
   },
   outputSchema: addTagsOutputSchema,
@@ -27,6 +27,7 @@ export const shopifyAiAddTags = createAction({
           { label: 'Draft order', value: 'DraftOrder' },
           { label: 'Customer', value: 'Customer' },
           { label: 'Product', value: 'Product' },
+          { label: 'Blog article', value: 'Article' },
         ],
       },
     }),
@@ -64,7 +65,7 @@ export const shopifyAiAddTags = createAction({
 });
 
 const TAGGED_NODE_FRAGMENTS =
-  '... on Order { tags } ... on DraftOrder { tags } ... on Customer { tags } ... on Product { tags }';
+  '... on Order { tags } ... on DraftOrder { tags } ... on Customer { tags } ... on Product { tags } ... on Article { tags }';
 
 type TaggedNode = {
   id: string;

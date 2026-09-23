@@ -2607,6 +2607,348 @@ function idListProp({
   });
 }
 
+function mapBlog(blog: GqlBlog) {
+  return {
+    id: blog.id,
+    title: blog.title ?? null,
+    handle: blog.handle ?? null,
+    comment_policy: blog.commentPolicy ?? null,
+    template_suffix: blog.templateSuffix ?? null,
+    articles_count: blog.articlesCount?.count ?? null,
+    feed_path: blog.feed?.path ?? null,
+    feed_location: blog.feed?.location ?? null,
+    created_at: blog.createdAt ?? null,
+    updated_at: blog.updatedAt ?? null,
+  };
+}
+
+function mapBlogDetail(blog: GqlBlog) {
+  return {
+    ...mapBlog(blog),
+    recent_article_tags: blog.tags ?? [],
+  };
+}
+
+function mapArticleSummary(article: GqlArticle) {
+  return {
+    id: article.id,
+    title: article.title ?? null,
+    handle: article.handle ?? null,
+    author_name: article.author?.name ?? null,
+    blog_id: article.blog?.id ?? null,
+    blog_title: article.blog?.title ?? null,
+    summary_html: article.summary ?? null,
+    tags: joinTags(article.tags),
+    is_published: article.isPublished ?? null,
+    published_at: article.publishedAt ?? null,
+    template_suffix: article.templateSuffix ?? null,
+    image_url: article.image?.url ?? null,
+    image_alt_text: article.image?.altText ?? null,
+    comments_count: article.commentsCount?.count ?? null,
+    created_at: article.createdAt ?? null,
+    updated_at: article.updatedAt ?? null,
+  };
+}
+
+function mapArticle(article: GqlArticle) {
+  return {
+    ...mapArticleSummary(article),
+    body_html: article.body ?? null,
+  };
+}
+
+function mapComment(comment: GqlComment) {
+  return {
+    id: comment.id,
+    status: comment.status ?? null,
+    body: comment.body ?? null,
+    body_html: comment.bodyHtml ?? null,
+    is_published: comment.isPublished ?? null,
+    published_at: comment.publishedAt ?? null,
+    author_name: comment.author?.name ?? null,
+    author_email: comment.author?.email ?? null,
+    ip: comment.ip ?? null,
+    user_agent: comment.userAgent ?? null,
+    article_id: comment.article?.id ?? null,
+    article_title: comment.article?.title ?? null,
+    created_at: comment.createdAt ?? null,
+    updated_at: comment.updatedAt ?? null,
+  };
+}
+
+function mapPageSummary(page: GqlPage) {
+  return {
+    id: page.id,
+    title: page.title ?? null,
+    handle: page.handle ?? null,
+    body_summary: page.bodySummary ?? null,
+    is_published: page.isPublished ?? null,
+    published_at: page.publishedAt ?? null,
+    template_suffix: page.templateSuffix ?? null,
+    created_at: page.createdAt ?? null,
+    updated_at: page.updatedAt ?? null,
+  };
+}
+
+function mapPage(page: GqlPage) {
+  return {
+    ...mapPageSummary(page),
+    body_html: page.body ?? null,
+  };
+}
+
+function mapUrlRedirect(redirect: GqlUrlRedirect) {
+  return {
+    id: redirect.id,
+    path: redirect.path ?? null,
+    target: redirect.target ?? null,
+  };
+}
+
+function mapTheme(theme: GqlTheme) {
+  return {
+    id: theme.id,
+    name: theme.name ?? null,
+    role: theme.role ?? null,
+    prefix: theme.prefix ?? null,
+    processing: theme.processing ?? null,
+    processing_failed: theme.processingFailed ?? null,
+    theme_store_id: theme.themeStoreId ?? null,
+    created_at: theme.createdAt ?? null,
+    updated_at: theme.updatedAt ?? null,
+  };
+}
+
+function mapThemeFile(file: GqlThemeFile) {
+  const body = file.body ?? {};
+  return {
+    filename: file.filename ?? null,
+    content_type: file.contentType ?? null,
+    size: file.size ?? null,
+    checksum_md5: file.checksumMd5 ?? null,
+    body_type: themeFileBodyType(body.__typename),
+    content: body.content ?? null,
+    content_base64: body.contentBase64 ?? null,
+    url: body.url ?? null,
+    created_at: file.createdAt ?? null,
+    updated_at: file.updatedAt ?? null,
+  };
+}
+
+function themeFileBodyType(typename: string | null | undefined): string | null {
+  const types: Record<string, string> = {
+    OnlineStoreThemeFileBodyText: 'TEXT',
+    OnlineStoreThemeFileBodyBase64: 'BASE64',
+    OnlineStoreThemeFileBodyUrl: 'URL',
+  };
+  return typename ? types[typename] ?? null : null;
+}
+
+function mapThemeFileResult(file: GqlThemeFileResult) {
+  return {
+    filename: file.filename ?? null,
+    size: file.size ?? null,
+    checksum_md5: file.checksumMd5 ?? null,
+    created_at: file.createdAt ?? null,
+    updated_at: file.updatedAt ?? null,
+  };
+}
+
+function mapThemeFileSummary(file: GqlThemeFileSummary) {
+  return {
+    filename: file.filename ?? null,
+    content_type: file.contentType ?? null,
+    size: file.size ?? null,
+    checksum_md5: file.checksumMd5 ?? null,
+    created_at: file.createdAt ?? null,
+    updated_at: file.updatedAt ?? null,
+  };
+}
+
+function mapMetafield(metafield: GqlMetafield) {
+  return {
+    id: metafield.id,
+    legacy_resource_id: metafield.legacyResourceId ?? null,
+    namespace: metafield.namespace ?? null,
+    key: metafield.key ?? null,
+    type: metafield.type ?? null,
+    value: metafield.value ?? null,
+    compare_digest: metafield.compareDigest ?? null,
+    owner_type: metafield.ownerType ?? null,
+    owner_id: metafield.owner?.id ?? null,
+    definition_id: metafield.definition?.id ?? null,
+    definition_name: metafield.definition?.name ?? null,
+    created_at: metafield.createdAt ?? null,
+    updated_at: metafield.updatedAt ?? null,
+  };
+}
+
+function mapValidation(validation: GqlValidation) {
+  return {
+    name: validation.name ?? null,
+    type: validation.type ?? null,
+    value: validation.value ?? null,
+  };
+}
+
+function mapMetafieldDefinition(definition: GqlMetafieldDefinition) {
+  return {
+    id: definition.id,
+    name: definition.name ?? null,
+    namespace: definition.namespace ?? null,
+    key: definition.key ?? null,
+    description: definition.description ?? null,
+    owner_type: definition.ownerType ?? null,
+    type: definition.type?.name ?? null,
+    type_category: definition.type?.category ?? null,
+    pinned_position: definition.pinnedPosition ?? null,
+    validation_status: definition.validationStatus ?? null,
+    validations: (definition.validations ?? []).map(mapValidation),
+    metafields_count: definition.metafieldsCount ?? null,
+    admin_access: definition.access?.admin ?? null,
+    storefront_access: definition.access?.storefront ?? null,
+    customer_account_access: definition.access?.customerAccount ?? null,
+    admin_filterable: definition.capabilities?.adminFilterable?.enabled ?? null,
+    smart_collection_condition: definition.capabilities?.smartCollectionCondition?.enabled ?? null,
+    unique_values: definition.capabilities?.uniqueValues?.enabled ?? null,
+  };
+}
+
+function mapMetafieldDefinitionType(type: GqlMetafieldDefinitionType) {
+  return {
+    name: type.name ?? null,
+    category: type.category ?? null,
+    supports_definition_migrations: type.supportsDefinitionMigrations ?? null,
+    supported_validations: (type.supportedValidations ?? []).map((validation) => ({
+      name: validation.name ?? null,
+      type: validation.type ?? null,
+    })),
+  };
+}
+
+function mapStandardMetafieldTemplate(template: GqlStandardMetafieldTemplate) {
+  return {
+    id: template.id,
+    namespace: template.namespace ?? null,
+    key: template.key ?? null,
+    name: template.name ?? null,
+    description: template.description ?? null,
+    owner_types: template.ownerTypes ?? [],
+    type: template.type?.name ?? null,
+    visible_to_storefront_api: template.visibleToStorefrontApi ?? null,
+    validations: (template.validations ?? []).map(mapValidation),
+  };
+}
+
+function mapMetaobject(metaobject: GqlMetaobject) {
+  const fields = (metaobject.fields ?? []).map((field) => ({
+    key: field.key ?? null,
+    type: field.type ?? null,
+    value: field.value ?? null,
+  }));
+  const values: Record<string, string | null> = {};
+  for (const field of fields) {
+    if (field.key) {
+      values[field.key] = field.value;
+    }
+  }
+  return {
+    id: metaobject.id,
+    type: metaobject.type ?? null,
+    handle: metaobject.handle ?? null,
+    display_name: metaobject.displayName ?? null,
+    status: metaobject.capabilities?.publishable?.status ?? null,
+    template_suffix: metaobject.capabilities?.onlineStore?.templateSuffix ?? null,
+    definition_id: metaobject.definition?.id ?? null,
+    definition_name: metaobject.definition?.name ?? null,
+    fields,
+    values,
+    created_at: metaobject.createdAt ?? null,
+    updated_at: metaobject.updatedAt ?? null,
+  };
+}
+
+function mapMetaobjectDefinition(definition: GqlMetaobjectDefinition) {
+  return {
+    id: definition.id,
+    type: definition.type ?? null,
+    name: definition.name ?? null,
+    description: definition.description ?? null,
+    display_name_key: definition.displayNameKey ?? null,
+    metaobjects_count: definition.metaobjectsCount ?? null,
+    has_thumbnail_field: definition.hasThumbnailField ?? null,
+    publishable: definition.capabilities?.publishable?.enabled ?? null,
+    translatable: definition.capabilities?.translatable?.enabled ?? null,
+    renderable: definition.capabilities?.renderable?.enabled ?? null,
+    online_store: definition.capabilities?.onlineStore?.enabled ?? null,
+    admin_access: definition.access?.admin ?? null,
+    storefront_access: definition.access?.storefront ?? null,
+    field_definitions: (definition.fieldDefinitions ?? []).map((field) => ({
+      key: field.key ?? null,
+      name: field.name ?? null,
+      description: field.description ?? null,
+      required: field.required ?? null,
+      type: field.type?.name ?? null,
+    })),
+    created_at: definition.createdAt ?? null,
+    updated_at: definition.updatedAt ?? null,
+  };
+}
+
+function requireGid({
+  value,
+  label,
+  example,
+  hint,
+}: {
+  value: string | undefined | null;
+  label: string;
+  example: string;
+  hint: string;
+}): string {
+  const trimmed = (value ?? '').trim();
+  if (!/^gid:\/\/shopify\/[A-Za-z]+\/[^/\s]+$/.test(trimmed)) {
+    throw new Error(
+      `${label} "${trimmed}" is not a full Shopify id. Pass the complete id, for example "${example}"; ${hint} Nothing was changed.`
+    );
+  }
+  return trimmed;
+}
+
+function legacyIdFilter(value: string | undefined | null): string | undefined {
+  const trimmed = nonEmpty(value);
+  if (!trimmed) {
+    return undefined;
+  }
+  const match = /(\d+)$/.exec(trimmed);
+  if (!match) {
+    throw new Error(`"${trimmed}" is not a numeric or gid://shopify/… id.`);
+  }
+  return match[1];
+}
+
+function joinSearch(parts: (string | undefined)[]): string | undefined {
+  const present = parts.filter((part): part is string => part !== undefined && part.length > 0);
+  return present.length > 0 ? present.join(' ') : undefined;
+}
+
+function metafieldOwnerTypeProp({
+  required,
+  description,
+}: {
+  required: boolean;
+  description: string;
+}) {
+  return Property.StaticDropdown({
+    displayName: 'Owner Type',
+    description,
+    required,
+    options: {
+      options: METAFIELD_OWNER_TYPES.map((value) => ({ label: value, value })),
+    },
+  });
+}
+
 const MONEY_FIELDS = 'shopMoney { amount currencyCode }';
 
 const MONEY_WITH_PRESENTMENT_FIELDS =
@@ -2807,6 +3149,78 @@ const DISCOUNT_ID_KINDS: Record<string, DiscountIdKind> = {
 
 const MAX_REDEEM_CODES_PER_CALL = 250;
 
+const BLOG_FIELDS =
+  'id title handle commentPolicy templateSuffix createdAt updatedAt feed { path location } articlesCount { count }';
+
+const BLOG_DETAIL_FIELDS = `${BLOG_FIELDS} tags`;
+
+const ARTICLE_SUMMARY_FIELDS =
+  'id title handle summary tags isPublished publishedAt templateSuffix createdAt updatedAt author { name } blog { id title } image { url altText } commentsCount { count }';
+
+const ARTICLE_FIELDS = `${ARTICLE_SUMMARY_FIELDS} body`;
+
+const COMMENT_FIELDS =
+  'id status body bodyHtml isPublished publishedAt createdAt updatedAt ip userAgent author { name email } article { id title }';
+
+const PAGE_SUMMARY_FIELDS =
+  'id title handle bodySummary isPublished publishedAt templateSuffix createdAt updatedAt';
+
+const PAGE_FIELDS = `${PAGE_SUMMARY_FIELDS} body`;
+
+const URL_REDIRECT_FIELDS = 'id path target';
+
+const THEME_FIELDS =
+  'id name role prefix processing processingFailed themeStoreId createdAt updatedAt';
+
+const THEME_FILE_FIELDS =
+  'filename contentType size checksumMd5 createdAt updatedAt body { __typename ... on OnlineStoreThemeFileBodyText { content } ... on OnlineStoreThemeFileBodyBase64 { contentBase64 } ... on OnlineStoreThemeFileBodyUrl { url } }';
+
+const THEME_FILE_RESULT_FIELDS = 'filename size checksumMd5 createdAt updatedAt';
+
+const THEME_FILE_SUMMARY_FIELDS = 'filename contentType size checksumMd5 createdAt updatedAt';
+
+const METAFIELD_FIELDS =
+  'id legacyResourceId namespace key type value compareDigest ownerType createdAt updatedAt owner { __typename ... on Node { id } } definition { id name }';
+
+const METAFIELD_DEFINITION_FIELDS =
+  'id name namespace key description ownerType pinnedPosition validationStatus metafieldsCount type { name category } validations { name type value } access { admin storefront customerAccount } capabilities { adminFilterable { enabled } smartCollectionCondition { enabled } uniqueValues { enabled } }';
+
+const METAFIELD_DEFINITION_TYPE_FIELDS =
+  'name category supportsDefinitionMigrations supportedValidations { name type }';
+
+const STANDARD_METAFIELD_TEMPLATE_FIELDS =
+  'id namespace key name description ownerTypes visibleToStorefrontApi type { name } validations { name type value }';
+
+const METAOBJECT_FIELDS =
+  'id type handle displayName createdAt updatedAt definition { id name } capabilities { publishable { status } onlineStore { templateSuffix } } fields { key type value }';
+
+const METAOBJECT_DEFINITION_FIELDS =
+  'id type name description displayNameKey metaobjectsCount hasThumbnailField createdAt updatedAt access { admin storefront } capabilities { publishable { enabled } translatable { enabled } renderable { enabled } onlineStore { enabled } } fieldDefinitions { key name description required type { name } }';
+
+const METAFIELD_OWNER_TYPES = [
+  'PRODUCT',
+  'PRODUCTVARIANT',
+  'COLLECTION',
+  'CUSTOMER',
+  'ORDER',
+  'DRAFTORDER',
+  'COMPANY',
+  'COMPANY_LOCATION',
+  'LOCATION',
+  'MARKET',
+  'PAGE',
+  'BLOG',
+  'ARTICLE',
+  'SHOP',
+  'DISCOUNT',
+  'SELLING_PLAN',
+  'GIFT_CARD_TRANSACTION',
+];
+
+const MAX_METAFIELDS_PER_CALL = 25;
+
+const MAX_THEME_FILES_PER_CALL = 50;
+
 
 export const shopifyFields = {
   MONEY_FIELDS,
@@ -2853,6 +3267,27 @@ export const shopifyFields = {
   CODE_DISCOUNT_DETAIL_FIELDS,
   CODE_DISCOUNT_TYPES,
   MAX_REDEEM_CODES_PER_CALL,
+  BLOG_FIELDS,
+  BLOG_DETAIL_FIELDS,
+  ARTICLE_SUMMARY_FIELDS,
+  ARTICLE_FIELDS,
+  COMMENT_FIELDS,
+  PAGE_SUMMARY_FIELDS,
+  PAGE_FIELDS,
+  URL_REDIRECT_FIELDS,
+  THEME_FIELDS,
+  THEME_FILE_FIELDS,
+  THEME_FILE_RESULT_FIELDS,
+  THEME_FILE_SUMMARY_FIELDS,
+  METAFIELD_FIELDS,
+  METAFIELD_DEFINITION_FIELDS,
+  METAFIELD_DEFINITION_TYPE_FIELDS,
+  STANDARD_METAFIELD_TEMPLATE_FIELDS,
+  METAOBJECT_FIELDS,
+  METAOBJECT_DEFINITION_FIELDS,
+  METAFIELD_OWNER_TYPES,
+  MAX_METAFIELDS_PER_CALL,
+  MAX_THEME_FILES_PER_CALL,
 };
 
 export const shopifyGraphqlClient = {
@@ -2903,6 +3338,9 @@ export const shopifyValues = {
   readIsoDate,
   nonEmptyList,
   clearableValue,
+  requireGid,
+  legacyIdFilter,
+  joinSearch,
 };
 
 export const shopifyMappers = {
@@ -2944,6 +3382,24 @@ export const shopifyMappers = {
   mapDiscountNode,
   mapDiscountRedeemCode,
   mapDiscountBulkCreation,
+  mapBlog,
+  mapBlogDetail,
+  mapArticleSummary,
+  mapArticle,
+  mapComment,
+  mapPageSummary,
+  mapPage,
+  mapUrlRedirect,
+  mapTheme,
+  mapThemeFile,
+  mapThemeFileResult,
+  mapThemeFileSummary,
+  mapMetafield,
+  mapMetafieldDefinition,
+  mapMetafieldDefinitionType,
+  mapStandardMetafieldTemplate,
+  mapMetaobject,
+  mapMetaobjectDefinition,
 };
 
 export const shopifyProps = {
@@ -2962,6 +3418,7 @@ export const shopifyProps = {
   productStatus: productStatusProp,
   fulfillmentOrderLineItems: fulfillmentOrderLineItemsProp,
   idList: idListProp,
+  metafieldOwnerType: metafieldOwnerTypeProp,
 };
 
 export type ShopifyGraphqlParams = {
@@ -3837,3 +4294,212 @@ export type GqlDiscountRedeemCodeBulkCreation = {
 };
 
 export type DiscountIdKind = 'code' | 'automatic' | 'node';
+
+export type GqlBlog = {
+  id: string;
+  title?: string | null;
+  handle?: string | null;
+  commentPolicy?: string | null;
+  templateSuffix?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  feed?: { path?: string | null; location?: string | null } | null;
+  articlesCount?: GqlCount | null;
+  tags?: string[] | null;
+};
+
+export type GqlArticle = {
+  id: string;
+  title?: string | null;
+  handle?: string | null;
+  summary?: string | null;
+  body?: string | null;
+  tags?: string[] | null;
+  isPublished?: boolean | null;
+  publishedAt?: string | null;
+  templateSuffix?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  author?: { name?: string | null } | null;
+  blog?: { id?: string | null; title?: string | null } | null;
+  image?: { url?: string | null; altText?: string | null } | null;
+  commentsCount?: GqlCount | null;
+};
+
+export type GqlComment = {
+  id: string;
+  status?: string | null;
+  body?: string | null;
+  bodyHtml?: string | null;
+  isPublished?: boolean | null;
+  publishedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  ip?: string | null;
+  userAgent?: string | null;
+  author?: { name?: string | null; email?: string | null } | null;
+  article?: { id?: string | null; title?: string | null } | null;
+};
+
+export type GqlPage = {
+  id: string;
+  title?: string | null;
+  handle?: string | null;
+  body?: string | null;
+  bodySummary?: string | null;
+  isPublished?: boolean | null;
+  publishedAt?: string | null;
+  templateSuffix?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type GqlUrlRedirect = {
+  id: string;
+  path?: string | null;
+  target?: string | null;
+};
+
+export type GqlTheme = {
+  id: string;
+  name?: string | null;
+  role?: string | null;
+  prefix?: string | null;
+  processing?: boolean | null;
+  processingFailed?: boolean | null;
+  themeStoreId?: number | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type GqlThemeFile = {
+  filename?: string | null;
+  contentType?: string | null;
+  size?: string | null;
+  checksumMd5?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  body?: {
+    __typename?: string;
+    content?: string | null;
+    contentBase64?: string | null;
+    url?: string | null;
+  } | null;
+};
+
+export type GqlThemeFileResult = {
+  filename?: string | null;
+  size?: string | null;
+  checksumMd5?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type GqlThemeFileSummary = GqlThemeFileResult & {
+  contentType?: string | null;
+};
+
+export type GqlMetafield = {
+  id: string;
+  legacyResourceId?: string | null;
+  namespace?: string | null;
+  key?: string | null;
+  type?: string | null;
+  value?: string | null;
+  compareDigest?: string | null;
+  ownerType?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  owner?: { __typename?: string; id?: string | null } | null;
+  definition?: { id?: string | null; name?: string | null } | null;
+};
+
+export type GqlValidation = {
+  name?: string | null;
+  type?: string | null;
+  value?: string | null;
+};
+
+export type GqlMetafieldDefinition = {
+  id: string;
+  name?: string | null;
+  namespace?: string | null;
+  key?: string | null;
+  description?: string | null;
+  ownerType?: string | null;
+  pinnedPosition?: number | null;
+  validationStatus?: string | null;
+  metafieldsCount?: number | null;
+  type?: { name?: string | null; category?: string | null } | null;
+  validations?: GqlValidation[] | null;
+  access?: {
+    admin?: string | null;
+    storefront?: string | null;
+    customerAccount?: string | null;
+  } | null;
+  capabilities?: {
+    adminFilterable?: { enabled?: boolean | null } | null;
+    smartCollectionCondition?: { enabled?: boolean | null } | null;
+    uniqueValues?: { enabled?: boolean | null } | null;
+  } | null;
+};
+
+export type GqlMetafieldDefinitionType = {
+  name?: string | null;
+  category?: string | null;
+  supportsDefinitionMigrations?: boolean | null;
+  supportedValidations?: { name?: string | null; type?: string | null }[] | null;
+};
+
+export type GqlStandardMetafieldTemplate = {
+  id: string;
+  namespace?: string | null;
+  key?: string | null;
+  name?: string | null;
+  description?: string | null;
+  ownerTypes?: string[] | null;
+  visibleToStorefrontApi?: boolean | null;
+  type?: { name?: string | null } | null;
+  validations?: GqlValidation[] | null;
+};
+
+export type GqlMetaobject = {
+  id: string;
+  type?: string | null;
+  handle?: string | null;
+  displayName?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  definition?: { id?: string | null; name?: string | null } | null;
+  capabilities?: {
+    publishable?: { status?: string | null } | null;
+    onlineStore?: { templateSuffix?: string | null } | null;
+  } | null;
+  fields?: { key?: string | null; type?: string | null; value?: string | null }[] | null;
+};
+
+export type GqlMetaobjectDefinition = {
+  id: string;
+  type?: string | null;
+  name?: string | null;
+  description?: string | null;
+  displayNameKey?: string | null;
+  metaobjectsCount?: number | null;
+  hasThumbnailField?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  access?: { admin?: string | null; storefront?: string | null } | null;
+  capabilities?: {
+    publishable?: { enabled?: boolean | null } | null;
+    translatable?: { enabled?: boolean | null } | null;
+    renderable?: { enabled?: boolean | null } | null;
+    onlineStore?: { enabled?: boolean | null } | null;
+  } | null;
+  fieldDefinitions?: {
+    key?: string | null;
+    name?: string | null;
+    description?: string | null;
+    required?: boolean | null;
+    type?: { name?: string | null } | null;
+  }[] | null;
+};
