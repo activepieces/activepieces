@@ -117,8 +117,8 @@ function normalizeOptions(opts: Record<string, string | boolean | undefined>): B
     const url = String(opts.url);
     const projectId = typeof opts.projectId === 'string' ? opts.projectId : undefined;
     const flowId = typeof opts.flowId === 'string' ? opts.flowId : undefined;
-    if (flowId && !projectId) {
-        throw new Error('--flow-id requires --project-id');
+    if (Boolean(projectId) !== Boolean(flowId)) {
+        throw new Error('--project-id and --flow-id must be provided together, or both omitted (letting the CLI provision and delete its own throwaway project + flow).');
     }
     return {
         url: url.endsWith('/') ? url.slice(0, -1) : url,
