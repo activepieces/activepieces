@@ -6,12 +6,13 @@ export const getFileName = createAction({
   name: 'get_file_name',
   classification: 'READ',
   displayName: 'Get File Name',
-  description: 'Get the name of a file',
+  description: "Return a file's name, including its extension.",
   aiMetadata: { description: 'Returns only the file name of an input file, without reading or decoding its contents. Use it when the name itself is what you need - to build a path, log it, or branch on the extension - and prefer Read File to get the content or Check File Type to resolve the MIME type. Requires a file input; read-only and idempotent.', idempotent: true },
   outputSchema: getFileNameActionOutputSchema,
   props: {
     file: Property.File({
       displayName: 'File',
+      description: 'Pick a file from an earlier step or paste a URL to download.',
       required: true,
     }),
   },

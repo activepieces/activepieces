@@ -1,9 +1,10 @@
 import { isNil } from '@activepieces/core-utils';
-import { PurchasablePlan } from '@activepieces/shared';
+import { PurchasablePlan, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Check, Info } from 'lucide-react';
 import { useState } from 'react';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -350,6 +351,7 @@ function PlanCta({
   onKeepPlan,
   onDowngrade,
 }: PlanCtaProps) {
+  const { capture } = useTelemetry();
   if (isEnterprise) {
     return (
       <Button variant="default" className="w-full bg-foreground" asChild>
@@ -357,6 +359,12 @@ function PlanCta({
           href={planSelectorUtils.SALES_URL}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() =>
+            capture({
+              name: TelemetryEventName.SALES_HANDOFF_CLICKED,
+              payload: { plan: 'enterprise', surface: 'plan_selector' },
+            })
+          }
         >
           {t('Talk to sales')}
         </a>

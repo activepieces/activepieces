@@ -17,6 +17,36 @@ import { getWordPressPost } from './lib/actions/get-post.action';
 import { wordpressCommon } from './lib/common';
 import { wordpressNewPost } from './lib/trigger/new-post.trigger';
 import { updateWordPressPost } from './lib/actions/update-post.action';
+import { listPostsAction } from './lib/actions/list-posts.action';
+import { getPostByIdAction } from './lib/actions/get-post-by-id.action';
+import { createBlogPostAction } from './lib/actions/create-blog-post.action';
+import { updateBlogPostAction } from './lib/actions/update-blog-post.action';
+import { trashPostAction } from './lib/actions/trash-post.action';
+import { deletePostPermanentlyAction } from './lib/actions/delete-post-permanently.action';
+import { listPagesAction } from './lib/actions/list-pages.action';
+import { getPageAction } from './lib/actions/get-page.action';
+import { createSitePageAction } from './lib/actions/create-site-page.action';
+import { updatePageAction } from './lib/actions/update-page.action';
+import { trashPageAction } from './lib/actions/trash-page.action';
+import { listCategoriesAction } from './lib/actions/list-categories.action';
+import { createCategoryAction } from './lib/actions/create-category.action';
+import { deleteCategoryAction } from './lib/actions/delete-category.action';
+import { listTagsAction } from './lib/actions/list-tags.action';
+import { createTagAction } from './lib/actions/create-tag.action';
+import { deleteTagAction } from './lib/actions/delete-tag.action';
+import { listCommentsAction } from './lib/actions/list-comments.action';
+import { createCommentAction } from './lib/actions/create-comment.action';
+import { moderateCommentAction } from './lib/actions/moderate-comment.action';
+import { deleteCommentAction } from './lib/actions/delete-comment.action';
+import { listMediaAction } from './lib/actions/list-media.action';
+import { getMediaAction } from './lib/actions/get-media.action';
+import { uploadMediaAction } from './lib/actions/upload-media.action';
+import { updateMediaDetailsAction } from './lib/actions/update-media-details.action';
+import { deleteMediaAction } from './lib/actions/delete-media.action';
+import { getCurrentUserAction } from './lib/actions/get-current-user.action';
+import { listUsersAction } from './lib/actions/list-users.action';
+import { searchSiteContentAction } from './lib/actions/search-site-content.action';
+import { getSiteSettingsAction } from './lib/actions/get-site-settings.action';
 
 const markdownPropertyDescription = `
 Connect with a WordPress **application password**:
@@ -120,6 +150,36 @@ export const wordpress = createPiece({
     createWordPressPage,
     updateWordPressPost,
     getWordPressPost,
+    listPostsAction,
+    getPostByIdAction,
+    createBlogPostAction,
+    updateBlogPostAction,
+    trashPostAction,
+    deletePostPermanentlyAction,
+    listPagesAction,
+    getPageAction,
+    createSitePageAction,
+    updatePageAction,
+    trashPageAction,
+    listCategoriesAction,
+    createCategoryAction,
+    deleteCategoryAction,
+    listTagsAction,
+    createTagAction,
+    deleteTagAction,
+    listCommentsAction,
+    createCommentAction,
+    moderateCommentAction,
+    deleteCommentAction,
+    listMediaAction,
+    getMediaAction,
+    uploadMediaAction,
+    updateMediaDetailsAction,
+    deleteMediaAction,
+    getCurrentUserAction,
+    listUsersAction,
+    searchSiteContentAction,
+    getSiteSettingsAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>auth ?
         (auth.props.website_url).trim() + '/wp-json/wp/v2' : '',

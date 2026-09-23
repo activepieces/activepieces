@@ -8,13 +8,13 @@ import { useDebounce } from 'use-debounce';
 
 import { ProjectSettingsDialog } from '@/app/components/project-settings';
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
-import { RequestTrial } from '@/app/components/request-trial';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { SearchInput } from '@/components/custom/search-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { projectCollectionUtils } from '@/features/projects';
