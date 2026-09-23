@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, assertNotNullOrUndefined, connectionTemplate, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
-import { AgentConversation, AgentConversationStatus, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, ListAgentRunsRequest, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
+import { AgentConversation, AgentConversationStatus, AgentFlowTool, AgentRunSource, AgentToolType, CreateAgentConversationRequest, ImportAgentMemoryRequest, InstructAgentMemoryRequest, LATEST_JOB_DATA_SCHEMA_VERSION, ListAgentRunsRequest, Permission, PrincipalType, SendAgentMessageRequest, SERVICE_KEY_SECURITY_OPENAPI, SetAgentMessageFeedbackRequest, UpdateAgentConversationRequest, UpdateAgentMemoryRequest, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -211,6 +211,15 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         })
         await assertCreditsAndAppSumoNotExceeded({ platformId, log })
 
+        const flowToolRequests = (agentConfig?.tools ?? []).filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
+        const flowTools = (!isNil(agentConfig) && !isBuilder && !isNil(runProjectId))
+            ? await agentHelpers.resolveFlowTools({
+                projectId: runProjectId,
+                flowToolRequests,
+                log: runLog,
+            })
+            : []
+
         await jobQueue(runLog).add({
             id: apId(),
             type: JobType.ONE_TIME,
@@ -225,6 +234,7 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 userMessage: content,
                 modelName: conversation.modelName ?? null,
                 files,
+                flowTools,
                 ...spreadIfDefined('source', conversation.source === AgentRunSource.CHAT ? undefined : conversation.source),
                 ...spreadIfDefined('messageSource', request.body.messageSource),
                 ...(isBuilder ? { promptOverride: { system: agentPrompt.buildBuilderSystemPrompt({ agent }) } } : {}),

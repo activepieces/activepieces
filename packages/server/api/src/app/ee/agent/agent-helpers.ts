@@ -1,15 +1,19 @@
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
-import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfig, AgentConversation, AgentConversationStatus, AI_PROVIDER_ENTITY_TYPES, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, UserMemory } from '@activepieces/shared'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AI_PROVIDER_ENTITY_TYPES, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { Repository } from 'typeorm'
+import { z } from 'zod'
 import { aiProviderService, ProviderScope } from '../../ai/ai-provider-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
 import { redisConnections } from '../../database/redis-connections'
+import { flowService } from '../../flows/flow/flow.service'
+import { extractMcpTriggerInput } from '../../mcp/mcp-server-builder'
+import { mcpToolInput } from '../../mcp/mcp-tool-input'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
@@ -308,6 +312,48 @@ async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: s
     }
 }
 
+async function resolveFlowTools({ projectId, flowToolRequests, log }: {
+    projectId: string
+    flowToolRequests: AgentFlowTool[]
+    log: FastifyBaseLogger
+}): Promise<ResolvedAgentFlowTool[]> {
+    if (flowToolRequests.length === 0) {
+        return []
+    }
+    const externalFlowIds = unique(flowToolRequests.map((tool) => tool.externalFlowId))
+    const listFlows = (versionState: FlowVersionState) => flowService(log).list({
+        projectIds: [projectId],
+        externalIds: externalFlowIds,
+        cursorRequest: null,
+        includeTriggerSource: false,
+        versionState,
+    })
+    const [published, drafts] = await Promise.all([listFlows(FlowVersionState.LOCKED), listFlows(FlowVersionState.DRAFT)])
+    const publishedByExternalId = new Map(published.data.map((flow) => [flow.externalId, flow]))
+    const runnableByExternalId = new Map(drafts.data.map((flow) => [flow.externalId, publishedByExternalId.get(flow.externalId) ?? flow]))
+    const missing = flowToolRequests.filter((tool) => !runnableByExternalId.has(tool.externalFlowId))
+    if (missing.length > 0) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: { message: `An agent cannot use flow tool(s) ${unique(missing.map((tool) => tool.toolName)).join(', ')}: the referenced flow was not found in this project` },
+        })
+    }
+    return flowToolRequests.map((toolRequest) => {
+        const flow = runnableByExternalId.get(toolRequest.externalFlowId)
+        assertNotNullOrUndefined(flow, `flow for tool ${toolRequest.toolName}`)
+        const { toolDescription, mcpInputs, returnsResponse } = extractMcpTriggerInput(flow)
+        const inputShape = mcpToolInput.modelInputShape({ properties: mcpInputs })
+        return {
+            toolName: toolRequest.toolName,
+            flowId: flow.id,
+            flowVersionId: flow.version.id,
+            description: toolDescription.length > 0 ? toolDescription : `Run the flow "${flow.version.displayName}"`,
+            inputSchema: z.toJSONSchema(z.object(inputShape)),
+            returnsResponse,
+        }
+    })
+}
+
 export const agentHelpers = {
     jobFieldsFromConfig,
     agentsSurfaceAvailable,
@@ -332,6 +378,7 @@ export const agentHelpers = {
     capMemories,
     mergeMemories,
     saveUserMemory,
+    resolveFlowTools,
 }
 
 type AgentJobConfigFields = Pick<ExecuteAgentRunJobData, 'tools' | 'structuredOutput' | 'maxSteps' | 'modelName' | 'provider' | 'providerConfigId' | 'promptOverride'>
