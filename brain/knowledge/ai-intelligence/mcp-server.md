@@ -123,3 +123,4 @@ Paths verified 2026-07-17.
   list rather than hiding the rows. Note the failure shape: a disabled tool is never `registerTool`d, so the
   client gets an unknown-tool error from the protocol, not a permission denial from inside the tool — the
   copy "every call fails" is directionally right but one layer off.
+- **The wording of an MCP tool's `❌ …` reply is part of a contract: `test/integration/ce/mcp/mcp-tools.test.ts` asserts substrings of it verbatim.** Rewording `resolveRouterStep`'s rejection from `not a ROUTER step` to `not a router step (ROUTER or AI_ROUTER)` failed case 62 of that suite, and only in CI, because the CE integration tests need Postgres and are not run locally. Before touching any tool's user-facing text, `grep -n "<old phrase>" packages/server/api/test/integration/ce/mcp/` and either keep the asserted substring or update the assertion in the same commit.
