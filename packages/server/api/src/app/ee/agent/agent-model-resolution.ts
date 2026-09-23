@@ -87,15 +87,6 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-function resolveFastModelId({ provider, config, modelScope, modelIds, runModelId }: { provider: AIProviderName, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[], runModelId: string }): string {
-    const { data, error } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds }))
-    const keyServesNoFastModel = isNil(error) || (error instanceof ActivepiecesError && error.error.code === ErrorCode.ENTITY_NOT_FOUND)
-    if (!keyServesNoFastModel) {
-        throw error
-    }
-    return data ?? runModelId
-}
-
 export const agentModelResolution = {
     findTier,
     resolveTier,
@@ -103,7 +94,6 @@ export const agentModelResolution = {
     resolveModelIdForProvider,
     defaultModelIdForProvider,
     resolveModelIdForAnalytics,
-    resolveFastModelId,
 }
 
 export const FAST_TIER_ID = 'fast'

@@ -145,7 +145,7 @@ async function assertRunProviderConfigured({ platformId, provider, providerConfi
     }
 }
 
-async function resolveChatModelId({ platformId, providerConfig, selectedModel, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, selectedModel: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string> {
+async function resolveModelId({ platformId, providerConfig, selectedModel, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, selectedModel: string | null, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string> {
     const { provider, config, modelScope, modelIds, configId } = providerConfig
     const { data, error } = tryCatchSync(() => agentModelResolution.resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }))
     if (!isNil(data)) {
@@ -167,13 +167,14 @@ async function resolveChatModelId({ platformId, providerConfig, selectedModel, s
     return picked.id
 }
 
-async function resolveFastModel({ platformId, provider, providerConfigId, scope, runModelId, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, runModelId?: string, log: FastifyBaseLogger }): Promise<LanguageModel> {
+async function resolveFastModelId({ platformId, providerConfig, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string> {
+    return resolveModelId({ platformId, providerConfig, selectedModel: FAST_TIER_ID, scope, log })
+}
+
+async function resolveFastModel({ platformId, provider, providerConfigId, scope, log }: { platformId: string, provider?: AIProviderName, providerConfigId?: string, scope: ProviderScope, log: FastifyBaseLogger }): Promise<LanguageModel> {
     const providerConfig = await resolveRunProvider({ platformId, scope, log, ...spreadIfDefined('provider', provider), ...spreadIfDefined('providerConfigId', providerConfigId) })
-    const { provider: resolvedProvider, config, modelScope, modelIds, configId } = providerConfig
-    const modelId = isNil(runModelId)
-        ? agentModelResolution.resolveModelIdForProvider({ provider: resolvedProvider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
-        : agentModelResolution.resolveFastModelId({ provider: resolvedProvider, config, modelScope, modelIds, runModelId })
-    return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: configId })
+    const modelId = await resolveFastModelId({ platformId, providerConfig, scope, log })
+    return aiUtils.createModel({ credentials: providerConfig, modelId, platformId, providerConfigId: providerConfig.configId })
 }
 
 
@@ -330,7 +331,8 @@ export const agentHelpers = {
     assertRunProviderConfigured,
     ...agentModelResolution,
     resolveFastModel,
-    resolveChatModelId,
+    resolveFastModelId,
+    resolveModelId,
     resolveRunProvider,
     resolveEmbeddingModel,
     resolveChatProviderName,

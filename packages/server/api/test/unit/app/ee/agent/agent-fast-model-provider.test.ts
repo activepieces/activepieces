@@ -29,12 +29,15 @@ const scope = { type: 'project', projectId: 'project-1' } as const
 
 describe('resolveFastModel', () => {
     beforeEach(() => {
+        mockListModels.mockClear().mockResolvedValue([])
         mockGetChatProvider.mockClear().mockResolvedValue(null)
         mockGetConfigOrThrow.mockClear().mockResolvedValue({
             provider: AIProviderName.OPENROUTER,
             configId: 'config-1',
             auth: { apiKey: 'k' },
             config: {},
+            modelScope: 'all',
+            modelIds: [],
         })
     })
 
@@ -67,43 +70,57 @@ describe('resolveFastModel', () => {
     })
 
     describe('on a provider we ship no curated model list for', () => {
-        const runModelId = 'global.anthropic.claude-haiku-4-5-20251001-v1:0'
-
         beforeEach(() => {
             mockGetConfigOrThrow.mockResolvedValue({
                 provider: AIProviderName.BEDROCK,
                 configId: 'config-1',
                 auth: { accessKeyId: 'a', secretAccessKey: 's' },
                 config: { region: 'us-east-1' },
+                modelScope: 'all',
+                modelIds: [],
             })
         })
 
-        it('fills a configured action\'s inputs on the model the turn already runs on', async () => {
-            const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, runModelId, log })
+        it('fills a configured action\'s inputs on a fast model the key actually serves', async () => {
+            mockListModels.mockResolvedValue([
+                { id: 'amazon.titan-text-express-v1', name: 'Titan', type: AIProviderModelType.TEXT },
+                { id: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Haiku', type: AIProviderModelType.TEXT },
+            ])
 
-            expect(model).toMatchObject({ credentials: { provider: AIProviderName.BEDROCK }, modelId: runModelId })
+            const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, log })
+
+            expect(model).toMatchObject({ credentials: { provider: AIProviderName.BEDROCK }, modelId: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0' })
         })
 
-        it('still refuses when the caller has no model to lend it', async () => {
+        it('needs nothing from the worker, so an in-flight run on an older one still resolves', async () => {
+            mockListModels.mockResolvedValue([{ id: 'amazon.titan-text-express-v1', name: 'Titan', type: AIProviderModelType.TEXT }])
+
+            await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, log })).resolves.toMatchObject({ modelId: 'amazon.titan-text-express-v1' })
+        })
+
+        it('still refuses a key that serves no text model at all', async () => {
+            mockListModels.mockResolvedValue([])
+
             await expect(agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.BEDROCK, scope, log })).rejects.toMatchObject({
                 error: { code: 'ENTITY_NOT_FOUND' },
             })
         })
     })
 
-    it('keeps the cheaper fast model when the provider offers one, rather than borrowing the turn\'s', async () => {
-        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, scope, runModelId: 'anthropic/claude-opus-4.8', log })
+    it('never asks the provider when our own catalogue already names a fast model', async () => {
+        const model = await agentHelpers.resolveFastModel({ platformId, provider: AIProviderName.OPENROUTER, scope, log })
 
         expect(model).toMatchObject({ modelId: 'anthropic/claude-haiku-4.5' })
+        expect(mockListModels).not.toHaveBeenCalled()
     })
 })
 
-describe('resolveChatModelId', () => {
+describe('resolveModelId', () => {
     const bedrockKey = { provider: AIProviderName.BEDROCK, configId: 'config-1', auth: { accessKeyId: 'a', secretAccessKey: 's' }, config: { region: 'us-east-1' }, modelScope: 'all' as const, modelIds: [] }
     const text = (id: string) => ({ id, name: id, type: AIProviderModelType.TEXT })
 
     const resolve = ({ selectedModel }: { selectedModel: string | null }) =>
-        agentHelpers.resolveChatModelId({ platformId, providerConfig: bedrockKey, selectedModel, scope, log })
+        agentHelpers.resolveModelId({ platformId, providerConfig: bedrockKey, selectedModel, scope, log })
 
     beforeEach(() => {
         mockListModels.mockClear().mockResolvedValue([])
@@ -112,7 +129,7 @@ describe('resolveChatModelId', () => {
     it('never asks the provider when our own catalogue already answers', async () => {
         const anthropicKey = { ...bedrockKey, provider: AIProviderName.ANTHROPIC, config: {} }
 
-        await expect(agentHelpers.resolveChatModelId({ platformId, providerConfig: anthropicKey, selectedModel: 'smart', scope, log })).resolves.toBe('claude-sonnet-4-6')
+        await expect(agentHelpers.resolveModelId({ platformId, providerConfig: anthropicKey, selectedModel: 'smart', scope, log })).resolves.toBe('claude-sonnet-4-6')
         expect(mockListModels).not.toHaveBeenCalled()
     })
 

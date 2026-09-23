@@ -232,7 +232,6 @@ export type ExecutePieceToolRequest = {
     instruction: string
     provider?: AIProviderName
     providerConfigId?: string
-    runModelId?: string
     piece: AgentPieceToolMetadata
 }
 
