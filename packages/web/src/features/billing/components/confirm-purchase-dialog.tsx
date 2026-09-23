@@ -83,7 +83,7 @@ export function ConfirmPurchaseDialog() {
                         key={feature}
                         className="flex items-center gap-2 text-sm text-foreground"
                       >
-                        <Check className="size-4 shrink-0 text-primary" />
+                        <Check className="size-4 shrink-0 text-primary-ink" />
                         <span>{t(feature)}</span>
                       </li>
                     ))}

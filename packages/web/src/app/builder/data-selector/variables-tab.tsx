@@ -80,7 +80,7 @@ const VariablesTab = () => {
               </>
             ) : (
               <>
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary-ink">
                   <Variable className="w-5 h-5" />
                 </div>
                 <div className="text-center font-semibold text-md">
@@ -132,7 +132,7 @@ const VariablesTab = () => {
                   'cursor-pointer flex items-center gap-3 px-5 py-3',
                 )}
               >
-                <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
+                <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary-ink">
                   <Variable className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">

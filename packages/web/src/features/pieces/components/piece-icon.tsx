@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const pieceIconVariants = cva(
-  'flex rounded-md items-center justify-center bg-background  ',
+  'flex rounded-md items-center justify-center bg-logo-surface  ',
   {
     variants: {
       size: {

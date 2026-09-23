@@ -85,7 +85,7 @@ export function ConnectLanding({
 function TrustPoint({ text }: { text: string }) {
   return (
     <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-      <Check className="size-3.5 text-success-600" />
+      <Check className="size-3.5 text-success-ink" />
       {text}
     </span>
   );

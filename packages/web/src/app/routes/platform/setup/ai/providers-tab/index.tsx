@@ -408,7 +408,7 @@ function ConfigRow({
             {config.name}
           </p>
           {config.enabledForChat && (
-            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-[11px] font-medium text-primary">
+            <span className="shrink-0 rounded-full bg-primary/10 px-2 py-px text-[11px] font-medium text-primary-ink">
               {t('Chat')}
             </span>
           )}
@@ -590,7 +590,7 @@ function EmptyProviders({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-4 rounded-xl border border-border/60 bg-card px-6 py-14 text-center">
         <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10">
-          <Bot className="size-5 text-primary" />
+          <Bot className="size-5 text-primary-ink" />
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-base font-semibold tracking-tight">

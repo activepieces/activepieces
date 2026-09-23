@@ -274,7 +274,7 @@ export function ConversationList({
             </div>
           ) : conversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-              <MessageSquare className="h-8 w-8 text-muted-foreground/30 mb-2" />
+              <MessageSquare className="h-8 w-8 text-ink-subtle mb-2" />
               <p className="text-xs text-muted-foreground">
                 {searchQuery.trim()
                   ? t('No chats found')

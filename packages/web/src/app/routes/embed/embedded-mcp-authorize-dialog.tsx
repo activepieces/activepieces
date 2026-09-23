@@ -92,7 +92,7 @@ export const EmbeddedMcpAuthorizeDialog = () => {
       >
         <DialogHeader>
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Plug className="h-5 w-5 text-primary" />
+            <Plug className="h-5 w-5 text-primary-ink" />
           </div>
           <DialogTitle className="text-center text-xl">
             {t('Authorize Application')}
@@ -105,11 +105,11 @@ export const EmbeddedMcpAuthorizeDialog = () => {
 
         <div className="flex flex-col gap-3">
           <PermissionItem
-            icon={<Workflow className="h-4 w-4 text-primary" />}
+            icon={<Workflow className="h-4 w-4 text-primary-ink" />}
             text={t('Build, test, and manage automations')}
           />
           <PermissionItem
-            icon={<Lock className="h-4 w-4 text-primary" />}
+            icon={<Lock className="h-4 w-4 text-primary-ink" />}
             text={t('Use connections and execute flows')}
           />
         </div>
@@ -117,7 +117,7 @@ export const EmbeddedMcpAuthorizeDialog = () => {
         <Separator />
 
         {approveMutation.isError && (
-          <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
+          <div className="rounded-md border border-destructive/50 bg-destructive-surface p-3 text-sm text-destructive">
             {t('Authorization failed. Please try again.')}
           </div>
         )}

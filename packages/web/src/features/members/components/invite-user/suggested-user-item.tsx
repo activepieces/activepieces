@@ -29,7 +29,7 @@ function PlatformUserItem({
     if (user.memberStatus === 'has-access') {
       return {
         label: t('Has Access'),
-        className: 'text-primary bg-primary/15',
+        className: 'text-primary-ink bg-primary/15',
       };
     }
     if (user.memberStatus === 'already-invited') {
@@ -92,14 +92,13 @@ function EmailStatusSuggestionItem({
       case 'new-user':
         return {
           label: isPlatformInvite ? t('New User') : t('New Member'),
-          className:
-            'text-primary-ink bg-primary-surface border-primary-line',
+          className: 'text-primary-ink bg-primary-surface border-primary-line',
           disabled: false,
         };
       case 'has-access':
         return {
           label: t('Has Access'),
-          className: 'text-primary bg-primary/15',
+          className: 'text-primary-ink bg-primary/15',
           disabled: true,
         };
       case 'in-project':

@@ -32,7 +32,7 @@ const CheckEmailNote = ({ email, type }: CreateOtpRequestBody) => {
       <div className="flex flex-row gap-1">
         {t("Didn't receive an email or it expired?")}
         <button
-          className="cursor-pointer text-primary underline"
+          className="cursor-pointer text-primary-ink underline"
           onClick={() =>
             resendVerification({
               email,

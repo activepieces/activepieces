@@ -109,7 +109,7 @@ export function ClientInstructions({
             <span className="flex-1 text-sm text-muted-foreground">
               {t('Using something else?')}
             </span>
-            <span className="shrink-0 text-sm font-semibold text-primary">
+            <span className="shrink-0 text-sm font-semibold text-primary-ink">
               {t('All {total} clients', { total: totalClients })}
             </span>
           </button>

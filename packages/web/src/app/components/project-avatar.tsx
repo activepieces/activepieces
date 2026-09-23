@@ -64,7 +64,7 @@ export const ProjectAvatar = ({
             showDetails ? 'mb-3' : ''
           }`}
           style={{
-            backgroundColor: 'var(--neutral-mark)',
+            backgroundColor: 'var(--neutral)',
             color: 'var(--on-neutral)',
           }}
         >
@@ -123,7 +123,9 @@ export const ProjectAvatar = ({
       </Avatar>
       {showDetails && (
         <div className="px-4 text-center">
-          <div className="font-semibold text-sm text-foreground">{displayName}</div>
+          <div className="font-semibold text-sm text-foreground">
+            {displayName}
+          </div>
           {createdDate && (
             <div className="text-xs text-muted-foreground mt-1">
               Created on{' '}

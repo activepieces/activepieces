@@ -73,7 +73,7 @@
   --color-warning-300: oklch(87.9% 0.169 91.605);
   --color-warning-400: oklch(82.8% 0.189 84.429);
   --color-warning-500: oklch(76.9% 0.188 70.08);
-  --color-warning-600: oklch(66.6% 0.179 58.318);
+  --color-warning-600: oklch(64.5% 0.179 58.318);
   --color-warning-700: oklch(55.5% 0.163 48.998);
   --color-warning-800: oklch(47.3% 0.137 46.201);
   --color-warning-900: oklch(41.4% 0.112 45.904);
@@ -143,6 +143,7 @@
   --color-surface-sunken: var(--surface-sunken);
   --color-surface-overlay: var(--surface-overlay);
   --color-surface-inverse: var(--surface-inverse);
+  --color-logo-surface: var(--logo-surface);
   --color-on-solid: var(--on-solid);
   --color-on-inverse: var(--on-inverse);
 
@@ -372,6 +373,7 @@
   --shadow-rest: var(--rest);
   --shadow-lift: var(--lift);
   --shadow-over: var(--over);
+  --shadow-glow-primary: var(--glow-primary);
   @keyframes primary-color-pulse {
     from {
       color: var(--primary);
@@ -713,7 +715,27 @@
     --surface-inverse: var(--ink-950);
     --on-inverse: var(--ink-50);
 
+    /*
+     * The tile a third-party logo sits on.
+     *
+     * Piece logos are other people's artwork, drawn against a light page —
+     * a dark mark like Zendesk's or Mailchimp's disappears on a dark chip.
+     * So this one surface stays light in both themes rather than following
+     * the page, which is what the old build did by accident: it mixed the
+     * logo's own average toward a hardcoded #fff, and the tint that produced
+     * was the only reason those logos stayed readable in the dark.
+     */
+    --logo-surface: oklch(100% 0 0);
+
     --ink-muted: var(--ink-500);
+
+    /*
+     * ink-subtle is the one role that does not owe 3:1. It is for decoration
+     * that carries no information on its own — an empty-state glyph, a
+     * disabled mark, a divider chevron. Anything inside a control, or any
+     * mark that is the only signal of a state, owes 3:1 and takes ink-muted
+     * or the intent's own mark instead.
+     */
     --ink-subtle: var(--ink-400);
 
     /*
@@ -722,7 +744,7 @@
      * a card IS ink-100: every such fill would land on a ground of exactly
      * its own value and vanish. `--muted` points here too.
      */
-    --fill: var(--ink-100);
+    --fill: var(--ink-150);
 
     /*
      * The accent. `--primary` is a literal rather than a ramp step because
@@ -734,35 +756,35 @@
     --primary: oklch(54.7% 0.2281 295.76);
     --primary-hover: var(--primary-700);
     --on-primary: oklch(100% 0 0);
-    --primary-surface: var(--fill);
+    --primary-surface: var(--ink-100);
     --primary-ink: var(--primary-700);
     --primary-line: var(--primary-200);
     --primary-mark: var(--primary-500);
 
     --neutral: var(--ink-700);
     --on-neutral: var(--on-solid);
-    --neutral-surface: var(--fill);
+    --neutral-surface: var(--ink-100);
     --neutral-ink: var(--ink-700);
     --neutral-line: var(--ink-200);
-    --neutral-mark: var(--ink-400);
+    --neutral-mark: var(--ink-500);
 
     --success: var(--color-success-700);
     --on-success: var(--on-solid);
-    --success-surface: var(--fill);
+    --success-surface: var(--ink-100);
     --success-ink: var(--color-success-700);
     --success-line: var(--color-success-200);
-    --success-mark: var(--color-success-500);
+    --success-mark: var(--color-success-600);
 
     --warning: var(--color-warning-700);
     --on-warning: var(--on-solid);
-    --warning-surface: var(--fill);
+    --warning-surface: var(--ink-100);
     --warning-ink: var(--color-warning-700);
     --warning-line: var(--color-warning-200);
-    --warning-mark: var(--color-warning-500);
+    --warning-mark: var(--color-warning-600);
 
     --destructive: var(--color-destructive-700);
     --on-destructive: var(--on-solid);
-    --destructive-surface: var(--fill);
+    --destructive-surface: var(--ink-100);
     --destructive-ink: var(--color-destructive-700);
     --destructive-line: var(--color-destructive-200);
     --destructive-mark: var(--color-destructive-500);
@@ -861,7 +883,7 @@
     --popover: var(--surface-overlay);
     --popover-foreground: var(--ink-950);
     --primary-foreground: var(--on-primary);
-    --secondary: var(--ink-100);
+    --secondary: var(--ink-150);
     --secondary-foreground: var(--ink-900);
     --muted: var(--fill);
     --muted-foreground: var(--ink-500);
@@ -906,7 +928,7 @@
     );
     --canvas-selection-line: var(--primary-mark);
     --canvas-mask: oklch(0% 0 0 / 5.5%);
-    --scrim: oklch(0% 0 0 / 50%);
+    --scrim: oklch(0% 0 0 / 70%);
 
     --light-blue: var(--ink-400);
     --add-button-shadow: 0 0 0 6px var(--primary-100);
@@ -934,6 +956,14 @@
     --over:
       0 0 0 1px var(--cast-10), 0 4px 8px -4px var(--cast-10),
       0 16px 32px -12px var(--cast-20);
+
+    /*
+     * The brand glow under the chat question card. It is the one shadow that
+     * carries hue rather than depth, so it is a token of its own: the card used
+     * a hardcoded violet rgba plus a `dark:` twin to deepen it, which is exactly
+     * the pair this layer exists to replace.
+     */
+    --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--primary), transparent 78%);
   }
 
   /*
@@ -980,6 +1010,9 @@
        lifted grey that the coloured marks still read against. */
     --surface-inverse: var(--ink-200);
     --on-inverse: var(--ink-950);
+
+    /* Toned a little off white so a wall of logo tiles does not glare. */
+    --logo-surface: oklch(95% 0.004 296);
 
     /* ink-500 clears 4.5:1 on every surface in this theme; ink-400 does not,
        which is the whole reason the two are separate roles. */
@@ -1119,6 +1152,7 @@
     --cast-08: oklch(100% 0 0 / 6%);
     --cast-10: oklch(100% 0 0 / 9%);
     --cast-20: oklch(0% 0 0 / 45%);
+    --glow-primary: 0 12px 40px -12px color-mix(in oklab, var(--primary), transparent 65%);
 
     --edge: 0 0 0 1px var(--ink-200);
     --edge-hover: 0 0 0 1px oklch(100% 0 0 / 16%);

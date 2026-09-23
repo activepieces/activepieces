@@ -37,6 +37,7 @@ function MiniDonut({
       width={DONUT_SIZE}
       height={DONUT_SIZE}
       viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+      data-decorative={total === 0 ? '' : undefined}
     >
       {total === 0 ? (
         <circle
@@ -44,9 +45,8 @@ function MiniDonut({
           cy={DONUT_CENTER}
           r={DONUT_RADIUS}
           fill="none"
-          stroke="var(--muted-foreground)"
+          stroke="var(--border)"
           strokeWidth={DONUT_STROKE}
-          opacity={0.4}
         />
       ) : (
         categories.map((cat) => {

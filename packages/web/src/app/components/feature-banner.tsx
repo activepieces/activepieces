@@ -25,7 +25,7 @@ export function FeatureBanner({
             href={docsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1 font-medium text-primary-ink hover:underline"
           >
             {t('Read the docs')}
             <ExternalLink className="size-3.5" />
@@ -34,7 +34,7 @@ export function FeatureBanner({
           <button
             type="button"
             onClick={() => openManagePlanDialog()}
-            className="font-medium text-primary hover:underline"
+            className="font-medium text-primary-ink hover:underline"
           >
             {t('Upgrade plan')}
           </button>

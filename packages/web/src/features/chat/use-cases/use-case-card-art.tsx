@@ -249,7 +249,6 @@ const CARD_INKS: Record<string, InkName> = {
   'write-posts': 'blue',
 };
 
-const CARD_SURFACE =
-  'bg-fill ring-border';
+const CARD_SURFACE = 'bg-fill ring-border';
 
 export const useCaseCardArt = { resolveTheme, CARD_SURFACE };

@@ -54,7 +54,7 @@ export function ActionReceiptCard({
       </div>
 
       {receipt.status === 'failed' && receipt.errorMessage && (
-        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-muted-foreground/70 break-words">
+        <p className="px-3.5 pb-2.5 text-[11px] leading-relaxed text-ink-muted break-words">
           {receipt.errorMessage}
         </p>
       )}
@@ -106,9 +106,7 @@ function StatusBadge({ isSuccess }: { isSuccess: boolean }) {
     );
   }
   return (
-    <span className="text-xs text-muted-foreground/70">
-      {t("Didn't go through")}
-    </span>
+    <span className="text-xs text-ink-muted">{t("Didn't go through")}</span>
   );
 }
 

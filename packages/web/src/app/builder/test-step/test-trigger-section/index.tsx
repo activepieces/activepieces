@@ -182,7 +182,7 @@ const TestTriggerSection = React.memo(
                 <StepDataPanelViewToggle />
               </div>
               <div className="grow flex flex-col items-center justify-center w-full px-6 py-10 gap-4 text-center">
-                <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary">
+                <div className="flex items-center justify-center size-12 rounded-full bg-primary/10 text-primary-ink">
                   <Zap className="size-6" />
                 </div>
                 <div className="flex flex-col gap-1.5 max-w-[280px]">

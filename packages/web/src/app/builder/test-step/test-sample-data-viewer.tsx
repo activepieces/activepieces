@@ -320,7 +320,7 @@ const RetestActionBar = ({
         disabled={disabled}
         keyboardShortcut="G"
         onKeyboardShortcut={onRetest}
-        className="w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20"
+        className="w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary-ink text-primary-ink border-primary/20"
         size="sm"
       >
         <Play className="size-4 fill-current" />
@@ -347,7 +347,7 @@ const CancelTestingBar = ({ onCancel }: CancelTestingBarProps) => (
       onClick={onCancel}
       disabled={!onCancel}
       variant="outline"
-      className="w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary border-primary/20"
+      className="w-full justify-center bg-primary/5 hover:bg-primary/10 text-primary-ink border-primary/20"
       size="sm"
     >
       <Loader2 className="size-4 animate-spin" />

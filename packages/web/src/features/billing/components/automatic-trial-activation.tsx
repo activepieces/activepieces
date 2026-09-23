@@ -186,7 +186,7 @@ const TrialActivationScreen = ({
                 >
                   {statusMessageFor(progress)}
                 </span>
-                <span className="text-xs tabular-nums text-muted-foreground/70">
+                <span className="text-xs tabular-nums text-ink-muted">
                   {Math.round(progress)}%
                 </span>
               </div>
@@ -221,7 +221,7 @@ const TrialActivationScreen = ({
         {view === 'not_admin' && (
           <div className="flex flex-col gap-6">
             <div className="grid size-11 place-items-center rounded-full bg-warning/15">
-              <TriangleAlert className="size-[22px] text-warning-700" />
+              <TriangleAlert className="size-[22px] text-warning-ink" />
             </div>
             <TrialActivationCopy
               heading={t('A platform admin needs to do this')}
@@ -233,7 +233,7 @@ const TrialActivationScreen = ({
               textToCopy={activationLinkFor(licenseKey)}
               useInput
             />
-            <p className="text-xs leading-relaxed text-muted-foreground/70">
+            <p className="text-xs leading-relaxed text-ink-muted">
               {t(
                 "Signed in as {email}. Sign out and back in with an admin account if that's you.",
                 { email: user?.email ?? '' },
@@ -244,7 +244,7 @@ const TrialActivationScreen = ({
         {view === 'failed' && (
           <div className="flex flex-col gap-6">
             <div className="grid size-11 place-items-center rounded-full bg-destructive/10">
-              <CircleX className="size-[22px] text-destructive-700" />
+              <CircleX className="size-[22px] text-destructive-ink" />
             </div>
             <TrialActivationCopy
               heading={t("We couldn't activate your trial")}

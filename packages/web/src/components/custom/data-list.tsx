@@ -41,7 +41,7 @@ export const DataList: React.FC<DataListProps> = ({
           <dt className="font-medium text-muted-foreground capitalize">
             {key}
           </dt>
-          <dd className="text-primary">{formatValue(value)}</dd>
+          <dd className="text-primary-ink">{formatValue(value)}</dd>
         </div>
       ))}
     </dl>

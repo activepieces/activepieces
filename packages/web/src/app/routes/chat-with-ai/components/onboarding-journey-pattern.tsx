@@ -141,7 +141,7 @@ export function OnboardingJourneyPattern() {
           preserveAspectRatio="xMidYMax slice"
           fill="none"
           aria-hidden
-          className="h-full w-full text-primary"
+          className="h-full w-full text-primary-ink"
         >
           <rect
             width="900"

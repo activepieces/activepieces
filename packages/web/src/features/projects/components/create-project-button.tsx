@@ -59,7 +59,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           size="icon"
           className={cn('h-6 w-6 hover:bg-accent', className)}
         >
-          {locked ? <Crown className="text-primary" /> : <Plus />}
+          {locked ? <Crown className="text-primary-ink" /> : <Plus />}
         </Button>
       );
     case 'full':
@@ -84,7 +84,7 @@ function triggerFor({ variant, className, crown, locked }: TriggerForParams) {
           className={cn('text-muted-foreground gap-2', className)}
         >
           {locked ? (
-            <Crown className="size-4 text-primary" />
+            <Crown className="size-4 text-primary-ink" />
           ) : (
             <Plus className="size-4" />
           )}

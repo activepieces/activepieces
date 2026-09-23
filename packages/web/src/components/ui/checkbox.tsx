@@ -15,7 +15,7 @@ const checkboxVariants = cva(
         primary:
           'data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground data-[state=indeterminate]:border-primary',
         secondary:
-          'data-[state=checked]:bg-secondary data-[state=checked]:text-secondary-foreground dark:data-[state=checked]:bg-secondary data-[state=checked]:border-secondary data-[state=indeterminate]:bg-secondary data-[state=indeterminate]:text-secondary-foreground data-[state=indeterminate]:border-secondary',
+          'data-[state=checked]:bg-surface-inverse data-[state=checked]:text-on-inverse data-[state=checked]:border-surface-inverse data-[state=indeterminate]:bg-surface-inverse data-[state=indeterminate]:text-on-inverse data-[state=indeterminate]:border-surface-inverse',
       },
     },
     defaultVariants: {

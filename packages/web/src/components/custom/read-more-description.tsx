@@ -33,7 +33,7 @@ export const ReadMoreDescription = ({
             {endText}
           </span>
           <span
-            className="text-primary ml-2 cursor-pointer"
+            className="text-primary-ink ml-2 cursor-pointer"
             role="button"
             tabIndex={0}
             aria-expanded={isExpanded}

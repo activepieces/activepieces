@@ -2,7 +2,6 @@ import { brandColors, PrimaryRoles } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 export const BrandColorPreview = ({ color }: BrandColorPreviewProps) => {
   const light = brandColors.primaryRoles({
@@ -46,19 +45,10 @@ export const BrandColorPreview = ({ color }: BrandColorPreviewProps) => {
 
 const RolePreview = ({ label, roles, inverse }: RolePreviewProps) => (
   <div
-    className={cn(
-      'flex min-w-[170px] flex-1 flex-col gap-2 rounded-md border border-border p-3',
-      inverse ? 'bg-surface-inverse' : 'bg-surface-raised',
-    )}
+    data-theme={inverse ? 'dark' : 'light'}
+    className="flex min-w-[170px] flex-1 flex-col gap-2 rounded-md border border-border bg-surface-raised p-3"
   >
-    <span
-      className={cn(
-        'text-xs font-medium',
-        inverse ? 'text-on-inverse/70' : 'text-ink-muted',
-      )}
-    >
-      {label}
-    </span>
+    <span className="text-xs font-medium text-ink-muted">{label}</span>
     <span
       className="rounded-md px-3 py-1.5 text-center text-sm"
       style={{ backgroundColor: roles.primary, color: roles.onPrimary }}

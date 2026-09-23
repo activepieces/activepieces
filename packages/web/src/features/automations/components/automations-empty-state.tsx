@@ -260,8 +260,8 @@ export const AutomationsEmptyState = ({
         </h2>
         <div className="flex gap-4">
           <GetStartedCard
-            icon={<Workflow className="h-5 w-5 text-primary" />}
-            iconBgClass="bg-primary-100"
+            icon={<Workflow className="h-5 w-5 text-primary-ink" />}
+            iconBgClass="bg-primary-surface"
             title={t('Build a Flow')}
             description={t('Create automated workflows')}
           >
@@ -310,8 +310,8 @@ export const AutomationsEmptyState = ({
 
           {!embedState.hideTables && (
             <GetStartedCard
-              icon={<Table2 className="h-5 w-5 text-primary" />}
-              iconBgClass="bg-primary-100"
+              icon={<Table2 className="h-5 w-5 text-primary-ink" />}
+              iconBgClass="bg-primary-surface"
               title={t('Create a Table')}
               description={t('Organize and manage data')}
             >

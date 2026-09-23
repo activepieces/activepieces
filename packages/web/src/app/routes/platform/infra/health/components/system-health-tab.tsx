@@ -243,9 +243,9 @@ function HealthRowItem({ row, loading }: { row: HealthRow; loading: boolean }) {
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-md',
           status === 'failed'
-            ? 'bg-destructive-50 text-destructive-700'
+            ? 'bg-destructive-surface text-destructive-ink'
             : status === 'passed'
-            ? 'bg-success-50 text-success-700'
+            ? 'bg-success-surface text-success-ink'
             : 'bg-muted text-muted-foreground',
         )}
       >
@@ -298,12 +298,12 @@ function StatusPill({ status }: { status: Status }) {
 const STATUS_CONFIG = {
   passed: {
     label: 'Passed',
-    text: 'text-success-700',
+    text: 'text-success-ink',
     dot: 'bg-success-600',
   },
   failed: {
     label: 'Needs attention',
-    text: 'text-destructive-700',
+    text: 'text-destructive-ink',
     dot: 'bg-destructive-600',
   },
   na: {

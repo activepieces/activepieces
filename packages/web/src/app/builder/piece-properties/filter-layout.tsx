@@ -90,7 +90,7 @@ function PropertySection({
     <div className="flex flex-col gap-3 rounded-lg border border-input bg-background p-4">
       <div className="flex items-center gap-2">
         {Icon && (
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary-ink">
             <Icon className="size-4" />
           </span>
         )}
@@ -236,7 +236,7 @@ function FilterSummary({
     <div className="flex flex-col gap-2 rounded-lg border border-input bg-muted/30 p-4">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          <Search className="size-4 text-primary" />
+          <Search className="size-4 text-primary-ink" />
           {t('Active filters')}
         </span>
         {active.length > 0 && (
@@ -261,7 +261,7 @@ function FilterSummary({
           {active.map(({ name, property, value }) => (
             <span
               key={name}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-primary/10 py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-primary"
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-primary/10 py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-primary-ink"
             >
               <span className="truncate">{chipLabel(property, value)}</span>
               <button
@@ -269,7 +269,7 @@ function FilterSummary({
                 aria-label={t('Remove')}
                 disabled={disabled}
                 onClick={() => clearOne(name, property)}
-                className="shrink-0 rounded-full p-0.5 text-primary/70 outline-none transition-colors hover:text-primary focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+                className="shrink-0 rounded-full p-0.5 text-primary-ink/70 outline-none transition-colors hover:text-primary-ink focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
               >
                 <X className="size-3" />
               </button>

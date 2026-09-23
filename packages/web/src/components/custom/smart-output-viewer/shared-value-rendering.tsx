@@ -100,7 +100,7 @@ function ValueRow({ label, value, depth }: ValueRowProps) {
         {isStepFileUrl(value) ? (
           <StepFileDownloadButton fileUrl={value} />
         ) : isNil(value) || value === '' ? (
-          <span className="text-muted-foreground/40 italic">{t('empty')}</span>
+          <span className="text-ink-muted italic">{t('empty')}</span>
         ) : Array.isArray(value) ? (
           t('itemCount', { count: value.length })
         ) : (

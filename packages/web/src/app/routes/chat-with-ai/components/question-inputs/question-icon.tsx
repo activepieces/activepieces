@@ -213,7 +213,7 @@ export function OptionIcon({
         variant === 'grid' ? 'size-10 rounded-lg' : 'size-8 rounded-md',
         selected &&
           (variant === 'grid'
-            ? 'bg-primary/15 text-primary'
+            ? 'bg-primary/15 text-primary-ink'
             : 'bg-foreground text-background'),
       )}
     >

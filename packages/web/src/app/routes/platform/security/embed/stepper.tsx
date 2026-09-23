@@ -59,12 +59,12 @@ export const Stepper = ({
                 aria-current={isActive ? 'step' : undefined}
                 className={cn(
                   'flex size-8 items-center justify-center transition-colors',
-                  isComplete && 'text-success-600',
-                  !isComplete && isActive && 'text-primary',
+                  isComplete && 'text-success-ink',
+                  !isComplete && isActive && 'text-primary-ink',
                   !isComplete &&
                     !isActive &&
                     !isLocked &&
-                    'text-muted-foreground hover:text-primary',
+                    'text-muted-foreground hover:text-primary-ink',
                   isLocked &&
                     'text-muted-foreground cursor-not-allowed opacity-60',
                 )}

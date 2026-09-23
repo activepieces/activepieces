@@ -1,8 +1,8 @@
+import { brandColors } from '@activepieces/shared';
 import { createContext, useContext, useEffect, useState } from 'react';
 import * as RippleHook from 'use-ripple-hook';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { brandColors } from '@activepieces/shared';
 
 const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
   undefined,
@@ -17,7 +17,9 @@ export function ThemeProvider({
   ...props
 }: ThemeProviderProps) {
   const [preference, setPreference] = useState<ThemePreference>(
-    () => (localStorage.getItem(storageKey) as ThemePreference) || defaultPreference,
+    () =>
+      (localStorage.getItem(storageKey) as ThemePreference) ||
+      defaultPreference,
   );
   const [forceLightMode, setForceLightMode] = useState(false);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);

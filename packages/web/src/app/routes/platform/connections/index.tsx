@@ -281,7 +281,7 @@ const ProjectsCell = ({
     return (
       <Link to={`/projects/${project.id}`}>
         <TextWithTooltip tooltipMessage={name}>
-          <span className="truncate max-w-[200px] text-primary hover:underline">
+          <span className="truncate max-w-[200px] text-primary-ink hover:underline">
             {name}
           </span>
         </TextWithTooltip>

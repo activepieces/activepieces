@@ -89,7 +89,7 @@ function SidebarFacsimile({ logoUrl }: { logoUrl: string }) {
       </div>
 
       <div className="flex min-h-0 flex-col gap-1">
-        <span className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">
+        <span className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-wide text-ink-muted">
           Recent
         </span>
         {RECENT_CHATS.map((title, index) => (
@@ -143,7 +143,7 @@ function AssistantTurn({ turn }: { turn: AssistantTurnData }) {
               key={step}
               className="flex items-center gap-2 text-[13px] text-foreground/70"
             >
-              <Check className="size-3.5 text-primary" strokeWidth={3} />
+              <Check className="size-3.5 text-primary-ink" strokeWidth={3} />
               {step}
             </div>
           ))}

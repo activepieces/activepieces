@@ -29,10 +29,7 @@ function FieldTypeIcon({
   format?: FieldFormat;
   className?: string;
 }) {
-  const iconClass = cn(
-    'h-3.5 w-3.5 shrink-0 text-muted-foreground/60',
-    className,
-  );
+  const iconClass = cn('h-3.5 w-3.5 shrink-0 text-ink-muted', className);
 
   if (format === 'email') return <AtSign className={iconClass} />;
   if (format === 'url') return <Link2 className={iconClass} />;

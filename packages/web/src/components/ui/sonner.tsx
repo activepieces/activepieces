@@ -42,14 +42,14 @@ function Toaster({ ...props }: ToasterProps) {
       toastOptions={{
         classNames: {
           toast: `
-            data-[type=error]:text-destructive-700!
-            data-[type=warning]:text-warning-700!
-            data-[type=success]:text-success-700!
+            data-[type=error]:text-destructive-ink!
+            data-[type=warning]:text-warning-ink!
+            data-[type=success]:text-success-ink!
           `,
           description: `
-            data-[type=error]:text-destructive-700!
-            data-[type=warning]:text-warning-700!
-            data-[type=success]:text-success-700!
+            data-[type=error]:text-destructive-ink!
+            data-[type=warning]:text-warning-ink!
+            data-[type=success]:text-success-ink!
           `,
         },
         descriptionClassName: 'text-inherit!',

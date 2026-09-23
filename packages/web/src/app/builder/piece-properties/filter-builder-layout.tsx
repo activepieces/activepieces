@@ -158,7 +158,7 @@ FilterBuilderLayout.displayName = 'FilterBuilderLayout';
 function EmptyFilterState() {
   return (
     <div className="flex flex-col items-center gap-2 px-6 pb-2.5 pt-[34px] text-center">
-      <span className="mb-1 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+      <span className="mb-1 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary-ink">
         <Filter className="size-5" />
       </span>
       <span className="text-sm font-semibold text-foreground">
@@ -199,7 +199,7 @@ function FilterRow({
   return (
     <div className="flex items-start gap-[11px] px-3.5 py-[13px]">
       <span className="flex h-[38px] w-[30px] shrink-0 items-center justify-center">
-        <span className="flex size-[30px] items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex size-[30px] items-center justify-center rounded-lg bg-primary/10 text-primary-ink">
           {Icon ? <Icon className="size-4" /> : null}
         </span>
       </span>
@@ -285,7 +285,7 @@ function AddFilterPopover({
           <button
             type="button"
             disabled={disabled}
-            className="flex w-full items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-dashed border-primary/30 bg-primary/5 py-[13px] text-sm font-semibold text-primary outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-dashed border-primary/30 bg-primary/5 py-[13px] text-sm font-semibold text-primary-ink outline-none transition-colors hover:bg-primary/10 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
           >
             <Plus className="size-4" />
             {t('Add filter')}
@@ -294,7 +294,7 @@ function AddFilterPopover({
           <button
             type="button"
             disabled={disabled}
-            className="flex items-center gap-2 rounded-[9px] border border-input bg-background px-3.5 py-2 text-sm font-semibold text-primary outline-none transition-colors hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+            className="flex items-center gap-2 rounded-[9px] border border-input bg-background px-3.5 py-2 text-sm font-semibold text-primary-ink outline-none transition-colors hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
           >
             <Plus className="size-4" />
             {t('Add filter')}
@@ -338,7 +338,7 @@ function AddFilterPopover({
                         ) : null}
                         <span className="flex-1">{t(label)}</span>
                         {added && (
-                          <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                          <span className="flex items-center gap-1 text-xs font-medium text-primary-ink">
                             <Check className="size-3.5" />
                             {t('Added')}
                           </span>
@@ -378,7 +378,7 @@ function FilterFooter({
   return (
     <div className="flex items-center justify-between gap-3 rounded-[14px] border border-input bg-background px-4 py-[13px]">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <span className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary-ink">
           {Icon ? <Icon className="size-4" /> : null}
         </span>
         <div className="min-w-0">

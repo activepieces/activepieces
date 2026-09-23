@@ -33,7 +33,7 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
       gradientId="fillTimeSaved"
       chartData={chartData}
       isLoading={!report}
-      emptyIcon={<Clock className="h-10 w-10 text-muted-foreground/50" />}
+      emptyIcon={<Clock className="h-10 w-10 text-ink-subtle" />}
       emptyText={t(
         'No time saved yet. Data will appear here once your flows start running.',
       )}

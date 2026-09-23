@@ -82,9 +82,7 @@ function CellValue({ value }: { value: unknown }) {
   }
 
   if (value === null || value === undefined || value === '') {
-    return (
-      <span className="text-muted-foreground/40 italic">{t('empty')}</span>
-    );
+    return <span className="text-ink-muted italic">{t('empty')}</span>;
   }
 
   return (

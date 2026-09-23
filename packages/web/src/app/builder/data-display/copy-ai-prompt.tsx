@@ -71,7 +71,7 @@ const CopyAiPromptButton = ({
         {copied ? (
           <Check className="size-3.5 text-success" />
         ) : (
-          <Sparkles className="size-3.5 text-primary" />
+          <Sparkles className="size-3.5 text-primary-ink" />
         )}
         {copied ? t('Copied') : t('Copy Error for AI')}
       </Button>

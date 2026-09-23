@@ -139,7 +139,7 @@ function VariablesPage() {
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 min-w-0">
-            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary">
+            <div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-md bg-primary/10 text-primary-ink">
               <Variable className="w-4 h-4" />
             </div>
             <span className="font-mono text-sm truncate">

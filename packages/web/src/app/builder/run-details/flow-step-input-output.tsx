@@ -357,7 +357,7 @@ const TruncatedInputNotice = () => (
         href="https://www.activepieces.com/docs/install/troubleshooting/truncated-logs"
         target="_blank"
         rel="noreferrer"
-        className="text-primary underline"
+        className="text-primary-ink underline"
       >
         {t('Learn more')}
       </a>

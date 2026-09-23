@@ -475,7 +475,7 @@ function convertTiptapJsonToText(
 // eslint-disable-next-line testing-library/render-result-naming-convention
 const VARIABLE_ICON_SVG_MARKUP = renderToStaticMarkup(
   createElement(VariableIcon, {
-    className: 'w-4 h-4 shrink-0 text-primary',
+    className: 'w-4 h-4 shrink-0 text-primary-ink',
     'aria-hidden': true,
   }),
 );

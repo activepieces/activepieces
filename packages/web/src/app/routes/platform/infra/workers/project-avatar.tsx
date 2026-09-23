@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export function ProjectAvatar({ project, size = 'md' }: ProjectAvatarProps) {
   const isPersonal = project.type === ProjectType.PERSONAL;
   const palette = PROJECT_COLOR_PALETTE[project.icon.color];
-  const background = isPersonal ? 'var(--neutral-mark)' : palette.color;
+  const background = isPersonal ? 'var(--neutral)' : palette.color;
   const color = isPersonal ? 'var(--on-neutral)' : palette.textColor;
 
   const sizeClass = size === 'sm' ? 'size-5 text-[10px]' : 'size-7 text-xs';

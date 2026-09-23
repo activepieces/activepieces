@@ -28,7 +28,7 @@ const StepDataPanelHeader = ({
     <div
       className={cn(
         'flex items-center justify-between px-3 py-2 shrink-0 gap-2',
-        status === 'success' && 'bg-success-100',
+        status === 'success' && 'bg-success-surface',
         status === 'failed' && 'bg-destructive/10',
         status === 'testing' && 'bg-primary/10',
       )}
@@ -38,7 +38,7 @@ const StepDataPanelHeader = ({
         <span
           className={cn(
             'text-xs truncate',
-            status === 'success' && 'text-success-700/80',
+            status === 'success' && 'text-success-ink/80',
             status === 'failed' && 'text-destructive/80',
           )}
         >
@@ -70,7 +70,7 @@ const StepDataPanelStatusBadge = ({
   }
   if (status === 'testing') {
     return (
-      <div className="flex items-center gap-1.5 text-sm text-primary">
+      <div className="flex items-center gap-1.5 text-sm text-primary-ink">
         <Loader2 className="size-4 animate-spin" />
         <span className="font-medium">{t('Testing...')}</span>
       </div>
@@ -79,7 +79,7 @@ const StepDataPanelStatusBadge = ({
   return (
     <div className="flex items-center gap-1.5 text-sm">
       <StepStatusIcon status={StepOutputStatus.SUCCEEDED} size="4.5" />
-      <span className="text-success-700 font-medium">
+      <span className="text-success-ink font-medium">
         {viewMode === 'run' ? t('Success') : t('Tested Successfully')}
       </span>
     </div>

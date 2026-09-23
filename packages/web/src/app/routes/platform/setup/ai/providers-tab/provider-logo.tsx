@@ -17,7 +17,7 @@ export function ProviderLogo({
     ) : null;
   }
   return (
-    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-logo-surface">
       {info.logoUrl && (
         <img
           src={info.logoUrl}

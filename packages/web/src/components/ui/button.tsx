@@ -14,7 +14,7 @@ const buttonVariants = cva(
         default:
           'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
         basic:
-          'text-primary font-medium underline-offset-4 enabled:hover:bg-accent',
+          'text-primary-ink font-medium underline-offset-4 enabled:hover:bg-accent',
         secondary:
           'text-secondary-foreground bg-secondary enabled:hover:bg-secondary/80 enabled:hover:text-secondary-foreground',
         destructive:
@@ -22,10 +22,9 @@ const buttonVariants = cva(
         outline:
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
         accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
-        ghost:
-          'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-        transparent: 'text-primary enabled:hover:bg-transparent',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary-ink underline-offset-4 hover:underline',
+        transparent: 'text-primary-ink enabled:hover:bg-transparent',
       },
       size: {
         default: 'h-9 px-3 py-2 has-[>svg]:px-2.5',

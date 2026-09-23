@@ -29,7 +29,7 @@ export const CreditsInfoDialog = () => {
   });
   return (
     <Dialog>
-      <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline">
+      <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary-ink hover:underline">
         {t('Usage breakdown')}
         <ArrowUpRight className="size-3.5" />
       </DialogTrigger>

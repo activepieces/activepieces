@@ -122,7 +122,7 @@ export default function TriggerHealthPage() {
   const getStatusIcon = (statusType: string) => {
     switch (statusType) {
       case STATUS.SUCCESS:
-        return <CheckCircle size={16} className="text-success-700" />;
+        return <CheckCircle size={16} className="text-success-ink" />;
       case STATUS.WARNING:
         return <AlertCircle size={16} className="text-warning-ink" />;
       case STATUS.FAULT:
@@ -135,7 +135,7 @@ export default function TriggerHealthPage() {
   const getStatusColor = (statusType: string) => {
     switch (statusType) {
       case STATUS.SUCCESS:
-        return 'text-success-700';
+        return 'text-success-ink';
       case STATUS.WARNING:
         return 'text-warning-ink';
       case STATUS.FAULT:

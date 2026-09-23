@@ -484,7 +484,7 @@ function LegalNote() {
 // alert — anything that reads as an error here costs signups.
 function WorkEmailHint() {
   return (
-    <div className="flex items-center gap-2 border-t border-primary/20 px-4 py-2.5 text-xs text-primary animate-in fade-in duration-200">
+    <div className="flex items-center gap-2 border-t border-primary/20 px-4 py-2.5 text-xs text-primary-ink animate-in fade-in duration-200">
       <Lightbulb className="size-3.5 shrink-0" />
       <p>{t('Use your work email for better personalization.')}</p>
     </div>
@@ -695,7 +695,7 @@ function VerifiedFlash() {
           strokeWidth={2.5}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="size-8 text-primary"
+          className="size-8 text-primary-ink"
           aria-hidden
         >
           <motion.path

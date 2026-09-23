@@ -120,7 +120,7 @@ export const TeamProjectAlerts = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="size-8 p-0 hover:bg-destructive-50"
+                        className="size-8 p-0 hover:bg-destructive-surface"
                         onClick={() => deleteAlert(alert)}
                         disabled={writeAlertPermission === false}
                       >

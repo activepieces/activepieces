@@ -9,7 +9,7 @@ export const NoProjectsState = () => {
 
       <Badge
         variant="secondary"
-        className="bg-primary/10 text-primary hover:bg-primary/10 gap-1.5 font-medium"
+        className="bg-primary/10 text-primary-ink hover:bg-primary/10 gap-1.5 font-medium"
       >
         <span className="size-1.5 rounded-full bg-primary" />
         {t('Waiting for access')}

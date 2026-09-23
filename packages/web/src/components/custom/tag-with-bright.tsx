@@ -1,7 +1,7 @@
+import { brandColors } from '@activepieces/shared';
 import { LineChart, Clock } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { brandColors } from '@activepieces/shared';
 
 type TagWithBrightProps = {
   index?: number;

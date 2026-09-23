@@ -124,7 +124,7 @@ function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
       <img
         src={logoUrl}
         alt=""
-        className="h-10 w-10 shrink-0 rounded-lg border bg-background object-contain p-1.5"
+        className="h-10 w-10 shrink-0 rounded-lg border bg-logo-surface object-contain p-1.5"
       />
     );
   }

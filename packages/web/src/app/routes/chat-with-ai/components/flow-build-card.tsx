@@ -161,7 +161,7 @@ function BuildStepIcon({ status }: { status: BuildPlanStep['status'] }) {
       return <Check className="h-[18px] w-[18px] shrink-0 text-success-mark" />;
     case 'in_progress':
       return (
-        <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-primary" />
+        <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-primary-ink" />
       );
     case 'failed':
       return (
@@ -170,7 +170,7 @@ function BuildStepIcon({ status }: { status: BuildPlanStep['status'] }) {
     case 'pending':
     default:
       return (
-        <Circle className="h-[18px] w-[18px] shrink-0 text-muted-foreground/40" />
+        <Circle className="h-[18px] w-[18px] shrink-0 text-neutral-mark" />
       );
   }
 }

@@ -61,7 +61,7 @@ function DateRangeProperty({
                 className={cn(
                   'rounded-full border px-3 py-1 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/50',
                   selected
-                    ? 'border-primary bg-primary/5 text-primary'
+                    ? 'border-primary bg-primary/5 text-primary-ink'
                     : 'border-input text-muted-foreground hover:text-foreground',
                   disabled && 'pointer-events-none opacity-50',
                 )}

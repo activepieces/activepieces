@@ -96,7 +96,7 @@ function ProjectNameLink({
       <button
         type="button"
         onClick={goToProjectHome}
-        className="truncate text-sm font-medium text-primary hover:underline"
+        className="truncate text-sm font-medium text-primary-ink hover:underline"
       >
         {projectName}
       </button>

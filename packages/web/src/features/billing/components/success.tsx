@@ -69,7 +69,7 @@ export const Success = () => {
         return {
           icon: Check,
           iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
+          iconColor: 'text-primary-ink',
           title: t('Success!'),
           description: t('Subscription created successfully'),
         };
@@ -77,7 +77,7 @@ export const Success = () => {
         return {
           icon: Check,
           iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
+          iconColor: 'text-primary-ink',
           title: t('Success!'),
           description: t('Subscription updated successfully'),
         };

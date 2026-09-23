@@ -132,7 +132,7 @@ function PropertyGroupTabs({
               <button
                 type="button"
                 aria-label={group.description}
-                className="text-muted-foreground/70 outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
+                className="text-ink-muted outline-none transition-colors hover:text-foreground focus-visible:text-foreground"
               >
                 <Info className="size-3.5" />
               </button>
@@ -204,7 +204,7 @@ function PropertyGroupTabs({
                       aria-hidden
                       className={cn(
                         'size-3.5 shrink-0',
-                        active ? 'text-foreground' : 'text-muted-foreground/80',
+                        active ? 'text-foreground' : 'text-ink-muted',
                       )}
                     />
                   ) : count > 0 ? (

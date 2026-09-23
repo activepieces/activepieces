@@ -40,7 +40,7 @@ const EmbedStatusBadge = ({ status }: { status: EmbedSubdomainStatus }) => {
   switch (status) {
     case EmbedSubdomainStatus.ACTIVE:
       return (
-        <div className="flex items-center gap-2 text-sm text-success-600">
+        <div className="flex items-center gap-2 text-sm text-success-ink">
           <CheckCircle className="size-4" />
           {t('DNS verified — your domain is ready')}
         </div>

@@ -95,14 +95,14 @@ function ItemMeta({
   if (!hasProject && !hasFolder && !hasUpdated) return null;
 
   return (
-    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground/80">
+    <span className="flex shrink-0 items-center gap-1 text-xs text-ink-muted">
       <span>—</span>
       {hasProject && <span>{projectName}</span>}
       {hasProject && hasFolder && <span>/</span>}
       {hasFolder && (
         <span className="flex items-center gap-0.5">
           <FolderIcon
-            className="size-4! mr-0.5 text-muted-foreground/80 shrink-0"
+            className="size-4! mr-0.5 text-ink-muted shrink-0"
             fill="currentColor"
             strokeWidth={0}
           />
@@ -110,7 +110,7 @@ function ItemMeta({
         </span>
       )}
       {(hasProject || hasFolder) && hasUpdated && (
-        <Dot className="size-3! shrink-0 text-muted-foreground/80" />
+        <Dot className="size-3! shrink-0 text-ink-muted" />
       )}
       {hasUpdated && (
         <span className="whitespace-nowrap">{`Last Modified: ${timeAgo(

@@ -22,7 +22,7 @@ export const AgentToolStack = ({
   if (toolCount === 0) {
     return (
       <span className="flex items-center gap-1.5 text-[13px] leading-5 text-muted-foreground">
-        <Unplug size={14} className="text-ink-subtle" />
+        <Unplug size={14} className="text-ink-muted" />
         {t('No tools')}
       </span>
     );

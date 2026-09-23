@@ -153,7 +153,7 @@ const DataSelectorNodeContent = ({
             <>
               <span className="shrink-0 text-muted-foreground">:</span>
               <TextWithTooltip tooltipMessage={String(valuePreview)}>
-                <span className="min-w-0 truncate text-primary text-sm flex-1">
+                <span className="min-w-0 truncate text-primary-ink text-sm flex-1">
                   {valuePreview}
                 </span>
               </TextWithTooltip>
@@ -173,7 +173,7 @@ const DataSelectorNodeContent = ({
               }
             }}
             className={cn(
-              'h-6 px-2 text-xs text-primary shrink-0 opacity-0 transition-opacity',
+              'h-6 px-2 text-xs text-primary-ink shrink-0 opacity-0 transition-opacity',
               'group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >

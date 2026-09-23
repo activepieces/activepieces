@@ -299,7 +299,7 @@ function SchemaFieldRow({ field, json, depth }: SchemaFieldRowProps) {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 cursor-help" />
+                  <Info className="h-3.5 w-3.5 text-ink-muted shrink-0 cursor-help" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-[300px]">
                   {field.description}

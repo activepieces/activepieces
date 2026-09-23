@@ -455,7 +455,7 @@ const AgentsPageContent = () => {
                 >
                   <LayoutGrid
                     size={15}
-                    className={cn(layout !== 'grid' && 'text-ink-subtle')}
+                    className={cn(layout !== 'grid' && 'text-ink-muted')}
                   />
                 </button>
                 <button
@@ -469,7 +469,7 @@ const AgentsPageContent = () => {
                 >
                   <List
                     size={15}
-                    className={cn(layout !== 'list' && 'text-ink-subtle')}
+                    className={cn(layout !== 'list' && 'text-ink-muted')}
                   />
                 </button>
               </div>

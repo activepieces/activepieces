@@ -281,7 +281,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                       >
                         <span
                           className={cn(
-                            'flex items-center gap-1 text-primary w-full',
+                            'flex items-center gap-1 text-primary-ink w-full',
                             {
                               'text-muted-foreground cursor-not-allowed':
                                 !hasPermissionToCreateConnection,

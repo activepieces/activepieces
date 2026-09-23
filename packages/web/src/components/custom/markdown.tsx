@@ -44,7 +44,7 @@ const Container = ({
       className={cn('rounded-md border', {
         'bg-warning-surface border-none text-warning-ink':
           variant === MarkdownVariant.WARNING,
-        'bg-success-100 text-success-300 border-none':
+        'bg-success-surface text-success-ink border-none':
           variant === MarkdownVariant.TIP,
         'p-0 bg-transparent border-none':
           variant === MarkdownVariant.BORDERLESS,
@@ -168,7 +168,7 @@ const ApMarkdown = React.memo(
             li: ({ node: _node, ref: _ref, ...props }) => <li {...props} />,
             a: ({ node: _node, ref: _ref, ...props }) => (
               <a
-                className="font-medium text-primary underline underline-offset-4"
+                className="font-medium text-primary-ink underline underline-offset-4"
                 target="_blank"
                 rel="noreferrer noopener"
                 {...props}

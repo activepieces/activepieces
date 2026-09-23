@@ -84,7 +84,7 @@ const AboveTriggerButton = ({
                   className={cn(
                     'text-[10px] bg-muted h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap text-muted-foreground',
                     {
-                      'bg-primary/13 text-primary': showPrimaryBg,
+                      'bg-primary/13 text-primary-ink': showPrimaryBg,
                     },
                   )}
                 >

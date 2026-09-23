@@ -88,7 +88,7 @@ export function FlowsDetails({
               DASHBOARD_CONTENT_PADDING_X,
             )}
           >
-            <Workflow className="size-4 mr-2 text-primary shrink-0" />
+            <Workflow className="size-4 mr-2 text-primary-ink shrink-0" />
             <span className="truncate">{row.original.flowName}</span>
           </div>
         ),
@@ -173,7 +173,7 @@ export function FlowsDetails({
               flowId={row.original.flowId}
               currentValue={timeSavedPerRun}
             >
-              <div className="flex items-center gap-1.5 cursor-pointer text-primary hover:underline">
+              <div className="flex items-center gap-1.5 cursor-pointer text-primary-ink hover:underline">
                 <Plus className="h-3.5 w-3.5" />
                 <span>{t('Add Estimated Time')}</span>
               </div>
@@ -448,7 +448,7 @@ function OwnerFilter({ filters }: { filters: FiltersReturn }) {
           <div className="p-2 border-t">
             <button
               onClick={() => filters.updateOwnerFilter({ selectedIds: [] })}
-              className="w-full text-center text-sm text-primary hover:underline"
+              className="w-full text-center text-sm text-primary-ink hover:underline"
             >
               {t('Clear all')}
             </button>

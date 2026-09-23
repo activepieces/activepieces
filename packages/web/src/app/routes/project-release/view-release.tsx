@@ -71,7 +71,7 @@ const ViewRelease = () => {
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Button
             variant="link"
-            className="p-0 h-auto text-sm text-muted-foreground hover:text-primary"
+            className="p-0 h-auto text-sm text-muted-foreground hover:text-primary-ink"
             onClick={() => navigate('/releases')}
           >
             {t('Releases')}

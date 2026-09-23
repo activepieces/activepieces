@@ -156,7 +156,7 @@ export function GrantsTab() {
           href={DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="font-semibold text-primary hover:underline"
+          className="font-semibold text-primary-ink hover:underline"
         >
           {t('How connecting works')} ↗
         </a>

@@ -108,7 +108,7 @@ export const AutomationsTableRow = ({
 
   if (item.type === 'load-more-folder') {
     return (
-      <div className="flex-1 flex items-center justify-center gap-2 text-primary font-medium py-2">
+      <div className="flex-1 flex items-center justify-center gap-2 text-primary-ink font-medium py-2">
         <div
           className="flex items-center gap-2 cursor-pointer hover:underline"
           onClick={(e) => {
@@ -152,7 +152,7 @@ export const AutomationsTableRow = ({
                     'h-4 w-4',
                     isPinned
                       ? 'text-swatch-6-mark fill-swatch-6-mark'
-                      : 'text-muted-foreground/40 hover:text-muted-foreground',
+                      : 'text-ink-muted hover:text-muted-foreground',
                   )}
                 />
               </button>
@@ -373,9 +373,9 @@ export const AutomationsTableRow = ({
 const RowItemIcon = ({ item }: { item: TreeItem }) => {
   switch (item.type) {
     case 'folder':
-      return <Folder className="h-4 w-4 text-ink-subtle fill-ink-subtle" />;
+      return <Folder className="h-4 w-4 text-ink-muted fill-ink-muted" />;
     case 'flow':
-      return <Workflow className="h-4 w-4 text-primary" />;
+      return <Workflow className="h-4 w-4 text-primary-ink" />;
     default:
       return <Table2 className="h-4 w-4 text-swatch-8-mark" />;
   }

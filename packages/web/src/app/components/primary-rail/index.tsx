@@ -237,7 +237,7 @@ function RailHeader({
                 setSearchOpen(true);
               }}
               aria-label={t('Search')}
-              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-ink-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
             >
               <Search className="size-4" />
             </button>
@@ -293,7 +293,7 @@ function RailHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 shrink-0 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="size-8 shrink-0 rounded-full text-ink-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
               onClick={() => setSearchOpen(true)}
               aria-label={t('Search')}
             >
@@ -308,7 +308,7 @@ function RailHeader({
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 shrink-0 rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              className="size-8 shrink-0 rounded-full text-ink-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
               onClick={onToggle}
               aria-label={t('Close sidebar')}
             >
@@ -376,12 +376,14 @@ function RailNavButton({
         onClick?.();
       }}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-10 px-3',
         active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
       )}
     >
-      <Icon className={cn('size-[18px] shrink-0', active && 'text-primary')} />
+      <Icon
+        className={cn('size-[18px] shrink-0', active && 'text-primary-ink')}
+      />
       {!collapsed && <span className="truncate">{label}</span>}
     </Link>
   );
@@ -459,7 +461,7 @@ function RailPinnedProjects({ collapsed }: { collapsed: boolean }) {
       />
       {!collapsed && (
         <div className="flex shrink-0 items-center gap-1 py-0.5 pl-3 pr-1">
-          <span className="text-[11px] font-medium uppercase tracking-wide text-sidebar-foreground/50">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-ink-muted">
             {t('Projects')}
           </span>
           <div className="ml-auto flex items-center gap-0.5">
@@ -526,7 +528,7 @@ function ProjectRow({
       {isTeam ? (
         name.charAt(0).toUpperCase()
       ) : (
-        <Lock className="size-3 text-sidebar-foreground/70" />
+        <Lock className="size-3 text-ink-muted" />
       )}
     </span>
   );
@@ -542,7 +544,7 @@ function ProjectRow({
       }}
       aria-label={name}
       className={cn(
-        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground',
+        'flex shrink-0 items-center gap-3 rounded-full text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground',
         collapsed ? 'size-9 cursor-pointer justify-center' : 'h-9 w-full px-3',
         active && 'bg-sidebar-accent font-medium text-sidebar-foreground',
       )}
@@ -617,7 +619,7 @@ function PinnedMenuOption({
   return (
     <DropdownMenuItem onClick={onClick} className="justify-between">
       {label}
-      {active && <span className="text-primary">✓</span>}
+      {active && <span className="text-primary-ink">✓</span>}
     </DropdownMenuItem>
   );
 }
@@ -777,7 +779,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
           <Button
             variant="ghost"
             size="icon"
-            className="size-8 shrink-0 cursor-pointer rounded-full text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="size-8 shrink-0 cursor-pointer rounded-full text-ink-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
             onClick={(e) => {
               e.stopPropagation();
               setAccountSettingsOpen(true);
@@ -799,7 +801,7 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
 }
 
 const RAIL_HEADER_ICON_BUTTON =
-  'size-6 rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground [&_svg]:size-3.5!';
+  'size-6 rounded-md text-ink-muted hover:bg-sidebar-accent hover:text-sidebar-foreground [&_svg]:size-3.5!';
 
 const PINNED_SORT_KEY = 'rail-pinned-sort';
 

@@ -81,7 +81,7 @@ const THUMB_SIZE_CLASSES: Record<NonNullable<SwitchProps['size']>, string> = {
 const COLOR_CLASSES: Record<NonNullable<SwitchProps['color']>, string> = {
   default: 'data-[state=checked]:bg-primary data-[state=unchecked]:bg-input',
   secondary:
-    'data-[state=checked]:bg-secondary data-[state=unchecked]:bg-input',
+    'data-[state=checked]:bg-surface-inverse data-[state=unchecked]:bg-input',
 };
 
 // Helper functions

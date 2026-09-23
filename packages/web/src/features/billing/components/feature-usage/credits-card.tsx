@@ -26,7 +26,7 @@ export const CreditsCard = ({ info }: CreditsCardProps) => {
     (info.billingPortalAvailable ? info.autumnPlanName : t('Free'));
 
   return (
-    <div className="flex flex-col rounded-xl border">
+    <div className="flex flex-col rounded-xl border bg-card">
       <div className="flex flex-col gap-3 p-5">
         <span className="text-muted-foreground text-sm">
           {isUnlimited ? t('Credits used') : t('Included in plan')}

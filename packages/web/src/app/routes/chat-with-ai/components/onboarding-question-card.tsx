@@ -270,7 +270,7 @@ function OnboardingPill({
         autoFocus={autoFocus}
         autoComplete="off"
         spellCheck={false}
-        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-lg bg-muted/60 px-3.5 py-1.5 text-foreground caret-primary ring-1 ring-transparent transition-[background-color,box-shadow] placeholder:text-muted-foreground/50 focus:bg-primary/5 focus:outline-none focus:ring-primary/35"
+        className="col-start-1 row-start-1 w-full min-w-0 max-w-full rounded-lg bg-muted/60 px-3.5 py-1.5 text-foreground caret-primary ring-1 ring-transparent transition-[background-color,box-shadow] placeholder:text-ink-muted focus:bg-primary/5 focus:outline-none focus:ring-primary/35"
       />
       {rotating && (
         <span className="pointer-events-none absolute inset-0 flex items-center overflow-hidden px-3.5">
@@ -279,7 +279,7 @@ function OnboardingPill({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, ease: 'easeInOut' }}
-            className="truncate font-normal text-muted-foreground/50"
+            className="truncate font-normal text-ink-muted"
           >
             {example}
           </motion.span>

@@ -63,7 +63,7 @@ export function ApFieldHeader({ field }: ApFieldHeaderProps) {
             {canEdit && (
               <GripVertical
                 onClick={(e) => e.stopPropagation()}
-                className="h-4 w-4 shrink-0 text-muted-foreground/60 opacity-0 cursor-grab active:cursor-grabbing transition-opacity group-hover:opacity-100"
+                className="h-4 w-4 shrink-0 text-ink-muted opacity-0 cursor-grab active:cursor-grabbing transition-opacity group-hover:opacity-100"
               />
             )}
             {tablesUtils.getColumnIcon(field.type)}

@@ -51,7 +51,7 @@ const SecretManagerToggleButton = React.memo(
           >
             <KeyRound
               className={cn('size-4', {
-                'text-primary': isActive,
+                'text-primary-ink': isActive,
               })}
             />
           </Button>

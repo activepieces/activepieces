@@ -217,7 +217,7 @@ export function AIModelSelector({
                     <img
                       src={getProviderLogo(selectedProvider)}
                       alt={selectedProvider}
-                      className="h-4 w-4 object-contain"
+                      className="h-4 w-4 rounded-sm bg-logo-surface object-contain p-px"
                     />
                   )}
                   <span className="truncate">
@@ -256,7 +256,7 @@ export function AIModelSelector({
                         <img
                           src={getProviderLogo(option.provider)}
                           alt={option.provider}
-                          className="h-4 w-4 object-contain"
+                          className="h-4 w-4 rounded-sm bg-logo-surface object-contain p-px"
                         />
                       )}
                       <span>{option.label}</span>

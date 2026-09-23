@@ -23,7 +23,7 @@ const formatError = (
           <strong>Respond on UI</strong> is in{' '}
           <a
             href={`/projects/${projectId}/flows/${flowId}`}
-            className="text-primary underline"
+            className="text-primary-ink underline"
             target="_blank"
             rel="noreferrer"
           >

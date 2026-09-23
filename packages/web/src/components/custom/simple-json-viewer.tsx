@@ -60,11 +60,7 @@ export const SimpleJsonViewer: React.FC<SimpleJsonViewerProps> = ({
             {copied ? (
               <Check className="w-4 h-4 text-success" />
             ) : (
-              <Copy
-                className={`w-4 h-4 ${
-                  'text-foreground'
-                }`}
-              />
+              <Copy className={`w-4 h-4 ${'text-foreground'}`} />
             )}
           </Button>
         </div>

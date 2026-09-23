@@ -202,7 +202,7 @@ function ToolStepRow({
       {recipeLines.length > 0 ? (
         <div className="mb-1.5 overflow-hidden rounded-lg border border-border bg-muted/20">
           <div className="flex items-center gap-2 border-b border-border/60 px-3 py-1">
-            <Code className="size-3 shrink-0 text-primary/80" />
+            <Code className="size-3 shrink-0 text-primary-ink/80" />
             <span className="text-[11px] font-medium text-muted-foreground">
               {t('What this code does')}
             </span>
@@ -213,7 +213,7 @@ function ToolStepRow({
                 key={`${idx}-${line}`}
                 className="flex items-start gap-2 text-foreground/75"
               >
-                <span className="select-none pt-px text-primary/70">›</span>
+                <span className="select-none pt-px text-primary-ink/70">›</span>
                 <span>{line}</span>
               </div>
             ))}
@@ -316,7 +316,7 @@ function ToolStepRow({
           <button
             type="button"
             onClick={() => setCodeOpen(!codeOpen)}
-            className="flex items-center gap-1 text-[11px] text-muted-foreground/70 hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-[11px] text-ink-muted hover:text-foreground transition-colors"
           >
             <Code className="size-3 shrink-0" />
             {codeOpen ? t('Hide code') : t('View code')}

@@ -108,7 +108,7 @@ function AssignProjectsContent({
         <DialogDescription>
           {t("These projects will run on this group's dedicated queue.")}
         </DialogDescription>
-        <div className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-sm font-medium text-primary w-fit">
+        <div className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-sm font-medium text-primary-ink w-fit">
           <Layers className="size-3.5 shrink-0" />
           {groupLabel.replaceAll('_', ' ')}
         </div>
@@ -158,7 +158,7 @@ function AssignProjectsContent({
                     </TextWithTooltip>
                     <span
                       className={cn('text-xs text-muted-foreground truncate', {
-                        'text-primary': isCurrentGroup,
+                        'text-primary-ink': isCurrentGroup,
                       })}
                     >
                       {subtitle}

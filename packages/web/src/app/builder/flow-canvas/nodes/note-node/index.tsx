@@ -222,31 +222,19 @@ type NoteContentProps = {
 };
 
 const NoteColorVariantClassName = {
-  [NoteColorVariant.YELLOW]:
-    'bg-swatch-6-surface text-swatch-6-ink',
-  [NoteColorVariant.ORANGE]:
-    'bg-swatch-5-surface text-swatch-5-ink',
-  [NoteColorVariant.RED]:
-    'bg-swatch-4-surface text-swatch-4-ink',
-  [NoteColorVariant.GREEN]:
-    'bg-swatch-8-surface text-swatch-8-ink',
-  [NoteColorVariant.BLUE]:
-    'bg-swatch-11-surface text-swatch-11-ink',
-  [NoteColorVariant.PURPLE]:
-    'bg-swatch-1-surface text-swatch-1-ink',
+  [NoteColorVariant.YELLOW]: 'bg-swatch-6-surface text-swatch-6-ink',
+  [NoteColorVariant.ORANGE]: 'bg-swatch-5-surface text-swatch-5-ink',
+  [NoteColorVariant.RED]: 'bg-swatch-4-surface text-swatch-4-ink',
+  [NoteColorVariant.GREEN]: 'bg-swatch-8-surface text-swatch-8-ink',
+  [NoteColorVariant.BLUE]: 'bg-swatch-11-surface text-swatch-11-ink',
+  [NoteColorVariant.PURPLE]: 'bg-swatch-1-surface text-swatch-1-ink',
 };
 
 const FocusedBorderClassName = {
-  [NoteColorVariant.YELLOW]:
-    'group-focus-within:border-swatch-6-mark',
-  [NoteColorVariant.ORANGE]:
-    'group-focus-within:border-swatch-5-mark',
-  [NoteColorVariant.RED]:
-    'group-focus-within:border-swatch-4-mark',
-  [NoteColorVariant.GREEN]:
-    'group-focus-within:border-swatch-8-mark',
-  [NoteColorVariant.BLUE]:
-    'group-focus-within:border-swatch-11-mark',
-  [NoteColorVariant.PURPLE]:
-    'group-focus-within:border-swatch-1-mark',
+  [NoteColorVariant.YELLOW]: 'group-focus-within:border-swatch-6-mark',
+  [NoteColorVariant.ORANGE]: 'group-focus-within:border-swatch-5-mark',
+  [NoteColorVariant.RED]: 'group-focus-within:border-swatch-4-mark',
+  [NoteColorVariant.GREEN]: 'group-focus-within:border-swatch-8-mark',
+  [NoteColorVariant.BLUE]: 'group-focus-within:border-swatch-11-mark',
+  [NoteColorVariant.PURPLE]: 'group-focus-within:border-swatch-1-mark',
 };
