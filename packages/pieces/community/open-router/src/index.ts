@@ -16,7 +16,7 @@ export const openRouter = createPiece({
   description: 'Use any AI model to generate code, text, or images via OpenRouter.ai.',
   auth: openRouterAuth,
 
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
 
   logoUrl: 'https://cdn.activepieces.com/pieces/open-router.png',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
