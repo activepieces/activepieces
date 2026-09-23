@@ -5,6 +5,7 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { VIEW_QUERY_PARAM } from '@/app/routes/platform/admin-pages';
 import {
   Select,
   SelectContent,
@@ -18,8 +19,6 @@ import { QueueTab } from './components/queue-tab';
 import { RunsTab } from './components/runs-tab';
 import { SystemHealthTab } from './components/system-health-tab';
 import { healthMetricsQueries } from './lib/health-metrics-hooks';
-
-type TabValue = 'system' | 'runs' | 'queue';
 
 type MonthOption = { value: string; label: string };
 
@@ -37,7 +36,7 @@ function buildMonthOptions(): MonthOption[] {
 export default function SettingsHealthPage() {
   const monthOptions = React.useMemo(buildMonthOptions, []);
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as TabValue) || 'system';
+  const activeTab = parseTabValue(searchParams.get(VIEW_QUERY_PARAM));
   const selectedMonth = searchParams.get('month') || monthOptions[0].value;
 
   const range = React.useMemo(() => {
@@ -60,9 +59,9 @@ export default function SettingsHealthPage() {
   const setTab = (tab: TabValue) => {
     const newParams = new URLSearchParams(searchParams);
     if (tab === 'system') {
-      newParams.delete('tab');
+      newParams.delete(VIEW_QUERY_PARAM);
     } else {
-      newParams.set('tab', tab);
+      newParams.set(VIEW_QUERY_PARAM, tab);
     }
     setSearchParams(newParams, { replace: true });
   };
@@ -136,3 +135,9 @@ export default function SettingsHealthPage() {
     </div>
   );
 }
+
+function parseTabValue(value: string | null): TabValue {
+  return value === 'runs' || value === 'queue' ? value : 'system';
+}
+
+type TabValue = 'system' | 'runs' | 'queue';

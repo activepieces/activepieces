@@ -157,6 +157,8 @@
   --radius-xs: calc(var(--radius) - 8px);
   --radius-xss: calc(var(--radius) - 10px);
 
+  --container-page-band: 1198px;
+
   --text-xss: 0.65rem;
   --text-3xl: 1.75rem;
   --text-4xl: 2rem;

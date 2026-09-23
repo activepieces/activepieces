@@ -158,7 +158,12 @@ async function resolvePropertyOptions({ props, componentProps, pieceName, pieceV
     const [piecePackage, sampleData] = await Promise.all([
         getPiecePackageWithoutArchive(log, platformId, { pieceName, pieceVersion }),
         flow
-            ? sampleDataService(log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
+            ? sampleDataService(log).getSampleDataForFlow({
+                projectId,
+                flowVersion: flow.version,
+                type: SampleDataFileType.OUTPUT,
+                referencedBy: providedInput,
+            })
             : Promise.resolve({} as Record<string, unknown>),
     ])
     const flowVersion: FlowVersion | undefined = flow?.version

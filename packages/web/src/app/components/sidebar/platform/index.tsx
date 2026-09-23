@@ -1,31 +1,13 @@
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ComponentType, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Fragment, useRef } from 'react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
-import { ChartLineIcon } from '@/components/icons/chart-line';
+import { adminPagesUtils } from '@/app/routes/platform/admin-pages';
 import {
   ChevronLeftIcon,
   ChevronLeftIconHandle,
 } from '@/components/icons/chevron-left';
-import { FileHeartIcon } from '@/components/icons/file-heart';
-import { FileJson2Icon } from '@/components/icons/file-json2';
-import { FrameIcon } from '@/components/icons/frame';
-import { KeyRoundIcon } from '@/components/icons/key-round';
-import { LayoutGridIcon } from '@/components/icons/layout-grid';
-import { LogInIcon } from '@/components/icons/log-in';
-import { MousePointerClickIcon } from '@/components/icons/mouse-pointer-click';
-import { PuzzleIcon } from '@/components/icons/puzzle';
-import { ReceiptIcon } from '@/components/icons/receipt';
-import { ServerIcon } from '@/components/icons/server';
-import { SettingsIcon } from '@/components/icons/settings';
-import { Settings2Icon } from '@/components/icons/settings2';
-import { SparklesIcon } from '@/components/icons/sparkles';
-import { SquareDashedBottomCodeIcon } from '@/components/icons/square-dashed-bottom-code';
-import { UnplugIcon } from '@/components/icons/unplug';
-import { UsersIcon } from '@/components/icons/users';
-import { WebhookIcon } from '@/components/icons/webhook';
 import { buttonVariants } from '@/components/ui/button';
 import {
   Sidebar,
@@ -35,8 +17,6 @@ import {
   SidebarHeader,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -44,8 +24,9 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { determineDefaultRoute } from '@/lib/route-utils';
 import { cn } from '@/lib/utils';
 
-import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
+
+import { PlatformNavItem, PlatformNavSubItem } from './platform-nav-item';
 
 export function PlatformSidebar() {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -57,170 +38,12 @@ export function PlatformSidebar() {
   });
   const chevronRef = useRef<ChevronLeftIconHandle>(null);
 
-  const setupItems = [
-    {
-      to: '/platform/setup/general',
-      label: t('General'),
-      icon: SettingsIcon,
-    },
-    {
-      to: '/platform/setup/ai',
-      label: t('AI Center'),
-      icon: SparklesIcon,
-    },
-    {
-      to: '/platform/setup/mcp',
-      label: t('MCP Server'),
-      icon: McpSvg,
-    },
-    {
-      to: '/platform/setup/connections',
-      label: t('Global Connections'),
-      icon: UnplugIcon,
-      locked: !platform.plan.globalConnectionsEnabled,
-    },
-    {
-      to: '/platform/setup/pieces',
-      label: t('Pieces'),
-      icon: PuzzleIcon,
-      locked: !platform.plan.managePiecesEnabled,
-    },
-    {
-      to: '/platform/setup/templates',
-      label: t('Templates'),
-      icon: LayoutGridIcon,
-      locked: !platform.plan.manageTemplatesEnabled,
-    },
-    {
-      to: '/platform/setup/billing',
-      label: t('Billing & subscription'),
-      icon: ReceiptIcon,
-      locked: edition === ApEdition.COMMUNITY,
-    },
-    {
-      to: '/platform/setup/usage',
-      label: t('Usage'),
-      icon: ChartLineIcon,
-      locked: edition === ApEdition.COMMUNITY,
-    },
-    {
-      to: '/platform/security/embed',
-      label: t('Embedding'),
-      icon: FrameIcon,
-      locked: !platform.plan.embeddingEnabled,
-    },
-  ];
-
-  const groups: {
-    label: string;
-    items: {
-      to: string;
-      label: string;
-      icon?: ComponentType<{ className?: string }>;
-      locked?: boolean;
-    }[];
-  }[] = [
-    {
-      label: t('General'),
-      items: [
-        {
-          to: '/platform/projects',
-          label: t('Projects'),
-          icon: LayoutGridIcon,
-          locked: platform.plan.billedTeamProjectsLimit === 0,
-        },
-        {
-          to: '/platform/users',
-          label: t('Users'),
-          icon: UsersIcon,
-        },
-        {
-          to: '/platform/connections',
-          label: t('Connections'),
-          icon: UnplugIcon,
-        },
-      ],
-    },
-    {
-      label: t('Setup'),
-      items: setupItems,
-    },
-    {
-      label: t('Security'),
-      items: [
-        {
-          to: '/platform/security/sso',
-          label: t('Single Sign On'),
-          icon: LogInIcon,
-          locked: !platform.plan.ssoEnabled,
-        },
-        {
-          to: '/platform/security/roles-and-access',
-          label: t('Roles & Access'),
-          icon: Settings2Icon,
-          locked: !platform.plan.projectRolesEnabled,
-        },
-        {
-          to: '/platform/security/api-keys',
-          label: t('API Keys'),
-          icon: FileJson2Icon,
-          locked: !platform.plan.apiKeysEnabled,
-        },
-        {
-          to: '/platform/security/secret-managers',
-          label: t('Secret Managers'),
-          icon: KeyRoundIcon,
-          locked: !platform.plan.secretManagersEnabled,
-        },
-      ],
-    },
-    {
-      label: t('Observability'),
-      items: [
-        {
-          to: '/platform/security/audit-logs',
-          label: t('Audit Logs'),
-          icon: SquareDashedBottomCodeIcon,
-          locked: !platform.plan.auditLogEnabled,
-        },
-        {
-          to: '/platform/infrastructure/event-destinations',
-          label: t('Event Streaming'),
-          icon: WebhookIcon,
-          locked: !platform.plan.eventStreamingEnabled,
-        },
-      ],
-    },
-    {
-      label: t('Infrastructure'),
-      items: [
-        {
-          to: '/platform/infrastructure/workers',
-          label: t('Workers'),
-          icon: ServerIcon,
-        },
-        {
-          to: '/platform/infrastructure/health',
-          label: t('Health'),
-          icon: FileHeartIcon,
-        },
-        {
-          to: '/platform/infrastructure/triggers',
-          label: t('Triggers'),
-          icon: MousePointerClickIcon,
-        },
-        ...(edition === ApEdition.CLOUD
-          ? []
-          : [
-              {
-                to: '/platform/infrastructure/configurations',
-                label: t('Configurations'),
-                icon: Settings2Icon,
-              },
-            ]),
-      ],
-    },
-  ];
+  const location = useLocation();
+  const context = { plan: platform.plan, edition };
+  const pages = adminPagesUtils.visibleNavPages(context);
+  const activeId = adminPagesUtils.activePageId(location.pathname);
+  const [searchParams] = useSearchParams();
+  const requestedTabId = searchParams.get('tab');
 
   return (
     <Sidebar className="border-r-0!">
@@ -240,26 +63,44 @@ export function PlatformSidebar() {
       </SidebarHeader>
       <div className="flex-1 overflow-y-auto">
         <SidebarContent className="gap-0">
-          {groups.map((group, idx) => (
-            <SidebarGroup key={group.label} className="cursor-default shrink-0">
-              {idx > 0 && <SidebarSeparator className="mb-3" />}
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {group.items.map((item) => (
-                    <ApSidebarItem
-                      type="link"
-                      key={item.label}
-                      to={item.to}
-                      label={item.label}
-                      icon={item.icon}
-                      locked={item.locked}
-                    />
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          ))}
+          <SidebarGroup className="cursor-default shrink-0">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {pages.map((page) => {
+                  const tabs = adminPagesUtils.navTabs({ page, context });
+                  const isActivePage = page.id === activeId;
+                  const activeTabId = adminPagesUtils.activeTabId({
+                    page,
+                    context,
+                    requested: requestedTabId,
+                  });
+                  return (
+                    <Fragment key={page.id}>
+                      <PlatformNavItem
+                        to={page.path}
+                        label={t(page.nav.label)}
+                        icon={page.nav.icon}
+                        active={
+                          isActivePage &&
+                          !tabs.some((tab) => tab.id === activeTabId)
+                        }
+                        crowned={adminPagesUtils.isCrowned({ page, context })}
+                      />
+                      {tabs.map((tab) => (
+                        <PlatformNavSubItem
+                          key={tab.id}
+                          to={`${page.path}?tab=${tab.id}`}
+                          label={t(tab.label)}
+                          active={isActivePage && activeTabId === tab.id}
+                          crowned={tab.isLocked?.(context) === true}
+                        />
+                      ))}
+                    </Fragment>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         </SidebarContent>
       </div>
 

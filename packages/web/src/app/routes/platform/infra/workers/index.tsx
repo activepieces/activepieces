@@ -22,8 +22,8 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
-import { RequestTrial } from '@/app/components/request-trial';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
+import { VIEW_QUERY_PARAM } from '@/app/routes/platform/admin-pages';
 import {
   Alert,
   AlertAction,
@@ -43,6 +43,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { RequestTrial } from '@/features/billing';
 import { workersQueries } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -53,8 +54,6 @@ import { SandboxesPopover } from './sandboxes-popover';
 import { WorkerAssignmentsTab } from './worker-assignments-tab';
 import { WorkerConfigsPopover } from './worker-configs-popover';
 
-type TabValue = 'health' | 'worker-groups';
-
 export default function WorkersPage() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { platform } = platformHooks.useCurrentPlatform();
@@ -62,14 +61,14 @@ export default function WorkersPage() {
   const { data: workersData, isLoading } = workersQueries.useWorkerMachines();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = (searchParams.get('tab') as TabValue) || 'health';
+  const activeTab = parseTabValue(searchParams.get(VIEW_QUERY_PARAM));
 
   const setTab = (tab: TabValue) => {
     const newParams = new URLSearchParams(searchParams);
     if (tab === 'health') {
-      newParams.delete('tab');
+      newParams.delete(VIEW_QUERY_PARAM);
     } else {
-      newParams.set('tab', tab);
+      newParams.set(VIEW_QUERY_PARAM, tab);
     }
     setSearchParams(newParams, { replace: true });
   };
@@ -378,3 +377,9 @@ type WorkerCardProps = {
   worker: WorkerMachineWithStatus;
   index: number;
 };
+
+function parseTabValue(value: string | null): TabValue {
+  return value === 'worker-groups' ? value : 'health';
+}
+
+type TabValue = 'health' | 'worker-groups';
