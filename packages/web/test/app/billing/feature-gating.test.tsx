@@ -94,6 +94,7 @@ vi.mock('@/components/ui/sidebar-shadcn', () => ({
   ),
 }));
 
+import { FeatureSample } from '@/app/components/feature-sample';
 import { FeatureTeaser } from '@/app/components/feature-teaser';
 import { CreateProjectButton } from '@/features/projects/components/create-project-button';
 
@@ -240,5 +241,27 @@ describe('feature teaser', () => {
     expect(container.querySelector('video')?.getAttribute('src')).toBe(
       SHOWCASE_VIDEO,
     );
+  });
+});
+
+describe('feature sample', () => {
+  it('offers contact sales on community', () => {
+    edition = 'ce';
+    render(
+      <FeatureSample locked title="Unlock Audit Logs" featureKey="AUDIT_LOGS">
+        <div />
+      </FeatureSample>,
+    );
+    expect(screen.getByRole('button', { name: /contact sales/i })).toBeDefined();
+  });
+
+  it('shows no sales form for a surface with no feature key', () => {
+    edition = 'ce';
+    render(
+      <FeatureSample locked title="Unlock Audit Logs">
+        <div />
+      </FeatureSample>,
+    );
+    expect(screen.queryByRole('button', { name: /contact sales/i })).toBeNull();
   });
 });
