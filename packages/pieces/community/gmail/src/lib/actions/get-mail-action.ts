@@ -8,7 +8,7 @@ export const gmailGetEmailAction = createAction({
   auth: gmailAuth,
   name: 'gmail_get_mail',
   classification: 'READ',
-  description: 'Get an email via Id.',
+  description: 'Read one email by its message ID, including attachments.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -18,8 +18,9 @@ export const gmailGetEmailAction = createAction({
   displayName: 'Get Email',
   props: {
     message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description: 'The messageId of the mail to read.',
+      displayName: 'Message',
+      description: 'Message ID from a Find Email step or a Gmail trigger.',
+      placeholder: '18c2f1a9b3d4e5f6',
       required: true,
     }),
   },

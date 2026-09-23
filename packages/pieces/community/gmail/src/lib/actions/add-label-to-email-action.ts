@@ -13,13 +13,13 @@ export const gmailAddLabelToEmailAction = createAction({
   audience: 'human',
   props: {
     message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description:
-        'The Gmail message ID to label (obtain from Search Email or Get Message).',
+      displayName: 'Message',
+      description: 'Message ID from a Find Email step or a Gmail trigger.',
+      placeholder: '18c2f1a9b3d4e5f6',
       required: true,
     }),
     label: GmailProps.label({
-      description: 'The label to apply to the message.',
+      description: 'Label to add.',
       required: true,
     }),
   },

@@ -12,9 +12,9 @@ export const gmailArchiveEmailAction = createAction({
   audience: 'human',
   props: {
     message_id: Property.ShortText({
-      displayName: 'Message ID',
-      description:
-        'The Gmail message ID to archive (obtain from Search Email or Get Message).',
+      displayName: 'Message',
+      description: 'Message ID from a Find Email step or a Gmail trigger.',
+      placeholder: '18c2f1a9b3d4e5f6',
       required: true,
     }),
   },
