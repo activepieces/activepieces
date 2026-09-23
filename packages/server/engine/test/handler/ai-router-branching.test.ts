@@ -1,4 +1,4 @@
-import { AiRouterMatchMode, FlowAction, FlowRunStatus, StepOutputStatus } from '@activepieces/shared'
+import { AI_ROUTER_MAX_STATE_LENGTH, AiRouterMatchMode, FlowAction, FlowRunStatus, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildAiRouter, buildPieceAction, generateMockEngineConstants } from './test-helper'
@@ -82,6 +82,18 @@ describe('ai router', () => {
                 Otherwise: 'Anything that fits none of the other routes',
             },
         })
+    })
+
+    it('sends at most the first 20,000 characters of the input', async () => {
+        const calls = answerWith({ matched: ['Billing'] })
+
+        await execute(buildAiRouter({
+            text: 'x'.repeat(AI_ROUTER_MAX_STATE_LENGTH + 5_000),
+            routes: [{ branchName: 'Billing', description: 'Payments' }],
+            children: [mapperStep('billing')],
+        }))
+
+        expect(calls[0]).toMatchObject({ state: 'x'.repeat(AI_ROUTER_MAX_STATE_LENGTH) })
     })
 
     it('sends a route named after an inherited object property', async () => {

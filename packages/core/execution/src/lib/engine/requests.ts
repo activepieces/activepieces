@@ -83,8 +83,10 @@ export type UpdateRunProgressRequest = {
     }
 }
 
+export const AI_ROUTER_MAX_STATE_LENGTH = 20_000
+
 export const ChooseAiRouteRequest = z.object({
-    state: z.string(),
+    state: z.string().max(AI_ROUTER_MAX_STATE_LENGTH),
     question: z.string(),
     options: z.record(z.string(), z.string()),
     matchMode: z.enum(AiRouterMatchMode),

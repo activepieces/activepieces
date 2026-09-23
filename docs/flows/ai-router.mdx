@@ -51,7 +51,7 @@ Never ask the model whether 500 is bigger than 499.
 
 | Field | What it does |
 |---|---|
-| **Input** | The text the model reads. Reference a previous step, e.g. `{{trigger.body.message}}`. |
+| **Input** | The text the model reads. Reference a previous step, e.g. `{{trigger.body.message}}`. Only the first 20,000 characters are sent. |
 | **Question** | One question. With the default match, exactly one route answers it. |
 | **Routes** | Each route's **name** is a possible answer; its **description** tells the model when to pick it. |
 | **Otherwise** | Always present, always last. Edit its description like any other route. |

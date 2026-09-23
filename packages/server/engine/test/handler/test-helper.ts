@@ -82,7 +82,7 @@ export function buildRouterWithOneCondition({ children, conditions, executionTyp
     }
 }
 
-export function buildAiRouter({ children, routes, fallback, minConfidence, matchMode }: { children: (FlowAction | null)[], routes: { branchName: string, description?: string }[], fallback?: { branchName: string, description?: string }, minConfidence?: number, matchMode?: AiRouterMatchMode }): AiRouterAction {
+export function buildAiRouter({ children, routes, fallback, minConfidence, matchMode, text }: { children: (FlowAction | null)[], routes: { branchName: string, description?: string }[], fallback?: { branchName: string, description?: string }, minConfidence?: number, matchMode?: AiRouterMatchMode, text?: string }): AiRouterAction {
     const fallbackBranches = fallback === undefined ? [] : [{
         branchType: BranchExecutionType.FALLBACK as const,
         branchName: fallback.branchName,
@@ -94,7 +94,7 @@ export function buildAiRouter({ children, routes, fallback, minConfidence, match
         type: FlowActionType.AI_ROUTER,
         skip: false,
         settings: {
-            text: 'My card was charged twice',
+            text: text ?? 'My card was charged twice',
             question: 'Which team should handle this?',
             matchMode: matchMode ?? AiRouterMatchMode.BEST_MATCH,
             branches: [

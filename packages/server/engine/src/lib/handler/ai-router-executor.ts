@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
-import { AiRouterAction, AiRouterActionSettings, AiRouterMatchMode, AiRouterStepOutput, BranchExecutionType, ChooseAiRouteResponse } from '@activepieces/shared'
+import { AI_ROUTER_MAX_STATE_LENGTH, AiRouterAction, AiRouterActionSettings, AiRouterMatchMode, AiRouterStepOutput, BranchExecutionType, ChooseAiRouteResponse } from '@activepieces/shared'
 import { aiRouterApi } from '../api/ai-router-api'
 import { utils } from '../utils'
 import { BaseExecutor, failStep } from './base-executor'
@@ -40,7 +40,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             aiRouterApi.choose({
                 apiUrl: constants.internalApiUrl,
                 engineToken: constants.engineToken,
-                state: asPlainText(resolvedInput.text),
+                state: asPlainText(resolvedInput.text).slice(0, AI_ROUTER_MAX_STATE_LENGTH),
                 question: asPlainText(resolvedInput.question),
                 options: toOptions(askableBranches({ branches: resolvedInput.branches, bestMatch })),
                 matchMode,
