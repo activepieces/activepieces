@@ -756,7 +756,7 @@
   "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.": "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
   "people": "people",
   "Full access": "Full access",
-  "Builds and runs everything in the project": "Builds and runs everything in the project",
+  "Everything except people, settings and alerts": "Everything except people, settings and alerts",
   "View only": "View only",
   "Access to the team projects they're invited to": "Access to the team projects they're invited to",
   "What new members get, and what each role can do.": "What new members get, and what each role can do.",
