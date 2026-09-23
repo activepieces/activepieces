@@ -5,17 +5,19 @@ import { searchIssuesByJql, mapFieldNames } from '../common';
 import * as z from 'zod/mini'
 import { propsValidation } from '@activepieces/pieces-common';
 
+import { issueListOutputSchema } from '../output-schemas';
 export const searchIssues = createAction({
   name: 'search_issues',
   displayName: 'Search Issues',
   description: 'Search for issues with JQL',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Search Jira issues with an arbitrary JQL query, paginating automatically up to a max-results cap (1-5000) and optionally restricting which fields are returned or mapping field IDs to readable names. The go-to tool for finding issues by project, status, assignee, dates, or any JQL-expressible criteria; limit returned fields on large result sets to avoid memory issues. Read-only and idempotent.',
     idempotent: true,
   },
   auth: jiraCloudAuth,
+  outputSchema: issueListOutputSchema,
   props: {
     memoryWarning: Property.MarkDown({
       value: `Fetching a large number of issues without specifying **Fields to Return** may exceed your flow's memory limits. Use field selection to reduce payload size.`,

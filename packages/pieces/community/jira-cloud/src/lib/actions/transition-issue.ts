@@ -9,18 +9,20 @@ import {
   issueStatusIdProp,
 } from '../common/props';
 
+import { legacyTransitionIssueOutputSchema } from '../output-schemas';
 export const transitionIssueAction = createAction({
   auth: jiraCloudAuth,
   name: 'transition_issue',
   displayName: 'Transition Issue',
   description:
     'Moves an issue to a new status by executing a workflow transition.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Execute a workflow transition on a Jira issue to move it to a new status (e.g. In Progress to Done), returning the refreshed issue. The transition must be valid from the issue\'s current status under its workflow, so it is not idempotent: re-running after the move succeeds fails because the transition is no longer available.',
     idempotent: false,
   },
+  outputSchema: legacyTransitionIssueOutputSchema,
   props: {
     projectId: getProjectIdDropdown(),
     issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

@@ -5,17 +5,19 @@ import { sendJiraRequest } from '../common';
 import FormData from 'form-data';
 import { getProjectIdDropdown, getIssueIdDropdown } from '../common/props';
 
+import { legacyAttachmentListOutputSchema } from '../output-schemas';
 export const addAttachmentToIssueAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'add_issue_attachment',
 	displayName: 'Add Attachment to Issue',
 	description: 'Adds an attachment to an issue.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Upload a file as an attachment on an existing Jira issue, identified by project and issue. Use when a file (image, log, document) needs to be stored on the issue itself rather than referenced in a comment. Not idempotent: re-running uploads a duplicate copy of the same file.',
 		idempotent: false,
 	},
+	outputSchema: legacyAttachmentListOutputSchema,
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
