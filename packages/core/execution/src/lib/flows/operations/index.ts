@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { Nullable } from '@activepieces/core-utils'
 import { Metadata } from '@activepieces/core-utils'
-import { BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
+import { AiRouterActionSchema, AiRouterActionSettings, BranchCondition, CodeActionSchema, CodeActionSettings, FlowActionType, LoopOnItemsActionSchema, LoopOnItemsActionSettings, PieceActionSchema, PieceActionSettings, RouterActionSchema, RouterActionSettings } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { Note } from '../note'
@@ -69,6 +69,7 @@ export const AddBranchRequest = z.object({
     branchIndex: z.number(),
     stepName: z.string(),
     conditions: z.array(z.array(BranchCondition)).optional(),
+    description: z.string().optional(),
     branchName: z.string(),
 })
 export const MoveBranchRequest = z.object({
@@ -153,6 +154,7 @@ export const UpdateActionRequest = z.union([
     LoopOnItemsActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: LoopOnItemsActionSettings.omit({ sampleData: true }) })),
     PieceActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: PieceActionSettings.omit({ sampleData: true }) })),
     RouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: RouterActionSettings.omit({ sampleData: true }) })),
+    AiRouterActionSchema.omit({ lastUpdatedDate: true, settings: true }).and(z.object({ settings: AiRouterActionSettings.omit({ sampleData: true }) })),
 ])
 
 
