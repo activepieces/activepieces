@@ -6,7 +6,7 @@ import { unsubscribeSubscriberOutputSchema } from '../output-schemas';
 export const unsubscribeSubscriberAction = createAction({
 	auth: mailerLiteAuth,
 	name: 'unsubscribe_subscriber',
-	classification: 'WRITE',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Unsubscribe Subscriber',
 	description: 'Set a subscriber status to unsubscribed.',
 	audience: 'both',

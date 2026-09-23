@@ -1,25 +1,28 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { mailerLiteAuth } from '../auth';
-import { mailerLiteCommon } from '../common';
 import { mailerLiteApi } from '../common/client';
-import { listGroupSubscribersOutputSchema } from '../output-schemas';
+import { listFormSubscribersOutputSchema } from '../output-schemas';
 
-export const listGroupSubscribersAction = createAction({
+export const listFormSubscribersAction = createAction({
 	auth: mailerLiteAuth,
-	name: 'list_group_subscribers',
-	classification: 'READ',
-	displayName: 'List Group Subscribers',
-	description: 'List the subscribers belonging to a group.',
-	audience: 'both',
+	name: 'list_form_subscribers',
+	classification: 'SEARCH',
+	displayName: 'List Form Subscribers',
+	description: 'List the subscribers who signed up through a form.',
+	audience: 'ai',
 	aiMetadata: {
 		description:
-			'List the subscribers that belong to a specific MailerLite group, given the group ID. By default MailerLite returns active subscribers only; set status to list unsubscribed, unconfirmed, bounced or junk members instead. Cursor-paginated: pass meta.next_cursor back as cursor to get the next page. Read-only and idempotent.',
+			'List the subscribers who signed up through a MailerLite form, given the form ID from list_forms. By default MailerLite returns active subscribers only; set status to list others. Cursor-paginated: pass meta.next_cursor back as cursor to get the next page. Read-only.',
 		idempotent: true,
 	},
-	outputSchema: listGroupSubscribersOutputSchema,
+	outputSchema: listFormSubscribersOutputSchema,
 	props: {
-		subscriberGroupId: mailerLiteCommon.subscriberGroupId(true),
+		form_id: Property.ShortText({
+			displayName: 'Form ID',
+			description: 'The form ID, from list_forms.',
+			required: true,
+		}),
 		status: Property.StaticDropdown({
 			displayName: 'Status',
 			description: 'Only return subscribers with this status. MailerLite defaults to active.',
@@ -36,7 +39,7 @@ export const listGroupSubscribersAction = createAction({
 		}),
 		limit: Property.Number({
 			displayName: 'Limit',
-			description: 'Subscribers to return (1-1000, default 25).',
+			description: 'Items to return (1-1000, default 25).',
 			required: false,
 			defaultValue: 25,
 		}),
@@ -47,17 +50,18 @@ export const listGroupSubscribersAction = createAction({
 		}),
 	},
 	async run(context) {
-		const id = mailerLiteApi.requireId({ value: context.propsValue.subscriberGroupId, label: 'Group' });
-		return mailerLiteApi.request<unknown>({
+		const id = mailerLiteApi.requireId({ value: context.propsValue.form_id, label: 'Form ID' });
+		const body = await mailerLiteApi.request<unknown>({
 			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
-			path: `/groups/${id}/subscribers`,
-			resource: `group ${id}`,
+			path: `/forms/${id}/subscribers`,
+			resource: `form ${id}`,
 			queryParams: {
+				'filter[status]': context.propsValue.status,
 				limit: mailerLiteApi.resolveLimit({ value: context.propsValue.limit, fallback: 25, max: 1000 }),
 				cursor: context.propsValue.cursor,
-				'filter[status]': context.propsValue.status,
 			},
 		});
+		return body;
 	},
 });
