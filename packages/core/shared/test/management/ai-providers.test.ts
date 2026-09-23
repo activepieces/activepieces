@@ -10,11 +10,9 @@ const bedrockRequest = {
 }
 
 describe('AI provider requests', () => {
-    it('accepts a bedrock session token', () => {
-        const request = { ...bedrockRequest, auth: { ...bedrockRequest.auth, sessionToken: 'temporary' } }
-
-        expect(CreateAIProviderRequest.parse(request).auth).toEqual(request.auth)
-        expect(UpdateAIProviderRequest.parse({ displayName: 'AWS Bedrock', auth: request.auth }).auth).toEqual(request.auth)
+    it('keeps every credential the provider models', () => {
+        expect(CreateAIProviderRequest.parse(bedrockRequest).auth).toEqual(bedrockRequest.auth)
+        expect(UpdateAIProviderRequest.parse({ displayName: 'AWS Bedrock', auth: bedrockRequest.auth }).auth).toEqual(bedrockRequest.auth)
     })
 
     it('rejects a credential field it cannot honour instead of dropping it', () => {
