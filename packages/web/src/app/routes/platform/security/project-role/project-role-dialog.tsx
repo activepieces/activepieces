@@ -122,11 +122,13 @@ function RoleDialogBody({
     name.trim().length > 0 && !isSaving && (isCreate || isDirty);
   const footerNote =
     saveError ??
-    (!isCreate && tab === 'people'
-      ? t(
-          "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
-        )
-      : null);
+    footerNoteFor({
+      isCreate,
+      isRenaming,
+      isBuiltIn,
+      isEditingPermissions,
+      tab,
+    });
 
   const changeBase = (nextBase: RoleBase) => {
     setBase(nextBase);
@@ -192,7 +194,7 @@ function RoleDialogBody({
               </Badge>
             </DialogTitle>
           )}
-          <DialogDescription className={cn('text-sm', !isBuiltIn && 'sr-only')}>
+          <DialogDescription className="sr-only">
             {isBuiltIn
               ? t("Built-in roles can't be changed")
               : t('Tick to add a permission, untick to take it away.')}
@@ -339,7 +341,7 @@ function RoleDialogBody({
         </Tabs>
       )}
 
-      <footer className="flex shrink-0 flex-wrap items-center justify-end gap-x-6 gap-y-2 border-t px-6 py-3">
+      <footer className="flex min-h-15 shrink-0 flex-wrap items-center justify-end gap-x-6 gap-y-2 border-t px-6 py-3">
         {footerNote ? (
           <p
             role={saveError ? 'alert' : undefined}
@@ -370,6 +372,30 @@ function RoleDialogBody({
   );
 }
 
+function footerNoteFor({
+  isCreate,
+  isRenaming,
+  isBuiltIn,
+  isEditingPermissions,
+  tab,
+}: FooterNoteParams): string | null {
+  if (isCreate || isRenaming) {
+    return null;
+  }
+  if (tab === 'people') {
+    return t(
+      "A role is set per project, so the same person can have a different role elsewhere. To change someone's role, open that project.",
+    );
+  }
+  if (isBuiltIn) {
+    return t("Built-in roles can't be changed");
+  }
+  if (isEditingPermissions) {
+    return null;
+  }
+  return t('Read-only — open the menu to edit this role.');
+}
+
 function samePermissions(left: string[], right: string[]): boolean {
   if (left.length !== right.length) {
     return false;
@@ -377,6 +403,14 @@ function samePermissions(left: string[], right: string[]): boolean {
   const rightSet = new Set(right);
   return left.every((permission) => rightSet.has(permission));
 }
+
+type FooterNoteParams = {
+  isCreate: boolean;
+  isRenaming: boolean;
+  isBuiltIn: boolean;
+  isEditingPermissions: boolean;
+  tab: RoleDialogTab;
+};
 
 type RoleDialogTab = 'permissions' | 'people';
 
