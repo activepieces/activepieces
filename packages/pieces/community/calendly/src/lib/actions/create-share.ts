@@ -43,8 +43,12 @@ export const createShareAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const hasWindow =
-      calendlyCommon.isProvided(propsValue.startDate) && calendlyCommon.isProvided(propsValue.endDate);
+    const hasStartDate = calendlyCommon.isProvided(propsValue.startDate);
+    const hasEndDate = calendlyCommon.isProvided(propsValue.endDate);
+    if (hasStartDate !== hasEndDate) {
+      throw new Error('Set both Start Date and End Date to limit the booking window, or leave both empty.');
+    }
+    const hasWindow = hasStartDate && hasEndDate;
     const response = await calendlyCommon.calendlyRequest<{ resource: CalendlyRecord }>({
       token: auth.secret_text,
       method: HttpMethod.POST,

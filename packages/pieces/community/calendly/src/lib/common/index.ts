@@ -138,17 +138,15 @@ function validateTimeWindow({
   if (Number.isNaN(start) || Number.isNaN(end)) {
     throw new Error('Start Time and End Time must be valid ISO 8601 date-times.');
   }
-  if (end <= start) {
-    throw new Error('End Time must be after Start Time.');
+  const effectiveStart = Math.max(start, Date.now() + FUTURE_START_BUFFER_MS);
+  if (end <= effectiveStart) {
+    throw new Error('End Time must be after Start Time and in the future.');
   }
-  if (end <= Date.now()) {
-    throw new Error('End Time must be in the future.');
-  }
-  if (end - start > maxDays * DAY_MS) {
+  if (end - effectiveStart > maxDays * DAY_MS) {
     throw new Error(`The range between Start Time and End Time can be at most ${maxDays} days.`);
   }
   return {
-    start_time: new Date(Math.max(start, Date.now() + FUTURE_START_BUFFER_MS)).toISOString(),
+    start_time: new Date(effectiveStart).toISOString(),
     end_time: new Date(end).toISOString(),
   };
 }

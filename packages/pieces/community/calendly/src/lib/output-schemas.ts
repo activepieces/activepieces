@@ -194,6 +194,34 @@ const inviteeFields: OutputSchemaField[] = [
       { key: 'utm_term', label: 'UTM Term' },
     ],
   },
+  {
+    key: 'no_show',
+    label: 'No Show',
+    children: [
+      { key: 'uri', label: 'No Show URI', format: 'url' },
+      { key: 'created_at', label: 'Marked At', format: 'datetime' },
+    ],
+  },
+  {
+    key: 'payment',
+    label: 'Payment',
+    children: [
+      { key: 'external_id', label: 'Payment ID' },
+      { key: 'provider', label: 'Provider' },
+      { key: 'amount', label: 'Amount', format: 'number' },
+      { key: 'currency', label: 'Currency' },
+      { key: 'successful', label: 'Successful', format: 'boolean' },
+      { key: 'terms', label: 'Terms' },
+    ],
+  },
+  {
+    key: 'reconfirmation',
+    label: 'Reconfirmation',
+    children: [
+      { key: 'created_at', label: 'Requested At', format: 'datetime' },
+      { key: 'confirmed_at', label: 'Confirmed At', format: 'datetime' },
+    ],
+  },
   { key: 'text_reminder_number', label: 'Text Reminder Number' },
   { key: 'created_at', label: 'Created At', format: 'datetime' },
   { key: 'updated_at', label: 'Updated At', format: 'datetime' },
