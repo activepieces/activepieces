@@ -7,9 +7,10 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const updateCustomerAction = createAction({
   auth: shopifyAuth,
   name: 'update_customer',
+  classification: 'WRITE',
   displayName: 'Update Customer',
   description: 'Update an existing customer.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Update fields on an existing Shopify customer identified by customer ID (email, name, phone, tags, marketing consent). Pick this to edit a known customer rather than Create Customer; the customer ID is required and only supplied fields are changed. Sets absolute field values, so re-running with the same input is idempotent.', idempotent: true },
   props: {
     customerId: Property.ShortText({

@@ -6,9 +6,10 @@ import { ShopifyDraftOrder } from '../common/types';
 export const createDraftOrderAction = createAction({
   auth: shopifyAuth,
   name: 'create_draft_order',
+  classification: 'WRITE',
   displayName: 'Create Draft Order',
   description: 'Create a new draft order.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Create a draft (unfinalized) Shopify order from a single line item and optional customer, for quotes or invoices that are not yet placed. Pick this over Create Order when the order should stay editable and unpaid until completed. Each call creates a new draft, so it is not idempotent.', idempotent: false },
   props: {
     productId: Property.Number({

@@ -5,9 +5,10 @@ import { getCustomers } from '../common';
 export const getCustomersAction = createAction({
   auth: shopifyAuth,
   name: 'get_customers',
+  classification: 'SEARCH',
   displayName: 'Get Customers',
   description: `Get an existing customers.`,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieve the list of customers in the Shopify store. Read-only and repeatable; pick this to browse or enumerate customer records when you do not have a specific customer ID. Returns all customers without filtering.', idempotent: true },
   props: {
   },

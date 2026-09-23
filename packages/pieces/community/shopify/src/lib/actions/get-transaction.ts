@@ -5,9 +5,10 @@ import { getTransaction } from '../common';
 export const getTransactionAction = createAction({
   auth: shopifyAuth,
   name: 'get_transaction',
+  classification: 'READ',
   displayName: 'Get Transaction',
   description: `Get an existing transaction's information.`,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Look up a single payment transaction by its transaction ID within a given order. Read-only and repeatable; use to inspect payment, capture, or refund details when you already know both the order ID and transaction ID.', idempotent: true },
   props: {
     orderId: Property.Number({

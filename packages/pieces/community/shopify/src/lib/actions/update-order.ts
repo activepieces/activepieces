@@ -10,9 +10,10 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const updateOrderAction = createAction({
   auth: shopifyAuth,
   name: 'update_order',
+  classification: 'WRITE',
   displayName: 'Update Order',
   description: 'Update an existing order.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Update editable fields on an existing Shopify order by order ID (email, phone, tags, note). Use to amend order metadata; this does not change line items, fulfillment, or payment. Sets absolute field values, so re-running with the same input is idempotent.', idempotent: true },
   props: {
     id: Property.ShortText({

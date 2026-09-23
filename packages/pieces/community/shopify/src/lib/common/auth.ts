@@ -44,6 +44,8 @@ Use this option for apps created in the Shopify **Dev Dashboard** (all new apps 
 const NO_APPROVED_SCOPES_ERROR =
   'Your Shopify app has no approved Admin API scopes on this store. In the Dev Dashboard, release an app version that includes the scopes, then install/approve it on the store (reinstall if needed), and try again.';
 
+export const SHOPIFY_API_VERSION = '2026-07';
+
 const SHOP_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
 
 const INVALID_SHOP_NAME_ERROR =
@@ -53,7 +55,7 @@ export function getBaseUrl(shopName: string) {
   if (!isValidShopName(shopName)) {
     throw new Error(INVALID_SHOP_NAME_ERROR);
   }
-  return `https://${shopName}.myshopify.com/admin/api/2023-10`;
+  return `https://${shopName}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}`;
 }
 
 export const shopifyAdminTokenAuth = PieceAuth.CustomAuth({

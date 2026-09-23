@@ -6,9 +6,10 @@ import { ShopifyOrder } from '../common/types';
 export const createOrderAction = createAction({
   auth: shopifyAuth,
   name: 'create_order',
+  classification: 'WRITE',
   displayName: 'Create Order',
   description: 'Create a new order.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Create a new placed Shopify order from a single line item, with optional customer, email, and receipt toggles. Pick this for a finalized order; use Create Draft Order when it should remain an editable, unpaid draft. Each call creates a new order, so repeating it may produce duplicates.', idempotent: false },
   props: {
     productId: Property.Number({

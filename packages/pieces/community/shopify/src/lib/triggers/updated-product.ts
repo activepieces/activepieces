@@ -2,6 +2,7 @@ import { createShopifyWebhookTrigger } from '../common/register-webhook';
 
 export const updatedProduct = createShopifyWebhookTrigger({
   name: 'updated_product',
+  classification: 'READ',
   description: 'Triggered when a product is updated.',
   topic: 'products/update',
   displayName: 'Updated Product',

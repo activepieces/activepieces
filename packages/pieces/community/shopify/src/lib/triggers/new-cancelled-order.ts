@@ -2,6 +2,7 @@ import { createShopifyWebhookTrigger } from '../common/register-webhook';
 
 export const newCancelledOrder = createShopifyWebhookTrigger({
   name: 'new_cancelled_order',
+  classification: 'READ',
   description: 'Triggered when order is cancelled',
   topic: 'orders/cancelled',
   displayName: 'New Cancelled Order',

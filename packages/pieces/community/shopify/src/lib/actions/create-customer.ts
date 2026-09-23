@@ -8,9 +8,10 @@ import { createCustomer } from '../common';
 export const createCustomerAction = createAction({
   auth: shopifyAuth,
   name: 'create_customer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Create a new customer.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Create a new Shopify customer record with email, name, phone, tags, and marketing consent. Pick this for a new contact; use Update Customer to edit an existing one. Each call creates a new record, so repeating it may produce duplicate customers.', idempotent: false },
   props: {
     email: Property.ShortText({
