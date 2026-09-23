@@ -155,7 +155,8 @@ async function resolveModelId({ platformId, providerConfig, selectedModel, scope
     if (!keyServesNoKnownModel) {
         throw error
     }
-    if (!isNil(fallbackModelId)) {
+    const fallbackStillAllowed = !isNil(fallbackModelId) && (modelScope !== 'selected' || modelIds.includes(fallbackModelId))
+    if (fallbackStillAllowed) {
         return fallbackModelId
     }
     const offered = await aiProviderService(log).listModels({ platformId, provider, scope, configId })

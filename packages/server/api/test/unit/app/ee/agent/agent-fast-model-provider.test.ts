@@ -166,6 +166,16 @@ describe('resolveModelId', () => {
         expect(mockListModels).not.toHaveBeenCalled()
     })
 
+    it('refuses a borrowed model the admin has since scoped off the key', async () => {
+        const scopedKey = { ...bedrockKey, modelScope: 'selected' as const, modelIds: ['eu.anthropic.claude-haiku-4-5-20251001-v1:0'] }
+        mockListModels.mockResolvedValue([
+            { id: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Haiku', type: AIProviderModelType.TEXT },
+        ])
+
+        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: scopedKey, scope, fallbackModelId: 'eu.anthropic.claude-sonnet-4-6', log }))
+            .resolves.toBe('eu.anthropic.claude-haiku-4-5-20251001-v1:0')
+    })
+
     it('never answers with a model the key does not serve', async () => {
         mockListModels.mockResolvedValue([{ id: 'amazon.titan-image-generator-v1', name: 'Titan Image', type: AIProviderModelType.IMAGE }])
 
