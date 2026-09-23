@@ -128,7 +128,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
             : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, scope: runScope, log })
-        const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, scope: runScope, log })
+        const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, scope: runScope, fallbackModelId: resolvedModelId, log })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery

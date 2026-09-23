@@ -157,6 +157,15 @@ describe('resolveModelId', () => {
         await expect(resolve({ selectedModel: 'mistral.mistral-large-2407-v1:0' })).resolves.toBe('mistral.mistral-large-2407-v1:0')
     })
 
+    it('keeps the run on the model it already resolved rather than picking a second unverified one', async () => {
+        mockListModels.mockResolvedValue([
+            { id: 'eu.anthropic.claude-haiku-4-5-20251001-v1:0', name: 'Haiku', type: AIProviderModelType.TEXT },
+        ])
+
+        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: bedrockKey, scope, fallbackModelId: 'eu.anthropic.claude-sonnet-4-6', log })).resolves.toBe('eu.anthropic.claude-sonnet-4-6')
+        expect(mockListModels).not.toHaveBeenCalled()
+    })
+
     it('never answers with a model the key does not serve', async () => {
         mockListModels.mockResolvedValue([{ id: 'amazon.titan-image-generator-v1', name: 'Titan Image', type: AIProviderModelType.IMAGE }])
 
