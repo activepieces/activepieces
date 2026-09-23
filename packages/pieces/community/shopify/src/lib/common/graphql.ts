@@ -1055,6 +1055,717 @@ function idempotencyKeyProp() {
   });
 }
 
+function mapProductSummary(product: GqlProduct) {
+  return {
+    id: product.id,
+    legacy_resource_id: product.legacyResourceId ?? null,
+    title: product.title ?? null,
+    handle: product.handle ?? null,
+    status: product.status ?? null,
+    vendor: product.vendor ?? null,
+    product_type: product.productType ?? null,
+    tags: joinTags(product.tags),
+    created_at: product.createdAt ?? null,
+    updated_at: product.updatedAt ?? null,
+    published_at: product.publishedAt ?? null,
+    total_inventory: product.totalInventory ?? null,
+    tracks_inventory: product.tracksInventory ?? null,
+    has_only_default_variant: product.hasOnlyDefaultVariant ?? null,
+    variants_count: product.variantsCount?.count ?? null,
+    media_count: product.mediaCount?.count ?? null,
+    min_price: product.priceRangeV2?.minVariantPrice?.amount ?? null,
+    max_price: product.priceRangeV2?.maxVariantPrice?.amount ?? null,
+    currency_code: product.priceRangeV2?.minVariantPrice?.currencyCode ?? null,
+    featured_media_id: product.featuredMedia?.id ?? null,
+    featured_image_url: product.featuredMedia?.preview?.image?.url ?? null,
+    category_id: product.category?.id ?? null,
+    category_name: product.category?.fullName ?? null,
+  };
+}
+
+function mapProductDetail(product: GqlProduct) {
+  return {
+    ...mapProductSummary(product),
+    description_html: product.descriptionHtml ?? null,
+    template_suffix: product.templateSuffix ?? null,
+    seo_title: product.seo?.title ?? null,
+    seo_description: product.seo?.description ?? null,
+    is_gift_card: product.isGiftCard ?? null,
+    requires_selling_plan: product.requiresSellingPlan ?? null,
+    options: (product.options ?? []).map(mapProductOption),
+    variants: (product.variants?.nodes ?? []).map(mapVariant),
+    variants_has_more: product.variants?.pageInfo?.hasNextPage ?? false,
+    media: (product.media?.nodes ?? []).map(mapMedia),
+    media_has_more: product.media?.pageInfo?.hasNextPage ?? false,
+  };
+}
+
+function mapProductOption(option: GqlProductOption) {
+  return {
+    id: option.id,
+    name: option.name ?? null,
+    position: option.position ?? null,
+    values: (option.optionValues ?? []).map((value) => ({
+      id: value.id,
+      name: value.name ?? null,
+      has_variants: value.hasVariants ?? null,
+    })),
+  };
+}
+
+function mapVariant(variant: GqlVariant) {
+  return {
+    id: variant.id,
+    legacy_resource_id: variant.legacyResourceId ?? null,
+    title: variant.title ?? null,
+    display_name: variant.displayName ?? null,
+    sku: variant.sku ?? null,
+    barcode: variant.barcode ?? null,
+    price: variant.price ?? null,
+    compare_at_price: variant.compareAtPrice ?? null,
+    position: variant.position ?? null,
+    inventory_quantity: variant.inventoryQuantity ?? null,
+    inventory_policy: variant.inventoryPolicy ?? null,
+    available_for_sale: variant.availableForSale ?? null,
+    taxable: variant.taxable ?? null,
+    selected_options: (variant.selectedOptions ?? []).map((option) => ({
+      name: option.name ?? null,
+      value: option.value ?? null,
+    })),
+    inventory_item_id: variant.inventoryItem?.id ?? null,
+    inventory_tracked: variant.inventoryItem?.tracked ?? null,
+    requires_shipping: variant.inventoryItem?.requiresShipping ?? null,
+    product_id: variant.product?.id ?? null,
+    product_title: variant.product?.title ?? null,
+    created_at: variant.createdAt ?? null,
+    updated_at: variant.updatedAt ?? null,
+  };
+}
+
+function mapMedia(media: GqlMedia) {
+  const errors = (media.mediaErrors ?? [])
+    .map((error) => error.message ?? error.code ?? '')
+    .filter((message) => message.length > 0);
+  return {
+    id: media.id ?? null,
+    alt: media.alt ?? null,
+    media_content_type: media.mediaContentType ?? null,
+    status: media.status ?? null,
+    image_url: media.image?.url ?? null,
+    width: media.image?.width ?? null,
+    height: media.image?.height ?? null,
+    mime_type: media.mimeType ?? null,
+    preview_url: media.preview?.image?.url ?? null,
+    external_url: media.originUrl ?? null,
+    filename: media.filename ?? null,
+    errors: errors.length > 0 ? errors.join('; ') : null,
+  };
+}
+
+function mapCollectionSummary(collection: GqlCollection) {
+  return {
+    id: collection.id,
+    legacy_resource_id: collection.legacyResourceId ?? null,
+    title: collection.title ?? null,
+    handle: collection.handle ?? null,
+    sort_order: collection.sortOrder ?? null,
+    updated_at: collection.updatedAt ?? null,
+    products_count: collection.productsCount?.count ?? null,
+    image_url: collection.image?.url ?? null,
+    image_alt: collection.image?.altText ?? null,
+  };
+}
+
+function mapCollection(collection: GqlCollection) {
+  return {
+    ...mapCollectionSummary(collection),
+    description_html: collection.descriptionHtml ?? null,
+    template_suffix: collection.templateSuffix ?? null,
+    seo_title: collection.seo?.title ?? null,
+    seo_description: collection.seo?.description ?? null,
+    sources: (collection.sources ?? []).map((source) => {
+      const selections = source.inclusion?.selections;
+      return {
+        id: source.id,
+        title: source.title ?? null,
+        type: source.__typename === 'CollectionConditionsSource' ? 'conditions' : 'sub_collections',
+        shareable: source.shareable ?? null,
+        app_id: source.app?.id ?? null,
+        target_type: source.targetType ?? null,
+        match_type: source.inclusion?.matchType ?? null,
+        conditions: (source.inclusion?.conditions ?? []).map(mapCollectionCondition),
+        selected_products: (selections?.nodes ?? []).map((selection) => ({
+          product_id: selection.product?.id ?? null,
+          product_title: selection.product?.title ?? null,
+          variant_ids: selection.variantIds ?? null,
+        })),
+        selected_products_count: selections?.nodes?.length ?? 0,
+        selected_products_truncated: selections?.pageInfo?.hasNextPage ?? false,
+      };
+    }),
+  };
+}
+
+function mapCollectionCondition(condition: GqlCollectionCondition) {
+  const relation =
+    condition.tagRelation ??
+    condition.titleRelation ??
+    condition.typeRelation ??
+    condition.vendorRelation ??
+    condition.variantTitleRelation ??
+    condition.priceRelation ??
+    condition.compareAtPriceRelation ??
+    condition.inventoryRelation ??
+    null;
+  const textValues =
+    condition.tagValues ??
+    condition.titleValues ??
+    condition.typeValues ??
+    condition.vendorValues ??
+    condition.variantTitleValues;
+  const money = condition.priceValue ?? condition.compareAtPriceValue;
+  const values = textValues
+    ? textValues
+    : money?.amount !== undefined && money.amount !== null
+      ? [money.amount]
+      : condition.inventoryValue !== undefined && condition.inventoryValue !== null
+        ? [String(condition.inventoryValue)]
+        : [];
+  return {
+    id: condition.id,
+    kind: (condition.__typename ?? '').replace('CollectionSourceInclusionCondition', ''),
+    relation,
+    values,
+    currency_code: money?.currencyCode ?? null,
+  };
+}
+
+function findConditionsSource({
+  collection,
+  sourceId,
+}: {
+  collection: GqlCollection;
+  sourceId: string | undefined;
+}): GqlCollectionSource | undefined {
+  if (sourceId !== undefined) {
+    return findExplicitConditionsSource({ collection, sourceId });
+  }
+  return editableConditionsSources(collection)[0];
+}
+
+function findExplicitConditionsSource({
+  collection,
+  sourceId,
+}: {
+  collection: GqlCollection;
+  sourceId: string;
+}): GqlCollectionSource {
+  const match = conditionsSources(collection).find((source) => source.id === sourceId);
+  if (!match) {
+    throw new Error(
+      `Source ${sourceId} is not a conditions source of collection ${collection.id}. Read the collection sources with get_collection.`
+    );
+  }
+  if (match.shareable === true) {
+    throw new Error(
+      `Source ${sourceId} ("${match.title ?? ''}") is shared with other collections, so changing its picks would change those collections too. Pick a non-shared source from get_collection, or omit source_id.`
+    );
+  }
+  return match;
+}
+
+function conditionsSources(collection: GqlCollection): GqlCollectionSource[] {
+  return (collection.sources ?? []).filter((source) => source.__typename === 'CollectionConditionsSource');
+}
+
+function editableConditionsSources(collection: GqlCollection): GqlCollectionSource[] {
+  return conditionsSources(collection).filter((source) => source.shareable !== true);
+}
+
+function sharedConditionsSources(collection: GqlCollection): GqlCollectionSource[] {
+  return conditionsSources(collection).filter((source) => source.shareable === true);
+}
+
+function mapInventoryItem(item: GqlInventoryItem) {
+  const variant = item.variants?.nodes?.[0];
+  return {
+    id: item.id,
+    legacy_resource_id: item.legacyResourceId ?? null,
+    sku: item.sku ?? null,
+    tracked: item.tracked ?? null,
+    requires_shipping: item.requiresShipping ?? null,
+    unit_cost: item.unitCost?.amount ?? null,
+    unit_cost_currency: item.unitCost?.currencyCode ?? null,
+    country_code_of_origin: item.countryCodeOfOrigin ?? null,
+    province_code_of_origin: item.provinceCodeOfOrigin ?? null,
+    harmonized_system_code: item.harmonizedSystemCode ?? null,
+    weight_value: item.measurement?.weight?.value ?? null,
+    weight_unit: item.measurement?.weight?.unit ?? null,
+    locations_count: item.locationsCount?.count ?? null,
+    variant_id: variant?.id ?? null,
+    variant_title: variant?.displayName ?? null,
+    product_id: variant?.product?.id ?? null,
+    product_title: variant?.product?.title ?? null,
+    created_at: item.createdAt ?? null,
+    updated_at: item.updatedAt ?? null,
+  };
+}
+
+function mapInventoryLevel(level: GqlInventoryLevel) {
+  const quantity = (name: string): number | null =>
+    (level.quantities ?? []).find((entry) => entry.name === name)?.quantity ?? null;
+  return {
+    id: level.id,
+    is_active: level.isActive ?? null,
+    can_deactivate: level.canDeactivate ?? null,
+    deactivation_alert: level.deactivationAlert ?? null,
+    inventory_item_id: level.item?.id ?? null,
+    sku: level.item?.sku ?? null,
+    location_id: level.location?.id ?? null,
+    location_name: level.location?.name ?? null,
+    available: quantity('available'),
+    on_hand: quantity('on_hand'),
+    committed: quantity('committed'),
+    incoming: quantity('incoming'),
+    reserved: quantity('reserved'),
+    damaged: quantity('damaged'),
+    safety_stock: quantity('safety_stock'),
+    quality_control: quantity('quality_control'),
+    updated_at: level.updatedAt ?? null,
+  };
+}
+
+function mapAdjustmentGroup(group: GqlInventoryAdjustmentGroup | null | undefined) {
+  return {
+    adjustment_group_id: group?.id ?? null,
+    created_at: group?.createdAt ?? null,
+    reason: group?.reason ?? null,
+    reference_document_uri: group?.referenceDocumentUri ?? null,
+    changes: (group?.changes ?? []).map((change) => ({
+      name: change.name ?? null,
+      delta: change.delta ?? null,
+      quantity_after_change: change.quantityAfterChange ?? null,
+      ledger_document_uri: change.ledgerDocumentUri ?? null,
+      inventory_item_id: change.item?.id ?? null,
+      sku: change.item?.sku ?? null,
+      location_id: change.location?.id ?? null,
+      location_name: change.location?.name ?? null,
+    })),
+  };
+}
+
+function mapLocation(location: GqlLocation) {
+  const address = location.address;
+  return {
+    id: location.id,
+    legacy_resource_id: location.legacyResourceId ?? null,
+    name: location.name ?? null,
+    is_active: location.isActive ?? null,
+    activatable: location.activatable ?? null,
+    deactivatable: location.deactivatable ?? null,
+    deletable: location.deletable ?? null,
+    fulfills_online_orders: location.fulfillsOnlineOrders ?? null,
+    ships_inventory: location.shipsInventory ?? null,
+    has_active_inventory: location.hasActiveInventory ?? null,
+    has_unfulfilled_orders: location.hasUnfulfilledOrders ?? null,
+    is_fulfillment_service: location.isFulfillmentService ?? null,
+    deactivated_at: location.deactivatedAt ?? null,
+    address1: address?.address1 ?? null,
+    address2: address?.address2 ?? null,
+    city: address?.city ?? null,
+    province: address?.province ?? null,
+    province_code: address?.provinceCode ?? null,
+    country: address?.country ?? null,
+    country_code: address?.countryCode ?? null,
+    zip: address?.zip ?? null,
+    phone: address?.phone ?? null,
+    formatted_address: Array.isArray(address?.formatted) ? address.formatted.join(', ') : null,
+    created_at: location.createdAt ?? null,
+    updated_at: location.updatedAt ?? null,
+  };
+}
+
+function mapPublication(publication: GqlPublication) {
+  return {
+    id: publication.id,
+    title: publication.catalog?.title ?? null,
+    catalog_id: publication.catalog?.id ?? null,
+    catalog_status: publication.catalog?.status ?? null,
+    auto_publish: publication.autoPublish ?? null,
+    supports_future_publishing: publication.supportsFuturePublishing ?? null,
+  };
+}
+
+function mapChannel(channel: GqlChannel) {
+  return {
+    id: channel.id,
+    name: channel.name ?? null,
+    handle: channel.handle ?? null,
+    account_name: channel.accountName ?? null,
+    app_id: channel.app?.id ?? null,
+    app_title: channel.app?.title ?? null,
+    supports_future_publishing: channel.supportsFuturePublishing ?? null,
+    products_count: channel.productsCount?.count ?? null,
+  };
+}
+
+function mapTaxonomyCategory(category: GqlTaxonomyCategory) {
+  return {
+    id: category.id,
+    name: category.name ?? null,
+    full_name: category.fullName ?? null,
+    level: category.level ?? null,
+    is_leaf: category.isLeaf ?? null,
+    is_root: category.isRoot ?? null,
+    is_archived: category.isArchived ?? null,
+    parent_id: category.parentId ?? null,
+    children_ids: category.childrenIds ?? [],
+  };
+}
+
+function parseOptionValues(value: unknown): Record<string, string>[] {
+  const text = readText(value);
+  if (!text) {
+    return [];
+  }
+  return text.split(',').map((pair) => {
+    const [optionName, ...rest] = pair.split('=');
+    const name = rest.join('=').trim();
+    if (!optionName || optionName.trim().length === 0 || name.length === 0) {
+      throw new Error(
+        `Option values must look like "Color=Red, Size=Large"; could not read "${pair.trim()}".`
+      );
+    }
+    return { optionName: optionName.trim(), name };
+  });
+}
+
+function splitList(value: unknown): string[] {
+  const text = readText(value);
+  if (!text) {
+    return [];
+  }
+  return text
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+}
+
+function buildVariantInputs({
+  value,
+  mode,
+}: {
+  value: unknown;
+  mode: 'create' | 'update';
+}): Record<string, unknown>[] {
+  return readRecords(value).map((item) => {
+    const variantId = readText(item['variant_id']);
+    if (mode === 'update' && !variantId) {
+      throw new Error('Every variant to update needs a variant_id.');
+    }
+    const optionValues = parseOptionValues(item['option_values']);
+    if (mode === 'create' && optionValues.length === 0) {
+      throw new Error('Every new variant needs option_values, for example "Color=Red, Size=Large".');
+    }
+    const price = readNumber(item['price']);
+    const compareAtPrice = readNumber(item['compare_at_price']);
+    const sku = readText(item['sku']);
+    const locationId = readText(item['location_id']);
+    const availableQuantity = readNumber(item['available_quantity']);
+    if (mode === 'create' && (locationId === undefined) !== (availableQuantity === undefined)) {
+      throw new Error('Give both location_id and available_quantity to stock a new variant, or neither.');
+    }
+    const fields = compact({
+      optionValues: optionValues.length > 0 ? optionValues : undefined,
+      price: price !== undefined ? String(price) : undefined,
+      compareAtPrice: compareAtPrice !== undefined ? String(compareAtPrice) : undefined,
+      barcode: readText(item['barcode']),
+      inventoryPolicy: readText(item['inventory_policy']),
+      taxable: toBooleanChoice(item['taxable']),
+      inventoryItem: sku !== undefined ? { sku } : undefined,
+      inventoryQuantities:
+        mode === 'create' && locationId !== undefined && availableQuantity !== undefined
+          ? [
+              {
+                locationId: toGid({ type: 'Location', id: locationId }),
+                availableQuantity,
+              },
+            ]
+          : undefined,
+    });
+    if (mode === 'update') {
+      if (Object.keys(fields).length === 0) {
+        throw new Error(`Variant ${variantId}: provide at least one field to update.`);
+      }
+      return { id: toGid({ type: 'ProductVariant', id: variantId ?? '' }), ...fields };
+    }
+    return fields;
+  });
+}
+
+function variantsProp({ mode }: { mode: 'create' | 'update' }) {
+  return Property.Array({
+    displayName: 'Variants',
+    description:
+      mode === 'create'
+        ? 'The variants to create, one entry per variant. Each needs option values for every product option.'
+        : 'The variants to change, one entry per variant. Fields left empty keep their values.',
+    required: true,
+    properties: {
+      ...(mode === 'update'
+        ? {
+            variant_id: Property.ShortText({
+              displayName: 'Variant ID',
+              description: 'The variant id, numeric or "gid://shopify/ProductVariant/…". Find it with list_product_variants.',
+              required: true,
+            }),
+          }
+        : {}),
+      option_values: Property.ShortText({
+        displayName: 'Option Values',
+        description:
+          mode === 'create'
+            ? 'Option name and value pairs, for example "Color=Red, Size=Large". New values are added to the option.'
+            : 'Change the option values, for example "Color=Blue". Leave empty to keep them.',
+        required: mode === 'create',
+      }),
+      price: Property.Number({
+        displayName: 'Price',
+        description: 'Price in the shop currency, for example 19.99.',
+        required: false,
+      }),
+      compare_at_price: Property.Number({
+        displayName: 'Compare-at Price',
+        description: 'Original price shown struck through, for example 24.99.',
+        required: false,
+      }),
+      sku: Property.ShortText({
+        displayName: 'SKU',
+        description: 'Stock keeping unit, for example "TSHIRT-RED-L".',
+        required: false,
+      }),
+      barcode: Property.ShortText({
+        displayName: 'Barcode',
+        description: 'Barcode such as a UPC or ISBN.',
+        required: false,
+      }),
+      inventory_policy: Property.StaticDropdown({
+        displayName: 'When Out of Stock',
+        description: 'Whether customers can buy the variant when it is out of stock.',
+        required: false,
+        options: {
+          options: [
+            { label: 'Stop selling (deny)', value: 'DENY' },
+            { label: 'Continue selling', value: 'CONTINUE' },
+          ],
+        },
+      }),
+      taxable: Property.StaticDropdown({
+        displayName: 'Taxable',
+        description: 'Whether taxes are charged on this variant. Leave empty to keep the current setting.',
+        required: false,
+        options: {
+          options: [
+            { label: 'Yes', value: 'true' },
+            { label: 'No', value: 'false' },
+          ],
+        },
+      }),
+      ...(mode === 'create'
+        ? {
+            location_id: Property.ShortText({
+              displayName: 'Stock Location ID',
+              description: 'Location to stock the new variant at, numeric or "gid://shopify/Location/…". Use with available_quantity.',
+              required: false,
+            }),
+            available_quantity: Property.Number({
+              displayName: 'Available Quantity',
+              description: 'Starting available quantity at the stock location, for example 10.',
+              required: false,
+            }),
+          }
+        : {}),
+    },
+  });
+}
+
+function buildConditions({
+  value,
+  currency,
+}: {
+  value: unknown;
+  currency: string | undefined;
+}): Record<string, unknown>[] {
+  return readRecords(value).map((item) => {
+    const field = readText(item['field']);
+    const relation = readText(item['relation']);
+    const conditionValue = readText(item['value']);
+    if (!field || !relation) {
+      throw new Error('Every condition needs a field and a relation.');
+    }
+    const allowed = CONDITION_RELATIONS[field];
+    if (!allowed) {
+      throw new Error(`Unknown condition field "${field}".`);
+    }
+    if (!allowed.includes(relation)) {
+      throw new Error(`Condition field "${field}" allows only these relations: ${allowed.join(', ')}.`);
+    }
+    const key = CONDITION_INPUT_KEYS[field];
+    if (TEXT_CONDITION_FIELDS.includes(field)) {
+      if (!conditionValue) {
+        throw new Error(`Condition "${field}" needs a value.`);
+      }
+      return { [key]: { relation, values: [conditionValue], matchType: 'ANY' } };
+    }
+    if (field === 'variant_inventory') {
+      const quantity = readNumber(conditionValue);
+      if (quantity === undefined || !Number.isInteger(quantity)) {
+        throw new Error('Condition "variant_inventory" needs a whole-number value.');
+      }
+      return { [key]: { relation, value: quantity } };
+    }
+    if (field === 'variant_compare_at_price' && (relation === 'IS_SET' || relation === 'IS_NOT_SET')) {
+      return { [key]: { relation } };
+    }
+    const amount = readNumber(conditionValue);
+    if (amount === undefined) {
+      throw new Error(`Condition "${field}" needs a numeric value, for example 25.`);
+    }
+    if (!currency) {
+      throw new Error('Set "currency" (for example "USD") when using a price condition.');
+    }
+    return { [key]: { relation, value: { amount: String(amount), currencyCode: currency } } };
+  });
+}
+
+function conditionsProp({ required, description }: { required: boolean; description: string }) {
+  return Property.Array({
+    displayName: 'Conditions',
+    description,
+    required,
+    properties: {
+      field: Property.StaticDropdown({
+        displayName: 'Field',
+        description: 'The product or variant field to test.',
+        required: true,
+        options: {
+          options: [
+            { label: 'Product tag', value: 'product_tag' },
+            { label: 'Product title', value: 'product_title' },
+            { label: 'Product type', value: 'product_type' },
+            { label: 'Product vendor', value: 'product_vendor' },
+            { label: 'Variant title', value: 'variant_title' },
+            { label: 'Variant price', value: 'variant_price' },
+            { label: 'Variant compare-at price', value: 'variant_compare_at_price' },
+            { label: 'Variant inventory', value: 'variant_inventory' },
+          ],
+        },
+      }),
+      relation: Property.StaticDropdown({
+        displayName: 'Relation',
+        description:
+          'How to compare. Tags: TAGGED_WITH or NOT_TAGGED_WITH. Text fields: EQUALS, NOT_EQUALS, CONTAINS, DOES_NOT_CONTAIN, STARTS_WITH, ENDS_WITH. Prices: EQUALS, NOT_EQUALS, GREATER_THAN, LESS_THAN (compare-at price also IS_SET, IS_NOT_SET). Inventory: EQUALS, GREATER_THAN, LESS_THAN.',
+        required: true,
+        options: {
+          options: [
+            { label: 'Tagged with', value: 'TAGGED_WITH' },
+            { label: 'Not tagged with', value: 'NOT_TAGGED_WITH' },
+            { label: 'Equals', value: 'EQUALS' },
+            { label: 'Does not equal', value: 'NOT_EQUALS' },
+            { label: 'Contains', value: 'CONTAINS' },
+            { label: 'Does not contain', value: 'DOES_NOT_CONTAIN' },
+            { label: 'Starts with', value: 'STARTS_WITH' },
+            { label: 'Ends with', value: 'ENDS_WITH' },
+            { label: 'Greater than', value: 'GREATER_THAN' },
+            { label: 'Less than', value: 'LESS_THAN' },
+            { label: 'Is set', value: 'IS_SET' },
+            { label: 'Is not set', value: 'IS_NOT_SET' },
+          ],
+        },
+      }),
+      value: Property.ShortText({
+        displayName: 'Value',
+        description: 'The value to compare with, for example "summer", "Nike" or 25. Leave empty only for IS_SET / IS_NOT_SET.',
+        required: false,
+      }),
+    },
+  });
+}
+
+function collectionSortOrderProp() {
+  return Property.StaticDropdown({
+    displayName: 'Product Sort Order',
+    description: 'How products are ordered inside the collection. Manual is required before reorder_collection_products.',
+    required: false,
+    options: {
+      options: [
+        { label: 'Manual', value: 'MANUAL' },
+        { label: 'Best selling', value: 'BEST_SELLING' },
+        { label: 'Alphabetical A-Z', value: 'ALPHA_ASC' },
+        { label: 'Alphabetical Z-A', value: 'ALPHA_DESC' },
+        { label: 'Price low to high', value: 'PRICE_ASC' },
+        { label: 'Price high to low', value: 'PRICE_DESC' },
+        { label: 'Newest first', value: 'CREATED_DESC' },
+        { label: 'Oldest first', value: 'CREATED' },
+        { label: 'Most relevant', value: 'MOST_RELEVANT' },
+      ],
+    },
+  });
+}
+
+function productStatusProp({ description }: { description: string }) {
+  return Property.StaticDropdown({
+    displayName: 'Status',
+    description,
+    required: false,
+    options: {
+      options: [
+        { label: 'Active', value: 'ACTIVE' },
+        { label: 'Draft', value: 'DRAFT' },
+        { label: 'Archived', value: 'ARCHIVED' },
+        { label: 'Unlisted', value: 'UNLISTED' },
+      ],
+    },
+  });
+}
+
+function toSeo({
+  title,
+  description,
+}: {
+  title: string | undefined | null;
+  description: string | undefined | null;
+}): Record<string, unknown> | undefined {
+  const seo = compact({ title: nonEmpty(title), description: nonEmpty(description) });
+  return Object.keys(seo).length > 0 ? seo : undefined;
+}
+
+function groupVariantMedia(value: unknown): { variantId: string; mediaIds: string[] }[] {
+  const grouped = readRecords(value).reduce<Record<string, string[]>>((acc, item) => {
+    const variantId = readText(item['variant_id']);
+    const mediaId = readText(item['media_id']);
+    if (!variantId || !mediaId) {
+      throw new Error('Every entry needs a variant_id and a media_id.');
+    }
+    const key = toGid({ type: 'ProductVariant', id: variantId });
+    const media = toGid({ type: 'MediaImage', id: mediaId });
+    return { ...acc, [key]: [...(acc[key] ?? []), media] };
+  }, {});
+  const entries = Object.entries(grouped).map(([variantId, mediaIds]) => ({ variantId, mediaIds }));
+  if (entries.length === 0) {
+    throw new Error('Provide at least one variant and media pair.');
+  }
+  return entries;
+}
+
+function toGidList({ type, value }: { type: string; value: unknown }): string[] | undefined {
+  const ids = readStringList(value);
+  if (!ids || ids.length === 0) {
+    return undefined;
+  }
+  return ids.map((id) => toGid({ type, id }));
+}
+
 const MONEY_FIELDS = 'shopMoney { amount currencyCode }';
 
 const MONEY_WITH_PRESENTMENT_FIELDS =
@@ -1088,6 +1799,89 @@ const ABANDONMENT_FIELDS = `id abandonmentType mostRecentStep createdAt emailSta
 const PAGE_INFO_FIELDS = 'pageInfo { hasNextPage endCursor }';
 
 export { SHOPIFY_API_VERSION };
+const MEDIA_SUMMARY_FIELDS =
+  'id alt mediaContentType status preview { image { url } } ... on MediaImage { mimeType image { url width height } } ... on ExternalVideo { originUrl } ... on Video { filename } ... on Model3d { filename }';
+
+const MEDIA_FIELDS = `${MEDIA_SUMMARY_FIELDS} mediaErrors { code message }`;
+
+const VARIANT_FIELDS =
+  'id legacyResourceId title displayName sku barcode price compareAtPrice position inventoryQuantity inventoryPolicy availableForSale taxable createdAt updatedAt selectedOptions { name value } inventoryItem { id tracked requiresShipping } product { id title }';
+
+const PRODUCT_SUMMARY_FIELDS =
+  'id legacyResourceId title handle status vendor productType tags createdAt updatedAt publishedAt totalInventory tracksInventory hasOnlyDefaultVariant variantsCount { count } mediaCount { count } priceRangeV2 { minVariantPrice { amount currencyCode } maxVariantPrice { amount currencyCode } } featuredMedia { id preview { image { url } } } category { id fullName }';
+
+const PRODUCT_DETAIL_FIELDS = `${PRODUCT_SUMMARY_FIELDS} descriptionHtml templateSuffix seo { title description } isGiftCard requiresSellingPlan options { id name position optionValues { id name hasVariants } } variants(first: 100) { pageInfo { hasNextPage } nodes { ${VARIANT_FIELDS} } } media(first: 50) { pageInfo { hasNextPage } nodes { ${MEDIA_SUMMARY_FIELDS} } }`;
+
+const COLLECTION_SUMMARY_FIELDS =
+  'id legacyResourceId title handle sortOrder updatedAt productsCount { count } image { url altText }';
+
+const COLLECTION_CONDITION_FIELDS =
+  '__typename id ... on CollectionSourceInclusionConditionProductTag { tagRelation: relation tagValues: values } ... on CollectionSourceInclusionConditionProductTitle { titleRelation: relation titleValues: values } ... on CollectionSourceInclusionConditionProductType { typeRelation: relation typeValues: values } ... on CollectionSourceInclusionConditionProductVendor { vendorRelation: relation vendorValues: values } ... on CollectionSourceInclusionConditionVariantTitle { variantTitleRelation: relation variantTitleValues: values } ... on CollectionSourceInclusionConditionVariantPrice { priceRelation: relation priceValue: value { amount currencyCode } } ... on CollectionSourceInclusionConditionVariantCompareAtPrice { compareAtPriceRelation: relation compareAtPriceValue: value { amount currencyCode } } ... on CollectionSourceInclusionConditionVariantInventory { inventoryRelation: relation inventoryValue: value }';
+
+const COLLECTION_SELECTIONS_LIMIT = 25;
+
+const COLLECTION_FIELDS = `${COLLECTION_SUMMARY_FIELDS} descriptionHtml templateSuffix seo { title description } sources { __typename id title ... on CollectionConditionsSource { shareable app { id } targetType inclusion { matchType conditions { ${COLLECTION_CONDITION_FIELDS} } selections(first: ${COLLECTION_SELECTIONS_LIMIT}) { pageInfo { hasNextPage } nodes { product { id title } variantIds } } } } }`;
+
+const COLLECTION_SOURCE_LOOKUP_FIELDS =
+  'id sources { __typename id title ... on CollectionConditionsSource { shareable app { id } } }';
+
+const INVENTORY_ITEM_FIELDS =
+  'id legacyResourceId sku tracked requiresShipping countryCodeOfOrigin provinceCodeOfOrigin harmonizedSystemCode unitCost { amount currencyCode } measurement { weight { value unit } } locationsCount { count } createdAt updatedAt variants(first: 1) { nodes { id displayName product { id title } } }';
+
+const INVENTORY_LEVEL_FIELDS =
+  'id isActive canDeactivate deactivationAlert updatedAt item { id sku } location { id name } quantities(names: ["available", "on_hand", "committed", "incoming", "reserved", "damaged", "safety_stock", "quality_control"]) { name quantity }';
+
+const INVENTORY_ADJUSTMENT_GROUP_FIELDS =
+  'id createdAt reason referenceDocumentUri changes { name delta quantityAfterChange ledgerDocumentUri item { id sku } location { id name } }';
+
+const LOCATION_FIELDS =
+  'id legacyResourceId name isActive activatable deactivatable deletable fulfillsOnlineOrders shipsInventory hasActiveInventory hasUnfulfilledOrders isFulfillmentService deactivatedAt createdAt updatedAt address { address1 address2 city province provinceCode country countryCode zip phone formatted }';
+
+const PUBLICATION_FIELDS =
+  'id autoPublish supportsFuturePublishing catalog { id title status }';
+
+const CHANNEL_FIELDS =
+  'id name handle accountName supportsFuturePublishing app { id title } productsCount { count }';
+
+const TAXONOMY_CATEGORY_FIELDS =
+  'id name fullName level isLeaf isRoot isArchived parentId childrenIds';
+
+const TEXT_CONDITION_FIELDS = [
+  'product_tag',
+  'product_title',
+  'product_type',
+  'product_vendor',
+  'variant_title',
+];
+
+const TEXT_RELATIONS = ['EQUALS', 'NOT_EQUALS', 'CONTAINS', 'DOES_NOT_CONTAIN', 'STARTS_WITH', 'ENDS_WITH'];
+
+const CONDITION_RELATIONS: Record<string, string[]> = {
+  product_tag: ['TAGGED_WITH', 'NOT_TAGGED_WITH'],
+  product_title: TEXT_RELATIONS,
+  product_type: TEXT_RELATIONS,
+  product_vendor: TEXT_RELATIONS,
+  variant_title: TEXT_RELATIONS,
+  variant_price: ['EQUALS', 'NOT_EQUALS', 'GREATER_THAN', 'LESS_THAN'],
+  variant_compare_at_price: ['EQUALS', 'NOT_EQUALS', 'GREATER_THAN', 'LESS_THAN', 'IS_SET', 'IS_NOT_SET'],
+  variant_inventory: ['EQUALS', 'GREATER_THAN', 'LESS_THAN'],
+};
+
+const CONDITION_INPUT_KEYS: Record<string, string> = {
+  product_tag: 'productTag',
+  product_title: 'productTitle',
+  product_type: 'productType',
+  product_vendor: 'productVendor',
+  variant_title: 'variantTitle',
+  variant_price: 'variantPrice',
+  variant_compare_at_price: 'variantCompareAtPrice',
+  variant_inventory: 'variantInventory',
+};
+
+const MANUAL_SELECTION_SOURCE_TITLE = 'Selected products';
+
+const CONDITIONS_SOURCE_TITLE = 'Product conditions';
+
 
 export const shopifyFields = {
   MONEY_FIELDS,
@@ -1104,6 +1898,23 @@ export const shopifyFields = {
   ABANDONED_CHECKOUT_FIELDS,
   ABANDONMENT_FIELDS,
   PAGE_INFO_FIELDS,
+  MEDIA_FIELDS,
+  VARIANT_FIELDS,
+  PRODUCT_SUMMARY_FIELDS,
+  PRODUCT_DETAIL_FIELDS,
+  COLLECTION_SUMMARY_FIELDS,
+  COLLECTION_FIELDS,
+  COLLECTION_SOURCE_LOOKUP_FIELDS,
+  COLLECTION_SELECTIONS_LIMIT,
+  INVENTORY_ITEM_FIELDS,
+  INVENTORY_LEVEL_FIELDS,
+  INVENTORY_ADJUSTMENT_GROUP_FIELDS,
+  LOCATION_FIELDS,
+  PUBLICATION_FIELDS,
+  CHANNEL_FIELDS,
+  TAXONOMY_CATEGORY_FIELDS,
+  MANUAL_SELECTION_SOURCE_TITLE,
+  CONDITIONS_SOURCE_TITLE,
 };
 
 export const shopifyGraphqlClient = {
@@ -1128,6 +1939,17 @@ export const shopifyValues = {
   buildMailingAddress,
   buildRefundLineItems,
   buildDraftLineItems,
+  parseOptionValues,
+  splitList,
+  buildVariantInputs,
+  buildConditions,
+  toSeo,
+  toGidList,
+  findConditionsSource,
+  editableConditionsSources,
+  sharedConditionsSources,
+  findExplicitConditionsSource,
+  groupVariantMedia,
 };
 
 export const shopifyMappers = {
@@ -1143,6 +1965,20 @@ export const shopifyMappers = {
   mapCustomer,
   mapAbandonedCheckout,
   mapAbandonment,
+  mapProductSummary,
+  mapProductDetail,
+  mapProductOption,
+  mapVariant,
+  mapMedia,
+  mapCollectionSummary,
+  mapCollection,
+  mapInventoryItem,
+  mapInventoryLevel,
+  mapAdjustmentGroup,
+  mapLocation,
+  mapPublication,
+  mapChannel,
+  mapTaxonomyCategory,
 };
 
 export const shopifyProps = {
@@ -1155,6 +1991,10 @@ export const shopifyProps = {
   idempotencyKey: idempotencyKeyProp,
   refundLineItems: refundLineItemsProp,
   draftLineItems: draftLineItemsProp,
+  variants: variantsProp,
+  conditions: conditionsProp,
+  collectionSortOrder: collectionSortOrderProp,
+  productStatus: productStatusProp,
 };
 
 export type ShopifyGraphqlParams = {
@@ -1509,4 +2349,240 @@ export type GqlAbandonment = {
     abandonedCheckoutUrl?: string | null;
     totalPriceSet?: GqlMoneyBag | null;
   } | null;
+};
+
+export type GqlMedia = {
+  id?: string | null;
+  alt?: string | null;
+  mediaContentType?: string | null;
+  status?: string | null;
+  mediaErrors?: { code?: string | null; message?: string | null }[] | null;
+  preview?: { image?: { url?: string | null } | null } | null;
+  mimeType?: string | null;
+  image?: { url?: string | null; width?: number | null; height?: number | null } | null;
+  originUrl?: string | null;
+  filename?: string | null;
+};
+
+export type GqlVariant = {
+  id: string;
+  legacyResourceId?: string | null;
+  title?: string | null;
+  displayName?: string | null;
+  sku?: string | null;
+  barcode?: string | null;
+  price?: string | null;
+  compareAtPrice?: string | null;
+  position?: number | null;
+  inventoryQuantity?: number | null;
+  inventoryPolicy?: string | null;
+  availableForSale?: boolean | null;
+  taxable?: boolean | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  selectedOptions?: { name?: string | null; value?: string | null }[] | null;
+  inventoryItem?: { id?: string | null; tracked?: boolean | null; requiresShipping?: boolean | null } | null;
+  product?: { id?: string | null; title?: string | null } | null;
+  media?: GqlConnection<{ id?: string | null }> | null;
+};
+
+export type GqlProductOption = {
+  id: string;
+  name?: string | null;
+  position?: number | null;
+  optionValues?: { id: string; name?: string | null; hasVariants?: boolean | null }[] | null;
+};
+
+export type GqlProduct = {
+  id: string;
+  legacyResourceId?: string | null;
+  title?: string | null;
+  handle?: string | null;
+  status?: string | null;
+  vendor?: string | null;
+  productType?: string | null;
+  tags?: string[] | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  publishedAt?: string | null;
+  totalInventory?: number | null;
+  tracksInventory?: boolean | null;
+  hasOnlyDefaultVariant?: boolean | null;
+  variantsCount?: GqlCount | null;
+  mediaCount?: GqlCount | null;
+  priceRangeV2?: { minVariantPrice?: GqlMoneyV2 | null; maxVariantPrice?: GqlMoneyV2 | null } | null;
+  featuredMedia?: { id?: string | null; preview?: { image?: { url?: string | null } | null } | null } | null;
+  category?: { id?: string | null; fullName?: string | null } | null;
+  descriptionHtml?: string | null;
+  templateSuffix?: string | null;
+  seo?: { title?: string | null; description?: string | null } | null;
+  isGiftCard?: boolean | null;
+  requiresSellingPlan?: boolean | null;
+  options?: GqlProductOption[] | null;
+  variants?: GqlConnection<GqlVariant> | null;
+  media?: GqlConnection<GqlMedia> | null;
+};
+
+export type GqlCollectionCondition = {
+  __typename?: string | null;
+  id: string;
+  tagRelation?: string | null;
+  tagValues?: string[] | null;
+  titleRelation?: string | null;
+  titleValues?: string[] | null;
+  typeRelation?: string | null;
+  typeValues?: string[] | null;
+  vendorRelation?: string | null;
+  vendorValues?: string[] | null;
+  variantTitleRelation?: string | null;
+  variantTitleValues?: string[] | null;
+  priceRelation?: string | null;
+  priceValue?: GqlMoneyV2 | null;
+  compareAtPriceRelation?: string | null;
+  compareAtPriceValue?: GqlMoneyV2 | null;
+  inventoryRelation?: string | null;
+  inventoryValue?: number | null;
+};
+
+export type GqlCollectionSource = {
+  __typename?: string | null;
+  id: string;
+  title?: string | null;
+  shareable?: boolean | null;
+  app?: { id?: string | null } | null;
+  targetType?: string | null;
+  inclusion?: {
+    matchType?: string | null;
+    conditions?: GqlCollectionCondition[] | null;
+    selections?: {
+      pageInfo?: { hasNextPage?: boolean | null } | null;
+      nodes?: { product?: { id?: string | null; title?: string | null } | null; variantIds?: string[] | null }[] | null;
+    } | null;
+  } | null;
+};
+
+export type GqlCollection = {
+  id: string;
+  legacyResourceId?: string | null;
+  title?: string | null;
+  handle?: string | null;
+  sortOrder?: string | null;
+  updatedAt?: string | null;
+  productsCount?: GqlCount | null;
+  image?: { url?: string | null; altText?: string | null } | null;
+  descriptionHtml?: string | null;
+  templateSuffix?: string | null;
+  seo?: { title?: string | null; description?: string | null } | null;
+  sources?: GqlCollectionSource[] | null;
+};
+
+export type GqlInventoryItem = {
+  id: string;
+  legacyResourceId?: string | null;
+  sku?: string | null;
+  tracked?: boolean | null;
+  requiresShipping?: boolean | null;
+  countryCodeOfOrigin?: string | null;
+  provinceCodeOfOrigin?: string | null;
+  harmonizedSystemCode?: string | null;
+  unitCost?: GqlMoneyV2 | null;
+  measurement?: { weight?: { value?: number | null; unit?: string | null } | null } | null;
+  locationsCount?: GqlCount | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  variants?: GqlConnection<{
+    id?: string | null;
+    displayName?: string | null;
+    product?: { id?: string | null; title?: string | null } | null;
+  }> | null;
+};
+
+export type GqlInventoryLevel = {
+  id: string;
+  isActive?: boolean | null;
+  canDeactivate?: boolean | null;
+  deactivationAlert?: string | null;
+  updatedAt?: string | null;
+  item?: { id?: string | null; sku?: string | null } | null;
+  location?: { id?: string | null; name?: string | null } | null;
+  quantities?: { name?: string | null; quantity?: number | null }[] | null;
+};
+
+export type GqlInventoryAdjustmentGroup = {
+  id?: string | null;
+  createdAt?: string | null;
+  reason?: string | null;
+  referenceDocumentUri?: string | null;
+  changes?: {
+    name?: string | null;
+    delta?: number | null;
+    quantityAfterChange?: number | null;
+    ledgerDocumentUri?: string | null;
+    item?: { id?: string | null; sku?: string | null } | null;
+    location?: { id?: string | null; name?: string | null } | null;
+  }[] | null;
+};
+
+export type GqlLocation = {
+  id: string;
+  legacyResourceId?: string | null;
+  name?: string | null;
+  isActive?: boolean | null;
+  activatable?: boolean | null;
+  deactivatable?: boolean | null;
+  deletable?: boolean | null;
+  fulfillsOnlineOrders?: boolean | null;
+  shipsInventory?: boolean | null;
+  hasActiveInventory?: boolean | null;
+  hasUnfulfilledOrders?: boolean | null;
+  isFulfillmentService?: boolean | null;
+  deactivatedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  address?: {
+    address1?: string | null;
+    address2?: string | null;
+    city?: string | null;
+    province?: string | null;
+    provinceCode?: string | null;
+    country?: string | null;
+    countryCode?: string | null;
+    zip?: string | null;
+    phone?: string | null;
+    formatted?: string[] | null;
+  } | null;
+};
+
+export type GqlPublication = {
+  id: string;
+  autoPublish?: boolean | null;
+  supportsFuturePublishing?: boolean | null;
+  catalog?: { id?: string | null; title?: string | null; status?: string | null } | null;
+};
+
+export type GqlChannel = {
+  id: string;
+  name?: string | null;
+  handle?: string | null;
+  accountName?: string | null;
+  supportsFuturePublishing?: boolean | null;
+  app?: { id?: string | null; title?: string | null } | null;
+  productsCount?: GqlCount | null;
+};
+
+export type GqlTaxonomyCategory = {
+  id: string;
+  name?: string | null;
+  fullName?: string | null;
+  level?: number | null;
+  isLeaf?: boolean | null;
+  isRoot?: boolean | null;
+  isArchived?: boolean | null;
+  parentId?: string | null;
+  childrenIds?: string[] | null;
+};
+
+export type GqlJob = {
+  id?: string | null;
+  done?: boolean | null;
 };

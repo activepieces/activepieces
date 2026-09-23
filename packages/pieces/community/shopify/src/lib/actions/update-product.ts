@@ -6,9 +6,10 @@ import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
 export const updateProductAction = createAction({
   auth: shopifyAuth,
   name: 'update_product',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update Product',
   description: 'Update an existing product.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Update fields on an existing Shopify product by product ID (title, description, type, vendor, tags, status, and an optional image). Pick this to edit a known product rather than creating one; the product ID is required. Sets absolute field values, so re-running with the same input is idempotent (though a supplied image is appended each time).', idempotent: true },
   props: {
     id: Property.ShortText({

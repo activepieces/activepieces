@@ -6,9 +6,10 @@ import { ShopifyImage, ShopifyProductStatuses } from '../common/types';
 export const createProductAction = createAction({
   auth: shopifyAuth,
   name: 'create_product',
+  classification: 'WRITE',
   displayName: 'Create Product',
   description: 'Create a new product.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Create a new product in the Shopify store with a title and optional description, type, image, status, vendor, and tags. Not idempotent: each call adds a separate product, so calling repeatedly creates duplicates. Use only to add a brand-new product, not to update an existing one.', idempotent: false },
   props: {
     title: Property.ShortText({
