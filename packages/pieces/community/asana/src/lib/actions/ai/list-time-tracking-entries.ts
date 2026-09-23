@@ -11,7 +11,7 @@ export const asanaListTimeTrackingEntriesAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists native Asana time tracking entries (minutes logged, date entered, who logged it, attributed project, categories). Filter by task, attributed project, portfolio or user; a workspace-wide list also needs Entered From or Entered To. Use it to total time spent on a task or project. Time tracking needs an Advanced or higher Asana plan; lower plans get a paid-plan error. Paginated with next_offset; read-only and safe to retry.',
+      'Lists native Asana time tracking entries (minutes logged, date entered, who logged it, attributed project, categories). Filter by task, attributed project, portfolio or user. Asana requires Entered From or Entered To whenever Workspace GID is set, even together with another filter, so to list one user\'s time without a date range set User GID alone. Use it to total time spent on a task or project. Time tracking needs an Advanced or higher Asana plan; lower plans get a paid-plan error. Paginated with next_offset; read-only and safe to retry.',
     idempotent: true,
   },
   props: {
@@ -62,7 +62,7 @@ export const asanaListTimeTrackingEntriesAction = createAction({
     const startDate = asanaUtils.hasValue(props.entered_on_start_date) ? asanaUtils.assertDate({ value: String(props.entered_on_start_date), field: 'Entered From' }) : undefined;
     const endDate = asanaUtils.hasValue(props.entered_on_end_date) ? asanaUtils.assertDate({ value: String(props.entered_on_end_date), field: 'Entered To' }) : undefined;
     if (asanaUtils.hasValue(props.workspace) && startDate === undefined && endDate === undefined) {
-      throw new Error('Workspace GID needs Entered From or Entered To as well.');
+      throw new Error('Asana requires Entered From or Entered To whenever Workspace GID is set. Add a date, or leave Workspace GID empty and filter by Task, Attributed Project, Portfolio or User GID alone.');
     }
     return asanaClient.asanaListPage<AsanaRecord>({
       auth: context.auth,
