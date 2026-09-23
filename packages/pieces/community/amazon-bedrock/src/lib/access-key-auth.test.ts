@@ -30,7 +30,17 @@ const accessKeyAuth = {
   region: 'us-east-1',
 };
 
-const server = { apiUrl: 'http://127.0.0.1:4200/api/', publicUrl: 'http://127.0.0.1:4200/api/', token: 'token' };
+const validationServer = {
+  apiUrl: 'http://127.0.0.1:4200/api/',
+  publicUrl: 'http://127.0.0.1:4200/api/',
+  mintOidcToken: vi.fn(),
+};
+
+const runtimeServer = {
+  apiUrl: 'http://127.0.0.1:4200/api/',
+  publicUrl: 'http://127.0.0.1:4200/api/',
+  token: 'token',
+};
 
 function credentialsOf(mock: typeof bedrockClientMock) {
   return mock.mock.calls[0][0].credentials;
@@ -47,7 +57,7 @@ describe('aws bedrock access key auth', () => {
   it('signs validation with the session token, so temporary credentials are accepted', async () => {
     const result = await awsBedrockAuth.validate?.({
       auth: { ...accessKeyAuth, sessionToken: 'temporary' },
-      server,
+      server: validationServer,
     });
 
     expect(result).toEqual({ valid: true });
@@ -59,7 +69,10 @@ describe('aws bedrock access key auth', () => {
   });
 
   it('leaves the session token unset for a long-term access key', async () => {
-    await awsBedrockAuth.validate?.({ auth: accessKeyAuth, server });
+    await awsBedrockAuth.validate?.({
+      auth: { ...accessKeyAuth, sessionToken: undefined },
+      server: validationServer,
+    });
 
     expect(credentialsOf(bedrockClientMock).sessionToken).toBeUndefined();
   });
@@ -67,7 +80,7 @@ describe('aws bedrock access key auth', () => {
   it('carries the session token into the runtime client that actions call', async () => {
     await createBedrockRuntimeClient({
       auth: { ...accessKeyAuth, sessionToken: 'temporary' },
-      server,
+      server: runtimeServer,
     });
 
     expect(credentialsOf(runtimeClientMock)).toEqual({
