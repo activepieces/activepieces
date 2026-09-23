@@ -1,4 +1,4 @@
-function normalize(locale: string | undefined | null): LocalesEnum {
+function toSupportedLocale(locale: string | undefined | null): LocalesEnum {
     if (!locale) {
         return LocalesEnum.ENGLISH
     }
@@ -21,4 +21,4 @@ export enum LocalesEnum {
 
 const SUPPORTED_LOCALES: readonly LocalesEnum[] = Object.values(LocalesEnum)
 
-export const localeUtils = { normalize }
+export const localeUtils = { toSupportedLocale }

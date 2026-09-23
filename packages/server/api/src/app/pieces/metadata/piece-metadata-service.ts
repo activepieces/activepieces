@@ -22,7 +22,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             await pieceCache(log).setup()
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
-            const locale = localeUtils.normalize(params.locale)
+            const locale = localeUtils.toSupportedLocale(params.locale)
             const catalogue = await dedupe(`list:${params.platformId ?? ''}:${locale}:${currentPieceGeneration()}`, () => fetchLatestPieces({
                 platformId: params.platformId,
                 locale,
@@ -89,7 +89,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            const normalizedLocale = isNil(locale) ? undefined : localeUtils.normalize(locale)
+            const normalizedLocale = isNil(locale) ? undefined : localeUtils.toSupportedLocale(locale)
             if (isNil(normalizedLocale) || normalizedLocale === LocalesEnum.ENGLISH) {
                 return piece
             }

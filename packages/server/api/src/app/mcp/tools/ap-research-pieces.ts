@@ -143,7 +143,7 @@ async function searchPieces({ params, projectId, platformId, log }: {
         categories: params.categories as PieceCategory[] | undefined,
         searchQuery: params.searchQuery,
         suggestionType: params.suggestionType as SuggestionType | undefined,
-        locale: params.locale as LocalesEnum | undefined,
+        locale: params.locale,
         audience: PieceAudienceFilter.ALL,
     })
 
