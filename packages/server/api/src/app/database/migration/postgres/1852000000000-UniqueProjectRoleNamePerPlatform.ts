@@ -35,7 +35,7 @@ export class UniqueProjectRoleNamePerPlatform1852000000000 implements Migration 
                 SELECT d."platformId", d.lower_name, d.base, g.n,
                        ROW_NUMBER() OVER (PARTITION BY d."platformId", d.lower_name ORDER BY g.n) AS slot
                 FROM dupe_groups d
-                CROSS JOIN generate_series(2, 1000) AS g(n)
+                CROSS JOIN generate_series(2, (SELECT 2 * COUNT(*) + 2 FROM "project_role")) AS g(n)
                 WHERE NOT EXISTS (
                     SELECT 1 FROM "project_role" e
                     WHERE e."platformId" = d."platformId"
