@@ -1,5 +1,5 @@
 
-import { isNil } from '@activepieces/core-utils'
+import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { ChooseAiRouteRequest, ChooseAiRouteResponse, FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, StartAiRouteResponse, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -104,7 +104,10 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
 
     app.post('/ai-router', AiRouterRequest, async (request, reply) => {
         if (request.principal.type !== PrincipalType.ENGINE) {
-            return reply.status(StatusCodes.UNAUTHORIZED).send()
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: { message: 'Only a running flow can ask the AI Router' },
+            })
         }
         const { waitpointId, ...body } = request.body
         const params = { ...body, platformId: request.principal.platform.id, projectId: request.principal.projectId }

@@ -1,10 +1,10 @@
-import { ActivepiecesAiBilling, AiChargeBasis, aiChargeFor, isNil, tryCatch } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, AiChargeBasis, aiChargeFor, AIProviderName, isNil, tryCatch } from '@activepieces/core-utils'
 import { activepiecesAiCost, safeHttp } from '@activepieces/server-utils'
 import { AiRouterMatchMode, ChooseAiRouteResponse, ResolveAiProviderResponse, RouteJobData } from '@activepieces/shared'
 import { z } from 'zod'
 
 export async function routeStep({ data, resolved, billing }: RouteStepParams): Promise<ChooseAiRouteResponse> {
-    const apiKey = resolved.auth.apiKey
+    const apiKey = resolved.provider === AIProviderName.ACTIVEPIECES || resolved.provider === AIProviderName.OPENROUTER ? resolved.auth.apiKey : undefined
     if (isNil(apiKey) || apiKey.length === 0) {
         throw new Error('The AI Router has no OpenRouter key to call the routing model with')
     }

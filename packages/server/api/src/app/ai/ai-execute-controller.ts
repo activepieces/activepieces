@@ -106,7 +106,7 @@ function aiJobFor({ body, requestId, projectId, platformId, webserverId }: {
 const RUN_PRINCIPALS = [PrincipalType.ENGINE] as const
 
 const ExecuteAiRequest = z.object({
-    action: z.enum(AiStepAction).exclude([AiStepAction.ROUTE]),
+    action: z.enum(AiStepAction).exclude(['ROUTE']),
     flowId: z.string(),
     flowRunId: z.string(),
     waitpointId: z.string().optional(),
