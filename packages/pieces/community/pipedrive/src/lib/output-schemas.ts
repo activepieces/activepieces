@@ -320,6 +320,461 @@ const fileFields: OutputSchema['fields'] = [
 	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
 ];
 
+const idNameFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'ID', format: 'number' },
+	{ key: 'name', label: 'Name' },
+];
+
+const orgWithAddressFields: OutputSchema['fields'] = [
+	...idNameFields,
+	{ key: 'address', label: 'Address' },
+];
+
+const searchScoreField: OutputSchema['fields'] = [
+	{ key: 'result_score', label: 'Result Score', format: 'number' },
+];
+
+const dealSearchItemFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Deal ID', format: 'number' },
+	{ key: 'type', label: 'Type' },
+	{ key: 'title', label: 'Title' },
+	{ key: 'value', label: 'Value', format: 'number' },
+	{ key: 'currency', label: 'Currency' },
+	{ key: 'status', label: 'Status' },
+	{ key: 'is_archived', label: 'Archived', format: 'boolean' },
+	{ key: 'visible_to', label: 'Visible To' },
+	{ key: 'owner', label: 'Owner', children: [{ key: 'id', label: 'Owner ID', format: 'number' }] },
+	{ key: 'stage', label: 'Stage', children: idNameFields },
+	{ key: 'pipeline', label: 'Pipeline', children: [{ key: 'id', label: 'Pipeline ID', format: 'number' }] },
+	{ key: 'person', label: 'Person', children: idNameFields },
+	{ key: 'organization', label: 'Organization', children: orgWithAddressFields },
+	{ key: 'custom_fields', label: 'Custom Fields' },
+	{ key: 'notes', label: 'Notes' },
+	...searchScoreField,
+];
+
+const personSearchItemFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Person ID', format: 'number' },
+	{ key: 'type', label: 'Type' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'phones', label: 'Phones' },
+	{ key: 'emails', label: 'Emails' },
+	{ key: 'primary_email', label: 'Primary Email', format: 'email' },
+	{ key: 'visible_to', label: 'Visible To' },
+	{ key: 'owner', label: 'Owner', children: [{ key: 'id', label: 'Owner ID', format: 'number' }] },
+	{ key: 'organization', label: 'Organization', children: orgWithAddressFields },
+	{ key: 'custom_fields', label: 'Custom Fields' },
+	{ key: 'notes', label: 'Notes' },
+	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
+	...searchScoreField,
+];
+
+const organizationSearchItemFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Organization ID', format: 'number' },
+	{ key: 'type', label: 'Type' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'address', label: 'Address' },
+	{ key: 'visible_to', label: 'Visible To' },
+	{ key: 'owner', label: 'Owner', children: [{ key: 'id', label: 'Owner ID', format: 'number' }] },
+	{ key: 'custom_fields', label: 'Custom Fields' },
+	{ key: 'notes', label: 'Notes' },
+	...searchScoreField,
+];
+
+const pipelineFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Pipeline ID', format: 'number' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'order_nr', label: 'Order', format: 'number' },
+	{ key: 'is_deal_probability_enabled', label: 'Deal Probability Enabled', format: 'boolean' },
+	{ key: 'is_deleted', label: 'Deleted', format: 'boolean' },
+	{ key: 'add_time', label: 'Created At', format: 'datetime' },
+	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
+];
+
+const stageFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Stage ID', format: 'number' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'pipeline_id', label: 'Pipeline ID', format: 'number' },
+	{ key: 'order_nr', label: 'Order', format: 'number' },
+	{ key: 'deal_probability', label: 'Deal Probability', format: 'number' },
+	{ key: 'is_deal_rot_enabled', label: 'Rotting Enabled', format: 'boolean' },
+	{ key: 'days_to_rotten', label: 'Days to Rotten', format: 'number' },
+	{ key: 'is_deleted', label: 'Deleted', format: 'boolean' },
+	{ key: 'add_time', label: 'Created At', format: 'datetime' },
+	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
+];
+
+const activityTypeFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Activity Type ID', format: 'number' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'key_string', label: 'Key' },
+	{ key: 'icon_key', label: 'Icon' },
+	{ key: 'color', label: 'Color' },
+	{ key: 'order_nr', label: 'Order', format: 'number' },
+	{ key: 'active_flag', label: 'Active', format: 'boolean' },
+	{ key: 'is_custom_flag', label: 'Custom', format: 'boolean' },
+	{ key: 'add_time', label: 'Created At' },
+	{ key: 'update_time', label: 'Updated At' },
+];
+
+const userDetailFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'User ID', format: 'number' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'email', label: 'Email', format: 'email' },
+	{ key: 'phone', label: 'Phone' },
+	{ key: 'active_flag', label: 'Active', format: 'boolean' },
+	{ key: 'is_deleted', label: 'Deleted', format: 'boolean' },
+	{ key: 'has_created_company', label: 'Has Created Company', format: 'boolean' },
+	{
+		key: 'access',
+		label: 'Access',
+		labelKey: 'app',
+		listItems: [
+			{ key: 'app', label: 'App' },
+			{ key: 'admin', label: 'Admin', format: 'boolean' },
+			{ key: 'permission_set_id', label: 'Permission Set ID' },
+		],
+	},
+	{ key: 'is_admin', label: 'Admin' },
+	{ key: 'role_id', label: 'Role ID', format: 'number' },
+	{ key: 'default_currency', label: 'Default Currency' },
+	{ key: 'locale', label: 'Locale' },
+	{ key: 'lang', label: 'Language ID', format: 'number' },
+	{ key: 'timezone_name', label: 'Timezone' },
+	{ key: 'timezone_offset', label: 'Timezone Offset' },
+	{ key: 'icon_url', label: 'Icon URL', format: 'url' },
+	{ key: 'is_you', label: 'Is Connected User', format: 'boolean' },
+	{ key: 'last_login', label: 'Last Login' },
+	{ key: 'created', label: 'Created At' },
+	{ key: 'modified', label: 'Updated At' },
+];
+
+const currentUserFields: OutputSchema['fields'] = [
+	...userDetailFields,
+	{ key: 'company_id', label: 'Company ID', format: 'number' },
+	{ key: 'company_name', label: 'Company Name' },
+	{ key: 'company_domain', label: 'Company Domain' },
+	{ key: 'company_country', label: 'Company Country' },
+	{
+		key: 'language',
+		label: 'Language',
+		children: [
+			{ key: 'language_code', label: 'Language Code' },
+			{ key: 'country_code', label: 'Country Code' },
+		],
+	},
+];
+
+const leadConversionFields: OutputSchema['fields'] = [
+	{ key: 'conversion_id', label: 'Conversion ID' },
+	{ key: 'status', label: 'Status' },
+	{ key: 'deal_id', label: 'Deal ID', format: 'number' },
+];
+
+const deleteResultFields: OutputSchema['fields'] = [{ key: 'id', label: 'Deleted ID' }];
+
+const customFieldsField: OutputSchema['fields'] = [
+	{ key: 'custom_fields', label: 'Custom Fields', dynamicKey: true },
+];
+
+const dealExtraFields: OutputSchema['fields'] = [
+	{ key: 'archive_time', label: 'Archived At', format: 'datetime' },
+	{ key: 'channel', label: 'Channel' },
+	{ key: 'channel_id', label: 'Channel ID' },
+	{ key: 'origin', label: 'Origin' },
+	{ key: 'origin_id', label: 'Origin ID' },
+	{ key: 'local_close_date', label: 'Local Close Date', format: 'date' },
+	{ key: 'local_won_date', label: 'Local Won Date', format: 'date' },
+	{ key: 'local_lost_date', label: 'Local Lost Date', format: 'date' },
+];
+
+const atomicDealListFields: OutputSchema['fields'] = [
+	...dealCoreFields,
+	...dealExtraFields,
+	...customFieldsField,
+];
+
+const atomicDealDetailFields: OutputSchema['fields'] = [
+	...dealDetailFields,
+	...dealExtraFields,
+	{ key: 'first_won_time', label: 'First Won At', format: 'datetime' },
+	{ key: 'email_messages_count', label: 'Email Messages', format: 'number' },
+	{ key: 'last_incoming_mail_time', label: 'Last Incoming Mail', format: 'datetime' },
+	{ key: 'last_outgoing_mail_time', label: 'Last Outgoing Mail', format: 'datetime' },
+];
+
+const relatedDealCountFields: OutputSchema['fields'] = [
+	{ key: 'related_open_deals_count', label: 'Related Open Deals', format: 'number' },
+	{ key: 'related_closed_deals_count', label: 'Related Closed Deals', format: 'number' },
+	{ key: 'related_won_deals_count', label: 'Related Won Deals', format: 'number' },
+	{ key: 'related_lost_deals_count', label: 'Related Lost Deals', format: 'number' },
+	{ key: 'email_messages_count', label: 'Email Messages', format: 'number' },
+];
+
+const atomicPersonListFields: OutputSchema['fields'] = [
+	...personCoreFields,
+	{ key: 'picture_id', label: 'Picture ID', format: 'number' },
+	...customFieldsField,
+];
+
+const atomicPersonDetailFields: OutputSchema['fields'] = [
+	...personDetailFields,
+	...relatedDealCountFields,
+	{ key: 'picture_id', label: 'Picture ID', format: 'number' },
+	{ key: 'participant_open_deals_count', label: 'Participant Open Deals', format: 'number' },
+	{ key: 'participant_closed_deals_count', label: 'Participant Closed Deals', format: 'number' },
+];
+
+const atomicOrganizationListFields: OutputSchema['fields'] = [
+	...organizationCoreFields,
+	...customFieldsField,
+];
+
+const mergedRecordFields: OutputSchema['fields'] = [
+	{ key: 'merge_what_id', label: 'Merged-Away Record ID', format: 'number' },
+];
+
+const mergedOrganizationFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Surviving Organization ID', format: 'number' },
+];
+
+const atomicOrganizationDetailFields: OutputSchema['fields'] = [
+	...organizationDetailFields,
+	...relatedDealCountFields,
+	{ key: 'done_activities_count', label: 'Done Activities', format: 'number' },
+	{ key: 'undone_activities_count', label: 'Undone Activities', format: 'number' },
+];
+
+const atomicActivityListFields: OutputSchema['fields'] = [
+	...activityFields,
+	{ key: 'private', label: 'Private', format: 'boolean' },
+	{ key: 'project_id', label: 'Project ID', format: 'number' },
+	{ key: 'conference_meeting_client', label: 'Meeting Client' },
+	{ key: 'conference_meeting_id', label: 'Meeting ID' },
+	...customFieldsField,
+];
+
+const atomicActivityDetailFields: OutputSchema['fields'] = [
+	...atomicActivityListFields,
+	{ key: 'attendees', label: 'Attendees' },
+];
+
+const atomicLeadFields: OutputSchema['fields'] = [
+	...leadFields,
+	{ key: 'archive_time', label: 'Archived At', format: 'datetime' },
+	{ key: 'archive_reason', label: 'Archive Reason' },
+	{ key: 'channel_id', label: 'Channel ID' },
+	{ key: 'origin', label: 'Origin' },
+	{ key: 'origin_id', label: 'Origin ID' },
+	{ key: 'source_deal_id', label: 'Source Deal ID', format: 'number' },
+];
+
+const atomicNoteFields: OutputSchema['fields'] = [
+	...noteFields.filter((field) => field.key !== 'user'),
+	{
+		key: 'user',
+		label: 'Author',
+		children: [
+			{ key: 'name', label: 'Name' },
+			{ key: 'email', label: 'Email', format: 'email' },
+			{ key: 'icon_url', label: 'Icon URL', format: 'url' },
+			{ key: 'is_you', label: 'Is Connected User', format: 'boolean' },
+		],
+	},
+	{ key: 'lead', label: 'Lead', children: [{ key: 'title', label: 'Title' }] },
+	{ key: 'person', label: 'Person', children: [{ key: 'name', label: 'Name' }] },
+	{ key: 'organization', label: 'Organization', children: [{ key: 'name', label: 'Name' }] },
+	{ key: 'pinned_to_lead_flag', label: 'Pinned to Lead', format: 'boolean' },
+	{ key: 'pinned_to_project_flag', label: 'Pinned to Project', format: 'boolean' },
+	{ key: 'pinned_to_task_flag', label: 'Pinned to Task', format: 'boolean' },
+	{ key: 'project_id', label: 'Project ID', format: 'number' },
+	{ key: 'task_id', label: 'Task ID', format: 'number' },
+];
+
+const atomicDealProductFields: OutputSchema['fields'] = [
+	...dealProductFields,
+	{ key: 'billing_frequency', label: 'Billing Frequency' },
+	{ key: 'billing_frequency_cycles', label: 'Billing Cycles', format: 'number' },
+	{ key: 'billing_start_date', label: 'Billing Start Date', format: 'date' },
+	{ key: 'product_variation_id', label: 'Product Variation ID', format: 'number' },
+];
+
+const mergedDealV1Fields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Surviving Deal ID', format: 'number' },
+	{ key: 'title', label: 'Title' },
+	{ key: 'value', label: 'Value', format: 'number' },
+	{ key: 'formatted_value', label: 'Formatted Value' },
+	{ key: 'currency', label: 'Currency' },
+	{ key: 'status', label: 'Status' },
+	{ key: 'pipeline_id', label: 'Pipeline ID', format: 'number' },
+	{ key: 'stage_id', label: 'Stage ID', format: 'number' },
+	{ key: 'stage_order_nr', label: 'Stage Order', format: 'number' },
+	{ key: 'person_id', label: 'Person' },
+	{ key: 'person_name', label: 'Person Name' },
+	{ key: 'org_id', label: 'Organization' },
+	{ key: 'org_name', label: 'Organization Name' },
+	{ key: 'user_id', label: 'Owner User ID', format: 'number' },
+	{ key: 'owner_name', label: 'Owner Name' },
+	{ key: 'creator_user_id', label: 'Creator User ID', format: 'number' },
+	{ key: 'probability', label: 'Probability', format: 'number' },
+	{ key: 'weighted_value', label: 'Weighted Value', format: 'number' },
+	{ key: 'expected_close_date', label: 'Expected Close Date', format: 'date' },
+	{ key: 'close_time', label: 'Closed At', format: 'datetime' },
+	{ key: 'won_time', label: 'Won At', format: 'datetime' },
+	{ key: 'first_won_time', label: 'First Won At', format: 'datetime' },
+	{ key: 'lost_time', label: 'Lost At', format: 'datetime' },
+	{ key: 'lost_reason', label: 'Lost Reason' },
+	{ key: 'label', label: 'Label' },
+	{ key: 'active', label: 'Active', format: 'boolean' },
+	{ key: 'deleted', label: 'Deleted', format: 'boolean' },
+	{ key: 'is_archived', label: 'Archived', format: 'boolean' },
+	{ key: 'visible_to', label: 'Visible To' },
+	{ key: 'add_time', label: 'Created At', format: 'datetime' },
+	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
+	{ key: 'stage_change_time', label: 'Stage Changed At', format: 'datetime' },
+	{ key: 'next_activity_id', label: 'Next Activity ID', format: 'number' },
+	{ key: 'next_activity_date', label: 'Next Activity Date', format: 'date' },
+	{ key: 'next_activity_subject', label: 'Next Activity Subject' },
+	{ key: 'last_activity_id', label: 'Last Activity ID', format: 'number' },
+	{ key: 'last_activity_date', label: 'Last Activity Date', format: 'date' },
+	{ key: 'activities_count', label: 'Activities', format: 'number' },
+	{ key: 'done_activities_count', label: 'Done Activities', format: 'number' },
+	{ key: 'undone_activities_count', label: 'Undone Activities', format: 'number' },
+	{ key: 'notes_count', label: 'Notes', format: 'number' },
+	{ key: 'files_count', label: 'Files', format: 'number' },
+	{ key: 'followers_count', label: 'Followers', format: 'number' },
+	{ key: 'participants_count', label: 'Participants', format: 'number' },
+	{ key: 'products_count', label: 'Products', format: 'number' },
+	{ key: 'email_messages_count', label: 'Email Messages', format: 'number' },
+	{ key: 'cc_email', label: 'Smart BCC Email', format: 'email' },
+	{ key: 'origin', label: 'Origin' },
+	{ key: 'source_lead_id', label: 'Source Lead ID' },
+];
+
+const mergedPersonV1Fields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Surviving Person ID', format: 'number' },
+	{ key: 'name', label: 'Name' },
+	{ key: 'first_name', label: 'First Name' },
+	{ key: 'last_name', label: 'Last Name' },
+	{ key: 'primary_email', label: 'Primary Email', format: 'email' },
+	{ key: 'email', label: 'Emails', labelKey: 'value', listItems: contactChannelFields },
+	{ key: 'phone', label: 'Phones', labelKey: 'value', listItems: contactChannelFields },
+	{ key: 'org_id', label: 'Organization' },
+	{ key: 'org_name', label: 'Organization Name' },
+	{ key: 'owner_id', label: 'Owner ID', format: 'number' },
+	{ key: 'owner_name', label: 'Owner Name' },
+	{ key: 'job_title', label: 'Job Title' },
+	{ key: 'birthday', label: 'Birthday', format: 'date' },
+	{ key: 'label', label: 'Label' },
+	{ key: 'label_ids', label: 'Label IDs' },
+	{ key: 'visible_to', label: 'Visible To' },
+	{ key: 'active_flag', label: 'Active', format: 'boolean' },
+	{ key: 'add_time', label: 'Created At', format: 'datetime' },
+	{ key: 'update_time', label: 'Updated At', format: 'datetime' },
+	{ key: 'open_deals_count', label: 'Open Deals', format: 'number' },
+	{ key: 'won_deals_count', label: 'Won Deals', format: 'number' },
+	{ key: 'lost_deals_count', label: 'Lost Deals', format: 'number' },
+	{ key: 'closed_deals_count', label: 'Closed Deals', format: 'number' },
+	{ key: 'activities_count', label: 'Activities', format: 'number' },
+	{ key: 'done_activities_count', label: 'Done Activities', format: 'number' },
+	{ key: 'undone_activities_count', label: 'Undone Activities', format: 'number' },
+	{ key: 'notes_count', label: 'Notes', format: 'number' },
+	{ key: 'files_count', label: 'Files', format: 'number' },
+	{ key: 'followers_count', label: 'Followers', format: 'number' },
+	{ key: 'email_messages_count', label: 'Email Messages', format: 'number' },
+	{ key: 'last_activity_id', label: 'Last Activity ID', format: 'number' },
+	{ key: 'next_activity_id', label: 'Next Activity ID', format: 'number' },
+	{ key: 'next_activity_date', label: 'Next Activity Date', format: 'date' },
+	{ key: 'last_incoming_mail_time', label: 'Last Incoming Mail', format: 'datetime' },
+	{ key: 'last_outgoing_mail_time', label: 'Last Outgoing Mail', format: 'datetime' },
+	{ key: 'postal_address_formatted_address', label: 'Postal Address' },
+	{ key: 'cc_email', label: 'Smart BCC Email', format: 'email' },
+];
+
+const goalFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Goal ID' },
+	{ key: 'title', label: 'Title' },
+	{ key: 'owner_id', label: 'Owner ID', format: 'number' },
+	{ key: 'is_active', label: 'Active', format: 'boolean' },
+	{ key: 'interval', label: 'Interval' },
+	{
+		key: 'assignee',
+		label: 'Assignee',
+		children: [
+			{ key: 'id', label: 'Assignee ID', format: 'number' },
+			{ key: 'type', label: 'Assignee Type' },
+		],
+	},
+	{
+		key: 'type',
+		label: 'Goal Type',
+		children: [
+			{ key: 'name', label: 'Type' },
+			{
+				key: 'params',
+				label: 'Type Settings',
+				children: [
+					{ key: 'pipeline_id', label: 'Pipeline IDs' },
+					{ key: 'stage_id', label: 'Stage ID', format: 'number' },
+					{ key: 'activity_type_id', label: 'Activity Type IDs' },
+				],
+			},
+		],
+	},
+	{
+		key: 'expected_outcome',
+		label: 'Expected Outcome',
+		children: [
+			{ key: 'target', label: 'Target', format: 'number' },
+			{ key: 'tracking_metric', label: 'Tracking Metric' },
+			{ key: 'currency_id', label: 'Currency ID', format: 'number' },
+		],
+	},
+	{
+		key: 'duration',
+		label: 'Duration',
+		children: [
+			{ key: 'start', label: 'Start Date', format: 'date' },
+			{ key: 'end', label: 'End Date', format: 'date' },
+		],
+	},
+	{ key: 'report_ids', label: 'Report IDs' },
+];
+
+const callLogFields: OutputSchema['fields'] = [
+	{ key: 'id', label: 'Call Log ID' },
+	{ key: 'outcome', label: 'Outcome' },
+	{ key: 'to_phone_number', label: 'To Phone Number' },
+	{ key: 'from_phone_number', label: 'From Phone Number' },
+	{ key: 'duration', label: 'Duration (seconds)' },
+	{ key: 'start_time', label: 'Start Time', format: 'datetime' },
+	{ key: 'end_time', label: 'End Time', format: 'datetime' },
+	{ key: 'has_recording', label: 'Has Recording', format: 'boolean' },
+	{ key: 'activity_id', label: 'Activity ID', format: 'number' },
+	{ key: 'person_id', label: 'Person ID', format: 'number' },
+	{ key: 'org_id', label: 'Organization ID', format: 'number' },
+	{ key: 'deal_id', label: 'Deal ID', format: 'number' },
+	{ key: 'lead_id', label: 'Lead ID' },
+	{ key: 'user_id', label: 'User ID', format: 'number' },
+	{ key: 'company_id', label: 'Company ID', format: 'number' },
+	{ key: 'note', label: 'Note' },
+];
+
+function v1Envelope({
+	label,
+	fields,
+}: {
+	label: string;
+	fields: OutputSchema['fields'];
+}): OutputSchema {
+	return {
+		fields: [
+			...envelope(label, fields).fields,
+			{ key: 'additional_data', label: 'Additional Data' },
+		],
+	};
+}
+
 function envelope(label: string, fields: OutputSchema['fields']): OutputSchema {
 	return {
 		fields: [
@@ -342,6 +797,23 @@ function search({
 		fields: [
 			{ key: 'found', label: 'Found', format: 'boolean' },
 			{ key: 'data', label, labelKey, listItems: fields },
+		],
+	};
+}
+
+function page({
+	label,
+	fields,
+	labelKey,
+}: {
+	label: string;
+	fields: OutputSchema['fields'];
+	labelKey: string;
+}): OutputSchema {
+	return {
+		fields: [
+			...search({ label, fields, labelKey }).fields,
+			{ key: 'next_cursor', label: 'Next Cursor' },
 		],
 	};
 }
@@ -420,6 +892,121 @@ export const findProductsActionOutputSchema = search({
 });
 export const addFollowerActionOutputSchema = envelope('Follower', followerFields);
 export const attachFileActionOutputSchema = envelope('File', fileFields);
+
+export const getDealActionOutputSchema = envelope('Deal', atomicDealDetailFields);
+export const getPersonActionOutputSchema = envelope('Person', atomicPersonDetailFields);
+export const getOrganizationActionOutputSchema = envelope('Organization', atomicOrganizationDetailFields);
+export const mergeDealsActionOutputSchema = envelope('Surviving Deal', [
+	...mergedDealV1Fields,
+	...mergedRecordFields,
+]);
+export const mergePersonsActionOutputSchema = envelope('Surviving Person', [
+	...mergedPersonV1Fields,
+	...mergedRecordFields,
+]);
+export const mergeOrganizationsActionOutputSchema = envelope(
+	'Surviving Organization',
+	mergedOrganizationFields
+);
+export const addGoalActionOutputSchema = envelope('Goal Envelope', [
+	{ key: 'goal', label: 'Goal', children: goalFields },
+]);
+export const updateGoalActionOutputSchema = envelope('Goal Envelope', [
+	{ key: 'goal', label: 'Goal', children: goalFields },
+]);
+export const findGoalsActionOutputSchema = search({ label: 'Goals', fields: goalFields, labelKey: 'title' });
+export const getGoalResultActionOutputSchema = envelope('Goal Result', [
+	{ key: 'goal', label: 'Goal', children: goalFields },
+	{ key: 'progress', label: 'Progress', format: 'number' },
+]);
+export const addCallLogActionOutputSchema = envelope('Call Log', callLogFields);
+export const getCallLogActionOutputSchema = envelope('Call Log', callLogFields);
+export const listCallLogsActionOutputSchema: OutputSchema = {
+	fields: [
+		...search({ label: 'Call Logs', fields: callLogFields, labelKey: 'to_phone_number' }).fields,
+		{ key: 'more_items_in_collection', label: 'More Items', format: 'boolean' },
+		{ key: 'next_start', label: 'Next Start', format: 'number' },
+	],
+};
+export const getActivityActionOutputSchema = envelope('Activity', atomicActivityDetailFields);
+export const getLeadActionOutputSchema = v1Envelope({ label: 'Lead', fields: atomicLeadFields });
+export const updateNoteActionOutputSchema = envelope('Note', atomicNoteFields);
+export const getCurrentUserActionOutputSchema = v1Envelope({ label: 'User', fields: currentUserFields });
+export const getLeadConversionStatusActionOutputSchema = v1Envelope({ label: 'Conversion', fields: leadConversionFields });
+export const convertLeadToDealActionOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'conversion_id', label: 'Conversion ID' },
+		{ key: 'lead_id', label: 'Lead ID' },
+	],
+};
+export const deleteRecordActionOutputSchema = envelope('Deleted Record', deleteResultFields);
+export const deleteRecordWithAdditionalDataActionOutputSchema = v1Envelope({ label: 'Deleted Record', fields: deleteResultFields });
+export const deleteNoteActionOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'success', label: 'Success', format: 'boolean' },
+		{ key: 'data', label: 'Deleted', format: 'boolean' },
+	],
+};
+export const listDealsActionOutputSchema = page({
+	label: 'Deals',
+	fields: atomicDealListFields,
+	labelKey: 'title',
+});
+export const searchDealsActionOutputSchema = page({
+	label: 'Deals',
+	fields: dealSearchItemFields,
+	labelKey: 'title',
+});
+export const listDealProductsActionOutputSchema = page({
+	label: 'Deal Products',
+	fields: atomicDealProductFields,
+	labelKey: 'name',
+});
+export const listPersonsActionOutputSchema = page({
+	label: 'People',
+	fields: atomicPersonListFields,
+	labelKey: 'name',
+});
+export const searchPersonsActionOutputSchema = page({
+	label: 'People',
+	fields: personSearchItemFields,
+	labelKey: 'name',
+});
+export const listOrganizationsActionOutputSchema = page({
+	label: 'Organizations',
+	fields: atomicOrganizationListFields,
+	labelKey: 'name',
+});
+export const searchOrganizationsActionOutputSchema = page({
+	label: 'Organizations',
+	fields: organizationSearchItemFields,
+	labelKey: 'name',
+});
+export const listActivitiesActionOutputSchema = page({
+	label: 'Activities',
+	fields: atomicActivityListFields,
+	labelKey: 'subject',
+});
+export const listPipelinesActionOutputSchema = page({
+	label: 'Pipelines',
+	fields: pipelineFields,
+	labelKey: 'name',
+});
+export const listStagesActionOutputSchema = page({
+	label: 'Stages',
+	fields: stageFields,
+	labelKey: 'name',
+});
+export const listActivityTypesActionOutputSchema = search({
+	label: 'Activity Types',
+	fields: activityTypeFields,
+	labelKey: 'name',
+});
+export const listUsersActionOutputSchema = search({
+	label: 'Users',
+	fields: userDetailFields,
+	labelKey: 'name',
+});
 
 export const newPersonTriggerOutputSchema: OutputSchema = { fields: personDetailFields };
 export const updatedPersonTriggerOutputSchema: OutputSchema = { fields: personDetailFields };
