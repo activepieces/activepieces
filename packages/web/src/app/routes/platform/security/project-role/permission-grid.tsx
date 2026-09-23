@@ -137,7 +137,12 @@ function Box({
           onCheckedChange={(value) => onCheckedChange(value === true)}
         />
       ) : (
-        <span aria-hidden className="text-xs text-muted-foreground">
+        <span
+          role="img"
+          aria-label={t('No view-only level')}
+          title={t('No view-only level')}
+          className="text-xs text-muted-foreground"
+        >
           &mdash;
         </span>
       )}
