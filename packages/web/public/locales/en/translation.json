@@ -1387,6 +1387,7 @@
   "Email authentication updated": "Email authentication updated",
   "Google authentication updated": "Google authentication updated",
   "Enable Single Sign On": "Enable Single Sign On",
+  "Enable Custom Roles": "Enable Custom Roles",
   "Let your users sign in with your current SSO provider or give them self serve sign up access": "Let your users sign in with your current SSO provider or give them self serve sign up access",
   "Manage single sign on providers": "Manage single sign on providers",
   "Allowed Domains": "Allowed Domains",
