@@ -1,8 +1,10 @@
+import { ApEdition, ApFlagId, TelemetryEventName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ChevronDown, ChevronRight, Crown } from 'lucide-react';
 import React, { ComponentType, useEffect, useRef, useState } from 'react';
 import { Link, matchPath, useLocation } from 'react-router-dom';
 
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
   SidebarMenuButton,
   SidebarMenuItem,
@@ -11,11 +13,21 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { FeatureTier, TIER_LABELS } from '@/features/billing';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
+
+import { sidebarItemUtils } from './ap-sidebar-item-utils';
 
 export const ApSidebarItem = (item: SidebarItemType) => {
   const location = useLocation();
   const { state } = useSidebar();
+  const { capture } = useTelemetry();
   const iconRef = useRef<AnimatedIconHandle | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const pathname = location.pathname;
@@ -30,12 +42,19 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     ? subItems.every(isSubItemLocked)
     : Boolean(item.locked);
   const isRowHighlighted = !hasSubItems && isLinkActive;
+  const parentTier = item.tier ?? subItems.find(isSubItemLocked)?.tier;
+
+  const captureLockedClick = ({ path, tier }: LockedClick) =>
+    capture({
+      name: TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
+      payload: { path, tier },
+    });
 
   const keepSearchWithinSection = (to: string) => {
     if (!hasSubItems || !isLinkActive) {
       return to;
     }
-    const shared = sectionSearch(location.search);
+    const shared = sidebarItemUtils.sectionSearch(location.search);
     return shared === '' ? to : `${to}?${shared}`;
   };
 
@@ -52,12 +71,16 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       asChild
       className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
         'bg-sidebar-accent hover:bg-sidebar-accent!': isRowHighlighted,
-        'text-sidebar-foreground/60': isCrowned,
       })}
     >
       <Link
         to={keepSearchWithinSection(item.to)}
         aria-current={isRowHighlighted ? 'page' : undefined}
+        onClick={
+          isCrowned && !isRouteActive({ pathname, to: item.to, end: true })
+            ? () => captureLockedClick({ path: item.to, tier: parentTier })
+            : undefined
+        }
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -93,7 +116,11 @@ export const ApSidebarItem = (item: SidebarItemType) => {
 
   return (
     <SidebarMenuItem>
-      {button}
+      {isCrowned && !isCollapsed ? (
+        <LockedTooltip tier={parentTier}>{button}</LockedTooltip>
+      ) : (
+        button
+      )}
       {showSubItems && (
         <SidebarMenuSub className="mx-0 ml-7 border-0 px-0 py-1">
           {subItems.map((subItem) => {
@@ -103,27 +130,40 @@ export const ApSidebarItem = (item: SidebarItemType) => {
               to: subItem.to,
               end: subItem.end,
             });
+            const subButton = (
+              <SidebarMenuSubButton
+                asChild
+                isActive={subItemActive}
+                className="h-8"
+              >
+                <Link
+                  to={keepSearchWithinSection(subItem.to)}
+                  aria-current={subItemActive ? 'page' : undefined}
+                  onClick={
+                    shut &&
+                    !isRouteActive({ pathname, to: subItem.to, end: true })
+                      ? () =>
+                          captureLockedClick({
+                            path: subItem.to,
+                            tier: subItem.tier,
+                          })
+                      : undefined
+                  }
+                >
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="truncate">{subItem.label}</span>
+                    {shut && !isCrowned && <CrownMark />}
+                  </span>
+                </Link>
+              </SidebarMenuSubButton>
+            );
             return (
               <SidebarMenuSubItem key={subItem.to}>
-                <SidebarMenuSubButton
-                  asChild
-                  isActive={subItemActive}
-                  className="h-8"
-                >
-                  <Link
-                    to={keepSearchWithinSection(subItem.to)}
-                    aria-current={subItemActive ? 'page' : undefined}
-                  >
-                    <span
-                      className={cn('flex min-w-0 items-center gap-1.5', {
-                        'text-sidebar-foreground/60': shut,
-                      })}
-                    >
-                      <span className="truncate">{subItem.label}</span>
-                      {shut && !isCrowned && <CrownMark />}
-                    </span>
-                  </Link>
-                </SidebarMenuSubButton>
+                {shut && !isCrowned ? (
+                  <LockedTooltip tier={subItem.tier}>{subButton}</LockedTooltip>
+                ) : (
+                  subButton
+                )}
               </SidebarMenuSubItem>
             );
           })}
@@ -132,6 +172,22 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     </SidebarMenuItem>
   );
 };
+
+function LockedTooltip({ tier, children }: LockedTooltipProps) {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+  const namedTier = edition === ApEdition.COMMUNITY ? undefined : tier;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side="right" align="center">
+        {namedTier === undefined
+          ? t('Not included in your plan')
+          : t('Included in the {tier} plan', { tier: TIER_LABELS[namedTier] })}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 function CrownMark() {
   return (
@@ -157,13 +213,6 @@ function isRouteActive({
   return matchPath({ path: to, end }, pathname) !== null;
 }
 
-function sectionSearch(search: string): string {
-  const params = new URLSearchParams(search);
-  return new URLSearchParams(
-    [...params].filter(([key]) => SECTION_SEARCH_KEYS.includes(key)),
-  ).toString();
-}
-
 function renderIcon({
   Icon,
   ref,
@@ -177,15 +226,12 @@ function renderIcon({
   } as { className: string });
 }
 
-export const sidebarItemUtils = { sectionSearch };
-
-const SECTION_SEARCH_KEYS = ['month'];
-
 export type SidebarSubItemType = {
   to: string;
   label: string;
   end?: boolean;
   locked?: boolean;
+  tier?: FeatureTier;
 };
 
 export type SidebarItemType = {
@@ -194,7 +240,18 @@ export type SidebarItemType = {
   type: 'link';
   icon?: ComponentType<{ className?: string }>;
   locked?: boolean;
+  tier?: FeatureTier;
   subItems?: SidebarSubItemType[];
+};
+
+type LockedTooltipProps = {
+  tier?: FeatureTier;
+  children: React.ReactElement;
+};
+
+type LockedClick = {
+  path: string;
+  tier?: FeatureTier;
 };
 
 type AnimatedIconHandle = {

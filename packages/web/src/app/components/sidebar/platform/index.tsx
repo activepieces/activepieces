@@ -37,6 +37,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
+import { PLATFORM_FEATURES } from '@/features/billing';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -75,6 +76,7 @@ export function PlatformSidebar() {
               to: '/platform/users/roles',
               label: t('Project Roles'),
               locked: !platform.plan.projectRolesEnabled,
+              tier: PLATFORM_FEATURES.projectRoles.tier,
             },
           ],
         },
@@ -88,6 +90,7 @@ export function PlatformSidebar() {
               to: '/platform/connections/global',
               label: t('Global Connections'),
               locked: !platform.plan.globalConnectionsEnabled,
+              tier: PLATFORM_FEATURES.globalConnections.tier,
             },
           ],
         },
@@ -106,6 +109,7 @@ export function PlatformSidebar() {
               to: '/platform/pieces/piece-sets',
               label: t('Piece Sets'),
               locked: !platform.plan.managePiecesEnabled,
+              tier: PLATFORM_FEATURES.pieces.tier,
             },
           ],
         },
@@ -114,6 +118,7 @@ export function PlatformSidebar() {
           label: t('Templates'),
           icon: LayoutGridIcon,
           locked: !platform.plan.manageTemplatesEnabled,
+          tier: PLATFORM_FEATURES.templates.tier,
         },
         {
           to: '/platform/ai',
@@ -140,12 +145,14 @@ export function PlatformSidebar() {
           label: t('Single Sign On'),
           icon: LogInIcon,
           locked: !platform.plan.ssoEnabled,
+          tier: PLATFORM_FEATURES.sso.tier,
         },
         {
           to: '/platform/secret-managers',
           label: t('Secret Managers'),
           icon: KeyRoundIcon,
           locked: !platform.plan.secretManagersEnabled,
+          tier: PLATFORM_FEATURES.secretManagers.tier,
         },
         {
           to: '/platform/audit-log',
@@ -157,11 +164,13 @@ export function PlatformSidebar() {
               label: t('Events'),
               end: true,
               locked: !platform.plan.auditLogEnabled,
+              tier: PLATFORM_FEATURES.auditLogs.tier,
             },
             {
               to: '/platform/audit-log/streaming',
               label: t('Event Streaming'),
               locked: !platform.plan.eventStreamingEnabled,
+              tier: PLATFORM_FEATURES.eventStreaming.tier,
             },
           ],
         },
@@ -175,12 +184,14 @@ export function PlatformSidebar() {
           label: t('API Keys'),
           icon: FileJson2Icon,
           locked: !platform.plan.apiKeysEnabled,
+          tier: PLATFORM_FEATURES.apiKeys.tier,
         },
         {
           to: '/platform/embedding',
           label: t('Embedding'),
           icon: FrameIcon,
           locked: !platform.plan.embeddingEnabled,
+          tier: PLATFORM_FEATURES.embedding.tier,
         },
         {
           to: '/platform/mcp',
@@ -319,6 +330,7 @@ export function PlatformSidebar() {
                       label={item.label}
                       icon={item.icon}
                       locked={item.locked}
+                      tier={item.tier}
                       subItems={item.subItems}
                     />
                   ))}
@@ -338,5 +350,5 @@ export function PlatformSidebar() {
 
 type PlatformNavItem = Pick<
   SidebarItemType,
-  'to' | 'label' | 'icon' | 'locked' | 'subItems'
+  'to' | 'label' | 'icon' | 'locked' | 'tier' | 'subItems'
 >;

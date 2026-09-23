@@ -3088,5 +3088,8 @@
   "Catalogue": "Catalogue",
   "Developers": "Developers",
   "Operations": "Operations",
-  "Forward every audit event we emit to a webhook, then handle it in a flow.": "Forward every audit event we emit to a webhook, then handle it in a flow."
+  "Forward every audit event we emit to a webhook, then handle it in a flow.": "Forward every audit event we emit to a webhook, then handle it in a flow.",
+  "Not included in your plan": "Not included in your plan",
+  "Included in the {tier} plan": "Included in the {tier} plan",
+  "Opened a paid admin page": "Opened a paid admin page"
 }

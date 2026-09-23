@@ -67,8 +67,15 @@ Six groups, named for the job. The regroup renamed no page; see Naming for the p
   that works with only some actions gated (Projects' New Project, the Pieces list's visibility changes)
   gets no crown; the gated action carries its own. A page is locked when it cannot be used on the plan:
   it shows the sample overlay, or its data is behind the plan (Piece Sets).
-- **A parent wears the crown only when every sub-page under it is locked**, and it is dimmed exactly when
-  it is crowned. Otherwise the crown sits on the locked sub-pages. A locked parent locks all its children.
+- **A parent wears the crown only when every sub-page under it is locked.** Otherwise the crown sits on
+  the locked sub-pages. A locked parent locks all its children.
+- **The crown is the only mark, and a locked row stays fully clickable.** No dimming: grey reads as
+  "disabled", and the point of showing a paid page is that people open its preview. Hovering a crowned
+  row names the plan on Cloud and Enterprise ("Included in the Team plan", from `PLATFORM_FEATURES`;
+  Community, which cannot buy a Cloud plan, gets "Not included in your plan"), and clicking it sends
+  `admin.nav.locked.clicked` with the path and tier (Cloud only, so it is not in the self-hosted "Events
+  we track" list), so each locked entry can be judged by whether anyone opens it. A click that lands on
+  the page you are already on is not counted.
 - **Detail pages have no sidebar entry.** You always arrive from a row. Planned: the back link always
   goes somewhere concrete, never browser history.
 
@@ -87,7 +94,7 @@ Six groups, named for the job. The regroup renamed no page; see Naming for the p
   before release, only the AI and Pieces ones map; the rest open the parent page.
 - **A section carries only the query its pages share.** Moving between sub-pages keeps `?month=` (the
   Health pages) and drops everything else, because sibling tables read the same `status`, `cursor` and
-  `limit` keys. A new shared key goes in `SECTION_SEARCH_KEYS` in `ap-sidebar-item`.
+  `limit` keys. A new shared key goes in `SECTION_SEARCH_KEYS` in `ap-sidebar-item-utils`.
 
 ## Thin pages — Planned
 

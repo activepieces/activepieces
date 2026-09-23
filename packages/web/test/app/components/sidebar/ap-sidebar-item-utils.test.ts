@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { sidebarItemUtils } from '@/app/components/sidebar/ap-sidebar-item';
+import { sidebarItemUtils } from '@/app/components/sidebar/ap-sidebar-item-utils';
 
 describe('sidebarItemUtils.sectionSearch', () => {
   it('keeps the month shared by a section', () => {
