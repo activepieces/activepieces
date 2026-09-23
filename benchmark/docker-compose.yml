@@ -1,17 +1,33 @@
-# Prod-mirror bench stack — matches Kamal shared-05cpu tier per-container caps.
+# Prod-mirror bench stack — parameterized so one compose file serves both
+# Kamal tiers we actually care about:
 #
-#   Container caps (per replica), pinned to disjoint cores so an app-CPU
-#   regression can never starve workers by fighting for the same cores:
-#     app     → 2 vCPU / 4 GB, cpuset 0-5   (fits up to 3 replicas × 2 vCPU)
-#     worker  → 0.5 vCPU / 1 GB, cpuset 6-11 (fits up to 12 replicas × 0.5 vCPU)
+#   shared-16cpu (majority prod volume):
+#     1 worker container × 16 vCPU / 32 GB / 28 slots / heap 64G / REUSE=false
+#   dedicated-05cpu (every dedicated tenant):
+#     4 worker containers × 0.5 vCPU / 1 GB / 1 slot / heap 768M / REUSE=true
 #
-#   Runner has 16 vCPU; cores 12-15 stay unpartitioned for postgres, redis,
-#   nginx, minio, autocannon and the kernel. Verify at runtime with
-#   `docker inspect <container> --format '{{.HostConfig.CpuQuota}}/{{.HostConfig.CpuPeriod}} {{.HostConfig.CpusetCpus}}'`
-#   or the "Verify container caps" workflow step.
+#   Cpuset pins app and worker to disjoint cores so an app-CPU regression
+#   can never starve workers by fighting for the same physical cores (prod
+#   runs them on separate hosts; we approximate by pinning them to separate
+#   cores on one runner):
+#     worker → cpuset 0-15   (16 cores — fits the full shared-16cpu container)
+#     app    → cpuset 16-17  (2 cores — matches one 2-vCPU app container)
+#   Runner is depot-ubuntu-24.04-32 (32 vCPU); cores 18-31 stay unpartitioned
+#   for postgres, redis, nginx, minio, autocannon and the kernel.
 #
-# APP_REPLICAS / WORKER_REPLICAS / AP_REUSE_SANDBOX / AP_EXECUTION_MODE /
-# AP_WORKER_CONCURRENCY are set per-cell by the workflow matrix.
+#   Verify at runtime with the "Verify container caps" workflow step, or
+#   `docker inspect <container> --format '{{.HostConfig.CpuQuota}}/{{.HostConfig.CpuPeriod}} {{.HostConfig.CpusetCpus}}'`.
+#
+# All of these are set per-cell by the workflow matrix; defaults are the
+# dedicated-05cpu shape so a local `docker compose up` matches most-common
+# prod dedicated-tenant behavior:
+#   APP_REPLICAS, WORKER_REPLICAS, WORKER_CPUS, WORKER_MEMORY,
+#   WORKER_HEAP_MB, AP_WORKER_CONCURRENCY, AP_REUSE_SANDBOX, AP_EXECUTION_MODE.
+#
+# Not modeled: AP_WORKER_GROUP_ID (routes to a per-tenant queue). The bench
+# stack is fresh single-tenant so there is no group to route to; the reuse
+# behavior we care about (canReuseSandbox in packages/server/sandbox) does
+# not depend on it.
 
 services:
   nginx:
@@ -65,7 +81,7 @@ services:
       AP_S3_ENDPOINT: ${AP_S3_ENDPOINT:-}
       AP_S3_REGION: ${AP_S3_REGION:-}
       AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
-    cpuset: "0-5"
+    cpuset: "16-17"
     deploy:
       replicas: ${APP_REPLICAS:-1}
       resources:
@@ -90,7 +106,7 @@ services:
       AP_REUSE_SANDBOX: ${AP_REUSE_SANDBOX:-false}
       AP_PRE_WARM_CACHE: 'true'
       AP_PROJECT_WORKER: 'false'
-      NODE_OPTIONS: --max-old-space-size=768
+      NODE_OPTIONS: --max-old-space-size=${WORKER_HEAP_MB:-768}
       AP_REDIS_HOST: redis
       AP_REDIS_PORT: 6379
       AP_POSTGRES_DATABASE: activepieces
@@ -109,13 +125,13 @@ services:
       AP_S3_REGION: ${AP_S3_REGION:-}
       AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
     privileged: true
-    cpuset: "6-11"
+    cpuset: "0-15"
     deploy:
-      replicas: ${WORKER_REPLICAS:-2}
+      replicas: ${WORKER_REPLICAS:-4}
       resources:
         limits:
-          cpus: '0.5'
-          memory: 1G
+          cpus: ${WORKER_CPUS:-0.5}
+          memory: ${WORKER_MEMORY:-1G}
     networks:
       - bench
 

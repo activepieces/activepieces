@@ -12,7 +12,7 @@ on:
 
 jobs:
   benchmark:
-    runs-on: depot-ubuntu-24.04-16
+    runs-on: depot-ubuntu-24.04-32
     timeout-minutes: 30
     env:
       AP_FILE_STORAGE_LOCATION: ${{ secrets.AP_FILE_STORAGE_LOCATION }}
@@ -28,22 +28,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - apps: 1
-            workers: 4
+          # Majority prod volume: one big container, 28 slots, huge heap, cold-every-job.
+          - label: "shared-16cpu"
+            apps: 1
+            workers: 1
+            worker_cpus: '16'
+            worker_memory: '32G'
+            worker_concurrency: '28'
+            worker_heap_mb: '64512'
             reuse: 'false'
-            label: "1app-4w-shared"
-          - apps: 3
-            workers: 12
-            reuse: 'false'
-            label: "3app-12w-shared"
-          - apps: 1
+          # Every dedicated tenant: 4 small workers per host, 1 slot each, warm reuse.
+          - label: "dedicated-05cpu"
+            apps: 1
             workers: 4
+            worker_cpus: '0.5'
+            worker_memory: '1G'
+            worker_concurrency: '1'
+            worker_heap_mb: '768'
             reuse: 'true'
-            label: "1app-4w-dedicated"
-          - apps: 3
-            workers: 12
-            reuse: 'true'
-            label: "3app-12w-dedicated"
 
     steps:
       - name: Checkout
@@ -64,20 +66,26 @@ jobs:
         run: |
           APP_REPLICAS=${{ matrix.apps }} \
           WORKER_REPLICAS=${{ matrix.workers }} \
+          WORKER_CPUS=${{ matrix.worker_cpus }} \
+          WORKER_MEMORY=${{ matrix.worker_memory }} \
+          WORKER_HEAP_MB=${{ matrix.worker_heap_mb }} \
+          AP_WORKER_CONCURRENCY=${{ matrix.worker_concurrency }} \
           AP_REUSE_SANDBOX=${{ matrix.reuse }} \
             docker compose -f benchmark/docker-compose.yml up -d
           echo "Waiting for containers to start..."
           sleep 5
           docker compose -f benchmark/docker-compose.yml ps
 
-      - name: Verify container caps (proves worker == 0.5 vCPU, cpuset partitioned)
+      - name: Verify container caps (proves the per-cell shape, cpuset partitioned)
         run: |
           echo "=== Container CPU / memory / cpuset (as Docker actually applied) ==="
           for c in $(docker compose -f benchmark/docker-compose.yml ps -q); do
             docker inspect "$c" --format '{{.Name}}  quota={{.HostConfig.CpuQuota}}  period={{.HostConfig.CpuPeriod}}  cpuset={{if .HostConfig.CpusetCpus}}{{.HostConfig.CpusetCpus}}{{else}}(any){{end}}  memBytes={{.HostConfig.Memory}}'
           done
           echo
-          echo "Effective vCPU = quota / period. Expected: app=2.00 (200000/100000), worker=0.50 (50000/100000)."
+          echo "Effective vCPU = quota / period.  Expected this cell:"
+          echo "  app    → 2.00 vCPU (200000/100000)   cpuset 16-17"
+          echo "  worker → ${{ matrix.worker_cpus }} vCPU                cpuset 0-15 (${{ matrix.workers }} replica(s))"
 
       - name: Setup flow, platform API key, and wait for app
         id: setup
