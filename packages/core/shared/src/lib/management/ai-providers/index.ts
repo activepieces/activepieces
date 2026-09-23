@@ -1,111 +1,129 @@
-import { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderCredentials, AiProviderKeyStatus, AIProviderModelType, AIProviderName, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BaseModelSchema, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
+import { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderConfig, AiProviderCredentials, AiProviderKeyStatus, AIProviderModelType, AIProviderName, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BaseModelSchema, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
 import { z } from 'zod'
 
 export { ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProviderAuthConfig, AIProviderConfig, AiProviderCredentials, aiProviderCredentials, AIProviderModelType, AnthropicProviderAuthConfig, AnthropicProviderConfig, AzureProviderAuthConfig, AzureProviderConfig, BaseAIProviderAuthConfig, BedrockProviderAuthConfig, BedrockProviderConfig, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig, GoogleProviderAuthConfig, GoogleProviderConfig, MistralProviderAuthConfig, MistralProviderConfig, OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig, OpenAiCompatibleVendorConfig, OpenAIProviderAuthConfig, OpenAIProviderConfig, OpenRouterProviderAuthConfig, OpenRouterProviderConfig, ProviderModelConfig, VertexProviderAuthConfig, VertexProviderConfig } from '@activepieces/core-utils'
+
+function strictAuth<Shape extends z.ZodRawShape>(schema: z.ZodObject<Shape>): z.ZodObject<Shape, z.core.$strict> {
+    return z.strictObject(schema.shape)
+}
 
 const ProviderConfigUnion = z.discriminatedUnion('provider', [
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.OPENAI),
         config: OpenAIProviderConfig,
-        auth: OpenAIProviderAuthConfig,
+        auth: strictAuth(OpenAIProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.OPENROUTER),
         config: OpenRouterProviderConfig,
-        auth: OpenRouterProviderAuthConfig,
+        auth: strictAuth(OpenRouterProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.ANTHROPIC),
         config: AnthropicProviderConfig,
-        auth: AnthropicProviderAuthConfig,
+        auth: strictAuth(AnthropicProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.AZURE),
         config: AzureProviderConfig,
-        auth: AzureProviderAuthConfig,
+        auth: strictAuth(AzureProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.GOOGLE),
         config: GoogleProviderConfig,
-        auth: GoogleProviderAuthConfig,
+        auth: strictAuth(GoogleProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.CLOUDFLARE_GATEWAY),
         config: CloudflareGatewayProviderConfig,
-        auth: CloudflareGatewayProviderAuthConfig,
+        auth: strictAuth(CloudflareGatewayProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.CUSTOM),
         config: OpenAICompatibleProviderConfig,
-        auth: OpenAICompatibleProviderAuthConfig,
+        auth: strictAuth(OpenAICompatibleProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.ACTIVEPIECES),
         config: ActivePiecesProviderConfig,
-        auth: ActivePiecesProviderAuthConfig,
+        auth: strictAuth(ActivePiecesProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.BEDROCK),
         config: BedrockProviderConfig,
-        auth: BedrockProviderAuthConfig,
+        auth: strictAuth(BedrockProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.VERTEX),
         config: VertexProviderConfig,
-        auth: VertexProviderAuthConfig,
+        auth: strictAuth(VertexProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.MISTRAL),
         config: MistralProviderConfig,
-        auth: MistralProviderAuthConfig,
+        auth: strictAuth(MistralProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.XAI),
         config: OpenAiCompatibleVendorConfig,
-        auth: BaseAIProviderAuthConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.DEEPSEEK),
         config: OpenAiCompatibleVendorConfig,
-        auth: BaseAIProviderAuthConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.ZAI),
         config: OpenAiCompatibleVendorConfig,
-        auth: BaseAIProviderAuthConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.QWEN),
         config: OpenAiCompatibleVendorConfig,
-        auth: BaseAIProviderAuthConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.MINIMAX),
         config: OpenAiCompatibleVendorConfig,
-        auth: BaseAIProviderAuthConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
     }),
     z.object({
         displayName: z.string().min(1),
         provider: z.literal(AIProviderName.MOONSHOT),
         config: OpenAiCompatibleVendorConfig,
-        auth: BaseAIProviderAuthConfig,
+        auth: strictAuth(BaseAIProviderAuthConfig),
     }),
+])
+
+const StrictAIProviderAuthConfig = z.union([
+    strictAuth(AnthropicProviderAuthConfig),
+    strictAuth(AzureProviderAuthConfig),
+    strictAuth(GoogleProviderAuthConfig),
+    strictAuth(OpenAIProviderAuthConfig),
+    strictAuth(OpenRouterProviderAuthConfig),
+    strictAuth(CloudflareGatewayProviderAuthConfig),
+    strictAuth(OpenAICompatibleProviderAuthConfig),
+    strictAuth(ActivePiecesProviderAuthConfig),
+    strictAuth(BedrockProviderAuthConfig),
+    strictAuth(VertexProviderAuthConfig),
+    strictAuth(MistralProviderAuthConfig),
 ])
 
 export const AIProvider = z.object({
@@ -179,7 +197,7 @@ export type CreateAIProviderRequest = z.infer<typeof CreateAIProviderRequest>
 export const UpdateAIProviderRequest = z.object({
     displayName: z.string().min(1),
     config: AIProviderConfig.optional(),
-    auth: AIProviderAuthConfig.optional(),
+    auth: StrictAIProviderAuthConfig.optional(),
     enabledForChat: z.boolean().optional(),
     modelScope: AiProviderModelScope.optional(),
     modelIds: z.array(z.string()).optional(),
