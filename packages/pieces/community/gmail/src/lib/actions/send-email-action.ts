@@ -20,62 +20,70 @@ export const gmailSendEmailAction = createAction({
   displayName: 'Send Email',
   props: {
     receiver: Property.Array({
-      displayName: 'Receiver Email (To)',
-      description: undefined,
+      displayName: 'To',
+      description: 'One address per row.',
       required: true,
     }),
     cc: Property.Array({
-      displayName: 'CC Email',
-      description: undefined,
+      displayName: 'Cc',
       required: false,
     }),
     bcc: Property.Array({
-      displayName: 'BCC Email',
-      description: undefined,
+      displayName: 'Bcc',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
       description: undefined,
+      placeholder: 'Invoice for March',
       required: true,
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'plain text',
+            label: 'Plain Text',
             value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
           },
           {
-            label: 'html',
+            label: 'HTML',
             value: 'html',
+            description: 'Tags are rendered',
+            icon: 'code',
           },
         ],
       },
     }),
     body: Property.ShortText({
       displayName: 'Body',
-      description: 'Body for the email you want to send',
       required: true,
     }),
     reply_to: Property.Array({
-      displayName: 'Reply-To Email',
-      description: 'Email address to set as the "Reply-To" header',
+      displayName: 'Reply To',
+      description: 'Replies go to these addresses instead of the sender.',
       required: false,
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     from: Property.ShortText({
-      displayName: 'Sender Email',
-      description:
-        "The address must be listed in your GMail account's settings",
+      displayName: 'From',
+      description: 'A send-as address already set up in your Gmail settings.',
+      placeholder: 'sales@example.com',
       required: false,
+      advanced: true,
     }),
     attachments: Property.Array({
       displayName: 'Attachments',
@@ -83,25 +91,26 @@ export const gmailSendEmailAction = createAction({
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'File to attach to the email you want to send.',
           required: true,
         }),
         name: Property.ShortText({
           displayName: 'Attachment Name',
-          description: 'In case you want to change the name of the attachment.',
+          description: 'Overrides the uploaded file name.',
+          placeholder: 'report.pdf',
           required: false,
         }),
       },
     }),
     in_reply_to: Property.ShortText({
-      displayName: 'In reply to',
-      description: 'Reply to this Message-ID',
+      displayName: 'In Reply To',
+      description: 'Message-ID header of the email to thread this under.',
       required: false,
+      advanced: true,
     }),
     draft: Property.Checkbox({
-      displayName: 'Create draft',
-      description: 'Create draft without sending the actual email',
-      required: true,
+      displayName: 'Save as Draft',
+      description: 'Save to Drafts instead of sending.',
+      required: false,
       defaultValue: false,
     }),
   },

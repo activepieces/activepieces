@@ -23,61 +23,71 @@ export const gmailReplyToEmailAction = createAction({
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
       displayName: 'Reply Type',
-      description:
-        'Choose whether to reply to sender only or to all recipients',
+      description: 'Reply to the sender only, or to everyone on the thread.',
       required: true,
       defaultValue: 'reply',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Reply (to sender only)',
+            label: 'Reply',
             value: 'reply',
+            description: 'Sender only',
           },
           {
-            label: 'Reply All (to all recipients)',
+            label: 'Reply All',
             value: 'reply_all',
+            description: 'Everyone on the thread',
           },
         ],
       },
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Plain text',
+            label: 'Plain Text',
             value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
+            description: 'Tags are rendered',
+            icon: 'code',
           },
         ],
       },
     }),
     body: Property.LongText({
-      displayName: 'Reply Body',
-      description: 'Your reply message content',
+      displayName: 'Body',
       required: true,
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
-      description: 'Optional sender name to display',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     attachment: Property.File({
       displayName: 'Attachment',
-      description: 'Optional file to attach to your reply',
+      description: 'File to attach.',
       required: false,
     }),
     attachment_name: Property.ShortText({
       displayName: 'Attachment Name',
-      description: 'Custom name for the attachment',
+      description: 'Overrides the uploaded file name.',
+      placeholder: 'report.pdf',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: replyToEmailActionOutputSchema,

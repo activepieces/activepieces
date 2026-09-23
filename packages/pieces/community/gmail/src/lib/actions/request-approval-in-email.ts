@@ -19,7 +19,7 @@ export const requestApprovalInEmail = createAction({
   classification: 'WRITE',
   displayName: 'Request Approval in Email',
   description:
-    'Send approval request email and then wait until the email is approved or disapproved',
+    'Send an email with an approval link and pause until it is answered.',
   audience: 'both',
   aiMetadata: {
     description:
@@ -28,48 +28,48 @@ export const requestApprovalInEmail = createAction({
   },
   props: {
     receiver: Property.ShortText({
-      displayName: 'Receiver Email (To)',
-      description:
-        'The email address of the recipient who will receive the approval request.',
+      displayName: 'To',
+      description: 'Address that receives the approval request.',
+      placeholder: 'manager@example.com',
       required: true,
     }),
 
     cc: Property.Array({
-      displayName: 'CC Email',
-      description:
-        'The email addresses of the recipients who will receive a carbon copy of the approval request.',
+      displayName: 'Cc',
       required: false,
     }),
     bcc: Property.Array({
-      displayName: 'BCC Email',
-      description:
-        'The email addresses of the recipients who will receive a blind carbon copy of the approval request.',
+      displayName: 'Bcc',
       required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The subject of the approval request email.',
+      placeholder: 'Approval needed: purchase order 1042',
       required: true,
     }),
     body: Property.ShortText({
       displayName: 'Body',
-      description: 'Body for the email you want to send',
+      description: 'Text shown above the Review & Respond button.',
       required: true,
     }),
     reply_to: Property.Array({
-      displayName: 'Reply-To Email',
-      description: 'Email address to set as the "Reply-To" header',
+      displayName: 'Reply To',
+      description: 'Replies go to these addresses instead of the sender.',
       required: false,
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     from: Property.ShortText({
-      displayName: 'Sender Email',
-      description:
-        "The address must be listed in your GMail account's settings",
+      displayName: 'From',
+      description: 'A send-as address already set up in your Gmail settings.',
+      placeholder: 'sales@example.com',
       required: false,
+      advanced: true,
     }),
     attachments: Property.Array({
       displayName: 'Attachments',
@@ -77,20 +77,21 @@ export const requestApprovalInEmail = createAction({
       properties: {
         file: Property.File({
           displayName: 'File',
-          description: 'File to attach to the approval request email.',
           required: true,
         }),
         name: Property.ShortText({
           displayName: 'Attachment Name',
-          description: 'In case you want to change the name of the attachment.',
+          description: 'Overrides the uploaded file name.',
+          placeholder: 'report.pdf',
           required: false,
         }),
       },
     }),
     in_reply_to: Property.ShortText({
-      displayName: 'In reply to',
-      description: 'Reply to this Message-ID',
+      displayName: 'In Reply To',
+      description: 'Message-ID header of the email to thread this under.',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: requestApprovalInMailActionOutputSchema,
