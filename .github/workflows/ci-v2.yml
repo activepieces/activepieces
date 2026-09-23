@@ -63,13 +63,14 @@ jobs:
           turbo-s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
           turbo-s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}
 
-      - name: Lint affected packages
-        if: needs.changes.outputs.all != 'true'
-        run: npx turbo run lint --affected
-
       - name: Lint core packages
         if: needs.changes.outputs.all == 'true'
         run: npm run lint-core
+
+      # Also on full runs: a PR that edits a workflow and pieces/framework in one go still needs
+      # every piece linted, and --affected is what knows that.
+      - name: Lint affected packages
+        run: npx turbo run lint --affected
 
   build-test:
     runs-on: ubuntu-latest
@@ -102,13 +103,12 @@ jobs:
 
       # One turbo invocation so every package builds once. api is excluded because its `test`
       # script runs the three integration suites serially; the api-tests matrix covers those.
-      - name: Typecheck, build and test affected packages
-        if: needs.changes.outputs.all != 'true'
-        run: npx turbo run typecheck build test --affected --filter='!api'
-
       - name: Typecheck, build and test core packages
         if: needs.changes.outputs.all == 'true'
         run: npx turbo run typecheck build test $(npx tsx tools/scripts/test-filters.ts)
+
+      - name: Typecheck, build and test affected packages
+        run: npx turbo run typecheck build test --affected --filter='!api'
 
       - name: Check new migrations are rollback-safe
         run: npx tsx tools/scripts/check-migration-rollback.ts
