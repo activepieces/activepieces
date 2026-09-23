@@ -1,4 +1,5 @@
 import { apId, LocalesEnum } from '@activepieces/core-utils'
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { PackageType, PieceType, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -54,25 +55,30 @@ const get = async (url: string, token: string) => {
     return { status: res.statusCode, body: res.statusCode === 200 ? res.json() : res.body }
 }
 
+const getList = async (url: string, token: string): Promise<PieceMetadataModelSummary[]> => {
+    const res = await app.inject({ method: 'GET', url, headers: { authorization: `Bearer ${token}` } })
+    expect(res.statusCode).toBe(200)
+    return res.json<PieceMetadataModelSummary[]>()
+}
+
 describe('custom pieces per platform', () => {
     it('list: each platform sees official + only its own custom piece, all translated', async () => {
         const { a, b, tokenA, tokenB } = await scenario()
 
-        const listA = await get(`/api/v1/pieces?locale=de&projectId=${a.mockProject.id}`, tokenA)
-        expect(listA.status).toBe(200)
-        expect(listA.body.map((p: any) => p.name).sort()).toEqual(['@ap/custom-a', '@ap/official'])
-        for (const p of listA.body) expect(p.description).toBe('Eine Nachricht senden')
+        const listA = await getList(`/api/v1/pieces?locale=de&projectId=${a.mockProject.id}`, tokenA)
+        expect(listA.map((piece) => piece.name).sort()).toEqual(['@ap/custom-a', '@ap/official'])
+        for (const piece of listA) expect(piece.description).toBe('Eine Nachricht senden')
 
-        const listB = await get(`/api/v1/pieces?locale=de&projectId=${b.mockProject.id}`, tokenB)
-        expect(listB.body.map((p: any) => p.name).sort()).toEqual(['@ap/custom-b', '@ap/official'])
-        for (const p of listB.body) expect(p.description).toBe('Eine Nachricht senden')
+        const listB = await getList(`/api/v1/pieces?locale=de&projectId=${b.mockProject.id}`, tokenB)
+        expect(listB.map((piece) => piece.name).sort()).toEqual(['@ap/custom-b', '@ap/official'])
+        for (const piece of listB) expect(piece.description).toBe('Eine Nachricht senden')
     })
 
     it('list: the shared cache does not leak platform B custom piece into platform A', async () => {
         const { a, b, tokenA, tokenB } = await scenario()
         await get(`/api/v1/pieces?locale=de&projectId=${b.mockProject.id}`, tokenB)
-        const listA = await get(`/api/v1/pieces?locale=de&projectId=${a.mockProject.id}`, tokenA)
-        expect(listA.body.map((p: any) => p.name)).not.toContain('@ap/custom-b')
+        const listA = await getList(`/api/v1/pieces?locale=de&projectId=${a.mockProject.id}`, tokenA)
+        expect(listA.map((piece) => piece.name)).not.toContain('@ap/custom-b')
     })
 
     it('single piece: a platform user gets an OFFICIAL piece translated', async () => {

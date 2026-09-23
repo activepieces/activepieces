@@ -1,4 +1,5 @@
 import { apId, LocalesEnum } from '@activepieces/core-utils'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import {
     PackageType,
     PieceAudienceFilter,
@@ -35,10 +36,12 @@ beforeEach(async () => {
 })
 
 const GERMAN_TRANSLATIONS = { 'Send a message': 'Eine Nachricht senden' }
+const UPSTREAM_VERSION = '1.0.0'
 
 const seedUpstreamPiece = async (name: string): Promise<void> => {
     await db.save('piece_metadata', createMockPieceMetadata({
         name,
+        version: UPSTREAM_VERSION,
         displayName: 'Upstream',
         description: 'Send a message',
         pieceType: PieceType.OFFICIAL,
@@ -48,37 +51,38 @@ const seedUpstreamPiece = async (name: string): Promise<void> => {
     await pieceCache(mockLog).invalidate()
 }
 
-const fetchAsPieceSyncDoes = async (name: string, query = ''): Promise<Record<string, unknown>> => {
-    const queryParams = new URLSearchParams({ audience: PieceAudienceFilter.ALL })
+const fetchAsPieceSyncDoes = async (name: string, extraQuery: Record<string, string> = {}): Promise<PieceMetadataModel> => {
+    const queryParams = new URLSearchParams({ audience: PieceAudienceFilter.ALL, version: UPSTREAM_VERSION, ...extraQuery })
     const response = await app!.inject({
         method: 'GET',
-        url: `/api/v1/pieces/${name}?${queryParams.toString()}${query}`,
+        url: `/api/v1/pieces/${name}?${queryParams.toString()}`,
         headers: { authorization: `Bearer ${token}` },
     })
     expect(response.statusCode).toBe(200)
-    return response.json()
+    return response.json<PieceMetadataModel>()
 }
 
 describe('Piece Sync Cloud Round Trip', () => {
-    it('keeps the translations a self-hoster installs from cloud', async () => {
-        await seedUpstreamPiece('piece-upstream')
-        const pieceMetadata = await fetchAsPieceSyncDoes('piece-upstream')
+    it.each(['piece-upstream', '@upstream/piece-scoped'])('stores exactly what the cloud serves for %s', async (name) => {
+        await seedUpstreamPiece(name)
+        const served = await fetchAsPieceSyncDoes(name)
 
         await databaseConnection().getRepository('piece_metadata').createQueryBuilder().delete().execute()
         await pieceMetadataService(mockLog).create({
-            pieceMetadata: pieceMetadata as never,
-            packageType: PackageType.REGISTRY,
-            pieceType: PieceType.OFFICIAL,
+            pieceMetadata: served,
+            packageType: served.packageType,
+            pieceType: served.pieceType,
             publishCacheRefresh: false,
         })
+        await pieceCache(mockLog).invalidate()
 
-        const stored = await databaseConnection().getRepository('piece_metadata').createQueryBuilder('pm').addSelect('pm.i18n').where({ name: 'piece-upstream' }).getOneOrFail()
-        expect(stored.i18n).toEqual({ [LocalesEnum.GERMAN]: GERMAN_TRANSLATIONS })
+        expect(served.i18n).toEqual({ [LocalesEnum.GERMAN]: GERMAN_TRANSLATIONS })
+        expect(await fetchAsPieceSyncDoes(name)).toEqual(served)
     })
 
     it('omits the translations when the caller opts out', async () => {
         await seedUpstreamPiece('piece-opted-out')
-        const pieceMetadata = await fetchAsPieceSyncDoes('piece-opted-out', '&excludeTranslations=true')
+        const pieceMetadata = await fetchAsPieceSyncDoes('piece-opted-out', { excludeTranslations: 'true' })
 
         expect(pieceMetadata.i18n).toBeUndefined()
         expect(pieceMetadata.description).toBe('Send a message')
@@ -86,7 +90,7 @@ describe('Piece Sync Cloud Round Trip', () => {
 
     it('translates and still carries the translations for a non-English caller', async () => {
         await seedUpstreamPiece('piece-both')
-        const pieceMetadata = await fetchAsPieceSyncDoes('piece-both', `&locale=${LocalesEnum.GERMAN}`)
+        const pieceMetadata = await fetchAsPieceSyncDoes('piece-both', { locale: LocalesEnum.GERMAN })
 
         expect(pieceMetadata.description).toBe('Eine Nachricht senden')
         expect(pieceMetadata.i18n).toEqual({ [LocalesEnum.GERMAN]: GERMAN_TRANSLATIONS })

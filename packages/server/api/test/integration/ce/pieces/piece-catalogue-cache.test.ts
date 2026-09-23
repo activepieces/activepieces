@@ -1,23 +1,29 @@
 import crypto from 'crypto'
 import { apId, LocalesEnum } from '@activepieces/core-utils'
+import { PieceMetadataModelSummary } from '@activepieces/pieces-framework'
 import { PackageType, PieceType, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { pieceCache } from '../../../../src/app/pieces/metadata/piece-cache'
+import { PieceMetadataSchema } from '../../../../src/app/pieces/metadata/piece-metadata-entity'
 import { pieceMetadataService } from '../../../../src/app/pieces/metadata/piece-metadata-service'
 import { generateMockToken } from '../../../helpers/auth'
 import { db } from '../../../helpers/db'
 import { createMockPieceMetadata } from '../../../helpers/mocks'
 import { setupTestEnvironment } from '../../../helpers/test-setup'
 
+const ELEVEN_MINUTES_MS = 11 * 60 * 1000
+
 let app: FastifyInstance
 let token: string
 
-const get = async (url: string): Promise<{ body: any, sha: string }> => {
+const get = async (url: string): Promise<{ body: PieceMetadataModelSummary[], sha: string }> => {
     const res = await app.inject({ method: 'GET', url, headers: { authorization: `Bearer ${token}` } })
     expect(res.statusCode).toBe(200)
-    return { body: res.json(), sha: crypto.createHash('sha256').update(res.body).digest('hex') }
+    return { body: res.json<PieceMetadataModelSummary[]>(), sha: crypto.createHash('sha256').update(res.body).digest('hex') }
 }
+
+const namesOf = (pieces: PieceMetadataModelSummary[]): string[] => pieces.map((piece) => piece.name)
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -54,7 +60,7 @@ describe('translated catalogue cache stays correct', () => {
         await pieceCache(app.log!).invalidate()
         const fresh = await get('/api/v1/pieces?locale=de')
         expect(fresh.body).toHaveLength(2)
-        expect(fresh.body.map((p: any) => p.description).sort()).toEqual(['Eine Nachricht senden', 'Zweite Nachricht'])
+        expect(fresh.body.map((piece) => piece.description).sort()).toEqual(['Eine Nachricht senden', 'Zweite Nachricht'])
     })
 
     it('picks up a changed translation after invalidation', async () => {
@@ -67,7 +73,7 @@ describe('translated catalogue cache stays correct', () => {
         await pieceCache(app.log!).invalidate()
         expect((await get('/api/v1/pieces?locale=de')).body[0].description).toBe('Alte Nachricht')
 
-        await db.update('piece_metadata', (piece as any).id, {
+        await db.update('piece_metadata', piece.id, {
             i18n: { [LocalesEnum.GERMAN]: { 'Send a message': 'Neue Nachricht' } },
         })
         await pieceCache(app.log!).invalidate()
@@ -98,7 +104,7 @@ describe('translated catalogue cache stays correct', () => {
         await get('/api/v1/pieces?locale=junk&suggestionType=ACTION')
         const plainB = await get('/api/v1/pieces?locale=de')
 
-        expect(plainB.body.map((p: any) => p.name)).toEqual(plainA.body.map((p: any) => p.name))
+        expect(namesOf(plainB.body)).toEqual(namesOf(plainA.body))
         expect(plainB.sha).toBe(plainA.sha)
     })
 
@@ -157,10 +163,10 @@ describe('translated catalogue cache stays correct', () => {
         const joined = await get('/api/v1/pieces?locale=de')
         await inFlight
 
-        expect(joined.body.map((p: any) => p.name)).toContain('piece-race-two')
+        expect(namesOf(joined.body)).toContain('piece-race-two')
 
         const afterwards = await get('/api/v1/pieces?locale=de')
-        expect(afterwards.body.map((p: any) => p.name)).toContain('piece-race-two')
+        expect(namesOf(afterwards.body)).toContain('piece-race-two')
         expect(afterwards.body).toHaveLength(42)
     })
 
@@ -208,10 +214,10 @@ describe('translated catalogue cache stays correct', () => {
 
         const url = '/api/v1/pieces?locale=de&suggestionType=ACTION_AND_TRIGGER'
         const first = await get(url)
-        const action = first.body[0].suggestedActions[0]
-        expect(action.displayName).toBe('Senden')
-        expect(action.props.channel.displayName).toBe('Kanal')
-        expect(action.props.channel.description).toBe('Der Kanal')
+        const action = first.body[0].suggestedActions?.[0]
+        expect(action?.displayName).toBe('Senden')
+        expect(action?.props.channel.displayName).toBe('Kanal')
+        expect(action?.props.channel.description).toBe('Der Kanal')
         expect((await get(url)).sha).toBe(first.sha)
 
         expect((await get('/api/v1/pieces?locale=de')).body[0].description).toBe('Eine Nachricht senden')
@@ -224,9 +230,9 @@ describe('translated catalogue cache stays correct', () => {
         await pieceCache(app.log!).invalidate()
 
         const afterwards = await get(url)
-        expect(afterwards.body.map((p: any) => p.name).sort()).toEqual(['piece-suggest', 'piece-suggest-two'])
-        const refreshed = afterwards.body.find((p: any) => p.name === 'piece-suggest')
-        expect(refreshed.suggestedActions[0].props.channel.displayName).toBe('Kanal')
+        expect(namesOf(afterwards.body).sort()).toEqual(['piece-suggest', 'piece-suggest-two'])
+        const refreshed = afterwards.body.find((piece) => piece.name === 'piece-suggest')
+        expect(refreshed?.suggestedActions?.[0].props.channel.displayName).toBe('Kanal')
     })
 
     it('serves concurrent first-time suggestion requests consistently', async () => {
@@ -255,11 +261,57 @@ describe('translated catalogue cache stays correct', () => {
                 version: '1.0.0', minimumSupportedRelease: '0.0.0', maximumSupportedRelease: '99999.99999.9999',
                 actions: {}, triggers: {}, auth: undefined, categories: [], authors: [],
                 logoUrl: 'https://example.com/l.png',
-            } as any,
-            projectId: undefined, platformId: undefined,
+            },
             packageType: PackageType.REGISTRY, pieceType: PieceType.OFFICIAL,
-        } as any)
+        })
 
         expect((await get('/api/v1/pieces?locale=de')).body).toHaveLength(2)
+    })
+
+    it('serves a write that skipped the invalidation once the generation reaches its max age', async () => {
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'piece-aged-one', displayName: 'Aged One', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+        }))
+        await pieceCache(app.log!).invalidate()
+        expect(namesOf((await get('/api/v1/pieces?locale=de')).body)).toEqual(['piece-aged-one'])
+
+        await db.save('piece_metadata', createMockPieceMetadata({
+            name: 'piece-aged-two', displayName: 'Aged Two', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+        }))
+        expect(namesOf((await get('/api/v1/pieces?locale=de')).body)).toEqual(['piece-aged-one'])
+
+        const realNow = performance.now.bind(performance)
+        const clock = vi.spyOn(performance, 'now').mockImplementation(() => realNow() + ELEVEN_MINUTES_MS)
+        try {
+            expect(namesOf((await get('/api/v1/pieces?locale=de')).body).sort()).toEqual(['piece-aged-one', 'piece-aged-two'])
+        }
+        finally {
+            clock.mockRestore()
+        }
+    })
+
+    it('shows a usage update in the popularity sort without a manual invalidate', async () => {
+        const quiet = createMockPieceMetadata({
+            name: 'piece-quiet', displayName: 'Quiet', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+        })
+        const popular = createMockPieceMetadata({
+            name: 'piece-popular', displayName: 'Popular', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+        })
+        await db.save('piece_metadata', [quiet, popular])
+        await pieceCache(app.log!).invalidate()
+        const url = '/api/v1/pieces?sortBy=POPULARITY&orderBy=DESC'
+        await get(url)
+        const updatedBefore = (await db.findOneByOrFail<PieceMetadataSchema>('piece_metadata', { id: popular.id })).updated
+
+        await pieceMetadataService(app.log!).updateUsages({ usages: [{ id: popular.id, usage: 5 }] })
+
+        const sorted = (await get(url)).body
+        expect(namesOf(sorted)).toEqual(['piece-popular', 'piece-quiet'])
+        expect(sorted[0].projectUsage).toBe(5)
+        expect((await db.findOneByOrFail<PieceMetadataSchema>('piece_metadata', { id: popular.id })).updated).toEqual(updatedBefore)
     })
 })
