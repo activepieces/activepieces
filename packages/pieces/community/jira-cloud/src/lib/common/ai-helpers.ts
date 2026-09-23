@@ -46,6 +46,7 @@ function buildIssueFields({
 	extraFields,
 }: IssueFieldsInput): Record<string, unknown> {
 	return {
+		...(extraFields ?? {}),
 		...(isProvided(projectIdOrKey) ? { project: projectReference({ projectIdOrKey }) } : {}),
 		...(isProvided(issueTypeId) ? { issuetype: { id: issueTypeId.trim() } } : {}),
 		...(isProvided(summary) ? { summary } : {}),
@@ -55,7 +56,6 @@ function buildIssueFields({
 		...(labels !== undefined && labels.length > 0 ? { labels } : {}),
 		...(isProvided(parentKey) ? { parent: { key: parentKey.trim() } } : {}),
 		...(isProvided(dueDate) ? { duedate: dueDate.trim() } : {}),
-		...(extraFields ?? {}),
 	};
 }
 

@@ -38,7 +38,7 @@ export const editIssueAiAction = createAction({
 		}),
 		labels: Property.Array({
 			displayName: 'Labels',
-			description: 'Labels that replace the current labels. Labels cannot contain spaces.',
+			description: 'Labels that replace the current labels. Pass an empty list to remove all labels. Labels cannot contain spaces.',
 			required: false,
 		}),
 		parentKey: Property.ShortText({
@@ -82,7 +82,7 @@ export const editIssueAiAction = createAction({
 				dueDate: propsValue.dueDate,
 				extraFields: jiraAiHelpers.toRecord({ value: propsValue.fields, label: 'Additional Fields' }),
 			}),
-			...(labels.length > 0 ? { labels } : {}),
+			...(Array.isArray(propsValue.labels) ? { labels } : {}),
 		};
 		if (Object.keys(fields).length === 0) {
 			throw new Error('Provide at least one field to update.');
