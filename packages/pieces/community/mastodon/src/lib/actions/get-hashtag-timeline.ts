@@ -15,7 +15,7 @@ export const getHashtagTimeline = createAction({
   classification: 'SEARCH',
   displayName: 'Get Hashtag Timeline',
   description: 'Get recent public statuses that use a hashtag.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Returns one page of recent public statuses using a hashtag, newest first, with cursors for further pages; combine extra tags with any, all or none. Use Search for free-text queries. Read-only and safe to retry.',
@@ -45,16 +45,19 @@ export const getHashtagTimeline = createAction({
     }),
     local: Property.Checkbox({
       displayName: 'Only Local Statuses',
+      description: 'Only include statuses posted by accounts on your own server.',
       required: false,
       defaultValue: false,
     }),
     remote: Property.Checkbox({
       displayName: 'Only Remote Statuses',
+      description: 'Only include statuses posted by accounts on other servers.',
       required: false,
       defaultValue: false,
     }),
     only_media: Property.Checkbox({
       displayName: 'Only Statuses With Media',
+      description: 'Only include statuses that have images, video or audio attached.',
       required: false,
       defaultValue: false,
     }),
