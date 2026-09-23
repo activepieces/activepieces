@@ -266,6 +266,77 @@ const teamListItemFields: OutputSchema['fields'] = [
   { key: 'permalink_url', label: 'Team URL', format: 'url' },
 ];
 
+const teamFields: OutputSchema['fields'] = [
+  ...teamListItemFields,
+  { key: 'html_description', label: 'Rich Description', format: 'html' },
+  { key: 'endorsed', label: 'Endorsed', format: 'boolean' },
+];
+
+const workspaceMembershipFields: OutputSchema['fields'] = [
+  { key: 'gid', label: 'Workspace Membership GID' },
+  { key: 'user', label: 'User', children: userRefFields },
+  { key: 'workspace', label: 'Workspace', children: workspaceRefFields },
+  { key: 'is_active', label: 'Active', format: 'boolean' },
+  { key: 'is_admin', label: 'Admin', format: 'boolean' },
+  { key: 'is_guest', label: 'Guest', format: 'boolean' },
+  { key: 'is_view_only', label: 'View Only', format: 'boolean' },
+  { key: 'created_at', label: 'Created At', format: 'datetime' },
+];
+
+const teamMembershipFields: OutputSchema['fields'] = [
+  { key: 'gid', label: 'Team Membership GID' },
+  { key: 'user', label: 'User', children: userRefFields },
+  { key: 'team', label: 'Team', children: namedRefFields },
+  { key: 'is_admin', label: 'Admin', format: 'boolean' },
+  { key: 'is_guest', label: 'Guest', format: 'boolean' },
+  { key: 'is_limited_access', label: 'Limited Access', format: 'boolean' },
+];
+
+const attachmentFields: OutputSchema['fields'] = [
+  { key: 'gid', label: 'Attachment GID' },
+  { key: 'name', label: 'Name' },
+  { key: 'resource_subtype', label: 'Attachment Type' },
+  { key: 'host', label: 'Host' },
+  { key: 'size', label: 'Size (bytes)', format: 'number' },
+  { key: 'view_url', label: 'View URL', format: 'url' },
+  { key: 'download_url', label: 'Download URL', format: 'url' },
+  { key: 'permanent_url', label: 'Permanent URL', format: 'url' },
+  { key: 'connected_to_app', label: 'Connected to App', format: 'boolean' },
+  { key: 'parent', label: 'Parent', children: namedRefFields },
+  { key: 'created_at', label: 'Created At', format: 'datetime' },
+];
+
+const accessRequestFields: OutputSchema['fields'] = [
+  { key: 'gid', label: 'Access Request GID' },
+  { key: 'approval_status', label: 'Approval Status' },
+  { key: 'message', label: 'Message' },
+  {
+    key: 'target',
+    label: 'Target',
+    children: [
+      { key: 'gid', label: 'Target GID' },
+      { key: 'resource_type', label: 'Target Type' },
+    ],
+  },
+  { key: 'requester', label: 'Requester', children: userRefFields },
+];
+
+const timePeriodFields: OutputSchema['fields'] = [
+  { key: 'gid', label: 'Time Period GID' },
+  { key: 'display_name', label: 'Name' },
+  { key: 'period', label: 'Period' },
+  { key: 'start_on', label: 'Start On', format: 'date' },
+  { key: 'end_on', label: 'End On', format: 'date' },
+  {
+    key: 'parent',
+    label: 'Parent Period',
+    children: [
+      { key: 'gid', label: 'Parent GID' },
+      { key: 'display_name', label: 'Parent Name' },
+    ],
+  },
+];
+
 const searchResultFields: OutputSchema['fields'] = [
   { key: 'gid', label: 'GID' },
   { key: 'name', label: 'Name' },
@@ -326,6 +397,10 @@ export const asanaTaskListOutputSchema = listPage({
   labelKey: 'name',
   itemFields: taskListItemFields,
 });
+
+export const asanaTaskSearchOutputSchema: OutputSchema = {
+  fields: [{ key: 'data', label: 'Tasks', labelKey: 'name', listItems: taskListItemFields }],
+};
 
 export const asanaProjectOutputSchema: OutputSchema = { fields: projectFields };
 
@@ -399,6 +474,17 @@ export const asanaMembershipListOutputSchema = listPage({
 
 export const asanaCurrentUserOutputSchema: OutputSchema = { fields: currentUserFields };
 
+export const asanaUserOutputSchema: OutputSchema = { fields: userFields };
+
+export const asanaUserListOutputSchema = listPage({
+  key: 'users',
+  label: 'Users',
+  labelKey: 'name',
+  itemFields: userFields,
+});
+
+export const asanaWorkspaceOutputSchema: OutputSchema = { fields: workspaceFields };
+
 export const asanaWorkspaceListOutputSchema = listPage({
   key: 'workspaces',
   label: 'Workspaces',
@@ -406,11 +492,62 @@ export const asanaWorkspaceListOutputSchema = listPage({
   itemFields: workspaceFields,
 });
 
+export const asanaTeamOutputSchema: OutputSchema = { fields: teamFields };
+
 export const asanaTeamListOutputSchema = listPage({
   key: 'teams',
   label: 'Teams',
   labelKey: 'name',
   itemFields: teamListItemFields,
+});
+
+export const asanaWorkspaceMembershipOutputSchema: OutputSchema = { fields: workspaceMembershipFields };
+
+export const asanaWorkspaceMembershipListOutputSchema = listPage({
+  key: 'workspace memberships',
+  label: 'Workspace Memberships',
+  labelKey: 'gid',
+  itemFields: workspaceMembershipFields,
+});
+
+export const asanaTeamMembershipOutputSchema: OutputSchema = { fields: teamMembershipFields };
+
+export const asanaTeamMembershipListOutputSchema = listPage({
+  key: 'team memberships',
+  label: 'Team Memberships',
+  labelKey: 'gid',
+  itemFields: teamMembershipFields,
+});
+
+export const asanaAttachmentOutputSchema: OutputSchema = { fields: attachmentFields };
+
+export const asanaAttachmentListOutputSchema = listPage({
+  key: 'attachments',
+  label: 'Attachments',
+  labelKey: 'name',
+  itemFields: attachmentFields,
+});
+
+export const asanaAccessRequestOutputSchema: OutputSchema = { fields: accessRequestFields };
+
+export const asanaAccessRequestListOutputSchema: OutputSchema = {
+  fields: [{ key: 'data', label: 'Access Requests', labelKey: 'approval_status', listItems: accessRequestFields }],
+};
+
+export const asanaAccessRequestDecisionOutputSchema = confirmation({
+  fields: [
+    { key: 'access_request_gid', label: 'Access Request GID' },
+    { key: 'approval_status', label: 'Approval Status' },
+  ],
+});
+
+export const asanaTimePeriodOutputSchema: OutputSchema = { fields: timePeriodFields };
+
+export const asanaTimePeriodListOutputSchema = listPage({
+  key: 'time periods',
+  label: 'Time Periods',
+  labelKey: 'display_name',
+  itemFields: timePeriodFields,
 });
 
 export const asanaSearchWorkspaceObjectsOutputSchema: OutputSchema = {
@@ -469,6 +606,60 @@ export const asanaDeleteProjectBriefOutputSchema = confirmation({
   fields: [{ key: 'project_brief_gid', label: 'Deleted Project Brief GID' }],
 });
 
+export const asanaDeleteAttachmentOutputSchema = confirmation({
+  fields: [{ key: 'attachment_gid', label: 'Deleted Attachment GID' }],
+});
+
+export const asanaFavoriteListOutputSchema = listPage({
+  key: 'favorites',
+  label: 'Favorites',
+  labelKey: 'name',
+  itemFields: namedRefFields,
+});
+
+export const asanaAddTaskDependenciesOutputSchema = confirmation({
+  fields: [
+    { key: 'task_gid', label: 'Task GID' },
+    { key: 'dependency_gids', label: 'Added Dependency GIDs' },
+  ],
+});
+
+export const asanaRemoveTaskDependenciesOutputSchema = confirmation({
+  fields: [
+    { key: 'task_gid', label: 'Task GID' },
+    { key: 'removed_dependency_gids', label: 'Removed Dependency GIDs' },
+  ],
+});
+
+export const asanaPortfolioItemChangeOutputSchema = confirmation({
+  fields: [
+    { key: 'portfolio_gid', label: 'Portfolio GID' },
+    { key: 'item_gid', label: 'Item GID' },
+  ],
+});
+
+export const asanaRemoveUserFromTeamOutputSchema = confirmation({
+  fields: [
+    { key: 'team_gid', label: 'Team GID' },
+    { key: 'user', label: 'Removed User' },
+  ],
+});
+
+export const asanaRemoveUserFromWorkspaceOutputSchema = confirmation({
+  fields: [
+    { key: 'workspace_gid', label: 'Workspace GID' },
+    { key: 'user', label: 'Removed User' },
+  ],
+});
+
 export const asanaDeleteMembershipOutputSchema = confirmation({
   fields: [{ key: 'membership_gid', label: 'Deleted Membership GID' }],
+});
+
+export const asanaDeleteAllocationOutputSchema = confirmation({
+  fields: [{ key: 'allocation_gid', label: 'Deleted Allocation GID' }],
+});
+
+export const asanaDeleteCustomFieldOutputSchema = confirmation({
+  fields: [{ key: 'custom_field_gid', label: 'Deleted Custom Field GID' }],
 });
