@@ -1,7 +1,8 @@
 import { ActivepiecesError, apId, ApId, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { CreateProjectRoleRequestBody } from '@activepieces/shared'
-import { Brackets, Equal, QueryFailedError } from 'typeorm'
+import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { isUniqueViolation } from '../../../core/db/unique-violation'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
 
@@ -114,8 +115,6 @@ export const projectRoleService = {
     },
 }
 
-const POSTGRES_UNIQUE_VIOLATION = '23505'
-
 function nameAlreadyExists(name: string | undefined): ActivepiecesError {
     return new ActivepiecesError({
         code: ErrorCode.VALIDATION,
@@ -124,8 +123,7 @@ function nameAlreadyExists(name: string | undefined): ActivepiecesError {
 }
 
 function rethrowNameConflict({ error, name }: RethrowNameConflictParams): never {
-    const driverError: unknown = error instanceof QueryFailedError ? error.driverError : undefined
-    if (typeof driverError === 'object' && driverError !== null && 'code' in driverError && driverError.code === POSTGRES_UNIQUE_VIOLATION) {
+    if (isUniqueViolation(error)) {
         throw nameAlreadyExists(name)
     }
     throw error
