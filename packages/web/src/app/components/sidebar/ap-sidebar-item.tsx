@@ -31,10 +31,13 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     : Boolean(item.locked);
   const isRowHighlighted = !hasSubItems && isLinkActive;
 
-  const keepSearchWithinSection = (to: string) =>
-    hasSubItems && isLinkActive && location.search
-      ? `${to}${location.search}`
-      : to;
+  const keepSearchWithinSection = (to: string) => {
+    if (!hasSubItems || !isLinkActive) {
+      return to;
+    }
+    const shared = sectionSearch(location.search);
+    return shared === '' ? to : `${to}?${shared}`;
+  };
 
   useEffect(() => {
     if (isHovered) {
@@ -49,7 +52,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       asChild
       className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
         'bg-sidebar-accent hover:bg-sidebar-accent!': isRowHighlighted,
-        'text-sidebar-foreground/60': item.locked,
+        'text-sidebar-foreground/60': isCrowned,
       })}
     >
       <Link
@@ -154,6 +157,13 @@ function isRouteActive({
   return matchPath({ path: to, end }, pathname) !== null;
 }
 
+function sectionSearch(search: string): string {
+  const params = new URLSearchParams(search);
+  return new URLSearchParams(
+    [...params].filter(([key]) => SECTION_SEARCH_KEYS.includes(key)),
+  ).toString();
+}
+
 function renderIcon({
   Icon,
   ref,
@@ -166,6 +176,10 @@ function renderIcon({
     ref,
   } as { className: string });
 }
+
+export const sidebarItemUtils = { sectionSearch };
+
+const SECTION_SEARCH_KEYS = ['month'];
 
 export type SidebarSubItemType = {
   to: string;

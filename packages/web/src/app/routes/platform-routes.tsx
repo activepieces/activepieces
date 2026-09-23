@@ -7,6 +7,7 @@ import { Error, Success } from '@/features/billing';
 
 import { PlatformLayout } from '../components/platform-layout';
 
+import { LegacyPathRedirect } from './platform/legacy-path-redirect';
 import { LegacyTabRedirect } from './platform/legacy-tab-redirect';
 import { PlanFeatureSample } from './platform/plan-feature-sample';
 
@@ -148,24 +149,11 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Setup">
-          <Navigate to="/platform/setup/ai" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/ai',
+    path: '/platform/ai',
     element: (
       <PlatformLayout>
         <PageTitle title="AI Center">
-          <LegacyTabRedirect
-            basePath="/platform/setup/ai"
-            tabPaths={AI_TAB_PATHS}
-          >
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
             <SuspenseWrapper>
               <AIProvidersPage section="providers" />
             </SuspenseWrapper>
@@ -175,14 +163,11 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/ai/capabilities',
+    path: '/platform/ai/capabilities',
     element: (
       <PlatformLayout>
         <PageTitle title="AI Capabilities">
-          <LegacyTabRedirect
-            basePath="/platform/setup/ai"
-            tabPaths={AI_TAB_PATHS}
-          >
+          <LegacyTabRedirect basePath="/platform/ai" tabPaths={AI_TAB_PATHS}>
             <SuspenseWrapper>
               <AIProvidersPage section="capabilities" />
             </SuspenseWrapper>
@@ -192,11 +177,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/ai-capabilities',
-    element: <Navigate to="/platform/setup/ai/capabilities" replace />,
-  },
-  {
-    path: '/platform/setup/mcp',
+    path: '/platform/mcp',
     element: (
       <PlatformLayout>
         <PageTitle title="MCP Server">
@@ -208,7 +189,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/mcp/tools',
+    path: '/platform/mcp/tools',
     element: (
       <PlatformLayout>
         <PageTitle title="MCP Tools">
@@ -220,7 +201,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/mcp/activity',
+    path: '/platform/mcp/activity',
     element: (
       <PlatformLayout>
         <PageTitle title="MCP Activity">
@@ -232,12 +213,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/pieces',
+    path: '/platform/pieces',
     element: (
       <PlatformLayout>
         <PageTitle title="Pieces">
           <LegacyTabRedirect
-            basePath="/platform/setup/pieces"
+            basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -249,12 +230,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/pieces/piece-sets',
+    path: '/platform/pieces/piece-sets',
     element: (
       <PlatformLayout>
         <PageTitle title="Piece Sets">
           <LegacyTabRedirect
-            basePath="/platform/setup/pieces"
+            basePath="/platform/pieces"
             tabPaths={PIECES_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -266,7 +247,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/pieces/piece-sets/:id',
+    path: '/platform/pieces/piece-sets/:id',
     element: (
       <PlatformLayout>
         <PageTitle title="Piece Set">
@@ -278,10 +259,10 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/connections',
+    path: '/platform/connections/global',
     element: (
       <PlatformLayout>
-        <PageTitle title="Connections">
+        <PageTitle title="Global Connections">
           <PlanFeatureSample feature="globalConnections">
             <SuspenseWrapper>
               <GlobalConnectionsTable />
@@ -292,7 +273,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/templates',
+    path: '/platform/templates',
     element: (
       <PlatformLayout>
         <PageTitle title="Templates">
@@ -306,7 +287,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/general',
+    path: '/platform/general',
     element: (
       <PlatformLayout>
         <PageTitle title="General">
@@ -318,11 +299,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/branding',
-    element: <Navigate to="/platform/setup/general" replace />,
-  },
-  {
-    path: '/platform/setup/billing',
+    path: '/platform/billing',
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
@@ -334,7 +311,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/usage',
+    path: '/platform/usage',
     element: (
       <PlatformLayout>
         <PageTitle title="Usage">
@@ -346,7 +323,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/billing/success',
+    path: '/platform/billing/success',
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
@@ -356,7 +333,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/setup/billing/error',
+    path: '/platform/billing/error',
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
@@ -366,17 +343,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Security">
-          <Navigate to="/platform/security/audit-logs" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/api-keys',
+    path: '/platform/api-keys',
     element: (
       <PlatformLayout>
         <PageTitle title="API Keys">
@@ -390,7 +357,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/secret-managers',
+    path: '/platform/secret-managers',
     element: (
       <PlatformLayout>
         <PageTitle title="Secret managers">
@@ -404,7 +371,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/audit-logs',
+    path: '/platform/audit-log',
     element: (
       <PlatformLayout>
         <PageTitle title="Audit Logs">
@@ -418,7 +385,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/embed',
+    path: '/platform/embedding',
     element: (
       <PlatformLayout>
         <PageTitle title="Embedding">
@@ -432,7 +399,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/sso',
+    path: '/platform/sso',
     element: (
       <PlatformLayout>
         <PageTitle title="SSO">
@@ -446,7 +413,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/security/project-roles',
+    path: '/platform/users/roles',
     element: (
       <PlatformLayout>
         <PageTitle title="Project Roles">
@@ -460,22 +427,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Platform Infrastructure">
-          <Navigate to="/platform/infrastructure/workers" replace />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/workers',
+    path: '/platform/workers',
     element: (
       <PlatformLayout>
         <PageTitle title="Workers">
           <LegacyTabRedirect
-            basePath="/platform/infrastructure/workers"
+            basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -487,12 +444,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/workers/groups',
+    path: '/platform/workers/groups',
     element: (
       <PlatformLayout>
         <PageTitle title="Worker Groups">
           <LegacyTabRedirect
-            basePath="/platform/infrastructure/workers"
+            basePath="/platform/workers"
             tabPaths={WORKERS_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -504,12 +461,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/health',
+    path: '/platform/health',
     element: (
       <PlatformLayout>
         <PageTitle title="Health">
           <LegacyTabRedirect
-            basePath="/platform/infrastructure/health"
+            basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -521,12 +478,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/health/runs',
+    path: '/platform/health/runs',
     element: (
       <PlatformLayout>
         <PageTitle title="Runs Health">
           <LegacyTabRedirect
-            basePath="/platform/infrastructure/health"
+            basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -538,12 +495,12 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/health/queue',
+    path: '/platform/health/queue',
     element: (
       <PlatformLayout>
         <PageTitle title="Queue Health">
           <LegacyTabRedirect
-            basePath="/platform/infrastructure/health"
+            basePath="/platform/health"
             tabPaths={HEALTH_TAB_PATHS}
           >
             <SuspenseWrapper>
@@ -555,7 +512,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/configurations',
+    path: '/platform/configurations',
     element: (
       <PlatformLayout>
         <PageTitle title="Configurations">
@@ -567,7 +524,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/triggers',
+    path: '/platform/triggers',
     element: (
       <PlatformLayout>
         <PageTitle title="Trigger Health">
@@ -579,7 +536,7 @@ export const platformRoutes = [
     ),
   },
   {
-    path: '/platform/infrastructure/event-destinations',
+    path: '/platform/audit-log/streaming',
     element: (
       <PlatformLayout>
         <PageTitle title="Event Streaming">
@@ -592,4 +549,9 @@ export const platformRoutes = [
       </PlatformLayout>
     ),
   },
+  ...[
+    '/platform/setup/*',
+    '/platform/security/*',
+    '/platform/infrastructure/*',
+  ].map((path) => ({ path, element: <LegacyPathRedirect /> })),
 ];

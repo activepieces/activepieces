@@ -87,7 +87,7 @@ export default function SettingsHealthPage({
         <SystemHealthTab
           onSeeRuns={() =>
             navigate({
-              pathname: '/platform/infrastructure/health/runs',
+              pathname: '/platform/health/runs',
               search: searchParams.toString(),
             })
           }

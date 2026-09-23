@@ -7,10 +7,11 @@ status: accepted
 
 ## Decision
 
-The platform admin nav is five labelled groups (General, Setup, Security, Observability, Infrastructure)
-written inline in `components/sidebar/platform`, and every section of a page is a sidebar sub-item with a
-path of its own (`/platform/setup/ai/capabilities`, `/platform/infrastructure/health/runs`), never a
-`?tab=`. There is no registry and there are no overview pages. This replaces the registry, overview and
+The platform admin nav is six labelled groups (Platform, Catalogue, Security, Developers, Operations,
+Account) written inline in `components/sidebar/platform`, and every section of a page is a sidebar sub-item
+with a path of its own (`/platform/ai/capabilities`, `/platform/health/runs`), never a `?tab=`. URLs are
+flat and never carry the group, so regrouping is a sidebar edit. There is no registry and there are no
+overview pages. The full rule set is *platform-admin-structure*. This replaces the registry, overview and
 `?tab=` parts of *platform-admin-is-fifteen-pages-derived-from-one-registry*; its gating and sample-mode
 sections still hold.
 
@@ -33,8 +34,8 @@ rejected alternative: it removed drift between nav, routes and gates, but needed
 - Nav, routes and gates live in three places again (`sidebar/platform/index.tsx`, `platform-routes.tsx`,
   and the page), so a new admin page has to be added to all three.
 - Old `?tab=` links are rewritten to the new paths by `LegacyTabRedirect`, one `*_TAB_PATHS` map per
-  promoted page. The `?tab=` URLs #15563 introduced (`/platform/users?tab=sso`, `/platform/security?tab=…`)
+  promoted page, and every retired `/platform/setup|security|infrastructure/*` URL by `LegacyPathRedirect`. The `?tab=` URLs #15563 introduced (`/platform/users?tab=sso`, `/platform/security?tab=…`)
   were live for a day and are not redirected.
 - The sample-data overlay that the registry applied per page now sits on the route, via
-  `routes/platform/plan-feature-sample.tsx`. A locked page that is not wrapped there renders unlocked,
-  because the pages themselves no longer carry a `LockedFeatureGuard`.
+  `routes/platform/plan-feature-sample.tsx`. A sampled page that is not wrapped there renders unlocked,
+  because the nine sampled pages no longer carry a `LockedFeatureGuard` of their own.

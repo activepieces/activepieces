@@ -21,7 +21,7 @@ Use both together to guarantee capacity for busy projects and cap the rest.
 
 A worker joins a group by setting its group ID at startup. `AP_PROJECT_WORKER` selects the group's scope:
 
-- **Project** group — leave `AP_PROJECT_WORKER=true` (the default). Assign individual projects to it from the platform's Workers → Assignments page.
+- **Project** group — leave `AP_PROJECT_WORKER=true` (the default). Assign individual projects to it from **Platform Admin → Operations → Workers → Worker groups**.
 - **Platform** group — set `AP_PROJECT_WORKER=false`. Serves the whole platform's runs; used for dedicated/canary fleets.
 
 ```bash
@@ -49,7 +49,7 @@ Once a project is assigned to a group, its flow and webhook runs are routed to t
 
 You can assign a project to a project group in two ways:
 
-- **UI** — go to **Platform → Infrastructure → Workers → Worker groups** (`/platform/infrastructure/workers/groups`) and pick the group for each project.
+- **UI** — go to **Platform admin → Operations → Workers → Worker groups** (`/platform/workers/groups`) and pick the group for each project.
 - **API** — set `workerGroupId` on the project via the projects API. Use the bare group name (the same value as the group's `AP_WORKER_GROUP_ID`); pass `null` to unassign and return the project to the shared queue.
 
 The same request also sets `maxConcurrentJobs` — the project's **concurrency limit** (the soft-cap ceiling). It's the maximum number of flow runs the project executes at once:
