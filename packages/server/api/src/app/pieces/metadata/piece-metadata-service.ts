@@ -5,7 +5,7 @@ import { EXACT_VERSION_REGEX, flowPieceUtil, PackageType, PieceAudienceFilter, P
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
-import { EntityManager, FindOptionsSelect, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { resolveVisibility } from '../../ee/pieces/filters/piece-filtering-utils'
 import { flowVersionRepo } from '../../flows/flow-version/flow-version.service'
@@ -487,15 +487,12 @@ async function fetchPieceVersion({ pieceName, version, platformId, includeTransl
         return devPiece
     }
 
-    const foundPiece = await pieceRepos().findOne({
-        where: {
-            name: pieceName,
-            version,
-            platformId: platformId ?? IsNull(),
-        },
-        select: includeTranslations ? { ...PIECE_COLUMNS_WITHOUT_TRANSLATIONS, i18n: true } : PIECE_COLUMNS_WITHOUT_TRANSLATIONS,
+    const query = pieceRepos().createQueryBuilder('pm').where({
+        name: pieceName,
+        version,
+        platformId: platformId ?? IsNull(),
     })
-    return foundPiece ?? null
+    return (includeTranslations ? query.addSelect('pm.i18n') : query).getOne()
 }
 
 export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
@@ -509,31 +506,7 @@ export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string):
     if (latestIds.length === 0) {
         return []
     }
-    return pieceRepos().find({ where: { id: In(latestIds) }, select: PIECE_COLUMNS_WITHOUT_TRANSLATIONS })
-}
-
-const PIECE_COLUMNS_WITHOUT_TRANSLATIONS: FindOptionsSelect<PieceMetadataSchema> = {
-    id: true,
-    created: true,
-    updated: true,
-    name: true,
-    authors: true,
-    displayName: true,
-    logoUrl: true,
-    projectUsage: true,
-    description: true,
-    platformId: true,
-    version: true,
-    minimumSupportedRelease: true,
-    maximumSupportedRelease: true,
-    auth: true,
-    actions: true,
-    triggers: true,
-    pieceType: true,
-    categories: true,
-    deprecated: true,
-    packageType: true,
-    archiveId: true,
+    return pieceRepos().find({ where: { id: In(latestIds) } })
 }
 
 function pickLatestVersionIds(pieces: PieceKey[]): string[] {

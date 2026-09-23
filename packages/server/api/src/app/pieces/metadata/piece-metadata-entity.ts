@@ -95,6 +95,7 @@ export const PieceMetadataEntity =
           i18n: {
               type: 'json',
               nullable: true,
+              select: false,
           },
       },
       indices: [

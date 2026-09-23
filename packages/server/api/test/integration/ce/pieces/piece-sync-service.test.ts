@@ -72,7 +72,7 @@ describe('Piece Sync Cloud Round Trip', () => {
             publishCacheRefresh: false,
         })
 
-        const stored = await databaseConnection().getRepository('piece_metadata').findOneByOrFail({ name: 'piece-upstream' })
+        const stored = await databaseConnection().getRepository('piece_metadata').createQueryBuilder('pm').addSelect('pm.i18n').where({ name: 'piece-upstream' }).getOneOrFail()
         expect(stored.i18n).toEqual({ [LocalesEnum.GERMAN]: GERMAN_TRANSLATIONS })
     })
 
