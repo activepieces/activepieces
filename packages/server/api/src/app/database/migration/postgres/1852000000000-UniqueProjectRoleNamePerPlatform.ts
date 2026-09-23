@@ -5,7 +5,6 @@ export class UniqueProjectRoleNamePerPlatform1852000000000 implements Migration 
     name = 'UniqueProjectRoleNamePerPlatform1852000000000'
     breaking = false
     release = '0.92.0'
-    irreversible = 'roles renamed to free a duplicate name keep the generated name; nothing records what they were called'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`

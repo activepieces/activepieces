@@ -78,9 +78,6 @@ async function executeRollback(params: {
     console.log(`Found ${candidates.length} migration(s) to rollback:`)
     for (const m of candidates) {
         console.log(`  - ${m.name ?? 'unknown'} (release: ${m.release}, breaking: ${m.breaking ?? false})`)
-        if (m.irreversible) {
-            console.log(`      not undone by down(): ${m.irreversible}`)
-        }
     }
 
     await verifyDatabaseState(dataSource, candidates)

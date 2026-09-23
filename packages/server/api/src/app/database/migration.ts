@@ -4,5 +4,4 @@ export type Migration = {
     name?: string
     breaking?: boolean
     release?: string
-    irreversible?: string
 } & MigrationInterface
