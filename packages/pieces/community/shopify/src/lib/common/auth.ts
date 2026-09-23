@@ -44,7 +44,15 @@ Use this option for apps created in the Shopify **Dev Dashboard** (all new apps 
 const NO_APPROVED_SCOPES_ERROR =
   'Your Shopify app has no approved Admin API scopes on this store. In the Dev Dashboard, release an app version that includes the scopes, then install/approve it on the store (reinstall if needed), and try again.';
 
+const SHOP_NAME_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
+
+const INVALID_SHOP_NAME_ERROR =
+  'Invalid Shop Name. Enter only the part before .myshopify.com in your store URL (letters, numbers and hyphens), for example "example" for https://example.myshopify.com.';
+
 export function getBaseUrl(shopName: string) {
+  if (!isValidShopName(shopName)) {
+    throw new Error(INVALID_SHOP_NAME_ERROR);
+  }
   return `https://${shopName}.myshopify.com/admin/api/2023-10`;
 }
 
@@ -63,6 +71,9 @@ export const shopifyAdminTokenAuth = PieceAuth.CustomAuth({
     }),
   },
   validate: async ({ auth }) => {
+    if (!isValidShopName(auth.shopName)) {
+      return { valid: false, error: INVALID_SHOP_NAME_ERROR };
+    }
     try {
       await httpClient.sendRequest({
         url: `${getBaseUrl(auth.shopName)}/shop.json`,
@@ -101,8 +112,8 @@ export const shopifyDevDashboardAuth = PieceAuth.OAuth2({
   },
   validate: async ({ auth }) => {
     const shopName = auth.props?.['shopName'];
-    if (typeof shopName !== 'string' || shopName.length === 0) {
-      return { valid: false, error: 'Shop Name is required.' };
+    if (!isValidShopName(shopName)) {
+      return { valid: false, error: INVALID_SHOP_NAME_ERROR };
     }
     try {
       const scopesResponse = await httpClient.sendRequest<{
@@ -161,12 +172,19 @@ function devDashboardValidationError(status: number | undefined): string {
   }
 }
 
+function isValidShopName(value: unknown): value is string {
+  return typeof value === 'string' && SHOP_NAME_PATTERN.test(value);
+}
+
 function getShopName(auth: ShopifyAuth): string {
-  if (auth.type === AppConnectionType.CUSTOM_AUTH) {
-    return auth.props.shopName;
+  const shopName =
+    auth.type === AppConnectionType.CUSTOM_AUTH
+      ? auth.props.shopName
+      : auth.props?.['shopName'];
+  if (!isValidShopName(shopName)) {
+    throw new Error(INVALID_SHOP_NAME_ERROR);
   }
-  const shopName = auth.props?.['shopName'];
-  return typeof shopName === 'string' ? shopName : '';
+  return shopName;
 }
 
 function getAccessToken(auth: ShopifyAuth): string {
