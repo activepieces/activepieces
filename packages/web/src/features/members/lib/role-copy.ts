@@ -13,7 +13,7 @@ function projectRoleDescription(roleName: string): string | null {
     case DefaultProjectRole.ADMIN:
       return t('Full access');
     case DefaultProjectRole.EDITOR:
-      return t('Edits everything except people, settings and alerts');
+      return t('Build, publish, and manage flows');
     case DefaultProjectRole.VIEWER:
       return t('View only');
     default:
