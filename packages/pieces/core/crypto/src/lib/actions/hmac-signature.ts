@@ -1,4 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
+import { hmacSignatureActionOutputSchema } from '../output-schemas';
 import Crypto from 'crypto';
 import { Buffer } from 'buffer';
 
@@ -10,6 +11,7 @@ export const hmacSignature = createAction({
     'Converts text to a HMAC signed hash value using various hashing algorithms',
   aiMetadata: { description: 'Computes a keyed HMAC digest of a text string with a secret key, selecting the hash algorithm and how the secret key itself is interpreted (UTF-8, hex or base64). Pick this to sign or verify webhook payloads and API requests that use a shared secret; use Text to Hash for an unkeyed digest and Generate RSA Signature for asymmetric private-key signing. The secret-key encoding must match how the key was issued or the signature will not match; pure computation and idempotent.', idempotent: true },
   displayName: 'Generate HMAC Signature',
+  outputSchema: hmacSignatureActionOutputSchema,
   props: {
     secretKey: Property.ShortText({
       displayName: 'Secret key',
