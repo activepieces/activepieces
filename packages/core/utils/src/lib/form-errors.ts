@@ -9,6 +9,9 @@ export const formErrors = {
     agentConfigTooLarge: 'agentConfigTooLarge',
     invalidGcpResourceId: 'invalidGcpResourceId',
     duplicateRouteName: 'duplicateRouteName',
+    atLeastOne: 'atLeastOne',
+    wholeNumber: 'wholeNumber',
+    atMostTenThousand: 'atMostTenThousand',
 } as const
 
 export const SAFE_EXTERNAL_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}$/
