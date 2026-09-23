@@ -144,15 +144,14 @@ const EditProjectForm = ({
       <form
         className="space-y-4"
         onSubmit={form.handleSubmit((values) => {
-          const request: UpdateProjectPlatformRequest = {
-            displayName: values.displayName,
-            externalId: values.externalId,
-            sensitive: values.sensitive,
-            globalConnectionExternalIds: values.globalConnectionExternalIds,
-          };
           mutate({
             projectId,
-            request,
+            request: {
+              displayName: values.displayName,
+              externalId: values.externalId,
+              sensitive: values.sensitive,
+              globalConnectionExternalIds: values.globalConnectionExternalIds,
+            },
           });
         })}
       >
