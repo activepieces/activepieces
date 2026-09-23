@@ -50,7 +50,10 @@ export async function connectionForConfiguredTool({ piece, projectId, platformId
 }
 
 function pinnedModelOf({ conversation }: { conversation: AgentConversationWithRelations }): string | undefined {
-    const pinned = conversation.agent?.published?.modelName ?? conversation.modelName ?? null
+    const runConfig = conversation.source === AgentRunSource.FLOW_STEP
+        ? conversation.agent?.published
+        : conversation.agent?.draft
+    const pinned = runConfig?.modelName ?? conversation.modelName ?? null
     if (isNil(pinned) || !isNil(agentHelpers.findTier({ tierId: pinned }))) {
         return undefined
     }
