@@ -31,6 +31,7 @@ The **Activepieces engineering brain**: how the system works, and *why* it was b
 - **API & Endpoints** — route conventions and the security contract
 - **Server Module Anatomy** — the six files of a server module (entity → migration → repo → service → controller → module), and the manual registration steps nothing auto-discovers
 - **Web Feature Anatomy** — the frontend feature folder, its barrel, route guards, and how a failed primary query reports itself in place
+- **Web Navigation Shell** — the rail, the three sidebars and the layouts that choose between them, which primitives are shared, and why platform admin renders without the rail
 - **Cloud Deployment Paths** — canary → prod, the `cloud-hotfix` override, and the breaking-migration gate that blocks both
 - **Helm Chart** — the Kubernetes install we ship to self-hosters, its two competing paths for an `AP_*` variable, and the secrets it never creates
 - **CI PR Review Hygiene** — draft-first Greptile review, the per-area PR size gate, and the workflow conventions reviewers keep re-litigating

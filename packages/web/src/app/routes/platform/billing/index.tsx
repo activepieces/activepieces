@@ -33,20 +33,71 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-export default function Billing() {
+import { UsageTab } from './usage-tab';
+
+export function BillingPlanTab() {
   return (
     <BillingPageShell
-      lockTitle={t('Unlock Billing Page')}
+      lockTitle={t('Unlock Billing & Usage')}
       errorMessage={t('Failed to load billing information')}
     >
       {({ platform, info }) => (
-        <BillingPageDetails platform={platform} info={info} />
+        <div className="flex w-full flex-col gap-4 p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-xl font-medium">
+                {t('Billing & subscription')}
+              </h1>
+              <div className="text-sm text-muted-foreground">
+                {t(
+                  'For questions about billing contact us at support@activepieces.com',
+                )}
+              </div>
+            </div>
+            <BillingRefreshButton />
+          </div>
+          <Separator />
+          <PlanTab platform={platform} info={info} />
+        </div>
       )}
     </BillingPageShell>
   );
 }
 
-function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
+export function BillingUsageTab() {
+  return (
+    <BillingPageShell
+      lockTitle={t('Unlock Billing & Usage')}
+      errorMessage={t('Failed to load billing information')}
+    >
+      {({ platform, info }) => <UsageTab platform={platform} info={info} />}
+    </BillingPageShell>
+  );
+}
+
+function BillingRefreshButton() {
+  const { mutate: refreshBilling, isPending: isRefreshing } =
+    billingMutations.useRefreshSubscription();
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="shrink-0"
+      loading={isRefreshing}
+      onClick={() =>
+        refreshBilling(undefined, {
+          onSuccess: () => toast.success(t('Billing information refreshed')),
+        })
+      }
+    >
+      <RefreshCw className="size-4 mr-2" />
+      {t('Refresh')}
+    </Button>
+  );
+}
+
+function PlanTab({ platform, info }: PlanTabProps) {
   const { openDialog } = useManagePlanDialogStore();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const isCommunity = edition === ApEdition.COMMUNITY;
@@ -56,8 +107,6 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
   const [isCancelOpen, setIsCancelOpen] = useState(false);
   const { cancelWithSeatCheck, deactivateUsersDialog } =
     useCancelSubscriptionGuard();
-  const { mutate: refreshBilling, isPending: isRefreshing } =
-    billingMutations.useRefreshSubscription();
 
   const isCloud = edition === ApEdition.CLOUD;
 
@@ -86,34 +135,6 @@ function BillingPageDetails({ platform, info }: BillingPageDetailsProps) {
 
   return (
     <div className="flex w-full flex-col gap-4 p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-medium">{t('Billing & subscription')}</h1>
-          <div className="text-sm text-muted-foreground">
-            {t(
-              'For questions about billing contact us at support@activepieces.com',
-            )}
-          </div>
-        </div>
-        {!isCommunity && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            loading={isRefreshing}
-            onClick={() =>
-              refreshBilling(undefined, {
-                onSuccess: () =>
-                  toast.success(t('Billing information refreshed')),
-              })
-            }
-          >
-            <RefreshCw className="size-4 mr-2" />
-            {t('Refresh')}
-          </Button>
-        )}
-      </div>
-      <Separator />
       {info.billingUnavailable && (
         <Alert variant="warning">
           <AlertDescription>
@@ -354,7 +375,7 @@ const LinkButton = ({
   </button>
 );
 
-type BillingPageDetailsProps = {
+type PlanTabProps = {
   platform: ReturnType<typeof platformHooks.useCurrentPlatform>['platform'];
   info: PlatformBillingInformation;
 };

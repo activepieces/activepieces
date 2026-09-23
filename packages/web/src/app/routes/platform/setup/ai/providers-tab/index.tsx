@@ -167,23 +167,25 @@ export function ProvidersTab() {
   if (activeConfig && activeInfo && allowWrite) {
     return (
       <>
-        <ConfigDetail
-          key={`${activeConfig.id}:${credentialsVersion}`}
-          config={activeConfig}
-          info={activeInfo}
-          projects={projects}
-          isSaving={isSaving}
-          onSave={(request) =>
-            tryCatch(() =>
-              updateProvider({ providerId: activeConfig.id, request }),
-            )
-          }
-          onDelete={() => deleteProvider(activeConfig.id)}
-          onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
-          isRechecking={isRechecking}
-          onRecheck={() => recheckProvider(activeConfig.id)}
-          onBack={closeConfig}
-        />
+        <div className="flex min-h-full w-full max-w-6xl flex-col px-8 py-6">
+          <ConfigDetail
+            key={`${activeConfig.id}:${credentialsVersion}`}
+            config={activeConfig}
+            info={activeInfo}
+            projects={projects}
+            isSaving={isSaving}
+            onSave={(request) =>
+              tryCatch(() =>
+                updateProvider({ providerId: activeConfig.id, request }),
+              )
+            }
+            onDelete={() => deleteProvider(activeConfig.id)}
+            onReplaceCredentials={() => openReplaceCredentials(activeConfig)}
+            isRechecking={isRechecking}
+            onRecheck={() => recheckProvider(activeConfig.id)}
+            onBack={closeConfig}
+          />
+        </div>
         <ConnectProviderDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
@@ -197,7 +199,7 @@ export function ProvidersTab() {
 
   return (
     <>
-      <div className="flex flex-col gap-6">
+      <div className="flex w-full mx-auto max-w-6xl flex-col gap-6 px-6 py-6">
         <div className="flex items-start justify-between gap-3">
           <SectionHeader
             title={t('Providers')}

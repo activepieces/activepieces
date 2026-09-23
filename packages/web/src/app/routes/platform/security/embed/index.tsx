@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +24,8 @@ import {
 } from '@/features/platform-admin';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+
+import { sampleData } from '../../sample-data';
 
 import { Stepper, StepKind, StepDef } from './stepper';
 import { AllowedDomainsStep } from './steps/allowed-domains-step';
@@ -48,7 +49,10 @@ const EmbedPage = () => {
     isLoading: isKeysLoading,
     refetch,
   } = signingKeyQueries.useSigningKeys();
-  const signingKeys: SigningKey[] = data?.data ?? [];
+  const isSample = !platform.plan.embeddingEnabled;
+  const signingKeys: SigningKey[] = isSample
+    ? sampleData.signingKeys()
+    : data?.data ?? [];
 
   const isLoading = (isCloud && isSubdomainLoading) || isKeysLoading;
 
@@ -126,72 +130,63 @@ const EmbedPage = () => {
     (displayedStep?.kind === 'hostname' || displayedStep?.kind === 'dns');
 
   return (
-    <LockedFeatureGuard
-      featureKey="SIGNING_KEYS"
-      locked={!platform.plan.embeddingEnabled}
-      lockTitle={t('Unlock Embedding Through JS SDK')}
-      lockDescription={t(
-        'Enable signing keys to access embedding functionalities.',
-      )}
-    >
-      <div className="w-full max-w-4/5 2xl:max-w-6xl mx-auto py-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
-          <div className="text-sm text-muted-foreground">
-            {description}
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 mt-0.5 ml-1"
-              asChild
+    <div className="w-full max-w-4/5 2xl:max-w-6xl mx-auto py-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
+        <div className="text-sm text-muted-foreground">
+          {description}
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0 mt-0.5 ml-1"
+            asChild
+          >
+            <a
+              href="https://www.activepieces.com/docs/embedding/overview"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              <a
-                href="https://www.activepieces.com/docs/embedding/overview"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('Read more')}
-                <ExternalLink className="size-3" />
-              </a>
-            </Button>
-          </div>
-        </div>
-        <Separator className="mt-4 mb-12" />
-
-        <div className="grid grid-cols-[16rem_1fr] gap-16">
-          <Stepper
-            steps={steps}
-            completion={stepCompletion}
-            activeStepIndex={activeStepIndex}
-            displayedIndex={displayedIndex}
-            onStepClick={handleStepClick}
-          />
-
-          <div className="min-w-0">
-            {isLoading ? (
-              <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
-            ) : subdomainStepFailed ? (
-              <DataFetchErrorState
-                entity={t('the embed subdomain')}
-                onRetry={refetchSubdomain}
-              />
-            ) : displayedStep?.kind === 'hostname' ? (
-              <HostnameStep subdomain={subdomain} />
-            ) : displayedStep?.kind === 'dns' ? (
-              <DnsStep subdomain={subdomain} />
-            ) : displayedStep?.kind === 'allowed-domains' ? (
-              <AllowedDomainsStep allowedEmbedOrigins={allowedEmbedOrigins} />
-            ) : displayedStep?.kind === 'signing-keys' ? (
-              <SigningKeysStep
-                signingKeys={signingKeys}
-                isLoading={isKeysLoading}
-                refetch={refetch}
-              />
-            ) : null}
-          </div>
+              {t('Read more')}
+              <ExternalLink className="size-3" />
+            </a>
+          </Button>
         </div>
       </div>
-    </LockedFeatureGuard>
+      <Separator className="mt-4 mb-12" />
+
+      <div className="grid grid-cols-[16rem_1fr] gap-16">
+        <Stepper
+          steps={steps}
+          completion={stepCompletion}
+          activeStepIndex={activeStepIndex}
+          displayedIndex={displayedIndex}
+          onStepClick={handleStepClick}
+        />
+
+        <div className="min-w-0">
+          {isLoading ? (
+            <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+          ) : subdomainStepFailed ? (
+            <DataFetchErrorState
+              entity={t('the embed subdomain')}
+              onRetry={refetchSubdomain}
+            />
+          ) : displayedStep?.kind === 'hostname' ? (
+            <HostnameStep subdomain={subdomain} />
+          ) : displayedStep?.kind === 'dns' ? (
+            <DnsStep subdomain={subdomain} />
+          ) : displayedStep?.kind === 'allowed-domains' ? (
+            <AllowedDomainsStep allowedEmbedOrigins={allowedEmbedOrigins} />
+          ) : displayedStep?.kind === 'signing-keys' ? (
+            <SigningKeysStep
+              signingKeys={signingKeys}
+              isLoading={isKeysLoading}
+              refetch={refetch}
+            />
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 };
 
