@@ -1,18 +1,26 @@
 import { ProjectRole } from '@activepieces/core-utils';
-import { isNil, ProjectMemberWithUser } from '@activepieces/shared';
+import { ProjectMemberWithUser } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ArrowUpRight, Loader2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { UserAvatar } from '@/components/custom/user-avatar';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { projectRoleQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
 export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
-  const { data, isLoading, isError, refetch } =
-    projectRoleQueries.useProjectRoleMembers(projectRole.id, true);
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = projectRoleQueries.useProjectRoleMembers(projectRole.id, true);
 
   if (isLoading) {
     return (
@@ -30,7 +38,7 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
     );
   }
 
-  const members = data?.data ?? [];
+  const members = data?.pages.flatMap((page) => page.data) ?? [];
 
   if (members.length === 0) {
     return (
@@ -44,15 +52,14 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
     );
   }
 
-  const isComplete = isNil(data?.next);
   const projectCount = new Set(members.map((member) => member.project.id)).size;
 
   return (
     <div className="flex h-full flex-col">
       <p className="shrink-0 px-6 pt-4 pb-3 text-sm text-muted-foreground">
-        {isComplete
-          ? t('hasThisRoleInProjects', { count: projectCount })
-          : t('showingFirstPeople', { count: members.length })}
+        {hasNextPage
+          ? t('showingFirstPeople', { count: members.length })
+          : t('hasThisRoleInProjects', { count: projectCount })}
       </p>
       <div className={cn(PEOPLE_COLUMNS, 'shrink-0 border-b px-6 pb-2')}>
         <span className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
@@ -70,6 +77,21 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
           {members.map((member) => (
             <PersonRow key={member.id} member={member} />
           ))}
+          {hasNextPage && (
+            <div className="flex justify-center py-3">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isFetchingNextPage}
+                onClick={() => fetchNextPage()}
+              >
+                {isFetchingNextPage && (
+                  <Loader2 className="size-4 animate-spin" />
+                )}
+                {t('Load more')}
+              </Button>
+            </div>
+          )}
         </div>
       </ScrollArea>
     </div>

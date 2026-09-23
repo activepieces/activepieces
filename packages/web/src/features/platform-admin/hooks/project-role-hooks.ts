@@ -1,8 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
 import { projectRoleApi } from '../api/project-role-api';
+
+const PROJECT_ROLE_MEMBERS_PAGE_SIZE = 100;
 
 export const projectRoleKeys = {
   all: ['project-roles'] as const,
@@ -17,13 +19,15 @@ export const projectRoleQueries = {
       enabled,
     }),
   useProjectRoleMembers: (roleId: string | undefined, enabled: boolean) =>
-    useQuery({
+    useInfiniteQuery({
       queryKey: projectRoleKeys.members(roleId ?? ''),
-      queryFn: () =>
+      queryFn: ({ pageParam }) =>
         projectRoleApi.listProjectMembers(roleId!, {
-          cursor: undefined,
-          limit: 100,
+          cursor: pageParam,
+          limit: PROJECT_ROLE_MEMBERS_PAGE_SIZE,
         }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) => lastPage.next ?? undefined,
       enabled: enabled && !!roleId,
     }),
 };
