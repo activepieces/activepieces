@@ -18,7 +18,7 @@ export const scheduleStatus = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Schedules a status to be published by Mastodon at a future date-time (at least 5 minutes ahead) and returns the scheduled status, not a published post. Use Create Status to post immediately; manage the result with List Scheduled Statuses, Reschedule Status or Cancel Scheduled Status. Each call schedules another post.',
+      'Schedules a status to be published by Mastodon at a future date-time (at least 6 minutes ahead) and returns the scheduled status, not a published post. Use Create Status to post immediately; manage the result with List Scheduled Statuses, Reschedule Status or Cancel Scheduled Status. Each call schedules another post.',
     idempotent: false,
   },
   outputSchema: scheduledStatusOutputSchema,
@@ -26,7 +26,7 @@ export const scheduleStatus = createAction({
     scheduled_at: Property.DateTime({
       displayName: 'Scheduled At',
       description:
-        'When to publish, as an ISO 8601 date-time such as 2026-10-01T09:30:00Z. Must be at least 5 minutes in the future.',
+        'When to publish, as an ISO 8601 date-time such as 2026-10-01T09:30:00Z. Must be at least 6 minutes in the future.',
       required: true,
     }),
     ...mastodonProps.compose(),

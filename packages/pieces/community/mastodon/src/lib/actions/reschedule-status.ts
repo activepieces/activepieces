@@ -13,7 +13,7 @@ export const rescheduleStatus = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Moves a scheduled status to a new publication time (at least 5 minutes ahead); its content cannot be changed here. Use Cancel Scheduled Status to drop it instead. Setting the same time again converges, so it is safe to retry.',
+      'Moves a scheduled status to a new publication time (at least 6 minutes ahead); its content cannot be changed here. Use Cancel Scheduled Status to drop it instead. Setting the same time again converges, so it is safe to retry.',
     idempotent: true,
   },
   outputSchema: scheduledStatusOutputSchema,
@@ -27,7 +27,7 @@ export const rescheduleStatus = createAction({
     scheduled_at: Property.DateTime({
       displayName: 'Scheduled At',
       description:
-        'New publication time as an ISO 8601 date-time such as 2026-10-01T09:30:00Z. Must be at least 5 minutes in the future.',
+        'New publication time as an ISO 8601 date-time such as 2026-10-01T09:30:00Z. Must be at least 6 minutes in the future.',
       required: true,
     }),
   },
