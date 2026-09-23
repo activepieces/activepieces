@@ -26,37 +26,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 
 const collectionQueryClient = new QueryClient();
 
-export const buildProjectUpdatePayload = ({
-  original,
-  modified,
-}: {
-  original: ProjectWithLimits;
-  modified: ProjectWithLimits;
-}): UpdateProjectPlatformRequest => {
-  const payload: UpdateProjectPlatformRequest = {};
-  for (const key of Object.keys(UpdateProjectPlatformRequest.shape)) {
-    const originalValue = Reflect.get(original, key);
-    const modifiedValue = Reflect.get(modified, key);
-    if (originalValue === modifiedValue) {
-      continue;
-    }
-    Object.assign(payload, {
-      [key]: normalizeProjectUpdateField(key, modifiedValue),
-    });
-  }
-  return payload;
-};
-
-const normalizeProjectUpdateField = (key: string, value: unknown): unknown => {
-  if (key === 'externalId') {
-    return typeof value === 'string' && value.trim() !== '' ? value : undefined;
-  }
-  if (key === 'metadata') {
-    return value ?? undefined;
-  }
-  return value;
-};
-
 export const projectCollection = createCollection<ProjectWithLimits, string>(
   queryCollectionOptions({
     queryKey: ['projects'],
@@ -75,10 +44,18 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     getKey: (item) => item.id,
     onUpdate: async ({ transaction }) => {
       for (const { original, modified } of transaction.mutations) {
-        const request = buildProjectUpdatePayload({ original, modified });
-        if (Object.keys(request).length === 0) {
-          continue;
-        }
+        const request: UpdateProjectPlatformRequest = {
+          displayName: modified.displayName,
+          metadata: modified.metadata ?? undefined,
+          releasesEnabled: modified.releasesEnabled,
+          notifyFlowOwnerOnFailure: modified.notifyFlowOwnerOnFailure,
+          externalId: modified.externalId?.trim() || undefined,
+          icon: modified.icon,
+          plan: modified.plan,
+          maxConcurrentJobs: modified.maxConcurrentJobs,
+          workerGroupId: modified.workerGroupId,
+          sensitive: modified.sensitive,
+        };
         await api.post<ProjectWithLimits>(
           `/v1/projects/${original.id}`,
           request,
