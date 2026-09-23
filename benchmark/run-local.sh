@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Local benchmark runner with SANDBOXED mode support
+# Local benchmark runner (mirrors what .github/workflows/benchmark.yml does per matrix cell).
 # Usage: ./benchmark/run-local.sh [execution_mode] [total_requests]
-#   execution_mode: SANDBOXED | SANDBOX_CODE_ONLY (default: SANDBOXED)
-#   total_requests: number of requests for hey (default: 500)
+#   execution_mode: SANDBOXED | SANDBOX_CODE_ONLY | SANDBOX_CODE_AND_PROCESS (default: SANDBOX_CODE_AND_PROCESS)
+#   total_requests: number of requests for the CLI (default: 500)
 
 EXECUTION_MODE=${1:-SANDBOX_CODE_AND_PROCESS}
 TOTAL_REQUESTS=${2:-500}
 APP_REPLICAS=${APP_REPLICAS:-1}
 WORKER_REPLICAS=${WORKER_REPLICAS:-2}
 
-# SANDBOXED mode needs more time for sandbox initialization
 if [ "$EXECUTION_MODE" = "SANDBOXED" ]; then
   export FLOW_ENABLE_TIMEOUT=120
 else
@@ -39,29 +38,22 @@ echo "Waiting for containers to settle..."
 sleep 5
 $COMPOSE ps
 
-echo "=== Setting up flow ==="
+echo "=== Setting up flow + API key ==="
 FLOW_ID=$(FLOW_ENABLE_TIMEOUT=$FLOW_ENABLE_TIMEOUT benchmark/setup.sh)
-echo "Flow ID: $FLOW_ID"
-
-echo "=== Warmup ==="
-hey -n 500 -c "$WORKER_REPLICAS" -t 60 \
-    -m POST \
-    -H "Content-Type: application/json" \
-    -d '{"test":true}' \
-    "http://localhost:8080/api/v1/webhooks/$FLOW_ID/sync" \
-    | tail -5
+PROJECT_ID=$(cat /tmp/bench-project-id)
+AP_API_KEY=$(cat /tmp/bench-api-key)
+export AP_API_KEY
+echo "Flow ID: $FLOW_ID  Project ID: $PROJECT_ID"
 
 echo "=== Benchmark ($TOTAL_REQUESTS requests, $WORKER_REPLICAS concurrency) ==="
-hey -n "$TOTAL_REQUESTS" \
-    -c "$WORKER_REPLICAS" \
-    -t 60 \
-    -m POST \
-    -H "Content-Type: application/json" \
-    -d '{"test":true}' \
-    "http://localhost:8080/api/v1/webhooks/$FLOW_ID/sync" \
-    | tee /tmp/hey-output.txt
+bun run packages/cli/src/benchmark-only.ts \
+  --url http://localhost:8080 \
+  --requests "$TOTAL_REQUESTS" \
+  --concurrency "$WORKER_REPLICAS" \
+  --project-id "$PROJECT_ID" \
+  --flow-id "$FLOW_ID" \
+  --json > /tmp/report.json
 
-echo "=== Parsing results ==="
-benchmark/parse.sh /tmp/hey-output.txt /tmp/results.json
-echo "Results saved to /tmp/results.json"
-cat /tmp/results.json
+echo "=== Summary ==="
+jq '.runs[0].summary, .runs[0].timeline' /tmp/report.json
+echo "Full report saved to /tmp/report.json"

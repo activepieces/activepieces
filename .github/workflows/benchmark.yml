@@ -112,14 +112,17 @@ jobs:
         if: always()
         run: |
           rm -f /tmp/bench-running
-          for _ in 1 2 3; do
-            if ! kill -0 "${STATS_PID:-0}" 2>/dev/null; then break; fi
-            sleep 1
-          done
-          kill "${STATS_PID:-0}" 2>/dev/null || true
-          wc -l /tmp/stats.jsonl || true
+          if [[ "${STATS_PID:-}" =~ ^[1-9][0-9]*$ ]]; then
+            for _ in 1 2 3; do
+              if ! kill -0 "$STATS_PID" 2>/dev/null; then break; fi
+              sleep 1
+            done
+            kill "$STATS_PID" 2>/dev/null || true
+          fi
+          wc -l /tmp/stats.jsonl 2>/dev/null || true
 
       - name: Combine results
+        if: '!cancelled()'
         run: |
           node benchmark/aggregate-stats.mjs /tmp/stats.jsonl > /tmp/stats.json
           node benchmark/combine-results.mjs \
@@ -132,7 +135,7 @@ jobs:
           cat /tmp/result.json
 
       - name: Detect regression against trailing 14 runs (scheduled runs only)
-        if: github.event_name == 'schedule'
+        if: '!cancelled() && github.event_name == ''schedule'''
         env:
           CH_HOST: ${{ secrets.CLICKHOUSE_CI_HOST }}
           CH_USER: ${{ secrets.CLICKHOUSE_CI_USER }}
@@ -145,7 +148,7 @@ jobs:
             --runUrl "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
       - name: Insert result into ClickHouse (scheduled runs only)
-        if: always() && github.event_name == 'schedule'
+        if: '!cancelled() && github.event_name == ''schedule'''
         env:
           CH_HOST: ${{ secrets.CLICKHOUSE_CI_HOST }}
           CH_USER: ${{ secrets.CLICKHOUSE_CI_USER }}
@@ -153,7 +156,7 @@ jobs:
         run: |
           set -o pipefail
           ROW=$(jq -c '{
-            ts: (.meta.ts | fromdateiso8601),
+            ts: (.meta.ts | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601),
             sha: .meta.sha,
             label: .meta.label,
             run_id: (.meta.runId | tonumber),
