@@ -90,6 +90,8 @@ export const ChooseAiRouteRequest = z.object({
     question: z.string(),
     options: z.record(z.string(), z.string()),
     matchMode: z.enum(AiRouterMatchMode),
+    flowId: z.string(),
+    flowRunId: z.string(),
 })
 
 export type ChooseAiRouteRequest = z.infer<typeof ChooseAiRouteRequest>

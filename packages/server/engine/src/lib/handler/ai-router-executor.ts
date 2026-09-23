@@ -36,15 +36,20 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
         const matchMode = resolvedInput.matchMode ?? AiRouterMatchMode.BEST_MATCH
         const bestMatch = matchMode === AiRouterMatchMode.BEST_MATCH
 
+        const options = toOptions(askableBranches({ branches: resolvedInput.branches, bestMatch }))
         const { data: answer, error: answerError } = await utils.tryCatchAndThrowOnEngineError(() =>
-            aiRouterApi.choose({
-                apiUrl: constants.internalApiUrl,
-                engineToken: constants.engineToken,
-                state: asPlainText(resolvedInput.text).slice(0, AI_ROUTER_MAX_STATE_LENGTH),
-                question: asPlainText(resolvedInput.question),
-                options: toOptions(askableBranches({ branches: resolvedInput.branches, bestMatch })),
-                matchMode,
-            }),
+            Object.keys(options).length === 0
+                ? Promise.resolve<ChooseAiRouteResponse>({ matched: [] })
+                : aiRouterApi.choose({
+                    apiUrl: constants.internalApiUrl,
+                    engineToken: constants.engineToken,
+                    state: asPlainText(resolvedInput.text).slice(0, AI_ROUTER_MAX_STATE_LENGTH),
+                    question: asPlainText(resolvedInput.question),
+                    options,
+                    matchMode,
+                    flowId: constants.flowId,
+                    flowRunId: constants.flowRunId,
+                }),
         )
         if (answerError) {
             return failStep({

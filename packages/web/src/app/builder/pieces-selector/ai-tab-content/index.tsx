@@ -1,9 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  ApFlagId,
-  FlowActionType,
-  FlowOperationType,
-} from '@activepieces/shared';
+import { FlowActionType, FlowOperationType } from '@activepieces/shared';
 import { useTranslation } from 'react-i18next';
 
 import { CardListItemSkeleton } from '@/components/custom/card-list';
@@ -14,7 +10,7 @@ import {
   PieceSelectorOperation,
   stepUtils,
 } from '@/features/pieces';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { AIPieceActionsList } from './ai-actions-list';
@@ -22,9 +18,8 @@ import { AIPieceActionsList } from './ai-actions-list';
 const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
   const { t } = useTranslation();
   const { selectedTab } = usePieceSelectorTabs();
-  const { data: aiRouterEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AI_ROUTER_ENABLED,
-  );
+  const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
+  const aiRouterEnabled = stepUtils.hasAiRouterProvider(aiProviders);
   const coreItems = aiRouterEnabled
     ? stepUtils
         .coreActionsMetadata()

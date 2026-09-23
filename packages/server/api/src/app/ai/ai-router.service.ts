@@ -1,122 +1,83 @@
-import { safeHttp } from '@activepieces/server-utils'
-import { ActivepiecesError, AiRouterMatchMode, ChooseAiRouteRequest, ChooseAiRouteResponse, ErrorCode, isNil, tryCatch } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
+import { AiStepAction, ChooseAiRouteRequest, ChooseAiRouteResponse, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { system } from '../helper/system/system'
-import { AppSystemProp } from '../helper/system/system-props'
-
-const GATEWAY_EVALUATION_URL = 'https://ai-gateway.vercel.sh/v4/ai/evaluation-model'
-const GATEWAY_MODEL_ID = 'typesafe-ai/jev'
-const GATEWAY_PROTOCOL_VERSION = '0.0.1'
-const CHOICE_KEY = 'route'
-const APPLIES_THRESHOLD = 0.5
-const TIMEOUT_MS = 8_000
+import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
+import { aiExecution } from './ai-execution'
+import { aiProviderService } from './ai-provider-service'
 
 export const aiRouterService = (log: FastifyBaseLogger) => ({
-    async choose({ state, question, options, matchMode }: ChooseAiRouteRequest): Promise<ChooseAiRouteResponse> {
-        const apiKey = system.get(AppSystemProp.AI_GATEWAY_API_KEY)
-        if (isNil(apiKey)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: { message: 'The AI router needs AP_AI_GATEWAY_API_KEY to be set on this instance' },
-            })
-        }
+    async choose({ platformId, projectId, ...request }: ChooseParams): Promise<ChooseAiRouteResponse> {
+        const provider = await pickProvider({ platformId, projectId, log })
+        await assertHasCredits({ platformId, log })
 
-        const keyToRoute = Object.fromEntries(Object.keys(options).map((route, index) => [`r${index}`, route]))
-        const startedAt = Date.now()
-        const { data: response, error } = await tryCatch(() => safeHttp.axios.post<GatewayEvaluationResponse>(
-            GATEWAY_EVALUATION_URL,
-            {
-                state,
-                questions: buildQuestions({ question, options, matchMode, keyToRoute }),
-            },
-            {
-                timeout: TIMEOUT_MS,
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json',
-                    'ai-model-id': GATEWAY_MODEL_ID,
-                    'ai-evaluation-model-specification-version': '4',
-                    'ai-gateway-protocol-version': GATEWAY_PROTOCOL_VERSION,
-                },
-            },
-        ))
-        const durationMs = Date.now() - startedAt
-        if (error) {
-            log.warn({ durationMs, matchMode, reason: error.message }, 'The AI router gateway call failed')
-            throw new ActivepiecesError({
-                code: ErrorCode.ENGINE_OPERATION_FAILURE,
-                params: { message: `The AI router gateway did not answer after ${durationMs} ms` },
-            })
-        }
+        const execution = aiExecution(log)
+        const requestId = apId()
+        const answer = execution.waitForAnswer({ requestId, timeoutMs: WAIT_MS })
+        await execution.enqueue({
+            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+            jobType: WorkerJobType.EXECUTE_AI,
+            action: AiStepAction.ROUTE,
+            requestId,
+            webserverId: execution.serverId(),
+            projectId,
+            platformId,
+            flowId: request.flowId,
+            flowRunId: request.flowRunId,
+            provider,
+            modelId: AI_ROUTER_MODEL_ID,
+            state: request.state,
+            question: request.question,
+            options: request.options,
+            matchMode: request.matchMode,
+        })
 
-        const answer = matchMode === AiRouterMatchMode.BEST_MATCH
-            ? readChoiceAnswer(response.data)
-            : readBooleanAnswers({ data: response.data, keyToRoute })
-        if (isNil(answer)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENGINE_OPERATION_FAILURE,
-                params: { message: 'The AI router model did not answer the routing question' },
-            })
+        const { output, failure } = await answer
+        if (!isNil(failure)) {
+            throw new ActivepiecesError({ code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message: failure } })
         }
-
-        log.info({ matched: answer.matched, matchMode, durationMs }, 'Chose the AI router routes')
-        return answer
+        const parsed = ChooseAiRouteResponse.safeParse(output)
+        if (!parsed.success) {
+            throw new ActivepiecesError({ code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message: 'The routing model answered in a shape the AI Router does not understand' } })
+        }
+        log.info({ matched: parsed.data.matched, matchMode: request.matchMode, provider }, 'Chose the AI router routes')
+        return parsed.data
     },
 })
 
-function buildQuestions({ question, options, matchMode, keyToRoute }: BuildQuestionsParams): Record<string, unknown> {
-    if (matchMode === AiRouterMatchMode.BEST_MATCH) {
-        return {
-            [CHOICE_KEY]: { type: 'choice', instructions: question, criteria: options },
-        }
+async function pickProvider({ platformId, projectId, log }: { platformId: string, projectId: string, log: FastifyBaseLogger }): Promise<AIProviderName> {
+    const available = await aiProviderService(log).listForProject({ platformId, projectId })
+    const provider = ROUTER_PROVIDERS.find((candidate) => available.some((entry) => entry.provider === candidate))
+    if (isNil(provider)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.FEATURE_DISABLED,
+            params: { message: 'The AI Router needs an OpenRouter key. On Cloud that is the Activepieces provider; self-hosted, add OpenRouter under AI providers.' },
+        })
     }
-    return Object.fromEntries(Object.entries(keyToRoute).map(([key, route]) => [
-        key,
-        { type: 'boolean', instructions: `${question}\n\nAnswer yes only if this route applies: ${route} — ${options[route]}` },
-    ]))
+    return provider
 }
 
-function readChoiceAnswer(data: GatewayEvaluationResponse): ChooseAiRouteResponse | undefined {
-    const answer = data.answers[CHOICE_KEY]
-    if (isNil(answer) || isNil(answer.choice)) {
-        return undefined
+async function assertHasCredits({ platformId, log }: { platformId: string, log: FastifyBaseLogger }): Promise<void> {
+    const { error } = await tryCatch(() => assertCreditsAndAppSumoNotExceeded({ platformId, log }))
+    if (isNil(error)) {
+        return
     }
-    return {
-        matched: [answer.choice],
-        ...(isNil(answer.probabilities) ? {} : { probabilities: answer.probabilities }),
+    const details = error instanceof ActivepiecesError ? error.error : undefined
+    if (isNil(details) || details.code !== ErrorCode.QUOTA_EXCEEDED) {
+        log.warn({ error, platform: { id: platformId } }, '[aiRouterService] Credits check failed, allowing the call')
+        return
     }
-}
-
-function readBooleanAnswers({ data, keyToRoute }: ReadBooleanAnswersParams): ChooseAiRouteResponse | undefined {
-    const entries = Object.entries(keyToRoute).flatMap(([key, route]) => {
-        const probability = data.answers[key]?.probability
-        return isNil(probability) ? [] : [{ route, probability }]
+    throw new ActivepiecesError({
+        code: ErrorCode.QUOTA_EXCEEDED,
+        params: { ...details.params, message: OUT_OF_CREDITS_MESSAGE },
     })
-    if (entries.length === 0) {
-        return undefined
-    }
-    return {
-        matched: entries.filter(({ probability }) => probability >= APPLIES_THRESHOLD).map(({ route }) => route),
-        probabilities: Object.fromEntries(entries.map(({ route, probability }) => [route, probability])),
-    }
 }
 
-type BuildQuestionsParams = {
-    question: string
-    options: Record<string, string>
-    matchMode: AiRouterMatchMode
-    keyToRoute: Record<string, string>
-}
+const ROUTER_PROVIDERS = [AIProviderName.ACTIVEPIECES, AIProviderName.OPENROUTER] as const
+const AI_ROUTER_MODEL_ID = 'typesafe/jev-1.13'
+const WAIT_MS = 25_000
+const OUT_OF_CREDITS_MESSAGE = 'The AI Router did not run because the platform is out of AI credits. Add credits or upgrade the plan, then retry the run.'
 
-type ReadBooleanAnswersParams = {
-    data: GatewayEvaluationResponse
-    keyToRoute: Record<string, string>
-}
-
-type GatewayEvaluationResponse = {
-    answers: Record<string, {
-        choice?: string
-        probabilities?: Record<string, number>
-        probability?: number
-    } | undefined>
+type ChooseParams = ChooseAiRouteRequest & {
+    platformId: string
+    projectId: string
 }

@@ -1,19 +1,22 @@
 ---
-title: The AI router is its own action type and bills nobody
+title: The AI router is its own action type and runs as a worker AI step
 icon: 🔀
 status: accepted
 ---
 
-# The AI router is its own action type and bills nobody
+# The AI router is its own action type and runs as a worker AI step
 
 ## Decision
 
 **AI Router is a real `FlowActionType.AI_ROUTER`**, not a Router mode and not a piece action. It asks
 one question at the root and each branch is one possible answer, inverting the Router's one-condition-
-tree-per-branch model. It calls Jev through **one Vercel AI Gateway key held by the instance**
-(`AP_AI_GATEWAY_API_KEY`) over `safeHttp`, reads no project AI provider, consumes no credit, and has
-no provider or model picker. Unset the key and `ApFlagId.AI_ROUTER_ENABLED` is false and the step is
-absent from the picker.
+tree-per-branch model. It calls Jev (`typesafe/jev-1.13`) through **OpenRouter's Decisions API on the
+platform's own OpenRouter key**, as a `ROUTE` action of the worker's `EXECUTE_AI` job: the engine posts
+to `/v1/engine/ai-router`, the API picks the provider and gates credits, the worker makes the call and
+bills it. The key is the managed Activepieces provider where credits are on, else the admin's own
+OpenRouter row; the step has no provider or model picker and appears in the picker only when the
+project's provider list contains one of the two. Billing is decision 000037 unchanged: observed
+`usage.cost` on the managed key, one fixed credit on an own key.
 
 ## Context
 
@@ -42,17 +45,25 @@ any sane threshold. With an explicit `Otherwise` criterion, `"hi"` and `"what is
 both go to Otherwise at **1.00** while a clear billing message still goes to Billing at 1.00. A
 confidence floor is kept as a second, independent net, but it is not the mechanism.
 
-**No metering.** Jev costs $0.042 per 1M input tokens with free output and a routing decision sends
-one sentence. A credit check and a usage pipeline cost more to build and run than the inference they
-would account for. Resolving the project's own provider was the rejected alternative: it turns a
-two-field step into a setup task and is the shape `.claude/rules/self-hosting.md` warns about.
+**Billed like any AI step, through the worker chokepoint.** The first cut billed nobody and called a
+Vercel AI Gateway from the API process with an instance-wide key, on the reasoning that Jev costs
+$0.042 per 1M input tokens and a usage pipeline would cost more than the inference. Its own
+Consequences warned that metering had to land before flows depended on free routing, and the PR was
+unmerged, so it did. Running the call as an `EXECUTE_AI` job reuses the pipeline decisions 000016 and
+000037 already built — provider resolution, `assertCreditsAndAppSumoNotExceeded` before the job, cost
+reported from the worker over RPC — instead of a second one beside it. The step still asks nothing of
+the user: the provider is picked server-side from `listForProject`, which is also what the picker
+reads, so server and picker agree by construction.
 
 ## Consequences
 
-The gateway key is a single point of failure for the step, and an instance pays for its users'
-routing. Bounded by a 10 s abort and by the price. Nothing is metered, so there is no usage record to
-reason about later — if cost becomes visible, metering must be added *before* behaviour can change,
-and flows will already depend on routing being free.
+A routing decision costs the platform what it costs us on the managed key (about 0.02 to 0.08
+credit) and one credit on an own key; a production run through one router is therefore about one
+credit plus a fraction. The engine waits 30 s, the API façade 25 s, the worker's HTTP call 8 s, so the
+readable failure text always beats a bare engine timeout. Community Edition has no OpenRouter key
+unless the admin adds one, so the step is hidden there by default — the price of dropping the
+instance-wide env var. OpenRouter's Decisions endpoint is alpha; its wire format lives in one worker
+file (`route.ts`) with a unit test per answer shape.
 
 A failed or timed-out call **fails the step**. It never quietly takes the fallback, because routing a
 refund down the wrong branch because a model timed out is a correctness bug that looks like normal
@@ -61,7 +72,7 @@ operation.
 The step started with **no `executionType`**, on the reasoning that a choice answer names exactly one
 branch so all-match had no meaning. That held only while the step asked one `choice` question. It now
 carries `matchMode`: `BEST_MATCH` asks one `choice` question and exactly one route runs, while
-`ALL_MATCHES` asks one `boolean` question per route — in a single request, since the gateway's
+`ALL_MATCHES` asks one `noul` question per route — in a single request, since Jev's
 `questions` field is a record — and every affirmed route runs. The fallback rule mirrors the Router's
 exactly: it runs iff no other route did.
 
@@ -86,16 +97,17 @@ match-mode toggle (one `choice` question → one route, N `boolean` questions �
 applies, which is the Router's first-match/all-match concept and the cheapest of the three);
 **facts** (thresholds, exists, two-value comparisons) by an optional one-line deterministic *guard*
 per route, evaluated first so guarded-out routes never reach the criteria map; **multi-dimensional
-routing** by asking several questions in one call and matching routes on combinations, which the
-gateway's plural `questions` record already supports and which the Router cannot do on meaning at
+routing** by asking several questions in one call and matching routes on combinations, which Jev's
+plural `questions` record already supports and which the Router cannot do on meaning at
 all. The guiding line is that the model turns unbounded text into a small enumerated value and
 everything after that is data. The standing risk on guards is that a nested condition builder inside
 a route rebuilds the Router twice and loses the pitch — one guard, one line, no AND/OR groups.
 
-The MCP flow-building tools still only understand `ROUTER`. They degrade rather than break —
-`ap_update_branch` reports the step is not a router, `ap_flow_structure` omits branch detail — because
-letting the agent create an AI router without settings support would let it build broken steps.
+The MCP flow-building tools resolve both router kinds for structure, validation and delete.
+`ap_add_branch` and `ap_update_branch` refuse an AI router with a message, and `ap_add_step` cannot
+create one, because letting the agent build one without settings support would let it build broken
+steps. Those three need a per-type body.
 
-**Jev is also on OpenRouter, but not where a catalog scan looks.** `GET /api/v1/models` lists text-producing models only; Jev's output modality is `decisions`, so it is absent there and lives at `POST https://openrouter.ai/api/alpha/decisions` as model `typesafe/jev-1.13` (`/api/v1/models/typesafe/jev-1.13/endpoints` confirms it; `jev-latest` 404s, so pin the version). Same price as the gateway, $0.042/M in and free out, 32k context. The wire format is the Jev native one that Vercel's `EvaluationModelV4` mirrors: `{ model, state, questions }` → `{ answers, usage }`, with one rename — a yes/no question is `type: "noul"`, not `"boolean"`. Moving the router there is a change confined to `ai-router.service.ts` (URL, `model` in the body, drop the three `ai-*` headers, `boolean`→`noul`) plus renaming the env var; the engine, web and `{ matched, probabilities }` contract stay. Two things to confirm with one paid curl before committing to it: that a noul answer carries `probability` (P(true)) as the gateway's boolean does, and that a string `state` is accepted (every OpenRouter example sends an object). The endpoint is alpha and its docs path 404s, so expect churn. A first pass of this note claimed OpenRouter had no Jev — that came from scanning the text-model catalog only.
+**Jev is on OpenRouter, but not where a catalog scan looks.** `GET /api/v1/models` lists text-producing models only; Jev's output modality is `decisions`, so it is absent there and lives at `POST https://openrouter.ai/api/alpha/decisions` as model `typesafe/jev-1.13` (`jev-latest` 404s, so pin the version). Same price as the gateway, $0.042/M in and free out, 32k context. The wire format, confirmed against OpenRouter's own Jev tutorial: body `{ model, state, questions }` with `state` an object (we send `{ text }`), a yes/no question is `type: "noul"` and its answer is `{ type: "noul", noul }` where `noul` is P(true) — no `answer`, no `probability` field — a choice answer is `{ choice, confidence, probabilities }`, and `usage` carries `input_tokens`, `output_tokens` and `cost` in dollars by default. A first pass of this note claimed OpenRouter had no Jev, from scanning the text-model catalog only.
 
-**Decided 2026-09-22: stay on the Vercel AI Gateway.** The OpenRouter route looked like it would reuse a key the deployment already had, but the only OpenRouter key the instance holds is the management key, which cannot call a model. Both paths therefore add exactly one new inference secret to the deployment, and only the gateway path adds it with no code change. Revisit if the gateway is dropped or the alpha Decisions API becomes the cheaper operational fit.
+**Decided 2026-09-23: run in the worker on OpenRouter, reversing the previous day's "stay on the gateway".** That call rested on a false premise: it said the only OpenRouter key the instance held was the management key, which cannot call a model. The management key is indeed inference-blind, but `enrichWithKeysIfNeeded` uses it to mint a real inference key per platform for the managed Activepieces provider, and any admin who added OpenRouter under AI providers holds one too. So the deployment already had a callable key, the gateway added a second vendor for nothing, and the worker pipeline could bill the call for free. The move also improves `.claude/rules/self-hosting.md` compliance: one env var fewer, and the key it reuses is one the deployment already manages.

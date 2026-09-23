@@ -54,3 +54,4 @@ managed-AI gate/metering should fold into it rather than being hardened in its c
 - The centralized path must preserve today's non-blocking properties (billing must not add per-token
   latency, per WS6): the goal is *observed* usage at one place, not a synchronous console/Autumn round-trip
   on every token.
+- The AI Router (2026-09-23) is the first non-language-model call through the chokepoint: an `EXECUTE_AI` job with `action: ROUTE`, billed from the Decisions response's `usage.cost` via `activepiecesAiCost.reportProviderCost` on the managed key, or one fixed credit on an own key. No managed AI call is exempt.

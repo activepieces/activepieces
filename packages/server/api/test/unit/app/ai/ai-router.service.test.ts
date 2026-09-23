@@ -1,14 +1,24 @@
-import { AiRouterMatchMode } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, ErrorCode, PlatformUsageMetric } from '@activepieces/core-utils'
+import { AiRouterMatchMode, AiStepAction } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const post = vi.fn()
-
-vi.mock('@activepieces/server-utils', () => ({
-    safeHttp: { axios: { post: (...args: unknown[]) => post(...args) } },
+const { enqueue, waitForAnswer, listForProject, assertCredits } = vi.hoisted(() => ({
+    enqueue: vi.fn(),
+    waitForAnswer: vi.fn(),
+    listForProject: vi.fn(),
+    assertCredits: vi.fn(),
 }))
 
-vi.mock('../../../../src/app/helper/system/system', () => ({
-    system: { get: () => 'a-key' },
+vi.mock('../../../../src/app/ai/ai-execution', () => ({
+    aiExecution: () => ({ serverId: () => 'server-1', enqueue, waitForAnswer }),
+}))
+
+vi.mock('../../../../src/app/ai/ai-provider-service', () => ({
+    aiProviderService: () => ({ listForProject }),
+}))
+
+vi.mock('../../../../src/app/platform/billing-provider', () => ({
+    assertCreditsAndAppSumoNotExceeded: assertCredits,
 }))
 
 const { aiRouterService } = await import('../../../../src/app/ai/ai-router.service')
@@ -16,100 +26,100 @@ const { aiRouterService } = await import('../../../../src/app/ai/ai-router.servi
 const log = { info: vi.fn(), warn: vi.fn() }
 const service = () => aiRouterService(log as never)
 
-beforeEach(() => {
-    post.mockReset()
-})
-
-function sentBody() {
-    return post.mock.calls[0][1]
+const REQUEST = {
+    platformId: 'platform-1',
+    projectId: 'project-1',
+    flowId: 'flow-1',
+    flowRunId: 'run-1',
+    state: 'charged twice',
+    question: 'Which team?',
+    options: { Billing: 'Payments', Technical: 'Bugs' },
+    matchMode: AiRouterMatchMode.BEST_MATCH,
 }
 
-describe('aiRouterService in best-match mode', () => {
-    it('asks one choice question carrying every route as a criterion', async () => {
-        post.mockResolvedValue({ data: { answers: { route: { choice: 'Billing', probabilities: { Billing: 0.91, Technical: 0.09 } } } } })
+const OUT_OF_CREDITS = new ActivepiecesError({ code: ErrorCode.QUOTA_EXCEEDED, params: { metric: PlatformUsageMetric.CREDITS } })
 
-        const answer = await service().choose({
+function provider(name: AIProviderName) {
+    return { provider: name, name, enabledForChat: false, keys: [] }
+}
+
+beforeEach(() => {
+    vi.clearAllMocks()
+    listForProject.mockResolvedValue([provider(AIProviderName.OPENROUTER), provider(AIProviderName.ACTIVEPIECES)])
+    assertCredits.mockResolvedValue(undefined)
+    enqueue.mockResolvedValue(undefined)
+    waitForAnswer.mockResolvedValue({ output: { matched: ['Billing'], probabilities: { Billing: 0.9, Technical: 0.1 } } })
+})
+
+describe('aiRouterService runs the decision as a worker AI job', () => {
+    it('enqueues a route job on the managed provider and returns the worker\'s answer', async () => {
+        const answer = await service().choose(REQUEST)
+
+        expect(enqueue).toHaveBeenCalledTimes(1)
+        expect(enqueue.mock.calls[0][0]).toMatchObject({
+            action: AiStepAction.ROUTE,
+            provider: AIProviderName.ACTIVEPIECES,
+            modelId: 'typesafe/jev-1.13',
+            webserverId: 'server-1',
+            platformId: 'platform-1',
+            projectId: 'project-1',
+            flowId: 'flow-1',
+            flowRunId: 'run-1',
             state: 'charged twice',
             question: 'Which team?',
             options: { Billing: 'Payments', Technical: 'Bugs' },
             matchMode: AiRouterMatchMode.BEST_MATCH,
         })
-
-        expect(sentBody().questions).toEqual({
-            route: { type: 'choice', instructions: 'Which team?', criteria: { Billing: 'Payments', Technical: 'Bugs' } },
-        })
-        expect(answer).toEqual({ matched: ['Billing'], probabilities: { Billing: 0.91, Technical: 0.09 } })
+        expect(waitForAnswer.mock.calls[0][0].requestId).toBe(enqueue.mock.calls[0][0].requestId)
+        expect(answer).toEqual({ matched: ['Billing'], probabilities: { Billing: 0.9, Technical: 0.1 } })
     })
 
-    it('fails when the model returned no choice', async () => {
-        post.mockResolvedValue({ data: { answers: {} } })
+    it('starts listening for the answer before the job is enqueued, so a fast worker cannot answer into the void', async () => {
+        await service().choose(REQUEST)
 
-        await expect(service().choose({
-            state: 'x', question: 'q', options: { Billing: 'Payments' }, matchMode: AiRouterMatchMode.BEST_MATCH,
-        })).rejects.toMatchObject({ error: { code: 'ENGINE_OPERATION_FAILURE' } })
-    })
-})
-
-describe('aiRouterService in all-matches mode', () => {
-    it('asks one boolean question per route in a single request', async () => {
-        post.mockResolvedValue({ data: { answers: { r0: { probability: 0.9 }, r1: { probability: 0.2 } } } })
-
-        const answer = await service().choose({
-            state: 'charged twice',
-            question: 'Which team?',
-            options: { Billing: 'Payments', Technical: 'Bugs' },
-            matchMode: AiRouterMatchMode.ALL_MATCHES,
-        })
-
-        expect(post).toHaveBeenCalledTimes(1)
-        expect(Object.keys(sentBody().questions)).toEqual(['r0', 'r1'])
-        expect(sentBody().questions.r0.type).toBe('boolean')
-        expect(sentBody().questions.r0.instructions).toContain('Which team?')
-        expect(sentBody().questions.r0.instructions).toContain('Billing — Payments')
-        expect(answer.matched).toEqual(['Billing'])
+        expect(waitForAnswer.mock.invocationCallOrder[0]).toBeLessThan(enqueue.mock.invocationCallOrder[0])
     })
 
-    it('reports the probability that the route applies and does not match below one half', async () => {
-        post.mockResolvedValue({ data: { answers: { r0: { probability: 0.2 } } } })
+    it('falls back to the platform\'s own OpenRouter key when the managed provider is absent', async () => {
+        listForProject.mockResolvedValue([provider(AIProviderName.OPENROUTER), provider(AIProviderName.OPENAI)])
 
-        const answer = await service().choose({
-            state: 'x', question: 'q', options: { Billing: 'Payments' }, matchMode: AiRouterMatchMode.ALL_MATCHES,
-        })
+        await service().choose(REQUEST)
 
-        expect(answer.matched).toEqual([])
-        expect(answer.probabilities?.Billing).toBeCloseTo(0.2, 6)
+        expect(enqueue.mock.calls[0][0]).toMatchObject({ provider: AIProviderName.OPENROUTER })
     })
 
-    it('returns no matches when the model said no to everything', async () => {
-        post.mockResolvedValue({ data: { answers: { r0: { probability: 0.1 }, r1: { probability: 0.3 } } } })
+    it('refuses with a setup message when no OpenRouter-capable key exists, and enqueues nothing', async () => {
+        listForProject.mockResolvedValue([provider(AIProviderName.OPENAI)])
 
-        const answer = await service().choose({
-            state: 'x', question: 'q', options: { Billing: 'Payments', Sales: 'Pricing' }, matchMode: AiRouterMatchMode.ALL_MATCHES,
-        })
-
-        expect(answer.matched).toEqual([])
+        await expect(service().choose(REQUEST)).rejects.toMatchObject({ error: { code: ErrorCode.FEATURE_DISABLED, params: { message: expect.stringContaining('OpenRouter') } } })
+        expect(enqueue).not.toHaveBeenCalled()
     })
 
-    it('fails when no boolean answer carries a probability', async () => {
-        post.mockResolvedValue({ data: { answers: { r0: { answer: true } } } })
+    it('refuses with a credits message when the platform is definitely out of credits', async () => {
+        assertCredits.mockRejectedValue(OUT_OF_CREDITS)
 
-        await expect(service().choose({
-            state: 'x', question: 'q', options: { Billing: 'Payments' }, matchMode: AiRouterMatchMode.ALL_MATCHES,
-        })).rejects.toMatchObject({ error: { code: 'ENGINE_OPERATION_FAILURE' } })
+        await expect(service().choose(REQUEST)).rejects.toMatchObject({ error: { code: ErrorCode.QUOTA_EXCEEDED, params: { message: expect.stringContaining('out of AI credits') } } })
+        expect(enqueue).not.toHaveBeenCalled()
     })
-})
 
-describe('aiRouterService failures', () => {
-    it('never lets the gateway error escape, because it carries the key', async () => {
-        post.mockRejectedValue(Object.assign(new Error('Request failed with status code 401'), {
-            config: { headers: { Authorization: 'Bearer a-key' } },
-        }))
+    it('lets the call through when the credits lookup itself fails', async () => {
+        assertCredits.mockRejectedValue(new Error('autumn is down'))
 
-        const attempt = service().choose({
-            state: 'x', question: 'q', options: { Billing: 'Payments' }, matchMode: AiRouterMatchMode.BEST_MATCH,
-        })
+        await service().choose(REQUEST)
 
-        await expect(attempt).rejects.toMatchObject({ error: { code: 'ENGINE_OPERATION_FAILURE' } })
-        await expect(attempt).rejects.not.toMatchObject({ config: expect.anything() })
+        expect(enqueue).toHaveBeenCalledTimes(1)
+        expect(log.warn).toHaveBeenCalled()
+    })
+
+    it('turns the worker\'s failure text into the error the engine shows', async () => {
+        waitForAnswer.mockResolvedValue({ failure: 'The routing model did not answer: HTTP 402: Insufficient credits' })
+
+        await expect(service().choose(REQUEST)).rejects.toMatchObject({ error: { code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message: 'The routing model did not answer: HTTP 402: Insufficient credits' } } })
+    })
+
+    it('fails when the worker answered in a shape the engine cannot read', async () => {
+        waitForAnswer.mockResolvedValue({ output: { chosen: 'Billing' } })
+
+        await expect(service().choose(REQUEST)).rejects.toMatchObject({ error: { code: ErrorCode.ENGINE_OPERATION_FAILURE } })
     })
 })

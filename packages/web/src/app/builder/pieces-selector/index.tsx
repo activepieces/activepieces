@@ -1,9 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
-import {
-  ApFlagId,
-  FlowOperationType,
-  FlowTriggerType,
-} from '@activepieces/shared';
+import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   CheckCircle2Icon,
@@ -33,9 +29,9 @@ import {
   PieceSearchProvider,
   usePieceSearchContext,
   piecesHooks,
+  stepUtils,
 } from '@/features/pieces';
 import { aiProviderQueries } from '@/features/platform-admin';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -164,9 +160,7 @@ const PieceSelectorContent = ({
   };
 
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: aiRouterEnabled } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AI_ROUTER_ENABLED,
-  );
+  const aiRouterEnabled = stepUtils.hasAiRouterProvider(aiProviders);
   const hasAiPieceActions =
     !isNil(aiProviders) && aiProviders.length > 0 && !isAiPieceUnavailable;
   const tabsList = pieceSelectorCustomization.buildResolvedTabs({

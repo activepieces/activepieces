@@ -1,6 +1,5 @@
 import { LocalesEnum, isNil } from '@activepieces/core-utils';
 import {
-  ApFlagId,
   FlowAction,
   FlowActionType,
   FlowTriggerType,
@@ -10,7 +9,7 @@ import {
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { piecesApi } from '../api/pieces-api';
@@ -56,9 +55,8 @@ export const stepsHooks = {
   useAllStepsMetadata: ({ searchQuery, type, enabled }: UseMetadataProps) => {
     const { i18n } = useTranslation();
     const projectId = authenticationSession.getProjectId() ?? undefined;
-    const { data: aiRouterEnabled } = flagsHooks.useFlag<boolean>(
-      ApFlagId.AI_ROUTER_ENABLED,
-    );
+    const { data: aiProviders } = aiProviderQueries.useProjectAiProviders();
+    const aiRouterEnabled = stepUtils.hasAiRouterProvider(aiProviders);
     const query = useQuery<StepMetadataWithSuggestions[], Error>({
       queryKey: [
         'pieces-metadata',

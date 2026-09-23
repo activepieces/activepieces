@@ -81,6 +81,8 @@ describe('ai router', () => {
                 Billing: 'Payments',
                 Otherwise: 'Anything that fits none of the other routes',
             },
+            flowId: 'flowId',
+            flowRunId: 'flowRunId',
         })
     })
 
@@ -94,6 +96,35 @@ describe('ai router', () => {
         }))
 
         expect(calls[0]).toMatchObject({ state: 'x'.repeat(AI_ROUTER_MAX_STATE_LENGTH) })
+    })
+
+    it('fails the step with the credits message when the API refuses for lack of credits', async () => {
+        answerWith({ code: 'QUOTA_EXCEEDED', params: { metric: 'credits', message: 'The AI Router did not run because the platform is out of AI credits.' } }, 402)
+
+        const result = await execute(buildAiRouter({
+            routes: [{ branchName: 'Billing', description: 'Payments' }],
+            fallback: { branchName: 'Otherwise' },
+            children: [mapperStep('billing'), mapperStep('otherwise')],
+        }))
+
+        expect(result.steps.ai_router.status).toBe(StepOutputStatus.FAILED)
+        expect(result.steps.ai_router.errorMessage).toContain('out of AI credits')
+        expect(result.steps.billing).toBeUndefined()
+        expect(result.steps.otherwise).toBeUndefined()
+    })
+
+    it('runs the fallback without asking the model when every-route mode has no route to ask about', async () => {
+        const calls = answerWith({ matched: [] })
+
+        const result = await execute(buildAiRouter({
+            matchMode: AiRouterMatchMode.ALL_MATCHES,
+            routes: [],
+            fallback: { branchName: 'Otherwise', description: 'Anything else' },
+            children: [mapperStep('otherwise')],
+        }))
+
+        expect(calls).toHaveLength(0)
+        expect(result.steps.otherwise.output).toEqual({ key: 3 })
     })
 
     it('sends a route named after an inherited object property', async () => {
@@ -217,6 +248,8 @@ describe('ai router', () => {
                 question: 'Which team should handle this?',
                 matchMode: allMatches,
                 options: { Billing: 'Payments' },
+                flowId: 'flowId',
+                flowRunId: 'flowRunId',
             })
         })
 

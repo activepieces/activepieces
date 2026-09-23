@@ -190,7 +190,6 @@ const systemPropValidators: {
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
     [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
     [AppSystemProp.OPENAI_API_KEY]: stringValidator,
-    [AppSystemProp.AI_GATEWAY_API_KEY]: stringValidator,
     [AppSystemProp.SCIM_DEFAULT_PROJECT_ROLE]: enumValidator(Object.values(DefaultProjectRole)),
 
     // AppSystemProp

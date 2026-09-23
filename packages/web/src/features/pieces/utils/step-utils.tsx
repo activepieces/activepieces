@@ -1,4 +1,8 @@
-import { LocalesEnum, spreadIfDefined } from '@activepieces/core-utils';
+import {
+  AIProviderName,
+  LocalesEnum,
+  spreadIfDefined,
+} from '@activepieces/core-utils';
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -13,6 +17,7 @@ import {
   FlowTrigger,
   StepOutput,
   StepRunResponse,
+  ProjectAIProvider,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -25,6 +30,13 @@ import {
 } from '../types';
 
 export const stepUtils = {
+  hasAiRouterProvider(providers: ProjectAIProvider[] | undefined): boolean {
+    return (providers ?? []).some(
+      (provider) =>
+        provider.provider === AIProviderName.ACTIVEPIECES ||
+        provider.provider === AIProviderName.OPENROUTER,
+    );
+  },
   coreActionsMetadata(): PrimitiveStepMetadata[] {
     const coreStepMetadata = buildCoreStepMetadata();
     return [

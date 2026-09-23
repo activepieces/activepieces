@@ -101,12 +101,14 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         return reply.status(StatusCodes.OK).send()
     })
 
-    app.post('/ai-router', AiRouterRequest, async (request) => {
+    app.post('/ai-router', AiRouterRequest, async (request, reply) => {
+        if (request.principal.type !== PrincipalType.ENGINE) {
+            return reply.status(StatusCodes.UNAUTHORIZED).send()
+        }
         return aiRouterService(request.log).choose({
-            state: request.body.state,
-            question: request.body.question,
-            options: request.body.options,
-            matchMode: request.body.matchMode,
+            ...request.body,
+            platformId: request.principal.platform.id,
+            projectId: request.principal.projectId,
         })
     })
 

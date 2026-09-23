@@ -87,7 +87,8 @@ other two.
 Two things to know before you switch:
 
 - It **asks the model once per route**, so a 6-route step is 6 questions instead of 1. They go in one
-  request, but it is not free.
+  request. On the built-in Activepieces key you pay the real cost of those extra questions, still a
+  fraction of a credit; on your own OpenRouter key it is one credit either way.
 - It does **not** send Otherwise to the model. There is no forced choice to decline from — every
   route can simply answer no — so Otherwise is decided here rather than by the model, and its
   description is unused in this mode.
@@ -152,9 +153,15 @@ The step **fails**. It does not quietly take the Otherwise route, because sendin
 wrong branch because a model timed out is a bug that looks like normal operation. A failed step is
 visible in the run and can be retried.
 
+When the platform is out of AI credits, the step fails the same way, with an error that says so, and
+nothing is charged.
+
 ## Self-hosting
 
-The AI Router reaches Jev through the Vercel AI Gateway with a key the instance holds, so there is no
-connection to set up and no AI credit is consumed. Set `AP_AI_GATEWAY_API_KEY` to a Vercel AI
-Gateway key (see [environment variables](/install/reference/environment-variables)). Leave it unset
-and the step does not appear in the step list.
+The AI Router runs on the platform's OpenRouter key, the same way every AI step does, and reaches Jev
+through OpenRouter's Decisions API. On Cloud, and on Enterprise instances with billing, that is the
+built-in Activepieces provider, and each decision is billed at the cost OpenRouter reports, about
+0.03 credit. With your own OpenRouter key, added under **AI providers** in the platform admin, each
+decision costs one AI credit, and nothing on Community Edition, which has no credits. The step
+appears in the step list as soon as the project can reach one of those keys, and is hidden otherwise.
+There is nothing to configure on the step itself.
