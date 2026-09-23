@@ -117,6 +117,18 @@ describe('ai router', () => {
         expect(calls[0]).toMatchObject({ state: 'x'.repeat(AI_ROUTER_MAX_STATE_LENGTH) })
     })
 
+    it('never cuts the input through the middle of an emoji', async () => {
+        const calls = answerWith({ matched: ['Billing'] })
+
+        await execute(buildAiRouter({
+            text: 'x'.repeat(AI_ROUTER_MAX_STATE_LENGTH - 1) + '😀',
+            routes: [{ branchName: 'Billing', description: 'Payments' }],
+            children: [mapperStep('billing')],
+        }))
+
+        expect(calls[0]).toMatchObject({ state: 'x'.repeat(AI_ROUTER_MAX_STATE_LENGTH - 1) })
+    })
+
     it('fails the step with the credits message when the API refuses for lack of credits', async () => {
         answerWith({ code: 'QUOTA_EXCEEDED', params: { metric: 'credits', message: 'The AI Router did not run because the platform is out of AI credits.' } }, 402)
 
@@ -218,6 +230,18 @@ describe('ai router', () => {
         expect(result.steps.otherwise.output).toEqual({ key: 3 })
     })
 
+    it('records no choice when the model names a route that does not exist and there is no fallback', async () => {
+        answerWith({ matched: ['Refunds'] })
+
+        const result = await execute(buildAiRouter({
+            routes: [{ branchName: 'Billing', description: 'Payments' }],
+            children: [mapperStep('billing')],
+        }))
+
+        expect(result.steps.billing).toBeUndefined()
+        expect(result.steps.ai_router.output).not.toHaveProperty('choice')
+    })
+
     it('fails the step when the routing call fails, and takes no route', async () => {
         answerWith({ message: 'boom' }, 500)
 
@@ -316,6 +340,22 @@ describe('ai router', () => {
 
             expect(result.steps.billing).toBeUndefined()
             expect(result.steps.otherwise.output).toEqual({ key: 3 })
+        })
+
+        it('lets a floor under 50% keep a route the worker left out', async () => {
+            answerWith({ matched: [], probabilities: { Billing: 0.4, Sales: 0.2 } })
+
+            const result = await execute(buildAiRouter({
+                matchMode: allMatches,
+                minConfidence: 0.3,
+                routes: [{ branchName: 'Billing', description: 'Payments' }, { branchName: 'Sales', description: 'Pricing' }],
+                fallback: { branchName: 'Otherwise', description: 'Anything else' },
+                children: [mapperStep('billing'), mapperStep('sales'), mapperStep('otherwise')],
+            }))
+
+            expect(result.steps.billing.output).toEqual({ key: 3 })
+            expect(result.steps.sales).toBeUndefined()
+            expect(result.steps.otherwise).toBeUndefined()
         })
     })
 })

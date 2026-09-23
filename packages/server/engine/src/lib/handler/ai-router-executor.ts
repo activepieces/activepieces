@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, spreadIfDefined } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { AI_ROUTER_MAX_STATE_LENGTH, AiRouterAction, AiRouterActionSettings, AiRouterEvaluationError, AiRouterMatchMode, AiRouterStepOutput, BranchExecutionType, ChooseAiRouteResponse, FlowActionType, FlowRunStatus, ResumePayload, StepOutputStatus } from '@activepieces/shared'
 import { z } from 'zod'
@@ -54,7 +54,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
         const request = {
             apiUrl: constants.internalApiUrl,
             engineToken: constants.engineToken,
-            state: asPlainText(resolvedInput.text).slice(0, AI_ROUTER_MAX_STATE_LENGTH),
+            state: truncate(asPlainText(resolvedInput.text)),
             question: asPlainText(resolvedInput.question),
             options,
             matchMode,
@@ -98,7 +98,7 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
             })
         }
 
-        const confident = confidentRoutes({ answer, minConfidence: resolvedInput.minConfidence })
+        const confident = confidentRoutes({ answer, minConfidence: resolvedInput.minConfidence, bestMatch })
         const evaluations = bestMatch
             ? bestMatchEvaluations({ branches: resolvedInput.branches, confident })
             : allMatchesEvaluations({ branches: resolvedInput.branches, confident })
@@ -111,8 +111,8 @@ export const aiRouterExecuter: BaseExecutor<AiRouterAction> = {
                 branchIndex: index + 1,
                 evaluation: evaluations[index],
             })),
-            ...(bestMatch ? { choice: chosenName({ branches: resolvedInput.branches, evaluations }) ?? answer.matched[0] } : {}),
-            ...(isNil(answer.probabilities) ? {} : { probabilities: answer.probabilities }),
+            ...spreadIfDefined('choice', bestMatch ? chosenName({ branches: resolvedInput.branches, evaluations }) : undefined),
+            ...spreadIfDefined('probabilities', answer.probabilities),
         }).setDuration(performance.now() - stepStartTime)
 
         return executeBranches({
@@ -146,11 +146,11 @@ async function pauseForAnswer({ action, executionState, constants, censoredInput
 
 function answerFromResume(payload: ResumePayload | undefined): ChooseAiRouteResponse {
     const parsed = ResumeBody.safeParse(payload?.body)
-    if (!parsed.success || (isNil(parsed.data.output) && isNil(parsed.data.failure))) {
-        throw new AiRouterEvaluationError({ message: 'The routing model did not answer before the step timed out' })
-    }
-    if (!isNil(parsed.data.failure)) {
+    if (parsed.success && !isNil(parsed.data.failure)) {
         throw new AiRouterEvaluationError({ message: parsed.data.failure })
+    }
+    if (!parsed.success || isNil(parsed.data.output)) {
+        throw new AiRouterEvaluationError({ message: 'The routing model did not answer before the step timed out' })
     }
     return parsed.data.output
 }
@@ -184,9 +184,12 @@ function criterionOf(branch: AiRouterActionSettings['branches'][number]): string
     return branch.branchType === BranchExecutionType.FALLBACK ? FALLBACK_CRITERION : branch.branchName
 }
 
-function confidentRoutes({ answer, minConfidence }: { answer: ChooseAiRouteResponse, minConfidence: number | undefined }): string[] {
+function confidentRoutes({ answer, minConfidence, bestMatch }: ConfidentRoutesParams): string[] {
     if (isNil(minConfidence)) {
         return answer.matched
+    }
+    if (!bestMatch && !isNil(answer.probabilities)) {
+        return Object.entries(answer.probabilities).filter(([, probability]) => probability >= minConfidence).map(([route]) => route)
     }
     return answer.matched.filter((route) => {
         const confidence = answer.probabilities?.[route]
@@ -221,13 +224,25 @@ function asPlainText(value: unknown): string {
     return JSON.stringify(value) ?? ''
 }
 
+function truncate(text: string): string {
+    const cut = text.slice(0, AI_ROUTER_MAX_STATE_LENGTH)
+    return LONE_HIGH_SURROGATE_AT_END.test(cut) ? cut.slice(0, -1) : cut
+}
+
 type EvaluationsParams = {
     branches: AiRouterActionSettings['branches']
     confident: string[]
 }
 
+type ConfidentRoutesParams = {
+    answer: ChooseAiRouteResponse
+    minConfidence: number | undefined
+    bestMatch: boolean
+}
+
 const FALLBACK_CRITERION = 'Anything that fits none of the other routes'
 const ANSWER_BACKSTOP_MS = 10 * 60 * 1000
+const LONE_HIGH_SURROGATE_AT_END = /[\uD800-\uDBFF]$/
 
 const ResumeBody = z.object({
     output: ChooseAiRouteResponse.optional(),

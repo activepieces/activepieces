@@ -109,8 +109,9 @@ export type BaseStepOutput = GenericStepOutput<FlowActionType | FlowTriggerType,
 export type StepOutput =
   | GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>
   | GenericStepOutput<FlowActionType.ROUTER, unknown>
+  | GenericStepOutput<FlowActionType.AI_ROUTER, AiRouterStepResult>
   | GenericStepOutput<
-  | Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER>
+  | Exclude<FlowActionType, FlowActionType.LOOP_ON_ITEMS | FlowActionType.ROUTER | FlowActionType.AI_ROUTER>
   | FlowTriggerType,
   unknown
   >
