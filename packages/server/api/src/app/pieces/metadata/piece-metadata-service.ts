@@ -92,15 +92,19 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 i18n: includeTranslations ? piece.i18n : undefined,
             }
         },
-        async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
-            const existingMetadata = await pieceRepos().findOneByOrFail({
-                id,
-            })
-            await pieceRepos().update(id, {
-                projectUsage: usage,
-                updated: existingMetadata.updated,
-                created: existingMetadata.created,
-            })
+        async updateUsages({ usages }: UpdateUsagesParams): Promise<void> {
+            if (usages.length === 0) {
+                return
+            }
+            for (const { id, usage } of usages) {
+                const existingMetadata = await pieceRepos().findOneByOrFail({ id })
+                await pieceRepos().update(id, {
+                    projectUsage: usage,
+                    updated: existingMetadata.updated,
+                    created: existingMetadata.created,
+                })
+            }
+            await pieceCache(log).invalidate()
         },
         async resolveExactVersion({ name, version, platformId }: GetExactPieceVersionParams): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
@@ -580,9 +584,11 @@ type CreateParams = {
     publishCacheRefresh?: boolean
 }
 
-type UpdateUsage = {
-    id: string
-    usage: number
+type UpdateUsagesParams = {
+    usages: {
+        id: string
+        usage: number
+    }[]
 }
 
 type GetExactPieceVersionParams = {
