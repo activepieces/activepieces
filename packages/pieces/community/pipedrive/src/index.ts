@@ -73,15 +73,6 @@ import { listStagesAction } from './lib/actions/list-stages';
 import { listActivityTypesAction } from './lib/actions/list-activity-types';
 import { listUsersAction } from './lib/actions/list-users';
 import { getCurrentUserAction } from './lib/actions/get-current-user';
-import { addGoalAction } from './lib/actions/add-goal';
-import { updateGoalAction } from './lib/actions/update-goal';
-import { deleteGoalAction } from './lib/actions/delete-goal';
-import { findGoalsAction } from './lib/actions/find-goals';
-import { getGoalResultAction } from './lib/actions/get-goal-result';
-import { addCallLogAction } from './lib/actions/add-call-log';
-import { getCallLogAction } from './lib/actions/get-call-log';
-import { listCallLogsAction } from './lib/actions/list-call-logs';
-import { deleteCallLogAction } from './lib/actions/delete-call-log';
 import { mergeDealsAction } from './lib/actions/merge-deals';
 import { mergePersonsAction } from './lib/actions/merge-persons';
 import { mergeOrganizationsAction } from './lib/actions/merge-organizations';
@@ -154,15 +145,6 @@ export const pipedrive = createPiece({
 		listActivityTypesAction,
 		listUsersAction,
 		getCurrentUserAction,
-		addGoalAction,
-		updateGoalAction,
-		deleteGoalAction,
-		findGoalsAction,
-		getGoalResultAction,
-		addCallLogAction,
-		getCallLogAction,
-		listCallLogsAction,
-		deleteCallLogAction,
 		mergeDealsAction,
 		mergePersonsAction,
 		mergeOrganizationsAction,

@@ -185,59 +185,6 @@ function toRfc3339({ value, label }: { value: string | undefined; label: string 
 	return parsed.toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
-function toPipedriveDateTime({ value, label }: { value: string | undefined; label: string }): string | undefined {
-	if (isNil(value) || value.trim().length === 0) {
-		return undefined;
-	}
-	const parsed = new Date(value);
-	if (Number.isNaN(parsed.getTime())) {
-		throw new Error(`${label} must be a valid date and time.`);
-	}
-	return parsed.toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
-}
-
-function assertGoalId(goalId: string | undefined): string {
-	const trimmed = (goalId ?? '').trim();
-	if (!/^[0-9a-f]{32}$/i.test(trimmed)) {
-		throw new Error(
-			'Goal ID must be the 32-character hexadecimal goal ID returned by Find Goals or Add Goal (no dashes).',
-		);
-	}
-	return trimmed;
-}
-
-function assertCallLogId(callLogId: string | undefined): string {
-	const trimmed = (callLogId ?? '').trim();
-	if (!/^[0-9a-f]{32}$/i.test(trimmed)) {
-		throw new Error(
-			'Call Log ID must be the 32-character hexadecimal call log ID returned by List Call Logs or Add Call Log.',
-		);
-	}
-	return trimmed;
-}
-
-function buildGoalTypeParams({
-	pipelineId,
-	stageId,
-	activityTypeId,
-}: {
-	pipelineId: number | undefined;
-	stageId: number | undefined;
-	activityTypeId: number | undefined;
-}): Record<string, unknown> | undefined {
-	const params: Record<string, unknown> = {};
-	if (!isNil(pipelineId)) {
-		params['pipeline_id'] = [pipelineId];
-	}
-	if (!isNil(stageId)) {
-		params['stage_id'] = stageId;
-	}
-	if (!isNil(activityTypeId)) {
-		params['activity_type_id'] = [activityTypeId];
-	}
-	return Object.keys(params).length > 0 ? params : undefined;
-}
-
 function assertSearchTerm({
 	term,
 	exactMatch,
@@ -263,52 +210,6 @@ function toPage<T>(response: V2ListResponse<T>): AtomicPage<T> {
 		found: data.length > 0,
 		data,
 		next_cursor: response.additional_data?.next_cursor ?? null,
-	};
-}
-
-function v1PaginationProps(maxLimit: number) {
-	return {
-		limit: Property.Number({
-			displayName: 'Limit',
-			description: `Maximum number of items to return in this page (1-${maxLimit}). Defaults to ${Math.min(
-				DEFAULT_PAGE_LIMIT,
-				maxLimit,
-			)}.`,
-			required: false,
-		}),
-		start: Property.Number({
-			displayName: 'Start',
-			description:
-				'Zero-based offset of the first item to return. Pass the next_start value from the previous call to fetch the next page. Leave empty for the first page.',
-			required: false,
-		}),
-	};
-}
-
-function clampV1Limit({ limit, maxLimit }: { limit: number | undefined; maxLimit: number }): number {
-	const fallback = Math.min(DEFAULT_PAGE_LIMIT, maxLimit);
-	if (isNil(limit) || !Number.isFinite(limit)) {
-		return fallback;
-	}
-	return Math.min(maxLimit, Math.max(1, Math.floor(limit)));
-}
-
-function clampV1Start(start: number | undefined): number {
-	if (isNil(start) || !Number.isFinite(start)) {
-		return 0;
-	}
-	return Math.max(0, Math.floor(start));
-}
-
-function v1Page<T>(response: V1ListResponse<T>): V1AtomicPage<T> {
-	const data = response.data ?? [];
-	const pagination = response.additional_data?.pagination;
-	const hasMore = pagination?.more_items_in_collection === true;
-	return {
-		found: data.length > 0,
-		data,
-		more_items_in_collection: hasMore,
-		next_start: hasMore ? pagination?.next_start ?? null : null,
 	};
 }
 
@@ -365,16 +266,8 @@ export const pipedriveAtomic = {
 	clampLimit,
 	emptyToUndefined,
 	toRfc3339,
-	toPipedriveDateTime,
-	assertGoalId,
-	assertCallLogId,
-	buildGoalTypeParams,
 	assertSearchTerm,
 	toPage,
-	v1PaginationProps,
-	clampV1Limit,
-	clampV1Start,
-	v1Page,
 	flattenSearchItems,
 	sortDirectionProp,
 	exactMatchProp,
@@ -436,24 +329,4 @@ export type AtomicPage<T> = {
 	found: boolean;
 	data: T[];
 	next_cursor: string | null;
-};
-
-export type V1ListResponse<T> = {
-	success: boolean;
-	data: T[] | null;
-	additional_data?: {
-		pagination?: {
-			start?: number;
-			limit?: number;
-			more_items_in_collection?: boolean;
-			next_start?: number;
-		};
-	};
-};
-
-export type V1AtomicPage<T> = {
-	found: boolean;
-	data: T[];
-	more_items_in_collection: boolean;
-	next_start: number | null;
 };

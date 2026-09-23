@@ -691,75 +691,6 @@ const mergedPersonV1Fields: OutputSchema['fields'] = [
 	{ key: 'cc_email', label: 'Smart BCC Email', format: 'email' },
 ];
 
-const goalFields: OutputSchema['fields'] = [
-	{ key: 'id', label: 'Goal ID' },
-	{ key: 'title', label: 'Title' },
-	{ key: 'owner_id', label: 'Owner ID', format: 'number' },
-	{ key: 'is_active', label: 'Active', format: 'boolean' },
-	{ key: 'interval', label: 'Interval' },
-	{
-		key: 'assignee',
-		label: 'Assignee',
-		children: [
-			{ key: 'id', label: 'Assignee ID', format: 'number' },
-			{ key: 'type', label: 'Assignee Type' },
-		],
-	},
-	{
-		key: 'type',
-		label: 'Goal Type',
-		children: [
-			{ key: 'name', label: 'Type' },
-			{
-				key: 'params',
-				label: 'Type Settings',
-				children: [
-					{ key: 'pipeline_id', label: 'Pipeline IDs' },
-					{ key: 'stage_id', label: 'Stage ID', format: 'number' },
-					{ key: 'activity_type_id', label: 'Activity Type IDs' },
-				],
-			},
-		],
-	},
-	{
-		key: 'expected_outcome',
-		label: 'Expected Outcome',
-		children: [
-			{ key: 'target', label: 'Target', format: 'number' },
-			{ key: 'tracking_metric', label: 'Tracking Metric' },
-			{ key: 'currency_id', label: 'Currency ID', format: 'number' },
-		],
-	},
-	{
-		key: 'duration',
-		label: 'Duration',
-		children: [
-			{ key: 'start', label: 'Start Date', format: 'date' },
-			{ key: 'end', label: 'End Date', format: 'date' },
-		],
-	},
-	{ key: 'report_ids', label: 'Report IDs' },
-];
-
-const callLogFields: OutputSchema['fields'] = [
-	{ key: 'id', label: 'Call Log ID' },
-	{ key: 'outcome', label: 'Outcome' },
-	{ key: 'to_phone_number', label: 'To Phone Number' },
-	{ key: 'from_phone_number', label: 'From Phone Number' },
-	{ key: 'duration', label: 'Duration (seconds)' },
-	{ key: 'start_time', label: 'Start Time', format: 'datetime' },
-	{ key: 'end_time', label: 'End Time', format: 'datetime' },
-	{ key: 'has_recording', label: 'Has Recording', format: 'boolean' },
-	{ key: 'activity_id', label: 'Activity ID', format: 'number' },
-	{ key: 'person_id', label: 'Person ID', format: 'number' },
-	{ key: 'org_id', label: 'Organization ID', format: 'number' },
-	{ key: 'deal_id', label: 'Deal ID', format: 'number' },
-	{ key: 'lead_id', label: 'Lead ID' },
-	{ key: 'user_id', label: 'User ID', format: 'number' },
-	{ key: 'company_id', label: 'Company ID', format: 'number' },
-	{ key: 'note', label: 'Note' },
-];
-
 function v1Envelope({
 	label,
 	fields,
@@ -908,26 +839,6 @@ export const mergeOrganizationsActionOutputSchema = envelope(
 	'Surviving Organization',
 	mergedOrganizationFields
 );
-export const addGoalActionOutputSchema = envelope('Goal Envelope', [
-	{ key: 'goal', label: 'Goal', children: goalFields },
-]);
-export const updateGoalActionOutputSchema = envelope('Goal Envelope', [
-	{ key: 'goal', label: 'Goal', children: goalFields },
-]);
-export const findGoalsActionOutputSchema = search({ label: 'Goals', fields: goalFields, labelKey: 'title' });
-export const getGoalResultActionOutputSchema = envelope('Goal Result', [
-	{ key: 'goal', label: 'Goal', children: goalFields },
-	{ key: 'progress', label: 'Progress', format: 'number' },
-]);
-export const addCallLogActionOutputSchema = envelope('Call Log', callLogFields);
-export const getCallLogActionOutputSchema = envelope('Call Log', callLogFields);
-export const listCallLogsActionOutputSchema: OutputSchema = {
-	fields: [
-		...search({ label: 'Call Logs', fields: callLogFields, labelKey: 'to_phone_number' }).fields,
-		{ key: 'more_items_in_collection', label: 'More Items', format: 'boolean' },
-		{ key: 'next_start', label: 'Next Start', format: 'number' },
-	],
-};
 export const getActivityActionOutputSchema = envelope('Activity', atomicActivityDetailFields);
 export const getLeadActionOutputSchema = v1Envelope({ label: 'Lead', fields: atomicLeadFields });
 export const updateNoteActionOutputSchema = envelope('Note', atomicNoteFields);
