@@ -1515,6 +1515,8 @@
   "AWS access key ID": "AWS access key ID",
   "AWS region": "AWS region",
   "AWS secret access key": "AWS secret access key",
+  "AWS session token": "AWS session token",
+  "Only for temporary credentials from AWS SSO or STS. They expire.": "Only for temporary credentials from AWS SSO or STS. They expire.",
   "Add key": "Add key",
   "All except": "All except",
   "All models": "All models",

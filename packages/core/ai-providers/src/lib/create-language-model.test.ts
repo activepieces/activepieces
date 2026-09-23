@@ -20,10 +20,7 @@ function identifyCustom(model: unknown): CustomModelIdentity {
     return model as CustomModelIdentity
 }
 
-async function captureHeaders({ patchedFetch, headers }: {
-    patchedFetch?: typeof globalThis.fetch
-    headers: Record<string, string>
-}): Promise<Headers> {
+async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers> {
     const original = globalThis.fetch
     let seen = new Headers()
     globalThis.fetch = (_input, init) => {
@@ -31,7 +28,7 @@ async function captureHeaders({ patchedFetch, headers }: {
         return Promise.resolve(new Response('{}'))
     }
     try {
-        await patchedFetch?.('https://example.test/v1/responses', { headers })
+        await send().catch(() => undefined)
     }
     finally {
         globalThis.fetch = original
@@ -39,6 +36,20 @@ async function captureHeaders({ patchedFetch, headers }: {
     return seen
 }
 
+function captureHeaders({ patchedFetch, headers }: {
+    patchedFetch?: typeof globalThis.fetch
+    headers: Record<string, string>
+}): Promise<Headers> {
+    return captureSentHeaders(async () => patchedFetch?.('https://example.test/v1/responses', { headers }))
+}
+
+function captureBedrockHeaders(auth: Record<string, string>): Promise<Headers> {
+    const model = createLanguageModel({
+        credentials: aiProviderCredentials({ provider: AIProviderName.BEDROCK, auth, config: { region: 'us-east-1' } }),
+        modelId: 'some-model-id',
+    })
+    return captureSentHeaders(() => model.doGenerate({ prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
+}
 
 const authFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.BEDROCK]: { accessKeyId: 'a', secretAccessKey: 'b' },
@@ -99,6 +110,18 @@ describe('createLanguageModel', () => {
         expect(identify(buildFor(AIProviderName.BEDROCK)).provider).toBe('amazon-bedrock')
         expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
         expect(identify(buildFor(AIProviderName.OPENROUTER)).provider).toBe('openrouter')
+    })
+
+    it('signs Bedrock requests with the session token, so temporary AWS credentials are accepted', async () => {
+        const headers = await captureBedrockHeaders({ accessKeyId: 'ASIA', secretAccessKey: 'b', sessionToken: 'temporary' })
+
+        expect(headers.get('x-amz-security-token')).toBe('temporary')
+    })
+
+    it('omits the security token header when Bedrock runs on a long-term access key', async () => {
+        const headers = await captureBedrockHeaders({ accessKeyId: 'AKIA', secretAccessKey: 'b' })
+
+        expect(headers.has('x-amz-security-token')).toBe(false)
     })
 
     it('uses the OpenAI Chat API by default and the Responses API when asked', () => {
