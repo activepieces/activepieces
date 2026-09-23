@@ -18,6 +18,7 @@ import { agentService } from './agent-service'
 import { chatAnalyticsTelemetry } from './chat-analytics-sync'
 import { chatRolloutService } from './chat-rollout-service'
 import { agentPrompt } from './prompt/agent-prompt'
+import { updateConversationForRun } from './rpc/rpc-shared'
 import { findConnectionsForPiece } from './tools/agent-tools'
 
 const CHAT_PRINCIPALS = [PrincipalType.USER] as const
@@ -208,10 +209,14 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
                 cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
             }
             await Promise.all(cancelPromises)
-            await agentHelpers.conversationRepo().update(conversationId, {
-                status: AgentConversationStatus.IDLE,
+            const stillOwned = await updateConversationForRun({
+                conversationId,
+                runId,
+                updates: { status: AgentConversationStatus.IDLE },
             })
-            await agentApprovalGate.clearPendingGate({ conversationId })
+            if (stillOwned) {
+                await agentApprovalGate.clearPendingGate({ conversationId })
+            }
         }
 
         await jobQueue(runLog).add({

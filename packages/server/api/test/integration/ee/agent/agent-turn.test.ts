@@ -3,6 +3,7 @@ import { AgentConversationStatus, AgentIcon, AgentRunSource, AgentToolType, Colo
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { agentApprovalGate } from '../../../../src/app/ee/agent/agent-approval-gate'
 import { agentHelpers } from '../../../../src/app/ee/agent/agent-helpers'
 import * as jobQueueModule from '../../../../src/app/workers/job-queue/job-queue'
 import { db } from '../../../helpers/db'
@@ -280,6 +281,34 @@ describe('the flow tools a chat turn hands to the worker', () => {
         const after = await agentHelpers.conversationRepo().findOneByOrFail({ id: conversation.id })
         expect(after.activeRunId).not.toBe(concurrentRunId)
         expect(after.status).toBe(AgentConversationStatus.IDLE)
+    })
+
+    it('leaves a newer run alone when its own cancellation cleanup lands late', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, { provider: AIProviderName.OPENROUTER, modelName: CONFIGURED_MODEL })
+        const conversation = await startConversation(ctx, agent.id)
+        await agentHelpers.conversationRepo().update(conversation.id, {
+            status: AgentConversationStatus.STREAMING,
+            activeRunId: apId(),
+        })
+
+        const newerRunId = apId()
+        const realRequestCancel = agentApprovalGate.requestCancel
+        vi.spyOn(agentApprovalGate, 'requestCancel').mockImplementation(async (args) => {
+            await agentHelpers.conversationRepo().update(conversation.id, {
+                activeRunId: newerRunId,
+                status: AgentConversationStatus.STREAMING,
+            })
+            return realRequestCancel(args)
+        })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello' })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const after = await agentHelpers.conversationRepo().findOneByOrFail({ id: conversation.id })
+        expect(after.activeRunId).toBe(newerRunId)
+        expect(after.status).toBe(AgentConversationStatus.STREAMING)
     })
 })
 
