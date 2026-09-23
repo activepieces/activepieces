@@ -387,11 +387,9 @@ export function looksEmptyResultText(text: string): boolean {
     return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
 }
 
-async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
-    const { data: catalog } = await tryCatch(() => modelCatalog.load())
-    const ceilings = modelIds
-        .filter((modelId) => !isNil(modelId))
-        .map((modelId) => catalog?.lookup({ provider, modelId })?.maxOutputTokens)
+export async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
+    const catalog = await modelCatalog.load()
+    const ceilings = modelIds.map((modelId) => isNil(modelId) ? undefined : catalog.lookup({ provider, modelId })?.maxOutputTokens)
     return clampOutputTokens({ thinkingBudget, ceilings })
 }
 
