@@ -112,7 +112,13 @@ renders and preserves every real price; the cheapest in the set is 0.01.
   per turn for an agent** — an agent turn is many model round-trips, so charging it per call would have
   silently raised the price of every agent on a customer's own key. The caller says which it wants with
   `ownKeyCredit`, and the agent's turn credit is charged in `chatToolBilling.chargeForLatestTurn`
-  alongside its tool calls.
+  alongside its tool calls. **The worker does not know the edition, so the one own-key credit is
+  reported on Community too; the API is what drops it.** `aiChargeFor` returns fixed credits for any
+  non-`ACTIVEPIECES` provider, and only the CLOUD and ENTERPRISE arms of `app.ts` set the Autumn
+  `billingProvider`; the default provider's `trackFeature` is a no-op, so Community records nothing
+  and its `getCreditsAndAppSumoState` never blocks. Enterprise records the credit but
+  `shouldBlockRunOnCredits` returns false for that edition, so only Cloud can refuse an AI call for
+  being out of credits. Self-hosters on their own OpenRouter key pay OpenRouter directly, not us.
 - **OpenRouter only reports `usage.cost` when the request asks for it.** The provider sends
   `usage: this.settings.usage` in the request body and copies `cost` into `providerMetadata` only when
   the response carries one, so without `usage: { include: true }` every managed call reports no cost,
