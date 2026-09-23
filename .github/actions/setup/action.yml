@@ -32,6 +32,14 @@ runs:
         key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
         restore-keys: ${{ runner.os }}-bun-
 
+    # redis-memory-server compiles Redis from source in its postinstall (about 3 minutes) unless
+    # the binary for the version pinned in the root package.json is already in this folder.
+    - uses: actions/cache@v4
+      with:
+        path: node_modules/.cache/redis-memory-server
+        key: ${{ runner.os }}-redis-memory-server-${{ hashFiles('package.json') }}
+        restore-keys: ${{ runner.os }}-redis-memory-server-
+
     - run: bun install --frozen-lockfile
       shell: bash
 

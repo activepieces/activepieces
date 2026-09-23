@@ -11,9 +11,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # redis-memory-server compiles Redis from source in its postinstall. CI tests talk to the
-  # redis service container instead, so the binary is never used here.
-  REDISMS_DISABLE_POSTINSTALL: "1"
   # turbo --affected diffs against this ref. CI checkouts have origin/<base> but no local main.
   TURBO_SCM_BASE: origin/${{ github.base_ref }}
   TURBO_TELEMETRY_DISABLED: "1"

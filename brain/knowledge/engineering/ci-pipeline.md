@@ -16,7 +16,7 @@ The PR checks that decide whether a change builds and passes tests. Lives in `.g
 
 ## Gotchas
 
-- `redis-memory-server` downloads and compiles Redis from source in its postinstall on every `bun install`. CI tests use the Redis service container, so the workflow sets `REDISMS_DISABLE_POSTINSTALL=1`. Do not set it where `AP_REDIS_TYPE=MEMORY` is actually used.
+- `redis-memory-server` downloads and compiles Redis from source in its postinstall (about 3 minutes, most of the old 3.5-minute `bun install`). Api tests, unit tests included, start an in-memory Redis from that binary at runtime, so skipping the postinstall (`REDISMS_DISABLE_POSTINSTALL=1`) only moves the compile into the first test that needs it and trips the 60 s and 120 s timeouts. Cache `node_modules/.cache/redis-memory-server` (keyed on the root `package.json`, which pins the version under `redisMemoryServer.version`) instead.
 - Every `build` task is `cache: false` in `turbo.json`, so each separate `turbo run` invocation rebuilds its whole dependency chain. Tasks that share dependencies belong in one invocation.
 - Api integration tests boot the full server once per test file (`pool: forks`, isolated). The number of test files is the CI cost driver: 122 files in June 2026 → 310 in September moved the test step from 6 to 19 minutes on one runner.
 - The GitHub org is on the free plan: 20 concurrent jobs org-wide, all workflows included. More jobs per PR means queueing at busy hours. `cancel-in-progress` per PR number keeps superseded runs from holding slots.
