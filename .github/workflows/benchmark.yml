@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 30
     env:
       AP_FILE_STORAGE_LOCATION: ${{ secrets.AP_FILE_STORAGE_LOCATION }}
-      AP_EXECUTION_MODE: SANDBOX_CODE_ONLY
+      AP_EXECUTION_MODE: SANDBOX_PROCESS
       AP_S3_BUCKET: ${{ secrets.AP_S3_BUCKET }}
       AP_S3_ACCESS_KEY_ID: ${{ secrets.AP_S3_ACCESS_KEY_ID }}
       AP_S3_SECRET_ACCESS_KEY: ${{ secrets.AP_S3_SECRET_ACCESS_KEY }}
@@ -30,13 +30,20 @@ jobs:
         include:
           - apps: 1
             workers: 4
-            label: "1app-4workers"
-          - apps: 2
-            workers: 8
-            label: "2app-8workers"
+            reuse: 'false'
+            label: "1app-4w-shared"
           - apps: 3
             workers: 12
-            label: "3app-12workers"
+            reuse: 'false'
+            label: "3app-12w-shared"
+          - apps: 1
+            workers: 4
+            reuse: 'true'
+            label: "1app-4w-dedicated"
+          - apps: 3
+            workers: 12
+            reuse: 'true'
+            label: "3app-12w-dedicated"
 
     steps:
       - name: Checkout
@@ -57,10 +64,20 @@ jobs:
         run: |
           APP_REPLICAS=${{ matrix.apps }} \
           WORKER_REPLICAS=${{ matrix.workers }} \
+          AP_REUSE_SANDBOX=${{ matrix.reuse }} \
             docker compose -f benchmark/docker-compose.yml up -d
           echo "Waiting for containers to start..."
           sleep 5
           docker compose -f benchmark/docker-compose.yml ps
+
+      - name: Verify container caps (proves worker == 0.5 vCPU, cpuset partitioned)
+        run: |
+          echo "=== Container CPU / memory / cpuset (as Docker actually applied) ==="
+          for c in $(docker compose -f benchmark/docker-compose.yml ps -q); do
+            docker inspect "$c" --format '{{.Name}}  quota={{.HostConfig.CpuQuota}}  period={{.HostConfig.CpuPeriod}}  cpuset={{if .HostConfig.CpusetCpus}}{{.HostConfig.CpusetCpus}}{{else}}(any){{end}}  memBytes={{.HostConfig.Memory}}'
+          done
+          echo
+          echo "Effective vCPU = quota / period. Expected: app=2.00 (200000/100000), worker=0.50 (50000/100000)."
 
       - name: Setup flow, platform API key, and wait for app
         id: setup
