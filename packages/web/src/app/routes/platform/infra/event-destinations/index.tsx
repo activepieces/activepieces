@@ -5,7 +5,6 @@ import { Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { CenteredPage } from '@/app/components/centered-page';
-import { LockedFeatureGuard } from '@/app/components/locked-feature-guard';
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { PlusIcon } from '@/components/icons/plus';
 import { ItemGroup } from '@/components/ui/item';
@@ -13,6 +12,8 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { flowsApi } from '@/features/flows';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+
+import { sampleData } from '../../sample-data';
 
 import { EventDestinationDialog } from './components/event-destination-dialog';
 import { EventDestinationRow } from './components/event-destination-row';
@@ -23,8 +24,12 @@ import { useEventLabels } from './lib/use-event-labels';
 const EventDestinationsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.eventStreamingEnabled;
-  const { data: destinations, isLoading } =
+  const { data: liveDestinations, isLoading } =
     eventDestinationsCollectionUtils.useAll(isEnabled);
+  const isSample = !isEnabled;
+  const destinations = isSample
+    ? sampleData.eventDestinations()
+    : liveDestinations;
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
@@ -75,59 +80,50 @@ const EventDestinationsPage = () => {
   }, [flowQueries, flowIds]);
 
   return (
-    <LockedFeatureGuard
-      featureKey="EVENT_DESTINATIONS"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Event Streaming')}
-      lockDescription={t(
-        'Forward every audit event we emit to a webhook, then handle it in a flow — wire it to Slack, Gmail, PagerDuty, or anywhere else.',
+    <CenteredPage
+      title={t('Event Streaming')}
+      description={t(
+        'Send a webhook for every audit event and build fully customizable alerts on top.',
       )}
+      actions={
+        <EventDestinationDialog destination={null}>
+          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+            {t('New Destination')}
+          </AnimatedIconButton>
+        </EventDestinationDialog>
+      }
     >
-      <CenteredPage
-        title={t('Event Streaming')}
-        description={t(
-          'Send a webhook for every audit event and build fully customizable alerts on top.',
-        )}
-        actions={
-          <EventDestinationDialog destination={null}>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Destination')}
-            </AnimatedIconButton>
-          </EventDestinationDialog>
-        }
-      >
-        {isLoading && (
-          <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
-        )}
+      {isLoading && (
+        <SkeletonList numberOfItems={3} className="w-full h-[72px]" />
+      )}
 
-        {!isLoading && parsedDestinations.length === 0 && (
-          <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
-            <Workflow className="size-10" />
-            <p className="text-sm">
-              {t('No destinations yet. Create one to get started.')}
-            </p>
-          </div>
-        )}
+      {!isLoading && parsedDestinations.length === 0 && (
+        <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+          <Workflow className="size-10" />
+          <p className="text-sm">
+            {t('No destinations yet. Create one to get started.')}
+          </p>
+        </div>
+      )}
 
-        {!isLoading && parsedDestinations.length > 0 && (
-          <ItemGroup className="gap-2">
-            {parsedDestinations.map(({ destination, parsed }) => (
-              <EventDestinationRow
-                key={destination.id}
-                destination={destination}
-                parsed={parsed}
-                flowDisplayName={
-                  parsed.kind === 'flow'
-                    ? flowDisplayNameById.get(parsed.flowId)
-                    : undefined
-                }
-                eventLabels={eventLabels}
-              />
-            ))}
-          </ItemGroup>
-        )}
-      </CenteredPage>
-    </LockedFeatureGuard>
+      {!isLoading && parsedDestinations.length > 0 && (
+        <ItemGroup className="gap-2">
+          {parsedDestinations.map(({ destination, parsed }) => (
+            <EventDestinationRow
+              key={destination.id}
+              destination={destination}
+              parsed={parsed}
+              flowDisplayName={
+                parsed.kind === 'flow'
+                  ? flowDisplayNameById.get(parsed.flowId)
+                  : undefined
+              }
+              eventLabels={eventLabels}
+            />
+          ))}
+        </ItemGroup>
+      )}
+    </CenteredPage>
   );
 };
 

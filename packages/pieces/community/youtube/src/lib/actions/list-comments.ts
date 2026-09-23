@@ -10,7 +10,7 @@ export const youtubeListCommentsAction = createAction({
   classification: 'SEARCH',
   displayName: 'List Comments',
   description: 'List the top-level comment threads on a video.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists comment threads on a YouTube video using commentThreads.list, returning each top-level comment with its author, text, like count and reply count. Use it to read audience feedback on a video for triage, sentiment or moderation flows. Comments must be enabled on the video, otherwise YouTube answers 403. Read-only and idempotent.',
