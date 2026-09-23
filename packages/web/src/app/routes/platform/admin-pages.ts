@@ -193,6 +193,13 @@ export const adminPagesUtils = {
 
 export const ADMIN_PAGES: AdminPage[] = [
   {
+    id: 'general',
+    path: '/platform/setup/general',
+    title: 'General',
+    component: GeneralPage,
+    nav: { label: 'General', icon: SettingsIcon },
+  },
+  {
     id: 'projects',
     path: '/platform/projects',
     title: 'Projects',
@@ -298,13 +305,6 @@ export const ADMIN_PAGES: AdminPage[] = [
       icon: LayoutGridIcon,
       isLocked: ({ plan }) => !plan.manageTemplatesEnabled,
     },
-  },
-  {
-    id: 'general',
-    path: '/platform/setup/general',
-    title: 'General',
-    component: GeneralPage,
-    nav: { label: 'General', icon: SettingsIcon },
   },
   {
     id: 'embed',
