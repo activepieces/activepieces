@@ -121,6 +121,7 @@ describe('createLanguageModel', () => {
     it('omits the security token header when Bedrock runs on a long-term access key', async () => {
         const headers = await captureBedrockHeaders({ accessKeyId: 'AKIA', secretAccessKey: 'b' })
 
+        expect(headers.get('authorization')).toContain('AWS4-HMAC-SHA256')
         expect(headers.has('x-amz-security-token')).toBe(false)
     })
 
