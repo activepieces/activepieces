@@ -46,6 +46,8 @@ let sandboxInfoInterval: NodeJS.Timeout | null = null
 const SANDBOX_INFO_REFRESH_MS = 15_000
 const SERVER_PING_TIMEOUT_MS = 5_000
 const MACHINE_INFO_TIMEOUT_MS = 15_000
+const SETTINGS_ACK_TIMEOUT_MS = 5_000
+const SETTINGS_RETRY_DELAY_MS = 1_000
 const POLL_LIVENESS_TIMEOUT_MS = 600_000
 const POLL_WATCHDOG_INTERVAL_MS = 30_000
 const RPC_TIMEOUT_MS = 60_000
@@ -81,7 +83,24 @@ export const worker = {
         socket.on('connect', async () => {
             logger.info('Connected to API server via Socket.IO')
             resetPollLoopLiveness({ loopCount: 0 })
-            await fetchAndStoreSettings(socket!)
+            const connectedSocket = socket!
+            const generation = connectionGeneration
+            const { data: settings, error } = await tryCatch(() => fetchWorkerSettings(connectedSocket))
+            if (!connectedSocket.connected || connectionGeneration !== generation) return
+            if (error) {
+                logger.error({ error }, 'Failed to load worker settings, reconnecting')
+                connectedSocket.disconnect()
+                await sleep(SETTINGS_RETRY_DELAY_MS)
+                if (socket === connectedSocket) connectedSocket.connect()
+                return
+            }
+            const { error: settingsError } = tryCatchSync(() => storeWorkerSettings(settings))
+            if (settingsError) {
+                logger.error({ error: settingsError }, 'Invalid worker settings')
+                process.exitCode = 1
+                connectedSocket.disconnect()
+                return
+            }
             void startPollingWorkers(apiClient).catch((err) => {
                 logger.error({ error: err }, 'Polling workers crashed unexpectedly')
             })
@@ -406,36 +425,39 @@ export function ensurePublicApiUrl(publicUrl: string): string {
     return publicUrl + '/api/'
 }
 
-async function fetchAndStoreSettings(sock: Socket): Promise<void> {
-    const { data: request, error } = await tryCatch(buildMachineInfo)
-    if (error) {
-        logger.error({ error }, 'Failed to build machine info for settings fetch')
-        return
-    }
-    return new Promise<void>((resolve) => {
-        sock.emit(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request, (response: WorkerSettingsResponse) => {
-            const localExecutionMode = system.get(WorkerSystemProp.EXECUTION_MODE)
-            if (!isNil(localExecutionMode)) {
-                response.EXECUTION_MODE = localExecutionMode
+async function fetchWorkerSettings(sock: Socket): Promise<WorkerSettingsResponse> {
+    const request = await buildMachineInfo()
+    return new Promise<WorkerSettingsResponse>((resolve, reject) => {
+        sock.timeout(SETTINGS_ACK_TIMEOUT_MS).emit(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request, (error: Error | null, response: WorkerSettingsResponse) => {
+            if (error) {
+                reject(error)
+                return
             }
-            const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
-            if (!isNil(workerGroupId)) {
-                if (response.EDITION === ApEdition.CLOUD) {
-                    const processSandboxedModes: string[] = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
-                    if (!processSandboxedModes.includes(response.EXECUTION_MODE)) {
-                        throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
-                    }
-                }
-                const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
-                if (isNil(reuseSandbox)) {
-                    throw new Error(`Worker group "${workerGroupId}" requires AP_REUSE_SANDBOX to be set (true or false)`)
-                }
-            }
-            workerSettings.set(response)
-            logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
-            resolve()
+            resolve(response)
         })
     })
+}
+
+function storeWorkerSettings(response: WorkerSettingsResponse): void {
+    const localExecutionMode = system.get(WorkerSystemProp.EXECUTION_MODE)
+    if (!isNil(localExecutionMode)) {
+        response.EXECUTION_MODE = localExecutionMode
+    }
+    const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
+    if (!isNil(workerGroupId)) {
+        if (response.EDITION === ApEdition.CLOUD) {
+            const processSandboxedModes: string[] = [ExecutionMode.SANDBOX_PROCESS, ExecutionMode.SANDBOX_CODE_AND_PROCESS]
+            if (!processSandboxedModes.includes(response.EXECUTION_MODE)) {
+                throw new Error(`Worker group "${workerGroupId}" requires AP_EXECUTION_MODE to be one of: ${processSandboxedModes.join(', ')}. Got: ${response.EXECUTION_MODE}`)
+            }
+        }
+        const reuseSandbox = system.get(WorkerSystemProp.REUSE_SANDBOX)
+        if (isNil(reuseSandbox)) {
+            throw new Error(`Worker group "${workerGroupId}" requires AP_REUSE_SANDBOX to be set (true or false)`)
+        }
+    }
+    workerSettings.set(response)
+    logger.info({ environment: response.ENVIRONMENT, executionMode: response.EXECUTION_MODE }, 'Worker settings loaded')
 }
 
 function getWorkerProps(): WorkerProps {

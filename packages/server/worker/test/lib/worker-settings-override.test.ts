@@ -40,6 +40,7 @@ vi.mock('../../src/lib/execute/job-registry', () => ({
 }))
 
 import { worker } from '../../src/lib/worker'
+import { logger } from '../../src/lib/config/logger'
 
 function buildWorkerSettingsResponse(overrides?: Partial<WorkerSettingsResponse>): WorkerSettingsResponse {
     return {
@@ -110,6 +111,8 @@ describe('worker settings override', () => {
         delete process.env.AP_EXECUTION_MODE
         delete process.env.AP_WORKER_GROUP_ID
         mockWorkerSettingsSet.mockClear()
+        vi.mocked(logger.error).mockClear()
+        process.exitCode = undefined
     })
 
     afterEach(async () => {
@@ -117,6 +120,7 @@ describe('worker settings override', () => {
         delete process.env.AP_EXECUTION_MODE
         delete process.env.AP_WORKER_GROUP_ID
         delete process.env.AP_REUSE_SANDBOX
+        process.exitCode = undefined
         await new Promise<void>((resolve) => {
             ioServer.close(() => resolve())
         })
@@ -124,7 +128,7 @@ describe('worker settings override', () => {
 
     function connectAndWaitForSettings(serverResponse: WorkerSettingsResponse): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('Timed out waiting for settings')), 5000)
+            const timeout = setTimeout(() => reject(new Error('Timed out waiting for settings')), 15_000)
             ioServer.on('connection', (serverSocket) => {
                 serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
                     const callback = args[args.length - 1]
@@ -146,30 +150,20 @@ describe('worker settings override', () => {
         })
     }
 
-    function connectAndExpectCrash(serverResponse: WorkerSettingsResponse): Promise<Error> {
-        return new Promise<Error>((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('Timed out waiting for crash')), 5000)
-            const handler = (err: Error) => {
-                clearTimeout(timeout)
-                process.removeListener('uncaughtException', handler)
-                resolve(err)
-            }
-            process.on('uncaughtException', handler)
-            ioServer.on('connection', (serverSocket) => {
-                serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
-                    const callback = args[args.length - 1]
-                    if (typeof callback === 'function') {
-                        callback(serverResponse)
-                    }
-                })
-                createRpcServer<WorkerToApiContract>(serverSocket, buildMinimalHandlers())
+    async function connectAndExpectInvalidSettings(serverResponse: WorkerSettingsResponse): Promise<void> {
+        ioServer.on('connection', (serverSocket) => {
+            serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
+                const callback = args[args.length - 1]
+                if (typeof callback === 'function') callback(serverResponse)
             })
-            worker.start({
-                apiUrl: `http://127.0.0.1:${port}/api/`,
-                socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
-                workerToken: 'test-token',
-            })
+            createRpcServer<WorkerToApiContract>(serverSocket, buildMinimalHandlers())
         })
+        await worker.start({
+            apiUrl: `http://127.0.0.1:${port}/api/`,
+            socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+            workerToken: 'test-token',
+        })
+        await vi.waitFor(() => expect(process.exitCode).toBe(1), { timeout: 15_000 })
     }
 
     it('no local override, no worker group → server mode used as-is', async () => {
@@ -179,7 +173,7 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_AND_PROCESS)
-    }, 10_000)
+    }, 20_000)
 
     it('local AP_EXECUTION_MODE overrides server-provided mode', async () => {
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_CODE_ONLY
@@ -189,7 +183,7 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_ONLY)
-    }, 10_000)
+    }, 20_000)
 
     it('worker group + SANDBOX_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
@@ -201,7 +195,7 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_PROCESS)
-    }, 10_000)
+    }, 20_000)
 
     it('worker group + SANDBOX_CODE_AND_PROCESS passes validation', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
@@ -213,7 +207,7 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_CODE_AND_PROCESS)
-    }, 10_000)
+    }, 20_000)
 
     it('worker group + UNSANDBOXED passes validation on non-cloud editions', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
@@ -225,7 +219,7 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.UNSANDBOXED)
-    }, 10_000)
+    }, 20_000)
 
     it('worker group + UNSANDBOXED throws on cloud edition', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
@@ -233,9 +227,13 @@ describe('worker settings override', () => {
         process.env.AP_REUSE_SANDBOX = 'false'
         const serverSettings = buildWorkerSettingsResponse({ EDITION: ApEdition.CLOUD })
 
-        const err = await connectAndExpectCrash(serverSettings)
-        expect(err.message).toMatch(/Worker group "group-1" requires AP_EXECUTION_MODE/)
-    }, 10_000)
+        await connectAndExpectInvalidSettings(serverSettings)
+        expect(logger.error).toHaveBeenCalledWith(
+            { error: expect.objectContaining({ message: expect.stringMatching(/Worker group "group-1" requires AP_EXECUTION_MODE/) }) },
+            'Invalid worker settings',
+        )
+        expect(mockWorkerSettingsSet).not.toHaveBeenCalled()
+    }, 20_000)
 
     it('worker group + SANDBOX_PROCESS passes validation on cloud edition', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
@@ -247,16 +245,20 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_PROCESS)
-    }, 10_000)
+    }, 20_000)
 
     it('worker group without AP_REUSE_SANDBOX throws error', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
         process.env.AP_EXECUTION_MODE = ExecutionMode.SANDBOX_PROCESS
         const serverSettings = buildWorkerSettingsResponse()
 
-        const err = await connectAndExpectCrash(serverSettings)
-        expect(err.message).toMatch(/Worker group "group-1" requires AP_REUSE_SANDBOX/)
-    }, 10_000)
+        await connectAndExpectInvalidSettings(serverSettings)
+        expect(logger.error).toHaveBeenCalledWith(
+            { error: expect.objectContaining({ message: expect.stringMatching(/Worker group "group-1" requires AP_REUSE_SANDBOX/) }) },
+            'Invalid worker settings',
+        )
+        expect(mockWorkerSettingsSet).not.toHaveBeenCalled()
+    }, 20_000)
 
     it('worker group + no local override, server sends SANDBOX_PROCESS → passes', async () => {
         process.env.AP_WORKER_GROUP_ID = 'group-1'
@@ -267,5 +269,5 @@ describe('worker settings override', () => {
         expect(mockWorkerSettingsSet).toHaveBeenCalledTimes(1)
         const stored = mockWorkerSettingsSet.mock.calls[0][0] as WorkerSettingsResponse
         expect(stored.EXECUTION_MODE).toBe(ExecutionMode.SANDBOX_PROCESS)
-    }, 10_000)
+    }, 20_000)
 })

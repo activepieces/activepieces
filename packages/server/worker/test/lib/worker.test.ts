@@ -1,6 +1,7 @@
 import { createServer } from 'node:http'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { Server as IOServer, Socket } from 'socket.io'
+import { systemUsage } from '@activepieces/server-utils'
 import {
     createRpcServer,
     PackageType,
@@ -151,17 +152,19 @@ describe('worker integration', () => {
 
         return new Promise((resolve) => {
             registerRpcServer({
-                poll: vi.fn(async () => {
-                    const response = pollIndex < pollResponses.length ? pollResponses[pollIndex] : null
-                    pollIndex++
-                    if (pollIndex >= pollResponses.length) {
-                        setTimeout(() => resolve({ completeJobCalls }), 200)
-                    }
-                    return response
-                }),
-                completeJob: vi.fn(async (input) => {
-                    completeJobCalls.push(input)
-                }),
+                overrides: {
+                    poll: vi.fn(async () => {
+                        const response = pollIndex < pollResponses.length ? pollResponses[pollIndex] : null
+                        pollIndex++
+                        if (pollIndex >= pollResponses.length) {
+                            setTimeout(() => resolve({ completeJobCalls }), 200)
+                        }
+                        return response
+                    }),
+                    completeJob: vi.fn(async (input) => {
+                        completeJobCalls.push(input)
+                    }),
+                },
             })
             worker.start({
                 apiUrl: `http://127.0.0.1:${port}/api/`,
@@ -171,12 +174,17 @@ describe('worker integration', () => {
         })
     }
 
-    function registerRpcServer(overrides: Partial<WorkerToApiContract>): void {
+    function registerRpcServer({ overrides, onSettingsRequest }: {
+        overrides: Partial<WorkerToApiContract>
+        onSettingsRequest?: (acknowledge: () => void) => void
+    }): void {
         ioServer.on('connection', (serverSocket) => {
             serverSocket.on(WebsocketServerEvent.FETCH_WORKER_SETTINGS, (...args: unknown[]) => {
                 const callback = args[args.length - 1]
                 if (typeof callback === 'function') {
-                    callback(WORKER_SETTINGS)
+                    const acknowledge = () => callback(WORKER_SETTINGS)
+                    if (onSettingsRequest) onSettingsRequest(acknowledge)
+                    else acknowledge()
                 }
             })
             createRpcServer<WorkerToApiContract>(serverSocket, {
@@ -216,6 +224,53 @@ describe('worker integration', () => {
         expect(completeJobCalls[0].status).toBe(EngineResponseStatus.OK)
         expect(mockGetHandler).toHaveBeenCalledWith(WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION)
     }, 15_000)
+
+    it('retries settings after a missing acknowledgement before polling', async () => {
+        let settingsRequests = 0
+        const poll = vi.fn(async () => null)
+        registerRpcServer({
+            overrides: { poll },
+            onSettingsRequest: (acknowledge) => {
+                settingsRequests++
+                if (settingsRequests > 1) acknowledge()
+            },
+        })
+
+        await worker.start({
+            apiUrl: `http://127.0.0.1:${port}/api/`,
+            socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+            workerToken: 'test-token',
+        })
+
+        await vi.waitFor(() => expect(settingsRequests).toBeGreaterThanOrEqual(2), { timeout: 35_000 })
+        await vi.waitFor(() => expect(poll).toHaveBeenCalled(), { timeout: 10_000 })
+        expect(settingsRequests).toBeGreaterThanOrEqual(2)
+    }, 50_000)
+
+    it('retries collecting machine info before polling', async () => {
+        const getContainerMemoryUsage = systemUsage.getContainerMemoryUsage
+        vi.spyOn(systemUsage, 'getContainerMemoryUsage')
+            .mockRejectedValueOnce(new Error('temporary metrics failure'))
+            .mockImplementation(getContainerMemoryUsage)
+        const poll = vi.fn(async () => null)
+        let settingsRequests = 0
+        registerRpcServer({
+            overrides: { poll },
+            onSettingsRequest: (acknowledge) => {
+                settingsRequests++
+                acknowledge()
+            },
+        })
+
+        await worker.start({
+            apiUrl: `http://127.0.0.1:${port}/api/`,
+            socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
+            workerToken: 'test-token',
+        })
+
+        await vi.waitFor(() => expect(poll).toHaveBeenCalled(), { timeout: 15_000 })
+        expect(settingsRequests).toBeGreaterThanOrEqual(1)
+    }, 20_000)
 
     it('keeps polling when the server-ping probe never settles', async () => {
         const realFetch = globalThis.fetch
@@ -584,7 +639,7 @@ describe('worker integration', () => {
         })
 
         async function startWithHealthServer(): Promise<void> {
-            registerRpcServer({})
+            registerRpcServer({ overrides: {} })
             worker.start({
                 apiUrl: `http://127.0.0.1:${port}/api/`,
                 socketUrl: { url: `http://127.0.0.1:${port}`, path: '/api/socket.io' },
