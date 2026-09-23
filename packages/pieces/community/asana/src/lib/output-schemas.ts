@@ -116,6 +116,16 @@ const projectFields: OutputSchema['fields'] = [
   { key: 'workspace', label: 'Workspace', children: workspaceRefFields },
   { key: 'members', label: 'Members', labelKey: 'name', listItems: userRefFields },
   { key: 'followers', label: 'Followers', labelKey: 'name', listItems: userRefFields },
+  {
+    key: 'current_status_update',
+    label: 'Latest Status Update',
+    children: [
+      { key: 'gid', label: 'Status Update GID' },
+      { key: 'title', label: 'Title' },
+      { key: 'status_type', label: 'Status' },
+    ],
+  },
+  { key: 'project_brief', label: 'Project Brief', children: [{ key: 'gid', label: 'Project Brief GID' }] },
   { key: 'created_at', label: 'Created At', format: 'datetime' },
   { key: 'modified_at', label: 'Modified At', format: 'datetime' },
   { key: 'permalink_url', label: 'Project URL', format: 'url' },
@@ -148,6 +158,7 @@ const storyFields: OutputSchema['fields'] = [
   { key: 'is_pinned', label: 'Pinned', format: 'boolean' },
   { key: 'is_edited', label: 'Edited', format: 'boolean' },
   { key: 'is_editable', label: 'Editable', format: 'boolean' },
+  { key: 'sticker_name', label: 'Sticker' },
   { key: 'target', label: 'Task', children: taskRefFields },
   { key: 'created_by', label: 'Created By', children: userRefFields },
   { key: 'created_at', label: 'Created At', format: 'datetime' },
@@ -179,6 +190,7 @@ const statusUpdateFields: OutputSchema['fields'] = [
   { key: 'text', label: 'Text' },
   { key: 'resource_subtype', label: 'Update Type' },
   { key: 'parent', label: 'Parent', children: namedRefFields },
+  { key: 'author', label: 'Author', children: userRefFields },
   { key: 'created_by', label: 'Created By', children: userRefFields },
   { key: 'created_at', label: 'Created At', format: 'datetime' },
   { key: 'modified_at', label: 'Modified At', format: 'datetime' },
@@ -199,6 +211,14 @@ const jobFields: OutputSchema['fields'] = [
   { key: 'status', label: 'Status' },
   { key: 'new_task', label: 'New Task', children: taskRefFields },
   { key: 'new_project', label: 'New Project', children: projectRefFields },
+  {
+    key: 'new_project_template',
+    label: 'New Project Template',
+    children: [
+      { key: 'gid', label: 'Project Template GID' },
+      { key: 'name', label: 'Project Template Name' },
+    ],
+  },
 ];
 
 const membershipFields: OutputSchema['fields'] = [
