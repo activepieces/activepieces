@@ -94,7 +94,7 @@ export function UsersOverview() {
         />
         <OverviewCard
           to="/platform/users?tab=roles"
-          title={t('Project roles')}
+          title={t('Roles')}
           tier="team"
           value={platform.plan.projectRolesEnabled ? customRoles : t('Locked')}
           isLoading={isLoadingRoles}

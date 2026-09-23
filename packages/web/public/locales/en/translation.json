@@ -714,7 +714,7 @@
   "Security": "Security",
   "Single Sign On": "Single Sign On",
   "Project Roles": "Project Roles",
-  "Roles & Access": "Roles & Access",
+  "Roles": "Roles",
   "Could not delete the role. Try again.": "Could not delete the role. Try again.",
   "Built in — platform roles can't be added or changed.": "Built in — platform roles can't be added or changed.",
   "permissionsCount": "{granted} of {total} permissions",
