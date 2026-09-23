@@ -310,6 +310,16 @@ function jobFieldsFromConfig({ config }: { config: AgentConfig }): AgentJobConfi
     }
 }
 
+async function claimConversationForRun({ conversationId, runId }: { conversationId: string, runId: string }): Promise<{ preemptedRunId: string | null, wasStreaming: boolean }> {
+    return transaction(async (entityManager) => {
+        const repo = entityManager.getRepository(AgentConversationEntity)
+        const current = await repo.findOne({ where: { id: conversationId }, lock: { mode: 'pessimistic_write' } })
+        const wasStreaming = current?.status === AgentConversationStatus.STREAMING
+        await repo.update(conversationId, { activeRunId: runId })
+        return { preemptedRunId: wasStreaming ? current?.activeRunId ?? null : null, wasStreaming }
+    })
+}
+
 async function resolveFlowTools({ projectId, tools, log }: { projectId: string, tools: AgentTool[], log: FastifyBaseLogger }): Promise<ResolvedAgentFlowTool[]> {
     const flowToolRequests = tools.filter((tool): tool is AgentFlowTool => tool.type === AgentToolType.FLOW)
     if (flowToolRequests.length === 0) {
@@ -370,6 +380,7 @@ async function assertAgentsSurfaceAvailable({ platformId, log }: { platformId: s
 
 export const agentHelpers = {
     jobFieldsFromConfig,
+    claimConversationForRun,
     resolveFlowTools,
     agentsSurfaceAvailable,
     assertAgentsSurfaceAvailable,

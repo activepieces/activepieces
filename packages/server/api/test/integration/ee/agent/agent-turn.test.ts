@@ -257,6 +257,30 @@ describe('the flow tools a chat turn hands to the worker', () => {
         expect(after.activeRunId).toBe(streamingRunId)
         expect(after.status).toBe(AgentConversationStatus.STREAMING)
     })
+
+    it('cancels a run that started streaming while this turn was still being admitted', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, { provider: AIProviderName.OPENROUTER, modelName: CONFIGURED_MODEL })
+        const conversation = await startConversation(ctx, agent.id)
+
+        const concurrentRunId = apId()
+        const realGetUserProjects = agentHelpers.getUserProjects
+        vi.spyOn(agentHelpers, 'getUserProjects').mockImplementation(async (args) => {
+            await agentHelpers.conversationRepo().update(conversation.id, {
+                activeRunId: concurrentRunId,
+                status: AgentConversationStatus.STREAMING,
+            })
+            return realGetUserProjects(args)
+        })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'hello' })
+
+        expect(response.statusCode).toBe(StatusCodes.OK)
+        const after = await agentHelpers.conversationRepo().findOneByOrFail({ id: conversation.id })
+        expect(after.activeRunId).not.toBe(concurrentRunId)
+        expect(after.status).toBe(AgentConversationStatus.IDLE)
+    })
 })
 
 async function seedMcpToolFlow(ctx: TestContext): Promise<{ flow: Flow, flowVersion: FlowVersion }> {

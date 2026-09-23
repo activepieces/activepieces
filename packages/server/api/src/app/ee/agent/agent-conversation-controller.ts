@@ -197,12 +197,9 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         // saveAgentMessages/updateAgentProgress/heartbeat fence against. A late write from the
         // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
         // with no Redis/DB split to race through. The prior owner is read from the same row.
-        const preemptedRunId = conversation.status === AgentConversationStatus.STREAMING
-            ? conversation.activeRunId
-            : null
-        await agentHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
+        const { preemptedRunId, wasStreaming } = await agentHelpers.claimConversationForRun({ conversationId, runId })
 
-        if (conversation.status === AgentConversationStatus.STREAMING) {
+        if (wasStreaming) {
             log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
             const cancelPromises = [
                 agentApprovalGate.requestCancel({ conversationId }),
