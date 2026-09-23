@@ -15,7 +15,7 @@ function projectRoleDescription(roleName: string): string | null {
     case DefaultProjectRole.ADMIN:
       return t('Full access');
     case DefaultProjectRole.EDITOR:
-      return t('Builds and runs flows');
+      return t('Builds and runs everything in the project');
     case DefaultProjectRole.VIEWER:
       return t('View only');
     default:
