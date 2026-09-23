@@ -475,7 +475,7 @@ function resolveRouterStep({ stepName, trigger }: { stepName: string, trigger: S
             .map(s => s.name)
             .join(', ')
         return {
-            error: { content: [{ type: 'text', text: `❌ Step "${stepName}" is not a router step (ROUTER or AI_ROUTER). Available routers: ${routers || 'none'}` }] },
+            error: { content: [{ type: 'text', text: `❌ Step "${stepName}" is not a ROUTER or AI_ROUTER step. Available routers: ${routers || 'none'}` }] },
         }
     }
     return { routerStep: step }
