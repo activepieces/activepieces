@@ -145,10 +145,6 @@ export const requestApprovalInEmail = createAction({
           bcc: bcc ? bcc.join(', ') : undefined,
           subject: `=?UTF-8?B?${subjectBase64}?=`,
           replyTo: replyTo ? replyTo.join(', ') : '',
-          // text:
-          //   context.propsValue.body_type === 'plain_text'
-          //     ? context.propsValue['body']
-          //     : undefined,
           html: htmlBody,
           attachments: [],
         };
@@ -195,7 +191,7 @@ export const requestApprovalInEmail = createAction({
             userId: 'me',
             q: `Rfc822msgid:${context.propsValue.in_reply_to}`,
           });
-          threadId = messages.data.messages?.[0].threadId;
+          threadId = messages.data.messages?.[0]?.threadId;
         }
         const mail: any = new MailComposer(mailOptions).compile();
         mail.keepBcc = true;

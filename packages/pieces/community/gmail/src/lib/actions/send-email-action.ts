@@ -158,7 +158,7 @@ export const gmailSendEmailAction = createAction({
         userId: 'me',
         q: `Rfc822msgid:${context.propsValue.in_reply_to}`,
       });
-      threadId = messages.data.messages?.[0].threadId;
+      threadId = messages.data.messages?.[0]?.threadId;
     }
 
     const senderEmail =
