@@ -1,5 +1,5 @@
 import { AIProviderName, ErrorCode, formatPieceError, isNil, isObject, isProviderBillingError, isTransientProviderError, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
-import { agentAiUtils, ContentPartLike } from '@activepieces/server-utils'
+import { agentAiUtils, ContentPartLike, modelCatalog } from '@activepieces/server-utils'
 import { AgentPhase, AgentRunSource, agentToolClassification, agentToolPhases, aiProviderUtils, apErrorOf, PersistedAgentPart } from '@activepieces/shared'
 import { APICallError, generateText, isLoopFinished, isStepCount, LanguageModel, LanguageModelUsage, ModelMessage, NoSuchToolError, RetryError, StepResultPerformance, StopCondition, streamText, ToolExecutionOptions, ToolSet } from 'ai'
 
@@ -74,10 +74,12 @@ export async function runAgentTurn({ model, fastModel, provider, systemPrompt, m
     let lastFinishReason = ''
     let budgetExceeded = false
 
+    const maxOutputTokens = await affordableOutputTokens({ provider, modelIds: [modelId, fastModelId], thinkingBudget: tier.thinkingBudget })
+
     const runStreamAttempt = (attemptMessages: ModelMessage[]): ReturnType<typeof streamText> => streamText({
         model,
         maxRetries: 3,
-        maxOutputTokens: tier.thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS,
+        maxOutputTokens,
         abortSignal,
         instructions: agentAiUtils.buildSystemPromptWithCaching({ systemPrompt, provider }),
         messages: agentAiUtils.stripThinkingBlocks(attemptMessages, provider),
@@ -383,6 +385,19 @@ export function isTransientFailureText(text: string): boolean {
 // from the shapes our action results use (found:false, empty array) and the A3a empty-result note.
 export function looksEmptyResultText(text: string): boolean {
     return /"found"\s*:\s*false|\bempty result\b|no results matched|"result"\s*:\s*\[\s*\]|"results"\s*:\s*\[\s*\]/i.test(text)
+}
+
+async function affordableOutputTokens({ provider, modelIds, thinkingBudget }: { provider: AIProviderName, modelIds: (string | undefined)[], thinkingBudget: number }): Promise<number> {
+    const { data: catalog } = await tryCatch(() => modelCatalog.load())
+    const ceilings = modelIds
+        .filter((modelId) => !isNil(modelId))
+        .map((modelId) => catalog?.lookup({ provider, modelId })?.maxOutputTokens)
+    return clampOutputTokens({ thinkingBudget, ceilings })
+}
+
+export function clampOutputTokens({ thinkingBudget, ceilings }: { thinkingBudget: number, ceilings: (number | undefined)[] }): number {
+    const known = ceilings.filter((ceiling) => !isNil(ceiling))
+    return Math.min(thinkingBudget + MAX_RESPONSE_OUTPUT_TOKENS, ...known)
 }
 
 function runawayTokenCeiling(provider: AIProviderName): number {
