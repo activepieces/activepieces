@@ -1,5 +1,5 @@
 import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, isNil, Permission, ProjectRole, SeekPage } from '@activepieces/core-utils'
-import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { InvitationStatus, InvitationType, ListUserInvitationsRequest, Principal, PrincipalType, SendUserInvitationRequest, SERVICE_KEY_SECURITY_OPENAPI, TelemetryEvent, TelemetryEventName, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -12,6 +12,8 @@ import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled, proje
 import { assertRoleHasPermission } from '../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
+import { rejectedPromiseHandler } from '../helper/promise-handler'
+import { telemetry } from '../helper/telemetry.utils'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { INVITATION_EXPIRY_SECONDS, userInvitationsService } from './user-invitation.service'
@@ -64,6 +66,19 @@ const invitationController: FastifyPluginAsyncZod = async (app) => {
             userInvitation: userInvitationRecord,
             invitationExpirySeconds: INVITATION_EXPIRY_SECONDS,
         })
+        rejectedPromiseHandler(trackInviteSent({
+            principal: request.principal,
+            platformId,
+            event: {
+                name: TelemetryEventName.INVITE_SENT,
+                payload: {
+                    platformId,
+                    type: type === InvitationType.PLATFORM ? 'platform' : 'project',
+                    role: type === InvitationType.PLATFORM ? request.body.platformRole ?? undefined : projectRole?.name,
+                },
+            },
+            log: request.log,
+        }), request.log)
         await reply.status(StatusCodes.CREATED).send(invitation)
     })
 
@@ -185,6 +200,14 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
 }
 
 
+async function trackInviteSent({ principal, platformId, event, log }: TrackInviteSentParams): Promise<void> {
+    if (principal.type === PrincipalType.USER) {
+        await telemetry(log).trackUser({ userId: principal.id, platformId, event })
+        return
+    }
+    await telemetry(log).trackPlatform({ platformId, event })
+}
+
 const ListUserInvitationsRequestParams = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE], {
@@ -244,4 +267,11 @@ const UpsertUserInvitationRequestParams = {
             [StatusCodes.CREATED]: UserInvitationWithLink,
         },
     },
+}
+
+type TrackInviteSentParams = {
+    principal: Principal
+    platformId: string
+    event: TelemetryEvent
+    log: FastifyBaseLogger
 }
