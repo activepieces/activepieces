@@ -125,6 +125,10 @@ clear billing message still goes to Billing.
 
 ## Reading a run
 
+In a published flow the step pauses the run while the decision is made, usually a second or two, so
+you may see it as Paused before it turns green. Test runs from the builder wait for the answer
+instead.
+
 The run detail shows how sure the model was across every route, not just the one it picked:
 
 ```
@@ -154,7 +158,7 @@ wrong branch because a model timed out is a bug that looks like normal operation
 visible in the run and can be retried.
 
 When the platform is out of AI credits, the step fails the same way, with an error that says so, and
-nothing is charged.
+nothing is charged. If no answer arrives within ten minutes, the step fails too.
 
 ## Self-hosting
 

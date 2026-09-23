@@ -92,9 +92,16 @@ export const ChooseAiRouteRequest = z.object({
     matchMode: z.enum(AiRouterMatchMode),
     flowId: z.string(),
     flowRunId: z.string(),
+    waitpointId: z.string().optional(),
 })
 
 export type ChooseAiRouteRequest = z.infer<typeof ChooseAiRouteRequest>
+
+export const StartAiRouteResponse = z.object({
+    requestId: z.string(),
+})
+
+export type StartAiRouteResponse = z.infer<typeof StartAiRouteResponse>
 
 export const ChooseAiRouteResponse = z.object({
     matched: z.array(z.string()),

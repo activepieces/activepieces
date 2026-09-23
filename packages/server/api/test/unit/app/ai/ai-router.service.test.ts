@@ -117,6 +117,22 @@ describe('aiRouterService runs the decision as a worker AI job', () => {
         await expect(service().choose(REQUEST)).rejects.toMatchObject({ error: { code: ErrorCode.ENGINE_OPERATION_FAILURE, params: { message: 'The routing model did not answer: HTTP 402: Insufficient credits' } } })
     })
 
+    it('starts a decision for a paused step without waiting, carrying the waitpoint', async () => {
+        const started = await service().start({ ...REQUEST, waitpointId: 'wp-1' })
+
+        expect(waitForAnswer).not.toHaveBeenCalled()
+        expect(enqueue.mock.calls[0][0]).toMatchObject({ action: AiStepAction.ROUTE, waitpointId: 'wp-1', provider: AIProviderName.ACTIVEPIECES, flowRunId: 'run-1' })
+        expect(enqueue.mock.calls[0][0].webserverId).toBeUndefined()
+        expect(started.requestId).toBe(enqueue.mock.calls[0][0].requestId)
+    })
+
+    it('gates credits before starting a paused decision too', async () => {
+        assertCredits.mockRejectedValue(OUT_OF_CREDITS)
+
+        await expect(service().start({ ...REQUEST, waitpointId: 'wp-1' })).rejects.toMatchObject({ error: { code: ErrorCode.QUOTA_EXCEEDED } })
+        expect(enqueue).not.toHaveBeenCalled()
+    })
+
     it('fails when the worker answered in a shape the engine cannot read', async () => {
         waitForAnswer.mockResolvedValue({ output: { chosen: 'Billing' } })
 

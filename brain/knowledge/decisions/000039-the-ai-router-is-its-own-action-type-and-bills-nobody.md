@@ -11,9 +11,12 @@ status: accepted
 **AI Router is a real `FlowActionType.AI_ROUTER`**, not a Router mode and not a piece action. It asks
 one question at the root and each branch is one possible answer, inverting the Router's one-condition-
 tree-per-branch model. It calls Jev (`typesafe/jev-1.13`) through **OpenRouter's Decisions API on the
-platform's own OpenRouter key**, as a `ROUTE` action of the worker's `EXECUTE_AI` job: the engine posts
-to `/v1/engine/ai-router`, the API picks the provider and gates credits, the worker makes the call and
-bills it. The key is the managed Activepieces provider where credits are on, else the admin's own
+platform's own OpenRouter key**, as a `ROUTE` action of the worker's `EXECUTE_AI` job, and it **pauses
+the run while it waits**: the engine creates a waitpoint, posts to `/v1/engine/ai-router` with its id,
+marks the step `PAUSED` and gives its worker slot back; the API picks the provider, gates credits and
+enqueues; the worker makes the call, bills it and resumes the run through `resumeAiStep`. On resume a
+decided router reuses its stored evaluations and never asks again, so a pause inside a route costs
+nothing. Only a single-action run, which cannot pause, still waits synchronously. The key is the managed Activepieces provider where credits are on, else the admin's own
 OpenRouter row; the step has no provider or model picker and appears in the picker only when the
 project's provider list contains one of the two. Billing is decision 000037 unchanged: observed
 `usage.cost` on the managed key, one fixed credit on an own key. In the picker it sits in the Utility
@@ -61,8 +64,12 @@ reads, so server and picker agree by construction.
 
 A routing decision costs the platform what it costs us on the managed key (about 0.02 to 0.08
 credit) and one credit on an own key; a production run through one router is therefore about one
-credit plus a fraction. The engine waits 30 s, the API façade 25 s, the worker's HTTP call 8 s, so the
-readable failure text always beats a bare engine timeout. Community Edition has no OpenRouter key
+credit plus a fraction. The pause exists because a flow job and the router's `EXECUTE_AI` job share
+one worker queue and a loop holds its slot for the whole job: a router that blocked on its own answer
+would starve itself at low concurrency and deadlock five flows at the default of five (see the
+starvation gotcha on [[workers]]). The waitpoint's deadline is ten minutes; a deadline resume carries
+no answer and fails the step with a readable message. The synchronous path (single-action runs) keeps
+the old nesting: engine 30 s, API 25 s, worker HTTP 8 s. Community Edition has no OpenRouter key
 unless the admin adds one, so the step is hidden there by default — the price of dropping the
 instance-wide env var. OpenRouter's Decisions endpoint is alpha; its wire format lives in one worker
 file (`route.ts`) with a unit test per answer shape.

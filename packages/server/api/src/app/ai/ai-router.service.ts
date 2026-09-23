@@ -1,11 +1,20 @@
 import { ActivepiecesError, AIProviderName, apId, ErrorCode, isNil, tryCatch } from '@activepieces/core-utils'
-import { AiStepAction, ChooseAiRouteRequest, ChooseAiRouteResponse, LATEST_JOB_DATA_SCHEMA_VERSION, WorkerJobType } from '@activepieces/shared'
+import { AiStepAction, ChooseAiRouteRequest, ChooseAiRouteResponse, ExecuteAiJobData, LATEST_JOB_DATA_SCHEMA_VERSION, StartAiRouteResponse, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { assertCreditsAndAppSumoNotExceeded } from '../platform/billing-provider'
 import { aiExecution } from './ai-execution'
 import { aiProviderService } from './ai-provider-service'
 
 export const aiRouterService = (log: FastifyBaseLogger) => ({
+    async start({ platformId, projectId, waitpointId, ...request }: StartParams): Promise<StartAiRouteResponse> {
+        const provider = await pickProvider({ platformId, projectId, log })
+        await assertHasCredits({ platformId, log })
+        const requestId = apId()
+        await aiExecution(log).enqueue(routeJob({ request, requestId, platformId, projectId, provider, waitpointId }))
+        log.info({ requestId, flowRun: { id: request.flowRunId }, provider }, 'Started the AI router decision for a paused step')
+        return { requestId }
+    },
+
     async choose({ platformId, projectId, ...request }: ChooseParams): Promise<ChooseAiRouteResponse> {
         const provider = await pickProvider({ platformId, projectId, log })
         await assertHasCredits({ platformId, log })
@@ -13,23 +22,7 @@ export const aiRouterService = (log: FastifyBaseLogger) => ({
         const execution = aiExecution(log)
         const requestId = apId()
         const answer = execution.waitForAnswer({ requestId, timeoutMs: WAIT_MS })
-        await execution.enqueue({
-            schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-            jobType: WorkerJobType.EXECUTE_AI,
-            action: AiStepAction.ROUTE,
-            requestId,
-            webserverId: execution.serverId(),
-            projectId,
-            platformId,
-            flowId: request.flowId,
-            flowRunId: request.flowRunId,
-            provider,
-            modelId: AI_ROUTER_MODEL_ID,
-            state: request.state,
-            question: request.question,
-            options: request.options,
-            matchMode: request.matchMode,
-        })
+        await execution.enqueue(routeJob({ request, requestId, platformId, projectId, provider, webserverId: execution.serverId() }))
 
         const { output, failure } = await answer
         if (!isNil(failure)) {
@@ -43,6 +36,27 @@ export const aiRouterService = (log: FastifyBaseLogger) => ({
         return parsed.data
     },
 })
+
+function routeJob({ request, requestId, platformId, projectId, provider, waitpointId, webserverId }: RouteJobParams): ExecuteAiJobData {
+    return {
+        schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
+        jobType: WorkerJobType.EXECUTE_AI,
+        action: AiStepAction.ROUTE,
+        requestId,
+        waitpointId,
+        webserverId,
+        projectId,
+        platformId,
+        flowId: request.flowId,
+        flowRunId: request.flowRunId,
+        provider,
+        modelId: AI_ROUTER_MODEL_ID,
+        state: request.state,
+        question: request.question,
+        options: request.options,
+        matchMode: request.matchMode,
+    }
+}
 
 async function pickProvider({ platformId, projectId, log }: { platformId: string, projectId: string, log: FastifyBaseLogger }): Promise<AIProviderName> {
     const available = await aiProviderService(log).listForProject({ platformId, projectId })
@@ -77,7 +91,21 @@ const AI_ROUTER_MODEL_ID = 'typesafe/jev-1.13'
 const WAIT_MS = 25_000
 const OUT_OF_CREDITS_MESSAGE = 'The AI Router did not run because the platform is out of AI credits. Add credits or upgrade the plan, then retry the run.'
 
-type ChooseParams = ChooseAiRouteRequest & {
+type ChooseParams = Omit<ChooseAiRouteRequest, 'waitpointId'> & {
     platformId: string
     projectId: string
+}
+
+type StartParams = ChooseParams & {
+    waitpointId: string
+}
+
+type RouteJobParams = {
+    request: Omit<ChooseAiRouteRequest, 'waitpointId'>
+    requestId: string
+    platformId: string
+    projectId: string
+    provider: AIProviderName
+    waitpointId?: string
+    webserverId?: string
 }

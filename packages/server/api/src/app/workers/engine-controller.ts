@@ -1,5 +1,6 @@
 
-import { ChooseAiRouteRequest, ChooseAiRouteResponse, FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { isNil } from '@activepieces/core-utils'
+import { ChooseAiRouteRequest, ChooseAiRouteResponse, FileType, FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest, PrincipalType, SendFlowResponseRequest, StartAiRouteResponse, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -105,11 +106,13 @@ export const flowEngineWorker: FastifyPluginAsyncZod = async (app) => {
         if (request.principal.type !== PrincipalType.ENGINE) {
             return reply.status(StatusCodes.UNAUTHORIZED).send()
         }
-        return aiRouterService(request.log).choose({
-            ...request.body,
-            platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
-        })
+        const { waitpointId, ...body } = request.body
+        const params = { ...body, platformId: request.principal.platform.id, projectId: request.principal.projectId }
+        if (!isNil(waitpointId)) {
+            const started = await aiRouterService(request.log).start({ ...params, waitpointId })
+            return reply.status(StatusCodes.ACCEPTED).send(started)
+        }
+        return aiRouterService(request.log).choose(params)
     })
 
 }
@@ -193,6 +196,7 @@ const AiRouterRequest = {
         body: ChooseAiRouteRequest,
         response: {
             [StatusCodes.OK]: ChooseAiRouteResponse,
+            [StatusCodes.ACCEPTED]: StartAiRouteResponse,
         },
     },
 }

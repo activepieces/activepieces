@@ -1,7 +1,14 @@
 import { AI_ROUTER_MAX_STATE_LENGTH, AiRouterMatchMode, FlowAction, FlowRunStatus, StepOutputStatus } from '@activepieces/shared'
 import { FlowExecutorContext } from '../../src/lib/handler/context/flow-execution-context'
+import { StepExecutionPath } from '../../src/lib/handler/context/step-execution-path'
 import { flowExecutor } from '../../src/lib/handler/flow-executor'
 import { buildAiRouter, buildPieceAction, generateMockEngineConstants } from './test-helper'
+
+vi.mock('../../src/lib/piece-context/waitpoint-client', () => ({
+    waitpointClient: {
+        create: async () => ({ id: 'mock-waitpoint-id', resumeUrl: 'http://localhost/resume' }),
+    },
+}))
 
 const AI_ROUTER_PATH = '/v1/engine/ai-router'
 
@@ -31,8 +38,20 @@ function execute(action: FlowAction): Promise<FlowExecutorContext> {
     return flowExecutor.execute({
         action,
         executionState: FlowExecutorContext.empty(),
-        constants: generateMockEngineConstants(),
+        constants: generateMockEngineConstants({ actionRunMode: true }),
     })
+}
+
+function executeInFlow(action: FlowAction, executionState = FlowExecutorContext.empty(), resumePayload?: { body: unknown }): Promise<FlowExecutorContext> {
+    return flowExecutor.execute({
+        action,
+        executionState,
+        constants: generateMockEngineConstants(resumePayload ? { resumePayload: { ...resumePayload, headers: {}, queryParams: {} } } : {}),
+    })
+}
+
+function resumedFrom(paused: FlowExecutorContext): FlowExecutorContext {
+    return paused.setCurrentPath(StepExecutionPath.empty()).setVerdict({ status: FlowRunStatus.RUNNING })
 }
 
 describe('ai router', () => {
@@ -298,5 +317,101 @@ describe('ai router', () => {
             expect(result.steps.billing).toBeUndefined()
             expect(result.steps.otherwise.output).toEqual({ key: 3 })
         })
+    })
+})
+
+describe('ai router pauses the run while the worker decides', () => {
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    const billingFlow = () => buildAiRouter({
+        routes: [{ branchName: 'Billing', description: 'Payments' }],
+        fallback: { branchName: 'Otherwise' },
+        children: [mapperStep('billing'), mapperStep('otherwise')],
+    })
+
+    const answerFor = (route: string) => ({ body: { output: { matched: [route], probabilities: { Billing: 0.9, Otherwise: 0.1 } } } })
+
+    it('creates a waitpoint, starts the decision, and pauses without running a route', async () => {
+        const calls = answerWith({ requestId: 'req-1' }, 202)
+
+        const result = await executeInFlow(billingFlow())
+
+        expect(result.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+        expect(result.steps.ai_router.status).toBe(StepOutputStatus.PAUSED)
+        expect(calls[0]).toMatchObject({ waitpointId: 'mock-waitpoint-id', flowId: 'flowId', flowRunId: 'flowRunId' })
+        expect(result.steps.billing).toBeUndefined()
+        expect(result.steps.otherwise).toBeUndefined()
+    })
+
+    it('resumes with the worker answer, runs that route, and asks nothing a second time', async () => {
+        const calls = answerWith({ requestId: 'req-1' }, 202)
+        const flow = billingFlow()
+        const paused = await executeInFlow(flow)
+
+        const resumed = await executeInFlow(flow, resumedFrom(paused), answerFor('Billing'))
+
+        expect(calls).toHaveLength(1)
+        expect(resumed.steps.ai_router).toMatchObject({ status: StepOutputStatus.SUCCEEDED, output: { choice: 'Billing' } })
+        expect(resumed.steps.billing.output).toEqual({ key: 3 })
+        expect(resumed.steps.otherwise).toBeUndefined()
+    })
+
+    it('fails the step with the worker failure text when the answer is a failure', async () => {
+        answerWith({ requestId: 'req-1' }, 202)
+        const flow = billingFlow()
+        const paused = await executeInFlow(flow)
+
+        const resumed = await executeInFlow(flow, resumedFrom(paused), { body: { failure: 'The routing model did not answer: HTTP 402: Insufficient credits' } })
+
+        expect(resumed.steps.ai_router.status).toBe(StepOutputStatus.FAILED)
+        expect(resumed.steps.ai_router.errorMessage).toContain('Insufficient credits')
+        expect(resumed.steps.billing).toBeUndefined()
+    })
+
+    it('fails the step when the deadline resumes it with no answer at all', async () => {
+        answerWith({ requestId: 'req-1' }, 202)
+        const flow = billingFlow()
+        const paused = await executeInFlow(flow)
+
+        const resumed = await executeInFlow(flow, resumedFrom(paused), { body: {} })
+
+        expect(resumed.steps.ai_router.status).toBe(StepOutputStatus.FAILED)
+        expect(resumed.steps.ai_router.errorMessage).toContain('did not answer before the step timed out')
+    })
+
+    it('reuses the decision when a step inside the chosen route pauses and resumes later', async () => {
+        const calls = answerWith({ requestId: 'req-1' }, 202)
+        const flow = buildAiRouter({
+            routes: [{ branchName: 'Billing', description: 'Payments' }],
+            fallback: { branchName: 'Otherwise' },
+            children: [
+                buildPieceAction({
+                    name: 'approval',
+                    pieceName: '@activepieces/piece-approval',
+                    actionName: 'wait_for_approval',
+                    input: {},
+                    nextAction: mapperStep('billing'),
+                }),
+                mapperStep('otherwise'),
+            ],
+        })
+
+        const pausedOnRouter = await executeInFlow(flow)
+        const pausedOnApproval = await executeInFlow(flow, resumedFrom(pausedOnRouter), answerFor('Billing'))
+        expect(pausedOnApproval.verdict).toEqual({ status: FlowRunStatus.PAUSED })
+        expect(pausedOnApproval.steps.approval.status).toBe(StepOutputStatus.PAUSED)
+
+        const finished = await flowExecutor.execute({
+            action: flow,
+            executionState: resumedFrom(pausedOnApproval),
+            constants: generateMockEngineConstants({ resumePayload: { body: {}, headers: {}, queryParams: { action: 'approve' } } }),
+        })
+
+        expect(calls).toHaveLength(1)
+        expect(finished.steps.ai_router).toMatchObject({ status: StepOutputStatus.SUCCEEDED, output: { choice: 'Billing' } })
+        expect(finished.steps.approval.status).toBe(StepOutputStatus.SUCCEEDED)
+        expect(finished.steps.billing.output).toEqual({ key: 3 })
     })
 })
