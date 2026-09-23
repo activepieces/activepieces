@@ -157,30 +157,6 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const runId = typeof clientRunId === 'string' ? clientRunId : apId()
         const runLog = log.child({ run: { id: runId } })
 
-        // Claim ownership atomically in the DB — the single source of truth that
-        // saveAgentMessages/updateAgentProgress/heartbeat fence against. A late write from the
-        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
-        // with no Redis/DB split to race through. The prior owner is read from the same row.
-        const preemptedRunId = conversation.status === AgentConversationStatus.STREAMING
-            ? conversation.activeRunId
-            : null
-        await agentHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
-
-        if (conversation.status === AgentConversationStatus.STREAMING) {
-            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
-            const cancelPromises = [
-                agentApprovalGate.requestCancel({ conversationId }),
-            ]
-            if (preemptedRunId) {
-                cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
-            }
-            await Promise.all(cancelPromises)
-            await agentHelpers.conversationRepo().update(conversationId, {
-                status: AgentConversationStatus.IDLE,
-            })
-            await agentApprovalGate.clearPendingGate({ conversationId })
-        }
-
         const agent = isNil(conversation.agentId)
             ? null
             : await agentService(log).getOneOrThrowByPlatform({ id: conversation.agentId, platformId, userId })
@@ -216,6 +192,30 @@ export const agentConversationController: FastifyPluginAsyncZod = async (app) =>
         const flowTools = carriesConfiguredTools
             ? await agentHelpers.resolveFlowTools({ projectId: runScope.projectId, tools: agentConfig.tools, log: runLog })
             : []
+
+        // Claim ownership atomically in the DB — the single source of truth that
+        // saveAgentMessages/updateAgentProgress/heartbeat fence against. A late write from the
+        // preempted run is rejected as soon as this UPDATE commits (its runId no longer matches),
+        // with no Redis/DB split to race through. The prior owner is read from the same row.
+        const preemptedRunId = conversation.status === AgentConversationStatus.STREAMING
+            ? conversation.activeRunId
+            : null
+        await agentHelpers.conversationRepo().update(conversationId, { activeRunId: runId })
+
+        if (conversation.status === AgentConversationStatus.STREAMING) {
+            log.info({ ...spreadIfDefined('preemptedRunId', preemptedRunId ?? undefined) }, '[agentConversationController] Cancelling in-flight run before new message')
+            const cancelPromises = [
+                agentApprovalGate.requestCancel({ conversationId }),
+            ]
+            if (preemptedRunId) {
+                cancelPromises.push(agentApprovalGate.requestCancel({ conversationId, runId: preemptedRunId }))
+            }
+            await Promise.all(cancelPromises)
+            await agentHelpers.conversationRepo().update(conversationId, {
+                status: AgentConversationStatus.IDLE,
+            })
+            await agentApprovalGate.clearPendingGate({ conversationId })
+        }
 
         await jobQueue(runLog).add({
             id: apId(),

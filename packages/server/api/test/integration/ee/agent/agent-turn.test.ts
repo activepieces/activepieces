@@ -1,5 +1,5 @@
 import { AIProviderName, apId, ErrorCode } from '@activepieces/core-utils'
-import { AgentIcon, AgentRunSource, AgentToolType, ColorName, Flow, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, McpPropertyType, WorkerJobType } from '@activepieces/shared'
+import { AgentConversationStatus, AgentIcon, AgentRunSource, AgentToolType, ColorName, Flow, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, McpPropertyType, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -233,6 +233,29 @@ describe('the flow tools a chat turn hands to the worker', () => {
         expect(response.statusCode).toBe(StatusCodes.CONFLICT)
         expect(response.json().params.message).toContain('the referenced flow was not found in this project')
         expect(addSpy).not.toHaveBeenCalled()
+    })
+
+    it('refuses without taking the conversation over, so a reply already streaming survives', async () => {
+        const ctx = await context()
+        await enableForChat(ctx.platform.id, AIProviderName.OPENROUTER)
+        const agent = await createAgent(ctx, {
+            provider: AIProviderName.OPENROUTER,
+            modelName: CONFIGURED_MODEL,
+            tools: [{ type: AgentToolType.FLOW, toolName: 'check_order_status', externalFlowId: apId() }],
+        })
+        const conversation = await startConversation(ctx, agent.id)
+        const streamingRunId = apId()
+        await db.update('agent_conversation', conversation.id, {
+            status: AgentConversationStatus.STREAMING,
+            activeRunId: streamingRunId,
+        })
+
+        const response = await ctx.post(`${CONVERSATIONS_URL}/${conversation.id}/messages`, { content: 'Where is order 12345?' })
+
+        expect(response.statusCode).toBe(StatusCodes.CONFLICT)
+        const after = await agentHelpers.conversationRepo().findOneByOrFail({ id: conversation.id })
+        expect(after.activeRunId).toBe(streamingRunId)
+        expect(after.status).toBe(AgentConversationStatus.STREAMING)
     })
 })
 
