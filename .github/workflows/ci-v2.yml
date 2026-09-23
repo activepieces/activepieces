@@ -34,7 +34,7 @@ jobs:
           ALL=false
           # Files outside any package (workflows, root config, tools) are invisible to turbo's
           # graph, so a change there runs everything. Docs and markdown never do.
-          OUTSIDE_PACKAGES=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -vE '^(packages/|docs/|brain/|\.agents/|\.claude/)|\.md$' || true)
+          OUTSIDE_PACKAGES=$(git diff --name-only "$TURBO_SCM_BASE...HEAD" | grep -vE '^(packages/|docs/|brain/|\.agents/|\.claude/)|\.md$' || true)
           if [ -n "$OUTSIDE_PACKAGES" ]; then
             ALL=true
           fi
@@ -106,10 +106,13 @@ jobs:
       # union is built here as explicit filters. api is excluded because its `test` script runs
       # the three integration suites serially; the api-tests matrix covers those.
       - name: Typecheck, build and test
+        env:
+          AFFECTED_PACKAGES: ${{ needs.changes.outputs.packages }}
+          RUN_ALL: ${{ needs.changes.outputs.all }}
         run: |
           set -euo pipefail
-          FILTERS=$(echo '${{ needs.changes.outputs.packages }}' | jq -r '.[] | select(. != "api") | "--filter=" + .' | tr '\n' ' ')
-          if [ "${{ needs.changes.outputs.all }}" = "true" ]; then
+          FILTERS=$(echo "$AFFECTED_PACKAGES" | jq -r '.[] | select(. != "api") | "--filter=" + .' | tr '\n' ' ')
+          if [ "$RUN_ALL" = "true" ]; then
             FILTERS="$FILTERS $(npx tsx tools/scripts/test-filters.ts)"
           fi
           npx turbo run typecheck build test $FILTERS
