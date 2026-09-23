@@ -1,35 +1,19 @@
-import { I18nForPiece, PieceMetadataModel, PieceMetadataModelSummary } from "./piece-metadata"
-import { LocalesEnum } from "@activepieces/core-utils"
+import { I18nForPiece } from "./piece-metadata"
+import { isObject, LocalesEnum } from "@activepieces/core-utils"
 import { MAX_KEY_LENGTH_FOR_CORWDIN } from "@activepieces/core-piece-types"
 import path from 'path';
 import fs from 'fs/promises';
 
 export const pieceTranslation = {
-  translatePiece: <T extends PieceMetadataModelSummary | PieceMetadataModel>(params: TranslatePieceParams<T>): T => {
-    const { piece, locale, mutate = false, paths = pieceTranslation.pathsToValuesToTranslate } = params
-    if (!locale) {
+  translatePiece: <T>({ piece, translations }: TranslatePieceParams<T>): T => {
+    if (!translations) {
       return piece
     }
-    try {
-      const target = piece.i18n?.[locale]
-      if (!target) {
-        return piece
-      }
-      if (mutate) {
-        paths.forEach(key => {
-          translateProperty(piece as unknown as Record<string, unknown>, key, target)
-        })
-        return piece
-      }
-      return paths.reduce<T>(
-        (acc, key) => translateAtPath(acc as unknown as Record<string, unknown>, key.split('.'), target) as unknown as T,
-        piece,
-      )
-    }
-    catch (err) {
-      console.error(`error translating piece ${piece.name}:`, err)
-      return piece
-    }
+    const translated = pieceTranslation.pathsToValuesToTranslate.reduce<unknown>(
+      (node, key) => translateAtPath({ node, keys: key.split('.'), translations }),
+      piece,
+    )
+    return translated as T
   },
 
   /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
@@ -73,106 +57,44 @@ export const pieceTranslation = {
     "triggers.*.props.*.displayName",
     "triggers.*.props.*.description",
     "triggers.*.props.*.options.options.*.label"
-  ],
-
-  pathsForSummary: [
-    "description",
-    "auth.username.displayName",
-    "auth.username.description",
-    "auth.password.displayName",
-    "auth.password.description",
-    "auth.props.*.displayName",
-    "auth.props.*.description",
-    "auth.props.*.options.options.*.label",
-    "auth.description",
-    "actions.*.displayName",
-    "actions.*.description",
-    "triggers.*.displayName",
-    "triggers.*.description"
-  ],
-
-  pathsForSuggestions: [
-    "actions.*.props.*.displayName",
-    "actions.*.props.*.description",
-    "actions.*.props.*.options.options.*.label",
-    "triggers.*.props.*.displayName",
-    "triggers.*.props.*.description",
-    "triggers.*.props.*.options.options.*.label"
   ]
 }
 
-
-/**This function translates a property inside a piece, i.e description, displayName, etc... 
- * 
- * @param pieceModelOrProperty - The piece model or property to translate
- * @param path - The path to the property to translate, i.e auth.username.displayName
- * @param i18n - The i18n object
- */
-function translateProperty(pieceModelOrProperty: Record<string, unknown>, path: string, i18n: Record<string, string>) {
-  const parsedKeys = path.split('.');
-  if (parsedKeys[0] === '*') {
-    return Object.values(pieceModelOrProperty).forEach(item => translateProperty(item as Record<string, unknown>, parsedKeys.slice(1).join('.'), i18n))
-  }
-  const nextObject = pieceModelOrProperty[parsedKeys[0]] as Record<string, unknown>;
-  if (!nextObject) {
-    return;
-  }
-  if (parsedKeys.length > 1) {
-    return translateProperty(nextObject, parsedKeys.slice(1).join('.'), i18n);
-  }
-  const propertyValue = pieceModelOrProperty[parsedKeys[0]] as string
-  const valueInI18n = i18n[propertyValue.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)]
-  if (valueInI18n) {
-    pieceModelOrProperty[parsedKeys[0]] = valueInI18n
-  }
-}
-
-function translateAtPath(node: unknown, parsedKeys: string[], i18n: Record<string, string>): unknown {
-  if (node === null || typeof node !== 'object') {
-    return node
-  }
-  const [head, ...rest] = parsedKeys
+function translateAtPath({ node, keys, translations }: TranslateAtPathParams): unknown {
+  const [head, ...rest] = keys
   if (head === '*') {
-    return mapChildren(node as Record<string, unknown>, (child) => translateAtPath(child, rest, i18n))
+    return mapChildren({ node, map: (child) => translateAtPath({ node: child, keys: rest, translations }) })
   }
-  const container = node as Record<string, unknown>
-  const child = container[head]
-  if (!child) {
+  if (!isObject(node)) {
     return node
   }
-  if (rest.length > 0) {
-    const translatedChild = translateAtPath(child, rest, i18n)
-    return translatedChild === child ? node : { ...container, [head]: translatedChild }
-  }
-  if (typeof child !== 'string') {
-    return node
-  }
-  const valueInI18n = i18n[child.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)]
-  if (!valueInI18n || valueInI18n === child) {
-    return node
-  }
-  return { ...container, [head]: valueInI18n }
+  const child = node[head]
+  const translatedChild = rest.length > 0
+    ? translateAtPath({ node: child, keys: rest, translations })
+    : translateValue({ value: child, translations })
+  return translatedChild === child ? node : { ...node, [head]: translatedChild }
 }
 
-function mapChildren(node: Record<string, unknown>, fn: (child: unknown) => unknown): unknown {
+function translateValue({ value, translations }: TranslateValueParams): unknown {
+  if (typeof value !== 'string' || value.length === 0) {
+    return value
+  }
+  const key = value.slice(0, MAX_KEY_LENGTH_FOR_CORWDIN)
+  const translated = Object.hasOwn(translations, key) ? translations[key] : undefined
+  return translated || value
+}
+
+function mapChildren({ node, map }: MapChildrenParams): unknown {
   if (Array.isArray(node)) {
-    let changed = false
-    const next = node.map((child) => {
-      const translated = fn(child)
-      changed ||= translated !== child
-      return translated
-    })
-    return changed ? next : node
+    const mapped = node.map((child: unknown) => map(child))
+    return mapped.some((child, index) => child !== node[index]) ? mapped : node
   }
-  const entries = Object.entries(node)
-  let changed = false
-  const next: Record<string, unknown> = {}
-  for (const [key, child] of entries) {
-    const translated = fn(child)
-    changed ||= translated !== child
-    next[key] = translated
+  if (!isObject(node)) {
+    return node
   }
-  return changed ? next : node
+  const mappedEntries = Object.entries(node).map(([key, child]): [string, unknown] => [key, map(child)])
+  const changed = mappedEntries.some(([key, child]) => child !== node[key])
+  return changed ? Object.fromEntries(mappedEntries) : node
 }
 
 async function fileExists(filePath: string) {
@@ -203,9 +125,25 @@ const readLocaleFile = async (locale: LocalesEnum, pieceOutputPath: string) => {
   }
 }
 
-type TranslatePieceParams<T extends PieceMetadataModelSummary | PieceMetadataModel> = {
+type TranslatePieceParams<T> = {
   piece: T
-  locale?: LocalesEnum
-  mutate?: boolean
-  paths?: string[]
+  translations: Translations | undefined
 }
+
+type TranslateAtPathParams = {
+  node: unknown
+  keys: string[]
+  translations: Translations
+}
+
+type TranslateValueParams = {
+  value: unknown
+  translations: Translations
+}
+
+type MapChildrenParams = {
+  node: unknown
+  map: (child: unknown) => unknown
+}
+
+type Translations = Record<string, string>

@@ -34,7 +34,7 @@ function legacyTranslatePiece(piece: Record<string, unknown>, locale: LocalesEnu
 
 const longKey = 'x'.repeat(MAX_KEY_LENGTH_FOR_CORWDIN + 40)
 
-const prop = (displayName: string, description: string, labels: string[] = []) => ({
+const prop = (displayName: string, description: string, labels: string[] = []): TestProp => ({
   displayName,
   description,
   required: false,
@@ -42,7 +42,7 @@ const prop = (displayName: string, description: string, labels: string[] = []) =
   ...(labels.length > 0 ? { options: { options: labels.map((label, i) => ({ label, value: `v${i}` })) } } : {}),
 })
 
-const fixtures: Record<string, unknown>[] = [
+const fixtures: TestPiece[] = [
   {
     name: 'plain', displayName: 'Plain', description: 'Send a message',
     auth: undefined, actions: {}, triggers: {},
@@ -108,59 +108,38 @@ describe('translatePiece copy-on-write', () => {
   it('matches the JSON-clone implementation on every fixture and locale', () => {
     for (const fixture of fixtures) {
       for (const locale of [DE, LocalesEnum.FRENCH, LocalesEnum.CHINESE_TRADITIONAL]) {
-        const raw = JSON.stringify(fixture)
-        const legacy = legacyTranslatePiece(JSON.parse(raw), locale)
-        const actual = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale } as never)
+        const legacy = legacyTranslatePiece(clone(fixture), locale)
+        const actual = translate({ piece: clone(fixture), locale })
         expect(JSON.stringify(actual)).toEqual(JSON.stringify(legacy))
       }
     }
   })
 
-  it('leaves the input untouched when mutate is false', () => {
+  it('leaves the input untouched', () => {
     for (const fixture of fixtures) {
-      const raw = JSON.stringify(fixture)
-      const input = JSON.parse(raw)
-      pieceTranslation.translatePiece({ piece: input, locale: DE } as never)
-      expect(JSON.stringify(input)).toEqual(raw)
+      const input = clone(fixture)
+      translate({ piece: input, locale: DE })
+      expect(input).toEqual(clone(fixture))
     }
   })
 
   it('keeps option arrays as arrays', () => {
-    const piece = fixtures.find(f => f.name === 'options-arrays')!
-    const translated = pieceTranslation.translatePiece({ piece: JSON.parse(JSON.stringify(piece)), locale: DE } as never) as never as Record<string, never>
-    const options = translated.actions.act.props.field.options.options
+    const translated = translate({ piece: clone(fixtureNamed('options-arrays')), locale: DE })
+    const options = translated.actions.act.props.field.options?.options ?? []
     expect(Array.isArray(options)).toBe(true)
-    expect(options.map((o: { label: string }) => o.label)).toEqual(['Alfa', 'Beta-DE', 'Untranslated'])
+    expect(options.map((option) => option.label)).toEqual(['Alfa', 'Beta-DE', 'Untranslated'])
   })
 
   it('shares untouched subtrees with the source instead of copying them', () => {
-    const piece = JSON.parse(JSON.stringify(fixtures.find(f => f.name === 'options-arrays')))
-    const summary = pieceTranslation.translatePiece({ piece, locale: DE, paths: pieceTranslation.pathsForSummary } as never) as never as Record<string, never>
-    expect(summary.actions.act.props).toBe(piece.actions.act.props)
-    expect(summary.actions.act.displayName).toEqual('Jetzt handeln')
-  })
-
-  it('partitions the full path set into the summary and suggestion halves', () => {
-    const summary = pieceTranslation.pathsForSummary
-    const suggestions = pieceTranslation.pathsForSuggestions
-    expect(summary.filter(p => suggestions.includes(p))).toEqual([])
-    expect([...summary, ...suggestions].sort()).toEqual([...pieceTranslation.pathsToValuesToTranslate].sort())
-  })
-
-  it('summary then suggestions equals one pass over the full path set', () => {
-    for (const fixture of fixtures) {
-      for (const locale of [DE, LocalesEnum.FRENCH, LocalesEnum.CHINESE_TRADITIONAL]) {
-        const raw = JSON.stringify(fixture)
-        const onePass = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale } as never)
-        const summary = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale, paths: pieceTranslation.pathsForSummary } as never)
-        const twoPass = pieceTranslation.translatePiece({ piece: summary, locale, paths: pieceTranslation.pathsForSuggestions } as never)
-        expect(JSON.stringify(twoPass)).toEqual(JSON.stringify(onePass))
-      }
-    }
+    const input = clone(fixtureNamed('missing-and-odd-leaves'))
+    const translated = translate({ piece: input, locale: DE })
+    expect(translated.actions.a1.props).toBe(input.actions.a1.props)
+    expect(translated.triggers).toBe(input.triggers)
+    expect(translated.actions.a2.props.p.displayName).toEqual('Pe')
   })
 
   it('never translates a value that is itself a translation key', () => {
-    const piece = {
+    const piece: TestPiece = {
       name: 'chained', displayName: 'Chained', description: 'Name',
       actions: {
         act: {
@@ -171,41 +150,31 @@ describe('translatePiece copy-on-write', () => {
       triggers: {},
       i18n: { [DE]: { 'Name': 'Nom', 'Nom': 'Nombre' } },
     }
-    const raw = JSON.stringify(piece)
-    const onePass = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale: DE } as never) as never as Record<string, never>
-    const summary = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale: DE, paths: pieceTranslation.pathsForSummary } as never)
-    const twoPass = pieceTranslation.translatePiece({ piece: summary, locale: DE, paths: pieceTranslation.pathsForSuggestions } as never) as never as Record<string, never>
-
-    expect(onePass.actions.act.displayName).toEqual('Nom')
-    expect(onePass.actions.act.props.field.displayName).toEqual('Nom')
-    expect(JSON.stringify(twoPass)).toEqual(JSON.stringify(onePass))
+    const translated = translate({ piece, locale: DE })
+    expect(translated.actions.act.displayName).toEqual('Nom')
+    expect(translated.actions.act.props.field.displayName).toEqual('Nom')
   })
 
-  it('translates the summary paths identically to the full path set', () => {
-    const piece = fixtures.find(f => f.name === 'options-arrays')!
-    const raw = JSON.stringify(piece)
-    const full = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale: DE } as never) as never as Record<string, never>
-    const summary = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale: DE, paths: pieceTranslation.pathsForSummary } as never) as never as Record<string, never>
-    expect(summary.description).toEqual(full.description)
-    expect(summary.actions.act.displayName).toEqual(full.actions.act.displayName)
-    expect(summary.actions.act.description).toEqual(full.actions.act.description)
-    expect(summary.triggers.trig.displayName).toEqual(full.triggers.trig.displayName)
-    expect(JSON.stringify(summary.auth)).toEqual(JSON.stringify(full.auth))
+  it('does not resolve a value to an inherited property of the translations', () => {
+    const piece: TestPiece = { name: 'inherited', displayName: 'Inherited', description: 'constructor', actions: {}, triggers: {} }
+    const translated = pieceTranslation.translatePiece({ piece, translations: {} })
+    expect(translated.description).toEqual('constructor')
   })
 })
 
 const corpus = process.env.PIECE_CORPUS_DIR
 describe.skipIf(!corpus)('translatePiece copy-on-write against a real catalogue', () => {
   it('matches the JSON-clone implementation for every piece and locale', () => {
-    const files = fs.readdirSync(corpus!)
+    const files = fs.readdirSync(corpus ?? '')
     const mismatches: string[] = []
     let compared = 0
     for (const file of files) {
-      const raw = fs.readFileSync(path.join(corpus!, file), 'utf8')
-      const locales = Object.keys(JSON.parse(raw).i18n ?? {})
-      for (const locale of [...locales, 'zh-TW'] as LocalesEnum[]) {
+      const raw = fs.readFileSync(path.join(corpus ?? '', file), 'utf8')
+      const parsed: TestPiece = JSON.parse(raw)
+      const locales = Object.keys(parsed.i18n ?? {})
+      for (const locale of [...locales, LocalesEnum.CHINESE_TRADITIONAL] as LocalesEnum[]) {
         const legacy = legacyTranslatePiece(JSON.parse(raw), locale)
-        const actual = pieceTranslation.translatePiece({ piece: JSON.parse(raw), locale } as never)
+        const actual = translate({ piece: JSON.parse(raw), locale })
         compared++
         if (JSON.stringify(actual) !== JSON.stringify(legacy)) mismatches.push(`${file}:${locale}`)
       }
@@ -214,3 +183,45 @@ describe.skipIf(!corpus)('translatePiece copy-on-write against a real catalogue'
     expect(mismatches).toEqual([])
   }, 600000)
 })
+
+function translate({ piece, locale }: { piece: TestPiece, locale: LocalesEnum }): TestPiece {
+  return pieceTranslation.translatePiece({ piece, translations: piece.i18n?.[locale] })
+}
+
+function clone(piece: TestPiece): TestPiece {
+  return JSON.parse(JSON.stringify(piece))
+}
+
+function fixtureNamed(name: string): TestPiece {
+  const fixture = fixtures.find((candidate) => candidate.name === name)
+  if (!fixture) {
+    throw new Error(`no fixture named ${name}`)
+  }
+  return fixture
+}
+
+type TestProp = {
+  displayName: string
+  description?: string
+  required: boolean
+  type: string
+  options?: { options: { label: string, value: string }[] }
+}
+
+type TestComponent = {
+  name: string
+  displayName: string
+  description?: string
+  requireAuth: boolean
+  props: Record<string, TestProp>
+}
+
+type TestPiece = {
+  name: string
+  displayName: string
+  description: string
+  auth?: unknown
+  actions: Record<string, TestComponent>
+  triggers: Record<string, TestComponent>
+  i18n?: Partial<Record<string, Record<string, string>>>
+}

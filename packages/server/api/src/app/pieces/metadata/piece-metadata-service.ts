@@ -13,6 +13,7 @@ import { projectService } from '../../project/project-service'
 import { currentPieceGeneration, pieceCache, PieceRegistryEntry } from './piece-cache'
 import { PieceMetadataEntity, PieceMetadataSchema } from './piece-metadata-entity'
 import { filterActionsByAudience, filterPieceBasedOnType, isNewerVersion, isSupportedRelease, lastVersionOfEachPiece, loadDevPiecesIfEnabled, pieceListUtils } from './utils'
+import { createGenerationMemo } from './utils/generation-memo'
 
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
@@ -23,15 +24,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const locale = localeUtils.toSupportedLocale(params.locale)
-            const catalogue = await dedupe(`list:${params.platformId ?? ''}:${locale}:${currentPieceGeneration()}`, () => fetchLatestPieces({
-                platformId: params.platformId,
-                locale,
-                log,
-            }))
-            const translatedPieces = isNil(params.suggestionType) ? catalogue.summary : catalogue.suggestions
+            const catalogue = await catalogueByLocale.get({ key: locale, load: () => fillCatalogue({ locale, log }) })
+            const platformPieces = lastVersionOfEachPiece(catalogue.filter((piece) => filterPieceBasedOnType(params.platformId, piece)))
             const policy = await resolveVisibility({ platformId: params.platformId, projectId: params.projectId, log })
             const audience = params.audience ?? PieceAudienceFilter.HUMAN
-            const audiencePieces = translatedPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
+            const audiencePieces = platformPieces.map((piece) => ({ ...piece, actions: filterActionsByAudience(piece.actions, audience) }))
             const sortedPieces = await pieceListUtils(log).sortAndSearchPieces({
                 ...params,
                 pieces: audiencePieces,
@@ -89,20 +86,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                     },
                 })
             }
-            const normalizedLocale = isNil(locale) ? undefined : localeUtils.toSupportedLocale(locale)
-            if (isNil(normalizedLocale) || normalizedLocale === LocalesEnum.ENGLISH) {
-                return piece
+            const translations = await findTranslations({ piece, locale: localeUtils.toSupportedLocale(locale) })
+            return {
+                ...pieceTranslation.translatePiece({ piece, translations }),
+                i18n: includeTranslations ? piece.i18n : undefined,
             }
-            const translations = piece.i18n?.[normalizedLocale] ?? await fetchTranslationsForPieceId({ pieceId: piece.id, locale: normalizedLocale })
-            if (isNil(translations)) {
-                return piece
-            }
-            const translated = pieceTranslation.translatePiece<PieceMetadataModel>({
-                piece: { ...piece, i18n: { [normalizedLocale]: translations } },
-                locale: normalizedLocale,
-            })
-            translated.i18n = includeTranslations ? piece.i18n : undefined
-            return translated
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
@@ -415,72 +403,37 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-async function fetchLatestPieces({ platformId, locale = LocalesEnum.ENGLISH, log }: FetchLatestPiecesParams): Promise<TranslatedCatalogue> {
+const latestCompatiblePieces = createGenerationMemo<PieceMetadataSchema[]>({ currentGeneration: currentPieceGeneration })
+const catalogueByLocale = createGenerationMemo<PieceMetadataSchema[]>({ currentGeneration: currentPieceGeneration })
+
+async function fillCatalogue({ locale, log }: FillCatalogueParams): Promise<PieceMetadataSchema[]> {
+    const startedAt = performance.now()
+    const pieces = await loadCataloguePieces({ log })
+    const storedTranslations = locale === LocalesEnum.ENGLISH
+        ? undefined
+        : await fetchTranslationsForLocale({ pieceIds: pieces.map((piece) => piece.id), locale })
+    const catalogue = pieces.map((piece) => ({
+        ...pieceTranslation.translatePiece({
+            piece,
+            translations: isNil(storedTranslations) ? undefined : piece.i18n?.[locale] ?? storedTranslations.get(piece.id),
+        }),
+        i18n: undefined,
+    }))
+    log.info({ pieceCatalogue: { locale, pieceCount: catalogue.length, durationMs: Math.round(performance.now() - startedAt) } }, '[pieceCatalogue] Filled')
+    return catalogue
+}
+
+async function loadCataloguePieces({ log }: LoadCataloguePiecesParams): Promise<PieceMetadataSchema[]> {
     const currentRelease = apVersionUtil.getCurrentRelease()
-
-    const catalogue = await loadTranslatedCatalogue({ currentRelease, locale })
-
-    const devPieces = await loadDevPiecesIfEnabled(log)
-    const translatedDevPieces = devPieces.map((piece) =>
-        pieceTranslation.translatePiece<PieceMetadataSchema>({ piece, locale }),
-    )
-
-    const summary = mergeDevPieces({ pieces: catalogue.summary, devPieces: translatedDevPieces, platformId, currentRelease })
-    return {
-        summary,
-        suggestions: catalogue.suggestions === catalogue.summary
-            ? summary
-            : mergeDevPieces({ pieces: catalogue.suggestions, devPieces: translatedDevPieces, platformId, currentRelease }),
-    }
-}
-
-function mergeDevPieces({ pieces, devPieces, platformId, currentRelease }: MergeDevPiecesParams): PieceMetadataSchema[] {
+    const [storedPieces, devPieces] = await Promise.all([
+        latestCompatiblePieces.get({ key: currentRelease, load: () => fetchLatestCompatiblePiecesFromDB(currentRelease) }),
+        loadDevPiecesIfEnabled(log),
+    ])
     const devPieceNames = new Set(devPieces.map((piece) => piece.name))
-    const merged = [...pieces.filter((piece) => !devPieceNames.has(piece.name)), ...devPieces]
-        .filter((piece) => filterPieceBasedOnType(platformId, piece))
-        .filter((piece) => isSupportedRelease(currentRelease, piece))
-    return lastVersionOfEachPiece(merged)
-}
-
-let rawCatalogueCache: PieceMetadataSchema[] | null = null
-let rawCatalogueGeneration = -1
-
-function loadRawCatalogue({ currentRelease, generation }: LoadRawCatalogueParams): Promise<PieceMetadataSchema[]> {
-    if (!isNil(rawCatalogueCache) && rawCatalogueGeneration === generation) {
-        return Promise.resolve(rawCatalogueCache)
-    }
-    return dedupe(`latest-pieces:${currentRelease}:${generation}`, async () => {
-        const pieces = await fetchLatestCompatiblePiecesFromDB(currentRelease)
-        if (currentPieceGeneration() === generation) {
-            rawCatalogueCache = pieces
-            rawCatalogueGeneration = generation
-        }
-        return pieces
-    })
-}
-
-let catalogueCacheGeneration = -1
-const catalogueCacheByLocale = new Map<LocalesEnum, TranslatedCatalogue>()
-
-function loadTranslatedCatalogue({ currentRelease, locale }: LoadTranslatedCatalogueParams): Promise<TranslatedCatalogue> {
-    const generation = currentPieceGeneration()
-    if (generation !== catalogueCacheGeneration) {
-        catalogueCacheByLocale.clear()
-        rawCatalogueCache = null
-        catalogueCacheGeneration = generation
-    }
-    const cached = catalogueCacheByLocale.get(locale)
-    if (!isNil(cached)) {
-        return Promise.resolve(cached)
-    }
-    return dedupe(`catalogue:${currentRelease}:${locale}:${generation}`, async () => {
-        const latestPieces = await loadRawCatalogue({ currentRelease, generation })
-        const catalogue = await translatePieces({ pieces: latestPieces, locale })
-        if (currentPieceGeneration() === generation) {
-            catalogueCacheByLocale.set(locale, catalogue)
-        }
-        return catalogue
-    })
+    return [
+        ...storedPieces.filter((piece) => !devPieceNames.has(piece.name)),
+        ...devPieces.filter((piece) => isSupportedRelease(currentRelease, piece)),
+    ]
 }
 
 async function fetchPieceVersion({ pieceName, version, platformId, includeTranslations, log }: FetchPieceVersionParams): Promise<PieceMetadataSchema | null> {
@@ -524,50 +477,16 @@ function pickLatestVersionIds(pieces: PieceKey[]): string[] {
     return Array.from(latest.values()).map((p) => p.id)
 }
 
-async function translatePieces({ pieces, locale }: TranslatePiecesParams): Promise<TranslatedCatalogue> {
+async function findTranslations({ piece, locale }: FindTranslationsParams): Promise<Record<string, string> | undefined> {
     if (locale === LocalesEnum.ENGLISH) {
-        const untranslated = pieces.map((piece) => ({ ...piece, i18n: undefined }))
-        return { summary: untranslated, suggestions: untranslated }
+        return undefined
     }
-    const translationsByPieceId = await fetchTranslationsForLocale({ pieceIds: pieces.map((piece) => piece.id), locale })
-    const summary: PieceMetadataSchema[] = []
-    const suggestions: PieceMetadataSchema[] = []
-    for (const piece of pieces) {
-        const translations = translationsByPieceId.get(piece.id)
-        if (isNil(translations)) {
-            const untranslated = { ...piece, i18n: undefined }
-            summary.push(untranslated)
-            suggestions.push(untranslated)
-            continue
-        }
-        const withTranslations = { ...piece, i18n: { [locale]: translations } }
-        const summaryPiece = pieceTranslation.translatePiece<PieceMetadataSchema>({
-            piece: withTranslations,
-            locale,
-            paths: pieceTranslation.pathsForSummary,
-        })
-        const suggestionPiece = pieceTranslation.translatePiece<PieceMetadataSchema>({
-            piece: summaryPiece,
-            locale,
-            paths: pieceTranslation.pathsForSuggestions,
-        })
-        summary.push({ ...summaryPiece, i18n: undefined })
-        suggestions.push({ ...suggestionPiece, i18n: undefined })
+    const loaded = piece.i18n?.[locale]
+    if (!isNil(loaded) || isNil(piece.id)) {
+        return loaded
     }
-    return { summary, suggestions }
-}
-
-async function fetchTranslationsForPieceId({ pieceId, locale }: FetchTranslationsForPieceIdParams): Promise<Record<string, string> | null> {
-    if (isNil(pieceId)) {
-        return null
-    }
-    const row = await pieceRepos()
-        .createQueryBuilder('pm')
-        .select('pm."i18n" -> :locale', 'translations')
-        .where('pm."id" = :pieceId', { pieceId })
-        .setParameter('locale', locale)
-        .getRawOne<{ translations: Record<string, string> | null }>()
-    return row?.translations ?? null
+    const translationsById = await fetchTranslationsForLocale({ pieceIds: [piece.id], locale })
+    return translationsById.get(piece.id)
 }
 
 async function fetchTranslationsForLocale({ pieceIds, locale }: FetchTranslationsForLocaleParams): Promise<Map<string, Record<string, string>>> {
@@ -677,12 +596,6 @@ type RegistryParams = {
     platformId?: string
 }
 
-type FetchLatestPiecesParams = {
-    platformId?: string
-    locale?: LocalesEnum
-    log: FastifyBaseLogger
-}
-
 type FetchPieceVersionParams = {
     pieceName: string
     version: string
@@ -697,8 +610,17 @@ type ToPieceMetadataModelSummaryParams<T extends PieceMetadataSchema | PieceMeta
     suggestionType?: SuggestionType
 }
 
-type TranslatePiecesParams = {
-    pieces: PieceMetadataSchema[]
+type FillCatalogueParams = {
+    locale: LocalesEnum
+    log: FastifyBaseLogger
+}
+
+type LoadCataloguePiecesParams = {
+    log: FastifyBaseLogger
+}
+
+type FindTranslationsParams = {
+    piece: PieceMetadataModel
     locale: LocalesEnum
 }
 
@@ -714,31 +636,4 @@ type PieceKey = {
     platformId: string | null
     minimumSupportedRelease?: string
     maximumSupportedRelease?: string
-}
-
-type TranslatedCatalogue = {
-    summary: PieceMetadataSchema[]
-    suggestions: PieceMetadataSchema[]
-}
-
-type LoadTranslatedCatalogueParams = {
-    currentRelease: string
-    locale: LocalesEnum
-}
-
-type FetchTranslationsForPieceIdParams = {
-    pieceId: string | undefined
-    locale: LocalesEnum
-}
-
-type LoadRawCatalogueParams = {
-    currentRelease: string
-    generation: number
-}
-
-type MergeDevPiecesParams = {
-    pieces: PieceMetadataSchema[]
-    devPieces: PieceMetadataSchema[]
-    platformId?: string
-    currentRelease: string
 }
