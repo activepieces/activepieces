@@ -7,7 +7,6 @@ import {
 import { whatsappAuth } from '../auth';
 import {
 	Property,
-	PiecePropValueSchema,
 	DynamicPropsValue,
 	DropdownOption,
 } from '@activepieces/pieces-framework';
@@ -18,67 +17,7 @@ export const mediaTypeSupportsCaption = (type: string) =>
 	['image', 'video', 'document'].includes(type);
 
 export const commonProps = {
-	phone_number_id: Property.Dropdown({
-		auth: whatsappAuth,
-		displayName: 'Phone Number ID',
-		description: 'Phone number ID that will be used to send the message.',
-		refreshers: [],
-		required: true,
-		options: async ({ auth }) => {
-			if (!auth) {
-				return {
-					placeholder: 'Please connect account first',
-					disabled: true,
-					options: [],
-				};
-			}
-
-			const authValue = auth.props;
-
-			const options: DropdownOption<string>[] = [];
-
-			let hasMore = false;
-			let cursor;
-
-			do {
-				const qs: QueryParams = {
-					fields: 'verified_name,id,display_phone_number',
-					limit: '1',
-				};
-				if (cursor) qs['after'] = cursor;
-
-				const response = await httpClient.sendRequest({
-					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/phone_numbers`,
-					authentication: {
-						type: AuthenticationType.BEARER_TOKEN,
-						token: authValue.access_token,
-					},
-					queryParams: qs,
-				});
-
-				for (const phoneNumber of response.body.data) {
-					options.push({
-						label: `${phoneNumber.verified_name as string} : ${
-							phoneNumber.display_phone_number as string
-						}`,
-						value: phoneNumber.id as string,
-					});
-				}
-
-				if (response.body.paging.next) {
-					(hasMore = true), (cursor = response.body.paging.cursors.after);
-				} else {
-					hasMore = false;
-				}
-			} while (hasMore);
-
-			return {
-				disabled: false,
-				options,
-			};
-		},
-	}),
+	phone_number_id: phoneNumberDropdown({ required: true }),
 	message_template_id: Property.Dropdown({
 		displayName: 'Message Template ID',
 		refreshers: [],
@@ -97,19 +36,18 @@ export const commonProps = {
 
 			const options: DropdownOption<string>[] = [];
 
-			let hasMore = false;
-			let cursor;
+			let cursor: string | undefined;
 
 			do {
 				const qs: QueryParams = {
 					fields: 'id,name,language',
-					limit: '1',
+					limit: String(DROPDOWN_PAGE_SIZE),
 				};
 				if (cursor) qs['after'] = cursor;
 
-				const response = await httpClient.sendRequest({
+				const response = await httpClient.sendRequest<GraphPage<MessageTemplateRow>>({
 					method: HttpMethod.GET,
-					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/message_templates`,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/message_templates`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
 						token: authValue.access_token,
@@ -117,19 +55,15 @@ export const commonProps = {
 					queryParams: qs,
 				});
 
-				for (const template of response.body.data) {
+				for (const template of response.body.data ?? []) {
 					options.push({
-						label: `${template.name as string} (${template.language as string})`,
-						value: template.id as string,
+						label: `${template.name} (${template.language})`,
+						value: template.id,
 					});
 				}
 
-				if (response.body.paging.next) {
-					(hasMore = true), (cursor = response.body.paging.cursors.after);
-				} else {
-					hasMore = false;
-				}
-			} while (hasMore);
+				cursor = nextCursor(response.body);
+			} while (cursor);
 
 			return {
 				disabled: false,
@@ -151,7 +85,7 @@ export const commonProps = {
 			const templateId = message_template_id as unknown as string;
 
 			const response = await httpClient.sendRequest({
-				url: `https://graph.facebook.com/v20.0/${templateId}`,
+				url: `${WHATSAPP_API_BASE}/${templateId}`,
 				method: HttpMethod.GET,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
@@ -223,3 +157,77 @@ export const commonProps = {
 		},
 	}),
 };
+
+
+function nextCursor<T>(page: GraphPage<T>): string | undefined {
+	return page.paging?.next ? page.paging.cursors?.after : undefined;
+}
+
+export function phoneNumberDropdown<R extends boolean>({ required }: { required: R }) {
+	return Property.Dropdown({
+		auth: whatsappAuth,
+		displayName: 'Phone Number ID',
+		description: 'Phone number ID that will be used to send the message.',
+		refreshers: [],
+		required,
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					placeholder: 'Please connect account first',
+					disabled: true,
+					options: [],
+				};
+			}
+
+			const authValue = auth.props;
+
+			const options: DropdownOption<string>[] = [];
+
+			let cursor: string | undefined;
+
+			do {
+				const qs: QueryParams = {
+					fields: 'verified_name,id,display_phone_number',
+					limit: String(DROPDOWN_PAGE_SIZE),
+				};
+				if (cursor) qs['after'] = cursor;
+
+				const response = await httpClient.sendRequest<GraphPage<PhoneNumberRow>>({
+					method: HttpMethod.GET,
+					url: `${WHATSAPP_API_BASE}/${authValue.businessAccountId}/phone_numbers`,
+					authentication: {
+						type: AuthenticationType.BEARER_TOKEN,
+						token: authValue.access_token,
+					},
+					queryParams: qs,
+				});
+
+				for (const phoneNumber of response.body.data ?? []) {
+					options.push({
+						label: `${phoneNumber.verified_name} : ${phoneNumber.display_phone_number}`,
+						value: phoneNumber.id,
+					});
+				}
+
+				cursor = nextCursor(response.body);
+			} while (cursor);
+
+			return {
+				disabled: false,
+				options,
+			};
+		},
+	});
+}
+
+export const WHATSAPP_API_BASE = 'https://graph.facebook.com/v23.0';
+
+const DROPDOWN_PAGE_SIZE = 100;
+
+type GraphPage<T> = {
+	data?: T[];
+	paging?: { next?: string; cursors?: { after?: string } };
+};
+
+type PhoneNumberRow = { id: string; verified_name: string; display_phone_number: string };
+type MessageTemplateRow = { id: string; name: string; language: string };

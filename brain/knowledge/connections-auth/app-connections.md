@@ -43,3 +43,7 @@ Entry point: `appConnectionService`, exported from the app-connection service an
 - `packages/web/src/app/routes/platform/setup/connections/` — platform-wide global connections page
 
 Paths verified 2026-07-17.
+
+## Gotchas
+
+- **`needRefresh` looks the piece up by `connection.pieceVersion`, so a CUSTOM_AUTH connection whose stored version is no longer served fails as `ConnectionNotFound`, not as a version error.** Any 404 from `GET /v1/worker/app-connections/:externalId` is mapped by the engine to "connection not found", which points debugging at credentials. On a dev instance this happens the moment a dev piece's version is bumped; in production it would need a published version to disappear from the registry. The lookup result is cached per piece version in `pieceRefreshSupportCache`.

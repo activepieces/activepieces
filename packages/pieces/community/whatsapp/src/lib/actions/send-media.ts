@@ -6,11 +6,14 @@ import {
 	capitalizeFirstLetter,
 	mediaTypeSupportsCaption,
 	commonProps,
+	WHATSAPP_API_BASE,
 } from '../common/utils';
+import { messageSendOutputSchema } from '../output-schemas';
 
 export const sendMedia = createAction({
 	auth: whatsappAuth,
 	name: 'sendMedia',
+	outputSchema: messageSendOutputSchema,
 	classification: 'WRITE',
 	displayName: 'Send Media',
 	description: 'Send a media message through WhatsApp',
@@ -57,24 +60,26 @@ export const sendMedia = createAction({
 	async run(context) {
 		const { to, caption, media, type, filename, phone_number_id } = context.propsValue;
 		const { access_token } = context.auth.props;
+		const mediaObject = {
+			link: media,
+			...(caption && mediaTypeSupportsCaption(type) ? { caption } : {}),
+			...(filename && type === 'document' ? { filename } : {}),
+		};
 		const body = {
 			messaging_product: 'whatsapp',
 			recipient_type: 'individual',
 			to,
 			type,
-			[type]: {
-				link: media,
-			},
+			[type]: mediaObject,
 		};
-		if (caption && mediaTypeSupportsCaption(type)) (body[type] as any).caption = caption;
-		if (filename && type === 'document') (body[type] as any).filename = filename;
-		return await httpClient.sendRequest({
+		const response = await httpClient.sendRequest({
 			method: HttpMethod.POST,
-			url: `https://graph.facebook.com/v17.0/${phone_number_id}/messages`,
+			url: `${WHATSAPP_API_BASE}/${phone_number_id}/messages`,
 			headers: {
 				Authorization: 'Bearer ' + access_token,
 			},
 			body,
 		});
+		return response.body;
 	},
 });
