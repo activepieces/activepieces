@@ -88,15 +88,19 @@ const CUSTOMER_IO_EVENTS: { label: string; value: string }[] = [
 export const newReportingEvent = createTrigger({
   auth: customerIOAuth,
   name: 'new_reporting_event',
+  classification: 'READ',
   displayName: 'New Reporting Event',
   description:
     'Fires on a Customer.io reporting-webhook event (delivered, bounced, clicked, …). Subscribe to only the event types you need, and optionally match a single campaign, action, or recipient domain so unrelated events never start a run.',
+  aiMetadata: {
+    description:
+      'Fires on each Customer.io reporting-webhook event of the subscribed types (e.g. email_delivered, email_bounced, sms_clicked). Requires the event types to subscribe to, and optionally filters by campaign ID, action ID, or recipient email domain so only matching events start a run. Returns the raw Customer.io event envelope (event_id, object_type, metric, timestamp, data).',
+  },
   type: TriggerStrategy.WEBHOOK,
   props: {
     events: Property.StaticMultiSelectDropdown({
       displayName: 'Event Types',
-      description:
-        'Which reporting events Customer.io should send. Only these types are subscribed at the source.',
+      description: 'Which reporting events Customer.io should send.',
       required: true,
       options: {
         options: CUSTOMER_IO_EVENTS,
@@ -104,8 +108,7 @@ export const newReportingEvent = createTrigger({
     }),
     campaign_id: Property.Number({
       displayName: 'Campaign ID',
-      description:
-        'Optional. When set, only events for this campaign start a run; others are dropped before a run is created.',
+      description: 'Optional. Only start a run for events of this campaign.',
       required: false,
     }),
     action_id: Property.Number({
@@ -117,7 +120,8 @@ export const newReportingEvent = createTrigger({
     recipient_domain: Property.ShortText({
       displayName: 'Recipient Domain',
       description:
-        'Optional. When set (e.g. "odoo.com"), only events whose recipient email is at this domain start a run.',
+        'Optional. Only start a run when the recipient email is at this domain.',
+      placeholder: 'odoo.com',
       required: false,
     }),
   },
@@ -143,11 +147,10 @@ export const newReportingEvent = createTrigger({
   async onEnable(context) {
     const { region, api_bearer_token } = context.auth.props;
     const apiUrl = customerIOCommon[region || 'us'].apiUrl;
-    const flowIdentifier = context.webhookUrl
-      .split('?')[0]
-      .split('/')
-      .filter(Boolean)
-      .pop();
+    const segments = context.webhookUrl.split('?')[0].split('/').filter(Boolean);
+    const lastSegment = segments[segments.length - 1];
+    const flowIdentifier =
+      lastSegment === 'test' ? segments[segments.length - 2] : lastSegment;
     const response = await httpClient.sendRequest<{ id: number }>({
       method: HttpMethod.POST,
       url: `${apiUrl}reporting_webhooks`,
@@ -162,15 +165,11 @@ export const newReportingEvent = createTrigger({
     try {
       await context.store.put(WEBHOOK_ID_STORE_KEY, response.body.id);
     } catch (error) {
-      try {
-        await deleteReportingWebhook({
-          apiUrl,
-          token: api_bearer_token,
-          webhookId: response.body.id,
-        });
-      } catch {
-        // Rollback is best-effort; surface the original persistence failure.
-      }
+      await deleteReportingWebhook({
+        apiUrl,
+        token: api_bearer_token,
+        webhookId: response.body.id,
+      }).catch(() => undefined);
       throw error;
     }
   },
@@ -187,9 +186,10 @@ export const newReportingEvent = createTrigger({
     });
   },
   async run(context) {
-    const event = context.payload.body as CustomerIoReportingEvent;
+    const body = context.payload.body;
+    const event: CustomerIoReportingEvent = isReportingEvent(body) ? body : {};
     const { campaign_id, action_id, recipient_domain } = context.propsValue;
-    const data = event?.data ?? {};
+    const data = event.data ?? {};
 
     if (
       campaign_id !== undefined &&
@@ -208,7 +208,11 @@ export const newReportingEvent = createTrigger({
     if (
       recipient_domain &&
       ![data.recipient, data.email_address, data.identifiers?.email].some(
-        (candidate) => recipientMatchesDomain(candidate, recipient_domain)
+        (candidate) =>
+          recipientMatchesDomain({
+            recipient: candidate,
+            domain: recipient_domain,
+          })
       )
     ) {
       return [];
@@ -240,10 +244,17 @@ async function deleteReportingWebhook({
   }
 }
 
-function recipientMatchesDomain(
-  recipient: string | undefined,
-  domain: string
-): boolean {
+function isReportingEvent(body: unknown): body is CustomerIoReportingEvent {
+  return typeof body === 'object' && body !== null;
+}
+
+function recipientMatchesDomain({
+  recipient,
+  domain,
+}: {
+  recipient: string | undefined;
+  domain: string;
+}): boolean {
   if (!recipient) {
     return false;
   }

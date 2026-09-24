@@ -14,7 +14,13 @@ const EVENT = {
   },
 };
 
-const buildContext = (propsValue: unknown, body: unknown) =>
+const buildContext = ({
+  propsValue,
+  body,
+}: {
+  propsValue: unknown;
+  body: unknown;
+}) =>
   ({
     propsValue,
     payload: {
@@ -28,7 +34,7 @@ const buildContext = (propsValue: unknown, body: unknown) =>
 describe('customer-io new-reporting-event run()', () => {
   test('returns the event when no filters are set', async () => {
     const output = await newReportingEvent.run(
-      buildContext({ events: ['email_delivered'] }, EVENT)
+      buildContext({ propsValue: { events: ['email_delivered'] }, body: EVENT })
     );
 
     expect(output).toEqual([EVENT]);
@@ -36,15 +42,12 @@ describe('customer-io new-reporting-event run()', () => {
 
   test('returns the event when campaign, action and domain all match', async () => {
     const output = await newReportingEvent.run(
-      buildContext(
-        {
+      buildContext({ propsValue: {
           events: ['email_delivered'],
           campaign_id: 20,
           action_id: 489,
           recipient_domain: 'odoo.com',
-        },
-        EVENT
-      )
+        }, body: EVENT })
     );
 
     expect(output).toEqual([EVENT]);
@@ -52,7 +55,7 @@ describe('customer-io new-reporting-event run()', () => {
 
   test('drops the event when the campaign does not match', async () => {
     const output = await newReportingEvent.run(
-      buildContext({ events: ['email_delivered'], campaign_id: 99 }, EVENT)
+      buildContext({ propsValue: { events: ['email_delivered'], campaign_id: 99 }, body: EVENT })
     );
 
     expect(output).toEqual([]);
@@ -60,7 +63,7 @@ describe('customer-io new-reporting-event run()', () => {
 
   test('drops the event when the action does not match', async () => {
     const output = await newReportingEvent.run(
-      buildContext({ events: ['email_delivered'], action_id: 1 }, EVENT)
+      buildContext({ propsValue: { events: ['email_delivered'], action_id: 1 }, body: EVENT })
     );
 
     expect(output).toEqual([]);
@@ -68,10 +71,7 @@ describe('customer-io new-reporting-event run()', () => {
 
   test('drops the event when the recipient domain does not match', async () => {
     const output = await newReportingEvent.run(
-      buildContext(
-        { events: ['email_delivered'], recipient_domain: 'example.com' },
-        EVENT
-      )
+      buildContext({ propsValue: { events: ['email_delivered'], recipient_domain: 'example.com' }, body: EVENT })
     );
 
     expect(output).toEqual([]);
@@ -79,10 +79,7 @@ describe('customer-io new-reporting-event run()', () => {
 
   test('matches the recipient domain case-insensitively and tolerates a leading @', async () => {
     const output = await newReportingEvent.run(
-      buildContext(
-        { events: ['email_delivered'], recipient_domain: '@ODOO.com' },
-        EVENT
-      )
+      buildContext({ propsValue: { events: ['email_delivered'], recipient_domain: '@ODOO.com' }, body: EVENT })
     );
 
     expect(output).toEqual([EVENT]);
@@ -94,7 +91,7 @@ describe('customer-io new-reporting-event run()', () => {
       data: { action_id: 489, campaign_id: 20, email_address: 'user@odoo.com' },
     };
     const output = await newReportingEvent.run(
-      buildContext({ events: ['email_delivered'], recipient_domain: 'odoo.com' }, event)
+      buildContext({ propsValue: { events: ['email_delivered'], recipient_domain: 'odoo.com' }, body: event })
     );
 
     expect(output).toEqual([event]);
@@ -112,7 +109,7 @@ describe('customer-io new-reporting-event run()', () => {
       },
     };
     const output = await newReportingEvent.run(
-      buildContext({ events: ['sms_delivered'], recipient_domain: 'odoo.com' }, event)
+      buildContext({ propsValue: { events: ['sms_delivered'], recipient_domain: 'odoo.com' }, body: event })
     );
 
     expect(output).toEqual([event]);
@@ -128,7 +125,7 @@ describe('customer-io new-reporting-event run()', () => {
       },
     };
     const output = await newReportingEvent.run(
-      buildContext({ events: ['email_delivered'], recipient_domain: 'odoo.com' }, event)
+      buildContext({ propsValue: { events: ['email_delivered'], recipient_domain: 'odoo.com' }, body: event })
     );
 
     expect(output).toEqual([event]);
