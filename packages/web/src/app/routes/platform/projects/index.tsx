@@ -37,6 +37,7 @@ import {
   EditProjectDialog,
   projectCollectionUtils,
 } from '@/features/projects';
+import type { EditProjectInitialValues } from '@/features/projects';
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
@@ -101,8 +102,9 @@ export default function ProjectsPage() {
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] =
-    useState<any>(null);
+  const [editDialogInitialValues, setEditDialogInitialValues] = useState<
+    EditProjectInitialValues | undefined
+  >(undefined);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
   const { data: allGlobalConnectionsPage } =
     globalConnectionsQueries.useGlobalConnections({
@@ -343,6 +345,7 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
+                    externalId: row.externalId ?? undefined,
                     sensitive: row.sensitive,
                   });
                   setEditDialogProjectId(row.id);
