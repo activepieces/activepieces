@@ -6,24 +6,9 @@ import {
 } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { getCloudProp } from '../common/microsoft-cloud';
 import { getFileOutputSchema } from '../output-schemas';
 
-type SearchItem = {
-  id: string;
-  name: string;
-  file?: { mimeType: string };
-};
-
-type DriveItem = {
-  id: string;
-  name: string;
-  size: number;
-  createdDateTime: string;
-  lastModifiedDateTime: string;
-  webUrl: string;
-  file?: { mimeType: string };
-  parentReference?: { path: string; driveId: string };
-};
 
 export const downloadFile = createAction({
   auth: oneDriveAuth,
@@ -55,7 +40,7 @@ export const downloadFile = createAction({
   },
   async run(context) {
     const { lookupBy, fileIdentifier } = context.propsValue;
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const cloud = getCloudProp(context.auth);
     const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
     let fileId: string;
@@ -126,3 +111,20 @@ export const downloadFile = createAction({
     };
   },
 });
+
+type SearchItem = {
+  id: string;
+  name: string;
+  file?: { mimeType: string };
+};
+
+type DriveItem = {
+  id: string;
+  name: string;
+  size: number;
+  createdDateTime: string;
+  lastModifiedDateTime: string;
+  webUrl: string;
+  file?: { mimeType: string };
+  parentReference?: { path: string; driveId: string };
+};

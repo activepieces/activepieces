@@ -24,7 +24,7 @@ export const onedriveCreateBundle = createAction({
     }),
     itemIds: Property.Array({
       displayName: 'Item IDs',
-      description: 'The IDs of the files to put in the bundle (at least two), from Search Files and Folders or List Folder Contents.',
+      description: 'IDs of at least two files, from Search or List Folder Contents.',
       required: true,
     }),
   },

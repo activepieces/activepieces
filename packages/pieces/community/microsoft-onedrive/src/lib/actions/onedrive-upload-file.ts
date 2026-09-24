@@ -23,13 +23,13 @@ export const onedriveUploadFile = createAction({
   props: {
     folderId: Property.ShortText({
       displayName: 'Folder ID',
-      description:
-        'The ID of the destination folder, from Search Files and Folders or List Folder Contents. Leave empty for the drive root.',
+      description: 'Destination folder ID. Leave empty for the drive root.',
       required: false,
     }),
     fileName: Property.ShortText({
       displayName: 'File Name',
-      description: 'The name to save the file as, including its extension, e.g. `report.pdf`.',
+      description: 'File name including its extension.',
+      placeholder: 'report.pdf',
       required: true,
     }),
     file: Property.File({

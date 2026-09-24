@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import {
   httpClient,
   HttpMethod,
@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { getCloudProp } from '../common/microsoft-cloud';
 import { listFoldersOutputSchema } from '../output-schemas';
 
 export const listFolders = createAction({
@@ -23,7 +24,7 @@ export const listFolders = createAction({
   },
   async run(context) {
     const parentId = context.propsValue.parentFolder ?? 'root';
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const cloud = getCloudProp(context.auth);
 
     const result = await httpClient.sendRequest({
       method: HttpMethod.GET,

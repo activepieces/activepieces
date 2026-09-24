@@ -21,12 +21,13 @@ export const onedriveListFolderChildren = createAction({
   props: {
     folderId: Property.ShortText({
       displayName: 'Folder ID',
-      description: 'The ID of the folder, from Search Files and Folders or a previous List Folder Contents call. Leave Folder ID and Folder Path empty for the drive root.',
+      description: 'Folder ID. Leave this and Folder Path empty for the drive root.',
       required: false,
     }),
     folderPath: Property.ShortText({
       displayName: 'Folder Path',
-      description: 'The folder path relative to the drive root, for example Documents/Reports. Used when Folder ID is empty.',
+      description: 'Folder path from the drive root. Used when Folder ID is empty.',
+      placeholder: 'Documents/Reports',
       required: false,
     }),
     itemType: Property.StaticDropdown({
@@ -49,7 +50,7 @@ export const onedriveListFolderChildren = createAction({
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'The nextPageToken returned by a previous call. Leave empty for the first page.',
+      description: 'nextPageToken from the previous call. Empty for the first page.',
       required: false,
     }),
   },

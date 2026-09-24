@@ -20,19 +20,18 @@ export const onedriveMoveItem = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description:
-        'The ID of the file or folder to move, from Search Files and Folders or List Folder Contents. Provide either this or Path.',
+      description: 'ID of the item to move, from Search or List Folder Contents.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The item path relative to the drive root, e.g. `Documents/report.docx`. Provide either this or Item ID.',
+      description: 'Path from the drive root. Use this or Item ID.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
     destinationFolderId: Property.ShortText({
       displayName: 'Destination Folder ID',
-      description:
-        'The ID of the folder to move into, from Search Files and Folders or List Folder Contents. Leave empty for the drive root.',
+      description: 'Folder to move into. Leave empty for the drive root.',
       required: false,
     }),
     newName: Property.ShortText({

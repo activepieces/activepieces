@@ -22,19 +22,18 @@ export const onedriveCopyItem = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description:
-        'The ID of the file or folder to copy, from Search Files and Folders or List Folder Contents. Provide either this or Path.',
+      description: 'ID of the item to copy, from Search or List Folder Contents.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The item path relative to the drive root, e.g. `Documents/report.docx`. Provide either this or Item ID.',
+      description: 'Path from the drive root. Use this or Item ID.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
     destinationFolderId: Property.ShortText({
       displayName: 'Destination Folder ID',
-      description:
-        'The ID of the folder to copy into, from Search Files and Folders or List Folder Contents. Leave empty for the drive root.',
+      description: 'Folder to copy into. Leave empty for the drive root.',
       required: false,
     }),
     newName: Property.ShortText({
@@ -44,8 +43,7 @@ export const onedriveCopyItem = createAction({
     }),
     conflictBehavior: Property.StaticDropdown({
       displayName: 'If the Name Exists',
-      description:
-        'What to do when the destination already has an item with this name. Not supported on personal OneDrive; leave empty there (the copy then fails on a conflict).',
+      description: 'What to do on a name clash. Not supported on personal OneDrive.',
       required: false,
       options: {
         disabled: false,

@@ -20,13 +20,13 @@ export const onedriveDeleteItem = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description:
-        'The ID of the file or folder to delete, from Search Files and Folders or List Folder Contents. Provide either this or Path.',
+      description: 'ID of the item to delete, from Search or List Folder Contents.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The item path relative to the drive root, e.g. `Documents/report.docx`. Provide either this or Item ID.',
+      description: 'Path from the drive root. Use this or Item ID.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
   },

@@ -20,12 +20,12 @@ export const onedriveAddItemToBundle = createAction({
   props: {
     bundleId: Property.ShortText({
       displayName: 'Bundle ID',
-      description: 'The ID of the bundle or album, from List Albums and Bundles or Create Bundle.',
+      description: 'Bundle ID from List Albums and Bundles or Create Bundle.',
       required: true,
     }),
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description: 'The ID of the file to add, from Search Files and Folders or List Folder Contents.',
+      description: 'ID of the file to add, from Search or List Folder Contents.',
       required: true,
     }),
   },

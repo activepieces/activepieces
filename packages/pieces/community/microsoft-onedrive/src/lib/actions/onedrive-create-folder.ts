@@ -20,13 +20,13 @@ export const onedriveCreateFolder = createAction({
   props: {
     parentFolderId: Property.ShortText({
       displayName: 'Parent Folder ID',
-      description:
-        'The ID of the folder to create the new folder in, from Search Files and Folders or List Folder Contents. Leave empty for the drive root.',
+      description: 'Parent folder ID. Leave empty for the drive root.',
       required: false,
     }),
     name: Property.ShortText({
       displayName: 'Folder Name',
-      description: 'The name of the folder, e.g. `Invoices 2026`. A single name, not a path.',
+      description: 'Folder name (a single name, not a path).',
+      placeholder: 'Invoices 2026',
       required: true,
     }),
   },

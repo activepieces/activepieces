@@ -10,9 +10,8 @@ import {
 import { oneDriveAuth } from '../auth';
 import mime from 'mime-types';
 import { oneDriveCommon } from '../common/common';
+import { getCloudProp } from '../common/microsoft-cloud';
 import { uploadFileOutputSchema } from '../output-schemas';
-
-const CHUNK_SIZE = 10485760; // Use 10MiB per chunk (a multiple of 320KiB, as OneDrive requires)
 
 export const uploadFile = createAction({
   auth: oneDriveAuth,
@@ -45,15 +44,12 @@ export const uploadFile = createAction({
     );
     const mimeType = mimeTypeLookup
       ? mimeTypeLookup
-      : 'application/octet-stream'; // Fallback to a default MIME type
+      : 'application/octet-stream';
     const encodedFilename = encodeURIComponent(context.propsValue.fileName);
     const parentId = context.propsValue.parentId ?? 'root';
-    const cloud = context.auth.props?.['cloud'] as string | undefined;
+    const cloud = getCloudProp(context.auth);
     const baseUrl = oneDriveCommon.getBaseUrl(cloud);
 
-    // Chunked upload needs the total size upfront for the Content-Range header.
-    // When the source doesn't report a size, buffer once and use its length —
-    // same behaviour as before streaming — then re-wrap so both paths stream.
     let { body, size: fileSize } = streamUtils.toStreamingBody(fileData);
     if (fileSize == null) {
       const buffered = await readableToBuffer(body);
@@ -62,7 +58,6 @@ export const uploadFile = createAction({
     }
 
     if (fileSize <= 4 * 1024 * 1024) {
-      // If file is smaller than 4MiB, use simple upload
       const result = await httpClient.sendRequest({
         method: HttpMethod.PUT,
         url: `${baseUrl}/items/${parentId}:/${encodedFilename}:/content`,
@@ -79,7 +74,6 @@ export const uploadFile = createAction({
 
       return result.body;
     } else {
-      // For files larger than 4MiB, use chunked upload
       const session = await httpClient.sendRequest({
         method: HttpMethod.POST,
         url: `${baseUrl}/items/${parentId}:/${encodedFilename}:/createUploadSession`,
@@ -121,3 +115,5 @@ export const uploadFile = createAction({
     }
   },
 });
+
+const CHUNK_SIZE = 10485760;

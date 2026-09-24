@@ -21,12 +21,12 @@ export const onedriveListDriveChanges = createAction({
   props: {
     pageToken: Property.ShortText({
       displayName: 'Page or Delta Token',
-      description: 'The nextPageToken or deltaToken returned by a previous call. Leave empty to start a new enumeration.',
+      description: 'nextPageToken or deltaToken from a previous call. Empty to start.',
       required: false,
     }),
     startFromNow: Property.Checkbox({
       displayName: 'Start From Now',
-      description: 'When no token is given, skip the existing items and return only a deltaToken for tracking future changes.',
+      description: 'Without a token, skip current items and return only a deltaToken.',
       required: false,
       defaultValue: false,
     }),

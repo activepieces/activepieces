@@ -43,7 +43,7 @@ export const onedriveSearchItems = createAction({
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'The nextPageToken returned by a previous call with the same search. Leave empty for the first page.',
+      description: 'nextPageToken from the previous call. Empty for the first page.',
       required: false,
     }),
   },

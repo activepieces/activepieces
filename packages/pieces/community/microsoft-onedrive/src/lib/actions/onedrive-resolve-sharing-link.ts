@@ -20,8 +20,8 @@ export const onedriveResolveSharingLink = createAction({
   props: {
     sharingUrl: Property.ShortText({
       displayName: 'Sharing Link or Share Token',
-      description:
-        'The full sharing URL (for example https://1drv.ms/...) or a share token that starts with `u!` or `s!`.',
+      description: 'The sharing URL, or a share token starting with u! or s!.',
+      placeholder: 'https://1drv.ms/...',
       required: true,
     }),
   },

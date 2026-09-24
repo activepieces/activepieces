@@ -20,12 +20,13 @@ export const onedriveListItemThumbnails = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description: 'The ID of the file, from Search Files and Folders or List Folder Contents. Provide this or Path.',
+      description: 'File ID from Search or List Folder Contents. Or use Path.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The file path relative to the drive root, for example Photos/beach.jpg. Used when Item ID is empty.',
+      description: 'File path from the drive root. Used when Item ID is empty.',
+      placeholder: 'Photos/beach.jpg',
       required: false,
     }),
   },

@@ -21,17 +21,18 @@ export const onedriveDownloadItemVersion = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'File ID',
-      description: 'The ID of the file, from Search Files and Folders or List Folder Contents. Provide this or Path.',
+      description: 'File ID from Search or List Folder Contents. Or use Path.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The file path relative to the drive root, for example Documents/report.docx. Used when File ID is empty.',
+      description: 'File path from the drive root. Used when File ID is empty.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
     versionId: Property.ShortText({
       displayName: 'Version ID',
-      description: 'The ID of an earlier version, from List File Versions. The current version cannot be downloaded this way.',
+      description: 'Earlier version ID from List File Versions (not the current one).',
       required: true,
     }),
   },

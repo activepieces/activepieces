@@ -20,13 +20,13 @@ export const onedriveCreateTextFile = createAction({
   props: {
     folderId: Property.ShortText({
       displayName: 'Folder ID',
-      description:
-        'The ID of the destination folder, from Search Files and Folders or List Folder Contents. Leave empty for the drive root.',
+      description: 'Destination folder ID. Leave empty for the drive root.',
       required: false,
     }),
     fileName: Property.ShortText({
       displayName: 'File Name',
-      description: 'The name of the new file, including its extension, e.g. `notes.txt` or `data.csv`.',
+      description: 'File name including its extension.',
+      placeholder: 'notes.txt',
       required: true,
     }),
     content: Property.LongText({

@@ -20,18 +20,18 @@ export const onedriveCreateSharingLink = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description:
-        'The ID of the file or folder, from Search Files and Folders or List Folder Contents. Provide either this or Path.',
+      description: 'File or folder ID from Search or List Folder Contents. Or use Path.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The item path relative to the drive root, e.g. `Documents/report.docx`. Provide either this or Item ID.',
+      description: 'Path from the drive root. Use this or Item ID.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
     type: Property.StaticDropdown({
       displayName: 'Link Type',
-      description: 'View is read-only, Edit allows changes, Embed produces an embeddable link (personal OneDrive only).',
+      description: 'View, Edit, or Embed (Embed is personal OneDrive only).',
       required: true,
       defaultValue: 'view',
       options: {
@@ -45,8 +45,7 @@ export const onedriveCreateSharingLink = createAction({
     }),
     scope: Property.StaticDropdown({
       displayName: 'Scope',
-      description:
-        'Who can use the link. Anonymous means anyone with the link, Organization means anyone signed in to your organization, Users means only people who already have access. Leave empty to use the account default.',
+      description: 'Who can open the link. Leave empty for the account default.',
       required: false,
       options: {
         disabled: false,

@@ -20,13 +20,13 @@ export const onedriveCheckoutItem = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description:
-        'The ID of the file, from Search Files and Folders or List Folder Contents. Provide either this or Path.',
+      description: 'File ID from Search or List Folder Contents. Or use Path.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The file path relative to the drive root, e.g. `Documents/report.docx`. Provide either this or Item ID.',
+      description: 'File path from the drive root. Use this or Item ID.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
   },

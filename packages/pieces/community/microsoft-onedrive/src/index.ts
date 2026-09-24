@@ -1,8 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import {
-  createPiece,
-  OAuth2PropertyValue,
-} from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/pieces-framework';
 import { copyFile } from './lib/actions/copy-file';
 import { downloadFile } from './lib/actions/download-file';
@@ -11,6 +8,7 @@ import { listFolders } from './lib/actions/list-folders';
 import { uploadFile } from './lib/actions/upload-file';
 import { oneDriveAuth } from './lib/auth';
 import { oneDriveCommon } from './lib/common/common';
+import { getCloudProp } from './lib/common/microsoft-cloud';
 import { newFile } from './lib/triggers/new-file';
 import { onedriveAddItemToBundle } from './lib/actions/onedrive-add-item-to-bundle';
 import { onedriveCheckinItem } from './lib/actions/onedrive-checkin-item';
@@ -101,12 +99,11 @@ export const microsoftOneDrive = createPiece({
     onedriveUploadFile,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
-        return oneDriveCommon.getBaseUrl(cloud);
+        return oneDriveCommon.getBaseUrl(getCloudProp(auth));
       },
       auth: oneDriveAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

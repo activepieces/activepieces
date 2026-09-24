@@ -1,124 +1,7 @@
 import { OutputSchema } from '@activepieces/pieces-framework';
 
-const identityFields: OutputSchema['fields'] = [
-  {
-    key: 'user',
-    label: 'User',
-    children: [
-      { key: 'displayName', label: 'Name' },
-      { key: 'email', label: 'Email', format: 'email' },
-      { key: 'id', label: 'User ID' },
-    ],
-  },
-];
-
-const parentReferenceFields: OutputSchema['fields'] = [
-  { key: 'id', label: 'Folder ID' },
-  { key: 'name', label: 'Folder Name' },
-  { key: 'path', label: 'Folder Path' },
-  { key: 'driveId', label: 'Drive ID' },
-  { key: 'driveType', label: 'Drive Type' },
-];
-
-const driveItemBaseFields: OutputSchema['fields'] = [
-  { key: 'id', label: 'Item ID' },
-  { key: 'name', label: 'Name' },
-  { key: 'webUrl', label: 'Web URL', format: 'url' },
-  { key: 'size', label: 'Size', format: 'filesize' },
-  { key: 'createdDateTime', label: 'Created At', format: 'datetime' },
-  { key: 'lastModifiedDateTime', label: 'Last Modified At', format: 'datetime' },
-  { key: 'createdBy', label: 'Created By', children: identityFields },
-  { key: 'lastModifiedBy', label: 'Last Modified By', children: identityFields },
-  { key: 'parentReference', label: 'Parent Folder', children: parentReferenceFields },
-];
-
-const driveFileFields: OutputSchema['fields'] = [
-  ...driveItemBaseFields,
-  {
-    key: 'file',
-    label: 'File',
-    children: [{ key: 'mimeType', label: 'MIME Type' }],
-  },
-];
-
-const driveFolderFields: OutputSchema['fields'] = [
-  ...driveItemBaseFields,
-  {
-    key: 'folder',
-    label: 'Folder',
-    children: [{ key: 'childCount', label: 'Child Count', format: 'number' }],
-  },
-];
-
-const itemFields: OutputSchema['fields'] = [
-  { key: 'id', label: 'Item ID' },
-  { key: 'name', label: 'Name' },
-  { key: 'type', label: 'Type' },
-  { key: 'webUrl', label: 'Web URL', format: 'url' },
-  { key: 'mimeType', label: 'MIME Type' },
-  { key: 'size', label: 'Size', format: 'filesize' },
-  { key: 'childCount', label: 'Child Count', format: 'number' },
-  { key: 'createdDateTime', label: 'Created At', format: 'datetime' },
-  { key: 'lastModifiedDateTime', label: 'Last Modified At', format: 'datetime' },
-  { key: 'parentId', label: 'Parent Folder ID' },
-  { key: 'parentPath', label: 'Parent Folder Path' },
-  { key: 'driveId', label: 'Drive ID' },
-  { key: 'driveType', label: 'Drive Type' },
-  { key: 'createdByName', label: 'Created By' },
-  { key: 'createdByEmail', label: 'Created By Email', format: 'email' },
-  { key: 'lastModifiedByName', label: 'Last Modified By' },
-  { key: 'lastModifiedByEmail', label: 'Last Modified By Email', format: 'email' },
-  { key: 'description', label: 'Description' },
-  { key: 'deleted', label: 'Deleted', format: 'boolean' },
-  { key: 'remoteItemId', label: 'Remote Item ID' },
-  { key: 'remoteDriveId', label: 'Remote Drive ID' },
-];
-
-const bundleFields: OutputSchema['fields'] = [
-  ...itemFields,
-  { key: 'bundleChildCount', label: 'Items in Bundle', format: 'number' },
-  { key: 'isAlbum', label: 'Is Album', format: 'boolean' },
-];
-
-const pageFields: OutputSchema['fields'] = [
-  { key: 'count', label: 'Count', format: 'number' },
-  { key: 'nextPageToken', label: 'Next Page Token' },
-];
-
-const driveFields: OutputSchema['fields'] = [
-  { key: 'id', label: 'Drive ID' },
-  { key: 'name', label: 'Name' },
-  { key: 'driveType', label: 'Drive Type' },
-  { key: 'webUrl', label: 'Web URL', format: 'url' },
-  { key: 'ownerName', label: 'Owner' },
-  { key: 'ownerEmail', label: 'Owner Email', format: 'email' },
-  { key: 'quotaTotal', label: 'Total Storage', format: 'filesize' },
-  { key: 'quotaUsed', label: 'Used Storage', format: 'filesize' },
-  { key: 'quotaRemaining', label: 'Remaining Storage', format: 'filesize' },
-  { key: 'quotaState', label: 'Storage State' },
-];
-
-const permissionFields: OutputSchema['fields'] = [
-  { key: 'id', label: 'Permission ID' },
-  { key: 'roles', label: 'Roles' },
-  { key: 'linkType', label: 'Link Type' },
-  { key: 'linkScope', label: 'Link Scope' },
-  { key: 'linkWebUrl', label: 'Link URL', format: 'url' },
-  { key: 'linkPreventsDownload', label: 'Link Prevents Download', format: 'boolean' },
-  { key: 'grantedToName', label: 'Granted To' },
-  { key: 'grantedToEmail', label: 'Granted To Email', format: 'email' },
-  { key: 'grantedToId', label: 'Granted To ID' },
-  { key: 'grantedToIdentities', label: 'Granted To (Link Users)' },
-  { key: 'invitationEmail', label: 'Invitation Email', format: 'email' },
-  { key: 'inherited', label: 'Inherited', format: 'boolean' },
-  { key: 'inheritedFromPath', label: 'Inherited From Path' },
-  { key: 'hasPassword', label: 'Has Password', format: 'boolean' },
-  { key: 'expirationDateTime', label: 'Expires At', format: 'datetime' },
-  { key: 'shareId', label: 'Share ID' },
-];
-
 export const uploadFileOutputSchema: OutputSchema = {
-  fields: driveFileFields,
+  fields: driveFileFields(),
 };
 
 export const getFileOutputSchema: OutputSchema = {
@@ -139,34 +22,34 @@ export const getFileOutputSchema: OutputSchema = {
 export const copyFileOutputSchema: OutputSchema = {
   fields: [
     { key: 'status', label: 'Status' },
-    { key: 'file', label: 'Copied File', children: driveFileFields },
+    { key: 'file', label: 'Copied File', children: driveFileFields() },
   ],
 };
 
 export const listFilesOutputSchema: OutputSchema = {
   itemLabel: '{name}',
-  fields: [{ key: 'files', label: 'Files', value: '', listItems: driveFileFields }],
+  fields: [{ key: 'files', label: 'Files', value: '', listItems: driveFileFields() }],
 };
 
 export const listFoldersOutputSchema: OutputSchema = {
   itemLabel: '{name}',
-  fields: [{ key: 'folders', label: 'Folders', value: '', listItems: driveFolderFields }],
+  fields: [{ key: 'folders', label: 'Folders', value: '', listItems: driveFolderFields() }],
 };
 
 export const newFileTriggerOutputSchema: OutputSchema = {
-  fields: driveFileFields,
+  fields: driveFileFields(),
 };
 
 export const onedriveItemOutputSchema: OutputSchema = {
-  fields: itemFields,
+  fields: itemFields(),
 };
 
 export const onedriveCreateFolderOutputSchema: OutputSchema = {
-  fields: [{ key: 'created', label: 'Created', format: 'boolean' }, ...itemFields],
+  fields: [{ key: 'created', label: 'Created', format: 'boolean' }, ...itemFields()],
 };
 
 export const onedriveDownloadFileOutputSchema: OutputSchema = {
-  fields: [{ key: 'data', label: 'File', format: 'url' }, ...itemFields],
+  fields: [{ key: 'data', label: 'File', format: 'url' }, ...itemFields()],
 };
 
 export const onedriveDownloadFileAsFormatOutputSchema: OutputSchema = {
@@ -174,7 +57,7 @@ export const onedriveDownloadFileAsFormatOutputSchema: OutputSchema = {
     { key: 'data', label: 'Converted File', format: 'url' },
     { key: 'convertedFormat', label: 'Converted Format' },
     { key: 'convertedFileName', label: 'Converted File Name' },
-    ...itemFields,
+    ...itemFields(),
   ],
 };
 
@@ -189,38 +72,38 @@ export const onedriveDownloadItemVersionOutputSchema: OutputSchema = {
 };
 
 export const onedriveResolveSharingLinkOutputSchema: OutputSchema = {
-  fields: [{ key: 'shareId', label: 'Share ID' }, ...itemFields],
+  fields: [{ key: 'shareId', label: 'Share ID' }, ...itemFields()],
 };
 
 export const onedriveBundleOutputSchema: OutputSchema = {
-  fields: bundleFields,
+  fields: bundleFields(),
 };
 
 export const onedriveListItemsOutputSchema: OutputSchema = {
   fields: [
-    { key: 'items', label: 'Items', labelKey: 'name', listItems: itemFields },
-    ...pageFields,
+    { key: 'items', label: 'Items', labelKey: 'name', listItems: itemFields() },
+    ...pageFields(),
   ],
 };
 
 export const onedriveListDriveChangesOutputSchema: OutputSchema = {
   fields: [
-    { key: 'items', label: 'Changed Items', labelKey: 'name', listItems: itemFields },
-    ...pageFields,
+    { key: 'items', label: 'Changed Items', labelKey: 'name', listItems: itemFields() },
+    ...pageFields(),
     { key: 'deltaToken', label: 'Delta Token' },
   ],
 };
 
 export const onedriveListBundlesOutputSchema: OutputSchema = {
   fields: [
-    { key: 'items', label: 'Bundles', labelKey: 'name', listItems: bundleFields },
-    ...pageFields,
+    { key: 'items', label: 'Bundles', labelKey: 'name', listItems: bundleFields() },
+    ...pageFields(),
   ],
 };
 
 export const onedriveGetDriveOutputSchema: OutputSchema = {
   fields: [
-    ...driveFields,
+    ...driveFields(),
     { key: 'createdDateTime', label: 'Created At', format: 'datetime' },
     { key: 'lastModifiedDateTime', label: 'Last Modified At', format: 'datetime' },
     { key: 'quotaDeleted', label: 'Recycle Bin Size', format: 'filesize' },
@@ -229,8 +112,8 @@ export const onedriveGetDriveOutputSchema: OutputSchema = {
 
 export const onedriveListDrivesOutputSchema: OutputSchema = {
   fields: [
-    { key: 'items', label: 'Drives', labelKey: 'name', listItems: driveFields },
-    ...pageFields,
+    { key: 'items', label: 'Drives', labelKey: 'name', listItems: driveFields() },
+    ...pageFields(),
   ],
 };
 
@@ -267,24 +150,24 @@ export const onedriveListItemVersionsOutputSchema: OutputSchema = {
         { key: 'lastModifiedByEmail', label: 'Last Modified By Email', format: 'email' },
       ],
     },
-    ...pageFields,
+    ...pageFields(),
   ],
 };
 
 export const onedrivePermissionOutputSchema: OutputSchema = {
-  fields: permissionFields,
+  fields: permissionFields(),
 };
 
 export const onedriveListItemPermissionsOutputSchema: OutputSchema = {
   fields: [
-    { key: 'items', label: 'Permissions', labelKey: 'id', listItems: permissionFields },
-    ...pageFields,
+    { key: 'items', label: 'Permissions', labelKey: 'id', listItems: permissionFields() },
+    ...pageFields(),
   ],
 };
 
 export const onedriveInviteToItemOutputSchema: OutputSchema = {
   fields: [
-    { key: 'permissions', label: 'Permissions', labelKey: 'grantedToEmail', listItems: permissionFields },
+    { key: 'permissions', label: 'Permissions', labelKey: 'grantedToEmail', listItems: permissionFields() },
     { key: 'count', label: 'Count', format: 'number' },
     { key: 'invitationSent', label: 'Invitation Sent', format: 'boolean' },
   ],
@@ -338,3 +221,140 @@ export const onedriveBundleMembershipOutputSchema: OutputSchema = {
     { key: 'itemId', label: 'Item ID' },
   ],
 };
+
+function identityFields(): OutputSchema['fields'] {
+  return [
+    {
+      key: 'user',
+      label: 'User',
+      children: [
+        { key: 'displayName', label: 'Name' },
+        { key: 'email', label: 'Email', format: 'email' },
+        { key: 'id', label: 'User ID' },
+      ],
+    },
+  ];
+}
+
+function parentReferenceFields(): OutputSchema['fields'] {
+  return [
+    { key: 'id', label: 'Folder ID' },
+    { key: 'name', label: 'Folder Name' },
+    { key: 'path', label: 'Folder Path' },
+    { key: 'driveId', label: 'Drive ID' },
+    { key: 'driveType', label: 'Drive Type' },
+  ];
+}
+
+function driveItemBaseFields(): OutputSchema['fields'] {
+  return [
+    { key: 'id', label: 'Item ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'webUrl', label: 'Web URL', format: 'url' },
+    { key: 'size', label: 'Size', format: 'filesize' },
+    { key: 'createdDateTime', label: 'Created At', format: 'datetime' },
+    { key: 'lastModifiedDateTime', label: 'Last Modified At', format: 'datetime' },
+    { key: 'createdBy', label: 'Created By', children: identityFields() },
+    { key: 'lastModifiedBy', label: 'Last Modified By', children: identityFields() },
+    { key: 'parentReference', label: 'Parent Folder', children: parentReferenceFields() },
+  ];
+}
+
+function driveFileFields(): OutputSchema['fields'] {
+  return [
+    ...driveItemBaseFields(),
+    {
+      key: 'file',
+      label: 'File',
+      children: [{ key: 'mimeType', label: 'MIME Type' }],
+    },
+  ];
+}
+
+function driveFolderFields(): OutputSchema['fields'] {
+  return [
+    ...driveItemBaseFields(),
+    {
+      key: 'folder',
+      label: 'Folder',
+      children: [{ key: 'childCount', label: 'Child Count', format: 'number' }],
+    },
+  ];
+}
+
+function itemFields(): OutputSchema['fields'] {
+  return [
+    { key: 'id', label: 'Item ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'type', label: 'Type' },
+    { key: 'webUrl', label: 'Web URL', format: 'url' },
+    { key: 'mimeType', label: 'MIME Type' },
+    { key: 'size', label: 'Size', format: 'filesize' },
+    { key: 'childCount', label: 'Child Count', format: 'number' },
+    { key: 'createdDateTime', label: 'Created At', format: 'datetime' },
+    { key: 'lastModifiedDateTime', label: 'Last Modified At', format: 'datetime' },
+    { key: 'parentId', label: 'Parent Folder ID' },
+    { key: 'parentPath', label: 'Parent Folder Path' },
+    { key: 'driveId', label: 'Drive ID' },
+    { key: 'driveType', label: 'Drive Type' },
+    { key: 'createdByName', label: 'Created By' },
+    { key: 'createdByEmail', label: 'Created By Email', format: 'email' },
+    { key: 'lastModifiedByName', label: 'Last Modified By' },
+    { key: 'lastModifiedByEmail', label: 'Last Modified By Email', format: 'email' },
+    { key: 'description', label: 'Description' },
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+    { key: 'remoteItemId', label: 'Remote Item ID' },
+    { key: 'remoteDriveId', label: 'Remote Drive ID' },
+  ];
+}
+
+function bundleFields(): OutputSchema['fields'] {
+  return [
+    ...itemFields(),
+    { key: 'bundleChildCount', label: 'Items in Bundle', format: 'number' },
+    { key: 'isAlbum', label: 'Is Album', format: 'boolean' },
+  ];
+}
+
+function pageFields(): OutputSchema['fields'] {
+  return [
+    { key: 'count', label: 'Count', format: 'number' },
+    { key: 'nextPageToken', label: 'Next Page Token' },
+  ];
+}
+
+function driveFields(): OutputSchema['fields'] {
+  return [
+    { key: 'id', label: 'Drive ID' },
+    { key: 'name', label: 'Name' },
+    { key: 'driveType', label: 'Drive Type' },
+    { key: 'webUrl', label: 'Web URL', format: 'url' },
+    { key: 'ownerName', label: 'Owner' },
+    { key: 'ownerEmail', label: 'Owner Email', format: 'email' },
+    { key: 'quotaTotal', label: 'Total Storage', format: 'filesize' },
+    { key: 'quotaUsed', label: 'Used Storage', format: 'filesize' },
+    { key: 'quotaRemaining', label: 'Remaining Storage', format: 'filesize' },
+    { key: 'quotaState', label: 'Storage State' },
+  ];
+}
+
+function permissionFields(): OutputSchema['fields'] {
+  return [
+    { key: 'id', label: 'Permission ID' },
+    { key: 'roles', label: 'Roles' },
+    { key: 'linkType', label: 'Link Type' },
+    { key: 'linkScope', label: 'Link Scope' },
+    { key: 'linkWebUrl', label: 'Link URL', format: 'url' },
+    { key: 'linkPreventsDownload', label: 'Link Prevents Download', format: 'boolean' },
+    { key: 'grantedToName', label: 'Granted To' },
+    { key: 'grantedToEmail', label: 'Granted To Email', format: 'email' },
+    { key: 'grantedToId', label: 'Granted To ID' },
+    { key: 'grantedToIdentities', label: 'Granted To (Link Users)' },
+    { key: 'invitationEmail', label: 'Invitation Email', format: 'email' },
+    { key: 'inherited', label: 'Inherited', format: 'boolean' },
+    { key: 'inheritedFromPath', label: 'Inherited From Path' },
+    { key: 'hasPassword', label: 'Has Password', format: 'boolean' },
+    { key: 'expirationDateTime', label: 'Expires At', format: 'datetime' },
+    { key: 'shareId', label: 'Share ID' },
+  ];
+}

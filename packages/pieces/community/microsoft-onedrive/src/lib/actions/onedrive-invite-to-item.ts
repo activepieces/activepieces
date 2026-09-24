@@ -20,13 +20,13 @@ export const onedriveInviteToItem = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description:
-        'The ID of the file or folder, from Search Files and Folders or List Folder Contents. Provide either this or Path.',
+      description: 'File or folder ID from Search or List Folder Contents. Or use Path.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The item path relative to the drive root, e.g. `Documents/report.docx`. Provide either this or Item ID.',
+      description: 'Path from the drive root. Use this or Item ID.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
     recipients: Property.Array({
@@ -49,14 +49,13 @@ export const onedriveInviteToItem = createAction({
     }),
     sendInvitation: Property.Checkbox({
       displayName: 'Send Invitation Email',
-      description:
-        'When true, OneDrive sends a real email invitation to every recipient. When false (default), access is granted silently.',
+      description: 'If on, OneDrive emails each recipient. Off grants access silently.',
       required: false,
       defaultValue: false,
     }),
     message: Property.LongText({
       displayName: 'Message',
-      description: 'Optional message included in the invitation email (used only when Send Invitation Email is true).',
+      description: 'Message for the invitation email (only sent when emails are on).',
       required: false,
     }),
   },

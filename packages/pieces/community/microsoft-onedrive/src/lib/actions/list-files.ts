@@ -1,5 +1,5 @@
-import { createAction, OAuth2PropertyValue } from '@activepieces/pieces-framework';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
+import { createAction } from '@activepieces/pieces-framework';
+import { getCloudProp, getGraphBaseUrl } from '../common/microsoft-cloud';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
 import { listFilesOutputSchema } from '../output-schemas';
@@ -26,7 +26,7 @@ export const listFiles = createAction({
 
 		const files = [];
 
-		const cloud = (context.auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
+		const cloud = getCloudProp(context.auth);
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
@@ -36,7 +36,8 @@ export const listFiles = createAction({
 		let response: PageCollection = await client.api(endpoint).get();
 
 		while (response.value.length > 0) {
-			for (const item of response.value as DriveItem[]) {
+			const items: DriveItem[] = response.value;
+			for (const item of items) {
 				if (item.file) {
 					files.push(item);
 				}

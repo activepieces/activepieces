@@ -20,18 +20,18 @@ export const onedriveListItemPermissions = createAction({
   props: {
     itemId: Property.ShortText({
       displayName: 'Item ID',
-      description:
-        'The ID of the file or folder, from Search Files and Folders or List Folder Contents. Provide either this or Path.',
+      description: 'File or folder ID from Search or List Folder Contents. Or use Path.',
       required: false,
     }),
     path: Property.ShortText({
       displayName: 'Path',
-      description: 'The item path relative to the drive root, e.g. `Documents/report.docx`. Provide either this or Item ID.',
+      description: 'Path from the drive root. Use this or Item ID.',
+      placeholder: 'Documents/report.docx',
       required: false,
     }),
     pageToken: Property.ShortText({
       displayName: 'Page Token',
-      description: 'The nextPageToken from a previous call, to fetch the next page. Leave empty for the first page.',
+      description: 'nextPageToken from the previous call. Empty for the first page.',
       required: false,
     }),
   },
