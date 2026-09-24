@@ -4,7 +4,7 @@ export const InvalidStepIcon = ({ className }: { className: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      className={cn('stroke-1 stroke-warning-line ', className)}
+      className={cn('stroke-1 stroke-warning-mark', className)}
       viewBox="0 0 16 16"
       fill="none"
       stroke="currentColor"
