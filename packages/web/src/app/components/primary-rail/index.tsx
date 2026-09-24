@@ -84,11 +84,10 @@ export function PrimaryRail() {
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
-  const { reachesMcp } = mcpHooks.useMcpReach({
-    enabled: !embedState.isEmbedded && !embedState.hideSideNav,
-  });
+  const isRailHidden = embedState.isEmbedded || embedState.hideSideNav;
+  const { reachesMcp } = mcpHooks.useMcpReach({ enabled: !isRailHidden });
 
-  if (embedState.isEmbedded || embedState.hideSideNav) {
+  if (isRailHidden) {
     return null;
   }
 
