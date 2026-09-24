@@ -109,7 +109,7 @@ export function SetupRequiredState() {
           )}
         </p>
       </div>
-      <Button onClick={() => navigate('/platform/setup/ai')} className="gap-2">
+      <Button onClick={() => navigate('/platform/ai')} className="gap-2">
         <Settings className="h-4 w-4" />
         {t('Go to AI Settings')}
       </Button>

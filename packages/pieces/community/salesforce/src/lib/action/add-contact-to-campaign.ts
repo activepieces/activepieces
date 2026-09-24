@@ -2,14 +2,16 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const addContactToCampaign = createAction({
     auth: salesforceAuth,
     name: 'add_contact_to_campaign',
     displayName: 'Add Contact to Campaign',
     description: 'Add a contact to a campaign.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Add a Contact to a Campaign by creating a CampaignMember linking the two, with an optional member status. Not idempotent — re-adding the same contact to the same campaign errors on the existing membership.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         campaign_id: salesforcesCommon.campaign,
         contact_id: salesforcesCommon.contact,

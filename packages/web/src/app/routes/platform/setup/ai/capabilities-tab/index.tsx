@@ -48,9 +48,10 @@ export function CapabilitiesTab() {
   });
 
   return (
-    <div className="flex w-full mx-auto max-w-6xl flex-col gap-4 px-6 py-6">
+    <div className="flex flex-col gap-4">
       <SectionHeader
         title={t('Assistant capabilities')}
+        isPageTitle
         count={AI_TOOL_CATALOG.length}
         description={t(
           'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',

@@ -2,14 +2,16 @@ import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { successOutputSchema } from '../output-schemas';
 
 export const deleteRecord = createAction({
     auth: salesforceAuth,
     name: 'delete_record',
     displayName: 'Delete Record',
     description: 'Deletes an existing record in an object.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Delete a single record of any object by its ID. Destructive and irreversible from here; not idempotent, since a repeat call on an already-deleted ID errors. Use this generic delete for objects without a dedicated one (Delete Opportunity exists separately).', idempotent: false },
+    outputSchema: successOutputSchema,
     props: {
         object: salesforcesCommon.object,
         record_id: salesforcesCommon.record,

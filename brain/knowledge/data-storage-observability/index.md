@@ -40,7 +40,7 @@ All structured logging goes through **evlog** — one wide event per unit of wor
 
 ### Product Telemetry
 
-Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Infrastructure > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
+Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Account > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
 
 Gotchas:
 - **Two independent PostHog paths exist and they are gated differently.** Product analytics obeys the per-platform switch; the license-key events (`total_runs_per_day`, `ai_usage_per_run`, `chat_message`) go through `captureLicenseKeyEvent` and deliberately do **not**, because PostHog is also the billing transport and a customer must not be able to switch off their own meter. Never "consistency-fix" that by routing a billing event through the gate.

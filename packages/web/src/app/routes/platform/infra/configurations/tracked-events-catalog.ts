@@ -129,6 +129,10 @@ const buildEventLabels = (): Record<TelemetryEventName, TrackedEvent> => ({
     group: 'billing',
     label: t('Contacted sales'),
   },
+  [TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED]: {
+    group: 'billing',
+    label: t('Opened a paid admin page'),
+  },
 });
 
 const buildGroups = (): TrackedEventGroup[] => {
