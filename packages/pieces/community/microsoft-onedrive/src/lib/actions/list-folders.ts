@@ -6,15 +6,17 @@ import {
 } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { listFoldersOutputSchema } from '../output-schemas';
 
 export const listFolders = createAction({
   auth: oneDriveAuth,
   name: 'list_folders',
   classification: 'SEARCH',
   description: 'List folders in a OneDrive folder',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'List the subfolders contained in a Microsoft OneDrive folder (file items are excluded). Provide a parent folder ID to scope the listing, or leave it empty to list folders at the drive root; useful for discovering a folder ID to pass to other actions. Read-only and idempotent.', idempotent: true },
   displayName: 'List Folders',
+  outputSchema: listFoldersOutputSchema,
   props: {
     markdown:oneDriveCommon.parentFolderInfo,
     parentFolder: oneDriveCommon.parentFolder,

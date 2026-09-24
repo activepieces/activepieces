@@ -5,6 +5,7 @@ import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import dayjs from 'dayjs';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { newFileTriggerOutputSchema } from '../output-schemas';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
 
@@ -61,6 +62,7 @@ export const newFile = createTrigger({
 	name: 'new_file',
 	classification: 'READ',
 	displayName: 'New File',
+	outputSchema: newFileTriggerOutputSchema,
 	description: 'Trigger when a new file is uploaded.',
 	aiMetadata: {
 		description: 'Fires when a new file appears in the watched Microsoft OneDrive folder, polling by file creation time. Scope it to a specific folder via the parent folder ID, or leave it empty to watch the drive root; subfolders are not included and folders themselves do not trigger it.',

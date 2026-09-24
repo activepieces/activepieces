@@ -10,14 +10,16 @@ import { DriveItem } from '@microsoft/microsoft-graph-types';
 import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { copyFileOutputSchema } from '../output-schemas';
 
 export const copyFile = createAction({
   auth: oneDriveAuth,
   name: 'copy_file',
   classification: 'WRITE',
   displayName: 'Copy File',
+  outputSchema: copyFileOutputSchema,
   description: 'Create a copy of a file in your OneDrive, optionally in a different folder or with a new name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates a copy of a OneDrive file, optionally into a different folder and/or under a new name, and returns the copied item once the asynchronous copy completes. Use to duplicate a file or stamp out copies of a template document. Not idempotent: each run creates another copy — with the default rename conflict behavior, repeated runs produce numbered duplicates.',

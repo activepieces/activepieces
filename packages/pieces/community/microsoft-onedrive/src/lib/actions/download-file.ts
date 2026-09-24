@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { getFileOutputSchema } from '../output-schemas';
 
 type SearchItem = {
   id: string;
@@ -29,9 +30,10 @@ export const downloadFile = createAction({
   name: 'download_file',
   classification: 'READ',
   description: 'Get and download a file using a File ID or filename.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Retrieve a single file from Microsoft OneDrive and download its content, looking it up either by its File ID or by its exact file name (a name lookup searches the drive and resolves to the matching file). Use when you need the file bytes plus its metadata; when only metadata is needed prefer a list action. Read-only and idempotent.', idempotent: true },
   displayName: 'Get File',
+  outputSchema: getFileOutputSchema,
   props: {
     lookupBy: Property.StaticDropdown({
       displayName: 'Look Up By',
