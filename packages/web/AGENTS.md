@@ -121,6 +121,11 @@ behind on it:
 - **Colour-picker defaults** — stored data, not UI colour.
 - **User-content previews** — the `bg-white` on the SVG and HTML preview frames. They render
   content authored against a white page.
+- **The Activepieces wordmark** — `activepieces-wordmark.tsx` inlines the logo so the lettering can
+  be `currentColor` (under `text-ink-700`) instead of a raster baked at `#404040` that vanished on a
+  dark ground. Its mark keeps the literal brand purple, because it only ever renders when the
+  platform is on the stock Activepieces logo — a tenant that uploaded its own gets that raster
+  rendered as-is, since we cannot recolour someone else's artwork.
 
 ### Colour sampled from images
 
