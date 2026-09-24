@@ -19,7 +19,7 @@ When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts]
 
 The chart reads PostgreSQL and Redis settings from the secrets listed under `activepiecesEnvVariables` in `values.yaml`. Create them before installing:
 
-Put the settings in env files, so passwords stay out of your shell history and process list:
+Put the settings in env files, so passwords stay out of your shell history and process list. Run `umask 077` first so only you can read them:
 
 ```bash title="db.env"
 AP_POSTGRES_HOST=your-postgres-host.example.com
@@ -127,7 +127,7 @@ helm upgrade activepieces deploy/activepieces-helm -f my-values.yaml
 # Check upgrade status (StatefulSet)
 kubectl rollout status statefulset/activepieces
 # Check upgrade status (Argo Rollout)
-kubectl argo rollouts status activepieces
+kubectl wait --for=jsonpath='{.status.phase}'=Healthy rollout/activepieces --timeout=10m
 ```
 
 With Helm 4 and `workloadType: rollout`, add `--force-conflicts` to `helm upgrade`. Argo Rollouts owns the Service selectors, and Helm 4's server-side apply stops on that conflict otherwise.
