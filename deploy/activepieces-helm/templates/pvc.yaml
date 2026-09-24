@@ -1,4 +1,4 @@
-{{- if and .Values.persistence.enabled (ne (.Values.workloadType | default "rollout") "statefulset") }}
+{{- if and .Values.persistence.enabled (ne (include "activepieces.workloadType" .) "statefulset") }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
