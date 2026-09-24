@@ -3,6 +3,7 @@ import { defaultSchema } from '@atlaskit/adf-schema/schema-default';
 import { JSONTransformer } from '@atlaskit/editor-json-transformer';
 import { MarkdownTransformer } from '@atlaskit/editor-markdown-transformer';
 
+import { markdownToAdfOutputSchema } from '../output-schemas';
 export const markdownToJiraFormat = createAction({
   name: 'markdownToJiraFormat',
   displayName: 'Markdown to Jira format',
@@ -15,6 +16,7 @@ export const markdownToJiraFormat = createAction({
     idempotent: true,
   },
   requireAuth: false,
+  outputSchema: markdownToAdfOutputSchema,
   props: {
     markdown: Property.LongText({
       displayName: 'Markdown text',
