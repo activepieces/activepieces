@@ -50,7 +50,7 @@ That 3-minute TTL is the reason a freshly-added origin does not take effect imme
 
 ## Admin UI
 
-The Embed Onboarding stepper at `/platform/security/embed`. Four steps exist as files — `hostname-step`, `dns-step`, `allowed-domains-step`, `signing-keys-step` — and Cloud walks all four; self-hosted skips the two Cloudflare ones because it serves the embed from `FRONTEND_URL`.
+The Embed Onboarding stepper at `/platform/embedding`. Four steps exist as files — `hostname-step`, `dns-step`, `allowed-domains-step`, `signing-keys-step` — and Cloud walks all four; self-hosted skips the two Cloudflare ones because it serves the embed from `FRONTEND_URL`.
 
 ## Endpoints
 

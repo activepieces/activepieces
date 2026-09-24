@@ -33,6 +33,11 @@ type OnboardingCompleted = {
     platformId: string
 }
 
+type AdminNavLockedClicked = {
+    path: string
+    tier?: string
+}
+
 type PlanChange = {
     platformId: string
     plan: string
@@ -167,6 +172,7 @@ export enum TelemetryEventName {
     INVITE_SENT = 'invite.sent',
     INVITE_ACCEPTED = 'invite.accepted',
     SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
+    ADMIN_NAV_LOCKED_CLICKED = 'admin.nav.locked.clicked',
 }
 
 export type TelemetryEvent =
@@ -199,6 +205,7 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
     | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
     | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
+    | BaseTelemetryEvent<TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED, AdminNavLockedClicked>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
     TelemetryEventName.ONBOARDING_COMPLETED,
@@ -208,6 +215,7 @@ export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new 
     TelemetryEventName.PLAN_REACTIVATED,
     TelemetryEventName.TRIAL_STARTED,
     TelemetryEventName.SALES_HANDOFF_CLICKED,
+    TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
     TelemetryEventName.SIGNED_UP,
     TelemetryEventName.SIGNED_IN,
     TelemetryEventName.SIGN_UP_SUBMITTED,
