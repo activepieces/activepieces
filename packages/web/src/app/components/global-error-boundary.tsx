@@ -29,6 +29,13 @@ function buildDiagnosticsText(
   ].join('\n');
 }
 
+function writeToClipboard(text: string): Promise<void> {
+  return (
+    navigator.clipboard?.writeText(text) ??
+    Promise.reject(new Error('clipboard unavailable'))
+  );
+}
+
 const ErrorFallbackContent = ({
   error,
   componentStack,
@@ -36,9 +43,21 @@ const ErrorFallbackContent = ({
   error: unknown;
   componentStack?: string | null;
 }) => {
-  const [isCopied, setIsCopied] = useState(false);
+  const [copyState, setCopyState] = useState<CopyState>('idle');
   const isChunkError = errorReporting.isChunkLoadError(error);
   const diagnostics = buildDiagnosticsText(error, componentStack);
+
+  const flashCopyState = (state: CopyState) => {
+    setCopyState(state);
+    setTimeout(() => setCopyState('idle'), 3000);
+  };
+
+  const detailsLabel =
+    copyState === 'copied'
+      ? t('Copied')
+      : copyState === 'failed'
+      ? t('Failed to copy to clipboard')
+      : t('Technical Details');
 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center p-6">
@@ -77,20 +96,20 @@ const ErrorFallbackContent = ({
         <div className="w-full flex flex-col gap-2 text-left">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground">
-              {t('Technical Details')}
+              {detailsLabel}
             </span>
             <Button
               variant="ghost"
               size="icon"
+              aria-label={t('Copy')}
               className="size-7 text-muted-foreground"
               onClick={() => {
-                navigator.clipboard
-                  ?.writeText(diagnostics)
-                  .then(() => setIsCopied(true))
-                  .catch(() => undefined);
+                writeToClipboard(diagnostics)
+                  .then(() => flashCopyState('copied'))
+                  .catch(() => flashCopyState('failed'));
               }}
             >
-              {isCopied ? (
+              {copyState === 'copied' ? (
                 <Check className="size-4" />
               ) : (
                 <Copy className="size-4" />
@@ -138,3 +157,5 @@ export const RouteErrorBoundary = () => {
   }, [error]);
   return <ErrorFallbackContent error={error} />;
 };
+
+type CopyState = 'idle' | 'copied' | 'failed';
