@@ -25,7 +25,7 @@ const StepNodeLogo = ({
         src={logoUrl}
         alt={displayName}
         key={logoUrl + displayName}
-        className={cn('bg-logo-surface border border-border/50 rounded-lg', {
+        className={cn('bg-logo-surface text-on-logo-surface border border-border/50 rounded-lg', {
           'w-9 h-9 p-2': !isHorizontal,
           'w-12 h-12 p-2.5': isHorizontal,
         })}

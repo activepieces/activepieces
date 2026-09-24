@@ -103,7 +103,7 @@ const NewConnectionDialog = React.memo(
                       onClick={() => clickPiece(piece.name)}
                       className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg"
                     >
-                      <div className="flex items-center justify-center rounded-md bg-logo-surface p-1.5">
+                      <div className="flex items-center justify-center rounded-md bg-logo-surface text-on-logo-surface p-1.5">
                         <img
                           className="w-[40px] h-[40px]"
                           src={piece.logoUrl}

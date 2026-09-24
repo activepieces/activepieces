@@ -109,7 +109,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
         <img
           src={metadata.logoUrl}
           alt="Tool logo"
-          className="h-4 w-4 shrink-0 rounded-sm bg-logo-surface object-contain p-px"
+          className="h-4 w-4 shrink-0 rounded-sm bg-logo-surface text-on-logo-surface object-contain p-px"
         />
       );
     return <Wrench className="h-4 w-4 shrink-0" />;

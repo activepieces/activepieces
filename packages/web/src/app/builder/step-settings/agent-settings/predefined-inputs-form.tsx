@@ -154,7 +154,7 @@ export const PredefinedInputsForm = () => {
     <Form {...form}>
       <ScrollArea className="h-full">
         <div className="flex items-start border-b gap-3 p-4">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-sm border bg-logo-surface">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-sm border bg-logo-surface text-on-logo-surface">
             <img
               className="size-8 object-contain"
               src={selectedPiece?.logoUrl}

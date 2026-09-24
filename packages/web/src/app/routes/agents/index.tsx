@@ -303,7 +303,7 @@ const AgentsPageContent = () => {
                       : t('Draft weekly launch posts and file them in Notion…')
                   }
                   className={cn(
-                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-ink-subtle',
+                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-ink-muted',
                     firstRun && 'min-h-11 px-1 py-1 text-[15px] leading-[22px]',
                   )}
                 />

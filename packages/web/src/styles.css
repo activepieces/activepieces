@@ -144,6 +144,7 @@
   --color-surface-overlay: var(--surface-overlay);
   --color-surface-inverse: var(--surface-inverse);
   --color-logo-surface: var(--logo-surface);
+  --color-on-logo-surface: var(--on-logo-surface);
   --color-on-solid: var(--on-solid);
   --color-on-inverse: var(--on-inverse);
 
@@ -159,6 +160,7 @@
   --color-ink-muted: var(--ink-muted);
   --color-ink-subtle: var(--ink-subtle);
   --color-fill: var(--fill);
+  --color-control-line: var(--control-line);
 
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
@@ -726,6 +728,7 @@
      * was the only reason those logos stayed readable in the dark.
      */
     --logo-surface: oklch(100% 0 0);
+    --on-logo-surface: var(--ink-950);
 
     --ink-muted: var(--ink-500);
 
@@ -747,6 +750,14 @@
     --fill: var(--ink-150);
 
     /*
+     * The edge of an interactive control — a checkbox, a radio, a switch track.
+     * --border is a divider and is allowed to be a hairline; a control boundary
+     * is the only thing telling you the control is there, so it owes 3:1. No
+     * ink step lands on that number, hence the explicit value.
+     */
+    --control-line: oklch(64.5% 0.045 296);
+
+    /*
      * The accent. `--primary` is a literal rather than a ramp step because
      * the identity is a fixed brand colour, not "whatever violet-600 happens
      * to be". It measures 5.49:1 against white, so the white label clears AA
@@ -758,35 +769,35 @@
     --on-primary: oklch(100% 0 0);
     --primary-surface: var(--ink-100);
     --primary-ink: var(--primary-700);
-    --primary-line: var(--primary-200);
+    --primary-line: var(--primary-500);
     --primary-mark: var(--primary-500);
 
     --neutral: var(--ink-700);
     --on-neutral: var(--on-solid);
     --neutral-surface: var(--ink-100);
     --neutral-ink: var(--ink-700);
-    --neutral-line: var(--ink-200);
+    --neutral-line: var(--control-line);
     --neutral-mark: var(--ink-500);
 
     --success: var(--color-success-700);
     --on-success: var(--on-solid);
     --success-surface: var(--ink-100);
     --success-ink: var(--color-success-700);
-    --success-line: var(--color-success-200);
+    --success-line: var(--color-success-600);
     --success-mark: var(--color-success-600);
 
     --warning: var(--color-warning-700);
     --on-warning: var(--on-solid);
     --warning-surface: var(--ink-100);
     --warning-ink: var(--color-warning-700);
-    --warning-line: var(--color-warning-200);
+    --warning-line: var(--color-warning-600);
     --warning-mark: var(--color-warning-600);
 
     --destructive: var(--color-destructive-700);
     --on-destructive: var(--on-solid);
     --destructive-surface: var(--ink-100);
     --destructive-ink: var(--color-destructive-700);
-    --destructive-line: var(--color-destructive-200);
+    --destructive-line: var(--color-destructive-500);
     --destructive-mark: var(--color-destructive-500);
 
     /*
@@ -1013,6 +1024,12 @@
 
     /* Toned a little off white so a wall of logo tiles does not glare. */
     --logo-surface: oklch(95% 0.004 296);
+    /*
+     * logo-surface stays light in both themes, so the ink on it cannot follow
+     * the ink ramp — a broken image's alt text was rendering near-white on a
+     * near-white plate. Pinned to the light theme's darkest ink.
+     */
+    --on-logo-surface: oklch(12.9% 0.023 296);
 
     /* ink-500 clears 4.5:1 on every surface in this theme; ink-400 does not,
        which is the whole reason the two are separate roles. */
@@ -1021,6 +1038,7 @@
 
     /* One step further from the card here — see the note in the light block. */
     --fill: var(--ink-200);
+    --control-line: oklch(58% 0.03 296);
 
     /* No `--primary` override: the fill is the brand colour in both themes,
        so hover has somewhere to go and the white label stays correct. */

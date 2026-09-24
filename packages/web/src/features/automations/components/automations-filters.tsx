@@ -132,7 +132,7 @@ export const AutomationsFilters = ({
         <img
           src={pieceIcon}
           alt=""
-          className="h-4 w-4 rounded-sm bg-logo-surface object-contain p-px"
+          className="h-4 w-4 rounded-sm bg-logo-surface text-on-logo-surface object-contain p-px"
         />
       ) : undefined,
     };
