@@ -161,7 +161,7 @@ export const FlowCanvas = React.memo(
       selectedSteps.forEach((step) => {
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
-          step.type === FlowActionType.ROUTER ||
+          flowStructureUtil.isBranchedAction(step) ||
           sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ) {
           const childrenNotSelected = flowStructureUtil
@@ -270,6 +270,7 @@ const getChildrenKey = (step: Step) => {
     case FlowActionType.LOOP_ON_ITEMS:
       return step.firstLoopAction ? step.firstLoopAction.name : '';
     case FlowActionType.ROUTER:
+    case FlowActionType.AI_ROUTER:
       return step.children.reduce((routerKey, child) => {
         const childrenKey = child
           ? flowStructureUtil
@@ -308,10 +309,9 @@ const createGraphKey = (
   const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
-      const branchesNames =
-        step.type === FlowActionType.ROUTER
-          ? step.settings.branches.map((branch) => branch.branchName).join('-')
-          : '0';
+      const branchesNames = flowStructureUtil.isBranchedAction(step)
+        ? step.settings.branches.map((branch) => branch.branchName).join('-')
+        : '0';
       const childrenKey = getChildrenKey(step);
       return `${acc}-${step.displayName}-${step.type}-${
         step.nextAction ? step.nextAction.name : ''

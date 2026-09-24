@@ -125,7 +125,13 @@ renders and preserves every real price; the cheapest in the set is 0.01.
   per turn for an agent** — an agent turn is many model round-trips, so charging it per call would have
   silently raised the price of every agent on a customer's own key. The caller says which it wants with
   `ownKeyCredit`, and the agent's turn credit is charged in `chatToolBilling.chargeForLatestTurn`
-  alongside its tool calls.
+  alongside its tool calls. **The worker does not know the edition, so the one own-key credit is
+  reported on Community too; the API is what drops it.** `aiChargeFor` returns fixed credits for any
+  non-`ACTIVEPIECES` provider, and only the CLOUD and ENTERPRISE arms of `app.ts` set the Autumn
+  `billingProvider`; the default provider's `trackFeature` is a no-op, so Community records nothing
+  and its `getCreditsAndAppSumoState` never blocks. Enterprise records the credit but
+  `shouldBlockRunOnCredits` returns false for that edition, so only Cloud can refuse an AI call for
+  being out of credits. Self-hosters on their own OpenRouter key pay OpenRouter directly, not us.
 - **OpenRouter only reports `usage.cost` when the request asks for it.** The provider sends
   `usage: this.settings.usage` in the request body and copies `cost` into `providerMetadata` only when
   the response carries one, so without `usage: { include: true }` every managed call reports no cost,
@@ -173,3 +179,5 @@ renders and preserves every real price; the cheapest in the set is 0.01.
 - `packages/web/src/features/agents/ai-model/` — model selector used in agent step settings
 
 Paths verified 2026-07-26.
+- **`OPENROUTER_PROVISION_KEY` is a management key and cannot make inference calls; only the per-platform keys it mints can.** OpenRouter states it outright: management keys are for creating, listing, updating and deleting other keys and are rejected by every completion or decisions endpoint. So "we already have an OpenRouter key" is true for provisioning and false for anything that needs to call a model at the instance level (the AI Router's Jev call, for example): that needs an ordinary inference key from the same account, created in the dashboard or via the same `POST /keys` the instance already uses, with a credit `limit`. The AI Router does exactly that since 2026-09-23: it runs on the platform's managed key where credits are on, else the admin's own OpenRouter row, as a worker `EXECUTE_AI` job billed like any AI step.
+- **`z.enum(SomeTsEnum).exclude([SomeTsEnum.MEMBER])` compiles and excludes nothing at the type level; pass the key string, `.exclude(['MEMBER'])`.** zod's `exclude` is typed over `keyof T` and returns `ZodEnum<Omit<T, U[number]>>`. A TS enum member is its own literal type, not the string `'MEMBER'`, so `Omit` finds no key to drop and the inferred value type keeps every member, while the runtime check does exclude it. The symptom is one step removed from the cause: a switch over the parsed field is suddenly non-exhaustive (`switch-exhaustiveness-check` in lint, `TS2366` in the build) even though the branch you removed can never arrive. `/v1/ai/execute` hit this when `ROUTE` was carved out of `AiStepAction` for #15707. Neither vitest nor a package-local eslint run without type information reports it; only the build does.
