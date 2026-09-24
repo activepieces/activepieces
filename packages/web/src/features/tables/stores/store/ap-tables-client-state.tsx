@@ -212,7 +212,15 @@ export const createApTableStore = (
           return {
             records: state.records.map((record) => ({
               ...record,
-              values: record.values.filter((_, index) => index !== fieldIndex),
+              values: record.values
+                .filter((cell) => cell.fieldIndex !== fieldIndex)
+                .map((cell) => ({
+                  ...cell,
+                  fieldIndex:
+                    cell.fieldIndex > fieldIndex
+                      ? cell.fieldIndex - 1
+                      : cell.fieldIndex,
+                })),
             })),
             fields: state.fields.filter((_, index) => index !== fieldIndex),
           };
