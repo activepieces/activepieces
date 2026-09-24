@@ -42,9 +42,9 @@ const Container = ({
   return (
     <Alert
       className={cn('rounded-md border', {
-        'dark:bg-amber-950 bg-amber-50  border-none dark:text-amber-600 text-amber-700':
+        'bg-warning-surface border-none text-warning-ink':
           variant === MarkdownVariant.WARNING,
-        'bg-success-100 text-success-300 border-none':
+        'bg-success-surface text-success-ink border-none':
           variant === MarkdownVariant.TIP,
         'p-0 bg-transparent border-none':
           variant === MarkdownVariant.BORDERLESS,
@@ -56,7 +56,7 @@ const Container = ({
             <Info className="w-4 h-4 mt-1" />
           )}
           {variant === MarkdownVariant.WARNING && (
-            <AlertTriangle className="w-4 h-4 mt-1 stroke-amber-700" />
+            <AlertTriangle className="w-4 h-4 mt-1 stroke-warning-ink" />
           )}
           {variant === MarkdownVariant.TIP && (
             <Lightbulb className="w-4 h-4 mt-1" />
@@ -168,7 +168,7 @@ const ApMarkdown = React.memo(
             li: ({ node: _node, ref: _ref, ...props }) => <li {...props} />,
             a: ({ node: _node, ref: _ref, ...props }) => (
               <a
-                className="font-medium text-primary underline underline-offset-4"
+                className="font-medium text-primary-ink underline underline-offset-4"
                 target="_blank"
                 rel="noreferrer noopener"
                 {...props}

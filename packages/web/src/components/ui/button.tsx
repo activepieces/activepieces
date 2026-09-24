@@ -14,18 +14,17 @@ const buttonVariants = cva(
         default:
           'bg-primary stroke-background text-primary-foreground enabled:hover:bg-primary/90',
         basic:
-          'text-primary font-medium underline-offset-4 enabled:hover:bg-accent',
+          'text-primary-ink font-medium underline-offset-4 enabled:hover:bg-accent',
         secondary:
           'text-secondary-foreground bg-secondary enabled:hover:bg-secondary/80 enabled:hover:text-secondary-foreground',
         destructive:
-          'bg-destructive text-white enabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
+          'bg-destructive text-on-destructive enabled:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40',
         outline:
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
         accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
-        ghost:
-          'hover:bg-gray-300/30 hover:text-accent-foreground dark:hover:bg-gray-300/10',
-        link: 'text-primary underline-offset-4 hover:underline',
-        transparent: 'text-primary enabled:hover:bg-transparent',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary-ink underline-offset-4 hover:underline',
+        transparent: 'text-primary-ink enabled:hover:bg-transparent',
       },
       size: {
         default: 'h-9 px-3 py-2 has-[>svg]:px-2.5',
@@ -111,7 +110,7 @@ function renderButtonContent(
           withCtrl={true}
           className={cn({
             'text-primary-foreground/70': variant === 'default',
-            'text-white/70': variant === 'destructive',
+            'text-on-destructive/70': variant === 'destructive',
           })}
         />
       </div>

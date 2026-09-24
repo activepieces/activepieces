@@ -62,7 +62,7 @@ const SIZES = {
 const TRIO: TrioGlyph[] = [
   {
     shape: 'circle',
-    fill: '#0D9488',
+    fill: 'var(--swatch-9-mark)',
     size: 72,
     left: 20,
     top: 24,
@@ -71,7 +71,7 @@ const TRIO: TrioGlyph[] = [
   },
   {
     shape: 'hexagon',
-    fill: '#D97706',
+    fill: 'var(--swatch-6-mark)',
     size: 74,
     left: 146,
     top: 22,
@@ -80,12 +80,12 @@ const TRIO: TrioGlyph[] = [
   },
   {
     shape: 'roundedSquare',
-    fill: 'hsl(var(--primary))',
+    fill: 'var(--primary)',
     size: 84,
     left: 76,
     top: 6,
     rotate: 0,
-    shadow: '0 5px 11px hsl(var(--primary) / 0.36)',
+    shadow: '0 5px 11px color-mix(in oklab, var(--primary), transparent 64%)',
   },
 ];
 
@@ -129,7 +129,7 @@ export const AgentMark = ({
 }: AgentMarkProps) => (
   <div
     className={cn(
-      'flex shrink-0 items-center justify-center border border-[#E7E7EA] bg-background',
+      'flex shrink-0 items-center justify-center border border-border bg-background',
       SIZES[size].box,
     )}
   >

@@ -107,7 +107,7 @@ export function AnalyticsAreaChart({
               <CartesianGrid
                 vertical={false}
                 strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
+                stroke="var(--border)"
               />
               <XAxis
                 dataKey="date"
@@ -115,7 +115,7 @@ export function AnalyticsAreaChart({
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
                     month: 'short',
@@ -127,7 +127,7 @@ export function AnalyticsAreaChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 width={40}
                 tickFormatter={yAxisFormatter}
               />
@@ -162,7 +162,7 @@ export function AnalyticsAreaChart({
                   r: 5,
                   fill: color,
                   strokeWidth: 2,
-                  stroke: '#fff',
+                  stroke: 'var(--surface-raised)',
                 }}
               />
             </AreaChart>

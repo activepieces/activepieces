@@ -12,11 +12,11 @@ import { FunctionTooltipCard } from './function-hover-popover';
 const SCREEN_MARGIN = 8;
 
 const CATEGORY_COLORS: Record<string, string> = {
-  text: 'bg-blue-100 text-blue-700 border-blue-200',
-  number: 'bg-green-100 text-green-700 border-green-200',
-  date: 'bg-orange-100 text-orange-700 border-orange-200',
-  list: 'bg-pink-100 text-pink-700 border-pink-200',
-  logic: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  text: 'bg-swatch-11-surface text-swatch-11-ink border-swatch-11-line',
+  number: 'bg-swatch-8-surface text-swatch-8-ink border-swatch-8-line',
+  date: 'bg-swatch-5-surface text-swatch-5-ink border-swatch-5-line',
+  list: 'bg-swatch-3-surface text-swatch-3-ink border-swatch-3-line',
+  logic: 'bg-swatch-6-surface text-swatch-6-ink border-swatch-6-line',
 };
 
 type FunctionSearchPopoverProps = {

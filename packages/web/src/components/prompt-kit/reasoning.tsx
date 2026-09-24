@@ -102,7 +102,7 @@ const ReasoningTrigger = React.forwardRef<
       }}
       {...props}
     >
-      <span className="text-primary">{children}</span>
+      <span className="text-primary-ink">{children}</span>
       <div
         className={cn(
           'transform transition-transform',

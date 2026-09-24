@@ -129,7 +129,11 @@ export const AutomationsFilters = ({
       value: connection.externalId,
       label: connection.displayName,
       icon: pieceIcon ? (
-        <img src={pieceIcon} alt="" className="h-4 w-4 object-contain" />
+        <img
+          src={pieceIcon}
+          alt=""
+          className="h-4 w-4 rounded-sm bg-logo-surface text-on-logo-surface object-contain p-px"
+        />
       ) : undefined,
     };
   });

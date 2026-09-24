@@ -368,7 +368,7 @@ const LinkButton = ({
   <button
     type="button"
     onClick={onClick}
-    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+    className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary-ink hover:underline"
   >
     {children}
     <ArrowUpRight className="size-3.5" />

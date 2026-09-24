@@ -1,62 +1,32 @@
+import { brandColors } from '@activepieces/shared';
 import { createContext, useContext, useEffect, useState } from 'react';
 import * as RippleHook from 'use-ripple-hook';
 
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { colorsUtils } from '@/lib/color-utils';
 
-type Theme = 'dark' | 'light' | 'system';
-
-type ResolvedTheme = 'dark' | 'light';
-
-type ThemeProviderProps = {
-  children: React.ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
-};
-
-type ThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  setThemeWithoutPersisting: (theme: Theme) => void;
-  forceLightMode: boolean;
-  setForceLightMode: (value: boolean) => void;
-};
-
-const initialState: ThemeProviderState = {
-  theme: 'light',
-  setTheme: () => null,
-  setThemeWithoutPersisting: () => null,
-  forceLightMode: false,
-  setForceLightMode: () => null,
-};
-
-const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
-
-const setFavicon = (url: string) => {
-  document.querySelectorAll("link[rel*='icon']").forEach((el) => el.remove());
-  const link = document.createElement('link');
-  link.rel = 'icon';
-  link.href = url;
-  document.head.appendChild(link);
-};
+const ThemeProviderContext = createContext<ThemeProviderState | undefined>(
+  undefined,
+);
 
 const systemThemeQuery = '(prefers-color-scheme: dark)';
 
-const getSystemTheme = (): ResolvedTheme =>
-  window.matchMedia(systemThemeQuery).matches ? 'dark' : 'light';
-
 export function ThemeProvider({
   children,
-  defaultTheme = 'light',
+  defaultPreference = 'light',
   storageKey = 'ap-ui-theme',
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem(storageKey) as Theme) || defaultTheme,
+  const [preference, setPreference] = useState<ThemePreference>(
+    () =>
+      (localStorage.getItem(storageKey) as ThemePreference) ||
+      defaultPreference,
   );
-  const [forceLightMode, setForceLightMode] = useState(false);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
   const branding = flagsHooks.useWebsiteBranding();
+
+  const resolvedTheme: ResolvedTheme =
+    preference === 'system' ? systemTheme : preference;
+
   useEffect(() => {
     const mediaQuery = window.matchMedia(systemThemeQuery);
     const handleChange = (event: MediaQueryListEvent) => {
@@ -65,65 +35,36 @@ export function ThemeProvider({
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
+  }, [resolvedTheme]);
+
   useEffect(() => {
     if (!branding) {
       console.warn('Website brand is not defined');
       return;
     }
-    const root = window.document.documentElement;
-
-    const resolvedTheme: ResolvedTheme = forceLightMode
-      ? 'light'
-      : theme === 'system'
-      ? systemTheme
-      : theme;
-    root.classList.remove('light', 'dark');
     document.title = branding.websiteName;
-    document.documentElement.style.setProperty(
-      '--primary',
-      colorsUtils.hexToHslString(branding.colors.primary.default),
-    );
-
     setFavicon(branding.logos.favIconUrl);
-    switch (resolvedTheme) {
-      case 'light': {
-        document.documentElement.style.setProperty(
-          '--primary-100',
-          colorsUtils.hexToHslString(branding.colors.primary.light),
-        );
-        document.documentElement.style.setProperty(
-          '--primary-300',
-          colorsUtils.hexToHslString(branding.colors.primary.dark),
-        );
-        break;
-      }
-      case 'dark': {
-        document.documentElement.style.setProperty(
-          '--primary-100',
-          colorsUtils.hexToHslString(branding.colors.primary.dark),
-        );
-        document.documentElement.style.setProperty(
-          '--primary-300',
-          colorsUtils.hexToHslString(branding.colors.primary.light),
-        );
-        break;
-      }
-      default:
-        break;
-    }
 
-    root.classList.add(resolvedTheme);
-  }, [theme, branding, forceLightMode, systemTheme]);
+    const variables = brandColors.cssVariables({
+      primaryColor: branding.colors.primary.default,
+      theme: resolvedTheme,
+    });
+    Object.entries(variables).forEach(([name, value]) => {
+      document.documentElement.style.setProperty(name, value);
+    });
+  }, [branding, resolvedTheme]);
 
   const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      localStorage.setItem(storageKey, theme);
-      setTheme(theme);
+    preference,
+    resolvedTheme,
+    setPreference: (next: ThemePreference) => {
+      localStorage.setItem(storageKey, next);
+      setPreference(next);
     },
-    setThemeWithoutPersisting: setTheme,
-    forceLightMode,
-    setForceLightMode,
+    setPreferenceWithoutPersisting: setPreference,
   };
 
   return (
@@ -143,12 +84,40 @@ export const useTheme = () => {
 };
 
 export const useApRipple = () => {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   return RippleHook.default({
     color:
-      theme === 'dark'
+      resolvedTheme === 'dark'
         ? 'rgba(233, 233, 233, 0.2)'
         : 'rgba(155, 155, 155, 0.2)',
     cancelAutomatically: true,
   });
+};
+
+const setFavicon = (url: string) => {
+  document.querySelectorAll("link[rel*='icon']").forEach((el) => el.remove());
+  const link = document.createElement('link');
+  link.rel = 'icon';
+  link.href = url;
+  document.head.appendChild(link);
+};
+
+const getSystemTheme = (): ResolvedTheme =>
+  window.matchMedia(systemThemeQuery).matches ? 'dark' : 'light';
+
+export type ThemePreference = 'dark' | 'light' | 'system';
+
+export type ResolvedTheme = 'dark' | 'light';
+
+type ThemeProviderProps = {
+  children: React.ReactNode;
+  defaultPreference?: ThemePreference;
+  storageKey?: string;
+};
+
+type ThemeProviderState = {
+  preference: ThemePreference;
+  resolvedTheme: ResolvedTheme;
+  setPreference: (preference: ThemePreference) => void;
+  setPreferenceWithoutPersisting: (preference: ThemePreference) => void;
 };

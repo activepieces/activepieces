@@ -546,7 +546,7 @@ const VerificationStatusBadge = ({
 }) => {
   if (status === SsoDomainVerificationStatus.VERIFIED) {
     return (
-      <div className="flex items-center gap-2 text-sm text-success-600">
+      <div className="flex items-center gap-2 text-sm text-success-ink">
         <CheckCircle className="size-4" />
         {t('DNS verified — domain is ready')}
       </div>

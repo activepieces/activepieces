@@ -199,7 +199,7 @@ export default function AuditLogsPage() {
               return row.original.projectId &&
                 'project' in row.original.data ? (
                 <Link to={`/projects/${row.original.projectId}`}>
-                  <div className="text-left text-primary hover:underline">
+                  <div className="text-left text-primary-ink hover:underline">
                     {row.original.data.project?.displayName}
                   </div>
                 </Link>

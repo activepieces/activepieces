@@ -36,8 +36,8 @@ export const PieceSelectorTabs = ({
             key={tab.key}
             value={tab.key}
             className={`flex flex-col h-full rounded-md w-[85px] max-w-[85px] shrink-0
-              hover:bg-gray-300/30 dark:hover:bg-gray-300/10
-               data-[state=active]:text-primary data-[state=active]:shadow-none
+              hover:bg-accent
+               data-[state=active]:text-primary-ink data-[state=active]:shadow-none
                border-transparent data-[state=active]:border-primary data-[state=active]:active data-[state=active]:bg-transparent
                text-accent-foreground [&>svg]:size-5 [&>svg]:shrink-0`}
           >

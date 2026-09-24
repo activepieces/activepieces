@@ -153,7 +153,7 @@ export function EditTimeSavedPopover({
                   handleTimeInput(e.target.value, 'hours', 1000, minsRef)
                 }
                 onKeyDown={handleKeyDown}
-                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-ink-muted"
                 maxLength={4}
                 autoFocus
               />
@@ -171,7 +171,7 @@ export function EditTimeSavedPopover({
                 }
                 onBlur={() => padOnBlur('mins')}
                 onKeyDown={handleKeyDown}
-                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-ink-muted"
                 maxLength={2}
               />
             </div>
@@ -188,7 +188,7 @@ export function EditTimeSavedPopover({
                 }
                 onBlur={() => padOnBlur('secs')}
                 onKeyDown={handleKeyDown}
-                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-muted-foreground/50"
+                className="w-full text-center text-sm bg-transparent outline-none placeholder:text-ink-muted"
                 maxLength={2}
               />
             </div>

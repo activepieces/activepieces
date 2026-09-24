@@ -46,7 +46,7 @@ export function UseCaseCard({
         />
         {card.kind === 'routine' && (
           <Repeat
-            className="size-3.5 text-muted-foreground/60"
+            className="size-3.5 text-ink-muted"
             aria-label={t('Runs on autopilot')}
           />
         )}

@@ -53,7 +53,7 @@ export function FeatureTeaserContent({
           href={docsUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline"
+          className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary-ink hover:underline"
         >
           {t('Read the docs')}
           <ExternalLink className="size-3.5" />
@@ -86,7 +86,7 @@ export function FeatureTeaserContent({
         <ul className="flex flex-col gap-2">
           {bullets.map((bullet) => (
             <li key={bullet} className="flex items-start gap-2 text-sm">
-              <Check className="mt-0.5 size-4 shrink-0 text-primary" />
+              <Check className="mt-0.5 size-4 shrink-0 text-primary-ink" />
               <span>{t(bullet)}</span>
             </li>
           ))}
@@ -102,7 +102,7 @@ export function FeatureTeaserContent({
             href={documentationUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1 text-sm font-medium text-primary-ink hover:underline"
           >
             {t('Read the docs')}
             <ExternalLink className="size-3.5" />

@@ -23,19 +23,20 @@ export const CurrentSubscriptionCard = ({
   if (isPaid) {
     return (
       <div
+        data-theme="light"
         className="flex flex-col gap-6 rounded-xl bg-cover bg-center p-5"
         style={{ backgroundImage: `url(${nonFreePlanBg})` }}
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="text-2xl font-bold text-neutral-900">
+          <span className="text-2xl font-bold text-foreground">
             {planTitle(info)}
           </span>
-          <Badge className="rounded-full border-0 bg-white px-3 py-1 text-primary shadow-sm hover:bg-white">
+          <Badge className="rounded-full border-0 bg-surface-raised px-3 py-1 text-primary-ink shadow-edge hover:bg-surface-raised">
             {isYearly ? t('Yearly') : t('Monthly')}
           </Badge>
         </div>
         <Button
-          className="w-full  text-neutral-900 shadow-sm hover:bg-white/90"
+          className="w-full text-foreground shadow-edge hover:bg-surface-raised"
           onClick={onExplorePlans}
           variant={'outline'}
         >
@@ -49,8 +50,7 @@ export const CurrentSubscriptionCard = ({
     <div
       className={cn(
         'flex flex-col gap-4 rounded-xl border border-primary/20 p-5',
-        'bg-gradient-to-r from-amber-50 to-primary/10',
-        'dark:border-primary/20 dark:from-muted/40 dark:to-primary/10',
+        'bg-primary-surface',
       )}
     >
       <span className="text-sm text-muted-foreground">{t('Current plan')}</span>

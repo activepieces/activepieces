@@ -29,11 +29,11 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
       subtitle={t('Track how much time your automations are saving')}
       tooltipLabel={t('Time Saved')}
       dataKey="minutesSaved"
-      color="#10b981"
+      color="var(--swatch-8-mark)"
       gradientId="fillTimeSaved"
       chartData={chartData}
       isLoading={!report}
-      emptyIcon={<Clock className="h-10 w-10 text-muted-foreground/50" />}
+      emptyIcon={<Clock className="h-10 w-10 text-ink-subtle" />}
       emptyText={t(
         'No time saved yet. Data will appear here once your flows start running.',
       )}

@@ -254,7 +254,7 @@ function PlanColumn({
         <h3
           className={cn(
             'text-lg font-semibold',
-            entry.highlighted && 'text-primary',
+            entry.highlighted && 'text-primary-ink',
           )}
         >
           {t(entry.name)}
@@ -316,7 +316,7 @@ function PlanColumn({
               key={feature.label}
               className="flex items-center gap-2 text-sm text-foreground"
             >
-              <Check className="size-4 shrink-0 text-primary" />
+              <Check className="size-4 shrink-0 text-primary-ink" />
               <span className="flex-1">{t(feature.label)}</span>
               {!isNil(feature.tooltip) && (
                 <Tooltip>
@@ -354,7 +354,11 @@ function PlanCta({
   const { capture } = useTelemetry();
   if (isEnterprise) {
     return (
-      <Button variant="default" className="w-full bg-foreground" asChild>
+      <Button
+        variant="default"
+        className="w-full bg-surface-inverse text-on-inverse hover:bg-surface-inverse/90"
+        asChild
+      >
         <a
           href={planSelectorUtils.SALES_URL}
           target="_blank"

@@ -29,7 +29,7 @@ export const CreditsInfoDialog = () => {
   });
   return (
     <Dialog>
-      <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary hover:underline">
+      <DialogTrigger className="inline-flex w-fit items-center gap-1 text-sm font-medium text-primary-ink hover:underline">
         {t('Usage breakdown')}
         <ArrowUpRight className="size-3.5" />
       </DialogTrigger>
@@ -38,8 +38,8 @@ export const CreditsInfoDialog = () => {
         aria-describedby={undefined}
         className="max-w-[625px] gap-0 overflow-hidden p-0"
       >
-        <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-violet-50 px-6 py-12 dark:bg-violet-950/30">
-          <DialogTitle className="relative flex items-center gap-2 text-2xl font-bold text-purple-900 dark:text-purple-200">
+        <div className="relative flex shrink-0 flex-col items-center justify-center gap-2 overflow-hidden border-b bg-primary-surface px-6 py-12">
+          <DialogTitle className="relative flex items-center gap-2 text-2xl font-bold text-primary-ink">
             <Coins className="size-6" />
             {t('Credits FAQ')}
           </DialogTitle>

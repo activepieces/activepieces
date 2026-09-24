@@ -31,7 +31,7 @@ const composeInnerClass =
 const chipWrapperClass = cn(
   'w-auto',
   '[&_.ProseMirror]:!cursor-pointer [&_.ProseMirror]:!opacity-100 [&_.ProseMirror]:pointer-events-none',
-  '[&_[data-type=mention]]:!inline [&_[data-type=mention]]:!align-baseline [&_[data-type=mention]]:!my-0 [&_[data-type=mention]]:!mx-0 [&_[data-type=mention]]:!border-0 [&_[data-type=mention]]:!bg-transparent [&_[data-type=mention]]:!px-0 [&_[data-type=mention]]:!py-0 [&_[data-type=mention]]:!rounded-none [&_[data-type=mention]]:!text-primary [&_[data-type=mention]]:!font-medium',
+  '[&_[data-type=mention]]:!inline [&_[data-type=mention]]:!align-baseline [&_[data-type=mention]]:!my-0 [&_[data-type=mention]]:!mx-0 [&_[data-type=mention]]:!border-0 [&_[data-type=mention]]:!bg-transparent [&_[data-type=mention]]:!px-0 [&_[data-type=mention]]:!py-0 [&_[data-type=mention]]:!rounded-none [&_[data-type=mention]]:!text-primary-ink [&_[data-type=mention]]:!font-medium',
   '[&_[data-type=mention]>*]:!hidden',
 );
 
@@ -190,7 +190,7 @@ function MentionChipsInput({
                 type="button"
                 aria-label={t('Remove')}
                 className={cn(
-                  'shrink-0 rounded-full px-1 py-0.5 text-muted-foreground/70 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50',
+                  'shrink-0 rounded-full px-1 py-0.5 text-ink-muted outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50',
                   { 'text-destructive/70 hover:text-destructive': invalid },
                 )}
                 onClick={(event) => {

@@ -97,7 +97,7 @@ function GeneratedImageCardSkeleton({ label }: { label: string }) {
         >
           {label}
         </TextShimmer>
-        <ImageIcon className="size-4 shrink-0 text-muted-foreground/50" />
+        <ImageIcon className="size-4 shrink-0 text-ink-subtle" />
       </div>
     </motion.div>
   );
@@ -158,7 +158,7 @@ function CardSkeletonFailed({ cardKind }: { cardKind: PendingCardKind }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
     >
-      <AlertCircle className="size-4 shrink-0 text-muted-foreground/70" />
+      <AlertCircle className="size-4 shrink-0 text-ink-muted" />
       <span className="text-xs">
         {cardKind === 'image'
           ? t("Couldn't generate the image")

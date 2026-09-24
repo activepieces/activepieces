@@ -47,9 +47,7 @@ function SpreadsheetTable({
               {row.map((cell, colIdx) => (
                 <td key={colIdx} className="px-3 py-2 align-top">
                   {cell === '' ? (
-                    <span className="italic text-muted-foreground/40">
-                      {t('empty')}
-                    </span>
+                    <span className="italic text-ink-muted">{t('empty')}</span>
                   ) : (
                     <span className="whitespace-pre-wrap break-words">
                       {cell}

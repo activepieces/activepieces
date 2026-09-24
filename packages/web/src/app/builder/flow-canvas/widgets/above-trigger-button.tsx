@@ -63,13 +63,13 @@ const AboveTriggerButton = ({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="bg-builder-background">
+        <div className="bg-canvas">
           <Button
             variant="ghost"
             className={cn(
               'h-8 bg-background border-input hover:border-border  border p-2.5 border-solid rounded-lg animate-fade',
               {
-                'bg-primary-100/50! dark:text-primary-foreground  text-primary hover:text-primary disabled:pointer-events-auto hover:border-primary!  border-primary/50':
+                'bg-primary-surface! text-primary-ink hover:text-primary-ink disabled:pointer-events-auto hover:border-primary!  border-primary-line':
                   showPrimaryBg,
               },
             )}
@@ -84,7 +84,7 @@ const AboveTriggerButton = ({
                   className={cn(
                     'text-[10px] bg-muted h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap text-muted-foreground',
                     {
-                      'bg-primary/13 text-primary': showPrimaryBg,
+                      'bg-primary/13 text-primary-ink': showPrimaryBg,
                     },
                   )}
                 >

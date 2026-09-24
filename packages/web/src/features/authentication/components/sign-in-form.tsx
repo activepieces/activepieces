@@ -194,14 +194,14 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
                       <button
                         type="button"
                         onClick={onForgotPassword}
-                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                        className="text-muted-foreground text-xs hover:text-primary-ink transition-all duration-200"
                       >
                         {t('Forgot your password?')}
                       </button>
                     ) : (
                       <Link
                         to="/forget-password"
-                        className="text-muted-foreground text-xs hover:text-primary transition-all duration-200"
+                        className="text-muted-foreground text-xs hover:text-primary-ink transition-all duration-200"
                       >
                         {t('Forgot your password?')}
                       </Link>

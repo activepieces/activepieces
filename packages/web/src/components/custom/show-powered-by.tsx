@@ -18,7 +18,7 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
     >
       <div
         className={cn(
-          'justify-end text-muted-foreground/70 text-sm items-center flex gap-1 transition group ',
+          'justify-end text-ink-muted text-sm items-center flex gap-1 transition group ',
           {
             'justify-center': position === 'static',
           },

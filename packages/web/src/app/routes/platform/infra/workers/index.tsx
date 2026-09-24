@@ -167,7 +167,7 @@ function StatBar({ label, value, detail }: StatBarProps) {
       ? 'bg-destructive'
       : value > 80
       ? 'bg-warning'
-      : 'bg-emerald-500';
+      : 'bg-success-mark';
 
   return (
     <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ function WorkerCard({ worker, index }: WorkerCardProps) {
                 worker.workerGroupId ? (
                   <Badge
                     variant="outline"
-                    className="border-primary/40 bg-primary/10 text-primary"
+                    className="border-primary/40 bg-primary/10 text-primary-ink"
                   >
                     <Layers className="size-3 shrink-0" />
                     {worker.workerGroupId.replaceAll('_', ' ')}

@@ -50,6 +50,6 @@ function getStateLabel(state: ConversationIndicatorState): string {
 
 const DOT_CLASS: Record<ConversationIndicatorState, string> = {
   working: 'bg-primary',
-  waiting: 'bg-amber-500',
-  unread: 'bg-sky-500',
+  waiting: 'bg-warning-mark',
+  unread: 'bg-primary-mark',
 };

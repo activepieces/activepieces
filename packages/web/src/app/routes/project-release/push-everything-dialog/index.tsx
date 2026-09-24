@@ -107,7 +107,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
                   <FormControl>
                     <Textarea {...field} />
                   </FormControl>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-ink-muted">
                     {t(
                       'Enter a commit message to describe the changes you want to push.',
                     )}

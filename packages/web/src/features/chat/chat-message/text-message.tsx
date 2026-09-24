@@ -23,9 +23,9 @@ interface TextMessageProps {
 
 export const TextMessage: React.FC<TextMessageProps> = React.memo(
   ({ content, role }) => {
-    const { theme } = useTheme();
+    const { resolvedTheme } = useTheme();
     const extensions = [
-      theme === 'dark' ? githubDark : githubLight,
+      resolvedTheme === 'dark' ? githubDark : githubLight,
       EditorState.readOnly.of(true),
       EditorView.editable.of(false),
       javascript({ jsx: false, typescript: true }),
@@ -47,7 +47,7 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                 <div
                   className={cn(
                     'relative border rounded-md p-4 pt-12',
-                    theme === 'dark' ? 'bg-[#0E1117]' : 'bg-background',
+                    'bg-fill',
                   )}
                 >
                   <ReactCodeMirror
@@ -72,11 +72,11 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                       closeBrackets: false,
                     }}
                     lang={match[1]}
-                    theme={theme === 'dark' ? githubDark : githubLight}
+                    theme={resolvedTheme === 'dark' ? githubDark : githubLight}
                     readOnly={true}
                     extensions={extensions}
                   />
-                  <div className="absolute top-4 left-5 text-xs text-gray-500">
+                  <div className="absolute top-4 left-5 text-xs text-ink-muted">
                     <div className="flex items-center gap-1">
                       <CodeIcon className="size-3" />
                       <span>{match[1]}</span>
@@ -84,14 +84,14 @@ export const TextMessage: React.FC<TextMessageProps> = React.memo(
                   </div>
                   <CopyCode
                     textToCopy={String(children).trim()}
-                    className="absolute top-2 right-2 text-xs text-gray-500"
+                    className="absolute top-2 right-2 text-xs text-ink-muted"
                   />
                 </div>
               ) : (
                 <code
                   className={cn(
                     className,
-                    'bg-gray-200 px-[6px] py-[2px] rounded-xs font-mono text-sm',
+                    'bg-fill px-[6px] py-[2px] rounded-xs font-mono text-sm',
                   )}
                   {...props}
                 >

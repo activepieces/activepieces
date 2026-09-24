@@ -141,7 +141,7 @@ export function OnboardingJourneyPattern() {
           preserveAspectRatio="xMidYMax slice"
           fill="none"
           aria-hidden
-          className="h-full w-full text-primary"
+          className="h-full w-full text-primary-ink"
         >
           <rect
             width="900"
@@ -254,12 +254,12 @@ function clamp({
 const LENS_MASK =
   'radial-gradient(circle 160px at var(--ob-mx, -300px) var(--ob-my, -300px), black 45%, transparent 100%)';
 
-const INK_BLUE = 'text-[#0078BF] dark:text-[#57ABE8]';
-const INK_TEAL = 'text-[#00838A] dark:text-[#35B5B0]';
-const INK_ORANGE = 'text-[#F0602F] dark:text-[#FF8E5E]';
-const INK_SUNFLOWER = 'text-[#D69A00] dark:text-[#F5B93D]';
-const INK_PINK = 'text-[#E3399B] dark:text-[#FF7AC1]';
-const INK_PURPLE = 'text-[#765BA7] dark:text-[#A98FD6]';
+const INK_BLUE = 'text-swatch-11-ink';
+const INK_TEAL = 'text-swatch-9-ink';
+const INK_ORANGE = 'text-swatch-5-ink';
+const INK_SUNFLOWER = 'text-swatch-6-ink';
+const INK_PINK = 'text-swatch-2-ink';
+const INK_PURPLE = 'text-swatch-1-ink';
 
 const JITTER = [
   { x: -0.3, y: 0.2 },

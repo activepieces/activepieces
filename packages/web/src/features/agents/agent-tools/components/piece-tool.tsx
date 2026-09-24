@@ -118,7 +118,7 @@ export const AgentPieceToolComponent = ({
       <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-accent transition-all">
         <div className="flex w-full items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+            <div className="h-8 w-8 rounded-md bg-logo-surface text-on-logo-surface flex items-center justify-center">
               {pieceMetadata.logoUrl ? (
                 <img
                   src={pieceMetadata.logoUrl}

@@ -54,7 +54,7 @@ export const ProjectAvatar = ({
           showBackground ? 'rounded-tr-md' : ''
         } ${showDetails ? 'py-6' : ''}`}
         style={{
-          backgroundColor: showBackground ? '#f3f4f6' : 'transparent',
+          backgroundColor: showBackground ? 'var(--fill)' : 'transparent',
         }}
       >
         <Avatar
@@ -64,8 +64,8 @@ export const ProjectAvatar = ({
             showDetails ? 'mb-3' : ''
           }`}
           style={{
-            backgroundColor: '#9ca3af',
-            color: '#ffffff',
+            backgroundColor: 'var(--neutral)',
+            color: 'var(--on-neutral)',
           }}
         >
           <span className={currentSize.text}>
@@ -74,7 +74,7 @@ export const ProjectAvatar = ({
         </Avatar>
         {showDetails && (
           <div className="px-4 text-center">
-            <div className="font-semibold text-sm text-black">
+            <div className="font-semibold text-sm text-foreground">
               {displayName}
             </div>
             {createdDate && (
@@ -102,7 +102,7 @@ export const ProjectAvatar = ({
       } ${showDetails ? 'py-6' : ''}`}
       style={{
         backgroundColor: showBackground
-          ? PROJECT_COLOR_PALETTE[iconColor].color + '26'
+          ? `color-mix(in oklab, ${PROJECT_COLOR_PALETTE[iconColor].color}, transparent 85%)`
           : 'transparent',
       }}
     >
@@ -123,7 +123,9 @@ export const ProjectAvatar = ({
       </Avatar>
       {showDetails && (
         <div className="px-4 text-center">
-          <div className="font-semibold text-sm text-black">{displayName}</div>
+          <div className="font-semibold text-sm text-foreground">
+            {displayName}
+          </div>
           {createdDate && (
             <div className="text-xs text-muted-foreground mt-1">
               Created on{' '}

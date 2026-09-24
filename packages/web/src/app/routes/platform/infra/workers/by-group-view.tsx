@@ -73,7 +73,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
     <>
       <div className="flex w-full flex-col rounded-lg border bg-background p-5 gap-4 sm:w-[475px]">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary-ink">
             <Layers className="size-4" />
           </div>
           <TextWithTooltip tooltipMessage={groupLabel}>

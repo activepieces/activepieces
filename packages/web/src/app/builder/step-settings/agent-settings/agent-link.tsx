@@ -230,7 +230,7 @@ export const AgentLink = ({ disabled }: AgentLinkProps) => {
               'text-xs',
               isNil(blockedReason)
                 ? 'text-muted-foreground'
-                : 'text-warning-700 dark:text-warning-300',
+                : 'text-warning-ink',
             )}
           >
             {blockedReason ??

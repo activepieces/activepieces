@@ -159,7 +159,7 @@ export const TemplatesBrowseDialog = ({
                           className={cn(
                             'px-3 py-1 h-auto whitespace-nowrap transition-colors border-none',
                             isSelected
-                              ? 'bg-black text-white hover:!bg-black hover:!text-white'
+                              ? 'bg-surface-inverse text-on-inverse hover:!bg-surface-inverse hover:!text-on-inverse'
                               : 'bg-transparent hover:!bg-sidebar-accent hover:!text-sidebar-accent-foreground',
                           )}
                         >

@@ -29,7 +29,9 @@ function highlightMatch(text: string, query: string) {
   return (
     <>
       {text.slice(0, idx)}
-      <span className="text-primary">{text.slice(idx, idx + q.length)}</span>
+      <span className="text-primary-ink">
+        {text.slice(idx, idx + q.length)}
+      </span>
       {text.slice(idx + q.length)}
     </>
   );

@@ -7,7 +7,13 @@ import { cn } from '@/lib/utils';
 import { passwordRules } from '../utils/password-validation-utils';
 
 // Color per step: 1/5 = red, 2/5 = orange, 3/5 = yellow, 4/5 = violet, 5/5 = purple
-const STEP_COLORS = ['#ef4444', '#f97316', '#eab308', '#c084fc', '#a855f7'];
+const STEP_COLORS = [
+  'var(--destructive-mark)',
+  'var(--warning-mark)',
+  'var(--swatch-6-mark)',
+  'var(--primary-mark)',
+  'var(--success-mark)',
+];
 
 function getBoltColor(passedCount: number) {
   if (passedCount === 0) return undefined;
@@ -90,9 +96,9 @@ const PasswordRequirementsList = ({
               className={cn(
                 'w-2 h-2 rounded-full shrink-0',
                 rule.passed
-                  ? 'bg-green-500'
+                  ? 'bg-success-mark'
                   : isError
-                  ? 'bg-red-500'
+                  ? 'bg-destructive-mark'
                   : 'bg-muted-foreground/40',
               )}
             />

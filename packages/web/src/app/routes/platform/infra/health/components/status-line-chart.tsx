@@ -19,14 +19,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/format-utils';
 
 const SERIES: Array<{ status: FlowRunStatus; label: string; color: string }> = [
-  { status: FlowRunStatus.SUCCEEDED, label: 'Succeeded', color: '#22c55e' },
-  { status: FlowRunStatus.FAILED, label: 'Failed', color: '#f59e0b' },
+  {
+    status: FlowRunStatus.SUCCEEDED,
+    label: 'Succeeded',
+    color: 'var(--success-mark)',
+  },
+  {
+    status: FlowRunStatus.FAILED,
+    label: 'Failed',
+    color: 'var(--warning-mark)',
+  },
   {
     status: FlowRunStatus.INTERNAL_ERROR,
     label: 'Internal error',
-    color: '#ef4444',
+    color: 'var(--destructive-mark)',
   },
-  { status: FlowRunStatus.CANCELED, label: 'Cancelled', color: '#9ca3af' },
+  {
+    status: FlowRunStatus.CANCELED,
+    label: 'Cancelled',
+    color: 'var(--neutral-mark)',
+  },
 ];
 
 type StatusLineChartProps = {
@@ -148,7 +160,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
               <CartesianGrid
                 vertical={false}
                 strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
+                stroke="var(--border)"
               />
               <XAxis
                 dataKey="date"
@@ -156,7 +168,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 tickFormatter={(value) =>
                   new Date(value).toLocaleDateString('en-US', {
                     month: 'short',
@@ -168,7 +180,7 @@ export function StatusLineChart({ data, isLoading }: StatusLineChartProps) {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
                 width={40}
                 tickFormatter={(value) =>
                   formatUtils.formatNumberCompact(value as number)

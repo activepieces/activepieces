@@ -140,8 +140,8 @@ const TrialActivationScreen = ({
   return (
     <div
       className={cn(
-        'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-builder-background px-6 py-12',
-        '[background-image:radial-gradient(var(--builder-background-pattern)_1px,transparent_0)] [background-size:22px_22px]',
+        'fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-canvas px-6 py-12',
+        '[background-image:radial-gradient(var(--canvas-pattern)_1px,transparent_0)] [background-size:22px_22px]',
       )}
     >
       <canvas
@@ -186,7 +186,7 @@ const TrialActivationScreen = ({
                 >
                   {statusMessageFor(progress)}
                 </span>
-                <span className="text-xs tabular-nums text-muted-foreground/70">
+                <span className="text-xs tabular-nums text-ink-muted">
                   {Math.round(progress)}%
                 </span>
               </div>
@@ -221,7 +221,7 @@ const TrialActivationScreen = ({
         {view === 'not_admin' && (
           <div className="flex flex-col gap-6">
             <div className="grid size-11 place-items-center rounded-full bg-warning/15">
-              <TriangleAlert className="size-[22px] text-warning-700" />
+              <TriangleAlert className="size-[22px] text-warning-ink" />
             </div>
             <TrialActivationCopy
               heading={t('A platform admin needs to do this')}
@@ -233,7 +233,7 @@ const TrialActivationScreen = ({
               textToCopy={activationLinkFor(licenseKey)}
               useInput
             />
-            <p className="text-xs leading-relaxed text-muted-foreground/70">
+            <p className="text-xs leading-relaxed text-ink-muted">
               {t(
                 "Signed in as {email}. Sign out and back in with an admin account if that's you.",
                 { email: user?.email ?? '' },
@@ -244,7 +244,7 @@ const TrialActivationScreen = ({
         {view === 'failed' && (
           <div className="flex flex-col gap-6">
             <div className="grid size-11 place-items-center rounded-full bg-destructive/10">
-              <CircleX className="size-[22px] text-destructive-700" />
+              <CircleX className="size-[22px] text-destructive-ink" />
             </div>
             <TrialActivationCopy
               heading={t("We couldn't activate your trial")}
@@ -349,7 +349,13 @@ const CONFETTI_OPTIONS: confetti.Options = {
   scalar: 0.85,
   shapes: ['square'],
   origin: { x: 0.5, y: 0.44 },
-  colors: ['#8142E3', '#B592F0', '#10b981', '#f59e0b', '#0a0a0a'],
+  colors: [
+    'var(--primary-mark)',
+    'var(--swatch-2-mark)',
+    'var(--swatch-8-mark)',
+    'var(--swatch-6-mark)',
+    'var(--swatch-11-mark)',
+  ],
   disableForReducedMotion: true,
 };
 

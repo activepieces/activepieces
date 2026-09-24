@@ -71,7 +71,7 @@ function Slot({
             key={`${piece.name}-${index}`}
             src={piece.logoUrl}
             alt=""
-            className="size-5 shrink-0 object-contain p-0.5"
+            className="size-5 shrink-0 rounded-sm bg-logo-surface text-on-logo-surface object-contain p-0.5"
           />
         ))}
       </div>

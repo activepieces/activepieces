@@ -154,7 +154,7 @@ function AutoIncludePill({
     <label
       className={cn(
         'inline-flex h-8 cursor-pointer select-none items-center gap-2 rounded-lg border bg-background px-3 text-sm font-medium transition-colors',
-        checked && 'border-primary/50 bg-primary/[0.07] text-primary',
+        checked && 'border-primary/50 bg-primary/[0.07] text-primary-ink',
         disabled && 'cursor-not-allowed opacity-60',
       )}
     >

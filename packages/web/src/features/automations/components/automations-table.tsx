@@ -153,7 +153,7 @@ export const AutomationsTable = ({
               type="button"
               aria-label={sortActionLabel(sort)}
               onClick={() => onSortChange(nextSort(sort))}
-              className="flex items-center gap-1.5 rounded-sm hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex items-center gap-1.5 rounded-sm hover:text-primary-ink focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               <Type className="h-3.5 w-3.5" />
               {t('Name')}

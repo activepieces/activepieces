@@ -55,7 +55,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
                 onClick={() => handlePieceSelect(piece)}
                 className="p-2 flex items-center gap-x-2 hover:bg-accent cursor-pointer rounded-lg"
               >
-                <div className="size-9 flex items-center justify-center rounded-sm aspect-square border bg-background">
+                <div className="size-9 flex items-center justify-center rounded-sm aspect-square border bg-logo-surface text-on-logo-surface">
                   <img
                     className="size-6 rounded object-contain"
                     src={piece.logoUrl}

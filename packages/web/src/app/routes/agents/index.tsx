@@ -69,22 +69,22 @@ const SUGGESTIONS = [
 const TEMPLATE_STARTERS: TemplateStarter[] = [
   {
     label: 'Research analyst',
-    dot: '#0D9488',
+    dot: 'bg-swatch-9-mark',
     prompt: 'Research a company and send me a cited brief on it',
   },
   {
     label: 'Support triage',
-    dot: '#D97706',
+    dot: 'bg-swatch-6-mark',
     prompt: 'Read a support ticket, tag its severity, and route it to a team',
   },
   {
     label: 'Lead enrichment',
-    dot: '#2563EB',
+    dot: 'bg-swatch-11-mark',
     prompt: 'Enrich a new lead with company details and write the first email',
   },
   {
     label: 'SEO writer',
-    dot: '#E11D48',
+    dot: 'bg-swatch-3-mark',
     prompt: 'Research keywords for a topic and draft a post that targets them',
   },
 ];
@@ -234,7 +234,7 @@ const AgentsPageContent = () => {
                 className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[520px] -translate-x-1/2 -translate-y-[230px]"
                 style={{
                   backgroundImage:
-                    'radial-gradient(ellipse at center, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0) 70%)',
+                    'radial-gradient(ellipse at center, color-mix(in oklab, var(--primary), transparent 90%) 0%, transparent 70%)',
                 }}
               />
               <AgentTrioMark className="mb-[22px]" />
@@ -303,7 +303,7 @@ const AgentsPageContent = () => {
                       : t('Draft weekly launch posts and file them in Notion…')
                   }
                   className={cn(
-                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-neutral-400',
+                    'min-h-10 resize-none border-0 bg-transparent px-0 py-2.5 text-base leading-5 shadow-none focus-visible:ring-0 placeholder:text-ink-muted',
                     firstRun && 'min-h-11 px-1 py-1 text-[15px] leading-[22px]',
                   )}
                 />
@@ -341,12 +341,14 @@ const AgentsPageContent = () => {
                           key={starter.label}
                           type="button"
                           onClick={() => askChat(t(starter.prompt))}
-                          className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-neutral-700 transition-colors hover:bg-accent"
+                          className="flex items-center gap-2 rounded-full border border-border py-[9px] pe-4 ps-[14px] text-sm font-medium leading-4 text-ink-700 transition-colors hover:bg-accent"
                         >
                           <span
                             aria-hidden
-                            className="size-[11px] shrink-0 rounded-sm"
-                            style={{ backgroundColor: starter.dot }}
+                            className={cn(
+                              'size-[11px] shrink-0 rounded-sm',
+                              starter.dot,
+                            )}
                           />
                           {t(starter.label)}
                         </button>
@@ -448,12 +450,12 @@ const AgentsPageContent = () => {
                   onClick={() => setLayout('grid')}
                   className={cn(
                     'flex h-6 w-8 shrink-0 items-center justify-center rounded-full',
-                    layout === 'grid' && 'bg-neutral-100',
+                    layout === 'grid' && 'bg-fill',
                   )}
                 >
                   <LayoutGrid
                     size={15}
-                    className={cn(layout !== 'grid' && 'text-neutral-400')}
+                    className={cn(layout !== 'grid' && 'text-ink-muted')}
                   />
                 </button>
                 <button
@@ -462,12 +464,12 @@ const AgentsPageContent = () => {
                   onClick={() => setLayout('list')}
                   className={cn(
                     'flex h-6 w-8 shrink-0 items-center justify-center rounded-full',
-                    layout === 'list' && 'bg-neutral-100',
+                    layout === 'list' && 'bg-fill',
                   )}
                 >
                   <List
                     size={15}
-                    className={cn(layout !== 'list' && 'text-neutral-400')}
+                    className={cn(layout !== 'list' && 'text-ink-muted')}
                   />
                 </button>
               </div>
@@ -476,7 +478,7 @@ const AgentsPageContent = () => {
                 pending={createAgent.isPending}
                 onCreate={createBlankAgent}
                 size="sm"
-                className="px-3.5 text-neutral-700"
+                className="px-3.5 text-ink-700"
                 icon={<Plus size={15} />}
                 label={t('New agent')}
               />

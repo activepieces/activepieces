@@ -54,7 +54,7 @@ export const downloadChartAsPng = async (
   if (!ref.current) return;
   try {
     const dataUrl = await toPng(ref.current, {
-      backgroundColor: '#ffffff',
+      backgroundColor: EXPORT_BACKGROUND,
       pixelRatio: 2,
     });
     const link = document.createElement('a');
@@ -92,3 +92,5 @@ export const exportFlowDetailsCsv = (
     extension: 'csv',
   });
 };
+
+export const EXPORT_BACKGROUND = '#ffffff';

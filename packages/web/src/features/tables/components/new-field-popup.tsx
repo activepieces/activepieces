@@ -182,7 +182,8 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
                               className={cn(
                                 'flex items-center gap-2 w-full px-3 py-2 rounded-sm',
                                 'text-left text-accent-foreground cursor-pointer hover:bg-muted',
-                                field.value === type && 'bg-muted text-primary',
+                                field.value === type &&
+                                  'bg-muted text-primary-ink',
                               )}
                             >
                               {tablesUtils.getColumnIcon(type)}

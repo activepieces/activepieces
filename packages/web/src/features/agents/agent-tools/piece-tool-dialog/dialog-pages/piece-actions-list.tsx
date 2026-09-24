@@ -93,7 +93,7 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
               }}
             >
               <div className="flex gap-2">
-                <div className="size-9 flex items-center justify-center rounded-sm border bg-background">
+                <div className="size-9 flex items-center justify-center rounded-sm border bg-logo-surface text-on-logo-surface">
                   <img
                     className="size-6 object-contain"
                     src={selectedPiece.logoUrl}

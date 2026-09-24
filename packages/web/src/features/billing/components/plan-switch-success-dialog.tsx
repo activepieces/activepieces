@@ -44,8 +44,8 @@ export function PlanSwitchSuccessDialog() {
       <DialogContent showCloseButton={false} className="max-w-md">
         {!isNil(entry) && (
           <div className="flex flex-col items-center gap-5 py-4 text-center">
-            <span className="flex size-14 items-center justify-center rounded-full bg-success-600">
-              <Check className="size-7 text-white" strokeWidth={3} />
+            <span className="flex size-14 items-center justify-center rounded-full bg-success">
+              <Check className="size-7 text-on-success" strokeWidth={3} />
             </span>
             <div className="flex flex-col gap-2">
               <h2 className="text-xl font-semibold">

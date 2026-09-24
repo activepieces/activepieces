@@ -19,7 +19,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { cn } from '@/lib/utils';
 
-const CARD_BASE = 'bg-[#f9f7f2] dark:bg-[#1e1b18]';
+const CARD_BASE = 'bg-card';
 
 export function FlowBuildCard({
   buildId,
@@ -69,8 +69,8 @@ export function FlowBuildCard({
           className="mt-3 h-2"
           indicatorClassName={cn(
             'transition-all duration-500 ease-out',
-            isDone && 'bg-emerald-500',
-            isFailed && 'bg-amber-500',
+            isDone && 'bg-success-mark',
+            isFailed && 'bg-warning-mark',
           )}
         />
       </div>
@@ -146,7 +146,7 @@ function BuildStepRow({ step }: { step: BuildPlanStep }) {
           step.status === 'done' && 'text-foreground',
           step.status === 'pending' && 'text-muted-foreground',
           step.status === 'in_progress' && 'font-medium text-foreground',
-          step.status === 'failed' && 'text-amber-600 dark:text-amber-400',
+          step.status === 'failed' && 'text-warning-ink',
         )}
       >
         {step.label}
@@ -158,19 +158,19 @@ function BuildStepRow({ step }: { step: BuildPlanStep }) {
 function BuildStepIcon({ status }: { status: BuildPlanStep['status'] }) {
   switch (status) {
     case 'done':
-      return <Check className="h-[18px] w-[18px] shrink-0 text-emerald-500" />;
+      return <Check className="h-[18px] w-[18px] shrink-0 text-success-mark" />;
     case 'in_progress':
       return (
-        <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-primary" />
+        <Loader2 className="h-[18px] w-[18px] shrink-0 animate-spin text-primary-ink" />
       );
     case 'failed':
       return (
-        <AlertCircle className="h-[18px] w-[18px] shrink-0 text-amber-500" />
+        <AlertCircle className="h-[18px] w-[18px] shrink-0 text-warning-mark" />
       );
     case 'pending':
     default:
       return (
-        <Circle className="h-[18px] w-[18px] shrink-0 text-muted-foreground/40" />
+        <Circle className="h-[18px] w-[18px] shrink-0 text-neutral-mark" />
       );
   }
 }

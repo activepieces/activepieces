@@ -257,7 +257,7 @@ function WorkerGroupCell({
                   ? 'text-destructive'
                   : isShared
                   ? 'text-muted-foreground'
-                  : 'text-primary',
+                  : 'text-primary-ink',
               )}
             />
             <SelectValue />

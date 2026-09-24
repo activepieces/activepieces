@@ -28,9 +28,9 @@ export const ImageMessage: React.FC<ImageMessageProps> = ({
             e.stopPropagation();
             downloadImage(content);
           }}
-          className="absolute top-2 right-2 bg-black bg-opacity-50 rounded-full p-1 hover:bg-opacity-75 transition-opacity opacity-0 group-hover:opacity-100"
+          className="absolute top-2 right-2 bg-scrim rounded-full p-1 hover:bg-scrim/80 transition-opacity opacity-0 group-hover:opacity-100"
         >
-          <Download className="h-4 w-4 text-white" />
+          <Download className="h-4 w-4 text-on-inverse" />
         </button>
       </div>
     </div>

@@ -273,7 +273,7 @@ const MarqueeColumn = memo(function MarqueeColumn({
       {strip.map((app, i) => (
         <div
           key={`${app.name}-${i}`}
-          className="size-14 shrink-0 overflow-hidden rounded-2xl bg-background shadow-sm ring-1 ring-border/50 mb-3"
+          className="size-14 shrink-0 overflow-hidden rounded-2xl bg-logo-surface text-on-logo-surface shadow-sm ring-1 ring-border/50 mb-3"
         >
           <img
             src={app.logoUrl}

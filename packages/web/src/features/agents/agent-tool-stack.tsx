@@ -22,7 +22,7 @@ export const AgentToolStack = ({
   if (toolCount === 0) {
     return (
       <span className="flex items-center gap-1.5 text-[13px] leading-5 text-muted-foreground">
-        <Unplug size={14} className="text-neutral-400" />
+        <Unplug size={14} className="text-ink-muted" />
         {t('No tools')}
       </span>
     );
@@ -44,7 +44,7 @@ export const AgentToolStack = ({
         />
       ))}
       {remaining > 0 && (
-        <span className="flex size-[26px] items-center justify-center rounded-[7px] bg-[#F0F0F2] text-xs leading-none font-semibold text-[#8A8A8F]">
+        <span className="flex size-[26px] items-center justify-center rounded-[7px] bg-fill text-xs leading-none font-semibold text-ink-muted">
           +{remaining}
         </span>
       )}

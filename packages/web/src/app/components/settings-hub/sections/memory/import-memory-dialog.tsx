@@ -122,7 +122,7 @@ export function ImportMemoryDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl" overlayClassName="bg-black/20">
+      <DialogContent className="max-w-xl" overlayClassName="bg-scrim/40">
         <ImportMemoryContent
           key={open ? 'open' : 'closed'}
           onClose={() => onOpenChange(false)}

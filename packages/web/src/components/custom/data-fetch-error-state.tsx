@@ -31,7 +31,7 @@ export function DataFetchErrorState({
         className,
       )}
     >
-      <div className="flex size-10 items-center justify-center rounded-xl bg-warning/15 text-warning-700 dark:text-warning-300">
+      <div className="flex size-10 items-center justify-center rounded-xl bg-warning-surface text-warning-ink">
         <TriangleAlert className="size-5" />
       </div>
       <p className="text-lg font-semibold">

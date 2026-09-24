@@ -34,7 +34,7 @@ export function WorkerAssignmentsTab() {
             href="https://www.activepieces.com/docs/install/configure-operate/worker-groups"
             target="_blank"
             rel="noreferrer"
-            className="text-primary underline"
+            className="text-primary-ink underline"
           >
             {t('Learn more')}
           </a>

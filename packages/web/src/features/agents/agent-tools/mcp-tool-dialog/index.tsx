@@ -161,7 +161,7 @@ export function AgentMcpDialog({
 
         {step === 'validating' && (
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <Loader2 className="w-12 h-12 animate-spin text-primary" />
+            <Loader2 className="w-12 h-12 animate-spin text-primary-ink" />
             <div className="text-center space-y-2">
               <h3 className="text-lg font-semibold">
                 {t('Connecting to MCP Server')}
@@ -191,7 +191,7 @@ export function AgentMcpDialog({
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 space-y-4">
-                <div className="rounded-full bg-success-100 p-3">
+                <div className="rounded-full bg-success-surface p-3">
                   <CheckCircle2 className="w-8 h-8 text-success" />
                 </div>
                 <div className="text-center space-y-2">

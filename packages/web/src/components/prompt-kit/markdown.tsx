@@ -288,7 +288,7 @@ const INITIAL_COMPONENTS: Partial<Components> = {
         href={href}
         target={isWebUrl ? '_blank' : undefined}
         rel={isWebUrl ? 'noopener noreferrer' : undefined}
-        className="text-primary underline underline-offset-2 hover:text-primary/80 transition-colors"
+        className="text-primary-ink underline underline-offset-2 hover:text-primary-ink/80 transition-colors"
       >
         {children}
       </a>

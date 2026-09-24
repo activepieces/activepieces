@@ -73,7 +73,7 @@ const UpdatePieceVersionDialog: React.FC<UpdatePieceVersionDialogProps> = ({
             loading={isLoading}
           >
             {hasNewerVersion ? (
-              <ArrowUp className="size-3.5 text-green-500" />
+              <ArrowUp className="size-3.5 text-success-mark" />
             ) : (
               <ArrowUpDown className="size-3.5" />
             )}

@@ -36,7 +36,7 @@ export function ShowcaseCard({
   return (
     <motion.div
       className={cn(
-        'overflow-hidden rounded-2xl border bg-background shadow-sm dark:bg-neutral-900',
+        'overflow-hidden rounded-2xl border bg-card shadow-sm',
         !isList && 'p-4 sm:p-5',
       )}
       initial={

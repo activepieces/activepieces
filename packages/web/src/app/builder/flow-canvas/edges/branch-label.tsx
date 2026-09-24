@@ -108,7 +108,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
       }}
     >
       <div
-        className="bg-builder-background pointer-events-auto"
+        className="bg-canvas pointer-events-auto"
         style={{
           paddingTop: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
           paddingBottom: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
@@ -116,14 +116,14 @@ const BranchLabel = (props: BaseBranchLabel) => {
       >
         <div
           className={cn(
-            'flex items-center justify-center gap-0.5 select-none transition-all rounded-md  text-sm border  border-solid bg-primary-100/30 dark:bg-primary-100/15  border-primary/50   px-2 text-primary/80 dark:text-primary/90   hover:text-primary hover:border-primary',
+            'flex items-center justify-center gap-0.5 select-none transition-all rounded-md  text-sm border  border-solid bg-primary-surface border-primary-line px-2 text-primary-ink   hover:text-primary-ink hover:border-primary',
             {
-              'border-primary text-primary': isBranchSelected,
-              'bg-border/60 text-foreground/70 dark:text-foreground/70  border-border hover:text-foreground/70 hover:bg-border/60 hover:border-border cursor-default':
+              'border-primary text-primary-ink': isBranchSelected,
+              'bg-neutral-surface text-neutral-ink border-neutral-line hover:text-foreground/70 hover:bg-border/60 hover:border-border cursor-default':
                 isOtherwiseBranch,
-              'text-success-800 bg-success-50 border-success-200 dark:text-success-200 dark:bg-success-900 dark:border-success-800 hover:text-success-800 hover:bg-success-50 hover:border-success-200 cursor-default':
+              'text-success-ink bg-success-surface border-success-line hover:text-success-ink hover:bg-success-surface hover:border-success-line cursor-default':
                 isOnSuccessBranch,
-              'text-destructive-800 bg-destructive-50 border-destructive-200 dark:text-destructive-200 dark:bg-destructive-900 dark:border-destructive-800 hover:text-destructive-800 hover:bg-destructive-50 hover:border-destructive-200 cursor-default':
+              'text-destructive-ink bg-destructive-surface border-destructive-line hover:text-destructive-ink hover:bg-destructive-surface hover:border-destructive-line cursor-default':
                 isOnFailureBranch,
             },
           )}
@@ -157,7 +157,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
               >
                 <DropdownMenuTrigger asChild>
                   <div
-                    className="h-5 shrink-0 border border-transparent hover:border-solid hover:border-primary-300/50 transition-all rounded-full w-5 flex items-center justify-center"
+                    className="h-5 shrink-0 border border-transparent hover:border-solid hover:border-primary-line transition-all rounded-full w-5 flex items-center justify-center"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <EllipsisVertical className="h-4 w-4" />

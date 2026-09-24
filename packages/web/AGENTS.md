@@ -35,6 +35,126 @@ You are working in the Activepieces web application (`packages/web`).
 - **Use the predefined type scale, never an arbitrary font size.** This is Tailwind v4 and the theme lives in the `@theme` block of `src/styles.css` — it is *not* stock Tailwind: it adds `--text-xss` (10.4px) and shrinks `--text-3xl` to 1.75rem and `--text-4xl` to 2rem. Pick the token, never `text-[13px]`: 10-11px → `text-xss` (eyebrows, dense badges), 11.5-12.5px → `text-xs` (metadata), 13-13.5px → `text-sm` (**body default**), 15-15.5px → `text-base`, then `text-lg` (card titles), `text-xl` (section titles), `text-2xl` (page titles), `text-3xl` / `text-4xl` (display). Drop the class entirely when the component already sets it (a `Badge` is `text-xs` on its own). Same for arbitrary `leading-[...]` / `tracking-[...]`: use `leading-*`, `tracking-tight` for headings, `tracking-wide` / `tracking-wider` for uppercase eyebrows. Fractional spacing is valid in v4, so `size-4.5` beats `size-[18px]`. The one exception is a layout constraint with no token equivalent (`max-w-[628px]` for a reading measure, `lg:w-[344px]` for a sidebar) — those stay arbitrary and are idiomatic. Neither eslint nor `tsc` catches any of this, so it only ever surfaces in review.
 - **Never use negative margins** (`-mt-`, `-mb-`, `-mx-`, `-my-`, `-ml-`, `-mr-`, etc.). They introduce subtle layout bugs and make spacing hard to reason about. Use `gap`, `padding`, or `space-*` utilities instead.
 
+## Colour
+
+Colour is a three-tier token system. Components write **roles**, never ramp steps and never
+the stock Tailwind palette.
+
+**Tier 1 — ramps.** `ink` (the neutral, 50→950 plus a 150 step for hairlines) and the
+chromatic ramps behind each intent. `ink` is the one ramp a component may name directly,
+because it is genuinely a scale — "how far from the page" — rather than a meaning.
+
+**Tier 2 — roles.** Every intent (`primary`, `success`, `warning`, `destructive`, `neutral`)
+exposes the same six slots:
+
+| Token | For |
+| --- | --- |
+| `{intent}` | solid fill that carries text on it — buttons |
+| `on-{intent}` | the text and icons sitting on that fill |
+| `{intent}-surface` | tinted ground — badges, banners, chips |
+| `{intent}-ink` | coloured text, on that ground or on the page |
+| `{intent}-line` | borders and dividers |
+| `{intent}-mark` | a coloured mark with no text on it — dots, meters, bars |
+
+So a status badge is **always** `bg-{intent}-surface text-{intent}-ink border-{intent}-line`,
+with no special case for any intent. `mark` is separate from the solid fill on purpose: a
+status dot wants the vivid step, but a button with a white label cannot have it, because
+white on any 500 in this palette lands between 2.1:1 and 3.8:1.
+
+Body text and furniture use `foreground`, `ink-muted`, `ink-subtle`, `border`, `fill`,
+`background`, `card` and `muted`. The two muted greys are not interchangeable:
+
+- `ink-muted` — secondary **text** someone is expected to read (help text, timestamps,
+  counts, metadata). Owes 4.5:1.
+- `ink-subtle` — decoration (chevrons, empty-state glyphs, disabled marks). Owes 3:1.
+
+**Tier 3 — bindings.** One light block and one dark block in `src/styles.css`. `ink` inverts
+between themes; the hue ramps do not, their roles rebind to different steps instead.
+
+**The ink ramp is written down twice, and the copy in `styles.css` is the one that loses.**
+`ThemeProvider` calls `brandColors.cssVariables` and writes the result as inline styles on
+`<html>`, which regenerates every `--ink-*` step from `INK_CURVE_LIGHT` / `INK_CURVE_DARK` in
+`@activepieces/shared`. An inline style beats a stylesheet, so editing an ink step in
+`styles.css` alone changes nothing at runtime — it only moves the pre-hydration fallback. Change
+both, keep them identical, and check the live page rather than the file: the two had already
+drifted once (ink-50's chroma) without anything visibly breaking.
+
+### Rules
+
+- **`dark:` is banned in application code.** If the system works, a `dark:` in a component is
+  either redundant or a bug. It is legal only in `src/styles.css` and in shadcn registry
+  primitives under `src/components/ui/`, which ship their own idioms (`dark:bg-input/30`,
+  `dark:aria-invalid:ring-destructive/40`) and are not worth fighting.
+- **Dark mode is `[data-theme='dark']` on `<html>`, not a `.dark` class.** Anything injecting a
+  theme-scoped selector at runtime must use the attribute — see `THEMES` in `components/ui/chart.tsx`.
+- **Never read `preference` to decide what something looks like.** `useTheme()` returns
+  `resolvedTheme` for that; `preference` can be `'system'`, and comparing it to `'dark'` is how
+  the code editors ended up light inside a dark app.
+- **Opacity modifiers (`/50`, `/10`) are fine.** The registry ships them and fighting that
+  costs more than it buys. Reaching for them to fake a ramp step that exists is not.
+- The stock Tailwind palette still resolves. Not using it is a convention, not a build error,
+  and neither eslint nor `tsc` will catch it — it only surfaces in review.
+
+### Colour that is not a state
+
+`{intent}` answers *"what does this mean?"*. When the question is instead *"which one is
+this?"* — projects, notes, avatars, chart series, tag categories — use the twelve-hue
+categorical set: `swatch-1` … `swatch-12`, each with `-mark`, `-surface`, `-ink`, `-line` and
+`-on`. Hue carries no meaning there beyond being different from its neighbours, and every
+member sits at one lightness and one chroma so none shouts louder than another.
+
+Store the **name** (`ColorName.YELLOW`), never the rendered value, so the value is free to
+differ per theme. `PROJECT_COLOR_PALETTE` in `@activepieces/shared` is this set.
+
+Charts sample the same swatches through `--chart-1..5`: a series and the entity it represents
+should not be two different greens. For "more is further from the page", use `chart-seq-1..5`,
+which runs darker on light and brighter on dark rather than being one fixed ramp.
+
+### White-labelling
+
+`brandColors.cssVariables` in `@activepieces/shared` turns a platform's `primaryColor` into the
+whole primary ramp, a retinted ink ramp and a measured `--on-primary`. `ThemeProvider` applies
+it. The tenant's hex renders verbatim as `--primary`; everything else is derived, so nothing
+else should ever be computed from their colour at a call site.
+
+### Deliberate exceptions
+
+These are the only places raw colour values remain, and each is outside the system rather than
+behind on it:
+
+- **PNG exports** — `EXPORT_BACKGROUND` in `impact-utils.ts` and the fallback in
+  `flow-screenshot-utils.ts`. A downloaded image wants a light ground whatever the app theme is.
+- **Illustration** — the doodle palettes in `flow-build-card.tsx`, and `#fff` stops inside SVG
+  luminance masks, which must be white to work as masks.
+- **Colour-picker defaults** — stored data, not UI colour.
+- **User-content previews** — the `bg-white` on the SVG and HTML preview frames. They render
+  content authored against a white page.
+- **The Activepieces wordmark** — `activepieces-wordmark.tsx` inlines the logo so the lettering can
+  be `currentColor` (under `text-ink-700`) instead of a raster baked at `#404040` that vanished on a
+  dark ground. Its mark keeps the literal brand purple, because it only ever renders when the
+  platform is on the stock Activepieces logo — a tenant that uploaded its own gets that raster
+  rendered as-is, since we cannot recolour someone else's artwork.
+
+### Colour sampled from images
+
+One place still derives colour from pixels: the **flow builder minimap**, where each block is
+filled with the average colour of its step's logo so a long flow stays readable at thumbnail
+size. That is wayfinding the token system cannot do, so it stays — but it composites through
+`--surface-raised` and falls back to `--neutral-mark`, so it resolves per theme like everything
+else.
+
+It used to happen in two more places, and both are gone:
+
+- Template card gradients sampled every piece logo through a canvas. They are now a two-swatch
+  gradient seeded off the template's first piece — deterministic, theme-aware, and 140 fewer
+  lines.
+- Piece logos sat on a 10% wash of their own average colour. At icon sizes a multi-hue logo on a
+  tint of itself is where contrast goes, and a near-black mark like Zendesk's landed on a dark
+  square in dark mode. Logos now sit on a neutral chip.
+
+Do not reintroduce either. If a surface needs to be "coloured per thing", that is what the
+twelve-hue swatch set and `swatchUtils.varsForSeed` are for.
+
 ## Components
 
 - **Reuse existing components before creating new ones.** Before building a new component, search the repo for something that already covers the use case. Creating near-duplicate components for minor variations adds maintenance burden and visual inconsistency.

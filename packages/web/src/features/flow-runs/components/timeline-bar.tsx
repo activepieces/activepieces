@@ -10,10 +10,10 @@ import { formatUtils } from '@/lib/format-utils';
 import { cn } from '@/lib/utils';
 
 const PHASE_COLOR: Record<TimelinePhase['name'], string> = {
-  QUEUE: 'bg-blue-600',
-  PROVISION: 'bg-amber-500',
-  BOOT: 'bg-violet-600',
-  RUN: 'bg-emerald-600',
+  QUEUE: 'bg-swatch-11-mark',
+  PROVISION: 'bg-swatch-6-mark',
+  BOOT: 'bg-swatch-1-mark',
+  RUN: 'bg-swatch-8-mark',
 };
 
 function phaseLabel(name: TimelinePhase['name']): string {

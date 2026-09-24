@@ -81,7 +81,7 @@ export const CustomizeSelectorDialog = ({
     return (
       <>
         <Button variant="outline" size="sm" onClick={gate.open}>
-          <Crown className="size-3.5 shrink-0 text-primary" />
+          <Crown className="size-3.5 shrink-0 text-primary-ink" />
           {t('Customize Selector')}
         </Button>
         {gate.dialog}
@@ -299,7 +299,7 @@ const TabCard = ({
         <SortableDragHandle
           variant="ghost"
           size="icon"
-          className="shrink-0 size-7 text-muted-foreground/50"
+          className="shrink-0 size-7 text-ink-muted"
         >
           <GripVerticalIcon className="size-4" />
         </SortableDragHandle>
@@ -475,7 +475,7 @@ const TabIconPicker = ({
               variant="ghost"
               size="icon"
               className={cn('size-9', {
-                'bg-accent text-primary': value === key,
+                'bg-accent text-primary-ink': value === key,
               })}
               onClick={() => onChange(key)}
             >
@@ -537,7 +537,7 @@ const PiecePickerButton = ({
                       <SortableDragHandle
                         variant="ghost"
                         size="icon"
-                        className="shrink-0 size-6 text-muted-foreground/60"
+                        className="shrink-0 size-6 text-ink-muted"
                       >
                         <GripVerticalIcon className="size-3.5" />
                       </SortableDragHandle>
@@ -587,7 +587,7 @@ const PiecePickerButton = ({
                     />
                     <span className="grow truncate">{piece.displayName}</span>
                     {isSelected && (
-                      <CheckIcon className="size-4 text-primary" />
+                      <CheckIcon className="size-4 text-primary-ink" />
                     )}
                   </CommandItem>
                 );

@@ -80,7 +80,7 @@ function TileRow({
         <span
           key={tile.name}
           title={tile.displayName}
-          className="flex size-16 shrink-0 items-center justify-center rounded-lg border bg-background"
+          className="flex size-16 shrink-0 items-center justify-center rounded-lg border bg-logo-surface text-on-logo-surface"
         >
           <ImageWithFallback
             src={tile.logoUrl}

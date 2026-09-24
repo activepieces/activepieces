@@ -152,7 +152,7 @@ function McpAuthorizePage() {
         <FullLogo />
         <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
           <CardContent className="flex flex-col items-center gap-5 pt-8 pb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-100">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success-surface">
               <CheckCircle className="h-7 w-7 text-success" />
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
@@ -182,7 +182,7 @@ function McpAuthorizePage() {
       <Card className="mt-4 w-full max-w-md rounded-sm drop-shadow-xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Plug className="h-5 w-5 text-primary" />
+            <Plug className="h-5 w-5 text-primary-ink" />
           </div>
           <CardTitle className="text-2xl">
             {t('Authorize Application')}
@@ -209,11 +209,11 @@ function McpAuthorizePage() {
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
             <PermissionItem
-              icon={<Workflow className="h-4 w-4 text-primary" />}
+              icon={<Workflow className="h-4 w-4 text-primary-ink" />}
               text={t('Build, test, and manage automations')}
             />
             <PermissionItem
-              icon={<Lock className="h-4 w-4 text-primary" />}
+              icon={<Lock className="h-4 w-4 text-primary-ink" />}
               text={t('Use connections and execute flows')}
             />
           </div>
@@ -264,7 +264,7 @@ function McpAuthorizePage() {
             requestRejected ||
             approveMutation.isError ||
             denyMutation.isError) && (
-            <div className="rounded-md border border-destructive/50 bg-destructive-100 p-3 text-sm text-destructive">
+            <div className="rounded-md border border-destructive/50 bg-destructive-surface p-3 text-sm text-destructive">
               {requestRejected ||
               (requestExpired &&
                 !approveMutation.isError &&

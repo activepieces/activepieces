@@ -45,15 +45,13 @@ function UserSuggestionsPopover({
       }
       if (platformUserEmails.has(trimmed.toLowerCase())) {
         return {
-          className:
-            'text-primary bg-primary/10 border-primary/20 dark:bg-primary/15',
+          className: 'text-primary-ink bg-primary-surface border-primary-line',
           icon: <UserCheck className="size-3 shrink-0" />,
           tooltip: t('Platform member'),
         };
       }
       return {
-        className:
-          'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-900',
+        className: 'text-primary-ink bg-primary-surface border-primary-line',
         icon: <Globe className="size-3 shrink-0" />,
         tooltip: isPlatformInvite ? t('New User') : t('New Member'),
       };

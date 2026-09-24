@@ -109,7 +109,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
         <img
           src={metadata.logoUrl}
           alt="Tool logo"
-          className="h-4 w-4 object-contain shrink-0"
+          className="h-4 w-4 shrink-0 rounded-sm bg-logo-surface text-on-logo-surface object-contain p-px"
         />
       );
     return <Wrench className="h-4 w-4 shrink-0" />;
@@ -266,7 +266,9 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
   }, [expanded, isTruncatable, prompt]);
 
   return (
-    <TimelineItem icon={<SquareTerminal className="h-4 w-4 text-primary" />}>
+    <TimelineItem
+      icon={<SquareTerminal className="h-4 w-4 text-primary-ink" />}
+    >
       <div className="bg-primary/5 rounded-md p-3 text-sm text-foreground border border-border space-y-2">
         <ApMarkdown
           markdown={displayedPrompt}
@@ -276,7 +278,7 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
         {isTruncatable && (
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="text-xs text-primary hover:underline"
+            className="text-xs text-primary-ink hover:underline"
           >
             {expanded ? 'Read less' : 'Read more'}
           </button>
@@ -289,9 +291,9 @@ export const PromptBlock = ({ prompt }: { prompt: string }) => {
 export const DoneBlock = () => {
   return (
     <TimelineItem
-      icon={<CircleCheckBig className="h-4 w-4 text-success-600" />}
+      icon={<CircleCheckBig className="h-4 w-4 text-success-ink" />}
     >
-      <div className="border border-success/40 bg-success-50/60 rounded-md p-3 text-sm text-success-700 font-medium flex items-center gap-2">
+      <div className="border border-success/40 bg-success-surface rounded-md p-3 text-sm text-success-ink font-medium flex items-center gap-2">
         <span>{t('Done!')}</span>
       </div>
     </TimelineItem>
@@ -300,8 +302,8 @@ export const DoneBlock = () => {
 
 export const FailedBlock = () => {
   return (
-    <TimelineItem icon={<CircleX className="h-4 w-4 text-destructive-600" />}>
-      <div className="border border-destructive/40 bg-destructive-50/60 rounded-md p-3 text-sm text-destructive-700 font-medium flex items-center gap-2">
+    <TimelineItem icon={<CircleX className="h-4 w-4 text-destructive-ink" />}>
+      <div className="border border-destructive/40 bg-destructive-surface rounded-md p-3 text-sm text-destructive-ink font-medium flex items-center gap-2">
         <span>{t('Failed')}</span>
       </div>
     </TimelineItem>

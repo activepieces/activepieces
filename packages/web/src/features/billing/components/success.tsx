@@ -52,16 +52,16 @@ export const Success = () => {
       case 'upgrade':
         return {
           icon: TrendingUp,
-          iconBg: 'bg-success-50 dark:bg-success-950',
-          iconColor: 'text-success-600 dark:text-success-400',
+          iconBg: 'bg-success-surface',
+          iconColor: 'text-success-ink',
           title: t('Successfully Upgraded!'),
           description: t('Subscription updated successfully'),
         };
       case 'downgrade':
         return {
           icon: TrendingDown,
-          iconBg: 'bg-orange-50 dark:bg-orange-950',
-          iconColor: 'text-orange-600 dark:text-orange-400',
+          iconBg: 'bg-warning-surface',
+          iconColor: 'text-warning-ink',
           title: t('Plan Downgraded'),
           description: t('Subscription updated successfully'),
         };
@@ -69,7 +69,7 @@ export const Success = () => {
         return {
           icon: Check,
           iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
+          iconColor: 'text-primary-ink',
           title: t('Success!'),
           description: t('Subscription created successfully'),
         };
@@ -77,7 +77,7 @@ export const Success = () => {
         return {
           icon: Check,
           iconBg: 'bg-primary/10',
-          iconColor: 'text-primary',
+          iconColor: 'text-primary-ink',
           title: t('Success!'),
           description: t('Subscription updated successfully'),
         };

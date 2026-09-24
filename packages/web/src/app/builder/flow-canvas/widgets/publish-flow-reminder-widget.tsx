@@ -119,7 +119,7 @@ const PublishFlowReminderWidget = () => {
             <Button
               size="sm"
               variant="ghost"
-              className="hover:bg-gray-300/10 text-foreground"
+              className="hover:bg-fill text-foreground"
               onClick={() => discardChange()}
             >
               {t('Discard changes')}

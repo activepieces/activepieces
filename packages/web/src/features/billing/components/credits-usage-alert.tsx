@@ -92,8 +92,8 @@ export const CreditsUsageAlert = React.memo(() => {
         className={cn(
           'flex items-center gap-2 py-2 *:[svg]:translate-y-0',
           isDanger
-            ? 'border-destructive/50 bg-destructive-100/10'
-            : 'bg-warning-100/10',
+            ? 'border-destructive/50 bg-destructive-surface'
+            : 'bg-warning-surface',
         )}
       >
         <Icon className="size-4 shrink-0" />

@@ -73,11 +73,7 @@ const ZapIcon = forwardRef<ZapIconHandle, ZapIconProps>(
           transition={{ duration: 0.7, ease: 'easeOut' }}
           style={{ transformOrigin: 'center' }}
         >
-          <path
-            d={ZAP_PATH}
-            fill="currentColor"
-            className="text-muted-foreground/20"
-          />
+          <path d={ZAP_PATH} fill="currentColor" className="text-ink-subtle" />
           <path
             d={ZAP_PATH}
             style={{

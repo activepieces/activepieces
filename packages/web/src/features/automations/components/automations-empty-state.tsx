@@ -260,8 +260,8 @@ export const AutomationsEmptyState = ({
         </h2>
         <div className="flex gap-4">
           <GetStartedCard
-            icon={<Workflow className="h-5 w-5 text-primary" />}
-            iconBgClass="bg-primary-100"
+            icon={<Workflow className="h-5 w-5 text-primary-ink" />}
+            iconBgClass="bg-primary-surface"
             title={t('Build a Flow')}
             description={t('Create automated workflows')}
           >
@@ -310,8 +310,8 @@ export const AutomationsEmptyState = ({
 
           {!embedState.hideTables && (
             <GetStartedCard
-              icon={<Table2 className="h-5 w-5 text-primary" />}
-              iconBgClass="bg-primary-100"
+              icon={<Table2 className="h-5 w-5 text-primary-ink" />}
+              iconBgClass="bg-primary-surface"
               title={t('Create a Table')}
               description={t('Organize and manage data')}
             >
@@ -338,7 +338,7 @@ export const AutomationsEmptyState = ({
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               {t('Templates For You')}
-              <Sparkles className="h-4 w-4 text-yellow-500" />
+              <Sparkles className="h-4 w-4 text-swatch-6-mark" />
             </h2>
             <button
               onClick={handleViewAllTemplates}

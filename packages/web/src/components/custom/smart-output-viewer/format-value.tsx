@@ -95,7 +95,7 @@ function FormatSingleValue({
     return (
       <a
         href={`mailto:${stringValue}`}
-        className="text-primary underline-offset-4 hover:underline"
+        className="text-primary-ink underline-offset-4 hover:underline"
         title={stringValue}
       >
         {stringValue}
@@ -112,7 +112,7 @@ function FormatSingleValue({
         href={stringValue}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-primary underline-offset-4 hover:underline break-all"
+        className="text-primary-ink underline-offset-4 hover:underline break-all"
       >
         {stringValue}
       </a>

@@ -27,7 +27,7 @@ const ApErrorDialog = () => {
         <DialogHeader>
           <div className="flex flex-col items-center">
             <span
-              className="rounded-full bg-destructive-100 flex items-center justify-center mb-2 mt-1"
+              className="rounded-full bg-destructive-surface flex items-center justify-center mb-2 mt-1"
               style={{ width: 48, height: 48 }}
             >
               <AlertCircleIcon className="h-8 w-8 text-destructive" />

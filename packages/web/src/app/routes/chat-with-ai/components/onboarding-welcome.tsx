@@ -21,7 +21,7 @@ export function OnboardingWelcome() {
               className="bg-clip-text font-bold leading-tight text-transparent"
               style={{
                 backgroundImage:
-                  'linear-gradient(100deg, color-mix(in oklch, var(--color-primary) 80%, #e879f9) 0%, var(--color-primary) 45%, color-mix(in oklch, var(--color-primary) 70%, #38bdf8) 100%)',
+                  'linear-gradient(100deg, color-mix(in oklch, var(--color-primary) 80%, var(--swatch-2-mark)) 0%, var(--color-primary) 45%, color-mix(in oklch, var(--color-primary) 70%, var(--swatch-11-mark)) 100%)',
               }}
             >
               {t('Who am I teaming up with?')}

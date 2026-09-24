@@ -368,7 +368,7 @@ function traverseStep(
           data: {
             type: 'chunk',
             displayName: t('On success'),
-            displayNameClassName: 'text-success-800 dark:text-success-200',
+            displayNameClassName: 'text-success-ink',
           },
           children: stepNode.children,
         };
@@ -378,8 +378,7 @@ function traverseStep(
           data: {
             type: 'chunk',
             displayName: t('On failure'),
-            displayNameClassName:
-              'text-destructive-800 dark:text-destructive-200',
+            displayNameClassName: 'text-destructive-ink',
           },
           children: [errorMessageLeaf],
         };

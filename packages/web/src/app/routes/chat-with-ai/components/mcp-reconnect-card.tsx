@@ -63,7 +63,7 @@ export function McpReconnectCard({
             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
             className="flex shrink-0 items-center justify-center"
           >
-            <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <Check className="h-5 w-5 text-success-ink" />
           </motion.span>
         ) : !opened ? (
           <Button
@@ -124,7 +124,7 @@ function ConnectorIcon({ logoUrl }: { logoUrl?: string }) {
       <img
         src={logoUrl}
         alt=""
-        className="h-10 w-10 shrink-0 rounded-lg border bg-background object-contain p-1.5"
+        className="h-10 w-10 shrink-0 rounded-lg border bg-logo-surface text-on-logo-surface object-contain p-1.5"
       />
     );
   }

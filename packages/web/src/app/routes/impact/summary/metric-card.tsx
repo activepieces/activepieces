@@ -37,7 +37,7 @@ export const MetricCard = ({
           </span>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-muted-foreground/70 cursor-help" />
+              <Info className="h-3.5 w-3.5 text-ink-muted cursor-help" />
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">{description}</TooltipContent>
           </Tooltip>

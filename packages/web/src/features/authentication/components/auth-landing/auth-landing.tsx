@@ -2,7 +2,6 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 
-import { useTheme } from '@/components/providers/theme-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
@@ -12,7 +11,6 @@ import { AuthDrawerBody, AuthMode } from './auth-drawer-body';
 const NUDGE_STREAK_WINDOW_MS = 700;
 
 export function AuthLanding({ initialMode }: AuthLandingProps) {
-  const { setForceLightMode } = useTheme();
   const redirectAfterLogin = useRedirectAfterLogin();
   const signedIn =
     !isNil(authenticationSession.getToken()) &&
@@ -27,11 +25,6 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
     streak: 0,
     animation: null,
   });
-
-  useEffect(() => {
-    setForceLightMode(true);
-    return () => setForceLightMode(false);
-  }, [setForceLightMode]);
 
   useEffect(() => {
     if (signedIn) {
@@ -72,19 +65,19 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
   };
 
   return (
-    <div className="relative h-dvh w-full overflow-hidden bg-white">
+    <div className="relative h-dvh w-full overflow-hidden bg-background">
       <AuthBackdrop />
       <div
         aria-hidden
         onClick={nudgePanel}
-        className="absolute inset-0 z-40 cursor-default bg-neutral-50/78 backdrop-blur-[2.8px]"
+        className="absolute inset-0 z-40 cursor-default bg-background/80 backdrop-blur-[2.8px]"
       />
       <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-300 fill-mode-both">
         <section
           ref={panelRef}
           role="dialog"
           aria-label={t('Sign in or create your account')}
-          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-black/[0.06] bg-background shadow-[0_1px_2px_rgba(16,24,40,0.04),0_6px_12px_-4px_rgba(16,24,40,0.06),0_24px_40px_-12px_rgba(16,24,40,0.14),0_56px_80px_-32px_rgba(16,24,40,0.16)]"
+          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-border bg-surface-overlay shadow-over"
         >
           <AuthDrawerBody initialMode={initialMode} />
         </section>

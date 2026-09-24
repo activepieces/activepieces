@@ -84,7 +84,7 @@ export function ShowcaseTile({
       {clickable && isList && (
         <ArrowRight
           aria-hidden
-          className="size-4 shrink-0 translate-x-1 text-primary opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+          className="size-4 shrink-0 translate-x-1 text-primary-ink opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
         />
       )}
     </>

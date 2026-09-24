@@ -61,7 +61,7 @@ export function ClientInstructions({
                 controls
                 preload="metadata"
                 playsInline
-                className="w-full rounded-md border bg-black"
+                className="w-full rounded-md border bg-surface-inverse"
               />
             </div>
           )}
@@ -109,7 +109,7 @@ export function ClientInstructions({
             <span className="flex-1 text-sm text-muted-foreground">
               {t('Using something else?')}
             </span>
-            <span className="shrink-0 text-sm font-semibold text-primary">
+            <span className="shrink-0 text-sm font-semibold text-primary-ink">
               {t('All {total} clients', { total: totalClients })}
             </span>
           </button>
@@ -201,24 +201,24 @@ function SetupInstructionItem({
 function TerminalBlock({ command }: { command: string }) {
   return (
     <div className="flex flex-col overflow-hidden rounded-lg">
-      <div className="flex items-center gap-2 bg-neutral-800 px-3.5 py-2">
-        <span className="flex-1 text-xss font-semibold uppercase tracking-wider text-neutral-400">
+      <div className="flex items-center gap-2 bg-surface-inverse px-3.5 py-2">
+        <span className="flex-1 text-xss font-semibold uppercase tracking-wider text-on-inverse/70">
           {t('Terminal')}
         </span>
         <CopyButton
           textToCopy={command}
           variant="ghost"
           size="sm"
-          className="h-auto gap-1.5 rounded-sm bg-white/10 px-2.5 py-1 text-xs text-neutral-200 hover:bg-white/20 hover:text-white"
+          className="h-auto gap-1.5 rounded-sm bg-on-inverse/10 px-2.5 py-1 text-xs text-on-inverse/80 hover:bg-on-inverse/20 hover:text-on-inverse"
         >
           {t('Copy')}
         </CopyButton>
       </div>
-      <div className="flex items-start gap-3 overflow-x-auto bg-neutral-900 px-4 py-4">
-        <span className="shrink-0 font-mono text-xs leading-relaxed text-emerald-300">
+      <div className="flex items-start gap-3 overflow-x-auto bg-surface-inverse px-4 py-4">
+        <span className="shrink-0 font-mono text-xs leading-relaxed text-success-mark">
           $
         </span>
-        <pre className="min-w-0 whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-neutral-200">
+        <pre className="min-w-0 whitespace-pre-wrap break-all font-mono text-xs leading-relaxed text-on-inverse/80">
           {command}
         </pre>
       </div>

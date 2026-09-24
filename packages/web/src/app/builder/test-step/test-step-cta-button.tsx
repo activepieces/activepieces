@@ -24,7 +24,7 @@ import {
 import { TestButtonTooltip } from './test-step-tooltip';
 
 const SOFT_PRIMARY_CTA_CLASSES =
-  'w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary text-primary border-primary/20';
+  'w-full justify-center bg-primary/5 enabled:hover:bg-primary/15 enabled:hover:text-primary-ink text-primary-ink border-primary/20';
 
 const TestStepCTAButton = () => {
   const [
