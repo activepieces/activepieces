@@ -58,17 +58,24 @@ export const gmailCreateDraftReplyAction = createAction({
             icon: 'text',
           },
           {
-            label: 'HTML',
+            label: 'Rich Text',
             value: 'html',
-            description: 'Tags are rendered',
+            description: 'Bold, links, lists',
+            icon: 'type',
+          },
+          {
+            label: 'HTML Code',
+            value: 'html_code',
+            description: 'Paste your own markup',
             icon: 'code',
           },
         ],
       },
     }),
-    body: Property.LongText({
+    body: Property.RichText({
       displayName: 'Body',
       required: false,
+      formatProperty: 'body_type',
     }),
     include_original_message: Property.Checkbox({
       displayName: 'Include Original Message',
@@ -221,17 +228,16 @@ export const gmailCreateDraftReplyAction = createAction({
     const senderEmail = await getUserEmail(context.auth, authClient);
 
     let draftBody = context.propsValue.body || '';
+    const isPlainText = context.propsValue.body_type === 'plain_text';
 
     if (context.propsValue.include_original_message && originalMessageContent) {
-      const separator =
-        context.propsValue.body_type === 'html'
-          ? '<br><br>--- Original Message ---<br>'
-          : '\n\n--- Original Message ---\n';
+      const separator = isPlainText
+        ? '\n\n--- Original Message ---\n'
+        : '<br><br>--- Original Message ---<br>';
 
-      const quotedContent =
-        context.propsValue.body_type === 'html'
-          ? originalMessageContent.replace(/\n/g, '<br>')
-          : originalMessageContent;
+      const quotedContent = isPlainText
+        ? originalMessageContent
+        : originalMessageContent.replace(/\n/g, '<br>');
 
       draftBody = draftBody
         ? `${draftBody}${separator}${quotedContent}`
@@ -243,9 +249,8 @@ export const gmailCreateDraftReplyAction = createAction({
       to: toRecipients.join(', '),
       cc: ccRecipients.length > 0 ? ccRecipients.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
-      text:
-        context.propsValue.body_type === 'plain_text' ? draftBody : undefined,
-      html: context.propsValue.body_type === 'html' ? draftBody : undefined,
+      text: isPlainText ? draftBody : undefined,
+      html: isPlainText ? undefined : draftBody,
       attachments: [],
       headers: [
         {

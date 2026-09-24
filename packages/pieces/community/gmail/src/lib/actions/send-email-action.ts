@@ -63,17 +63,24 @@ export const gmailSendEmailAction = createAction({
             icon: 'text',
           },
           {
-            label: 'HTML',
+            label: 'Rich Text',
             value: 'html',
-            description: 'Tags are rendered',
+            description: 'Bold, links, lists',
+            icon: 'type',
+          },
+          {
+            label: 'HTML Code',
+            value: 'html_code',
+            description: 'Paste your own markup',
             icon: 'code',
           },
         ],
       },
     }),
-    body: Property.ShortText({
+    body: Property.RichText({
       displayName: 'Body',
       required: true,
+      formatProperty: 'body_type',
     }),
     reply_to: Property.Array({
       displayName: 'Reply To',
@@ -144,20 +151,15 @@ export const gmailSendEmailAction = createAction({
     );
     const cc = context.propsValue['cc']?.filter((email) => email !== '');
     const bcc = context.propsValue['bcc']?.filter((email) => email !== '');
+    const isPlainText = context.propsValue.body_type === 'plain_text';
     const mailOptions: Mail.Options = {
       to: receiver.join(', '), // Join all email addresses with a comma
       cc: cc ? cc.join(', ') : undefined,
       bcc: bcc ? bcc.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
       replyTo: replyTo ? replyTo.join(', ') : '',
-      text:
-        context.propsValue.body_type === 'plain_text'
-          ? context.propsValue['body']
-          : undefined,
-      html:
-        context.propsValue.body_type === 'html'
-          ? context.propsValue['body']
-          : undefined,
+      text: isPlainText ? context.propsValue['body'] : undefined,
+      html: isPlainText ? undefined : context.propsValue['body'],
       attachments: [],
     };
     let threadId = undefined;

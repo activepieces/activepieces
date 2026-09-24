@@ -58,17 +58,24 @@ export const gmailReplyToEmailAction = createAction({
             icon: 'text',
           },
           {
-            label: 'HTML',
+            label: 'Rich Text',
             value: 'html',
-            description: 'Tags are rendered',
+            description: 'Bold, links, lists',
+            icon: 'type',
+          },
+          {
+            label: 'HTML Code',
+            value: 'html_code',
+            description: 'Paste your own markup',
             icon: 'code',
           },
         ],
       },
     }),
-    body: Property.LongText({
+    body: Property.RichText({
       displayName: 'Body',
       required: true,
+      formatProperty: 'body_type',
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
@@ -169,18 +176,13 @@ export const gmailReplyToEmailAction = createAction({
     const senderEmail = await getUserEmail(context.auth, authClient);
 
     const subjectBase64 = Buffer.from(replySubject).toString('base64');
+    const isPlainText = context.propsValue.body_type === 'plain_text';
     const mailOptions: Mail.Options = {
       to: toRecipients.join(', '),
       cc: ccRecipients.length > 0 ? ccRecipients.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
-      text:
-        context.propsValue.body_type === 'plain_text'
-          ? context.propsValue.body
-          : undefined,
-      html:
-        context.propsValue.body_type === 'html'
-          ? context.propsValue.body
-          : undefined,
+      text: isPlainText ? context.propsValue.body : undefined,
+      html: isPlainText ? undefined : context.propsValue.body,
       attachments: [],
       headers: [
         {
