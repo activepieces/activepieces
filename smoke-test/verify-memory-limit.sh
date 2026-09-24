@@ -3,8 +3,8 @@ set -euo pipefail
 
 # Verifies that a flow that exhausts the sandbox memory reliably ends with flow run status
 # MEMORY_LIMIT_EXCEEDED. Expects a flow created by benchmark/setup.sh with
-# CODE_INPUT_SUM="$(cat benchmark/oom-expression.txt)" on a stack running
-# AP_EXECUTION_MODE=SANDBOX_CODE_ONLY. The expression builds ~50MB inside the 128MB v8
+# CODE_BODY_FILE=benchmark/oom-code.js on a stack running
+# AP_EXECUTION_MODE=SANDBOX_CODE_ONLY. The code step builds ~50MB inside the 128MB v8
 # isolate (an array of refs to one big string), and the engine's outRef.copy() then
 # materializes every element separately in the ENGINE heap (~3GB) — the engine process dies
 # on the sandbox memory limit, which is how code-only engines OOM in production.
