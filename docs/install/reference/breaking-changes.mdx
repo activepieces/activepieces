@@ -103,6 +103,8 @@ In exchange, the platform-wide MCP server is no longer restricted to platform ad
 
 On the platform-wide server, `ap_list_ai_models` now needs a project to be selected with `ap_set_project_context` first, like the other project tools. The models it lists depend on the project, so the answer it gave without one could be wrong. A client that calls it before selecting a project now gets a "no project selected" result.
 
+The MCP page now hands out the platform server address, `/mcp/platform`, rather than the project one, and the project settings dialog no longer carries an MCP Server tab.
+
 #### What you need to do
 
 Nothing, if your members use the built-in roles. If you have built a custom project role and expect its holders to connect an MCP client, or to use the AI Chat for anything beyond conversation, open the role in **Platform Admin → Security → Project Roles** and set **MCP** to at least **Read** — otherwise their existing MCP clients stop working when you upgrade, rather than at the next token expiry. A role with MCP set to **None** now also loses the Activepieces tools in the AI Chat. There is no environment variable, migration, or new setup step.
