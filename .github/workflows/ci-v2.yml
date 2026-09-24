@@ -38,9 +38,18 @@ jobs:
           if [ -n "$OUTSIDE_PACKAGES" ]; then
             ALL=true
           fi
-          if ! PACKAGES=$(npx --yes turbo@2.9.14 ls --affected --output=json | jq -c '[.packages.items[].name]'); then
+          # Pieces follow the old ci.yml rule: a piece runs when its own files changed, and every
+          # piece runs when pieces/framework or pieces/common changed. A change to a core package
+          # (core-piece-types, core-utils, ...) does not pull the 700+ pieces in, even though they
+          # depend on it; a break there is caught when pieces are published, not in the PR.
+          if ! DIRECT=$(npx --yes turbo@2.9.14 ls --filter="[$TURBO_SCM_BASE...HEAD]" --output=json | jq -c '[.packages.items[].name]') \
+            || ! AFFECTED=$(npx --yes turbo@2.9.14 ls --affected --output=json | jq -c '[.packages.items[].name]'); then
             ALL=true
             PACKAGES='[]'
+          else
+            PACKAGES=$(jq -cn --argjson direct "$DIRECT" --argjson affected "$AFFECTED" '
+              ($direct | any(. == "@activepieces/pieces-framework" or . == "@activepieces/pieces-common")) as $allPieces
+              | [$affected[] | select((startswith("@activepieces/piece-") | not) or $allPieces or IN($direct[]))]')
           fi
           echo "all=$ALL" >> "$GITHUB_OUTPUT"
           echo "packages=$PACKAGES" >> "$GITHUB_OUTPUT"
@@ -68,9 +77,16 @@ jobs:
         run: npm run lint-core
 
       # Also on full runs: a PR that edits a workflow and pieces/framework in one go still needs
-      # every piece linted, and --affected is what knows that.
+      # every piece linted, and the changes job's list is what knows that.
       - name: Lint affected packages
-        run: npx turbo run lint --affected
+        env:
+          AFFECTED_PACKAGES: ${{ needs.changes.outputs.packages }}
+        run: |
+          set -euo pipefail
+          FILTERS=$(echo "$AFFECTED_PACKAGES" | jq -r '.[] | "--filter=" + .' | tr '\n' ' ')
+          if [ -n "$FILTERS" ]; then
+            npx turbo run lint $FILTERS
+          fi
 
   build-test:
     runs-on: ubuntu-latest
