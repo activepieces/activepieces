@@ -18,4 +18,4 @@ GIT-1923: after worker v2 the generated secrets were never wired in, so a defaul
 
 ## Consequences
 
-Renaming the generated keys or secrets orphans every install's key. The chart keeps a cluster-scoped operator as a dependency.
+Renaming the generated keys or secrets orphans every install's key. A user key present at render time is pinned (`optional: false`), so the fallback only ever serves installs that never had their own key. The chart keeps a cluster-scoped operator as a dependency.

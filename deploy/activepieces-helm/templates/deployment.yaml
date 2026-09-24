@@ -67,12 +67,16 @@ spec:
             {{- end }}
             {{- range $secretName, $vars := .Values.activepiecesEnvVariables }}
             {{- range $vars }}
+            {{- $userOwnedKey := false }}
+            {{- if has . (list "AP_ENCRYPTION_KEY" "AP_JWT_SECRET") }}
+            {{- $userOwnedKey = hasKey ((lookup "v1" "Secret" $.Release.Namespace $secretName).data | default dict) . }}
+            {{- end }}
             - name: {{ . }}
               valueFrom:
                 secretKeyRef:
                   name: {{ $secretName | quote }}
                   key: {{ . }}
-                  optional: true
+                  optional: {{ not $userOwnedKey }}
             {{- end }}
             {{- end }}
           {{- end }}
