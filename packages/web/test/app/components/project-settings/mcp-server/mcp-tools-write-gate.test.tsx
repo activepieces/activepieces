@@ -4,12 +4,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable testing-library/no-unnecessary-act */
 /* eslint-disable jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
+import { Permission } from '@activepieces/core-utils';
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const authorization = vi.hoisted(() => {
+  const grantedPermissions: string[] = [];
+  return { grantedPermissions, useAuthorization: vi.fn() };
+});
+
 vi.mock('i18next', () => ({ t: (key: string) => key }));
+
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useAuthorization: (projectId?: string) => {
+    authorization.useAuthorization(projectId);
+    return {
+      checkAccess: (permission: string) =>
+        authorization.grantedPermissions.includes(permission),
+    };
+  },
+}));
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: false }) },
@@ -61,16 +77,23 @@ declare global {
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const EDITABLE_TOOL = 'ap_create_flow';
+const PROJECT_ID = 'project-1';
 
 let container: HTMLDivElement;
 let root: Root;
 
-function render(props: Partial<Parameters<typeof McpTools>[0]> = {}) {
+function render({
+  canWrite,
+  ...props
+}: Partial<Parameters<typeof McpTools>[0]> & { canWrite: boolean }) {
+  authorization.grantedPermissions = canWrite
+    ? [Permission.READ_MCP, Permission.WRITE_MCP]
+    : [Permission.READ_MCP];
   act(() => {
     root.render(
       <McpTools
         disabledTools={[]}
-        canWrite={true}
+        projectId={PROJECT_ID}
         isPending={false}
         onUpdateDisabledTools={() => undefined}
         {...props}
@@ -98,6 +121,13 @@ describe('McpTools write gate', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
+    authorization.useAuthorization.mockClear();
+  });
+
+  it('checks write access against the project it edits', () => {
+    render({ canWrite: true });
+
+    expect(authorization.useAuthorization).toHaveBeenCalledWith(PROJECT_ID);
   });
 
   it('leaves every checkbox editable when the role can write', () => {
