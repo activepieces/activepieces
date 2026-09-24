@@ -39,7 +39,7 @@ export const gmailReplyToEmailAction = createAction({
           {
             label: 'Reply All',
             value: 'reply_all',
-            description: 'Everyone on the thread',
+            description: 'All recipients',
             icon: 'reply-all',
           },
         ],
