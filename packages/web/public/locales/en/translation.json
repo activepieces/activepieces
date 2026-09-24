@@ -976,6 +976,7 @@
   "This request has expired. Go back to {client} and start the connection again.": "This request has expired. Go back to {client} and start the connection again.",
   "Signed in as {email}": "Signed in as {email}",
   "Switch account": "Switch account",
+  "You do not have MCP access here. Pick another project, or ask a platform admin for access.": "You do not have MCP access here. Pick another project, or ask a platform admin for access.",
   "Deny": "Deny",
   "Authorize": "Authorize",
   "Unknown app": "Unknown app",
