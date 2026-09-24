@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { successOutputSchema } from '../output-schemas';
 
 export const updateLead = createAction({
     auth: salesforceAuth,
     name: 'update_lead',
     displayName: 'Update Lead',
     description: 'Update an existing lead.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Update fields on an existing Lead selected by its ID; only the fields you provide are changed and the Lead must already exist. Use Create Lead to add a new one; this does not convert the Lead.', idempotent: false },
+    outputSchema: successOutputSchema,
     props: {
         lead_id: salesforcesCommon.lead,
         FirstName: Property.ShortText({
