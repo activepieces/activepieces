@@ -767,7 +767,7 @@
     --primary: oklch(54.7% 0.2281 295.76);
     --primary-hover: var(--primary-700);
     --on-primary: oklch(100% 0 0);
-    --primary-surface: var(--primary-50);
+    --primary-surface: var(--primary-100);
     --primary-ink: var(--primary-700);
     --primary-line: var(--primary-500);
     --primary-mark: var(--primary-500);
