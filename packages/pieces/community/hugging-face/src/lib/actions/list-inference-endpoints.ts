@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { AuthenticationType, httpClient, HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 import { hfHub } from '../common/hub-client';
+import { listInferenceEndpointsOutputSchema } from '../output-schemas';
 
 export const listInferenceEndpoints = createAction({
   auth: huggingFaceAuth,
@@ -15,6 +16,7 @@ export const listInferenceEndpoints = createAction({
       "Lists the dedicated Inference Endpoints (paid, billing-enabled deployments) of a namespace, which defaults to the connected user: name, model repository, task, framework, state (for example 'running', 'paused' or 'scaledToZero'), public URL, access type, hardware, cloud vendor and region, and replica bounds. Pass an organization name to list its endpoints. A namespace without a payment method has no endpoints and may answer 401. Environment variables and secrets of the endpoints are never returned. For the serverless Inference Providers, use the inference actions instead. Read-only and safe to retry.",
     idempotent: true,
   },
+  outputSchema: listInferenceEndpointsOutputSchema,
   props: {
     namespace: Property.ShortText({
       displayName: 'Namespace',

@@ -304,6 +304,13 @@ const socialHandleFields: OutputSchemaField[] = [
   { key: 'linkedin', label: 'LinkedIn Handle' },
 ];
 
+const watchTargetFields: OutputSchemaField[] = [
+  { key: 'type', label: 'Type', description: "'user', 'org', 'model', 'dataset' or 'space'." },
+  { key: 'name', label: 'Name', description: 'The username, organization name or canonical repository ID.' },
+  { key: 'id', label: 'Hub ID', description: 'The 24-character Hub ObjectId the name resolved to.' },
+  { key: 'watch_type', label: 'Watch Type', description: "'user', 'org' or 'repo', as sent to the Hub." },
+];
+
 export const languageTranslationOutputSchema: OutputSchema = {
   fields: [
     { key: 'translatedText', label: 'Translated Text' },
@@ -1708,6 +1715,9 @@ export const handleGatedAccessRequestOutputSchema: OutputSchema = {
     { key: 'username', label: 'Username' },
     { key: 'status', label: 'New Status', description: "One of 'accepted', 'rejected', 'pending' or 'reset'." },
     { key: 'reason', label: 'Reason', description: 'The rejection or reset reason sent to the requester. Null when none was given.' },
+  ],
+};
+
 export const webhookOutputSchema: OutputSchema = {
   fields: webhookFields,
 };
@@ -1795,6 +1805,59 @@ export const searchHfDocsOutputSchema: OutputSchema = {
         { key: 'section', label: 'Section', description: "The heading path, joined with ' > '." },
         { key: 'text', label: 'Text (Markdown)' },
       ],
+    },
+    countField,
+  ],
+};
+
+export const listInferenceEndpointsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'namespace', label: 'Namespace' },
+    {
+      key: 'endpoints',
+      label: 'Endpoints',
+      labelKey: 'name',
+      listItems: [
+        { key: 'name', label: 'Name' },
+        { key: 'type', label: 'Access Type', description: "For example 'public', 'protected' or 'private'." },
+        { key: 'state', label: 'State', description: "For example 'running', 'paused' or 'scaledToZero'." },
+        { key: 'url', label: 'Endpoint URL', format: 'url' },
+        { key: 'status_message', label: 'Status Message' },
+        { key: 'created_at', label: 'Created At', format: 'datetime' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+        { key: 'repository', label: 'Model Repository' },
+        { key: 'revision', label: 'Model Revision' },
+        { key: 'task', label: 'Task' },
+        { key: 'framework', label: 'Framework' },
+        { key: 'accelerator', label: 'Accelerator' },
+        { key: 'instance_type', label: 'Instance Type' },
+        { key: 'instance_size', label: 'Instance Size' },
+        { key: 'min_replica', label: 'Min Replicas', format: 'number' },
+        { key: 'max_replica', label: 'Max Replicas', format: 'number' },
+        { key: 'vendor', label: 'Cloud Vendor' },
+        { key: 'region', label: 'Region' },
+      ],
+    },
+    countField,
+  ],
+};
+
+export const updateWatchListOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'watched', label: 'Now Watching', labelKey: 'name', listItems: watchTargetFields },
+    { key: 'unwatched', label: 'No Longer Watching', labelKey: 'name', listItems: watchTargetFields },
+    { key: 'watched_count', label: 'Watched Count', format: 'number' },
+    { key: 'unwatched_count', label: 'Unwatched Count', format: 'number' },
+  ],
+};
+
+export const deleteNotificationsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+    {
+      key: 'deleted_discussion_ids',
+      label: 'Deleted Discussion IDs',
+      description: 'The lowercased, de-duplicated discussion IDs whose notifications were removed.',
     },
     countField,
   ],

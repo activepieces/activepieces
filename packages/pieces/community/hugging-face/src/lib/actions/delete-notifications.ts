@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 import { hfUtils } from '../common/utils';
 import { hfSettingsApi } from '../common/webhooks';
+import { deleteNotificationsOutputSchema } from '../output-schemas';
 
 export const deleteNotifications = createAction({
   auth: huggingFaceAuth,
@@ -16,6 +17,7 @@ export const deleteNotifications = createAction({
       "Permanently removes the notifications for the given discussions from the connected account's Hub inbox; the discussions themselves are untouched. Pass the 24-character discussion_id values returned by List Notifications, not per-repository discussion numbers. Only the listed notifications are removed, never the whole inbox. Needs a 'write' role token. Cannot be undone, and a retry after success has nothing left to delete.",
     idempotent: false,
   },
+  outputSchema: deleteNotificationsOutputSchema,
   props: {
     discussion_ids: Property.Array({
       displayName: 'Discussion IDs',

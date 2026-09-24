@@ -4,6 +4,7 @@ import { huggingFaceAuth } from '../auth';
 import { hfHub } from '../common/hub-client';
 import { hfRepo } from '../common/repo';
 import { hfSettingsApi, hfWebhooks, WatchedItem } from '../common/webhooks';
+import { updateWatchListOutputSchema } from '../output-schemas';
 
 export const updateWatchList = createAction({
   auth: huggingFaceAuth,
@@ -17,6 +18,7 @@ export const updateWatchList = createAction({
       "Adds items to, or removes items from, the connected account's Hub watch list, which controls the discussion notifications the user receives. Items are users, organizations, or model, dataset or Space repositories, given by name; each is resolved to its Hub ObjectId first, so an unknown name fails with 404 before anything changes. Only the listed items change; the rest of the watch list is untouched. Needs a 'write' role token. Safe to retry: watching an already-watched item or unwatching one that is not watched is a no-op.",
     idempotent: true,
   },
+  outputSchema: updateWatchListOutputSchema,
   props: {
     watch: hfWebhooks.watchedItemsProp({
       required: false,
