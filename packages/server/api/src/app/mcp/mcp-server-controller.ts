@@ -1,5 +1,6 @@
 import { ApId, Permission } from '@activepieces/core-utils'
-import { PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { PopulatedMcpServer, PrincipalType, ProjectMcpServerResponse, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
@@ -7,26 +8,39 @@ import { ProjectResourceType } from '../core/security/authorization/common'
 import { securityAccess } from '../core/security/authorization/fastify-security'
 import { system } from '../helper/system/system'
 import { AppSystemProp } from '../helper/system/system-props'
+import { projectService } from '../project/project-service'
 import { mcpServerService } from './mcp-service'
 import { mcpOAuthTokenService } from './oauth/token/mcp-oauth-token.service'
 
 export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/', GetMcpRequest, async (req) => {
-        return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
+        return withPlatformDisabledTools({
+            projectId: req.projectId,
+            mcp: await mcpServerService(req.log).getPopulatedByProjectId(req.projectId),
+            log: req.log,
+        })
     })
 
     app.post('/', UpdateMcpRequest, async (req) => {
         const { disabledTools } = req.body
-        return mcpServerService(req.log).update({
+        return withPlatformDisabledTools({
             projectId: req.projectId,
-            disabledTools,
+            mcp: await mcpServerService(req.log).update({
+                projectId: req.projectId,
+                disabledTools,
+            }),
+            log: req.log,
         })
     })
 
     app.post('/rotate', RotateTokenRequest, async (req) => {
-        return mcpServerService(req.log).rotateToken({
+        return withPlatformDisabledTools({
             projectId: req.projectId,
+            mcp: await mcpServerService(req.log).rotateToken({
+                projectId: req.projectId,
+            }),
+            log: req.log,
         })
     })
 
@@ -42,6 +56,16 @@ export const mcpServerController: FastifyPluginAsyncZod = async (app) => {
             mcpToken,
         }
     })
+}
+
+async function withPlatformDisabledTools({ projectId, mcp, log }: {
+    projectId: string
+    mcp: PopulatedMcpServer
+    log: FastifyBaseLogger
+}): Promise<ProjectMcpServerResponse> {
+    const project = await projectService(log).getOneOrThrow(projectId)
+    const platformDisabledTools = await mcpServerService(log).listPlatformDisabledTools({ platformId: project.platformId })
+    return { ...mcp, platformDisabledTools }
 }
 
 export const UpdateMcpRequest = {
