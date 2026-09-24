@@ -130,6 +130,14 @@ function RoleDialogBody({
       tab,
     });
 
+  const cancelEdit = () => {
+    setName(projectRole?.name ?? '');
+    setPermissions(projectRole?.permissions ?? []);
+    setIsRenaming(false);
+    setIsEditingPermissions(false);
+    setSaveError(null);
+  };
+
   const changeBase = (nextBase: RoleBase) => {
     setBase(nextBase);
     setPermissions(rolePermissionModel.basePermissions({ base: nextBase }));
@@ -359,7 +367,11 @@ function RoleDialogBody({
         )}
         {showsActions && (
           <div className="flex shrink-0 items-center gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={isCreate ? onClose : cancelEdit}
+            >
               {t('Cancel')}
             </Button>
             <Button type="button" disabled={!canSubmit} onClick={submit}>
