@@ -6,6 +6,7 @@ import { Link, matchPath, useLocation } from 'react-router-dom';
 
 import { useTelemetry } from '@/components/providers/telemetry-provider';
 import {
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -35,7 +36,8 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const isCollapsed = state === 'collapsed';
   const subItems = item.subItems ?? [];
   const hasSubItems = subItems.length > 0;
-  const showSubItems = hasSubItems && isLinkActive && !isCollapsed;
+  const [isExpanded, setIsExpanded] = useState(isLinkActive);
+  const showSubItems = hasSubItems && isExpanded && !isCollapsed;
   const isSubItemLocked = (subItem: SidebarSubItemType) =>
     Boolean(item.locked) || Boolean(subItem.locked);
   const isCrowned = hasSubItems
@@ -59,6 +61,12 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   };
 
   useEffect(() => {
+    if (isLinkActive) {
+      setIsExpanded(true);
+    }
+  }, [isLinkActive]);
+
+  useEffect(() => {
     if (isHovered) {
       iconRef.current?.startAnimation?.();
     } else {
@@ -71,16 +79,23 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       asChild
       className={cn('h-8 [&_svg]:block [&_svg]:size-5', {
         'bg-sidebar-accent hover:bg-sidebar-accent!': isRowHighlighted,
+        'pr-8': hasSubItems && !isCollapsed,
       })}
     >
       <Link
         to={keepSearchWithinSection(item.to)}
         aria-current={isRowHighlighted ? 'page' : undefined}
-        onClick={
-          isCrowned && !isRouteActive({ pathname, to: item.to, end: true })
-            ? () => captureLockedClick({ path: item.to, tier: parentTier })
-            : undefined
-        }
+        onClick={() => {
+          if (hasSubItems) {
+            setIsExpanded(true);
+          }
+          if (
+            isCrowned &&
+            !isRouteActive({ pathname, to: item.to, end: true })
+          ) {
+            captureLockedClick({ path: item.to, tier: parentTier });
+          }
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -95,21 +110,6 @@ export const ApSidebarItem = (item: SidebarItemType) => {
             {isCrowned && <CrownMark />}
           </span>
         )}
-        {!isCollapsed && hasSubItems && (
-          <span className="ml-auto flex shrink-0 items-center gap-1.5">
-            {isLinkActive ? (
-              <ChevronDown
-                aria-hidden
-                className="size-4! text-sidebar-foreground/60"
-              />
-            ) : (
-              <ChevronRight
-                aria-hidden
-                className="size-4! text-sidebar-foreground/60"
-              />
-            )}
-          </span>
-        )}
       </Link>
     </SidebarMenuButton>
   );
@@ -120,6 +120,20 @@ export const ApSidebarItem = (item: SidebarItemType) => {
         <LockedTooltip tier={parentTier}>{button}</LockedTooltip>
       ) : (
         button
+      )}
+      {!isCollapsed && hasSubItems && (
+        <SidebarMenuAction
+          className="right-1.5 text-sidebar-foreground/60"
+          aria-label={isExpanded ? t('Collapse') : t('Expand')}
+          aria-expanded={isExpanded}
+          onClick={() => setIsExpanded((expanded) => !expanded)}
+        >
+          {isExpanded ? (
+            <ChevronDown aria-hidden />
+          ) : (
+            <ChevronRight aria-hidden />
+          )}
+        </SidebarMenuAction>
       )}
       {showSubItems && (
         <SidebarMenuSub className="mx-0 ml-7 border-0 px-0 py-1">
