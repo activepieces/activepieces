@@ -21,6 +21,7 @@ RUN printf 'deb http://snapshot.debian.org/archive/debian/20260825T000000Z bulls
 # node base image wipes /var/cache/apt anyway, and a persisted /var/lib/apt/lists goes stale
 # against rotated bullseye-security packages, failing the build with hash/size fetch errors.
 # libcap2 is isolate's runtime lib (the isolate binaries ship prebuilt in api assets).
+# tini runs as PID 1 so the isolate processes orphaned on sandbox teardown get reaped, not left as zombies.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         openssh-client \
@@ -31,6 +32,7 @@ RUN apt-get update && \
         poppler-utils \
         poppler-data \
         procps \
+        tini \
         unzip \
         curl \
         ca-certificates \
@@ -162,5 +164,5 @@ LABEL service=activepieces
 HEALTHCHECK --interval=10s --timeout=5s --start-period=60s --retries=5 \
     CMD [ "$AP_CONTAINER_TYPE" = "WORKER" ] && exit 0 || curl -fsS "http://localhost:${AP_PORT:-80}/api/v1/health" || exit 1
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/bin/tini", "--", "./docker-entrypoint.sh"]
 EXPOSE 80
