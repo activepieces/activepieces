@@ -1,9 +1,13 @@
 import { isNil } from '@activepieces/core-utils';
-import { UserWithMetaInformation } from '@activepieces/shared';
+import {
+  TelemetryEventName,
+  UserWithMetaInformation,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { AnimatedIconButton } from '@/components/custom/animated-icon-button';
 import { SendIcon } from '@/components/icons/send';
+import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { userHooks } from '@/hooks/user-hooks';
 import { telemetryUtils } from '@/lib/telemetry-utils';
 
@@ -13,13 +17,19 @@ export const RequestTrial = ({
   buttonSize = 'default',
 }: RequestTrialProps) => {
   const { data: currentUser } = userHooks.useCurrentUser();
+  const { capture } = useTelemetry();
 
-  const handleClick = () =>
+  const handleClick = () => {
+    capture({
+      name: TelemetryEventName.SALES_HANDOFF_CLICKED,
+      payload: { featureKey, surface: 'locked_feature' },
+    });
     window.open(
       buildSalesUrl({ currentUser, featureKey }),
       '_blank',
       'noopener noreferrer',
     );
+  };
 
   return (
     <AnimatedIconButton

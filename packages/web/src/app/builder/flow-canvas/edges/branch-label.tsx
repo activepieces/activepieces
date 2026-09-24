@@ -1,6 +1,5 @@
 import { isNil } from '@activepieces/core-utils';
 import {
-  FlowActionType,
   BranchExecutionType,
   FlowOperationType,
   flowStructureUtil,
@@ -76,7 +75,8 @@ const BranchLabel = (props: BaseBranchLabel) => {
   const isInsideRouterBranch = branchIndex !== null;
   const isFallbackBranch =
     isInsideRouterBranch &&
-    step?.type === FlowActionType.ROUTER &&
+    !isNil(step) &&
+    flowStructureUtil.isBranchedAction(step) &&
     step?.settings.branches[branchIndex]?.branchType ===
       BranchExecutionType.FALLBACK;
   const isOtherwiseBranch =
@@ -91,7 +91,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
   if (isNil(step)) {
     return <></>;
   }
-  if (isInsideRouterBranch && step.type !== FlowActionType.ROUTER) {
+  if (isInsideRouterBranch && !flowStructureUtil.isBranchedAction(step)) {
     return <></>;
   }
 
@@ -149,7 +149,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
 
           {!isOtherwiseBranch &&
             !readonly &&
-            step.type === FlowActionType.ROUTER && (
+            flowStructureUtil.isBranchedAction(step) && (
               <DropdownMenu
                 modal={true}
                 open={isDropdownMenuOpen}

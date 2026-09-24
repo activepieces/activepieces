@@ -65,7 +65,7 @@ export function ShowcaseTile({
             className={cn(
               'truncate text-foreground',
               isList
-                ? 'font-sentient text-lg font-bold leading-snug'
+                ? 'font-serif text-lg font-bold leading-snug'
                 : 'text-sm font-medium',
             )}
           >

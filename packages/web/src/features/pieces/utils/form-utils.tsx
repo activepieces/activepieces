@@ -15,6 +15,8 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 import {
+  AiRouterActionSchema,
+  AiRouterActionSettingsWithValidation,
   AppConnectionScope,
   AppConnectionType,
   CodeActionSchema,
@@ -595,6 +597,10 @@ export const formUtils = {
               executionType: z.enum(RouterExecutionType),
             }),
           }).shape,
+        );
+      case FlowActionType.AI_ROUTER:
+        return AiRouterActionSchema.omit({ settings: true }).extend(
+          z.object({ settings: AiRouterActionSettingsWithValidation }).shape,
         );
       case FlowActionType.CODE:
         return CodeActionSchema;
