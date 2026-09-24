@@ -16,7 +16,7 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
     return {
         title: 'ap_lock_and_publish',
         permission: Permission.UPDATE_FLOW_STATUS,
-        description: 'Publish the current draft version of a flow. This locks the draft and sets it as the published version. Whether the flow is enabled on publish is controlled by the ENABLE_FLOW_ON_PUBLISH env var. Returns validation errors if the flow is not ready.',
+        description: 'Publish the current draft version of a flow. This locks the draft and sets it as the published version. Whether the flow is enabled on publish is controlled by the AP_ENABLE_FLOW_ON_PUBLISH env var. In projects that require approval, this submits the flow for approval instead of publishing immediately. Returns validation errors if the flow is not ready.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
         },
@@ -53,7 +53,7 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
             }
 
             try {
-                await flowService(log).update({
+                const updatedFlow = await flowService(log).update({
                     id: flow.id,
                     projectId: mcp.projectId,
                     userId,
@@ -61,7 +61,13 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
                     platformId: project.platformId,
                     operation,
                 })
-                const outcome = enableOnPublish ? 'published and enabled' : 'published (flow left disabled)'
+                const published = updatedFlow.publishedVersionId === updatedFlow.version.id
+                if (!published) {
+                    return {
+                        content: [{ type: 'text', text: `⏳ Flow "${flow.version.displayName}" was submitted for approval and is not published yet. Its current status is ${updatedFlow.status}.` }],
+                    }
+                }
+                const outcome = updatedFlow.status === FlowStatus.ENABLED ? 'published and enabled' : 'published (flow left disabled)'
                 return {
                     content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" ${outcome} successfully.` }],
                 }
