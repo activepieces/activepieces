@@ -38,10 +38,7 @@ export function PermissionGrid({
             {group.label}
           </p>
           {group.rows.map((row) => (
-            <div
-              key={row.key}
-              className="flex items-center gap-2 border-b border-border/60 py-1.5 last:border-b-0"
-            >
+            <div key={row.key} className="flex items-center gap-2 py-2">
               <span
                 className={cn(
                   'size-1.5 shrink-0 rounded-full',

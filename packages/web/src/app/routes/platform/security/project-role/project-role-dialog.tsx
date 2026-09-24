@@ -61,7 +61,7 @@ export const ProjectRoleDialog = ({
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent
         showCloseButton={false}
-        className="@container flex h-[min(36rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0"
+        className="@container flex h-[min(39rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0"
       >
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
@@ -122,10 +122,7 @@ function RoleDialogBody({
     name.trim() !== projectRole?.name ||
     !samePermissions(permissions, projectRole?.permissions ?? []);
   const showsActions =
-    isCreate ||
-    isRenaming ||
-    isDirty ||
-    (isEditingPermissions && tab === 'permissions');
+    isCreate || isDirty || (isEditingPermissions && tab === 'permissions');
   const canSubmit =
     name.trim().length > 0 && !isSaving && (isCreate || isDirty);
   const footerNote =
