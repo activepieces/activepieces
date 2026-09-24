@@ -49,6 +49,7 @@ export const previewDatasetRows = createAction({
       rows,
       count: rows.length,
       rows_available: allRows.length,
+      truncated: record['truncated'] === true || rows.length < allRows.length,
     };
   },
 });

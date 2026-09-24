@@ -1266,7 +1266,7 @@ export const previewDatasetRowsOutputSchema: OutputSchema = {
       key: 'truncated',
       label: 'Truncated',
       format: 'boolean',
-      description: 'True when the preview holds fewer rows than the whole split.',
+      description: 'True when the returned rows are fewer than the whole split, either because the viewer preview is partial or because Max Rows trimmed it.',
     },
   ],
 };
