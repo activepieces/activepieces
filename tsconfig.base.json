@@ -642,6 +642,9 @@
       "@activepieces/piece-help-scout": [
         "packages/pieces/community/help-scout/src/index.ts"
       ],
+      "@activepieces/piece-hesperan": [
+        "packages/pieces/community/hesperan/src/index.ts"
+      ],
       "@activepieces/piece-heygen": [
         "packages/pieces/community/heygen/src/index.ts"
       ],

@@ -4276,6 +4276,18 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/hesperan": {
+      "name": "@activepieces/piece-hesperan",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+        "tslib": "2.6.2",
+      },
+      "devDependencies": {
+        "vitest": "3.2.6",
+      },
+    },
     "packages/pieces/community/heygen": {
       "name": "@activepieces/piece-heygen",
       "version": "0.2.0",
@@ -11777,6 +11789,8 @@
     "@activepieces/piece-hedy": ["@activepieces/piece-hedy@workspace:packages/pieces/community/hedy"],
 
     "@activepieces/piece-help-scout": ["@activepieces/piece-help-scout@workspace:packages/pieces/community/help-scout"],
+
+    "@activepieces/piece-hesperan": ["@activepieces/piece-hesperan@workspace:packages/pieces/community/hesperan"],
 
     "@activepieces/piece-heygen": ["@activepieces/piece-heygen@workspace:packages/pieces/community/heygen"],
 
