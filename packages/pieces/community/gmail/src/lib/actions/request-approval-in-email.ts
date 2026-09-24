@@ -57,10 +57,41 @@ export const requestApprovalInEmail = createAction({
       placeholder: 'Approval needed: purchase order 1042',
       required: true,
     }),
-    body: Property.ShortText({
+    body_type: Property.StaticDropdown({
+      displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
+      required: true,
+      defaultValue: 'plain_text',
+      display: 'cards',
+      options: {
+        disabled: false,
+        options: [
+          {
+            label: 'Plain Text',
+            value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
+          },
+          {
+            label: 'Rich Text',
+            value: 'html',
+            description: 'Bold, links, lists',
+            icon: 'type',
+          },
+          {
+            label: 'HTML Code',
+            value: 'html_code',
+            description: 'Paste your own markup',
+            icon: 'code',
+          },
+        ],
+      },
+    }),
+    body: Property.RichText({
       displayName: 'Body',
       description: 'Text shown above the Review & Respond button.',
       required: true,
+      formatProperty: 'body_type',
     }),
     reply_to: Property.Array({
       displayName: 'Reply To',
@@ -123,9 +154,14 @@ export const requestApprovalInEmail = createAction({
 
         const confirmationLink = `${waitpoint.resumeUrl}/confirm`;
 
+        const bodyHtml =
+          context.propsValue.body_type === 'plain_text'
+            ? escapeHtml(body).replace(/\r?\n/g, '<br>')
+            : body;
+
         const htmlBody = `
         <div>
-          <p>${body}</p>
+          <div>${bodyHtml}</div>
           <br />
           <p>
             <a href="${confirmationLink}" style="display: inline-block; padding: 10px 20px; background-color: #6e41e2; color: white; text-decoration: none; border-radius: 4px;">Review &amp; Respond</a>
@@ -241,3 +277,12 @@ export const requestApprovalInEmail = createAction({
     }
   },
 });
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
