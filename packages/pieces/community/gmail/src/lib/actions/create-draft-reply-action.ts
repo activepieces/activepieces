@@ -61,15 +61,9 @@ export const gmailCreateDraftReplyAction = createAction({
             icon: 'text',
           },
           {
-            label: 'Rich Text',
+            label: 'HTML',
             value: 'html',
             description: 'Bold, links, lists',
-            icon: 'type',
-          },
-          {
-            label: 'HTML Code',
-            value: 'html_code',
-            description: 'Paste your own markup',
             icon: 'code',
           },
         ],
