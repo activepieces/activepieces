@@ -179,8 +179,7 @@ redis:
 
 # Deployment-specific, non-sensitive env vars set as plain values.
 # Use this for vars that differ per release (e.g. APP vs WORKER) and don't belong in the shared secret.
-activepiecesConfig:
-  AP_CONTAINER_TYPE: ""
+activepiecesConfig: {}
 
 # Map of Kubernetes secret name → list of AP_* (and OTEL_*) env var names to inject.
 # Each var name must exist as a key in the corresponding secret.

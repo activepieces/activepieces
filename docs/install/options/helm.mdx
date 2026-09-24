@@ -134,6 +134,66 @@ With Helm 4 and `workloadType: rollout`, add `--force-conflicts` to `helm upgrad
 
 The bundled secret generator creates cluster-wide RBAC named after the release, so give each release in a cluster its own name. A second release can also set `kubernetes-secret-generator.enabled: false`, because the first release's generator already serves every namespace.
 
+## Migrating from chart 0.3.x
+
+Chart 0.4.0 replaced the `activepieces:` block and keys such as `postgresql.host` and `redis.host` with the secrets listed under `activepiecesEnvVariables`. `helm install` and `helm upgrade` print a warning that names every old key they ignore. Run these steps before upgrading, with `RELEASE` set to your release name.
+
+**1. Keep your database.** Chart 0.3.x ran PostgreSQL and Redis inside the cluster by default. If you used them, keep them enabled in your values:
+
+```yaml
+postgresql:
+  enabled: true
+  image:
+    repository: bitnamilegacy/postgresql
+redis:
+  enabled: true
+  image:
+    repository: bitnamilegacy/redis
+```
+
+Then point the app at them. The passwords are copied straight from their existing secrets:
+
+```bash
+umask 077
+printf 'AP_POSTGRES_HOST=%s-postgresql\nAP_POSTGRES_PORT=5432\nAP_POSTGRES_DATABASE=activepieces\nAP_POSTGRES_USERNAME=postgres\nAP_POSTGRES_PASSWORD=%s\n' \
+  "$RELEASE" "$(kubectl get secret "$RELEASE-postgresql" -o jsonpath='{.data.postgres-password}' | base64 -d)" > db.env
+printf 'AP_REDIS_HOST=%s-redis-master\nAP_REDIS_PORT=6379\nAP_REDIS_PASSWORD=%s\n' \
+  "$RELEASE" "$(kubectl get secret "$RELEASE-redis" -o jsonpath='{.data.redis-password}' | base64 -d)" > redis.env
+kubectl create secret generic activepieces-db-secrets --from-env-file=db.env
+kubectl create secret generic activepieces-redis-secrets --from-env-file=redis.env
+rm db.env redis.env
+```
+
+If you used an external database instead, create the same two secrets as described in [Database and Redis](#database-and-redis).
+
+**2. Move your settings.** Each `activepieces.<name>` value becomes an `AP_*` variable in the `activepieces-config-secrets` secret, for example `frontendUrl` → `AP_FRONTEND_URL`, `edition` → `AP_EDITION` and `executionMode` → `AP_EXECUTION_MODE`. Set `persistence.storageClassName` to a StorageClass your cluster has (`kubectl get storageclass`); chart 0.3.x used the cluster default, and `persistence.storageClass` is no longer read.
+
+```bash
+kubectl create secret generic activepieces-config-secrets \
+  --from-literal=AP_FRONTEND_URL=https://activepieces.yourdomain.com
+```
+
+**3. Keep your keys.** The encryption key and JWT secret in `RELEASE-activepieces-secrets` and `RELEASE-activepieces-jwt-secret` (or `RELEASE-secrets` and `RELEASE-jwt-secret` when the release name contains `activepieces`) are carried over automatically. If you deploy with `helm template`, Argo CD or Kustomize, the chart cannot see them, so copy them into `activepieces-auth-secrets` first:
+
+```bash
+FULLNAME="$RELEASE-activepieces"
+case "$RELEASE" in *activepieces*) FULLNAME="$RELEASE" ;; esac
+kubectl create secret generic activepieces-auth-secrets \
+  --from-file=AP_ENCRYPTION_KEY=<(kubectl get secret "$FULLNAME-secrets" -o jsonpath='{.data.encryption-key}' | base64 -d) \
+  --from-file=AP_JWT_SECRET=<(kubectl get secret "$FULLNAME-jwt-secret" -o jsonpath='{.data.jwt-secret}' | base64 -d)
+```
+
+**4. Upgrade.** Pin `image.tag` to the version you run today, upgrade the chart, then move to a newer image in a separate step. The app now runs as a StatefulSet (or an Argo `Rollout`) instead of a Deployment, and its piece cache volume is recreated.
+
+If you already upgraded with the old values and the new pod is stuck in `Pending` (for example `storageclass "local-path" not found`), Kubernetes will not let the chart change the volume. Delete the StatefulSet and its empty cache volume, then upgrade again. The pod never started, so nothing is lost:
+
+```bash
+FULLNAME="$RELEASE-activepieces"
+case "$RELEASE" in *activepieces*) FULLNAME="$RELEASE" ;; esac
+kubectl delete statefulset "$FULLNAME"
+kubectl delete pvc "cache-$FULLNAME-0"
+```
+
 ## Troubleshooting
 
 ### Common Issues
