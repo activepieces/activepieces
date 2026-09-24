@@ -1,9 +1,7 @@
-import { Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
 
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 import { McpCredentials } from './mcp-credentials';
@@ -18,7 +16,6 @@ export const McpServerSettings = () => {
   );
   const { mutate: updateMcpServer, isPending: isUpdating } =
     mcpHooks.useUpdateMcpServer(currentProjectId!);
-  const { checkAccess } = useAuthorization();
 
   if (isLoading) {
     return (
@@ -58,7 +55,6 @@ export const McpServerSettings = () => {
               <McpTools
                 disabledTools={mcpServer.disabledTools}
                 platformDisabledTools={mcpServer.platformDisabledTools ?? []}
-                canWrite={checkAccess(Permission.WRITE_MCP)}
                 isPending={isUpdating}
                 onUpdateDisabledTools={(tools) =>
                   updateMcpServer({ disabledTools: tools })

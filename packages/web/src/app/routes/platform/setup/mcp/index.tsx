@@ -8,7 +8,6 @@ import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clip
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LoadingSpinner } from '@/components/custom/spinner';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
@@ -23,7 +22,6 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
   const { mutate: updateTools, isPending: isToolsUpdating } =
     platformMcpHooks.useUpdatePlatformMcpTools();
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const isPlatformAdmin = useIsPlatformAdmin();
 
   if (isLoading) {
     return (
@@ -117,7 +115,6 @@ export default function PlatformMcpPage({ section }: PlatformMcpPageProps) {
                   </p>
                   <McpTools
                     disabledTools={mcpServer.disabledTools}
-                    canWrite={isPlatformAdmin}
                     isPending={isToolsUpdating}
                     onUpdateDisabledTools={(tools) =>
                       updateTools({ disabledTools: tools })

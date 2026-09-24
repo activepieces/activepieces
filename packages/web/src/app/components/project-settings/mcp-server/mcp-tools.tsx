@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/core-utils';
 import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Lock } from 'lucide-react';
@@ -17,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
@@ -25,10 +27,12 @@ import { getToolCategories } from './utils/mcp-tools-metadata';
 export function McpTools({
   disabledTools: externalDisabledTools,
   platformDisabledTools = [],
-  canWrite,
+  projectId,
   isPending,
   onUpdateDisabledTools,
 }: McpToolsProps) {
+  const { checkAccess } = useAuthorization(projectId);
+  const canWrite = checkAccess(Permission.WRITE_MCP);
   const { data: toolSearchEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TOOL_SEARCH_ENABLED,
   );
@@ -211,7 +215,7 @@ export function McpTools({
 type McpToolsProps = {
   disabledTools: string[] | null;
   platformDisabledTools?: string[];
-  canWrite: boolean;
+  projectId?: string;
   isPending: boolean;
   onUpdateDisabledTools: (tools: string[]) => void;
 };
