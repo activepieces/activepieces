@@ -10,7 +10,7 @@ import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpActivityContext, withActivityRecording } from './activity/mcp-activity-recorder'
 import { mcpAccess } from './mcp-access'
-import { ALLOW_ALL, PermissionChecker, resolveMcpPermissionChecker } from './mcp-permissions'
+import { ALLOW_ALL, PermissionChecker, resolveMcpPermissionChecker, resolvePermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { mcpToolInput } from './mcp-tool-input'
 import { McpCallBilling, mcpUsageTracker } from './mcp-usage-tracker'
@@ -38,13 +38,14 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, platformId, platformDisabledTools, clientKey, clientId, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, platformId, platformDisabledTools, clientKey, clientId, isInAppChat, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId?: string
     platformId?: string
     platformDisabledTools: string[]
     clientKey: McpOAuthClientKey | null
     clientId: string
+    isInAppChat: boolean
     log: FastifyBaseLogger
     resolveProjectMcp?: (projectId: string) => Promise<McpServerSchema>
 }): Promise<McpServer> {
@@ -74,8 +75,9 @@ export async function buildMcpServer({ mcp, userId, platformId, platformDisabled
     const billing = await mcpUsageTracker(log).resolveCallBilling({ mcp, clientId })
 
     if (projectId) {
+        const resolveChecker = isInAppChat ? resolvePermissionChecker : resolveMcpPermissionChecker
         const permissionChecker = userId
-            ? await resolveMcpPermissionChecker({ userId, projectId, log })
+            ? await resolveChecker({ userId, projectId, log })
             : ALLOW_ALL
         const activityContext: McpActivityContext | null = isNil(platformId) || isNil(userId) ? null : { platformId, projectId, userId, clientKey }
         registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log })

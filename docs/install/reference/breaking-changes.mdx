@@ -89,50 +89,6 @@ Clearing a description from this action is therefore no longer possible; that is
 
 Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
 
-#### MCP access is governed by the `READ_MCP` permission on every call
-
-This applies to Enterprise and Cloud, where project roles exist. A Community self-host has no roles and is unaffected.
-
-Authorizing an MCP client for a project used to require only that you were a member of it, and the permission was never consulted again once a token existed. Two things change.
-
-A project role must now grant `READ_MCP` to authorize MCP for that project, and the permission is checked on every tool call against your live role rather than once at authorization. Removing `READ_MCP` from a role therefore takes effect immediately, on tokens that are already issued: the client keeps its token, and every tool answers with a permission error instead — piece-catalogue lookups included, since those resolve project connections and AI providers. All three built-in roles — Admin, Editor and Viewer — grant `READ_MCP`, so only a custom role that leaves it out is affected.
-
-This reaches the in-app AI Chat too, not only external MCP clients. The chat talks to the platform MCP server over an internal token, so a member whose role does not grant `READ_MCP` keeps the chat itself but loses every Activepieces tool inside it — it can no longer read their flows, run a step, or look a piece up for them.
-
-In exchange, the platform-wide MCP server is no longer restricted to platform administrators. Any member holding `READ_MCP` in at least one project can authorize it, and it reaches exactly the projects whose role grants them that permission. Embedded users are the exception: they can authorize MCP for a single project only, not the platform-wide server.
-
-On the platform-wide server, `ap_list_ai_models` now needs a project to be selected with `ap_set_project_context` first, like the other project tools. The models it lists depend on the project, so the answer it gave without one could be wrong. A client that calls it before selecting a project now gets a "no project selected" result.
-
-The MCP page now hands out the platform server address, `/mcp/platform`, rather than the project one, and the project settings dialog no longer carries an MCP Server tab.
-
-#### What you need to do
-
-Nothing, if your members use the built-in roles. If you have built a custom project role and expect its holders to connect an MCP client, or to use the AI Chat for anything beyond conversation, open the role in **Platform Admin → Security → Project Roles** and set **MCP** to at least **Read** — otherwise their existing MCP clients stop working when you upgrade, rather than at the next token expiry. A role with MCP set to **None** now also loses the Activepieces tools in the AI Chat. There is no environment variable, migration, or new setup step.
-
-#### A project's switched-off tools now apply to platform-wide MCP clients
-
-A project's MCP server carries a list of tools that are switched off for that project. Until now it governed only a client connected to the project address, `/mcp`. A client connected to the platform address, `/mcp/platform`, was filtered by the platform's own list and never consulted the project's, so a tool an admin had switched off for a project still ran there once the client selected it.
-
-Both lists now apply. The platform list sets the outer bound and decides which tools the client is offered; the project list narrows it at the moment of the call, against the project the client has selected. A tool that is off for the selected project answers with an error instead of running, and is not charged. Locked read-only tools are exempt, as they always have been — a `disabledTools` entry never switched those off.
-
-The check reads the project's live list on every call, so switching a tool on or off takes effect at once, on clients that are already connected. Because the client selects its project after it connects, and can change it, the tool stays in the client's tool list and refuses when called. This matches how a missing `READ_MCP` permission already behaves.
-
-#### What you need to do
-
-There is no environment variable and no migration. If you use the platform-wide server and have switched tools off per project, review the Tools tab of the MCP page for each of those projects before you upgrade: those settings were doing nothing for platform clients and now take effect. A connected agent that relied on a tool you had switched off will start being refused.
-
-#### The platform's switched-off tools now apply to every MCP server, and to the AI Chat
-
-Platform → Setup → MCP carries a list of built-in tools switched off for the platform, and the page has always described it as governing the AI Chat and external agents. It did neither in full. It filtered only a client connected to the platform address, `/mcp/platform`, with no project selected. A client connected to a project address, `/mcp`, was filtered by that project's list alone and never consulted the platform's — and so was the AI Chat, because a chat resolves its project from the conversation and is then served as a project client.
-
-The platform list is now the outer bound everywhere. A tool switched off there is absent from the tool list of every MCP server on the platform, the embedded MCP settings dialog reports it as off, and the AI Chat no longer offers it. A project can still switch off more than the platform does; it can no longer switch back on what the platform switched off. Locked read-only tools stay exempt, as they always have been.
-
-A client that is already connected keeps the tool list it fetched when it connected, because the server does not notify clients when the list changes. Until it reconnects, such a client still shows a tool that the platform has since switched off, and a call to that tool fails with a generic "tool not found" error rather than an explanation.
-
-#### What you need to do
-
-Review Platform → Setup → MCP before you upgrade. Anything switched off there was, until now, still reachable through every project MCP server and through the AI Chat, so an agent or a connected client may be relying on it. Switch it back on at the platform level if you meant the restriction to apply only to platform-wide clients, and switch it off per project instead. There is no environment variable and no migration.
-
 ## 0.91.0
 
 ### What has changed?
