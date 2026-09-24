@@ -1,6 +1,5 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { PDFDocument } from 'pdf-lib';
-import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { extractPdfPagesActionOutputSchema } from '../output-schemas';
 
 export function pageRangeToIndexes(
@@ -18,7 +17,7 @@ export function pageRangeToIndexes(
     throw Error('Range start/end has to be a non-zero number');
   }
 
-  if (startPage > totalPages || endPage > totalPages) {
+  if (Math.abs(startPage) > totalPages || Math.abs(endPage) > totalPages) {
     throw Error(
       'Range start/end has to be less or equal to the total number of pages'
     );
@@ -49,15 +48,11 @@ export function pageRangeToIndexes(
 }
 
 const markdownValue = `
-This action can extract or rearrange the pages in a PDF.
+Ranges are copied in the order listed, so pages can be reordered.
 
-- The order of array determines the sequence of pages.
-- Each array element is one inclusive continuous range with a start page and end page.
-- Pages start from 1, and 0 is not valid.
-- Start page has to be less than end page.
-- You can select one page by setting the same start and end page.
-- To select pages from the start, specify negative pages eg. -1 is the last page, -5 is the 5th last page. start: -5, end: -1 are the last 5 pages.
-- Range cannot span across 0 eg. start: -3, end: 5.
+- Pages start at 1. Start and end are inclusive; use the same number for one page.
+- Negative numbers count from the end: -1 is the last page, -5 to -1 the last five.
+- A range cannot cross 0.
 `;
 
 export const extractPdfPages = createAction({
@@ -65,7 +60,7 @@ export const extractPdfPages = createAction({
   name: 'extractPdfPages',
   classification: 'READ',
   displayName: 'Extract PDF Pages',
-  description: 'Extract or rearrange page(s)from PDF File.',
+  description: 'Copy page ranges from a PDF into a new file, in the order given.',
   aiMetadata: { description: 'Builds a new PDF from page ranges taken from a source PDF; because ranges are copied in the order given, it both extracts/trims and reorders pages. Use it to split or resequence one document — use Merge PDFs to join separate files, and PDF Page Count first if bounds are unknown. Ranges are 1-indexed and inclusive, negatives count from the end (start -5, end -1 is the last five pages), and no range may span across 0; the source file is untouched and repeating the call produces the same page content, so idempotent.', idempotent: true },
   outputSchema: extractPdfPagesActionOutputSchema,
   props: {
@@ -76,29 +71,25 @@ export const extractPdfPages = createAction({
     file: Property.File({
       displayName: 'PDF File or URL',
       required: true,
+      placeholder: 'https://example.com/document.pdf',
     }),
     pageRanges: Property.Array({
       displayName: 'Page Ranges',
+      description: 'One item per range. Order here is the page order in the output.',
       properties: {
         startPage: Property.Number({
           displayName: 'Start Page',
+          description: 'First page of the range. Pages start at 1.',
           required: true,
         }),
         endPage: Property.Number({
           displayName: 'End Page',
+          description: 'Last page of the range, inclusive.',
           required: true,
         }),
       },
       required: true,
     }),
-  },
-  errorHandlingOptions: {
-    continueOnFailure: {
-      defaultValue: false,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
   },
   async run(context) {
     try {

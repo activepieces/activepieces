@@ -103,6 +103,32 @@ export async function makeRequest(
   }
 }
 
+export function buildPath(
+  basePath: string,
+  params: Record<string, string | number | undefined>
+) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== '') {
+      search.append(key, String(value));
+    }
+  }
+  const query = search.toString();
+  return query === '' ? basePath : `${basePath}?${query}`;
+}
+
+export function paginatedResult(response: {
+  items?: unknown[];
+  bookmark?: string | null;
+}) {
+  const items = response.items ?? [];
+  return {
+    items,
+    count: items.length,
+    bookmark: response.bookmark ?? null,
+  };
+}
+
 export async function fetchAllPages({
   accessToken,
   path,

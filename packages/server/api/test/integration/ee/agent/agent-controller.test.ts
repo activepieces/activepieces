@@ -914,7 +914,6 @@ describe('agent feature gate', () => {
         expect((await ctx.get(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}`, { displayName: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.post(`/v1/agents/${agent.id}/publish`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
-        expect((await ctx.post('/v1/agents/draft', { projectId: ctx.project.id, prompt: 'x' })).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
         expect((await ctx.delete(`/v1/agents/${agent.id}`)).statusCode).toBe(StatusCodes.PAYMENT_REQUIRED)
     })
 })

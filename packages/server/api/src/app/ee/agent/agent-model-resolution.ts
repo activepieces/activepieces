@@ -95,10 +95,6 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-function resolveFastModelId({ provider, config, modelScope, modelIds }: { provider: AIProviderName, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
-    return resolveModelIdForProvider({ provider, selectedModel: FAST_TIER_ID, config, modelScope, modelIds })
-}
-
 export const agentModelResolution = {
     findTier,
     resolveTier,
@@ -106,7 +102,6 @@ export const agentModelResolution = {
     resolveModelIdForProvider,
     defaultModelIdForProvider,
     resolveModelIdForAnalytics,
-    resolveFastModelId,
 }
 
 export const FAST_TIER_ID = 'fast'

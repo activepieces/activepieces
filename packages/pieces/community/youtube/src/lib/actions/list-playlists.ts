@@ -10,7 +10,7 @@ export const youtubeListPlaylistsAction = createAction({
   classification: 'SEARCH',
   displayName: 'List Playlists',
   description: 'List the playlists on a channel.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Lists the playlists belonging to a YouTube channel using playlists.list, returning each playlist title, description, item count and privacy status. Use it to discover a playlist ID before calling List Playlist Items. Read-only and idempotent.',

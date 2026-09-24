@@ -31,7 +31,7 @@ export async function createBedrockRuntimeClient({
     return new BedrockRuntimeClient({ credentials, region: auth.region, ...BEDROCK_CLIENT_TIMEOUTS });
   }
   return new BedrockRuntimeClient({
-    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+    credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey, sessionToken: auth.sessionToken },
     region: auth.region,
     ...BEDROCK_CLIENT_TIMEOUTS,
   });
@@ -65,7 +65,7 @@ export async function getBedrockModelOptions(
       client = new BedrockClient({ credentials, region: auth.region, ...BEDROCK_CLIENT_TIMEOUTS });
     } else {
       client = new BedrockClient({
-        credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey },
+        credentials: { accessKeyId: auth.accessKeyId, secretAccessKey: auth.secretAccessKey, sessionToken: auth.sessionToken },
         region: auth.region,
         ...BEDROCK_CLIENT_TIMEOUTS,
       });

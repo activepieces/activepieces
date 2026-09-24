@@ -52,15 +52,21 @@ export const useSeatLimitGuard = () => {
     return true;
   };
 
-  const ensureSeatsAvailable = (additionalSeats: number): boolean => {
+  const hasSeatsFor = (additionalSeats: number): boolean => {
     if (isNil(info) || !info.billingEnforced || isNil(info.plan.usersLimit)) {
       return true;
     }
-    if (additionalSeats > info.plan.usersLimit - info.usage.users) {
-      openSeatLimit();
-      return false;
+    return additionalSeats <= info.plan.usersLimit - info.usage.users;
+  };
+
+  const isOutOfSeats = !hasSeatsFor(1);
+
+  const ensureSeatsAvailable = (additionalSeats: number): boolean => {
+    if (hasSeatsFor(additionalSeats)) {
+      return true;
     }
-    return true;
+    openSeatLimit();
+    return false;
   };
 
   const seatLimitDialog = isPlatformAdmin ? (
@@ -79,7 +85,12 @@ export const useSeatLimitGuard = () => {
     />
   );
 
-  return { handleSeatLimitError, ensureSeatsAvailable, seatLimitDialog };
+  return {
+    isOutOfSeats,
+    handleSeatLimitError,
+    ensureSeatsAvailable,
+    seatLimitDialog,
+  };
 };
 
 function ContactAdminSeatsDialog({

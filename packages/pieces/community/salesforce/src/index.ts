@@ -59,6 +59,8 @@ export const salesforceAuth = PieceAuth.OAuth2({
 	authUrl: 'https://{environment}/services/oauth2/authorize',
 	tokenUrl: 'https://{environment}/services/oauth2/token',
 	scope: ['refresh_token', 'full', 'api'],
+	pkce: true,
+	pkceMethod: 'S256',
 });
 
 export const salesforce = createPiece({

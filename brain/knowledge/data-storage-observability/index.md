@@ -34,6 +34,10 @@ Security-relevant actions persisted to `audit_event`, queryable by platform admi
 
 Platform reporting: daily runs, active flows/users, time-saved estimates. `PlatformAnalyticsReport` cached (5-min TTL) refreshed under a distributed lock; separate daily cron (12:00 UTC) tallies per-piece usage into `pieceMetadata.usage`. minutesSaved = runs × flow.timeSavedPerRun. Powers `/impact` (Summary/Trends/Details). Gated by `analyticsEnabled` — NOT in CE. Frontend queries carry `enabled: platform.plan.analyticsEnabled`.
 
+### Logging & Metrics (evlog)
+
+All structured logging goes through **evlog** — one wide event per unit of work, one remote drain (Axiom / HyperDX / Loki / Better Stack / OTLP; first match wins). Metrics on ClickStack are **log-based**: dashboards and alerts query numeric fields (`durationMs`, `memRssMb`, `eventLoopDelayP99Ms`) on wide events. Both API and worker emit a 60s `system.snapshot` event with process RSS / heap / event-loop lag so those charts exist at all. BullMQ queue depth is the one signal exported as a **native OTLP gauge** (`bullmq.job.count`), because per-queue-per-state cardinality would bloat wide events. Worker CPU / RAM travels in-band on the poll healthcheck (not to ClickStack) and surfaces on `GET /v1/health/system`.
+
 ### Product Telemetry
 
 Anonymous product analytics to PostHog, from both the browser and the app container. Gated per platform by `platform_configuration.isProductTelemetryEnabled`, edited at Platform Admin > Infrastructure > Configurations; `AP_TELEMETRY_ENABLED` survives only as the value a platform's row is *born* with. See [000033](../decisions/000033-platform-configuration-rows-are-authoritative-and-created-on-first-read.md).
@@ -61,6 +65,19 @@ Gotchas:
 - The Google `USER_SIGNED_UP` audit event is gated on `signedUp` too; before that it fired on every login.
 - SAML users are never stamped: they are provisioned by their platform admin, not by a campaign link.
 
+### Product Lifecycle Telemetry
+
+Server-side PostHog events for the moments between sign-up and payment: `onboarding.completed` (name step done), `invite.sent` / `invite.accepted`, `checkout.started`, `plan.changed`, `plan.cancelled`, `plan.reactivated`, `trial.started`, plus `flow.published` from the service so API and approval publishes count too. Billing events are emitted by `platform-plan-telemetry.ts`; the entitlement refresh in `autumn-utils.ts` compares the plan before and after and emits `trial.started` or `plan.changed` when it changed, skipping free plans (`FREE`, `FREE_LEGACY`, `APPSUMO`). Platforms are PostHog groups (`groupIdentify`, type `platform`) set on creation and refreshed on plan change. Every event, person and group carries `deployment` (`DeploymentKind`: cloud, self_hosted, dev) because self-hosted instances report into the same project.
+
+Gotchas:
+- Pre-login email-code events are keyed by the identity id; `aliasIdentity` merges that person into the user once the user exists, and `trackForIdentity` in `passwordless-auth.service.ts` switches to the user id as soon as one exists for identity+platform.
+- Billing and onboarding events are in `CLOUD_ONLY_TELEMETRY_EVENTS`; the tracked-events catalog on the platform settings page hides groups whose events are all cloud-only, so `billing` never shows on self-hosted.
+- In a development environment the web sends nothing to PostHog unless `localStorage.ap_posthog_dev` is `'1'`.
+- **The event is `plan.changed`, not `plan.upgraded`** — the entitlement refresh only knows the plan differs, not which way, so a downgrade reaches the same code path. Direction is derived in PostHog from the `previousPlan` and `plan` properties. A trial converting to paid emits **nothing**: it is the same `planId` with the trial simply ended, so the plan-equality check returns early, and no previous trialing state is persisted anywhere to compare against (`trialEndsAt` comes from the live Autumn subscription, `platform_plan` has no trial column, and the customer state cache holds only balances).
+- **`flow.published` is emitted once, by `flowService`** — the browser capture in `flow-hooks.tsx` was removed when the service emit landed, because the two fired on exactly the same UI publishes. The service emit also counts publishes no user pressed Publish for: the connection-swap republish in `app-connection.handler.ts` and the git-sync project-release import both dispatch `LOCK_AND_PUBLISH`.
+- **A platform group's `name` only leaves Cloud** (`pickPlatformGroupPii`): a self-hosted platform name is usually the customer's company name, the same reason `pickTelemetryPii` exists. The group itself is still created on every edition, so `plan`, `createdAt` and `deployment` stay groupable off Cloud.
+- **Google and SAML emit `signed.in` only for a returning user**, in the `else` branch of the `signedUp` check, mirroring the password path where sign-up emits `signed.up` and only a later sign-in emits `signed.in`. Emitting it on every claim made SSO sign-in counts run high against password.
+
 ### Flow Failure Alerts (EE)
 
 Email on flow-run failure. First failure per flowVersion per 24h window sends; rest suppressed via Redis counter `flow_fail_count:<flowVersionId>` (1-day TTL). Personal projects: single owner-only receiver toggle; team projects: any number of receivers. Platform admins can bulk sub/unsub across projects (max 5 concurrent). Receivers stored/compared lowercase. Edition check (`paidEditions`) in service, no plan flag. No Issues feature — email links straight to the run page. EE/Cloud only.
@@ -81,3 +98,4 @@ Streams platform/project events to webhook URLs in real time — internal AP flo
 - **Knowledge Base** — documents chunked into vector embeddings for AI search
 - **Analytics** — usage reporting
 - **Audit Logs** — the persisted security-action record
+- **Logging & Metrics (evlog)** — wide events, drains, log-based metrics, `system.snapshot`, OTLP queue gauge
