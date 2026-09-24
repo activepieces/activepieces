@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveBulkFlowRunIds } from './bulk-run-ids';
+import { resolveBulkFlowRunIds } from '@/features/flow-runs/components/runs-table/bulk-run-ids';
 
 describe('resolveBulkFlowRunIds', () => {
   it('sends the ticked rows when select all is off', () => {
