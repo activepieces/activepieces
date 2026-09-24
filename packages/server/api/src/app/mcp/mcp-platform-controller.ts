@@ -61,7 +61,6 @@ const GetMcpReachRoute = {
     schema: {
         tags: ['mcp'],
         description: 'List the projects where the caller may use MCP',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
         response: {
             [StatusCodes.OK]: McpReachResponse,
         },

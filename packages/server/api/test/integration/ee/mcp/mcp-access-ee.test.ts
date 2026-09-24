@@ -125,4 +125,46 @@ describe('MCP access on enterprise edition', () => {
         expect(selected).toContain('Project context set')
         expect(listed).not.toContain('Permission denied')
     })
+
+    it('denies a project already selected on the platform server once its role loses READ_MCP', async () => {
+        const ctx = await createTestContext(app)
+        const role = createMockProjectRole({
+            platformId: ctx.platform.id,
+            name: `role-${apId()}`,
+            permissions: [Permission.READ_MCP, Permission.READ_FLOW],
+            type: RoleType.CUSTOM,
+        })
+        await db.save('project_role', role)
+        const member = await createMemberContext(app, ctx, { projectRole: role.name })
+        const mcpClient = await connectAs({ ctx: member })
+        await mcpClientHelpers.callTool({ app, mcpClient, name: 'ap_set_project_context', args: { projectId: ctx.project.id } })
+
+        const before = await mcpClientHelpers.callTool({ app, mcpClient, name: LOCKED_TOOL })
+        await db.update('project_role', role.id, { permissions: [Permission.READ_FLOW] })
+        const after = await mcpClientHelpers.callTool({ app, mcpClient, name: LOCKED_TOOL })
+
+        expect(before).not.toContain('Permission denied')
+        expect(after).toContain(Permission.READ_MCP)
+    })
+
+    it('lets a platform admin authorize a project of their own platform', async () => {
+        const ctx = await createTestContext(app)
+
+        const mcpClient = await mcpClientHelpers.connect({
+            app,
+            projectId: ctx.project.id,
+            approve: (payload) => ctx.post('/v1/mcp-oauth/approve', payload),
+        })
+
+        expect(mcpClient.accessToken).toBeTruthy()
+    })
+
+    it('refuses a platform admin a project that belongs to another platform', async () => {
+        const ctx = await createTestContext(app)
+        const otherCtx = await createTestContext(app)
+
+        const response = await ctx.post('/v1/mcp-oauth/approve', { authRequestId: 'unused', projectId: otherCtx.project.id })
+
+        expect(response.statusCode).toBe(403)
+    })
 })
