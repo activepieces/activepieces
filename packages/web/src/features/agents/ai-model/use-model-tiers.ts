@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
 
-const BUNDLED_TIERS: ChatTiersResponse = {
+const BUNDLED_TIERS: ModelTiersResponse = {
   tiers: ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
     id: tier.id,
     label: tier.label,
@@ -15,22 +15,22 @@ const BUNDLED_TIERS: ChatTiersResponse = {
   defaultTierId: DEFAULT_CHAT_TIER_ID,
 };
 
-export function useChatTiers(): ChatTiersResponse {
+export function useModelTiers(): ModelTiersResponse {
   const { data } = useQuery({
     queryKey: ['ai-provider-tiers'],
-    queryFn: () => api.get<ChatTiersResponse>('/v1/ai-providers/tiers'),
+    queryFn: () => api.get<ModelTiersResponse>('/v1/ai-providers/tiers'),
     staleTime: 60 * 60 * 1000,
   });
   return data ?? BUNDLED_TIERS;
 }
 
-export type ChatTier = {
+export type ModelTier = {
   id: string;
   label: string;
   modelId: string;
 };
 
-export type ChatTiersResponse = {
-  tiers: ChatTier[];
+export type ModelTiersResponse = {
+  tiers: ModelTier[];
   defaultTierId: string;
 };

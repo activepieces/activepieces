@@ -15,7 +15,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             projectId: request.projectId,
         })
     })
-    app.get('/tiers', ListChatTiers, async () => {
+    app.get('/tiers', ListModelTiers, async () => {
         const pricing = await aiPricingCatalog.load()
         return {
             tiers: pricing.tiers.map((tier) => ({ id: tier.id, label: tier.label, modelId: tier.modelId })),
@@ -72,7 +72,7 @@ const ListAIProvidersForProject = {
     },
 }
 
-const ListChatTiers = {
+const ListModelTiers = {
     config: {
         security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.ENGINE]),
     },

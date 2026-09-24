@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { ChatTier, useChatTiers } from './use-chat-tiers';
+import { ModelTier, useModelTiers } from './use-model-tiers';
 
 type AIModelType = 'text' | 'image';
 
@@ -16,7 +16,7 @@ function getAllowedModelsForProvider(
   provider: AIProviderName,
   allModels: AIProviderModel[],
   modelType: AIModelType,
-  tiers: ChatTier[],
+  tiers: ModelTier[],
 ): AIProviderModel[] {
   const allowedIds =
     provider === AIProviderName.ACTIVEPIECES
@@ -55,7 +55,7 @@ function managedTierLabel({
   tiers,
 }: {
   modelId: string;
-  tiers: ChatTier[];
+  tiers: ModelTier[];
 }): string | undefined {
   return tiers.find((tier) => tier.modelId === modelId)?.label;
 }
@@ -73,7 +73,7 @@ export const aiModelHooks = {
 
   useGetModelsForProvider: (provider?: AIProviderName, configId?: string) => {
     const projectId = authenticationSession.getProjectId();
-    const { tiers } = useChatTiers();
+    const { tiers } = useModelTiers();
     return useQuery({
       queryKey: ['ai-models', provider, configId, projectId, tiers],
       enabled: !isNil(provider) && !isNil(projectId),

@@ -23,7 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { useChatTiers } from '@/features/agents/ai-model/use-chat-tiers';
+import { useModelTiers } from '@/features/agents/ai-model/use-model-tiers';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
@@ -50,7 +50,7 @@ const TIER_CONFIG: Record<
 
 function useModelOptions(): ModelOption[] {
   const { data: chatProvider } = aiProviderQueries.useChatProvider();
-  const { tiers } = useChatTiers();
+  const { tiers } = useModelTiers();
   const curatedModels = isNil(chatProvider)
     ? undefined
     : aiProviderUtils.getCuratedChatModels({ provider: chatProvider.provider });
