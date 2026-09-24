@@ -21,6 +21,34 @@ function summarizeCollection({ body, created }: { body: unknown; created: boolea
   };
 }
 
+async function findCollectionSlugByTitle({ token, owner, title }: FindCollectionParams): Promise<string | null> {
+  let cursor: string | null = null;
+  for (let page = 0; page < MAX_LOOKUP_PAGES; page++) {
+    const response = await hfHub.request<unknown>({
+      token,
+      method: HttpMethod.GET,
+      path: '/api/collections',
+      query: [
+        ['owner', owner],
+        ['q', title],
+        ['limit', LOOKUP_PAGE_SIZE],
+        ['cursor', cursor],
+      ],
+    });
+    const collections = Array.isArray(response.body) ? response.body : [];
+    const match = collections.find((collection) => hfWrite.readString({ record: collection, key: 'title' }) === title);
+    const slug = hfWrite.readString({ record: match, key: 'slug' });
+    if (slug) {
+      return slug;
+    }
+    cursor = hfHub.parseNextCursor(response.headers);
+    if (cursor === null || collections.length === 0) {
+      return null;
+    }
+  }
+  return null;
+}
+
 export const createCollection = createAction({
   auth: huggingFaceAuth,
   name: 'create_collection',
@@ -108,10 +136,12 @@ export const createCollection = createAction({
     if (!outcome.conflict) {
       return summarizeCollection({ body: outcome.body, created: true });
     }
-    const existingSlug = hfWrite.readString({ record: outcome.body, key: 'slug' });
+    const existingSlug =
+      hfWrite.readString({ record: outcome.body, key: 'slug' }) ??
+      (await findCollectionSlugByTitle({ token, owner, title: collectionTitle }));
     if (!existingSlug) {
       throw new Error(
-        `COLLECTION_EXISTS: a collection titled '${collectionTitle}' already exists in '${owner}', but the Hub did not return its slug. Find it with List Collections.`
+        `COLLECTION_EXISTS: a collection titled '${collectionTitle}' already exists in '${owner}', but it could not be found by title. Find it with List Collections.`
       );
     }
     const existing = await hfHub.request<unknown>({
@@ -122,3 +152,12 @@ export const createCollection = createAction({
     return summarizeCollection({ body: existing.body, created: false });
   },
 });
+
+const MAX_LOOKUP_PAGES = 5;
+const LOOKUP_PAGE_SIZE = 100;
+
+type FindCollectionParams = {
+  token: string;
+  owner: string;
+  title: string;
+};

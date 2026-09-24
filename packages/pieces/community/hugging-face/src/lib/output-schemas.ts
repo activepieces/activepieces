@@ -1652,3 +1652,31 @@ export const upsertSpaceVariableOutputSchema: OutputSchema = {
 export const deleteSpaceVariableOutputSchema: OutputSchema = {
   fields: [...spaceKeyRefFields, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
 };
+
+export const commentOnPaperOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'paper_id', label: 'Paper ID' },
+    { key: 'comment_id', label: 'Comment ID', description: 'Pass this to Reply to Paper Comment. Null if the Hub did not return it.' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'url', label: 'Comment URL', format: 'url' },
+  ],
+};
+
+export const replyToPaperCommentOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'paper_id', label: 'Paper ID' },
+    { key: 'parent_comment_id', label: 'Parent Comment ID' },
+    { key: 'comment_id', label: 'Reply ID', description: 'The ID of the new reply. Null if the Hub did not return it.' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'url', label: 'Reply URL', format: 'url' },
+  ],
+};
+
+export const handleGatedAccessRequestOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'username', label: 'Username' },
+    { key: 'status', label: 'New Status', description: "One of 'accepted', 'rejected', 'pending' or 'reset'." },
+    { key: 'reason', label: 'Reason', description: 'The rejection or reset reason sent to the requester. Null when none was given.' },
+  ],
+};

@@ -34,7 +34,7 @@ export const deleteSpaceSecret = createAction({
     const token = context.auth.secret_text;
     const secretKey = hfWrite.assertSpaceKey(key);
     const space = await hfWrite.resolveRepo({ token, repoType: 'space', repoId: space_id });
-    await hfWrite.request({
+    await hfWrite.sensitiveRequest({
       token,
       method: HttpMethod.DELETE,
       path: `${space.apiPath}/secrets`,

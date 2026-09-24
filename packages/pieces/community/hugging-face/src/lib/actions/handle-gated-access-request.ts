@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 import { hfWrite } from '../common/hub-write';
 import { hfProps } from '../common/props';
+import { handleGatedAccessRequestOutputSchema } from '../output-schemas';
 
 export const handleGatedAccessRequest = createAction({
   auth: huggingFaceAuth,
@@ -16,6 +17,7 @@ export const handleGatedAccessRequest = createAction({
       "Sets the status of one user's access request to a gated model or dataset: accepted (grants that person access to the gated files), rejected, pending, or reset. Only accept when the user explicitly approves that requester. Find requesters with List Gated Access Requests. Setting the same status again converges, so it is safe to retry. Requires a write-role token with owner or admin rights on the repository.",
     idempotent: true,
   },
+  outputSchema: handleGatedAccessRequestOutputSchema,
   props: {
     repo_type: Property.StaticDropdown({
       displayName: 'Repository Type',

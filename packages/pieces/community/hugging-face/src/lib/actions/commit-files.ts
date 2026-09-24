@@ -118,9 +118,8 @@ export const commitFiles = createAction({
     branch: Property.ShortText({
       displayName: 'Branch',
       description:
-        "The branch to commit to, for example 'main' or 'dev', or 'refs/pr/3' to add a commit to an open pull request. Defaults to 'main'.",
+        "The branch to commit to, for example 'dev', or 'refs/pr/3' to add a commit to an open pull request. Leave empty to use the repository's default branch 'main'; if the repository has no 'main' branch the action fails with BRANCH_REQUIRED and lists the branches.",
       required: false,
-      defaultValue: 'main',
     }),
     summary: Property.ShortText({
       displayName: 'Commit Title',
@@ -198,9 +197,10 @@ export const commitFiles = createAction({
     if (parentCommit !== undefined && !/^[0-9a-fA-F]{40}$/.test(parentCommit)) {
       throw new Error('Parent Commit must be a full 40-character commit SHA. Get it from List Repo Commits.');
     }
-    const targetBranch = hfWrite.optionalText({ value: branch, name: 'Branch' }) ?? 'main';
+    const requestedBranch = hfWrite.optionalText({ value: branch, name: 'Branch' });
     const description = hfWrite.optionalText({ value: commit_description, name: 'Commit Description' });
     const repo = await hfWrite.resolveRepo({ token, repoType: repo_type, repoId: repo_id });
+    const targetBranch = requestedBranch ?? (await hfWrite.resolveDefaultBranch({ token, repo }));
     const body: Record<string, unknown> = {
       summary: title,
       files: prepared.files,

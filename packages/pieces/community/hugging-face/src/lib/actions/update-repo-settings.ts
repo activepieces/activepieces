@@ -5,6 +5,19 @@ import { hfWrite } from '../common/hub-write';
 import { hfProps } from '../common/props';
 import { updateRepoSettingsOutputSchema } from '../output-schemas';
 
+function pickOption<T extends string>({ value, allowed, name }: PickOptionParams<T>): T | undefined {
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  const match = allowed.find((option) => option === value);
+  if (match === undefined) {
+    throw new Error(
+      `${name} must be one of ${allowed.map((option) => `'${option}'`).join(', ')}, or empty to keep the current setting.`
+    );
+  }
+  return match;
+}
+
 export const updateRepoSettings = createAction({
   auth: huggingFaceAuth,
   name: 'update_repo_settings',
@@ -90,17 +103,25 @@ export const updateRepoSettings = createAction({
     } = context.propsValue;
     const token = context.auth.secret_text;
     const settings: Record<string, unknown> = {};
-    if (visibility !== undefined && visibility !== null) {
-      settings['private'] = visibility === 'private';
+    const selectedVisibility = pickOption({ value: visibility, allowed: VISIBILITY_OPTIONS, name: 'Visibility' });
+    if (selectedVisibility !== undefined) {
+      settings['private'] = selectedVisibility === 'private';
     }
-    if (discussions !== undefined && discussions !== null) {
-      settings['discussionsDisabled'] = discussions === 'disabled';
+    const selectedDiscussions = pickOption({ value: discussions, allowed: DISCUSSIONS_OPTIONS, name: 'Discussions' });
+    if (selectedDiscussions !== undefined) {
+      settings['discussionsDisabled'] = selectedDiscussions === 'disabled';
     }
-    if (gated !== undefined && gated !== null) {
-      settings['gated'] = gated === 'false' ? false : gated;
+    const selectedGated = pickOption({ value: gated, allowed: GATED_OPTIONS, name: 'Gated Access' });
+    if (selectedGated !== undefined) {
+      settings['gated'] = selectedGated === 'false' ? false : selectedGated;
     }
-    if (gated_notifications_mode !== undefined && gated_notifications_mode !== null) {
-      settings['gatedNotificationsMode'] = gated_notifications_mode;
+    const selectedNotificationsMode = pickOption({
+      value: gated_notifications_mode,
+      allowed: NOTIFICATIONS_MODE_OPTIONS,
+      name: 'Access Request Notifications',
+    });
+    if (selectedNotificationsMode !== undefined) {
+      settings['gatedNotificationsMode'] = selectedNotificationsMode;
     }
     const email = hfWrite.optionalText({ value: gated_notifications_email, name: 'Notification Email' });
     if (email !== undefined) {
@@ -124,3 +145,14 @@ export const updateRepoSettings = createAction({
     };
   },
 });
+
+const VISIBILITY_OPTIONS: readonly ('private' | 'public')[] = ['private', 'public'];
+const DISCUSSIONS_OPTIONS: readonly ('enabled' | 'disabled')[] = ['enabled', 'disabled'];
+const GATED_OPTIONS: readonly ('false' | 'auto' | 'manual')[] = ['false', 'auto', 'manual'];
+const NOTIFICATIONS_MODE_OPTIONS: readonly ('real-time' | 'bulk')[] = ['real-time', 'bulk'];
+
+type PickOptionParams<T extends string> = {
+  value: unknown;
+  allowed: readonly T[];
+  name: string;
+};

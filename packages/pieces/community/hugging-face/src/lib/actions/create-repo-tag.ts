@@ -29,9 +29,8 @@ export const createRepoTag = createAction({
     }),
     revision: Property.ShortText({
       displayName: 'Revision',
-      description: "The branch, tag or commit SHA to tag, for example 'main'. Defaults to 'main'.",
+      description: "The branch, tag or commit SHA to tag, for example 'dev' or a commit SHA. Leave empty to tag the head of the repository's default branch 'main'; if the repository has no 'main' branch the action fails with BRANCH_REQUIRED and lists the branches.",
       required: false,
-      defaultValue: 'main',
     }),
     message: Property.LongText({
       displayName: 'Message',
@@ -47,8 +46,9 @@ export const createRepoTag = createAction({
       prefix: 'refs/tags/',
     });
     const tagMessage = hfWrite.optionalText({ value: message, name: 'Message' });
-    const targetRevision = hfWrite.optionalText({ value: revision, name: 'Revision' }) ?? 'main';
+    const requestedRevision = hfWrite.optionalText({ value: revision, name: 'Revision' });
     const repo = await hfWrite.resolveRepo({ token, repoType: repo_type, repoId: repo_id });
+    const targetRevision = requestedRevision ?? (await hfWrite.resolveDefaultBranch({ token, repo }));
     const body: Record<string, unknown> = { tag: tagName };
     if (tagMessage !== undefined) {
       body['message'] = tagMessage;

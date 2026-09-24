@@ -42,8 +42,11 @@ function toWriteError({ error, resource, statusErrors }: ToWriteErrorParams): Er
   if (!(error instanceof HttpError)) {
     return hfHub.toError({ error, resource });
   }
-  const status = error.response.status;
-  const detail = errorDetail(error.response.body);
+  return statusToWriteError({ status: error.response.status, body: error.response.body, resource, statusErrors });
+}
+
+function statusToWriteError({ status, body, resource, statusErrors }: StatusToWriteErrorParams): Error {
+  const detail = errorDetail(body);
   const custom = statusErrors?.[status];
   if (custom) {
     return custom(detail);
@@ -61,8 +64,50 @@ function toWriteError({ error, resource, statusErrors }: ToWriteErrorParams): Er
     case 409:
       return new Error(`CONFLICT: Hugging Face reported a conflict (409) for ${resource}.${suffix}`);
     default:
-      return hfHub.toError({ error, resource });
+      return hfHub.toError({ error: new HttpError(undefined, { status, responseBody: body }), resource });
   }
+}
+
+function parseResponseText(text: string): unknown {
+  if (text.length === 0) {
+    return null;
+  }
+  try {
+    const parsed: unknown = JSON.parse(text);
+    return parsed;
+  } catch {
+    return text;
+  }
+}
+
+async function sensitiveWriteRequest({
+  token,
+  method,
+  path,
+  body,
+  statusErrors,
+}: SensitiveWriteRequestParams): Promise<unknown> {
+  let response: Response;
+  try {
+    response = await fetch(buildWriteUrl({ path }), {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(SENSITIVE_REQUEST_TIMEOUT_MS),
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.name : 'unknown error';
+    throw new Error(`Could not reach Hugging Face for ${path} (${reason}). Retry in a moment.`);
+  }
+  const responseBody = parseResponseText(await response.text());
+  if (!response.ok) {
+    throw statusToWriteError({ status: response.status, body: responseBody, resource: path, statusErrors });
+  }
+  return responseBody;
 }
 
 async function sendWrite({
@@ -102,6 +147,25 @@ async function createOrConflict(params: WriteRequestParams): Promise<CreateOutco
     }
     throw toWriteError({ error, resource: params.path });
   }
+}
+
+async function resolveDefaultBranch({ token, repo }: ResolveDefaultBranchParams): Promise<string> {
+  const response = await hfHub.request<unknown>({
+    token,
+    method: HttpMethod.GET,
+    path: `${repo.apiPath}/refs`,
+  });
+  const rawBranches = hfHub.isRecord(response.body) ? response.body['branches'] : undefined;
+  const branches = (Array.isArray(rawBranches) ? rawBranches : [])
+    .map((branch) => readString({ record: branch, key: 'name' }))
+    .filter((name): name is string => name !== null);
+  if (branches.includes(DEFAULT_BRANCH)) {
+    return DEFAULT_BRANCH;
+  }
+  const listed = branches.length > 0 ? branches.map((name) => `'${name}'`).join(', ') : 'none';
+  throw new Error(
+    `BRANCH_REQUIRED: ${repo.repoId} has no '${DEFAULT_BRANCH}' branch, the Hub's default branch, so no branch can be assumed. Pass the branch explicitly. Existing branches: ${listed}.`
+  );
 }
 
 async function currentUsername(token: string): Promise<string> {
@@ -198,9 +262,13 @@ function readString({ record, key }: { record: unknown; key: string }): string |
 }
 
 const SPACE_KEY_PATTERN = /^[a-zA-Z][_a-zA-Z0-9]*$/;
+const DEFAULT_BRANCH = 'main';
+const SENSITIVE_REQUEST_TIMEOUT_MS = 30000;
 
 export const hfWrite = {
   request: writeRequest,
+  sensitiveRequest: sensitiveWriteRequest,
+  resolveDefaultBranch,
   createOrConflict,
   currentUsername,
   resolveRepo,
@@ -235,6 +303,26 @@ type ToWriteErrorParams = {
   error: unknown;
   resource: string;
   statusErrors?: StatusErrors;
+};
+
+type SensitiveWriteRequestParams = {
+  token: string;
+  method: HttpMethod.POST | HttpMethod.DELETE;
+  path: string;
+  body: Record<string, unknown>;
+  statusErrors?: StatusErrors;
+};
+
+type StatusToWriteErrorParams = {
+  status: number;
+  body: unknown;
+  resource: string;
+  statusErrors?: StatusErrors;
+};
+
+type ResolveDefaultBranchParams = {
+  token: string;
+  repo: ResolvedRepo;
 };
 
 type CreateOutcome = { conflict: false; body: unknown } | { conflict: true; body: unknown };

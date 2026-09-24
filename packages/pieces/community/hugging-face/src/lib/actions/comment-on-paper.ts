@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { huggingFaceAuth } from '../auth';
 import { hfHub } from '../common/hub-client';
 import { hfWrite } from '../common/hub-write';
+import { commentOnPaperOutputSchema } from '../output-schemas';
 
 export const commentOnPaper = createAction({
   auth: huggingFaceAuth,
@@ -16,6 +17,7 @@ export const commentOnPaper = createAction({
       "Posts a new top-level comment on a Hugging Face Papers page, publicly and permanently visible to everyone under the connected user's name. Only post when the user explicitly asks and approves the text. To answer an existing comment use Reply to Paper Comment instead. Each call adds another comment, so retries duplicate. Requires a write-role token.",
     idempotent: false,
   },
+  outputSchema: commentOnPaperOutputSchema,
   props: {
     paper_id: Property.ShortText({
       displayName: 'Paper ID',

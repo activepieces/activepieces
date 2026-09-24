@@ -52,7 +52,7 @@ export const upsertSpaceSecret = createAction({
     if (note !== undefined) {
       body['description'] = note;
     }
-    await hfWrite.request({
+    await hfWrite.sensitiveRequest({
       token,
       method: HttpMethod.POST,
       path: `${space.apiPath}/secrets`,
