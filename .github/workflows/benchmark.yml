@@ -28,26 +28,28 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Majority prod volume: one big container, 28 slots, huge heap, cold-every-job.
-          - label: "shared-16cpu"
+          # Both cells: 28 × 0.5cpu / 1 GB / 1 slot / heap 768M — mirrors the
+          # per-host density Kamal deploys on prod 16-vCPU worker boxes.
+          # Only AP_REUSE_SANDBOX differs, so any per-cell delta isolates
+          # the reuse variable.
+          - label: "shared"
             apps: 1
-            workers: 1
-            worker_cpus: '16'
-            worker_memory: '32G'
-            worker_concurrency: '28'
-            worker_heap_mb: '64512'
+            workers: 28
+            worker_cpus: '0.5'
+            worker_memory: '1G'
+            worker_concurrency: '1'
+            worker_heap_mb: '768'
             reuse: 'false'
             total_slots: 28
-          # Every dedicated tenant: 4 small workers per host, 1 slot each, warm reuse.
-          - label: "dedicated-05cpu"
+          - label: "dedicated"
             apps: 1
-            workers: 4
+            workers: 28
             worker_cpus: '0.5'
             worker_memory: '1G'
             worker_concurrency: '1'
             worker_heap_mb: '768'
             reuse: 'true'
-            total_slots: 4
+            total_slots: 28
 
     steps:
       - name: Checkout
