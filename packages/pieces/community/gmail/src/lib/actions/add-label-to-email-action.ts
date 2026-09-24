@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { gmailAuth, createGoogleClient } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { GmailProps } from '../common/props';
@@ -12,12 +12,7 @@ export const gmailAddLabelToEmailAction = createAction({
   description: 'Apply a label to an email message.',
   audience: 'human',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message',
-      description: 'Message ID from a Find Email step or a Gmail trigger.',
-      placeholder: '18c2f1a9b3d4e5f6',
-      required: true,
-    }),
+    message_id: GmailProps.message,
     label: GmailProps.label({
       description: 'Label to add.',
       required: true,

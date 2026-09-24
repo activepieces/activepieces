@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { gmailAuth, createGoogleClient } from '../auth';
+import { createAction, FilesService } from '@activepieces/pieces-framework';
+import { gmailAuth, createGoogleClient, GmailAuthValue } from '../auth';
 import { gmail as googleGmail } from '@googleapis/gmail';
 import { convertAttachment, parseStream } from '../common/data';
+import { GmailProps } from '../common/props';
 import { gmailGetMailActionOutputSchema } from '../output-schemas';
 
 export const gmailGetEmailAction = createAction({
@@ -17,38 +18,46 @@ export const gmailGetEmailAction = createAction({
   },
   displayName: 'Get Email',
   props: {
-    message_id: Property.ShortText({
-      displayName: 'Message',
-      description: 'Message ID from a Find Email step or a Gmail trigger.',
-      placeholder: '18c2f1a9b3d4e5f6',
-      required: true,
-    }),
+    message_id: GmailProps.message,
   },
   outputSchema: gmailGetMailActionOutputSchema,
   async run(context) {
-    const authClient = await createGoogleClient(context.auth);
-
-    const gmail = googleGmail({ version: 'v1', auth: authClient });
-
-    const rawMailResponse = await gmail.users.messages.get({
-      userId: 'me',
-      id: context.propsValue.message_id!,
-      format: 'raw',
+    return getGmailMessage({
+      auth: context.auth,
+      messageId: context.propsValue.message_id,
+      files: context.files,
     });
-
-    const parsedMailResponse = await parseStream(
-      Buffer.from(rawMailResponse.data.raw as string, 'base64').toString(
-        'utf-8'
-      )
-    );
-
-    return {
-      id: context.propsValue.message_id,
-      ...parsedMailResponse,
-      attachments: await convertAttachment(
-        parsedMailResponse.attachments,
-        context.files
-      ),
-    };
   },
 });
+
+export async function getGmailMessage({
+  auth,
+  messageId,
+  files,
+}: GetGmailMessageParams) {
+  const authClient = await createGoogleClient(auth);
+
+  const gmail = googleGmail({ version: 'v1', auth: authClient });
+
+  const rawMailResponse = await gmail.users.messages.get({
+    userId: 'me',
+    id: messageId,
+    format: 'raw',
+  });
+
+  const parsedMailResponse = await parseStream(
+    Buffer.from(rawMailResponse.data.raw as string, 'base64').toString('utf-8')
+  );
+
+  return {
+    id: messageId,
+    ...parsedMailResponse,
+    attachments: await convertAttachment(parsedMailResponse.attachments, files),
+  };
+}
+
+type GetGmailMessageParams = {
+  auth: GmailAuthValue;
+  messageId: string;
+  files: FilesService;
+};
