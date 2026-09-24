@@ -1,4 +1,3 @@
-import { ErrorCode } from '@activepieces/core-utils';
 import { isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { ExternalLink, Info, TriangleAlert } from 'lucide-react';
@@ -6,10 +5,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { ProjectSettingsDialog } from '@/app/components/project-settings';
-import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { LockedAlert } from '@/components/custom/locked-alert';
-import { SearchInput } from '@/components/custom/search-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,23 +16,27 @@ import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { projectCollectionUtils } from '@/features/projects';
 import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 
-import { PageBand } from '../page-band';
+import {
+  isProjectAccessError,
+  ProjectAccessDeniedAlert,
+} from '../project-access';
 
 import { PieceRow } from './piece-row';
 import { piecesUtils } from './pieces-utils';
-import { ProjectPicker } from './project-picker';
 
-const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
 const COLLAPSED_ROW_HEIGHT = 50;
 const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
 const SEARCH_DEBOUNCE_MS = 300;
 
-export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export function PiecesPanel({
+  projectId,
+  searchQuery,
+  isRunActionDisabled,
+  isRunActionDisabledByPlatform,
+  onShowBuiltIn,
+}: PiecesPanelProps) {
   const [debouncedSearchQuery] = useDebounce(
     searchQuery.trim(),
     SEARCH_DEBOUNCE_MS,
@@ -51,8 +51,6 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
     enabled: !isNil(projectId),
     keepPreviousResults: true,
   });
-  const { data: mcpServer } = mcpHooks.useMcpServer(projectId ?? '');
-
   const rows = useMemo(
     () =>
       piecesUtils.toReachablePieces({
@@ -68,37 +66,15 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
   const hiddenCount = rows.length - visibleRows.length;
 
   return (
-    <PageBand className="flex flex-col gap-6 py-8">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-xl font-bold leading-7 tracking-tight">
-          {t(
-            'Every piece a connected client can reach, and every action inside it.',
-          )}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          {t(
-            'This page is a mirror — a platform admin decides what is on the list.',
-          )}
-        </p>
-      </div>
-
+    <div className="flex flex-col gap-4">
       <PieceSetBanner projectId={projectId} />
 
-      {projectId !== null &&
-        mcpServer?.disabledTools?.includes(RUN_ACTION_TOOL_NAME) && (
-          <RunActionDisabledAlert projectId={projectId} />
-        )}
-
-      <div className="flex flex-wrap items-center gap-3">
-        <ProjectPicker projectId={projectId} onSelect={onSelectProject} />
-        <div className="w-full max-w-[420px]">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder={t('Search pieces and actions...')}
-          />
-        </div>
-      </div>
+      {(isRunActionDisabled || isRunActionDisabledByPlatform) && (
+        <RunActionDisabledAlert
+          isDisabledByPlatform={isRunActionDisabledByPlatform}
+          onShowBuiltIn={onShowBuiltIn}
+        />
+      )}
 
       {isLoading ? (
         <div className="flex flex-col gap-2">
@@ -138,7 +114,7 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
           )}
         </div>
       )}
-    </PageBand>
+    </div>
   );
 }
 
@@ -147,17 +123,7 @@ function PiecesUnavailableAlert({
   onRetry,
 }: PiecesUnavailableAlertProps) {
   if (isProjectAccessError(error)) {
-    return (
-      <Alert variant="destructive">
-        <TriangleAlert />
-        <AlertTitle>{t('You cannot see this project')}</AlertTitle>
-        <AlertDescription>
-          {t(
-            'Pick another project above, or ask a platform admin for access to this one.',
-          )}
-        </AlertDescription>
-      </Alert>
-    );
+    return <ProjectAccessDeniedAlert />;
   }
 
   return (
@@ -181,37 +147,37 @@ function PiecesUnavailableAlert({
   );
 }
 
-function RunActionDisabledAlert({ projectId }: { projectId: string }) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const isCurrentProject = authenticationSession.getProjectId() === projectId;
-
+function RunActionDisabledAlert({
+  isDisabledByPlatform,
+  onShowBuiltIn,
+}: {
+  isDisabledByPlatform: boolean;
+  onShowBuiltIn: () => void;
+}) {
   return (
-    <>
-      <Alert variant="warning">
-        <TriangleAlert />
-        <AlertTitle>{t('Nothing below can run right now')}</AlertTitle>
-        <AlertDescription>
-          {t(
-            'Running piece actions is switched off for this project. Clients can still see the list, but every call fails.',
-          )}
-        </AlertDescription>
-        {isCurrentProject && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="col-start-2 mt-3 w-fit"
-            onClick={() => setSettingsOpen(true)}
-          >
-            {t('Turn it on in project settings')}
-          </Button>
-        )}
-      </Alert>
-      <ProjectSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        initialTab="mcp"
-      />
-    </>
+    <Alert variant="warning">
+      <TriangleAlert />
+      <AlertTitle>{t('Nothing below can run right now')}</AlertTitle>
+      <AlertDescription>
+        {isDisabledByPlatform
+          ? t(
+              'A platform admin switched Run action off for the whole platform. Clients can still see the list, but every call fails.',
+            )
+          : t(
+              'Running piece actions is switched off for this project. Clients can still see the list, but every call fails.',
+            )}
+      </AlertDescription>
+      {!isDisabledByPlatform && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="col-start-2 mt-3 w-fit"
+          onClick={onShowBuiltIn}
+        >
+          {t('Turn on Run action')}
+        </Button>
+      )}
+    </Alert>
   );
 }
 
@@ -273,20 +239,15 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
   );
 }
 
-function isProjectAccessError(error: Error | null): boolean {
-  return (
-    api.isApError(error, ErrorCode.AUTHORIZATION) ||
-    api.isApError(error, ErrorCode.PERMISSION_DENIED) ||
-    api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
-  );
-}
-
 type PiecesUnavailableAlertProps = {
   error: Error | null;
   onRetry: () => void;
 };
 
-type PiecesTabProps = {
+type PiecesPanelProps = {
   projectId: string | null;
-  onSelectProject: (projectId: string) => void;
+  searchQuery: string;
+  isRunActionDisabled: boolean;
+  isRunActionDisabledByPlatform: boolean;
+  onShowBuiltIn: () => void;
 };
