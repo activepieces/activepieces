@@ -1,6 +1,6 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { gmailAuth } from '../auth';
-import { gmailGetEmailAction } from './get-mail-action';
+import { getGmailMessage } from './get-mail-action';
 import { gmailAiGetMessageActionOutputSchema } from '../output-schemas';
 
 export const gmailAiGetMessageAction = createAction({
@@ -16,6 +16,18 @@ export const gmailAiGetMessageAction = createAction({
     idempotent: true,
   },
   outputSchema: gmailAiGetMessageActionOutputSchema,
-  props: gmailGetEmailAction.props,
-  run: gmailGetEmailAction.run,
+  props: {
+    message_id: Property.ShortText({
+      displayName: 'Message',
+      description: 'Message ID from a Find Email step or a Gmail trigger.',
+      required: true,
+    }),
+  },
+  async run(context) {
+    return getGmailMessage({
+      auth: context.auth,
+      messageId: context.propsValue.message_id,
+      files: context.files,
+    });
+  },
 });
