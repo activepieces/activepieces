@@ -12,6 +12,14 @@ import {
   Trash2,
 } from 'lucide-react';
 
+import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
+import {
+  AI_TOOL_CATALOG,
+  AiToolCapabilityInfo,
+  AiToolProviderInfo,
+} from '../../ai-capabilities/catalog';
+import { SectionHeader } from '../components/section-header';
+
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -22,14 +30,6 @@ import {
 } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
-
-import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
-import {
-  AI_TOOL_CATALOG,
-  AiToolCapabilityInfo,
-  AiToolProviderInfo,
-} from '../../ai-capabilities/catalog';
-import { SectionHeader } from '../components/section-header';
 
 export function CapabilitiesTab() {
   const {
@@ -51,6 +51,7 @@ export function CapabilitiesTab() {
     <div className="flex flex-col gap-4">
       <SectionHeader
         title={t('Assistant capabilities')}
+        isPageTitle
         count={AI_TOOL_CATALOG.length}
         description={t(
           'Connect external services so the AI assistant can search the web, scrape pages, and generate images.',
