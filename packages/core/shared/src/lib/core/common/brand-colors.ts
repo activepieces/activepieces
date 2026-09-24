@@ -13,7 +13,7 @@ const PRIMARY_CURVE: RampStep[] = [
 ];
 
 const INK_CURVE_LIGHT: RampStep[] = [
-  { step: '50', lightness: 98.4, chroma: 0.003 },
+  { step: '50', lightness: 98.4, chroma: 0.009 },
   { step: '100', lightness: 96.8, chroma: 0.007 },
   { step: '150', lightness: 94.6, chroma: 0.005 },
   { step: '200', lightness: 92.9, chroma: 0.013 },
@@ -28,7 +28,7 @@ const INK_CURVE_LIGHT: RampStep[] = [
 ];
 
 const INK_CURVE_DARK: RampStep[] = [
-  { step: '50', lightness: 17, chroma: 0.012 },
+  { step: '50', lightness: 11, chroma: 0.01 },
   { step: '100', lightness: 21, chroma: 0.014 },
   { step: '150', lightness: 25, chroma: 0.014 },
   { step: '200', lightness: 29, chroma: 0.015 },

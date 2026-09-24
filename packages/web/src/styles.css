@@ -774,7 +774,7 @@
 
     --neutral: var(--ink-700);
     --on-neutral: var(--on-solid);
-    --neutral-surface: var(--ink-100);
+    --neutral-surface: var(--ink-200);
     --neutral-ink: var(--ink-700);
     --neutral-line: var(--control-line);
     --neutral-mark: var(--ink-500);
@@ -928,7 +928,7 @@
      * neutral, because a canvas next to a tinted page is exactly where a
      * stray hue shows.
      */
-    --canvas: oklch(98.8% 0.002 296);
+    --canvas: var(--ink-100);
     --canvas-pattern: var(--ink-400);
     --canvas-edge: var(--ink-300);
     --canvas-edge-selected: var(--primary-mark);
@@ -992,7 +992,7 @@
    * per-step dark overrides at all.
    */
   [data-theme='dark'] {
-    --ink-50: oklch(17% 0.012 296);
+    --ink-50: oklch(11% 0.01 296);
     --ink-100: oklch(21% 0.014 296);
     --ink-150: oklch(25% 0.014 296);
     --ink-200: oklch(29% 0.015 296);
@@ -1048,10 +1048,10 @@
     --primary-mark: var(--primary-400);
 
     --neutral: var(--ink-700);
-    --neutral-surface: var(--fill);
+    --neutral-surface: var(--ink-300);
     --neutral-ink: var(--ink-700);
     --neutral-line: var(--ink-300);
-    --neutral-mark: var(--ink-400);
+    --neutral-mark: var(--ink-500);
 
     --success: var(--color-success-400);
     --success-surface: var(--color-success-950);
@@ -1156,7 +1156,7 @@
     /* The canvas cannot go lighter than the page in the dark, so it becomes
        the page and the nodes lift off it instead. Both veils go heavier: a
        dark ground needs more dimming to read as dimmed at all. */
-    --canvas: var(--ink-50);
+    --canvas: var(--ink-100);
     --canvas-pattern: var(--ink-300);
     --canvas-mask: oklch(0% 0 0 / 80%);
     --scrim: oklch(0% 0 0 / 70%);

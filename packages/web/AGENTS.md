@@ -71,6 +71,14 @@ Body text and furniture use `foreground`, `ink-muted`, `ink-subtle`, `border`, `
 **Tier 3 — bindings.** One light block and one dark block in `src/styles.css`. `ink` inverts
 between themes; the hue ramps do not, their roles rebind to different steps instead.
 
+**The ink ramp is written down twice, and the copy in `styles.css` is the one that loses.**
+`ThemeProvider` calls `brandColors.cssVariables` and writes the result as inline styles on
+`<html>`, which regenerates every `--ink-*` step from `INK_CURVE_LIGHT` / `INK_CURVE_DARK` in
+`@activepieces/shared`. An inline style beats a stylesheet, so editing an ink step in
+`styles.css` alone changes nothing at runtime — it only moves the pre-hydration fallback. Change
+both, keep them identical, and check the live page rather than the file: the two had already
+drifted once (ink-50's chroma) without anything visibly breaking.
+
 ### Rules
 
 - **`dark:` is banned in application code.** If the system works, a `dark:` in a component is
