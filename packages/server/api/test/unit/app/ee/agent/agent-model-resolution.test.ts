@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, tryCatchSync } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { agentHelpers } from '../../../../../src/app/ee/agent/agent-helpers'
 import { agentModelResolution } from '../../../../../src/app/ee/agent/agent-model-resolution'
@@ -8,6 +8,7 @@ const getChatProviderName = vi.fn()
 
 const published = vi.hoisted(() => ({
     tiers: [] as { id: string, label: string, modelId: string, nativeModelId?: string, thinkingBudget: number }[],
+    defaultTierId: '',
 }))
 
 vi.mock('../../../../../src/app/ai/ai-provider-service', () => ({
@@ -19,16 +20,19 @@ vi.mock('@activepieces/server-utils', async (importOriginal) => ({
     aiPricingCatalog: {
         current: () => ({
             tiers: published.tiers,
-            defaultTierId: published.tiers[0].id,
+            defaultTierId: published.defaultTierId,
             findTierById: (tierId: string) => published.tiers.find((tier) => tier.id === tierId),
             findTierByModelId: (modelId: string) => published.tiers.find((tier) => tier.modelId === modelId),
-            resolveTier: (tierId?: string) => published.tiers.find((tier) => tier.id === tierId) ?? published.tiers[0],
+            resolveTier: (tierId?: string) => published.tiers.find((tier) => tier.id === tierId)
+                ?? published.tiers.find((tier) => tier.id === published.defaultTierId)
+                ?? published.tiers[0],
         }),
     },
 }))
 
 beforeEach(() => {
     published.tiers = ACTIVEPIECES_CHAT_TIERS.map((tier) => ({ ...tier }))
+    published.defaultTierId = DEFAULT_CHAT_TIER_ID
 })
 
 const resolve = ({ provider, selectedModel }: { provider: AIProviderName, selectedModel: string | null }) =>
