@@ -138,7 +138,7 @@ function isNil<T>(value: T | null | undefined): value is null | undefined {
 const MAX_OBSERVED_BODY_LENGTH = 2000
 const CREDIT_ERROR_PATTERNS = [/credits/i, /\b402\b/, /payment.required/i]
 
-const TRANSIENT_ERROR_PATTERN = /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|try again|econnreset|etimedout|socket hang up|service unavailable/i
+const TRANSIENT_ERROR_PATTERN = /\b(429|5\d\d)\b|rate.?limit|timeout|timed out|temporarily|econnreset|etimedout|socket hang up|service unavailable/i
 
 const BILLING_BODY_PATTERN = /insufficient_quota|credit[_ ]balance|billing_hard_limit_reached|billing|\bcredits?\b|out of funds|payment required/i
 

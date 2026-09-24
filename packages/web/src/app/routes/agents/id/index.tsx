@@ -95,7 +95,9 @@ const AgentEditorContent = () => {
     searchParams.get(CONVERSATION_QUERY_PARAM) ?? undefined;
   const [openedConversationId, setOpenedConversationId] =
     useState(conversationId);
-  const [freshConversations, setFreshConversations] = useState(0);
+  const [chatSessionKey, setChatSessionKey] = useState(
+    () => conversationId ?? 'new',
+  );
 
   const writeConversationParam = (nextConversationId: string | null) => {
     const next = new URLSearchParams(searchParams);
@@ -108,6 +110,7 @@ const AgentEditorContent = () => {
   };
   const openConversation = (nextConversationId: string) => {
     setOpenedConversationId(nextConversationId);
+    setChatSessionKey(nextConversationId);
     writeConversationParam(nextConversationId);
   };
   const runsOpen = pathname.endsWith(`/${RUNS_TAB}`);
@@ -128,7 +131,7 @@ const AgentEditorContent = () => {
   };
   const startNewConversation = () => {
     setOpenedConversationId(undefined);
-    setFreshConversations((count) => count + 1);
+    setChatSessionKey(`new-${Date.now()}`);
     writeConversationParam(null);
   };
   const {
@@ -250,7 +253,7 @@ const AgentEditorContent = () => {
               agent={agent}
               conversationsOpen={conversationsOpen}
               openedConversationId={openedConversationId ?? conversationId}
-              freshConversations={freshConversations}
+              chatSessionKey={chatSessionKey}
               footerNote={buildCapabilityNote(agent)}
               onSelectConversation={openConversation}
               onNewConversation={startNewConversation}

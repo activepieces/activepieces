@@ -6,6 +6,7 @@ import { JobContext, JobHandler, JobResult, JobResultKind } from '../../types'
 import { resolveAiFiles } from './ai-files'
 import { extractStructuredData } from './extract-structured-data'
 import { generateImageStep } from './generate-image'
+import { routeStep } from './route'
 
 export const executeAiJob: JobHandler<ExecuteAiJobData, JobResult> = {
     jobType: WorkerJobType.EXECUTE_AI,
@@ -64,6 +65,8 @@ async function callTheModel({ ctx, data }: { ctx: JobContext, data: ExecuteAiJob
             return { answer: await extractStructuredData({ data, resolved, flowStep, billing, files: await resolveAiFiles({ ctx, data }) }) }
         case AiStepAction.GENERATE_IMAGE:
             return { answer: await generateImageStep({ ctx, data, resolved, flowStep, billing, inputImages: await resolveAiFiles({ ctx, data }) }) }
+        case AiStepAction.ROUTE:
+            return routeStep({ data, resolved, billing })
         case AiStepAction.ASK_AI:
         case AiStepAction.SUMMARIZE_TEXT:
         case AiStepAction.CLASSIFY_TEXT:
@@ -131,6 +134,7 @@ function buildMessages(data: ExecuteAiJobData): ModelMessage[] {
             return [{ role: 'user', content: classificationPrompt(data) }]
         case AiStepAction.EXTRACT_STRUCTURED_DATA:
         case AiStepAction.GENERATE_IMAGE:
+        case AiStepAction.ROUTE:
             throw new Error(`${data.action} does not build plain messages`)
     }
 }
@@ -171,6 +175,7 @@ function toStepOutput({ data, text, sources }: { data: ExecuteAiJobData, text: s
         }
         case AiStepAction.EXTRACT_STRUCTURED_DATA:
         case AiStepAction.GENERATE_IMAGE:
+        case AiStepAction.ROUTE:
             throw new Error(`${data.action} returns its own output shape`)
     }
 }

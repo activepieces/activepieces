@@ -39,6 +39,7 @@ function buildCreateRequest({
         auth: {
           accessKeyId: value('accessKeyId'),
           secretAccessKey: value('secretAccessKey'),
+          sessionToken: optional('sessionToken'),
         },
       };
     case AIProviderName.VERTEX:
