@@ -744,7 +744,7 @@
   "permissionsCount": "{granted} of {total} permissions",
   "Nobody has this role yet": "Nobody has this role yet",
   "People get it when they are added to a project with this role.": "People get it when they are added to a project with this role.",
-  "A role with this name already exists.": "A role with this name already exists.",
+  "nameAlreadyTaken": "A role called {name} already exists on this platform. Pick another name.",
   "Could not save the role. Try again.": "Could not save the role. Try again.",
   "Build": "Build",
   "Connections & releases": "Connections & releases",

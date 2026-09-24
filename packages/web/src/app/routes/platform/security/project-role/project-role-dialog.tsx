@@ -1,13 +1,15 @@
 import { ErrorCode, ProjectRole, RoleType } from '@activepieces/core-utils';
 import { t } from 'i18next';
-import { MoreHorizontal, Pencil, Trash, Type } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash, X } from 'lucide-react';
 import { ReactNode, useState } from 'react';
 
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import EditableText from '@/components/custom/editable-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
@@ -57,7 +59,10 @@ export const ProjectRoleDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
-      <DialogContent className="@container flex h-[min(36rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0">
+      <DialogContent
+        showCloseButton={false}
+        className="@container flex h-[min(36rem,88dvh)] w-[calc(100vw-2rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0"
+      >
         <RoleDialogBody
           key={isOpen ? `${projectRole?.id ?? 'new'}-open` : 'closed'}
           mode={mode}
@@ -100,8 +105,8 @@ function RoleDialogBody({
       onSave: onSaved,
       onError: (error) =>
         setSaveError(
-          api.isApError(error, ErrorCode.VALIDATION)
-            ? t('A role with this name already exists.')
+          isDuplicateNameError(error)
+            ? t('nameAlreadyTaken', { name: name.trim() })
             : t('Could not save the role. Try again.'),
         ),
     });
@@ -113,11 +118,14 @@ function RoleDialogBody({
 
   const granted = rolePermissionModel.grantedBoxes({ permissions });
   const total = rolePermissionModel.totalBoxes();
-  const showsActions =
-    isCreate || isRenaming || (isEditingPermissions && tab === 'permissions');
   const isDirty =
     name.trim() !== projectRole?.name ||
     !samePermissions(permissions, projectRole?.permissions ?? []);
+  const showsActions =
+    isCreate ||
+    isRenaming ||
+    isDirty ||
+    (isEditingPermissions && tab === 'permissions');
   const canSubmit =
     name.trim().length > 0 && !isSaving && (isCreate || isDirty);
   const footerNote =
@@ -162,7 +170,7 @@ function RoleDialogBody({
 
   return (
     <>
-      <header className="flex shrink-0 items-center gap-3 border-b py-4 pr-12 pl-6">
+      <header className="flex shrink-0 items-center gap-3 border-b px-6 py-4">
         {!isCreate && projectRole && (
           <RoleAvatar
             name={projectRole.name}
@@ -175,11 +183,9 @@ function RoleDialogBody({
               {t('New role')}
             </p>
           )}
-          {isCreate || isRenaming ? (
+          {isCreate ? (
             <>
-              <DialogTitle className="sr-only">
-                {isCreate ? t('New role') : t('Rename')}
-              </DialogTitle>
+              <DialogTitle className="sr-only">{t('New role')}</DialogTitle>
               <Input
                 autoFocus
                 value={name}
@@ -193,7 +199,33 @@ function RoleDialogBody({
             </>
           ) : (
             <DialogTitle className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-lg">
-              <span className="truncate">{projectRole?.name}</span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <EditableText
+                  value={name}
+                  readonly={isBuiltIn}
+                  isEditing={isRenaming}
+                  setIsEditing={setIsRenaming}
+                  onValueChange={(next) => {
+                    setName(next);
+                    setSaveError(null);
+                  }}
+                  tooltipContent={isBuiltIn ? '' : t('Rename role')}
+                  className={cn(
+                    'min-w-0 rounded-sm px-1 py-0.5',
+                    !isBuiltIn &&
+                      !isRenaming &&
+                      'cursor-text hover:bg-muted hover:text-foreground/80',
+                    isRenaming &&
+                      'border border-ring bg-background ring-[1px] ring-ring/50',
+                  )}
+                />
+                {!isBuiltIn && !isRenaming && (
+                  <Pencil
+                    aria-hidden
+                    className="size-3.5 shrink-0 text-muted-foreground"
+                  />
+                )}
+              </span>
               <Badge
                 variant={isBuiltIn ? 'accent' : 'inverted'}
                 className="shrink-0 text-xss uppercase tracking-wider"
@@ -208,53 +240,61 @@ function RoleDialogBody({
               : t('Tick to add a permission, untick to take it away.')}
           </DialogDescription>
         </div>
-        {!isCreate && !isBuiltIn && projectRole && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="size-8 shrink-0 p-0">
-                <MoreHorizontal className="size-4" />
-                <span className="sr-only">{t('More')}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onSelect={() => {
-                  setIsEditingPermissions(true);
-                  setTab('permissions');
-                }}
-                disabled={isEditingPermissions}
-              >
-                <Pencil className="size-4" />
-                {t('Edit permissions')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setIsRenaming(true)}>
-                <Type className="size-4" />
-                {t('Rename')}
-              </DropdownMenuItem>
-              <ConfirmationDeleteDialog
-                isDanger={true}
-                title={t('Delete role')}
-                message={t(
-                  'Deleting this role will remove {count} project member(s) and all associated invitations.',
-                  { count: projectRole.userCount },
-                )}
-                entityName={`${t('Project Role')} ${projectRole.name}`}
-                buttonText={t('Delete role')}
-                mutationFn={async () => {
-                  await deleteRole(projectRole.name);
-                }}
-              >
-                <DropdownMenuItem
-                  variant="destructive"
-                  onSelect={(event) => event.preventDefault()}
+        <div className="flex shrink-0 items-center gap-1">
+          {!isCreate && !isBuiltIn && projectRole && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="size-8 shrink-0 p-0"
                 >
-                  <Trash className="size-4" />
-                  {t('Delete role')}
+                  <MoreHorizontal className="size-4" />
+                  <span className="sr-only">{t('More')}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setIsEditingPermissions(true);
+                    setTab('permissions');
+                  }}
+                  disabled={isEditingPermissions}
+                >
+                  <Pencil className="size-4" />
+                  {t('Edit permissions')}
                 </DropdownMenuItem>
-              </ConfirmationDeleteDialog>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+                <ConfirmationDeleteDialog
+                  isDanger={true}
+                  title={t('Delete role')}
+                  message={t(
+                    'Deleting this role will remove {count} project member(s) and all associated invitations.',
+                    { count: projectRole.userCount },
+                  )}
+                  entityName={`${t('Project Role')} ${projectRole.name}`}
+                  buttonText={t('Delete role')}
+                  mutationFn={async () => {
+                    await deleteRole(projectRole.name);
+                  }}
+                >
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onSelect={(event) => event.preventDefault()}
+                  >
+                    <Trash className="size-4" />
+                    {t('Delete role')}
+                  </DropdownMenuItem>
+                </ConfirmationDeleteDialog>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <DialogClose asChild>
+            <Button variant="ghost" size="sm" className="size-8 shrink-0 p-0">
+              <X className="size-4" />
+              <span className="sr-only">{t('Close')}</span>
+            </Button>
+          </DialogClose>
+        </div>
       </header>
 
       {isCreate ? (
@@ -406,6 +446,13 @@ function footerNoteFor({
     return null;
   }
   return t('Read-only — open the menu to edit this role.');
+}
+
+function isDuplicateNameError(error: unknown): boolean {
+  return (
+    api.isApError(error, ErrorCode.VALIDATION) ||
+    api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
+  );
 }
 
 function samePermissions(left: string[], right: string[]): boolean {
