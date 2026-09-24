@@ -34,7 +34,7 @@ If it takes more than {{webhookTimeoutSeconds}} seconds, it will return a 408 Re
 To return data, add an Webhook step to your flow with the Return Response action.
 `;
 
-enum AuthType {
+export enum AuthType {
   NONE = 'none',
   BASIC = 'basic',
   HEADER = 'header',

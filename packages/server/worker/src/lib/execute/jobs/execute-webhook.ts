@@ -146,11 +146,8 @@ export const executeWebhookJob: JobHandler<WebhookJobData, FireAndForgetJobResul
                 })
             }
         }
-        else {
-            ctx.log.warn({ flow: { id: data.flowId }, flowVersion: { id: flowVersion.id }, status: execResult.status, error: execResult.error }, 'Webhook trigger run did not complete successfully')
-        }
 
-        await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status })
+        await recordTriggerRun({ apiClient: ctx.apiClient, log: ctx.log, flowVersion, platformId: data.platformId, status: execResult.status, error: execResult.error })
 
         return { kind: JobResultKind.FIRE_AND_FORGET, status: EngineResponseStatus.OK, logs: execResult.logs }
     },
