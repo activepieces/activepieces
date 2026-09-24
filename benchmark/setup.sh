@@ -19,20 +19,37 @@ for i in $(seq 1 $MAX_RETRIES); do
   sleep $RETRY_INTERVAL
 done
 
-# Wait for webhook piece to be synced (pieces sync from cloud in batches)
-echo "Waiting for webhook piece to be available..." >&2
+# Wait for webhook + math-helper pieces to be synced (pieces sync from cloud in batches).
+# Under SANDBOX_PROCESS the trigger-enable hook resolves every piece in the flow eagerly, so
+# both must be published by the time we call LOCK_AND_PUBLISH — otherwise enable fails.
+echo "Waiting for webhook + math-helper pieces to be available..." >&2
+PIECES_JSON='[]'
 for i in $(seq 1 600); do
-  HAS_WEBHOOK=$(curl -sf "$BASE_URL/pieces" 2>/dev/null | jq '[.[].name] | any(. == "@activepieces/piece-webhook")' 2>/dev/null || echo "false")
-  if [ "$HAS_WEBHOOK" = "true" ]; then
-    echo "Webhook piece is available (took ${i}s)" >&2
+  PIECES_JSON=$(curl -sf "$BASE_URL/pieces" 2>/dev/null || echo '[]')
+  READY=$(echo "$PIECES_JSON" | jq '
+    ([.[].name] | any(. == "@activepieces/piece-webhook")) and
+    ([.[].name] | any(. == "@activepieces/piece-math-helper"))' 2>/dev/null || echo "false")
+  if [ "$READY" = "true" ]; then
+    echo "Both pieces available (took ${i}s)" >&2
     break
   fi
   if [ "$i" -eq 600 ]; then
-    echo "ERROR: Webhook piece not available after 600s" >&2
+    echo "ERROR: pieces not available after 600s" >&2
     exit 1
   fi
   sleep 1
 done
+
+# Pull the actually-published versions from the registry so we never hard-pin a version that
+# has since stopped resolving. Under SANDBOX_PROCESS a missing pinned version is fatal — the
+# trigger enable hook resolves everything eagerly and rolls back the whole publish.
+WEBHOOK_LATEST=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-webhook") | .version')
+MATH_LATEST=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-math-helper") | .version')
+if [ -z "$WEBHOOK_LATEST" ] || [ "$WEBHOOK_LATEST" = "null" ] || [ -z "$MATH_LATEST" ] || [ "$MATH_LATEST" = "null" ]; then
+  echo "ERROR: could not resolve piece versions from registry (webhook=$WEBHOOK_LATEST math=$MATH_LATEST)" >&2
+  exit 1
+fi
+echo "Resolved piece versions: webhook=$WEBHOOK_LATEST math-helper=$MATH_LATEST" >&2
 
 # Sign up
 echo "Authenticating..." >&2
@@ -137,8 +154,9 @@ else
 fi
 
 # Flow: webhook (latest) -> math-helper addition (latest) -> small CODE step -> return response (latest).
-WEBHOOK_VERSION="${WEBHOOK_VERSION:-~0.1.36}"
-MATH_VERSION="${MATH_VERSION:-~0.0.24}"
+# Versions default to whatever the registry reports as latest, resolved above.
+WEBHOOK_VERSION="${WEBHOOK_VERSION:-$WEBHOOK_LATEST}"
+MATH_VERSION="${MATH_VERSION:-$MATH_LATEST}"
 IMPORT_PAYLOAD=$(jq -n \
   --arg code "$CODE_STEP_SRC" \
   --arg webhookV "$WEBHOOK_VERSION" \
