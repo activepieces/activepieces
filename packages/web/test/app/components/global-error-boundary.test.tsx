@@ -104,4 +104,31 @@ describe('GlobalErrorBoundary fallback outside every provider', () => {
 
     expect(screen.getByText('Failed to copy to clipboard')).toBeTruthy();
   });
+
+  it('keeps the latest copy result visible when clicked twice in quick succession', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    setClipboard(vi.fn<WriteText>(() => Promise.resolve()));
+
+    renderCrashedApp();
+    fireEvent.click(screen.getByLabelText('Copy'));
+    await act(async () => undefined);
+
+    await act(async () => {
+      vi.advanceTimersByTime(2000);
+    });
+    fireEvent.click(screen.getByLabelText('Copy'));
+    await act(async () => undefined);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1500);
+    });
+
+    expect(screen.getByText('Copied')).toBeTruthy();
+
+    await act(async () => {
+      vi.advanceTimersByTime(1600);
+    });
+
+    expect(screen.getByText('Technical Details')).toBeTruthy();
+  });
 });

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { AlertTriangle, Check, Copy, RefreshCcw } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
@@ -44,12 +44,16 @@ const ErrorFallbackContent = ({
   componentStack?: string | null;
 }) => {
   const [copyState, setCopyState] = useState<CopyState>('idle');
+  const copyResetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const isChunkError = errorReporting.isChunkLoadError(error);
   const diagnostics = buildDiagnosticsText(error, componentStack);
 
+  useEffect(() => () => clearTimeout(copyResetTimer.current), []);
+
   const flashCopyState = (state: CopyState) => {
+    clearTimeout(copyResetTimer.current);
     setCopyState(state);
-    setTimeout(() => setCopyState('idle'), 3000);
+    copyResetTimer.current = setTimeout(() => setCopyState('idle'), 3000);
   };
 
   const detailsLabel =
