@@ -136,7 +136,7 @@
   "Save to Drafts instead of sending.": "Save to Drafts instead of sending.",
   "Address that receives the approval request.": "Address that receives the approval request.",
   "Text shown above the Review & Respond button.": "Text shown above the Review & Respond button.",
-  "Pick a recent message, or map its ID from a trigger or Find Email step.": "Pick a recent message, or map its ID from a trigger or Find Email step.",
+  "Pick a recent message, or map its ID from a trigger or Find Email.": "Pick a recent message, or map its ID from a trigger or Find Email.",
   "Reply to the sender only, or to everyone on the thread.": "Reply to the sender only, or to everyone on the thread.",
   "File to attach.": "File to attach.",
   "Overrides the uploaded file name.": "Overrides the uploaded file name.",

@@ -96,7 +96,7 @@ export const GmailProps = {
   message: Property.Dropdown({
     displayName: 'Message',
     description:
-      'Pick a recent message, or map its ID from a trigger or Find Email step.',
+      'Pick a recent message, or map its ID from a trigger or Find Email.',
     required: true,
     auth: gmailAuth,
     refreshers: [],
