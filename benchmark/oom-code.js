@@ -1,0 +1,8 @@
+export const code = async () => {
+  const chunk = 'x'.repeat(52428800);
+  const hog = [];
+  for (let i = 0; i < 64; i = i + 1) {
+    hog.push(chunk);
+  }
+  return hog;
+};

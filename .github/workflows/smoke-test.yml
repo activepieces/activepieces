@@ -79,7 +79,7 @@ jobs:
       # can't exercise isolation here (it returns no data and the gate fails spuriously). Run it
       # locally with `benchmark/probe-fs.js` + `smoke-test/verify-isolation.sh` (both kept in repo).
 
-      # Memory-limit detection gate (same SANDBOX_CODE_ONLY stack): the OOM input expression blows
+      # Memory-limit detection gate (same SANDBOX_CODE_ONLY stack): the OOM code step blows
       # the ENGINE heap via the isolate->engine result copy, and AP_WORKER_CONCURRENCY=1 (job env)
       # gives that single sandbox the full 1G worker container. Every run must end
       # MEMORY_LIMIT_EXCEEDED — this pins the detection path for production code-only engine OOMs.
@@ -87,7 +87,7 @@ jobs:
         if: matrix.executionMode == 'SANDBOX_CODE_ONLY'
         id: setup-oom
         run: |
-          FLOW_ID=$(CODE_INPUT_SUM="$(cat benchmark/oom-expression.txt)" benchmark/setup.sh)
+          FLOW_ID=$(CODE_BODY_FILE=benchmark/oom-code.js benchmark/setup.sh)
           echo "flow_id=$FLOW_ID" >> "$GITHUB_OUTPUT"
           echo "Flow ID: $FLOW_ID"
 
