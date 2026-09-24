@@ -62,13 +62,14 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return mcpServerService(log).getByPlatformId(platformId)
     },
 
-    buildServer: async ({ mcp, userId, platformId, clientKey, clientId }: { mcp: PopulatedMcpServer, userId?: string, platformId?: string, clientKey?: McpOAuthClientKey | null, clientId: string }) => {
+    buildServer: async ({ mcp, userId, platformId, clientKey, clientId, isInAppChat }: { mcp: PopulatedMcpServer, userId?: string, platformId?: string, clientKey?: McpOAuthClientKey | null, clientId: string, isInAppChat?: boolean }) => {
         return buildMcpServer({
             mcp,
             userId,
             platformId,
             clientKey: clientKey ?? null,
             clientId,
+            isInAppChat: isInAppChat ?? false,
             log,
             resolveProjectMcp: (projectId: string) => mcpServerService(log).getByProjectId(projectId),
         })
