@@ -31,7 +31,12 @@ jobs:
           helm repo add bitnami https://charts.bitnami.com/bitnami
           helm dependency build
           helm lint .
-          helm template ap . > /dev/null
+          helm template ap . | grep -q '^kind: Rollout'
+          helm template ap . --api-versions apps/v1/StatefulSet | grep -q '^kind: StatefulSet'
+          helm template ap . --set autoscaling.enabled=true --api-versions apps/v1/StatefulSet --api-versions argoproj.io/v1alpha1/Rollout > "$RUNNER_TEMP/rollout.yaml"
+          grep -q '^kind: Rollout' "$RUNNER_TEMP/rollout.yaml"
+          grep -q 'name: ap-activepieces-preview' "$RUNNER_TEMP/rollout.yaml"
+          grep -A2 'scaleTargetRef:' "$RUNNER_TEMP/rollout.yaml" | grep -q 'kind: Rollout'
 
       - uses: helm/kind-action@v1
 
@@ -50,7 +55,9 @@ jobs:
             --set redis.enabled=true,redis.architecture=standalone,redis.auth.password=ci-password
 
       - name: Test
-        run: helm test ap
+        run: |
+          kubectl get statefulset ap-activepieces
+          helm test ap
 
       - name: Debug
         if: failure()
