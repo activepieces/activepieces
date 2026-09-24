@@ -5,6 +5,7 @@ import { ArrowUpRight, Loader2, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -115,16 +116,24 @@ function PersonRow({ member }: { member: ProjectMemberWithUser }) {
           size={24}
           disableTooltip
         />
-        <span className="min-w-0 truncate text-sm">{fullName}</span>
+        <TextWithTooltip tooltipMessage={fullName}>
+          <span className="min-w-0 truncate text-sm">{fullName}</span>
+        </TextWithTooltip>
       </span>
-      <span className="hidden min-w-0 truncate text-sm text-muted-foreground @min-[36rem]:block">
-        {member.user.email}
+      <span className="hidden min-w-0 @min-[36rem]:block">
+        <TextWithTooltip tooltipMessage={member.user.email}>
+          <span className="block min-w-0 truncate text-sm text-muted-foreground">
+            {member.user.email}
+          </span>
+        </TextWithTooltip>
       </span>
       <Link
         to={`/projects/${member.project.id}/settings/team`}
         className="flex min-w-0 items-center gap-1 text-sm text-primary underline-offset-4 hover:underline"
       >
-        <span className="truncate">{member.project.displayName}</span>
+        <TextWithTooltip tooltipMessage={member.project.displayName}>
+          <span className="min-w-0 truncate">{member.project.displayName}</span>
+        </TextWithTooltip>
         <ArrowUpRight className="size-3.5 shrink-0" />
       </Link>
     </div>
