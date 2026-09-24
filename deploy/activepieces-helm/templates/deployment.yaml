@@ -1,4 +1,4 @@
-{{- if eq (.Values.workloadType | default "rollout") "statefulset" }}
+{{- if eq (include "activepieces.workloadType" .) "statefulset" }}
 apiVersion: apps/v1
 kind: StatefulSet
 {{- else }}
@@ -13,7 +13,7 @@ spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
-  {{- if eq (.Values.workloadType | default "rollout") "statefulset" }}
+  {{- if eq (include "activepieces.workloadType" .) "statefulset" }}
   serviceName: {{ include "activepieces.fullname" . }}
   podManagementPolicy: {{ .Values.podManagementPolicy | default "OrderedReady" }}
   {{- end }}
@@ -54,6 +54,11 @@ spec:
             - name: http
               containerPort: {{ .Values.container.port }}
               protocol: TCP
+          envFrom:
+            - secretRef:
+                name: {{ include "activepieces.fullname" . }}-secrets
+            - secretRef:
+                name: {{ include "activepieces.fullname" . }}-jwt-secret
           {{- if or .Values.activepiecesEnvVariables .Values.activepiecesConfig }}
           env:
             {{- range $key, $value := .Values.activepiecesConfig }}
@@ -95,7 +100,7 @@ spec:
           {{- end }}
           {{- if or .Values.persistence.enabled .Values.volumes }}
       volumes:
-        {{- if and .Values.persistence.enabled (ne (.Values.workloadType | default "rollout") "statefulset") }}
+        {{- if and .Values.persistence.enabled (ne (include "activepieces.workloadType" .) "statefulset") }}
         - name: cache
           persistentVolumeClaim:
             claimName: {{ include "activepieces.fullname" . }}-cache
@@ -116,7 +121,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-  {{- if eq (.Values.workloadType | default "rollout") "statefulset" }}
+  {{- if eq (include "activepieces.workloadType" .) "statefulset" }}
   {{- if .Values.persistence.enabled }}
   volumeClaimTemplates:
     - metadata:

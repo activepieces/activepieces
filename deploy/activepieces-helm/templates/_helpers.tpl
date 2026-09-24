@@ -60,3 +60,13 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "activepieces.workloadType" -}}
+{{- if .Values.workloadType }}
+{{- .Values.workloadType }}
+{{- else if .Capabilities.APIVersions.Has "argoproj.io/v1alpha1/Rollout" }}
+{{- "rollout" }}
+{{- else }}
+{{- "statefulset" }}
+{{- end }}
+{{- end }}

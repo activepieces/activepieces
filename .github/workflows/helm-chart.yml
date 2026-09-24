@@ -1,0 +1,60 @@
+name: Helm chart
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'deploy/activepieces-helm/**'
+      - '.github/workflows/helm-chart.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: deploy/activepieces-helm
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: azure/setup-helm@v4
+
+      - name: Lint and render with default values
+        run: |
+          helm repo add mittwald https://helm.mittwald.de
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm dependency build
+          helm lint .
+          helm template ap . > /dev/null
+
+      - uses: helm/kind-action@v1
+
+      - name: Create connection secrets
+        run: |
+          kubectl create secret generic activepieces-config-secrets --from-literal=AP_FRONTEND_URL=http://ap-activepieces.default.svc.cluster.local
+          kubectl create secret generic activepieces-db-secrets --from-literal=AP_POSTGRES_HOST=ap-postgresql --from-literal=AP_POSTGRES_PORT=5432 --from-literal=AP_POSTGRES_DATABASE=postgres --from-literal=AP_POSTGRES_USERNAME=postgres --from-literal=AP_POSTGRES_PASSWORD=ci-password
+          kubectl create secret generic activepieces-redis-secrets --from-literal=AP_REDIS_HOST=ap-redis-master --from-literal=AP_REDIS_PORT=6379 --from-literal=AP_REDIS_PASSWORD=ci-password
+
+      - name: Install
+        run: |
+          helm install ap . --wait --timeout 10m \
+            --set image.tag=latest \
+            --set persistence.storageClassName=standard \
+            --set postgresql.enabled=true,postgresql.auth.postgresPassword=ci-password \
+            --set redis.enabled=true,redis.architecture=standalone,redis.auth.password=ci-password
+
+      - name: Test
+        run: helm test ap
+
+      - name: Debug
+        if: failure()
+        run: |
+          kubectl get pods
+          kubectl describe pods
+          kubectl logs statefulset/ap-activepieces --tail 200 || true
