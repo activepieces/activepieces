@@ -22,7 +22,7 @@ version: 0.3.0
 # incremented each time you make changes to the application. Versions are not expected to
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
-appVersion: "0.71.2"
+appVersion: "0.91.3"
 
 dependencies:
   - name: kubernetes-secret-generator
