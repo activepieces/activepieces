@@ -28,7 +28,8 @@ export const GmailProps = {
   }),
   category: Property.StaticDropdown({
     displayName: 'Category',
-    description: 'Only emails in this inbox tab, such as Primary or Promotions.',
+    description:
+      'Only emails in this inbox tab, such as Primary or Promotions.',
     required: false,
     options: {
       disabled: false,
