@@ -27,6 +27,7 @@ A built-in relational database inside Activepieces: users store structured data 
 - `record.create()` bulk insert caps at 50 per batch, transactional.
 - When adding any new table/field/record route, the `permission` arg to `securityAccess.project(...)` is required — passing `undefined` silently allows any project member.
 - The per-create `field.validateCount()` check alone races on bulk paths: all concurrent creates read the same pre-save count and pass. Bulk/import paths (`table.create` with fields, project-state/project-replace apply) MUST call it once up front with the batch size **before** their `Promise.all`.
+- The web table store keys each cell by the column's position (`fieldIndex`), not by field id, so every field mutator in `ap-tables-client-state.tsx` has to renumber surviving cells (`deleteField` didn't, see ENG-537). A cell edit sends only the edited cell, and `record.update` upserts just those cells, so stale indexes can't blank other columns on the server.
 - Concurrent field reorders are last-write-wins, same as rename — no distributed lock. Reordering *existing* fields through project-release apply is not supported: `FieldState` carries no position, so array order only applies to newly created fields.
 - The web client stores positional `cell.fieldIndex` references, so it must remap every record's cells when fields move.
 
