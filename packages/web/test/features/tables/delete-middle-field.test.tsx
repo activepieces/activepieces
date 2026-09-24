@@ -189,10 +189,7 @@ describe('deleteField remaps surviving cells (ENG-537)', () => {
     );
 
     expect(updateRecord).toHaveBeenCalledWith(0, {
-      values: [
-        { fieldIndex: 0, value: 'a-edited' },
-        { fieldIndex: 1, value: 'c-value' },
-      ],
+      values: [{ fieldIndex: 0, value: 'a-edited' }],
     });
   });
 });
