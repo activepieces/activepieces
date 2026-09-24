@@ -2,7 +2,6 @@ import { createAction, OAuth2PropertyValue, Property } from '@activepieces/piece
 import { HttpMethod } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { GraphDriveItem, oneDriveApi } from '../common/graph-api';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { onedriveListBundlesOutputSchema } from '../output-schemas';
 
 export const onedriveListBundles = createAction({
@@ -32,7 +31,7 @@ export const onedriveListBundles = createAction({
     const response = await oneDriveApi.request<GraphBundlePage>({
       auth: context.auth,
       method: HttpMethod.GET,
-      path: token ? validatePageToken({ auth: context.auth, pageToken: token }) : '/me/drive/bundles',
+      path: token ? token : '/me/drive/bundles',
     });
     const items = response.value.map((bundle) => ({
       ...oneDriveApi.toItem(bundle),
@@ -57,15 +56,6 @@ async function assertPersonalDrive({ auth }: { auth: OAuth2PropertyValue }): Pro
   if (drive.driveType !== 'personal') {
     throw new Error('Albums and bundles are available only on personal OneDrive (Microsoft account) drives. This connection uses OneDrive for Business.');
   }
-}
-
-function validatePageToken({ auth, pageToken }: { auth: OAuth2PropertyValue; pageToken: string }): string {
-  const cloud = auth.props?.['cloud'];
-  const graphPrefix = `${getGraphBaseUrl(typeof cloud === 'string' ? cloud : undefined)}/v1.0/`;
-  if (!pageToken.startsWith(graphPrefix)) {
-    throw new Error('The page token is not a valid OneDrive page link. Pass the nextPageToken from the previous call unchanged.');
-  }
-  return pageToken;
 }
 
 type GraphBundle = GraphDriveItem & {

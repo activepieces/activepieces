@@ -14,7 +14,7 @@ export const onedriveMoveItem = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Moves a file or folder (with its contents) into another folder in the same drive, optionally renaming it; the item keeps its ID. Use Rename / Update File or Folder to rename without moving, and Copy File or Folder to keep the original. Fails if the destination already has an item with the same name unless you set New Name; moving between drives is not supported. Safe to retry.',
+      'Moves a file or folder (with its contents) into another folder in the same drive, optionally renaming it; the item keeps its ID. Use Rename / Update File or Folder to rename without moving, and Copy File or Folder to keep the original. Fails if the destination already has an item with the same name unless you set New Name; moving between drives is not supported. Retrying by item ID is safe; after a move by path, use the returned item ID, because the old path no longer exists.',
     idempotent: true,
   },
   props: {

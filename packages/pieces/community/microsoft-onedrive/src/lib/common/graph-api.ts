@@ -39,10 +39,11 @@ async function request<T extends HttpMessageBody>({
   queryParams,
   headers,
 }: GraphRequest): Promise<T> {
+  const url = resolveUrl({ auth, path });
   try {
     const response = await httpClient.sendRequest<T>({
       method,
-      url: path.startsWith('https://') ? path : `${graphBaseUrl(auth)}${path}`,
+      url,
       body,
       queryParams,
       headers,
@@ -58,6 +59,20 @@ async function request<T extends HttpMessageBody>({
       status: error instanceof HttpError ? error.response.status : null,
     });
   }
+}
+
+function resolveUrl({ auth, path }: { auth: OAuth2PropertyValue; path: string }): string {
+  const base = graphBaseUrl(auth);
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(path)) {
+    return `${base}${path}`;
+  }
+  if (!path.startsWith(`${base}/`)) {
+    throw new OneDriveApiError({
+      message: 'The page token or link is not a Microsoft Graph URL for this connection. Pass the token returned by the previous call unchanged.',
+      status: null,
+    });
+  }
+  return path;
 }
 
 function statusOf(error: unknown): number | null {

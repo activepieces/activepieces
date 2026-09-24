@@ -14,7 +14,7 @@ export const onedriveUpdateItem = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Renames a file or folder and/or sets its description, changing only the fields you provide; the item keeps its ID. Use Move File or Folder to change its folder. Description is supported on personal OneDrive only, and renaming fails if the folder already has an item with the new name. Safe to retry.',
+      'Renames a file or folder and/or sets its description, changing only the fields you provide; the item keeps its ID. Use Move File or Folder to change its folder. Description is supported on personal OneDrive only, and renaming fails if the folder already has an item with the new name. Retrying by item ID is safe; after a rename by path, use the returned item ID, because the old path no longer exists.',
     idempotent: true,
   },
   props: {

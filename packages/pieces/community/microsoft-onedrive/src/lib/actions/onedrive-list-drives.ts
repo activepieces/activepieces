@@ -1,8 +1,7 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { GraphIdentity, oneDriveApi } from '../common/graph-api';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { onedriveListDrivesOutputSchema } from '../output-schemas';
 
 export const onedriveListDrives = createAction({
@@ -31,7 +30,7 @@ export const onedriveListDrives = createAction({
     const response = await oneDriveApi.request<GraphDriveList>({
       auth: context.auth,
       method: HttpMethod.GET,
-      path: token ? validatePageToken({ auth: context.auth, pageToken: token }) : '/me/drives',
+      path: token ? token : '/me/drives',
     });
     const items = response.value.map((drive) => ({
       id: drive.id,
@@ -52,15 +51,6 @@ export const onedriveListDrives = createAction({
     };
   },
 });
-
-function validatePageToken({ auth, pageToken }: { auth: OAuth2PropertyValue; pageToken: string }): string {
-  const cloud = auth.props?.['cloud'];
-  const graphPrefix = `${getGraphBaseUrl(typeof cloud === 'string' ? cloud : undefined)}/v1.0/`;
-  if (!pageToken.startsWith(graphPrefix)) {
-    throw new Error('The page token is not a valid OneDrive page link. Pass the nextPageToken from the previous call unchanged.');
-  }
-  return pageToken;
-}
 
 type GraphDriveList = {
   value: {

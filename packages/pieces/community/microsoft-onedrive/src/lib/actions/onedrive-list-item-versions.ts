@@ -1,8 +1,7 @@
-import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { oneDriveAuth } from '../auth';
 import { GraphIdentity, oneDriveApi } from '../common/graph-api';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
 import { onedriveListItemVersionsOutputSchema } from '../output-schemas';
 
 export const onedriveListItemVersions = createAction({
@@ -43,7 +42,7 @@ export const onedriveListItemVersions = createAction({
       auth: context.auth,
       method: HttpMethod.GET,
       path: token
-        ? validatePageToken({ auth: context.auth, pageToken: token })
+        ? token
         : `${oneDriveApi.itemPath({ itemId, path })}/versions`,
     });
     const items = response.value.map((version) => ({
@@ -60,15 +59,6 @@ export const onedriveListItemVersions = createAction({
     };
   },
 });
-
-function validatePageToken({ auth, pageToken }: { auth: OAuth2PropertyValue; pageToken: string }): string {
-  const cloud = auth.props?.['cloud'];
-  const graphPrefix = `${getGraphBaseUrl(typeof cloud === 'string' ? cloud : undefined)}/v1.0/`;
-  if (!pageToken.startsWith(graphPrefix)) {
-    throw new Error('The page token is not a valid OneDrive page link. Pass the nextPageToken from the previous call unchanged.');
-  }
-  return pageToken;
-}
 
 type GraphVersionPage = {
   value: {
