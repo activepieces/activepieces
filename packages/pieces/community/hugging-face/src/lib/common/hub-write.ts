@@ -149,25 +149,6 @@ async function createOrConflict(params: WriteRequestParams): Promise<CreateOutco
   }
 }
 
-async function resolveDefaultBranch({ token, repo }: ResolveDefaultBranchParams): Promise<string> {
-  const response = await hfHub.request<unknown>({
-    token,
-    method: HttpMethod.GET,
-    path: `${repo.apiPath}/refs`,
-  });
-  const rawBranches = hfHub.isRecord(response.body) ? response.body['branches'] : undefined;
-  const branches = (Array.isArray(rawBranches) ? rawBranches : [])
-    .map((branch) => readString({ record: branch, key: 'name' }))
-    .filter((name): name is string => name !== null);
-  if (branches.includes(DEFAULT_BRANCH)) {
-    return DEFAULT_BRANCH;
-  }
-  const listed = branches.length > 0 ? branches.map((name) => `'${name}'`).join(', ') : 'none';
-  throw new Error(
-    `BRANCH_REQUIRED: ${repo.repoId} has no '${DEFAULT_BRANCH}' branch, the Hub's default branch, so no branch can be assumed. Pass the branch explicitly. Existing branches: ${listed}.`
-  );
-}
-
 async function currentUsername(token: string): Promise<string> {
   const response = await hfHub.request<unknown>({
     token,
@@ -262,13 +243,11 @@ function readString({ record, key }: { record: unknown; key: string }): string |
 }
 
 const SPACE_KEY_PATTERN = /^[a-zA-Z][_a-zA-Z0-9]*$/;
-const DEFAULT_BRANCH = 'main';
 const SENSITIVE_REQUEST_TIMEOUT_MS = 30000;
 
 export const hfWrite = {
   request: writeRequest,
   sensitiveRequest: sensitiveWriteRequest,
-  resolveDefaultBranch,
   createOrConflict,
   currentUsername,
   resolveRepo,
@@ -318,11 +297,6 @@ type StatusToWriteErrorParams = {
   body: unknown;
   resource: string;
   statusErrors?: StatusErrors;
-};
-
-type ResolveDefaultBranchParams = {
-  token: string;
-  repo: ResolvedRepo;
 };
 
 type CreateOutcome = { conflict: false; body: unknown } | { conflict: true; body: unknown };
