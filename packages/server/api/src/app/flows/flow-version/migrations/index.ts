@@ -21,6 +21,7 @@ import { migrateV23UpgradePieceVersions } from './migrate-v23-upgrade-piece-vers
 import { migrateV24OpenaiPieceVersion } from './migrate-v24-openai-piece-version'
 import { migrateV25HttpPieceVersion } from './migrate-v25-http-piece-version'
 import { migrateV26AiPieceCostBilling } from './migrate-v26-ai-piece-cost-billing'
+import { migrateV27PieceVersionUpgrades } from './migrate-v27-piece-version-upgrades'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
@@ -68,6 +69,7 @@ const migrations: Migration[] = [
     migrateV24OpenaiPieceVersion,
     migrateV25HttpPieceVersion,
     migrateV26AiPieceCostBilling,
+    migrateV27PieceVersionUpgrades,
 ] as const
 
 export const flowMigrations = {
