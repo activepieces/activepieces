@@ -15,6 +15,7 @@ const DISMISS_IGNORE_SELECTOR = [
   '[role="dialog"]',
   '[data-slot="resizable-handle"]',
   '[data-panel-resize-handle-id]',
+  '[data-step-settings-form]',
 ].join(',');
 
 type StepDataPanelHostProps = {

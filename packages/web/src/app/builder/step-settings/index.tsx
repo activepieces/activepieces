@@ -243,6 +243,7 @@ const StepSettingsContainer = () => {
         onSubmit={(e) => e.preventDefault()}
         onChange={(e) => e.preventDefault()}
         className="w-full h-full flex flex-col"
+        data-step-settings-form
       >
         <div
           ref={sidebarHeaderContainerRef}

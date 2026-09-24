@@ -7,7 +7,7 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Play } from 'lucide-react';
+import { Loader2, Play } from 'lucide-react';
 import { useContext, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -119,12 +119,30 @@ const ActionCTAButton = ({
   const stepIsValid = currentStep.valid !== false;
   const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
   const runner = useActionTestRunner();
+  const runnerBusy = runner?.isTesting ?? false;
   useConfigureStepShortcutToast(stepIsValid);
 
   const fireTest = () => {
     onOpenPanel();
     runner?.fireTest();
   };
+
+  if (runnerBusy) {
+    return (
+      <CTAShell>
+        <Button
+          variant="outline"
+          onClick={onOpenPanel}
+          className={SOFT_PRIMARY_CTA_CLASSES}
+          size="sm"
+          data-testid="test-action-busy-button"
+        >
+          <Loader2 className="size-4 animate-spin mr-2" />
+          {t('Testing Step...')}
+        </Button>
+      </CTAShell>
+    );
+  }
 
   if (hasRun) {
     return (
@@ -231,6 +249,23 @@ const TriggerCTAButton = ({
     stepIsRunning ||
     runnerBusy ||
     !runnerReady;
+
+  if (runnerBusy) {
+    return (
+      <CTAShell>
+        <Button
+          variant="outline"
+          onClick={onOpenPanel}
+          className={SOFT_PRIMARY_CTA_CLASSES}
+          size="sm"
+          data-testid="test-trigger-busy-button"
+        >
+          <Loader2 className="size-4 animate-spin mr-2" />
+          {t('Testing Trigger...')}
+        </Button>
+      </CTAShell>
+    );
+  }
 
   if (hasRun) {
     return (
