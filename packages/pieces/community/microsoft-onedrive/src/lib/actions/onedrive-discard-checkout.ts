@@ -14,7 +14,7 @@ export const onedriveDiscardCheckout = createAction({
   classification: 'DESTRUCTIVE',
   aiMetadata: {
     description:
-      'Releases the check-out on a file in a OneDrive for Business or SharePoint document library and permanently discards every change made while it was checked out, reverting to the last checked-in version. Use Check In File instead to keep the changes; personal OneDrive may not support check-out, and a retry fails once the file is no longer checked out.',
+      'Releases the check-out on a file and permanently discards every change made while it was checked out, reverting to the last checked-in version. Use Check In File instead to keep the changes. Works on personal and business drives; a retry fails once the file is no longer checked out.',
     idempotent: false,
   },
   props: {

@@ -37,7 +37,6 @@ import { onedriveListItemPermissions } from './lib/actions/onedrive-list-item-pe
 import { onedriveListItemThumbnails } from './lib/actions/onedrive-list-item-thumbnails';
 import { onedriveListItemVersions } from './lib/actions/onedrive-list-item-versions';
 import { onedriveMoveItem } from './lib/actions/onedrive-move-item';
-import { onedrivePermanentlyDeleteItem } from './lib/actions/onedrive-permanently-delete-item';
 import { onedriveRemoveItemFromBundle } from './lib/actions/onedrive-remove-item-from-bundle';
 import { onedriveReplaceFileContent } from './lib/actions/onedrive-replace-file-content';
 import { onedriveResolveSharingLink } from './lib/actions/onedrive-resolve-sharing-link';
@@ -88,7 +87,6 @@ export const microsoftOneDrive = createPiece({
     onedriveListItemThumbnails,
     onedriveListItemVersions,
     onedriveMoveItem,
-    onedrivePermanentlyDeleteItem,
     onedriveRemoveItemFromBundle,
     onedriveReplaceFileContent,
     onedriveResolveSharingLink,

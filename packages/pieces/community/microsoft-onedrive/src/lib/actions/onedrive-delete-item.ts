@@ -14,7 +14,7 @@ export const onedriveDeleteItem = createAction({
   classification: 'DESTRUCTIVE',
   aiMetadata: {
     description:
-      'Deletes a file or folder by moving it to the OneDrive recycle bin, where the owner can still restore it; deleting a folder also deletes everything inside it. Prefer this over Permanently Delete File or Folder, which cannot be undone. Confirm the exact item first (get its ID from Search Files and Folders or List Folder Contents); retrying after success fails because the item is gone.',
+      'Deletes a file or folder by moving it to the OneDrive recycle bin, where the owner can still restore it; deleting a folder also deletes everything inside it. Confirm the exact item first (get its ID from Search Files and Folders or List Folder Contents); retrying after success fails because the item is gone.',
     idempotent: false,
   },
   props: {

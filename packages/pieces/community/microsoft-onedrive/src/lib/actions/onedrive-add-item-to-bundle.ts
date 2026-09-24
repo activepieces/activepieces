@@ -14,8 +14,8 @@ export const onedriveAddItemToBundle = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Add one existing file to an existing bundle or photo album in a personal OneDrive; the file stays where it is. Get the bundle ID from List Albums and Bundles or Create Bundle, and the item ID from Search Files and Folders or List Folder Contents; use Create Bundle to start a new one. Works only on personal OneDrive (Microsoft account); adding an item that is already in the bundle can return an error.',
-    idempotent: false,
+      'Add one existing file to an existing bundle or photo album in a personal OneDrive; the file stays where it is. Get the bundle ID from List Albums and Bundles or Create Bundle, and the item ID from Search Files and Folders or List Folder Contents; use Create Bundle to start a new one. Works only on personal OneDrive (Microsoft account); adding an item that is already in the bundle succeeds without duplicating it.',
+    idempotent: true,
   },
   props: {
     bundleId: Property.ShortText({

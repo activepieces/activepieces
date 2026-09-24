@@ -14,7 +14,7 @@ export const onedriveCheckoutItem = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Checks out a file in a OneDrive for Business or SharePoint document library, locking it for exclusive editing until Check In File or Discard Check-Out is called. Intended for business libraries; personal OneDrive may not support check-out, and checking out a file that is already checked out fails.',
+      'Checks out a file, locking it for exclusive editing until Check In File or Discard Check-Out is called. Works on personal OneDrive and on OneDrive for Business or SharePoint libraries; checking out a file that is already checked out fails.',
     idempotent: false,
   },
   props: {

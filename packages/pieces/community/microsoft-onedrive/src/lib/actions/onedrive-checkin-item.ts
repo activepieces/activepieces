@@ -14,7 +14,7 @@ export const onedriveCheckinItem = createAction({
   classification: 'WRITE',
   aiMetadata: {
     description:
-      'Checks in a file previously checked out with Check Out File in a OneDrive for Business or SharePoint document library, publishing the changes and releasing the lock. Use Discard Check-Out instead to throw the changes away; personal OneDrive may not support check-in, and checking in a file that is not checked out fails.',
+      'Checks in a file previously checked out with Check Out File, publishing the changes and releasing the lock. Use Discard Check-Out instead to throw the changes away. Works on personal and business drives; checking in a file that is not checked out fails.',
     idempotent: false,
   },
   props: {
