@@ -19,20 +19,37 @@ for i in $(seq 1 $MAX_RETRIES); do
   sleep $RETRY_INTERVAL
 done
 
-# Wait for webhook piece to be synced (pieces sync from cloud in batches)
-echo "Waiting for webhook piece to be available..." >&2
+# Wait for webhook + math-helper pieces to be synced (pieces sync from cloud in batches).
+# Under SANDBOX_PROCESS the trigger-enable hook resolves every piece in the flow eagerly, so
+# both must be published by the time we call LOCK_AND_PUBLISH — otherwise enable fails.
+echo "Waiting for webhook + math-helper pieces to be available..." >&2
+PIECES_JSON='[]'
 for i in $(seq 1 600); do
-  HAS_WEBHOOK=$(curl -sf "$BASE_URL/pieces" 2>/dev/null | jq '[.[].name] | any(. == "@activepieces/piece-webhook")' 2>/dev/null || echo "false")
-  if [ "$HAS_WEBHOOK" = "true" ]; then
-    echo "Webhook piece is available (took ${i}s)" >&2
+  PIECES_JSON=$(curl -sf "$BASE_URL/pieces" 2>/dev/null || echo '[]')
+  READY=$(echo "$PIECES_JSON" | jq '
+    ([.[].name] | any(. == "@activepieces/piece-webhook")) and
+    ([.[].name] | any(. == "@activepieces/piece-math-helper"))' 2>/dev/null || echo "false")
+  if [ "$READY" = "true" ]; then
+    echo "Both pieces available (took ${i}s)" >&2
     break
   fi
   if [ "$i" -eq 600 ]; then
-    echo "ERROR: Webhook piece not available after 600s" >&2
+    echo "ERROR: pieces not available after 600s" >&2
     exit 1
   fi
   sleep 1
 done
+
+# Pull the actually-published versions from the registry so we never hard-pin a version that
+# has since stopped resolving. Under SANDBOX_PROCESS a missing pinned version is fatal — the
+# trigger enable hook resolves everything eagerly and rolls back the whole publish.
+WEBHOOK_LATEST=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-webhook") | .version')
+MATH_LATEST=$(echo "$PIECES_JSON" | jq -r '.[] | select(.name == "@activepieces/piece-math-helper") | .version')
+if [ -z "$WEBHOOK_LATEST" ] || [ "$WEBHOOK_LATEST" = "null" ] || [ -z "$MATH_LATEST" ] || [ "$MATH_LATEST" = "null" ]; then
+  echo "ERROR: could not resolve piece versions from registry (webhook=$WEBHOOK_LATEST math=$MATH_LATEST)" >&2
+  exit 1
+fi
+echo "Resolved piece versions: webhook=$WEBHOOK_LATEST math-helper=$MATH_LATEST" >&2
 
 # Sign up
 echo "Authenticating..." >&2
@@ -81,6 +98,26 @@ echo "Signed up. Project: $PROJECT_ID" >&2
 
 AUTH="Authorization: Bearer $TOKEN"
 
+# Provision a platform API key for the benchmark CLI.
+# The key value is only returned on creation and is written to a file with mode 600
+# so it never lands in the workflow log via stdout capture.
+BENCH_API_KEY_FILE="${BENCH_API_KEY_FILE:-/tmp/bench-api-key}"
+echo "Creating platform API key for benchmark CLI..." >&2
+API_KEY_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/api-keys" \
+  -H "Content-Type: application/json" \
+  -H "$AUTH" \
+  -d '{"displayName":"benchmark-cli"}')
+BENCH_API_KEY=$(echo "$API_KEY_RESPONSE" | jq -r '.value // empty')
+if [ -z "$BENCH_API_KEY" ] || [ "$BENCH_API_KEY" = "null" ]; then
+  echo "ERROR: Failed to create API key" >&2
+  echo "$API_KEY_RESPONSE" >&2
+  exit 1
+fi
+umask 077
+printf '%s' "$BENCH_API_KEY" > "$BENCH_API_KEY_FILE"
+chmod 600 "$BENCH_API_KEY_FILE"
+echo "API key written to $BENCH_API_KEY_FILE (mode 600)" >&2
+
 # Create flow
 echo "Creating flow..." >&2
 FLOW_RESPONSE=$(curl -s --fail-with-body "$BASE_URL/flows" \
@@ -117,8 +154,9 @@ else
 fi
 
 # Flow: webhook (latest) -> math-helper addition (latest) -> small CODE step -> return response (latest).
-WEBHOOK_VERSION="${WEBHOOK_VERSION:-~0.1.36}"
-MATH_VERSION="${MATH_VERSION:-~0.0.24}"
+# Versions default to whatever the registry reports as latest, resolved above.
+WEBHOOK_VERSION="${WEBHOOK_VERSION:-$WEBHOOK_LATEST}"
+MATH_VERSION="${MATH_VERSION:-$MATH_LATEST}"
 IMPORT_PAYLOAD=$(jq -n \
   --arg code "$CODE_STEP_SRC" \
   --arg webhookV "$WEBHOOK_VERSION" \
@@ -263,7 +301,10 @@ for i in $(seq 1 "$FLOW_ENABLE_TIMEOUT"); do
   sleep 1
 done
 
-echo "Setup complete. Flow ID: $FLOW_ID" >&2
+BENCH_PROJECT_ID_FILE="${BENCH_PROJECT_ID_FILE:-/tmp/bench-project-id}"
+printf '%s' "$PROJECT_ID" > "$BENCH_PROJECT_ID_FILE"
+echo "Project ID written to $BENCH_PROJECT_ID_FILE" >&2
 
-# Output only the flow ID to stdout
+echo "Setup complete. Flow ID: $FLOW_ID  Project ID: $PROJECT_ID" >&2
+
 echo "$FLOW_ID"
