@@ -7,6 +7,7 @@ function formatEntry(entry: ConversationEntry) {
 		type: entry.type ?? null,
 		role: entry.role ?? null,
 		content: mistralApi.contentToText(entry.content),
+		chunks: Array.isArray(entry.content) ? entry.content.filter((chunk) => !(mistralApi.isRecord(chunk) && chunk['type'] === 'text')) : [],
 		name: entry.name ?? null,
 		arguments: entry.arguments ?? null,
 		agent_id: entry.agent_id ?? null,

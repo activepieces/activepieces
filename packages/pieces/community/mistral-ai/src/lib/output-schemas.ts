@@ -70,6 +70,7 @@ const conversationEntryFields: OutputSchema['fields'] = [
 	{ key: 'type', label: 'Type' },
 	{ key: 'role', label: 'Role' },
 	{ key: 'content', label: 'Content' },
+	{ key: 'chunks', label: 'Files & References' },
 	{ key: 'name', label: 'Tool Name' },
 	{ key: 'arguments', label: 'Tool Arguments' },
 	{ key: 'agent_id', label: 'Agent ID' },

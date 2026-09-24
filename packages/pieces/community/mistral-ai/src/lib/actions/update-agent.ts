@@ -2,7 +2,8 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
 import { mistralApi } from '../common/client';
-import { agentUtils, MistralAgent } from '../common/agents';
+import { AgentTool, agentUtils, MistralAgent } from '../common/agents';
+import { MistralAuthValue } from '../common/request';
 import { agentOutputSchema } from '../output-schemas';
 
 export const updateAgent = createAction({
@@ -14,7 +15,7 @@ export const updateAgent = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Updates a Mistral agent (Beta) by agent id; only the fields you pass change and the rest are kept. Setting tools or libraries replaces the agent’s whole tool list. Each update creates a new agent version. Get the id from List Agents. Idempotent: sending the same values again leaves the same configuration.',
+			'Updates a Mistral agent (Beta) by agent id; only the fields you pass change and the rest are kept. Built-in tools and document libraries are replaced independently: passing one keeps the other as it was. Tools cannot be cleared here. Each update creates a new agent version. Get the id from List Agents. Idempotent: sending the same values again leaves the same configuration.',
 		idempotent: true,
 	},
 	outputSchema: agentOutputSchema,
@@ -38,7 +39,9 @@ export const updateAgent = createAction({
 			model,
 			instructions,
 			description,
-			tools: agentUtils.buildTools({
+			tools: await resolveTools({
+				auth: context.auth,
+				agentId: agent_id,
 				builtInTools: mistralApi.toStringArray(built_in_tools),
 				libraryIds: mistralApi.toStringArray(library_ids),
 			}),
@@ -56,3 +59,28 @@ export const updateAgent = createAction({
 		return agentUtils.formatAgent(agent);
 	},
 });
+
+async function resolveTools({ auth, agentId, builtInTools, libraryIds }: ResolveToolsParams): Promise<AgentTool[] | undefined> {
+	if (builtInTools.length === 0 && libraryIds.length === 0) {
+		return undefined;
+	}
+	const updated = agentUtils.buildTools({ builtInTools, libraryIds }) ?? [];
+	if (builtInTools.length > 0 && libraryIds.length > 0) {
+		return updated;
+	}
+	const current = await mistralApi.call<MistralAgent>({
+		auth,
+		method: HttpMethod.GET,
+		path: `/agents/${encodeURIComponent(agentId)}`,
+	});
+	const keepLibraries = libraryIds.length === 0;
+	const kept = (current.tools ?? []).filter((tool) => (tool.type === 'document_library') === keepLibraries);
+	return [...updated, ...kept];
+}
+
+type ResolveToolsParams = {
+	auth: MistralAuthValue;
+	agentId: string;
+	builtInTools: string[];
+	libraryIds: string[];
+};
