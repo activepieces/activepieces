@@ -10,7 +10,6 @@ import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state'
 import { LoadingSpinner } from '@/components/custom/spinner';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
@@ -25,7 +24,6 @@ export default function PlatformMcpPage() {
   const { mutate: updateTools, isPending: isToolsUpdating } =
     platformMcpHooks.useUpdatePlatformMcpTools();
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
-  const isPlatformAdmin = useIsPlatformAdmin();
 
   if (isLoading) {
     return (
@@ -122,7 +120,6 @@ export default function PlatformMcpPage() {
                 </p>
                 <McpTools
                   disabledTools={mcpServer.disabledTools}
-                  canWrite={isPlatformAdmin}
                   isPending={isToolsUpdating}
                   onUpdateDisabledTools={(tools) =>
                     updateTools({ disabledTools: tools })

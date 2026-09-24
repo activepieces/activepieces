@@ -1,4 +1,3 @@
-import { Permission } from '@activepieces/core-utils';
 import { ApFlagId, isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
@@ -10,7 +9,6 @@ import { SearchInput } from '@/components/custom/search-input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
-import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { McpToolSegment } from '../mcp-nav';
@@ -54,7 +52,6 @@ export function ToolsTab({
   const { data: toolSearchEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TOOL_SEARCH_ENABLED,
   );
-  const { checkAccess } = useAuthorization(selectedProjectId ?? undefined);
   const { pieces } = piecesHooks.usePieces({
     projectId: selectedProjectId ?? undefined,
     suggestionType: SuggestionType.ACTION,
@@ -148,7 +145,6 @@ export function ToolsTab({
           disabledTools={mcpServer.disabledTools}
           platformDisabledTools={mcpServer.platformDisabledTools ?? []}
           projectId={selectedProjectId}
-          canWrite={checkAccess(Permission.WRITE_MCP)}
           isPending={isPending}
           onUpdateDisabledTools={updateDisabledTools}
         />
