@@ -1,4 +1,5 @@
 import { DataSource } from 'typeorm'
+import { createMockProjectMember, mockAndSaveBasicSetup } from '../../../helpers/mocks'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection, resetDatabaseConnection } from '../../../../src/app/database/database-connection'
 import { UniqueProjectRoleNamePerPlatform1852000000000 } from '../../../../src/app/database/migration/postgres/1852000000000-UniqueProjectRoleNamePerPlatform'
@@ -33,6 +34,7 @@ async function runMigration(ds: DataSource): Promise<void> {
 }
 
 async function cleanup(ds: DataSource): Promise<void> {
+    await ds.query(`DELETE FROM "project_member" WHERE "projectRoleId" LIKE '${ID_PREFIX}%'`)
     await ds.query(`DELETE FROM "project_role" WHERE "id" LIKE '${ID_PREFIX}%'`)
 }
 
@@ -91,6 +93,26 @@ describe('UniqueProjectRoleNamePerPlatform migration', () => {
         expect(await nameOf(ds, 'otherB')).toBe('Manager')
         expect(await nameOf(ds, 'globalA')).toBe('Viewer')
         expect(await nameOf(ds, 'globalB')).toBe('viewer')
+    })
+
+    it('keeps the name on the copy with the most members, not the oldest', async () => {
+        const { mockPlatform, mockProject, mockOwner } = await mockAndSaveBasicSetup()
+
+        await seedRole(ds, { seed: 'tieOld', platformId: mockPlatform.id, name: 'Manager', created: '2024-01-01T00:00:00Z' })
+        await seedRole(ds, { seed: 'tieNew', platformId: mockPlatform.id, name: 'Manager', created: '2024-06-01T00:00:00Z' })
+
+        const member = createMockProjectMember({
+            projectId: mockProject.id,
+            userId: mockOwner.id,
+            platformId: mockPlatform.id,
+            projectRoleId: id('tieNew'),
+        })
+        await ds.getRepository('project_member').save(member)
+
+        await runMigration(ds)
+
+        expect(await nameOf(ds, 'tieNew')).toBe('Manager')
+        expect(await nameOf(ds, 'tieOld')).toBe('Manager (2)')
     })
 
     it('builds an index that then rejects a case variant on the same platform', async () => {
