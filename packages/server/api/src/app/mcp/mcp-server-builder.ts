@@ -22,6 +22,7 @@ const PLATFORM_LEVEL_TOOL_SET = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
 ### Workflow
+0. Project: on the platform server, call ap_set_project_context first — every project tool, including ap_list_connections and ap_list_ai_models, needs a selected project
 1. Discover: ap_research_pieces, ap_list_connections, ap_list_ai_models
 2. Schema: ap_get_piece_props (get field names/types before configuring)
 3. Build: ap_build_flow (one call for new flows) OR ap_create_flow → ap_update_trigger → ap_add_step (granular)

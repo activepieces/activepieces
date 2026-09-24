@@ -10,6 +10,7 @@ export const mcpAccess = {
     listAccessibleProjects,
     resolveReach,
     hasMcpReach,
+    hasMcpAccessToProject,
     noMcpReachResult,
 }
 
@@ -30,6 +31,16 @@ async function resolveReach({ platformId, userId, log }: UserScope): Promise<Mcp
 async function hasMcpReach({ platformId, userId, log }: UserScope): Promise<boolean> {
     const { projectIds } = await resolveReach({ platformId, userId, log })
     return isNil(projectIds) || projectIds.length > 0
+}
+
+async function hasMcpAccessToProject({ platformId, userId, projectId, log }: UserScope & { projectId: string }): Promise<boolean> {
+    const isPrivileged = await isUserPrivileged({ userId, log })
+    if (isPrivileged) {
+        const project = await projectService(log).getOne(projectId)
+        return !isNil(project) && project.platformId === platformId
+    }
+    const projects = await listProjectsForUser({ platformId, userId, isPrivileged, log })
+    return projects.some((project) => project.id === projectId)
 }
 
 function noMcpReachResult(toolTitle: string): McpToolResult {
