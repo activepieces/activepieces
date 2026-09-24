@@ -9,6 +9,7 @@ import { stripeAuth } from '../..';
 import { customerOutputSchema } from '../output-schemas';
 export const stripeUpdateCustomerAi = createAction({
   name: 'update_customer_ai',
+  classification: 'WRITE',
   auth: stripeAuth,
   displayName: 'Update Customer (Agent)',
   description: 'Modify an existing Stripe customer.',

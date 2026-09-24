@@ -6,6 +6,7 @@ import { createRowActionOutputSchema } from '../output-schemas';
 
 export const createRow = createAction({
     name: 'create_row',
+    classification: 'WRITE',
     displayName: 'Create Row',
     description: 'Create a new row in a table',
     audience: 'both',

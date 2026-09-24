@@ -9,6 +9,7 @@ const TRIGGER_SCOPE = 'store/shipment/created';
 export const shipmentCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'shipmentCreated',
+  classification: 'READ',
   displayName: 'Shipment Created',
   description: 'Triggers when a new shipment is created',
   aiMetadata: {

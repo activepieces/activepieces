@@ -6,6 +6,7 @@ import { togglCommon } from '../common';
 export const createClient = createAction({
   auth: togglTrackAuth,
   name: 'create_client',
+  classification: 'WRITE',
   displayName: 'Create Client',
   description: 'Create a new client in a workspace.',
   audience: 'both',

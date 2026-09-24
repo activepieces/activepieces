@@ -14,6 +14,8 @@ import {
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import {
   CURSOR_QUERY_PARAM,
   DataTable,
@@ -47,6 +49,7 @@ export const PieceSetsTab = () => {
   const {
     data: pieceSetsPage,
     isLoading,
+    isError,
     refetch,
   } = pieceSetQueries.usePieceSets({ cursor, limit });
   const { mutate: deleteSet } = pieceSetMutations.useDeletePieceSet();
@@ -166,6 +169,13 @@ export const PieceSetsTab = () => {
 
   return (
     <>
+      <DashboardPageHeader
+        title={t('Piece Sets')}
+        description={t(
+          'Group pieces into sets and choose which projects can use each one',
+        )}
+      />
+      <PiecesLockedBanner message={t('Piece sets need a higher plan.')} />
       <DataTable
         emptyStateTextTitle={t('No piece sets found')}
         emptyStateTextDescription={t(
@@ -187,6 +197,9 @@ export const PieceSetsTab = () => {
           previous: pieceSetsPage?.previous ?? null,
         }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('piece sets')}
+        onRetry={refetch}
         clientFiltering={true}
         toolbarButtons={[
           <CreatePieceSetDialog key="create" onCreated={() => refetch()} />,

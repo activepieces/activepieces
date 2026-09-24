@@ -10,6 +10,7 @@ import { discordCreateChannelActionOutputSchema } from '../output-schemas';
 export const discordCreateChannelAi = createAction({
   auth: discordAuth,
   name: 'discord_create_channel',
+  classification: 'WRITE',
   displayName: 'Create Channel',
   description: 'Create a new channel in a guild.',
   audience: 'ai',

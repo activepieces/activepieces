@@ -6,6 +6,7 @@ import { driveGetReplyOutputSchema } from '../output-schemas';
 export const driveGetReply = createAction({
   auth: googleDriveAuth,
   name: 'drive_get_reply',
+  classification: 'READ',
   displayName: 'Get Reply',
   description: 'Fetch a single reply on a Drive comment by ID.',
   audience: 'ai',

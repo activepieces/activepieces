@@ -4,6 +4,7 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 
 export const fetchPaymentLinkDetails = createAction({
   name: 'fetch-payment-link-details',
+  classification: 'READ',
   displayName: 'Fetch Payment Link Details',
   description: 'View all details and status of a payment link in Cashfree Payment Gateway',
   audience: 'both',

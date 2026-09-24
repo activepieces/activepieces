@@ -60,6 +60,11 @@ export const FileEntity = new EntitySchema<FileSchema>({
             columns: ['type', 'created'],
         },
         {
+            name: 'idx_file_platform_id_null_project',
+            columns: ['platformId'],
+            where: '"projectId" IS NULL',
+        },
+        {
             // Real index is a partial expression index on (type, (metadata->>'flowId')),
             // created in 1815000000000-AddSampleDataFlowIdIndexToFile. EntitySchema can't
             // express the expression, so synchronize:false stops migration:generate dropping it.

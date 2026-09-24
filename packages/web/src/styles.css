@@ -3,53 +3,35 @@
 @import './styles/globals.css';
 @custom-variant dark (&:is(.dark *));
 
-/* Sentient Variable Font */
+/* Paths are relative to this file, not /fonts/, so Vite fingerprints them. */
 @font-face {
-  font-family: 'Sentient';
-  src: url('/fonts/Sentient-Variable.woff2') format('woff2-variations');
-  font-weight: 200 700;
   font-display: swap;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  src: url('assets/fonts/InterVariable.woff2') format('woff2-variations');
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Inter';
+  font-style: italic;
+  font-weight: 100 900;
+  src: url('assets/fonts/InterVariable-Italic.woff2') format('woff2-variations');
 }
 
-/* inter-regular - latin */
 @font-face {
   font-display: swap;
-  font-family: 'Inter';
+  font-family: 'JetBrains Mono';
   font-style: normal;
-  font-weight: 400;
-  src: url('assets/fonts/inter-v20-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  font-weight: 100 800;
+  src: url('assets/fonts/JetBrainsMono.woff2') format('woff2-variations');
 }
-/* inter-500 - latin */
+
 @font-face {
   font-display: swap;
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 500;
-  src: url('assets/fonts/inter-v20-latin-500.ttf') format('truetype');
-}
-/* inter-600 - latin */
-@font-face {
-  font-display: swap;
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 600;
-  src: url('assets/fonts/inter-v20-latin-600.ttf') format('truetype');
-}
-/* inter-700 - latin */
-@font-face {
-  font-display: swap;
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 700;
-  src: url('assets/fonts/inter-v20-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
-}
-/* inter-800 - latin */
-@font-face {
-  font-display: swap;
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 800;
-  src: url('assets/fonts/inter-v20-latin-800.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+  font-family: 'Sentient';
+  font-weight: 200 700;
+  src: url('assets/fonts/Sentient-Variable.woff2') format('woff2-variations');
 }
 
 @utility container {
@@ -157,6 +139,8 @@
   --radius-xs: calc(var(--radius) - 8px);
   --radius-xss: calc(var(--radius) - 10px);
 
+  --container-page-band: 1198px;
+
   --text-xss: 0.65rem;
   --text-3xl: 1.75rem;
   --text-4xl: 2rem;
@@ -176,7 +160,10 @@
     alternate;
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji', Segoe UI Symbol, 'Noto Color Emoji';
-  --font-sentient: 'Sentient', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  --font-mono--font-feature-settings: 'calt' 0;
+  --font-serif: 'Sentient', ui-serif, Georgia, serif;
   --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.3);
   --shadow-add-button: var(--add-button-shadow);
   --color-builder-background: var(--builder-background);
@@ -723,9 +710,6 @@
 }
 
 @layer base {
-  body {
-    @apply font-sans;
-  }
   html {
     @apply font-sans;
   }

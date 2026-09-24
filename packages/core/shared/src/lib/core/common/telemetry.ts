@@ -1,31 +1,7 @@
 import type { RunEnvironment } from '@activepieces/core-execution'
 import type { FlowId, ProjectId, UserId } from '@activepieces/core-utils'
 import type { McpId } from '../../automation/mcp/mcp'
-
-type FlowCreated = {
-    flowId: FlowId
-}
-type PiecesSearch = {
-    target: 'steps' | 'triggers'
-    search: string
-}
-
-type TemplateSearch = {
-    search: string
-    tags: string[]
-    pieces: string[]
-}
-
-type RunCreated = {
-    projectId: ProjectId
-    flowId: FlowId
-    environment: RunEnvironment
-    count: number
-}
-
-type FlowPublished = {
-    flowId: FlowId
-}
+import type { AttributionParams } from './attribution'
 
 type SignedUp = {
     userId: UserId
@@ -33,6 +9,76 @@ type SignedUp = {
     firstName?: string
     lastName?: string
     projectId: ProjectId
+}
+
+type SignedIn = {
+    userId: UserId
+    platformId: string
+}
+
+type SignUpSubmitted = {
+    method: 'password' | 'email_code'
+} & AttributionParams
+
+type SignUpFailed = {
+    errorCode: string
+}
+
+type SignInSubmitted = {
+    method: 'email'
+}
+
+type OnboardingCompleted = {
+    userId: UserId
+    platformId: string
+}
+
+type PlanChange = {
+    platformId: string
+    plan: string
+    previousPlan?: string
+}
+
+type CheckoutStarted = {
+    platformId: string
+    plan: string
+}
+
+type TrialStarted = {
+    platformId: string
+    plan: string
+    trialEndsAt: string
+}
+
+type InviteSent = {
+    platformId: string
+    type: 'platform' | 'project'
+    role?: string
+}
+
+type InviteAccepted = {
+    platformId: string
+    type: 'platform' | 'project'
+}
+
+type SalesHandoffClicked = {
+    featureKey?: string
+    plan?: string
+    surface: string
+}
+
+type SignInFailed = {
+    errorCode: string
+}
+
+type FederatedLoginStarted = {
+    provider: 'google' | 'saml'
+}
+
+type EmailVerificationCompleted = Record<string, never>
+
+type CaptchaUnavailable = {
+    surface: string
 }
 
 type EmailCodeRequested = {
@@ -49,107 +95,30 @@ type EmailCodeRejected = {
 
 type EmailCodeResendRequested = Record<string, never>
 
-type CaptchaUnavailable = {
-    surface: string
+type FlowCreated = {
+    flowId: FlowId
 }
 
-type QuotaAlert = {
-    percentageUsed: number
+type RunCreated = {
+    projectId: ProjectId
+    flowId: FlowId
+    environment: RunEnvironment
+    count: number
 }
-type FlowImported = {
-    id: string
-    name: string
-    location:
-    | 'import flow view'
-    | 'inside the builder'
-    | 'import flow by uri encoded query param'
-    tab?: string
+
+type FlowPublished = {
+    flowId: FlowId
 }
+
 type FlowImportedUsingFile = {
     location: 'inside dashboard' | 'inside the builder'
     multiple: boolean
 }
 
-type FlowIssueClicked = {
-    flowId: string
-}
-
-type FlowIssueResolved = {
-    flowId: string
-}
-
-type RequestTrialSubmitted = {
-    fullName: string
-    email: string
-    numberOfEmployees: string
-    companyName: string
-    goal: string
-}
-
-type RequestTrialClicked = {
-    location: string
-}
-
-type KeyActivated = {
-    date: string
-    key: string
-}
-
-type UpgradeClicked = {
-    limitType?: 'team'
-}
-
-type UpgradePopup = {
-    limitType?: 'team'
-}
-
-type ReferralLinkCopied = {
-    userId: UserId
-}
-
-type RewardButtonClicked = {
-    source: 'note' | 'rewards-button'
-}
-
-type RewardInstructionsClicked = {
-    type: 'share-template' | 'linkedin' | 'referral' | 'contribute-piece'
-}
-
-type Referral = {
-    referredUserId: UserId
-}
-
-type FlowShared = {
-    flowId: FlowId
-    projectId: ProjectId
-}
-
-type OpenedFromDashboard = {
-    location: 'sidenav' | 'tasks-progress'
-}
-
-type FormsViewed = {
-    flowId: string
-    projectId: string
-    formProps: Record<string, unknown>
-}
-
-type UserInvited = {
-    platformId: string
-    projectId?: string
-    email: string
-}
-
-type TriggerFailuresExceeded = {
-    projectId: string
-    flowId: string
-    pieceName: string
-    pieceVersion: string
-}
-type AiProviderConfiguredOrUsed = {
-    provider: string
-    projectId: string
-    platformId: string
+type PieceSelectorSearch = {
+    search: string
+    isTrigger: boolean
+    selectedActionOrTriggerName: string | null
 }
 
 type McpToolCalled = {
@@ -163,197 +132,101 @@ type McpServerConnected = {
     platformId?: string
 }
 
-type PieceSelectorSearch = {
-    search: string
-    isTrigger: boolean
-    selectedActionOrTriggerName: string | null
-}
-
-type SignUpSubmitted = {
-    method: 'email'
-    utm_source?: string
-    utm_medium?: string
-    utm_campaign?: string
-    utm_term?: string
-    utm_content?: string
-    gclid?: string
-    fbclid?: string
-    ref?: string
-    ap_cta?: string
-}
-
-type SignUpFailed = {
-    errorCode: string
-}
-
-type EmailVerificationCompleted = Record<string, never>
-
-type SignInSubmitted = {
-    method: 'email'
-}
-
-type SignInFailed = {
-    errorCode: string
-}
-
-type FederatedLoginStarted = {
-    provider: 'google' | 'saml'
-}
-
-type SignedIn = {
-    userId: UserId
-    platformId: string
-}
-export enum TelemetryEventName {
-    SIGNED_UP = 'signed.up',
-    EMAIL_CODE_REQUESTED = 'email.code.requested',
-    EMAIL_CODE_VERIFIED = 'email.code.verified',
-    EMAIL_CODE_REJECTED = 'email.code.rejected',
-    EMAIL_CODE_RESEND_REQUESTED = 'email.code.resend.requested',
-    CAPTCHA_UNAVAILABLE = 'captcha.unavailable',
-    QUOTA_ALERT = 'quota.alert',
-    REQUEST_TRIAL_CLICKED = 'request.trial.clicked',
-    REQUEST_TRIAL_SUBMITTED = 'request.trial.submitted',
-    KEY_ACTIVATED = 'key.activated',
-    FLOW_ISSUE_CLICKED = 'flow.issue.clicked',
-    FLOW_ISSUE_RESOLVED = 'flow.issue.resolved',
-    USER_INVITED = 'user.invited',
-    UPGRADE_POPUP = 'upgrade.popup',
-    CREATED_FLOW = 'flow.created',
-    DEMO_IMPORTED = 'demo.imported',
-    FLOW_RUN_CREATED = 'run.created',
-    FLOW_PUBLISHED = 'flow.published',
-    /**used with templates dialog + import flow component + flows imported by uri query param*/
-    FLOW_IMPORTED = 'flow.imported',
-    /**used only with import flow dialog*/
-    FLOW_IMPORTED_USING_FILE = 'flow.imported.using.file',
-    PIECES_SEARCH = 'pieces.search',
-    REFERRAL = 'referral',
-    REFERRAL_LINK_COPIED = 'referral.link.copied',
-    FLOW_SHARED = 'flow.shared',
-    TEMPLATE_SEARCH = 'template.search',
-    FORMS_VIEWED = 'forms.viewed',
-    FORMS_SUBMITTED = 'forms.submitted',
-    REWARDS_OPENED = 'rewards.opened',
-    REWARDS_INSTRUCTION_CLICKED = 'rewards.instructions.clicked',
-    TRIGGER_FAILURES_EXCEEDED = 'trigger.failures.exceeded',
-    AI_PROVIDER_USED = 'ai.provider.used',
-    AI_PROVIDER_CONFIGURED = 'ai.provider.configured',
-    MCP_TOOL_CALLED = 'mcp.tool.called',
-    MCP_SERVER_CONNECTED = 'mcp.server.connected',
-    UPGRADE_POPUP_OPENED = 'upgrade.popup.opened',
-    UPGRADE_CLICKED = 'upgrade.clicked',
-    OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',
-    PIECE_SELECTOR_SEARCH = 'piece.selector.search',
-    SIGN_UP_SUBMITTED = 'signup.submitted',
-    SIGN_UP_FAILED = 'signup.failed',
-    EMAIL_VERIFICATION_COMPLETED = 'email.verification.completed',
-    SIGN_IN_SUBMITTED = 'signin.submitted',
-    SIGN_IN_FAILED = 'signin.failed',
-    FEDERATED_LOGIN_STARTED = 'federated.login.started',
-    SIGNED_IN = 'signed.in',
-    CHAT_PAGE_VIEWED = 'chat.page.viewed',
-}
-
 type BaseTelemetryEvent<T, P> = {
     name: T
     payload: P
 }
 
+export enum TelemetryEventName {
+    SIGNED_UP = 'signed.up',
+    SIGNED_IN = 'signed.in',
+    SIGN_UP_SUBMITTED = 'signup.submitted',
+    SIGN_UP_FAILED = 'signup.failed',
+    SIGN_IN_SUBMITTED = 'signin.submitted',
+    SIGN_IN_FAILED = 'signin.failed',
+    FEDERATED_LOGIN_STARTED = 'federated.login.started',
+    EMAIL_VERIFICATION_COMPLETED = 'email.verification.completed',
+    CAPTCHA_UNAVAILABLE = 'captcha.unavailable',
+    EMAIL_CODE_REQUESTED = 'email.code.requested',
+    EMAIL_CODE_VERIFIED = 'email.code.verified',
+    EMAIL_CODE_REJECTED = 'email.code.rejected',
+    EMAIL_CODE_RESEND_REQUESTED = 'email.code.resend.requested',
+    CREATED_FLOW = 'flow.created',
+    FLOW_RUN_CREATED = 'run.created',
+    FLOW_PUBLISHED = 'flow.published',
+    FLOW_IMPORTED_USING_FILE = 'flow.imported.using.file',
+    PIECE_SELECTOR_SEARCH = 'piece.selector.search',
+    MCP_TOOL_CALLED = 'mcp.tool.called',
+    MCP_SERVER_CONNECTED = 'mcp.server.connected',
+    ONBOARDING_COMPLETED = 'onboarding.completed',
+    CHECKOUT_STARTED = 'checkout.started',
+    PLAN_CHANGED = 'plan.changed',
+    PLAN_CANCELLED = 'plan.cancelled',
+    PLAN_REACTIVATED = 'plan.reactivated',
+    TRIAL_STARTED = 'trial.started',
+    INVITE_SENT = 'invite.sent',
+    INVITE_ACCEPTED = 'invite.accepted',
+    SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
+}
+
 export type TelemetryEvent =
-  | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
-  | BaseTelemetryEvent<
-  TelemetryEventName.EMAIL_CODE_REQUESTED,
-  EmailCodeRequested
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.EMAIL_CODE_VERIFIED,
-  EmailCodeVerified
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.EMAIL_CODE_REJECTED,
-  EmailCodeRejected
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
-  EmailCodeResendRequested
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.CAPTCHA_UNAVAILABLE,
-  CaptchaUnavailable
-  >
-  | BaseTelemetryEvent<TelemetryEventName.REFERRAL, Referral>
-  | BaseTelemetryEvent<
-  TelemetryEventName.REQUEST_TRIAL_CLICKED,
-  RequestTrialClicked
-  >
-  | BaseTelemetryEvent<TelemetryEventName.KEY_ACTIVATED, KeyActivated>
-  | BaseTelemetryEvent<
-  TelemetryEventName.REQUEST_TRIAL_SUBMITTED,
-  RequestTrialSubmitted
-  >
-  | BaseTelemetryEvent<TelemetryEventName.FLOW_ISSUE_CLICKED, FlowIssueClicked>
-  | BaseTelemetryEvent<
-  TelemetryEventName.FLOW_ISSUE_RESOLVED,
-  FlowIssueResolved
-  >
-  | BaseTelemetryEvent<TelemetryEventName.UPGRADE_CLICKED, UpgradeClicked>
-  | BaseTelemetryEvent<TelemetryEventName.UPGRADE_POPUP, UpgradePopup>
-  | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>
-  | BaseTelemetryEvent<TelemetryEventName.FLOW_PUBLISHED, FlowPublished>
-  | BaseTelemetryEvent<TelemetryEventName.QUOTA_ALERT, QuotaAlert>
-  | BaseTelemetryEvent<TelemetryEventName.CREATED_FLOW, FlowCreated>
-  | BaseTelemetryEvent<TelemetryEventName.TEMPLATE_SEARCH, TemplateSearch>
-  | BaseTelemetryEvent<TelemetryEventName.PIECES_SEARCH, PiecesSearch>
-  | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED, FlowImported>
-  | BaseTelemetryEvent<
-  TelemetryEventName.FLOW_IMPORTED_USING_FILE,
-  FlowImportedUsingFile
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.REFERRAL_LINK_COPIED,
-  ReferralLinkCopied
-  >
-  | BaseTelemetryEvent<TelemetryEventName.FLOW_SHARED, FlowShared>
-  | BaseTelemetryEvent<TelemetryEventName.DEMO_IMPORTED, Record<string, never>>
-  | BaseTelemetryEvent<
-  TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD,
-  OpenedFromDashboard
-  >
-  | BaseTelemetryEvent<TelemetryEventName.FORMS_VIEWED, FormsViewed>
-  | BaseTelemetryEvent<TelemetryEventName.USER_INVITED, UserInvited>
-  | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>
-  | BaseTelemetryEvent<TelemetryEventName.REWARDS_OPENED, RewardButtonClicked>
-  | BaseTelemetryEvent<
-  TelemetryEventName.REWARDS_INSTRUCTION_CLICKED,
-  RewardInstructionsClicked
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.TRIGGER_FAILURES_EXCEEDED,
-  TriggerFailuresExceeded
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.AI_PROVIDER_USED,
-  AiProviderConfiguredOrUsed
-  >
-  | BaseTelemetryEvent<
-  TelemetryEventName.AI_PROVIDER_CONFIGURED,
-  AiProviderConfiguredOrUsed
-  >
-  | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
-  | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
-  | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>
-  | BaseTelemetryEvent<TelemetryEventName.SIGN_UP_SUBMITTED, SignUpSubmitted>
-  | BaseTelemetryEvent<TelemetryEventName.SIGN_UP_FAILED, SignUpFailed>
-  | BaseTelemetryEvent<
-  TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
-  EmailVerificationCompleted
-  >
-  | BaseTelemetryEvent<TelemetryEventName.SIGN_IN_SUBMITTED, SignInSubmitted>
-  | BaseTelemetryEvent<TelemetryEventName.SIGN_IN_FAILED, SignInFailed>
-  | BaseTelemetryEvent<
-  TelemetryEventName.FEDERATED_LOGIN_STARTED,
-  FederatedLoginStarted
-  >
-  | BaseTelemetryEvent<TelemetryEventName.SIGNED_IN, SignedIn>
-  | BaseTelemetryEvent<TelemetryEventName.CHAT_PAGE_VIEWED, Record<string, never>>
+    | BaseTelemetryEvent<TelemetryEventName.SIGNED_UP, SignedUp>
+    | BaseTelemetryEvent<TelemetryEventName.SIGNED_IN, SignedIn>
+    | BaseTelemetryEvent<TelemetryEventName.SIGN_UP_SUBMITTED, SignUpSubmitted>
+    | BaseTelemetryEvent<TelemetryEventName.SIGN_UP_FAILED, SignUpFailed>
+    | BaseTelemetryEvent<TelemetryEventName.SIGN_IN_SUBMITTED, SignInSubmitted>
+    | BaseTelemetryEvent<TelemetryEventName.SIGN_IN_FAILED, SignInFailed>
+    | BaseTelemetryEvent<TelemetryEventName.FEDERATED_LOGIN_STARTED, FederatedLoginStarted>
+    | BaseTelemetryEvent<TelemetryEventName.EMAIL_VERIFICATION_COMPLETED, EmailVerificationCompleted>
+    | BaseTelemetryEvent<TelemetryEventName.CAPTCHA_UNAVAILABLE, CaptchaUnavailable>
+    | BaseTelemetryEvent<TelemetryEventName.EMAIL_CODE_REQUESTED, EmailCodeRequested>
+    | BaseTelemetryEvent<TelemetryEventName.EMAIL_CODE_VERIFIED, EmailCodeVerified>
+    | BaseTelemetryEvent<TelemetryEventName.EMAIL_CODE_REJECTED, EmailCodeRejected>
+    | BaseTelemetryEvent<TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED, EmailCodeResendRequested>
+    | BaseTelemetryEvent<TelemetryEventName.CREATED_FLOW, FlowCreated>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_RUN_CREATED, RunCreated>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_PUBLISHED, FlowPublished>
+    | BaseTelemetryEvent<TelemetryEventName.FLOW_IMPORTED_USING_FILE, FlowImportedUsingFile>
+    | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>
+    | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
+    | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
+    | BaseTelemetryEvent<TelemetryEventName.ONBOARDING_COMPLETED, OnboardingCompleted>
+    | BaseTelemetryEvent<TelemetryEventName.CHECKOUT_STARTED, CheckoutStarted>
+    | BaseTelemetryEvent<TelemetryEventName.PLAN_CHANGED, PlanChange>
+    | BaseTelemetryEvent<TelemetryEventName.PLAN_CANCELLED, PlanChange>
+    | BaseTelemetryEvent<TelemetryEventName.PLAN_REACTIVATED, PlanChange>
+    | BaseTelemetryEvent<TelemetryEventName.TRIAL_STARTED, TrialStarted>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
+    | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
+
+export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
+    TelemetryEventName.ONBOARDING_COMPLETED,
+    TelemetryEventName.CHECKOUT_STARTED,
+    TelemetryEventName.PLAN_CHANGED,
+    TelemetryEventName.PLAN_CANCELLED,
+    TelemetryEventName.PLAN_REACTIVATED,
+    TelemetryEventName.TRIAL_STARTED,
+    TelemetryEventName.SALES_HANDOFF_CLICKED,
+    TelemetryEventName.SIGNED_UP,
+    TelemetryEventName.SIGNED_IN,
+    TelemetryEventName.SIGN_UP_SUBMITTED,
+    TelemetryEventName.SIGN_UP_FAILED,
+    TelemetryEventName.SIGN_IN_SUBMITTED,
+    TelemetryEventName.SIGN_IN_FAILED,
+    TelemetryEventName.FEDERATED_LOGIN_STARTED,
+    TelemetryEventName.EMAIL_VERIFICATION_COMPLETED,
+    TelemetryEventName.CAPTCHA_UNAVAILABLE,
+    TelemetryEventName.EMAIL_CODE_REQUESTED,
+    TelemetryEventName.EMAIL_CODE_VERIFIED,
+    TelemetryEventName.EMAIL_CODE_REJECTED,
+    TelemetryEventName.EMAIL_CODE_RESEND_REQUESTED,
+])
+
+export const isCloudOnlyTelemetryEvent = (name: TelemetryEventName): boolean => CLOUD_ONLY_TELEMETRY_EVENTS.has(name)
+
+export enum DeploymentKind {
+    CLOUD = 'cloud',
+    SELF_HOSTED = 'self_hosted',
+    DEV = 'dev',
+}

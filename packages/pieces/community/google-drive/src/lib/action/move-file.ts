@@ -7,18 +7,23 @@ import { googleDriveMoveFileActionOutputSchema } from '../output-schemas';
 export const moveFileAction = createAction({
   auth: googleDriveAuth,
   name: 'google-drive-move-file',
+  classification: 'WRITE',
   displayName: 'Move File',
-  description: 'Moves a file from one folder to another.',
+  description: 'Move a file into another folder.',
   audience: 'human',
   aiMetadata: { description: 'Relocates a Drive file to a target folder, detaching it from its current parents and attaching it to the new one. Use to reorganize a file once you know its ID and the destination folder ID. Idempotent: repeating with the same destination leaves the file in the same folder.', idempotent: true },
   props: {
     fileId: Property.ShortText({
       displayName: 'File ID',
-      description: 'You can use **Search Folder/File** action to retrieve ID.',
+      description: 'Use the ID from a trigger or the Find File or Folder action.',
       required: true,
+      placeholder: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
+    }),
+    folderId: common.parentFolderDropdown({
+      displayName: 'Destination Folder',
+      description: 'The folder to move the file into. Type to search by folder name.',
     }),
     include_team_drives: common.properties.include_team_drives,
-    folderId: common.properties.parentFolder,
   },
   outputSchema: googleDriveMoveFileActionOutputSchema,
   async run(context) {

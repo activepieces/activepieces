@@ -4,6 +4,7 @@ import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 
 export const createOrder = createAction({
   name: 'create-order',
+  classification: 'WRITE',
   displayName: 'Create Order',
   description: 'Creates an order in Cashfree Payment Gateway',
   audience: 'both',

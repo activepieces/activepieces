@@ -8,6 +8,7 @@ import { propsValidation } from '@activepieces/pieces-common';
 export const generatePassword = createAction({
   audience: 'both',
   name: 'generate-password',
+  classification: 'READ',
   description: 'Generates a random password with the specified length',
   aiMetadata: { description: 'Generates a random password of a given length, from either an alphanumeric character set or alphanumeric plus symbols. Pick this when a flow needs a fresh secret or random token to hand to a later step; it is a value generator, not a digest, so use Text to Hash or Generate HMAC Signature to hash existing text. Length must be 256 or less; not idempotent: every call returns a different password, so capture the output once and reuse it rather than re-running.', idempotent: false },
   displayName: 'Generate Password',

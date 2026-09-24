@@ -8,9 +8,10 @@ import * as z from 'zod/mini'
 
 export const createReply = createAction({
   name: 'create-reply',
+  classification: 'WRITE',
   displayName: 'Create or Update Reply',
   description: 'Create or update a reply to a review if it already exists',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Posts the business owner\'s reply to a specific Google Business Profile review, or overwrites the existing reply if one is already present. Use to respond to customer reviews; safe to repeat since it upserts on the review name. Requires the full review resource name in the form accounts/{account}/locations/{location}/reviews/{review}.', idempotent: true },
   props: {
     reviewName: Property.ShortText({
@@ -33,7 +34,7 @@ export const createReply = createAction({
     });
 
     const response = await httpClient.sendRequest({
-      url: ` https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
+      url: `https://mybusiness.googleapis.com/v4/${reviewName}/reply`,
       method: HttpMethod.PUT,
       headers: {
         Authorization: `Bearer ${ctx.auth.access_token}`,

@@ -7,6 +7,7 @@ import { clickupAuth } from '../../auth';
 export const deleteClickupTask = createAction({
   auth: clickupAuth,
   name: 'delete_task',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a task in a workspace and list',
   audience: 'human',
   aiMetadata: { description: 'Permanently delete a ClickUp task identified by its task ID. Pick this to remove a task entirely; this is destructive and cannot be undone, so confirm the ID before calling. Deleting an already-deleted task fails rather than succeeding, so treat it as non-idempotent.', idempotent: false },

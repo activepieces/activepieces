@@ -8,6 +8,7 @@ import { AddEventEvent } from '../common/types';
 export const addEventCreateAddToCalendarLinksAction = createAction({
   auth: addEventAuth,
   name: 'create_add_to_calendar_links',
+  classification: 'WRITE',
   displayName: 'Create Dynamic Add to Calendar Links',
   description:
     'Creates an AddEvent event and returns its shareable "Add to Calendar" links. Opening a link lets recipients add the event to Apple, Google, Outlook, and other calendars. Each run produces a unique link, so links can be personalized per recipient.',

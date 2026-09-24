@@ -6,6 +6,7 @@ import { driveDeleteReplyOutputSchema } from '../output-schemas';
 export const driveDeleteReply = createAction({
   auth: googleDriveAuth,
   name: 'drive_delete_reply',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Reply',
   description: 'Permanently delete a reply on a Drive comment by ID.',
   audience: 'ai',

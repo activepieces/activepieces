@@ -29,6 +29,10 @@ export const OptionalBooleanFromQuery = z.pipe(
     z.optional(z.boolean()),
 )
 
+export const OptionalIsoDateTimeQuery = z.optional(
+    z.iso.datetime({ offset: true }).check(z.refine((val) => val.slice(0, 4) !== '0000')),
+)
+
 export const OptionalArrayFromQuery = <T extends z.ZodMiniType>(schema: T) =>
     z.pipe(
         z.transform((val) => (Array.isArray(val) ? val : val !== undefined ? [val] : undefined)),

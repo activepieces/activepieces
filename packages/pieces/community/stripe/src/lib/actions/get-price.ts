@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { priceOutputSchema } from '../output-schemas';
 export const stripeGetPrice = createAction({
   name: 'get_price',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Price (Agent)',
   description: 'Retrieve a Stripe price by its ID.',

@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 
@@ -9,14 +9,17 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
 import { Client } from '@hubspot/api-client';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const updateCompanyAction = createAction({
 	auth: hubspotAuth,
 	name: 'update-company',
+	classification: 'WRITE',
 	displayName: 'Update Company',
 	description: 'Updates a company in Hubspot.',
 	audience: 'both',
 	aiMetadata: { description: 'Update properties on an existing HubSpot company identified by Company ID; only the supplied fields are changed. Applying the same field values repeatedly leaves the record in the same state, so it is idempotent. Use Create Company to add a new record, or a find action to obtain the ID first.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',
@@ -54,7 +57,7 @@ export const updateCompanyAction = createAction({
 			companyProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const updatedCompany = await client.crm.companies.basicApi.update(companyId, {
 			properties: companyProperties,

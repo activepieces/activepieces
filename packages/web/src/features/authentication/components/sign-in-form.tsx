@@ -13,7 +13,7 @@ import { t } from 'i18next';
 import { Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 
 import { authenticationApi } from '@/api/authentication-api';
@@ -23,10 +23,15 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
-import { useRedirectAfterLogin } from '@/lib/navigation-utils';
+import {
+  FROM_QUERY_PARAM,
+  pendingRedirect,
+  useRedirectAfterLogin,
+} from '@/lib/navigation-utils';
 
 import { CheckEmailNote } from './check-email-note';
 
@@ -52,6 +57,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
   const { data: edition } = flagsHooks.useFlag(ApFlagId.EDITION);
 
   const redirectAfterLogin = useRedirectAfterLogin();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { capture } = useTelemetry();
 
@@ -64,7 +70,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
     onSuccess: (data) => {
       authenticationSession.saveResponse(data, false);
 
-      if (isNil(data.projectId)) {
+      if (isNil(data.platformId)) {
         navigate('/create-platform');
         return;
       }
@@ -99,6 +105,7 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
             break;
           }
           case ErrorCode.EMAIL_IS_NOT_VERIFIED: {
+            pendingRedirect.remember(searchParams.get(FROM_QUERY_PARAM));
             setShowCheckYourEmailNote(true);
             break;
           }
@@ -111,6 +118,14 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
           case ErrorCode.EMAIL_AUTH_DISABLED: {
             form.setError('root.serverError', {
               message: t(`Email authentication has been disabled`),
+            });
+            break;
+          }
+          case ErrorCode.USER_NOT_FOUND_ON_PLATFORM: {
+            form.setError('root.serverError', {
+              message: t(
+                'Your account is not set up on this platform, please contact your administrator',
+              ),
             });
             break;
           }
@@ -132,7 +147,9 @@ const SignInForm = ({ onForgotPassword }: SignInFormProps) => {
       name: TelemetryEventName.SIGN_IN_SUBMITTED,
       payload: { method: 'email' },
     });
-    mutate(data);
+    // On Cloud a password sign-up is only provisioned on this first sign-in
+    // (after the verification email), so the stashed attribution rides along.
+    mutate({ ...data, attribution: acquisitionUtils.getAcquisitionParams() });
   };
 
   return (

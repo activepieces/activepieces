@@ -1,4 +1,8 @@
-import { LocalesEnum, spreadIfDefined } from '@activepieces/core-utils';
+import {
+  AIProviderName,
+  LocalesEnum,
+  spreadIfDefined,
+} from '@activepieces/core-utils';
 import {
   ErrorHandlingOptionsParam,
   PieceMetadataModel,
@@ -13,6 +17,7 @@ import {
   FlowTrigger,
   StepOutput,
   StepRunResponse,
+  ProjectAIProvider,
 } from '@activepieces/shared';
 import { t } from 'i18next';
 
@@ -24,42 +29,23 @@ import {
   StepMetadataWithActionOrTriggerOrAgentDisplayName,
 } from '../types';
 
-export const CORE_STEP_METADATA: Record<
-  Exclude<FlowActionType, FlowActionType.PIECE> | FlowTriggerType.EMPTY,
-  PrimitiveStepMetadata
-> = {
-  [FlowActionType.CODE]: {
-    displayName: t('Code'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/code.svg',
-    description: t('Powerful Node.js & TypeScript code with npm'),
-    type: FlowActionType.CODE as const,
-  },
-  [FlowActionType.LOOP_ON_ITEMS]: {
-    displayName: t('Loop on Items'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/loop.svg',
-    description: 'Iterate over a list of items',
-    type: FlowActionType.LOOP_ON_ITEMS as const,
-  },
-  [FlowActionType.ROUTER]: {
-    displayName: t('Router'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
-    description: t('Split your flow into branches depending on condition(s)'),
-    type: FlowActionType.ROUTER as const,
-  },
-  [FlowTriggerType.EMPTY]: {
-    displayName: t('Empty Trigger'),
-    logoUrl: 'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
-    description: t('Empty Trigger'),
-    type: FlowTriggerType.EMPTY as const,
-  },
-} as const;
-export const CORE_ACTIONS_METADATA = [
-  CORE_STEP_METADATA[FlowActionType.CODE],
-  CORE_STEP_METADATA[FlowActionType.LOOP_ON_ITEMS],
-  CORE_STEP_METADATA[FlowActionType.ROUTER],
-] as const;
-
 export const stepUtils = {
+  hasAiRouterProvider(providers: ProjectAIProvider[] | undefined): boolean {
+    return (providers ?? []).some(
+      (provider) =>
+        provider.provider === AIProviderName.ACTIVEPIECES ||
+        provider.provider === AIProviderName.OPENROUTER,
+    );
+  },
+  coreActionsMetadata(): PrimitiveStepMetadata[] {
+    const coreStepMetadata = buildCoreStepMetadata();
+    return [
+      coreStepMetadata[FlowActionType.CODE],
+      coreStepMetadata[FlowActionType.LOOP_ON_ITEMS],
+      coreStepMetadata[FlowActionType.ROUTER],
+      coreStepMetadata[FlowActionType.AI_ROUTER],
+    ];
+  },
   getKeys(
     step: FlowAction | FlowTrigger,
     locale: LocalesEnum,
@@ -84,11 +70,12 @@ export const stepUtils = {
       'customLogoUrl' in step ? step.customLogoUrl : undefined;
     switch (step.type) {
       case FlowActionType.ROUTER:
+      case FlowActionType.AI_ROUTER:
       case FlowActionType.LOOP_ON_ITEMS:
       case FlowActionType.CODE:
       case FlowTriggerType.EMPTY:
         return {
-          ...CORE_STEP_METADATA[step.type],
+          ...buildCoreStepMetadata()[step.type],
           ...spreadIfDefined('logoUrl', customLogoUrl),
           actionOrTriggerOrAgentDisplayName: '',
           actionOrTriggerOrAgentDescription: '',
@@ -164,6 +151,7 @@ export function extractPieceNamesAndCoreMetadata(
 ): { pieceNames: string[]; coreMetadata: StepMetadata[] } {
   const pieceNamesSet = new Set<string>();
   const coreMetadata: StepMetadata[] = [];
+  const coreStepMetadata = excludeCore ? undefined : buildCoreStepMetadata();
 
   for (const step of steps) {
     if (
@@ -171,9 +159,8 @@ export function extractPieceNamesAndCoreMetadata(
       step.type === FlowTriggerType.PIECE
     ) {
       pieceNamesSet.add(step.settings.pieceName);
-    } else if (!excludeCore) {
-      const coreMeta =
-        CORE_STEP_METADATA[step.type as keyof typeof CORE_STEP_METADATA];
+    } else if (coreStepMetadata) {
+      const coreMeta = coreStepMetadata[step.type];
       if (coreMeta) {
         coreMetadata.push(coreMeta);
       }
@@ -181,6 +168,46 @@ export function extractPieceNamesAndCoreMetadata(
   }
 
   return { pieceNames: Array.from(pieceNamesSet), coreMetadata };
+}
+
+function buildCoreStepMetadata(): Record<
+  Exclude<FlowActionType, FlowActionType.PIECE> | FlowTriggerType.EMPTY,
+  PrimitiveStepMetadata
+> {
+  return {
+    [FlowActionType.CODE]: {
+      displayName: t('Code'),
+      logoUrl: 'https://cdn.activepieces.com/pieces/new-core/code.svg',
+      description: t('Powerful Node.js & TypeScript code with npm'),
+      type: FlowActionType.CODE,
+    },
+    [FlowActionType.LOOP_ON_ITEMS]: {
+      displayName: t('Loop on Items'),
+      logoUrl: 'https://cdn.activepieces.com/pieces/new-core/loop.svg',
+      description: t('Iterate over a list of items'),
+      type: FlowActionType.LOOP_ON_ITEMS,
+    },
+    [FlowActionType.ROUTER]: {
+      displayName: t('Router'),
+      logoUrl: 'https://cdn.activepieces.com/pieces/new-core/router.svg',
+      description: t('Split your flow into branches depending on condition(s)'),
+      type: FlowActionType.ROUTER,
+    },
+    [FlowActionType.AI_ROUTER]: {
+      displayName: t('AI Router'),
+      logoUrl: 'https://cdn.activepieces.com/pieces/ai_router.png',
+      description: t(
+        'Ask one question and Jev, an evaluation model, picks the route',
+      ),
+      type: FlowActionType.AI_ROUTER,
+    },
+    [FlowTriggerType.EMPTY]: {
+      displayName: t('Empty Trigger'),
+      logoUrl: 'https://cdn.activepieces.com/pieces/new-core/empty-trigger.svg',
+      description: t('Empty Trigger'),
+      type: FlowTriggerType.EMPTY,
+    },
+  };
 }
 
 function mapErrorHandlingOptions(

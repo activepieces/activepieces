@@ -16,6 +16,7 @@ interface ReactionUser {
 export const discordListReactions = createAction({
   auth: discordAuth,
   name: 'discord_list_reactions',
+  classification: 'SEARCH',
   displayName: 'List Reactions',
   description: 'List users who reacted to a message with an emoji.',
   audience: 'ai',

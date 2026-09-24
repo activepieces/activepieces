@@ -5,8 +5,8 @@ import { ApplicationEventName,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { applicationEvents } from '../../helper/application-events'
+import { waitpointService } from '../../waitpoints/waitpoint-service'
 import { flowRunHooks } from './flow-run-hooks'
-import { waitpointService } from './waitpoint/waitpoint-service'
 
 export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
     async onFinish({ flowRun, platformId }: FlowRunSideEffectParams): Promise<void> {
@@ -16,7 +16,7 @@ export const flowRunSideEffects = (log: FastifyBaseLogger) => ({
         })) {
             return
         }
-        await waitpointService(log).deleteByFlowRunId(flowRun.id)
+        await waitpointService(log).deleteByFlowRunId({ flowRunId: flowRun.id, projectId: flowRun.projectId })
         await flowRunHooks(log).onFinish(flowRun)
         applicationEvents(log).sendWorkerEvent({
             projectId: flowRun.projectId,

@@ -6,6 +6,7 @@ import { driveCreateCommentOutputSchema } from '../output-schemas';
 export const driveCreateComment = createAction({
   auth: googleDriveAuth,
   name: 'drive_create_comment',
+  classification: 'WRITE',
   displayName: 'Create Comment',
   description: 'Add a new comment to a Drive file.',
   audience: 'ai',

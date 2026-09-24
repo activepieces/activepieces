@@ -6,6 +6,7 @@ import { freshnessDropdown, countProp } from '../common/props';
 
 export const webSearchAction = createAction({
   name: 'web_search',
+  classification: 'SEARCH',
   displayName: 'Web Search',
   description: 'Search the web using Bocha.',
   audience: 'both',

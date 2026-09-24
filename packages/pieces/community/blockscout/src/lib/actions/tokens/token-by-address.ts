@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTokenByAddress = createAction({
   name: 'get_token_by_address',
+  classification: 'READ',
   displayName: 'Get Token by Address',
   description: 'Get token info by its contract address',
   audience: 'both',

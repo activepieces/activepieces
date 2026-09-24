@@ -6,6 +6,7 @@ import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 export const closeDmAction = createAction({
   auth: slackAuth,
   name: 'slack_close_dm',
+  classification: 'WRITE',
   displayName: 'Close Direct Message',
   description: 'Closes a direct message or group DM conversation.',
   audience: 'ai',

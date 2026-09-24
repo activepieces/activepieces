@@ -5,6 +5,7 @@ import { aiAnswerConfig } from '../common/models';
 
 export const scheduleCallAgent = createAction({
   name: 'scheduleCallAgent',
+  classification: 'WRITE',
   auth: aiAnswerAuth,
   displayName: 'Schedule Call Agent',
   description: 'Schedule a call with an agent',

@@ -14,6 +14,7 @@ interface CreateCommentPayload {
 export const createComment = createAction({
 	auth: circleAuth,
 	name: 'create_comment',
+	classification: 'WRITE',
 	displayName: 'Create Comment',
 	description: 'Creates a new comment on a post.',
 	audience: 'both',

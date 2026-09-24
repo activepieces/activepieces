@@ -10,8 +10,9 @@ import { updateRecordActionOutputSchema } from '../output-schemas';
 export const airtableUpdateRecordAction = createAction({
   auth: airtableAuth,
   name: 'airtable_update_record',
+  classification: 'WRITE',
   displayName: 'Update Airtable Record',
-  description: 'Update a record in airtable',
+  description: 'Changes the fields you fill in on an existing record.',
   audience: 'human',
   outputSchema: updateRecordActionOutputSchema,
   aiMetadata: {
@@ -55,6 +56,7 @@ export const airtableUpdateRecordAction = createAction({
       tableId: tableId as string,
       recordId: recordId as string,
       fields: updatedFields as Record<string, unknown>,
+      typecast: true,
     });
   },
 });

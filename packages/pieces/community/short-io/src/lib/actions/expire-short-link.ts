@@ -7,6 +7,7 @@ import { domainIdDropdown, linkIdDropdown } from '../common/props';
 export const expireShortLinkAction = createAction({
   auth: shortIoAuth,
   name: 'expire-short-link',
+  classification: 'DESTRUCTIVE',
   displayName: 'Expire Short Link',
   description: 'Set an expiration date or click limit to deactivate a short link.',
   audience: 'both',

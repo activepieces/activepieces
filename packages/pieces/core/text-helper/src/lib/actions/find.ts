@@ -10,14 +10,7 @@ export const find = createAction({
   },
   displayName: 'Find',
   name: 'find',
-  errorHandlingOptions: {
-    continueOnFailure: {
-      hide: true,
-    },
-    retryOnFailure: {
-      hide: true,
-    },
-  },
+  classification: 'READ',
   props: {
     text: Property.ShortText({
       displayName: 'Text',

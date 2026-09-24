@@ -8,7 +8,7 @@ import {
   flowStructureUtil,
   FlowVersion,
   LoopOnItemsAction,
-  RouterAction,
+  BranchedAction,
   StepLocationRelativeToParent,
   FlowTrigger,
   FlowTriggerType,
@@ -136,7 +136,7 @@ const createStepGraph: (params: {
     nodes: [stepNode, graphEndNode],
     edges:
       step.type !== FlowActionType.LOOP_ON_ITEMS &&
-      step.type !== FlowActionType.ROUTER &&
+      !flowStructureUtil.isBranchedAction(step) &&
       !sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
         ? [straightLineEdge]
         : [],
@@ -162,7 +162,7 @@ const buildFlowGraph: (params: {
   const childGraph =
     step.type === FlowActionType.LOOP_ON_ITEMS
       ? buildLoopChildGraph({ step, orientation })
-      : step.type === FlowActionType.ROUTER
+      : flowStructureUtil.isBranchedAction(step)
       ? buildRouterChildGraph({ step, orientation })
       : sharedFlowCanvasUtils.hasContinueOnFailureBranches(step)
       ? buildContinueOnFailureBranchesGraph({ step, orientation })
@@ -377,7 +377,7 @@ const buildRouterChildGraph = ({
   step,
   orientation,
 }: {
-  step: RouterAction;
+  step: BranchedAction;
   orientation: CanvasOrientation;
 }) => {
   const layout = getLayout(orientation);
@@ -650,7 +650,7 @@ const isSkipped = (stepName: string, trigger: FlowTrigger) => {
     .filter(
       (stepInPath) =>
         stepInPath.type === FlowActionType.LOOP_ON_ITEMS ||
-        stepInPath.type === FlowActionType.ROUTER ||
+        flowStructureUtil.isBranchedAction(stepInPath) ||
         sharedFlowCanvasUtils.hasContinueOnFailureBranches(stepInPath),
     )
     .filter((parentInPath) =>

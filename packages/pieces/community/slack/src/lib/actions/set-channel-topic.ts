@@ -8,6 +8,7 @@ import { channelResponseOutputSchema } from '../output-schemas';
 export const setChannelTopicAction = createAction({
 	auth: slackAuth,
 	name: 'set-channel-topic',
+	classification: 'WRITE',
 	displayName: 'Set Channel Topic',
 	description: 'Sets the topic on a selected channel.',
 	audience: 'human',
@@ -18,6 +19,8 @@ export const setChannelTopicAction = createAction({
 		channel: slackChannel(true),
 		topic: Property.LongText({
 			displayName: 'Topic',
+			description: 'Shown under the channel name.',
+			placeholder: 'Weekly release coordination',
 			required: true,
 		}),
 	},

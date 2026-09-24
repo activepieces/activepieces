@@ -6,6 +6,7 @@ import { driveUpdateFileMetadataOutputSchema } from '../output-schemas';
 export const driveUpdateFileMetadata = createAction({
   auth: googleDriveAuth,
   name: 'drive_update_file_metadata',
+  classification: 'WRITE',
   displayName: 'Update File Metadata (Rename)',
   description:
     "Rename a Drive file/folder or update its description or starred flag (metadata only).",

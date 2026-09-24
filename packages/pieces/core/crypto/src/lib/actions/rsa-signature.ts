@@ -4,6 +4,7 @@ import Crypto from 'crypto';
 export const rsaSignature = createAction({
   audience: 'both',
   name: 'rsa-signature',
+  classification: 'READ',
   displayName: 'Generate RSA Signature',
   description:
     'Signs text with an RSA private key using SHA-256, SHA-384, or SHA-512 (RSA-SHA256 by default)',

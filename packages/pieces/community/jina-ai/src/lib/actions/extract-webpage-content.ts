@@ -6,6 +6,7 @@ import { jinaAiAuth } from '../auth';
 export const extractWebpageContentAction = createAction({
   auth:jinaAiAuth,
   name: 'extract_webpage_content',
+  classification: 'READ',
   displayName: 'Extract Webpage Content',
   description:
     'Convert a URL into clean, LLM-friendly Markdown using the Reader API.',

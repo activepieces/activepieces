@@ -10,6 +10,7 @@ import {
 export const createWorkItemAction = createAction({
   auth: azureDevOpsAuth,
   name: 'create_work_item',
+  classification: 'WRITE',
   displayName: 'Create Work Item',
   description: 'Creates a new work item (Bug, Task, User Story, etc.) in Azure DevOps',
   audience: 'both',

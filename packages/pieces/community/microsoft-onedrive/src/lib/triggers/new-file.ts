@@ -59,6 +59,7 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof oneDriveAuth>, P
 export const newFile = createTrigger({
 	auth: oneDriveAuth,
 	name: 'new_file',
+	classification: 'READ',
 	displayName: 'New File',
 	description: 'Trigger when a new file is uploaded.',
 	aiMetadata: {

@@ -5,6 +5,7 @@ import { bigCommerceApiService } from '../common/requests';
 export const createBlogPost = createAction({
   auth: bigcommerceAuth,
   name: 'createBlogPost',
+  classification: 'WRITE',
   displayName: 'Create Blog Post',
   description: 'Creates a blog post',
   audience: 'both',

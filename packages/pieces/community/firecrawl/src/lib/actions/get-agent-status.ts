@@ -7,6 +7,7 @@ import { getAgentStatusActionOutputSchema } from '../output-schemas';
 export const getAgentStatus = createAction({
   auth: firecrawlAuth,
   name: 'get_agent_status',
+  classification: 'READ',
   displayName: 'Get Agent Status',
   description: 'Get the status and result of a Firecrawl (FIRE-1) agent job by its ID.',
   audience: 'ai',

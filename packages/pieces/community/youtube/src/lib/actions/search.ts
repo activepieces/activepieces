@@ -1,14 +1,18 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { youtubeAuth } from '../common/auth';
+import { searchOutputSchema } from '../output-schemas';
 
 export const youtubeSearchAction = createAction({
   auth: youtubeAuth,
+
+  outputSchema: searchOutputSchema,
   name: 'search',
+  classification: 'SEARCH',
   displayName: 'Search',
   description:
     'Search YouTube videos, channels, and playlists using the YouTube Data API search.list endpoint.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Runs a YouTube search.list query across videos, channels, and playlists at once or restricted to a single resource type, and can instead be scoped to uploads owned by the authenticated account (For Mine), a CMS content owner, or the developer project. Use it to turn a free-text query, channel, date range, region, or topic into video, channel, or playlist IDs for later steps; prefer List Playlist Items when the playlist ID is already known. Video-only filters such as duration, definition, caption, event type, and location require Type to be Video, and Location must be paired with Location Radius. Read-only and idempotent.', idempotent: true },
   props: {
     query: Property.ShortText({
@@ -372,7 +376,7 @@ export const youtubeSearchAction = createAction({
 
     if (maxResults !== undefined && maxResults !== null) {
       const maxResultsNumber = Math.trunc(Number(maxResults));
-      if (maxResultsNumber < 0 || maxResultsNumber > 50) {
+      if (!Number.isFinite(maxResultsNumber) || maxResultsNumber < 0 || maxResultsNumber > 50) {
         throw new Error('Max Results must be between 0 and 50.');
       }
     }

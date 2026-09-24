@@ -8,6 +8,7 @@ import {
 
 export const clarifaiAskLLM = createAction({
   name: 'ask-llm',
+  classification: 'READ',
   displayName: 'Ask LLM',
   description:
     'Send a prompt to any large language models (LLM) supported by clarifai.',

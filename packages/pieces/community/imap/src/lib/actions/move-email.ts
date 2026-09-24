@@ -23,10 +23,11 @@ const props = {
 export const moveEmail = createAction({
   auth: imapAuth,
   name: 'move_email',
+  classification: 'WRITE',
   displayName: 'Move Email',
   description: 'Move an email to another mailbox',
   outputSchema: moveEmailActionOutputSchema,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Moves an email (by message UID) from a source IMAP folder to a target folder, removing it from the source. Use to file, archive, or send a message to a Trash folder. Requires the source folder, target folder, and the UID; not idempotent since after the move the message no longer exists at the source UID and a repeat call cannot find it.', idempotent: false },
   props,
   async run({ auth, propsValue }) {

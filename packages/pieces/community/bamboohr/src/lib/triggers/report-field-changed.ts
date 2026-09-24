@@ -37,6 +37,7 @@ async function getReportById(
 export const reportFieldChanged = createTrigger({
   auth: bambooHrAuth,
   name: 'reportFieldChanged',
+  classification: 'READ',
   displayName: 'Report Field Changed',
   description:
     'Triggers when a specific field in a BambooHR report changes for any employee.',

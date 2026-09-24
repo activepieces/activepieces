@@ -86,6 +86,7 @@ const polling: Polling<
 export const twilioNewCall = createTrigger({
     auth: twilioAuth,
     name: 'new_call',
+    classification: 'READ',
     displayName: 'New Call',
     description: 'Triggers when a call completes (incoming or outgoing).',
     aiMetadata: {

@@ -1,13 +1,14 @@
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, Pencil, Trash } from 'lucide-react';
+import { CheckIcon, Package, Pencil, Trash, UserCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { platformApi } from '@/api/platforms-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import {
   DataTable,
   RowDataWithActions,
@@ -16,6 +17,15 @@ import {
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Item,
+  ItemMedia,
+  ItemContent,
+  ItemTitle,
+  ItemDescription,
+  ItemActions,
+} from '@/components/ui/item';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -35,10 +45,10 @@ import { validationUtils } from '@/lib/validation-utils';
 import { projectsTableColumns } from './columns';
 
 export default function ProjectsPage() {
-  const { platform } = platformHooks.useCurrentPlatform();
+  const { platform, setCurrentPlatform } = platformHooks.useCurrentPlatform();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isEnabled = platform.plan.billedTeamProjectsLimit !== 0;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
 
@@ -71,6 +81,23 @@ export default function ProjectsPage() {
 
   const { data: allProjects } =
     projectCollectionUtils.useAllPlatformProjects(filters);
+
+  const {
+    mutate: toggleAutoCreatePersonalProjects,
+    isPending: isAutoCreatePersonalProjectsPending,
+  } = useMutation({
+    mutationFn: (autoCreatePersonalProjects: boolean) =>
+      platformApi.update({ autoCreatePersonalProjects }, platform.id),
+    onSuccess: (updatedPlatform) => {
+      setCurrentPlatform(queryClient, updatedPlatform);
+      toast.success(t('Automatic personal project creation updated'), {
+        duration: 3000,
+      });
+    },
+    onError: () => {
+      toast.error(t('Failed to save changes. Please try again.'));
+    },
+  });
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -111,11 +138,7 @@ export default function ProjectsPage() {
       header: ({ table }) => {
         const selectableRows = table
           .getRowModel()
-          .rows.filter(
-            (row) =>
-              row.original.id !== currentProject?.id &&
-              row.original.type !== ProjectType.PERSONAL,
-          );
+          .rows.filter((row) => row.original.id !== currentProject?.id);
         const allSelectableSelected =
           selectableRows.length > 0 &&
           selectableRows.every((row) => row.getIsSelected());
@@ -157,8 +180,7 @@ export default function ProjectsPage() {
       },
       cell: ({ row }) => {
         const isCurrentProject = row.original.id === currentProject?.id;
-        const isPersonalProject = row.original.type === ProjectType.PERSONAL;
-        const isDisabled = isCurrentProject || isPersonalProject;
+        const isDisabled = isCurrentProject;
         const isChecked = selectedRows.some(
           (selectedRow) => selectedRow.id === row.original.id,
         );
@@ -233,9 +255,7 @@ export default function ProjectsPage() {
           resetSelection: () => void,
         ) => {
           const canDeleteAny = selectedRows.some(
-            (row) =>
-              row.id !== currentProject?.id &&
-              row.type !== ProjectType.PERSONAL,
+            (row) => row.id !== currentProject?.id,
           );
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -248,9 +268,7 @@ export default function ProjectsPage() {
                 buttonText={t('Delete')}
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
-                    (row) =>
-                      row.id !== currentProject?.id &&
-                      row.type !== ProjectType.PERSONAL,
+                    (row) => row.id !== currentProject?.id,
                   );
                   projectCollectionUtils.delete(
                     deletableProjects.map((row) => row.id),
@@ -325,6 +343,7 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
+                    sensitive: row.sensitive,
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);
@@ -341,72 +360,88 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <LockedFeatureGuard
-      featureKey="PROJECTS"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Projects')}
-      lockDescription={t(
-        'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
-    >
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
-          title={t('Projects')}
-          description={t('Manage your automation projects')}
-        />
-        <DataTable
-          emptyStateTextTitle={t('No projects found')}
-          emptyStateTextDescription={t(
-            'Start by creating projects to manage your automation teams',
-          )}
-          emptyStateIcon={<Package className="size-14" />}
-          onRowClick={async (project) => {
-            await projectCollectionUtils.setCurrentProject(project.id);
-            navigate('/');
-          }}
-          filters={[
-            {
-              type: 'input',
-              title: t('Name'),
-              accessorKey: 'displayName',
-              icon: CheckIcon,
-            },
-            {
-              type: 'select',
-              title: t('Type'),
-              accessorKey: 'type',
-              options: Object.values(ProjectType).map((type) => {
-                return {
-                  label:
-                    formatUtils.convertEnumToHumanReadable(type) + ' Project',
-                  value: type,
-                };
-              }),
-              icon: CheckIcon,
-            },
-          ]}
-          columns={columnsWithCheckbox}
-          page={{
-            data: allProjectsWithGlobalConnectionsCount,
-            next: null,
-            previous: null,
-          }}
-          isLoading={false}
-          clientPagination={true}
-          bulkActions={bulkActions}
-          toolbarButtons={toolbarButtons}
-          actions={actions}
-        />
-        <EditProjectDialog
-          open={editDialogOpen}
-          onClose={() => {
-            setEditDialogOpen(false);
-          }}
-          initialValues={editDialogInitialValues}
-          projectId={editDialogProjectId}
-        />
+    <div className="flex flex-col w-full">
+      <DashboardPageHeader
+        title={t('Projects')}
+        description={t('Manage your automation projects')}
+      />
+      <div className="px-6 pt-4">
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <UserCircle />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
+            <ItemDescription>
+              {t(
+                'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
+              )}
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Switch
+              checked={platform.autoCreatePersonalProjects}
+              onCheckedChange={(checked) =>
+                toggleAutoCreatePersonalProjects(checked)
+              }
+              disabled={isAutoCreatePersonalProjectsPending}
+            />
+          </ItemActions>
+        </Item>
       </div>
-    </LockedFeatureGuard>
+      <DataTable
+        emptyStateTextTitle={t('No projects found')}
+        emptyStateTextDescription={t(
+          'Start by creating projects to manage your automation teams',
+        )}
+        emptyStateIcon={<Package className="size-14" />}
+        onRowClick={async (project) => {
+          await projectCollectionUtils.setCurrentProject(project.id);
+          navigate('/');
+        }}
+        filters={[
+          {
+            type: 'input',
+            title: t('Name'),
+            accessorKey: 'displayName',
+            icon: CheckIcon,
+          },
+          {
+            type: 'select',
+            title: t('Type'),
+            accessorKey: 'type',
+            options: Object.values(ProjectType).map((type) => {
+              return {
+                label:
+                  formatUtils.convertEnumToHumanReadable(type) + ' Project',
+                value: type,
+              };
+            }),
+            icon: CheckIcon,
+          },
+        ]}
+        columns={columnsWithCheckbox}
+        page={{
+          data: allProjectsWithGlobalConnectionsCount,
+          next: null,
+          previous: null,
+        }}
+        isLoading={false}
+        isError={false}
+        errorStateEntity={t('projects')}
+        clientPagination={true}
+        bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
+        actions={actions}
+      />
+      <EditProjectDialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+        }}
+        initialValues={editDialogInitialValues}
+        projectId={editDialogProjectId}
+      />
+    </div>
   );
 }

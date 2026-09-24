@@ -5,6 +5,7 @@ import { heygenAuth } from '../common/auth';
 export const uploadAssetAction = createAction({
 	auth: heygenAuth,
 	name: 'upload_asset',
+	classification: 'WRITE',
 	displayName: 'Upload an Asset',
 	description:
 		'Upload media files (images, videos, or audio) to HeyGen. Supports JPEG, PNG, MP4, WEBM, and MPEG files.',

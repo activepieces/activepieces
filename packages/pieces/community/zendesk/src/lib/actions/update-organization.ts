@@ -3,16 +3,17 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { organizationIdDropdown, groupIdDropdown } from '../common/props';
 
 export const updateOrganizationAction = createAction({
   auth: zendeskAuth,
   name: 'update-organization',
+  classification: 'WRITE',
   displayName: 'Update Organization',
   description: 'Update existing organization fields.',
   audience: 'both',
@@ -64,13 +65,9 @@ export const updateOrganizationAction = createAction({
         try {
           const authentication = auth;
           const response = await httpClient.sendRequest({
-            url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+            url: `${getZendeskBaseUrl(authentication)}/organization_fields.json`,
             method: HttpMethod.GET,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: authentication.props.email + '/token',
-              password: authentication.props.token,
-            },
+            authentication: getZendeskAuthentication(authentication),
           });
 
           const fields = (response.body as { organization_fields: Array<{
@@ -238,13 +235,9 @@ export const updateOrganizationAction = createAction({
     if (organization_fields && typeof organization_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organization_fields.json`,
+          url: `${getZendeskBaseUrl(authentication)}/organization_fields.json`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const fieldDefinitions = (fieldsResponse.body as { organization_fields: Array<{
@@ -285,16 +278,12 @@ export const updateOrganizationAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/organizations/${organization_id}.json`,
+        url: `${getZendeskBaseUrl(authentication)}/organizations/${organization_id}.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: {
           organization,
         },

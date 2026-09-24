@@ -14,6 +14,7 @@ import { addChecklistItemActionOutputSchema } from '../../output-schemas';
 export const addChecklistItem = createAction({
   auth: trelloAuth,
   name: 'add_checklist_item',
+  classification: 'WRITE',
   displayName: 'Add Checklist Item (Agent)',
   description: 'Add an item to a Trello checklist.',
   audience: 'ai',

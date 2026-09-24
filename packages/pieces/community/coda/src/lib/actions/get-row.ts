@@ -2,10 +2,12 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { codaAuth } from '../auth';
 import { codaClient } from '../common/types';
 import { docIdDropdown, tableIdDropdown } from '../common/props';
+import { getRowActionOutputSchema } from '../output-schemas';
 
 export const getRowAction = createAction({
 	auth: codaAuth,
 	name: 'get-row',
+	classification: 'READ',
 	displayName: 'Get Row',
 	description: 'Retrieves a single row by specified ID.',
 	audience: 'both',
@@ -18,6 +20,7 @@ export const getRowAction = createAction({
 			required: true,
 		}),
 	},
+	outputSchema: getRowActionOutputSchema,
 	async run(context) {
 		const { docId, tableId, rowIdOrName } = context.propsValue;
 		const client = codaClient(context.auth);

@@ -1,14 +1,15 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, messageTs } from '../common/props';
 import { processMessageTimestamp } from '../common/utils';
 import { WebClient } from '@slack/web-api';
 import { requireUserToken, SlackAuthValue } from '../common/auth-helpers';
 
 export const deleteMessageAction = createAction({
   name: 'delete-message',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Message',
-  description: `Deletes a specific message from a channel using the message's timestamp.`,
+  description: 'Deletes a message. Needs a user token.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,12 +20,7 @@ export const deleteMessageAction = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
-    ts: Property.ShortText({
-      displayName: 'Message Timestamp',
-      description:
-        'Please provide the timestamp of the message you wish to retrieve, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
-      required: true,
-    }),
+    ts: messageTs,
   },
   async run({ auth, propsValue }) {
     const messageTimestamp = processMessageTimestamp(propsValue.ts);

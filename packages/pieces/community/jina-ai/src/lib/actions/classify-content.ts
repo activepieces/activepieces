@@ -6,6 +6,7 @@ import { jinaAiAuth } from '../auth';
 export const classifyContentAction = createAction({
   auth:jinaAiAuth,
   name: 'classify_content',
+  classification: 'READ',
   displayName: 'Classify Text or Image',
   description:
     'Assign categories to text or images using the Classifier API (zero-shot/few-shot).',

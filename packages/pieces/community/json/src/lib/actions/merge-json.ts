@@ -3,6 +3,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 export const mergeJson = createAction({
   audience: 'human',
   name: 'merge_json',
+  classification: 'READ',
   displayName: 'Merge JSON Objects',
   description:
     'Combine an array of JSON objects into a single object using a per-field merge strategy.',

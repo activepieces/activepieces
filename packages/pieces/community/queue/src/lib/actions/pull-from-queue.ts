@@ -13,6 +13,7 @@ const notes = `**Note:**
 export const pullFromQueue = createAction({
   audience: 'both',
     name: 'pull-from-queue',
+    classification: 'DESTRUCTIVE',
     description: 'Pull items from queue',
     aiMetadata: { description: 'Removes and returns the first N items of a named project-scoped FIFO queue and writes the remainder back, so it is a destructive consume rather than a peek - the returned items are gone from the queue, and fewer than requested come back when the queue holds less. Use it to drain work buffered by Push to Queue; prefer Clear queue when the aim is to empty the queue without reading the items. Not idempotent: every call consumes a further batch.', idempotent: false },
     displayName: 'Pull items from queue',

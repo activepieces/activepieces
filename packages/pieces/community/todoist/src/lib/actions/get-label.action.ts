@@ -7,6 +7,7 @@ import { getLabelActionOutputSchema } from '../output-schemas';
 export const todoistGetLabelAction = createAction({
   auth: todoistAuth,
   name: 'todoist_get_label',
+  classification: 'READ',
   displayName: 'Get Label',
   description: 'Gets a single personal label by ID in Todoist.',
   audience: 'ai',

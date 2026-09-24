@@ -6,6 +6,7 @@ import { listCalendarsActionOutputSchema } from '../output-schemas';
 export const aiListCalendars = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_list_calendars',
+  classification: 'SEARCH',
   displayName: 'List Calendars',
   description:
     'List every calendar in the user\'s calendar list, returning each calendar\'s id, summary, access role, time zone, and whether it is primary.',

@@ -5,6 +5,7 @@ import { activecampaignCommon, makeClient } from '../../common';
 export const subscribeOrUnsubscribeContactFromListAction = createAction({
 	auth: activeCampaignAuth,
 	name: 'activecampaign_subscribe_or_unsubscribe_contact_from_list',
+	classification: 'WRITE',
 	displayName: 'Subscribe or Unsubscribe Contact From List',
 	description:
 		'Subscribes a Contact to a List it is not currently associated with, or Unsubscribes a Contact from a list is currently associated with.',

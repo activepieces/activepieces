@@ -8,6 +8,7 @@ import { fileContentBodyOutputSchema } from '../../output-schemas';
 export const githubGetFileContentAction = createAction({
   auth: githubAuth,
   name: 'get_file_content',
+  classification: 'READ',
   displayName: 'Get File Content (Agent)',
   description: 'Reads a file (or directory listing) from a repository.',
   audience: 'ai',

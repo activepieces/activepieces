@@ -1,16 +1,12 @@
-import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { ModelMessage, generateText, stepCountIs } from 'ai';
-import { AIProviderName, getEffectiveProviderAndModel, spreadIfDefined } from '@activepieces/pieces-framework';
-import { aiProps } from '../../common/props';
-import { createAIModel } from '../../common/ai-sdk';
-import { buildWebSearchOptionsProperty, buildWebSearchConfig, WebSearchOptions } from '../../common/web-search';
+import { AiStepAction, createAction, isNil, Property, spreadIfDefined } from '@activepieces/pieces-framework';
+import { runOnWorker } from '../../common/ai-step';
+import { aiProps, aiProviderSelection } from '../../common/props';
+import { buildWebSearchOptionsProperty, sanitizeWebSearchOptions, usesNativeWebSearchTools } from '../../common/web-search';
 
 export const askAI = createAction({
   audience: 'both',
   name: 'askAi',
+  classification: 'READ',
   displayName: 'Ask AI',
   description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',
   aiMetadata: { description: 'Sends a free-form prompt to a text model and returns its answer, optionally continuing a multi-turn thread via a Conversation Key or grounding the reply with web search. Pick it for open-ended reasoning, drafting, or judgement over flow data; prefer summarizeText to condense text, classifyText for a fixed label set, extractStructuredData for typed fields, or run_agent when the task needs tools and multiple steps. Requires a provider/model plus a prompt; not idempotent, since each call generates a fresh answer and a Conversation Key appends the exchange to stored history.', idempotent: false },
@@ -28,7 +24,6 @@ export const askAI = createAction({
     creativity: Property.Number({
       displayName: 'Creativity',
       required: false,
-      defaultValue: 100,
       description:
         'Controls the creativity of the AI response. A higher value will make the AI more creative and a lower value will make it more deterministic.',
     }),
@@ -46,91 +41,75 @@ export const askAI = createAction({
     }),
     webSearchOptions: buildWebSearchOptionsProperty(
       (propsValue) => ({
-        provider: propsValue['provider'] as string | undefined,
+        provider: aiProviderSelection.resolve(propsValue['provider'])?.provider,
         model: propsValue['model'] as string | undefined,
       }),
       ['webSearch', 'provider', 'model'],
     ),
   },
   async run(context) {
-    const provider = context.propsValue.provider;
-    const modelId = context.propsValue.model;
-    const storage = context.store;
+    const { provider, configId } = aiProviderSelection.resolveOrThrow(context.propsValue.provider);
     const webSearchEnabled = !!context.propsValue.webSearch;
-    const webSearchOptions = (context.propsValue.webSearchOptions ?? {}) as WebSearchOptions;
-
-    const { tools: webSearchTools, providerOptions } = buildWebSearchConfig({
+    const webSearchOptions = webSearchOptionsToSend({
       provider,
-      model: modelId,
-      webSearchEnabled,
-      webSearchOptions,
+      model: context.propsValue.model,
+      saved: context.propsValue.webSearchOptions,
+    });
+    const storageKey = conversationStorageKey(context.propsValue.conversationKey);
+
+    const result = await runOnWorker({
+      context,
+      buildRequest: async () => ({
+        action: AiStepAction.ASK_AI,
+        provider,
+        ...spreadIfDefined('providerConfigId', configId),
+        modelId: context.propsValue.model,
+        prompt: context.propsValue.prompt,
+        ...spreadIfDefined('maxOutputTokens', context.propsValue.maxOutputTokens),
+        ...spreadIfDefined('temperature', isNil(context.propsValue.creativity) ? undefined : context.propsValue.creativity / 100),
+        ...spreadIfDefined('conversation', isNil(storageKey) ? undefined : await readConversation(context.store, storageKey)),
+        webSearch: { enabled: webSearchEnabled, options: webSearchOptions },
+      }),
     });
 
-    const { provider: effectiveProvider } = getEffectiveProviderAndModel({
-      provider: provider as AIProviderName,
-      model: modelId,
-    });
-    const model = await createAIModel({
-      provider: provider as AIProviderName,
-      modelId,
-      engineToken: context.server.token,
-      apiUrl: context.server.apiUrl,
-      projectId: context.project.id,
-      flowId: context.flows.current.id,
-      runId: context.run.id,
-      ...spreadIfDefined('openaiResponsesModel', webSearchEnabled && effectiveProvider === AIProviderName.OPENAI ? true : undefined),
-    });
-
-    const conversationKey = context.propsValue.conversationKey
-      ? `ask-ai-conversation:${context.propsValue.conversationKey}`
-      : null;
-
-    let conversation = null;
-    if (conversationKey) {
-      conversation = (await storage.get<ModelMessage[]>(conversationKey)) ?? [];
-      if (!conversation) {
-        await storage.put(conversationKey, { messages: [] });
-      }
+    if (result.status === 'paused') {
+      return {};
     }
 
-    const stopWhen = webSearchTools
-      ? stepCountIs(webSearchOptions?.maxUses ?? 5)
-      : undefined;
-
-    const response = await generateText({
-      model,
-      messages: [
-        ...(conversation ?? []),
-        {
-          role: 'user',
-          content: context.propsValue.prompt,
-        },
-      ],
-      maxOutputTokens: context.propsValue.maxOutputTokens,
-      temperature: (context.propsValue.creativity ?? 100) / 100,
-      tools: webSearchTools,
-      stopWhen,
-      providerOptions,
-    });
-
-    conversation?.push({
-      role: 'user',
-      content: context.propsValue.prompt,
-    });
-
-    conversation?.push({
-      role: 'assistant',
-      content: response.text ?? '',
-    });
-
-    if (conversationKey) {
-      await storage.put(conversationKey, conversation);
+    if (!isNil(storageKey) && !isNil(result.output.conversation)) {
+      await context.store.put(storageKey, result.output.conversation);
     }
 
-    const includeSources = webSearchTools && webSearchOptions.includeSources;
-    if (includeSources) {
-      return { text: response.text, sources: response.sources };
-    }
-    return response.text;
+    return result.output.answer;
   },
 });
+
+function webSearchOptionsToSend({ provider, model, saved }: { provider: string; model: string; saved: unknown }): Record<string, unknown> {
+  const options = sanitizeWebSearchOptions(saved);
+  if (usesNativeWebSearchTools({ provider, model })) {
+    return options;
+  }
+  const { includeSources: _onlyWithNativeTools, ...rest } = options;
+  return rest;
+}
+
+function conversationStorageKey(conversationKey: string | undefined): string | null {
+  return conversationKey ? `ask-ai-conversation:${conversationKey}` : null;
+}
+
+async function readConversation(store: ConversationStore, storageKey: string): Promise<Record<string, unknown>[]> {
+  const stored = await store.get<StoredConversation>(storageKey);
+  if (Array.isArray(stored)) {
+    return stored;
+  }
+  if (!isNil(stored) && Array.isArray(stored.messages)) {
+    return stored.messages;
+  }
+  return [];
+}
+
+type StoredConversation = Record<string, unknown>[] | { messages?: Record<string, unknown>[] };
+
+type ConversationStore = {
+  get<T>(key: string): Promise<T | null>;
+};

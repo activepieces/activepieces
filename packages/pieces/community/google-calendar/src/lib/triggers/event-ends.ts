@@ -123,6 +123,7 @@ const polling: Polling<
 export const eventEnds = createTrigger({
   auth: googleCalendarAuth,
   name: 'event_ends',
+  classification: 'READ',
   displayName: 'Event Ends',
   description: 'Fires when an event ends.',
   aiMetadata: {
@@ -132,8 +133,7 @@ export const eventEnds = createTrigger({
     calendar_id: googleCalendarCommon.calendarDropdown('writer'),
     specific_event: Property.Checkbox({
       displayName: 'Target Specific Event',
-      description:
-        'Enable to monitor a specific event instead of all events in the calendar.',
+      description: 'Watch one event instead of the whole calendar.',
       required: false,
       defaultValue: false,
     }),

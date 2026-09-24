@@ -9,6 +9,7 @@ import { newMessageInChannelTriggerOutputSchema } from '../output-schemas';
 export const newMessageInChannelTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-message-in-channel',
+	classification: 'READ',
 	displayName: 'New Message Posted to Channel',
 	description: 'Triggers when a new message is posted to a specific #channel you choose.',
 	aiMetadata: {
@@ -20,8 +21,9 @@ export const newMessageInChannelTrigger = createTrigger({
 		info: singleSelectChannelInfo,
 		channel: slackChannel(true),
 		ignoreBots: Property.Checkbox({
-			displayName: 'Ignore Bot Messages ?',
-			required: true,
+			displayName: 'Ignore Bot Messages',
+			description: 'Skip messages posted by bots and apps.',
+			required: false,
 			defaultValue: false,
 		}),
 	},

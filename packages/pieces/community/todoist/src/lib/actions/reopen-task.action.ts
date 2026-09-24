@@ -6,6 +6,7 @@ import { todoistRestClient } from '../common/client/rest-client';
 export const todoistReopenTaskAction = createAction({
   auth: todoistAuth,
   name: 'todoist_reopen_task',
+  classification: 'WRITE',
   displayName: 'Reopen Task',
   description: 'Uncomplete a previously completed task.',
   audience: 'ai',

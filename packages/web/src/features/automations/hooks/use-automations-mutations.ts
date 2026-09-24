@@ -53,6 +53,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
         });
       },
       onSuccess: (flow) => {
+        deps.invalidateRoot();
         navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
       },
     });
@@ -68,6 +69,7 @@ export function useAutomationsMutations(deps: MutationDeps) {
       },
       onSuccess: (table) => {
         queryClient.invalidateQueries({ queryKey: ['tables'] });
+        deps.invalidateRoot();
         navigate(
           `/projects/${projectId}/tables/${table.id}?${NEW_TABLE_QUERY_PARAM}=true`,
         );

@@ -8,6 +8,7 @@ const CACHE_KEY = 'bigin_company_updated_trigger';
 export const companyUpdated = createTrigger({
   auth: biginAuth,
   name: 'companyUpdated',
+  classification: 'READ',
   displayName: 'Company Updated',
   description: 'Triggers when a company record is updated',
   aiMetadata: {

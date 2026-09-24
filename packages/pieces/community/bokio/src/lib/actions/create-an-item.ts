@@ -7,6 +7,7 @@ import { lineItemsProps, unitTypeDropdown } from '../common/props';
 export const createAnItem = createAction({
   auth: bokioAuth,
   name: 'createAnItem',
+  classification: 'WRITE',
   displayName: 'Create an item',
   description: 'Creates a new item in Bokio',
   audience: 'both',

@@ -12,6 +12,7 @@ import { newCommandInDirectMessageTriggerOutputSchema } from '../output-schemas'
 export const newCommandInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
   name: 'new-command-in-direct-message',
+  classification: 'READ',
   displayName: 'New Command in Direct Message',
   description:
     'Triggers when a specific command is sent to the bot (e.g., @bot command arg1 arg2) via Direct Message.',
@@ -24,20 +25,21 @@ export const newCommandInDirectMessageTrigger = createTrigger({
     user: userId(true),
     commands: Property.Array({
       displayName: 'Commands',
-      description:
-        'List of valid commands that the bot should respond to (e.g., help, ocr, remind)',
+      description: 'Words the bot responds to, such as help or remind.',
       required: true,
       defaultValue: ['help'],
     }),
     ignoreBots: Property.Checkbox({
-      displayName: 'Ignore Bot Messages ?',
-      required: true,
+      displayName: 'Ignore Bot Messages',
+      description: 'Skip messages posted by bots and apps.',
+      required: false,
       defaultValue: true,
     }),
     ignoreSelfMessages: Property.Checkbox({
-        displayName: 'Ignore Message from Yourself ?',
-        required: true,
-        defaultValue: false,
+      displayName: 'Ignore My Own Messages',
+      description: 'Skip messages sent by the connected user. Needs a user token.',
+      required: false,
+      defaultValue: false,
     }),
   },
   type: TriggerStrategy.APP_WEBHOOK,
@@ -75,7 +77,6 @@ export const newCommandInDirectMessageTrigger = createTrigger({
 			return [];
 		}
 
-    // Check for mention and parse command
     if (user && payloadBody.event.text) {
       const parsedCommand = parseCommand(
         payloadBody.event.text,
@@ -83,8 +84,7 @@ export const newCommandInDirectMessageTrigger = createTrigger({
         commands
       );
 
-      if (parsedCommand && commands.includes(parsedCommand.command)) {
-        // Return event with parsed command
+      if (parsedCommand) {
         return [
           {
             ...payloadBody.event,

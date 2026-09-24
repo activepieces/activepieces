@@ -7,6 +7,7 @@ import { t } from 'i18next';
 export const createCustomer = createAction({
   auth: bokioAuth,
   name: 'createCustomer',
+  classification: 'WRITE',
   displayName: 'Create Customer',
   description: 'Creates a new customer in Bokio',
   audience: 'both',

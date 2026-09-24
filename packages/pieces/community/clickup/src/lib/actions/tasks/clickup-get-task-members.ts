@@ -8,6 +8,7 @@ import { membersOutputSchema } from '../../output-schemas';
 export const clickupGetTaskMembersAi = createAction({
   auth: clickupAuth,
   name: 'clickup_get_task_members',
+  classification: 'READ',
   description: 'List the members who have access to a task',
   audience: 'ai',
   aiMetadata: {

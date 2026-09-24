@@ -27,10 +27,11 @@ const props = {
 export const copyEmail = createAction({
   auth: imapAuth,
   name: 'copy_email',
+  classification: 'WRITE',
   displayName: 'Copy Email',
   description: 'Copy an email to another mailbox',
   outputSchema: copyEmailActionOutputSchema,
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Copies an email (by message UID) from a source IMAP folder into a target folder, leaving the original in place. Use to duplicate a message into another mailbox without removing it from the source. Requires the source folder, target folder, and the UID; not idempotent since each call appends another copy with a new UID.', idempotent: false },
   props,
   async run({ auth, propsValue }) {

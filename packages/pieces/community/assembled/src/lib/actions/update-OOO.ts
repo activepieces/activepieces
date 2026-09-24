@@ -6,6 +6,7 @@ import { assembledAuth } from '../common/auth';
 export const updateOOO = createAction({
   auth: assembledAuth,
   name: 'update_OOO',
+  classification: 'DESTRUCTIVE',
   displayName: 'Update OOO Request',
   description: 'Updates an existing OOO request.',
   audience: 'both',

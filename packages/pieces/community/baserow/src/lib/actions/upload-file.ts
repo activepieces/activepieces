@@ -4,6 +4,7 @@ import { makeClient } from '../common';
 
 export const uploadFileAction = createAction({
   name: 'baserow_upload_file',
+  classification: 'WRITE',
   displayName: 'Upload File',
   description:
     'Uploads a file to Baserow from a URL. Returns the uploaded file object that can be used in file fields. Requires Email & Password (JWT) authentication — Database Tokens do not have access to the user-files endpoint.',

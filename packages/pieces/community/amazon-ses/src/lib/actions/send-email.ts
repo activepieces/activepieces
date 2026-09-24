@@ -18,6 +18,7 @@ import {
 export const sendEmail = createAction({
   auth: amazonSesAuth,
   name: 'send_email',
+  classification: 'WRITE',
   displayName: 'Send Email',
   description:
     'Send a customizable email via Amazon SES with verified sender addresses',

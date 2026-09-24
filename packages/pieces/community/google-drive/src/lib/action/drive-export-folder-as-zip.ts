@@ -4,13 +4,12 @@ import {
   PieceAuth,
   MarkdownVariant,
 } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Readable } from 'node:stream';
 import { ZipWriter, ZipWriterAddDataOptions } from '@zip.js/zip.js';
 import { extension } from 'mime-types';
-import querystring from 'querystring';
 import { googleDriveAuth, GoogleDriveAuthValue, getAccessToken } from '../auth';
 import { common } from '../common';
+import { listDriveFiles } from '../common/list-drive-files';
 
 // A zip is a sequential format. Only the entry holding the writer lock streams straight into the
 // archive -- that one is paced by backpressure and costs almost nothing. Every *other* in-flight
@@ -72,11 +71,6 @@ const NATIVE_TYPES: Record<string, NativeTypeConfig> = {
   },
 };
 
-const encryptionMethodDescription = `
-- ZipCrypto: Legacy encryption method with wide compatibility (not recommended for sensitive data)
-- AES-256: Modern encryption with strong security (may not be supported by older zip clients)
-`;
-
 interface ZipFolderEntry {
   relativePath: string;
   fileId: string;
@@ -103,40 +97,17 @@ async function listFolderChildren({
   folderId: string;
   includeTeamDrives: boolean;
 }): Promise<DriveListItem[]> {
-  const accessToken = await getAccessToken(auth);
-  const items: DriveListItem[] = [];
-
-  const params: Record<string, string> = {
-    q: `'${folderId}' in parents and trashed=false`,
-    fields: 'nextPageToken,files(id,name,mimeType,size)',
-    supportsAllDrives: 'true',
-    includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
-    corpora: includeTeamDrives ? 'allDrives' : 'user',
-    pageSize: '1000',
-  };
-
-  let nextPageToken: string | undefined;
-  do {
-    if (nextPageToken) {
-      params.pageToken = nextPageToken;
-    }
-    const response = await httpClient.sendRequest<{
-      files: DriveListItem[];
-      nextPageToken?: string;
-    }>({
-      method: HttpMethod.GET,
-      url: `https://www.googleapis.com/drive/v3/files?${querystring.stringify(
-        params
-      )}`,
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    items.push(...(response.body.files ?? []));
-    nextPageToken = response.body.nextPageToken;
-  } while (nextPageToken);
-
-  return items;
+  return listDriveFiles<DriveListItem>({
+    auth,
+    params: {
+      q: `'${folderId}' in parents and trashed=false`,
+      fields: 'nextPageToken,files(id,name,mimeType,size)',
+      supportsAllDrives: 'true',
+      includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+      corpora: includeTeamDrives ? 'allDrives' : 'user',
+      pageSize: '1000',
+    },
+  });
 }
 
 interface ExportError {
@@ -478,9 +449,10 @@ async function downloadAndAddZipEntry({
 export const driveExportFolderAsZip = createAction({
   auth: googleDriveAuth,
   name: 'drive_export_folder_as_zip',
+  classification: 'READ',
   displayName: 'Export Folder as Zip',
   description:
-    'Recursively export a Google Drive folder (with all subfolders) as a single zip file.',
+    'Download a folder and all its subfolders as one zip file.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -488,14 +460,10 @@ export const driveExportFolderAsZip = createAction({
     idempotent: true,
   },
   props: {
-    duplicatePathWarning: Property.MarkDown({
-      value:
-        'Zip paths mirror the Drive folder exactly, with no renaming. The action fails before downloading anything if: a file and a folder share a name in the same Drive folder, two items share a name, or a Google Doc/Sheet/Slides export lands on a name that already exists (e.g. a Sheet named "Report" exported as PDF alongside an existing "Report.pdf"); or an included item\'s name contains "/" or "\\", or is exactly "." or ".." (not usable as a zip path segment). Rename the conflicting or unsafe item in Drive and re-run.',
-      variant: MarkdownVariant.WARNING,
-    }),
     folderId: Property.Dropdown({
       displayName: 'Folder',
-      description: 'The Drive folder to export (including all subfolders).',
+      description:
+        'Everything inside it, including subfolders, goes into the zip.',
       required: true,
       auth: googleDriveAuth,
       refreshers: ['includeTeamDrives'],
@@ -509,62 +477,72 @@ export const driveExportFolderAsZip = createAction({
     }),
     includeTeamDrives: Property.Checkbox({
       displayName: 'Include Team Drives',
+      description: 'Also include shared drives, not only My Drive.',
       required: false,
       defaultValue: false,
     }),
     googleDocsFormat: Property.StaticDropdown({
-      displayName: 'Google Docs',
-      description: 'How to include native Google Docs found in the folder.',
+      displayName: 'Google Docs As',
+      description: 'Convert Docs to Word or PDF, or leave them out.',
       required: true,
       defaultValue: 'docx',
       options: {
         options: [
           { label: 'Word (DOCX)', value: 'docx' },
           { label: 'PDF', value: 'pdf' },
-          { label: 'Skip', value: 'skip' },
+          { label: 'Leave Out', value: 'skip' },
         ],
       },
     }),
     googleSheetsFormat: Property.StaticDropdown({
-      displayName: 'Google Sheets',
-      description: 'How to include native Google Sheets found in the folder.',
+      displayName: 'Google Sheets As',
+      description: 'Convert Sheets to Excel or PDF, or leave them out.',
       required: true,
       defaultValue: 'xlsx',
       options: {
         options: [
           { label: 'Excel (XLSX)', value: 'xlsx' },
           { label: 'PDF', value: 'pdf' },
-          { label: 'Skip', value: 'skip' },
+          { label: 'Leave Out', value: 'skip' },
         ],
       },
     }),
     googleSlidesFormat: Property.StaticDropdown({
-      displayName: 'Google Slides',
-      description: 'How to include native Google Slides found in the folder.',
+      displayName: 'Google Slides As',
+      description: 'Convert Slides to PowerPoint or PDF, or leave them out.',
       required: true,
       defaultValue: 'pptx',
       options: {
         options: [
           { label: 'PowerPoint (PPTX)', value: 'pptx' },
           { label: 'PDF', value: 'pdf' },
-          { label: 'Skip', value: 'skip' },
+          { label: 'Leave Out', value: 'skip' },
         ],
       },
     }),
+    duplicatePathWarning: Property.MarkDown({
+      value:
+        'Zip paths copy the Drive names. The export stops before downloading anything if two items in one folder would share a path, for example a Sheet named "Report" exported as PDF next to an existing Report.pdf, or if a name contains / or \\ or is "." or "..". Rename the item in Drive and run again.',
+      variant: MarkdownVariant.WARNING,
+    }),
     outputFileName: Property.ShortText({
-      displayName: 'Output Zip File Name',
+      displayName: 'Zip File Name',
+      description: 'Include the .zip extension.',
       required: true,
       defaultValue: 'export.zip',
+      placeholder: 'export.zip',
     }),
     usePassword: Property.Checkbox({
-      displayName: 'Use password',
-      description: 'Enable password protection for the zip file',
+      displayName: 'Use Password',
+      description: 'Encrypt the zip so a password is needed to open it.',
       required: false,
       defaultValue: false,
+      advanced: true,
     }),
     passwordOptions: Property.DynamicProperties({
-      displayName: 'Password options',
+      displayName: 'Password Options',
       required: false,
+      advanced: true,
       auth: PieceAuth.None(),
       refreshers: ['usePassword'],
       props: async ({ usePassword }) => {
@@ -575,18 +553,20 @@ export const driveExportFolderAsZip = createAction({
         const fields = {
           password: Property.ShortText({
             displayName: 'Password',
+            description: 'Needed to open the zip.',
             required: true,
           }),
           encryptionMethod: Property.StaticDropdown({
             displayName: 'Encryption Method',
-            description: encryptionMethodDescription,
+            description:
+              'ZipCrypto opens everywhere; AES-256 is stronger but needs a modern unzip app.',
             required: true,
             defaultValue: 'zipcrypto',
             options: {
               disabled: false,
               options: [
-                { label: 'ZipCrypto (Most Compatible)', value: 'zipcrypto' },
-                { label: 'AES-256 (Stronger Security)', value: 'aes-256' },
+                { label: 'ZipCrypto', value: 'zipcrypto' },
+                { label: 'AES-256', value: 'aes-256' },
               ],
             },
           }),

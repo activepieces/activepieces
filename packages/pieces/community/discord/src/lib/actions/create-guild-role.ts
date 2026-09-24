@@ -11,52 +11,60 @@ import { discordRoleActionOutputSchema } from '../output-schemas';
 export const discordCreateGuildRole = createAction({
   auth: discordAuth,
   name: 'createGuildRole',
-  displayName: 'Create guild role',
-  description: 'Creates a new role on the specified guild',
+  classification: 'WRITE',
+  displayName: 'Create Role',
+  description: 'Create a role in a server.',
   audience: 'human',
   aiMetadata: { description: 'Creates a new role in a guild with the given name and optional color, hoist, and mentionable settings, identified by guild ID. Use to provision a role before assigning it to members. Requires the bot to have Manage Roles permission; not idempotent, since each call creates a separate role even with the same name.', idempotent: false },
   outputSchema: discordRoleActionOutputSchema,
   props: {
     guild_id: discordCommon.guilds,
     role_name: Property.ShortText({
-      displayName: 'Role Name',
-      description: 'The name of the role',
+      displayName: 'Name',
+      placeholder: 'Moderators',
       required: true,
     }),
     role_color: Property.ShortText({
-      displayName: 'Role Color',
-      description: `The RGB color of the role (may be better to set manually on the server)`,
+      displayName: 'Color',
+      description: 'Hex like #5865F2 or a decimal RGB number.',
+      placeholder: '#5865F2',
       required: false,
+      advanced: true,
     }),
     display_separated: Property.Checkbox({
-      displayName: 'Display Separated',
-      description:
-        'Whether the role should be displayed separately in the sidebar',
+      displayName: 'Show Separately',
+      description: 'Lists members with this role in their own sidebar group.',
       required: false,
+      advanced: true,
     }),
     role_mentionable: Property.Checkbox({
       displayName: 'Mentionable',
-      description: 'Whether the role can be mentioned by other users',
+      description: 'Lets anyone @mention this role.',
       required: false,
+      advanced: true,
     }),
     creation_reason: Property.ShortText({
-      displayName: 'Creation Reason',
-      description: 'The reason for creating the role',
+      displayName: 'Reason',
+      description: 'Recorded in the server audit log.',
       required: false,
+      advanced: true,
     }),
   },
   async run(configValue) {
+    const reason = configValue.propsValue.creation_reason;
+    const color = toColorInteger({ color: configValue.propsValue.role_color });
+
     const request: HttpRequest = {
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/roles`,
       method: HttpMethod.POST,
       headers: {
         authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
-        'X-Audit-Log-Reason': `${configValue.propsValue.creation_reason}`,
+        ...(reason ? { 'X-Audit-Log-Reason': reason } : {}),
       },
       body: {
         name: configValue.propsValue.role_name,
-        color: configValue.propsValue.role_color,
+        ...(color === undefined ? {} : { color }),
         hoist: configValue.propsValue.display_separated,
         mentionable: configValue.propsValue.role_mentionable,
       },
@@ -73,3 +81,31 @@ export const discordCreateGuildRole = createAction({
     };
   },
 });
+
+function toColorInteger({
+  color,
+}: {
+  color: string | undefined;
+}): number | undefined {
+  const trimmed = color?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (/^\d+$/.test(trimmed)) {
+    const decimal = Number(trimmed);
+    if (decimal > MAX_COLOR_VALUE) {
+      throw new Error(`Color must be between 0 and ${MAX_COLOR_VALUE}, received "${trimmed}".`);
+    }
+    return decimal;
+  }
+
+  const hex = trimmed.startsWith('#') ? trimmed.slice(1) : trimmed;
+  if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+    return parseInt(hex, 16);
+  }
+
+  throw new Error(`Color must be a hex value like #5865F2 or a decimal RGB number, received "${trimmed}".`);
+}
+
+const MAX_COLOR_VALUE = 0xffffff;

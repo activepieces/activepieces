@@ -1,14 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { youtubeAuth } from '../common/auth';
+import { listPlaylistItemsOutputSchema } from '../output-schemas';
 
 export const youtubeListPlaylistItemsAction = createAction({
   auth: youtubeAuth,
+
+  outputSchema: listPlaylistItemsOutputSchema,
   name: 'list_playlist_items',
+  classification: 'SEARCH',
   displayName: 'List Playlist Items',
   description:
     'Returns videos in a YouTube playlist. You can filter by playlist ID or by specific item IDs.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Lists the entries of a YouTube playlist in one of two modes: pass a playlist ID to page through that whole playlist (optionally narrowed to entries containing one video ID), or pass a comma-separated list of playlist item IDs to fetch only those entries. Exactly one of the two is required, supplying both or filtering by video without a playlist ID fails validation, and Max Results is capped at 50 with further pages fetched via the page token. Run Search with type Playlist first when the playlist ID is unknown; read-only and idempotent.', idempotent: true },
   props: {
     playlistId: Property.ShortText({
@@ -63,7 +67,7 @@ export const youtubeListPlaylistItemsAction = createAction({
 
     if (maxResults !== undefined && maxResults !== null) {
       const maxResultsNumber = Math.trunc(Number(maxResults));
-      if (maxResultsNumber < 0 || maxResultsNumber > 50) {
+      if (!Number.isFinite(maxResultsNumber) || maxResultsNumber < 0 || maxResultsNumber > 50) {
         throw new Error('Max Results must be between 0 and 50.');
       }
     }

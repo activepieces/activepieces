@@ -32,6 +32,7 @@ import {
 import {
   ConnectionPickerData,
   getTextFromParts,
+  parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
@@ -50,6 +51,8 @@ import { markdownPreviewComponents } from './previews/markdown-preview-component
 import { previewUtils } from './previews/preview-utils';
 import { ProducedFileCard } from './produced-file-card';
 import { ProjectPickerCard } from './project-picker-card';
+import { ShowcaseCard } from './showcase-card/showcase-card';
+import { ShowcaseTileData } from './showcase-card/showcase-tile';
 import { ToolShimmerPills } from './tool-shimmer-pills';
 
 const PROSE_CLASSES = 'max-w-none break-words';
@@ -387,6 +390,7 @@ function MessageBlocks({
                     part={block.part}
                     onResolve={approveGate}
                     isInteractive={false}
+                    onSendPrompt={onSendPrompt}
                   />
                 </div>
               );
@@ -557,10 +561,12 @@ function DisplayToolCard({
   part,
   onResolve,
   isInteractive,
+  onSendPrompt,
 }: {
   part: AnyToolPart;
   onResolve: (gateId: string, payload?: Record<string, unknown>) => void;
   isInteractive: boolean;
+  onSendPrompt?: (text: string) => void;
 }) {
   if (!chatPartUtils.isReady(part)) return null;
   const data = part.input as Record<string, unknown>;
@@ -613,6 +619,26 @@ function DisplayToolCard({
         />
       );
     }
+    case 'ap_show_showcase': {
+      return (
+        <ShowcaseCard
+          content={{
+            headline:
+              typeof data['headline'] === 'string' ? data['headline'] : '',
+            ...(typeof data['subhead'] === 'string'
+              ? { subhead: data['subhead'] }
+              : {}),
+            ...(data['layout'] === 'grid' || data['layout'] === 'list'
+              ? { layout: data['layout'] }
+              : {}),
+            tiles: Array.isArray(data['tiles'])
+              ? (data['tiles'] as ShowcaseTileData[])
+              : [],
+          }}
+          {...(onSendPrompt ? { onSendPrompt } : {})}
+        />
+      );
+    }
     case 'ap_show_questions': {
       const answersText =
         typeof toolOutput?.['answers'] === 'string'
@@ -654,18 +680,4 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       </div>
     </motion.div>
   );
-}
-
-function parseAnswerPairs(
-  text: string,
-): Array<{ question: string; answer: string }> {
-  return text
-    .split('\n')
-    .filter((line) => line.startsWith('- **'))
-    .map((line) => {
-      const match = line.match(/^- \*\*(.+?)\*\*\s*(.*)$/);
-      if (!match) return null;
-      return { question: match[1], answer: match[2] };
-    })
-    .filter((p): p is { question: string; answer: string } => p !== null);
 }

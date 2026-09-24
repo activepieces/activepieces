@@ -7,6 +7,7 @@ import { timeEntryOutputSchema } from '../../output-schemas';
 export const clickupGetTimeEntry = createAction({
   auth: clickupAuth,
   name: 'clickup_get_time_entry',
+  classification: 'READ',
   displayName: 'Get Time Entry',
   description: 'Retrieve a single time entry by its ID.',
   audience: 'ai',

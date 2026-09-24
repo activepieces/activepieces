@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	fromObjectTypeAssociationDropdown,
@@ -9,14 +9,17 @@ import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { AssociationSpecAssociationCategoryEnum } from '../common/types';
 import { chunk } from '@activepieces/pieces-framework';
+import { createAssociationsOutputSchema } from '../output-schemas';
 
 export const createAssociationsAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-associations',
+	classification: 'WRITE',
 	displayName: 'Create Associations',
 	description: 'Creates associations between objects',
 	audience: 'both',
 	aiMetadata: { description: 'Link one source HubSpot object (e.g. a company) to one or more target objects using a specific association type, batching the targets. Re-running with the same inputs re-applies the same association without creating duplicates. Use Remove Associations to undo a link.', idempotent: true },
+	outputSchema: createAssociationsOutputSchema,
 	props: {
 		fromObjectId: Property.ShortText({
 			displayName: 'From Object ID',
@@ -46,7 +49,7 @@ export const createAssociationsAction = createAction({
 	async run(context) {
 		const { fromObjectId, fromObjectType, toObjectType, associationType } = context.propsValue;
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		if(context.propsValue.toObjectIds === undefined) {
 			throw new Error('Please provide To Object IDs');

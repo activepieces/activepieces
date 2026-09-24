@@ -4,14 +4,14 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   DedupeStrategy,
   HttpMethod,
   httpClient,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 
 interface ZendeskGroup {
   id: number;
@@ -28,7 +28,7 @@ type ZendeskAuthValue = AppConnectionValueForAuthProperty<typeof zendeskAuth>;
 const polling: Polling<ZendeskAuthValue, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
-    let url: string | undefined = `https://${auth.props.subdomain}.zendesk.com/api/v2/groups?sort=-created_at`;
+    let url: string | undefined = `${getZendeskBaseUrl(auth)}/groups?sort=-created_at`;
     const groups: ZendeskGroup[] = [];
 
     while (url) {
@@ -36,11 +36,7 @@ const polling: Polling<ZendeskAuthValue, Record<string, never>> = {
       const response = await httpClient.sendRequest<{ groups: ZendeskGroup[]; next_page?: string }>({
         url: currentUrl,
         method: HttpMethod.GET,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: auth.props.email + '/token',
-          password: auth.props.token,
-        },
+        authentication: getZendeskAuthentication(auth),
       });
 
       groups.push(...response.body.groups);
@@ -56,6 +52,7 @@ const polling: Polling<ZendeskAuthValue, Record<string, never>> = {
 
 export const newGroup = createTrigger({
   name: 'new_group',
+  classification: 'READ',
   displayName: 'New Group',
   description: 'Fires when a new group is created.',
   aiMetadata: {

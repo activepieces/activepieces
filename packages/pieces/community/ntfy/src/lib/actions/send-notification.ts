@@ -5,6 +5,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { ntfyAuth } from '../..';
+import { sendNotificationActionOutputSchema } from '../output-schemas';
 
 const encodeToRFC2047 = (text: string) => {
   return `=?UTF-8?B?${Buffer.from(text, 'utf-8').toString('base64')}?=`;
@@ -13,6 +14,7 @@ const encodeToRFC2047 = (text: string) => {
 export const sendNotification = createAction({
   auth: ntfyAuth,
   name: 'send_notification',
+  classification: 'WRITE',
   displayName: 'Send Notification',
   description: 'Send a notification to ntfy',
   audience: 'both',
@@ -69,6 +71,7 @@ export const sendNotification = createAction({
       required: false,
     }),
   },
+  outputSchema: sendNotificationActionOutputSchema,
   async run({ auth, propsValue }) {
     const baseUrl = auth.props.base_url.replace(/\/$/, '');
     const accessToken = auth.props.access_token;

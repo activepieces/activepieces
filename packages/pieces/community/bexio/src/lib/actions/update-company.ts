@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const updateCompanyAction = createAction({
   auth: bexioAuth,
   name: 'update_company',
+  classification: 'WRITE',
   displayName: 'Update Company',
   description: 'Update an existing company contact',
   audience: 'both',

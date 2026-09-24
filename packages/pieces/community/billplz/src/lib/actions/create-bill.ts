@@ -7,6 +7,7 @@ import { billplzAuth } from '../common/auth';
 
 export const createBill = createAction({
   name: 'create_bill',
+  classification: 'WRITE',
   displayName: 'Create Bill',
   description: 'Create a new bill within a collection',
   audience: 'both',

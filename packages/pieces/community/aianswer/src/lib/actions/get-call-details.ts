@@ -5,6 +5,7 @@ import { aiAnswerConfig } from '../common/models';
 
 export const getCallDetails = createAction({
   name: 'getCallDetails',
+  classification: 'READ',
   auth: aiAnswerAuth,
   displayName: 'Get Call Details',
   description: 'Fetch Call details by Call ID',

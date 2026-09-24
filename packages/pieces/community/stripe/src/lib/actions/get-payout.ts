@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { payoutOutputSchema } from '../output-schemas';
 export const stripeGetPayout = createAction({
   name: 'get_payout',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Payout (Agent)',
   description: 'Retrieve a Stripe payout by its ID.',

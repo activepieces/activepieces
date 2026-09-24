@@ -12,6 +12,7 @@ import { createTaskActionOutputSchema } from '../output-schemas';
 export const todoistCreateTaskAiAction = createAction({
   auth: todoistAuth,
   name: 'todoist_create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Create a task in Todoist with explicit, structured fields.',
   audience: 'ai',

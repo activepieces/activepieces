@@ -7,15 +7,17 @@ import { getFileOrFolderByIdActionOutputSchema } from '../output-schemas';
 export const googleDriveGetResourceById = createAction({
   auth: googleDriveAuth,
   name: 'get-file-or-folder-by-id',
+  classification: 'READ',
   displayName: 'Get File Information',
-  description: 'Get a file folder for files/sub-folders',
+  description: 'Get the details of a file or folder by its ID.',
   audience: 'human',
   aiMetadata: { description: 'Fetches metadata for a single file or folder in Google Drive by its exact ID (name, MIME type, parents, etc.). Use when an agent already has a file/folder ID and needs its details. Read-only and idempotent. Requires the resource ID, not a name or path.', idempotent: true },
   props: {
     id: Property.ShortText({
-      displayName: 'File / Folder Id',
-      description: 'The Id of the file/folder to search for.',
+      displayName: 'File or Folder ID',
+      description: "The ID from the item's Drive URL or an earlier step.",
       required: true,
+      placeholder: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
     }),
     include_team_drives: common.properties.include_team_drives,
   },

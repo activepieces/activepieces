@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-post-sent-trigger';
 export const newPostSentTrigger = createTrigger({
 	auth: beehiivAuth,
 	name: 'beehiiv_new_post_sent',
+	classification: 'READ',
 	displayName: 'New Post Sent',
 	description: 'Triggers when a new post is sent.',
 	aiMetadata: {

@@ -26,7 +26,7 @@ export const apUpdateBranchTool = ({ mcp, userId }: McpToolContext, log: Fastify
             branchName: z.string().optional().describe('New display name for the branch'),
             conditions: mcpUtils.BRANCH_CONDITIONS_INPUT_SCHEMA.optional().describe('New conditions array (outer array = OR groups, inner array = AND conditions). Replaces the existing conditions entirely.'),
         },
-        annotations: { destructiveHint: false, idempotentHint: true, openWorldHint: false },
+        annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
         execute: async (args) => {
             try {
                 const { flowId, routerStepName, branchIndex, branchName, conditions } = updateBranchInput.parse(args)
@@ -49,6 +49,9 @@ export const apUpdateBranchTool = ({ mcp, userId }: McpToolContext, log: Fastify
                     return resolved.error
                 }
                 const routerStep = resolved.routerStep
+                if (routerStep.type === FlowActionType.AI_ROUTER) {
+                    return { content: [{ type: 'text', text: `❌ "${routerStepName}" is an AI Router. Its routes have descriptions, not conditions, and can only be edited in the builder for now.` }] }
+                }
 
                 const branches = [...routerStep.settings.branches]
 

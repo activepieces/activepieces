@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 import { APITableCommon, makeClient } from '../common';
 import dayjs from 'dayjs';
+import { newRecordTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
    AppConnectionValueForAuthProperty<typeof APITableAuth>,
@@ -41,6 +42,7 @@ const polling: Polling<
 export const newRecordTrigger = createTrigger({
   auth: APITableAuth,
   name: 'new_record',
+  classification: 'READ',
   displayName: 'New Record',
   description: 'Triggers when a new record is added to a datasheet.',
   aiMetadata: {
@@ -51,6 +53,7 @@ export const newRecordTrigger = createTrigger({
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,
   },
+  outputSchema: newRecordTriggerOutputSchema,
   sampleData: {
     recordId: 'rec2T5ppW1Mal',
     createdAt: 1689772153000,

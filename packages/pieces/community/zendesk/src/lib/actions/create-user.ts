@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import {
   organizationIdDropdown,
   customRoleIdDropdown,
@@ -16,6 +16,7 @@ import {
 export const createUserAction = createAction({
   auth: zendeskAuth,
   name: 'create-user',
+  classification: 'WRITE',
   displayName: 'Create User',
   description: 'Add a new user to the Zendesk instance.',
   audience: 'both',
@@ -291,13 +292,9 @@ export const createUserAction = createAction({
     if (user_fields && typeof user_fields === 'object') {
       try {
         const fieldsResponse = await httpClient.sendRequest({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/user_fields.json`,
+          url: `${getZendeskBaseUrl(authentication)}/user_fields.json`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const defs = (fieldsResponse.body as { user_fields: Array<{ id: number; key: string; type: string }> }).user_fields;
@@ -357,16 +354,12 @@ export const createUserAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users.json`,
+        url: `${getZendeskBaseUrl(authentication)}/users.json`,
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body: requestBody,
       });
 

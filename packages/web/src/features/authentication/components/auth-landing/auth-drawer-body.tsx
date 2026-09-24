@@ -47,6 +47,7 @@ import { HorizontalSeparatorWithText } from '@/components/ui/separator';
 import { authMutations } from '@/features/authentication/hooks/auth-hooks';
 import { captchaUtils } from '@/features/authentication/utils/captcha-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { acquisitionUtils } from '@/lib/acquisition-utils';
 import { HttpError, api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/format-utils';
@@ -393,6 +394,7 @@ function AuthStep({
         </>
       )}
       <EmailStep
+        mode={effectiveMode}
         invitedEmail={invitedEmail}
         captchaToken={captchaToken}
         captchaRequired={captchaRequired}
@@ -490,6 +492,7 @@ function WorkEmailHint() {
 }
 
 function EmailStep({
+  mode,
   invitedEmail,
   captchaToken,
   captchaRequired,
@@ -513,6 +516,7 @@ function EmailStep({
   const showWorkEmailHint =
     formatUtils.emailRegex.test(email.trim()) && isPersonalEmail(email);
 
+  const { capture } = useTelemetry();
   const { mutate, isPending } = authMutations.useRequestEmailCode({
     onSuccess: () => {
       onCaptchaSpent();
@@ -528,6 +532,16 @@ function EmailStep({
 
   const onSubmit: SubmitHandler<EmailSchema> = (data) => {
     form.clearErrors('root.serverError');
+    // The same box serves sign-in; only a sign-up attempt belongs in the funnel.
+    if (mode === 'signup') {
+      capture({
+        name: TelemetryEventName.SIGN_UP_SUBMITTED,
+        payload: {
+          method: 'email_code',
+          ...acquisitionUtils.getAcquisitionParams(),
+        },
+      });
+    }
     mutate({ email: data.email.trim(), captchaToken });
   };
 
@@ -734,7 +748,10 @@ function NameStep({ onSessionRejected }: NameStepProps) {
 
   const onSubmit: SubmitHandler<FullNameSchema> = (data) => {
     form.clearErrors('root.serverError');
-    mutate({ fullName: data.fullName.trim() });
+    mutate({
+      fullName: data.fullName.trim(),
+      attribution: acquisitionUtils.getAcquisitionParams(),
+    });
   };
 
   return (
@@ -818,9 +835,7 @@ function CodeStep({
     authMutations.useVerifyEmailCode({
       onSuccess: (data) => {
         authenticationSession.saveResponse(data, false);
-        // A brand-new member arrives on the pre-platform onboarding token, so
-        // there is no project yet: ask their name before building the platform.
-        if (isNil(data.projectId)) {
+        if (isNil(data.platformId)) {
           onNeedsName();
           return;
         }
@@ -856,7 +871,11 @@ function CodeStep({
     setErrorMessage(null);
     setCode(value);
     if (value.length === CODE_LENGTH) {
-      verify({ email, code: value });
+      verify({
+        email,
+        code: value,
+        attribution: acquisitionUtils.getAcquisitionParams(),
+      });
     }
   };
 
@@ -966,13 +985,16 @@ function ModeSwitch({
 }
 
 function usePasswordlessAvailable(): boolean {
+  const { data: codeAuthEnabled } = flagsHooks.useFlag<boolean>(
+    ApFlagId.EMAIL_CODE_AUTH_ENABLED,
+  );
   const { data: emailAuthEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.EMAIL_AUTH_ENABLED,
   );
   const { data: smtpConfigured } = flagsHooks.useFlag<boolean>(
     ApFlagId.SMTP_CONFIGURED,
   );
-  return (emailAuthEnabled ?? true) && !!smtpConfigured;
+  return !!codeAuthEnabled && (emailAuthEnabled ?? true) && !!smtpConfigured;
 }
 
 // Country variants are endless (yahoo.co.uk, hotmail.fr, …), so match the
@@ -1081,6 +1103,7 @@ type CodeStepProps = {
 };
 
 type EmailStepProps = {
+  mode: AuthMode;
   invitedEmail: string;
   captchaToken: string | undefined;
   captchaRequired: boolean;

@@ -9,6 +9,7 @@ import {
 
 export const addGreetAction = createAction({
   name: 'add_greet',
+  classification: 'WRITE',
   auth: bonjoroAuth,
   displayName: 'Create a Greet',
   description: 'Create a new Greet in Bonjoro',

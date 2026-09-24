@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { taxRateOutputSchema } from '../output-schemas';
 export const stripeGetTaxRate = createAction({
   name: 'get_tax_rate',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Tax Rate (Agent)',
   description: 'Retrieve a tax rate by its ID.',

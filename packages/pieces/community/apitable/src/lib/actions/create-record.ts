@@ -5,10 +5,12 @@ import {
 } from '@activepieces/pieces-framework';
 import { APITableCommon, createNewFields, makeClient } from '../common';
 import { APITableAuth } from '../auth';
+import { createRecordActionOutputSchema } from '../output-schemas';
 
 export const createRecordAction = createAction({
   auth: APITableAuth,
   name: 'apitable_create_record',
+  classification: 'WRITE',
   displayName: 'Create Record',
   description: 'Creates a new record in datasheet.',
   audience: 'both',
@@ -22,6 +24,7 @@ export const createRecordAction = createAction({
     datasheet_id: APITableCommon.datasheet_id,
     fields: APITableCommon.fields,
   },
+  outputSchema: createRecordActionOutputSchema,
   async run(context) {
     const auth = context.auth;
     const datasheetId = context.propsValue.datasheet_id;

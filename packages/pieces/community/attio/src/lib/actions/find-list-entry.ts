@@ -7,6 +7,7 @@ import { formatInputFields, listFields, listIdDropdown } from '../common/props';
 
 export const findListEntryAction = createAction({
 	name: 'find_list_entry',
+	classification: 'SEARCH',
 	displayName: 'Find List Entry',
 	description:
 		'Search for entries in a specific list in Attio using filters and return matching results.',

@@ -7,6 +7,7 @@ import { driveSetPublicAccessOutputSchema } from '../output-schemas';
 export const driveSetPublicAccess = createAction({
   auth: googleDriveAuth,
   name: 'drive_set_public_access',
+  classification: 'WRITE',
   displayName: 'Set Public Access',
   description: 'Make a Drive file or folder accessible to anyone with the link.',
   audience: 'ai',

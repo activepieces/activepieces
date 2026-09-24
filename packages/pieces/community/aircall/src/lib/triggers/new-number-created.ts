@@ -8,6 +8,7 @@ const TRIGGER_KEY = 'trigger_new-number'
 export const newNumberCreated = createTrigger({
   auth: aircallAuth,
   name: 'newNumberCreated',
+  classification: 'READ',
   displayName: 'New Number Created',
   description: 'Triggers when a new number is created.',
   aiMetadata: {

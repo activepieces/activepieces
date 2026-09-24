@@ -8,6 +8,7 @@ import { listRepositoriesOutputSchema } from '../../output-schemas';
 export const githubListUserRepositoriesAction = createAction({
   auth: githubAuth,
   name: 'list_user_repositories',
+  classification: 'SEARCH',
   displayName: 'List User Repositories (Agent)',
   description: "Lists a specific user's public repositories.",
   audience: 'ai',

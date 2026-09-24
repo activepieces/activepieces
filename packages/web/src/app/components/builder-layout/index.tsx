@@ -10,7 +10,7 @@ import {
   GlobalSearchProvider,
   useGlobalSearch,
 } from '../global-search/global-search-context';
-import { ProjectDashboardSidebar } from '../sidebar/dashboard';
+import { PrimaryRail } from '../primary-rail';
 
 export function BuilderLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,28 +26,34 @@ function BuilderLayoutInner({ children }: { children: React.ReactNode }) {
   const { open: searchOpen } = useGlobalSearch();
 
   return (
-    <SidebarProvider hoverMode={!searchOpen} defaultOpen={false}>
-      {!embedState.isEmbedded && <ProjectDashboardSidebar />}
-      <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
-        <div
-          className={cn(
-            'flex-1 flex flex-col overflow-hidden',
-            !embedState.isEmbedded && 'p-1.5',
-          )}
-        >
+    <div className="flex h-full w-full overflow-hidden">
+      {!embedState.isEmbedded && <PrimaryRail />}
+      <SidebarProvider
+        hoverMode={!searchOpen}
+        defaultOpen={false}
+        className="flex-1 min-w-0 w-auto will-change-transform"
+      >
+        <SidebarInset className="flex flex-col h-full overflow-hidden bg-sidebar">
           <div
             className={cn(
-              'flex flex-col h-full bg-background overflow-hidden',
-              embedState.isEmbedded
-                ? 'border-l'
-                : 'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              'flex-1 flex flex-col overflow-hidden',
+              !embedState.isEmbedded && 'p-1.5',
             )}
           >
-            {children}
+            <div
+              className={cn(
+                'flex flex-col h-full bg-background overflow-hidden',
+                embedState.isEmbedded
+                  ? 'border-l'
+                  : 'rounded-xl shadow-[2px_0px_4px_-2px_rgba(0,0,0,0.05),0px_2px_4px_-2px_rgba(0,0,0,0.05)] border',
+              )}
+            >
+              {children}
+            </div>
           </div>
-        </div>
-        {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
-      </SidebarInset>
-    </SidebarProvider>
+          {edition !== ApEdition.COMMUNITY && <ManagePlanDialog />}
+        </SidebarInset>
+      </SidebarProvider>
+    </div>
   );
 }

@@ -1,27 +1,10 @@
 import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils';
-import { createLanguageModel } from '@activepieces/ai-providers';
-import { AI_PROVIDER_CAPABILITIES, BaseAIProviderAuthConfig, agentPersistenceUtils, agentToolClassification, CloudflareGatewayProviderConfig, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus, splitCloudflareGatewayModelId } from '@activepieces/shared';
-import { createAnthropic } from '@ai-sdk/anthropic'
-import { createAzure } from '@ai-sdk/azure'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { createOpenAI } from '@ai-sdk/openai'
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
-import { SharedV3ProviderOptions } from '@ai-sdk/provider'
-import { createOpenRouter, OpenRouterChatSettings } from '@openrouter/ai-sdk-provider'
-import { EmbeddingModel, LanguageModel, ModelMessage, SystemModelMessage, TelemetryOptions, ToolSet } from 'ai'
+import { agentPersistenceUtils, agentToolClassification, PersistedAgentPart, PersistedAgentPartType, PersistedToolCallStatus } from '@activepieces/shared';
+import { agentProviderOptions } from './agent-provider-options'
+import { ModelMessage, TelemetryOptions } from 'ai'
 import { createEvlogIntegration } from 'evlog/ai'
 import { wideEvent } from './wide-event'
 
-const MAX_WEB_SEARCH_RESULTS = 5
-export const EMBEDDING_DIMENSIONS = 768
-const OPENAI_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
-    openai: { dimensions: EMBEDDING_DIMENSIONS },
-}
-
-const OPENROUTER_EMBEDDING_PROVIDER_OPTIONS: SharedV3ProviderOptions = {
-    openrouter: { dimensions: EMBEDDING_DIMENSIONS },
-    openai: { dimensions: EMBEDDING_DIMENSIONS },
-}
 
 const KEEP_RECENT_TOOL_RESULTS = 6
 const COLLAPSE_OUTPUT_OVER_CHARS = 600
@@ -30,121 +13,6 @@ const COLLAPSE_OUTPUT_OVER_CHARS = 600
 const SCHEMA_TOOL_NAMES = new Set(['ap_get_piece_props', 'ap_prepare_action'])
 const CHARS_PER_TOKEN_ESTIMATE = 4
 
-// OpenAI is absent on purpose: its web search needs the Responses API, which breaks legacy BYOK models.
-// Which providers support web search (and how) is declared in AI_PROVIDER_CAPABILITIES; the native
-// tool builders below stay here because they need the provider SDKs.
-const NATIVE_WEB_SEARCH_TOOLS: Partial<Record<AIProviderName, (auth: BaseAIProviderAuthConfig) => ToolSet>> = {
-    [AIProviderName.ANTHROPIC]: ({ apiKey }) => ({ web_search: createAnthropic({ apiKey }).tools.webSearch_20250305({ maxUses: MAX_WEB_SEARCH_RESULTS }) }),
-    [AIProviderName.GOOGLE]: ({ apiKey }) => ({ google_search: createGoogleGenerativeAI({ apiKey }).tools.googleSearch({}) }),
-}
-
-function supportsWebSearch(provider: AIProviderName): boolean {
-    return AI_PROVIDER_CAPABILITIES[provider].webSearch !== undefined
-}
-
-function buildWebSearchTools({ provider, auth }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-}): ToolSet {
-    return NATIVE_WEB_SEARCH_TOOLS[provider]?.(auth as BaseAIProviderAuthConfig) ?? {}
-}
-
-function openRouterModelSettings(provider: AIProviderName, webSearchEnabled: boolean): OpenRouterChatSettings | undefined {
-    if (!webSearchEnabled || AI_PROVIDER_CAPABILITIES[provider].webSearch !== 'plugin') {
-        return undefined
-    }
-    return { plugins: [{ id: 'web', max_results: MAX_WEB_SEARCH_RESULTS }] }
-}
-
-function createChatModel({ provider, auth, config, modelId, metadata, webSearchEnabled = false }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
-    modelId: string
-    metadata?: ChatModelMetadata
-    webSearchEnabled?: boolean
-}): LanguageModel {
-    if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
-        const { apiKey } = auth as BaseAIProviderAuthConfig
-        const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
-        const { model: actualModelId } = splitCloudflareGatewayModelId(modelId)
-        return createOpenAICompatible({
-            name: 'cloudflare',
-            baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
-            headers: { 'cf-aig-authorization': `Bearer ${apiKey}` },
-        }).chatModel(actualModelId)
-    }
-    return createLanguageModel({
-        provider,
-        auth,
-        config,
-        modelId,
-        options: {
-            openRouterSettings: openRouterModelSettings(provider, webSearchEnabled),
-            mistralViaOpenRouter: true,
-            ...spreadIfDefined('extraHeaders', managedProviderMetadataHeaders({ provider, metadata })),
-        },
-    })
-}
-
-function readStringField(source: Record<string, unknown>, key: string): string {
-    const value = source[key]
-    return typeof value === 'string' ? value : ''
-}
-
-function toStorageEmbedding(embedding: number[]): number[] {
-    if (embedding.length < EMBEDDING_DIMENSIONS) {
-        throw new Error(`This embedding model returns ${embedding.length} dimensions, fewer than the ${EMBEDDING_DIMENSIONS} a knowledge base stores`)
-    }
-    const truncated = embedding.slice(0, EMBEDDING_DIMENSIONS)
-    const magnitude = Math.sqrt(truncated.reduce((sum, value) => sum + value * value, 0))
-    return magnitude === 0 ? truncated : truncated.map((value) => value / magnitude)
-}
-
-function createEmbeddingModel({ provider, auth, config }: {
-    provider: AIProviderName
-    auth: Record<string, unknown>
-    config: Record<string, unknown>
-}): { model: EmbeddingModel, providerOptions: SharedV3ProviderOptions } {
-    const embeddingModelId = AI_PROVIDER_CAPABILITIES[provider].defaultEmbeddingModel
-    if (isNil(embeddingModelId)) {
-        throw new Error(`Provider ${provider} does not support knowledge base search`)
-    }
-    const apiKey = readStringField(auth, 'apiKey')
-    switch (provider) {
-        case AIProviderName.OPENAI:
-            return { model: createOpenAI({ apiKey }).embeddingModel(embeddingModelId), providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS }
-        case AIProviderName.GOOGLE:
-            return { model: createGoogleGenerativeAI({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: {} }
-        case AIProviderName.AZURE: {
-            const resourceName = readStringField(config, 'resourceName')
-            const apiVersion = readStringField(config, 'apiVersion')
-            return {
-                model: createAzure({ resourceName, apiKey, ...spreadIfDefined('apiVersion', apiVersion || undefined) }).embeddingModel(embeddingModelId),
-                providerOptions: OPENAI_EMBEDDING_PROVIDER_OPTIONS,
-            }
-        }
-        case AIProviderName.ACTIVEPIECES:
-        case AIProviderName.OPENROUTER:
-            return { model: createOpenRouter({ apiKey }).textEmbeddingModel(embeddingModelId), providerOptions: OPENROUTER_EMBEDDING_PROVIDER_OPTIONS }
-        default:
-            throw new Error(`Provider ${provider} does not support knowledge base search`)
-    }
-}
-
-function managedProviderMetadataHeaders({ provider, metadata }: {
-    provider: AIProviderName
-    metadata?: ChatModelMetadata
-}): Record<string, string> | undefined {
-    if (isNil(metadata) || provider !== AIProviderName.ACTIVEPIECES) {
-        return undefined
-    }
-    return {
-        'x-ap-platform-id': metadata.platformId,
-        'x-ap-conversation-id': metadata.conversationId,
-        ...spreadIfDefined('x-ap-run-id', metadata.runId),
-    }
-}
 
 /**
  * Strips for ALL providers (not just non-thinking ones) because Anthropic rejects
@@ -163,7 +31,7 @@ function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName
     )
     if (!hasThinking) return messages
 
-    return messages
+    const stripped = messages
         .map((msg) => {
             if (msg.role !== 'assistant' || !Array.isArray(msg.content)) return msg
             const filtered = (msg.content as Array<Record<string, unknown>>).filter(
@@ -174,6 +42,13 @@ function stripThinkingBlocks(messages: ModelMessage[], _provider: AIProviderName
             return { ...msg, content: filtered }
         })
         .filter((msg): msg is ModelMessage => msg !== null)
+    return keepAtLeastOne({ transformed: stripped })
+}
+
+const CONTINUATION_NUDGE: ModelMessage = { role: 'user', content: 'Continue.' }
+
+function keepAtLeastOne({ transformed }: { transformed: ModelMessage[] }): ModelMessage[] {
+    return transformed.length === 0 ? [CONTINUATION_NUDGE] : transformed
 }
 
 function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[] {
@@ -200,7 +75,7 @@ function sanitizeTruncatedAssistantTail(messages: ModelMessage[]): ModelMessage[
 
     const head = messages.slice(0, -1)
     if (sanitizedParts.length === 0) {
-        return head
+        return keepAtLeastOne({ transformed: head })
     }
     if (sanitizedParts.length === last.content.length) {
         return messages
@@ -233,7 +108,7 @@ function estimateTokenCount({ messages, systemPromptLength }: { messages: ModelM
 function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): ModelMessage[] {
     const totalToolResults = messages.reduce((count, message) => {
         if (message.role !== 'tool' || !Array.isArray(message.content)) return count
-        return count + message.content.filter((part) => part.type === 'tool-result').length
+        return count + message.content.filter((part) => part.type === 'tool-result' && !SCHEMA_TOOL_NAMES.has(part.toolName)).length
     }, 0)
 
     const staleCount = totalToolResults - KEEP_RECENT_TOOL_RESULTS
@@ -259,29 +134,6 @@ function collapseStaleToolOutputs({ messages }: { messages: ModelMessage[] }): M
         })
         return { ...message, content }
     })
-}
-
-function buildProviderOptions({ provider, tier, disableThinking = false }: { provider: AIProviderName, tier: { id: string, thinkingBudget: number }, disableThinking?: boolean }): SharedV3ProviderOptions {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { anthropic: { thinking: disableThinking ? { type: 'disabled' } : { type: 'enabled', budgetTokens: tier.thinkingBudget } } }
-        case AIProviderName.ACTIVEPIECES:
-        case AIProviderName.OPENROUTER:
-            return { openrouter: { cache_control: { type: 'ephemeral' }, reasoning: disableThinking ? { enabled: false } : { max_tokens: tier.thinkingBudget } } }
-        default:
-            return {}
-    }
-}
-
-function buildSystemPromptWithCaching({ systemPrompt, provider }: { systemPrompt: string, provider: AIProviderName }): string | SystemModelMessage {
-    switch (provider) {
-        case AIProviderName.ANTHROPIC:
-        case AIProviderName.BEDROCK:
-            return { role: 'system', content: systemPrompt, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } }
-        default:
-            return systemPrompt
-    }
 }
 
 function buildTelemetry({ functionId }: { functionId: string }): TelemetryOptions | undefined {
@@ -533,18 +385,12 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 export const agentAiUtils = {
-    createChatModel,
-    createEmbeddingModel,
-    toStorageEmbedding,
-    supportsWebSearch,
-    buildWebSearchTools,
     stripThinkingBlocks,
     sanitizeTruncatedAssistantTail,
     collectStepMessages,
     estimateTokenCount,
     collapseStaleToolOutputs,
-    buildProviderOptions,
-    buildSystemPromptWithCaching,
+    ...agentProviderOptions,
     buildTelemetry,
     buildStepParts,
     findDataArray,
@@ -552,11 +398,3 @@ export const agentAiUtils = {
 }
 
 export type { ContentPartLike }
-
-type ChatModelMetadata = {
-    platformId: string
-    conversationId: string
-    runId?: string
-}
-
-export type { ChatModelMetadata }

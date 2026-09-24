@@ -11,6 +11,7 @@ import { newMentionInDirectMessageTriggerOutputSchema } from '../output-schemas'
 export const newMentionInDirectMessageTrigger = createTrigger({
   auth: slackAuth,
   name: 'new-mention-in-direct-message',
+  classification: 'READ',
   displayName: 'New Mention in Direct Message',
   description:
     'Triggers when a username is mentioned in a direct message channel.',
@@ -22,13 +23,15 @@ export const newMentionInDirectMessageTrigger = createTrigger({
     info: appWebhookSetupInfo,
     user: userId(true),
     ignoreBots: Property.Checkbox({
-      displayName: 'Ignore Bot Messages ?',
-      required: true,
+      displayName: 'Ignore Bot Messages',
+      description: 'Skip messages posted by bots and apps.',
+      required: false,
       defaultValue: false,
     }),
     ignoreSelfMessages: Property.Checkbox({
-      displayName: 'Ignore Message from Yourself ?',
-      required: true,
+      displayName: 'Ignore My Own Messages',
+      description: 'Skip messages sent by the connected user. Needs a user token.',
+      required: false,
       defaultValue: false,
     }),
   },

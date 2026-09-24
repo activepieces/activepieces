@@ -11,7 +11,6 @@ import {
   Package,
   Hash,
   GitBranch,
-  Layers,
   Puzzle,
   Trash,
 } from 'lucide-react';
@@ -20,17 +19,16 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { RequestTrial } from '@/app/components/request-trial';
 import { CustomizeSelectorDialog } from '@/app/routes/platform/setup/pieces/customize-selector-dialog';
+import { DownloadPiecesReportButton } from '@/app/routes/platform/setup/pieces/download-pieces-report';
 import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
+import { PiecesLockedBanner } from '@/app/routes/platform/setup/pieces/pieces-locked-banner';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { DataTable, RowDataWithActions } from '@/components/custom/data-table';
 import { DataTableColumnHeader } from '@/components/custom/data-table/data-table-column-header';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
-import { LockedAlert } from '@/components/custom/locked-alert';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { oauthAppsQueries } from '@/features/connections';
 import {
   InstallPieceDialog,
@@ -41,11 +39,7 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 
-import { PieceSetsTab } from './piece-sets/piece-sets-tab';
-
-type TabValue = 'pieces' | 'piece-sets';
-
-const PiecesListTab = () => {
+export const PiecesListTab = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
@@ -54,6 +48,7 @@ const PiecesListTab = () => {
     pieces,
     refetch: refetchPieces,
     isLoading,
+    isError,
   } = piecesHooks.usePieces({
     searchQuery,
     includeHidden: true,
@@ -178,20 +173,15 @@ const PiecesListTab = () => {
 
   return (
     <>
-      {!isEnabled && (
-        <LockedAlert
-          title={t('Control Pieces')}
-          description={t(
-            "Show the pieces that matter most to your users and hide the ones you don't like.",
-          )}
-          button={
-            <RequestTrial
-              featureKey="ENTERPRISE_PIECES"
-              buttonVariant="basic"
-            />
-          }
-        />
-      )}
+      <DashboardPageHeader
+        title={t('Pieces')}
+        description={t('Manage the pieces that are available to your users')}
+      />
+      <PiecesLockedBanner
+        message={t(
+          "Showing and hiding pieces needs a higher plan. You can browse the catalog, but changes won't stick.",
+        )}
+      />
       <DataTable
         emptyStateTextTitle={t('No pieces found')}
         emptyStateTextDescription={t(
@@ -213,8 +203,12 @@ const PiecesListTab = () => {
           previous: null,
         }}
         isLoading={isLoading}
+        isError={isError}
+        errorStateEntity={t('pieces')}
+        onRetry={refetchPieces}
         toolbarButtons={[
           <CustomizeSelectorDialog key="customize" isEnabled={isEnabled} />,
+          <DownloadPiecesReportButton key="download-report" />,
           <SyncPiecesButton key="sync" />,
           <InstallPieceDialog
             key="install"
@@ -228,66 +222,6 @@ const PiecesListTab = () => {
     </>
   );
 };
-
-const PlatformPiecesPage = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = (searchParams.get('tab') as TabValue) || 'pieces';
-
-  const setTab = (tab: TabValue) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (tab === 'pieces') {
-      newParams.delete('tab');
-    } else {
-      newParams.set('tab', tab);
-    }
-    setSearchParams(newParams, { replace: true });
-  };
-
-  return (
-    <>
-      <DashboardPageHeader
-        description={t('Manage the pieces that are available to your users')}
-        title={t('Pieces')}
-      />
-      <div className="mx-auto w-full flex flex-col flex-1 min-h-0">
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setTab(v as TabValue)}
-          className="flex flex-col flex-1 min-h-0 min-w-0"
-        >
-          <TabsList
-            variant="outline"
-            className="border-b w-full rounded-none justify-start shrink-0"
-          >
-            <TabsTrigger variant="outline" value="pieces">
-              <Puzzle className="size-4 mr-2" />
-              {t('Pieces')}
-            </TabsTrigger>
-            <TabsTrigger variant="outline" value="piece-sets">
-              <Layers className="size-4 mr-2" />
-              {t('Piece Sets')}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent
-            value="pieces"
-            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
-          >
-            <PiecesListTab />
-          </TabsContent>
-          <TabsContent
-            value="piece-sets"
-            className="flex-1 min-h-0 flex flex-col mt-0 min-w-0"
-          >
-            <PieceSetsTab />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </>
-  );
-};
-
-PlatformPiecesPage.displayName = 'PlatformPiecesPage';
-export { PlatformPiecesPage };
 
 function shouldShowOauth2SettingForPiece(piece: PieceMetadataModelSummary) {
   const pieceAuth = Array.isArray(piece.auth)

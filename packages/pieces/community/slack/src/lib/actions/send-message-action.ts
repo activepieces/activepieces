@@ -1,14 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import {
-  profilePicture,
-  slackChannel,
-  username,
-  blocks,
-  threadTs,
-  singleSelectChannelInfo,
-  mentionOriginFlow,
-  iconEmoji,
-} from '../common/props';
+import { profilePicture, slackChannel, username, blocks, threadTs, singleSelectChannelInfo, mentionOriginFlow, iconEmoji, replyBroadcast, unfurlLinks } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, slackSendMessage, textToSectionBlocks } from '../common/utils';
 import { slackAuth } from '../auth';
 import { Block,KnownBlock } from '@slack/web-api';
@@ -19,6 +10,7 @@ import { chatPostMessageOutputSchema } from '../output-schemas';
 export const slackSendMessageAction = createAction({
   auth: slackAuth,
   name: 'send_channel_message',
+  classification: 'WRITE',
   displayName: 'Send Message To A Channel',
   description: 'Send message to a channel',
   audience: 'human',
@@ -29,35 +21,27 @@ export const slackSendMessageAction = createAction({
     channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The text of your message. When using Block Kit blocks, this is used as a fallback for notifications.',
+      description: 'Slack mrkdwn is supported. Empty sends blocks only.',
       required: false,
     }),
     sendAsBot:Property.Checkbox({
-      displayName:'Send as a bot?',
-      required:true,
+      displayName:'Send as Bot',
+      description: 'Off posts as the connected user and needs a user token.',
+      required:false,
       defaultValue:true
     }),
     threadTs,
+    file: Property.File({
+      displayName: 'Attachment',
+      description: 'Sent with the message as its comment. Other options are skipped.',
+      required: false,
+    }),
     username,
     profilePicture,
     iconEmoji,
-    file: Property.File({
-      displayName: 'Attachment',
-      required: false,
-    }),
-    replyBroadcast: Property.Checkbox({
-      displayName: 'Broadcast reply to channel',
-      description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',
-      required: false,
-      defaultValue: false,
-    }),
+    replyBroadcast,
     mentionOriginFlow,
-    unfurlLinks: Property.Checkbox({
-      displayName: 'Unfurl Links',
-      description: 'Enable link unfurling for this message',
-      required: false,
-      defaultValue: true,
-    }),
+    unfurlLinks,
     blocks,
   },
   async run(context) {

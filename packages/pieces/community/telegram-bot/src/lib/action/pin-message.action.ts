@@ -7,6 +7,7 @@ import { pinMessageActionOutputSchema } from '../output-schemas';
 export const telegramPinMessageAction = createAction({
   auth: telegramBotAuth,
   name: 'pin_message',
+  classification: 'WRITE',
   displayName: 'Pin Message',
   description: 'Pin a message in a chat. The bot must be an administrator in the chat for this to work.',
   audience: 'human',

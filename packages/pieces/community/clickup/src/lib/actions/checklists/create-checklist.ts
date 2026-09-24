@@ -7,6 +7,7 @@ import { checklistOutputSchema } from '../../output-schemas';
 export const clickupCreateChecklist = createAction({
   auth: clickupAuth,
   name: 'clickup_create_checklist',
+  classification: 'WRITE',
   description: 'Create a new checklist on a ClickUp task',
   audience: 'ai',
   aiMetadata: {

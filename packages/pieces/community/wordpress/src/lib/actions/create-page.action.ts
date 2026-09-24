@@ -12,33 +12,24 @@ import { createPageActionOutputSchema } from '../output-schemas';
 export const createWordPressPage = createAction({
   auth: wordpressAuth,
   name: 'create_page',
-  description: 'Create new page on WordPress',
-  audience: 'both',
+  classification: 'WRITE',
+  description: 'Add a new page to your WordPress site',
+  audience: 'human',
   aiMetadata: { description: 'Publishes a new static page (not a blog post) on a WordPress site via the REST API, with optional status, slug, excerpt, and comment settings. Choose this for standalone pages like About or Contact rather than dated posts. Requires a title and HTML content; not idempotent — each call creates a separate page.', idempotent: false },
   displayName: 'Create Page',
   outputSchema: createPageActionOutputSchema,
   props: {
     title: Property.ShortText({
-      description: 'Title of the page about to be added',
       displayName: 'Title',
       required: true,
     }),
     content: Property.LongText({
-      description: 'Uses the WordPress Text Editor which supports HTML',
+      description: 'Body of the page. HTML is allowed.',
       displayName: 'Content',
       required: true,
     }),
-    slug: Property.ShortText({
-      displayName: 'Slug',
-      required: false,
-    }),
-    date: Property.ShortText({
-      description: 'Page publish date (ISO-8601)',
-      displayName: 'Date',
-      required: false,
-    }),
     status: Property.StaticDropdown({
-      description: 'Choose status',
+      description: 'Publish now, schedule it, or save as a draft.',
       displayName: 'Status',
       required: false,
       options: {
@@ -52,17 +43,35 @@ export const createWordPressPage = createAction({
         ],
       },
     }),
+    date: Property.ShortText({
+      description: "Publish date and time in the site's timezone.",
+      displayName: 'Publish Date',
+      placeholder: '2026-09-21T09:00:00',
+      required: false,
+    }),
+    slug: Property.ShortText({
+      advanced: true,
+      description: 'Last part of the URL.',
+      displayName: 'Slug',
+      placeholder: 'my-first-post',
+      required: false,
+    }),
     excerpt: Property.LongText({
-      description: 'Uses the WordPress Text Editor which supports HTML',
+      advanced: true,
+      description: 'Short summary shown in listings. HTML is allowed.',
       displayName: 'Excerpt',
       required: false,
     }),
     comment_status: Property.Checkbox({
-      displayName: 'Enable Comments',
+      advanced: true,
+      description: 'On lets readers comment. Off leaves the setting as is.',
+      displayName: 'Allow Comments',
       required: false,
     }),
     ping_status: Property.Checkbox({
-      displayName: 'Open to Pinging',
+      advanced: true,
+      description: 'On accepts pingbacks and trackbacks. Off leaves it as is.',
+      displayName: 'Allow Pingbacks',
       required: false,
     }),
   },
@@ -76,6 +85,11 @@ export const createWordPressPage = createAction({
     }
     if (context.propsValue.comment_status) {
       requestBody['comment_status'] = context.propsValue.comment_status
+        ? 'open'
+        : 'closed';
+    }
+    if (context.propsValue.ping_status) {
+      requestBody['ping_status'] = context.propsValue.ping_status
         ? 'open'
         : 'closed';
     }

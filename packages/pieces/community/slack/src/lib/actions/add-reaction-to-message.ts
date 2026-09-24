@@ -1,6 +1,6 @@
 import { slackAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { singleSelectChannelInfo, slackChannel } from '../common/props';
+import { singleSelectChannelInfo, slackChannel, messageTs } from '../common/props';
 
 import { WebClient } from '@slack/web-api';
 import { processMessageTimestamp } from '../common/utils';
@@ -14,6 +14,7 @@ import {
 export const addRectionToMessageAction = createAction({
   auth: slackAuth,
   name: 'slack-add-reaction-to-message',
+  classification: 'WRITE',
   displayName: 'Add Reaction to Message',
   description: 'Add an emoji reaction to a message.',
   audience: 'human',
@@ -22,22 +23,18 @@ export const addRectionToMessageAction = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
-    ts: Property.ShortText({
-      displayName: 'Message Timestamp',
-      description:
-        'Please provide the timestamp of the message you wish to react, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
-      required: true,
-    }),
+    ts: messageTs,
     reaction: Property.ShortText({
-      displayName: 'Reaction (emoji) name',
+      displayName: 'Emoji',
+      description: 'Emoji name without colons.',
+      placeholder: 'thumbsup',
       required: true,
-      description: 'e.g.`thumbsup`',
     }),
     reactAsUser: Property.Checkbox({
-      displayName: 'React as user?',
+      displayName: 'React as User',
       description:
-        'If enabled, the reaction will be added as the authenticated user instead of the bot.',
-      required: true,
+        'Add the reaction as the connected user instead of the bot.',
+      required: false,
       defaultValue: false,
     }),
   },

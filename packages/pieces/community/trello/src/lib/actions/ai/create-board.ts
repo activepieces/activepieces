@@ -13,6 +13,7 @@ import { createBoardActionOutputSchema } from '../../output-schemas';
 export const createBoard = createAction({
   auth: trelloAuth,
   name: 'create_board',
+  classification: 'WRITE',
   displayName: 'Create Board (Agent)',
   description: 'Create a new Trello board.',
   audience: 'ai',

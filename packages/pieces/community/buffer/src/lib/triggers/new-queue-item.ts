@@ -43,6 +43,7 @@ const polling: Polling<
 export const newQueueItem = createTrigger({
   auth: bufferAuth,
   name: 'new_queue_item',
+  classification: 'READ',
   displayName: 'New Queue Item',
   description: 'Triggers when a new post is queued in Buffer.',
   aiMetadata: {

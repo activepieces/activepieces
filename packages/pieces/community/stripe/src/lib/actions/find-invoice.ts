@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { invoiceOutputSchema } from '../output-schemas';
 export const stripeFindInvoice = createAction({
   name: 'find_invoice',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Find Invoice',
   description: 'Finds an invoice by its unique ID.',

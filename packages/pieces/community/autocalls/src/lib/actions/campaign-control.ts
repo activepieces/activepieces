@@ -6,6 +6,7 @@ import { baseApiUrl } from '../..';
 export const campaignControl = createAction({
   auth:autocallsAuth,
   name: 'campaignControl',
+  classification: 'DESTRUCTIVE',
   displayName: 'Start/Stop Campaign',
   description: "Start or stop an outbound campaign from our platform.",
   audience: 'both',

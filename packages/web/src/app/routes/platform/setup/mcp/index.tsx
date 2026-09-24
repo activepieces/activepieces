@@ -1,27 +1,33 @@
 import { ApFlagId } from '@activepieces/shared';
 import { t } from 'i18next';
+import React from 'react';
 
-import { CenteredPage } from '@/app/components/centered-page';
 import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
+import { ActivityFeed } from '@/app/routes/mcp-server/activity/activity-feed';
 import { CopyToClipboardInput } from '@/components/custom/clipboard/copy-to-clipboard';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
+import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { LoadingSpinner } from '@/components/custom/spinner';
+import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { flagsHooks } from '@/hooks/flags-hooks';
 
 import { platformMcpHooks } from './platform-mcp-hooks';
 
 export default function PlatformMcpPage() {
-  const { data: mcpServer, isLoading } =
-    platformMcpHooks.usePlatformMcpServer();
+  const {
+    data: mcpServer,
+    isLoading,
+    isError,
+    refetch,
+  } = platformMcpHooks.usePlatformMcpServer();
   const { mutate: updateTools, isPending: isToolsUpdating } =
     platformMcpHooks.useUpdatePlatformMcpTools();
   const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
 
   if (isLoading) {
     return (
-      <CenteredPage
-        title={t('Platform MCP Server')}
+      <McpSection
         description={t(
           'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
         )}
@@ -29,7 +35,19 @@ export default function PlatformMcpPage() {
         <div className="flex items-center justify-center py-20">
           <LoadingSpinner />
         </div>
-      </CenteredPage>
+      </McpSection>
+    );
+  }
+
+  if (isError) {
+    return (
+      <McpSection
+        description={t(
+          'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
+        )}
+      >
+        <DataFetchErrorState entity={t('the MCP server')} onRetry={refetch} />
+      </McpSection>
     );
   }
 
@@ -44,8 +62,7 @@ export default function PlatformMcpPage() {
   };
 
   return (
-    <CenteredPage
-      title={t('Platform MCP Server')}
+    <McpSection
       description={t(
         'Configure the platform-wide MCP server used by the AI Chat assistant and external MCP clients.',
       )}
@@ -56,6 +73,7 @@ export default function PlatformMcpPage() {
             <TabsList>
               <TabsTrigger value="connection">{t('Connection')}</TabsTrigger>
               <TabsTrigger value="tools">{t('Tools')}</TabsTrigger>
+              <TabsTrigger value="activity">{t('Activity')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="connection" className="mt-4 pb-6" tabIndex={-1}>
@@ -109,9 +127,36 @@ export default function PlatformMcpPage() {
                 />
               </div>
             </TabsContent>
+
+            <TabsContent
+              value="activity"
+              className="mt-4 flex flex-col gap-2 pb-6"
+              tabIndex={-1}
+            >
+              <ActivityFeed />
+            </TabsContent>
           </Tabs>
         )}
       </div>
-    </CenteredPage>
+    </McpSection>
+  );
+}
+
+function McpSection({
+  description,
+  children,
+}: {
+  description: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="w-full mx-auto max-w-page-band py-6">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-xl font-medium">{t('Platform MCP Server')}</h1>
+        <div className="text-sm text-muted-foreground">{description}</div>
+      </div>
+      <Separator className="my-4" />
+      {children}
+    </div>
   );
 }

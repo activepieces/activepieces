@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { flowRunUtils } from '@/features/flow-runs/utils/flow-run-utils';
 import { projectCollectionUtils } from '@/features/projects';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { billingQueries } from '../hooks/billing-hooks';
@@ -47,6 +48,10 @@ export const SidebarUsageLimits = React.memo(() => {
     return null;
   }
 
+  if (isNil(authenticationSession.getProjectId())) {
+    return null;
+  }
+
   if (isNil(project) || isNil(usage)) {
     return (
       <div className="flex flex-col w-full gap-2 p-2.5 bg-background rounded-md border">
@@ -63,12 +68,11 @@ export const SidebarUsageLimits = React.memo(() => {
     return null;
   }
 
-  const creditsText = billingUtils.formatCredits(Math.round(creditsRemaining));
+  const creditsText = billingUtils.formatCredits(creditsRemaining);
   const resetLine = billingUtils.resolveCreditsReset({
     creditsNextResetAt: usage.creditsNextResetAt,
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
-    isPaid,
     dateFormat: BILLING_DATE_FORMAT,
   });
   return (

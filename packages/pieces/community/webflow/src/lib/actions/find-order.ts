@@ -7,6 +7,7 @@ import { WebflowApiClient } from '../common/client';
 export const webflowFindOrder = createAction({
 	auth: webflowAuth,
 	name: 'find_order',
+	classification: 'READ',
 	description: 'Find order',
 	displayName: 'Find an order',
 	audience: 'both',

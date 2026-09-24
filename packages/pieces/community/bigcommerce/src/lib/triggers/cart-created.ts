@@ -9,6 +9,7 @@ const TRIGGER_SCOPE = 'store/cart/created';
 export const cartCreated = createTrigger({
   auth: bigcommerceAuth,
   name: 'cartCreated',
+  classification: 'READ',
   displayName: 'Cart Created',
   description: 'Triggers when a new cart is created',
   aiMetadata: {

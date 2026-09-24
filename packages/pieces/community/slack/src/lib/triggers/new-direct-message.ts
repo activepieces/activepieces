@@ -9,6 +9,7 @@ import { newDirectMessageTriggerOutputSchema } from '../output-schemas';
 export const newDirectMessageTrigger = createTrigger({
 	auth: slackAuth,
 	name: 'new-direct-message',
+	classification: 'READ',
 	displayName: 'New Direct Message',
 	description: 'Triggers when a message was posted in a direct message channel.',
 	aiMetadata: {
@@ -18,13 +19,15 @@ export const newDirectMessageTrigger = createTrigger({
 	props: {
 		info: appWebhookSetupInfo,
 		ignoreBots: Property.Checkbox({
-			displayName: 'Ignore Bot Messages ?',
-			required: true,
+			displayName: 'Ignore Bot Messages',
+			description: 'Skip messages posted by bots and apps.',
+			required: false,
 			defaultValue: false,
 		}),
 		ignoreSelfMessages: Property.Checkbox({
-			displayName: 'Ignore Message from Yourself ?',
-			required: true,
+			displayName: 'Ignore My Own Messages',
+			description: 'Skip messages sent by the connected user. Needs a user token.',
+			required: false,
 			defaultValue: false,
 		}),
 	},

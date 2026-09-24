@@ -6,6 +6,7 @@ import { callGraphApi, flattenUser, userDropdown } from '../common';
 export const updateUserAction = createAction({
     auth: azureAdAuth,
     name: 'update_user',
+    classification: 'WRITE',
     displayName: 'Update User',
     description: 'Updates an Azure AD user. Only provide fields you want to change.',
     audience: 'both',

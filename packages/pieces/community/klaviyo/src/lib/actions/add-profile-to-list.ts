@@ -7,6 +7,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 export const addProfileToList = createAction({
   auth: klaviyoAuth,
   name: 'addProfileToList',
+  classification: 'WRITE',
   displayName: 'Add Profile to List',
   description:
     'Add profiles to a specific list without changing subscription status.',

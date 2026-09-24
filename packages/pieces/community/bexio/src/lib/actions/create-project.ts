@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const createProjectAction = createAction({
   auth: bexioAuth,
   name: 'create_project',
+  classification: 'WRITE',
   displayName: 'Create Project',
   description: 'Create a new project',
   audience: 'both',

@@ -1,10 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { AuthenticationType, HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { HttpMethod } from '@activepieces/pieces-common';
 import { resendAuth } from '../..';
+import { resendClient } from '../common/client';
 import { cancelScheduledEmailOutputSchema } from '../output-schemas';
 
 export const cancelScheduledEmail = createAction({
   name: 'cancel_scheduled_email',
+  classification: 'DESTRUCTIVE',
   auth: resendAuth,
   displayName: 'Cancel Scheduled Email',
   outputSchema: cancelScheduledEmailOutputSchema,
@@ -19,11 +21,6 @@ export const cancelScheduledEmail = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const response = await httpClient.sendRequest<{ object: string; id: string }>({
-      method: HttpMethod.POST,
-      url: `https://api.resend.com/emails/${propsValue.email_id}/cancel`,
-      authentication: { type: AuthenticationType.BEARER_TOKEN, token: auth.secret_text },
-    });
-    return response.body;
+    return await resendClient.sendRequest<{ object: string; id: string }>({ auth: auth.secret_text, method: HttpMethod.POST, path: `/emails/${propsValue.email_id}/cancel` });
   },
 });

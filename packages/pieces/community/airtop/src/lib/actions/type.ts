@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 
 export const typeAction = createAction({
 	name: 'type',
+	classification: 'WRITE',
 	auth: airtopAuth,
 	displayName: 'Type',
 	description: 'Type into a browser window at the specified field.',

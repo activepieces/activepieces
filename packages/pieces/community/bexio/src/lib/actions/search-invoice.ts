@@ -5,6 +5,7 @@ import { BexioClient } from '../common/client';
 export const searchInvoiceAction = createAction({
   auth: bexioAuth,
   name: 'search_invoice',
+  classification: 'SEARCH',
   displayName: 'Search Invoice',
   description: 'Search for invoices using various criteria',
   audience: 'both',

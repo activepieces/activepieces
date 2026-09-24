@@ -11,6 +11,7 @@ const TRIGGER_KEY = 'new-record-trigger';
 export const recordCreatedTrigger = createTrigger({
 	auth: attioAuth,
 	name: 'record_created',
+	classification: 'READ',
 	displayName: 'Record Created',
 	description: 'Triggers when a new record such as person,company or deal is created.',
 	aiMetadata: {

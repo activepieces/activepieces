@@ -11,6 +11,7 @@ import { newReactionRemovedTriggerOutputSchema } from '../output-schemas';
 export const newReactionRemoved = createTrigger({
   auth: slackAuth,
   name: 'new_reaction_removed',
+  classification: 'READ',
   displayName: 'Reaction Removed',
   description: 'Triggers when a reaction is removed from a message',
   aiMetadata: {
@@ -21,16 +22,15 @@ export const newReactionRemoved = createTrigger({
     webhookInfo: appWebhookSetupInfo,
     info: multiSelectChannelInfo,
     emojis: Property.Array({
-      displayName: 'Emojis (E.g fire, smile)',
-      description: 'Select emojis to trigger on',
+      displayName: 'Emojis',
+      description: 'Emoji names without colons. Empty means any emoji.',
       required: false,
     }),
     user: userId(false),
     channels: Property.MultiSelectDropdown({
       auth: slackAuth,
       displayName: 'Channels',
-      description:
-        'If no channel is selected, the flow will be triggered for reactions removed in all channels the app has access to',
+      description: 'Empty means every channel the bot is in.',
       required: false,
       refreshers: [],
       async options({ auth }) {

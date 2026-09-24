@@ -18,6 +18,7 @@ export const askOpenAI = createAction({
   audience: 'both',
   auth: openaiAuth,
   name: 'ask_chatgpt',
+  classification: 'READ',
   displayName: 'Ask ChatGPT',
   description: 'Ask ChatGPT anything you want!',
   aiMetadata: { description: 'Sends a prompt to an OpenAI chat model and returns the reply text, with sampling controls (temperature, top P, frequency and presence penalties) and an optional roles array that supplies the system message. Two modes: stateless by default, or, when a memory key is set, loading and re-saving the conversation history in project storage so later runs continue the same thread, trimming it as it approaches the token limit. This is the general-purpose text call of this piece; prefer ask_assistant to route through a pre-built OpenAI Assistant, vision_prompt when an image is part of the question, and extract-structured-data when the answer must come back as named fields. A model, a question, and a maximum token count are required; not idempotent: each call produces a fresh completion and, with a memory key, rewrites the stored history.', idempotent: false },

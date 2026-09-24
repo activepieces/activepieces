@@ -10,6 +10,7 @@ import { stripeCommon } from '../common';
 import { eventOutputSchema } from '../output-schemas';
 export const stripeGetEvent = createAction({
   name: 'get_event',
+  classification: 'READ',
   auth: stripeAuth,
   displayName: 'Get Event (Agent)',
   description: 'Retrieve a single Stripe event by its ID.',

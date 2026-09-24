@@ -7,6 +7,7 @@ import { searchGoogleJobsOutputSchema } from '../output-schemas';
 export const searchGoogleJobs = createAction({
   auth: serpApiAuth,
   name: 'search_google_jobs',
+  classification: 'SEARCH',
   displayName: 'Search Google Jobs',
   description: 'Find job listings on Google Jobs for a query.',
   audience: 'ai',

@@ -6,6 +6,7 @@ import { businessAccountIdProp, phoneNumberIdDropdown } from '../common/props';
 export const sendReaction = createAction({
   auth: kapsoAuth,
   name: 'send_reaction',
+  classification: 'WRITE',
   displayName: 'Send Reaction',
   description: 'React to a WhatsApp message with an emoji.',
   audience: 'both',

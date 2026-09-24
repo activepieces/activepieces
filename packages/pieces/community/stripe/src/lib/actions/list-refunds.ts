@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { refundListOutputSchema } from '../output-schemas';
 export const stripeListRefunds = createAction({
   name: 'list_refunds',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Refunds (Agent)',
   description: 'List Stripe refunds.',

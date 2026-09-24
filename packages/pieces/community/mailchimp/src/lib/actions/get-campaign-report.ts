@@ -8,6 +8,7 @@ import { MailchimpClient, CampaignReportOptions } from '../common/types';
 export const getCampaignReport = createAction({
   auth: mailchimpAuth,
   name: 'get_campaign_report',
+  classification: 'READ',
   displayName: 'Get Campaign Report',
   description: 'Get comprehensive report details for a specific sent campaign including opens, clicks, bounces, and performance metrics',
   audience: 'both',

@@ -11,6 +11,7 @@ import { stripeCommon } from '../common';
 import { taxRateListOutputSchema } from '../output-schemas';
 export const stripeListTaxRates = createAction({
   name: 'list_tax_rates',
+  classification: 'SEARCH',
   auth: stripeAuth,
   displayName: 'List Tax Rates (Agent)',
   description: 'List Stripe tax rates.',

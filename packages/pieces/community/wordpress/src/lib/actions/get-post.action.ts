@@ -16,14 +16,15 @@ import { getPostActionOutputSchema } from '../output-schemas';
 export const getWordPressPost = createAction({
   auth: wordpressAuth,
   name: 'get_post',
-  description: 'Get a post from WordPress',
-  audience: 'both',
+  classification: 'READ',
+  description: 'Fetch one post by its ID',
+  audience: 'human',
   aiMetadata: { description: 'Fetches a single WordPress post by its numeric post ID via the REST API. Use it to read the current content, status, or metadata of a known post before acting on it. Requires the post ID; read-only and idempotent.', idempotent: true },
   displayName: 'Get Post Details',
   outputSchema: getPostActionOutputSchema,
   props: {
     id: Property.Number({
-      description: 'The ID of the post to get',
+      description: "Number after post= in the post's edit URL.",
       displayName: 'Post ID',
       required: true,
     }),

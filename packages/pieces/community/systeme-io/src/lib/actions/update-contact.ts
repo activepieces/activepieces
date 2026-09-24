@@ -3,6 +3,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { systemeIoAuth } from '../common/auth';
 import { systemeIoCommon } from '../common/client';
 import { systemeIoProps } from '../common/props';
+import { updateContactActionOutputSchema } from '../output-schemas';
 
 interface ContactFieldUpdate {
   field: string;
@@ -12,6 +13,7 @@ interface ContactFieldUpdate {
 export const updateContact = createAction({
   auth: systemeIoAuth,
   name: 'updateContact',
+  classification: 'WRITE',
   displayName: 'Update Contact',
   description: 'Update fields (name, phone, custom fields) of an existing contact using fields from your Systeme.io account',
   audience: 'both',
@@ -79,6 +81,7 @@ export const updateContact = createAction({
       },
     }),
   },
+  outputSchema: updateContactActionOutputSchema,
   async run(context) {
     const { 
       contactId, 

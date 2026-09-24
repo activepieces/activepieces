@@ -14,6 +14,7 @@ The new name for the worksheet. The name must adhere to the following rules:
 export const renameWorksheetAction = createAction({
   auth: excelAuth,
   name: 'rename_worksheet',
+  classification: 'WRITE',
   displayName: 'Rename Worksheet',
   description: 'Change the name of an existing worksheet.',
   audience: 'both',

@@ -5,6 +5,7 @@ import { avomaCommon } from '../common';
 export const createCall = createAction({
   auth: avomaCommon.avomaAuth,
   name: 'create_call',
+  classification: 'WRITE',
   displayName: 'Create Call',
   description: 'Creates a new call in Avoma',
   audience: 'both',

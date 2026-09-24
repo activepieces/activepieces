@@ -1,15 +1,15 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { slackAuth } from '../auth';
-import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow } from '../common/props';
+import { blocks, singleSelectChannelInfo, slackChannel, mentionOriginFlow, messageTs } from '../common/props';
 import { buildFlowOriginContextBlock, processMessageTimestamp, textToSectionBlocks } from '../common/utils';
 import { Block,KnownBlock, WebClient } from '@slack/web-api';
 import { getBotToken, SlackAuthValue } from '../common/auth-helpers';
 import { chatUpdateOutputSchema } from '../output-schemas';
 
 export const updateMessage = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'updateMessage',
-  displayName: 'Update message',
+  classification: 'WRITE',
+  displayName: 'Update Message',
   description: 'Update an existing message',
   audience: 'human',
   aiMetadata: {
@@ -22,16 +22,11 @@ export const updateMessage = createAction({
   props: {
     info: singleSelectChannelInfo,
     channel: slackChannel(true),
-    ts: Property.ShortText({
-      displayName: 'Message Timestamp',
-      description:
-        'Please provide the timestamp of the message you wish to update, such as `1710304378.475129`. Alternatively, you can easily obtain the message link by clicking on the three dots next to the message and selecting the `Copy link` option.',
-      required: true,
-    }),
+    ts: messageTs,
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The updated text of your message',
-      required: true,
+      description: 'Slack mrkdwn is supported. Empty updates blocks only.',
+      required: false,
     }),
     mentionOriginFlow,
     blocks,
@@ -44,10 +39,18 @@ export const updateMessage = createAction({
     }
     const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
+    const blockList: (KnownBlock | Block)[] = [];
+
+    if (propsValue.text) {
+      blockList.push(...textToSectionBlocks(propsValue.text));
+    }
 
     if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
       blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
+    }
+
+    if (blockList.length === 0) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
     }
 
     if (propsValue.mentionOriginFlow) {
@@ -57,7 +60,7 @@ export const updateMessage = createAction({
     return await client.chat.update({
       channel: propsValue.channel,
       ts: messageTimestamp,
-      text: propsValue.text,
+      text: propsValue.text || undefined,
       blocks: blockList,
     });
   },

@@ -9,7 +9,7 @@ import { chatVisibilityHelper } from '../ee/agent/chat-visibility-helper'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { emailService } from '../ee/helper/email/email-service'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { cutOffPlatformAccess } from '../ee/platform/platform-teardown-jobs'
+import { beginPlatformTeardown } from '../ee/platform/platform-teardown-jobs'
 import { fileService } from '../file/file.service'
 import { attachMultipartFieldsToBody } from '../helper/multipart-body'
 import { system } from '../helper/system/system'
@@ -168,7 +168,7 @@ export const platformController: FastifyPluginAsyncZod = async (app) => {
                 },
             })
 
-            await cutOffPlatformAccess({ platformId, log: req.log })
+            await beginPlatformTeardown({ platformId, log: req.log })
 
             const { error: emailError } = await tryCatch(() => emailService(req.log).sendPlatformDeleted({
                 platformId,

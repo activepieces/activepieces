@@ -18,6 +18,7 @@ interface ThreadChannel {
 export const discordListActiveThreads = createAction({
   auth: discordAuth,
   name: 'discord_list_active_threads',
+  classification: 'SEARCH',
   displayName: 'List Active Threads',
   description: 'List all active threads in a guild.',
   audience: 'ai',

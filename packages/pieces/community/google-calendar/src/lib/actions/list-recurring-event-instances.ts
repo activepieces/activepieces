@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 export const listRecurringEventInstances = createAction({
   auth: googleCalendarAuth,
   name: 'google_calendar_list_recurring_event_instances',
+  classification: 'SEARCH',
   displayName: 'List Recurring Event Instances',
   description:
     'Lists the individual occurrences of one recurring event series, each with its own instance event ID.',

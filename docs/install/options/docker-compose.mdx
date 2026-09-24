@@ -1,122 +1,266 @@
 ---
-title: "Docker Compose"
-description: ""
-icon: "book"
+title: "Self Host Activepieces"
+sidebarTitle: "Self host (Docker)"
+description: "Docker Compose with PostgreSQL and Redis"
+icon: "docker"
 ---
 
-To get up and running quickly with Activepieces, we will use the Activepieces Docker image. Follow these steps:
+## Install with one command (recommended)
 
-## Prerequisites
+One line writes the config, generates your secrets, and starts everything.
 
-You need to have [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) and [Docker](https://docs.docker.com/get-docker/) installed on your machine in order to set up Activepieces via Docker Compose.
-
-## Installing
-
-**1. Clone Activepieces repository.**
-
-Use the command line to clone Activepieces repository:
+Run it in the folder where you want Activepieces to live:
 
 ```bash
-git clone https://github.com/activepieces/activepieces.git
+curl -fsSL https://get.activepieces.com | sh
 ```
 
-**2. Go to the repository folder.**
+Or hand it to your AI assistant:
+
+<Prompt description="Install Activepieces with an AI assistant" icon="sparkles" actions={["copy", "cursor"]}>
+Install Activepieces on this machine by running `curl -fsSL https://get.activepieces.com | sh` from a folder I choose. It needs Docker Compose v2, so check `docker compose version` first and tell me if it is missing. If port 8080 is already in use, re-run with `--port` and a free port. When it finishes, confirm the stack is healthy with `docker compose -p activepieces ps` and `curl http://localhost:8080/api/v1/health`, then tell me the URL to open and remind me to back up the generated `.env` file.
+</Prompt>
+
+<Info>
+**Requirements**
+- [Docker Compose v2](https://docs.docker.com/compose/install/). The old `docker-compose` will not work.
+- At least 2 vCPU and 4 GB RAM.
+- On Windows, WSL2. Run the command inside it.
+</Info>
+
+<Tip>
+Use `--port <port>` if 8080 is taken, and `--dir <path>` to install somewhere other than `./activepieces`. Want to read it before running it? `curl -fsSL https://get.activepieces.com` prints the script.
+</Tip>
+
+## Alternative: run Docker Compose yourself
+
+Use this if you would rather not pipe a remote script into a shell, or your change process needs the compose file in front of it before anything starts.
+
+You get the same four containers, set up by hand.
+
+<Accordion title="Show the manual steps" icon="wrench">
+**1. Get the compose file**
 
 ```bash
+git clone --depth 1 https://github.com/activepieces/activepieces.git
 cd activepieces
 ```
 
-**3.Generate Environment variable**
-
-Run the following command from the command prompt / terminal
+**2. Generate your secrets**
 
 ```bash
 sh tools/deploy.sh
 ```
 
-<Tip>
-If none of the above methods work, you can rename the .env.example file in the root directory to .env and fill in the necessary information within the file.
-</Tip>
-
-**4. Run Activepieces.**
-
-<Warning>
-Please note that "docker-compose" (with a dash) is an outdated version of Docker Compose and it will not work properly. We strongly recommend downloading and installing version 2 from the [here](https://docs.docker.com/compose/install/) to use Docker Compose.
-</Warning>
+This copies `.env.example` to `.env` and fills in the passwords and keys. It needs `openssl`. If `openssl` is missing it will still report success while leaving the values blank, so check before you continue:
 
 ```bash
-docker compose -p activepieces up
+grep -E '^(AP_ENCRYPTION_KEY|AP_JWT_SECRET|AP_POSTGRES_PASSWORD)=' .env
 ```
 
-## 4. Configure Webhook URL (Important for Triggers, Optional If you have public IP)
+Every one of those must have a value. If any is empty, install `openssl` and run `sh tools/deploy.sh` again.
 
-**Note:** By default, Activepieces will try to use your public IP for webhooks. If you are self-hosting on a personal machine, you must configure the frontend URL so that the webhook is accessible from the internet.
+**3. Set the edition**
 
-**Optional:** The easiest way to expose your webhook URL on localhost is by using a service like ngrok. However, it is not suitable for production use.
+Add this to `.env`. Without it you get the Community edition, and you will not be able to activate a license key later.
 
-1. Install ngrok
-2. Run the following command:
+```bash
+AP_EDITION=ee
+AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
+```
+
+`.env.example` ships `AP_EXECUTION_MODE=UNSANDBOXED`, which the server rejects at startup on `ee`.
+
+**4. Point the worker at the app**
+
+In `docker-compose.yml`, give the `worker` service its own `AP_FRONTEND_URL`:
+
+```yaml
+worker:
+  environment:
+    - AP_CONTAINER_TYPE=WORKER
+    - AP_FRONTEND_URL=http://app
+```
+
+Both services share `.env`, where `AP_FRONTEND_URL` is your public URL. That address means "the app" to a browser but "myself" to the worker container, so without this override the worker cannot open its socket and the Workers page stays empty.
+
+**5. Start it**
+
+```bash
+docker compose -p activepieces up -d
+```
+
+<Note>
+Two more things worth changing before production. The image tag in `docker-compose.yml` is pinned to a specific release, so bump it yourself when you upgrade. And `worker` is set to `replicas: 5`, which is more than a single small machine wants; see [Production Setup](/install/configure-operate/production-setup) for sizing.
+</Note>
+</Accordion>
+
+
+## Open Activepieces
+
+Go to [http://localhost:8080](http://localhost:8080), or `http://<your-server-ip>:<your-port>` if you installed on a remote server or changed the port.
+
+The first account you create becomes the platform administrator. There is no default username or password.
+
+<Warning>
+Your secrets are written to `activepieces/.env`. Back that file up.
+
+Without `AP_ENCRYPTION_KEY`, stored connections cannot be decrypted, even from a full database backup.
+</Warning>
+
+## Check it's working
+
+```bash
+docker compose -p activepieces ps
+curl http://localhost:8080/api/v1/health
+```
+
+All four containers should be `Up`, and the health endpoint should respond.
+
+Then sign in and open **Platform Admin → Infrastructure → Workers**. You should see at least one worker. If the list is empty, see [Troubleshooting](#troubleshooting).
+
+## What you've just set up
+
+Four containers, defined in `activepieces/docker-compose.yml`:
+
+| Container | Role |
+|---|---|
+| `app` | API and UI, served on port 8080 |
+| `worker` | Runs your flows |
+| `postgres` | Flows, runs, and connections |
+| `redis` | Job queue |
+
+**Your data is not in the `activepieces` folder.** It lives in the `postgres_data` Docker volume, so backing up the folder does not back up your flows.
+
+## Activate a license key (optional)
+
+Your install runs on the free plan by default.
+
+If you have a trial or paid license key, activate it to unlock the paid features. See [License key](/install/configure-operate/enterprise-license).
+
+## Make webhooks reachable (optional)
+
+Skip this if your server already has a public URL.
+
+Webhooks and app triggers need an address that third parties can reach. On a personal machine, expose it with a tunnel such as ngrok:
+
 ```bash
 ngrok http 8080
 ```
-3. Replace `AP_FRONTEND_URL` environment variable in `.env` with the ngrok url.
 
-![Ngrok](../../resources/screenshots/docker-ngrok.png)
+Then set `AP_FRONTEND_URL` in `.env` to the ngrok URL and restart.
 
-<Warning>
-When deploying for production, ensure that you update the database credentials and properly set the environment variables.
+<Frame>
+  <img src="/resources/screenshots/docker-ngrok.png" alt="Copying the public URL from ngrok" />
+</Frame>
 
-Review the [configurations guide](/install/reference/environment-variables) to make any necessary adjustments.
-</Warning>
+<Note>
+ngrok is fine for testing but not suitable for production. In production, point `AP_FRONTEND_URL` at your real domain.
+</Note>
 
-## Upgrading
+## Upgrade
 
-To upgrade to new versions, which are installed using docker compose, perform the following steps. First, open a terminal in the activepieces repository directory and run the following commands.
-
-### Automatic Pull
-
-**1. Run the update script**
+Back up first:
 
 ```bash
-sh tools/update.sh
+docker compose -p activepieces exec postgres pg_dump -U postgres activepieces > backup.sql
 ```
 
-### Manually Pull
+Then upgrade:
 
-**1. Pull the new docker compose file**
 ```bash
-git pull
+curl -fsSL https://get.activepieces.com | sh -s -- --upgrade
 ```
 
-**2. Pull the new images**
-```bash
-docker compose pull
-```
-
-**3. Review changelog for breaking changes**
+Your `.env`, your data, and any edits to `docker-compose.yml` are left alone.
 
 <Warning>
-Please review breaking changes in the [changelog](../reference/breaking-changes).
+Review [breaking changes](/install/reference/breaking-changes) before upgrading.
 </Warning>
 
-**4. Run the updated docker images**
-```
-docker compose up -d --remove-orphans
-```
+<Tip>
+The version is pinned in `AP_VERSION` inside `.env`. Set it yourself and re-run the upgrade to move to a specific release.
+</Tip>
 
-Congratulations! You have now successfully updated the version.
+## Uninstall
 
-## Deleting
+Stop Activepieces and keep your data:
 
-The following command is capable of deleting all Docker containers and associated data, and therefore should be used with caution:
-
-```
-sh tools/reset.sh
+```bash
+curl -fsSL https://get.activepieces.com | sh -s -- --uninstall
 ```
 
-<Warning>
-Executing this command will result in the removal of all Docker containers and the data stored within them. It is important to be aware of the potentially hazardous nature of this command before proceeding.
-</Warning>
+Stop it and delete everything, including the database:
 
+```bash
+curl -fsSL https://get.activepieces.com | sh -s -- --uninstall --purge
+```
 
+## Troubleshooting
 
+<AccordionGroup>
+<Accordion title="The install command fails">
+Check which Docker Compose you have:
+
+```bash
+docker compose version
+```
+
+If that errors, you are on Compose v1. The old `docker-compose` will not work with this setup. Install [Docker Compose v2](https://docs.docker.com/compose/install/).
+</Accordion>
+
+<Accordion title="The Workers page is empty">
+Your worker cannot reach the app. Check its logs:
+
+```bash
+docker compose -p activepieces logs worker | grep -i socket
+```
+
+Repeated `Socket.IO connection error` means `AP_FRONTEND_URL` on the **worker** points at an address that does not resolve from inside the container. `localhost` refers to the worker itself, not the app. It must be the app's service name on the Docker network:
+
+```yaml
+worker:
+  environment:
+    - AP_FRONTEND_URL=http://app
+```
+
+The app's own `AP_FRONTEND_URL` should stay as your public URL. See [Websocket Issues](/install/troubleshooting/websocket-issues).
+</Accordion>
+
+<Accordion title="Port 8080 is already in use">
+Install on another port:
+
+```bash
+curl -fsSL https://get.activepieces.com | sh -s -- --port 8090
+```
+
+On an existing install, change `AP_HOST_PORT` in `.env` and run `docker compose -p activepieces up -d`.
+
+Do not set `AP_PORT`. That is the app's own listen port inside the container, and changing it breaks the port mapping.
+</Accordion>
+
+<Accordion title="The app keeps restarting">
+Read the startup error:
+
+```bash
+docker compose -p activepieces logs app | grep -i "failed to start"
+```
+
+A common cause is `AP_EXECUTION_MODE=UNSANDBOXED` with `AP_EDITION=ee`, which is rejected at startup. Use `SANDBOX_CODE_ONLY` instead. See [Sandboxing Mode](/install/configure-operate/sandboxing).
+</Accordion>
+
+<Accordion title="Reading the logs">
+```bash
+docker compose -p activepieces logs -f app
+docker compose -p activepieces logs -f worker
+```
+</Accordion>
+</AccordionGroup>
+
+## Going to production
+
+<Note>
+Read [Production Setup](/install/configure-operate/production-setup). It's the one opinionated production shape, and every sizing choice flows from a single number.
+
+For the full list of settings, see [Environment Variables](/install/reference/environment-variables).
+</Note>

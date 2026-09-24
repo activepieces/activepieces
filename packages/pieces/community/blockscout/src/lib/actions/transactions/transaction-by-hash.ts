@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const getTransactionByHash = createAction({
   name: 'get_transaction_by_hash',
+  classification: 'READ',
   displayName: 'Get Transaction by Hash',
   description: 'Get transaction details by its hash',
   audience: 'both',

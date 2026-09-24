@@ -2,9 +2,10 @@ import { performance } from 'node:perf_hooks'
 import { isNil } from '@activepieces/core-utils'
 import { EngineGenericError, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, FlowTrigger, GenericStepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
-import { triggerRunner } from '../core/piece/trigger-runner'
 import { flowRunProgressReporter } from '../helper/flow-run-progress-reporter'
 import { loggingUtils } from '../helper/logging-utils'
+import { triggerHelper } from '../helper/trigger-helper'
+import { aiRouterExecuter } from './ai-router-executor'
 import { BaseExecutor } from './base-executor'
 import { codeExecutor } from './code-executor'
 import { EngineConstants, ResolvedExecuteFlowOperation } from './context/engine-constants'
@@ -23,6 +24,7 @@ function getExecutors(): Record<FlowActionType, BaseExecutor<FlowAction>> {
         [FlowActionType.LOOP_ON_ITEMS]: loopExecutor,
         [FlowActionType.PIECE]: pieceExecutor,
         [FlowActionType.ROUTER]: routerExecuter,
+        [FlowActionType.AI_ROUTER]: aiRouterExecuter,
     }
     return executors
 }
@@ -49,7 +51,7 @@ export const flowExecutor = {
             void flowRunProgressReporter.backup().catch((err) => {
                 console.error('[Progress] Initial payload upload failed', err)
             })
-            await triggerRunner.executeOnStart({ trigger, constants, payload: input.triggerPayload })
+            await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
             await flowRunProgressReporter.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: executionState,
@@ -181,7 +183,7 @@ const applyLogSizeLimitIfExceeded = async (
         status: FlowRunStatus.LOG_SIZE_EXCEEDED,
         failedStep: {
             name: action.name,
-            displayName: action.displayName,
+            displayName: action.displayName ?? action.name,
             message: 'Flow run logs size exceeded',
         },
     })

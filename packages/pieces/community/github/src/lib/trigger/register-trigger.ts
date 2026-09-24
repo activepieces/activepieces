@@ -17,6 +17,7 @@ export const githubRegisterTrigger = ({
   createTrigger({
     auth: githubAuth,
     name: `trigger_${name}`,
+    classification: 'READ',
     displayName,
     description,
     aiMetadata: {

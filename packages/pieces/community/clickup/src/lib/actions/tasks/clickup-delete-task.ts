@@ -7,6 +7,7 @@ import { clickupAuth } from '../../auth';
 export const clickupDeleteTaskAi = createAction({
   auth: clickupAuth,
   name: 'clickup_delete_task',
+  classification: 'DESTRUCTIVE',
   description: 'Delete a task in a workspace and list',
   audience: 'ai',
   aiMetadata: {

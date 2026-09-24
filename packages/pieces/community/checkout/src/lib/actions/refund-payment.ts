@@ -4,6 +4,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const refundPaymentAction = createAction({
   name: 'refund_payment',
+  classification: 'DESTRUCTIVE',
   auth: checkoutComAuth,
   displayName: 'Refund a Payment',
   description: 'Issue a refund (full or partial) for a captured payment. Supports split refunds, line items, and bank account destinations.',

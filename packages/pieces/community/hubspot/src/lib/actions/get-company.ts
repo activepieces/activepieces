@@ -1,4 +1,4 @@
-import { hubspotAuth } from '../auth';
+import { getHubspotAccessToken, hubspotAuth } from '../auth';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	getDefaultPropertiesForObject,
@@ -7,14 +7,17 @@ import {
 import { OBJECT_TYPE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { MarkdownVariant } from '@activepieces/pieces-framework';
+import { crmObjectOutputSchema } from '../output-schemas';
 
 export const getCompanyAction = createAction({
 	auth: hubspotAuth,
 	name: 'get-company',
+	classification: 'READ',
 	displayName: 'Get Company',
 	description: 'Gets a company.',
 	audience: 'both',
 	aiMetadata: { description: 'Fetches a single company by its HubSpot company ID, returning default and any requested additional properties. Use when you already have the company ID; use Find Company to look one up by domain or another property first. Read-only and idempotent.', idempotent: true },
+	outputSchema: crmObjectOutputSchema,
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',
@@ -42,7 +45,7 @@ export const getCompanyAction = createAction({
 
 		const defaultCompanyProperties = getDefaultPropertiesForObject(OBJECT_TYPE.COMPANY);
 
-		const client = new Client({ accessToken: context.auth.access_token });
+		const client = new Client({ accessToken: getHubspotAccessToken(context.auth) });
 
 		const companyDetails = await client.crm.companies.basicApi.getById(companyId, [
 			...defaultCompanyProperties,

@@ -34,6 +34,7 @@ async function executeStorageGet(context: ActionContext<PieceAuthProperty | unde
 export const storageGetAction = createAction({
   audience: 'both',
   name: 'get',
+  classification: 'READ',
   displayName: 'Get',
   description: 'Get a value from storage',
   aiMetadata: { description: 'Reads the value stored under a key in the key/value store, falling back to an optional default value when the key is missing. Use it to load state persisted by an earlier step, run, or flow; pair it with Put, which writes the value. Requires the key (max 128 characters) and the matching Store Scope, because a key written in one scope is invisible to the others; read-only and idempotent.', idempotent: true },

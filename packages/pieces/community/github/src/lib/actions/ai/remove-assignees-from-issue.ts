@@ -8,6 +8,7 @@ import { issueBodyOutputSchema } from '../../output-schemas';
 export const githubRemoveAssigneesFromIssueAction = createAction({
   auth: githubAuth,
   name: 'remove_assignees_from_issue',
+  classification: 'WRITE',
   displayName: 'Remove Assignees from Issue (Agent)',
   description: 'Unassigns users from an issue or pull request.',
   audience: 'ai',

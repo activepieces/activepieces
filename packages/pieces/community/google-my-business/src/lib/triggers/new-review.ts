@@ -17,6 +17,7 @@ import { googleAuth } from '../..';
 
 export const newReview = createTrigger({
   name: 'new_review',
+  classification: 'READ',
   displayName: 'New Review',
   description: 'Triggers when there is new review',
   aiMetadata: {
@@ -33,18 +34,10 @@ export const newReview = createTrigger({
     return await pollingHelper.test(polling, ctx);
   },
   async onEnable(ctx) {
-    await pollingHelper.onEnable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onEnable(polling, ctx);
   },
   async onDisable(ctx) {
-    await pollingHelper.onDisable(polling, {
-      auth: ctx.auth,
-      store: ctx.store,
-      propsValue: ctx.propsValue,
-    });
+    await pollingHelper.onDisable(polling, ctx);
   },
   async run(ctx) {
     return await pollingHelper.poll(polling, ctx);
@@ -77,13 +70,13 @@ const getResponse = async (
   const response = await httpClient.sendRequest<{
     reviews: { createTime: string }[];
   }>({
-    url: ` https://mybusiness.googleapis.com/v4/${account}/${location}/reviews`,
+    url: `https://mybusiness.googleapis.com/v4/${account}/${location}/reviews`,
     method: HttpMethod.GET,
     headers: {
       Authorization: `Bearer ${authentication.access_token}`,
     },
     queryParams: {
-      pageSize: '100',
+      pageSize: '50',
       orderBy: 'updateTime desc',
     },
   });

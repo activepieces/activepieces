@@ -15,6 +15,7 @@ import { requestActionActionOutputSchema } from '../output-schemas';
 export const requestActionDirectMessageAction = createAction({
   auth: slackAuth,
   name: 'request_action_direct_message',
+  classification: 'WRITE',
   displayName: 'Request Action from A User',
   description:
     'Send a message to a user and wait until the user selects an action',

@@ -6,10 +6,12 @@ import {
 } from '@activepieces/pieces-framework';
 import { APITableCommon, createNewFields, makeClient } from '../common';
 import { APITableAuth } from '../auth';
+import { updateRecordActionOutputSchema } from '../output-schemas';
 
 export const updateRecordAction = createAction({
 	auth: APITableAuth,
 	name: 'apitable_update_record',
+	classification: 'WRITE',
 	displayName: 'Update Record',
 	description: 'Updates an existing record in datasheet.',
 	audience: 'both',
@@ -28,6 +30,7 @@ export const updateRecordAction = createAction({
 		}),
 		fields: APITableCommon.fields,
 	},
+	outputSchema: updateRecordActionOutputSchema,
 	async run(context) {
 		const auth = context.auth;
 		const datasheetId = context.propsValue.datasheet_id;

@@ -7,6 +7,7 @@ import { outlookCommon } from '../common/client';
 export const sendEmailAction = createAction({
 	auth: microsoftOutlookAuth,
 	name: 'send-email',
+	classification: 'WRITE',
 	displayName: 'Send Email',
 	description: 'Sends an email using Microsoft Outlook.',
 	audience: 'both',
@@ -64,9 +65,9 @@ export const sendEmailAction = createAction({
 	},
 	async run(context) {
 		const recipients = context.propsValue.recipients as string[];
-		const ccRecipients = context.propsValue.ccRecipients as string[];
-		const bccRecipients = context.propsValue.bccRecipients as string[];
-		const attachments = context.propsValue.attachments as Array<{ file: ApFile; fileName: string }>;
+		const ccRecipients = (context.propsValue.ccRecipients ?? []) as string[];
+		const bccRecipients = (context.propsValue.bccRecipients ?? []) as string[];
+		const attachments = (context.propsValue.attachments ?? []) as Array<{ file: ApFile; fileName: string }>;
 
 		const { subject, body, bodyFormat } = context.propsValue;
 

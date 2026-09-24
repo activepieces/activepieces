@@ -5,18 +5,19 @@ import {
   AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   DedupeStrategy,
   httpClient,
   HttpMethod,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 
 export const newTicketInView = createTrigger({
   auth: zendeskAuth,
   name: 'new_ticket_in_view',
+  classification: 'READ',
   displayName: 'New ticket in view',
   description: 'Triggers when a new ticket is created in a view',
   aiMetadata: {
@@ -42,13 +43,9 @@ export const newTicketInView = createTrigger({
           };
         }
         const response = await httpClient.sendRequest<{ views: any[] }>({
-          url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/views.json`,
+          url: `${getZendeskBaseUrl(auth)}/views.json`,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(auth),
         });
         return {
           placeholder: 'Select a view',
@@ -153,15 +150,10 @@ const polling: Polling<AppConnectionValueForAuthProperty<typeof zendeskAuth>, { 
 };
 
 async function getTickets(authentication: AppConnectionValueForAuthProperty<typeof zendeskAuth>, view_id: string) {
-  const { email, token, subdomain } = authentication.props;
   const response = await httpClient.sendRequest<{ tickets: any[] }>({
-    url: `https://${subdomain}.zendesk.com/api/v2/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
+    url: `${getZendeskBaseUrl(authentication)}/views/${view_id}/tickets.json?sort_order=desc&sort_by=created_at&per_page=200`,
     method: HttpMethod.GET,
-    authentication: {
-      type: AuthenticationType.BASIC,
-      username: email + '/token',
-      password: token,
-    },
+    authentication: getZendeskAuthentication(authentication),
   });
   return response.body.tickets;
 }

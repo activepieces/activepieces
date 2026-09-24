@@ -7,6 +7,7 @@ import { appointmentTypeIdDropdown, calendarIdDropdown } from '../common/props';
 export const rescheduleAppointmentAction = createAction({
 	auth: acuitySchedulingAuth,
 	name: 'reschedule_appointment',
+	classification: 'WRITE',
 	displayName: 'Reschedule Appointment',
 	description: 'Reschedules an existing appointment to a new date/time.',
 	audience: 'both',

@@ -10,6 +10,7 @@ import { WebhookInformation, common } from '../common';
 export const newFolder = createTrigger({
   auth: boxAuth,
   name: 'new_folder',
+  classification: 'READ',
   displayName: 'New Folder',
   description: 'Triggers when a folder is created',
   aiMetadata: {

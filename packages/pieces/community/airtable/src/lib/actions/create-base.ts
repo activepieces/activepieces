@@ -7,6 +7,7 @@ import { createBaseActionOutputSchema } from '../output-schemas';
 export const airtableCreateBaseAction = createAction({
   auth: airtableAuth,
   name: 'airtable_create_base',
+  classification: 'WRITE',
   displayName: 'Create Base',
   description: 'Create a new base with a specified table structure.',
   audience: 'human',
@@ -20,13 +21,12 @@ export const airtableCreateBaseAction = createAction({
     workspaceId: airtableCommon.workspaceId,
     name: Property.ShortText({
       displayName: 'Base Name',
-      description: 'The name for the new base.',
       required: true,
     }),
     tables: Property.Json({
       displayName: 'Tables',
       description:
-        'Define the tables for the new base. Use the default value as a template. The first field for each table will be its primary field.',
+        'Tables to create. The first field of each table is its primary field.',
       required: true,
       defaultValue: [
         {

@@ -6,10 +6,12 @@ import {
 import { APITableCommon, makeClient } from '../common';
 import { APITableAuth } from '../auth';
 import { prepareQuery } from '../common/client';
+import { findRecordActionOutputSchema } from '../output-schemas';
 
 export const findRecordAction = createAction({
   auth: APITableAuth,
   name: 'apitable_find_record',
+  classification: 'SEARCH',
   displayName: 'Find Records',
   description: 'Finds records in datasheet.',
   audience: 'both',
@@ -54,6 +56,7 @@ export const findRecordAction = createAction({
       required: false,
     }),
   },
+  outputSchema: findRecordActionOutputSchema,
   async run(context) {
     const datasheetId = context.propsValue.datasheet_id;
     const recordIds = context.propsValue.recordIds ?? []
