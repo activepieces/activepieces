@@ -37,6 +37,7 @@ jobs:
             worker_concurrency: '28'
             worker_heap_mb: '64512'
             reuse: 'false'
+            total_slots: 28
           # Every dedicated tenant: 4 small workers per host, 1 slot each, warm reuse.
           - label: "dedicated-05cpu"
             apps: 1
@@ -46,6 +47,7 @@ jobs:
             worker_concurrency: '1'
             worker_heap_mb: '768'
             reuse: 'true'
+            total_slots: 4
 
     steps:
       - name: Checkout
@@ -126,7 +128,7 @@ jobs:
           bun run packages/cli/src/benchmark-only.ts \
             --url http://localhost:8080 \
             --requests "${TOTAL_REQUESTS}" \
-            --concurrency ${{ matrix.workers }} \
+            --concurrency ${{ matrix.total_slots }} \
             --project-id "${{ steps.setup.outputs.project_id }}" \
             --flow-id "${{ steps.setup.outputs.flow_id }}" \
             --json > /tmp/report.json
