@@ -15,7 +15,7 @@ import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-select
 import { mcpToolInput } from './mcp-tool-input'
 import { McpCallBilling, mcpUsageTracker } from './mcp-usage-tracker'
 import { activepiecesTools, ALL_CONTROLLABLE_TOOL_NAMES, LOCKED_TOOL_NAMES, PLATFORM_LEVEL_TOOL_NAMES } from './tools'
-import { apSetProjectContextTool } from './tools/ap-set-project-context'
+import { apSetProjectContextTool, SET_PROJECT_CONTEXT_TOOL_NAME } from './tools/ap-set-project-context'
 
 const PLATFORM_LEVEL_TOOL_SET = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
 
@@ -199,7 +199,7 @@ function toolSwitchedOffResult(toolTitle: string): McpToolResult {
     return {
         content: [{
             type: 'text' as const,
-            text: `Tool "${toolTitle}" is switched off for the selected project.`,
+            text: `Tool "${toolTitle}" is switched off for the selected project by an admin. Do not retry it here. Ask the user to switch it on, or call ${SET_PROJECT_CONTEXT_TOOL_NAME} to select a project where it is on.`,
         }],
         isError: true,
     }

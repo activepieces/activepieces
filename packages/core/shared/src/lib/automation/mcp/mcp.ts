@@ -26,7 +26,7 @@ export const PopulatedMcpServer = McpServer.extend({
 export type PopulatedMcpServer = z.infer<typeof PopulatedMcpServer>
 
 export const ProjectMcpServerResponse = PopulatedMcpServer.extend({
-    platformDisabledTools: z.optional(z.array(z.string())),
+    platformDisabledTools: z.array(z.string()),
 })
 export type ProjectMcpServerResponse = z.infer<typeof ProjectMcpServerResponse>
 

@@ -117,13 +117,15 @@ The check reads the project's live list on every call, so switching a tool on or
 
 #### What you need to do
 
-Nothing on a normal upgrade, and no environment variable or migration. Check the Tools tab of the MCP page for each project if you use the platform-wide server and have switched tools off per project: those settings were doing nothing for platform clients and now take effect. A connected agent that relied on a tool you had switched off will start being refused.
+There is no environment variable and no migration. If you use the platform-wide server and have switched tools off per project, review the Tools tab of the MCP page for each of those projects before you upgrade: those settings were doing nothing for platform clients and now take effect. A connected agent that relied on a tool you had switched off will start being refused.
 
 #### The platform's switched-off tools now apply to every MCP server, and to the AI Chat
 
 Platform → Setup → MCP carries a list of built-in tools switched off for the platform, and the page has always described it as governing the AI Chat and external agents. It did neither in full. It filtered only a client connected to the platform address, `/mcp/platform`, with no project selected. A client connected to a project address, `/mcp`, was filtered by that project's list alone and never consulted the platform's — and so was the AI Chat, because a chat resolves its project from the conversation and is then served as a project client.
 
 The platform list is now the outer bound everywhere. A tool switched off there is absent from the tool list of every MCP server on the platform, the embedded MCP settings dialog reports it as off, and the AI Chat no longer offers it. A project can still switch off more than the platform does; it can no longer switch back on what the platform switched off. Locked read-only tools stay exempt, as they always have been.
+
+A client that is already connected keeps the tool list it fetched when it connected, because the server does not notify clients when the list changes. Until it reconnects, such a client still shows a tool that the platform has since switched off, and a call to that tool fails with a generic "tool not found" error rather than an explanation.
 
 #### What you need to do
 

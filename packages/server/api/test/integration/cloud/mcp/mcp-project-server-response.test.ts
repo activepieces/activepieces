@@ -52,6 +52,15 @@ describe('GET /v1/projects/:projectId/mcp-server', () => {
         expect(response.json().platformDisabledTools).toEqual([])
     })
 
+    it('reads the platform list without creating a platform server row', async () => {
+        const ctx = await createTestContext(app)
+
+        const response = await ctx.get(`/v1/projects/${ctx.project.id}/mcp-server`)
+
+        expect(response.statusCode).toBe(200)
+        expect(await db.findBy('mcp_server', { platformId: ctx.platform.id })).toEqual([])
+    })
+
     it('keeps the platform list on the save response, so the page does not lose it', async () => {
         const ctx = await createTestContext(app)
         await switchOffOnPlatform({ ctx, tools: [PLATFORM_SWITCHED_OFF_TOOL] })
