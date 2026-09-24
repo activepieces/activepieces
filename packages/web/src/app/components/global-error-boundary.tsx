@@ -1,10 +1,9 @@
 import { t } from 'i18next';
-import { AlertTriangle, RefreshCcw } from 'lucide-react';
+import { AlertTriangle, Check, Copy, RefreshCcw } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useRouteError } from 'react-router-dom';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { Button } from '@/components/ui/button';
 import { errorReporting } from '@/lib/error-reporting';
 
@@ -18,7 +17,7 @@ function buildDiagnosticsText(
       : new Error(String(error ?? 'Unknown error'));
   return [
     `Message: ${err.message}`,
-    `URL: ${window.location.href}`,
+    `URL: ${window.location.origin}${window.location.pathname}`,
     `User Agent: ${navigator.userAgent}`,
     `Time: ${new Date().toISOString()}`,
     '',
@@ -37,8 +36,9 @@ const ErrorFallbackContent = ({
   error: unknown;
   componentStack?: string | null;
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const isChunkError = errorReporting.isChunkLoadError(error);
+  const diagnostics = buildDiagnosticsText(error, componentStack);
 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center p-6">
@@ -74,29 +74,32 @@ const ErrorFallbackContent = ({
           </Button>
         </div>
 
-        <div className="w-full flex flex-col items-center gap-3">
-          <button
-            type="button"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            onClick={() => setShowDetails((prev) => !prev)}
-          >
-            {showDetails
-              ? t('Hide technical details')
-              : t('Show technical details')}
-          </button>
-          {showDetails && (
-            <div className="relative w-full text-left">
-              <CopyButton
-                textToCopy={buildDiagnosticsText(error, componentStack)}
-                variant="ghost"
-                withoutTooltip
-                className="absolute right-2 top-2 size-7 text-muted-foreground"
-              />
-              <pre className="max-h-56 overflow-auto rounded-lg border bg-muted/40 p-4 pr-12 font-mono text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap break-words">
-                {buildDiagnosticsText(error, componentStack)}
-              </pre>
-            </div>
-          )}
+        <div className="w-full flex flex-col gap-2 text-left">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">
+              {t('Technical Details')}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7 text-muted-foreground"
+              onClick={() => {
+                navigator.clipboard
+                  ?.writeText(diagnostics)
+                  .then(() => setIsCopied(true))
+                  .catch(() => undefined);
+              }}
+            >
+              {isCopied ? (
+                <Check className="size-4" />
+              ) : (
+                <Copy className="size-4" />
+              )}
+            </Button>
+          </div>
+          <pre className="max-h-56 overflow-auto rounded-lg border bg-muted/40 p-4 font-mono text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap break-words select-all">
+            {diagnostics}
+          </pre>
         </div>
       </div>
     </div>
