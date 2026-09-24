@@ -3,6 +3,8 @@ import { FlowOperationRequest, FlowOperationType, FlowStatus, flowStructureUtil,
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
+import { system } from '../../helper/system/system'
+import { AppSystemProp } from '../../helper/system/system-props'
 import { projectService } from '../../project/project-service'
 import { mcpUtils } from './mcp-utils'
 
@@ -14,7 +16,7 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
     return {
         title: 'ap_lock_and_publish',
         permission: Permission.UPDATE_FLOW_STATUS,
-        description: 'Publish and enable the current draft version of a flow. This locks the draft, sets it as the published version, and enables the flow. Returns validation errors if the flow is not ready.',
+        description: 'Publish the current draft version of a flow. This locks the draft and sets it as the published version. Whether the flow is enabled on publish is controlled by the ENABLE_FLOW_ON_PUBLISH env var. Returns validation errors if the flow is not ready.',
         inputSchema: {
             flowId: z.string().describe('The id of the flow to publish'),
         },
@@ -42,9 +44,12 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
                 }
             }
 
+            const enableOnPublish = system.getBoolean(AppSystemProp.ENABLE_FLOW_ON_PUBLISH) ?? true
+            const status = enableOnPublish ? FlowStatus.ENABLED : FlowStatus.DISABLED
+
             const operation: FlowOperationRequest = {
                 type: FlowOperationType.LOCK_AND_PUBLISH,
-                request: { status: FlowStatus.ENABLED },
+                request: { status },
             }
 
             try {
@@ -56,8 +61,9 @@ export const apLockAndPublishTool = ({ mcp, userId }: McpToolContext, log: Fasti
                     platformId: project.platformId,
                     operation,
                 })
+                const outcome = enableOnPublish ? 'published and enabled' : 'published (flow left disabled)'
                 return {
-                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" published and enabled successfully.` }],
+                    content: [{ type: 'text', text: `✅ Flow "${flow.version.displayName}" ${outcome} successfully.` }],
                 }
             }
             catch (err) {
