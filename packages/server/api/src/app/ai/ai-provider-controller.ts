@@ -16,7 +16,7 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
         })
     })
     app.get('/tiers', ListModelTiers, async () => {
-        const pricing = await aiPricingCatalog.load()
+        const pricing = aiPricingCatalog.current()
         return {
             tiers: pricing.tiers.map((tier) => ({ id: tier.id, label: tier.label, modelId: tier.modelId })),
             defaultTierId: pricing.defaultTierId,

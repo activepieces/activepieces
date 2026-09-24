@@ -1,4 +1,4 @@
-import { isNil, tryCatch } from '@activepieces/core-utils'
+import { isNil, tryCatch, unique } from '@activepieces/core-utils'
 import { ACTIVEPIECES_CHAT_TIERS, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
 import { z } from 'zod'
 import { apLogger } from './ap-logger'
@@ -140,6 +140,10 @@ const PublishedPricing = z
     .refine((value) => value.tiers.some((tier) => tier.id === value.defaultTierId), {
         message: 'The default tier must be one of the tiers',
         path: ['defaultTierId'],
+    })
+    .refine((value) => unique(value.tiers.map((tier) => tier.id)).length === value.tiers.length, {
+        message: 'Each tier must have its own id',
+        path: ['tiers'],
     })
 
 type PublishedPricing = z.infer<typeof PublishedPricing>
