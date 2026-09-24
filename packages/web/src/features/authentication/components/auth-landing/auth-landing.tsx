@@ -2,7 +2,6 @@ import { isNil } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
 
-import { useTheme } from '@/components/providers/theme-provider';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useRedirectAfterLogin } from '@/lib/navigation-utils';
 
@@ -12,7 +11,6 @@ import { AuthDrawerBody, AuthMode } from './auth-drawer-body';
 const NUDGE_STREAK_WINDOW_MS = 700;
 
 export function AuthLanding({ initialMode }: AuthLandingProps) {
-  const { setForceLightMode } = useTheme();
   const redirectAfterLogin = useRedirectAfterLogin();
   const signedIn =
     !isNil(authenticationSession.getToken()) &&
@@ -27,11 +25,6 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
     streak: 0,
     animation: null,
   });
-
-  useEffect(() => {
-    setForceLightMode(true);
-    return () => setForceLightMode(false);
-  }, [setForceLightMode]);
 
   useEffect(() => {
     if (signedIn) {
@@ -84,7 +77,7 @@ export function AuthLanding({ initialMode }: AuthLandingProps) {
           ref={panelRef}
           role="dialog"
           aria-label={t('Sign in or create your account')}
-          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-border bg-background shadow-over"
+          className="pointer-events-auto max-h-[90dvh] w-full max-w-[400px] overflow-hidden rounded-2xl border border-border bg-surface-overlay shadow-over"
         >
           <AuthDrawerBody initialMode={initialMode} />
         </section>

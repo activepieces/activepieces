@@ -21,15 +21,11 @@ export function ThemeProvider({
       (localStorage.getItem(storageKey) as ThemePreference) ||
       defaultPreference,
   );
-  const [forceLightMode, setForceLightMode] = useState(false);
   const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(getSystemTheme);
   const branding = flagsHooks.useWebsiteBranding();
 
-  const resolvedTheme: ResolvedTheme = forceLightMode
-    ? 'light'
-    : preference === 'system'
-    ? systemTheme
-    : preference;
+  const resolvedTheme: ResolvedTheme =
+    preference === 'system' ? systemTheme : preference;
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(systemThemeQuery);
@@ -69,8 +65,6 @@ export function ThemeProvider({
       setPreference(next);
     },
     setPreferenceWithoutPersisting: setPreference,
-    forceLightMode,
-    setForceLightMode,
   };
 
   return (
@@ -126,6 +120,4 @@ type ThemeProviderState = {
   resolvedTheme: ResolvedTheme;
   setPreference: (preference: ThemePreference) => void;
   setPreferenceWithoutPersisting: (preference: ThemePreference) => void;
-  forceLightMode: boolean;
-  setForceLightMode: (value: boolean) => void;
 };

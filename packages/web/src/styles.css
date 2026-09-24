@@ -767,7 +767,7 @@
     --primary: oklch(54.7% 0.2281 295.76);
     --primary-hover: var(--primary-700);
     --on-primary: oklch(100% 0 0);
-    --primary-surface: var(--ink-100);
+    --primary-surface: var(--primary-50);
     --primary-ink: var(--primary-700);
     --primary-line: var(--primary-500);
     --primary-mark: var(--primary-500);
@@ -781,21 +781,21 @@
 
     --success: var(--color-success-700);
     --on-success: var(--on-solid);
-    --success-surface: var(--ink-100);
+    --success-surface: var(--color-success-50);
     --success-ink: var(--color-success-700);
     --success-line: var(--color-success-600);
     --success-mark: var(--color-success-600);
 
     --warning: var(--color-warning-700);
     --on-warning: var(--on-solid);
-    --warning-surface: var(--ink-100);
+    --warning-surface: var(--color-warning-50);
     --warning-ink: var(--color-warning-700);
     --warning-line: var(--color-warning-600);
     --warning-mark: var(--color-warning-600);
 
     --destructive: var(--color-destructive-700);
     --on-destructive: var(--on-solid);
-    --destructive-surface: var(--ink-100);
+    --destructive-surface: var(--color-destructive-50);
     --destructive-ink: var(--color-destructive-700);
     --destructive-line: var(--color-destructive-500);
     --destructive-mark: var(--color-destructive-500);
@@ -894,7 +894,7 @@
     --popover: var(--surface-overlay);
     --popover-foreground: var(--ink-950);
     --primary-foreground: var(--on-primary);
-    --secondary: var(--ink-150);
+    --secondary: var(--ink-300);
     --secondary-foreground: var(--ink-900);
     --muted: var(--fill);
     --muted-foreground: var(--ink-500);
@@ -1042,7 +1042,7 @@
 
     /* No `--primary` override: the fill is the brand colour in both themes,
        so hover has somewhere to go and the white label stays correct. */
-    --primary-surface: var(--fill);
+    --primary-surface: var(--primary-950);
     --primary-ink: var(--primary-300);
     --primary-line: var(--primary-800);
     --primary-mark: var(--primary-400);
@@ -1054,19 +1054,19 @@
     --neutral-mark: var(--ink-400);
 
     --success: var(--color-success-400);
-    --success-surface: var(--fill);
+    --success-surface: var(--color-success-950);
     --success-ink: var(--color-success-300);
     --success-line: var(--color-success-800);
     --success-mark: var(--color-success-400);
 
     --warning: var(--color-warning-400);
-    --warning-surface: var(--fill);
+    --warning-surface: var(--color-warning-950);
     --warning-ink: var(--color-warning-300);
     --warning-line: var(--color-warning-800);
     --warning-mark: var(--color-warning-400);
 
     --destructive: var(--color-destructive-400);
-    --destructive-surface: var(--fill);
+    --destructive-surface: var(--color-destructive-950);
     --destructive-ink: var(--color-destructive-300);
     --destructive-line: var(--color-destructive-800);
     --destructive-mark: var(--color-destructive-400);
@@ -1151,7 +1151,7 @@
 
     /* The rail is the page ground in the dark; the active item lifts off it. */
     --sidebar: var(--ink-100);
-    --sidebar-accent: var(--ink-200);
+    --sidebar-accent: var(--ink-300);
 
     /* The canvas cannot go lighter than the page in the dark, so it becomes
        the page and the nodes lift off it instead. Both veils go heavier: a
