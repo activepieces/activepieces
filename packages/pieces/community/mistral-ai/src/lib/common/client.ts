@@ -18,7 +18,7 @@ async function call<T>({ auth, method, path, body, queryParams, headers, timeout
 			});
 			return response.body;
 		} catch (e) {
-			if (isRateLimited(e) && !(body instanceof Stream) && attempt < MAX_RATE_LIMIT_RETRIES) {
+			if (isRateLimited(e) && isRetrySafe({ method, path, body }) && attempt < MAX_RATE_LIMIT_RETRIES) {
 				await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
 				continue;
 			}
@@ -86,6 +86,13 @@ function isRateLimited(error: unknown): boolean {
 	return error instanceof HttpError && error.response.status === 429;
 }
 
+function isRetrySafe({ method, path, body }: { method: HttpMethod; path: string; body: unknown }): boolean {
+	if (body instanceof Stream) {
+		return false;
+	}
+	return method !== HttpMethod.POST || STATELESS_POST_PATHS.includes(path);
+}
+
 function describeError({ error, isGateway }: { error: unknown; isGateway: boolean }): string {
 	if (!(error instanceof HttpError)) {
 		return error instanceof Error ? error.message : String(error);
@@ -145,6 +152,7 @@ function formatValidationItem(item: unknown): string {
 
 const GATEWAY_HOST = 'gateway.ai.cloudflare.com';
 const MAX_RATE_LIMIT_RETRIES = 3;
+const STATELESS_POST_PATHS = ['/chat/completions', '/fim/completions', '/moderations', '/chat/moderations', '/audio/speech'];
 
 type MistralCallParams = {
 	auth: MistralAuthValue;
