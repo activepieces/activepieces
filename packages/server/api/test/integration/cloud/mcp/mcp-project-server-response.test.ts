@@ -3,7 +3,7 @@ import { DefaultProjectRole, McpServerType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { db } from '../../../helpers/db'
-import { createMockProjectRole } from '../../../helpers/mocks'
+import { createMockProjectMember, createMockProjectRole } from '../../../helpers/mocks'
 import { createMemberContext, createTestContext, TestContext } from '../../../helpers/test-context'
 import { setupTestEnvironment, teardownTestEnvironment } from '../../../helpers/test-setup'
 
@@ -104,6 +104,25 @@ describe('GET /v1/projects/:projectId/mcp-server', () => {
         const response = await member.post(`/v1/projects/${ctx.project.id}/mcp-server`, { disabledTools: [PROJECT_SWITCHED_OFF_TOOL] })
 
         expect(response.statusCode).toBe(403)
+    })
+
+    it('reports the list of the platform that owns the project, not of the caller platform', async () => {
+        const owner = await createTestContext(app)
+        await switchOffOnPlatform({ ctx: owner, tools: [PLATFORM_SWITCHED_OFF_TOOL] })
+        const outsider = await createTestContext(app)
+        await switchOffOnPlatform({ ctx: outsider, tools: [PROJECT_SWITCHED_OFF_TOOL] })
+        const viewerRole = await db.findOneByOrFail<{ id: string }>('project_role', { name: DefaultProjectRole.VIEWER })
+        await db.save('project_member', createMockProjectMember({
+            userId: outsider.user.id,
+            platformId: owner.platform.id,
+            projectId: owner.project.id,
+            projectRoleId: viewerRole.id,
+        }))
+
+        const response = await outsider.get(`/v1/projects/${owner.project.id}/mcp-server`)
+
+        expect(response.statusCode).toBe(200)
+        expect(response.json().platformDisabledTools).toEqual([PLATFORM_SWITCHED_OFF_TOOL])
     })
 
     it('never leaks the platform server token to a project member', async () => {
