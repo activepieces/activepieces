@@ -102,11 +102,13 @@ export function AIModelSelector({
       );
   }, [providers]);
 
-  const selectedOptionLabel = providerKeyOptions.find(
-    (option) =>
-      option.provider === selectedProvider &&
-      option.configId === selectedConfigId,
-  )?.label;
+  const selectedOptionLabel =
+    providerKeyOptions.find(
+      (option) =>
+        option.provider === selectedProvider &&
+        option.configId === selectedConfigId,
+    )?.label ??
+    providers.find((entry) => entry.provider === selectedProvider)?.name;
 
   React.useEffect(() => {
     if (!selectedProvider && !providersLoading && providerKeyOptions.length) {

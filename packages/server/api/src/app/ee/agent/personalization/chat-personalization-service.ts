@@ -250,13 +250,13 @@ export const chatPersonalizationService = (log: FastifyBaseLogger) => ({
             findRow({ platformId, userId: null }),
             tryCatch(() => aiToolConfigService(log).getEnabledTools({ platformId })),
         ])
-        const providerName = provider.provider
         const webSearch = enabledTools.data?.webSearch ?? null
+        const modelId = await agentHelpers.resolveModelId({ platformId, providerConfig: provider, selectedModel: null, scope: PERSONALIZATION_PROVIDER_SCOPE, log })
         return {
             claimed: true,
             credentials: provider,
-            modelId: agentHelpers.resolveModelIdForProvider({ provider: providerName, selectedModel: null, config: provider.config, modelScope: provider.modelScope, modelIds: provider.modelIds }),
-            fastModelId: agentHelpers.resolveFastModelId({ provider: providerName, config: provider.config, modelScope: provider.modelScope, modelIds: provider.modelIds }),
+            modelId,
+            fastModelId: await agentHelpers.resolveFastModelId({ platformId, providerConfig: provider, scope: PERSONALIZATION_PROVIDER_SCOPE, log }),
             user: { firstName: user.firstName, lastName: user.lastName, email: user.email },
             platformName: platform.name,
             website: companyRow?.domain ?? null,

@@ -106,12 +106,6 @@ describe('resolveModelIdForProvider', () => {
         expect(error).toBeInstanceOf(ActivepiecesError)
         expect(String(error)).not.toContain('claude')
     })
-
-    it('resolves the fast round to a model the provider offers', () => {
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ANTHROPIC })).toBe('claude-haiku-4-5')
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.OPENAI })).toBe('gpt-5.5')
-        expect(agentModelResolution.resolveFastModelId({ provider: AIProviderName.ACTIVEPIECES })).toBe('anthropic/claude-haiku-4.5')
-    })
 })
 
 describe('resolveModelIdForAnalytics', () => {
