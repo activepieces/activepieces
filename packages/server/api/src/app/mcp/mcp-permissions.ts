@@ -3,7 +3,7 @@ import { McpToolDefinition, ProjectRole } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { editionRequiresRbac, getPrincipalRoleOrThrow } from '../ee/authentication/project-role/rbac-middleware'
 
-export async function resolveRolePermissionChecker({ userId, projectId, log }: ResolveCheckerParams): Promise<PermissionChecker> {
+export async function resolvePermissionChecker({ userId, projectId, log }: ResolveCheckerParams): Promise<PermissionChecker> {
     return buildPermissionChecker({ userId, projectId, log })
 }
 

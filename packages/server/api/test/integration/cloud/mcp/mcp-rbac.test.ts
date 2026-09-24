@@ -2,7 +2,7 @@ import { apId, Permission, RoleType } from '@activepieces/core-utils'
 import { DefaultProjectRole, McpServerType, PlatformRole, ProjectScopedMcpServer } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { resolveMcpPermissionChecker, resolveRolePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
+import { resolveMcpPermissionChecker, resolvePermissionChecker } from '../../../../src/app/mcp/mcp-permissions'
 import { apCreateFlowTool } from '../../../../src/app/mcp/tools/ap-create-flow'
 import { apListFlowsTool } from '../../../../src/app/mcp/tools/ap-list-flows'
 import { apSetupGuideTool } from '../../../../src/app/mcp/tools/ap-setup-guide'
@@ -155,7 +155,7 @@ describe('MCP Tool RBAC', () => {
         it('leaves the non-MCP checker alone, so agent permissions do not require READ_MCP', async () => {
             const { ctx, member } = await createMemberWithPermissions([Permission.READ_FLOW, Permission.WRITE_AGENT])
 
-            const checker = await resolveRolePermissionChecker({ userId: member.user.id, projectId: ctx.project.id, log: mockLog })
+            const checker = await resolvePermissionChecker({ userId: member.user.id, projectId: ctx.project.id, log: mockLog })
 
             expect(checker.check(Permission.READ_FLOW, '__name_flows_using_agent')).toBeNull()
             expect(checker.check(Permission.WRITE_AGENT, '__move_agent_into_project')).toBeNull()
