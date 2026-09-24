@@ -253,6 +253,27 @@ const datasetSizeCoreFields: OutputSchemaField[] = [
   },
 ];
 
+const repoRefFields: OutputSchemaField[] = [
+  { key: 'repo_id', label: 'Repo ID' },
+  { key: 'repo_type', label: 'Repo Type' },
+];
+
+const discussionRefFields: OutputSchemaField[] = [
+  ...repoRefFields,
+  { key: 'discussion_number', label: 'Discussion Number', format: 'number' },
+];
+
+const spaceKeyRefFields: OutputSchemaField[] = [
+  { key: 'space_id', label: 'Space ID' },
+  { key: 'key', label: 'Key' },
+];
+
+const collectionWriteFields: OutputSchemaField[] = [
+  { key: 'slug', label: 'Collection Slug' },
+  { key: 'item_count', label: 'Item Count', format: 'number' },
+  { key: 'url', label: 'Collection URL', format: 'url' },
+];
+
 export const languageTranslationOutputSchema: OutputSchema = {
   fields: [
     { key: 'translatedText', label: 'Translated Text' },
@@ -1417,4 +1438,217 @@ export const getDatasetLeaderboardOutputSchema: OutputSchema = {
     },
     countField,
   ],
+};
+
+export const createRepoOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'created',
+      label: 'Created',
+      format: 'boolean',
+      description: 'False when the repository already existed and was returned unchanged.',
+    },
+    ...repoRefFields,
+    { key: 'url', label: 'Repo URL', format: 'url' },
+    { key: 'private', label: 'Private', format: 'boolean' },
+  ],
+};
+
+export const updateRepoSettingsOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'updated_settings', label: 'Updated Settings', description: 'Names of the settings that were changed.' },
+    {
+      key: 'settings',
+      label: 'Settings',
+      dynamicKey: true,
+      description:
+        'The new values of the changed settings, keyed by name: private, discussionsDisabled, gated, gatedNotificationsMode or gatedNotificationsEmail.',
+    },
+  ],
+};
+
+export const createRepoBranchOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'branch', label: 'Branch' },
+    {
+      key: 'starting_point',
+      label: 'Starting Point',
+      description: 'The revision the branch was created from. Null means the head of the default branch.',
+    },
+    { key: 'empty_branch', label: 'Empty Branch', format: 'boolean' },
+    { key: 'created', label: 'Created', format: 'boolean' },
+  ],
+};
+
+export const deleteRepoBranchOutputSchema: OutputSchema = {
+  fields: [...repoRefFields, { key: 'branch', label: 'Branch' }, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const createRepoTagOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'tag', label: 'Tag' },
+    { key: 'revision', label: 'Tagged Revision' },
+    { key: 'created', label: 'Created', format: 'boolean' },
+  ],
+};
+
+export const deleteRepoTagOutputSchema: OutputSchema = {
+  fields: [...repoRefFields, { key: 'tag', label: 'Tag' }, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const commitFilesOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'branch', label: 'Branch' },
+    { key: 'commit_oid', label: 'Commit SHA' },
+    { key: 'commit_url', label: 'Commit URL', format: 'url' },
+    {
+      key: 'pull_request_url',
+      label: 'Pull Request URL',
+      format: 'url',
+      description: 'Set only when the commit was opened as a pull request; null otherwise.',
+    },
+    {
+      key: 'pull_request_number',
+      label: 'Pull Request Number',
+      format: 'number',
+      description: 'Set only when the commit was opened as a pull request; null otherwise.',
+    },
+    {
+      key: 'pull_request_revision',
+      label: 'Pull Request Revision',
+      description:
+        'The pull request ref, for example refs/pr/1, when opened as a pull request. Pass it as the branch to add more commits to that pull request.',
+    },
+    { key: 'files_written', label: 'Files Written' },
+    { key: 'paths_deleted', label: 'Paths Deleted' },
+    { key: 'total_bytes', label: 'Total Size Written', format: 'filesize' },
+  ],
+};
+
+export const createDiscussionOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'title', label: 'Title' },
+    { key: 'is_pull_request', label: 'Is Pull Request', format: 'boolean' },
+    {
+      key: 'pull_request_revision',
+      label: 'Pull Request Revision',
+      description: 'The pull request ref, for example refs/pr/2, when opened as a pull request; null otherwise.',
+    },
+    {
+      key: 'url',
+      label: 'Discussion Path',
+      description: 'The discussion path on huggingface.co, for example /user/repo/discussions/2.',
+    },
+  ],
+};
+
+export const commentOnDiscussionOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'comment_id', label: 'Comment ID' },
+    { key: 'created_at', label: 'Created At', format: 'datetime' },
+    { key: 'url', label: 'Comment URL', format: 'url' },
+  ],
+};
+
+export const renameDiscussionOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'title', label: 'New Title' },
+    { key: 'previous_title', label: 'Previous Title' },
+    { key: 'event_id', label: 'Event ID' },
+  ],
+};
+
+export const pinDiscussionOutputSchema: OutputSchema = {
+  fields: [...discussionRefFields, { key: 'pinned', label: 'Pinned', format: 'boolean' }],
+};
+
+export const changeDiscussionStatusOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionRefFields,
+    { key: 'status', label: 'Status' },
+    { key: 'event_id', label: 'Event ID' },
+    { key: 'created_at', label: 'Changed At', format: 'datetime' },
+  ],
+};
+
+export const deleteDiscussionOutputSchema: OutputSchema = {
+  fields: [...discussionRefFields, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const createCollectionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'created',
+      label: 'Created',
+      format: 'boolean',
+      description: 'False when a collection with this title already existed and was returned unchanged.',
+    },
+    { key: 'title', label: 'Title' },
+    { key: 'description', label: 'Description' },
+    { key: 'private', label: 'Private', format: 'boolean' },
+    ...collectionWriteFields,
+  ],
+};
+
+export const addCollectionItemOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'item_type', label: 'Item Type' },
+    { key: 'item_id', label: 'Item ID' },
+    { key: 'item_object_id', label: 'Item Object ID', description: 'The ID of the item entry inside the collection.' },
+    ...collectionWriteFields,
+  ],
+};
+
+export const listGatedAccessRequestsOutputSchema: OutputSchema = {
+  fields: [
+    ...repoRefFields,
+    { key: 'status', label: 'Status Filter' },
+    {
+      key: 'requests',
+      label: 'Access Requests',
+      labelKey: 'username',
+      listItems: [
+        { key: 'username', label: 'Username' },
+        { key: 'user_id', label: 'User ID' },
+        { key: 'fullname', label: 'Full Name' },
+        { key: 'email', label: 'Email', format: 'email' },
+        { key: 'status', label: 'Status' },
+        { key: 'requested_at', label: 'Requested At', format: 'datetime' },
+        { key: 'reviewed_at', label: 'Reviewed At', format: 'datetime' },
+        { key: 'granted_by', label: 'Granted By' },
+        {
+          key: 'fields',
+          label: 'Gate Form Answers',
+          dynamicKey: true,
+          description: 'The answers the requester gave on the gate form, keyed by field name.',
+        },
+      ],
+    },
+    countField,
+    { key: 'oldest_requested_at', label: 'Oldest Requested At', format: 'datetime' },
+    { key: 'newest_requested_at', label: 'Newest Requested At', format: 'datetime' },
+  ],
+};
+
+export const upsertSpaceSecretOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'updated', label: 'Updated', format: 'boolean' }],
+};
+
+export const deleteSpaceSecretOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
+};
+
+export const upsertSpaceVariableOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'updated', label: 'Updated', format: 'boolean' }],
+};
+
+export const deleteSpaceVariableOutputSchema: OutputSchema = {
+  fields: [...spaceKeyRefFields, { key: 'deleted', label: 'Deleted', format: 'boolean' }],
 };
