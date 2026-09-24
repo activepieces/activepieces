@@ -26,6 +26,7 @@ export const gmailReplyToEmailAction = createAction({
       description: 'Reply to the sender only, or to everyone on the thread.',
       required: true,
       defaultValue: 'reply',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
@@ -33,11 +34,13 @@ export const gmailReplyToEmailAction = createAction({
             label: 'Reply',
             value: 'reply',
             description: 'Sender only',
+            icon: 'reply',
           },
           {
             label: 'Reply All',
             value: 'reply_all',
             description: 'Everyone on the thread',
+            icon: 'reply-all',
           },
         ],
       },
