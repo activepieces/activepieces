@@ -49,16 +49,6 @@ export function PermissionGrid({
               />
               <span className="flex min-w-0 flex-1 items-baseline gap-2 text-sm">
                 <span className="truncate">{row.label}</span>
-                {row.viewAlwaysOn && (
-                  <span className="hidden shrink-0 text-xs text-muted-foreground @max-[38rem]:inline @min-[48rem]:inline">
-                    {t('view always on')}
-                  </span>
-                )}
-                {!row.view && (
-                  <span className="hidden shrink-0 text-xs text-muted-foreground @max-[38rem]:inline @min-[48rem]:inline">
-                    {t('no view-only level')}
-                  </span>
-                )}
               </span>
               <Box
                 permission={row.view}

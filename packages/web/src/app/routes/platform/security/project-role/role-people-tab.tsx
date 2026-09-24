@@ -53,15 +53,13 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
     );
   }
 
-  const projectCount = new Set(members.map((member) => member.project.id)).size;
-
   return (
     <div className="flex h-full flex-col">
-      <p className="shrink-0 px-6 pt-4 pb-3 text-sm text-muted-foreground">
-        {hasNextPage
-          ? t('showingFirstPeople', { count: members.length })
-          : t('hasThisRoleInProjects', { count: projectCount })}
-      </p>
+      {hasNextPage && (
+        <p className="shrink-0 px-6 pt-4 pb-3 text-sm text-muted-foreground">
+          {t('showingFirstPeople', { count: members.length })}
+        </p>
+      )}
       <div className={cn(PEOPLE_COLUMNS, 'shrink-0 border-b px-6 pb-2')}>
         <span className="text-xss font-medium uppercase tracking-wider text-muted-foreground">
           {t('Name')}
