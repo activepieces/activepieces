@@ -47,12 +47,14 @@ export const GmailProps = {
     displayName?: string;
     description?: string;
     required: R;
+    icon?: string;
   }) =>
     Property.Dropdown<GmailLabel, R, typeof gmailAuth>({
       auth: gmailAuth,
       displayName: overrides.displayName ?? 'Label',
       description: overrides.description ?? 'Only emails carrying this label.',
       required: overrides.required,
+      icon: overrides.icon,
       defaultValue: '',
       refreshers: [],
       options: async ({ auth }) => {
