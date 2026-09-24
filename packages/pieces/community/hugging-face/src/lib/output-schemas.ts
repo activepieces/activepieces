@@ -927,6 +927,8 @@ export const getCurrentUserOutputSchema: OutputSchema = {
         { key: 'is_enterprise', label: 'Is Enterprise', format: 'boolean' },
       ],
     },
+    { key: 'token_name', label: 'Token Name' },
+    { key: 'token_created_at', label: 'Token Created At', format: 'datetime' },
     { key: 'token_role', label: 'Token Role' },
     { key: 'token_can_read_gated_repos', label: 'Token Can Read Gated Repos', format: 'boolean' },
     { key: 'token_global_permissions', label: 'Token Global Permissions' },

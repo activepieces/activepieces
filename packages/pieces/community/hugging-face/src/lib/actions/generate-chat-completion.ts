@@ -1,5 +1,4 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
 import { InferenceClient } from '@huggingface/inference';
 import type { ChatCompletionInput, ChatCompletionInputMessage } from '@huggingface/tasks';
 import { huggingFaceAuth } from '../auth';
@@ -24,24 +23,12 @@ export const generateChatCompletion = createAction({
   },
   outputSchema: generateChatCompletionOutputSchema,
   props: {
-    model: Property.Dropdown({
-      auth: huggingFaceAuth,
+    model: Property.ShortText({
       displayName: 'Model',
       description:
-        "Model ID served by Inference Providers, for example 'openai/gpt-oss-20b' or 'Qwen/Qwen3-8B'. Any ID from Search Models (pipeline_tag 'text-generation', inference_provider 'all') works; append ':<provider>' (for example ':groq') or ':preferred' to pick the provider.",
-      required: true,
-      refreshers: [],
+        "Model ID served by Inference Providers, for example 'openai/gpt-oss-20b' or 'Qwen/Qwen3-8B'. Find others with Search Models (pipeline_tag 'text-generation', inference_provider 'all'); append ':<provider>' (for example ':groq') or ':preferred' to pick the provider. Leave empty to use openai/gpt-oss-20b.",
+      required: false,
       defaultValue: DEFAULT_CHAT_MODEL,
-      options: async ({ auth }) => {
-        if (!auth) {
-          return { disabled: true, options: [], placeholder: 'Please connect your Hugging Face account first' };
-        }
-        const models = await listChatModels(auth.secret_text);
-        return {
-          disabled: false,
-          options: models.map((id) => ({ label: id, value: id })),
-        };
-      },
     }),
     provider: hfInference.providerProp(),
     messages: Property.Json({
@@ -156,29 +143,6 @@ export const generateChatCompletion = createAction({
     }
   },
 });
-
-async function listChatModels(token: string): Promise<string[]> {
-  try {
-    const response = await hfHub.request<unknown>({
-      token,
-      method: HttpMethod.GET,
-      path: '/api/models',
-      query: [
-        ['pipeline_tag', 'text-generation'],
-        ['inference_provider', 'all'],
-        ['sort', 'trendingScore'],
-        ['limit', 50],
-      ],
-    });
-    const ids = (Array.isArray(response.body) ? response.body : [])
-      .filter(hfHub.isRecord)
-      .map((item) => item['id'])
-      .filter((id): id is string => typeof id === 'string');
-    return ids.includes(DEFAULT_CHAT_MODEL) ? ids : [DEFAULT_CHAT_MODEL, ...ids];
-  } catch {
-    return [DEFAULT_CHAT_MODEL];
-  }
-}
 
 function parseMessages(value: unknown): ChatCompletionInputMessage[] {
   const raw: unknown = typeof value === 'string' ? parseJson(value) : value;

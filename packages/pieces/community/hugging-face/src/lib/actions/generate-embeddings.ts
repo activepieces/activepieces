@@ -84,20 +84,10 @@ export const generateEmbeddings = createAction({
         ...(direction ? { truncation_direction: direction } : {}),
         ...(promptName ? { prompt_name: promptName } : {}),
       });
+      const embeddings = toPooledEmbeddings({ output, count: texts.length });
       if (texts.length === 1) {
-        const embedding = isNumberArray(output) ? output : isNumberArray(output[0]) ? output[0] : null;
-        if (embedding === null) {
-          throw new Error(
-            'The model returned token-level vectors instead of one pooled embedding. Use a sentence-embedding model such as BAAI/bge-small-en-v1.5.'
-          );
-        }
+        const embedding = embeddings[0];
         return { model: resolved.model, embedding, dimensions: embedding.length };
-      }
-      const embeddings = output.filter(isNumberArray);
-      if (embeddings.length !== texts.length) {
-        throw new Error(
-          'The model did not return one pooled embedding per text. Use a sentence-embedding model such as BAAI/bge-small-en-v1.5.'
-        );
       }
       return {
         model: resolved.model,
@@ -111,6 +101,47 @@ export const generateEmbeddings = createAction({
   },
 });
 
+function toPooledEmbeddings({ output, count }: ToPooledEmbeddingsParams): number[][] {
+  if (isNumberArray(output)) {
+    if (count === 1) {
+      return [output];
+    }
+    throw new Error(NOT_ONE_PER_TEXT_MESSAGE);
+  }
+  if (!Array.isArray(output)) {
+    throw new Error(NOT_ONE_PER_TEXT_MESSAGE);
+  }
+  const items: unknown[] = output;
+  if (items.some(isNumberMatrix)) {
+    throw new Error(TOKEN_LEVEL_MESSAGE);
+  }
+  const rows = items.filter(isNumberArray);
+  if (rows.length !== items.length) {
+    throw new Error(NOT_ONE_PER_TEXT_MESSAGE);
+  }
+  if (count === 1 && rows.length > 1) {
+    throw new Error(TOKEN_LEVEL_MESSAGE);
+  }
+  if (rows.length !== count) {
+    throw new Error(NOT_ONE_PER_TEXT_MESSAGE);
+  }
+  return rows;
+}
+
+function isNumberMatrix(value: unknown): value is number[][] {
+  return Array.isArray(value) && value.length > 0 && value.every(isNumberArray);
+}
+
 function isNumberArray(value: unknown): value is number[] {
   return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === 'number');
 }
+
+const TOKEN_LEVEL_MESSAGE =
+  'The model returned token-level vectors instead of one pooled embedding per text. Use a sentence-embedding model such as BAAI/bge-small-en-v1.5.';
+const NOT_ONE_PER_TEXT_MESSAGE =
+  'The model did not return one pooled embedding per text. Use a sentence-embedding model such as BAAI/bge-small-en-v1.5.';
+
+type ToPooledEmbeddingsParams = {
+  output: unknown;
+  count: number;
+};
