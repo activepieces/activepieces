@@ -8,6 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 
+#### Event Streaming delivers only on plans that include it
+
+Event Streaming was already shown as an Enterprise feature, but the server did not check the plan: a platform that had destinations kept receiving events, and could manage them over the API, even when its plan did not include Event Streaming. The server now checks the plan's Event Streaming entitlement. On a platform without it, no events are delivered to any destination, and every `/v1/event-destinations` endpoint answers `402`.
+
+Destinations themselves are unchanged. An existing destination keeps its URL and events, starts with the **Raw JSON** format, and receives exactly the body it received before.
+
+#### What you need to do
+
+Nothing if your plan includes Event Streaming. If your platform uses event destinations without it, contact sales to add Event Streaming to your plan before you upgrade. Self-hosted Enterprise instances read the entitlement from the license key.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.

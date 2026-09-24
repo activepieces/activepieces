@@ -2,23 +2,26 @@ import { isNil } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
   CreatePlatformEventDestinationRequestBody,
-  DestinationType,
   EventDestination,
+  EventDestinationFormat,
   EventDestinationHeaders,
   EventDestinationHeadersRequest,
-  EventDestinationMapper,
 } from '@activepieces/shared';
 
-function toDefaultValues(
-  destination: EventDestination | null,
-): DestinationFormValues {
+import { DestinationKind, destinationKinds } from './destination-kinds';
+
+function toDefaultValues({
+  destination,
+  kind,
+}: {
+  destination: EventDestination | null;
+  kind: DestinationKind;
+}): DestinationFormValues {
   return {
-    name: destination?.name ?? '',
-    type: destination?.type ?? DestinationType.CUSTOM,
     url: destination?.url ?? '',
     events: destination?.events ?? [],
     headers: toHeaderInputs(destination?.headers),
-    mapper: destination?.mapper ?? {},
+    format: destination?.format ?? destinationKinds.defaultFormatOf(kind),
   };
 }
 
@@ -57,24 +60,14 @@ function hasBlankHeaderValue(headers: Record<string, string>): boolean {
   );
 }
 
-function toMapper(value: unknown): EventDestinationMapper | null {
-  const parsed = EventDestinationMapper.safeParse(value);
-  if (!parsed.success || Object.keys(parsed.data).length === 0) {
-    return null;
-  }
-  return parsed.data;
-}
-
 function toRequest(
   values: DestinationFormValues,
 ): CreatePlatformEventDestinationRequestBody {
   return {
-    name: values.name === '' ? null : values.name,
-    type: values.type,
     url: values.url,
     events: values.events,
     headers: toHeaderRequest(values.headers),
-    mapper: toMapper(values.mapper),
+    format: values.format,
   };
 }
 
@@ -83,15 +76,12 @@ export const destinationFormUtils = {
   toHeaderRequest,
   toTestHeaders,
   hasBlankHeaderValue,
-  toMapper,
   toRequest,
 };
 
 export type DestinationFormValues = {
-  name: string;
-  type: DestinationType;
   url: string;
   events: ApplicationEventName[];
   headers: Record<string, string>;
-  mapper: unknown;
+  format: EventDestinationFormat;
 };

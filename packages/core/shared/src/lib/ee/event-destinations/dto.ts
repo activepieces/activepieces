@@ -11,22 +11,11 @@ export enum EventDestinationScope {
     PROJECT = 'PROJECT',
 }
 
-export enum DestinationType {
-    CUSTOM = 'CUSTOM',
-    LOKI = 'LOKI',
-    DATADOG = 'DATADOG',
-    POSTHOG = 'POSTHOG',
-    SPLUNK = 'SPLUNK',
-    ELASTICSEARCH = 'ELASTICSEARCH',
-    SUMO_LOGIC = 'SUMO_LOGIC',
-    NEW_RELIC = 'NEW_RELIC',
-    AXIOM = 'AXIOM',
-    BETTER_STACK = 'BETTER_STACK',
+export enum EventDestinationFormat {
+    RAW = 'RAW',
+    OTLP_JSON = 'OTLP_JSON',
+    OTLP_PROTOBUF = 'OTLP_PROTOBUF',
 }
-
-export const EventDestinationMapper = z.record(z.string(), z.unknown())
-
-export type EventDestinationMapper = z.infer<typeof EventDestinationMapper>
 
 export const EventDestinationHeaders = z.record(HeaderName, z.string())
 
@@ -46,11 +35,9 @@ export type ListPlatformEventDestinationsRequestBody = z.infer<typeof ListPlatfo
 export const CreatePlatformEventDestinationRequestBody = z.object({
     events: z.array(z.enum(ApplicationEventName)),
     url: z.url(),
-    name: z.string().nullish(),
-    type: z.enum(DestinationType).optional(),
     enabled: z.boolean().optional(),
     headers: EventDestinationHeadersRequest.nullish(),
-    mapper: EventDestinationMapper.nullish(),
+    format: z.enum(EventDestinationFormat).optional(),
 })
 
 export type CreatePlatformEventDestinationRequestBody = z.infer<typeof CreatePlatformEventDestinationRequestBody>
@@ -59,11 +46,11 @@ export const UpdatePlatformEventDestinationRequestBody = CreatePlatformEventDest
 
 export type UpdatePlatformEventDestinationRequestBody = z.infer<typeof UpdatePlatformEventDestinationRequestBody>
 
-export const TestPlatformEventDestinationRequestBody = z.strictObject({
+export const TestPlatformEventDestinationRequestBody = z.object({
     url: z.url(),
     event: z.enum(ApplicationEventName).optional(),
     headers: EventDestinationHeaders.nullish(),
-    mapper: EventDestinationMapper.nullish(),
+    format: z.enum(EventDestinationFormat).optional(),
 })
 
 export type TestPlatformEventDestinationRequestBody = z.infer<typeof TestPlatformEventDestinationRequestBody>
@@ -76,13 +63,3 @@ export const TestPlatformEventDestinationResponse = z.object({
 })
 
 export type TestPlatformEventDestinationResponse = z.infer<typeof TestPlatformEventDestinationResponse>
-
-export const EventDestinationPreset = z.object({
-    type: z.enum(DestinationType),
-    label: z.string(),
-    docsUrl: z.string().optional(),
-    defaultHeaders: EventDestinationHeaders,
-    defaultMapper: EventDestinationMapper.nullable(),
-})
-
-export type EventDestinationPreset = z.infer<typeof EventDestinationPreset>

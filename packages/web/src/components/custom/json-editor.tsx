@@ -6,6 +6,7 @@ import CodeMirror, {
   ReactCodeMirrorRef,
 } from '@uiw/react-codemirror';
 import React, { RefObject, useRef, useState } from 'react';
+import { ControllerRenderProps } from 'react-hook-form';
 
 import { useTheme } from '@/components/providers/theme-provider';
 import { cn } from '@/lib/utils';
@@ -34,13 +35,8 @@ const tryParseJson = (value: unknown): unknown => {
   }
 };
 
-type JsonEditorField = {
-  value: unknown;
-  onChange: (event: { target: { value: unknown } }) => void;
-};
-
 type JsonEditorProps = {
-  field: JsonEditorField;
+  field: ControllerRenderProps<Record<string, any>, string>;
   readonly: boolean;
   onFocus?: (ref: RefObject<ReactCodeMirrorRef | null>) => void;
   className?: string;

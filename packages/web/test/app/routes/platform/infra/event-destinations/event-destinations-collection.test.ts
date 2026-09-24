@@ -2,7 +2,7 @@
 import type { SeekPage } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
-  DestinationType,
+  EventDestinationFormat,
   EventDestinationScope,
 } from '@activepieces/shared';
 import type { EventDestination } from '@activepieces/shared';
@@ -25,11 +25,9 @@ function makeDestination(id: string): EventDestination {
     scope: EventDestinationScope.PLATFORM,
     events: [ApplicationEventName.FLOW_RUN_FINISHED],
     url: `https://example.com/${id}`,
-    name: null,
-    type: DestinationType.CUSTOM,
     enabled: true,
-    mapper: null,
     headers: {},
+    format: EventDestinationFormat.RAW,
   };
 }
 

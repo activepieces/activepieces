@@ -1,15 +1,21 @@
 import { isNil } from '@activepieces/core-utils';
 import {
   ApplicationEventName,
-  DestinationType,
   EventDestination,
+  EventDestinationFormat,
 } from '@activepieces/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { Check } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import {
+  Link,
+  Navigate,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -33,13 +39,18 @@ import {
   destinationFormUtils,
   DestinationFormValues,
 } from '../lib/destination-form-utils';
+import {
+  DESTINATION_KIND_SEARCH_PARAM,
+  destinationKinds,
+} from '../lib/destination-kinds';
 import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
+import { buildEventGroups } from '../lib/event-groups';
 
 import { ConnectionStep } from './connection-step';
+import { DestinationStep } from './destination-step';
 import { EventsStep } from './events-step';
-import { MappingStep } from './mapping-step';
 
-const LISTING_PATH = '/platform/infrastructure/event-destinations';
+const LISTING_PATH = '/platform/security?tab=events';
 
 const EventDestinationFormPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,8 +69,9 @@ const EventDestinationFormPage = () => {
       locked={!isEnabled}
       lockTitle={t('Unlock Event Streaming')}
       lockDescription={t(
-        'Forward every audit event we emit to a webhook, then handle it in a flow — wire it to Slack, Gmail, PagerDuty, or anywhere else.',
+        'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
       )}
+      lockDocumentationUrl={EVENT_STREAMING_DOCUMENTATION_URL}
     >
       {!isNil(id) && isLoading && (
         <div className="w-full mx-auto py-6 px-6">
@@ -82,28 +94,27 @@ const DestinationForm = ({
   destination: EventDestination | null;
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isEdit = !isNil(destination);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [mapperKey, setMapperKey] = useState(0);
+  const presetKind = destinationKinds.parse(
+    searchParams.get(DESTINATION_KIND_SEARCH_PARAM),
+  );
+  const [stepIndex, setStepIndex] = useState(
+    isEdit
+      ? CONNECTION_STEP
+      : isNil(presetKind)
+      ? DESTINATION_STEP
+      : EVENTS_STEP,
+  );
 
   const formSchema = z
     .object({
-      name: z.string(),
-      type: z.enum(DestinationType),
       url: z.url(t('Invalid URL')).min(1, t('Webhook URL is required')),
       events: z
         .array(z.enum(ApplicationEventName))
         .min(1, t('Select at least one event')),
       headers: z.record(z.string(), z.string()),
-      mapper: z
-        .unknown()
-        .refine(
-          (value) =>
-            isNil(value) ||
-            value === '' ||
-            (typeof value === 'object' && !Array.isArray(value)),
-          t('Payload template must be valid JSON'),
-        ),
+      format: z.enum(EventDestinationFormat),
     })
     .superRefine((values, ctx) => {
       if (isNil(destination) || values.url === destination.url) {
@@ -124,7 +135,10 @@ const DestinationForm = ({
   const form = useForm<DestinationFormValues>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
-    defaultValues: destinationFormUtils.toDefaultValues(destination),
+    defaultValues: destinationFormUtils.toDefaultValues({
+      destination,
+      kind: presetKind ?? 'otel',
+    }),
   });
 
   const { mutate: createDestination, isPending: isCreating } =
@@ -171,31 +185,39 @@ const DestinationForm = ({
   };
 
   const goToNextStep = async () => {
-    if (stepIndex === STEP_COUNT - 1) {
+    if (stepIndex === CONNECTION_STEP) {
       return;
     }
-    if (stepIndex === 1) {
-      const isUrlValid = await form.trigger('url');
-      if (!isUrlValid) {
-        setStepIndex(0);
-        return;
-      }
-      if (!(await form.trigger('events'))) {
-        return;
-      }
+    if (stepIndex === EVENTS_STEP && !(await form.trigger('events'))) {
+      return;
     }
     setStepIndex(stepIndex + 1);
   };
 
-  const replaceMapper = (mapper: unknown) => {
-    form.setValue('mapper', mapper ?? {}, { shouldValidate: true });
-    setMapperKey((current) => current + 1);
-  };
-
-  const watchedName = useWatch({ control: form.control, name: 'name' });
   const watchedEvents = useWatch({ control: form.control, name: 'events' });
-  const isLastStep = stepIndex === STEP_COUNT - 1;
+  const watchedFormat = useWatch({ control: form.control, name: 'format' });
+  const watchedUrl = useWatch({ control: form.control, name: 'url' });
+  const selectedKind = destinationKinds.kindOf(watchedFormat);
+  const selectedKindTitle =
+    destinationKinds
+      .buildOptions()
+      .find((option) => option.kind === selectedKind)?.shortTitle ?? '';
+  const totalEventCount = buildEventGroups().reduce(
+    (total, group) => total + group.events.length,
+    0,
+  );
+  const isLastStep = stepIndex === CONNECTION_STEP;
   const showSubmit = isEdit || isLastStep;
+  const footerStatus =
+    stepIndex === EVENTS_STEP
+      ? t('{selected} of {total} events selected', {
+          selected: watchedEvents.length,
+          total: totalEventCount,
+        })
+      : t('Step {current} of {total}', {
+          current: stepIndex + 1,
+          total: STEP_COUNT,
+        });
 
   return (
     <CenteredPage
@@ -218,9 +240,6 @@ const DestinationForm = ({
         </Breadcrumb>
       }
       title={isEdit ? t('Edit destination') : t('New destination')}
-      description={t(
-        'Stream audit events to an external log or analytics tool over HTTP.',
-      )}
       footer={
         <>
           <Button
@@ -231,7 +250,11 @@ const DestinationForm = ({
           >
             {t('Cancel')}
           </Button>
-          {!isEdit && stepIndex > 0 && (
+          <span className="flex-1" />
+          <span className="self-center pr-2 text-sm text-muted-foreground">
+            {footerStatus}
+          </span>
+          {!isEdit && stepIndex > DESTINATION_STEP && (
             <Button
               type="button"
               variant="outline"
@@ -249,7 +272,7 @@ const DestinationForm = ({
             <Button
               type="button"
               loading={isSaving}
-              disabled={isSaving}
+              disabled={isSaving || watchedUrl === ''}
               onClick={form.handleSubmit(handleSubmit, handleInvalidSubmit)}
             >
               {isEdit ? t('Save changes') : t('Create destination')}
@@ -262,34 +285,23 @@ const DestinationForm = ({
         <form className="flex max-w-[50rem] flex-col gap-6">
           <StepHeader
             steps={[
-              { title: t('Connection'), subtitle: watchedName },
               {
-                title: t('Events'),
-                subtitle:
-                  watchedEvents.length === 0
-                    ? ''
-                    : t('{count} selected', { count: watchedEvents.length }),
+                title: t('Destination'),
+                doneTitle: selectedKindTitle,
               },
-              { title: t('Mapping'), subtitle: '' },
+              { title: t('Events'), doneTitle: t('Events') },
+              { title: t('Connection'), doneTitle: t('Connection') },
             ]}
             activeIndex={stepIndex}
             canJump={isEdit}
             onSelect={setStepIndex}
           />
-          {stepIndex === 0 && (
-            <ConnectionStep
-              form={form}
-              isEdit={isEdit}
-              onPresetPicked={replaceMapper}
-            />
+          {stepIndex === DESTINATION_STEP && (
+            <DestinationStep form={form} isEdit={isEdit} />
           )}
-          {stepIndex === 1 && <EventsStep form={form} />}
-          {stepIndex === 2 && (
-            <MappingStep
-              form={form}
-              mapperKey={mapperKey}
-              onMapperReplaced={replaceMapper}
-            />
+          {stepIndex === EVENTS_STEP && <EventsStep form={form} />}
+          {stepIndex === CONNECTION_STEP && (
+            <ConnectionStep form={form} isEdit={isEdit} />
           )}
         </form>
       </Form>
@@ -303,58 +315,70 @@ const StepHeader = ({
   canJump,
   onSelect,
 }: {
-  steps: { title: string; subtitle: string }[];
+  steps: { title: string; doneTitle: string }[];
   activeIndex: number;
   canJump: boolean;
   onSelect: (index: number) => void;
 }) => {
   return (
-    <ol className="flex items-center gap-2">
-      {steps.map(({ title, subtitle }, index) => {
+    <ol className="flex items-center gap-3">
+      {steps.map(({ title, doneTitle }, index) => {
         const isActive = index === activeIndex;
         const isDone = index < activeIndex;
+        const isLocked = !canJump && index > activeIndex;
         return (
-          <li key={title} className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={!canJump && index > activeIndex}
-              onClick={() => onSelect(index)}
-              aria-current={isActive ? 'step' : undefined}
-              className={cn(
-                'flex items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors',
-                isActive && 'font-medium text-foreground',
-                !isActive && 'text-muted-foreground',
-                (canJump || index <= activeIndex) && 'hover:text-foreground',
-                !canJump && index > activeIndex && 'cursor-not-allowed',
-              )}
-            >
-              <span
+          <Fragment key={title}>
+            <li>
+              <button
+                type="button"
+                disabled={isLocked}
+                onClick={() => onSelect(index)}
+                aria-current={isActive ? 'step' : undefined}
                 className={cn(
-                  'flex size-5 items-center justify-center rounded-full border text-xs',
-                  isActive &&
-                    'border-transparent bg-primary text-primary-foreground',
-                  isDone && 'border-transparent bg-primary/10 text-primary-300',
+                  'flex items-center gap-2 text-sm transition-colors',
+                  isActive
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground',
+                  !isLocked && 'hover:text-foreground',
+                  isLocked && 'cursor-not-allowed',
                 )}
               >
-                {isDone ? <Check className="size-3" /> : index + 1}
-              </span>
-              {title}
-              {isDone && subtitle !== '' && (
-                <span className="max-w-40 truncate text-muted-foreground">
-                  · {subtitle}
+                <span
+                  className={cn(
+                    'flex size-6 items-center justify-center rounded-full text-xs',
+                    isActive && 'bg-primary text-primary-foreground',
+                    isDone && 'bg-primary/10 text-primary',
+                    !isActive && !isDone && 'border',
+                  )}
+                >
+                  {isDone ? (
+                    <Check className="size-3.5" strokeWidth={3} />
+                  ) : (
+                    index + 1
+                  )}
                 </span>
-              )}
-            </button>
+                {isDone ? doneTitle : title}
+              </button>
+            </li>
             {index < steps.length - 1 && (
-              <span className="h-px w-6 bg-border" />
+              <li aria-hidden="true" className="h-px flex-1 bg-border" />
             )}
-          </li>
+          </Fragment>
         );
       })}
     </ol>
   );
 };
 
+const DESTINATION_STEP = 0;
+
+const EVENTS_STEP = 1;
+
+const CONNECTION_STEP = 2;
+
 const STEP_COUNT = 3;
+
+const EVENT_STREAMING_DOCUMENTATION_URL =
+  'https://www.activepieces.com/docs/admin-guide/guides/event-streaming';
 
 export default EventDestinationFormPage;

@@ -1,4 +1,4 @@
-import { DestinationType, EventDestination, EventDestinationScope, Platform, Project } from '@activepieces/shared'
+import { EventDestination, EventDestinationFormat, EventDestinationScope, Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { z } from 'zod'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
@@ -44,15 +44,6 @@ export const EventDestinationEntity = new EntitySchema<EventDestinationSchema>({
             type: String,
             nullable: false,
         },
-        name: {
-            type: String,
-            nullable: true,
-        },
-        type: {
-            type: String,
-            nullable: false,
-            default: DestinationType.CUSTOM,
-        },
         enabled: {
             type: Boolean,
             nullable: false,
@@ -62,9 +53,10 @@ export const EventDestinationEntity = new EntitySchema<EventDestinationSchema>({
             type: 'jsonb',
             nullable: true,
         },
-        mapper: {
-            type: 'jsonb',
-            nullable: true,
+        format: {
+            type: String,
+            nullable: false,
+            default: EventDestinationFormat.RAW,
         },
     },
     indices: [

@@ -1,6 +1,6 @@
 import { apId } from '@activepieces/core-utils'
 import { safeHttp } from '@activepieces/server-utils'
-import { ApplicationEventName, PlatformRole, PrincipalType } from '@activepieces/shared'
+import { ApplicationEventName, EventDestinationFormat, PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { generateMockToken } from '../../../helpers/auth'
@@ -41,6 +41,32 @@ describe('Event Destinations API', () => {
             expect(body.events).toContain(ApplicationEventName.FLOW_CREATED)
             expect(body.platformId).toBe(ctx.platform.id)
             expect(body.id).toBeDefined()
+        })
+
+        it('should default the format to RAW when the request does not send one', async () => {
+            const ctx = await createEnabledContext()
+
+            const response = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/webhook',
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().format).toBe(EventDestinationFormat.RAW)
+        })
+
+        it('should store and return the requested format', async () => {
+            const ctx = await createEnabledContext()
+
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            const listed = await ctx.get('/v1/event-destinations')
+
+            expect(created?.json().format).toBe(EventDestinationFormat.OTLP_PROTOBUF)
+            expect(listed?.json().data[0].format).toBe(EventDestinationFormat.OTLP_PROTOBUF)
         })
     })
 
@@ -97,6 +123,43 @@ describe('Event Destinations API', () => {
             expect(body.events).toContain(ApplicationEventName.FLOW_DELETED)
         })
 
+        it('should keep the stored format when the update does not send one', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_CREATED],
+                format: EventDestinationFormat.OTLP_JSON,
+            })
+
+            const response = await ctx.post(`/v1/event-destinations/${created?.json().id}`, {
+                url: 'https://otlp.example.com/v1/logs',
+                events: [ApplicationEventName.FLOW_DELETED],
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().format).toBe(EventDestinationFormat.OTLP_JSON)
+        })
+
+        it('should still accept PATCH, the method existing API clients use', async () => {
+            const ctx = await createEnabledContext()
+            const created = await ctx.post('/v1/event-destinations', {
+                url: 'https://example.com/original',
+                events: [ApplicationEventName.FLOW_CREATED],
+            })
+
+            const response = await ctx.inject({
+                method: 'PATCH',
+                url: `/api/v1/event-destinations/${created?.json().id}`,
+                body: {
+                    url: 'https://example.com/patched',
+                    events: [ApplicationEventName.FLOW_CREATED],
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().url).toBe('https://example.com/patched')
+        })
+
         it('should return error for non-existent destination', async () => {
             const ctx = await createEnabledContext()
             const nonExistentId = apId()
@@ -141,7 +204,7 @@ describe('Event Destinations API', () => {
     })
 
     describe('POST /v1/event-destinations/test', () => {
-        it('should return the raw event as the rendered body when no mapper is given', async () => {
+        it('should return the raw event as the rendered body for the RAW format', async () => {
             const ctx = await createEnabledContext()
 
             const response = await ctx.post('/v1/event-destinations/test', {
@@ -167,26 +230,37 @@ describe('Event Destinations API', () => {
             expect(response?.json().renderedBody.action).toBe(ApplicationEventName.FLOW_CREATED)
         })
 
-        it('should render the mapper and keep native JSON types', async () => {
+        it('should echo the OTLP/JSON request for an OTLP format', async () => {
             const ctx = await createEnabledContext()
 
             const response = await ctx.post('/v1/event-destinations/test', {
                 url: UNREACHABLE_URL,
                 event: ApplicationEventName.FLOW_RUN_FINISHED,
-                mapper: {
-                    name: '{{ action }}',
-                    duration: '{{ data.flowRun.duration }}',
-                    nested: { platform: '{{ platformId }}' },
-                    literal: 'no tokens here',
-                },
+                format: EventDestinationFormat.OTLP_JSON,
             })
 
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const { renderedBody } = response?.json()
-            expect(renderedBody.name).toBe(ApplicationEventName.FLOW_RUN_FINISHED)
-            expect(renderedBody.duration).toBe(1234)
-            expect(renderedBody.nested.platform).toBe(ctx.platform.id)
-            expect(renderedBody.literal).toBe('no tokens here')
+            const record = response?.json().renderedBody.resourceLogs[0].scopeLogs[0].logRecords[0]
+            expect(record.eventName).toBe(ApplicationEventName.FLOW_RUN_FINISHED)
+            expect(JSON.parse(record.body.stringValue).action).toBe(ApplicationEventName.FLOW_RUN_FINISHED)
+            expect(record.attributes).toContainEqual({ key: 'platformId', value: { stringValue: ctx.platform.id } })
+        })
+
+        it('should post protobuf bytes for OTLP_PROTOBUF and still echo the OTLP/JSON form', async () => {
+            const ctx = await createEnabledContext()
+            const requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
+
+            const response = await ctx.post('/v1/event-destinations/test', {
+                url: 'https://otlp.example.com/v1/logs',
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().renderedBody.resourceLogs).toHaveLength(1)
+            const sent = requestSpy.mock.calls[0][0]
+            expect(sent.headers).toMatchObject({ 'Content-Type': 'application/x-protobuf' })
+            expect(Buffer.isBuffer(sent.data)).toBe(true)
+            requestSpy.mockRestore()
         })
 
         it('should report the failure instead of throwing when the destination is unreachable', async () => {
@@ -216,11 +290,14 @@ describe('Event Destinations API', () => {
             })
             expect(nullHeader?.statusCode).toBe(StatusCodes.BAD_REQUEST)
 
+            const requestSpy = vi.spyOn(safeHttp.axios, 'request').mockResolvedValue({ status: 200 })
             const byDestinationId = await ctx.post('/v1/event-destinations/test', {
-                url: UNREACHABLE_URL,
+                url: 'https://example.com/webhook',
                 destinationId: created?.json().id,
             })
-            expect(byDestinationId?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+            expect(byDestinationId?.statusCode).toBe(StatusCodes.OK)
+            expect(requestSpy.mock.calls[0][0].headers).not.toHaveProperty('Authorization')
+            requestSpy.mockRestore()
         })
 
         it('should send only the headers the caller supplied in the request', async () => {

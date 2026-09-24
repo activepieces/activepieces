@@ -115,6 +115,12 @@ const TriggerHealthPage = React.lazy(() => import('./infra/triggers'));
 const EventDestinationsPage = React.lazy(
   () => import('./infra/event-destinations'),
 );
+const EventDestinationFormPage = React.lazy(
+  () => import('./infra/event-destinations/destination-form'),
+);
+
+const EVENT_STREAMING_DOCUMENTATION_URL =
+  'https://www.activepieces.com/docs/admin-guide/guides/event-streaming';
 
 function isCommunity({ edition }: AdminPageContext) {
   return edition === ApEdition.COMMUNITY;
@@ -446,12 +452,13 @@ export const ADMIN_PAGES: AdminPage[] = [
           featureKey: 'EVENT_DESTINATIONS',
           title: 'Unlock Event Streaming',
           description:
-            'Forward every audit event we emit to a webhook, then handle it in a flow.',
+            'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
           tier: 'enterprise',
+          documentationUrl: EVENT_STREAMING_DOCUMENTATION_URL,
           bullets: [
-            'Stream events to any endpoint',
+            'OpenTelemetry logs for Datadog, PostHog, Grafana Loki, New Relic and Honeycomb',
+            'Raw JSON to any webhook or a handler flow',
             'Wire alerts into Slack, PagerDuty or email',
-            'Build your own monitoring on top',
           ],
         },
       },
@@ -497,6 +504,18 @@ export const ADMIN_PAGES: AdminPage[] = [
         isHidden: ({ edition }) => edition === ApEdition.CLOUD,
       },
     ],
+  },
+  {
+    id: 'event-destination-new',
+    path: '/platform/security/event-destinations/new',
+    title: 'New Destination',
+    component: EventDestinationFormPage,
+  },
+  {
+    id: 'event-destination-edit',
+    path: '/platform/security/event-destinations/:id',
+    title: 'Edit Destination',
+    component: EventDestinationFormPage,
   },
   {
     id: 'piece-set-details',

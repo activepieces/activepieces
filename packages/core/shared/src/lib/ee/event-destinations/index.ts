@@ -1,18 +1,16 @@
 import { BaseModelSchema } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { ApplicationEventName } from '../audit-events/index'
-import { DestinationType, EventDestinationHeadersRequest, EventDestinationScope } from './dto'
+import { EventDestinationFormat, EventDestinationHeadersRequest, EventDestinationScope } from './dto'
 
 const EventDestinationBase = {
     ...BaseModelSchema,
     platformId: z.string(),
     events: z.array(z.enum(ApplicationEventName)),
     url: z.url(),
-    name: z.string().nullable(),
-    type: z.enum(DestinationType),
     enabled: z.boolean(),
     headers: EventDestinationHeadersRequest.nullable(),
-    mapper: z.unknown(),
+    format: z.enum(EventDestinationFormat),
 }
 
 const EventDestinationProjectScope = z.object({

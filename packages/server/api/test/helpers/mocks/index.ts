@@ -1,6 +1,6 @@
 import { AIProviderName, apId, assertNotNullOrUndefined, ProjectRole, RoleType } from '@activepieces/core-utils'
 import { LATEST_CONTEXT_VERSION, PieceMetadata } from '@activepieces/pieces-framework'
-import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, DestinationType, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
+import { AIProvider, ApiKey, AppConnection, AppConnectionScope, AppConnectionStatus, AppConnectionType, ApplicationEvent, ApplicationEventName, Cell, ColorName, EventDestinationFormat, EventDestinationScope, Field, FieldType, File, FileCompression, FileLocation, FileType, Flow, FlowOperationStatus, FlowRun, FlowRunStatus, FlowStatus, FlowTriggerType, FlowVersion, FlowVersionState, Folder, GitBranchType, GitRepo, InvitationStatus, InvitationType, KeyAlgorithm, LATEST_FLOW_SCHEMA_VERSION, OAuthApp, OtpModel, OtpState, OtpType, PackageType, PiecesFilterType, PieceType, Platform, PlatformPlan, PlatformRole, Project, ProjectIcon, ProjectMember, ProjectPlan, ProjectRelease, ProjectReleaseType, ProjectType, Record, RunEnvironment, SigningKey, Table, Template, TemplateStatus, TemplateType, User, UserIdentity, UserIdentityProvider, UserInvitation, UserStatus } from '@activepieces/shared'
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
@@ -774,11 +774,9 @@ export const createMockEventDestination = (eventDestination?: Partial<MockEventD
         events: eventDestination?.events ?? [faker.helpers.enumValue(ApplicationEventName)],
         url: eventDestination?.url ?? faker.internet.url(),
         scope: eventDestination?.scope ?? EventDestinationScope.PLATFORM,
-        name: eventDestination?.name ?? null,
-        type: eventDestination?.type ?? DestinationType.CUSTOM,
         enabled: eventDestination?.enabled ?? true,
         headers: eventDestination?.headers ?? null,
-        mapper: eventDestination?.mapper ?? null,
+        format: eventDestination?.format ?? EventDestinationFormat.RAW,
     }
 }
 
@@ -791,11 +789,9 @@ type MockEventDestination = {
     events: ApplicationEventName[]
     url: string
     scope: EventDestinationScope
-    name: string | null
-    type: DestinationType
     enabled: boolean
     headers: Record<string, EncryptedObject> | null
-    mapper: unknown
+    format: EventDestinationFormat
 }
 
 type CreateMockPlatformWithOwnerParams = {

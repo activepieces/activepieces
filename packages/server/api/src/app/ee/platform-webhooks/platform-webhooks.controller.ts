@@ -1,10 +1,9 @@
 import { SeekPage } from '@activepieces/core-utils'
-import { CreatePlatformEventDestinationRequestBody, EventDestination, EventDestinationPreset, ListPlatformEventDestinationsRequestBody, PrincipalType, TestPlatformEventDestinationRequestBody, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
+import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, PrincipalType, TestPlatformEventDestinationRequestBody, TestPlatformEventDestinationResponse, UpdatePlatformEventDestinationRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
 import { z } from 'zod'
 import { securityAccess } from '../../core/security/authorization/fastify-security'
-import { destinationPresets } from '../../event-destinations/destination-presets'
 import { eventDestinationService } from '../../event-destinations/event-destinations.service'
 
 export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => {
@@ -23,6 +22,13 @@ export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => 
         })
     })
 
+    app.patch('/:id', UpdateEventDestinationRequest, async (req) => {
+        return eventDestinationService(req.log).update({
+            id: req.params.id,
+            platformId: req.principal.platform.id,
+            request: req.body,
+        })
+    })
     app.get('/', ListEventDestinationsRequest, async (req) => {
         return eventDestinationService(req.log).list({
             platformId: req.principal.platform.id,
@@ -37,17 +43,13 @@ export const platformWebhooksController: FastifyPluginAsyncZod = async (app) => 
         })
     })
 
-    app.get('/presets', ListEventDestinationPresetsRequest, async () => {
-        return destinationPresets
-    })
-
     app.post('/test', TestPlatformEventDestinationRequest, async (req) => {
         return eventDestinationService(req.log).test({
             platformId: req.principal.platform.id,
             projectId: undefined,
             url: req.body.url,
             event: req.body.event,
-            mapper: req.body.mapper,
+            format: req.body.format,
             headers: req.body.headers,
         })
     })
@@ -83,6 +85,9 @@ export const ListEventDestinationsRequest = {
         tags: ['event-destinations'],
         description: 'List event destinations',
     },
+    response: {
+        [StatusCodes.OK]: SeekPage(EventDestination),
+    },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
@@ -93,17 +98,6 @@ export const DeleteEventDestinationRequest = {
         params: z.object({
             id: z.string(),
         }),
-    },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-}
-
-export const ListEventDestinationPresetsRequest = {
-    schema: {
-        response: {
-            [StatusCodes.OK]: z.array(EventDestinationPreset),
-        },
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),

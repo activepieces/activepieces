@@ -5,7 +5,6 @@ import {
   buildMockEvent,
   CreatePlatformEventDestinationRequestBody,
   EventDestination,
-  EventDestinationPreset,
   FlowOperationType,
   ListPlatformEventDestinationsRequestBody,
   PopulatedFlow,
@@ -18,16 +17,13 @@ import {
 } from '@activepieces/shared';
 import { queryCollectionOptions } from '@tanstack/query-db-collection';
 import { createCollection, useLiveQuery } from '@tanstack/react-db';
-import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
+import { QueryClient, useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import { flowHooks, flowsApi, triggerEventsApi } from '@/features/flows';
 import { projectCollectionUtils } from '@/features/projects';
-import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
-
-import { destinationFormUtils } from './destination-form-utils';
 
 const collectionQueryClient = new QueryClient();
 
@@ -67,17 +63,6 @@ export const eventDestinationsCollection = createCollection<
 );
 
 export const eventDestinationsCollectionUtils = {
-  usePresets: () => {
-    const { platform } = platformHooks.useCurrentPlatform();
-    return useQuery({
-      queryKey: ['event-destination-presets'],
-      queryFn: () =>
-        api.get<EventDestinationPreset[]>('/v1/event-destinations/presets'),
-      enabled: platform.plan.eventStreamingEnabled,
-      staleTime: Infinity,
-    });
-  },
-
   useAll: (enabled: boolean) => {
     const queryResult = useLiveQuery(
       (q) =>
@@ -148,8 +133,9 @@ export const eventDestinationsCollectionUtils = {
     });
   },
 
-  delete: (destinationIds: string[]) => {
-    eventDestinationsCollection.delete(destinationIds);
+  delete: async (destinationIds: string[]) => {
+    const transaction = eventDestinationsCollection.delete(destinationIds);
+    await transaction.isPersisted.promise;
   },
 
   useTestEventDestination: () => {
@@ -250,11 +236,9 @@ function toRequestBody(
   return {
     url: destination.url,
     events: destination.events,
-    name: destination.name,
-    type: destination.type,
     enabled: destination.enabled,
     headers: destination.headers,
-    mapper: destinationFormUtils.toMapper(destination.mapper),
+    format: destination.format,
   };
 }
 

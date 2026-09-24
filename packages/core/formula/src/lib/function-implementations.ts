@@ -120,12 +120,6 @@ parser.functions.slug = (s: unknown) =>
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '')
 
-parser.functions.to_json = (value: unknown) => {
-    if (value === null || value === undefined) return ''
-    const serialized = JSON.stringify(value)
-    return serialized === undefined ? '' : serialized
-}
-
 parser.functions.add = (a: unknown, b: unknown) => Number(a) + Number(b)
 parser.functions.subtract = (a: unknown, b: unknown) => Number(a) - Number(b)
 parser.functions.multiply = (a: unknown, b: unknown) => Number(a) * Number(b)
@@ -249,21 +243,6 @@ parser.functions.today = () => dayjs().format('YYYY-MM-DD')
 parser.functions.to_date = (d: unknown) => {
     const parsed = dayjs(String(d ?? ''))
     return parsed.isValid() ? parsed.toISOString() : ''
-}
-const MILLISECONDS_PER_SECOND = 1000
-
-const INTEGER_PATTERN = /^-?\d+$/
-parser.functions.to_epoch = (d: unknown, unit: unknown = 'ms') => {
-    const milliseconds = toEpochMilliseconds(d)
-    if (milliseconds === null) return ''
-    const normalizedUnit = String(unit).toLowerCase()
-    if (normalizedUnit === 's' || normalizedUnit === 'seconds') {
-        return Math.floor(milliseconds / MILLISECONDS_PER_SECOND)
-    }
-    if (normalizedUnit === 'ms' || normalizedUnit === 'milliseconds') {
-        return milliseconds
-    }
-    return ''
 }
 parser.functions.add_minutes = (d: unknown, n: unknown) => {
     const parsed = dayjs(String(d ?? ''))
@@ -443,17 +422,6 @@ for (const fn of AP_FUNCTIONS) {
         }
         return impl(...padded)
     }
-}
-
-function toEpochMilliseconds(value: unknown): number | null {
-    const text = String(value ?? '').trim()
-    if (text === '') return null
-    if (INTEGER_PATTERN.test(text)) {
-        const milliseconds = Number(text)
-        return Number.isSafeInteger(milliseconds) ? milliseconds : null
-    }
-    const parsed = dayjs(text)
-    return parsed.isValid() ? parsed.valueOf() : null
 }
 
 function toArray(value: unknown): unknown[] {

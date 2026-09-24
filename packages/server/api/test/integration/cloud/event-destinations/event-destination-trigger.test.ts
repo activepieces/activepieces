@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { AgentActionExecutedEvent, AgentRunSource, ApplicationEventName, EventDestinationScope, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, WorkerJobType } from '@activepieces/shared'
+import { AgentActionExecutedEvent, AgentRunSource, ApplicationEventName, EventDestinationFormat, EventDestinationScope, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, WorkerJobType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { eventDestinationService } from '../../../../src/app/event-destinations/event-destinations.service'
 import { applicationEvents } from '../../../../src/app/helper/application-events'
@@ -670,6 +670,89 @@ describe('Event Destination Trigger', () => {
         )
     })
 
+    it('should queue a RAW destination without headers with the same job fields as before formats existed', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+        })
+        await db.save('event_destination', destination)
+
+        const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id })
+        await eventDestinationService(app.log).trigger({ event })
+
+        const jobData = addSpy.mock.calls[0][0].data
+        expect(jobData).not.toHaveProperty('contentType')
+        expect(jobData).not.toHaveProperty('hasHeaders')
+        expect(jobData.payload).toEqual(event)
+    })
+
+    it('should queue the OTLP/JSON request without a content type for an OTLP_JSON destination', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            format: EventDestinationFormat.OTLP_JSON,
+        })
+        await db.save('event_destination', destination)
+
+        const event = buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id })
+        await eventDestinationService(app.log).trigger({ event })
+
+        const jobData = addSpy.mock.calls[0][0].data
+        expect(jobData).not.toHaveProperty('contentType')
+        const record = jobData.payload.resourceLogs[0].scopeLogs[0].logRecords[0]
+        expect(record.eventName).toBe(ApplicationEventName.FLOW_CREATED)
+        expect(JSON.parse(record.body.stringValue)).toEqual(event)
+    })
+
+    it('should mark an OTLP_PROTOBUF job with the protobuf content type and keep the JSON request as its payload', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const destination = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            format: EventDestinationFormat.OTLP_PROTOBUF,
+        })
+        await db.save('event_destination', destination)
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        const jobData = addSpy.mock.calls[0][0].data
+        expect(jobData.contentType).toBe('application/x-protobuf')
+        expect(jobData.payload.resourceLogs).toHaveLength(1)
+    })
+
+    it('should tell the worker to resolve headers only for a destination that stores them', async () => {
+        const ctx = await createTestContext(app, ENTITLED_PLAN)
+        const withHeaders = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://example.com/with-headers',
+            headers: { Authorization: await encryptUtils.encryptString(QUEUED_JOB_SECRET) },
+        })
+        const withoutHeaders = createMockEventDestination({
+            platformId: ctx.platform.id,
+            events: [ApplicationEventName.FLOW_CREATED],
+            scope: EventDestinationScope.PLATFORM,
+            url: 'https://example.com/without-headers',
+        })
+        await db.save('event_destination', [withHeaders, withoutHeaders])
+
+        await eventDestinationService(app.log).trigger({
+            event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+        })
+
+        const jobsByUrl = new Map(addSpy.mock.calls.map(([job]) => [job.data.webhookUrl, job.data]))
+        expect(jobsByUrl.get(withHeaders.url)).toMatchObject({ hasHeaders: true })
+        expect(jobsByUrl.get(withoutHeaders.url)).not.toHaveProperty('hasHeaders')
+    })
+
     it('regression: ensure that we have setup the event streaming listeners', async () => {
         const ctx = await createTestContext(app, ENTITLED_PLAN)
         const workerDestination = createMockEventDestination({
@@ -873,6 +956,31 @@ describe('Event Destination Trigger', () => {
                 body: event,
                 queryParams: {},
             })
+        })
+
+        it('should send the OTLP/JSON request to an internal handler flow for an OTLP format', async () => {
+            const ctx = await createTestContext(app, ENTITLED_PLAN)
+            const flowId = apId()
+            const webhookUrlPrefix = await domainHelper.getPublicApiUrl({
+                path: 'v1/webhooks',
+            })
+            const destination = createMockEventDestination({
+                platformId: ctx.platform.id,
+                events: [ApplicationEventName.FLOW_CREATED],
+                scope: EventDestinationScope.PLATFORM,
+                url: `${webhookUrlPrefix}/${flowId}`,
+                format: EventDestinationFormat.OTLP_PROTOBUF,
+            })
+            await db.save('event_destination', destination)
+
+            await eventDestinationService(app.log).trigger({
+                event: buildFlowEvent(ApplicationEventName.FLOW_CREATED, { platformId: ctx.platform.id }),
+            })
+
+            expect(addSpy).not.toHaveBeenCalled()
+            const payload = await handleWebhookSpy.mock.calls[0][0].data(ctx.project.id)
+            expect(payload.headers).toEqual({ 'content-type': 'application/json' })
+            expect(payload.body.resourceLogs[0].scopeLogs[0].logRecords[0].eventName).toBe(ApplicationEventName.FLOW_CREATED)
         })
 
         it('should never put a stored header into the internal handler flow payload', async () => {

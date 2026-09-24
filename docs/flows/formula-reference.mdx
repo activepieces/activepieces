@@ -50,7 +50,6 @@ Functions that work with strings of text.
 | `repeat` | `repeat(text; count)` | Repeats text a given number of times. | `repeat(ab; 3)` → `ababab` |
 | `reverse` | `reverse(text)` | Reverses the order of characters in the text. | `reverse(hello)` → `olleh` |
 | `slug` | `slug(text)` | Turns text into a URL-friendly slug (lowercase, dashes between words). | `slug(Hello World!)` → `hello-world` |
-| `to_json` | `to_json(value)` | Turns any value into its JSON text, so a list or an object can sit inside a sentence. | `to_json([1, 2, 3])` → `[1,2,3]` |
 
 ## Number
 
@@ -105,7 +104,6 @@ Functions for working with dates and times.
 | `now` | `now()` | Returns the current date and time at the moment the flow runs. | `now()` → `2025-01-15T14:30:00Z` |
 | `today` | `today()` | Returns today's date with no time attached. | `today()` → `2025-01-15` |
 | `to_date` | `to_date(text)` | Turns a text value into a proper date the flow can work with. | `to_date(January 15, 2025)` → `2025-01-15T00:00:00Z` |
-| `to_epoch` | `to_epoch(date; unit)` | Turns a date into the number of seconds or milliseconds since 1 January 1970. | `to_epoch(2025-01-15T00:00:00Z; ms)` → `1736899200000` |
 | `add_minutes` | `add_minutes(date; n)` | Adds a number of minutes to a date and time. | `add_minutes(2025-01-15T14:30:00Z; 15)` → `2025-01-15T14:45:00Z` |
 | `hours_between` | `hours_between(date1; date2)` | Counts how many hours are between two dates. | `hours_between(2025-01-15T09:00:00Z; 2025-01-15T17:30:00Z)` → `8` |
 | `start_of_day` | `start_of_day(date)` | Returns the date at midnight (the start of that day). | `start_of_day(2025-01-15T14:30:00Z)` → `2025-01-15T00:00:00Z` |

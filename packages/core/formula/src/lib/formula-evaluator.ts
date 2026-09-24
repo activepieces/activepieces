@@ -1,11 +1,6 @@
 import { evaluateRaw } from './function-implementations'
 import { AP_FUNCTIONS } from './function-registry'
 
-const AP_FUNCTION_BY_NAME = new Map(AP_FUNCTIONS.map((fn) => [fn.name, fn]))
-const AP_FUNCTION_NAMES = new Set(AP_FUNCTION_BY_NAME.keys())
-
-const BARE_WORD_RUN = /[a-z0-9_][ \t]+[a-z0-9_]/i
-
 const CURRENT_FORMULA_VERSION = 1
 const FORMULA_PREFIX = `ap-formula-v${CURRENT_FORMULA_VERSION}::{`
 const FORMULA_SUFFIX = `}::ap-formula-v${CURRENT_FORMULA_VERSION}`
@@ -23,24 +18,6 @@ function wrap(expression: string): string {
 
 function containsWrapper(input: string): boolean {
     return /ap-formula-v\d+::\{/.test(input)
-}
-
-function isSingleExpression(template: string): boolean {
-    if (!template) return false
-    const tokens = template.match(/\{\{[^}]+\}\}/g)
-    if (tokens?.length === 1 && tokens[0] === template) return true
-    const call = template.match(/^([a-z_][a-z0-9_]*)\s*\(/i)
-    if (!call || !AP_FUNCTION_NAMES.has(call[1])) return false
-    if (readsAsProse(template)) return false
-    return findMatchingParen(template, call[0].length - 1) === template.length - 1
-}
-
-function readsAsProse(template: string): boolean {
-    const withoutValues = template
-        .replace(/\{\{[^}]*\}\}/g, '')
-        .replace(/"[^"]*"/g, '')
-        .replace(/'[^']*'/g, '')
-    return BARE_WORD_RUN.test(withoutValues)
 }
 
 function unwrap(template: string): string {
@@ -203,11 +180,12 @@ function replaceInlineJsonArrays(
 }
 
 function wrapStringArgs(expr: string): string {
+    const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name))
     let result = ''
     let pos = 0
 
     while (pos < expr.length) {
-        const next = findNextFunctionCall(expr, pos, AP_FUNCTION_NAMES)
+        const next = findNextFunctionCall(expr, pos, fnNames)
 
         if (next === null) {
             result += expr.slice(pos)
@@ -217,7 +195,7 @@ function wrapStringArgs(expr: string): string {
         result += expr.slice(pos, next.start)
 
         const fnName = expr.slice(next.start, next.openParen).trim()
-        const fn = AP_FUNCTION_BY_NAME.get(fnName)
+        const fn = AP_FUNCTIONS.find((f) => f.name === fnName)
         const closePos = findMatchingParen(expr, next.openParen)
 
         if (closePos === -1) {
@@ -251,7 +229,7 @@ function quoteIfBare(arg: string): string {
         (trimmed.startsWith('\'') && trimmed.endsWith('\''))) return arg
     if (trimmed.startsWith('__ap_')) return arg
     const fnCallMatch = trimmed.match(/^([a-z_][a-z0-9_]*)\s*\(/i)
-    if (fnCallMatch && AP_FUNCTION_NAMES.has(fnCallMatch[1])) return arg
+    if (fnCallMatch && AP_FUNCTIONS.some((f) => f.name === fnCallMatch[1])) return arg
     return '"' + arg.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"'
 }
 
@@ -311,9 +289,10 @@ function normalizeExpression(expr: string): string {
 }
 
 function validateFunctionArgs(expr: string): string | null {
+    const fnNames = new Set(AP_FUNCTIONS.map((f) => f.name))
     let pos = 0
     while (pos < expr.length) {
-        const next = findNextFunctionCall(expr, pos, AP_FUNCTION_NAMES)
+        const next = findNextFunctionCall(expr, pos, fnNames)
         if (!next) break
         const closePos = findMatchingParen(expr, next.openParen)
         // Advance inside the paren so nested calls are also validated
@@ -473,7 +452,6 @@ export const formulaEvaluator = {
     wrap,
     unwrap,
     containsWrapper,
-    isSingleExpression,
     PREFIX: FORMULA_PREFIX,
     SUFFIX: FORMULA_SUFFIX,
 }

@@ -1,12 +1,9 @@
-import {
-  ApFlagId,
-  DestinationType,
-  EventDestination,
-} from '@activepieces/shared';
+import { tryCatchSync } from '@activepieces/core-utils';
+import { ApFlagId, EventDestination } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Globe, ListChecks, Tag, Workflow } from 'lucide-react';
+import { Globe, ListChecks, Radio } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -24,13 +21,13 @@ import { useNewWindow } from '@/lib/navigation-utils';
 
 import { sampleData } from '../../sample-data';
 
-import { DestinationTypeTile } from './components/destination-type-tile';
+import { DestinationStartCards } from './components/destination-start-cards';
 import EventDestinationActions from './components/event-destination-actions';
 import { eventDestinationsCollectionUtils } from './lib/event-destinations-collection';
 import { buildEventGroups } from './lib/event-groups';
 import { parseFlowIdFromUrl } from './lib/parse-flow-id-from-url';
 
-const LISTING_PATH = '/platform/infrastructure/event-destinations';
+const FORM_PATH = '/platform/security/event-destinations';
 
 const EventDestinationsPage = () => {
   const navigate = useNavigate();
@@ -46,7 +43,6 @@ const EventDestinationsPage = () => {
   const destinations = isSample
     ? sampleData.eventDestinations()
     : liveDestinations;
-  const { data: presets } = eventDestinationsCollectionUtils.usePresets();
   const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
     ApFlagId.WEBHOOK_URL_PREFIX,
   );
@@ -90,16 +86,8 @@ const EventDestinationsPage = () => {
     return new Map(entries);
   }, [flowQueries, flowIds]);
 
-  const typeLabelByType = useMemo(
-    () => new Map((presets ?? []).map((preset) => [preset.type, preset.label])),
-    [presets],
-  );
-
   const destinationTitle = useCallback(
     (destination: EventDestination) => {
-      if (destination.name) {
-        return destination.name;
-      }
       const parsed = parseFlowIdFromUrl({
         url: destination.url,
         webhookPrefixUrl: webhookPrefixUrl ?? null,
@@ -110,7 +98,8 @@ const EventDestinationsPage = () => {
           t('Destination (flow {flowId})', { flowId: parsed.flowId })
         );
       }
-      return destination.url;
+      const { data: url } = tryCatchSync(() => new URL(destination.url));
+      return url?.host ?? destination.url;
     },
     [flowDisplayNameById, webhookPrefixUrl],
   );
@@ -118,14 +107,7 @@ const EventDestinationsPage = () => {
   const columns: ColumnDef<RowDataWithActions<EventDestination>>[] = useMemo(
     () => [
       {
-        accessorKey: 'name',
-        filterFn: (row, _columnId, filterValue: string) => {
-          const needle = String(filterValue).toLowerCase();
-          return (
-            (row.original.name ?? '').toLowerCase().includes(needle) ||
-            row.original.url.toLowerCase().includes(needle)
-          );
-        },
+        id: 'destination',
         header: ({ column }) => (
           <DataTableColumnHeader
             column={column}
@@ -135,7 +117,6 @@ const EventDestinationsPage = () => {
         ),
         cell: ({ row }) => (
           <div className="flex min-w-0 items-center gap-3">
-            <DestinationTypeTile type={row.original.type} />
             <div className="flex min-w-0 flex-col gap-0.5">
               <TextWithTooltip tooltipMessage={destinationTitle(row.original)}>
                 <span className="truncate text-sm font-medium">
@@ -149,20 +130,6 @@ const EventDestinationsPage = () => {
               </TextWithTooltip>
             </div>
           </div>
-        ),
-      },
-      {
-        accessorKey: 'type',
-        size: 160,
-        filterFn: (row, _columnId, filterValue: string[]) =>
-          filterValue.includes(row.original.type),
-        header: ({ column }) => (
-          <DataTableColumnHeader column={column} title={t('Type')} icon={Tag} />
-        ),
-        cell: ({ row }) => (
-          <span className="text-sm text-muted-foreground">
-            {typeLabelByType.get(row.original.type) ?? row.original.type}
-          </span>
         ),
       },
       {
@@ -214,70 +181,58 @@ const EventDestinationsPage = () => {
         ),
       },
     ],
-    [destinationTitle, totalEventCount, typeLabelByType],
+    [destinationTitle, totalEventCount],
   );
 
   return (
-      <>
-        <DashboardPageHeader
-          title={t('Event Streaming')}
-          description={t(
-            'Send a webhook for every audit event and build fully customizable alerts on top.',
+    <>
+      <DashboardPageHeader
+        title={t('Event Streaming')}
+        description={t(
+          'Stream every audit event in OpenTelemetry (OTLP) format to Datadog, PostHog, Grafana Loki, or any OTLP backend. Or send it as raw JSON to a webhook or a handler flow.',
+        )}
+      >
+        <Link to={`${FORM_PATH}/new`}>
+          <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
+            {t('New Destination')}
+          </AnimatedIconButton>
+        </Link>
+      </DashboardPageHeader>
+      <div className="flex w-full flex-col px-4 pb-6">
+        <DataTable
+          bordered={true}
+          columns={columns}
+          page={{ data: destinations, next: null, previous: null }}
+          isLoading={isLoading}
+          isError={isError}
+          errorStateEntity={t('destinations')}
+          hidePagination={true}
+          onRowClick={(row, newWindow) =>
+            newWindow
+              ? openNewWindow(`${FORM_PATH}/${row.id}`)
+              : navigate(`${FORM_PATH}/${row.id}`)
+          }
+          toolbarButtons={[
+            <span
+              key="count"
+              className="shrink-0 text-xs text-muted-foreground"
+            >
+              {t('destinationsCount', { count: destinations.length })}
+            </span>,
+          ]}
+          emptyStateTextTitle={t('No destinations yet')}
+          emptyStateTextDescription={t(
+            'Stream every audit event on your platform over OpenTelemetry (OTLP), or send it to a flow.',
           )}
-        >
-          <Link to={`${LISTING_PATH}/new`}>
-            <AnimatedIconButton icon={PlusIcon} iconSize={16} size="sm">
-              {t('New Destination')}
-            </AnimatedIconButton>
-          </Link>
-        </DashboardPageHeader>
-        <div className="flex w-full flex-col px-4 pb-6">
-          <DataTable
-            bordered={true}
-            columns={columns}
-            page={{ data: destinations, next: null, previous: null }}
-            isLoading={isLoading}
-            isError={isError}
-            errorStateEntity={t('destinations')}
-            clientFiltering={true}
-            hidePagination={true}
-            onRowClick={(row, newWindow) =>
-              newWindow
-                ? openNewWindow(`${LISTING_PATH}/${row.id}`)
-                : navigate(`${LISTING_PATH}/${row.id}`)
-            }
-            filters={[
-              {
-                type: 'input',
-                title: t('Search destinations'),
-                accessorKey: 'name',
-              },
-              {
-                type: 'select',
-                title: t('Type'),
-                accessorKey: 'type',
-                options: Object.values(DestinationType).map((type) => ({
-                  label: typeLabelByType.get(type) ?? type,
-                  value: type,
-                })),
-              },
-            ]}
-            toolbarButtons={[
-              <span
-                key="count"
-                className="shrink-0 text-xs text-muted-foreground"
-              >
-                {t('destinationsCount', { count: destinations.length })}
-              </span>,
-            ]}
-            emptyStateTextTitle={t('No destinations yet')}
-            emptyStateTextDescription={t(
-              'Create one to start forwarding audit events.',
-            )}
-            emptyStateIcon={<Workflow className="size-14" />}
-          />
-        </div>
-      </>
+          emptyStateIcon={
+            <span className="mb-1 mt-10 flex size-11 items-center justify-center rounded-lg bg-muted">
+              <Radio className="size-5" />
+            </span>
+          }
+          emptyStateAction={<DestinationStartCards formPath={FORM_PATH} />}
+        />
+      </div>
+    </>
   );
 };
 

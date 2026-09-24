@@ -1,28 +1,19 @@
-import { ApFlagId, ApplicationEventName } from '@activepieces/shared';
+import { ApplicationEventName } from '@activepieces/shared';
 import { t } from 'i18next';
-import { ChevronDown, Search, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useId, useState } from 'react';
-import { UseFormReturn, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
+import { UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 
 import type { DestinationFormValues } from '../lib/destination-form-utils';
-import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 import { buildEventGroups } from '../lib/event-groups';
 import { buildEventLabels } from '../lib/event-labels';
-import { handlerFlowBuilder } from '../lib/handler-flow-builder';
 
 export const EventsStep = ({
   form,
@@ -33,12 +24,8 @@ export const EventsStep = ({
   const eventGroups = buildEventGroups();
   const checkboxIdPrefix = useId();
   const [search, setSearch] = useState('');
-  const [openGroups, setOpenGroups] = useState<string[]>([
+  const [activeGroupKey, setActiveGroupKey] = useState(
     eventGroups[0]?.key ?? '',
-  ]);
-  const selectedEvents = useWatch({ control: form.control, name: 'events' });
-  const { data: webhookPrefixUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.WEBHOOK_URL_PREFIX,
   );
 
   const matchesSearch = (event: ApplicationEventName) => {
@@ -60,53 +47,11 @@ export const EventsStep = ({
     }))
     .filter((group) => group.events.length > 0);
 
+  const activeGroup =
+    visibleGroups.find((group) => group.key === activeGroupKey) ??
+    visibleGroups[0];
+
   const allEvents = eventGroups.flatMap((group) => group.events);
-
-  const { mutate: importHandlerFlow, isPending: isImporting } =
-    eventDestinationsCollectionUtils.useImportHandlerFlow(
-      (createdFlow) => {
-        form.setValue('url', `${webhookPrefixUrl}/${createdFlow.id}`, {
-          shouldValidate: true,
-        });
-        toast.success(t('Success'), {
-          description: t(
-            'The Webhook URL now points to the new handler flow. Publish the flow before you save.',
-          ),
-        });
-        window.open(
-          `/flows/${createdFlow.id}`,
-          '_blank',
-          'noopener,noreferrer',
-        );
-      },
-      (error) => {
-        toast.error(
-          error.message ||
-            t('Failed to generate the handler flow. Please try again.'),
-        );
-      },
-    );
-
-  const handleImportHandlerFlow = () => {
-    if (selectedEvents.length === 0) {
-      form.setError('events', { message: t('Select at least one event') });
-      return;
-    }
-    if (!webhookPrefixUrl) {
-      toast.error(t('Webhook URL prefix is not configured.'));
-      return;
-    }
-    importHandlerFlow({
-      template: handlerFlowBuilder.buildHandlerFlowTemplate({
-        events: selectedEvents.map((name) => ({
-          name,
-          label: eventLabels[name]?.label ?? name,
-        })),
-        labels: handlerFlowLabels({ selectedEvents, eventLabels }),
-      }),
-      selectedEvents,
-    });
-  };
 
   return (
     <FormField
@@ -125,14 +70,21 @@ export const EventsStep = ({
           );
           field.onChange(shouldSelect ? [...remaining, ...events] : remaining);
         };
+        const isEverythingSelected = allEvents.every((event) =>
+          field.value.includes(event),
+        );
+        const selectedInActiveGroup =
+          activeGroup?.events.filter((event) => field.value.includes(event)) ??
+          [];
+        const groupCheckboxId = `${checkboxIdPrefix}-group`;
 
         return (
           <FormItem className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  className="pl-8"
+                  className="pl-9"
                   placeholder={t('Search events')}
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
@@ -141,129 +93,118 @@ export const EventsStep = ({
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={() =>
-                  toggleEvents({ events: allEvents, shouldSelect: true })
+                  isEverythingSelected
+                    ? field.onChange([])
+                    : toggleEvents({ events: allEvents, shouldSelect: true })
                 }
               >
-                {t('Select all')}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => field.onChange([])}
-              >
-                {t('Clear')}
+                {isEverythingSelected ? t('Clear') : t('Select all')}
               </Button>
             </div>
 
-            <div className="flex flex-col gap-2">
-              {visibleGroups.map((group) => {
-                const selectedInGroup = group.events.filter((event) =>
-                  field.value.includes(event),
-                );
-                const isOpen = openGroups.includes(group.key);
-                return (
-                  <Collapsible
-                    key={group.key}
-                    open={isOpen}
-                    onOpenChange={(open) =>
-                      setOpenGroups(
-                        open
-                          ? [...openGroups, group.key]
-                          : openGroups.filter((key) => key !== group.key),
-                      )
-                    }
-                    className="rounded-md border"
-                  >
-                    <div className="flex items-center gap-3 px-3 py-2">
+            <div className="grid min-h-[340px] grid-cols-[240px_minmax(0,1fr)] overflow-hidden rounded-lg border">
+              <nav className="flex flex-col gap-0.5 border-r bg-accent p-1.5">
+                {visibleGroups.map((group) => {
+                  const isActive = group.key === activeGroup?.key;
+                  const selectedCount = group.events.filter((event) =>
+                    field.value.includes(event),
+                  ).length;
+                  return (
+                    <button
+                      key={group.key}
+                      type="button"
+                      onClick={() => setActiveGroupKey(group.key)}
+                      aria-current={isActive ? 'true' : undefined}
+                      className={cn(
+                        'flex h-[34px] items-center gap-2.5 rounded-md px-2.5 text-left text-sm transition-colors',
+                        isActive
+                          ? 'bg-background font-semibold'
+                          : 'hover:bg-background/60',
+                      )}
+                    >
+                      <span className="flex-1 truncate">{group.title}</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {t('{selected}/{total}', {
+                          selected: selectedCount,
+                          total: group.events.length,
+                        })}
+                      </span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              <div className="flex flex-col gap-1 px-[18px] py-3.5">
+                {activeGroup === undefined ? (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    {t('No events match your search')}
+                  </p>
+                ) : (
+                  <>
+                    <div className="mb-1 flex h-8 items-center gap-2.5 border-b pb-2">
                       <Checkbox
+                        id={groupCheckboxId}
                         checked={
-                          selectedInGroup.length === 0
+                          selectedInActiveGroup.length === 0
                             ? false
-                            : selectedInGroup.length === group.events.length
+                            : selectedInActiveGroup.length ===
+                              activeGroup.events.length
                             ? true
                             : 'indeterminate'
                         }
                         onCheckedChange={(checked) =>
                           toggleEvents({
-                            events: group.events,
+                            events: activeGroup.events,
                             shouldSelect: checked === true,
                           })
                         }
                       />
-                      <CollapsibleTrigger className="flex flex-1 items-center justify-between gap-2 text-left">
-                        <span className="text-sm font-medium">
-                          {group.title}
-                        </span>
-                        <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {t('{selected} of {total} selected', {
-                            selected: selectedInGroup.length,
-                            total: group.events.length,
-                          })}
-                          <ChevronDown
-                            className={cn(
-                              'size-4 transition-transform',
-                              isOpen && 'rotate-180',
-                            )}
-                          />
-                        </span>
-                      </CollapsibleTrigger>
-                    </div>
-                    <CollapsibleContent>
-                      <div className="grid grid-cols-2 gap-2 border-t px-3 py-3">
-                        {group.events.map((event) => {
-                          const checkboxId = `${checkboxIdPrefix}-${event}`;
-                          return (
-                            <div
-                              key={event}
-                              className="flex items-center gap-3"
-                            >
-                              <Checkbox
-                                id={checkboxId}
-                                checked={field.value.includes(event)}
-                                onCheckedChange={(checked) =>
-                                  toggleEvents({
-                                    events: [event],
-                                    shouldSelect: checked === true,
-                                  })
-                                }
-                              />
-                              <Label
-                                htmlFor={checkboxId}
-                                className="cursor-pointer text-sm font-normal"
-                              >
-                                {eventLabels[event]?.label ?? event}
-                              </Label>
-                            </div>
-                          );
+                      <Label
+                        htmlFor={groupCheckboxId}
+                        className="flex-1 cursor-pointer text-sm font-medium"
+                      >
+                        {activeGroup.title}
+                      </Label>
+                      <span className="text-sm text-muted-foreground">
+                        {t('{selected} of {total} selected', {
+                          selected: selectedInActiveGroup.length,
+                          total: activeGroup.events.length,
                         })}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted-foreground">
-                {t('{selected} of {total} events selected', {
-                  selected: field.value.length,
-                  total: allEvents.length,
-                })}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleImportHandlerFlow}
-                disabled={isImporting}
-                loading={isImporting}
-              >
-                <Sparkles className="size-4" />
-                {t('Generate handler flow')}
-              </Button>
+                      </span>
+                    </div>
+                    {activeGroup.events.map((event) => {
+                      const checkboxId = `${checkboxIdPrefix}-${event}`;
+                      return (
+                        <div
+                          key={event}
+                          className="flex h-9 items-center gap-2.5"
+                        >
+                          <Checkbox
+                            id={checkboxId}
+                            checked={field.value.includes(event)}
+                            onCheckedChange={(checked) =>
+                              toggleEvents({
+                                events: [event],
+                                shouldSelect: checked === true,
+                              })
+                            }
+                          />
+                          <Label
+                            htmlFor={checkboxId}
+                            className="flex-1 cursor-pointer text-sm font-normal"
+                          >
+                            {eventLabels[event]?.label ?? event}
+                          </Label>
+                          <span className="font-mono text-xs text-muted-foreground">
+                            {event}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
             </div>
             <FormMessage />
           </FormItem>
@@ -272,34 +213,3 @@ export const EventsStep = ({
     />
   );
 };
-
-function handlerFlowLabels({
-  selectedEvents,
-  eventLabels,
-}: {
-  selectedEvents: ApplicationEventName[];
-  eventLabels: ReturnType<typeof buildEventLabels>;
-}) {
-  return {
-    flowDisplayName: t('Event handler starter'),
-    flowDescription: t(
-      'Routes audit events into branches you can wire to Slack, Gmail, Teams, or any HTTP endpoint.',
-    ),
-    webhookTriggerDisplayName: t('Catch Webhook'),
-    eventTypeRouterDisplayName: t('Event type checker'),
-    runStatusRouterDisplayName: t('Run status check'),
-    failedRunBranchName: t('Failed run'),
-    otherwiseBranchName: t('Otherwise'),
-    noteContent: t(
-      '**Audit event handler**\n\nThis flow runs whenever any of these events fire:\n\n{events}\n\n**Add your channel** (Slack, Gmail, Teams, HTTP…) inside each branch below.\n\nOnce you are done:\n\n1. **Publish this flow** so it can receive events.\n2. Head back to the **Event Streaming** tab and create the destination to start sending events here.',
-      {
-        events: selectedEvents
-          .map((name) => `- ${eventLabels[name]?.label ?? name}`)
-          .join('\n'),
-      },
-    ),
-    sampleDataNoteContent: t(
-      '**Test different scenarios**\n\nOpen the trigger and edit its **Sample Data** to swap in a different event payload and test each branch without firing real audit events.',
-    ),
-  };
-}
