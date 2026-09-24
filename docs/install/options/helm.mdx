@@ -157,11 +157,14 @@ Then copy the database and Redis settings your running app uses today, so custom
 umask 077
 FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
 kubectl exec "deploy/$FULLNAME" -- printenv > app.env
-grep '^AP_POSTGRES_' app.env > db.env
+grep '^AP_POSTGRES_' app.env | grep -v '^AP_POSTGRES_SSL_CA=' > db.env
 grep '^AP_REDIS_' app.env | grep -v '^AP_REDIS_TYPE=DEFAULT$' > redis.env
 kubectl create secret generic activepieces-db-secrets --from-env-file=db.env
 kubectl create secret generic activepieces-redis-secrets --from-env-file=redis.env
-rm app.env db.env redis.env
+if kubectl exec "deploy/$FULLNAME" -- printenv AP_POSTGRES_SSL_CA > ca.pem; then
+  kubectl patch secret activepieces-db-secrets -p "{\"data\":{\"AP_POSTGRES_SSL_CA\":\"$(base64 < ca.pem | tr -d '\n')\"}}"
+fi
+rm app.env db.env redis.env ca.pem
 ```
 
 If a variable in those files is not listed under `activepiecesEnvVariables` (for example `AP_POSTGRES_URL` or `AP_REDIS_SENTINEL_HOSTS`), add it to that list in your values.

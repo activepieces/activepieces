@@ -9,7 +9,7 @@ The Kubernetes install we ship to self-hosters, at `deploy/activepieces-helm/`. 
 ## Two paths for an AP_* variable
 `templates/deployment.yaml` builds one `env:` list from two values keys, in this fixed order:
 
-- **`activepiecesConfig`** — a flat map rendered as plain `value:` entries. Rendered **first**. The shipped default holds only `AP_CONTAINER_TYPE`.
+- **`activepiecesConfig`** — a flat map rendered as plain `value:` entries. Rendered **first**. Empty (`{}`) by default.
 - **`activepiecesEnvVariables`** — a map of *secret name* → *list of var names*, rendered as `secretKeyRef` with `optional: true`. Rendered **second**. The shipped default routes `AP_EDITION`, `AP_EXECUTION_MODE`, `AP_ENCRYPTION_KEY`, `AP_JWT_SECRET` and the queue/auth vars through secrets the chart does not create.
 - **`envFrom` the generated secrets**: lowest precedence. Supplies `AP_ENCRYPTION_KEY` / `AP_JWT_SECRET` when no user secret sets them, because `env` beats `envFrom`.
 
