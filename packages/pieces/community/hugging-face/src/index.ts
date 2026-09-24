@@ -37,6 +37,17 @@ import { listCollections } from './lib/actions/list-collections';
 import { getCollection } from './lib/actions/get-collection';
 import { generateChatCompletion } from './lib/actions/generate-chat-completion';
 import { generateEmbeddings } from './lib/actions/generate-embeddings';
+import { checkDatasetViewerSupport } from './lib/actions/check-dataset-viewer-support';
+import { listDatasetSplits } from './lib/actions/list-dataset-splits';
+import { previewDatasetRows } from './lib/actions/preview-dataset-rows';
+import { getDatasetRows } from './lib/actions/get-dataset-rows';
+import { searchDatasetRows } from './lib/actions/search-dataset-rows';
+import { filterDatasetRows } from './lib/actions/filter-dataset-rows';
+import { getDatasetViewerInfo } from './lib/actions/get-dataset-viewer-info';
+import { getDatasetSize } from './lib/actions/get-dataset-size';
+import { getDatasetStatistics } from './lib/actions/get-dataset-statistics';
+import { listDatasetParquetFiles } from './lib/actions/list-dataset-parquet-files';
+import { getDatasetLeaderboard } from './lib/actions/get-dataset-leaderboard';
 import { huggingFaceAuth } from './lib/auth';
 
 export const huggingface = createPiece({
@@ -86,6 +97,17 @@ export const huggingface = createPiece({
     getCollection,
     generateChatCompletion,
     generateEmbeddings,
+    checkDatasetViewerSupport,
+    listDatasetSplits,
+    previewDatasetRows,
+    getDatasetRows,
+    searchDatasetRows,
+    filterDatasetRows,
+    getDatasetViewerInfo,
+    getDatasetSize,
+    getDatasetStatistics,
+    listDatasetParquetFiles,
+    getDatasetLeaderboard,
   ],
   triggers: [],
 });
