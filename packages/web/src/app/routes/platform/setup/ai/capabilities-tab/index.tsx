@@ -12,14 +12,6 @@ import {
   Trash2,
 } from 'lucide-react';
 
-import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
-import {
-  AI_TOOL_CATALOG,
-  AiToolCapabilityInfo,
-  AiToolProviderInfo,
-} from '../../ai-capabilities/catalog';
-import { SectionHeader } from '../components/section-header';
-
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -30,6 +22,14 @@ import {
 } from '@/features/platform-admin';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn } from '@/lib/utils';
+
+import { AiCapabilityDialog } from '../../ai-capabilities/ai-capability-dialog';
+import {
+  AI_TOOL_CATALOG,
+  AiToolCapabilityInfo,
+  AiToolProviderInfo,
+} from '../../ai-capabilities/catalog';
+import { SectionHeader } from '../components/section-header';
 
 export function CapabilitiesTab() {
   const {
