@@ -3,12 +3,17 @@
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable testing-library/no-unnecessary-act */
+/* eslint-disable jest-dom/prefer-to-have-text-content -- @testing-library/jest-dom is not a dependency of packages/web */
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('i18next', () => ({ t: (key: string) => key }));
+
+vi.mock('@/hooks/authorization-hooks', () => ({
+  useAuthorization: () => ({ checkAccess: () => true }),
+}));
 
 vi.mock('@/hooks/flags-hooks', () => ({
   flagsHooks: { useFlag: () => ({ data: false }) },
@@ -71,7 +76,6 @@ function render(props: Partial<Parameters<typeof McpTools>[0]> = {}) {
     root.render(
       <McpTools
         disabledTools={[]}
-        canWrite={true}
         isPending={false}
         onUpdateDisabledTools={() => undefined}
         {...props}
