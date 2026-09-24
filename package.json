@@ -24,6 +24,7 @@
     "dev:frontend": "turbo run serve --filter=web --filter=api --filter=@activepieces/engine --ui stream",
     "start": "node tools/setup-dev.js && npm run dev",
     "test:e2e": "npx playwright test --config=packages/tests-e2e/playwright.config.ts",
+    "oro-styling-audit": "bun tools/scripts/oro-styling-audit.ts",
     "test:sandbox-e2e": "bash scripts/run-sandbox-e2e.sh",
     "db-migration": "npx turbo run db-migration --filter=api --",
     "check-migrations": "npx turbo run check-migrations --filter=api",
