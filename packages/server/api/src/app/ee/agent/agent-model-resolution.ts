@@ -98,6 +98,7 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
 export const agentModelResolution = {
     findTier,
     resolveTier,
+    nativeModelIdFor,
     resolveNamedModelId,
     resolveModelIdForProvider,
     defaultModelIdForProvider,
