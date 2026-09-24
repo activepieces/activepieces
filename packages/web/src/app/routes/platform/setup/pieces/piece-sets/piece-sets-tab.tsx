@@ -71,7 +71,7 @@ export const PieceSetsTab = () => {
           <div
             className="flex items-center gap-2 cursor-pointer"
             onClick={() =>
-              navigate(`/platform/setup/pieces/piece-sets/${row.original.id}`)
+              navigate(`/platform/pieces/piece-sets/${row.original.id}`)
             }
           >
             <span className="font-medium">{row.original.name}</span>

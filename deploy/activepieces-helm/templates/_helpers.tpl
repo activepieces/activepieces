@@ -60,3 +60,15 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "activepieces.workloadType" -}}
+{{- $liveCluster := .Capabilities.APIVersions.Has "apps/v1/StatefulSet" }}
+{{- $argoRollouts := .Capabilities.APIVersions.Has "argoproj.io/v1alpha1/Rollout" }}
+{{- if .Values.workloadType }}
+{{- .Values.workloadType }}
+{{- else if and $liveCluster (not $argoRollouts) (not (lookup "v1" "Service" .Release.Namespace (printf "%s-preview" (include "activepieces.fullname" .)))) }}
+{{- "statefulset" }}
+{{- else }}
+{{- "rollout" }}
+{{- end }}
+{{- end }}

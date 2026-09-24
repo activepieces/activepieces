@@ -13,6 +13,7 @@ import { IssueFieldMetaData, VALID_CUSTOM_FIELD_TYPES } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 
+import { issueOutputSchema } from '../output-schemas';
 async function getFields(auth: JiraAuth, projectId: string, issueTypeId: string): Promise<IssueFieldMetaData[]> {
 	const fields = await jiraPaginatedApiCall<IssueFieldMetaData, 'fields'>({
 		auth: auth,
@@ -32,13 +33,14 @@ export const createIssueAction = createAction({
 	name: 'create_issue',
 	displayName: 'Create Issue',
 	description: 'Creates a new issue in a project.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'Create a new Jira issue in a given project and issue type, with fields driven by that type\'s create screen (summary, description, custom fields, etc.); selected rich-text fields can be supplied as raw ADF JSON. Use for brand-new work items — to modify an existing one use Update Issue. Not idempotent: every run creates another issue.',
 		idempotent: false,
 	},
 	auth: jiraCloudAuth,
+	outputSchema: issueOutputSchema,
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueTypeId: issueTypeIdProp('Issue Type'),

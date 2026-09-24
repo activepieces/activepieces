@@ -14,7 +14,7 @@ export const Error = () => {
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          navigate('/platform/setup/billing');
+          navigate('/platform/billing');
           return 0;
         }
         return prev - 1;
@@ -54,7 +54,7 @@ export const Error = () => {
 
             <div className="flex flex-col gap-3 pt-2">
               <Button
-                onClick={() => navigate('/platform/setup/billing')}
+                onClick={() => navigate('/platform/billing')}
                 className="w-full"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />

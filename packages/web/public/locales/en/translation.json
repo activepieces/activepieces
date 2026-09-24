@@ -3125,5 +3125,13 @@
   "billing": "billing",
   "project roles": "project roles",
   "infrastructure status": "infrastructure status",
-  "Plans, credits and usage tracking are part of the Enterprise and Cloud editions.": "Plans, credits and usage tracking are part of the Enterprise and Cloud editions."
+  "Plans, credits and usage tracking are part of the Enterprise and Cloud editions.": "Plans, credits and usage tracking are part of the Enterprise and Cloud editions.",
+  "Requires a plan upgrade": "Requires a plan upgrade",
+  "Catalogue": "Catalogue",
+  "Developers": "Developers",
+  "Operations": "Operations",
+  "Forward every audit event we emit to a webhook, then handle it in a flow.": "Forward every audit event we emit to a webhook, then handle it in a flow.",
+  "Not included in your plan": "Not included in your plan",
+  "Included in the {tier} plan": "Included in the {tier} plan",
+  "Opened a paid admin page": "Opened a paid admin page"
 }

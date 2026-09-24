@@ -320,23 +320,29 @@ export const issueIdOrKeyProp = (displayName: string, required = true) =>
 					placeholder: 'Please connect your account first',
 				};
 			}
-			const authValue = auth as JiraAuth;
-			const response = await jiraPaginatedApiCall<{ id: string; key: string }, 'issues'>({
-				auth: authValue,
-				resourceUri: '/search',
-				propertyName: 'issues',
-				query: { fields: 'summary' },
-				method: HttpMethod.GET,
-			});
-
 			const options: DropdownOption<string>[] = [];
-
-			for (const issue of response) {
-				options.push({
-					value: issue.id,
-					label: issue.key,
+			let nextPageToken: string | undefined;
+			do {
+				const response = await sendJiraRequest({
+					method: HttpMethod.POST,
+					url: 'search/jql',
+					auth: auth as JiraAuth,
+					body: {
+						fields: ['summary'],
+						jql: 'created <= now() ORDER BY updated DESC',
+						nextPageToken,
+						maxResults: 100,
+					},
 				});
-			}
+				const issueList = response.body as SearchIssuesResponse;
+				options.push(
+					...issueList.issues.map((issue) => ({
+						value: issue.id,
+						label: issue.key,
+					})),
+				);
+				nextPageToken = issueList.isLast ? undefined : issueList.nextPageToken;
+			} while (nextPageToken && options.length < ISSUE_OPTIONS_LIMIT);
 
 			return {
 				disabled: false,
@@ -679,3 +685,5 @@ export function transformCustomFields(
 
 	return result;
 }
+
+const ISSUE_OPTIONS_LIMIT = 1000;

@@ -2,6 +2,7 @@ import { TriggerStrategy, createTrigger, isNil } from '@activepieces/pieces-fram
 import { jiraCloudAuth } from '../../auth';
 import { getPriorities } from '../common';
 
+import { priorityTriggerOutputSchema } from '../output-schemas';
 export const newPriority = createTrigger({
   name: 'new_priority',
   displayName: 'New Priority',
@@ -12,6 +13,7 @@ export const newPriority = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: priorityTriggerOutputSchema,
   props: {},
   sampleData: {
     self: 'https://instance.atlassian.net/rest/api/3/priority/1',
