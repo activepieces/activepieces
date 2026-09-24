@@ -119,6 +119,7 @@
                   "group": "Flows",
                   "pages": [
                      "flows/building-flows",
+       "flows/ai-router",
                      "flows/passing-data",
                      "flows/using-formulas",
                      "flows/formula-reference",
