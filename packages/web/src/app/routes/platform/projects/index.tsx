@@ -37,7 +37,6 @@ import {
   EditProjectDialog,
   projectCollectionUtils,
 } from '@/features/projects';
-import type { EditProjectInitialValues } from '@/features/projects';
 import { PlatformAdminProjectAlertSubscriptionBulkActions } from '@/features/projects/components/platform-admin-project-alert-subscription-bulk-actions';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/format-utils';
@@ -102,10 +101,10 @@ export default function ProjectsPage() {
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] = useState<
-    EditProjectInitialValues | undefined
-  >(undefined);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
+  const editDialogProject = allProjects.find(
+    (project) => project.id === editDialogProjectId,
+  );
   const { data: allGlobalConnectionsPage } =
     globalConnectionsQueries.useGlobalConnections({
       request: { limit: 9999 },
@@ -343,11 +342,6 @@ export default function ProjectsPage() {
                 onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  setEditDialogInitialValues({
-                    projectName: row.displayName,
-                    externalId: row.externalId ?? undefined,
-                    sensitive: row.sensitive,
-                  });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);
                 }}
@@ -442,7 +436,13 @@ export default function ProjectsPage() {
         onClose={() => {
           setEditDialogOpen(false);
         }}
-        initialValues={editDialogInitialValues}
+        initialValues={
+          editDialogProject && {
+            projectName: editDialogProject.displayName,
+            externalId: editDialogProject.externalId ?? undefined,
+            sensitive: editDialogProject.sensitive,
+          }
+        }
         projectId={editDialogProjectId}
       />
     </div>

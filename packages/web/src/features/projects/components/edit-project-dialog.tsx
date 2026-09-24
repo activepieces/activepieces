@@ -41,7 +41,11 @@ interface EditProjectDialogProps {
   open: boolean;
   onClose: () => void;
   projectId: string;
-  initialValues?: EditProjectInitialValues;
+  initialValues?: {
+    projectName?: string;
+    externalId?: string;
+    sensitive?: boolean;
+  };
 }
 
 export function EditProjectDialog({
@@ -251,10 +255,4 @@ const EditProjectForm = ({
       </form>
     </Form>
   );
-};
-
-export type EditProjectInitialValues = {
-  projectName?: string;
-  externalId?: string;
-  sensitive?: boolean;
 };
