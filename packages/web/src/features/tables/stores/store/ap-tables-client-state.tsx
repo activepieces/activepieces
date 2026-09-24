@@ -183,7 +183,7 @@ export const createApTableStore = (
                         (cell) => !updatedFieldIndexes.has(cell.fieldIndex),
                       ),
                       ...recordData.values,
-                    ],
+                    ].sort((a, b) => a.fieldIndex - b.fieldIndex),
                   }
                 : record,
             ),

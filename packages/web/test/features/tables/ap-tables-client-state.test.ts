@@ -80,11 +80,7 @@ describe('createApTableStore', () => {
     store.getState().updateRecord(0, edit);
 
     expect(serverUpdateRecord).toHaveBeenCalledWith(0, edit);
-    expect(
-      [...store.getState().records[0].values].sort(
-        (x, y) => x.fieldIndex - y.fieldIndex,
-      ),
-    ).toEqual([
+    expect(store.getState().records[0].values).toEqual([
       { fieldIndex: 0, value: 'a-edited' },
       { fieldIndex: 1, value: 'b-value' },
       { fieldIndex: 2, value: 'c-value' },
