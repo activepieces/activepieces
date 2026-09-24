@@ -1,9 +1,8 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { DefaultProjectRole, McpReachResponse, McpToolResult, Project, User } from '@activepieces/shared'
+import { McpReachResponse, McpToolResult, Project } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { editionRequiresRbac } from '../ee/authentication/project-role/rbac-middleware'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
-import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 
@@ -15,16 +14,16 @@ export const mcpAccess = {
 }
 
 async function listAccessibleProjects({ platformId, userId, log }: UserScope): Promise<Project[]> {
-    const user = await userService(log).getOneOrFail({ id: userId })
-    return listProjectsForUser({ user, platformId, log })
+    const isPrivileged = await isUserPrivileged({ userId, log })
+    return listProjectsForUser({ platformId, userId, isPrivileged, log })
 }
 
 async function resolveReach({ platformId, userId, log }: UserScope): Promise<McpReachResponse> {
-    const user = await userService(log).getOneOrFail({ id: userId })
-    if (userService(log).isUserPrivileged(user)) {
+    const isPrivileged = await isUserPrivileged({ userId, log })
+    if (isPrivileged) {
         return { projectIds: null }
     }
-    const projects = await listProjectsForUser({ user, platformId, log })
+    const projects = await listProjectsForUser({ platformId, userId, isPrivileged, log })
     return { projectIds: projects.map((project) => project.id) }
 }
 
@@ -43,35 +42,23 @@ function noMcpReachResult(toolTitle: string): McpToolResult {
     }
 }
 
-async function listProjectsForUser({ user, platformId, log }: {
-    user: User
-    platformId: string
-    log: FastifyBaseLogger
+async function isUserPrivileged({ userId, log }: Omit<UserScope, 'platformId'>): Promise<boolean> {
+    const user = await userService(log).getOneOrFail({ id: userId })
+    return userService(log).isUserPrivileged(user)
+}
+
+async function listProjectsForUser({ platformId, userId, isPrivileged, log }: UserScope & {
+    isPrivileged: boolean
 }): Promise<Project[]> {
-    const isPrivileged = userService(log).isUserPrivileged(user)
-    const projects = await projectService(log).getAllForUser({ platformId, userId: user.id, isPrivileged })
+    const projects = await projectService(log).getAllForUser({ platformId, userId, isPrivileged })
 
     if (!editionRequiresRbac() || isPrivileged || projects.length === 0) {
         return projects
     }
 
-    const ownsAProject = projects.some((project) => project.ownerId === user.id)
-    const [ownedProjectRoleGrantsMcp, memberProjectIdsGrantingMcp] = await Promise.all([
-        ownsAProject ? defaultRoleGrantsMcp({ platformId, roleName: DefaultProjectRole.ADMIN }) : Promise.resolve(false),
-        projectMemberService(log).listProjectIdsWithPermission({ userId: user.id, platformId, permission: Permission.READ_MCP }).then((projectIds) => new Set(projectIds)),
-    ])
+    const projectIdsGrantingMcp = new Set(await projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_MCP }))
 
-    return projects.filter((project) => project.ownerId === user.id
-        ? ownedProjectRoleGrantsMcp
-        : memberProjectIdsGrantingMcp.has(project.id))
-}
-
-async function defaultRoleGrantsMcp({ platformId, roleName }: {
-    platformId: string
-    roleName: DefaultProjectRole
-}): Promise<boolean> {
-    const role = await projectRoleService.getOne({ name: roleName, platformId })
-    return role?.permissions?.includes(Permission.READ_MCP) ?? false
+    return projects.filter((project) => project.ownerId === userId || projectIdsGrantingMcp.has(project.id))
 }
 
 type UserScope = {
