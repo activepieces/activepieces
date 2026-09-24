@@ -274,6 +274,36 @@ const collectionWriteFields: OutputSchemaField[] = [
   { key: 'url', label: 'Collection URL', format: 'url' },
 ];
 
+const webhookFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Webhook ID' },
+  { key: 'url', label: 'Target URL', format: 'url' },
+  { key: 'enabled', label: 'Enabled', format: 'boolean' },
+  {
+    key: 'disabled_reason',
+    label: 'Disabled Reason',
+    description: "Why the webhook is off, for example 'disabled' when turned off by hand. Null while enabled.",
+  },
+  {
+    key: 'watched',
+    label: 'Watched Items',
+    labelKey: 'name',
+    listItems: [
+      { key: 'type', label: 'Type', description: "'user', 'org', 'model', 'dataset' or 'space'." },
+      { key: 'name', label: 'Name' },
+    ],
+  },
+  { key: 'domains', label: 'Event Domains', description: "'repo', 'discussion' or both." },
+  { key: 'has_secret', label: 'Has Secret', format: 'boolean' },
+  { key: 'runs_job', label: 'Runs a Job', format: 'boolean' },
+  { key: 'last_trigger_at', label: 'Last Triggered At', format: 'datetime' },
+];
+
+const socialHandleFields: OutputSchemaField[] = [
+  { key: 'twitter', label: 'X (Twitter) Handle' },
+  { key: 'github', label: 'GitHub Handle' },
+  { key: 'linkedin', label: 'LinkedIn Handle' },
+];
+
 export const languageTranslationOutputSchema: OutputSchema = {
   fields: [
     { key: 'translatedText', label: 'Translated Text' },
@@ -1678,5 +1708,94 @@ export const handleGatedAccessRequestOutputSchema: OutputSchema = {
     { key: 'username', label: 'Username' },
     { key: 'status', label: 'New Status', description: "One of 'accepted', 'rejected', 'pending' or 'reset'." },
     { key: 'reason', label: 'Reason', description: 'The rejection or reset reason sent to the requester. Null when none was given.' },
+export const webhookOutputSchema: OutputSchema = {
+  fields: webhookFields,
+};
+
+export const listWebhooksOutputSchema: OutputSchema = {
+  fields: [{ key: 'webhooks', label: 'Webhooks', labelKey: 'url', listItems: webhookFields }, countField],
+};
+
+export const updateWebhookOutputSchema: OutputSchema = {
+  fields: [
+    ...webhookFields,
+    {
+      key: 'secret_status',
+      label: 'Secret Status',
+      description: "'kept', 'set', 'replaced', 'cleared' or 'none'.",
+    },
+    {
+      key: 'warning',
+      label: 'Warning',
+      description: 'Set only when the Hub removed the existing signing secret; null otherwise.',
+    },
+  ],
+};
+
+export const deleteWebhookOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'webhook_id', label: 'Webhook ID' },
+    { key: 'deleted', label: 'Deleted', format: 'boolean' },
+  ],
+};
+
+export const listNotificationsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'notifications',
+      label: 'Notifications',
+      labelKey: 'title',
+      listItems: [
+        { key: 'type', label: 'Type' },
+        { key: 'title', label: 'Title' },
+        { key: 'read', label: 'Read', format: 'boolean' },
+        { key: 'updated_at', label: 'Updated At', format: 'datetime' },
+        {
+          key: 'discussion_id',
+          label: 'Discussion ID',
+          description: 'The 24-character ID that Delete Notifications needs, not the discussion number.',
+        },
+        ...repoRefFields,
+        { key: 'discussion_num', label: 'Discussion Number', format: 'number' },
+        { key: 'discussion_status', label: 'Discussion Status' },
+        { key: 'is_pull_request', label: 'Is Pull Request', format: 'boolean' },
+        { key: 'paper_id', label: 'Paper ID' },
+        { key: 'post_id', label: 'Post ID' },
+        { key: 'post_slug', label: 'Post Slug' },
+        { key: 'post_author', label: 'Post Author' },
+        { key: 'participants', label: 'Participants', description: 'Comma-separated usernames in the thread.' },
+      ],
+    },
+    countField,
+    { key: 'total_matching', label: 'Total Matching', format: 'number' },
+    { key: 'total_unread', label: 'Total Unread', format: 'number' },
+    { key: 'total_all', label: 'Total Notifications', format: 'number' },
+    nextPageField,
+  ],
+};
+
+export const getUserSocialsOutputSchema: OutputSchema = {
+  fields: [{ key: 'username', label: 'Username' }, ...socialHandleFields, { key: 'bluesky', label: 'Bluesky Handle' }],
+};
+
+export const getOrganizationSocialsOutputSchema: OutputSchema = {
+  fields: [{ key: 'organization', label: 'Organization' }, ...socialHandleFields],
+};
+
+export const searchHfDocsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'results',
+      label: 'Passages',
+      labelKey: 'title',
+      listItems: [
+        { key: 'title', label: 'Page Title' },
+        { key: 'url', label: 'URL', format: 'url' },
+        { key: 'product', label: 'Product' },
+        { key: 'section', label: 'Section', description: "The heading path, joined with ' > '." },
+        { key: 'text', label: 'Text (Markdown)' },
+      ],
+    },
+    countField,
   ],
 };
