@@ -11,7 +11,7 @@ export const onedriveListItemThumbnails = createAction({
   description: 'Get the small, medium and large thumbnail image URLs of a file.',
   audience: 'ai',
   outputSchema: onedriveListItemThumbnailsOutputSchema,
-  classification: 'READ',
+  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Get the thumbnail image URLs (small, medium, large, with sizes) that OneDrive generated for one file, for previews or image galleries. Provide the item ID (from Search Files and Folders or List Folder Contents) or a path; an empty result is normal for a new file whose thumbnails are not generated yet, or for file types without thumbnails. The URLs are short-lived. Read-only and safe to retry.',

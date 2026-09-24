@@ -7,9 +7,6 @@ import { oneDriveAuth } from '../auth';
 import { GraphDriveItem, oneDriveApi } from '../common/graph-api';
 import { onedriveItemOutputSchema } from '../output-schemas';
 
-const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024;
-const CHUNK_SIZE = 10485760;
-
 export const onedriveUploadFile = createAction({
   auth: oneDriveAuth,
   name: 'onedrive_upload_file',
@@ -132,3 +129,6 @@ async function uploadContent({
   }
   return result;
 }
+
+const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024;
+const CHUNK_SIZE = 10485760;

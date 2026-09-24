@@ -11,7 +11,7 @@ export const onedriveListItemPermissions = createAction({
   description: 'List who has access to a OneDrive file or folder, including sharing links.',
   audience: 'ai',
   outputSchema: onedriveListItemPermissionsOutputSchema,
-  classification: 'READ',
+  classification: 'SEARCH',
   aiMetadata: {
     description:
       'Lists the permissions on a file or folder: owner, per-person grants, sharing links and access inherited from parent folders. Use it to find the permission ID that Update Permission Role and Remove Permission need; permissions marked inherited can only be changed on the folder they are inherited from.',

@@ -7,9 +7,6 @@ import { oneDriveAuth } from '../auth';
 import { GraphDriveItem, oneDriveApi } from '../common/graph-api';
 import { onedriveItemOutputSchema } from '../output-schemas';
 
-const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024;
-const CHUNK_SIZE = 10485760;
-
 export const onedriveReplaceFileContent = createAction({
   auth: oneDriveAuth,
   name: 'onedrive_replace_file_content',
@@ -128,3 +125,6 @@ async function replaceContent({
   }
   return result;
 }
+
+const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024;
+const CHUNK_SIZE = 10485760;

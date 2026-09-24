@@ -9,6 +9,28 @@ import {
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { getGraphBaseUrl } from './microsoft-cloud';
 
+export const oneDriveApi = {
+  request,
+  itemPath,
+  folderPath,
+  getRootId,
+  resolveFolderId,
+  getDriveId,
+  toItem,
+  describeError,
+  statusOf,
+};
+
+export class OneDriveApiError extends Error {
+  readonly status: number | null;
+
+  constructor({ message, status }: { message: string; status: number | null }) {
+    super(message);
+    this.name = 'OneDriveApiError';
+    this.status = status;
+  }
+}
+
 async function request<T extends HttpMessageBody>({
   auth,
   method,
@@ -157,28 +179,6 @@ function readGraphError(body: unknown): string | null {
   const code = 'code' in inner && typeof inner.code === 'string' ? inner.code : null;
   const message = 'message' in inner && typeof inner.message === 'string' ? inner.message : null;
   return [code, message].filter(Boolean).join(': ') || null;
-}
-
-export const oneDriveApi = {
-  request,
-  itemPath,
-  folderPath,
-  getRootId,
-  resolveFolderId,
-  getDriveId,
-  toItem,
-  describeError,
-  statusOf,
-};
-
-export class OneDriveApiError extends Error {
-  readonly status: number | null;
-
-  constructor({ message, status }: { message: string; status: number | null }) {
-    super(message);
-    this.name = 'OneDriveApiError';
-    this.status = status;
-  }
 }
 
 export type GraphRequest = {

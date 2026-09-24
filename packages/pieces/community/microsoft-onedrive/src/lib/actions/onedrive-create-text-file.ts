@@ -4,8 +4,6 @@ import { oneDriveAuth } from '../auth';
 import { GraphDriveItem, oneDriveApi } from '../common/graph-api';
 import { onedriveItemOutputSchema } from '../output-schemas';
 
-const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024;
-
 export const onedriveCreateTextFile = createAction({
   auth: oneDriveAuth,
   name: 'onedrive_create_text_file',
@@ -72,3 +70,5 @@ export const onedriveCreateTextFile = createAction({
     return oneDriveApi.toItem(item);
   },
 });
+
+const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024;

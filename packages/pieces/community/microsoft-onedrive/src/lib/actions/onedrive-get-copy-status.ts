@@ -4,15 +4,6 @@ import { oneDriveAuth } from '../auth';
 import { oneDriveApi } from '../common/graph-api';
 import { onedriveGetCopyStatusOutputSchema } from '../output-schemas';
 
-const ALLOWED_EXACT_HOSTS = ['api.onedrive.com'];
-const ALLOWED_HOST_SUFFIXES = [
-  '.svc.ms',
-  '.microsoftpersonalcontent.com',
-  '.sharepoint.com',
-  '.sharepoint.us',
-  '.sharepoint-df.com',
-];
-
 export const onedriveGetCopyStatus = createAction({
   auth: oneDriveAuth,
   name: 'onedrive_get_copy_status',
@@ -116,6 +107,15 @@ function describeFailure({
   }
   return null;
 }
+
+const ALLOWED_EXACT_HOSTS = ['api.onedrive.com'];
+const ALLOWED_HOST_SUFFIXES = [
+  '.svc.ms',
+  '.microsoftpersonalcontent.com',
+  '.sharepoint.com',
+  '.sharepoint.us',
+  '.sharepoint-df.com',
+];
 
 type MonitorStatus = {
   status?: string;
