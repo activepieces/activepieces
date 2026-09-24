@@ -18,10 +18,19 @@ export const gmailSendEmailAction = createAction({
     idempotent: false,
   },
   displayName: 'Send Email',
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Recipients',
+      description:
+        'Press Enter after each address. Reply To receives replies instead of the sender.',
+      props: ['receiver', 'cc', 'bcc', 'reply_to'],
+    },
+  ],
   props: {
     receiver: Property.Array({
       displayName: 'To',
-      description: 'One address per row.',
       required: true,
     }),
     cc: Property.Array({

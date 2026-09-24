@@ -26,6 +26,16 @@ export const requestApprovalInEmail = createAction({
       'Sends an email, optionally with file attachments, carrying a single link to a confirmation page where the recipient chooses Approve or Disapprove, then pauses the flow until they respond, resuming with their decision. Use this as a human-in-the-loop gate before proceeding with a sensitive action. The flow blocks indefinitely until a response arrives. Not idempotent: each call sends a new approval email and creates a new wait.',
     idempotent: false,
   },
+  propertyGroups: [
+    {
+      key: 'recipients',
+      display: 'tabs',
+      label: 'Recipients',
+      description:
+        'Press Enter after each address. Reply To receives replies instead of the sender.',
+      props: ['receiver', 'cc', 'bcc', 'reply_to'],
+    },
+  ],
   props: {
     receiver: Property.ShortText({
       displayName: 'To',
