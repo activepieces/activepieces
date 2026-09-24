@@ -42,5 +42,8 @@ async function appendToDescription({ auth, id, note }: { auth: OAuth2PropertyVal
 		undefined
 	);
 	const current = response.body.Description;
-	return current ? `${current}\n\n${note}` : note;
+	if (!current) {
+		return note;
+	}
+	return current.endsWith(note) ? current : `${current}\n\n${note}`;
 }

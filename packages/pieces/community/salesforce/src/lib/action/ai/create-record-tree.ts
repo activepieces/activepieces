@@ -39,6 +39,10 @@ export const createRecordTree = createAction({
 			fieldName: 'Records',
 			max: recordsUtils.MAX_COMPOSITE_RECORDS,
 		});
+		const total = countTreeRecords(records);
+		if (total > recordsUtils.MAX_COMPOSITE_RECORDS) {
+			throw new Error(`A record tree can hold at most ${recordsUtils.MAX_COMPOSITE_RECORDS} records in total, including children; this one has ${total}.`);
+		}
 		const response = await callSalesforceApi<TreeResponse>(
 			HttpMethod.POST,
 			context.auth,
@@ -55,6 +59,18 @@ export const createRecordTree = createAction({
 		};
 	},
 });
+
+function countTreeRecords(records: unknown[]): number {
+	return records.reduce<number>((total, record) => {
+		if (!salesforceUtils.isRecord(record)) {
+			return total + 1;
+		}
+		const nested = Object.values(record)
+			.filter((value): value is Record<string, unknown> => salesforceUtils.isRecord(value) && Array.isArray(value['records']))
+			.reduce<number>((sum, value) => sum + countTreeRecords(Array.isArray(value['records']) ? value['records'] : []), 0);
+		return total + 1 + nested;
+	}, 0);
+}
 
 function withAttributes({ record, object, index }: { record: Record<string, unknown>; object: string; index: number }) {
 	const attributes = salesforceUtils.isRecord(record['attributes']) ? record['attributes'] : {};

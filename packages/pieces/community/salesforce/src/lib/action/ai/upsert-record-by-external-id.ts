@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../../..';
 import { callSalesforceApi } from '../../common';
@@ -61,8 +61,12 @@ export const upsertRecordByExternalId = createAction({
 			fields
 		);
 		const body = salesforceUtils.isRecord(response.body) ? response.body : {};
+		const id =
+			typeof body['id'] === 'string'
+				? body['id']
+				: await resolveRecordId({ auth: context.auth, object, externalField, value });
 		return {
-			id: typeof body['id'] === 'string' ? body['id'] : null,
+			id,
 			success: true,
 			created: response.status === 201,
 			external_id_field: externalField,
@@ -71,3 +75,16 @@ export const upsertRecordByExternalId = createAction({
 		};
 	},
 });
+
+async function resolveRecordId({ auth, object, externalField, value }: { auth: OAuth2PropertyValue; object: string; externalField: string; value: string }): Promise<string | null> {
+	if (externalField === 'Id') {
+		return value;
+	}
+	const response = await callSalesforceApi<{ Id?: string }>(
+		HttpMethod.GET,
+		auth,
+		`/services/data/v56.0/sobjects/${object}/${externalField}/${encodeURIComponent(value)}?fields=Id`,
+		undefined
+	);
+	return response.body.Id ?? null;
+}
