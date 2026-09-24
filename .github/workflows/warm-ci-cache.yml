@@ -1,0 +1,22 @@
+name: Warm CI cache
+# GitHub only lets a pull request restore caches created on the same PR or on the base branch.
+# CI v2 runs on pull requests only, so this seeds the base-branch copies (bun downloads and the
+# compiled redis-memory-server binary) that every new PR's first run restores.
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    if: github.repository == 'activepieces/activepieces'
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/setup
+        with:
+          turbo-s3-bucket: ${{ secrets.TURBO_CACHE_S3_BUCKET }}
+          turbo-s3-endpoint: ${{ secrets.TURBO_CACHE_S3_ENDPOINT }}
+          turbo-s3-access-key-id: ${{ secrets.TURBO_CACHE_S3_ACCESS_KEY_ID }}
+          turbo-s3-secret-access-key: ${{ secrets.TURBO_CACHE_S3_SECRET_ACCESS_KEY }}

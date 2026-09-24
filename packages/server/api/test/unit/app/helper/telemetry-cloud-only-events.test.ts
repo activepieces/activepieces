@@ -80,6 +80,7 @@ const CLOUD_ONLY_BILLING_AND_ONBOARDING_EVENTS: TelemetryEvent[] = [
     { name: TelemetryEventName.PLAN_REACTIVATED, payload: { platformId: 'platform-1', plan: 'plus' } },
     { name: TelemetryEventName.TRIAL_STARTED, payload: { platformId: 'platform-1', plan: 'plus', trialEndsAt: '2030-01-01T00:00:00.000Z' } },
     { name: TelemetryEventName.SALES_HANDOFF_CLICKED, payload: { surface: 'plan-selector' } },
+    { name: TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED, payload: { path: '/platform/sso', tier: 'team' } },
 ]
 
 const capturedEventNames = (): string[] => mockCapture.mock.calls.map(([message]) => message.event)
