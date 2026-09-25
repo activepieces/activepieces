@@ -8,7 +8,7 @@ export const getPipelineStageDetailsAction = createAction({
 	name: 'get-pipeline-stage-details',
 	classification: 'READ',
 	displayName: 'Get Pipeline Stage Details',
-	description: 'Finds and retrieves CRM object pipeline stage details.',
+	description: 'Gets the details of a deal or ticket pipeline stage.',
 	audience: 'both',
 	aiMetadata: { description: 'Retrieves the configuration of a single pipeline stage (label, order, metadata) for a ticket or deal pipeline, given the object type, pipeline ID, and stage ID. Use to resolve or validate a stage ID before setting a deal or ticket stage. Read-only and idempotent.', idempotent: true },
 	outputSchema: pipelineStageDetailsOutputSchema,
@@ -20,7 +20,7 @@ export const getPipelineStageDetailsAction = createAction({
 				disabled: false,
 				options: [
 					{
-						label: 'Tickets',
+						label: 'Ticket',
 						value: 'ticket',
 					},
 					{
@@ -32,10 +32,12 @@ export const getPipelineStageDetailsAction = createAction({
 		}),
 		pipelineId: Property.ShortText({
 			displayName: 'Pipeline ID',
+			description: 'The pipeline\'s ID, found in a deal or ticket\'s pipeline property.',
 			required: true,
 		}),
 		stageId: Property.ShortText({
 			displayName: 'Stage ID',
+			description: 'The stage\'s ID, found in a deal or ticket\'s stage property.',
 			required: true,
 		}),
 	},

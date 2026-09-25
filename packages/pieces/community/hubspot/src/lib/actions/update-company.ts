@@ -16,29 +16,28 @@ export const updateCompanyAction = createAction({
 	name: 'update-company',
 	classification: 'WRITE',
 	displayName: 'Update Company',
-	description: 'Updates a company in Hubspot.',
+	description: 'Updates a company in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Update properties on an existing HubSpot company identified by Company ID; only the supplied fields are changed. Applying the same field values repeatedly leaves the record in the same state, so it is idempotent. Use Create Company to add a new record, or a find action to obtain the ID first.', idempotent: true },
 	outputSchema: crmObjectOutputSchema,
 	props: {
 		companyId: Property.ShortText({
 			displayName: 'Company ID',
-			description: 'The ID of the company to update.',
+			description: 'Map it from an earlier step like Find Company.',
 			required: true,
 		}),
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.COMPANY, []),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                            
-                    name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
-                            
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {
