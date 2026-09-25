@@ -5,11 +5,11 @@ import { useRef, useState } from 'react';
 import { SIDEBAR_ID } from '@/app/components/sidebar/dashboard';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { NoteDragOverlayMode } from '../../../state/notes-state';
 import {
   useCursorPosition,
   useCursorPositionEffect,
-} from '../../cursor-position-context';
+} from '../../../state/cursor-position-context';
+import { NoteDragOverlayMode } from '../../../state/notes-state';
 import { flowCanvasConsts } from '../../utils/consts';
 
 import { NoteContent } from '.';
