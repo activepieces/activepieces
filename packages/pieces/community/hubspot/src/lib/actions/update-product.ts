@@ -16,29 +16,28 @@ export const updateProductAction = createAction({
     name: 'update-product',
     classification: 'WRITE',
     displayName: 'Update Product',
-    description: 'Updates a product in Hubspot.',
+    description: 'Updates a product in HubSpot.',
     audience: 'both',
     aiMetadata: { description: 'Updates properties on an existing product identified by its product ID, such as name, price, description, or tax, then returns the refreshed product. Use to modify a known product in the product library. Idempotent: applying the same property values converges to the same product state.', idempotent: true },
     outputSchema: crmObjectOutputSchema,
     props: {
         productId:Property.ShortText({
             displayName:'Product ID',
-            description:'The ID of the product to update.',
+            description:'Map it from an earlier step like Find Product.',
             required:true
         }),
         objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.PRODUCT,[]),
         markdown: Property.MarkDown({
             variant: MarkdownVariant.INFO,
-            value: `### Properties to retrieve:
-                                    
-                    createdate, description, name, price, tax, hs_lastmodifieddate
-                                            
-                    **Specify here a list of additional properties to retrieve**`,
+            value: `Returned by default: createdate, description, name, price, tax, hs_lastmodifieddate.
+
+Pick more under **Advanced**.`,
         }),
         additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
             objectType: OBJECT_TYPE.PRODUCT,
-            displayName: 'Additional properties to retrieve',
+            displayName: 'Additional Properties to Retrieve',
             required: false,
+            advanced: true,
         }),
     },
     async run(context) {

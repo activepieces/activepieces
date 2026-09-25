@@ -11,7 +11,7 @@ export const createCompanyAction = createAction({
 	name: 'create-company',
 	classification: 'WRITE',
 	displayName: 'Create Company',
-	description: 'Creates a company in Hubspot.',
+	description: 'Creates a company in HubSpot.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a new HubSpot company record from the supplied properties (name, domain, industry, etc.). Always inserts a new company even if one with the same domain already exists, so it is not idempotent; to change an existing record use Update Company, and to locate one first use a find action.', idempotent: false },
 	outputSchema: crmObjectOutputSchema,
@@ -19,16 +19,15 @@ export const createCompanyAction = createAction({
 		objectProperties: standardObjectDynamicProperties(OBJECT_TYPE.COMPANY, []),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                            
-                    name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
-                            
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies.
+
+Pick more under **Advanced**.`,
 		}),
 		additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
 			objectType: OBJECT_TYPE.COMPANY,
-			displayName: 'Additional properties to retrieve',
+			displayName: 'Additional Properties to Retrieve',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {
