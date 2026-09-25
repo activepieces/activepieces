@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, isNil, Property } from '@activepieces/pieces-framework';
 import { mondayAuth } from '../../../auth';
 import { updateWorkspaceActionOutputSchema } from '../../../output-schemas';
 import { mondayAiProps } from '../../../common/ai-props';
@@ -13,7 +13,7 @@ export const updateWorkspaceAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      "Change a monday.com workspace's name, description, kind (open/closed), or account product. Only the fields you provide are changed; omitted fields keep their current value. Setting the same values again leaves the workspace unchanged, so it is safe to retry.",
+      "Change a monday.com workspace's name, description, kind (open/closed), or account product. Only the fields you provide are changed; omitted fields keep their current value. To remove the description, set Clear Description. Setting the same values again leaves the workspace unchanged, so it is safe to retry.",
     idempotent: true,
   },
   outputSchema: updateWorkspaceActionOutputSchema,
@@ -26,6 +26,12 @@ export const updateWorkspaceAction = createAction({
     description: Property.LongText({
       displayName: 'Description',
       required: false,
+    }),
+    clear_description: Property.Checkbox({
+      displayName: 'Clear Description',
+      description: 'Remove the current description. Leave unchecked to keep it.',
+      required: false,
+      defaultValue: false,
     }),
     kind: Property.StaticDropdown({
       displayName: 'Kind',
@@ -45,10 +51,14 @@ export const updateWorkspaceAction = createAction({
     }),
   },
   async run(context) {
-    const { workspace_id, name, description, kind, account_product_id } = context.propsValue;
+    const { workspace_id, name, description, clear_description, kind, account_product_id } = context.propsValue;
+    if (clear_description && !isNil(description) && description !== '') {
+      throw new Error('Set either Description or Clear Description, not both.');
+    }
     const attributes = {
       ...(name ? { name } : {}),
-      ...(description ? { description } : {}),
+      ...(clear_description ? { description: '' } : {}),
+      ...(!clear_description && !isNil(description) && description !== '' ? { description } : {}),
       ...(kind ? { kind } : {}),
       ...(account_product_id ? { account_product_id } : {}),
     };

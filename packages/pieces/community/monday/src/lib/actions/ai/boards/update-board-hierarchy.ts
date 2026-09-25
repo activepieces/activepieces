@@ -63,6 +63,9 @@ export const updateBoardHierarchyAction = createAction({
     });
 
     const result = data.update_board_hierarchy;
+    if (!result.success) {
+      throw new Error(`monday.com did not move board ${board_id}: ${result.message ?? 'no reason given'}`);
+    }
     return {
       success: result.success,
       message: result.message ?? null,

@@ -89,18 +89,31 @@ function toColumnsFilter({ filters }: { filters: unknown }): { column_id: string
   if (!Array.isArray(filters)) {
     return [];
   }
-  const pairs = filters
-    .map((row: unknown) => ({
-      columnId: itemCommon.readString({ row, key: 'column_id' }),
-      value: itemCommon.readString({ row, key: 'value' }),
-    }))
-    .filter((pair): pair is { columnId: string; value: string } => !isNil(pair.columnId) && !isNil(pair.value));
+  const pairs = filters.flatMap((row: unknown) => {
+    const columnId = itemCommon.readString({ row, key: 'column_id' });
+    if (isNil(columnId)) {
+      return [];
+    }
+    const value = readFilterValue({ row });
+    if (isNil(value)) {
+      throw new Error(`Filter for column "${columnId}" has no value. Use an empty string to match empty cells.`);
+    }
+    return [{ columnId, value }];
+  });
 
   const columnOrder = [...new Set(pairs.map((pair) => pair.columnId))];
   return columnOrder.map((columnId) => ({
     column_id: columnId,
     column_values: pairs.filter((pair) => pair.columnId === columnId).map((pair) => pair.value),
   }));
+}
+
+function readFilterValue({ row }: { row: unknown }): string | null {
+  if (typeof row !== 'object' || row === null || !('value' in row)) {
+    return null;
+  }
+  const value: unknown = Reflect.get(row, 'value');
+  return isNil(value) ? null : String(value).trim();
 }
 
 type MondayItemsPage = {
