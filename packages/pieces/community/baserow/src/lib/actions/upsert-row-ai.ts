@@ -1,5 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
+import { BaserowFieldType } from '../common/constants';
+import { BaserowField } from '../common/types';
 import { ensureSelectOptionsExist, makeClient } from '../common';
 import { baserowAiProps } from '../common/ai-props';
 import { baserowAiHelpers } from '../common/ai-helpers';
@@ -14,7 +16,7 @@ export const upsertRowAiAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Looks up the first row whose match field equals the match value; updates it with the given fields if found, otherwise creates a new row with those fields plus the match value. Use to sync records by a unique key (email, external ID) without duplicates. Idempotent only when the match value is unique in the table — the lookup and write are separate calls, so concurrent calls can still create two rows.',
+      'Looks up the first row whose match field equals the match value; updates it with the given fields if found, otherwise creates a new row with those fields plus the match value (the match value always wins over the same field in Fields). Use to sync records by a unique key (email, external ID) without duplicates. Idempotent only when the match value is unique in the table — the lookup and write are separate calls, so concurrent calls can still create two rows.',
     idempotent: true,
   },
   auth: baserowAuth,
@@ -22,7 +24,7 @@ export const upsertRowAiAction = createAction({
     table_id: baserowAiProps.tableIdProp(),
     match_field: Property.ShortText({
       displayName: 'Match Field Name',
-      description: 'Exact name of the key field to match on (a text, number, email, URL or similar field).',
+      description: 'Exact name of the key field to match on. Must be a writable text, long text, number, rating, boolean, email, URL or phone number field.',
       required: true,
     }),
     match_value: Property.ShortText({
@@ -61,6 +63,11 @@ export const upsertRowAiAction = createAction({
           `Field "${match_field}" was not found in table ${table_id}. Available fields: ${tableFields.map((f) => f.name).join(', ')}.`
         );
       }
+      if (!isMatchableField({ field: matchField })) {
+        throw new Error(
+          `Field "${match_field}" (${matchField.type}${matchField.read_only ? ', read-only' : ''}) cannot be used as a match field. Use a writable text, long text, number, rating, boolean, email, URL or phone number field. Matchable fields: ${tableFields.filter((f) => isMatchableField({ field: f })).map((f) => f.name).join(', ')}.`
+        );
+      }
       const existing = await client.queryRows({
         tableId: table_id,
         query: { size: '1', [`filter__field_${matchField.id}__equal`]: match_value },
@@ -68,7 +75,7 @@ export const upsertRowAiAction = createAction({
       const existingRow = existing.results[0];
       const rowPayload = existingRow
         ? Object.fromEntries(Object.entries(payload).filter(([key]) => key !== matchField.name))
-        : { ...payload, [matchField.name]: payload[matchField.name] ?? match_value };
+        : { ...payload, [matchField.name]: match_value };
       if (create_missing_select_options) {
         await ensureSelectOptionsExist({ fields: tableFields, payload: rowPayload, client });
       }
@@ -81,3 +88,25 @@ export const upsertRowAiAction = createAction({
     });
   },
 });
+
+function isMatchableField({ field }: { field: BaserowField }): boolean {
+  const unsupportedTypes: string[] = [
+    BaserowFieldType.LINK_TO_TABLE,
+    BaserowFieldType.SINGLE_SELECT,
+    BaserowFieldType.MULTI_SELECT,
+    BaserowFieldType.MULTIPLE_COLLABORATORS,
+    BaserowFieldType.FILE,
+    BaserowFieldType.ROLLUP,
+    BaserowFieldType.LOOKUP,
+    BaserowFieldType.COUNT,
+    BaserowFieldType.LAST_MODIFIED_BY,
+    BaserowFieldType.CREATED_BY,
+    BaserowFieldType.DATE,
+    BaserowFieldType.LAST_MODIFIED,
+    BaserowFieldType.CREATED_ON,
+    BaserowFieldType.DURATION,
+    BaserowFieldType.UUID,
+    BaserowFieldType.AUTO_NUMBER,
+  ];
+  return !field.read_only && !unsupportedTypes.includes(field.type);
+}
