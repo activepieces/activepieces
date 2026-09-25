@@ -373,6 +373,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         },
     })
 
+    const { status } = await flowService(log).getOneOrThrow({ id: flow.id, projectId })
     await flowService(log).update({
         id: flow.id,
         projectId,
@@ -380,7 +381,7 @@ async function handleLockedVersion(flow: PopulatedFlow, userId: UserId, projectI
         userId,
         operation: {
             type: FlowOperationType.LOCK_AND_PUBLISH,
-            request: { status: flow.status },
+            request: { status },
         },
     })
 }

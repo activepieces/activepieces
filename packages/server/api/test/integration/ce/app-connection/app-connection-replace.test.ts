@@ -1,3 +1,4 @@
+import { isNil } from '@activepieces/core-utils'
 import { AppConnection, AppConnectionScope, Flow, FlowStatus, FlowTrigger, FlowTriggerType, FlowVersion, FlowVersionState } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
@@ -23,6 +24,7 @@ afterAll(async () => {
 })
 
 const PIECE_NAME = '@activepieces/piece-slack'
+const MISSING_PIECE_NAME = '@activepieces/piece-does-not-exist'
 
 describe('POST /v1/app-connections/replace', () => {
     it('keeps the source connection when deleteSourceConnection is not set', async () => {
@@ -419,14 +421,14 @@ describe('POST /v1/app-connections/replace', () => {
             state: FlowVersionState.LOCKED,
             created: '2020-01-01T00:00:00.000Z',
             connectionIds: [source.externalId],
-            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published' }),
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published', sampleDataFileId: 'published-sample-file' }),
         })
         const editedDraftVersion = createMockFlowVersion({
             flowId: flow.id,
             state: FlowVersionState.DRAFT,
             created: '2020-06-01T00:00:00.000Z',
             connectionIds: [source.externalId],
-            trigger: pieceTrigger({ externalId: source.externalId, marker: 'draft-edit' }),
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'draft-edit', sampleDataFileId: 'draft-sample-file' }),
         })
         await db.save('flow_version', [publishedVersion, editedDraftVersion])
         flow.publishedVersionId = publishedVersion.id
@@ -447,6 +449,7 @@ describe('POST /v1/app-connections/replace', () => {
         expect(republished?.trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'published' })
         expect(versions[0].state).toBe(FlowVersionState.DRAFT)
         expect(versions[0].trigger.settings.input).toEqual({ auth: connectionRef(target.externalId), marker: 'draft-edit' })
+        expect(versions[0].trigger.settings.sampleData?.sampleDataFileId).toBe('draft-sample-file')
     })
 
     it('restores unpublished draft edits when the republish fails', async () => {
@@ -463,7 +466,7 @@ describe('POST /v1/app-connections/replace', () => {
             state: FlowVersionState.LOCKED,
             created: '2020-01-01T00:00:00.000Z',
             connectionIds: [source.externalId],
-            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published' }),
+            trigger: pieceTrigger({ externalId: source.externalId, marker: 'published', pieceName: MISSING_PIECE_NAME }),
         })
         const editedDraftVersion = createMockFlowVersion({
             flowId: flow.id,
@@ -544,7 +547,7 @@ function connectionRef(externalId: string): string {
     return `{{connections['${externalId}']}}`
 }
 
-function pieceTrigger({ externalId, marker }: { externalId: string, marker: string }): FlowTrigger {
+function pieceTrigger({ externalId, marker, pieceName = PIECE_NAME, sampleDataFileId }: { externalId: string, marker: string, pieceName?: string, sampleDataFileId?: string }): FlowTrigger {
     return {
         type: FlowTriggerType.PIECE,
         name: 'trigger',
@@ -552,11 +555,12 @@ function pieceTrigger({ externalId, marker }: { externalId: string, marker: stri
         valid: true,
         lastUpdatedDate: dayjs().toISOString(),
         settings: {
-            pieceName: PIECE_NAME,
+            pieceName,
             pieceVersion: '0.1.0',
             triggerName: 'new_message',
             input: { auth: connectionRef(externalId), marker },
             propertySettings: {},
+            sampleData: isNil(sampleDataFileId) ? undefined : { sampleDataFileId },
         },
     }
 }
