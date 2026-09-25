@@ -29,7 +29,7 @@ export const upsertRowAiAction = createAction({
     }),
     match_value: Property.ShortText({
       displayName: 'Match Value',
-      description: 'The key value to look for.',
+      description: 'The key value to look for. For a single select field, pass the option name or its option ID.',
       required: true,
     }),
     fields: Property.Json({
@@ -74,7 +74,7 @@ export const upsertRowAiAction = createAction({
         : undefined;
       const rowPayload = existingRow
         ? Object.fromEntries(Object.entries(payload).filter(([key]) => key !== matchField.name))
-        : { ...payload, [matchField.name]: match_value };
+        : { ...payload, [matchField.name]: toCreateValue({ field: matchField, value: match_value }) };
       if (create_missing_select_options) {
         await ensureSelectOptionsExist({ fields: tableFields, payload: rowPayload, client });
       }
@@ -113,6 +113,20 @@ function buildMatchFilter({ field, value }: { field: BaserowField; value: string
   if (field.type !== BaserowFieldType.SINGLE_SELECT) {
     return { [`filter__field_${field.id}__equal`]: value };
   }
-  const option = field.select_options.find((o) => o.value === value);
+  const option = findSelectOption({ field, value });
   return option ? { [`filter__field_${field.id}__single_select_equal`]: String(option.id) } : null;
+}
+
+function toCreateValue({ field, value }: { field: BaserowField; value: string }): string | number {
+  if (field.type !== BaserowFieldType.SINGLE_SELECT) {
+    return value;
+  }
+  return findSelectOption({ field, value })?.id ?? value;
+}
+
+function findSelectOption({ field, value }: { field: BaserowField; value: string }): { id: number; value: string } | undefined {
+  if (field.type !== BaserowFieldType.SINGLE_SELECT) {
+    return undefined;
+  }
+  return field.select_options.find((o) => o.value === value || String(o.id) === value.trim());
 }
