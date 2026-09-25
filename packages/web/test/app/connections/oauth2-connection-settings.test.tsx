@@ -104,17 +104,30 @@ const click = (element: Element | null | undefined) => {
   });
 };
 
+const openTrigger = () =>
+  click(
+    Array.from(document.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Select permissions'),
+    ),
+  );
+
 const openPicker = () => {
   act(() => {
     document
       .querySelector<HTMLElement>('[role="button"]')
       ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   });
-  click(
-    Array.from(document.querySelectorAll('button')).find((button) =>
-      button.textContent?.includes('Select permissions'),
-    ),
-  );
+  openTrigger();
+};
+
+const closePicker = () => {
+  act(() => {
+    document
+      .querySelector('[cmdk-input]')
+      ?.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }),
+      );
+  });
 };
 
 const typeSearch = (value: string) => {
@@ -149,9 +162,10 @@ describe('OAuth2ConnectionSettings scope search', () => {
     act(() => root?.unmount());
     process.off('uncaughtException', collect);
     document.body.innerHTML = '';
+    expect(unhandled).toEqual([]);
   });
 
-  it('keeps the typed keyword and filters the scope list', () => {
+  const mountAndOpen = () => {
     act(() => {
       root = createRoot(
         document.body.appendChild(document.createElement('div')),
@@ -159,17 +173,45 @@ describe('OAuth2ConnectionSettings scope search', () => {
       root.render(<Harness />);
     });
     openPicker();
+  };
+
+  it('keeps the typed keyword and filters the scope list', () => {
+    mountAndOpen();
     expect(listedItems()).toEqual(['Select All', ...SCOPES]);
 
     const input = typeSearch('modify');
 
-    expect(unhandled).toEqual([]);
     expect(input?.value).toBe('modify');
     expect(listedItems()).toEqual([
       'https://www.googleapis.com/auth/gmail.modify',
     ]);
 
     typeSearch('');
+    expect(listedItems()).toEqual(['Select All', ...SCOPES]);
+  });
+
+  it('shows the empty state when no scope matches', () => {
+    mountAndOpen();
+
+    typeSearch('zzz');
+
+    expect(listedItems()).toEqual([]);
+    expect(document.querySelector('[cmdk-empty]')?.textContent).toBe(
+      'No results found.',
+    );
+  });
+
+  it('resets the search when the picker is closed and reopened', () => {
+    mountAndOpen();
+    typeSearch('modify');
+
+    closePicker();
+    expect(document.querySelector('[cmdk-item]')).toBeNull();
+    openTrigger();
+
+    expect(
+      document.querySelector<HTMLInputElement>('[cmdk-input]')?.value,
+    ).toBe('');
     expect(listedItems()).toEqual(['Select All', ...SCOPES]);
   });
 });
