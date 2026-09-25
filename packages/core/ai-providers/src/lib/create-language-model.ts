@@ -39,9 +39,9 @@ export function createLanguageModel({ credentials, modelId, options = {} }: Crea
             return createAzure({ resourceName, apiKey, apiVersion, ...observed }).chat(modelId)
         }
         case AIProviderName.BEDROCK: {
-            const { accessKeyId, secretAccessKey } = credentials.auth
+            const { accessKeyId, secretAccessKey, sessionToken } = credentials.auth
             const { region } = credentials.config
-            return createAmazonBedrock({ region, accessKeyId, secretAccessKey, ...observed })(modelId)
+            return createAmazonBedrock({ region, accessKeyId, secretAccessKey, sessionToken, ...observed })(modelId)
         }
         case AIProviderName.VERTEX: {
             const { serviceAccountJson } = credentials.auth
@@ -120,9 +120,9 @@ export function createImageModel({ credentials, modelId, options = {} }: CreateI
             return createAzure({ resourceName, apiKey, apiVersion, ...observed }).imageModel(modelId)
         }
         case AIProviderName.BEDROCK: {
-            const { accessKeyId, secretAccessKey } = credentials.auth
+            const { accessKeyId, secretAccessKey, sessionToken } = credentials.auth
             const { region } = credentials.config
-            return createAmazonBedrock({ region, accessKeyId, secretAccessKey, ...observed }).imageModel(modelId)
+            return createAmazonBedrock({ region, accessKeyId, secretAccessKey, sessionToken, ...observed }).imageModel(modelId)
         }
         case AIProviderName.VERTEX: {
             const { serviceAccountJson } = credentials.auth

@@ -28,6 +28,50 @@ type SignInSubmitted = {
     method: 'email'
 }
 
+type OnboardingCompleted = {
+    userId: UserId
+    platformId: string
+}
+
+type AdminNavLockedClicked = {
+    path: string
+    tier?: string
+}
+
+type PlanChange = {
+    platformId: string
+    plan: string
+    previousPlan?: string
+}
+
+type CheckoutStarted = {
+    platformId: string
+    plan: string
+}
+
+type TrialStarted = {
+    platformId: string
+    plan: string
+    trialEndsAt: string
+}
+
+type InviteSent = {
+    platformId: string
+    type: 'platform' | 'project'
+    role?: string
+}
+
+type InviteAccepted = {
+    platformId: string
+    type: 'platform' | 'project'
+}
+
+type SalesHandoffClicked = {
+    featureKey?: string
+    plan?: string
+    surface: string
+}
+
 type SignInFailed = {
     errorCode: string
 }
@@ -119,6 +163,16 @@ export enum TelemetryEventName {
     PIECE_SELECTOR_SEARCH = 'piece.selector.search',
     MCP_TOOL_CALLED = 'mcp.tool.called',
     MCP_SERVER_CONNECTED = 'mcp.server.connected',
+    ONBOARDING_COMPLETED = 'onboarding.completed',
+    CHECKOUT_STARTED = 'checkout.started',
+    PLAN_CHANGED = 'plan.changed',
+    PLAN_CANCELLED = 'plan.cancelled',
+    PLAN_REACTIVATED = 'plan.reactivated',
+    TRIAL_STARTED = 'trial.started',
+    INVITE_SENT = 'invite.sent',
+    INVITE_ACCEPTED = 'invite.accepted',
+    SALES_HANDOFF_CLICKED = 'sales.handoff.clicked',
+    ADMIN_NAV_LOCKED_CLICKED = 'admin.nav.locked.clicked',
 }
 
 export type TelemetryEvent =
@@ -142,8 +196,26 @@ export type TelemetryEvent =
     | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>
     | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
     | BaseTelemetryEvent<TelemetryEventName.MCP_SERVER_CONNECTED, McpServerConnected>
+    | BaseTelemetryEvent<TelemetryEventName.ONBOARDING_COMPLETED, OnboardingCompleted>
+    | BaseTelemetryEvent<TelemetryEventName.CHECKOUT_STARTED, CheckoutStarted>
+    | BaseTelemetryEvent<TelemetryEventName.PLAN_CHANGED, PlanChange>
+    | BaseTelemetryEvent<TelemetryEventName.PLAN_CANCELLED, PlanChange>
+    | BaseTelemetryEvent<TelemetryEventName.PLAN_REACTIVATED, PlanChange>
+    | BaseTelemetryEvent<TelemetryEventName.TRIAL_STARTED, TrialStarted>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_SENT, InviteSent>
+    | BaseTelemetryEvent<TelemetryEventName.INVITE_ACCEPTED, InviteAccepted>
+    | BaseTelemetryEvent<TelemetryEventName.SALES_HANDOFF_CLICKED, SalesHandoffClicked>
+    | BaseTelemetryEvent<TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED, AdminNavLockedClicked>
 
 export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new Set([
+    TelemetryEventName.ONBOARDING_COMPLETED,
+    TelemetryEventName.CHECKOUT_STARTED,
+    TelemetryEventName.PLAN_CHANGED,
+    TelemetryEventName.PLAN_CANCELLED,
+    TelemetryEventName.PLAN_REACTIVATED,
+    TelemetryEventName.TRIAL_STARTED,
+    TelemetryEventName.SALES_HANDOFF_CLICKED,
+    TelemetryEventName.ADMIN_NAV_LOCKED_CLICKED,
     TelemetryEventName.SIGNED_UP,
     TelemetryEventName.SIGNED_IN,
     TelemetryEventName.SIGN_UP_SUBMITTED,
@@ -160,3 +232,9 @@ export const CLOUD_ONLY_TELEMETRY_EVENTS: ReadonlySet<TelemetryEventName> = new 
 ])
 
 export const isCloudOnlyTelemetryEvent = (name: TelemetryEventName): boolean => CLOUD_ONLY_TELEMETRY_EVENTS.has(name)
+
+export enum DeploymentKind {
+    CLOUD = 'cloud',
+    SELF_HOSTED = 'self_hosted',
+    DEV = 'dev',
+}

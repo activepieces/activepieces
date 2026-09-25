@@ -201,6 +201,7 @@ export function ProvidersTab() {
         <div className="flex items-start justify-between gap-3">
           <SectionHeader
             title={t('Providers')}
+            isPageTitle
             count={configs.length}
             description={
               configs.length === 0

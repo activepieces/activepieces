@@ -16,7 +16,7 @@ export function getTargetPages(
   }
 
   if (pageNumber === undefined) {
-    throw new Error(`Page Number is required when "Apply to all pages?" is not checked for ${itemName}.`);
+    throw new Error(`Page Number is required when "Apply to All Pages" is not checked for ${itemName}.`);
   }
 
   const pageIndex = Number(pageNumber) - 1;

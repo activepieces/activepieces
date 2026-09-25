@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const createContact = createAction({
     auth: salesforceAuth,
     name: 'create_contact',
     displayName: 'Create Contact',
     description: 'Creates a new contact record.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Create a new Contact in Salesforce; Last Name is required and the contact can be linked to an existing Account. Not idempotent — calling it twice creates duplicate contacts, so check for an existing match (e.g. via Find Record) first if dedup matters.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         LastName: Property.ShortText({
             displayName: 'Last Name',

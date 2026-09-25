@@ -2,7 +2,7 @@ import { createServer } from 'http'
 import os from 'os'
 import { ActivepiecesError, isNil, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { ACTION_RUN_CACHE_ACTIVE_WINDOW_MS, ACTION_RUN_CACHE_FIRST_SWEEP_DELAY_MS, ACTION_RUN_CACHE_SWEEP_INTERVAL_MS, actionRunCache, cacheUtils, createResolver, createSandboxRuntime, Runtime } from '@activepieces/sandbox'
-import { aiCostReporter, createLogger, systemUsage, wideEvent } from '@activepieces/server-utils'
+import { aiCostReporter, createLogger, modelCatalog, systemUsage, wideEvent } from '@activepieces/server-utils'
 import { ApEdition, ApiToWorkerContract, ConsumeJobRequest, createNotifyServer, createRpcClient, EngineResponseStatus, ExecutionMode, JobData, LONG_RUNNING_RPC_METHODS, SandboxInformation, WebsocketServerEvent, WorkerJobType, WorkerMachineHealthcheckRequest, WorkerProps, WorkerSettingsResponse, WorkerToApiContract } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { io, Socket } from 'socket.io-client'
@@ -61,6 +61,7 @@ let cacheSweepFirstRunTimeout: NodeJS.Timeout | null = null
 export const worker = {
     async start({ apiUrl, socketUrl, workerToken, withHealthServer = false }: WorkerStartParams): Promise<void> {
         versionChecker.assertReleaseReadable()
+        modelCatalog.load().catch(() => undefined)
         const workerGroupId = system.get(WorkerSystemProp.WORKER_GROUP_ID)
         const projectWorker = system.getBoolean(WorkerSystemProp.PROJECT_WORKER) ?? true
         socket = io(socketUrl.url, {
@@ -371,6 +372,7 @@ async function executeJob(apiClient: WorkerToApiContract, job: ConsumeJobRequest
                 }),
                 workerIndex,
                 jobId: job.jobId,
+                lastAttempt: job.lastAttempt ?? true,
                 engineToken: job.engineToken,
                 internalApiUrl,
                 publicApiUrl,

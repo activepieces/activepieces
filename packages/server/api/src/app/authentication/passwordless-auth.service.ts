@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
-import { ApFlagId, OtpType, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ApFlagId, OtpType, TelemetryEvent, TelemetryEventName, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flagService } from '../flags/flag.service'
 import { rejectedPromiseHandler } from '../helper/promise-handler'
@@ -85,13 +85,14 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
         const preferredPlatformId = isNil(platformId)
             ? await authenticationService(log).selectCloudSignInPlatformId({ identityId: verifiedIdentity.id })
             : platformId
-        rejectedPromiseHandler(telemetry(log).trackIdentity({
+        rejectedPromiseHandler(trackForIdentity({
             identityId: verifiedIdentity.id,
             platformId: preferredPlatformId,
             event: {
                 name: TelemetryEventName.EMAIL_CODE_VERIFIED,
                 payload: { needsNameStep: isNil(preferredPlatformId) },
             },
+            log,
         }), log)
 
         if (!isNil(platformId)) {
@@ -106,6 +107,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
                 identity: verifiedIdentity,
                 platformId,
             })
+            rejectedPromiseHandler(telemetry(log).aliasIdentity({ identityId: verifiedIdentity.id, userId: user.id, platformId }), log)
             await userInvitationsService(log).provisionUserInvitation({ email })
             const response = await authenticationUtils(log).getProjectAndToken({
                 userId: user.id,
@@ -121,6 +123,7 @@ export const passwordlessAuthService = (log: FastifyBaseLogger) => ({
                 identity: verifiedIdentity,
                 platformId: preferredPlatformId,
             })
+            rejectedPromiseHandler(telemetry(log).aliasIdentity({ identityId: verifiedIdentity.id, userId: user.id, platformId: preferredPlatformId }), log)
             const response = await authenticationUtils(log).getProjectAndToken({
                 userId: user.id,
                 platformId: preferredPlatformId,
@@ -153,14 +156,24 @@ async function trackEmailCodeRequested({ identityId, platformId, isNewIdentity, 
     const preferredPlatformId = isNil(platformId)
         ? await authenticationService(log).selectCloudSignInPlatformId({ identityId })
         : platformId
-    await telemetry(log).trackIdentity({
+    await trackForIdentity({
         identityId,
         platformId: preferredPlatformId,
         event: {
             name: TelemetryEventName.EMAIL_CODE_REQUESTED,
             payload: { isNewIdentity },
         },
+        log,
     })
+}
+
+async function trackForIdentity({ identityId, platformId, event, log }: TrackForIdentityParams): Promise<void> {
+    const user = isNil(platformId) ? null : await userService(log).getOneByIdentityAndPlatform({ identityId, platformId })
+    if (!isNil(user) && !isNil(platformId)) {
+        await telemetry(log).trackUser({ userId: user.id, platformId, event })
+        return
+    }
+    await telemetry(log).trackIdentity({ identityId, platformId, event })
 }
 
 async function assertPlatformAuthIsOpenTo({ email, platformId, log }: PlatformGateParams): Promise<void> {
@@ -187,6 +200,13 @@ type TrackEmailCodeRequestedParams = {
     identityId: string
     platformId: string | null
     isNewIdentity: boolean
+    log: FastifyBaseLogger
+}
+
+type TrackForIdentityParams = {
+    identityId: string
+    platformId: string | null
+    event: TelemetryEvent
     log: FastifyBaseLogger
 }
 

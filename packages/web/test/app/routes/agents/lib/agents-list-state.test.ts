@@ -2,11 +2,9 @@ import { QueryClient } from '@tanstack/react-query';
 import { describe, expect, it } from 'vitest';
 
 import {
-  acceptsDraftPrompt,
   showsAgentList,
   showsFirstRun,
   showsNoMatchNotice,
-  shownDestination,
 } from '@/app/routes/agents/lib/agents-list-state';
 
 const loaded = { listLoaded: true, hasAnyAgents: false, search: '' };
@@ -170,63 +168,5 @@ describe('showsFirstRun with a project filter', () => {
         projectFiltered: false,
       }),
     ).toBe(true);
-  });
-});
-
-describe('acceptsDraftPrompt', () => {
-  const ready = {
-    prompt: 'summarise my inbox',
-    isBuilding: false,
-    readinessUnknown: false,
-  };
-
-  it('accepts a prompt once the destination is known to be ready', () => {
-    expect(acceptsDraftPrompt(ready)).toBe(true);
-  });
-
-  it('refuses while the destination project has not answered about its provider', () => {
-    expect(acceptsDraftPrompt({ ...ready, readinessUnknown: true })).toBe(
-      false,
-    );
-  });
-
-  it('refuses a second submit while one is already building', () => {
-    expect(acceptsDraftPrompt({ ...ready, isBuilding: true })).toBe(false);
-  });
-
-  it('refuses whitespace', () => {
-    expect(acceptsDraftPrompt({ ...ready, prompt: '   ' })).toBe(false);
-  });
-});
-
-describe('shownDestination', () => {
-  it('holds the project a build started in, even after the pick changes', () => {
-    expect(
-      shownDestination({
-        isBuilding: true,
-        buildingIn: 'project_a',
-        picked: 'project_b',
-      }),
-    ).toBe('project_a');
-  });
-
-  it('follows the pick again once the build is over', () => {
-    expect(
-      shownDestination({
-        isBuilding: false,
-        buildingIn: 'project_a',
-        picked: 'project_b',
-      }),
-    ).toBe('project_b');
-  });
-
-  it('falls back to the pick when nothing was captured', () => {
-    expect(
-      shownDestination({
-        isBuilding: true,
-        buildingIn: null,
-        picked: 'project_b',
-      }),
-    ).toBe('project_b');
   });
 });

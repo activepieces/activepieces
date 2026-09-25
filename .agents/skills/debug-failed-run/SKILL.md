@@ -46,6 +46,22 @@ Use the **`Logs`** source (`id: 6a2a91b1d37162f45ad78233`; key columns `Body`, `
 
 Scope the time window to the job's `processedAt`/`finishedAt` from Step 1 (± a few minutes) to keep queries cheap.
 
+**Host correlation** — every log carries `LogAttributes['host']` (format `<host_ip>-<container_hex>`, e.g. `91.98.135.134-e5cbf708af8d`), stamped by the global evlog host enricher. When a failure looks resource-shaped (OOM, RPC timeout, sandbox crash, silent hang), correlate the failing job's host with its `system.snapshot` metrics at that time:
+
+```sql
+-- Given the failed job's host + finish time, what did that container's memory + event loop look like?
+SELECT Timestamp, LogAttributes['memRssMb'] AS rss_mb,
+       LogAttributes['memHeapUsedMb'] AS heap_mb,
+       LogAttributes['eventLoopDelayP99Ms'] AS lag_ms
+FROM default.otel_logs
+WHERE LogAttributes['event'] = 'system.snapshot'
+  AND LogAttributes['host'] = '<host_from_failed_job>'
+  AND Timestamp BETWEEN <finishedAt> - INTERVAL 15 MINUTE AND <finishedAt> + INTERVAL 1 MINUTE
+ORDER BY Timestamp
+```
+
+RSS climbing toward the container's cgroup ceiling (~900 MB on workers, ~2 GB on app) or `lag_ms` spiking above ~1 s just before the failure = infra cause, not the code path. The reverse — pull failed jobs on a host whose RSS crossed a threshold — surfaces a leaking container that is dropping a small percentage of runs silently.
+
 > **Those two names exist only in the script's report** (`debug-failed-job.js` formats them from the raw job). If you bypass the script and read jobs straight off the queue with `bullmq` — `q.getJobs(['failed'], …)` — the properties are **`job.processedOn` / `job.finishedOn`**. `job.processedAt` is silently `undefined`, not an error, so a hand-rolled scan reports every failure as having no timestamp and you fall back to `job.timestamp` (enqueue time) without noticing. That shifts failures earlier by however long the queue backlog is (8+ minutes on cloud) and will make a fix look like it did not take effect. Bucket by `finishedOn` when you want "is this still happening". You're looking for the engine/worker log lines that bracket the failure — sandbox crashes, OOM ("no space"/heap), RPC timeouts, connection refresh failures.
 
 ## Step 3 — Trace the failure into this repo

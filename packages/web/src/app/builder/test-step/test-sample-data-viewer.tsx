@@ -1,5 +1,10 @@
 import { isNil, tryParseFriendlyPieceError } from '@activepieces/core-utils';
-import { AgentResult, AgentTaskStatus, FlowAction } from '@activepieces/shared';
+import {
+  AgentResult,
+  AgentTaskStatus,
+  FlowAction,
+  FlowActionType,
+} from '@activepieces/shared';
 import { t } from 'i18next';
 import { Loader2, Play } from 'lucide-react';
 import React, { useState } from 'react';
@@ -12,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { DataDisplayTabs } from '../data-display/data-display-tabs';
 import { ErrorExplanationContext } from '../data-display/explanation-prompt';
 import { FriendlyErrorView } from '../data-display/friendly-error-view';
+import { AiRouterRoutes } from '../run-details/ai-router-routes';
 import { ClosePanelButton } from '../step-data/close-panel-button';
 import { StepDataPanelHeader } from '../step-data/step-data-panel-header';
 import { StepDataPanelViewToggle } from '../step-data/step-data-panel-view-toggle';
@@ -149,11 +155,16 @@ export const TestSampleDataViewer = React.memo(
                 pieceDisplayName={pieceDisplayName}
               />
             ) : activeTab === 'Output' && !errorMessage ? (
-              <SmartOutputViewer
-                json={outputData}
-                title={t('Output')}
-                pieceSchema={pieceSchema ?? null}
-              />
+              <div className="flex flex-col gap-3">
+                {currentStep?.type === FlowActionType.AI_ROUTER && (
+                  <AiRouterRoutes output={outputData} input={sampleDataInput} />
+                )}
+                <SmartOutputViewer
+                  json={outputData}
+                  title={t('Output')}
+                  pieceSchema={pieceSchema ?? null}
+                />
+              </div>
             ) : (
               <DataDisplayTabs
                 data={activeData}

@@ -4,17 +4,19 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { sendJiraRequest } from '../common';
 import { getProjectIdDropdown, getIssueIdDropdown } from '../common/props';
 
+import { legacyCommentPageOutputSchema } from '../output-schemas';
 export const listIssueCommentsAction = createAction({
 	auth: jiraCloudAuth,
 	name: 'list_issue_comments',
 	displayName: 'List Issue Comments',
 	description: 'Returns all comments for an issue.',
-	audience: 'both',
+	audience: 'human',
 	aiMetadata: {
 		description:
 			'List comments on a Jira issue, ordered by creation date (ascending or descending) and capped at a configurable limit, including rendered HTML bodies. Use to read an issue\'s discussion before replying or summarizing. Read-only and idempotent.',
 		idempotent: true,
 	},
+	outputSchema: legacyCommentPageOutputSchema,
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),

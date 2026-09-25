@@ -224,5 +224,3 @@ export function OptionIcon({
     </span>
   );
 }
-
-export const ALLOWED_QUESTION_ICONS = Object.keys(ICON_MAP);

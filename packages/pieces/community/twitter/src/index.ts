@@ -7,6 +7,7 @@ import { PieceCategory } from '@activepieces/pieces-framework';
 import { TwitterApi } from 'twitter-api-v2';
 import { createTweet } from './lib/actions/create-tweet';
 import { createReply } from './lib/actions/create-reply';
+import { xGetAuthenticatedUser } from './lib/actions/x-get-authenticated-user';
 
 const markdownDescription = `
 If you don't have the credentials down below, please follow these steps to obtain the required credentials:
@@ -84,11 +85,11 @@ export const twitterAuth = PieceAuth.CustomAuth({
 export const twitter = createPiece({
   displayName: 'Twitter',
   description: 'Social media platform with over 500 million user',
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/twitter.png',
   categories: [PieceCategory.COMMUNICATION],
   authors: ["Abdallah-Alwarawreh","Salem-Alaa","kishanprmr","AbdulTheActivePiecer","khaledmashaly","abuaboud"],
   auth: twitterAuth,
-  actions: [createTweet, createReply],
+  actions: [createTweet, createReply, xGetAuthenticatedUser],
   triggers: [],
 });

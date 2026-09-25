@@ -32,6 +32,7 @@ import {
 import {
   ConnectionPickerData,
   getTextFromParts,
+  parseAnswerPairs,
   ProjectPickerData,
 } from '../lib/message-parsers';
 
@@ -679,18 +680,4 @@ function AnsweredQuestionsCard({ answersText }: { answersText: string }) {
       </div>
     </motion.div>
   );
-}
-
-function parseAnswerPairs(
-  text: string,
-): Array<{ question: string; answer: string }> {
-  return text
-    .split('\n')
-    .filter((line) => line.startsWith('- **'))
-    .map((line) => {
-      const match = line.match(/^- \*\*(.+?)\*\*\s*(.*)$/);
-      if (!match) return null;
-      return { question: match[1], answer: match[2] };
-    })
-    .filter((p): p is { question: string; answer: string } => p !== null);
 }

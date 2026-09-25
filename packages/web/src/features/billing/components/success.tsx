@@ -41,7 +41,7 @@ export const Success = () => {
       return;
     }
     const timer = setTimeout(
-      () => leave('/platform/setup/billing'),
+      () => leave('/platform/billing'),
       REDIRECT_DELAY_MS,
     );
     return () => clearTimeout(timer);
@@ -133,7 +133,7 @@ export const Success = () => {
               </Button>
 
               <Button
-                onClick={() => leave('/platform/setup/billing')}
+                onClick={() => leave('/platform/billing')}
                 variant="outline"
                 className="w-full"
               >

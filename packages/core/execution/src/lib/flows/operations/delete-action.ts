@@ -25,7 +25,8 @@ function _deleteAction(
                     }
                     break
                 }
-                case FlowActionType.ROUTER: {
+                case FlowActionType.ROUTER:
+                case FlowActionType.AI_ROUTER: {
                     parentStep.children = parentStep.children.map((child) => {
                         if (child && child.name === name) {
                             return child.nextAction ?? null

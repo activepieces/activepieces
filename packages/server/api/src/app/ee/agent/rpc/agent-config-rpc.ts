@@ -83,7 +83,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // it then adopted. A flow step reads its own conversation's project rather than the
         // selection above, which narrows to what the owner can still see in chat.
         const runProjectId = isFlowStep ? conversation.projectId ?? null : selectedProjectId
-        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: agentHelpers.runScopeOrThrow({ projectId: runProjectId }), ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const runScope = agentHelpers.runScopeOrThrow({ projectId: runProjectId })
+        const providerConfig = await agentHelpers.resolveRunProvider({ platformId, log, scope: runScope, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
 
         const attachmentRefs = files && files.length > 0 && !isNil(selectedProjectId)
             ? await persistAgentAttachments({ files, projectId: selectedProjectId, platformId, log })
@@ -126,7 +127,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         const tier = agentHelpers.resolveTier({ tierId: namesItsOwnModel ? null : selectedModel })
         const resolvedModelId = namesItsOwnModel && !isNil(modelName)
             ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
-            : agentHelpers.resolveModelIdForProvider({ provider: providerConfig.provider, selectedModel, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
+            : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, scope: runScope, log })
+        const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, scope: runScope, fallbackModelId: resolvedModelId, log })
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery
@@ -240,7 +242,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             credentials: providerConfig,
             providerConfigId: providerConfig.configId,
             modelId: resolvedModelId,
-            fastModelId: agentHelpers.resolveFastModelId({ provider: providerConfig.provider, config: providerConfig.config, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds }),
+            fastModelId,
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
