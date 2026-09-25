@@ -1,66 +1,81 @@
 import { tryCatchSync } from '@activepieces/core-utils';
-
-const ACQUISITION_PARAM_KEYS = [
-  'utm_source',
-  'utm_medium',
-  'utm_campaign',
-  'utm_term',
-  'utm_content',
-  'gclid',
-  'fbclid',
-  'ref',
-  'ap_cta',
-] as const;
-
-const STORAGE_KEY = 'ap_acquisition_params';
+import {
+  ATTRIBUTION_PARAM_KEYS,
+  ATTRIBUTION_STORAGE_KEY,
+  ATTRIBUTION_STORAGE_TTL_MS,
+  ATTRIBUTION_VALUE_MAX_LENGTH,
+  AttributionParams,
+  attributionUtils,
+} from '@activepieces/shared';
 
 function stashAcquisitionParams(): void {
-  const fromUrl = readFromSearch(window.location.search);
-  if (Object.keys(fromUrl).length === 0) {
+  const fromUrl = attributionUtils.readAttributionFromSearch({
+    search: window.location.search,
+  });
+  if (attributionUtils.isEmptyAttribution({ attribution: fromUrl })) {
     return;
   }
   tryCatchSync(() => {
-    if (sessionStorage.getItem(STORAGE_KEY) !== null) {
+    if (readStash() !== null) {
       return;
     }
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(fromUrl));
+    const entry: StoredAttribution = {
+      params: fromUrl,
+      capturedAt: Date.now(),
+    };
+    localStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(entry));
   });
 }
 
-function getAcquisitionParams(): AcquisitionParams {
+function getAcquisitionParams(): AttributionParams {
   const stashed = readStash();
-  if (stashed && Object.keys(stashed).length > 0) {
+  if (stashed !== null) {
     return stashed;
   }
-  return readFromSearch(window.location.search);
+  return attributionUtils.readAttributionFromSearch({
+    search: window.location.search,
+  });
 }
 
-function readFromSearch(search: string): AcquisitionParams {
-  const params = new URLSearchParams(search);
-  return ACQUISITION_PARAM_KEYS.reduce<AcquisitionParams>((acc, key) => {
-    const value = params.get(key);
-    return value ? { ...acc, [key]: value } : acc;
-  }, {});
+function clearAcquisitionParams(): void {
+  tryCatchSync(() => localStorage.removeItem(ATTRIBUTION_STORAGE_KEY));
 }
 
-function readStash(): AcquisitionParams | null {
+function readStash(): AttributionParams | null {
   const { data } = tryCatchSync(() => {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(ATTRIBUTION_STORAGE_KEY);
     if (raw === null) {
       return null;
     }
     const parsed: unknown = JSON.parse(raw);
-    if (!isRecord(parsed)) {
+    if (!isRecord(parsed) || typeof parsed.capturedAt !== 'number') {
       return null;
     }
-    return ACQUISITION_PARAM_KEYS.reduce<AcquisitionParams>((acc, key) => {
-      const value = parsed[key];
-      return typeof value === 'string' && value.length > 0
-        ? { ...acc, [key]: value }
-        : acc;
-    }, {});
+    if (Date.now() - parsed.capturedAt > ATTRIBUTION_STORAGE_TTL_MS) {
+      return null;
+    }
+    if (!isRecord(parsed.params)) {
+      return null;
+    }
+    const params = pickAttribution(parsed.params);
+    return attributionUtils.isEmptyAttribution({ attribution: params })
+      ? null
+      : params;
   });
   return data;
+}
+
+function pickAttribution(source: Record<string, unknown>): AttributionParams {
+  return ATTRIBUTION_PARAM_KEYS.reduce<AttributionParams>((acc, key) => {
+    const value = source[key];
+    if (typeof value !== 'string' || value.trim().length === 0) {
+      return acc;
+    }
+    return {
+      ...acc,
+      [key]: value.trim().slice(0, ATTRIBUTION_VALUE_MAX_LENGTH),
+    };
+  }, {});
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -70,8 +85,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export const acquisitionUtils = {
   stashAcquisitionParams,
   getAcquisitionParams,
+  clearAcquisitionParams,
 };
 
-export type AcquisitionParams = Partial<
-  Record<(typeof ACQUISITION_PARAM_KEYS)[number], string>
->;
+type StoredAttribution = {
+  params: AttributionParams;
+  capturedAt: number;
+};

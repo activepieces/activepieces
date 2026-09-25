@@ -13,6 +13,7 @@ import { querySalesforceApi } from '../common';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
+import { newUpdatedFileTriggerOutputSchema } from '../output-schemas';
 
 export const newUpdatedFile = createTrigger({
     auth: salesforceAuth,
@@ -22,6 +23,7 @@ export const newUpdatedFile = createTrigger({
     aiMetadata: {
         description: 'Fires whenever a Salesforce Files ContentDocument is created or modified, detected by polling for records whose SystemModstamp is later than the last poll. Each event represents the current state of one file and includes its fields plus a Type of ContentDocument. Does not fire for classic Attachments or Notes.',
     },
+    outputSchema: newUpdatedFileTriggerOutputSchema,
     props: {},
     sampleData: {
         "Id": "0697Q000002qB9iQAE",

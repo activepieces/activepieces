@@ -1,4 +1,5 @@
 import { EngineResponseStatus, FlowTriggerType, FlowVersion, FlowVersionState, LATEST_FLOW_SCHEMA_VERSION, TriggerRunStatus, WorkerToApiContract } from '@activepieces/shared'
+import { formatPieceError } from '@activepieces/core-utils'
 import { describe, expect, it, vi } from 'vitest'
 import { recordTriggerRun } from '../../../../src/lib/execute/utils/trigger-run-recorder'
 
@@ -71,5 +72,15 @@ describe('recordTriggerRun', () => {
         const apiClient = { recordTriggerRun: recordTriggerRunRpc } as unknown as WorkerToApiContract
 
         await expect(recordTriggerRun({ apiClient, log, flowVersion: buildPieceFlowVersion('@activepieces/piece-slack'), platformId: 'p1', status: EngineResponseStatus.OK })).resolves.toBeUndefined()
+    })
+
+    it('logs only the failure message with the flow id, never the raw error', async () => {
+        const apiClient = { recordTriggerRun: vi.fn(async () => undefined) } as unknown as WorkerToApiContract
+        const engineError = JSON.stringify(formatPieceError(new Error('Webhook authentication failed'), { raw: 'headers: { Authorization: Bearer SECRET123 }' }))
+
+        await recordTriggerRun({ apiClient, log, flowVersion: buildPieceFlowVersion('@activepieces/piece-webhook'), platformId: 'p1', status: EngineResponseStatus.USER_FAILURE, error: engineError })
+
+        expect(log.warn).toHaveBeenCalledWith(expect.objectContaining({ error: 'Webhook authentication failed', flow: { id: 'flow1' }, status: EngineResponseStatus.USER_FAILURE }), 'Trigger run did not complete successfully')
+        expect(JSON.stringify(vi.mocked(log.warn).mock.calls)).not.toContain('SECRET123')
     })
 })

@@ -9,6 +9,7 @@ import { JiraPollingItem, JiraPollingProps, createJiraPolling } from '../common/
 import { getUsersDropdown } from '../common/props';
 import { ChangelogHistory } from '../common/types';
 
+import { issueAssignedTriggerOutputSchema } from '../output-schemas';
 type IssueWithChangelog = {
   id: string;
   key: string;
@@ -92,6 +93,7 @@ export const issueAssigned = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueAssignedTriggerOutputSchema,
   props: {
     assignedToMe: Property.Checkbox({
       displayName: 'Only when assigned to me',

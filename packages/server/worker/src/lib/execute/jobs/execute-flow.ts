@@ -188,6 +188,7 @@ function toInternalError(source: RunInternalErrorSource, error: unknown): RunInt
 }
 
 async function reportFlowStatus({ ctx, data, status, internalError, failedStep }: ReportFlowStatusParams): Promise<void> {
+    const willRetry = status === FlowRunStatus.INTERNAL_ERROR && !ctx.lastAttempt
     // A status report has no log file of its own; carry logsFileId only for an internalError the server may
     // persist into one (see uploadRunLog). Sending it on a plain status report would dangle flow_run.logsFileId.
     await ctx.apiClient.uploadRunLog({
@@ -199,6 +200,7 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         ...(isNil(internalError) ? {} : { logsFileId: data.logsFileId }),
         internalError,
         failedStep,
+        willRetry,
         ...spreadIfDefined('workerHandlerId', data.workerHandlerId ?? undefined),
         ...spreadIfDefined('httpRequestId', data.httpRequestId),
     })
@@ -207,7 +209,7 @@ async function reportFlowStatus({ ctx, data, status, internalError, failedStep }
         onCallService(ctx.log, workerSettings.getSettings().PAGE_ONCALL_WEBHOOK).page({
             code: ErrorCode.ENGINE_OPERATION_FAILURE,
             message: `Flow run ${data.runId} ended with INTERNAL_ERROR`,
-            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId },
+            params: { runId: data.runId, flowId: data.flowId, projectId: data.projectId, willRetry },
         }).catch((e) => ctx.log.error({ flowRun: { id: data.runId }, error: inspect(e) }, 'Failed to send on-call page for INTERNAL_ERROR'))
     }
 }

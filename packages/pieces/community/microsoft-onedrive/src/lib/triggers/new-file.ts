@@ -1,66 +1,20 @@
-import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { getGraphBaseUrl } from '../common/microsoft-cloud';
+import { getCloudProp, getGraphBaseUrl } from '../common/microsoft-cloud';
 import dayjs from 'dayjs';
 import { oneDriveAuth } from '../auth';
 import { oneDriveCommon } from '../common/common';
+import { newFileTriggerOutputSchema } from '../output-schemas';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { DriveItem } from '@microsoft/microsoft-graph-types';
-
-type Props = {
-	parentFolder?: string;
-};
-
-const polling: Polling<AppConnectionValueForAuthProperty<typeof oneDriveAuth>, Props> = {
-	strategy: DedupeStrategy.TIMEBASED,
-	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-		const cloud = auth.props?.['cloud'] as string | undefined;
-		const client = Client.initWithMiddleware({
-			authProvider: {
-				getAccessToken: () => Promise.resolve(auth.access_token),
-			},
-			baseUrl: getGraphBaseUrl(cloud),
-		});
-
-		const files = [];
-
-		const endpoint = propsValue.parentFolder
-			? `/me/drive/items/${propsValue.parentFolder}/children`
-			: `/me/drive/items/root/children`;
-		let response: PageCollection = await client.api(endpoint).get();
-		while (response.value.length > 0) {
-			for (const item of response.value as DriveItem[]) {
-				if (item.file) {
-					files.push(item);
-				}
-			}
-
-			if (response['@odata.nextLink']) {
-				response = await client.api(response['@odata.nextLink']).get();
-			} else {
-				break;
-			}
-		}
-
-		files.sort((a, b) => {
-			const aDate = dayjs(a.createdDateTime);
-			const bDate = dayjs(b.createdDateTime);
-			return bDate.diff(aDate);
-		});
-
-		return files.map((file) => ({
-			epochMilliSeconds: dayjs(file.createdDateTime).valueOf(),
-			data: file,
-		}));
-	},
-};
 
 export const newFile = createTrigger({
 	auth: oneDriveAuth,
 	name: 'new_file',
 	classification: 'READ',
 	displayName: 'New File',
+	outputSchema: newFileTriggerOutputSchema,
 	description: 'Trigger when a new file is uploaded.',
 	aiMetadata: {
 		description: 'Fires when a new file appears in the watched Microsoft OneDrive folder, polling by file creation time. Scope it to a specific folder via the parent folder ID, or leave it empty to watch the drive root; subfolders are not included and folders themselves do not trigger it.',
@@ -71,18 +25,10 @@ export const newFile = createTrigger({
 	},
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
-		await pollingHelper.onEnable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onEnable(polling, context);
 	},
 	async onDisable(context) {
-		await pollingHelper.onDisable(polling, {
-			auth: context.auth,
-			store: context.store,
-			propsValue: context.propsValue,
-		});
+		await pollingHelper.onDisable(polling, context);
 	},
 	async test(context) {
 		return await pollingHelper.test(polling, context);
@@ -137,3 +83,52 @@ export const newFile = createTrigger({
 		},
 	},
 });
+
+const polling: Polling<AppConnectionValueForAuthProperty<typeof oneDriveAuth>, Props> = {
+	strategy: DedupeStrategy.TIMEBASED,
+	items: async ({ auth, propsValue }) => {
+		const cloud = getCloudProp(auth);
+		const client = Client.initWithMiddleware({
+			authProvider: {
+				getAccessToken: () => Promise.resolve(auth.access_token),
+			},
+			baseUrl: getGraphBaseUrl(cloud),
+		});
+
+		const files = [];
+
+		const endpoint = propsValue.parentFolder
+			? `/me/drive/items/${propsValue.parentFolder}/children`
+			: `/me/drive/items/root/children`;
+		let response: PageCollection = await client.api(endpoint).get();
+		while (response.value.length > 0) {
+			const items: DriveItem[] = response.value;
+			for (const item of items) {
+				if (item.file) {
+					files.push(item);
+				}
+			}
+
+			if (response['@odata.nextLink']) {
+				response = await client.api(response['@odata.nextLink']).get();
+			} else {
+				break;
+			}
+		}
+
+		files.sort((a, b) => {
+			const aDate = dayjs(a.createdDateTime);
+			const bDate = dayjs(b.createdDateTime);
+			return bDate.diff(aDate);
+		});
+
+		return files.map((file) => ({
+			epochMilliSeconds: dayjs(file.createdDateTime).valueOf(),
+			data: file,
+		}));
+	},
+};
+
+type Props = {
+	parentFolder?: string;
+};

@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { exportReportOutputSchema } from '../output-schemas';
 
 export const exportReport = createAction({
   auth: salesforceAuth,
@@ -14,6 +15,7 @@ export const exportReport = createAction({
   description: 'Export a Salesforce report as an Excel file.',
   audience: 'both',
   aiMetadata: { description: 'Run an existing Salesforce report by its ID and return its results as a downloadable Excel (.xlsx) file. Read-only — it does not change the report or any records, and the report definition must already exist.', idempotent: true },
+  outputSchema: exportReportOutputSchema,
   props: {
     report_id: salesforcesCommon.report,
   },

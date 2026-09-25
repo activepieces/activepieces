@@ -11,6 +11,175 @@ const scoredLabelItems: OutputSchemaField[] = [
   { key: 'score', label: 'Score', format: 'number' },
 ];
 
+const nextCursorField: OutputSchemaField = {
+  key: 'next_cursor',
+  label: 'Next Cursor',
+  description: 'Pass this to Cursor to fetch the next page. Null on the last page.',
+};
+
+const nextPageField: OutputSchemaField = {
+  key: 'next_page',
+  label: 'Next Page',
+  format: 'number',
+  description: 'Pass this to Page to fetch the next page. Null on the last page.',
+};
+
+const countField: OutputSchemaField = { key: 'count', label: 'Count', format: 'number' };
+
+const pageField: OutputSchemaField = { key: 'page', label: 'Page', format: 'number' };
+
+const gatedField: OutputSchemaField = {
+  key: 'gated',
+  label: 'Gated',
+  description: "false, or the gating mode such as 'auto' or 'manual'.",
+};
+
+const hubAccountFields: OutputSchemaField[] = [
+  { key: 'name', label: 'Username' },
+  { key: 'fullname', label: 'Full Name' },
+  { key: 'type', label: 'Account Type' },
+];
+
+const repoSearchCoreFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Repo ID' },
+  { key: 'likes', label: 'Likes', format: 'number' },
+  { key: 'trendingScore', label: 'Trending Score', format: 'number' },
+  { key: 'private', label: 'Private', format: 'boolean' },
+  { key: 'tags', label: 'Tags' },
+  { key: 'createdAt', label: 'Created At', format: 'datetime' },
+];
+
+const repoCardBaseFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Repo ID' },
+  { key: 'author', label: 'Author' },
+  { key: 'likes', label: 'Likes', format: 'number' },
+  { key: 'downloads', label: 'Downloads', format: 'number' },
+  { key: 'lastModified', label: 'Last Modified', format: 'datetime' },
+  gatedField,
+  { key: 'private', label: 'Private', format: 'boolean' },
+];
+
+const repoCardFields: OutputSchemaField[] = [
+  ...repoCardBaseFields,
+  { key: 'pipeline_tag', label: 'Pipeline Task', description: 'Models only.' },
+  { key: 'numParameters', label: 'Parameters', format: 'number', description: 'Models only.' },
+];
+
+const repoDetailCoreFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Repo ID' },
+  { key: 'author', label: 'Author' },
+  { key: 'tags', label: 'Tags' },
+  { key: 'likes', label: 'Likes', format: 'number' },
+  { key: 'sha', label: 'Latest Commit SHA' },
+  { key: 'lastModified', label: 'Last Modified', format: 'datetime' },
+  { key: 'createdAt', label: 'Created At', format: 'datetime' },
+  { key: 'private', label: 'Private', format: 'boolean' },
+  gatedField,
+  { key: 'disabled', label: 'Disabled', format: 'boolean' },
+  { key: 'usedStorage', label: 'Used Storage', format: 'filesize' },
+];
+
+const siblingsField: OutputSchemaField = {
+  key: 'siblings',
+  label: 'Files',
+  labelKey: 'rfilename',
+  listItems: [{ key: 'rfilename', label: 'File Path' }],
+};
+
+const gitRefItemFields: OutputSchemaField[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'ref', label: 'Ref' },
+  { key: 'targetCommit', label: 'Target Commit' },
+];
+
+const discussionSummaryFields: OutputSchemaField[] = [
+  { key: 'num', label: 'Number', format: 'number' },
+  { key: 'title', label: 'Title' },
+  { key: 'status', label: 'Status' },
+  { key: 'isPullRequest', label: 'Is Pull Request', format: 'boolean' },
+  { key: 'pinned', label: 'Pinned', format: 'boolean' },
+  { key: 'createdAt', label: 'Created At', format: 'datetime' },
+  { key: 'author', label: 'Author', children: hubAccountFields },
+  {
+    key: 'repo',
+    label: 'Repo',
+    children: [
+      { key: 'name', label: 'Repo ID' },
+      { key: 'type', label: 'Repo Type' },
+    ],
+  },
+];
+
+const commentEventFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Event ID' },
+  { key: 'type', label: 'Event Type' },
+  { key: 'createdAt', label: 'Created At', format: 'datetime' },
+  { key: 'author', label: 'Author', children: hubAccountFields },
+  {
+    key: 'data',
+    label: 'Data',
+    description: "For 'comment' events: the latest comment text and edit state.",
+    children: [
+      {
+        key: 'latest',
+        label: 'Latest Version',
+        children: [
+          { key: 'raw', label: 'Text (Markdown)' },
+          { key: 'html', label: 'Text (HTML)', format: 'html' },
+          { key: 'updatedAt', label: 'Updated At', format: 'datetime' },
+        ],
+      },
+      { key: 'edited', label: 'Edited', format: 'boolean' },
+      { key: 'hidden', label: 'Hidden', format: 'boolean' },
+      { key: 'numEdits', label: 'Edit Count', format: 'number' },
+    ],
+  },
+];
+
+const paperAuthorsField: OutputSchemaField = {
+  key: 'authors',
+  label: 'Authors',
+  labelKey: 'name',
+  listItems: [{ key: 'name', label: 'Name' }],
+};
+
+const paperCoreFields: OutputSchemaField[] = [
+  { key: 'id', label: 'Paper ID', description: 'The arXiv ID, for example 2307.09288.' },
+  { key: 'title', label: 'Title' },
+  { key: 'summary', label: 'Abstract' },
+  { key: 'publishedAt', label: 'Published At', format: 'datetime' },
+  { key: 'upvotes', label: 'Upvotes', format: 'number' },
+  paperAuthorsField,
+  { key: 'discussionId', label: 'Discussion ID' },
+];
+
+const paperListingFields: OutputSchemaField[] = [
+  { key: 'title', label: 'Title' },
+  { key: 'publishedAt', label: 'Published At', format: 'datetime' },
+  { key: 'thumbnail', label: 'Thumbnail', format: 'image' },
+  { key: 'numComments', label: 'Comments', format: 'number' },
+];
+
+const collectionFields: OutputSchemaField[] = [
+  { key: 'slug', label: 'Collection Slug' },
+  { key: 'title', label: 'Title' },
+  { key: 'description', label: 'Description' },
+  { key: 'lastUpdated', label: 'Last Updated', format: 'datetime' },
+  { key: 'private', label: 'Private', format: 'boolean' },
+  { key: 'upvotes', label: 'Upvotes', format: 'number' },
+  { key: 'owner', label: 'Owner', children: hubAccountFields },
+  {
+    key: 'items',
+    label: 'Items',
+    labelKey: 'id',
+    listItems: [
+      { key: 'type', label: 'Item Type' },
+      { key: 'position', label: 'Position', format: 'number' },
+      ...repoCardFields,
+    ],
+  },
+];
+
 export const languageTranslationOutputSchema: OutputSchema = {
   fields: [
     { key: 'translatedText', label: 'Translated Text' },
@@ -408,5 +577,585 @@ export const imageClassificationOutputSchema: OutputSchema = {
       ],
     },
     rawResultField('rawResults'),
+  ],
+};
+
+export const searchModelsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'models',
+      label: 'Models',
+      labelKey: 'id',
+      listItems: [
+        ...repoSearchCoreFields,
+        { key: 'pipeline_tag', label: 'Pipeline Task' },
+        { key: 'library_name', label: 'Library' },
+        { key: 'downloads', label: 'Downloads', format: 'number' },
+      ],
+    },
+    countField,
+    nextCursorField,
+  ],
+};
+
+export const searchDatasetsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'datasets',
+      label: 'Datasets',
+      labelKey: 'id',
+      listItems: [
+        ...repoSearchCoreFields,
+        { key: 'author', label: 'Author' },
+        { key: 'description', label: 'Description' },
+        { key: 'downloads', label: 'Downloads', format: 'number' },
+        { key: 'lastModified', label: 'Last Modified', format: 'datetime' },
+        gatedField,
+        { key: 'disabled', label: 'Disabled', format: 'boolean' },
+        { key: 'sha', label: 'Latest Commit SHA' },
+      ],
+    },
+    countField,
+    nextCursorField,
+  ],
+};
+
+export const searchSpacesOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'spaces',
+      label: 'Spaces',
+      labelKey: 'id',
+      listItems: [...repoSearchCoreFields, { key: 'sdk', label: 'SDK' }],
+    },
+    countField,
+    nextCursorField,
+  ],
+};
+
+export const searchPapersOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'papers',
+      label: 'Papers',
+      labelKey: 'title',
+      listItems: [
+        ...paperListingFields,
+        {
+          key: 'paper',
+          label: 'Paper',
+          children: [
+            ...paperCoreFields,
+            { key: 'ai_summary', label: 'AI Summary' },
+            { key: 'ai_keywords', label: 'AI Keywords' },
+          ],
+        },
+      ],
+    },
+    countField,
+  ],
+};
+
+export const getModelOutputSchema: OutputSchema = {
+  fields: [
+    ...repoDetailCoreFields,
+    { key: 'pipeline_tag', label: 'Pipeline Task' },
+    { key: 'library_name', label: 'Library' },
+    { key: 'downloads', label: 'Downloads (Last 30 Days)', format: 'number' },
+    {
+      key: 'cardData',
+      label: 'Model Card Metadata',
+      children: [
+        { key: 'license', label: 'License' },
+        { key: 'language', label: 'Language' },
+      ],
+    },
+    {
+      key: 'safetensors',
+      label: 'Safetensors',
+      children: [{ key: 'total', label: 'Total Parameters', format: 'number' }],
+    },
+    siblingsField,
+    { key: 'spaces', label: 'Spaces Using This Model' },
+  ],
+};
+
+export const getDatasetOutputSchema: OutputSchema = {
+  fields: [
+    ...repoDetailCoreFields,
+    { key: 'description', label: 'Description' },
+    { key: 'downloads', label: 'Downloads (Last 30 Days)', format: 'number' },
+    { key: 'paperswithcode_id', label: 'Papers with Code ID' },
+    {
+      key: 'cardData',
+      label: 'Dataset Card Metadata',
+      children: [
+        { key: 'pretty_name', label: 'Pretty Name' },
+        { key: 'license', label: 'License' },
+        { key: 'language', label: 'Language' },
+        { key: 'task_categories', label: 'Task Categories' },
+        { key: 'size_categories', label: 'Size Categories' },
+      ],
+    },
+    siblingsField,
+  ],
+};
+
+export const getSpaceOutputSchema: OutputSchema = {
+  fields: [
+    ...repoDetailCoreFields,
+    { key: 'sdk', label: 'SDK' },
+    { key: 'host', label: 'App URL', format: 'url' },
+    { key: 'subdomain', label: 'Subdomain' },
+    { key: 'region', label: 'Region' },
+    {
+      key: 'cardData',
+      label: 'Space Card Metadata',
+      children: [
+        { key: 'title', label: 'Title' },
+        { key: 'emoji', label: 'Emoji' },
+        { key: 'sdk_version', label: 'SDK Version' },
+        { key: 'app_file', label: 'App File' },
+      ],
+    },
+    {
+      key: 'runtime',
+      label: 'Runtime',
+      children: [
+        { key: 'stage', label: 'Stage' },
+        {
+          key: 'hardware',
+          label: 'Hardware',
+          children: [
+            { key: 'current', label: 'Current' },
+            { key: 'requested', label: 'Requested' },
+          ],
+        },
+      ],
+    },
+    siblingsField,
+  ],
+};
+
+export const listTrendingReposOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'repos',
+      label: 'Trending Repos',
+      labelKey: 'id',
+      listItems: [
+        { key: 'repo_type', label: 'Repo Type' },
+        ...repoCardFields,
+        { key: 'title', label: 'Title', description: 'Spaces only.' },
+        { key: 'emoji', label: 'Emoji', description: 'Spaces only.' },
+        { key: 'shortDescription', label: 'Short Description', description: 'Spaces only.' },
+        { key: 'ai_short_description', label: 'AI Short Description', description: 'Spaces only.' },
+        { key: 'ai_category', label: 'AI Category', description: 'Spaces only.' },
+        {
+          key: 'runtime',
+          label: 'Runtime',
+          description: 'Spaces only.',
+          children: [{ key: 'stage', label: 'Stage' }],
+        },
+      ],
+    },
+    countField,
+  ],
+};
+
+export const listHubTagsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'tags_by_type',
+      label: 'Tags by Type',
+      value: '',
+      dynamicKey: true,
+      description:
+        "One entry per tag type (for example 'library' or 'pipeline_tag'), each a list of {id, label, type} tags. Use a tag's id as a Tag Filters value.",
+    },
+  ],
+};
+
+export const listRepoFilesOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'files',
+      label: 'Files',
+      labelKey: 'path',
+      listItems: [
+        { key: 'path', label: 'Path' },
+        { key: 'type', label: 'Type', description: "'file' or 'directory'." },
+        { key: 'size', label: 'Size', format: 'filesize' },
+        { key: 'oid', label: 'Git Object ID' },
+        {
+          key: 'lfs',
+          label: 'LFS',
+          description: 'Only present for files stored with Git LFS.',
+          children: [
+            { key: 'size', label: 'Size', format: 'filesize' },
+            { key: 'oid', label: 'SHA-256' },
+          ],
+        },
+      ],
+    },
+    countField,
+    nextCursorField,
+  ],
+};
+
+export const getRepoPathsInfoOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'paths',
+      label: 'Paths',
+      labelKey: 'path',
+      listItems: [
+        { key: 'path', label: 'Path' },
+        { key: 'type', label: 'Type', description: "'file' or 'directory'." },
+        { key: 'size', label: 'Size', format: 'filesize' },
+        { key: 'oid', label: 'Git Object ID' },
+        {
+          key: 'lastCommit',
+          label: 'Last Commit',
+          children: [
+            { key: 'id', label: 'Commit SHA' },
+            { key: 'title', label: 'Title' },
+            { key: 'date', label: 'Date', format: 'datetime' },
+          ],
+        },
+        {
+          key: 'securityFileStatus',
+          label: 'Security Status',
+          children: [{ key: 'status', label: 'Overall Status' }],
+        },
+      ],
+    },
+    countField,
+  ],
+};
+
+export const readRepoFileOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'content', label: 'Content' },
+    { key: 'path', label: 'Path' },
+    { key: 'size_bytes', label: 'Size', format: 'filesize' },
+    { key: 'url', label: 'Download URL', format: 'url' },
+    { key: 'repo_id', label: 'Repo ID' },
+    { key: 'repo_type', label: 'Repo Type' },
+    { key: 'revision', label: 'Revision' },
+  ],
+};
+
+export const listRepoCommitsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'commits',
+      label: 'Commits',
+      labelKey: 'title',
+      listItems: [
+        { key: 'id', label: 'Commit SHA' },
+        { key: 'title', label: 'Title' },
+        { key: 'message', label: 'Message' },
+        { key: 'date', label: 'Date', format: 'datetime' },
+        {
+          key: 'authors',
+          label: 'Authors',
+          labelKey: 'user',
+          listItems: [
+            { key: 'user', label: 'Username' },
+            { key: 'avatar', label: 'Avatar', format: 'image' },
+          ],
+        },
+      ],
+    },
+    countField,
+    pageField,
+    nextPageField,
+  ],
+};
+
+export const listRepoRefsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'branches', label: 'Branches', labelKey: 'name', listItems: gitRefItemFields },
+    { key: 'tags', label: 'Tags', labelKey: 'name', listItems: gitRefItemFields },
+    { key: 'converts', label: 'Converts', labelKey: 'name', listItems: gitRefItemFields },
+    { key: 'pullRequests', label: 'Pull Requests', labelKey: 'name', listItems: gitRefItemFields },
+  ],
+};
+
+export const compareRepoRevisionsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'diff', label: 'Diff' },
+    { key: 'base', label: 'Base Revision' },
+    { key: 'head', label: 'Head Revision' },
+    { key: 'truncated', label: 'Truncated', format: 'boolean' },
+    { key: 'diff_length', label: 'Diff Length', format: 'number' },
+  ],
+};
+
+export const getRepoSizeOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'path', label: 'Path' },
+    { key: 'size', label: 'Size', format: 'filesize' },
+  ],
+};
+
+export const getRepoSecurityScanOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'scansDone', label: 'Scans Done', format: 'boolean' },
+    { key: 'filesWithIssues', label: 'Files With Issues' },
+  ],
+};
+
+export const getCurrentUserOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'username', label: 'Username' },
+    { key: 'full_name', label: 'Full Name' },
+    { key: 'email', label: 'Email', format: 'email' },
+    { key: 'email_verified', label: 'Email Verified', format: 'boolean' },
+    { key: 'is_pro', label: 'Is Pro', format: 'boolean' },
+    { key: 'avatar_url', label: 'Avatar URL' },
+    { key: 'account_type', label: 'Account Type' },
+    {
+      key: 'organizations',
+      label: 'Organizations',
+      labelKey: 'name',
+      listItems: [
+        { key: 'name', label: 'Name' },
+        { key: 'full_name', label: 'Full Name' },
+        { key: 'role_in_org', label: 'Role' },
+        { key: 'is_enterprise', label: 'Is Enterprise', format: 'boolean' },
+      ],
+    },
+    { key: 'token_name', label: 'Token Name' },
+    { key: 'token_created_at', label: 'Token Created At', format: 'datetime' },
+    { key: 'token_role', label: 'Token Role' },
+    { key: 'token_can_read_gated_repos', label: 'Token Can Read Gated Repos', format: 'boolean' },
+    { key: 'token_global_permissions', label: 'Token Global Permissions' },
+    {
+      key: 'token_scoped_permissions',
+      label: 'Token Scoped Permissions',
+      labelKey: 'entity_name',
+      listItems: [
+        { key: 'entity_type', label: 'Entity Type' },
+        { key: 'entity_name', label: 'Entity Name' },
+        { key: 'permissions', label: 'Permissions' },
+      ],
+    },
+  ],
+};
+
+export const getUserOverviewOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'user', label: 'Username' },
+    { key: 'fullname', label: 'Full Name' },
+    { key: 'type', label: 'Account Type' },
+    { key: 'details', label: 'Bio' },
+    { key: 'avatarUrl', label: 'Avatar', format: 'image' },
+    { key: 'isPro', label: 'Is Pro', format: 'boolean' },
+    { key: 'createdAt', label: 'Joined At', format: 'datetime' },
+    { key: 'numModels', label: 'Models', format: 'number' },
+    { key: 'numDatasets', label: 'Datasets', format: 'number' },
+    { key: 'numSpaces', label: 'Spaces', format: 'number' },
+    { key: 'numPapers', label: 'Papers', format: 'number' },
+    { key: 'numDiscussions', label: 'Discussions', format: 'number' },
+    { key: 'numUpvotes', label: 'Upvotes', format: 'number' },
+    { key: 'numLikes', label: 'Likes', format: 'number' },
+    { key: 'numFollowers', label: 'Followers', format: 'number' },
+    { key: 'numFollowing', label: 'Following', format: 'number' },
+    {
+      key: 'orgs',
+      label: 'Organizations',
+      labelKey: 'name',
+      listItems: [
+        { key: 'name', label: 'Name' },
+        { key: 'fullname', label: 'Full Name' },
+      ],
+    },
+  ],
+};
+
+export const getOrganizationOverviewOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'name', label: 'Name' },
+    { key: 'fullname', label: 'Full Name' },
+    { key: 'details', label: 'Description' },
+    { key: 'avatarUrl', label: 'Avatar', format: 'image' },
+    { key: 'isVerified', label: 'Verified', format: 'boolean' },
+    { key: 'plan', label: 'Plan' },
+    { key: 'numUsers', label: 'Members', format: 'number' },
+    { key: 'numModels', label: 'Models', format: 'number' },
+    { key: 'numDatasets', label: 'Datasets', format: 'number' },
+    { key: 'numSpaces', label: 'Spaces', format: 'number' },
+    { key: 'numPapers', label: 'Papers', format: 'number' },
+    { key: 'numFollowers', label: 'Followers', format: 'number' },
+  ],
+};
+
+export const listOrganizationMembersOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'members',
+      label: 'Members',
+      labelKey: 'user',
+      listItems: [
+        { key: 'user', label: 'Username' },
+        { key: 'fullname', label: 'Full Name' },
+        { key: 'type', label: 'Account Type' },
+        { key: 'isPro', label: 'Is Pro', format: 'boolean' },
+      ],
+    },
+    countField,
+    nextCursorField,
+  ],
+};
+
+export const listDiscussionsOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'discussions',
+      label: 'Discussions',
+      labelKey: 'title',
+      listItems: [...discussionSummaryFields, { key: 'numComments', label: 'Comments', format: 'number' }],
+    },
+    countField,
+    { key: 'total_count', label: 'Total Count', format: 'number' },
+    pageField,
+    nextPageField,
+  ],
+};
+
+export const getDiscussionOutputSchema: OutputSchema = {
+  fields: [
+    ...discussionSummaryFields,
+    { key: 'locked', label: 'Locked', format: 'boolean' },
+    { key: 'events', label: 'Events', labelKey: 'type', listItems: commentEventFields },
+  ],
+};
+
+export const listDailyPapersOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'papers',
+      label: 'Papers',
+      labelKey: 'title',
+      listItems: [
+        ...paperListingFields,
+        {
+          key: 'paper',
+          label: 'Paper',
+          children: [
+            ...paperCoreFields,
+            { key: 'submittedOnDailyAt', label: 'Submitted to Daily Papers At', format: 'datetime' },
+          ],
+        },
+        { key: 'submittedBy', label: 'Submitted By', children: hubAccountFields },
+      ],
+    },
+    countField,
+    pageField,
+    nextPageField,
+  ],
+};
+
+export const getPaperOutputSchema: OutputSchema = {
+  fields: [
+    ...paperCoreFields,
+    { key: 'ai_summary', label: 'AI Summary' },
+    { key: 'ai_keywords', label: 'AI Keywords' },
+    { key: 'submittedOnDailyAt', label: 'Submitted to Daily Papers At', format: 'datetime' },
+    {
+      key: 'submittedOnDailyBy',
+      label: 'Submitted By',
+      children: [
+        { key: 'user', label: 'Username' },
+        { key: 'fullname', label: 'Full Name' },
+      ],
+    },
+    { key: 'githubRepo', label: 'GitHub Repo', format: 'url' },
+    { key: 'githubStars', label: 'GitHub Stars', format: 'number' },
+    { key: 'linkedModels', label: 'Linked Models', labelKey: 'id', listItems: repoCardFields },
+    { key: 'numTotalModels', label: 'Total Linked Models', format: 'number' },
+    { key: 'linkedDatasets', label: 'Linked Datasets', labelKey: 'id', listItems: repoCardBaseFields },
+    { key: 'numTotalDatasets', label: 'Total Linked Datasets', format: 'number' },
+    {
+      key: 'linkedSpaces',
+      label: 'Linked Spaces',
+      labelKey: 'id',
+      listItems: [
+        { key: 'id', label: 'Space ID' },
+        { key: 'emoji', label: 'Emoji' },
+        { key: 'shortDescription', label: 'Short Description' },
+        { key: 'running', label: 'Running', format: 'boolean' },
+      ],
+    },
+    { key: 'numTotalSpaces', label: 'Total Linked Spaces', format: 'number' },
+    {
+      key: 'comments',
+      label: 'Comments',
+      labelKey: 'id',
+      description: 'Only present when Include Comments is on.',
+      listItems: [
+        ...commentEventFields,
+        { key: 'replies', label: 'Replies', labelKey: 'id', listItems: commentEventFields },
+      ],
+    },
+  ],
+};
+
+export const listCollectionsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'collections', label: 'Collections', labelKey: 'title', listItems: collectionFields },
+    countField,
+    nextCursorField,
+  ],
+};
+
+export const getCollectionOutputSchema: OutputSchema = {
+  fields: [...collectionFields, { key: 'shareUrl', label: 'Share URL', format: 'url' }],
+};
+
+export const generateChatCompletionOutputSchema: OutputSchema = {
+  fields: [
+    {
+      key: 'content',
+      label: 'Reply',
+      description: "Empty with finish_reason 'length' means Max Tokens ran out, often on hidden reasoning.",
+    },
+    { key: 'finish_reason', label: 'Finish Reason' },
+    { key: 'model', label: 'Model' },
+    { key: 'id', label: 'Completion ID' },
+    {
+      key: 'usage',
+      label: 'Token Usage',
+      children: [
+        { key: 'prompt_tokens', label: 'Prompt Tokens', format: 'number' },
+        { key: 'completion_tokens', label: 'Completion Tokens', format: 'number' },
+        { key: 'total_tokens', label: 'Total Tokens', format: 'number' },
+      ],
+    },
+  ],
+};
+
+export const generateEmbeddingsOutputSchema: OutputSchema = {
+  fields: [
+    { key: 'model', label: 'Model' },
+    { key: 'dimensions', label: 'Dimensions', format: 'number' },
+    {
+      key: 'embedding',
+      label: 'Embedding',
+      description: 'The vector for a single input text. Only present when one text was sent.',
+    },
+    {
+      key: 'embeddings',
+      label: 'Embeddings',
+      description: 'One vector per input text, in input order. Only present when several texts were sent.',
+    },
+    {
+      key: 'count',
+      label: 'Count',
+      format: 'number',
+      description: 'Number of vectors returned. Only present when several texts were sent.',
+    },
   ],
 };

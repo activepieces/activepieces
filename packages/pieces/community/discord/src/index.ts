@@ -66,18 +66,10 @@ import { discordRevokeInvite } from './lib/actions/ai-revoke-invite';
 import { discordCreateDm } from './lib/actions/ai-create-dm';
 import { discordGetUser } from './lib/actions/ai-get-user';
 
-const markdown = `
-To obtain a token, follow these steps:
-1. Go to https://discord.com/developers/applications
-2. Click on Application (or create one if you don't have one)
-3. Click on Bot
-4. Copy the token
-`;
-
 export const discord = createPiece({
   displayName: 'Discord',
   description: 'Instant messaging and VoIP social platform',
-  minimumSupportedRelease: '0.87.0',
+  minimumSupportedRelease: '0.88.2',
   logoUrl: 'https://cdn.activepieces.com/pieces/discord.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: discordAuth,

@@ -23,67 +23,81 @@ export const gmailCreateDraftReplyAction = createAction({
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
       displayName: 'Reply Type',
-      description:
-        'Choose whether to reply to sender only or to all recipients',
+      description: 'Reply to the sender only, or to everyone on the thread.',
       required: true,
       defaultValue: 'reply',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Reply (to sender only)',
+            label: 'Reply',
             value: 'reply',
+            description: 'Sender only',
+            icon: 'reply',
           },
           {
-            label: 'Reply All (to all recipients)',
+            label: 'Reply All',
             value: 'reply_all',
+            description: 'All recipients',
+            icon: 'reply-all',
           },
         ],
       },
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Plain text',
+            label: 'Plain Text',
             value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
+            description: 'Bold, links, lists',
+            icon: 'code',
           },
         ],
       },
     }),
-    body: Property.LongText({
-      displayName: 'Draft Reply Body',
-      description: 'Your draft reply message content',
+    body: Property.RichText({
+      displayName: 'Body',
       required: false,
+      formatProperty: 'body_type',
     }),
     include_original_message: Property.Checkbox({
       displayName: 'Include Original Message',
-      description: 'Include the original message content in the draft reply',
-      required: true,
+      description: 'Quote the original message below your reply.',
+      required: false,
       defaultValue: true,
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
-      description: 'Optional sender name to display',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     attachment: Property.File({
       displayName: 'Attachment',
-      description: 'Optional file to attach to your draft reply',
+      description: 'File to attach.',
       required: false,
     }),
     attachment_name: Property.ShortText({
       displayName: 'Attachment Name',
-      description: 'Custom name for the attachment',
+      description: 'Overrides the uploaded file name.',
+      placeholder: 'report.pdf',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: createDraftReplyActionOutputSchema,
@@ -211,17 +225,16 @@ export const gmailCreateDraftReplyAction = createAction({
     const senderEmail = await getUserEmail(context.auth, authClient);
 
     let draftBody = context.propsValue.body || '';
+    const isPlainText = context.propsValue.body_type === 'plain_text';
 
     if (context.propsValue.include_original_message && originalMessageContent) {
-      const separator =
-        context.propsValue.body_type === 'html'
-          ? '<br><br>--- Original Message ---<br>'
-          : '\n\n--- Original Message ---\n';
+      const separator = isPlainText
+        ? '\n\n--- Original Message ---\n'
+        : '<br><br>--- Original Message ---<br>';
 
-      const quotedContent =
-        context.propsValue.body_type === 'html'
-          ? originalMessageContent.replace(/\n/g, '<br>')
-          : originalMessageContent;
+      const quotedContent = isPlainText
+        ? originalMessageContent
+        : originalMessageContent.replace(/\n/g, '<br>');
 
       draftBody = draftBody
         ? `${draftBody}${separator}${quotedContent}`
@@ -233,9 +246,8 @@ export const gmailCreateDraftReplyAction = createAction({
       to: toRecipients.join(', '),
       cc: ccRecipients.length > 0 ? ccRecipients.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
-      text:
-        context.propsValue.body_type === 'plain_text' ? draftBody : undefined,
-      html: context.propsValue.body_type === 'html' ? draftBody : undefined,
+      text: isPlainText ? draftBody : undefined,
+      html: isPlainText ? undefined : draftBody,
       attachments: [],
       headers: [
         {
