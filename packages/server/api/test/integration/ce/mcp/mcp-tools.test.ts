@@ -1,5 +1,5 @@
 import { apId } from '@activepieces/core-utils'
-import { FlowActionType, FlowCreatorType, FlowRunStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
+import { FlowActionType, FlowCreatorType, FlowRunStatus, FlowStatus, McpServerType, PackageType, PieceType, ProjectScopedMcpServer, RunEnvironment, StepLocationRelativeToParent } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -318,6 +318,59 @@ describe('MCP Tools integration', () => {
 
         expect(text(result)).toContain('❌')
         expect(text(result)).toContain('invalid')
+    })
+
+    async function buildPublishableFlow(mcp: ProjectScopedMcpServer, flowName: string): Promise<string> {
+        const flowId = await createFlowAndGetId(mcp, flowName)
+        await apUpdateTriggerTool({ mcp }, mockLog).execute({
+            flowId,
+            pieceName: '@activepieces/piece-test-email',
+            triggerName: 'new_email',
+        })
+        await apAddStepTool({ mcp }, mockLog).execute({
+            flowId,
+            parentStepName: 'trigger',
+            stepLocationRelativeToParent: StepLocationRelativeToParent.AFTER,
+            stepType: FlowActionType.CODE,
+            displayName: 'Code',
+        })
+        await apUpdateStepTool({ mcp }, mockLog).execute({
+            flowId,
+            stepName: 'step_1',
+            sourceCode: 'export const code = async () => { return { ok: true }; };',
+            input: {},
+        })
+        return flowId
+    }
+
+    it('9b. ap_lock_and_publish — enables the flow when AP_ENABLE_FLOW_ON_PUBLISH is unset (default)', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await buildPublishableFlow(mcp, 'Publishable Flow Default')
+
+        const result = await apLockAndPublishTool({ mcp }, mockLog).execute({ flowId })
+
+        expect(text(result)).toContain('published and enabled')
+        const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+        expect(flow.status).toBe(FlowStatus.ENABLED)
+    })
+
+    it('9c. ap_lock_and_publish — leaves the flow disabled when AP_ENABLE_FLOW_ON_PUBLISH=false', async () => {
+        const ctx = await createTestContext(app)
+        const mcp = makeMcp(ctx.project.id)
+        const flowId = await buildPublishableFlow(mcp, 'Publishable Flow Disabled')
+
+        process.env.AP_ENABLE_FLOW_ON_PUBLISH = 'false'
+        try {
+            const result = await apLockAndPublishTool({ mcp }, mockLog).execute({ flowId })
+
+            expect(text(result)).toContain('flow left disabled')
+            const flow = await flowService(mockLog).getOnePopulatedOrThrow({ id: flowId, projectId: ctx.project.id })
+            expect(flow.status).toBe(FlowStatus.DISABLED)
+        }
+        finally {
+            delete process.env.AP_ENABLE_FLOW_ON_PUBLISH
+        }
     })
 
     it('10. ap_add_step + ap_add_branch + ap_delete_branch — router workflow', async () => {
