@@ -43,13 +43,48 @@ Dropdown labels should combine the human-readable name with a disambiguator:
 
 ## 2. Write Descriptions That Teach
 
-**BAD:** `description: 'The thread timestamp'`
+**Hard limit: property descriptions must be 70 characters or fewer.** The builder renders anything longer as a truncated line ending in `... show more`, so the user sees a cut-off sentence and a link instead of help. Every `description` on a prop, and every dropdown option `label`, must be readable in full at 70 characters. Put long setup instructions in a `Property.MarkDown()` instead (see §3).
 
-**GOOD:** `description: 'The ts (timestamp) of the parent message to reply in a thread. Get it by clicking the three dots next to a message → Copy link. The timestamp is the number at the end of the URL (e.g. 1710304378.475129).'`
+**Dropdown option labels: one idea per label, code on the second line.** A `DropdownOption` takes an optional `description`, which the builder's select renders as a dimmed second line under the label and includes in the search. Put the human-readable value in `label` and any pattern, code or ID in `description` — never both in the label. The dropdown trigger shows only the label and is about 40 characters wide, so a label carrying two things is guaranteed to truncate.
 
-**BAD:** `description: 'Enter the chat ID'`
+```typescript
+// GOOD — trigger reads "Sun Sep 17 2023 11:23:58"
+{ label: 'Sun Sep 17 2023 11:23:58', value: 'DDD MMM DD YYYY HH:mm:ss', description: 'DDD MMM DD YYYY HH:mm:ss' }
 
-**GOOD:** `description: 'The unique ID of the chat. To find it: 1) Search @getmyid_bot in Telegram, 2) Send /my_id, 3) Copy the number it replies with.'`
+// BAD — trigger truncates mid-token
+{ label: 'DDD MMM DD YYYY HH:mm:ss (Sun Sep 17 2023 11:23:58)', value: 'DDD MMM DD YYYY HH:mm:ss' }
+```
+
+**`width: 'half'` only suits short values.** The step panel is narrow, so a half-width field is roughly 20 characters wide. Use it for a first/last name or a bounded number. Never for a dropdown whose selected label is longer than that, or for a field whose help text then wraps to more lines than the field is tall — stacked full-width fields read better than a cramped two-up row.
+
+**Do not repeat the same example twice in one form.** If a dropdown option already shows the example value, the text field above it should not carry the identical string as its `placeholder`. Point at the neighbouring field in the description instead.
+
+**BAD:** `description: 'The thread timestamp'` — accurate and useless.
+
+**ALSO BAD:** teaches, but blows the limit and renders as a clipped line plus `... show more`:
+
+`description: 'The ts (timestamp) of the parent message to reply in a thread. Get it by clicking the three dots next to a message → Copy link. The timestamp is the number at the end of the URL (e.g. 1710304378.475129).'`
+
+**GOOD:** the description stays inside the limit and the how-to moves to a Markdown block, where it has room to be numbered and formatted:
+
+```typescript
+props: {
+  threadHelp: Property.MarkDown({
+    value: `To reply in a thread, you need the parent message's timestamp:
+
+1. Click the three dots next to the message
+2. Choose **Copy link**
+3. The timestamp is the number at the end of the URL, e.g. \`1710304378.475129\``,
+  }),
+  threadTs: Property.ShortText({
+    displayName: 'Thread Timestamp',
+    description: 'The ts of the parent message to reply under.',
+    required: false,
+  }),
+}
+```
+
+A chat ID works the same way: `description: 'The unique ID of the chat to post in.'`, with the "search @getmyid_bot, send /my_id" steps in the Markdown block above it — never crammed into the description.
 
 ---
 
@@ -243,6 +278,9 @@ PieceAuth.CustomAuth({
 
 - [ ] No prop asks users to type an ID when a dropdown could be used
 - [ ] Every prop has a `description` explaining what it is and how to find it
+- [ ] Every prop `description` and option `label` is 70 characters or fewer (no `show more` truncation)
+- [ ] Option labels hold one idea; patterns, codes and IDs live in the option `description`
+- [ ] No example string appears twice in the same form (placeholder vs. option label)
 - [ ] Complex setup steps use `Property.MarkDown()` with numbered instructions
 - [ ] Optional props have sensible `defaultValue` where applicable
 - [ ] Display names use plain language (`"Create Contact"` not `"POST /contacts"`)
