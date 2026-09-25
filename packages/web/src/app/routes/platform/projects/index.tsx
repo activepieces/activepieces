@@ -101,9 +101,10 @@ export default function ProjectsPage() {
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editDialogInitialValues, setEditDialogInitialValues] =
-    useState<any>(null);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
+  const editDialogProject = allProjects.find(
+    (project) => project.id === editDialogProjectId,
+  );
   const { data: allGlobalConnectionsPage } =
     globalConnectionsQueries.useGlobalConnections({
       request: { limit: 9999 },
@@ -341,10 +342,6 @@ export default function ProjectsPage() {
                 onClick={async (e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  setEditDialogInitialValues({
-                    projectName: row.displayName,
-                    sensitive: row.sensitive,
-                  });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);
                 }}
@@ -439,7 +436,13 @@ export default function ProjectsPage() {
         onClose={() => {
           setEditDialogOpen(false);
         }}
-        initialValues={editDialogInitialValues}
+        initialValues={
+          editDialogProject && {
+            projectName: editDialogProject.displayName,
+            externalId: editDialogProject.externalId ?? undefined,
+            sensitive: editDialogProject.sensitive,
+          }
+        }
         projectId={editDialogProjectId}
       />
     </div>

@@ -25,6 +25,7 @@ import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
+import { projectSettingsFormDefaults } from './form-defaults';
 import { GeneralSettings, FormValues } from './general';
 import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
@@ -42,17 +43,12 @@ interface ProjectSettingsDialogProps {
   open: boolean;
   onClose: () => void;
   initialTab?: TabId;
-  initialValues?: {
-    projectName?: string;
-    externalId?: string;
-  };
 }
 
 export function ProjectSettingsDialog({
   open,
   onClose,
   initialTab = 'general',
-  initialValues,
 }: ProjectSettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
@@ -67,14 +63,7 @@ export function ProjectSettingsDialog({
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
   const form = useForm<FormValues>({
-    defaultValues: {
-      projectName: initialValues?.projectName,
-      icon: project.icon,
-      externalId: initialValues?.externalId,
-      maxConcurrentJobs: project.maxConcurrentJobs,
-      activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
-      sensitive: project.sensitive ?? false,
-    },
+    defaultValues: projectSettingsFormDefaults(project),
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
@@ -105,13 +94,8 @@ export function ProjectSettingsDialog({
 
   useEffect(() => {
     const dialogJustOpened = open && !previousOpenRef.current;
-    if (dialogJustOpened && !isNil(project)) {
-      form.reset({
-        ...initialValues,
-        icon: project.icon,
-        maxConcurrentJobs: project.maxConcurrentJobs,
-        activeFlowsLimit: project.plan?.activeFlowsLimit ?? null,
-      });
+    if (dialogJustOpened) {
+      form.reset(projectSettingsFormDefaults(project));
       setActiveTab(initialTab);
     }
     previousOpenRef.current = open;
