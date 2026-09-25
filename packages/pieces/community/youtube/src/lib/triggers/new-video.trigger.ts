@@ -15,7 +15,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { channelIdentifier } from '../common/props';
 import { newVideoTriggerOutputSchema } from '../output-schemas';
-import { isNil } from '@activepieces/pieces-framework';
+import { isNil, tryCatch } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { load as cheerioLoad } from 'cheerio';
 import FeedParser from 'feedparser';
@@ -344,7 +344,7 @@ function getId(item: { id?: string; guid?: string }) {
 
 async function getChannelId(urlOrId: string) {
   const trimmed = urlOrId.trim();
-  const pageUrl = toChannelPageUrl(trimmed);
+  const pageUrl = await toChannelPageUrl(trimmed);
   if (isNil(pageUrl)) {
     return trimmed;
   }
@@ -363,17 +363,25 @@ async function getChannelId(urlOrId: string) {
   throw new Error('Invalid YouTube channel URL');
 }
 
-function toChannelPageUrl(value: string): string | null {
+async function toChannelPageUrl(value: string): Promise<string | null> {
   if (value.startsWith('@')) {
-    return 'https://www.youtube.com/' + value;
+    return `https://www.youtube.com/${value}`;
   }
-  if (/^https?:\/\//i.test(value)) {
-    return value;
+  if (!value.includes('://') && !value.includes('youtube.com/')) {
+    return null;
   }
-  if (value.includes('youtube.com/')) {
-    return 'https://' + value;
+  const withScheme = value.includes('://') ? value : `https://${value}`;
+  const { data: parsed } = await tryCatch(async () => new URL(withScheme));
+  if (isNil(parsed) || !isYoutubeUrl(parsed)) {
+    throw new Error('Invalid YouTube channel URL');
   }
-  return null;
+  return `https://www.youtube.com${parsed.pathname}`;
+}
+
+function isYoutubeUrl(url: URL): boolean {
+  const host = url.hostname.toLowerCase();
+  const isWeb = url.protocol === 'https:' || url.protocol === 'http:';
+  return isWeb && (host === 'youtube.com' || host.endsWith('.youtube.com'));
 }
 
 async function getRssItems(channelId: string): Promise<any[]> {
