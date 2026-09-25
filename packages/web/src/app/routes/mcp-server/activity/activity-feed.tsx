@@ -1,6 +1,7 @@
 import {
   McpActivityStatus,
   McpOAuthClientKey,
+  PieceAudienceFilter,
   PopulatedMcpActivity,
 } from '@activepieces/shared';
 import { t } from 'i18next';
@@ -81,7 +82,10 @@ export function ActivityFeed({ emptyStateAction }: ActivityFeedProps) {
     () => distinctPieceNames(data?.data ?? []),
     [data?.data],
   );
-  const pieceQueries = piecesHooks.useMultiplePieces({ names: pieceNames });
+  const pieceQueries = piecesHooks.useMultiplePieces({
+    names: pieceNames,
+    audience: PieceAudienceFilter.ALL,
+  });
   const piecesByName = useMemo(
     () =>
       new Map(

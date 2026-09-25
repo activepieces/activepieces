@@ -6,6 +6,7 @@ import {
   FlowTrigger,
   FlowTriggerType,
   flowStructureUtil,
+  PieceAudienceFilter,
 } from '@activepieces/shared';
 import { useQueries } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -19,7 +20,7 @@ import { SearchInput } from '@/components/custom/search-input';
 import { OutputSchema } from '@/components/custom/smart-output-viewer/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
-import { piecesApi } from '@/features/pieces';
+import { pieceQueryKey, piecesApi } from '@/features/pieces';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
@@ -168,12 +169,18 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
 
   const pieceQueries = useQueries({
     queries: piecePairs.map(({ pieceName, pieceVersion }) => ({
-      queryKey: ['piece', pieceName, pieceVersion],
+      queryKey: pieceQueryKey({
+        name: pieceName,
+        version: pieceVersion,
+        locale: i18n.language,
+        audience: PieceAudienceFilter.ALL,
+      }),
       queryFn: () =>
         piecesApi.get({
           name: pieceName,
           version: pieceVersion,
           locale: i18n.language as LocalesEnum,
+          audience: PieceAudienceFilter.ALL,
         }),
       staleTime: Infinity,
     })),
