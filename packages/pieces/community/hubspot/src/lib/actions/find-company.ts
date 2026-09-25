@@ -15,7 +15,7 @@ export const findCompanyAction = createAction({
     name: 'find-company',
     classification: 'SEARCH',
     displayName: 'Find Company',
-    description: 'Finds a company by searching.',
+    description: 'Finds up to 200 companies matching one or two property values.',
     audience: 'both',
     aiMetadata: { description: 'Searches companies via the HubSpot CRM search API, matching on one or two property name/value pairs (exact match, combined as AND), and returns matching companies. Use to locate a company by domain, name, or another property before reading or updating it; prefer Get Company when you already have the company ID. Read-only and idempotent.', idempotent: true },
     outputSchema: companySearchOutputSchema,
@@ -23,41 +23,46 @@ export const findCompanyAction = createAction({
         firstSearchPropertyName: standardObjectPropertiesDropdown(
             {
                 objectType: OBJECT_TYPE.COMPANY,
-                displayName: 'First search property name',
+                displayName: 'Search Property',
+                description: 'The property to compare, such as the company domain.',
                 required: true,
             },
             true,
             true,
         ),
         firstSearchPropertyValue: Property.ShortText({
-            displayName: 'First search property value',
+            displayName: 'Search Value',
+            description: 'Only exact matches are returned.',
             required: true,
         }),
         secondSearchPropertyName: standardObjectPropertiesDropdown(
             {
                 objectType: OBJECT_TYPE.COMPANY,
-                displayName: 'Second search property name',
+                displayName: 'Second Search Property',
+                description: 'Optional second condition; records must match both.',
                 required: false,
+                advanced: true,
             },
             true,
             true,
         ),
         secondSearchPropertyValue: Property.ShortText({
-            displayName: 'Second search property value',
+            displayName: 'Second Search Value',
+            description: 'Ignored unless a second property is also chosen.',
             required: false,
+            advanced: true,
         }),
         markdown: Property.MarkDown({
             variant: MarkdownVariant.INFO,
-            value: `### Properties to retrieve:
-                                                        
-                    name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies
+            value: `Returned by default: name, domain, industry, about_us, phone, address, address2, city, state, zip, country, website, type, description, founded_year, hs_createdate, hs_lastmodifieddate, hs_object_id, is_public, timezone, total_money_raised, total_revenue, owneremail, ownername, numberofemployees, annualrevenue, lifecyclestage, createdate, web_technologies.
 
-                    **Specify here a list of additional properties to retrieve**`,
+Pick more under **Advanced**.`,
         }),
         additionalPropertiesToRetrieve: standardObjectPropertiesDropdown({
             objectType: OBJECT_TYPE.COMPANY,
-            displayName: 'Additional properties to retrieve',
+            displayName: 'Additional Properties to Retrieve',
             required: false,
+            advanced: true,
         }),
     },
     async run(context) {
