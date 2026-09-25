@@ -11,18 +11,19 @@ export const youtubeDownloadCaptionAction = createAction({
   classification: 'READ',
   displayName: 'Download Caption',
   description:
-    'Returns a caption track text by caption ID using the YouTube captions.download endpoint. Requires permission to edit the video, so it only works for captions on videos the authenticated user owns. Auto-generated (asr) caption tracks cannot be downloaded and will return a 403.',
+    "Download a caption track's text. Works only on videos you own.",
   audience: 'human',
   aiMetadata: { description: 'Downloads the raw text of one YouTube caption track identified by its caption ID, optionally emitting it as SRT, VTT, SBV, SCC, or TTML and machine-translating it into a target language code. Use it after List Captions has supplied the caption ID; the endpoint only serves tracks on videos the authenticated account can edit, and auto-generated (asr) tracks are refused with a 403. Read-only and idempotent.', idempotent: true },
   props: {
     captionId: Property.ShortText({
       displayName: 'Caption ID',
-      description: 'The caption track ID to download.',
+      description: "From List Captions. Auto-generated tracks can't be downloaded.",
       required: true,
     }),
     format: Property.StaticDropdown({
-      displayName: 'Format (tfmt)',
-      description: 'Optional output format for the caption track.',
+      displayName: 'Format',
+      description:
+        "File format of the captions. Empty: the track's original format.",
       required: false,
       options: {
         options: [
@@ -35,16 +36,17 @@ export const youtubeDownloadCaptionAction = createAction({
       },
     }),
     targetLanguage: Property.ShortText({
-      displayName: 'Target Language (tlang)',
-      description:
-        'Optional language code for machine-translated captions (for example: en, es, fr).',
+      displayName: 'Target Language',
+      description: 'Translate the captions into this language code.',
+      placeholder: 'es',
       required: false,
     }),
     onBehalfOfContentOwner: Property.ShortText({
       displayName: 'On Behalf Of Content Owner',
       description:
-        'Optional. Intended for YouTube CMS content partners acting on behalf of a content owner.',
+        'Content owner ID, for YouTube partners who manage many channels.',
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

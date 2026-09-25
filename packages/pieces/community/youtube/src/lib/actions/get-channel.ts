@@ -9,7 +9,7 @@ export const youtubeGetChannelAction = createAction({
   name: 'get_channel',
   classification: 'READ',
   displayName: 'Get Channel',
-  description: 'Retrieve a channel by ID or handle, including its subscriber and view counts.',
+  description: "Get a channel's details, including subscriber and view counts.",
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,12 +19,14 @@ export const youtubeGetChannelAction = createAction({
   props: {
     channelId: Property.ShortText({
       displayName: 'Channel ID',
-      description: 'Channel ID starting with `UC`. Leave blank if using a handle.',
+      description: 'Starts with UC. Leave empty to look the channel up by Handle.',
+      placeholder: 'UC_x5XG1OV2P6uZZ5FSM9Ttw',
       required: false,
     }),
     handle: Property.ShortText({
       displayName: 'Handle',
-      description: 'Channel handle such as `@GoogleDevelopers`. Ignored when a Channel ID is given.',
+      description: 'The @name on the channel page. Used only when Channel ID is empty.',
+      placeholder: '@GoogleDevelopers',
       required: false,
     }),
   },
