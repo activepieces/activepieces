@@ -30,6 +30,7 @@ import {
   MultiSelectValue,
 } from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
+import { CommandEmpty } from '@/components/ui/command';
 import {
   FormControl,
   FormField,
@@ -87,6 +88,10 @@ function OAuth2ConnectionSettings({
     grantType === OAuth2GrantType.AUTHORIZATION_CODE;
   const [loading, setLoading] = useState(false);
   const [scopesEditing, setScopesEditing] = useState(false);
+  const [scopeSearch, setScopeSearch] = useState('');
+  const filteredScopes = authProperty.scope.filter((scope) =>
+    scope.toLowerCase().includes(scopeSearch.toLowerCase()),
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -187,6 +192,12 @@ function OAuth2ConnectionSettings({
                           value: scope,
                           label: scope,
                         }))}
+                        onSearch={(keyword) => setScopeSearch(keyword ?? '')}
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setScopeSearch('');
+                          }
+                        }}
                       >
                         <MultiSelectTrigger>
                           {selected.length < 10 ? (
@@ -204,24 +215,31 @@ function OAuth2ConnectionSettings({
                             placeholder={t('Search permissions')}
                           />
                           <MultiSelectList>
-                            <div
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                field.onChange(authProperty.scope.join(' '));
-                              }}
-                            >
-                              <MultiSelectItem>
-                                {t('Select All')}
-                              </MultiSelectItem>
-                            </div>
-                            {authProperty.scope.map((scope) => (
+                            {scopeSearch === '' && (
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  field.onChange(authProperty.scope.join(' '));
+                                }}
+                              >
+                                <MultiSelectItem>
+                                  {t('Select All')}
+                                </MultiSelectItem>
+                              </div>
+                            )}
+                            {filteredScopes.map((scope) => (
                               <MultiSelectItem key={scope} value={scope}>
                                 <span className="truncate min-w-0">
                                   {scope}
                                 </span>
                               </MultiSelectItem>
                             ))}
+                            {filteredScopes.length === 0 && (
+                              <CommandEmpty>
+                                {t('No results found.')}
+                              </CommandEmpty>
+                            )}
                           </MultiSelectList>
                         </MultiSelectContent>
                       </MultiSelect>
