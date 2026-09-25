@@ -74,7 +74,7 @@ export function PlatformSidebar() {
             { to: '/platform/users', label: t('Members'), end: true },
             {
               to: '/platform/users/roles',
-              label: t('Project Roles'),
+              label: t('Roles'),
               locked: !platform.plan.projectRolesEnabled,
               tier: PLATFORM_FEATURES.projectRoles.tier,
             },
