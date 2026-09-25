@@ -12,42 +12,47 @@ export const findCustomObjectAction = createAction({
 	name: 'find-custom-object',
 	classification: 'SEARCH',
 	displayName: 'Find Custom Object',
-	description: 'Finds a custom object by searching.',
+	description: 'Finds up to 200 custom object records matching one or two values.',
 	audience: 'both',
 	aiMetadata: { description: 'Search records of a selected HubSpot custom object type by one or two property/value pairs (matched with equality) and return the matches. Read-only and repeatable. Requires choosing the custom object type; use Create Custom Object to add a new record.', idempotent: true },
 	outputSchema: customObjectSearchOutputSchema,
 	props: {
 		customObjectType: customObjectDropdown,
-		firstSearchPropertyName: customObjectPropertiesDropdown(
-			'First search property name',
-			true,
-			true,
-		),
+		firstSearchPropertyName: customObjectPropertiesDropdown({
+			displayName: 'Search Property',
+			description: 'The property to compare.',
+			required: true,
+			isSingleSelect: true,
+		}),
 		firstSearchPropertyValue: Property.ShortText({
-			displayName: 'First search property value',
+			displayName: 'Search Value',
+			description: 'Only exact matches are returned.',
 			required: true,
 		}),
-		secondSearchPropertyName: customObjectPropertiesDropdown(
-			'Second search property name',
-			false,
-			true,
-		),
-		secondSearchPropertyValue: Property.ShortText({
-			displayName: 'Second search property value',
+		secondSearchPropertyName: customObjectPropertiesDropdown({
+			displayName: 'Second Search Property',
+			description: 'Optional second condition; records must match both.',
 			required: false,
+			isSingleSelect: true,
+			advanced: true,
+		}),
+		secondSearchPropertyValue: Property.ShortText({
+			displayName: 'Second Search Value',
+			description: 'Ignored unless a second property is also chosen.',
+			required: false,
+			advanced: true,
 		}),
 		markdown: Property.MarkDown({
 			variant: MarkdownVariant.INFO,
-			value: `### Properties to retrieve:
-                                    
-                    hs_object_id, hs_lastmodifieddate, hs_createdate   
-                                            
-                    **Specify here a list of additional properties to retrieve**`,
+			value: `Returned by default: hs_object_id, hs_lastmodifieddate, hs_createdate.
+
+Pick more under **Advanced**.`,
 		}),
-		additionalPropertiesToRetrieve: customObjectPropertiesDropdown(
-			'Additional Properties to Retrieve',
-			false,
-		),
+		additionalPropertiesToRetrieve: customObjectPropertiesDropdown({
+			displayName: 'Additional Properties to Retrieve',
+			required: false,
+			advanced: true,
+		}),
 	},
 	async run(context) {
 		const customObjectType = context.propsValue.customObjectType as string;

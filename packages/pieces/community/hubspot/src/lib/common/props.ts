@@ -372,7 +372,7 @@ export const standardObjectDynamicProperties = (objectType: string, excludedProp
 
 export const customObjectDynamicProperties = Property.DynamicProperties({
 	auth: hubspotAuth,
-	displayName: 'Custom Object Properties',
+	displayName: 'Object Properties',
 	refreshers: ['customObjectType'],
 	required: false,
 	props: async ({ auth, customObjectType }) => {
@@ -396,6 +396,7 @@ export const standardObjectPropertiesDropdown = (
 		refreshers: [],
 		required: params.required,
 		description: params.description,
+		advanced: params.advanced,
 		options: async ({ auth }) => {
 			if (!auth) {
 				return buildEmptyList({
@@ -439,16 +440,19 @@ export const standardObjectPropertiesDropdown = (
 	});
 };
 
-export const customObjectPropertiesDropdown = (
-	displayName: string,
-	required: boolean,
+export const customObjectPropertiesDropdown = ({
+	displayName,
+	required,
+	description,
 	isSingleSelect = false,
-) =>
+	advanced = false,
+}: CustomObjectPropertiesDropdownParams) =>
 	Property.DynamicProperties({
 		auth: hubspotAuth,
 		displayName,
 		refreshers: ['customObjectType'],
 		required,
+		advanced,
 		props: async ({ auth, customObjectType }) => {
 			if (!auth || !customObjectType) {
 				return {};
@@ -486,6 +490,7 @@ export const customObjectPropertiesDropdown = (
 
 			props['values'] = dropdownFunction({
 				displayName,
+				description,
 				required,
 				options: {
 					disabled: false,
@@ -499,8 +504,8 @@ export const customObjectPropertiesDropdown = (
 export const workflowIdDropdown = Property.Dropdown({
 	auth: hubspotAuth,
 	displayName: 'Workflow',
+	description: 'Only workflows that are turned on are listed.',
 	refreshers: [],
-	// description: 'Workflow to add contact to',
 	required: true,
 	options: async ({ auth }) => {
 		if (!auth) {
@@ -579,7 +584,7 @@ export const pipelineStageDropdown = (params: DropdownParams) =>
 		options: async ({ auth, pipelineId }) => {
 			if (!auth || !pipelineId) {
 				return buildEmptyList({
-					placeholder: 'Please connect your account and select a pipeline.',
+					placeholder: 'Please select a pipeline first.',
 				});
 			}
 
@@ -644,7 +649,7 @@ export const productDropdown = (params: DropdownParams) =>
 	});
 export const customObjectDropdown = Property.Dropdown({
 	auth: hubspotAuth,
-	displayName: 'Type of Custom Object',
+	displayName: 'Custom Object Type',
 	refreshers: [],
 	required: true,
 	options: async ({ auth }) => {
@@ -674,7 +679,8 @@ export const customObjectDropdown = Property.Dropdown({
 
 export const staticListsDropdown = Property.Dropdown({
 	auth: hubspotAuth,
-	displayName: 'List ID',
+	displayName: 'Contact List',
+	description: 'Only static lists are shown.',
 	refreshers: [],
 	required: true,
 	options: async ({ auth }) => {
@@ -759,7 +765,7 @@ export const fromObjectTypeAssociationDropdown = (params: DropdownParams) =>
 
 export const associationTypeDropdown = Property.Dropdown({
 	auth: hubspotAuth,
-	displayName: 'Type of the association',
+	displayName: 'Association Type',
 	refreshers: ['fromObjectType', 'toObjectType'],
 	required: true,
 	options: async ({ auth, fromObjectType, toObjectType }) => {
@@ -978,6 +984,15 @@ type DropdownParams = {
 	displayName: string;
 	required: boolean;
 	description?: string;
+	advanced?: boolean;
+};
+
+type CustomObjectPropertiesDropdownParams = {
+	displayName: string;
+	required: boolean;
+	description?: string;
+	isSingleSelect?: boolean;
+	advanced?: boolean;
 };
 
 export const 	pageType=Property.StaticDropdown({
