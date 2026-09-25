@@ -48,6 +48,29 @@ import { getDatasetSize } from './lib/actions/get-dataset-size';
 import { getDatasetStatistics } from './lib/actions/get-dataset-statistics';
 import { listDatasetParquetFiles } from './lib/actions/list-dataset-parquet-files';
 import { getDatasetLeaderboard } from './lib/actions/get-dataset-leaderboard';
+import { createRepo } from './lib/actions/create-repo';
+import { updateRepoSettings } from './lib/actions/update-repo-settings';
+import { createRepoBranch } from './lib/actions/create-repo-branch';
+import { deleteRepoBranch } from './lib/actions/delete-repo-branch';
+import { createRepoTag } from './lib/actions/create-repo-tag';
+import { deleteRepoTag } from './lib/actions/delete-repo-tag';
+import { commitFiles } from './lib/actions/commit-files';
+import { createDiscussion } from './lib/actions/create-discussion';
+import { commentOnDiscussion } from './lib/actions/comment-on-discussion';
+import { changeDiscussionStatus } from './lib/actions/change-discussion-status';
+import { renameDiscussion } from './lib/actions/rename-discussion';
+import { pinDiscussion } from './lib/actions/pin-discussion';
+import { deleteDiscussion } from './lib/actions/delete-discussion';
+import { commentOnPaper } from './lib/actions/comment-on-paper';
+import { replyToPaperComment } from './lib/actions/reply-to-paper-comment';
+import { createCollection } from './lib/actions/create-collection';
+import { addCollectionItem } from './lib/actions/add-collection-item';
+import { listGatedAccessRequests } from './lib/actions/list-gated-access-requests';
+import { handleGatedAccessRequest } from './lib/actions/handle-gated-access-request';
+import { upsertSpaceSecret } from './lib/actions/upsert-space-secret';
+import { deleteSpaceSecret } from './lib/actions/delete-space-secret';
+import { upsertSpaceVariable } from './lib/actions/upsert-space-variable';
+import { deleteSpaceVariable } from './lib/actions/delete-space-variable';
 import { huggingFaceAuth } from './lib/auth';
 
 export const huggingface = createPiece({
@@ -108,6 +131,29 @@ export const huggingface = createPiece({
     getDatasetStatistics,
     listDatasetParquetFiles,
     getDatasetLeaderboard,
+    createRepo,
+    updateRepoSettings,
+    createRepoBranch,
+    deleteRepoBranch,
+    createRepoTag,
+    deleteRepoTag,
+    commitFiles,
+    createDiscussion,
+    commentOnDiscussion,
+    changeDiscussionStatus,
+    renameDiscussion,
+    pinDiscussion,
+    deleteDiscussion,
+    commentOnPaper,
+    replyToPaperComment,
+    createCollection,
+    addCollectionItem,
+    listGatedAccessRequests,
+    handleGatedAccessRequest,
+    upsertSpaceSecret,
+    deleteSpaceSecret,
+    upsertSpaceVariable,
+    deleteSpaceVariable,
   ],
   triggers: [],
 });
