@@ -228,7 +228,7 @@ Understanding execution modes is crucial for security and performance. See the [
 
 ## OpenShift and restricted Pod Security
 
-The pod listens on `container.port` (default `8080`), and the chart passes it to the app as `AP_PORT`. A port above 1024 lets the container run as a non-root user with every capability dropped. The Service still exposes port 80 (`service.port`). If you set `AP_PORT` yourself, in `activepiecesConfig` or in a secret listed under `activepiecesEnvVariables`, the chart leaves it alone: set `container.port` to the same number.
+The pod listens on `container.port` (default `8080`), and the chart passes it to the app as `AP_PORT`. A port above 1024 lets the container run as a non-root user with every capability dropped. Some runtimes (containerd 2.x, Docker) already let any user bind low ports by setting `net.ipv4.ip_unprivileged_port_start=0` in the pod; CRI-O, which OpenShift uses, does not, so there port 80 fails with `listen EACCES`. The Service still exposes port 80 (`service.port`). If you set `AP_PORT` yourself, in `activepiecesConfig` or in a secret listed under `activepiecesEnvVariables`, the chart leaves it alone: set `container.port` to the same number.
 
 To run under the Kubernetes `restricted` Pod Security Standard or OpenShift's `restricted-v2` SCC:
 

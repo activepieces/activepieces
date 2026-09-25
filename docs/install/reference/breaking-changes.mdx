@@ -10,7 +10,7 @@ icon: "hammer"
 
 #### The Helm chart's pod listens on port 8080
 
-The chart's default `container.port` is now `8080` instead of `80`, and the chart sets `AP_PORT` to match. A port above 1024 lets the pod run as a non-root user with all capabilities dropped, which OpenShift's `restricted-v2` SCC and the `restricted` Pod Security Standard require. The Service still listens on port 80, so an Ingress or client that goes through the Service is unaffected.
+The chart's default `container.port` is now `8080` instead of `80`, and the chart sets `AP_PORT` to match. A port above 1024 lets the pod run as a non-root user with all capabilities dropped, which OpenShift's `restricted-v2` SCC requires: its runtime (CRI-O) does not allow non-root processes to bind ports below 1024. The Service still listens on port 80, so an Ingress or client that goes through the Service is unaffected.
 
 #### What you need to do
 

@@ -60,7 +60,8 @@ securityContext: {}
 container:
   # Port the server listens on inside the pod; the chart passes it to the app
   # as AP_PORT. It is above 1024 so a non-root container can bind it without
-  # NET_BIND_SERVICE. The Service still exposes service.port (80).
+  # NET_BIND_SERVICE on runtimes that keep net.ipv4.ip_unprivileged_port_start
+  # at 1024 (CRI-O, as on OpenShift). The Service still exposes service.port (80).
   port: 8080
 
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/

@@ -10,6 +10,15 @@ spec:
   containers:
     - name: wget
       image: busybox
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 65534
+        capabilities:
+          drop:
+            - ALL
+        seccompProfile:
+          type: RuntimeDefault
       command: ['wget']
       args: ['{{ include "activepieces.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never
