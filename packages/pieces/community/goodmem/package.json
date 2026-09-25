@@ -1,20 +1,23 @@
 {
   "name": "@activepieces/piece-goodmem",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.lib.json && cp package.json dist/",
     "bundle": "node ../../../../dist/packages/cli/src/index.js pieces bundle",
-    "lint": "eslint 'src/**/*.ts'"
+    "lint": "eslint 'src/**/*.ts'",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@activepieces/pieces-common": "workspace:*",
     "@activepieces/pieces-framework": "workspace:*",
-    "@activepieces/core-piece-types": "workspace:*",
-    "@activepieces/core-utils": "workspace:*"
+    "@pairsystems/goodmem": "0.1.6"
   },
   "devDependencies": {
-    "tslib": "2.6.2"
+    "tslib": "2.6.2",
+    "vitest": "3.2.6"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

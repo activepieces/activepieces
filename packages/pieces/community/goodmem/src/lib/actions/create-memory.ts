@@ -1,118 +1,155 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { goodmemAuth } from '../../index';
-import { getBaseUrl, getCommonHeaders, extractAuthFromContext, spaceIdDropdown } from '../common';
+import { createGoodmemClient } from '../client';
+import { goodmemAuth } from '../auth';
+import { waitForMemory } from '../indexing';
+import { spaceIdDropdown } from '../common';
 
 export const createMemory = createAction({
   auth: goodmemAuth,
   name: 'create_memory',
   displayName: 'Create Memory',
-  description: 'Store a document as a new memory in a space. The memory is processed asynchronously - chunked into searchable pieces and embedded into vectors. Accepts a file or plain text.',
+  description:
+    'Store a document as a new memory in a space. The memory is processed asynchronously - chunked into searchable pieces and embedded into vectors. Accepts a file or plain text.',
   audience: 'both',
-  aiMetadata: { description: 'Stores content as a new memory in a GoodMem space, which is then chunked and embedded asynchronously for later semantic retrieval. Provide the content either as a file or as plain text (the file takes priority when both are given), along with the target space ID. Use it to ingest documents into a memory store. Not idempotent: each call creates a separate memory, so repeated calls produce duplicates.', idempotent: false },
+  aiMetadata: {
+    description:
+      'Stores content as a new memory in a GoodMem space, which is then chunked and embedded asynchronously for later semantic retrieval. Provide the content either as a file or as plain text (the file takes priority when both are given), along with the target space ID. Use it to ingest documents into a memory store. Not idempotent: each call creates a separate memory, so repeated calls produce duplicates.',
+    idempotent: false,
+  },
   props: {
     spaceId: spaceIdDropdown,
     file: Property.File({
       displayName: 'File',
-      description: 'A file to store as memory (PDF, DOCX, image, etc.). Connect the output of a trigger or action that provides a file. Content type is auto-detected from the file extension.',
+      description:
+        'A file to store as memory (PDF, DOCX, image, etc.). Connect the output of a trigger or action that provides a file. Content type is auto-detected from the file extension.',
       required: false,
     }),
     textContent: Property.LongText({
       displayName: 'Text Content',
-      description: 'Plain text content to store as memory (sent as text/plain). If both File and Text Content are provided, the file takes priority.',
+      description:
+        'Plain text content to store as memory (sent as text/plain). If both File and Text Content are provided, the file takes priority.',
       required: false,
     }),
     source: Property.ShortText({
       displayName: 'Source',
-      description: 'Where this memory came from (e.g., "google-drive", "gmail", "manual upload"). Stored in metadata.source',
+      description:
+        'Where this memory came from (e.g., "google-drive", "gmail", "manual upload"). Stored in metadata.source',
       required: false,
     }),
     author: Property.ShortText({
       displayName: 'Author',
-      description: 'The author or creator of the content. Stored in metadata.author',
+      description:
+        'The author or creator of the content. Stored in metadata.author',
       required: false,
     }),
     tags: Property.ShortText({
       displayName: 'Tags',
-      description: 'Comma-separated tags for categorization (e.g., "legal,research,important"). Stored in metadata.tags as an array',
+      description:
+        'Comma-separated tags for categorization (e.g., "legal,research,important"). Stored in metadata.tags as an array',
       required: false,
+    }),
+    waitForIndexing: Property.Checkbox({
+      displayName: 'Wait for Indexing',
+      description:
+        'Wait for this memory to finish processing before the next step. Its ID is returned even if processing fails or the wait expires.',
+      required: false,
+      defaultValue: true,
+    }),
+    indexingTimeout: Property.Number({
+      displayName: 'Indexing Timeout (seconds)',
+      description:
+        'Maximum time to wait for this memory, from 1 to 300 seconds.',
+      required: false,
+      defaultValue: 60,
     }),
     metadata: Property.Json({
       displayName: 'Additional Metadata',
-      description: 'Extra key-value metadata as JSON. Merged with Source, Author, and Tags fields above',
+      description:
+        'Extra key-value metadata as JSON. Merged with Source, Author, and Tags fields above',
       required: false,
     }),
   },
   async run(context) {
-    const { spaceId, file, textContent, source, author, tags, metadata } = context.propsValue;
-    const { baseUrl: rawBaseUrl, apiKey } = extractAuthFromContext(context.auth);
-    const baseUrl = getBaseUrl(rawBaseUrl);
-
-    const requestBody: any = {
+    const {
       spaceId,
+      file,
+      textContent,
+      source,
+      author,
+      tags,
+      metadata,
+      waitForIndexing = true,
+      indexingTimeout = 60,
+    } = context.propsValue;
+    if (
+      waitForIndexing &&
+      (!Number.isFinite(indexingTimeout) ||
+        indexingTimeout < 1 ||
+        indexingTimeout > 300)
+    ) {
+      throw new Error('Indexing timeout must be between 1 and 300 seconds.');
+    }
+    if (
+      metadata !== undefined &&
+      metadata !== null &&
+      (typeof metadata !== 'object' || Array.isArray(metadata))
+    ) {
+      throw new Error('Additional metadata must be a JSON object.');
+    }
+    const mergedMetadata: Record<string, unknown> = {
+      ...metadata,
+      ...(file?.filename ? { filename: file.filename } : {}),
+      ...(source ? { source } : {}),
+      ...(author ? { author } : {}),
+      ...(tags
+        ? {
+            tags: tags
+              .split(',')
+              .map((tag) => tag.trim())
+              .filter(Boolean),
+          }
+        : {}),
     };
-
-    if (file && file.base64) {
-      // File provided — auto-detect content type from extension
-      const detectedMimeType = file.extension
-        ? getMimeType(file.extension)
-        : null;
-      const mimeType = detectedMimeType || 'application/octet-stream';
-
-      // For text file types, decode base64 and send as originalContent
-      if (mimeType.startsWith('text/')) {
-        const decoded = Buffer.from(file.base64, 'base64').toString('utf-8');
-        requestBody.contentType = mimeType;
-        requestBody.originalContent = decoded;
-      } else {
-        // For binary types (PDF, images, etc.), send as base64
-        requestBody.contentType = mimeType;
-        requestBody.originalContentB64 = file.base64;
-      }
-    } else if (textContent) {
-      // Plain text provided
-      requestBody.contentType = 'text/plain';
-      requestBody.originalContent = textContent;
-    } else {
-      return {
-        success: false,
-        error: 'No content provided. Please provide a file or text content.',
-      };
-    }
-
-    const mergedMetadata: any = {};
-    if (metadata && typeof metadata === 'object' && Object.keys(metadata).length > 0) {
-      Object.assign(mergedMetadata, metadata);
-    }
-    if (source) {
-      mergedMetadata.source = source;
-    }
-    if (author) {
-      mergedMetadata.author = author;
-    }
-    if (tags) {
-      mergedMetadata.tags = tags.split(',').map((t: string) => t.trim()).filter((t: string) => t.length > 0);
-    }
-    if (Object.keys(mergedMetadata).length > 0) {
-      requestBody.metadata = mergedMetadata;
-    }
-
-    try {
-      const response = await httpClient.sendRequest({
-        method: HttpMethod.POST,
-        url: `${baseUrl}/v1/memories`,
-        headers: getCommonHeaders(apiKey),
-        body: requestBody,
+    const client = createGoodmemClient(context.auth.props);
+    let memory;
+    if (file) {
+      memory = await client.memories.createFromBytes({
+        spaceId,
+        bytes: file.data,
+        filename: file.filename,
+        contentType:
+          getMimeType(file.extension ?? '') ?? 'application/octet-stream',
+        metadata: mergedMetadata,
       });
-
-      return response.body;
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.message || 'Failed to create memory',
-        details: error.response?.body || error,
-      };
+    } else if (textContent?.trim()) {
+      memory = await client.memories.create({
+        spaceId,
+        originalContent: textContent,
+        metadata: mergedMetadata,
+      });
+    } else {
+      throw new Error('Provide a file or text content.');
     }
+    const indexed = waitForIndexing
+      ? await waitForMemory({
+          client,
+          memory,
+          timeoutMs: indexingTimeout * 1000,
+        })
+      : { memory, timedOut: false, indexingError: undefined };
+    const ready = indexed.memory.processingStatus === 'COMPLETED';
+    return {
+      ...indexed.memory,
+      indexing: {
+        ready,
+        status: indexed.memory.processingStatus,
+        timedOut: indexed.timedOut,
+      },
+      ...(waitForIndexing && !ready ? { partial: true } : {}),
+      ...(indexed.indexingError
+        ? { indexingError: indexed.indexingError }
+        : {}),
+    };
   },
 });
 

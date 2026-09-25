@@ -3740,15 +3740,14 @@
     },
     "packages/pieces/community/goodmem": {
       "name": "@activepieces/piece-goodmem",
-      "version": "0.0.5",
+      "version": "0.1.0",
       "dependencies": {
-        "@activepieces/core-piece-types": "workspace:*",
-        "@activepieces/core-utils": "workspace:*",
-        "@activepieces/pieces-common": "workspace:*",
         "@activepieces/pieces-framework": "workspace:*",
+        "@pairsystems/goodmem": "0.1.6",
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/google-bigquery": {
@@ -13753,6 +13752,9 @@
     "@oxc-resolver/binding-win32-arm64-msvc": ["@oxc-resolver/binding-win32-arm64-msvc@11.24.2", "", { "os": "win32", "cpu": "arm64" }, "sha512-uokJqro2iBqkFvJdKQLP7d8/BUmFwESQFVmIJUQKj1Xn1a/LysJoe1vmeECLF5b3jsV8CAL5sEMJXX6SdK9Nhg=="],
 
     "@oxc-resolver/binding-win32-x64-msvc": ["@oxc-resolver/binding-win32-x64-msvc@11.24.2", "", { "os": "win32", "cpu": "x64" }, "sha512-UqGPmo56KDfLlfXFAFIrNflHT8tFxWGEivWg3Zeyp4Uy2NlKN1FGPr6/BxcLGG3+kZ6Wp14g5Uj+n71boqZfiw=="],
+
+
+    "@pairsystems/goodmem": ["@pairsystems/goodmem@0.1.6", "", {}, "sha512-ag+UWejB8FNZYQpjVtnKjNXXIfdXwTK/zENzTnn6xWRiPmox8nT1TUOKTsH1PRvZKzqhpPboFpnabJv6dBnKzg=="],
 
     "@paralleldrive/cuid2": ["@paralleldrive/cuid2@2.3.1", "", { "dependencies": { "@noble/hashes": "^1.1.5" } }, "sha512-XO7cAxhnTZl0Yggq6jOgjiOHhbgcO4NqFqwSmQpjK3b6TEE6Uj/jfSk6wzYyemh3+I0sHirKSetjQwn5cZktFw=="],
 
