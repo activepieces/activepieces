@@ -6,7 +6,7 @@ import { huggingFaceAuth } from '../auth';
 import { chatCompletionOutputSchema } from '../output-schemas';
 
 export const chatCompletion = createAction({
-  audience: 'both',
+  audience: 'human',
   name: 'chat_completion',
   classification: 'READ',
   auth: huggingFaceAuth,

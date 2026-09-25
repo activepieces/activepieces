@@ -4362,7 +4362,7 @@
     },
     "packages/pieces/community/hugging-face": {
       "name": "@activepieces/piece-hugging-face",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4373,6 +4373,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/hume-ai": {
