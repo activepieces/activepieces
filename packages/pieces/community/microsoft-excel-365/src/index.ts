@@ -45,6 +45,56 @@ import { appendMultipleRowsAction } from './lib/actions/append-multiple-rows';
 import { findWorkbookAction } from './lib/actions/find-workbooks';
 import { findWorksheetAction } from './lib/actions/find-worksheets';
 import { getWorksheetColumnsAction } from './lib/actions/get-wroksheet-columns';
+import { excelAddChart } from './lib/actions/excel-add-chart';
+import { excelAddTableColumn } from './lib/actions/excel-add-table-column';
+import { excelAddTableRows } from './lib/actions/excel-add-table-rows';
+import { excelAddWorksheet } from './lib/actions/excel-add-worksheet';
+import { excelAppendRows } from './lib/actions/excel-append-rows';
+import { excelApplyTableFilter } from './lib/actions/excel-apply-table-filter';
+import { excelClearRange } from './lib/actions/excel-clear-range';
+import { excelClearTableFilter } from './lib/actions/excel-clear-table-filter';
+import { excelConvertTableToRange } from './lib/actions/excel-convert-table-to-range';
+import { excelCreateTable } from './lib/actions/excel-create-table';
+import { excelCreateWorkbook } from './lib/actions/excel-create-workbook';
+import { excelDeleteRange } from './lib/actions/excel-delete-range';
+import { excelDeleteTableColumn } from './lib/actions/excel-delete-table-column';
+import { excelDeleteTableRow } from './lib/actions/excel-delete-table-row';
+import { excelDeleteWorksheet } from './lib/actions/excel-delete-worksheet';
+import { excelExportWorkbookPdf } from './lib/actions/excel-export-workbook-pdf';
+import { excelFindTableRows } from './lib/actions/excel-find-table-rows';
+import { excelGetChartAxis } from './lib/actions/excel-get-chart-axis';
+import { excelGetChartDataLabels } from './lib/actions/excel-get-chart-data-labels';
+import { excelGetChartLegend } from './lib/actions/excel-get-chart-legend';
+import { excelGetCurrentUser } from './lib/actions/excel-get-current-user';
+import { excelGetRange } from './lib/actions/excel-get-range';
+import { excelGetTableColumn } from './lib/actions/excel-get-table-column';
+import { excelGetUsedRange } from './lib/actions/excel-get-used-range';
+import { excelGetWorkbook } from './lib/actions/excel-get-workbook';
+import { excelGetWorksheet } from './lib/actions/excel-get-worksheet';
+import { excelInsertRange } from './lib/actions/excel-insert-range';
+import { excelListChartSeries } from './lib/actions/excel-list-chart-series';
+import { excelListCharts } from './lib/actions/excel-list-charts';
+import { excelListComments } from './lib/actions/excel-list-comments';
+import { excelListNamedItems } from './lib/actions/excel-list-named-items';
+import { excelListTableColumns } from './lib/actions/excel-list-table-columns';
+import { excelListTableRows } from './lib/actions/excel-list-table-rows';
+import { excelListTables } from './lib/actions/excel-list-tables';
+import { excelListWorkbookPermissions } from './lib/actions/excel-list-workbook-permissions';
+import { excelListWorkbooks } from './lib/actions/excel-list-workbooks';
+import { excelListWorksheets } from './lib/actions/excel-list-worksheets';
+import { excelMergeCells } from './lib/actions/excel-merge-cells';
+import { excelProtectWorksheet } from './lib/actions/excel-protect-worksheet';
+import { excelSearchWorkbooks } from './lib/actions/excel-search-workbooks';
+import { excelShareWorkbook } from './lib/actions/excel-share-workbook';
+import { excelSortRange } from './lib/actions/excel-sort-range';
+import { excelSortTable } from './lib/actions/excel-sort-table';
+import { excelUnprotectWorksheet } from './lib/actions/excel-unprotect-worksheet';
+import { excelUpdateChartLegend } from './lib/actions/excel-update-chart-legend';
+import { excelUpdateChart } from './lib/actions/excel-update-chart';
+import { excelUpdateRange } from './lib/actions/excel-update-range';
+import { excelUpdateTable } from './lib/actions/excel-update-table';
+import { excelUpdateWorksheet } from './lib/actions/excel-update-worksheet';
+import { excelUploadWorkbook } from './lib/actions/excel-upload-workbook';
 import { excelCommon } from './lib/common/common';
 import { excelAuth } from './lib/auth';
 
@@ -53,7 +103,7 @@ export const microsoftExcel = createPiece({
 	description: 'Spreadsheet software by Microsoft',
 
 	auth: excelAuth,
-	minimumSupportedRelease: '0.30.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-excel-365.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: [
@@ -97,6 +147,56 @@ export const microsoftExcel = createPiece({
 		getRowAction,
 		getWorksheetAction,
 		renameWorksheetAction,
+		excelAddChart,
+		excelAddTableColumn,
+		excelAddTableRows,
+		excelAddWorksheet,
+		excelAppendRows,
+		excelApplyTableFilter,
+		excelClearRange,
+		excelClearTableFilter,
+		excelConvertTableToRange,
+		excelCreateTable,
+		excelCreateWorkbook,
+		excelDeleteRange,
+		excelDeleteTableColumn,
+		excelDeleteTableRow,
+		excelDeleteWorksheet,
+		excelExportWorkbookPdf,
+		excelFindTableRows,
+		excelGetChartAxis,
+		excelGetChartDataLabels,
+		excelGetChartLegend,
+		excelGetCurrentUser,
+		excelGetRange,
+		excelGetTableColumn,
+		excelGetUsedRange,
+		excelGetWorkbook,
+		excelGetWorksheet,
+		excelInsertRange,
+		excelListChartSeries,
+		excelListCharts,
+		excelListComments,
+		excelListNamedItems,
+		excelListTableColumns,
+		excelListTableRows,
+		excelListTables,
+		excelListWorkbookPermissions,
+		excelListWorkbooks,
+		excelListWorksheets,
+		excelMergeCells,
+		excelProtectWorksheet,
+		excelSearchWorkbooks,
+		excelShareWorkbook,
+		excelSortRange,
+		excelSortTable,
+		excelUnprotectWorksheet,
+		excelUpdateChartLegend,
+		excelUpdateChart,
+		excelUpdateRange,
+		excelUpdateTable,
+		excelUpdateWorksheet,
+		excelUploadWorkbook,
 		createCustomApiCallAction({
 			baseUrl: (auth) => {
 				const cloud = (auth as OAuth2PropertyValue).props?.['cloud'] as string | undefined;
