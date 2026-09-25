@@ -6,13 +6,15 @@ import {
   formatFieldValues,
   makeClient,
 } from '../common';
+import { rowOutputSchema } from '../output-schemas';
 
 export const createRowAction = createAction({
   name: 'baserow_create_row',
   classification: 'WRITE',
+  outputSchema: rowOutputSchema,
   displayName: 'Create Row',
   description: 'Creates a new row in a table.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Creates one new row in a chosen Baserow table, setting field values by field name. Use to add a single record; for many rows at once use Batch Create Rows, and to avoid duplicates by a key field use Upsert Row. Not idempotent — each call inserts another row. Optionally auto-creates missing single/multi-select options referenced in the payload.',
