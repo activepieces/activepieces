@@ -343,15 +343,14 @@ function getId(item: { id?: string; guid?: string }) {
 }
 
 async function getChannelId(urlOrId: string) {
-  if (urlOrId.trim().startsWith('@')) {
-    urlOrId = 'https://www.youtube.com/' + urlOrId;
+  const trimmed = urlOrId.trim();
+  const pageUrl = toChannelPageUrl(trimmed);
+  if (isNil(pageUrl)) {
+    return trimmed;
   }
-  if (!urlOrId.includes('https')) {
-    return urlOrId;
-  }
-  const response = await httpClient.sendRequest<any>({
+  const response = await httpClient.sendRequest<string>({
     method: HttpMethod.GET,
-    url: urlOrId,
+    url: pageUrl,
   });
   const $ = cheerioLoad(response.body);
 
@@ -362,6 +361,19 @@ async function getChannelId(urlOrId: string) {
   }
 
   throw new Error('Invalid YouTube channel URL');
+}
+
+function toChannelPageUrl(value: string): string | null {
+  if (value.startsWith('@')) {
+    return 'https://www.youtube.com/' + value;
+  }
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+  if (value.includes('youtube.com/')) {
+    return 'https://' + value;
+  }
+  return null;
 }
 
 async function getRssItems(channelId: string): Promise<any[]> {
