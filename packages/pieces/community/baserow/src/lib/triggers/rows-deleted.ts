@@ -2,6 +2,7 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
 import { createWebhookTriggerHooks, dynamicWebhookInstructions } from '../common/webhook-trigger';
+import { rowsDeletedTriggerOutputSchema } from '../output-schemas';
 
 const triggerHooks = createWebhookTriggerHooks({
   events: ['rows.deleted'],
@@ -11,6 +12,7 @@ const triggerHooks = createWebhookTriggerHooks({
 export const rowsDeletedTrigger = createTrigger({
   name: 'baserow_rows_deleted',
   classification: 'READ',
+  outputSchema: rowsDeletedTriggerOutputSchema,
   auth: baserowAuth,
   displayName: 'Deleted Rows (Batch)',
   description:
