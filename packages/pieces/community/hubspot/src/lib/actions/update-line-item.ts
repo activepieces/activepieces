@@ -53,9 +53,7 @@ export const updateLineItemAction = createAction({
         const objectProperties = context.propsValue.objectProperties ?? {};
         const additionalPropertiesToRetrieve = context.propsValue.additionalPropertiesToRetrieve ?? [];
 
-        const lineItemProperties: Record<string, string> = {
-            hs_product_id: productId!,
-        };
+        const lineItemProperties: Record<string, string> = {};
 
         if(productId)
         {
