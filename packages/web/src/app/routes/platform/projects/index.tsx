@@ -9,13 +9,14 @@ import { toast } from 'sonner';
 
 import { platformApi } from '@/api/platforms-api';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import {
   DataTable,
   RowDataWithActions,
   BulkAction,
 } from '@/components/custom/data-table';
 import { ConfirmationDeleteDialog } from '@/components/custom/delete-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Item,
   ItemMedia,
@@ -23,9 +24,7 @@ import {
   ItemTitle,
   ItemDescription,
   ItemActions,
-} from '@/components/custom/item';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
@@ -50,7 +49,6 @@ export default function ProjectsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const isEnabled = platform.plan.billedTeamProjectsLimit !== 0;
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
 
@@ -345,6 +343,7 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
+                    sensitive: row.sensitive,
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);
@@ -361,98 +360,88 @@ export default function ProjectsPage() {
   ];
 
   return (
-    <LockedFeatureGuard
-      featureKey="PROJECTS"
-      locked={!isEnabled}
-      lockTitle={t('Unlock Projects')}
-      lockDescription={t(
-        'Orchestrate your automation teams across projects with their own flows, connections and usage quotas',
-      )}
-      lockVideoUrl="https://cdn.activepieces.com/videos/showcase/projects.mp4"
-    >
-      <div className="flex flex-col w-full">
-        <DashboardPageHeader
-          title={t('Projects')}
-          description={t('Manage your automation projects')}
-        />
-        <div className="px-6 pt-4">
-          <Item variant="outline">
-            <ItemMedia variant="icon">
-              <UserCircle />
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
-              <ItemDescription>
-                {t(
-                  'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
-                )}
-              </ItemDescription>
-            </ItemContent>
-            <ItemActions>
-              <Switch
-                checked={platform.autoCreatePersonalProjects}
-                onCheckedChange={(checked) =>
-                  toggleAutoCreatePersonalProjects(checked)
-                }
-                disabled={isAutoCreatePersonalProjectsPending}
-              />
-            </ItemActions>
-          </Item>
-        </div>
-        <DataTable
-          emptyStateTextTitle={t('No projects found')}
-          emptyStateTextDescription={t(
-            'Start by creating projects to manage your automation teams',
-          )}
-          emptyStateIcon={<Package className="size-14" />}
-          onRowClick={async (project) => {
-            await projectCollectionUtils.setCurrentProject(project.id);
-            navigate('/');
-          }}
-          filters={[
-            {
-              type: 'input',
-              title: t('Name'),
-              accessorKey: 'displayName',
-              icon: CheckIcon,
-            },
-            {
-              type: 'select',
-              title: t('Type'),
-              accessorKey: 'type',
-              options: Object.values(ProjectType).map((type) => {
-                return {
-                  label:
-                    formatUtils.convertEnumToHumanReadable(type) + ' Project',
-                  value: type,
-                };
-              }),
-              icon: CheckIcon,
-            },
-          ]}
-          columns={columnsWithCheckbox}
-          page={{
-            data: allProjectsWithGlobalConnectionsCount,
-            next: null,
-            previous: null,
-          }}
-          isLoading={false}
-          isError={false}
-          errorStateEntity={t('projects')}
-          clientPagination={true}
-          bulkActions={bulkActions}
-          toolbarButtons={toolbarButtons}
-          actions={actions}
-        />
-        <EditProjectDialog
-          open={editDialogOpen}
-          onClose={() => {
-            setEditDialogOpen(false);
-          }}
-          initialValues={editDialogInitialValues}
-          projectId={editDialogProjectId}
-        />
+    <div className="flex flex-col w-full">
+      <DashboardPageHeader
+        title={t('Projects')}
+        description={t('Manage your automation projects')}
+      />
+      <div className="px-6 pt-4">
+        <Item variant="outline">
+          <ItemMedia variant="icon">
+            <UserCircle />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{t('Automatic personal project creation')}</ItemTitle>
+            <ItemDescription>
+              {t(
+                'Create a personal project for every new user on signup. Turn off if you provision users into team projects manually (e.g. via SSO or SCIM).',
+              )}
+            </ItemDescription>
+          </ItemContent>
+          <ItemActions>
+            <Switch
+              checked={platform.autoCreatePersonalProjects}
+              onCheckedChange={(checked) =>
+                toggleAutoCreatePersonalProjects(checked)
+              }
+              disabled={isAutoCreatePersonalProjectsPending}
+            />
+          </ItemActions>
+        </Item>
       </div>
-    </LockedFeatureGuard>
+      <DataTable
+        emptyStateTextTitle={t('No projects found')}
+        emptyStateTextDescription={t(
+          'Start by creating projects to manage your automation teams',
+        )}
+        emptyStateIcon={<Package className="size-14" />}
+        onRowClick={async (project) => {
+          await projectCollectionUtils.setCurrentProject(project.id);
+          navigate('/');
+        }}
+        filters={[
+          {
+            type: 'input',
+            title: t('Name'),
+            accessorKey: 'displayName',
+            icon: CheckIcon,
+          },
+          {
+            type: 'select',
+            title: t('Type'),
+            accessorKey: 'type',
+            options: Object.values(ProjectType).map((type) => {
+              return {
+                label:
+                  formatUtils.convertEnumToHumanReadable(type) + ' Project',
+                value: type,
+              };
+            }),
+            icon: CheckIcon,
+          },
+        ]}
+        columns={columnsWithCheckbox}
+        page={{
+          data: allProjectsWithGlobalConnectionsCount,
+          next: null,
+          previous: null,
+        }}
+        isLoading={false}
+        isError={false}
+        errorStateEntity={t('projects')}
+        clientPagination={true}
+        bulkActions={bulkActions}
+        toolbarButtons={toolbarButtons}
+        actions={actions}
+      />
+      <EditProjectDialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+        }}
+        initialValues={editDialogInitialValues}
+        projectId={editDialogProjectId}
+      />
+    </div>
   );
 }

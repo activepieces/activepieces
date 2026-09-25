@@ -11,6 +11,7 @@ import {
 } from '@activepieces/pieces-common';
 import { APITableCommon, makeClient } from '../common';
 import dayjs from 'dayjs';
+import { newRecordTriggerOutputSchema } from '../output-schemas';
 
 const polling: Polling<
    AppConnectionValueForAuthProperty<typeof APITableAuth>,
@@ -52,6 +53,7 @@ export const newRecordTrigger = createTrigger({
     space_id: APITableCommon.space_id,
     datasheet_id: APITableCommon.datasheet_id,
   },
+  outputSchema: newRecordTriggerOutputSchema,
   sampleData: {
     recordId: 'rec2T5ppW1Mal',
     createdAt: 1689772153000,

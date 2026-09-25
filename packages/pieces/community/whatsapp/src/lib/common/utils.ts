@@ -7,9 +7,9 @@ import {
 import { whatsappAuth } from '../auth';
 import {
 	Property,
-	PiecePropValueSchema,
 	DynamicPropsValue,
 	DropdownOption,
+	MarkdownVariant,
 } from '@activepieces/pieces-framework';
 
 export const supportedMediaTypes = ['image', 'audio', 'document', 'sticker', 'video'];
@@ -20,14 +20,14 @@ export const mediaTypeSupportsCaption = (type: string) =>
 export const commonProps = {
 	phone_number_id: Property.Dropdown({
 		auth: whatsappAuth,
-		displayName: 'Phone Number ID',
-		description: 'Phone number ID that will be used to send the message.',
+		displayName: 'From Phone Number',
+		description: 'The business number the message is sent from.',
 		refreshers: [],
 		required: true,
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect account first',
+					placeholder: 'Please connect your account first',
 					disabled: true,
 					options: [],
 				};
@@ -38,16 +38,16 @@ export const commonProps = {
 			const options: DropdownOption<string>[] = [];
 
 			let hasMore = false;
-			let cursor;
+			let cursor: string | undefined;
 
 			do {
 				const qs: QueryParams = {
 					fields: 'verified_name,id,display_phone_number',
-					limit: '1',
+					limit: '100',
 				};
 				if (cursor) qs['after'] = cursor;
 
-				const response = await httpClient.sendRequest({
+				const response = await httpClient.sendRequest<PhoneNumbersPage>({
 					method: HttpMethod.GET,
 					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/phone_numbers`,
 					authentication: {
@@ -57,21 +57,31 @@ export const commonProps = {
 					queryParams: qs,
 				});
 
-				for (const phoneNumber of response.body.data) {
+				for (const phoneNumber of response.body.data ?? []) {
 					options.push({
-						label: `${phoneNumber.verified_name as string} : ${
-							phoneNumber.display_phone_number as string
-						}`,
-						value: phoneNumber.id as string,
+						label: `${phoneNumber.verified_name} (${phoneNumber.display_phone_number})`,
+						value: phoneNumber.id,
 					});
 				}
 
-				if (response.body.paging.next) {
-					(hasMore = true), (cursor = response.body.paging.cursors.after);
+				const nextPage = response.body.paging?.next;
+				const nextCursor = response.body.paging?.cursors?.after;
+
+				if (nextPage && nextCursor) {
+					hasMore = true;
+					cursor = nextCursor;
 				} else {
 					hasMore = false;
 				}
 			} while (hasMore);
+
+			if (options.length === 0) {
+				return {
+					placeholder: 'No phone numbers found in this account',
+					disabled: false,
+					options: [],
+				};
+			}
 
 			return {
 				disabled: false,
@@ -80,14 +90,15 @@ export const commonProps = {
 		},
 	}),
 	message_template_id: Property.Dropdown({
-		displayName: 'Message Template ID',
+		displayName: 'Template',
+		description: 'Only templates approved by WhatsApp are delivered.',
 		refreshers: [],
 		required: true,
 		auth: whatsappAuth,
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect account first',
+					placeholder: 'Please connect your account first',
 					disabled: true,
 					options: [],
 				};
@@ -98,16 +109,16 @@ export const commonProps = {
 			const options: DropdownOption<string>[] = [];
 
 			let hasMore = false;
-			let cursor;
+			let cursor: string | undefined;
 
 			do {
 				const qs: QueryParams = {
 					fields: 'id,name,language',
-					limit: '1',
+					limit: '100',
 				};
 				if (cursor) qs['after'] = cursor;
 
-				const response = await httpClient.sendRequest({
+				const response = await httpClient.sendRequest<TemplatesPage>({
 					method: HttpMethod.GET,
 					url: `https://graph.facebook.com/v20.0/${authValue.businessAccountId}/message_templates`,
 					authentication: {
@@ -117,19 +128,31 @@ export const commonProps = {
 					queryParams: qs,
 				});
 
-				for (const template of response.body.data) {
+				for (const template of response.body.data ?? []) {
 					options.push({
-						label: `${template.name as string} (${template.language as string})`,
-						value: template.id as string,
+						label: `${template.name} (${template.language})`,
+						value: template.id,
 					});
 				}
 
-				if (response.body.paging.next) {
-					(hasMore = true), (cursor = response.body.paging.cursors.after);
+				const nextPage = response.body.paging?.next;
+				const nextCursor = response.body.paging?.cursors?.after;
+
+				if (nextPage && nextCursor) {
+					hasMore = true;
+					cursor = nextCursor;
 				} else {
 					hasMore = false;
 				}
 			} while (hasMore);
+
+			if (options.length === 0) {
+				return {
+					placeholder: 'No message templates found',
+					disabled: false,
+					options: [],
+				};
+			}
 
 			return {
 				disabled: false,
@@ -140,17 +163,18 @@ export const commonProps = {
 
 	message_template_fields: Property.DynamicProperties({
 		displayName: 'Template Fields',
+		description: 'Fill in each placeholder of the selected template.',
 		refreshers: ['message_template_id'],
 		required: true,
 		auth: whatsappAuth,
-			props: async ({ auth, message_template_id }) => {
+		props: async ({ auth, message_template_id }) => {
 			if (!auth) return {};
 			if (!message_template_id) return {};
 
 			const authValue = auth.props;
-			const templateId = message_template_id as unknown as string;
+			const templateId = String(message_template_id);
 
-			const response = await httpClient.sendRequest({
+			const response = await httpClient.sendRequest<TemplateDetails>({
 				url: `https://graph.facebook.com/v20.0/${templateId}`,
 				method: HttpMethod.GET,
 				authentication: {
@@ -163,13 +187,11 @@ export const commonProps = {
 			const headerComponentFields: DynamicPropsValue = {};
 			const buttonComponentFields: DynamicPropsValue = {};
 
-			for (const component of response.body.components) {
+			for (const component of response.body.components ?? []) {
 				if (component.type === 'BODY') {
-					// https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components#syntax
 					bodyComponentFields['BODY_markdown'] = Property.MarkDown({
-						value: `
-						**Body :**
-						${component.text}`,
+						value: `**Body**\n\n${escapeTemplatePlaceholders(component.text ?? '')}`,
+						variant: MarkdownVariant.BORDERLESS,
 					});
 
 					const bodyTextVariables = component.text?.match(/{{(\d+)}}/g) ?? [];
@@ -181,11 +203,9 @@ export const commonProps = {
 						});
 					}
 				} else if (component.type === 'HEADER' && component.format === 'TEXT') {
-					// https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components#text-headers
 					headerComponentFields['HEADER_markdown'] = Property.MarkDown({
-						value: `
-						**Header :**
-						${component.text}`,
+						value: `**Header**\n\n${escapeTemplatePlaceholders(component.text ?? '')}`,
+						variant: MarkdownVariant.BORDERLESS,
 					});
 
 					const headerTextVariables = component.text?.match(/{{(\d+)}}/g) ?? [];
@@ -197,8 +217,7 @@ export const commonProps = {
 						});
 					}
 				} else if (component.type === 'BUTTONS') {
-					// https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components#url-buttons
-					for (const button of component.buttons) {
+					for (const button of component.buttons ?? []) {
 						if (button.type === 'URL') {
 							const buttonURLTextVariables = button.url?.match(/{{(\d+)}}/g) ?? [];
 
@@ -222,4 +241,46 @@ export const commonProps = {
 			return templateFields;
 		},
 	}),
+};
+
+function escapeTemplatePlaceholders(text: string) {
+	return text.replace(/{{(\d+)}}/g, '`{`{$1`}`}');
+}
+
+type Paging = {
+	next?: string;
+	cursors?: {
+		after?: string;
+	};
+};
+
+type PhoneNumbersPage = {
+	data?: {
+		id: string;
+		verified_name: string;
+		display_phone_number: string;
+	}[];
+	paging?: Paging;
+};
+
+type TemplatesPage = {
+	data?: {
+		id: string;
+		name: string;
+		language: string;
+	}[];
+	paging?: Paging;
+};
+
+type TemplateDetails = {
+	components?: {
+		type: string;
+		format?: string;
+		text?: string;
+		buttons?: {
+			type: string;
+			text: string;
+			url?: string;
+		}[];
+	}[];
 };

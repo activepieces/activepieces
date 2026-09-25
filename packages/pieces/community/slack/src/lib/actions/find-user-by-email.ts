@@ -20,6 +20,8 @@ export const findUserByEmailAction = createAction({
   props: {
     email: Property.ShortText({
       displayName: 'Email',
+      description: 'Must match the email on the Slack profile.',
+      placeholder: 'jane@example.com',
       required: true,
     }),
   },

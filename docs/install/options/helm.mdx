@@ -13,87 +13,37 @@ This guide walks you through deploying Activepieces on Kubernetes using the offi
 - Helm 3.x installed
 - kubectl configured to access your cluster
 
-## Using External PostgreSQL and Redis
+When `helm install` or `helm upgrade` talks to a cluster without [Argo Rollouts](https://argoproj.github.io/rollouts/), the chart deploys a `StatefulSet`; otherwise it deploys an Argo `Rollout`. A release that already runs as a `Rollout` stays one. Rendering without a cluster (`helm template`, Kustomize) produces a `Rollout`, so set `workloadType: statefulset` there, or pass the cluster's API versions as Argo CD does. The StatefulSet volume uses the `local-path` storage class unless you set `persistence.storageClassName`.
 
-The Helm chart supports using external PostgreSQL and Redis services instead of deploying the Bitnami subcharts.
+## Database and Redis
 
-### Using External PostgreSQL
+The chart reads PostgreSQL and Redis settings from the secrets listed under `activepiecesEnvVariables` in `values.yaml`. Create them before installing:
 
-To use an external PostgreSQL instance:
+Put the settings in env files, so passwords stay out of your shell history and process list. Run `umask 077` first so only you can read them:
 
-```yaml
-postgresql:
-  enabled: false  # Disable Bitnami PostgreSQL subchart
-  host: "your-postgres-host.example.com"
-  port: 5432
-  useSSL: true  # Enable SSL if required
-  auth:
-    database: "activepieces"
-    username: "postgres"
-    password: "your-password"
-    # Or use external secret reference:
-    # externalSecret:
-    #   name: "postgresql-credentials"
-    #   key: "password"
+```bash title="db.env"
+AP_POSTGRES_HOST=your-postgres-host.example.com
+AP_POSTGRES_PORT=5432
+AP_POSTGRES_DATABASE=activepieces
+AP_POSTGRES_USERNAME=postgres
+AP_POSTGRES_PASSWORD=your-password
 ```
 
-Alternatively, you can use a connection URL:
-
-```yaml
-postgresql:
-  enabled: false
-  url: "postgresql://user:password@host:5432/database?sslmode=require"
+```bash title="redis.env"
+AP_REDIS_HOST=your-redis-host.example.com
+AP_REDIS_PORT=6379
+AP_REDIS_PASSWORD=your-password
 ```
 
-### Using External Redis
-
-To use an external Redis instance:
-
-```yaml
-redis:
-  enabled: false  # Disable Bitnami Redis subchart
-  host: "your-redis-host.example.com"
-  port: 6379
-  useSSL: false  # Enable SSL if required
-  auth:
-    enabled: true
-    password: "your-password"
-    # Or use external secret reference:
-    # externalSecret:
-    #   name: "redis-credentials"
-    #   key: "password"
+```bash
+kubectl create secret generic activepieces-db-secrets --from-env-file=db.env
+kubectl create secret generic activepieces-redis-secrets --from-env-file=redis.env
+rm db.env redis.env
 ```
 
-Alternatively, you can use a connection URL:
+To run PostgreSQL and Redis inside the cluster instead, set `postgresql.enabled: true` / `redis.enabled: true`. The hosts are `<release>-postgresql` and `<release>-redis-master`.
 
-```yaml
-redis:
-  enabled: false
-  url: "redis://:password@host:6379/0"
-```
-
-### External Secret References
-
-For better security, you can reference passwords from existing Kubernetes secrets (useful with External Secrets Operator or Sealed Secrets):
-
-```yaml
-postgresql:
-  enabled: false
-  host: "your-postgres-host.example.com"
-  auth:
-    externalSecret:
-      name: "postgresql-credentials"
-      key: "password"
-
-redis:
-  enabled: false
-  host: "your-redis-host.example.com"
-  auth:
-    enabled: true
-    externalSecret:
-      name: "redis-credentials"
-      key: "password"
-```
+`AP_JWT_SECRET` and `AP_ENCRYPTION_KEY` are generated on first install. To bring your own, put them in `activepieces-auth-secrets`; that secret takes precedence.
 
 ## Quick Start
 
@@ -107,7 +57,9 @@ cd activepieces
 ### 2. Install Dependencies
 
 ```bash
-helm dependency update
+helm repo add mittwald https://helm.mittwald.de
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm dependency build deploy/activepieces-helm
 ```
 
 ### 3. Create a Values File
@@ -115,20 +67,27 @@ helm dependency update
 Create a `my-values.yaml` file with your configuration. You can use the [example values file](https://github.com/activepieces/activepieces/blob/main/deploy/activepieces-helm/values.yaml) as a reference.
 The Helm chart has sensible defaults for required values while leaving the optional ones empty, but you should customize these core values for production.
 
-Include these so you can activate a [license key](/install/configure-operate/enterprise-license) later:
+Set the core settings in the `activepieces-config-secrets` secret the chart already reads. `AP_EDITION` and `AP_EXECUTION_MODE` let you activate a [license key](/install/configure-operate/enterprise-license) later:
+
+```bash
+kubectl create secret generic activepieces-config-secrets \
+  --from-literal=AP_FRONTEND_URL=https://activepieces.yourdomain.com \
+  --from-literal=AP_EDITION=ee \
+  --from-literal=AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
+```
+
+`AP_FRONTEND_URL` is required, and it must also be reachable from inside the pod: the worker downloads pieces through it.
 
 ```yaml
-activepiecesConfig:
-  AP_EDITION: "ee"
-  AP_EXECUTION_MODE: "SANDBOX_CODE_ONLY"
+persistence:
+  storageClassName: "your-storage-class"  # see `kubectl get storageclass`
 ```
 
 <Warning>
-Set both, and set each variable in **one place only**. `activepiecesConfig` writes plain values into the pod, while `activepiecesEnvVariables` pulls the same names from Kubernetes secrets you create yourself and renders *after* it, so a secret that holds the key wins. The chart lists `AP_EDITION` and `AP_EXECUTION_MODE` under `activepieces-config-secrets` by default, so either remove them from there or set them in that secret instead of here.
+Set `AP_EDITION` and `AP_EXECUTION_MODE` together: `AP_EDITION=ee` with the default execution mode is rejected at startup and the app will not boot.
 
-`AP_EDITION=ee` with the default execution mode is rejected at startup and the app will not boot.
+Set each variable in **one place only**. A name that is both in `activepiecesConfig` and in an `activepiecesEnvVariables` list is rendered twice, which Helm 4 rejects (`duplicate entries for key`).
 </Warning>
-
 
 ### 4. Install Activepieces
 
@@ -147,7 +106,7 @@ kubectl get services
 
 ## Production Checklist
 
-- [ ] Set `frontendUrl` to your actual domain
+- [ ] Set `AP_FRONTEND_URL` to your actual domain
 - [ ] Set strong passwords for PostgreSQL and Redis (or keep auto-generated)
 - [ ] Configure proper ingress with TLS
 - [ ] Set appropriate resource limits
@@ -160,29 +119,97 @@ kubectl get services
 
 ```bash
 # Update dependencies
-helm dependency update
+helm dependency build deploy/activepieces-helm
 
 # Upgrade release
 helm upgrade activepieces deploy/activepieces-helm -f my-values.yaml
 
-# Check upgrade status
-kubectl rollout status deployment/activepieces
+# Check upgrade status (StatefulSet)
+kubectl rollout status statefulset/activepieces
+# Check upgrade status (Argo Rollout)
+kubectl wait --for=jsonpath='{.status.phase}'=Healthy rollout/activepieces --timeout=10m
+```
+
+With Helm 4 and `workloadType: rollout`, add `--force-conflicts` to `helm upgrade`. Argo Rollouts owns the Service selectors, and Helm 4's server-side apply stops on that conflict otherwise.
+
+The bundled secret generator creates cluster-wide RBAC named after the release, so give each release in a cluster its own name. A second release can also set `kubernetes-secret-generator.enabled: false`, because the first release's generator already serves every namespace.
+
+## Migrating from chart 0.3.x
+
+Chart 0.4.0 replaced the `activepieces:` block and keys such as `postgresql.host` and `redis.host` with the secrets listed under `activepiecesEnvVariables`. `helm install` and `helm upgrade` print a warning that names every old key they ignore. Run these steps before upgrading, with `RELEASE` set to your release name.
+
+**1. Keep your database.** Chart 0.3.x ran PostgreSQL and Redis inside the cluster by default. If you used them, keep them enabled in your values:
+
+```yaml
+postgresql:
+  enabled: true
+  image:
+    repository: bitnamilegacy/postgresql
+redis:
+  enabled: true
+  image:
+    repository: bitnamilegacy/redis
+```
+
+Then copy the database and Redis settings your running app uses today, so custom names, users and hosts carry over. This works the same for bundled and external databases:
+
+```bash
+umask 077
+FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
+kubectl exec "deploy/$FULLNAME" -- printenv > app.env
+grep '^AP_POSTGRES_' app.env | grep -v '^AP_POSTGRES_SSL_CA=' > db.env
+grep '^AP_REDIS_' app.env | grep -v '^AP_REDIS_TYPE=DEFAULT$' > redis.env
+kubectl create secret generic activepieces-db-secrets --from-env-file=db.env
+kubectl create secret generic activepieces-redis-secrets --from-env-file=redis.env
+if kubectl exec "deploy/$FULLNAME" -- printenv AP_POSTGRES_SSL_CA > ca.pem; then
+  kubectl patch secret activepieces-db-secrets -p "{\"data\":{\"AP_POSTGRES_SSL_CA\":\"$(base64 < ca.pem | tr -d '\n')\"}}"
+fi
+rm app.env db.env redis.env ca.pem
+```
+
+If a variable in those files is not listed under `activepiecesEnvVariables` (for example `AP_POSTGRES_URL` or `AP_REDIS_SENTINEL_HOSTS`), add it to that list in your values.
+
+**2. Move your settings.** Each `activepieces.<name>` value becomes an `AP_*` variable in the `activepieces-config-secrets` secret, for example `frontendUrl` → `AP_FRONTEND_URL`, `edition` → `AP_EDITION` and `executionMode` → `AP_EXECUTION_MODE`. Set `persistence.storageClassName` to a StorageClass your cluster has (`kubectl get storageclass`); chart 0.3.x used the cluster default, and `persistence.storageClass` is no longer read.
+
+```bash
+kubectl create secret generic activepieces-config-secrets \
+  --from-literal=AP_FRONTEND_URL=https://activepieces.yourdomain.com
+```
+
+**3. Keep your keys.** Your encryption key and JWT secret are carried over automatically. If you deploy with `helm template`, Argo CD or Kustomize, the chart cannot see them, so copy the ones your running app uses into `activepieces-auth-secrets` first:
+
+```bash
+umask 077
+FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
+kubectl exec "deploy/$FULLNAME" -- printenv | grep -E '^AP_(ENCRYPTION_KEY|JWT_SECRET)=' > auth.env
+kubectl create secret generic activepieces-auth-secrets --from-env-file=auth.env
+rm auth.env
+```
+
+**4. Upgrade.** Pin `image.tag` to the version you run today, upgrade the chart, then move to a newer image in a separate step. The app now runs as a StatefulSet (or an Argo `Rollout`) instead of a Deployment, and its piece cache volume is recreated.
+
+If you already upgraded with the old values and the new pod is stuck in `Pending` (for example `storageclass "local-path" not found`), Kubernetes will not let the chart change the volume. Delete the StatefulSet and its empty cache volume, then upgrade again. The pod never started, so nothing is lost:
+
+```bash
+FULLNAME=$(kubectl get secret -l app.kubernetes.io/instance="$RELEASE" -o name | sed -n 's|^secret/\(.*\)-jwt-secret$|\1|p')
+kubectl delete statefulset "$FULLNAME"
+kubectl delete pvc "cache-$FULLNAME-0"
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Pod won't start**: Check logs with `kubectl logs deployment/activepieces`
+1. **Pod won't start**: Check logs with `kubectl logs -l app.kubernetes.io/instance=activepieces,app.kubernetes.io/name=activepieces`
 2. **Database connection**: Verify PostgreSQL credentials and connectivity
-3. **Frontend URL**: Ensure `frontendUrl` is accessible from external sources
+3. **Frontend URL**: Ensure `AP_FRONTEND_URL` is accessible from external sources
 4. **Webhooks not working**: Check ingress configuration and DNS resolution
 
 ### Useful Commands
 
 ```bash
 # View logs
-kubectl logs deployment/activepieces -f
+kubectl logs -l app.kubernetes.io/instance=activepieces,app.kubernetes.io/name=activepieces -f
 
 # Port forward for testing
 kubectl port-forward svc/activepieces 4200:80 --namespace default

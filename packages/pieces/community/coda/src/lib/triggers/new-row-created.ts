@@ -8,6 +8,7 @@ import { codaAuth } from '../auth';
 import { CodaRow, codaClient } from '../common/types';
 import dayjs from 'dayjs';
 import { docIdDropdown, tableIdDropdown } from '../common/props';
+import { newRowCreatedTriggerOutputSchema } from '../output-schemas';
 
 type Props = {
 	tableId: string;
@@ -65,6 +66,7 @@ export const newRowCreatedTrigger = createTrigger({
 		docId: docIdDropdown,
 		tableId: tableIdDropdown,
 	},
+	outputSchema: newRowCreatedTriggerOutputSchema,
 	type: TriggerStrategy.POLLING,
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {

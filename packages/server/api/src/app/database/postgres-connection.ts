@@ -432,6 +432,19 @@ import { DropTeamsBotInstallation1836000000000 } from './migration/postgres/1836
 import { AddAiProviderStatus1837000000000 } from './migration/postgres/1837000000000-AddAiProviderStatus'
 import { AddMcpOAuthTokenLastUsedAndClientKey1838000000000 } from './migration/postgres/1838000000000-AddMcpOAuthTokenLastUsedAndClientKey'
 import { AddFlowProjectIdExternalIdUniqueIndex1839000000000 } from './migration/postgres/1839000000000-AddFlowProjectIdExternalIdUniqueIndex'
+import { AddFlowApprovalWorkflow1840000000000 } from './migration/postgres/1840000000000-AddFlowApprovalWorkflow'
+import { AddPlatformConfiguration1841000000000 } from './migration/postgres/1841000000000-AddPlatformConfiguration'
+import { AddAgentRunsIndex1842000000000 } from './migration/postgres/1842000000000-AddAgentRunsIndex'
+import { AddAgentConversationFlowRunId1843000000000 } from './migration/postgres/1843000000000-AddAgentConversationFlowRunId'
+import { AddMcpActivity1844000000000 } from './migration/postgres/1844000000000-AddMcpActivity'
+import { AddMaxBarrierSignalsToPlatformConfiguration1845000000000 } from './migration/postgres/1845000000000-AddMaxBarrierSignalsToPlatformConfiguration'
+import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/1846000000000-NullOrphanFolderReferences'
+import { IndexWaitpointLookups1847000000000 } from './migration/postgres/1847000000000-IndexWaitpointLookups'
+import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
+import { AddMcpOAuthCodeNonce1851000000000 } from './migration/postgres/1851000000000-AddMcpOAuthCodeNonce'
+import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
+import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000000000-AddFlowTombstoneIndex'
+import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -879,6 +892,19 @@ export const getMigrations = (): (new () => Migration)[] => {
         AddAiProviderStatus1837000000000,
         AddMcpOAuthTokenLastUsedAndClientKey1838000000000,
         AddFlowProjectIdExternalIdUniqueIndex1839000000000,
+        AddFlowApprovalWorkflow1840000000000,
+        AddPlatformConfiguration1841000000000,
+        AddAgentRunsIndex1842000000000,
+        AddAgentConversationFlowRunId1843000000000,
+        AddMcpActivity1844000000000,
+        AddMaxBarrierSignalsToPlatformConfiguration1845000000000,
+        NullOrphanFolderReferences1846000000000,
+        IndexWaitpointLookups1847000000000,
+        AddAgentConversationAiCredits1850000000000,
+        AddMcpOAuthCodeNonce1851000000000,
+        FlowExternalIdUniqueIgnoresDeleting1855000000000,
+        AddFlowTombstoneIndex1856000000000,
+        AddWaitpointDeadLetteredAt1857000000000,
     ]
     return migrations
 }

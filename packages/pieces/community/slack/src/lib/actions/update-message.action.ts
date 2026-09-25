@@ -33,8 +33,9 @@ export const slackUpdateMessageAiAction = createAction({
     }),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The new text of the message.',
-      required: true,
+      description:
+        'The new text of the message. Renders as a section above any blocks, and is used as the notification fallback. Leave empty for a blocks-only update.',
+      required: false,
     }),
     blocks: Property.Json({
       displayName: 'Block Kit Blocks',
@@ -51,15 +52,23 @@ export const slackUpdateMessageAiAction = createAction({
     }
     const client = new WebClient(getBotToken(auth as SlackAuthValue));
 
-    const blockList: (KnownBlock | Block)[] = [...textToSectionBlocks(propsValue.text)];
+    const blockList: (KnownBlock | Block)[] = [];
+
+    if (propsValue.text) {
+      blockList.push(...textToSectionBlocks(propsValue.text));
+    }
     if (propsValue.blocks && Array.isArray(propsValue.blocks) && propsValue.blocks.length > 0) {
       blockList.push(...(propsValue.blocks as unknown as (KnownBlock | Block)[]));
+    }
+
+    if (blockList.length === 0) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
     }
 
     return await client.chat.update({
       channel: propsValue.channel,
       ts: messageTimestamp,
-      text: propsValue.text,
+      text: propsValue.text || undefined,
       blocks: blockList,
     });
   },

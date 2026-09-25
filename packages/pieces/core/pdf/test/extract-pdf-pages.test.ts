@@ -56,4 +56,26 @@ describe('pageRangeToIndexes', () => {
     const indexes = pageRangeToIndexes(-5, -5, 10);
     expect(indexes).toStrictEqual([5]);
   });
+
+  test('should accept negative start equal to the total page count', () => {
+    const indexes = pageRangeToIndexes(-10, -10, 10);
+    expect(indexes).toStrictEqual([0]);
+  });
+
+  test('should map the full negative range to every page', () => {
+    const indexes = pageRangeToIndexes(-3, -1, 3);
+    expect(indexes).toStrictEqual([0, 1, 2]);
+  });
+
+  test('should throw error if negative start is beyond the total pages', () => {
+    expect(() => {
+      pageRangeToIndexes(-15, -1, 10);
+    }).toThrow();
+  });
+
+  test('should throw error if negative end is beyond the total pages', () => {
+    expect(() => {
+      pageRangeToIndexes(-15, -12, 10);
+    }).toThrow();
+  });
 });

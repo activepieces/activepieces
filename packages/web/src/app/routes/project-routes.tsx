@@ -16,7 +16,9 @@ import { AgentsFlagGuard } from '../guards/agents-flag-guard';
 import { RoutePermissionGuard } from '../guards/permission-guard';
 import { ProjectRouterWrapper } from '../guards/project-route-wrapper';
 
+import { ApprovalsPage } from './approvals';
 import { AutomationsPage } from './automations';
+
 const AgentEditorPage = lazyWithRetry(
   () => import('./agents/id').then((m) => ({ default: m.AgentEditorPage })),
   'agent-editor',
@@ -88,22 +90,28 @@ const automationsPagePermissions = [
   Permission.READ_FOLDER,
 ];
 
+const agentEditorElement = (
+  <AgentsFlagGuard>
+    <ProjectDashboardLayout>
+      <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
+        <PageTitle title="Agent">
+          <SuspenseWrapper>
+            <AgentEditorPage />
+          </SuspenseWrapper>
+        </PageTitle>
+      </RoutePermissionGuard>
+    </ProjectDashboardLayout>
+  </AgentsFlagGuard>
+);
+
 export const projectRoutes = [
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleAgent,
-    element: (
-      <AgentsFlagGuard>
-        <ProjectDashboardLayout>
-          <RoutePermissionGuard requiredPermissions={[Permission.READ_AGENT]}>
-            <PageTitle title="Agent">
-              <SuspenseWrapper>
-                <AgentEditorPage />
-              </SuspenseWrapper>
-            </PageTitle>
-          </RoutePermissionGuard>
-        </ProjectDashboardLayout>
-      </AgentsFlagGuard>
-    ),
+    element: agentEditorElement,
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.singleAgentRuns,
+    element: agentEditorElement,
   }),
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.automations,
@@ -242,6 +250,20 @@ export const projectRoutes = [
             <ProjectReleasesPage />
           </SuspenseWrapper>
         </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  }),
+  ...ProjectRouterWrapper({
+    path: routesThatRequireProjectId.approvals,
+    element: (
+      <ProjectDashboardLayout>
+        <RoutePermissionGuard requiredPermissions={Permission.READ_FLOW}>
+          <PageTitle title="Pending approvals">
+            <SuspenseWrapper>
+              <ApprovalsPage />
+            </SuspenseWrapper>
+          </PageTitle>
+        </RoutePermissionGuard>
       </ProjectDashboardLayout>
     ),
   }),

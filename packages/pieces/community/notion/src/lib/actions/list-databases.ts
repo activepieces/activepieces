@@ -12,7 +12,7 @@ export const listDatabases = createAction({
   classification: 'SEARCH',
   displayName: 'List Databases',
   description:
-    'Lists Notion databases accessible by the connected account with pagination support.',
+    'List the databases shared with your integration, newest edits first.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -22,14 +22,19 @@ export const listDatabases = createAction({
   props: {
     limit: Property.Number({
       displayName: 'Limit',
-      description: `Number of databases to retrieve (1-${MAX_LIMIT}).`,
+      description: 'How many databases to return, up to 100.',
       required: false,
       defaultValue: DEFAULT_LIMIT,
+      display: 'stepper',
+      min: 1,
+      max: MAX_LIMIT,
+      step: 1,
     }),
     cursor: Property.ShortText({
       displayName: 'Cursor',
-      description: 'Pagination cursor returned from a previous execution.',
+      description: "Next-page cursor from a previous run's output.",
       required: false,
+      advanced: true,
     }),
   },
   async run(context) {

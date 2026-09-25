@@ -125,5 +125,15 @@
   "Only trigger for emails containing this text in the subject.": "Trigger nur für E-Mails, die diesen Text im Betreff enthalten.",
   "Filter by Gmail label.": "Nach Google Mail-Label filtern.",
   "Filter by Gmail category.": "Nach Google Mail-Kategorie filtern.",
-  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "Trigger nur für Anhänge mit dieser Dateiendung (z.B. pdf, jpg, docx)."
+  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "Trigger nur für Anhänge mit dieser Dateiendung (z.B. pdf, jpg, docx).",
+  "Plain Text": "Einfacher Text",
+  "Reply To": "Antwort an",
+  "Save as Draft": "Als Entwurf speichern",
+  "Reply": "Antwort",
+  "Create Label": "Label erstellen",
+  "Label Name": "Labelname",
+  "Add Label to Email": "Label zur E-Mail hinzufügen",
+  "Archive Email": "E-Mail archivieren",
+  "Response is Binary": "Antwort ist binär",
+  "Return Error as Output": "Rückgabewert Fehler als Ausgabe"
 }

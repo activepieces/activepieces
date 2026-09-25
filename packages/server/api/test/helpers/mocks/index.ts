@@ -130,6 +130,7 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         platformId: project?.platformId ?? apId(),
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
+        sensitive: project?.sensitive ?? false,
         notifyFlowOwnerOnFailure: project?.notifyFlowOwnerOnFailure ?? false,
         metadata: project?.metadata ?? null,
         type: project?.type ?? ProjectType.TEAM,
@@ -204,12 +205,12 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         name: platform?.name ?? faker.lorem.word(),
         primaryColor: platform?.primaryColor ?? faker.color.rgb(),
         themeColors: platform?.themeColors ?? null,
-        logoIconUrl: platform?.logoIconUrl ?? faker.image.urlPlaceholder(),
-        fullLogoUrl: platform?.fullLogoUrl ?? faker.image.urlPlaceholder(),
+        logoIconUrl: platform?.logoIconUrl ?? faker.image.url(),
+        fullLogoUrl: platform?.fullLogoUrl ?? faker.image.url(),
         emailAuthEnabled: platform?.emailAuthEnabled ?? faker.datatype.boolean(),
         autoCreatePersonalProjects: platform?.autoCreatePersonalProjects ?? true,
         pinnedPieces: platform?.pinnedPieces ?? [],
-        favIconUrl: platform?.favIconUrl ?? faker.image.urlPlaceholder(),
+        favIconUrl: platform?.favIconUrl ?? faker.image.url(),
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
         googleAuthEnabled: platform?.googleAuthEnabled ?? true,
         ssoDomain: platform?.ssoDomain ?? null,
@@ -319,7 +320,7 @@ export const createMockPieceMetadata = (
         updated: pieceMetadata?.updated ?? faker.date.recent().toISOString(),
         name: pieceMetadata?.name ?? faker.lorem.word(),
         displayName: pieceMetadata?.displayName ?? faker.lorem.word(),
-        logoUrl: pieceMetadata?.logoUrl ?? faker.image.urlPlaceholder(),
+        logoUrl: pieceMetadata?.logoUrl ?? faker.image.url(),
         description: pieceMetadata?.description ?? faker.lorem.sentence(),
         directoryPath: pieceMetadata?.directoryPath,
         auth: pieceMetadata?.auth,
@@ -336,6 +337,7 @@ export const createMockPieceMetadata = (
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
         contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
+        i18n: pieceMetadata?.i18n,
     }
 }
 
@@ -706,6 +708,10 @@ export const createMockAIProvider = async (aiProvider?: MockAIProviderParams): P
         modelIds: aiProvider?.modelIds ?? [],
         projectScope: aiProvider?.projectScope ?? 'all',
         projectIds: aiProvider?.projectIds ?? [],
+        status: 'active',
+        statusReason: null,
+        statusUpdated: null,
+        statusVersion: 0,
     }
 
 }
@@ -732,6 +738,19 @@ export const mockPieceMetadata = async (mockLog: FastifyBaseLogger): Promise<Pie
     await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
     pieceMetadataService(mockLog).getOrThrow = vi.fn().mockResolvedValue(mockPieceMetadata)
     return mockPieceMetadata
+}
+
+export const createMockWaitpoint = (waitpoint?: Partial<MockWaitpoint>): MockWaitpoint => {
+    return {
+        id: waitpoint?.id ?? apId(),
+        flowRunId: waitpoint?.flowRunId ?? apId(),
+        projectId: waitpoint?.projectId ?? apId(),
+        stepName: waitpoint?.stepName ?? 'approval',
+        type: waitpoint?.type ?? 'WEBHOOK',
+        status: waitpoint?.status ?? 'PENDING',
+        httpRequestId: waitpoint?.httpRequestId ?? null,
+        workerHandlerId: waitpoint?.workerHandlerId ?? null,
+    }
 }
 
 export const createMockFolder = (folder?: Partial<Folder>): Folder => {
@@ -801,4 +820,15 @@ type MockBasicSetupParams = {
     plan?: Partial<PlatformPlan>
     platform?: Partial<Platform>
     project?: Partial<Project>
+}
+
+export type MockWaitpoint = {
+    id: string
+    flowRunId: string
+    projectId: string
+    stepName: string
+    type: string
+    status: string
+    httpRequestId: string | null
+    workerHandlerId: string | null
 }

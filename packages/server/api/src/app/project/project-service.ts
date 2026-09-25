@@ -21,6 +21,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             icon,
             releasesEnabled: false,
             notifyFlowOwnerOnFailure: false,
+            sensitive: params.sensitive ?? false,
         }
         const savedProject = await projectRepo(entityManager).save(newProject)
         if (callPostCreateHooks) {
@@ -75,6 +76,7 @@ export const projectService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
             ...spreadIfDefined('notifyFlowOwnerOnFailure', request.notifyFlowOwnerOnFailure),
             ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('sensitive', request.sensitive),
             ...(request.poolId !== undefined ? { poolId: request.poolId } : {}),
             ...(request.maxConcurrentJobs !== undefined ? { maxConcurrentJobs: request.maxConcurrentJobs } : {}),
             ...(request.workerGroupId !== undefined ? { workerGroupId: request.workerGroupId } : {}),
@@ -294,6 +296,7 @@ type UpdateTeamProjectParams = {
     workerGroupId?: string | null
     executionDataRetentionDays?: number | null
     icon?: ProjectIcon
+    sensitive?: boolean
 }
 
 type UpdatePersonalProjectParams = {
@@ -306,6 +309,7 @@ type UpdatePersonalProjectParams = {
     maxConcurrentJobs?: number | null
     workerGroupId?: string | null
     executionDataRetentionDays?: number | null
+    sensitive?: boolean
 }
 
 type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
@@ -318,6 +322,7 @@ type CreateParams = {
     externalId?: string
     metadata?: Metadata
     maxConcurrentJobs?: number
+    sensitive?: boolean
     callPostCreateHooks?: boolean
     postCreateContext?: ProjectPostCreateContext
     entityManager?: EntityManager

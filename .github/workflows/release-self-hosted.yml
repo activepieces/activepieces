@@ -30,6 +30,8 @@ jobs:
     needs: preflight
     if: ${{ always() && !cancelled() && !failure() }}
     runs-on: ubuntu-24.04
+    environment:
+      name: release
     steps:
       - uses: actions/checkout@v5
 
@@ -53,6 +55,11 @@ jobs:
             exit 1
           fi
           echo "Release tag base '$TAG_BASE' matches package.json version '$PACKAGE_VERSION'."
+          CHART_APP_VERSION="$(sed -n 's/^appVersion: "\(.*\)"/\1/p' deploy/activepieces-helm/Chart.yaml)"
+          if [ "$CHART_APP_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "::error::Helm chart appVersion '$CHART_APP_VERSION' does not match package.json version '$PACKAGE_VERSION'. Bump deploy/activepieces-helm/Chart.yaml."
+            exit 1
+          fi
 
       - name: Fail if tag already exists
         run: '! docker manifest inspect activepieces/activepieces:${{ inputs.tag }}'
@@ -164,8 +171,9 @@ jobs:
           npm pkg set version="$TAG_BASE"
           sed -i -E "s|(image: ghcr.io/activepieces/activepieces:)[0-9][0-9a-zA-Z.-]*|\1$TAG|" docker-compose.yml
           grep -q "image: ghcr.io/activepieces/activepieces:$TAG" docker-compose.yml
+          sed -i -E "s|^appVersion: .*|appVersion: \"$TAG_BASE\"|" deploy/activepieces-helm/Chart.yaml
           git checkout -b "automated/sync-version-$TAG_BASE"
-          git add package.json docker-compose.yml
+          git add package.json docker-compose.yml deploy/activepieces-helm/Chart.yaml
           git commit -m "chore(release): sync version to $TAG_BASE after off-cycle release"
           git push -f origin "automated/sync-version-$TAG_BASE"
 

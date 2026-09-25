@@ -10,7 +10,7 @@ export const getPageComments = createAction({
   classification: 'READ',
   displayName: 'Get Page Comments',
   description:
-    'Retrieve all comments from a Notion page, organized by discussion threads. Perfect for tracking feedback, managing reviews, or monitoring page discussions.',
+    'Get all comments on a page, grouped by thread.',
   audience: 'human',
   aiMetadata: {
     description:

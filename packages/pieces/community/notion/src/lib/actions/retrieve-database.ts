@@ -15,7 +15,7 @@ export const retrieveDatabase = createAction({
   classification: 'READ',
   displayName: 'Retrieve Database Structure',
   description:
-    'Get detailed information about a Notion database including all its properties, field types, and configuration. Perfect for building dynamic forms, validation rules, or understanding database schemas.',
+    "Get a database's properties, field types and options.",
   audience: 'human',
   aiMetadata: {
     description:

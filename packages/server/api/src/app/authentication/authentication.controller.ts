@@ -1,5 +1,5 @@
 import { isNil } from '@activepieces/core-utils'
-import { ApplicationEventName, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
+import { ApplicationEventName, attributionUtils, CompleteSignUpRequest, PrincipalType, SignInRequest, SignUpMethod, SignUpRequest, SwitchPlatformRequest, TelemetryEventName, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { securityAccess } from '../core/security/authorization/fastify-security'
@@ -27,17 +27,18 @@ export const authenticationController: FastifyPluginAsyncZod = async (
             remoteIp: clientIp(request),
             log: request.log,
         })
-        const signUpResponse = await authenticationService(request.log).signUp({
-            ...request.body,
+        const { attribution, ...signUpRequest } = request.body
+        const { response, signedUp } = await authenticationService(request.log).signUp({
+            ...signUpRequest,
             provider: UserIdentityProvider.EMAIL,
             platformId: platformId ?? null,
         })
 
-        if (!isNil(signUpResponse.platformId)) {
+        if (signedUp && !isNil(response.platformId)) {
             applicationEvents(request.log).sendUserEvent({
-                platformId: signUpResponse.platformId,
-                userId: signUpResponse.id,
-                projectId: signUpResponse.projectId ?? undefined,
+                platformId: response.platformId,
+                userId: response.id,
+                projectId: response.projectId ?? undefined,
                 ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
             }, {
                 action: ApplicationEventName.USER_SIGNED_UP,
@@ -45,19 +46,34 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                     source: 'credentials',
                 },
             })
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
+                userId: response.id,
+                platformId: response.platformId,
+                method: SignUpMethod.PASSWORD,
+                attribution,
+            }), request.log)
         }
 
-        return signUpResponse
+        return response
     })
 
     app.post('/sign-in', SignInRequestOptions, async (request) => {
 
         const predefinedPlatformId = await platformUtils.getPlatformIdForRequest(request)
-        const response = await authenticationService(request.log).signInWithPassword({
+        const { response, signedUp } = await authenticationService(request.log).signInWithPassword({
             email: request.body.email,
             password: request.body.password,
             predefinedPlatformId,
         })
+
+        if (signedUp && !isNil(response.platformId)) {
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
+                userId: response.id,
+                platformId: response.platformId,
+                method: SignUpMethod.PASSWORD,
+                attribution: request.body.attribution,
+            }), request.log)
+        }
 
         if (!isNil(response.platformId)) {
             applicationEvents(request.log).sendUserEvent({
@@ -69,20 +85,24 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                 action: ApplicationEventName.USER_SIGNED_IN,
                 data: {},
             })
-            rejectedPromiseHandler(telemetry(request.log).trackUser(response.id, {
-                name: TelemetryEventName.SIGNED_IN,
-                payload: {
-                    userId: response.id,
-                    platformId: response.platformId,
+            rejectedPromiseHandler(telemetry(request.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.SIGNED_IN,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
                 },
-            }, { platform: response.platformId }), request.log)
+            }), request.log)
         }
 
         return response
     })
 
     app.post('/complete-sign-up', CompleteSignUpRequestOptions, async (request) => {
-        const { response, signedUp } = await passwordlessAuthService(request.log).completeSignUp({
+        const { response, signedUp, provider } = await passwordlessAuthService(request.log).completeSignUp({
             identityId: request.principal.id,
             fullName: request.body.fullName,
         })
@@ -97,6 +117,23 @@ export const authenticationController: FastifyPluginAsyncZod = async (
                 action: ApplicationEventName.USER_SIGNED_UP,
                 data: {},
             })
+            rejectedPromiseHandler(telemetry(request.log).identifySignUp({
+                userId: response.id,
+                platformId: response.platformId,
+                method: attributionUtils.signUpMethodFromProvider({ provider }),
+                attribution: request.body.attribution,
+            }), request.log)
+            rejectedPromiseHandler(telemetry(request.log).trackUser({
+                userId: response.id,
+                platformId: response.platformId,
+                event: {
+                    name: TelemetryEventName.ONBOARDING_COMPLETED,
+                    payload: {
+                        userId: response.id,
+                        platformId: response.platformId,
+                    },
+                },
+            }), request.log)
         }
 
         return response
