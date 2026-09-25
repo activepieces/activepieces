@@ -24,7 +24,7 @@ export const youtubeNewVideoTrigger = createTrigger({
   name: 'new-video',
   classification: 'READ',
   displayName: 'New Video In Channel',
-  description: 'Runs when a new video is added to a YouTube channel',
+  description: 'Runs when a new video is added to a YouTube channel.',
   aiMetadata: {
     description:
       'Fires when a new video is published on the specified YouTube channel. The event represents a single newly detected video from the channel RSS feed, including its title, link, video ID, publish date, author, and thumbnail.',
