@@ -3,14 +3,16 @@ import { salesforcesCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { querySalesforceApi } from '../common';
 import { salesforceAuth } from '../..';
+import { runQueryOutputSchema } from '../output-schemas';
 
 export const runQuery = createAction({
   auth: salesforceAuth,
   name: 'run_query',
   displayName: 'Run Query (Advanced)',
   description: 'Run a salesforce query',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Run an arbitrary SOQL query string and return the matching records (read-only). Use this for any read needing multiple conditions, field selection, relationships, ordering, or aggregation that the simpler Find Record lookup cannot express; the caller must supply valid SOQL.', idempotent: true },
+  outputSchema: runQueryOutputSchema,
   props: {
     query: Property.ShortText({
       displayName: 'Query',

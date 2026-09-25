@@ -65,7 +65,7 @@ protect connections and tokens, and telemetry.
 | ❗ `AP_JWT_SECRET` | 32-character hexadecimal key used to sign JWT tokens. Generate one with `openssl rand -hex 32`. | `None` |
 | `AP_CONFIG_PATH` | Path where the PGLite database and local settings are stored. | `~/.activepieces` |
 | `AP_INTERNAL_URL` | (Beta) Internal URL used for SSO authentication, e.g. `https://demo.activepieces.com/api`. | `None` |
-| `AP_TELEMETRY_ENABLED` | Collect anonymous telemetry. | `true` |
+| `AP_TELEMETRY_ENABLED` | Starting value for product analytics. Each platform's setting is created from it on first read; after that, change it at Platform Admin → Account → Configurations. | `true` |
 
 <Warning>
 `AP_FRONTEND_URL` is essential for webhooks and app triggers. It must be
@@ -166,10 +166,11 @@ run data is kept. The **Cloud** values and how these interact are covered in
 
 | Variable | Description | Default |
 |---|---|---|
-| `AP_EXECUTION_DATA_RETENTION_DAYS` | Days to retain execution data, logs, and events. | `30` |
-| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`. | `30` |
+| `AP_EXECUTION_DATA_RETENTION_DAYS` | Days to retain execution data, logs, and events. Should be **strictly greater** than `AP_PAUSED_FLOW_TIMEOUT_DAYS` — when the two are equal, a valid resume firing on the retention boundary can race the file-cleanup job and find its state files gone. A 1-2 day margin closes the race. | `30` |
+| `AP_PAUSED_FLOW_TIMEOUT_DAYS` | Maximum pause duration for a paused flow, in days. Cannot exceed `AP_EXECUTION_DATA_RETENTION_DAYS`, and should be at least 1 day smaller than it (see above). Measured cumulatively from `flow_run.created`, not per-pause — a flow with stacked delays whose sum exceeds this fails at waitpoint creation. Webhook waitpoints without an explicit expiry default to this deadline. | `30` |
 | `AP_ISSUE_ARCHIVE_DAYS` | Issues not updated for this many days are automatically archived. | `7` |
 | `AP_MAX_FILE_SIZE_MB` | Maximum size (MB) for files uploaded in steps or triggers. Larger files are rejected. | `25` |
+| `AP_AI_CREDIT_USD_VALUE` | Dollar value of one AI credit. A call on the Activepieces AI provider is billed the dollar cost the provider reports for it, divided by this. A call on your own API key is billed one flat credit and ignores this. | `0.0005` |
 | `AP_MAX_STORE_ENTRY_VALUE_SIZE_KB` | Maximum size (KB) of a single value written by the Store piece or `context.store`. Larger writes are rejected with HTTP 413. | `512` |
 | `AP_MAX_FLOW_RUN_LOG_SIZE_MB` | Maximum combined size (MB) of all step inputs and outputs in a single run. Exceeding it ends the run with `LOG_SIZE_EXCEEDED`. | `50` |
 | `AP_FLOW_RUN_LOG_SLICE_THRESHOLD_KB` | Step outputs larger than this (KB) are offloaded to object storage instead of inlined in the run log. | `32` |
@@ -177,6 +178,7 @@ run data is kept. The **Cloud** values and how these interact are covered in
 | `AP_MAX_WEBHOOK_PAYLOAD_SIZE_MB` | Maximum incoming webhook payload size (MB). Larger payloads are rejected with HTTP 413. | `25` |
 | `AP_WEBHOOK_PAYLOAD_INLINE_THRESHOLD_KB` | Webhook payloads below this (KB) are stored inline in Redis; larger ones are offloaded to file storage to protect Redis memory. | `512` |
 | `AP_WEBHOOK_TIMEOUT_SECONDS` | Default timeout for synchronous webhooks. Maximum 15 minutes; note Cloudflare caps it at 30 seconds. | `30` |
+| `AP_MAX_BARRIER_SIGNALS` | Maximum number of things a single barrier may wait on — the approvers on one approval, or the batches a fan-out dispatched. The cap is stored per platform and created from this value the first time that platform's configuration is read, so changing it later only affects platforms that have not been read yet. Capped at `10000`; a higher value is clamped down to it. | `10000` |
 | `AP_MAX_RECORDS_PER_TABLE` | Maximum number of records per table. | `10000` |
 | `AP_MAX_FIELDS_PER_TABLE` | Maximum number of fields per table. | `100` |
 

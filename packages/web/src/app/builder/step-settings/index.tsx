@@ -37,6 +37,7 @@ import {
 import { TestStepCTAButton } from '../test-step/test-step-cta-button';
 
 import { AgentSettings } from './agent-settings';
+import { AiRouterSettings } from './ai-router-settings';
 import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
@@ -206,6 +207,9 @@ const StepSettingsContainer = () => {
           )}
         {modifiedStep.type === FlowActionType.ROUTER && modifiedStep && (
           <RouterSettings readonly={readonly}></RouterSettings>
+        )}
+        {modifiedStep.type === FlowActionType.AI_ROUTER && modifiedStep && (
+          <AiRouterSettings readonly={readonly}></AiRouterSettings>
         )}
         {modifiedStep.type === FlowTriggerType.PIECE && modifiedStep && (
           <PieceSettings

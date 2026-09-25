@@ -1,8 +1,8 @@
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import { useStore } from '@xyflow/react';
 import { t } from 'i18next';
 import { useState } from 'react';
 
-import { SIDEBAR_ID } from '@/app/components/sidebar/dashboard';
 import { stepsHooks } from '@/features/pieces';
 
 import {
@@ -15,15 +15,17 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { cursorPosition } = useCursorPosition();
   const [overlayPosition, setOverlayPosition] =
     useState<typeof cursorPosition>(cursorPosition);
-  const sidebar = document.getElementById(SIDEBAR_ID);
-  const sidebarWidth = sidebar?.clientWidth ?? 0;
+  const canvasElement = useStore((state) => state.domNode);
+  const canvasRect = canvasElement?.getBoundingClientRect();
   const left = `${
     overlayPosition.x -
     flowCanvasConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
-    sidebarWidth
+    (canvasRect?.left ?? 0)
   }px`;
   const top = `${
-    overlayPosition.y - flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
+    overlayPosition.y -
+    flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT / 2 -
+    (canvasRect?.top ?? 0)
   }px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,

@@ -3,17 +3,19 @@ import { jiraCloudAuth } from "../../auth";
 import { jiraApiCall } from "../common";
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 
+import { legacyGetAttachmentOutputSchema } from '../output-schemas';
 export const getIssueAttachmentAction = createAction({
     auth: jiraCloudAuth,
     name: 'get-issue-attachment',
     displayName: 'Get Issue Attachment',
     description: 'Retrieves an attachment from an issue.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: {
         description:
             'Download a Jira attachment by its attachment ID, fetching both its metadata and the file content itself for use in later steps. Use when you already have the attachment ID (e.g. from Get Issue) and need the actual file, not just a link. Read-only and idempotent.',
         idempotent: true,
     },
+    outputSchema: legacyGetAttachmentOutputSchema,
     props: {
         attachmentId: Property.ShortText({
             displayName: 'Attachment ID',

@@ -17,7 +17,7 @@ spec:
       name: api
   selector:
     {{- include "activepieces.selectorLabels" . | nindent 4 }}
-{{- if ne (.Values.workloadType | default "rollout") "statefulset" }}
+{{- if ne (include "activepieces.workloadType" .) "statefulset" }}
 ---
 apiVersion: v1
 kind: Service

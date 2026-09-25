@@ -34,6 +34,7 @@ BedrockProviderConfig
             credentials: {
                 accessKeyId: authConfig.accessKeyId,
                 secretAccessKey: authConfig.secretAccessKey,
+                sessionToken: authConfig.sessionToken,
             },
         })
 

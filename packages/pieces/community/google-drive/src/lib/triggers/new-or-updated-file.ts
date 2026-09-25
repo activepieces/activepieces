@@ -1,6 +1,7 @@
 import {
   AppConnectionValueForAuthProperty,
   FilesService,
+  MarkdownVariant,
   Property,
   TriggerStrategy,
   createTrigger,
@@ -56,18 +57,27 @@ export const newOrUpdatedFile = createTrigger({
   classification: 'READ',
   displayName: 'New or Updated File',
   description:
-    'Trigger when a file is created or updated, checked on a schedule. Each event carries a Change Type of created or updated, and several edits between two checks arrive as a single event. Renaming a file counts as an update. Trashing a file is not an event, and neither is restoring one from the bin nor moving an existing file into the watched folder. Selecting a parent folder watches its direct children only, not sub-folders.',
+    'Triggers when a file is created or edited. A rename counts; trashing or moving does not.',
   aiMetadata: {
     description:
       'Fires when a file is created or modified in Google Drive, based on its creation and last-modified times (polling), optionally scoped to a parent folder and to specific file types. Each event represents one file and its metadata, carries a changeType of created or updated, and can include the file content, falling back to a contentError field when a download fails. Choose this over New File when edits to files that already exist should also trigger the flow.',
   },
   props: {
-    parentFolder: common.properties.parentFolder,
+    behaviourNote: Property.MarkDown({
+      value:
+        'Each event carries a Change Type of created or updated. Several edits between two checks arrive as one event. A chosen folder is watched one level deep, not its subfolders.',
+      variant: MarkdownVariant.INFO,
+    }),
+    parentFolder: common.parentFolderDropdown({
+      displayName: 'Folder',
+      description:
+        'Leave empty to watch all of My Drive. Type to search by folder name.',
+    }),
     include_team_drives: common.properties.include_team_drives,
     file_types: Property.StaticMultiSelectDropdown({
       displayName: 'File Types',
       description:
-        "Only fire for files of these types. Leave empty to watch every type. If the type you need is not listed, switch this field to 'Dynamic value' (the toggle next to the field) and provide a list of MIME types.",
+        'Empty watches every type. Use Dynamic value to add other MIME types.',
       required: false,
       options: {
         options: [
@@ -99,7 +109,7 @@ export const newOrUpdatedFile = createTrigger({
     include_file_content: Property.Checkbox({
       displayName: 'Include File Content',
       description:
-        'Include the file content in the output. This will increase the time taken to fetch the files and might cause issues with large files. If a download fails the event still arrives, carrying a File Content Error instead of the content.',
+        'Also download each file. A failed download adds an error instead.',
       required: false,
       defaultValue: false,
     }),

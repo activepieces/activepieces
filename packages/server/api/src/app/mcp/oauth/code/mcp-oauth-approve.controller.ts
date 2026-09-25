@@ -1,4 +1,4 @@
-import { isNil } from '@activepieces/core-utils'
+import { isNil, tryCatch } from '@activepieces/core-utils'
 import { PlatformRole, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
@@ -33,21 +33,9 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
             }
         }
 
-        const key = await jwtUtils.getJwtSecret()
-        let authRequest: AuthRequestPayload
-        try {
-            authRequest = await jwtUtils.decodeAndVerify<AuthRequestPayload>({
-                jwt: authRequestId,
-                key,
-                audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
-            })
-        }
-        catch {
+        const { data: authRequest, error } = await tryCatch(() => verifyAuthRequest(authRequestId))
+        if (error) {
             return reply.status(400).send({ error: 'invalid_request', error_description: 'Invalid or expired authorization request' })
-        }
-
-        if (authRequest.type !== 'mcp_auth_request') {
-            return reply.status(400).send({ error: 'invalid_request', error_description: 'Invalid authorization request type' })
         }
 
         const code = await mcpOAuthCodeService.create({
@@ -60,6 +48,7 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
             codeChallengeMethod: authRequest.codeChallengeMethod,
             scopes: authRequest.scopes,
             state: authRequest.state ?? undefined,
+            nonce: authRequest.nonce,
         })
 
         const redirectUrl = new URL(authRequest.redirectUri)
@@ -70,6 +59,34 @@ export const mcpOAuthApproveController: FastifyPluginAsyncZod = async (app) => {
 
         return reply.send({ redirectUrl: redirectUrl.toString() })
     })
+
+    app.post('/v1/mcp-oauth/deny', DenyRequest, async (req, reply) => {
+        const { data: authRequest, error } = await tryCatch(() => verifyAuthRequest(req.body.authRequestId))
+        if (error) {
+            return reply.status(400).send({ error: 'invalid_request', error_description: 'Invalid or expired authorization request' })
+        }
+
+        const redirectUrl = new URL(authRequest.redirectUri)
+        redirectUrl.searchParams.set('error', 'access_denied')
+        if (authRequest.state) {
+            redirectUrl.searchParams.set('state', authRequest.state)
+        }
+
+        return reply.send({ redirectUrl: redirectUrl.toString() })
+    })
+}
+
+async function verifyAuthRequest(authRequestId: string): Promise<AuthRequestPayload> {
+    const key = await jwtUtils.getJwtSecret()
+    const authRequest = await jwtUtils.decodeAndVerify<AuthRequestPayload>({
+        jwt: authRequestId,
+        key,
+        audience: JwtAudience.MCP_OAUTH_AUTH_REQUEST,
+    })
+    if (authRequest.type !== 'mcp_auth_request') {
+        throw new Error('Invalid authorization request type')
+    }
+    return authRequest
 }
 
 const ApproveRequest = {
@@ -85,12 +102,25 @@ const ApproveRequest = {
     },
 }
 
+const DenyRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['mcp-oauth'],
+        body: z.object({
+            authRequestId: z.string(),
+        }),
+    },
+}
+
 type AuthRequestPayload = {
     clientId: string
     redirectUri: string
     codeChallenge: string
     codeChallengeMethod: string
     state: string | null
+    nonce: string | null
     scopes: string[]
     resource: string | null
     type: 'mcp_auth_request'

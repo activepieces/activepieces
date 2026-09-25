@@ -305,3 +305,168 @@ export const uploadFileOutputSchema: OutputSchema = {
 		{ key: 'archived', label: 'Archived', format: 'boolean' },
 	],
 };
+
+const pipelineStageFields: OutputSchemaField[] = [
+	{ key: 'id', label: 'Stage ID' },
+	{ key: 'label', label: 'Label' },
+	{ key: 'displayOrder', label: 'Display Order', format: 'number' },
+	{ key: 'archived', label: 'Archived', format: 'boolean' },
+	{
+		key: 'metadata',
+		label: 'Metadata',
+		dynamicKey: true,
+		description: 'Stage metadata such as probability and isClosed.',
+	},
+	{ key: 'createdAt', label: 'Created At', format: 'datetime' },
+	{ key: 'updatedAt', label: 'Updated At', format: 'datetime' },
+];
+
+export const listPipelinesOutputSchema: OutputSchema = {
+	itemLabel: '{label}',
+	fields: [
+		{
+			key: 'pipelines',
+			label: 'Pipelines',
+			labelKey: 'label',
+			listItems: [
+				{ key: 'id', label: 'Pipeline ID' },
+				{ key: 'label', label: 'Label' },
+				{ key: 'displayOrder', label: 'Display Order', format: 'number' },
+				{ key: 'archived', label: 'Archived', format: 'boolean' },
+				{ key: 'stages', label: 'Stages', labelKey: 'label', listItems: pipelineStageFields },
+				{ key: 'createdAt', label: 'Created At', format: 'datetime' },
+				{ key: 'updatedAt', label: 'Updated At', format: 'datetime' },
+			],
+		},
+		{ key: 'count', label: 'Count', format: 'number' },
+	],
+};
+
+export const listPipelineStagesOutputSchema: OutputSchema = {
+	itemLabel: '{label}',
+	fields: [
+		{ key: 'stages', label: 'Stages', labelKey: 'label', listItems: pipelineStageFields },
+		{ key: 'count', label: 'Count', format: 'number' },
+	],
+};
+
+export const listStaticListsOutputSchema: OutputSchema = {
+	itemLabel: '{name}',
+	fields: [
+		{
+			key: 'lists',
+			label: 'Lists',
+			labelKey: 'name',
+			listItems: [
+				{ key: 'listId', label: 'List ID' },
+				{ key: 'name', label: 'Name' },
+				{ key: 'processingType', label: 'Processing Type' },
+				{ key: 'processingStatus', label: 'Processing Status' },
+				{ key: 'objectTypeId', label: 'Object Type ID' },
+				{ key: 'listVersion', label: 'List Version', format: 'number' },
+				{ key: 'createdAt', label: 'Created At', format: 'datetime' },
+				{ key: 'updatedAt', label: 'Updated At', format: 'datetime' },
+			],
+		},
+		{ key: 'total', label: 'Total', format: 'number' },
+		{ key: 'offset', label: 'Next Offset', format: 'number' },
+		{ key: 'hasMore', label: 'Has More', format: 'boolean' },
+	],
+};
+
+export const listAssociationTypesOutputSchema: OutputSchema = {
+	fields: [
+		{
+			key: 'associationTypes',
+			label: 'Association Types',
+			listItems: [
+				{
+					key: 'typeId',
+					label: 'Type ID',
+					format: 'number',
+					description: 'Numeric id required by Create Associations.',
+				},
+				{ key: 'label', label: 'Label', description: 'Null for the default unlabelled association.' },
+				{ key: 'category', label: 'Category', description: 'HUBSPOT_DEFINED or USER_DEFINED.' },
+				{ key: 'fromObjectTypeId', label: 'From Object Type ID' },
+				{ key: 'toObjectTypeId', label: 'To Object Type ID' },
+			],
+		},
+		{ key: 'count', label: 'Count', format: 'number' },
+	],
+};
+
+export const listOwnersOutputSchema: OutputSchema = {
+	itemLabel: '{email}',
+	fields: [
+		{
+			key: 'owners',
+			label: 'Owners',
+			labelKey: 'email',
+			listItems: [
+				{ key: 'id', label: 'Owner ID' },
+				{ key: 'email', label: 'Email' },
+				{ key: 'firstName', label: 'First Name' },
+				{ key: 'lastName', label: 'Last Name' },
+				{ key: 'userId', label: 'User ID', format: 'number' },
+				{ key: 'type', label: 'Type' },
+				{ key: 'archived', label: 'Archived', format: 'boolean' },
+				{ key: 'createdAt', label: 'Created At', format: 'datetime' },
+				{ key: 'updatedAt', label: 'Updated At', format: 'datetime' },
+			],
+		},
+		{ key: 'count', label: 'Count', format: 'number' },
+		{ key: 'paging', label: 'Paging', children: pagingFields },
+	],
+};
+
+export const listObjectPropertiesOutputSchema: OutputSchema = {
+	itemLabel: '{label}',
+	fields: [
+		{
+			key: 'properties',
+			label: 'Properties',
+			labelKey: 'label',
+			listItems: [
+				{ key: 'name', label: 'Internal Name', description: 'The name a write must use.' },
+				{ key: 'label', label: 'Label', description: 'The name shown in the HubSpot UI.' },
+				{ key: 'type', label: 'Type' },
+				{ key: 'fieldType', label: 'Field Type' },
+				{ key: 'groupName', label: 'Group' },
+				{ key: 'description', label: 'Description' },
+				{ key: 'hasUniqueValue', label: 'Unique', format: 'boolean' },
+				{ key: 'hidden', label: 'Hidden', format: 'boolean' },
+				{ key: 'calculated', label: 'Calculated', format: 'boolean' },
+				{
+					key: 'options',
+					label: 'Options',
+					labelKey: 'label',
+					listItems: [
+						{ key: 'label', label: 'Label' },
+						{ key: 'value', label: 'Value' },
+						{ key: 'displayOrder', label: 'Display Order', format: 'number' },
+						{ key: 'hidden', label: 'Hidden', format: 'boolean' },
+					],
+				},
+			],
+		},
+		{ key: 'count', label: 'Count', format: 'number' },
+	],
+};
+
+export const searchObjectsOutputSchema: OutputSchema = {
+	fields: [
+		{ key: 'total', label: 'Total Matches', format: 'number' },
+		{ key: 'results', label: 'Results', listItems: crmObjectFields },
+		{
+			key: 'paging',
+			label: 'Paging',
+			description: 'Pass paging.next.after back as After to read the next page.',
+			children: pagingFields,
+		},
+	],
+};
+
+export const createNoteOutputSchema: OutputSchema = { fields: crmObjectFields };
+
+export const createTaskOutputSchema: OutputSchema = { fields: crmObjectFields };

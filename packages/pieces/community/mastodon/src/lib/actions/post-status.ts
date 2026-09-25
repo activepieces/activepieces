@@ -6,6 +6,7 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import { mastodonAuth } from '../..';
+import { postStatusOutputSchema } from '../output-schemas';
 
 const uploadMedia = async (media: ApFile, baseUrl: string, token: string) => {
   const formData = new FormData();
@@ -33,8 +34,9 @@ export const postStatus = createAction({
   classification: 'WRITE',
   displayName: 'Post Status',
   description: 'Post a status to Mastodon',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Publishes a new status (toot) to a Mastodon instance from the authenticated account, optionally attaching a single media file uploaded alongside the post. Use to broadcast a message or share content on Mastodon. Requires status text; not idempotent — each call creates a separate post.', idempotent: false },
+  outputSchema: postStatusOutputSchema,
   props: {
     status: Property.LongText({
       displayName: 'Status',

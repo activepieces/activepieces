@@ -13,20 +13,21 @@ export const sendMedia = createAction({
 	name: 'sendMedia',
 	classification: 'WRITE',
 	displayName: 'Send Media',
-	description: 'Send a media message through WhatsApp',
+	description: 'Send an image, video, audio, document or sticker by URL.',
 	audience: 'both',
 	aiMetadata: { description: 'Sends an image, video, audio, document, or sticker to a WhatsApp recipient by referencing the media via a public URL. Choose this when the message payload is a file rather than plain text; captions are supported for media types that allow them and a filename can be set for documents. Requires the sender phone number ID, recipient phone number, media type, and a reachable media URL; subject to WhatsApp messaging-window rules. Not idempotent — each call delivers a new message.', idempotent: false },
 	props: {
 		phone_number_id: commonProps.phone_number_id,
 		to: Property.ShortText({
 			displayName: 'To',
-			description: 'The recipient of the message',
+			description: "Recipient's phone number in international format.",
+			placeholder: '15551234567',
 			required: true,
 		}),
 		type: Property.Dropdown({
 			auth: whatsappAuth,
-			displayName: 'Type',
-			description: 'The type of media to send',
+			displayName: 'Media Type',
+			description: 'What kind of file the URL points to.',
 			required: true,
 			options: async () => {
 				return {
@@ -40,18 +41,20 @@ export const sendMedia = createAction({
 		}),
 		media: Property.ShortText({
 			displayName: 'Media URL',
-			description: 'The URL of the media to send',
+			description: 'Public link WhatsApp downloads when it sends the message.',
+			placeholder: 'https://example.com/photo.jpg',
 			required: true,
 		}),
 		caption: Property.LongText({
 			displayName: 'Caption',
-			description: 'A caption for the media',
+			description: 'Text shown under the media. Ignored for audio and stickers.',
 			required: false,
 		}),
 		filename: Property.LongText({
 			displayName: 'Filename',
-			description: 'Filename of the document to send',
+			description: 'Documents only: the file name the recipient sees.',
 			required: false,
+			advanced: true,
 		}),
 	},
 	async run(context) {

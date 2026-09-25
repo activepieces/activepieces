@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { BranchExecutionType, FlowActionType, flowStructureUtil, FlowTriggerType, McpToolDefinition, ProjectScopedMcpServer, Step } from '@activepieces/shared'
+import { BranchExecutionType, flowStructureUtil, FlowTriggerType, McpToolDefinition, ProjectScopedMcpServer, Step } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
 import { flowService } from '../../flows/flow/flow.service'
@@ -91,7 +91,7 @@ function validateFlow({ trigger }: { trigger: Step }): ValidationResult {
             }
         }
 
-        if (step.type === FlowActionType.ROUTER) {
+        if (flowStructureUtil.isBranchedAction(step)) {
             const { children, settings } = step
             const branches = settings.branches ?? []
             for (let i = 0; i < children.length; i++) {

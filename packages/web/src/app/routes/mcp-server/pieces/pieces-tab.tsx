@@ -8,13 +8,13 @@ import { useDebounce } from 'use-debounce';
 
 import { ProjectSettingsDialog } from '@/app/components/project-settings';
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
-import { RequestTrial } from '@/app/components/request-trial';
 import { LockedAlert } from '@/components/custom/locked-alert';
 import { SearchInput } from '@/components/custom/search-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VirtualizedList } from '@/components/ui/virtualized-list';
+import { RequestTrial } from '@/features/billing';
 import { pieceSetQueries } from '@/features/piece-sets';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { projectCollectionUtils } from '@/features/projects';
@@ -32,7 +32,7 @@ import { ProjectPicker } from './project-picker';
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
 const COLLAPSED_ROW_LIMIT = 6;
 const COLLAPSED_ROW_HEIGHT = 50;
-const PIECE_SETS_LIST_ROUTE = '/platform/setup/pieces?tab=piece-sets';
+const PIECE_SETS_LIST_ROUTE = '/platform/pieces/piece-sets';
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
@@ -172,7 +172,7 @@ function PiecesUnavailableAlert({
       <Button
         variant="outline"
         size="sm"
-        className="mt-3 w-fit"
+        className="col-start-2 mt-3 w-fit"
         onClick={() => onRetry()}
       >
         {t('Try again')}
@@ -199,7 +199,7 @@ function RunActionDisabledAlert({ projectId }: { projectId: string }) {
           <Button
             variant="outline"
             size="sm"
-            className="mt-3 w-fit"
+            className="col-start-2 mt-3 w-fit"
             onClick={() => setSettingsOpen(true)}
           >
             {t('Turn it on in project settings')}
@@ -238,9 +238,12 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
   }
 
   return (
-    <Alert variant="primary" className="flex items-center gap-3">
+    <Alert
+      variant="primary"
+      className="flex flex-wrap items-center gap-x-3 gap-y-2"
+    >
       <Info />
-      <AlertDescription>
+      <AlertDescription className="min-w-60 flex-1">
         {isPlatformAdmin
           ? t("This project's pieces are controlled by a Piece Set.")
           : t(
@@ -257,7 +260,7 @@ function PieceSetBanner({ projectId }: { projectId: string | null }) {
           <Link
             to={
               pieceSetId
-                ? `/platform/setup/pieces/piece-sets/${pieceSetId}`
+                ? `/platform/pieces/piece-sets/${pieceSetId}`
                 : PIECE_SETS_LIST_ROUTE
             }
           >

@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/core-utils'
+import { aiProviderCredentials, AIProviderName } from '@activepieces/core-utils'
 import { AIProviderConfig, AIProviderModelType, VertexProviderConfig } from '@activepieces/core-piece-types'
 import { describe, expect, it } from 'vitest'
 import { buildOpenAICompatibleHeaders, createLanguageModel } from './create-language-model'
@@ -20,10 +20,7 @@ function identifyCustom(model: unknown): CustomModelIdentity {
     return model as CustomModelIdentity
 }
 
-async function captureHeaders({ patchedFetch, headers }: {
-    patchedFetch?: typeof globalThis.fetch
-    headers: Record<string, string>
-}): Promise<Headers> {
+async function captureSentHeaders(send: () => Promise<unknown>): Promise<Headers> {
     const original = globalThis.fetch
     let seen = new Headers()
     globalThis.fetch = (_input, init) => {
@@ -31,7 +28,7 @@ async function captureHeaders({ patchedFetch, headers }: {
         return Promise.resolve(new Response('{}'))
     }
     try {
-        await patchedFetch?.('https://example.test/v1/responses', { headers })
+        await send().catch(() => undefined)
     }
     finally {
         globalThis.fetch = original
@@ -39,6 +36,20 @@ async function captureHeaders({ patchedFetch, headers }: {
     return seen
 }
 
+function captureHeaders({ patchedFetch, headers }: {
+    patchedFetch?: typeof globalThis.fetch
+    headers: Record<string, string>
+}): Promise<Headers> {
+    return captureSentHeaders(async () => patchedFetch?.('https://example.test/v1/responses', { headers }))
+}
+
+function captureBedrockHeaders(auth: Record<string, string>): Promise<Headers> {
+    const model = createLanguageModel({
+        credentials: aiProviderCredentials({ provider: AIProviderName.BEDROCK, auth, config: { region: 'us-east-1' } }),
+        modelId: 'some-model-id',
+    })
+    return captureSentHeaders(() => model.doGenerate({ prompt: [{ role: 'user', content: [{ type: 'text', text: 'hi' }] }] }))
+}
 
 const authFor: Partial<Record<AIProviderName, unknown>> = {
     [AIProviderName.BEDROCK]: { accessKeyId: 'a', secretAccessKey: 'b' },
@@ -58,9 +69,7 @@ const configFor: Partial<Record<AIProviderName, unknown>> = {
 }
 
 const buildFor = (provider: AIProviderName, options?: Record<string, unknown>) => createLanguageModel({
-    provider,
-    auth: authFor[provider] ?? { apiKey: 'test-key' },
-    config: configFor[provider] ?? {},
+    credentials: aiProviderCredentials({ provider, auth: authFor[provider] ?? { apiKey: 'test-key' }, config: configFor[provider] ?? {} }),
     modelId: 'some-model-id',
     options,
 })
@@ -103,6 +112,19 @@ describe('createLanguageModel', () => {
         expect(identify(buildFor(AIProviderName.OPENROUTER)).provider).toBe('openrouter')
     })
 
+    it('signs Bedrock requests with the session token, so temporary AWS credentials are accepted', async () => {
+        const headers = await captureBedrockHeaders({ accessKeyId: 'ASIA', secretAccessKey: 'b', sessionToken: 'temporary' })
+
+        expect(headers.get('x-amz-security-token')).toBe('temporary')
+    })
+
+    it('omits the security token header when Bedrock runs on a long-term access key', async () => {
+        const headers = await captureBedrockHeaders({ accessKeyId: 'AKIA', secretAccessKey: 'b' })
+
+        expect(headers.get('authorization')).toContain('AWS4-HMAC-SHA256')
+        expect(headers.has('x-amz-security-token')).toBe(false)
+    })
+
     it('uses the OpenAI Chat API by default and the Responses API when asked', () => {
         expect(identify(buildFor(AIProviderName.OPENAI)).provider).toBe('openai.chat')
         expect(identify(buildFor(AIProviderName.OPENAI, { openaiResponsesModel: true })).provider).toBe('openai.responses')
@@ -119,9 +141,7 @@ describe('createLanguageModel', () => {
 
     it('sends Model Garden Claude ids to the Vertex Anthropic client, not the Gemini one', () => {
         const anthropicOnVertex = createLanguageModel({
-            provider: AIProviderName.VERTEX,
-            auth: authFor[AIProviderName.VERTEX],
-            config: configFor[AIProviderName.VERTEX],
+            credentials: aiProviderCredentials({ provider: AIProviderName.VERTEX, auth: authFor[AIProviderName.VERTEX], config: configFor[AIProviderName.VERTEX] }),
             modelId: 'claude-sonnet-4-6',
         })
 
@@ -131,9 +151,7 @@ describe('createLanguageModel', () => {
 
     it('sends Model Garden MaaS ids to the Vertex MaaS client', () => {
         const build = (modelId: string) => identify(createLanguageModel({
-            provider: AIProviderName.VERTEX,
-            auth: authFor[AIProviderName.VERTEX],
-            config: configFor[AIProviderName.VERTEX],
+            credentials: aiProviderCredentials({ provider: AIProviderName.VERTEX, auth: authFor[AIProviderName.VERTEX], config: configFor[AIProviderName.VERTEX] }),
             modelId,
         })).provider
 
@@ -146,9 +164,7 @@ describe('createLanguageModel', () => {
     it('keeps the custom provider on chat completions unless apiStyle asks for responses', () => {
         const responsesConfig = { ...(configFor[AIProviderName.CUSTOM] as Record<string, unknown>), apiStyle: 'responses' }
         const model = createLanguageModel({
-            provider: AIProviderName.CUSTOM,
-            auth: { apiKey: 'test-key' },
-            config: responsesConfig,
+            credentials: aiProviderCredentials({ provider: AIProviderName.CUSTOM, auth: { apiKey: 'test-key' }, config: responsesConfig }),
             modelId: 'openai.gpt-oss-120b',
         })
         expect(identify(buildFor(AIProviderName.CUSTOM)).provider).toBe('openai-compatible.chat')
@@ -158,9 +174,7 @@ describe('createLanguageModel', () => {
 
     it('drops the SDK default Authorization when the custom provider authenticates with another header', async () => {
         const model = createLanguageModel({
-            provider: AIProviderName.CUSTOM,
-            auth: { apiKey: 'secret-key' },
-            config: { apiKeyHeader: 'x-api-key', baseUrl: 'https://example.test/v1', models: [], apiStyle: 'responses' },
+            credentials: aiProviderCredentials({ provider: AIProviderName.CUSTOM, auth: { apiKey: 'secret-key' }, config: { apiKeyHeader: 'x-api-key', baseUrl: 'https://example.test/v1', models: [], apiStyle: 'responses' } }),
             modelId: 'some-model-id',
         })
         const { headers, fetch: patchedFetch } = identifyCustom(model).config
@@ -177,9 +191,7 @@ describe('createLanguageModel', () => {
 
     it('keeps the Authorization header when that is the custom provider\'s own api key header', () => {
         const model = createLanguageModel({
-            provider: AIProviderName.CUSTOM,
-            auth: { apiKey: 'Bearer bedrock-key' },
-            config: { apiKeyHeader: 'Authorization', baseUrl: 'https://bedrock-mantle.us-east-1.api.aws/v1', models: [], apiStyle: 'responses' },
+            credentials: aiProviderCredentials({ provider: AIProviderName.CUSTOM, auth: { apiKey: 'Bearer bedrock-key' }, config: { apiKeyHeader: 'Authorization', baseUrl: 'https://bedrock-mantle.us-east-1.api.aws/v1', models: [], apiStyle: 'responses' } }),
             modelId: 'openai.gpt-oss-120b',
         })
         const { headers, fetch: patchedFetch } = identifyCustom(model).config
@@ -190,15 +202,17 @@ describe('createLanguageModel', () => {
 
     it('keeps an Authorization the admin supplied through custom headers', async () => {
         const model = createLanguageModel({
-            provider: AIProviderName.CUSTOM,
-            auth: { apiKey: 'secret-key' },
-            config: {
-                apiKeyHeader: 'x-api-key',
-                baseUrl: 'https://gateway.test/v1',
-                models: [],
-                apiStyle: 'responses',
-                defaultHeaders: { Authorization: 'Bearer gateway-token' },
-            },
+            credentials: aiProviderCredentials({
+                provider: AIProviderName.CUSTOM,
+                auth: { apiKey: 'secret-key' },
+                config: {
+                    apiKeyHeader: 'x-api-key',
+                    baseUrl: 'https://gateway.test/v1',
+                    models: [],
+                    apiStyle: 'responses',
+                    defaultHeaders: { Authorization: 'Bearer gateway-token' },
+                },
+            }),
             modelId: 'some-model-id',
         })
         const { headers, fetch: patchedFetch } = identifyCustom(model).config
@@ -215,9 +229,7 @@ describe('createLanguageModel', () => {
     it('forwards OpenRouter web-search plugin settings onto the model', () => {
         const openRouterSettings = { plugins: [{ id: 'web', max_results: 5 }] }
         const model = createLanguageModel({
-            provider: AIProviderName.OPENROUTER,
-            auth: { apiKey: 'test-key' },
-            config: {},
+            credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'test-key' }, config: {} }),
             modelId: 'anthropic/claude',
             options: { openRouterSettings },
         })
@@ -226,9 +238,7 @@ describe('createLanguageModel', () => {
 
     it('refuses to build Cloudflare Gateway (caller-specific)', () => {
         expect(() => createLanguageModel({
-            provider: AIProviderName.CLOUDFLARE_GATEWAY,
-            auth: { apiKey: 'test-key' },
-            config: { accountId: 'a', gatewayId: 'g', models: [] },
+            credentials: aiProviderCredentials({ provider: AIProviderName.CLOUDFLARE_GATEWAY, auth: { apiKey: 'test-key' }, config: { accountId: 'a', gatewayId: 'g', models: [] } }),
             modelId: 'openai/gpt-4',
         })).toThrow()
     })
@@ -268,13 +278,13 @@ describe('resolved endpoint, credentials and headers', () => {
     const urlOf = (cfg: ResolvedConfig): string => cfg.url({ path: '/chat/completions', modelId: 'm' })
 
     it('sends OpenAI to the OpenAI endpoint with a bearer credential', () => {
-        const cfg = configOf(createLanguageModel({ provider: AIProviderName.OPENAI, auth: { apiKey: 'SECRET' }, config: {}, modelId: 'm' }))
+        const cfg = configOf(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENAI, auth: { apiKey: 'SECRET' }, config: {} }), modelId: 'm' }))
         expect(urlOf(cfg)).toContain('https://api.openai.com')
         expect(headersOf(cfg)['authorization']).toBe('Bearer SECRET')
     })
 
     it('encodes the Azure resource name and api version into the URL', () => {
-        const cfg = configOf(createLanguageModel({ provider: AIProviderName.AZURE, auth: { apiKey: 'SECRET' }, config: { resourceName: 'myres', apiVersion: '2024-08-01' }, modelId: 'm' }))
+        const cfg = configOf(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.AZURE, auth: { apiKey: 'SECRET' }, config: { resourceName: 'myres', apiVersion: '2024-08-01' } }), modelId: 'm' }))
         const url = urlOf(cfg)
         expect(url).toContain('myres')
         expect(url).toContain('api-version=2024-08-01')
@@ -283,9 +293,7 @@ describe('resolved endpoint, credentials and headers', () => {
 
     it('attaches the caller metadata headers to managed OpenRouter traffic', () => {
         const cfg = configOf(createLanguageModel({
-            provider: AIProviderName.ACTIVEPIECES,
-            auth: { apiKey: 'SECRET' },
-            config: {},
+            credentials: aiProviderCredentials({ provider: AIProviderName.ACTIVEPIECES, auth: { apiKey: 'SECRET' }, config: {} }),
             modelId: 'anthropic/claude',
             options: { extraHeaders: { 'x-ap-platform-id': 'plat', 'x-ap-conversation-id': 'conv' } },
         }))
@@ -296,7 +304,7 @@ describe('resolved endpoint, credentials and headers', () => {
     })
 
     it('leaves OpenRouter headers untouched when no metadata is passed', () => {
-        const cfg = configOf(createLanguageModel({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'SECRET' }, config: {}, modelId: 'anthropic/claude' }))
+        const cfg = configOf(createLanguageModel({ credentials: aiProviderCredentials({ provider: AIProviderName.OPENROUTER, auth: { apiKey: 'SECRET' }, config: {} }), modelId: 'anthropic/claude' }))
         const headers = headersOf(cfg)
         expect(headers['x-ap-platform-id']).toBeUndefined()
         expect(headers['Authorization']).toBe('Bearer SECRET')
@@ -304,9 +312,7 @@ describe('resolved endpoint, credentials and headers', () => {
 
     it('points Custom at its base URL and applies header precedence end to end', () => {
         const cfg = configOf(createLanguageModel({
-            provider: AIProviderName.CUSTOM,
-            auth: { apiKey: 'SECRET' },
-            config: { apiKeyHeader: 'x-api-key', baseUrl: 'https://custom.test/v1', defaultHeaders: { 'x-shared': 'from-default' }, models: [] },
+            credentials: aiProviderCredentials({ provider: AIProviderName.CUSTOM, auth: { apiKey: 'SECRET' }, config: { apiKeyHeader: 'x-api-key', baseUrl: 'https://custom.test/v1', defaultHeaders: { 'x-shared': 'from-default' }, models: [] } }),
             modelId: 'm',
             options: { extraHeaders: { 'x-ap-project-id': 'proj', 'x-shared': 'from-extra' } },
         }))

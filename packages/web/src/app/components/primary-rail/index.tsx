@@ -33,7 +33,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -60,7 +59,10 @@ import {
   projectCollectionUtils,
 } from '@/features/projects';
 import { templatesTelemetryApi } from '@/features/templates';
-import { useRailCollapsed } from '@/features/workspace/lib/rail-collapsed';
+import {
+  railIsCollapsed,
+  useRailCollapsed,
+} from '@/features/workspace/lib/rail-collapsed';
 import {
   useAuthorization,
   useIsPlatformAdmin,
@@ -71,7 +73,7 @@ import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import AccountSettingsDialog from '../account-settings';
+import { AccountSettingsDialog } from '../account-settings';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
@@ -80,11 +82,10 @@ export function PrimaryRail() {
   const { embedState } = useEmbedding();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: currentUser } = userHooks.useCurrentUser();
-  const {
-    collapsed,
-    setCollapsed,
-    toggle: toggleCollapsed,
-  } = useRailCollapsed();
+  const { preference, setCollapsed, toggle } = useRailCollapsed();
+  const { pathname } = useLocation();
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
   const { checkAccess } = useAuthorization();
 
@@ -92,7 +93,14 @@ export function PrimaryRail() {
     return null;
   }
 
-  const openSidebar = () => setCollapsed(false);
+  const openSidebar = () => {
+    setOpenedOn(pathname);
+    setCollapsed(false);
+  };
+  const toggleCollapsed = () => {
+    setOpenedOn(pathname);
+    toggle();
+  };
 
   return (
     <TooltipProvider delayDuration={300}>
@@ -100,7 +108,7 @@ export function PrimaryRail() {
         onClick={collapsed ? openSidebar : undefined}
         title={collapsed ? t('Open sidebar') : undefined}
         className={cn(
-          'flex h-svh shrink-0 flex-col bg-sidebar py-3 transition-[width] duration-150',
+          'flex h-svh shrink-0 flex-col overflow-hidden whitespace-nowrap bg-sidebar py-3 transition-[width] duration-200 ease-out motion-reduce:transition-none',
           collapsed ? 'w-14 cursor-ew-resize items-center' : 'w-62',
         )}
       >
@@ -664,7 +672,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { reset } = useTelemetry();
   const navigate = useNavigate();
 
   if (!user) {
@@ -674,7 +681,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
-    reset();
     navigate('/sign-in');
   };
 

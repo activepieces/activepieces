@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { ticketIdDropdown } from '../common/props';
 
 export const addTagToTicketAction = createAction({
@@ -60,16 +60,12 @@ export const addTagToTicketAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/tickets/${ticket_id}/tags.json`,
+        url: `${getZendeskBaseUrl(authentication)}/tickets/${ticket_id}/tags.json`,
         method: HttpMethod.PUT,
         headers: {
           'Content-Type': 'application/json',
         },
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
         body,
       });
 

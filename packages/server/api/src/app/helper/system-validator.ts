@@ -1,6 +1,6 @@
 import { inspect } from 'util'
 import { isNil } from '@activepieces/core-utils'
-import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, NetworkMode, PieceSyncMode } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, DefaultProjectRole, ExecutionMode, FileLocation, maxBarrierSignalsBounds, NetworkMode, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { DatabaseType } from '../database/database-type'
 import { RedisType } from '../database/redis/types'
@@ -26,6 +26,25 @@ function booleanValidator(value: string | undefined) {
 function numberValidator(value: string | undefined) {
     const isValid = !isNil(value) && !Number.isNaN(Number(value))
     return isValid ? true : 'Value must be a valid number'
+}
+
+function positiveIntegerValidator(value: string | undefined) {
+    const parsed = Number(value)
+    return Number.isInteger(parsed) && parsed > 0 ? true : 'Value must be a positive integer'
+}
+
+function positiveFiniteNumberValidator(value: string | undefined) {
+    const parsed = isNil(value) ? Number.NaN : Number(value)
+    const isValid = Number.isFinite(parsed) && parsed > 0
+    return isValid ? true : 'Value must be a finite number greater than zero'
+}
+
+function boundedNumberValidator({ min, max }: { min: number, max: number }) {
+    return (value: string | undefined) => {
+        const parsed = Number(value)
+        const isValid = !isNil(value) && Number.isInteger(parsed) && parsed >= min && parsed <= max
+        return isValid ? true : `Value must be a whole number between ${min} and ${max}`
+    }
 }
 
 function stringValidator(value: string) {
@@ -64,8 +83,12 @@ const systemPropValidators: {
     [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
+    [AppSystemProp.MAX_BARRIER_SIGNALS]: boundedNumberValidator(maxBarrierSignalsBounds),
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
+    [AppSystemProp.AI_CREDIT_USD_VALUE]: positiveFiniteNumberValidator,
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
+    [AppSystemProp.FLOW_RUN_LOG_INPUT_TRUNCATE_THRESHOLD_KB]: positiveIntegerValidator,
+    [AppSystemProp.FLOW_RUN_LOG_SLICE_THRESHOLD_KB]: positiveIntegerValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,

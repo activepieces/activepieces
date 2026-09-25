@@ -10,7 +10,7 @@ export const findPage = createAction({
   classification: 'SEARCH',
   displayName: 'Find Page',
   description:
-    'Search for Notion pages by title with flexible matching options. Perfect for finding specific pages, building page references, or creating automated workflows based on page discovery.',
+    'Find pages by title, with exact or partial matching.',
   audience: 'human',
   aiMetadata: {
     description:
@@ -19,23 +19,27 @@ export const findPage = createAction({
   },
   props: {
     title: Property.ShortText({
-      displayName: 'Page Title',
-      description:
-        'Enter the page title or part of the title you want to search for',
+      displayName: 'Title',
+      description: 'Full title, or part of it.',
       required: true,
+      placeholder: 'e.g. Meeting notes',
     }),
     exact_match: Property.Checkbox({
       displayName: 'Exact Match',
       description:
-        'Enable this to find pages with exactly the same title. Disable for partial matching (finds pages containing your search term).',
+        'Only return pages whose title equals the search exactly.',
       required: false,
       defaultValue: false,
     }),
     limit: Property.Number({
-      displayName: 'Maximum Results',
-      description: 'How many pages to return at most (between 1 and 100)',
+      displayName: 'Limit',
+      description: 'How many pages to return, up to 100.',
       required: false,
       defaultValue: 10,
+      display: 'stepper',
+      min: 1,
+      max: 100,
+      step: 1,
     }),
   },
   outputSchema: findPageActionOutputSchema,

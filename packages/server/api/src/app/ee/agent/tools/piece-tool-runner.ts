@@ -1,5 +1,6 @@
 import { PredefinedInputsStructure } from '@activepieces/core-piece-types'
 import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { ActionClassification } from '@activepieces/pieces-framework'
 import { McpToolResult } from '@activepieces/shared'
 import { LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -9,7 +10,7 @@ import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-se
 import { pieceInputFiller, ResolveProperty } from './piece-input-filler'
 
 async function resolveInput({ piece, instruction, predefinedInput, model, projectId, platformId, connectionExternalId, log }: ResolveInputParams): Promise<ResolvedPieceInput> {
-    const { properties, pieceVersion, actionDisplayName } = await resolveAction({ piece, platformId, log })
+    const { properties, pieceVersion, actionDisplayName, pieceDisplayName, classification } = await resolveAction({ piece, platformId, log })
     const account = connectionExternalId ?? connectionTemplate.unwrapExternalId(predefinedInput?.auth) ?? undefined
     const resolvedInput = await pieceInputFiller.fillInput({
         action: { name: piece.actionName, properties, ...spreadIfDefined('connectionExternalId', account) },
@@ -23,7 +24,7 @@ async function resolveInput({ piece, instruction, predefinedInput, model, projec
 
     assertUrlStaysOnThePieceHost({ actionName: piece.actionName, input: resolvedInput })
 
-    return { resolvedInput, actionDisplayName }
+    return { resolvedInput, actionDisplayName, pieceDisplayName, ...spreadIfDefined('classification', classification) }
 }
 
 function withoutCredential(input: Record<string, unknown>): Record<string, unknown> {
@@ -62,7 +63,7 @@ async function resolveAction({ piece, platformId, log }: { piece: PieceActionRef
             params: { entityType: 'PieceAction', entityId: `${piece.pieceName}:${piece.actionName}` },
         })
     }
-    return { properties: action.props, pieceVersion: metadata.version, actionDisplayName: action.displayName }
+    return { properties: action.props, pieceVersion: metadata.version, actionDisplayName: action.displayName, pieceDisplayName: metadata.displayName, classification: action.classification }
 }
 
 function propertyResolverFor({ piece, pieceVersion, projectId, platformId, log }: {
@@ -132,6 +133,8 @@ export type ResolveInputParams = {
 export type ResolvedPieceInput = {
     resolvedInput: Record<string, unknown>
     actionDisplayName: string
+    pieceDisplayName: string
+    classification?: ActionClassification
 }
 
 export type PieceToolRun = {

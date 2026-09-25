@@ -82,7 +82,6 @@ const PublishFlowReminderWidget = () => {
   const { mutateAsync: publish } = flowHooks.useChangeFlowStatus({
     flowId: flow.id,
     change: 'publish',
-    requiresApproval,
     onSuccess: (updatedFlow: PopulatedFlow) => {
       setFlow(updatedFlow);
       setVersion(updatedFlow.version);
