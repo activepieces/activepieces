@@ -8,8 +8,8 @@ export const createBlogPostAction = createAction({
 	auth: hubspotAuth,
 	name: 'create-blog-post',
 	classification: 'WRITE',
-	displayName: 'Create COS Blog Post',
-	description: 'Creates a blog post in you Hubspot COS blog.',
+	displayName: 'Create Blog Post',
+	description: 'Creates a draft or published post on a HubSpot blog.',
 	audience: 'both',
 	aiMetadata: { description: 'Create a post in a HubSpot CMS (COS) blog with title, slug, body, and featured image, then optionally publish it immediately when Status is set to publish rather than draft. Each call creates a new post, so it is not idempotent.', idempotent: false },
 	outputSchema: createBlogPostOutputSchema,
@@ -17,18 +17,23 @@ export const createBlogPostAction = createAction({
 		contentGroupId: blogUrlDropdown,
 		authorId: blogAuthorDropdown,
 		status: Property.StaticDropdown({
-			displayName: 'Publish This Post?',
+			displayName: 'Status',
 			required: true,
+			display: 'cards',
 			options: {
 				disabled: false,
 				options: [
 					{
-						label: 'Leave As Draft',
+						label: 'Draft',
 						value: 'DRAFT',
+						description: 'Kept unpublished',
+						icon: 'file',
 					},
 					{
-						label: 'Publish Immediately',
+						label: 'Publish',
 						value: 'PUBLISHED',
+						description: 'Live once created',
+						icon: 'send',
 					},
 				],
 			},
@@ -36,14 +41,15 @@ export const createBlogPostAction = createAction({
 		slug: Property.ShortText({
 			displayName: 'Slug',
 			required: true,
-			description: 'The slug of the blog post. This is the URL of the post on your COS blog.',
+			description: 'The last part of the post\'s URL.',
+			placeholder: 'my-first-post',
 		}),
 		title: Property.ShortText({
-			displayName: 'Blog Post Title',
+			displayName: 'Title',
 			required: true,
 		}),
 		body: Property.LongText({
-			displayName: 'Blog Post Content',
+			displayName: 'Content',
 			required: true,
 		}),
 		meta: Property.LongText({
@@ -52,6 +58,7 @@ export const createBlogPostAction = createAction({
 		}),
 		imageUrl: Property.ShortText({
 			displayName: 'Featured Image URL',
+			placeholder: 'https://example.com/cover.png',
 			required: true,
 		}),
 	},

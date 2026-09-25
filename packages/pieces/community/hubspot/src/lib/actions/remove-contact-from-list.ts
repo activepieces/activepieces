@@ -10,7 +10,7 @@ export const removeContactFromListAction = createAction({
 	name: 'remove-contact-from-list',
 	classification: 'WRITE',
 	displayName: 'Remove Contact from List',
-	description: 'Remove a contact from a specific list.',
+	description: 'Removes a contact from a static list by email.',
 	audience: 'both',
 	aiMetadata: {
 		description:
@@ -21,6 +21,7 @@ export const removeContactFromListAction = createAction({
 		listId: staticListsDropdown,
 		email: Property.ShortText({
 			displayName: 'Contact Email',
+			placeholder: 'jane@example.com',
 			required: true,
 		}),
 	},
