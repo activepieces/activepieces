@@ -1,11 +1,31 @@
 import {
   httpClient,
+  HttpError,
   HttpMethod,
+  HttpResponse,
   QueryParams,
 } from '@activepieces/pieces-common';
 import { createOAuthHeader } from './oauth';
 
 const PAGE_SIZE = 1000;
+// NetSuite enforces a per-account concurrency limit (roughly 5-20 concurrent
+// requests depending on subscription tier, shared across REST/SOAP/RESTlets);
+// exceeding it returns 429. Retry with backoff instead of failing the action.
+const MAX_RETRY_ATTEMPTS = 5;
+const BASE_RETRY_DELAY_MS = 500;
+const MAX_RETRY_DELAY_MS = 16000;
+
+function retryDelayMs(attempt: number): number {
+  return Math.min(BASE_RETRY_DELAY_MS * 2 ** attempt, MAX_RETRY_DELAY_MS) + Math.random() * 250;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRateLimited(error: unknown): error is HttpError {
+  return error instanceof HttpError && error.response.status === 429;
+}
 
 interface NetSuiteAuth {
   accountId: string;
@@ -20,6 +40,11 @@ interface MakeRequestParams {
   url: string;
   queryParams?: QueryParams;
   body?: unknown;
+}
+
+interface CreateRecordParams {
+  recordType: string;
+  body: unknown;
 }
 
 interface PaginatedResponse<T> {
@@ -38,36 +63,29 @@ export class NetSuiteClient {
     return `https://${this.auth.accountId}.suitetalk.api.netsuite.com`;
   }
 
-  async makeRequest<T>({
-    method,
-    url,
-    queryParams,
-    body,
-  }: MakeRequestParams): Promise<T> {
-    const authHeader = createOAuthHeader(
-      this.auth.accountId,
-      this.auth.consumerKey,
-      this.auth.consumerSecret,
-      this.auth.tokenId,
-      this.auth.tokenSecret,
-      url,
-      method,
-      queryParams
-    );
+  async makeRequest<T>(params: MakeRequestParams): Promise<T> {
+    const response = await this.send<T>(params);
+    return response.body;
+  }
 
-    const response = await httpClient.sendRequest({
-      method,
-      url,
-      headers: {
-        Authorization: authHeader,
-        prefer: 'transient',
-        Cookie: 'NS_ROUTING_VERSION=LAGGING',
-      },
-      queryParams,
+  // Record creates return 204 No Content with the new record's URL in the
+  // Location header; parse the trailing id from it rather than the empty body.
+  async createRecord({ recordType, body }: CreateRecordParams): Promise<{
+    id: string | null;
+    recordType: string;
+    location: string | null;
+  }> {
+    const response = await this.send({
+      method: HttpMethod.POST,
+      url: `${this.baseUrl}/services/rest/record/v1/${recordType}`,
       body,
     });
 
-    return response.body;
+    const header = response.headers?.['location'];
+    const location = Array.isArray(header) ? header[0] : header ?? null;
+    const id = location ? location.split('/').pop() ?? null : null;
+
+    return { id, recordType, location };
   }
 
   // paginate results: https://docs.oracle.com/en/cloud/saas/netsuite/ns-online-help/section_156414087576.html
@@ -99,5 +117,46 @@ export class NetSuiteClient {
     }
 
     return results;
+  }
+
+  private async send<T>({
+    method,
+    url,
+    queryParams,
+    body,
+  }: MakeRequestParams): Promise<HttpResponse<T>> {
+    for (let attempt = 0; ; attempt++) {
+      // OAuth 1.0 signatures are single-use (nonce/timestamp bound to one
+      // request), so a retry needs a freshly generated header, not a reused one.
+      const authHeader = createOAuthHeader(
+        this.auth.accountId,
+        this.auth.consumerKey,
+        this.auth.consumerSecret,
+        this.auth.tokenId,
+        this.auth.tokenSecret,
+        url,
+        method,
+        queryParams
+      );
+
+      try {
+        return await httpClient.sendRequest<T>({
+          method,
+          url,
+          headers: {
+            Authorization: authHeader,
+            prefer: 'transient',
+            Cookie: 'NS_ROUTING_VERSION=LAGGING',
+          },
+          queryParams,
+          body,
+        });
+      } catch (error) {
+        if (!isRateLimited(error) || attempt >= MAX_RETRY_ATTEMPTS) {
+          throw error;
+        }
+        await sleep(retryDelayMs(attempt));
+      }
+    }
   }
 }
