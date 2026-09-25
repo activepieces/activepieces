@@ -20,5 +20,5 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       command: ['wget']
-      args: ['-O', '/dev/null', '{{ include "activepieces.fullname" . }}:{{ .Values.service.port }}']
+      args: ['-q', '-O', '/dev/null', '{{ include "activepieces.fullname" . }}:{{ .Values.service.port }}']
   restartPolicy: Never
