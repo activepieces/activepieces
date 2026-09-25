@@ -24,7 +24,7 @@ export const upsertRowAiAction = createAction({
     table_id: baserowAiProps.tableIdProp(),
     match_field: Property.ShortText({
       displayName: 'Match Field Name',
-      description: 'Exact name of the key field to match on. Must be a writable text, long text, number, rating, boolean, email, URL or phone number field.',
+      description: 'Exact name of the key field to match on. Must be a writable text, long text, number, rating, boolean, email, URL, phone number or single select field.',
       required: true,
     }),
     match_value: Property.ShortText({
@@ -65,14 +65,13 @@ export const upsertRowAiAction = createAction({
       }
       if (!isMatchableField({ field: matchField })) {
         throw new Error(
-          `Field "${match_field}" (${matchField.type}${matchField.read_only ? ', read-only' : ''}) cannot be used as a match field. Use a writable text, long text, number, rating, boolean, email, URL or phone number field. Matchable fields: ${tableFields.filter((f) => isMatchableField({ field: f })).map((f) => f.name).join(', ')}.`
+          `Field "${match_field}" (${matchField.type}${matchField.read_only ? ', read-only' : ''}) cannot be used as a match field. Use a writable text, long text, number, rating, boolean, email, URL, phone number or single select field. Matchable fields: ${tableFields.filter((f) => isMatchableField({ field: f })).map((f) => f.name).join(', ')}.`
         );
       }
-      const existing = await client.queryRows({
-        tableId: table_id,
-        query: { size: '1', [`filter__field_${matchField.id}__equal`]: match_value },
-      });
-      const existingRow = existing.results[0];
+      const matchFilter = buildMatchFilter({ field: matchField, value: match_value });
+      const existingRow = matchFilter
+        ? (await client.queryRows({ tableId: table_id, query: { size: '1', ...matchFilter } })).results[0]
+        : undefined;
       const rowPayload = existingRow
         ? Object.fromEntries(Object.entries(payload).filter(([key]) => key !== matchField.name))
         : { ...payload, [matchField.name]: match_value };
@@ -92,7 +91,6 @@ export const upsertRowAiAction = createAction({
 function isMatchableField({ field }: { field: BaserowField }): boolean {
   const unsupportedTypes: string[] = [
     BaserowFieldType.LINK_TO_TABLE,
-    BaserowFieldType.SINGLE_SELECT,
     BaserowFieldType.MULTI_SELECT,
     BaserowFieldType.MULTIPLE_COLLABORATORS,
     BaserowFieldType.FILE,
@@ -109,4 +107,12 @@ function isMatchableField({ field }: { field: BaserowField }): boolean {
     BaserowFieldType.AUTO_NUMBER,
   ];
   return !field.read_only && !unsupportedTypes.includes(field.type);
+}
+
+function buildMatchFilter({ field, value }: { field: BaserowField; value: string }): Record<string, string> | null {
+  if (field.type !== BaserowFieldType.SINGLE_SELECT) {
+    return { [`filter__field_${field.id}__equal`]: value };
+  }
+  const option = field.select_options.find((o) => o.value === value);
+  return option ? { [`filter__field_${field.id}__single_select_equal`]: String(option.id) } : null;
 }
