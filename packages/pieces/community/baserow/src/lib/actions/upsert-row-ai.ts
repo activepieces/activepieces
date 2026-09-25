@@ -29,7 +29,7 @@ export const upsertRowAiAction = createAction({
     }),
     match_value: Property.ShortText({
       displayName: 'Match Value',
-      description: 'The key value to look for. For a single select field, pass the option name or its option ID.',
+      description: 'The key value to look for. For a single select field, pass the option name, or its option ID when no option has that name.',
       required: true,
     }),
     fields: Property.Json({
@@ -128,5 +128,8 @@ function findSelectOption({ field, value }: { field: BaserowField; value: string
   if (field.type !== BaserowFieldType.SINGLE_SELECT) {
     return undefined;
   }
-  return field.select_options.find((o) => o.value === value || String(o.id) === value.trim());
+  return (
+    field.select_options.find((o) => o.value === value) ??
+    field.select_options.find((o) => String(o.id) === value.trim())
+  );
 }
