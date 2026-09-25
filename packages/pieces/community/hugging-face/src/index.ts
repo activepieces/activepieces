@@ -71,6 +71,19 @@ import { upsertSpaceSecret } from './lib/actions/upsert-space-secret';
 import { deleteSpaceSecret } from './lib/actions/delete-space-secret';
 import { upsertSpaceVariable } from './lib/actions/upsert-space-variable';
 import { deleteSpaceVariable } from './lib/actions/delete-space-variable';
+import { listNotifications } from './lib/actions/list-notifications';
+import { deleteNotifications } from './lib/actions/delete-notifications';
+import { updateWatchList } from './lib/actions/update-watch-list';
+import { listWebhooks } from './lib/actions/list-webhooks';
+import { getWebhook } from './lib/actions/get-webhook';
+import { createWebhook } from './lib/actions/create-webhook';
+import { updateWebhook } from './lib/actions/update-webhook';
+import { deleteWebhook } from './lib/actions/delete-webhook';
+import { setWebhookEnabled } from './lib/actions/set-webhook-enabled';
+import { listInferenceEndpoints } from './lib/actions/list-inference-endpoints';
+import { getUserSocials } from './lib/actions/get-user-socials';
+import { getOrganizationSocials } from './lib/actions/get-organization-socials';
+import { searchHfDocs } from './lib/actions/search-hf-docs';
 import { huggingFaceAuth } from './lib/auth';
 
 export const huggingface = createPiece({
@@ -154,6 +167,19 @@ export const huggingface = createPiece({
     deleteSpaceSecret,
     upsertSpaceVariable,
     deleteSpaceVariable,
+    listNotifications,
+    deleteNotifications,
+    updateWatchList,
+    listWebhooks,
+    getWebhook,
+    createWebhook,
+    updateWebhook,
+    deleteWebhook,
+    setWebhookEnabled,
+    listInferenceEndpoints,
+    getUserSocials,
+    getOrganizationSocials,
+    searchHfDocs,
   ],
   triggers: [],
 });
