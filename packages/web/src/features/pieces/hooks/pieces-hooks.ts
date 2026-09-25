@@ -556,6 +556,9 @@ const getExploreTabContent = (
   const loopPiece = queryResult.find(
     (piece) => piece.type === FlowActionType.LOOP_ON_ITEMS,
   );
+  const aiRouterPiece = queryResult.find(
+    (piece) => piece.type === FlowActionType.AI_ROUTER,
+  );
 
   if (highlightedPieces.length > 0) {
     hightlightedPiecesCategory.metadata.push(...highlightedPieces);
@@ -563,6 +566,9 @@ const getExploreTabContent = (
 
   if (branchPiece) {
     hightlightedPiecesCategory.metadata.splice(0, 0, branchPiece);
+  }
+  if (aiRouterPiece) {
+    hightlightedPiecesCategory.metadata.splice(1, 0, aiRouterPiece);
   }
 
   if (codePiece) {

@@ -23,61 +23,75 @@ export const gmailReplyToEmailAction = createAction({
     message_id: GmailProps.message,
     reply_type: Property.StaticDropdown({
       displayName: 'Reply Type',
-      description:
-        'Choose whether to reply to sender only or to all recipients',
+      description: 'Reply to the sender only, or to everyone on the thread.',
       required: true,
       defaultValue: 'reply',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Reply (to sender only)',
+            label: 'Reply',
             value: 'reply',
+            description: 'Sender only',
+            icon: 'reply',
           },
           {
-            label: 'Reply All (to all recipients)',
+            label: 'Reply All',
             value: 'reply_all',
+            description: 'All recipients',
+            icon: 'reply-all',
           },
         ],
       },
     }),
     body_type: Property.StaticDropdown({
       displayName: 'Body Type',
+      description: 'How the text in Body is interpreted.',
       required: true,
       defaultValue: 'plain_text',
+      display: 'cards',
       options: {
         disabled: false,
         options: [
           {
-            label: 'Plain text',
+            label: 'Plain Text',
             value: 'plain_text',
+            description: 'Sent as written',
+            icon: 'text',
           },
           {
             label: 'HTML',
             value: 'html',
+            description: 'Bold, links, lists',
+            icon: 'code',
           },
         ],
       },
     }),
-    body: Property.LongText({
-      displayName: 'Reply Body',
-      description: 'Your reply message content',
+    body: Property.RichText({
+      displayName: 'Body',
       required: true,
+      formatProperty: 'body_type',
     }),
     sender_name: Property.ShortText({
       displayName: 'Sender Name',
-      description: 'Optional sender name to display',
+      description: 'Name shown in the inbox instead of your address.',
+      placeholder: 'Jane at Acme',
       required: false,
+      advanced: true,
     }),
     attachment: Property.File({
       displayName: 'Attachment',
-      description: 'Optional file to attach to your reply',
+      description: 'File to attach.',
       required: false,
     }),
     attachment_name: Property.ShortText({
       displayName: 'Attachment Name',
-      description: 'Custom name for the attachment',
+      description: 'Overrides the uploaded file name.',
+      placeholder: 'report.pdf',
       required: false,
+      advanced: true,
     }),
   },
   outputSchema: replyToEmailActionOutputSchema,
@@ -159,18 +173,13 @@ export const gmailReplyToEmailAction = createAction({
     const senderEmail = await getUserEmail(context.auth, authClient);
 
     const subjectBase64 = Buffer.from(replySubject).toString('base64');
+    const isPlainText = context.propsValue.body_type === 'plain_text';
     const mailOptions: Mail.Options = {
       to: toRecipients.join(', '),
       cc: ccRecipients.length > 0 ? ccRecipients.join(', ') : undefined,
       subject: `=?UTF-8?B?${subjectBase64}?=`,
-      text:
-        context.propsValue.body_type === 'plain_text'
-          ? context.propsValue.body
-          : undefined,
-      html:
-        context.propsValue.body_type === 'html'
-          ? context.propsValue.body
-          : undefined,
+      text: isPlainText ? context.propsValue.body : undefined,
+      html: isPlainText ? undefined : context.propsValue.body,
       attachments: [],
       headers: [
         {

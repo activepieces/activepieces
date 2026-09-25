@@ -4,6 +4,10 @@ status: accepted
 
 # Platform admin is fifteen pages derived from one registry
 
+> **Partly superseded** by *platform-admin-sections-are-sidebar-sub-items-each-with-its-own-route* (#15727).
+> The registry (`admin-pages.ts`), the overview pages and `?tab=` sections are gone. The gating-at-the-action
+> and sample-mode sections below still hold.
+
 ## Decision
 
 The platform admin nav collapses from **22 items in 5 labelled groups to 15 items in 3 unlabelled blocks**,

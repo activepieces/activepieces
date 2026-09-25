@@ -2,7 +2,8 @@ import { typeformCommon, formsDropdown } from '../common';
 import { nanoid } from 'nanoid';
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
-import { typeformAuth } from '../..';
+import { typeformAuth } from '../auth';
+import { newSubmissionOutputSchema } from '../output-schemas';
 
 export const typeformNewSubmission = createTrigger({
   auth: typeformAuth,
@@ -13,6 +14,7 @@ export const typeformNewSubmission = createTrigger({
     description:
       'Fires when a respondent completes and submits the specified Typeform form. The event represents a single finished submission, delivered via webhook, and provides the form response payload including the submission token, landing/submission timestamps, the form definition, and the respondent\'s answers.',
   },
+  outputSchema: newSubmissionOutputSchema,
   props: {
     form_id: formsDropdown,
   },

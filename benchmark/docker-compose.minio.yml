@@ -8,32 +8,35 @@
 # bucket must already exist — minio-init creates it before app/worker start.
 services:
   minio:
-    image: quay.io/minio/minio:RELEASE.2024-09-22T00-33-43Z
+    image: cgr.dev/chainguard/minio@sha256:bd014394a80898e68c149f2311fdf8d5a2c2f3bb2c33b9327ae6d02b4b065ae1
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
     volumes:
       - minio_data:/data
-    healthcheck:
-      test: ['CMD', 'mc', 'ready', 'local']
-      interval: 3s
-      timeout: 5s
-      retries: 20
+    networks:
+      - bench
+
+  minio-ready:
+    image: cgr.dev/chainguard/minio-client@sha256:b8b144ab34694ecea25aa352c4be9de4c26ee2a02701521dce02ee5593c57338
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      MC_HOST_local: http://minioadmin:minioadmin@minio:9000
+    command: ready local
     networks:
       - bench
 
   minio-init:
-    image: quay.io/minio/mc:RELEASE.2024-09-16T17-43-14Z
+    image: cgr.dev/chainguard/minio-client@sha256:b8b144ab34694ecea25aa352c4be9de4c26ee2a02701521dce02ee5593c57338
     depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      mc alias set local http://minio:9000 minioadmin minioadmin &&
-      mc mb --ignore-existing local/activepieces &&
-      echo 'bucket activepieces ready'
-      "
+      minio-ready:
+        condition: service_completed_successfully
+    environment:
+      MC_HOST_local: http://minioadmin:minioadmin@minio:9000
+    command: mb --ignore-existing local/activepieces
     networks:
       - bench
 

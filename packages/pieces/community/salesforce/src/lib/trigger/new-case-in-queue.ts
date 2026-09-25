@@ -8,6 +8,7 @@ import { querySalesforceApi, salesforcesCommon } from '../common';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
+import { newCaseTriggerOutputSchema } from '../output-schemas';
 
 // https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_select_fields.htm
 // Hard Salesforce limit: FIELDS(ALL) returns at most 200 records per query
@@ -21,6 +22,7 @@ export const newCaseCreatedTrigger = createTrigger({
     aiMetadata: {
         description: 'Fires when a Case becomes owned by the selected Salesforce queue, whether assigned at creation by an Assignment Rule or moved into the queue later via an owner change. Each event emits all fields of the Case. Detected by polling CaseHistory owner changes and newly created Cases owned by the queue since the last poll.',
     },
+    outputSchema: newCaseTriggerOutputSchema,
     props: {
         caseQueueId: salesforcesCommon.caseQueueId,
     },

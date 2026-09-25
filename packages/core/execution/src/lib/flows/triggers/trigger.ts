@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { STEP_NAME_REGEX } from '@activepieces/core-utils'
 import { VersionType } from '@activepieces/core-piece-types'
-import { CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
+import { AiRouterActionSettings, CodeActionSettings, LoopOnItemsActionSettings, PieceActionSettings, RouterActionSettings } from '../actions/action'
 import { PropertySettings } from '../properties'
 import { SampleDataSetting } from '../sample-data'
 
@@ -69,4 +69,5 @@ export type StepSettings =
   | PieceActionSettings
   | PieceTriggerSettings
   | RouterActionSettings
+  | AiRouterActionSettings
   | LoopOnItemsActionSettings

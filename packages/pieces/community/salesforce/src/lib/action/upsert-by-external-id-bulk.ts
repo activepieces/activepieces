@@ -9,6 +9,7 @@ import {
 
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
+import { upsertByExternalIdBulkOutputSchema } from '../output-schemas';
 
 export const upsertByExternalIdBulk = createAction({
   auth: salesforceAuth,
@@ -17,6 +18,7 @@ export const upsertByExternalIdBulk = createAction({
   description: 'Bulk upsert a record by external id',
   audience: 'both',
   aiMetadata: { description: 'Insert-or-update many records at once via the Bulk API, matching on a stable external-ID field and accepting CSV input. Idempotent on the external ID — rerunning with the same data does not create duplicates. Pick this for large batches; use Batch Upsert for small JSON payloads.', idempotent: true },
+  outputSchema: upsertByExternalIdBulkOutputSchema,
   props: {
     object: salesforcesCommon.object,
     external_field: Property.ShortText({

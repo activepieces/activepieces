@@ -5,14 +5,16 @@ import {
 } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
+import { aggregateFieldOutputSchema } from '../output-schemas';
 
 export const aggregateFieldAction = createAction({
   name: 'baserow_aggregate_field',
   classification: 'READ',
+  outputSchema: aggregateFieldOutputSchema,
   displayName: 'Aggregate Field',
   description:
     'Calculates an aggregation (sum, average, min, max, count, etc.) over all values of a field in a grid view.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Computes a single aggregate value (sum, average, min, max, median, std dev, variance, or empty/non-empty/unique counts) over one field across all rows of a Baserow grid view. Use for roll-up metrics over a whole view rather than fetching rows yourself; numeric aggregations require a number field. Requires a grid view ID and a field ID. Read-only and idempotent.',
