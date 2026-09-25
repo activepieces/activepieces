@@ -5,17 +5,7 @@ import {
   HttpResponse,
 } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
-import { postizAuth, PostizAuth } from './auth';
-
-const DEFAULT_BASE_URL = 'https://api.postiz.com/public/v1';
-
-function buildBaseUrl(auth: PostizAuth): string {
-  const url = auth.props.base_url?.trim();
-  if (!url) {
-    return DEFAULT_BASE_URL;
-  }
-  return url.replace(/\/+$/, '');
-}
+import { postizAuth, postizAuthHelpers, PostizAuthValue } from './auth';
 
 export async function postizApiCall<T extends HttpMessageBody>({
   auth,
@@ -24,7 +14,7 @@ export async function postizApiCall<T extends HttpMessageBody>({
   body,
   queryParams,
 }: {
-  auth: PostizAuth;
+  auth: PostizAuthValue;
   method: HttpMethod;
   path: string;
   body?: unknown;
@@ -32,7 +22,7 @@ export async function postizApiCall<T extends HttpMessageBody>({
 }): Promise<HttpResponse<T>> {
   return await httpClient.sendRequest<T>({
     method,
-    url: `${buildBaseUrl(auth)}${path}`,
+    url: `${postizAuthHelpers.publicApiUrl(auth)}${path}`,
     headers: {
       Authorization: auth.props.api_key,
     },
@@ -64,7 +54,7 @@ export const postizCommon = {
           profile: string;
         }[]
       >({
-        auth: auth as PostizAuth,
+        auth,
         method: HttpMethod.GET,
         path: '/integrations',
       });
@@ -79,4 +69,4 @@ export const postizCommon = {
   }),
 };
 
-export type { PostizAuth } from './auth';
+export type { PostizAuthValue } from './auth';
