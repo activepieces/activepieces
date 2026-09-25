@@ -128,7 +128,7 @@ export const youtubeSearchAction = createAction({
       required: false,
       defaultValue: 25,
       display: 'stepper',
-      min: 1,
+      min: 0,
       max: 50,
       step: 1,
     }),

@@ -42,7 +42,7 @@ export const youtubeListPlaylistItemsAction = createAction({
       description:
         'How many items to return, up to 50.',
       display: 'stepper',
-      min: 1,
+      min: 0,
       max: 50,
       step: 1,
       required: false,
