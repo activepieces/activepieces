@@ -25,10 +25,15 @@ export function PlatformRolesList() {
             personalProjectsEnabled: platform.autoCreatePersonalProjects,
           })
           .map((platformRole) => (
-            <Item key={platformRole.role} variant="outline" size="sm">
-              <RoleAvatar name={platformRole.label} />
-              <ItemContent>
-                <ItemTitle>
+            <Item
+              key={platformRole.role}
+              variant="outline"
+              size="sm"
+              className="flex-nowrap bg-background dark:bg-muted/50"
+            >
+              <RoleAvatar name={platformRole.label} tone={platformRole.tone} />
+              <ItemContent className="min-w-0">
+                <ItemTitle className="min-w-0 max-w-full flex-wrap">
                   {platformRole.label}
                   <Badge
                     variant="accent"

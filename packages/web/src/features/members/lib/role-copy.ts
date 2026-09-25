@@ -2,6 +2,8 @@ import { ProjectRole, RoleType } from '@activepieces/core-utils';
 import { DefaultProjectRole, PlatformRole } from '@activepieces/shared';
 import { t } from 'i18next';
 
+import { rolePermissionModel } from './role-permissions';
+
 const BUILT_IN_ORDER: string[] = [
   DefaultProjectRole.ADMIN,
   DefaultProjectRole.EDITOR,
@@ -19,6 +21,17 @@ function projectRoleDescription(roleName: string): string | null {
     default:
       return null;
   }
+}
+
+function projectRoleSummary({
+  name,
+  permissions,
+}: ProjectRoleSummaryParams): string {
+  const granted = rolePermissionModel.grantedBoxes({ permissions });
+  const total = rolePermissionModel.totalBoxes();
+  const count = t('permissionsCount', { granted, total });
+  const description = projectRoleDescription(name);
+  return description ? `${description} \u00b7 ${count}` : count;
 }
 
 function projectRoleTone(roleName: string): RoleTone {
@@ -89,6 +102,7 @@ function builtInRank(role: ProjectRole): number {
 
 export const roleCopy = {
   projectRoleDescription,
+  projectRoleSummary,
   projectRoleTone,
   platformRoles,
   sortProjectRoles,
@@ -106,4 +120,9 @@ export type PlatformRoleSummary = {
 
 type PlatformRolesParams = {
   personalProjectsEnabled: boolean;
+};
+
+type ProjectRoleSummaryParams = {
+  name: string;
+  permissions: string[];
 };

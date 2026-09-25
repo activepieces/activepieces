@@ -4,6 +4,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
+const GUTTER = 'w-full px-4 sm:px-6';
+
 export const CenteredPage = ({
   title,
   description,
@@ -11,6 +13,7 @@ export const CenteredPage = ({
   footer,
   children,
   widthClassName = 'max-w-[40rem]',
+  className,
 }: {
   title?: string;
   description?: React.ReactNode;
@@ -18,6 +21,7 @@ export const CenteredPage = ({
   footer?: React.ReactNode;
   children: React.ReactNode;
   widthClassName?: string;
+  className?: string;
 }) => {
   const header =
     title === undefined && !description && !actions ? null : (
@@ -39,31 +43,35 @@ export const CenteredPage = ({
 
   if (!footer) {
     return (
-      <div className={cn('w-full mx-auto py-6', widthClassName)}>
-        {header}
-        {children}
+      <div className={cn(GUTTER, 'py-6', className)}>
+        <div className={cn('w-full mx-auto', widthClassName)}>
+          {header}
+          {children}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className={cn('w-full mx-auto pt-6 shrink-0', widthClassName)}>
-        {header}
+      <div className={cn(GUTTER, 'pt-6 shrink-0')}>
+        <div className={cn('w-full mx-auto', widthClassName)}>{header}</div>
       </div>
       <ScrollArea className="flex-1 min-h-0">
-        <div className={cn('w-full mx-auto pb-6', widthClassName)}>
-          {children}
+        <div className={cn(GUTTER, 'pb-6')}>
+          <div className={cn('w-full mx-auto', widthClassName)}>{children}</div>
         </div>
       </ScrollArea>
       <div className="shrink-0 border-t bg-background">
-        <div
-          className={cn(
-            'w-full mx-auto py-3 flex justify-end gap-2',
-            widthClassName,
-          )}
-        >
-          {footer}
+        <div className={cn(GUTTER, 'py-3')}>
+          <div
+            className={cn(
+              'w-full mx-auto flex justify-end gap-2',
+              widthClassName,
+            )}
+          >
+            {footer}
+          </div>
         </div>
       </div>
     </div>

@@ -13,17 +13,13 @@ import {
 import { roleCopy } from '@/features/members/lib/role-copy';
 import { platformHooks } from '@/hooks/platform-hooks';
 
-export const getProjectRoleDescription = (roleName: string): string => {
-  return roleCopy.projectRoleDescription(roleName) ?? '';
-};
-
 interface RoleSelectorProps {
   type: 'platform' | 'project';
   value: string;
   onValueChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
-  roles?: Array<{ name: string }>;
+  roles?: Array<{ name: string; permissions: string[] }>;
   isLoading?: boolean;
   isAssigningRole?: boolean;
 }
@@ -60,7 +56,10 @@ export const RoleSelector = ({
     : roles.map((role) => ({
         value: role.name,
         label: role.name,
-        description: getProjectRoleDescription(role.name),
+        description: roleCopy.projectRoleSummary({
+          name: role.name,
+          permissions: role.permissions,
+        }),
       }));
 
   const selectedRole = options.find((r) => r.value === value);
