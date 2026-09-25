@@ -8,6 +8,14 @@ icon: "hammer"
 
 ### What has changed?
 
+#### The Helm chart's pod listens on port 8080
+
+The chart's default `container.port` is now `8080` instead of `80`, and the chart sets `AP_PORT` to match. A port above 1024 lets the pod run as a non-root user with all capabilities dropped, which OpenShift's `restricted-v2` SCC and the `restricted` Pod Security Standard require. The Service still listens on port 80, so an Ingress or client that goes through the Service is unaffected.
+
+#### What you need to do
+
+Nothing if you reach Activepieces through the chart's Service or Ingress. If something targets the pod's port directly (a NetworkPolicy, a `kubectl port-forward` to the pod, a sidecar), change it from `80` to `8080`, or set `container.port: 80` to keep the old port. If you already set `AP_PORT` yourself, the chart leaves it alone; keep `container.port` equal to it.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.

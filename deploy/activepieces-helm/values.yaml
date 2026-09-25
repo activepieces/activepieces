@@ -41,17 +41,27 @@ podLabels: {}
 podSecurityContext: {}
   # fsGroup: 2000
 
+# Left empty so SANDBOX_PROCESS users can keep granting what isolate needs
+# (Helm merges your securityContext into these defaults). For a restricted Pod
+# Security Standard or OpenShift's restricted-v2 SCC, run UNSANDBOXED (the
+# default) or SANDBOX_CODE_ONLY and set:
+#   allowPrivilegeEscalation: false
+#   runAsNonRoot: true
+#   runAsUser: 1000      # omit on OpenShift, which assigns the UID
+#   capabilities:
+#     drop:
+#     - ALL
+#   seccompProfile:
+#     type: RuntimeDefault
+# See "OpenShift and restricted Pod Security" in docs/install/options/helm.mdx.
 securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
 
 # Container configuration
 container:
-  port: 80
+  # Port the server listens on inside the pod; the chart passes it to the app
+  # as AP_PORT. It is above 1024 so a non-root container can bind it without
+  # NET_BIND_SERVICE. The Service still exposes service.port (80).
+  port: 8080
 
 # This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:

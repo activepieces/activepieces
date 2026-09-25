@@ -226,6 +226,31 @@ For a complete list of configuration options, see the [Environment Variables](/i
 
 Understanding execution modes is crucial for security and performance. See the [Sandboxing](/install/architecture/sandboxing) guide to choose the right mode for your deployment.
 
+## OpenShift and restricted Pod Security
+
+The pod listens on `container.port` (default `8080`), and the chart passes it to the app as `AP_PORT`. A port above 1024 lets the container run as a non-root user with every capability dropped. The Service still exposes port 80 (`service.port`). If you set `AP_PORT` yourself, in `activepiecesConfig` or in a secret listed under `activepiecesEnvVariables`, the chart leaves it alone: set `container.port` to the same number.
+
+To run under the Kubernetes `restricted` Pod Security Standard or OpenShift's `restricted-v2` SCC:
+
+1. Use `AP_EXECUTION_MODE=UNSANDBOXED` (the default) or `SANDBOX_CODE_ONLY`. `SANDBOX_PROCESS` and `SANDBOX_CODE_AND_PROCESS` need `CAP_SYS_ADMIN`, which these policies forbid. See [Sandboxing](/install/architecture/sandboxing).
+2. Set a restricted security context:
+
+```yaml
+securityContext:
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000        # omit on OpenShift, which assigns a UID from the namespace range
+  capabilities:
+    drop:
+      - ALL
+  seccompProfile:
+    type: RuntimeDefault
+podSecurityContext:
+  fsGroup: 1000          # omit on OpenShift, which sets it; makes the cache volume writable
+persistence:
+  storageClassName: "your-storage-class"  # see `kubectl get storageclass`
+```
+
 ## Uninstalling
 
 ```bash

@@ -59,8 +59,19 @@ spec:
                 name: {{ include "activepieces.fullname" . }}-secrets
             - secretRef:
                 name: {{ include "activepieces.fullname" . }}-jwt-secret
-          {{- if or .Values.activepiecesEnvVariables .Values.activepiecesConfig }}
+          {{- $userSetsPort := hasKey (.Values.activepiecesConfig | default dict) "AP_PORT" }}
+          {{- range $vars := .Values.activepiecesEnvVariables }}
+          {{- if has "AP_PORT" $vars }}
+          {{- $userSetsPort = true }}
+          {{- end }}
+          {{- end }}
           env:
+            {{- /* The server listens on AP_PORT (80 when unset). Keep it equal to
+            containerPort so the probes and the Service reach the listening port. */}}
+            {{- if not $userSetsPort }}
+            - name: AP_PORT
+              value: {{ .Values.container.port | quote }}
+            {{- end }}
             {{- range $key, $value := .Values.activepiecesConfig }}
             - name: {{ $key }}
               value: {{ $value | quote }}
@@ -85,7 +96,6 @@ spec:
                   optional: {{ index $ref 2 }}
             {{- end }}
             {{- end }}
-          {{- end }}
           {{- with .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml . | nindent 12 }}

@@ -37,6 +37,10 @@ jobs:
           grep -q '^kind: Rollout' "$RUNNER_TEMP/rollout.yaml"
           grep -q 'name: ap-activepieces-preview' "$RUNNER_TEMP/rollout.yaml"
           grep -A2 'scaleTargetRef:' "$RUNNER_TEMP/rollout.yaml" | grep -q 'kind: Rollout'
+          helm template ap . --api-versions apps/v1/StatefulSet > "$RUNNER_TEMP/port.yaml"
+          grep -q 'containerPort: 8080' "$RUNNER_TEMP/port.yaml"
+          grep -A1 'name: AP_PORT' "$RUNNER_TEMP/port.yaml" | grep -q 'value: "8080"'
+          test "$(helm template ap . --api-versions apps/v1/StatefulSet --set activepiecesConfig.AP_PORT=9000 | grep -c 'name: AP_PORT')" -eq 1
           NOTES=$(helm install ap . --dry-run=client --set activepieces.frontendUrl=x)
           grep -q 'ignores these values' <<< "$NOTES"
           NOTES=$(helm install ap . --dry-run=client)
