@@ -14,27 +14,18 @@ export const youtubeListPlaylistItemsAction = createAction({
     'List the videos in a playlist, or fetch specific playlist items.',
   audience: 'human',
   aiMetadata: { description: 'Lists the entries of a YouTube playlist in one of two modes: pass a playlist ID to page through that whole playlist (optionally narrowed to entries containing one video ID), or pass a comma-separated list of playlist item IDs to fetch only those entries. Exactly one of the two is required, supplying both or filtering by video without a playlist ID fails validation, and Max Results is capped at 50 with further pages fetched via the page token. Run Search with type Playlist first when the playlist ID is unknown; read-only and idempotent.', idempotent: true },
-  propertyGroups: [
-    {
-      key: 'items',
-      display: 'tabs',
-      label: 'Playlist',
-      description: 'List a whole playlist, or fetch playlist items by ID.',
-      props: ['playlistId', 'itemIds'],
-    },
-  ],
   props: {
     playlistId: Property.ShortText({
       displayName: 'Playlist ID',
       description:
-        "The list= value in the playlist's URL.",
+        "The list= value in the playlist's URL. Leave empty to use Item IDs.",
       placeholder: 'PLbpi6ZahtOH6Ar_3GPy3workLYfGa7mGm',
       required: false,
     }),
     itemIds: Property.ShortText({
       displayName: 'Item IDs',
       description:
-        'Playlist item IDs, separated by commas. These are not video IDs.',
+        'Comma-separated playlist item IDs, used instead of Playlist ID.',
       required: false,
     }),
     maxResults: Property.Number({
