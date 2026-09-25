@@ -895,23 +895,36 @@ export const blogUrlDropdown = Property.Dropdown({
 		}
 
 
-		const response = await httpClient.sendRequest<ListBlogsResponse>({
-			method: HttpMethod.GET,
-			url: 'https://api.hubapi.com/content/api/v2/blogs',
-			authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(auth) },
-			queryParams: {
-				limit: '100',
-			},
-		});
+		const options: DropdownOption<string>[] = [];
+		let offset = 0;
+		let total = 0;
+		do {
+			const response = await httpClient.sendRequest<ListBlogsResponse>({
+				method: HttpMethod.GET,
+				url: 'https://api.hubapi.com/content/api/v2/blogs',
+				authentication: { type: AuthenticationType.BEARER_TOKEN, token: getHubspotAccessToken(auth) },
+				queryParams: {
+					limit: '100',
+					offset: String(offset),
+				},
+			});
+			const { objects } = response.body;
+			if (objects.length === 0) {
+				break;
+			}
+			for (const blog of objects) {
+				options.push({
+					label: blog.absolute_url,
+					value: blog.id.toString(),
+				});
+			}
+			offset += objects.length;
+			total = response.body.total;
+		} while (offset < total);
 
 		return {
 			disabled: false,
-			options: response.body.objects.map((blog) => {
-				return {
-					label: blog.absolute_url,
-					value: blog.id.toString(),
-				};
-			}),
+			options,
 		};
 	},
 });
