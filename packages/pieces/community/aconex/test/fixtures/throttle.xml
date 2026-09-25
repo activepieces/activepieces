@@ -1,0 +1,5 @@
+<Error>
+  <ErrorCode>MAX_FREQUENCY_THROTTLE_LIMIT_REACHED</ErrorCode>
+  <ErrorDescription>Too many requests</ErrorDescription>
+  <RequestID>throttle1</RequestID>
+</Error>

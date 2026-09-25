@@ -1,0 +1,17 @@
+<RegisterSearch TotalResults="1" TotalResultsOnPage="1" TotalPages="1" PageSize="25" CurrentPage="1">
+  <SearchResults>
+    <Document DocumentId="1879093137">
+      <DocumentNumber>DWG-001</DocumentNumber>
+      <Title>Shop drawing</Title>
+      <Revision>A</Revision>
+      <DocumentType>Shop Drawing</DocumentType>
+      <Author>Ada Lovelace</Author>
+      <Filename>dwg-001.pdf</Filename>
+      <FileSize>1024</FileSize>
+      <FileType>pdf</FileType>
+      <TrackingId>271341877549172398</TrackingId>
+      <DateModified>2026-01-15T00:00:00.000Z</DateModified>
+      <VersionNumber>2</VersionNumber>
+    </Document>
+  </SearchResults>
+</RegisterSearch>

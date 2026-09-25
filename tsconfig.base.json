@@ -24,6 +24,9 @@
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
       "@activepieces/engine": ["packages/server/engine/src/main.ts"],
+      "@activepieces/piece-aconex": [
+        "packages/pieces/community/aconex/src/index.ts"
+      ],
       "@activepieces/piece-activecampaign": [
         "packages/pieces/community/activecampaign/src/index.ts"
       ],

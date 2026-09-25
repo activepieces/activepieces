@@ -1,0 +1,13 @@
+<Error>
+  <ErrorCode>VALIDATION_FAILED</ErrorCode>
+  <ErrorDescription>Validation failed!</ErrorDescription>
+  <RequestID>kcdzj7xl</RequestID>
+  <SystemTime>2020-07-09T09:20:13.831+10:00</SystemTime>
+  <Fields>
+    <Field>
+      <FieldName>MailSubject</FieldName>
+      <ErrorCode>MANDATORY</ErrorCode>
+      <ErrorMessage>Required</ErrorMessage>
+    </Field>
+  </Fields>
+</Error>

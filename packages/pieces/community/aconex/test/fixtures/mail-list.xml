@@ -1,0 +1,7 @@
+<MailSearch CurrentPage="1" PageSize="50" TotalPages="1" TotalResults="1" TotalResultsOnPage="1">
+  <SearchResults>
+    <Mail MailId="1879053088">
+      <Confidential>true</Confidential>
+    </Mail>
+  </SearchResults>
+</MailSearch>
