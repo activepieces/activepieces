@@ -65,10 +65,18 @@ export const jsonToCsvAction = createAction({
       }))
     }
     const flattened = json_array.map((item) => flatten(item) as Record<string, string>);
+    if (flattened.length === 0) {
+      return '';
+    }
 
     return stringify(flattened, {
       header: true,
       delimiter: delimiter_type,
+      columns: collectColumns(flattened),
     });
   },
 });
+
+function collectColumns(rows: Record<string, string>[]): string[] {
+  return Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+}

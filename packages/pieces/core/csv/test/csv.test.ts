@@ -112,6 +112,23 @@ describe('jsonToCsvAction', () => {
     });
     await expect(jsonToCsvAction.run(ctx)).rejects.toThrow();
   });
+
+  test('includes columns from every row, not only the first', async () => {
+    const jsonArray = [{ a: 1 }, { a: 2, b: 3 }];
+    const ctx = createMockActionContext({
+      propsValue: { markdown: '', json_array: jsonArray, delimiter_type: ',' },
+    });
+    const result = await jsonToCsvAction.run(ctx);
+    expect(result).toBe('a,b\n1,\n2,3\n');
+  });
+
+  test('returns an empty string for an empty array', async () => {
+    const ctx = createMockActionContext({
+      propsValue: { markdown: '', json_array: [], delimiter_type: ',' },
+    });
+    const result = await jsonToCsvAction.run(ctx);
+    expect(result).toBe('');
+  });
 });
 
 describe('excelToCsvAction', () => {
