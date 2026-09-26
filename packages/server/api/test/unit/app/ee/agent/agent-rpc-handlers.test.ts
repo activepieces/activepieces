@@ -26,8 +26,9 @@ const { mockSet, mockWhere, mockAndWhere, mockExecute, mockFindOneBy, mockFindOn
     mockSendConversationUpdate: vi.fn(),
 }))
 
-const { mockAssertProjectSwitchKeepsKey } = vi.hoisted(() => ({
+const { mockAssertProjectSwitchKeepsKey, mockResolveFastModel } = vi.hoisted(() => ({
     mockAssertProjectSwitchKeepsKey: vi.fn().mockResolvedValue(undefined),
+    mockResolveFastModel: vi.fn().mockResolvedValue({}),
 }))
 
 const { mockGetFileOrThrow, mockKbSearch, mockIsSearchable } = vi.hoisted(() => ({
@@ -112,7 +113,7 @@ vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
         surfaceOf: () => 'flow',
         findTier: () => undefined,
-        resolveFastModel: () => ({}),
+        resolveFastModel: mockResolveFastModel,
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
             findOneBy: mockFindOneBy,
@@ -435,6 +436,32 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
         await expect(runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: null })).rejects.toThrow()
 
         expect(mockRunResolved).not.toHaveBeenCalled()
+    })
+
+    describe('the model the fast round reuses', () => {
+        const fastModelCall = () => mockResolveFastModel.mock.calls.at(-1)?.[0]
+
+        it('is the inline step\'s own model when the run has no agent', async () => {
+            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: null, modelName: 'eu.anthropic.claude-sonnet-4-6' })
+
+            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'eu.anthropic.claude-sonnet-4-6' })
+        })
+
+        it('is the saved agent\'s own model, read from the half this run uses', async () => {
+            const agent = { draft: { modelName: 'draft-model' }, published: { modelName: 'published-model' } }
+
+            await runPieceTool({ id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent })
+            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'draft-model' })
+
+            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent })
+            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'published-model' })
+        })
+
+        it('is never the tier id the worker persisted on a saved agent\'s conversation, even once that tier leaves the published list', async () => {
+            await runPieceTool({ id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent: { draft: { modelName: null } } })
+
+            expect(fastModelCall()).not.toHaveProperty('fallbackModelId')
+        })
     })
 })
 
