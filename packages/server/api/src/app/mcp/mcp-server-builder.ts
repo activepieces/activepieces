@@ -1,5 +1,5 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { FlowStatus, McpOAuthClientKey, McpProperty, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { FlowStatus, McpOAuthClientKey, McpProperty, McpServer as McpServerSchema, McpToolDefinition, mcpToolNameUtils, McpToolResult, McpTrigger, PopulatedFlow, PopulatedMcpServer, ProjectScopedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { flowService } from '../flows/flow/flow.service'
@@ -9,7 +9,8 @@ import { AppSystemProp } from '../helper/system/system-props'
 import { telemetry } from '../helper/telemetry.utils'
 import { WebhookFlowVersionToRun, webhookService } from '../webhooks/webhook.service'
 import { McpActivityContext, withActivityRecording } from './activity/mcp-activity-recorder'
-import { ALLOW_ALL, PermissionChecker, resolvePermissionChecker } from './mcp-permissions'
+import { mcpAccess } from './mcp-access'
+import { ALLOW_ALL, PermissionChecker, resolveMcpPermissionChecker, resolvePermissionChecker } from './mcp-permissions'
 import { mcpProjectSelection, ProjectSelectionScope } from './mcp-project-selection'
 import { mcpToolInput } from './mcp-tool-input'
 import { McpCallBilling, mcpUsageTracker } from './mcp-usage-tracker'
@@ -21,6 +22,7 @@ const PLATFORM_LEVEL_TOOL_SET = new Set<string>(PLATFORM_LEVEL_TOOL_NAMES)
 const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 
 ### Workflow
+0. Project: on the platform server, call ap_set_project_context first — every project tool, including ap_list_connections and ap_list_ai_models, needs a selected project
 1. Discover: ap_research_pieces, ap_list_connections, ap_list_ai_models
 2. Schema: ap_get_piece_props (get field names/types before configuring)
 3. Build: ap_build_flow (one call for new flows) OR ap_create_flow → ap_update_trigger → ap_add_step (granular)
@@ -36,14 +38,15 @@ const MCP_SERVER_INSTRUCTIONS = `## Activepieces MCP Server
 - **CODE steps**: export a \`code\` fn; access inputs via \`inputs.key\`.
 - **Tables**: use field names, not IDs.`
 
-export async function buildMcpServer({ mcp, userId, platformId, clientKey, clientId, log, resolveProjectMcp }: {
+export async function buildMcpServer({ mcp, userId, platformId, clientKey, clientId, isInAppChat, log, resolveProjectMcp }: {
     mcp: PopulatedMcpServer
     userId?: string
     platformId?: string
     clientKey: McpOAuthClientKey | null
     clientId: string
+    isInAppChat: boolean
     log: FastifyBaseLogger
-    resolveProjectMcp?: (projectId: string) => Promise<PopulatedMcpServer>
+    resolveProjectMcp?: (projectId: string) => Promise<McpServerSchema>
 }): Promise<McpServer> {
     const projectId = mcp.projectId
 
@@ -71,15 +74,16 @@ export async function buildMcpServer({ mcp, userId, platformId, clientKey, clien
     const billing = await mcpUsageTracker(log).resolveCallBilling({ mcp, clientId })
 
     if (projectId) {
+        const resolveChecker = isInAppChat ? resolvePermissionChecker : resolveMcpPermissionChecker
         const permissionChecker = userId
-            ? await resolvePermissionChecker({ userId, projectId, log })
+            ? await resolveChecker({ userId, projectId, log })
             : ALLOW_ALL
         const activityContext: McpActivityContext | null = isNil(platformId) || isNil(userId) ? null : { platformId, projectId, userId, clientKey }
         registerFlowTools({ server, mcp, projectId, permissionChecker, billing, log })
         registerStaticTools({ server, mcp, projectId, userId, permissionChecker, activityContext, billing, log })
     }
     else if (!isNil(mcp.platformId) && !isNil(userId) && !isNil(resolveProjectMcp)) {
-        registerPlatformTools({ server, mcp, userId, clientKey, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, billing, log })
+        registerPlatformTools({ server, mcp, platformId: mcp.platformId, userId, clientKey, selectionScope: { platformId: mcp.platformId, userId, clientId }, resolveProjectMcp, billing, log })
     }
     else {
         registerPlaceholderTools(server)
@@ -89,19 +93,22 @@ export async function buildMcpServer({ mcp, userId, platformId, clientKey, clien
     return server
 }
 
-function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope, resolveProjectMcp, billing, log }: {
+function registerPlatformTools({ server, mcp, platformId, userId, clientKey, selectionScope, resolveProjectMcp, billing, log }: {
     server: McpServer
     mcp: PopulatedMcpServer
+    platformId: string
     userId: string
     clientKey: McpOAuthClientKey | null
     selectionScope: ProjectSelectionScope
-    resolveProjectMcp: (projectId: string) => Promise<PopulatedMcpServer>
+    resolveProjectMcp: (projectId: string) => Promise<McpServerSchema>
     billing: McpCallBilling
     log: FastifyBaseLogger
 }): void {
-    const platformId = mcp.platformId!
+    const requireMcpReach = (execute: McpToolDefinition['execute'], toolTitle: string): McpToolDefinition['execute'] =>
+        withMcpReach({ execute, toolTitle, platformId, userId, log })
+
     const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
-    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing })(args))
+    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => requireMcpReach(charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing }), contextTool.title)(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
     const allTools = activepiecesTools(templateMcp, userId, log)
@@ -110,7 +117,7 @@ function registerPlatformTools({ server, mcp, userId, clientKey, selectionScope,
 
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
-            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => charged({ execute: tool.execute, toolName: tool.title, projectId: null, billing })(args))
+            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => requireMcpReach(charged({ execute: tool.execute, toolName: tool.title, projectId: null, billing }), tool.title)(args))
             return
         }
 
@@ -136,13 +143,13 @@ async function executeInSelectedProject({ toolTitle, args, projectId, userId, re
     args: Record<string, unknown>
     projectId: string
     userId: string
-    resolveProjectMcp: (projectId: string) => Promise<PopulatedMcpServer>
+    resolveProjectMcp: (projectId: string) => Promise<McpServerSchema>
     billing: McpCallBilling
     log: FastifyBaseLogger
 }): Promise<McpToolResult> {
     const projectMcp = await resolveProjectMcp(projectId)
     const projectScopedMcp: ProjectScopedMcpServer = { ...projectMcp, projectId }
-    const permissionChecker = await resolvePermissionChecker({ userId, projectId, log })
+    const permissionChecker = await resolveMcpPermissionChecker({ userId, projectId, log })
     const realTools = activepiecesTools(projectScopedMcp, userId, log)
     const realTool = realTools.find(t => t.title === toolTitle)
     if (isNil(realTool)) {
@@ -157,6 +164,22 @@ async function executeInSelectedProject({ toolTitle, args, projectId, userId, re
         toolTitle: realTool.title,
     })
     return execute(args)
+}
+
+function withMcpReach({ execute, toolTitle, platformId, userId, log }: {
+    execute: McpToolDefinition['execute']
+    toolTitle: string
+    platformId: string
+    userId: string
+    log: FastifyBaseLogger
+}): McpToolDefinition['execute'] {
+    return async (args) => {
+        const reachesMcp = await mcpAccess.hasMcpReach({ platformId, userId, log })
+        if (!reachesMcp) {
+            return mcpAccess.noMcpReachResult(toolTitle)
+        }
+        return execute(args)
+    }
 }
 
 function noProjectSelectedResult(): McpToolResult {
