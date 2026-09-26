@@ -29,6 +29,11 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
         return { ...mcp, flows }
     },
 
+    listPlatformDisabledTools: async ({ platformId }: { platformId: string }): Promise<string[]> => {
+        const platformMcp = await mcpServerRepository().findOneBy({ platformId })
+        return platformMcp?.disabledTools ?? []
+    },
+
     getPopulatedByPlatformId: async (platformId: string): Promise<PopulatedMcpServer> => {
         const mcp = await mcpServerService(log).getByPlatformId(platformId)
         return { ...mcp, flows: [] }
@@ -67,6 +72,9 @@ export const mcpServerService = (log: FastifyBaseLogger) => ({
             mcp,
             userId,
             platformId,
+            platformDisabledTools: mcp.type === McpServerType.PROJECT && !isNil(platformId)
+                ? await mcpServerService(log).listPlatformDisabledTools({ platformId })
+                : [],
             clientKey: clientKey ?? null,
             clientId,
             isInAppChat: isInAppChat ?? false,
