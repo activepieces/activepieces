@@ -44,19 +44,13 @@ describe('Flags API', () => {
             expect(theme.colors.primary.default).toBe('#ff0000')
         })
 
-        it('should apply platform theme color overrides on top of the generated theme', async () => {
+        it('should carry only the brand colour, whatever else is stored', async () => {
             const ctx = await createTestContext(app!, {
                 platform: {
                     primaryColor: '#ff0000',
                     themeColors: {
                         danger: '#e82c51',
                         selection: '#fbb67e',
-                        primary: {
-                            dark: '#ca6716',
-                        },
-                        success: {
-                            default: '#00a367',
-                        },
                     },
                 },
                 plan: {
@@ -69,13 +63,7 @@ describe('Flags API', () => {
             expect(response.statusCode).toBe(StatusCodes.OK)
             const theme = response.json()[ApFlagId.THEME]
 
-            expect(theme.colors.danger).toBe('#e82c51')
-            expect(theme.colors.selection).toBe('#fbb67e')
-            expect(theme.colors.primary.dark).toBe('#ca6716')
-            expect(theme.colors.success).toStrictEqual({ default: '#00a367', light: '#3cad71' })
-            // non-overridden colors keep their generated values
-            expect(theme.colors.primary.default).toBe('#ff0000')
-            expect(theme.colors['blue-link']).toBe('#1890ff')
+            expect(theme.colors).toStrictEqual({ primary: { default: '#ff0000' } })
         })
 
     })

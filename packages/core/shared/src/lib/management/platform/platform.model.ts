@@ -222,7 +222,6 @@ export const PlatformWithoutSensitiveData = z.object({
     ownerId: ApId,
     name: z.string(),
     primaryColor: z.string(),
-    themeColors: Nullable(PlatformThemeColors),
     logoIconUrl: z.string(),
     fullLogoUrl: z.string(),
     favIconUrl: z.string(),

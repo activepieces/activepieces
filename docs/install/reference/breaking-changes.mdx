@@ -8,6 +8,35 @@ icon: "hammer"
 
 ### What has changed?
 
+#### A platform's branding is one colour
+
+Custom appearance used to carry `themeColors` — a configurable palette of `danger`, `warn`,
+`success`, `avatar`, `blue-link`, `selection` and three extra primary shades. Of those, only the
+`primary.light` and `primary.dark` shades ever reached the interface; a tenant who set a custom danger
+red saw nothing change.
+
+The whole interface palette is now derived in CSS from a single seed, `primaryColor`.
+
+- `themeColors` is gone from `POST /v1/platforms/:id` and from the platform response. It is no longer
+  read: a request that still sends it succeeds, and the field is dropped.
+- The `theme` flag in `GET /v1/flags` now returns `colors: { primary: { default } }` only. The
+  `danger`, `warn`, `success`, `avatar`, `blue-link` and `selection` keys, and the `primary.dark` /
+  `.light` / `.medium` shades, are removed.
+- `primaryColor` is now validated as a hex colour (`#abc` or `#aabbcc`), and anything else is rejected
+  with `400`. It previously accepted any string and silently rendered as black when it was not a colour.
+
+#### What you need to do
+
+Nothing on a normal upgrade. The lighter and darker brand shades are now derived from `primaryColor`,
+so a platform that had overridden `themeColors.primary.light` or `.dark` sees those shades follow its
+brand colour instead. Pick your brand colour under **Platform → General**; everything else follows from it.
+
+Stop sending `themeColors` if you call the platform update endpoint directly, and send `primaryColor`
+as a hex colour. Read the brand colour from `theme.colors.primary.default` and derive any brand shades
+you need from it. If you used the removed status colours (`danger`, `warn`, `success`), choose those
+colours in your own client instead. Values already stored are left in place and ignored, so there is
+nothing to migrate and a downgrade restores the previous behaviour.
+
 #### The AI provider config endpoint is removed
 
 `GET /v1/ai-providers/:provider/config` returned a provider's decrypted credentials so that an AI step running inside the engine could build the model itself and call the provider directly. AI steps no longer work that way: the worker resolves the credentials and makes the call, which is what lets Activepieces charge managed AI on what the call actually cost. Nothing in the product calls the endpoint any more, and it now returns `404`.

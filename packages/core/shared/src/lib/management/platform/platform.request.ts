@@ -1,7 +1,7 @@
 import { ApId, ApMultipartFile, Nullable, OptionalArrayFromQuery, OptionalBooleanFromQuery, SAFE_STRING_PATTERN, tryCatchSync } from '@activepieces/core-utils'
 import { z } from 'zod'
 import { FederatedAuthnProviderConfig } from '../../core/federated-authn'
-import { PieceSelectorConfig, PlatformThemeColors } from './platform.model'
+import { HEX_COLOR_PATTERN, PieceSelectorConfig } from './platform.model'
 
 export const MAX_EMBED_ORIGIN_LENGTH = 300
 
@@ -44,14 +44,11 @@ const jsonFromMultipart = (value: unknown): unknown => {
     return error ? value : data
 }
 
-const NullableThemeColorsFromMultipart = z.preprocess(jsonFromMultipart, Nullable(PlatformThemeColors))
-
 const NullablePieceSelectorConfigFromMultipart = z.preprocess(jsonFromMultipart, Nullable(PieceSelectorConfig))
 
 export const UpdatePlatformRequestBody = z.object({
     name: z.string().regex(new RegExp(SAFE_STRING_PATTERN)).optional(),
-    primaryColor: z.string().optional(),
-    themeColors: NullableThemeColorsFromMultipart,
+    primaryColor: z.string().regex(HEX_COLOR_PATTERN, 'invalidHexColor').optional(),
     logoIcon: z.optional(ApMultipartFile),
     fullLogo: z.optional(ApMultipartFile),
     favIcon: z.optional(ApMultipartFile),
