@@ -10,14 +10,14 @@ export const downloadAttachmentAction = createAction({
 	name: 'downloadAttachment',
 	classification: 'READ',
 	displayName: 'Download Attachment',
-	description: 'Download attachments from a specific email message.',
+	description: 'Save the files attached to an email so later steps can use them.',
 	audience: 'human',
 	aiMetadata: { description: 'Fetches all file attachments from a specific Outlook message (by message ID) and writes them to storage for downstream steps. Use this after locating a message to retrieve its attached files. Requires a valid message ID; idempotent since it only reads.', idempotent: true },
 	outputSchema: downloadAttachmentActionOutputSchema,
 	props: {
 		messageId: Property.ShortText({
 			displayName: 'Message ID',
-			description: 'The ID of the email message containing the attachment.',
+			description: 'Map it from a Find Email step or an Outlook trigger.',
 			required: true,
 		}),
 	},
