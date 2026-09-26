@@ -22,7 +22,7 @@ export const csvToJsonAction = createAction({
       displayName: 'Has Header Row',
       description: 'On: rows become objects keyed by column name. Off: lists of values.',
       defaultValue: false,
-      required: true,
+      required: false,
     }),
     delimiter_type: Property.StaticDropdown({
       displayName: 'Delimiter',
