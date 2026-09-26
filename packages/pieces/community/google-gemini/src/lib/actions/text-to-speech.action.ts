@@ -104,7 +104,7 @@ export const textToSpeechAction = createAction({
       });
 
     } catch (error) {
-      console.error('Error in generate content from image:', error);
+      console.error('Error in text to speech:', error);
       throw error;
     }
   },
