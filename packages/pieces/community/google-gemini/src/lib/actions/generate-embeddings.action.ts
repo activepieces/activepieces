@@ -71,7 +71,7 @@ export const generateEmbeddingsAction = createAction({
       contents: text,
       config: {
         taskType,
-        title,
+        ...(taskType === 'RETRIEVAL_DOCUMENT' ? { title } : {}),
         outputDimensionality,
       },
     });
