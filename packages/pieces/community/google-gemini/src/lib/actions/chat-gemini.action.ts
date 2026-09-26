@@ -65,15 +65,15 @@ export const chatGemini = createAction({
 
     const result = await chat.sendMessage(prompt);
     const responseText = result.response.text();
+    const returnedHistory = memoryKey ? await chat.getHistory() : history;
 
     if (memoryKey) {
-      const updatedHistory = await chat.getHistory();
-      await store.put(memoryKey, updatedHistory, StoreScope.PROJECT);
+      await store.put(memoryKey, returnedHistory, StoreScope.PROJECT);
     }
 
     return {
       response: responseText,
-      history: history,
+      history: returnedHistory,
     };
   },
 });
