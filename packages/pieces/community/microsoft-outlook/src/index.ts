@@ -21,7 +21,7 @@ import { requestApprovalInMail } from './lib/actions/request-approval-send-email
 export const microsoftOutlook = createPiece({
 	displayName: 'Microsoft Outlook',
 	auth: microsoftOutlookAuth,
-	minimumSupportedRelease: '0.87.0',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.png',
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['lucaslimasouza', 'kishanprmr', 'sanket-a11y'],
