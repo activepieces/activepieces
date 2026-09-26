@@ -40,7 +40,9 @@ function startFetch(): Promise<void> {
         })
         .catch((error: unknown) => {
             lastFailureAt = Date.now()
-            logger.warn({ error, tiers: { url: tiersUrl() } }, 'Failed to load the AI model tiers file; serving the tiers shipped with the release')
+            logger.warn({ error, tiers: { url: tiersUrl() } }, isNil(cached)
+                ? 'Failed to load the AI model tiers file; serving the tiers shipped with the release'
+                : 'Failed to refresh the AI model tiers file; keeping the last published copy')
             throw error
         })
         .finally(() => {
