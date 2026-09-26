@@ -35,7 +35,7 @@ export const mailboxDropdown = (params: DropdownParams) =>
 
         if (options.length === 0) {
           return {
-            disabled: false,
+            disabled: true,
             options: [],
             placeholder: 'No folders found on this account.',
           };
