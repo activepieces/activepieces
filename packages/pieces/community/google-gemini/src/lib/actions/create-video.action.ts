@@ -15,47 +15,35 @@ export const createVideoAction = createAction({
   description: 'Generate a video from a text prompt using Google Veo models.',
   aiMetadata: { description: 'Generates a short video with a Google Veo model from a text prompt, optionally seeded by a start image (image-to-video) or by both a start and end image (interpolation between those frames), polling the long-running generation job for up to 10 minutes before returning the finished MP4 as a file. Use it whenever the required output is video; text goes through generate_content and speech through text-to-speech. Note the model-dependent limits: 1080p needs Veo 3.0 or newer, 4K needs Veo 3.1, and both require an 8-second duration. Not idempotent: each call renders a new video.', idempotent: false },
   props: {
+    prompt: Property.LongText({
+      displayName: 'Prompt',
+      description: 'Describe the scene, motion, style and lighting you want.',
+      required: true,
+    }),
     model: Property.Dropdown({
       displayName: 'Model',
+      description: 'Veo model that creates the video.',
       required: true,
       auth: googleGeminiAuth,
       refreshers: [],
       defaultValue: 'veo-3.1-generate-preview',
       options: async ({ auth }) => getGeminiVideoModelOptions({ auth }),
     }),
-    prompt: Property.LongText({
-      displayName: 'Prompt',
-      description:
-        'Describe the video you want to generate. Be specific about the scene, motion, style, and lighting for best results.',
-      required: true,
-    }),
-    image: Property.File({
-      displayName: 'Start Image',
-      description:
-        'Optional image to use as the first frame of the video (image-to-video).',
-      required: false,
-    }),
-    lastFrame: Property.File({
-      displayName: 'End Image',
-      description:
-        'Optional image to use as the last frame. Use together with Start Image to generate an interpolation video.',
-      required: false,
-    }),
     aspectRatio: Property.StaticDropdown({
       displayName: 'Aspect Ratio',
       required: true,
       defaultValue: '16:9',
+      display: 'cards',
       options: {
-        disabled: false,
         options: [
-          { label: '16:9 (Landscape)', value: '16:9' },
-          { label: '9:16 (Portrait)', value: '9:16' },
+          { label: 'Landscape', value: '16:9', description: '16:9' },
+          { label: 'Portrait', value: '9:16', description: '9:16' },
         ],
       },
     }),
     durationSeconds: Property.Dropdown({
-      displayName: 'Duration (seconds)',
-      description: 'Must be 8 when using 1080p, 4K, or reference images.',
+      displayName: 'Duration',
+      description: 'Video length in seconds. 1080p and 4K need 8 seconds.',
       required: false,
       auth: googleGeminiAuth,
       refreshers: ['model'],
@@ -86,7 +74,7 @@ export const createVideoAction = createAction({
     resolution: Property.Dropdown({
       displayName: 'Resolution',
       description:
-        '1080p is available on Veo 3.0+ only. 4K is only available on Veo 3.1 models. 1080p and 4K require 8-second duration.',
+        '4K needs Veo 3.1. 1080p and 4K need an 8-second video.',
       required: false,
       auth: googleGeminiAuth,
       refreshers: ['model'],
@@ -105,18 +93,29 @@ export const createVideoAction = createAction({
         };
       },
     }),
-    personGeneration: Property.StaticDropdown({
-      displayName: 'Person Generation',
-      description:
-        'Controls whether people or faces can appear in the generated video.',
+    image: Property.File({
+      displayName: 'Start Image',
+      description: 'Image to use as the first frame of the video.',
       required: false,
+      advanced: true,
+    }),
+    lastFrame: Property.File({
+      displayName: 'End Image',
+      description: 'Image to use as the last frame. Needs a Start Image.',
+      required: false,
+      advanced: true,
+    }),
+    personGeneration: Property.StaticDropdown({
+      displayName: 'People in Video',
+      description: 'Whether people can appear in the video.',
+      required: false,
+      advanced: true,
       defaultValue: 'allow_adult',
       options: {
-        disabled: false,
         options: [
-          { label: 'Allow Adults Only (default)', value: 'allow_adult' },
-          { label: 'Allow All Ages (requires allowlist)', value: 'allow_all' },
-          { label: "Don't Allow People", value: 'dont_allow' },
+          { label: 'Adults Only', value: 'allow_adult' },
+          { label: 'All Ages (requires allowlist)', value: 'allow_all' },
+          { label: 'No People', value: 'dont_allow' },
         ],
       },
     }),
