@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { fetchMailboxes } from './imap';
-import { imapAuth, type ImapAuth } from './auth';
+import { imapAuth } from './auth';
 
 interface DropdownParams {
   description?: string;
@@ -27,18 +27,26 @@ export const mailboxDropdown = (params: DropdownParams) =>
       try {
         const mailboxes = await fetchMailboxes(auth);
         const options = mailboxes.map(
-          ({ name, path }: { name: string; path: string }) => ({
-            label: name,
+          ({ path }: { path: string }) => ({
+            label: path,
             value: path,
           })
         );
 
+        if (options.length === 0) {
+          return {
+            disabled: false,
+            options: [],
+            placeholder: 'No folders found on this account.',
+          };
+        }
+
         return { disabled: false, options };
-      } catch (error: any) {
+      } catch (error) {
         return {
           disabled: true,
           options: [],
-          placeholder: `Error: ${error.message}`,
+          placeholder: `Couldn't load folders: ${error instanceof Error ? error.message : String(error)}`,
         };
       }
     },
