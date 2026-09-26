@@ -65,6 +65,32 @@ describe('aiPricingCatalog', () => {
         expect(reader.tiers.map((tier) => tier.id)).toEqual(ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.id))
     })
 
+    it('rejects a file where two tiers share an id, because a saved flow step stores that id', async () => {
+        mockResponse({
+            ...validPricing,
+            tiers: [
+                { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000 },
+                { id: 'smart', label: 'Heavy', modelId: 'anthropic/claude-opus-4.8', thinkingBudget: 20_000 },
+            ],
+        })
+        const reader = await (await loadCatalog()).load()
+        expect(reader.tiers.map((tier) => tier.id)).toEqual(ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.id))
+    })
+
+    it('accepts two tiers on the same model, which is a fair thing to do during a provider incident', async () => {
+        mockResponse({
+            ...validPricing,
+            tiers: [
+                { id: 'fast', label: 'Fast', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 5_000 },
+                { id: 'smart', label: 'Expert', modelId: 'anthropic/claude-sonnet-4.6', thinkingBudget: 10_000 },
+            ],
+        })
+        const reader = await (await loadCatalog()).load()
+
+        expect(reader.findTierById('fast')?.thinkingBudget).toBe(5_000)
+        expect(reader.findTierById('smart')?.thinkingBudget).toBe(10_000)
+    })
+
     it('rejects a file with no tiers', async () => {
         mockResponse({ ...validPricing, tiers: [] })
         const reader = await (await loadCatalog()).load()

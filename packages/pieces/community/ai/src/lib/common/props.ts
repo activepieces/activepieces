@@ -1,4 +1,4 @@
-import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { ACTIVEPIECES_CHAT_TIERS, ACTIVEPIECES_IMAGE_TIERS, PieceAuth, Property, tryCatch } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/pieces-framework';
 import { AIProviderModel, AIProviderName, ProjectAIProvider } from '@activepieces/pieces-framework';
@@ -21,6 +21,22 @@ async function listProviders(ctx: {
     },
   });
   return body;
+}
+
+async function listTiers(ctx: {
+  server: { apiUrl: string; token: string };
+}): Promise<ListedTier[] | null> {
+  const { data } = await tryCatch(async () => {
+    const { body } = await httpClient.sendRequest<ListedTiers>({
+      method: HttpMethod.GET,
+      url: `${ctx.server.apiUrl}v1/ai-providers/tiers`,
+      headers: {
+        Authorization: `Bearer ${ctx.server.token}`,
+      },
+    });
+    return body.tiers;
+  });
+  return data;
 }
 
 function providerOptionsOf(provider: ListedProvider): {
@@ -106,6 +122,18 @@ export const aiProps = <T extends AIModelType>({
       }
 
       const { provider, configId } = selection;
+
+      if (provider === AIProviderName.ACTIVEPIECES && modelType === 'text') {
+        const tiers = await listTiers(ctx);
+        if (!isNil(tiers) && tiers.length > 0) {
+          return {
+            placeholder: 'Select AI Model',
+            disabled: false,
+            options: tiers.map(tier => ({ label: tier.label, value: tier.id })),
+          };
+        }
+      }
+
       const { body: allModels } =
         await httpClient.sendRequest<AIProviderModel[]>({
           method: HttpMethod.GET,
@@ -156,4 +184,15 @@ type AIPropsParams<T extends AIModelType> = {
 
 type ListedProvider = Omit<ProjectAIProvider, 'keys'> & {
   keys?: ProjectAIProvider['keys'];
+};
+
+type ListedTier = {
+  id: string;
+  label: string;
+  modelId: string;
+};
+
+type ListedTiers = {
+  tiers: ListedTier[];
+  defaultTierId: string;
 };
