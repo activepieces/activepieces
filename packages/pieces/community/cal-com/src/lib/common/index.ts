@@ -1,3 +1,5 @@
+export * from './client';
+
 export const enum EventTrigger {
   BOOKING_CREATED = 'BOOKING_CREATED',
   BOOKING_RESCHEDULED = 'BOOKING_RESCHEDULED',

@@ -1,4 +1,5 @@
 import { EventTrigger } from '../common';
+import { bookingEventTriggerOutputSchema } from '../output-schemas';
 import { registerWebhooks } from './register-webhook';
 
 export const triggers = [
@@ -194,5 +195,6 @@ export const triggers = [
     displayName: eventTrigger.displayName,
     sampleData: eventTrigger.sampleData,
     description: `Create a webhook to monitor when ${eventTrigger.displayName}`,
+    outputSchema: bookingEventTriggerOutputSchema,
   })
 );
