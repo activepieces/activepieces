@@ -40,9 +40,7 @@ export const csvToJsonAction = createAction({
   async run(context) {
     const { csv_text, has_headers, delimiter_type } = context.propsValue;
     if (!isString(csv_text)) {
-      throw new Error(JSON.stringify({
-        message: 'The input should be a string.',
-      }))
+      throw new Error('The input should be a string.')
     }
 
     const records = parse(csv_text,{delimiter: delimiter_type,columns: has_headers ? true : false,bom: true});

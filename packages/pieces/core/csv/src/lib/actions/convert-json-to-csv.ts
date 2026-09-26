@@ -58,9 +58,7 @@ export const jsonToCsvAction = createAction({
   async run(context) {
     const { json_array, delimiter_type } = context.propsValue;
     if (!Array.isArray(json_array)) {
-      throw new Error(JSON.stringify({
-        message: 'The input should be a JSON array.',
-      }))
+      throw new Error('The input should be a JSON array.');
     }
     const flattened = json_array.map((item) => flatten(item) as Record<string, string>);
     if (flattened.length === 0) {
