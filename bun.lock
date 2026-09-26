@@ -5400,7 +5400,7 @@
     },
     "packages/pieces/community/mailer-lite": {
       "name": "@activepieces/piece-mailer-lite",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6986,7 +6986,7 @@
     },
     "packages/pieces/community/pipedrive": {
       "name": "@activepieces/piece-pipedrive",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
