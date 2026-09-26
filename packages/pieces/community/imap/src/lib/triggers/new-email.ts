@@ -6,7 +6,6 @@ import {
 import {
   AppConnectionValueForAuthProperty,
   FilesService,
-  PiecePropValueSchema,
   Property,
   StaticPropsValue,
   TriggerStrategy,
@@ -22,16 +21,13 @@ import {
 } from '../common';
 import { newEmailTriggerOutputSchema } from '../output-schemas';
 
-const filterInstructions = `
-**Emails Filtering:**
-
-Add a Router Piece to filter emails based on the subject, to, from, cc or other fields.
-`;
+const filterInstructions =
+  'Every new email in this folder starts the flow. To act on only some, add a **Router** step after this trigger.';
 
 const props = {
   mailbox: mailboxDropdown({
-    displayName: 'Mailbox',
-    description: 'Select the mailbox to search.',
+    displayName: 'Folder',
+    description: 'Folder to watch for new emails.',
     required: true,
   }),
   filterInstructions: Property.MarkDown({
@@ -59,8 +55,6 @@ const polling: Polling<
   },
 };
 
-// This wrapper's only purpose is to reverse the messages array to ensure that
-// test polling returns the 5 most recent messages.
 const testPolling: typeof polling = {
   ...polling,
   items: async (...args) => {
@@ -74,7 +68,7 @@ export const newEmail = createTrigger({
   name: 'new_email',
   classification: 'READ',
   displayName: 'New Email',
-  description: 'Trigger when a new email is received',
+  description: 'Starts the flow when a new email arrives in a folder.',
   outputSchema: newEmailTriggerOutputSchema,
   aiMetadata: {
     description: 'Fires when a new email arrives in the selected IMAP mailbox folder. Polls the folder on an interval and emits one event per newly received message, including its parsed content and any attachments. Represents an inbound email landing in that mailbox.',
@@ -164,7 +158,6 @@ async function enrichAttachments(items: Message[], files: FilesService) {
       return {
         ...rest,
         attachments: convertedAttachments,
-        // epochMilliSeconds: item.epochMilliSeconds,
       };
     })
   );
