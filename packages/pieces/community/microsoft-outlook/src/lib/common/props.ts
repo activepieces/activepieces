@@ -20,7 +20,7 @@ export const messageIdDropdown = (params: DropdownParams) =>
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect your account first.',
+					placeholder: 'Please connect your Outlook account first.',
 					disabled: true,
 					options: [],
 				};
@@ -40,7 +40,7 @@ export const messageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: false,
 					options: messages.map((message) => ({
-						label: `${message.subject || 'No Subject'}`,
+						label: `${message.subject || 'No Subject'} - ${message.from?.emailAddress?.name || message.from?.emailAddress?.address || 'Unknown Sender'}`,
 						value: message.id,
 					})),
 				};
@@ -48,6 +48,7 @@ export const messageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: true,
 					options: [],
+					placeholder: 'Could not load emails. Check your connection.',
 				};
 			}
 		},
@@ -63,7 +64,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect your account first.',
+					placeholder: 'Please connect your Outlook account first.',
 					disabled: true,
 					options: [],
 				};
@@ -74,7 +75,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 
 			try {
 				const response: PageCollection = await client
-					.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders/drafts/messages?$top=50&$select=id,subject,from,receivedDateTime`)
+					.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders/drafts/messages?$top=50&$select=id,subject,from,toRecipients,receivedDateTime`)
 					.orderby('receivedDateTime desc')
 					.get();
 
@@ -83,7 +84,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: false,
 					options: messages.map((message) => ({
-						label: `${message.subject || 'No Subject'}`,
+						label: draftLabel(message),
 						value: message.id,
 					})),
 				};
@@ -91,6 +92,7 @@ export const draftMessageIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: true,
 					options: [],
+					placeholder: 'Could not load drafts. Check your connection.',
 				};
 			}
 		},
@@ -106,7 +108,7 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect your account first.',
+					placeholder: 'Please connect your Outlook account first.',
 					disabled: true,
 					options: [],
 				};
@@ -116,14 +118,25 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 			const client = outlookCommon.createClient(authValue);
 
 			try {
-				const response: PageCollection = await client.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders`).get();
+				const folders: MailFolder[] = [];
+				let response: PageCollection = await client
+					.api(`${outlookCommon.mailboxPrefix(authValue)}/mailFolders?$top=100`)
+					.get();
 
-				const folders = response.value as MailFolder[];
+				while (response.value.length > 0) {
+					folders.push(...response.value);
+
+					if (response['@odata.nextLink']) {
+						response = await client.api(response['@odata.nextLink']).get();
+					} else {
+						break;
+					}
+				}
 
 				return {
 					disabled: false,
 					options: folders.map((folder) => ({
-						label: folder.displayName || folder.id || 'Unknown',
+						label: folder.displayName || 'Unnamed folder',
 						value: folder.id || '',
 					})),
 				};
@@ -131,7 +144,14 @@ export const mailFolderIdDropdown = (params: DropdownParams) =>
 				return {
 					disabled: true,
 					options: [],
+					placeholder: 'Could not load folders. Check your connection.',
 				};
 			}
 		},
 	});
+
+function draftLabel(message: Message): string {
+	const subject = message.subject || 'No Subject';
+	const firstRecipient = message.toRecipients?.[0]?.emailAddress?.address;
+	return firstRecipient ? `${subject} - to ${firstRecipient}` : subject;
+}
