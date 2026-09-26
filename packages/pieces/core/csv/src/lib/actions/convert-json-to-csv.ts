@@ -1,13 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { flatten } from 'safe-flat';
 import { stringify } from "csv-stringify/sync";
 import { jsonToCsvActionOutputSchema } from '../output-schemas';
 
-const markdown = `
-**Notes**:
-* The input should be a JSON array.
-* The JSON object will be flattened If nested and the keys will be used as headers.
-`
+const markdown = 'Each object becomes a row and each key a column; missing keys stay blank. Nested fields become columns named with dots, like `address.city`.';
+
 export const jsonToCsvAction = createAction({
   audience: 'both',
   name: 'convert_json_to_csv',
@@ -18,6 +15,7 @@ export const jsonToCsvAction = createAction({
   props: {
     markdown: Property.MarkDown({
       value: markdown,
+      variant: MarkdownVariant.INFO,
     }),
     json_array: Property.Json({
       displayName: 'JSON Array',
