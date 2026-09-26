@@ -74,5 +74,11 @@ export const jsonToCsvAction = createAction({
 });
 
 function collectColumns(rows: Record<string, string>[]): string[] {
-  return Array.from(new Set(rows.flatMap((row) => Object.keys(row))));
+  const columns = new Set<string>();
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      columns.add(key);
+    }
+  }
+  return Array.from(columns);
 }
