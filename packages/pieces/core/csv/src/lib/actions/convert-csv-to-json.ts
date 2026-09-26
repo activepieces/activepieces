@@ -45,7 +45,7 @@ export const csvToJsonAction = createAction({
       }))
     }
 
-    const records = parse(csv_text,{delimiter: delimiter_type,columns: has_headers ? true : false});
+    const records = parse(csv_text,{delimiter: delimiter_type,columns: has_headers ? true : false,bom: true});
     return records;
   },
 });

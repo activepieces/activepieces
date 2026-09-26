@@ -65,6 +65,15 @@ describe('csvToJsonAction', () => {
     });
     await expect(csvToJsonAction.run(ctx)).rejects.toThrow();
   });
+
+  test('strips a leading byte-order mark from the first header', async () => {
+    const csvText = '\uFEFFname,age\nAlice,30';
+    const ctx = createMockActionContext({
+      propsValue: { csv_text: csvText, has_headers: true, delimiter_type: ',' },
+    });
+    const result = await csvToJsonAction.run(ctx);
+    expect(result).toEqual([{ name: 'Alice', age: '30' }]);
+  });
 });
 
 describe('jsonToCsvAction', () => {
