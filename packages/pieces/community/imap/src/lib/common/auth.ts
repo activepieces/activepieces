@@ -56,10 +56,10 @@ export const imapAuth = PieceAuth.CustomAuth({
     auth,
   }): Promise<{ valid: true } | { valid: false; error: string }> {
     try {
-      return (await performImapOperation({ type: AppConnectionType.CUSTOM_AUTH, props: auth }, async (imapClient) => {
-        imapClient.noop();
-        return { valid: true };
-      })) as { valid: true };
+      await performImapOperation({ type: AppConnectionType.CUSTOM_AUTH, props: auth }, async (imapClient) => {
+        await imapClient.noop();
+      });
+      return { valid: true };
     } catch (e) {
       return {
         valid: false,
