@@ -1,6 +1,5 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
-  ACTIVEPIECES_CHAT_TIERS,
   aiProviderUtils,
   CHAT_CREDITS_PER_TOOL_CALL,
 } from '@activepieces/shared';
@@ -24,6 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useModelTiers } from '@/features/agents/ai-model/use-model-tiers';
 import { aiProviderQueries } from '@/features/platform-admin';
 import { cn } from '@/lib/utils';
 
@@ -50,13 +50,14 @@ const TIER_CONFIG: Record<
 
 function useModelOptions(): ModelOption[] {
   const { data: chatProvider } = aiProviderQueries.useChatProvider();
+  const { tiers } = useModelTiers();
   const curatedModels = isNil(chatProvider)
     ? undefined
     : aiProviderUtils.getCuratedChatModels({ provider: chatProvider.provider });
   if (isNil(curatedModels)) {
-    return ACTIVEPIECES_CHAT_TIERS.map((tier) => ({
+    return tiers.map((tier) => ({
       id: tier.id,
-      ...TIER_CONFIG[tier.id],
+      ...(TIER_CONFIG[tier.id] ?? { icon: Sparkles, description: null }),
       displayLabel: tier.label,
     }));
   }

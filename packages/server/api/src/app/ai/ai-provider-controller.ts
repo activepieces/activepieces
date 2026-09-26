@@ -1,4 +1,5 @@
 import { AiProviderKeyStatus, AIProviderName } from '@activepieces/core-utils'
+import { aiPricingCatalog } from '@activepieces/server-utils'
 import { AIProviderModel, CreateAIProviderRequest, PrincipalType, spreadIfDefined, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncZod } from 'fastify-type-provider-zod'
 import { StatusCodes } from 'http-status-codes'
@@ -13,6 +14,13 @@ export const aiProviderController: FastifyPluginAsyncZod = async (app) => {
             platformId: request.principal.platform.id,
             projectId: request.projectId,
         })
+    })
+    app.get('/tiers', ListModelTiers, async () => {
+        const pricing = await aiPricingCatalog.load()
+        return {
+            tiers: pricing.tiers.map((tier) => ({ id: tier.id, label: tier.label, modelId: tier.modelId })),
+            defaultTierId: pricing.defaultTierId,
+        }
     })
     app.get('/configs', ListAIProviderConfigs, async (request) => {
         return aiProviderService(app.log).listConfigs(request.principal.platform.id)
@@ -61,6 +69,24 @@ const ListAIProvidersForProject = {
         querystring: z.object({
             projectId: z.string().optional(),
         }),
+    },
+}
+
+const ListModelTiers = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER, PrincipalType.ENGINE]),
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: z.object({
+                tiers: z.array(z.object({
+                    id: z.string(),
+                    label: z.string(),
+                    modelId: z.string(),
+                })),
+                defaultTierId: z.string(),
+            }),
+        },
     },
 }
 

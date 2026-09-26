@@ -1,6 +1,5 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
-  ACTIVEPIECES_CHAT_TIERS,
   AIProviderModel,
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
 } from '@activepieces/shared';
@@ -9,16 +8,19 @@ import { useQuery } from '@tanstack/react-query';
 import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
 import { authenticationSession } from '@/lib/authentication-session';
 
+import { ModelTier, useModelTiers } from './use-model-tiers';
+
 type AIModelType = 'text' | 'image';
 
 function getAllowedModelsForProvider(
   provider: AIProviderName,
   allModels: AIProviderModel[],
   modelType: AIModelType,
+  tiers: ModelTier[],
 ): AIProviderModel[] {
   const allowedIds =
     provider === AIProviderName.ACTIVEPIECES
-      ? ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.modelId)
+      ? tiers.map((tier) => tier.modelId)
       : ALLOWED_CHAT_MODELS_BY_PROVIDER[provider];
 
   return allModels
@@ -40,14 +42,22 @@ function getAllowedModelsForProvider(
     })
     .map((model) =>
       provider === AIProviderName.ACTIVEPIECES
-        ? { ...model, name: managedTierLabel(model.id) ?? model.name }
+        ? {
+            ...model,
+            name: managedTierLabel({ modelId: model.id, tiers }) ?? model.name,
+          }
         : model,
     );
 }
 
-function managedTierLabel(modelId: string): string | undefined {
-  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)
-    ?.label;
+function managedTierLabel({
+  modelId,
+  tiers,
+}: {
+  modelId: string;
+  tiers: ModelTier[];
+}): string | undefined {
+  return tiers.find((tier) => tier.modelId === modelId)?.label;
 }
 
 export const aiModelHooks = {
@@ -63,8 +73,9 @@ export const aiModelHooks = {
 
   useGetModelsForProvider: (provider?: AIProviderName, configId?: string) => {
     const projectId = authenticationSession.getProjectId();
+    const { tiers } = useModelTiers();
     return useQuery({
-      queryKey: ['ai-models', provider, configId, projectId],
+      queryKey: ['ai-models', provider, configId, projectId, tiers],
       enabled: !isNil(provider) && !isNil(projectId),
       queryFn: async () => {
         if (isNil(provider) || isNil(projectId)) return [];
@@ -75,7 +86,7 @@ export const aiModelHooks = {
           configId,
         );
 
-        return getAllowedModelsForProvider(provider, allModels, 'text');
+        return getAllowedModelsForProvider(provider, allModels, 'text', tiers);
       },
     });
   },

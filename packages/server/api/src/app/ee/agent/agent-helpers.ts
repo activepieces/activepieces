@@ -169,8 +169,9 @@ async function resolveModelId({ platformId, providerConfig, selectedModel, scope
         throw error
     }
     const tier = agentModelResolution.resolveTier({ tierId: selectedModel })
+    const nativeModelId = agentModelResolution.nativeModelIdFor({ tier })
     const picked = textModels.find((model) => model.id === selectedModel)
-        ?? textModels.find((model) => model.id.includes(tier.nativeModelId))
+        ?? textModels.find((model) => !isNil(nativeModelId) && model.id.includes(nativeModelId))
         ?? textModels[0]
     return picked.id
 }
