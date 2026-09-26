@@ -54,7 +54,7 @@ function pinnedModelOf({ conversation }: { conversation: AgentConversationWithRe
         ? conversation.agent?.published
         : conversation.agent?.draft
     const pinned = runConfig?.modelName ?? conversation.modelName ?? null
-    if (isNil(pinned) || !isNil(agentHelpers.findTier({ tierId: pinned }))) {
+    if (isNil(pinned) || !isNil(agentHelpers.findTier({ tierId: pinned, surface: agentHelpers.surfaceOf({ source: conversation.source }) }))) {
         return undefined
     }
     return pinned

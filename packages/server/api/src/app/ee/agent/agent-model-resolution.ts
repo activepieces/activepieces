@@ -1,12 +1,22 @@
-import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
+import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync, unique } from '@activepieces/core-utils'
+import { ModelTier, modelTierCatalog, ModelTierSurface } from '@activepieces/server-utils'
+import { ACTIVEPIECES_CHAT_TIERS, AgentRunSource, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 
-function findTier({ tierId }: { tierId: string | null }) {
-    return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
+function surfaceOf({ source }: { source: AgentRunSource | undefined }): ModelTierSurface {
+    return source === AgentRunSource.FLOW_STEP || source === AgentRunSource.AGENT ? 'flow' : 'chat'
 }
 
-function resolveTier({ tierId }: { tierId: string | null }) {
-    return findTier({ tierId }) ?? findTier({ tierId: DEFAULT_CHAT_TIER_ID }) ?? ACTIVEPIECES_CHAT_TIERS[0]
+function findTier({ tierId, surface }: { tierId: string | null, surface: ModelTierSurface }): ModelTier | undefined {
+    return isNil(tierId) ? undefined : modelTierCatalog.current(surface).findTier({ tierId })
+}
+
+function resolveTier({ tierId, surface }: { tierId: string | null, surface: ModelTierSurface }): ModelTier {
+    return modelTierCatalog.current(surface).resolveTier({ tierId })
+}
+
+function nativeModelIdFor({ tier }: { tier: ModelTier }): string | null {
+    return tier.nativeModelId ?? ACTIVEPIECES_CHAT_TIERS.find((shipped) => shipped.id === tier.id)?.nativeModelId ?? null
 }
 
 // An admin-listed catalog is the whole truth about what a key exposes, so an empty one means the key
@@ -31,17 +41,32 @@ function pickAllowedModel({ provider, selectedModel, candidates, modelScope, mod
     return selectedModel && allowed.includes(selectedModel) ? selectedModel : allowed[0]
 }
 
-function managedModelCandidates({ modelScope, modelIds }: { modelScope?: AiProviderModelScope, modelIds?: string[] }): string[] {
-    const managed = aiProviderUtils.managedChatModelIds()
+function managedModelCandidates({ surface, modelScope, modelIds }: { surface: ModelTierSurface, modelScope?: AiProviderModelScope, modelIds?: string[] }): string[] {
+    const managed = unique([
+        ...aiProviderUtils.managedChatModelIds(),
+        ...modelTierCatalog.current(surface).tiers.map((tier) => tier.modelId),
+    ])
     return modelScope === 'selected' && !isNil(modelIds) ? managed.filter((id) => modelIds.includes(id)) : managed
 }
 
-function resolveNamedModelId({ provider, modelName, modelScope, modelIds }: { provider: AIProviderName, modelName: string, modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+function isTierId({ modelName }: { modelName: string }): boolean {
+    return modelName.length > 0 && !modelName.includes('/')
+}
+
+function publishedTierModelId({ tierId, surface, log }: { tierId: string, surface: ModelTierSurface, log: FastifyBaseLogger }): string {
+    const tier = findTier({ tierId, surface })
+    if (isNil(tier)) {
+        log.warn({ tier: { id: tierId }, surface }, '[agentModelResolution] Tier is no longer published; running the surface default')
+    }
+    return (tier ?? resolveTier({ tierId, surface })).modelId
+}
+
+function resolveNamedModelId({ provider, modelName, surface, modelScope, modelIds, log }: { provider: AIProviderName, modelName: string, surface: ModelTierSurface, modelScope?: AiProviderModelScope, modelIds?: string[], log: FastifyBaseLogger }): string {
     if (provider !== AIProviderName.ACTIVEPIECES) {
         return modelName
     }
-    const requested = findTier({ tierId: modelName })?.modelId ?? modelName
-    const candidates = managedModelCandidates({ modelScope, modelIds })
+    const requested = isTierId({ modelName }) ? publishedTierModelId({ tierId: modelName, surface, log }) : modelName
+    const candidates = managedModelCandidates({ surface, modelScope, modelIds })
     if (!candidates.includes(requested)) {
         throw new ActivepiecesError({
             code: ErrorCode.VALIDATION,
@@ -51,36 +76,36 @@ function resolveNamedModelId({ provider, modelName, modelScope, modelIds }: { pr
     return requested
 }
 
-function resolveModelIdForProvider({ provider, selectedModel, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
+function resolveModelIdForProvider({ provider, selectedModel, surface, config, modelScope, modelIds }: { provider: AIProviderName, selectedModel: string | null, surface: ModelTierSurface, config?: AiProviderCredentials['config'], modelScope?: AiProviderModelScope, modelIds?: string[] }): string {
     const catalog = manualTextModelCatalog({ config })
     if (!isNil(catalog)) {
         return pickAllowedModel({ provider, selectedModel, candidates: catalog, modelScope, modelIds })
     }
-    const tier = resolveTier({ tierId: selectedModel })
+    const tier = resolveTier({ tierId: selectedModel, surface })
     if (provider === AIProviderName.ACTIVEPIECES || provider === AIProviderName.OPENROUTER) {
         return tier.modelId
     }
     const candidates = (aiProviderUtils.getCuratedChatModels({ provider }) ?? []).map((model) => model.id)
-    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : tier.nativeModelId
+    const preferred = selectedModel && candidates.includes(selectedModel) ? selectedModel : nativeModelIdFor({ tier })
     return pickAllowedModel({ provider, selectedModel: preferred, candidates, modelScope, modelIds })
 }
 
-function defaultModelIdForProvider({ provider }: { provider: AIProviderName }): string | null {
-    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: DEFAULT_CHAT_TIER_ID }))
+function defaultModelIdForProvider({ provider, surface }: { provider: AIProviderName, surface: ModelTierSurface }): string | null {
+    const { data } = tryCatchSync(() => resolveModelIdForProvider({ provider, selectedModel: modelTierCatalog.current(surface).defaultTierId, surface }))
     return data
 }
 
 // Analytics and billing report the model a turn ran on. The provider is unknown when a platform's
 // chat provider no longer resolves, so fall back to the stored selection — but only when it is one
 // of our own ids, never echoing an arbitrary stored string out to the analytics sink.
-function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIProviderName | null, selectedModel: string | null }): string | null {
+function resolveModelIdForAnalytics({ provider, selectedModel, surface }: { provider: AIProviderName | null, selectedModel: string | null, surface: ModelTierSurface }): string | null {
     if (isNil(selectedModel)) {
         return null
     }
     if (!isNil(provider)) {
-        return resolveModelIdForProvider({ provider, selectedModel })
+        return resolveModelIdForProvider({ provider, selectedModel, surface })
     }
-    const tier = findTier({ tierId: selectedModel })
+    const tier = findTier({ tierId: selectedModel, surface })
     if (!isNil(tier)) {
         return tier.modelId
     }
@@ -88,12 +113,12 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
 }
 
 export const agentModelResolution = {
+    surfaceOf,
     findTier,
     resolveTier,
+    nativeModelIdFor,
     resolveNamedModelId,
     resolveModelIdForProvider,
     defaultModelIdForProvider,
     resolveModelIdForAnalytics,
 }
-
-export const FAST_TIER_ID = 'fast'

@@ -41,8 +41,9 @@ async function chargeForLatestTurn({ conversation, runId, log }: ChargeForLatest
         projectId: conversation.projectId ?? null,
         log,
     })
-    const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
-    const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null })
+    const surface = agentHelpers.surfaceOf({ source: conversation.source })
+    const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider, surface })
+    const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null, surface })
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)
 
     const turnCredits = provider === AIProviderName.ACTIVEPIECES ? 0 : CREDITS_PER_OWN_KEY_TURN

@@ -110,6 +110,8 @@ type QueryBuilderMock = {
 vi.mock('../../../../../src/app/ee/agent/agent-helpers', () => ({
     agentHelpers: {
         assertProjectSwitchKeepsKey: mockAssertProjectSwitchKeepsKey,
+        surfaceOf: () => 'flow',
+        findTier: () => undefined,
         resolveFastModel: () => ({}),
         resolveEmbeddingModel: () => ({ model: {}, providerOptions: {} }),
         conversationRepo: () => ({
