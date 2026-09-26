@@ -22,7 +22,7 @@ import {
 import { newEmailTriggerOutputSchema } from '../output-schemas';
 
 const filterInstructions =
-  'Every new email in this folder starts the flow. To act on only some, add a **Router** step after this trigger.';
+  'New emails in this folder start the flow. An email whose sent date is older than the last check is skipped. To act on only some, add a **Router** step after this trigger.';
 
 const props = {
   mailbox: mailboxDropdown({
