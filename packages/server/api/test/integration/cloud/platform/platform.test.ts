@@ -65,7 +65,7 @@ describe('Platform API', () => {
             })
             const requestBody: UpdatePlatformRequestBody = {
                 name: 'updated name',
-                primaryColor: 'updated primary color',
+                primaryColor: '#4F46E5',
                 enforceAllowedAuthDomains: true,
                 allowedAuthDomains: ['yahoo.com'],
                 cloudAuthEnabled: false,
@@ -97,7 +97,7 @@ describe('Platform API', () => {
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.emailAuthEnabled).toBe(requestBody.emailAuthEnabled)
             expect(responseBody.name).toBe('updated name')
-            expect(responseBody.primaryColor).toBe('updated primary color')
+            expect(responseBody.primaryColor).toBe('#4F46E5')
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({
                 saml: null,
@@ -200,103 +200,7 @@ describe('Platform API', () => {
             expect(responseBody.favIconUrl.startsWith(baseUrl)).toBeTruthy()
         }),
 
-        it('updates platform theme colors', async () => {
-            // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                plan: {
-                    embeddingEnabled: false,
-                },
-                platform: {
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const requestBody: UpdatePlatformRequestBody = {
-                themeColors: {
-                    'blue-link': '#434fef',
-                    danger: '#e82c51',
-                    primary: {
-                        dark: '#ca6716',
-                    },
-                    warn: {
-                        default: '#fa9d52',
-                    },
-                },
-            }
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: requestBody,
-            })
-
-            // assert
-            const responseBody = response?.json()
-
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(responseBody.themeColors).toStrictEqual(requestBody.themeColors)
-        }),
-
-        it('updates and clears theme colors via multipart form data', async () => {
-            // arrange
-            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
-                plan: {
-                    embeddingEnabled: false,
-                },
-                platform: {
-                },
-            })
-            const testToken = await generateMockToken({
-                type: PrincipalType.USER,
-                id: mockOwner.id,
-                platform: { id: mockPlatform.id },
-            })
-            const formData = new FormData()
-            formData.append('name', 'updated name')
-            formData.append('themeColors', JSON.stringify({ danger: '#e82c51' }))
-
-            // act
-            const response = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: formData,
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.OK)
-            expect(response?.json().themeColors).toStrictEqual({ danger: '#e82c51' })
-
-            // act - clear the overrides
-            const clearFormData = new FormData()
-            clearFormData.append('name', 'updated name')
-            clearFormData.append('themeColors', 'null')
-
-            const clearResponse = await app?.inject({
-                method: 'POST',
-                url: `/api/v1/platforms/${mockPlatform.id}`,
-                headers: {
-                    authorization: `Bearer ${testToken}`,
-                },
-                body: clearFormData,
-            })
-
-            // assert
-            expect(clearResponse?.statusCode).toBe(StatusCodes.OK)
-            expect(clearResponse?.json().themeColors).toBeNull()
-        }),
-
-        it('rejects invalid theme colors', async () => {
-            // arrange
+        it('rejects a primary color that is not a hex color', async () => {
             const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
@@ -310,7 +214,6 @@ describe('Platform API', () => {
                 platform: { id: mockPlatform.id },
             })
 
-            // act
             const response = await app?.inject({
                 method: 'POST',
                 url: `/api/v1/platforms/${mockPlatform.id}`,
@@ -318,14 +221,43 @@ describe('Platform API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
                 body: {
-                    themeColors: {
-                        danger: 'red',
-                    },
+                    primaryColor: 'red',
                 },
             })
 
-            // assert
             expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        }),
+
+        it('accepts and drops the removed themeColors field', async () => {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                platform: { id: mockPlatform.id },
+            })
+
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/api/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: {
+                    name: 'renamed',
+                    themeColors: { danger: '#ff0000' },
+                },
+            })
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(response?.json().name).toBe('renamed')
+            const stored = await databaseConnection().getRepository('platform').findOneByOrFail({ id: mockPlatform.id })
+            expect(stored.themeColors).toBeNull()
         }),
 
         it('updates and clears piece selector config', async () => {
@@ -598,7 +530,6 @@ describe('Platform API', () => {
                 'primaryColor',
                 'ssoDomain',
                 'ssoDomainVerification',
-                'themeColors',
                 'updated',
                 'usage',
             ])
@@ -608,7 +539,6 @@ describe('Platform API', () => {
             expect(responseBody.billingEnforced).toBe(false)
             expect(responseBody.federatedAuthProviders.saml).toStrictEqual({})
             expect(responseBody.primaryColor).toBe(mockPlatform.primaryColor)
-            expect(responseBody.themeColors).toBeNull()
             expect(responseBody.pieceSelectorConfig).toBeNull()
             expect(responseBody.logoIconUrl).toBe(mockPlatform.logoIconUrl)
             expect(responseBody.fullLogoUrl).toBe(mockPlatform.fullLogoUrl)

@@ -32,7 +32,6 @@ const enterpriseThemeChecker = async (platform: PlatformWithoutSensitiveData) =>
                 favIconUrl: platform.favIconUrl,
                 logoIconUrl: platform.logoIconUrl,
                 primaryColor: platform.primaryColor,
-                themeColors: platform.themeColors ?? undefined,
             })
         case ApEdition.ENTERPRISE:
             if (platform.plan.customAppearanceEnabled) {
@@ -42,7 +41,6 @@ const enterpriseThemeChecker = async (platform: PlatformWithoutSensitiveData) =>
                     favIconUrl: platform.favIconUrl,
                     logoIconUrl: platform.logoIconUrl,
                     primaryColor: platform.primaryColor,
-                    themeColors: platform.themeColors ?? undefined,
                 })
             }
             return defaultTheme

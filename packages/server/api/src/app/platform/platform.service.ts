@@ -179,7 +179,6 @@ export const platformService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('federatedAuthProviders', federatedAuthProviders),
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
-            ...spreadIfNotUndefined('themeColors', params.themeColors),
             ...spreadIfDefined('logoIconUrl', params.logoIconUrl),
             ...spreadIfDefined('fullLogoUrl', params.fullLogoUrl),
             ...spreadIfDefined('favIconUrl', params.favIconUrl),
