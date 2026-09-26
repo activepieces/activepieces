@@ -1,3 +1,5 @@
+import { statSync } from 'node:fs'
+import path from 'node:path'
 import { isNil } from '@activepieces/core-utils'
 import { type ApLogger } from '@activepieces/server-utils'
 import { ApEnvironment, ExecutionMode } from '@activepieces/shared'
@@ -7,19 +9,23 @@ import { SandboxSettings } from './types'
 
 export function createSandboxManager({ boxId, basePath, getSettings }: { boxId: number, basePath: string, getSettings: () => SandboxSettings }): SandboxManager {
     let currentSandbox: Sandbox | null = null
+    let currentDevPiecesBuildStamp = ''
 
     return {
         acquire(params: { log: ApLogger }): Sandbox {
-            if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady()) {
+            const devPiecesBuildStamp = readDevPiecesBuildStamp({ devPieces: getSettings().DEV_PIECES })
+            const devPiecesRebuilt = devPiecesBuildStamp !== currentDevPiecesBuildStamp
+            if (canReuseSandbox(getSettings) && currentSandbox && currentSandbox.isReady() && !devPiecesRebuilt) {
                 return currentSandbox
             }
             if (currentSandbox) {
-                params.log.info('Sandbox not ready or not reusable, creating fresh one')
+                params.log.info({ devPiecesRebuilt }, 'Sandbox not ready or not reusable, creating fresh one')
                 currentSandbox.shutdown().catch((err) =>
                     params.log.error({ error: err }, 'Error shutting down previous sandbox'),
                 )
             }
             currentSandbox = createSandboxForJob({ ...params, boxId, reusable: canReuseSandbox(getSettings), basePath, getSettings })
+            currentDevPiecesBuildStamp = devPiecesBuildStamp
             return currentSandbox
         },
         async invalidate(log: ApLogger): Promise<void> {
@@ -70,6 +76,17 @@ function canReuseSandbox(getSettings: () => SandboxSettings): boolean {
     }
     return false
 }
+
+function readDevPiecesBuildStamp({ devPieces }: { devPieces: string[] }): string {
+    return devPieces
+        .flatMap((pieceName) => DEV_PIECE_GROUPS.map((group) => {
+            const distPackageJson = path.resolve('packages', 'pieces', group, pieceName, 'dist', 'package.json')
+            return statSync(distPackageJson, { throwIfNoEntry: false })?.mtimeMs ?? 0
+        }))
+        .join(',')
+}
+
+const DEV_PIECE_GROUPS = ['core', 'community', 'custom']
 
 export type ActiveSandboxInfo = {
     sandboxId: string

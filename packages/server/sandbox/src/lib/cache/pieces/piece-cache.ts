@@ -1,7 +1,7 @@
 import path from 'path'
 import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/core-utils'
 import { type ApLogger, wideEvent } from '@activepieces/server-utils'
-import { ApEnvironment, EXACT_VERSION_REGEX, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
+import { ApEnvironment, EXACT_VERSION_REGEX, getPieceNameFromAlias, PackageType, PiecePackage, PieceType, WorkerToApiContract } from '@activepieces/shared'
 import { SandboxSettings } from '../../types'
 import { cacheUtils } from '../cache-paths'
 import { cacheState, NO_SAVE_GUARD } from '../cache-state'
@@ -46,7 +46,7 @@ async function readPieceThroughCache({ cacheKey, pieceName, pieceVersion, platfo
                 return true
             }
             const devPieces = getSettings().DEV_PIECES
-            if (devPieces.includes(pieceName)) {
+            if (devPieces.includes(getPieceNameFromAlias(pieceName))) {
                 return true
             }
             return false

@@ -1,8 +1,12 @@
-import { readdir, readFile, stat } from 'node:fs/promises'
+import { realpathSync } from 'node:fs'
+import { readdir, readFile, rm, stat } from 'node:fs/promises'
+import Module from 'node:module'
 import { join, resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { sep } from 'path'
+import { isNil } from '@activepieces/core-utils'
 import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-framework'
+import { fileSystemUtils } from '@activepieces/server-utils'
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
@@ -75,8 +79,36 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
         const packageJsonPath = join(distFolderPath, 'package.json')
         clearModule(indexPath)
         clearModule(packageJsonPath)
+        const realDistFolderPath = realpathSync(distFolderPath)
+        Object.keys(require.cache)
+            .filter((id) => isInsideFolder({ filePath: id, folderPath: realDistFolderPath }))
+            .forEach((id) => Reflect.deleteProperty(require.cache, id))
+        const resolvedPathCache: unknown = Reflect.get(Module, '_pathCache')
+        if (typeof resolvedPathCache === 'object' && !isNil(resolvedPathCache)) {
+            Object.entries(resolvedPathCache)
+                .filter(([, resolvedPath]) => typeof resolvedPath === 'string' && isInsideFolder({ filePath: resolvedPath, folderPath: realDistFolderPath }))
+                .forEach(([request]) => Reflect.deleteProperty(resolvedPathCache, request))
+        }
+    },
+
+    removeOrphanedBuildOutputs: async (pieceDirectory: string): Promise<void> => {
+        const distSrcDir = join(pieceDirectory, 'dist', 'src')
+        const outputs = await readdir(distSrcDir, { recursive: true })
+        const orphans = await Promise.all(outputs.map(async (output) => {
+            const sourceBase = BUILD_OUTPUT_REGEX.exec(output)?.[1]
+            if (isNil(sourceBase)) {
+                return null
+            }
+            const sourceExists = await fileSystemUtils.fileExists(join(pieceDirectory, 'src', `${sourceBase}.ts`))
+            return sourceExists ? null : output
+        }))
+        await Promise.all(orphans.filter((orphan) => !isNil(orphan)).map((orphan) => rm(join(distSrcDir, orphan), { force: true })))
     },
 })
+
+function isInsideFolder({ filePath, folderPath }: { filePath: string, folderPath: string }): boolean {
+    return filePath.startsWith(folderPath + sep)
+}
 
 const findAllPiecesFolder = async (folderPath: string): Promise<string[]> => {
     const paths = []
@@ -146,3 +178,5 @@ const loadPieceFromFolder = async (
 
     return metadata
 }
+
+const BUILD_OUTPUT_REGEX = /^(.*)\.(?:js|js\.map|d\.ts|d\.ts\.map)$/

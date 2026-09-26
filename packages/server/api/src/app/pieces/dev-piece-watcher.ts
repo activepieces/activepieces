@@ -43,6 +43,7 @@ async function buildPieces(app: FastifyInstance, piecesInfo: PieceInfo[]): Promi
         const utils = filePiecesUtils(app.log)
         await Promise.all(piecesInfo.map(async (piece) => {
             await copyPackageJsonToDist(piece.pieceDirectory)
+            await utils.removeOrphanedBuildOutputs(piece.pieceDirectory)
             await copyI18nToDist(piece.pieceDirectory)
             const distPath = await utils.findDistPiecePathByPackageName(piece.packageName)
             if (distPath) {

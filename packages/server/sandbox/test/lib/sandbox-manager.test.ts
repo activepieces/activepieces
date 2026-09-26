@@ -1,4 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ApEnvironment, ExecutionMode, NetworkMode } from '@activepieces/shared'
 
 vi.mock('../../src/lib/create-sandbox-for-job', () => ({
@@ -131,5 +134,82 @@ describe('sandbox-manager canReuseSandbox', () => {
         const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
         manager.acquire({ log })
         expect(createSandboxForJob).toHaveBeenCalledTimes(1)
+    })
+})
+
+describe('sandbox-manager dev piece rebuilds', () => {
+    const originalCwd = process.cwd()
+    let workspace: string
+    let distPackageJson: string
+
+    beforeEach(() => {
+        vi.clearAllMocks()
+        workspace = mkdtempSync(path.join(tmpdir(), 'sandbox-manager-'))
+        const distDir = path.join(workspace, 'packages', 'pieces', 'core', 'csv', 'dist')
+        mkdirSync(distDir, { recursive: true })
+        distPackageJson = path.join(distDir, 'package.json')
+        writeFileSync(distPackageJson, '{}')
+        utimesSync(distPackageJson, 1000, 1000)
+        process.chdir(workspace)
+    })
+
+    afterEach(() => {
+        process.chdir(originalCwd)
+        rmSync(workspace, { recursive: true, force: true })
+    })
+
+    function buildDevSettings({ reuseSandbox }: { reuseSandbox: string | undefined }) {
+        return {
+            ...buildSettings({ executionMode: ExecutionMode.UNSANDBOXED, environment: ApEnvironment.DEVELOPMENT }),
+            DEV_PIECES: ['csv'],
+            REUSE_SANDBOX: reuseSandbox,
+        }
+    }
+
+    it('reuses the sandbox while the dev piece is not rebuilt', async () => {
+        const settings = buildDevSettings({ reuseSandbox: undefined })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        manager.acquire({ log })
+        await manager.release(log)
+        manager.acquire({ log })
+
+        const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
+        expect(createSandboxForJob).toHaveBeenCalledTimes(1)
+    })
+
+    it('replaces the sandbox after the dev piece is rebuilt', async () => {
+        const settings = buildDevSettings({ reuseSandbox: undefined })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        manager.acquire({ log })
+        await manager.release(log)
+        utimesSync(distPackageJson, 2000, 2000)
+        manager.acquire({ log })
+        manager.acquire({ log })
+
+        const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
+    })
+
+    it('replaces the sandbox after a rebuild even when AP_REUSE_SANDBOX=true', async () => {
+        const settings = buildDevSettings({ reuseSandbox: 'true' })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        manager.acquire({ log })
+        utimesSync(distPackageJson, 2000, 2000)
+        manager.acquire({ log })
+
+        const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
+    })
+
+    it('replaces the sandbox when the dev piece dist appears for the first time', async () => {
+        rmSync(distPackageJson)
+        const settings = buildDevSettings({ reuseSandbox: undefined })
+        const manager = createSandboxManager({ boxId: 1, basePath: '/tmp', getSettings: () => settings })
+        manager.acquire({ log })
+        writeFileSync(distPackageJson, '{}')
+        manager.acquire({ log })
+
+        const { createSandboxForJob } = await import('../../src/lib/create-sandbox-for-job')
+        expect(createSandboxForJob).toHaveBeenCalledTimes(2)
     })
 })
