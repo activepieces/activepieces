@@ -54,8 +54,12 @@ export const calcomMarkBookingNoShow = createAction({
     const { auth, propsValue } = context;
     const { booking_uid, host_absent, attendee_email, attendee_absent } = propsValue;
 
-    const body: Record<string, unknown> = {};
     const hostValue = toOptionalBoolean(host_absent);
+    if (hostValue === undefined && attendee_email === undefined) {
+      throw new Error('Set at least one of Host Absent or Attendee Email.');
+    }
+
+    const body: Record<string, unknown> = {};
     if (hostValue !== undefined) body['host'] = hostValue;
     if (attendee_email !== undefined) {
       body['attendees'] = [

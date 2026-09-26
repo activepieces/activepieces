@@ -119,9 +119,10 @@ export const deleteEventTypeActionOutputSchema: OutputSchema = {
 };
 
 export const listBookingsActionOutputSchema: OutputSchema = {
-  itemLabel: '{title}',
   fields: [
-    { key: 'bookings', label: 'Bookings', value: '', listItems: bookingFields },
+    { key: 'bookings', label: 'Bookings', labelKey: 'title', listItems: bookingFields },
+    { key: 'nextCursor', label: 'Next Cursor' },
+    { key: 'hasMore', label: 'Has More', format: 'boolean' },
   ],
 };
 

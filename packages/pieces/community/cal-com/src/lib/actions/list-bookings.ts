@@ -16,7 +16,7 @@ export const calcomListBookings = createAction({
   outputSchema: listBookingsActionOutputSchema,
   aiMetadata: {
     description:
-      'Lists bookings with optional filters. Returns a cursor for the next page when more results exist. Use Get Booking for the full detail of a single result.',
+      'Lists bookings with optional filters, including a team ID from List Teams. Returns { bookings, nextCursor, hasMore } — pass nextCursor as Cursor on the next call when hasMore is true. Use Get Booking for the full detail of a single result.',
     idempotent: true,
   },
   props: {
@@ -43,6 +43,11 @@ export const calcomListBookings = createAction({
     }),
     event_type_id: Property.Number({
       displayName: 'Event Type ID',
+      required: false,
+    }),
+    team_id: Property.Number({
+      displayName: 'Team ID',
+      description: 'Get this from List Teams.',
       required: false,
     }),
     after_start: Property.ShortText({
@@ -73,6 +78,7 @@ export const calcomListBookings = createAction({
       attendee_email,
       attendee_name,
       event_type_id,
+      team_id,
       after_start,
       before_end,
       limit,
@@ -82,7 +88,7 @@ export const calcomListBookings = createAction({
     const clampedLimit =
       limit === undefined ? undefined : Math.min(Math.max(limit, 1), MAX_PAGE_SIZE);
 
-    return await calcomCommon.calRequest({
+    const { data, nextCursor, hasMore } = await calcomCommon.calRequestPaginated({
       apiKey: auth.secret_text,
       method: HttpMethod.GET,
       path: '/bookings',
@@ -92,11 +98,14 @@ export const calcomListBookings = createAction({
         attendeeEmail: attendee_email,
         attendeeName: attendee_name,
         eventTypeId: event_type_id,
+        teamId: team_id,
         afterStart: after_start,
         beforeEnd: before_end,
         limit: clampedLimit,
         cursor,
       },
     });
+
+    return { bookings: data, nextCursor, hasMore };
   },
 });

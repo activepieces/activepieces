@@ -8,9 +8,15 @@ import {
 
 type QueryValue = string | number | boolean | undefined;
 
+interface CalPagination {
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
 interface CalEnvelope<T> {
   status: 'success' | 'error';
   data: T;
+  pagination?: CalPagination;
 }
 
 function toQueryParams(
@@ -48,21 +54,17 @@ function mapCalError(error: unknown): Error {
   return new Error(`Cal.com API error (${status}): ${message}`);
 }
 
-async function calRequest<T>({
-  apiKey,
-  method,
-  path,
-  version,
-  query,
-  body,
-}: {
+interface CalRequestParams {
   apiKey: string;
   method: HttpMethod;
   path: string;
   version?: string;
   query?: Record<string, QueryValue>;
   body?: unknown;
-}): Promise<T> {
+}
+
+async function sendCalRequest<T>(params: CalRequestParams): Promise<CalEnvelope<T> | undefined> {
+  const { apiKey, method, path, version, query, body } = params;
   const request: HttpRequest = {
     method,
     url: `https://api.cal.com/v2${path}`,
@@ -81,14 +83,34 @@ async function calRequest<T>({
   } catch (error) {
     throw mapCalError(error);
   }
-  if (response.body?.status === 'error') {
+  if (!response.body) {
+    return undefined;
+  }
+  if (response.body.status === 'error') {
     throw new Error(`Cal.com API returned an error: ${JSON.stringify(response.body)}`);
   }
-  return response.body.data;
+  return response.body;
+}
+
+async function calRequest<T>(params: CalRequestParams): Promise<T> {
+  const envelope = await sendCalRequest<T>(params);
+  return envelope?.data as T;
+}
+
+async function calRequestPaginated<T>(
+  params: CalRequestParams
+): Promise<{ data: T; nextCursor: string | null; hasMore: boolean }> {
+  const envelope = await sendCalRequest<T>(params);
+  return {
+    data: envelope?.data as T,
+    nextCursor: envelope?.pagination?.nextCursor ?? null,
+    hasMore: envelope?.pagination?.hasMore ?? false,
+  };
 }
 
 export const calcomCommon = {
   calRequest,
+  calRequestPaginated,
   versions: {
     eventTypes: '2026-06-12',
     bookingsList: '2026-05-01',
