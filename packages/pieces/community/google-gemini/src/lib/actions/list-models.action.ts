@@ -9,7 +9,7 @@ export const listModelsAction = createAction({
   classification: 'SEARCH',
   auth: googleGeminiAuth,
   displayName: 'List Models',
-  description: 'Lists every model this API key can use, with its token limits.',
+  description: 'Lists the models this API key can use, with limits where known.',
   aiMetadata: {
     description:
       'Lists every Gemini/Veo model available to this API key, with its token limits and supported generation methods. Use this to discover valid model names before calling generate_content, generate_image, create_video, or generate_embeddings, or to check a model\'s input/output token limits. Safe to retry: read-only.',
