@@ -1,3 +1,4 @@
+import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
 
 import { useMcpServerUrl } from '@/app/routes/mcp-server/mcp-server-url';
@@ -5,7 +6,7 @@ import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { CollapsibleJson } from '@/components/custom/collapsible-json';
 
 export function McpCredentials() {
-  const { serverUrl } = useMcpServerUrl();
+  const { serverUrl } = useMcpServerUrl({ serverType: McpServerType.PROJECT });
 
   const jsonConfiguration = {
     mcpServers: {

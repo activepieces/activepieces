@@ -3,6 +3,7 @@ import { jiraCloudAuth } from '../../auth';
 import { getIssueTypes } from '../common';
 import { getProjectIdDropdown } from '../common/props';
 
+import { issueTypeTriggerOutputSchema } from '../output-schemas';
 export const newIssueType = createTrigger({
   name: 'new_issue_type',
   displayName: 'New Issue Type',
@@ -13,6 +14,7 @@ export const newIssueType = createTrigger({
   },
   auth: jiraCloudAuth,
   type: TriggerStrategy.POLLING,
+  outputSchema: issueTypeTriggerOutputSchema,
   props: {
     projectId: getProjectIdDropdown({
       displayName: 'Project',

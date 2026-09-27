@@ -2,6 +2,7 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const createAttachment = createAction({
     auth: salesforceAuth,
@@ -10,6 +11,7 @@ export const createAttachment = createAction({
     description: 'Creates a legacy Attachment record. Salesforce recommends using "Add File to Record" for modern apps.',
     audience: 'both',
     aiMetadata: { description: 'Attach a file to a record using the legacy Attachment object (single parent, no sharing). Prefer modern Files/ContentDocument when available; this is for older orgs or when a classic Attachment is specifically required. Not idempotent — repeated calls create duplicate attachments.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         object: salesforcesCommon.object,
         parent_id: salesforcesCommon.record, 

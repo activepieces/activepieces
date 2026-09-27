@@ -46,6 +46,7 @@ export type OpenRouterProviderAuthConfig = z.infer<typeof OpenRouterProviderAuth
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().min(1),
     secretAccessKey: z.string().min(1),
+    sessionToken: z.string().optional(),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 

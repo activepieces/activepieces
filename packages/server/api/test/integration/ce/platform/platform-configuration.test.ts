@@ -1,4 +1,4 @@
-import { ApFlagId, DefaultProjectRole } from '@activepieces/shared'
+import { ApFlagId, DefaultProjectRole, maxBarrierSignalsBounds } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../../src/app/helper/system/system'
@@ -37,6 +37,50 @@ describe('platform configuration', () => {
         const configuration = (await ctx.get('/v1/platform-configurations'))!.json()
 
         expect(configuration.isInfraSetupTelemetryEnabled).toBe(true)
+    })
+
+    it('creates the barrier signal cap from AP_MAX_BARRIER_SIGNALS', async () => {
+        const ctx = await createTestContext(app!)
+
+        const configuration = (await ctx.get('/v1/platform-configurations'))!.json()
+
+        expect(configuration.maxBarrierSignals).toBe(system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS))
+    })
+
+    it('persists the barrier signal cap without disturbing telemetry', async () => {
+        const ctx = await createTestContext(app!)
+
+        await ctx.post('/v1/platform-configurations', { maxBarrierSignals: 5 })
+
+        const configuration = (await ctx.get('/v1/platform-configurations'))!.json()
+        expect(configuration.maxBarrierSignals).toBe(5)
+        expect(configuration.isInfraSetupTelemetryEnabled).toBe(true)
+    })
+
+    it('refuses a barrier signal cap below one', async () => {
+        const ctx = await createTestContext(app!)
+
+        const response = await ctx.post('/v1/platform-configurations', { maxBarrierSignals: 0 })
+
+        expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect((await ctx.get('/v1/platform-configurations'))!.json().maxBarrierSignals).toBe(system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS))
+    })
+
+    it('refuses a barrier signal cap above the ten thousand ceiling', async () => {
+        const ctx = await createTestContext(app!)
+
+        const response = await ctx.post('/v1/platform-configurations', { maxBarrierSignals: maxBarrierSignalsBounds.max + 1 })
+
+        expect(response?.statusCode).toBe(StatusCodes.BAD_REQUEST)
+        expect((await ctx.get('/v1/platform-configurations'))!.json().maxBarrierSignals).toBe(system.getNumberOrThrow(AppSystemProp.MAX_BARRIER_SIGNALS))
+    })
+
+    it('accepts a barrier signal cap sitting exactly on the ceiling', async () => {
+        const ctx = await createTestContext(app!)
+
+        await ctx.post('/v1/platform-configurations', { maxBarrierSignals: maxBarrierSignalsBounds.max })
+
+        expect((await ctx.get('/v1/platform-configurations'))!.json().maxBarrierSignals).toBe(maxBarrierSignalsBounds.max)
     })
 
     it('switches each setting without disturbing the other', async () => {

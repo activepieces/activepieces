@@ -6,7 +6,7 @@ import { createEventEmitter } from './tools/event-emitter'
 import { wrapTestFlowGate } from './tools/flow-gate-tools'
 import { createAgentSurfaceTools, createBuildPlanTools, createLocalTools, createPhaseTools, createStructuredOutputTool, createThinkingTools } from './tools/session-tools'
 import { extractResultText, extractUserFacingError, isSuccessResult, normalizePieceName, TOOL_EXECUTION_TIMEOUT_MS, truncateLargeResult, withToolTimeout, wrapToolsWithTaint } from './tools/tool-primitives'
-import { createImageTools, createScrapeTools, createSearchTools, createWebTools } from './tools/web-media-tools'
+import { createImageTools, createProviderSearchTools, createScrapeTools, createSearchTools, createWebTools, falImageGenerator, providerImageGenerator } from './tools/web-media-tools'
 
 export { AgentEventEmitter, GateDecision, TaintState } from './tools/tool-primitives'
 
@@ -19,8 +19,11 @@ export const agentWorkerTools = {
     createCrossProjectTools,
     createWebTools,
     createSearchTools,
+    createProviderSearchTools,
     createScrapeTools,
     createImageTools,
+    falImageGenerator,
+    providerImageGenerator,
     createEmailTools,
     wrapTestFlowGate,
     createThinkingTools,

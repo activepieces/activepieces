@@ -36,21 +36,24 @@ async function runModule(source: string, inputs: Record<string, unknown> = {}): 
 
 const PERMISSION_DENIED = /NotCapable|PermissionDenied/
 
+async function expectRejection(run: Promise<unknown>, pattern: RegExp): Promise<void> {
+    const thrown = await run.then(() => null, (error: Error) => error)
+    expect(thrown).toBeInstanceOf(Error)
+    expect(String(thrown)).toMatch(pattern)
+}
+
 describe('denoCodeSandbox permission boundary', () => {
     describe('blocks unpermitted operations', () => {
         it('rejects outbound network access', async () => {
-            await expect(runModule(`export const code = async () => (await fetch('https://example.com')).status`))
-                .rejects.toThrow(PERMISSION_DENIED)
+            await expectRejection(runModule(`export const code = async () => (await fetch('https://example.com')).status`), PERMISSION_DENIED)
         })
 
         it('rejects reading a file outside the step directory', async () => {
-            await expect(runModule(`export const code = async () => Deno.readTextFile('/etc/hosts')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+            await expectRejection(runModule(`export const code = async () => Deno.readTextFile('/etc/hosts')`), PERMISSION_DENIED)
         })
 
         it('rejects reading environment variables', async () => {
-            await expect(runModule(`export const code = async () => Deno.env.toObject()`))
-                .rejects.toThrow(PERMISSION_DENIED)
+            await expectRejection(runModule(`export const code = async () => Deno.env.toObject()`), PERMISSION_DENIED)
         })
 
         it('gives each run its own DENO_DIR and removes it after the run', async () => {
@@ -123,32 +126,29 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('rejects the symlink escape (link inside dir -> outside, read through it)', async () => {
-            await expect(runModule(`export const code = async () => {
+            await expectRejection(runModule(`export const code = async () => {
                 await Deno.symlink('/etc/passwd', './escape')
                 return Deno.readTextFile('./escape')
-            }`)).rejects.toThrow(PERMISSION_DENIED)
+            }`), PERMISSION_DENIED)
         })
 
         it('rejects spawning a subprocess', async () => {
-            await expect(runModule(`export const code = async () => {
+            await expectRejection(runModule(`export const code = async () => {
                 const out = await new Deno.Command('sh', { args: ['-c', 'id'] }).output()
                 return new TextDecoder().decode(out.stdout)
-            }`)).rejects.toThrow(PERMISSION_DENIED)
+            }`), PERMISSION_DENIED)
         })
 
         it('rejects writing outside the step directory', async () => {
-            await expect(runModule(`export const code = async () => Deno.writeTextFile('/tmp/ap-pwned.txt', 'hi')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+            await expectRejection(runModule(`export const code = async () => Deno.writeTextFile('/tmp/ap-pwned.txt', 'hi')`), PERMISSION_DENIED)
         })
 
         it('rejects writing inside the step directory (locked profile grants no write)', async () => {
-            await expect(runModule(`export const code = async () => Deno.writeTextFile('./data.json', 'x')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+            await expectRejection(runModule(`export const code = async () => Deno.writeTextFile('./data.json', 'x')`), PERMISSION_DENIED)
         })
 
         it('rejects path traversal out of the step directory', async () => {
-            await expect(runModule(`export const code = async () => Deno.readTextFile('../../../../etc/hosts')`))
-                .rejects.toThrow(PERMISSION_DENIED)
+            await expectRejection(runModule(`export const code = async () => Deno.readTextFile('../../../../etc/hosts')`), PERMISSION_DENIED)
         })
     })
 
@@ -165,8 +165,7 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('surfaces user thrown errors', async () => {
-            await expect(runModule(`export const code = async () => { throw new Error('boom') }`))
-                .rejects.toThrow(/boom/)
+            await expectRejection(runModule(`export const code = async () => { throw new Error('boom') }`), /boom/)
         })
     })
 
@@ -181,13 +180,11 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('surfaces a TS syntax error as a catchable user failure', async () => {
-            await expect(runModule(`export const code = async () => {`))
-                .rejects.toThrow(/SyntaxError|Unexpected|expected/i)
+            await expectRejection(runModule(`export const code = async () => {`), /SyntaxError|Unexpected|expected/i)
         })
 
         it('rejects a module that does not export a code function', async () => {
-            await expect(runModule(`export const notCode = 1`))
-                .rejects.toThrow(/must export a "code" function/)
+            await expectRejection(runModule(`export const notCode = 1`), /must export a "code" function/)
         })
     })
 
@@ -221,8 +218,7 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('rejects remote imports', async () => {
-            await expect(runModule(`export const code = async () => (await import('https://example.com/mod.ts')).default`))
-                .rejects.toThrow(/Requires import access|--no-remote/i)
+            await expectRejection(runModule(`export const code = async () => (await import('https://example.com/mod.ts')).default`), /Requires import access|--no-remote/i)
         })
     })
 
@@ -243,8 +239,7 @@ describe('denoCodeSandbox permission boundary', () => {
         })
 
         it('runs without any permissions (network blocked)', async () => {
-            await expect(denoCodeSandbox.runScript({ script: `fetch('https://example.com')`, scriptContext: {}, functions: {} }))
-                .rejects.toThrow(PERMISSION_DENIED)
+            await expectRejection(denoCodeSandbox.runScript({ script: `fetch('https://example.com')`, scriptContext: {}, functions: {} }), PERMISSION_DENIED)
         })
     })
 
@@ -264,10 +259,10 @@ describe('denoCodeSandbox permission boundary', () => {
                 await session.setGlobal('base', 100)
                 expect(await session.run('base')).toBe(40)
 
-                await expect(session.run('missingVar.foo')).rejects.toThrow(/missingVar/)
+                await expectRejection(session.run('missingVar.foo'), /missingVar/)
                 expect(await session.run('Promise.resolve(base + step_1.out)')).toBe(45)
 
-                await expect(session.run(`fetch('https://example.com')`)).rejects.toThrow(PERMISSION_DENIED)
+                await expectRejection(session.run(`fetch('https://example.com')`), PERMISSION_DENIED)
             }
             finally {
                 session.dispose()

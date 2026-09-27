@@ -27,7 +27,12 @@ function resolveCloudHost(cloudLoginHost: string | undefined | null): string {
 }
 
 export function getMicrosoftCloudFromAuth(auth: OAuth2PropertyValue): string {
-  return resolveCloudHost(auth.props?.['cloud'] as string | undefined);
+  return resolveCloudHost(getCloudProp(auth));
+}
+
+export function getCloudProp(auth: { props?: Record<string, unknown> } | undefined): string | undefined {
+  const cloud = auth?.props?.['cloud'];
+  return typeof cloud === 'string' ? cloud : undefined;
 }
 
 export function getGraphBaseUrl(cloudLoginHost: string | undefined | null): string {

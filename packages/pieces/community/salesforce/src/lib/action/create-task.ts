@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const createTask = createAction({
     auth: salesforceAuth,
     name: 'create_task',
     displayName: 'Create Task',
     description: 'Creates a new task.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Create a new activity Task with a required Subject and optional owner, status, priority, and links to a Contact/Lead (WhoId) or other object (WhatId). Not idempotent — each call creates a separate task.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         Subject: Property.ShortText({
             displayName: 'Subject',

@@ -2,6 +2,7 @@ import { ActivepiecesError, connectionTemplate, ErrorCode, isNil, Permission, sp
 import { ActionClassification, isReadOnlyClassification } from '@activepieces/pieces-framework'
 import { AgentActionKind, AgentActionOutcome, AgentActionRef, AgentConversation, AgentConversationStatus, AgentPieceToolMetadata, AgentRunSource, agentToolClassification, ApplicationEventName } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { AgentConversationWithRelations } from '.././agent-conversation-entity'
 import { agentHelpers } from '.././agent-helpers'
 import { agentService } from '.././agent-service'
 import { agentToolPinning } from '.././agent-tool-pinning'
@@ -48,6 +49,17 @@ export async function connectionForConfiguredTool({ piece, projectId, platformId
     return { externalId: pinned, ...spreadIfDefined('label', connection?.displayName) }
 }
 
+function pinnedModelOf({ conversation }: { conversation: AgentConversationWithRelations }): string | undefined {
+    const runConfig = conversation.source === AgentRunSource.FLOW_STEP
+        ? conversation.agent?.published
+        : conversation.agent?.draft
+    const pinned = runConfig?.modelName ?? conversation.modelName ?? null
+    if (isNil(pinned) || !isNil(agentHelpers.findTier({ tierId: pinned }))) {
+        return undefined
+    }
+    return pinned
+}
+
 export async function configuredToolConversationOrThrow({ conversationId }: { conversationId: string }): Promise<ConfiguredToolRun> {
     const conversation = await agentHelpers.conversationRepo().findOne({ where: { id: conversationId }, relations: { agent: true } })
     if (isNil(conversation) || !CONFIGURED_TOOL_SOURCES.includes(conversation.source) || isNil(conversation.projectId)) {
@@ -58,6 +70,7 @@ export async function configuredToolConversationOrThrow({ conversationId }: { co
         platformId: conversation.platformId,
         userId: conversation.userId,
         source: conversation.source,
+        ...spreadIfDefined('runModelId', pinnedModelOf({ conversation })),
         ...spreadIfDefined('agent', isNil(conversation.agentId) ? undefined : {
             id: conversation.agentId,
             ...spreadIfDefined('displayName', conversation.agent?.displayName),
@@ -192,6 +205,7 @@ export type ConfiguredToolRun = {
     platformId: string
     userId: string
     source: AgentRunSource
+    runModelId?: string
     agent?: { id: string, displayName?: string }
 }
 

@@ -1,1 +1,23 @@
 Activepieces has been deployed successfully!
+{{- $ignored := list }}
+{{- range $key := list "activepieces" "smtp" "s3" "queueUi" }}
+{{- if hasKey $.Values $key }}{{ $ignored = append $ignored $key }}{{ end }}
+{{- end }}
+{{- range $key := list "host" "port" "useSSL" "url" "sslCa" }}
+{{- if hasKey $.Values.postgresql $key }}{{ $ignored = append $ignored (printf "postgresql.%s" $key) }}{{ end }}
+{{- end }}
+{{- range $key := list "host" "port" "useSSL" "sslCaFile" "db" "url" "type" "user" "failedJob" }}
+{{- if hasKey $.Values.redis $key }}{{ $ignored = append $ignored (printf "redis.%s" $key) }}{{ end }}
+{{- end }}
+{{- if dig "auth" "externalSecret" "" .Values.postgresql }}{{ $ignored = append $ignored "postgresql.auth.externalSecret" }}{{ end }}
+{{- if dig "auth" "externalSecret" "" .Values.redis }}{{ $ignored = append $ignored "redis.auth.externalSecret" }}{{ end }}
+{{- if hasKey .Values.persistence "storageClass" }}{{ $ignored = append $ignored "persistence.storageClass" }}{{ end }}
+{{- with $ignored }}
+
+WARNING: this chart ignores these values from the chart 0.3.x format:
+{{- range . }}
+  - {{ . }}
+{{- end }}
+Move them to the secrets listed under activepiecesEnvVariables, or persistence.storageClassName:
+https://www.activepieces.com/docs/install/options/helm#migrating-from-chart-0-3-x
+{{- end }}

@@ -30,6 +30,12 @@ vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan.service'
     }),
 }))
 
+vi.mock('../../../../../src/app/ee/platform/platform-plan/platform-plan-telemetry', () => ({
+    platformPlanTelemetry: () => ({
+        onEntitlementsRefreshed: vi.fn(),
+    }),
+}))
+
 vi.mock('../../../../../src/app/database/redis-connections', () => ({
     distributedLock: () => ({
         runExclusive: async ({ fn }: { fn: () => Promise<unknown> }) => fn(),

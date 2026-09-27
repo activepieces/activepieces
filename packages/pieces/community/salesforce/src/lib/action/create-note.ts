@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
 import { callSalesforceApi, salesforcesCommon } from '../common';
+import { sobjectCreateResponseOutputSchema } from '../output-schemas';
 
 export const createNote = createAction({
     auth: salesforceAuth,
     name: 'create_note',
     displayName: 'Create Note',
     description: 'Creates a note and attaches it to a record.',
-    audience: 'both',
+    audience: 'human',
     aiMetadata: { description: 'Create a classic Salesforce Note (title and body) and attach it to a parent record via its record Id. Use to add a free-text note to an existing record. Not idempotent: each call creates a new Note, so re-running adds a duplicate.', idempotent: false },
+    outputSchema: sobjectCreateResponseOutputSchema,
     props: {
         object: salesforcesCommon.object,
         parent_id: salesforcesCommon.record, 

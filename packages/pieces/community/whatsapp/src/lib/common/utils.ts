@@ -9,6 +9,7 @@ import {
 	Property,
 	DynamicPropsValue,
 	DropdownOption,
+	MarkdownVariant,
 } from '@activepieces/pieces-framework';
 
 export const supportedMediaTypes = ['image', 'audio', 'document', 'sticker', 'video'];
@@ -19,14 +20,15 @@ export const mediaTypeSupportsCaption = (type: string) =>
 export const commonProps = {
 	phone_number_id: phoneNumberDropdown({ required: true }),
 	message_template_id: Property.Dropdown({
-		displayName: 'Message Template ID',
+		displayName: 'Template',
+		description: 'Only templates approved by WhatsApp are delivered.',
 		refreshers: [],
 		required: true,
 		auth: whatsappAuth,
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect account first',
+					placeholder: 'Please connect your account first',
 					disabled: true,
 					options: [],
 				};
@@ -65,6 +67,14 @@ export const commonProps = {
 				cursor = nextCursor(response.body);
 			} while (cursor);
 
+			if (options.length === 0) {
+				return {
+					placeholder: 'No message templates found',
+					disabled: false,
+					options: [],
+				};
+			}
+
 			return {
 				disabled: false,
 				options,
@@ -74,17 +84,18 @@ export const commonProps = {
 
 	message_template_fields: Property.DynamicProperties({
 		displayName: 'Template Fields',
+		description: 'Fill in each placeholder of the selected template.',
 		refreshers: ['message_template_id'],
 		required: true,
 		auth: whatsappAuth,
-			props: async ({ auth, message_template_id }) => {
+		props: async ({ auth, message_template_id }) => {
 			if (!auth) return {};
 			if (!message_template_id) return {};
 
 			const authValue = auth.props;
-			const templateId = message_template_id as unknown as string;
+			const templateId = String(message_template_id);
 
-			const response = await httpClient.sendRequest({
+			const response = await httpClient.sendRequest<TemplateDetails>({
 				url: `${WHATSAPP_API_BASE}/${templateId}`,
 				method: HttpMethod.GET,
 				authentication: {
@@ -97,13 +108,11 @@ export const commonProps = {
 			const headerComponentFields: DynamicPropsValue = {};
 			const buttonComponentFields: DynamicPropsValue = {};
 
-			for (const component of response.body.components) {
+			for (const component of response.body.components ?? []) {
 				if (component.type === 'BODY') {
-					// https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components#syntax
 					bodyComponentFields['BODY_markdown'] = Property.MarkDown({
-						value: `
-						**Body :**
-						${component.text}`,
+						value: `**Body**\n\n${escapeTemplatePlaceholders(component.text ?? '')}`,
+						variant: MarkdownVariant.BORDERLESS,
 					});
 
 					const bodyTextVariables = component.text?.match(/{{(\d+)}}/g) ?? [];
@@ -115,11 +124,9 @@ export const commonProps = {
 						});
 					}
 				} else if (component.type === 'HEADER' && component.format === 'TEXT') {
-					// https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components#text-headers
 					headerComponentFields['HEADER_markdown'] = Property.MarkDown({
-						value: `
-						**Header :**
-						${component.text}`,
+						value: `**Header**\n\n${escapeTemplatePlaceholders(component.text ?? '')}`,
+						variant: MarkdownVariant.BORDERLESS,
 					});
 
 					const headerTextVariables = component.text?.match(/{{(\d+)}}/g) ?? [];
@@ -131,8 +138,7 @@ export const commonProps = {
 						});
 					}
 				} else if (component.type === 'BUTTONS') {
-					// https://developers.facebook.com/docs/whatsapp/business-management-api/message-templates/components#url-buttons
-					for (const button of component.buttons) {
+					for (const button of component.buttons ?? []) {
 						if (button.type === 'URL') {
 							const buttonURLTextVariables = button.url?.match(/{{(\d+)}}/g) ?? [];
 
@@ -166,14 +172,14 @@ function nextCursor<T>(page: GraphPage<T>): string | undefined {
 export function phoneNumberDropdown<R extends boolean>({ required }: { required: R }) {
 	return Property.Dropdown({
 		auth: whatsappAuth,
-		displayName: 'Phone Number ID',
-		description: 'Phone number ID that will be used to send the message.',
+		displayName: 'From Phone Number',
+		description: 'The business number the message is sent from.',
 		refreshers: [],
 		required,
 		options: async ({ auth }) => {
 			if (!auth) {
 				return {
-					placeholder: 'Please connect account first',
+					placeholder: 'Please connect your account first',
 					disabled: true,
 					options: [],
 				};
@@ -204,13 +210,21 @@ export function phoneNumberDropdown<R extends boolean>({ required }: { required:
 
 				for (const phoneNumber of response.body.data ?? []) {
 					options.push({
-						label: `${phoneNumber.verified_name} : ${phoneNumber.display_phone_number}`,
+						label: `${phoneNumber.verified_name} (${phoneNumber.display_phone_number})`,
 						value: phoneNumber.id,
 					});
 				}
 
 				cursor = nextCursor(response.body);
 			} while (cursor);
+
+			if (options.length === 0) {
+				return {
+					placeholder: 'No phone numbers found in this account',
+					disabled: false,
+					options: [],
+				};
+			}
 
 			return {
 				disabled: false,
@@ -231,3 +245,20 @@ type GraphPage<T> = {
 
 type PhoneNumberRow = { id: string; verified_name: string; display_phone_number: string };
 type MessageTemplateRow = { id: string; name: string; language: string };
+
+type TemplateDetails = {
+	components?: {
+		type: string;
+		format?: string;
+		text?: string;
+		buttons?: {
+			type: string;
+			text: string;
+			url?: string;
+		}[];
+	}[];
+};
+
+function escapeTemplatePlaceholders(text: string) {
+	return text.replace(/{{(\d+)}}/g, '`{`{$1`}`}');
+}
