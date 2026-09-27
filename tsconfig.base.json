@@ -724,6 +724,9 @@
       "@activepieces/piece-klipy": [
         "packages/pieces/community/klipy/src/index.ts"
       ],
+      "@activepieces/piece-kleap": [
+        "packages/pieces/community/kleap/src/index.ts"
+      ],
       "@activepieces/piece-klenty": [
         "packages/pieces/community/klenty/src/index.ts"
       ],
