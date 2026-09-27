@@ -16,11 +16,6 @@ function getValueByDotPath(obj: unknown, path: string): unknown {
   return pathUtils.getValueByDotPath(obj, path);
 }
 
-function resolveValue(json: unknown, field: OutputSchemaField): unknown {
-  const path = field.value ?? field.key;
-  return getValueByDotPath(json, path);
-}
-
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -250,7 +245,6 @@ function FormatValue({ value, field }: FormatValueProps) {
 export {
   FormatValue,
   FormatSingleValue,
-  resolveValue,
   getValueByDotPath,
   isSafeUrl,
   isSafeEmail,

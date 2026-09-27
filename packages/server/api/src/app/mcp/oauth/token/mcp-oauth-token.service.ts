@@ -1,7 +1,8 @@
 import { randomBytes } from 'crypto'
-import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, unique } from '@activepieces/core-utils'
+import { ActivepiecesError, apId, ErrorCode, isNil, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, tryCatch, unique } from '@activepieces/core-utils'
 import { cryptoUtils } from '@activepieces/server-utils'
 import { McpOAuthClientKey, McpOAuthGrant, McpOAuthToken } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { In, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
@@ -10,6 +11,7 @@ import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import { mcpListingUtils } from '../../mcp-listing-utils'
 import { mcpOAuthClientIdentity } from '../client/mcp-oauth-client-identity'
 import { McpOAuthClientEntity } from '../client/mcp-oauth-client.entity'
+import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthPkce } from '../mcp-oauth.pkce'
 import { mcpOAuthRevocationList } from './mcp-oauth-revocation-list'
 import { MCP_OAUTH_ACCESS_TOKEN_TTL_SECONDS, MCP_OAUTH_REFRESH_TOKEN_TTL_MS } from './mcp-oauth-token-lifetimes'
@@ -129,6 +131,26 @@ export const mcpOAuthTokenService = {
         }
     },
 
+    async authenticate({ token, log }: AuthenticateParams): Promise<AuthenticateResult> {
+        const { data: payload, error } = await tryCatch(() => mcpOAuthTokenService.verifyAccessToken(token))
+        if (error || isNil(payload)) {
+            log.debug({ error }, 'MCP OAuth token verification failed')
+            return { status: 'invalid' }
+        }
+        const { grantId } = payload
+        if (!isNil(grantId)) {
+            const { data: revoked, error: revocationError } = await tryCatch(() => mcpOAuthRevocationList.isRevoked({ grantId }))
+            if (revocationError) {
+                log.error({ error: revocationError }, 'Could not read the MCP OAuth revocation list')
+                return { status: 'unavailable' }
+            }
+            if (revoked) {
+                return { status: 'invalid' }
+            }
+        }
+        return { status: 'ok', payload }
+    },
+
     async verifyAccessToken(token: string): Promise<McpOAuthAccessTokenPayload> {
         const key = await jwtUtils.getJwtSecret()
         const payload = await jwtUtils.decodeAndVerify<McpOAuthAccessTokenPayload>({
@@ -208,7 +230,7 @@ export const mcpOAuthTokenService = {
     },
 
     async issueInternalAccessToken({ userId, platformId, projectId }: { userId: string, platformId: string, projectId: string | null }): Promise<string> {
-        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: ['mcp'] })
+        return issueAccessToken({ userId, platformId, projectId, clientId: INTERNAL_CHAT_CLIENT_ID, grantId: null, clientKey: null, scopes: DEFAULT_MCP_OAUTH_SCOPES })
     },
 }
 
@@ -300,6 +322,16 @@ type TokenResponse = {
     expires_in: number
     refresh_token?: string
 }
+
+type AuthenticateParams = {
+    token: string
+    log: FastifyBaseLogger
+}
+
+type AuthenticateResult =
+    | { status: 'ok', payload: McpOAuthAccessTokenPayload }
+    | { status: 'invalid' }
+    | { status: 'unavailable' }
 
 export const INTERNAL_CHAT_CLIENT_ID = 'internal-chat'
 

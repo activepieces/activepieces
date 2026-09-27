@@ -1,9 +1,9 @@
+import { isNil } from '@activepieces/core-utils';
 import {
   Agent,
   AgentConversationStatus,
   AgentListSort,
   CreateAgentRequest,
-  DraftAgentRequest,
   MoveAgentRequest,
   Permission,
   UpdateAgentRequest,
@@ -102,6 +102,18 @@ export const agentsQueries = {
       queryFn: () => agentsApi.get(id, { includeUsage }),
       enabled,
     }),
+  useAgentRun: ({
+    runId,
+    projectId,
+  }: {
+    runId: string | null;
+    projectId: string;
+  }) =>
+    useQuery({
+      queryKey: [AGENTS_KEY, 'run', runId],
+      enabled: !isNil(runId),
+      queryFn: () => agentsApi.getRun(runId ?? '', projectId),
+    }),
   useAgentRuns: ({
     agentId,
     projectId,
@@ -178,9 +190,4 @@ export const agentsMutations = {
       },
     });
   },
-  useDraftAgent: () =>
-    useMutation({
-      mutationFn: (request: DraftAgentRequest) => agentsApi.draft(request),
-      onError: () => undefined,
-    }),
 };

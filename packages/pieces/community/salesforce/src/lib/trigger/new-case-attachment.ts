@@ -14,6 +14,7 @@ import { querySalesforceApi } from '../common';
 
 import dayjs from 'dayjs';
 import { salesforceAuth } from '../..';
+import { newCaseAttachmentTriggerOutputSchema } from '../output-schemas';
 
 export const newCaseAttachment = createTrigger({
     auth: salesforceAuth,
@@ -23,6 +24,7 @@ export const newCaseAttachment = createTrigger({
     aiMetadata: {
         description: 'Fires when an attachment is added to any Case in Salesforce, covering both classic Attachments and modern Files (ContentDocumentLink) linked to recently modified Cases. Each event represents one attachment and includes an attachment_type field of either "Classic" or "File". Detected by polling for records modified since the last poll.',
     },
+    outputSchema: newCaseAttachmentTriggerOutputSchema,
     props: {},
     sampleData: {
         "Id": "00P7Q000002XyA4UAK",

@@ -2,14 +2,16 @@ import { Property, createAction } from '@activepieces/pieces-framework';
 import { callSalesforceApi, salesforcesCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { salesforceAuth } from '../..';
+import { upsertByExternalIdOutputSchema } from '../output-schemas';
 
 export const upsertByExternalId = createAction({
   auth: salesforceAuth,
   name: 'upsert_by_external_id',
   displayName: 'Batch Upsert (Advanced)',
   description: 'Batch upsert a record by external id',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Insert-or-update a small batch of records via the composite API, matching on a stable external-ID field and accepting JSON input. Idempotent on the external ID — rerunning with the same data updates rather than duplicates. Use Bulk Upsert for large CSV loads.', idempotent: true },
+  outputSchema: upsertByExternalIdOutputSchema,
   props: {
     object: salesforcesCommon.object,
     external_field: Property.ShortText({

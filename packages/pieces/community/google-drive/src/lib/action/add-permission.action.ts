@@ -8,37 +8,39 @@ export const addPermission = createAction({
     auth: googleDriveAuth,
     name: 'update_permissions',
     classification: 'WRITE',
-    description: 'Update permissions for a file or folder',
+    description: 'Give a person a role on a file or folder by email.',
     audience: 'human',
     aiMetadata: { description: 'Grants a specified role (reader, commenter, writer, fileOrganizer, or organizer) on a Drive file or folder to a user identified by email, optionally sending a notification email. Use to share a resource with a person. Requires the file/folder ID and target email. Not idempotent: each call creates a new permission grant.', idempotent: false },
-    displayName: 'Update permissions',
+    displayName: 'Share File or Folder',
     props: {
         fileId: Property.ShortText({
             displayName: 'File or Folder ID',
-            description: 'The ID of the file or folder to update permissions for',
+            description: "The ID from the item's Drive URL or an earlier step.",
             required: true,
+            placeholder: '1dpv4-sKJfKRwI9qx1vWqQhEGEn3EpbI5',
         }),
         user_email: Property.ShortText({
-            displayName: 'User email',
-            description: 'The email address of the user to update permissions for',
+            displayName: 'User Email',
+            description: 'The person who receives the access.',
             required: true,
+            placeholder: 'name@example.com',
         }),
         permission_name : Property.StaticDropdown({
             displayName: 'Role',
-            description: 'The role to grant to user. See more at: https://developers.google.com/drive/api/guides/ref-roles',
+            description: 'What the person can do. Manager roles apply to shared drives only.',
             required: true,
             options: {
             options: [
                 {
-                    label: 'Organizer',
+                    label: 'Manager',
                     value: 'organizer',
                 },
                 {
-                    label: 'File Organizer',
+                    label: 'Content Manager',
                     value: 'fileOrganizer',
                 },
                 {
-                    label: 'Writer',
+                    label: 'Editor',
                     value: 'writer',
                 },
                 {
@@ -46,19 +48,19 @@ export const addPermission = createAction({
                     value: 'commenter',
                 },
                 {
-                    label: 'Reader',
+                    label: 'Viewer',
                     value: 'reader',
                 },
 
             ]
             }
         }),
-        include_team_drives: common.properties.include_team_drives,
         send_invitation_email: Property.Checkbox({
-            displayName: 'Send invitation email',
-            description: 'Send an email to the user to notify them of the new permissions',
+            displayName: 'Send Invitation Email',
+            description: 'Email the person that they now have access.',
             required: true,
         }),
+        include_team_drives: common.properties.include_team_drives,
        },
     outputSchema: updatePermissionsActionOutputSchema,
 

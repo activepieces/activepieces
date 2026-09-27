@@ -3,11 +3,11 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 import { userIdDropdown } from '../common/props';
 
 export const deleteUserAction = createAction({
@@ -39,13 +39,9 @@ export const deleteUserAction = createAction({
 
     try {
       const response = await httpClient.sendRequest({
-        url: `https://${authentication.props.subdomain}.zendesk.com/api/v2/users/${user_id}.json`,
+        url: `${getZendeskBaseUrl(authentication)}/users/${user_id}.json`,
         method: HttpMethod.DELETE,
-        authentication: {
-          type: AuthenticationType.BASIC,
-          username: authentication.props.email + '/token',
-          password: authentication.props.token,
-        },
+        authentication: getZendeskAuthentication(authentication),
       });
 
       return {

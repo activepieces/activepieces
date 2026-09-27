@@ -26,7 +26,6 @@ export const CreditsUsageAlert = React.memo(() => {
     platformId,
     usage,
     isPlatformAdmin,
-    isPaid,
     isBillingEnforced,
     creditsRemaining,
     isUnlimited,
@@ -62,7 +61,6 @@ export const CreditsUsageAlert = React.memo(() => {
     creditsNextResetAt: usage?.creditsNextResetAt,
     creditsResetInterval: info?.creditsResetInterval,
     nextBillingDate: info?.nextBillingDate,
-    isPaid,
     dateFormat: BILLING_DATE_FORMAT,
   });
   const isDanger = severity === 'error';

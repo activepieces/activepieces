@@ -375,7 +375,7 @@ describe('agentWorkerTools', () => {
         it('refuses to rewrite the agent once the turn has read outside content', async () => {
             const { result, executeTool } = await editWith(true)
 
-            expect(result.error).toMatch(/read data earlier in this reply/i)
+            expect(result.error).toMatch(/read the user's data earlier in this reply/i)
             expect(executeTool).not.toHaveBeenCalled()
         })
 

@@ -54,6 +54,63 @@ The limit is per file, not per step, so several large files in one step are fine
 
 Nothing unless an AI step handles files larger than 25 MB. Those steps now fail with a size error naming the limit. Raise `AP_MAX_FILE_SIZE_MB` on a self-hosted installation if you need more.
 
+#### Applying a release or a project replace now updates changed connection references
+
+Applying a release (Environments / Git Sync) or running Project Replace used to keep whatever connection the destination step already pointed at. A step whose connection changed in the source silently kept the old one, and the connection the release created for it stayed unreferenced with status `MISSING`. Two things change:
+
+- A changed connection reference is now a change the diff sees, so a flow whose only edit is its connection is applied instead of being reported as unchanged.
+- The destination's connection is kept only when the incoming step carries no connection of its own, and only when the step is still the same piece. Swapping a step to a different piece no longer grafts the old piece's connection onto it.
+
+Connection secrets still never cross instances. Only the reference travels, and a reference to a connection that does not exist in the destination yet lands as a `MISSING` connection for someone to authorize there.
+
+#### What you need to do
+
+Nothing on upgrade if your source project is the source of truth for connections, which is the intended model. If instead you deliberately re-point a step in the destination project at a different connection than the source uses, that re-point is now overwritten on the next apply. Either point the source at the connection you want, or clear the connection on the source step so the destination wiring is preserved.
+
+#### Seven actions are no longer offered to agents
+
+The Pinterest piece advertised its six original actions to AI agents as `audience: 'both'`, but they identify boards and Pins through dynamic dropdowns that an agent has no way to drive. They are now `human`, alongside the Trello `add_card_attachment` action, whose only input is a file an agent cannot produce.
+
+An agent that currently holds one of these tools stops seeing it. Every one has a replacement among the new agent actions that takes plain IDs instead: Create Pin from Media, Create New Board, Update Board Details, Delete Pin by ID, Search Boards, Search Pins, and Add Card Attachment from URL.
+
+The flow builder is unaffected. All seven actions keep working exactly as before for human users, and no saved step changes.
+
+#### What you need to do
+
+Nothing for flows. If you have an agent configured with one of the seven actions above, point it at the corresponding agent action listed there. MCP clients should refresh their tool list.
+
+#### Pinterest Update Board can no longer clear a description
+
+Update Board and its agent twin Update Board Details treat a blank or whitespace-only description as "keep the current one", matching the help text the field always carried. Previously a blank description was sent to Pinterest and wiped the board's description on every run.
+
+Clearing a description from this action is therefore no longer possible; that is the intended reading. A call that supplies only a blank description now fails with "At least one field (name, description, or privacy) must be provided to update the board." instead of silently doing nothing.
+
+#### What you need to do
+
+Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
+
+#### WhatsApp Business' Send Message and Send Media return the API response instead of the HTTP envelope
+
+The WhatsApp Business piece returned two different shapes depending on which action you used. `Send Template Message` returned the WhatsApp Cloud API payload directly, while `Send Message` and `Send Media` returned the whole HTTP response, so the same payload sat one level down under `body`, alongside `status` and `headers`.
+
+Both actions now return the API payload directly, matching `Send Template Message` and every other action in the piece. A step that produced
+
+```json
+{ "status": 200, "headers": { }, "body": { "messaging_product": "whatsapp", "messages": [{ "id": "wamid.…" }] } }
+```
+
+now produces
+
+```json
+{ "messaging_product": "whatsapp", "contacts": [{ "input": "…", "wa_id": "…" }], "messages": [{ "id": "wamid.…" }] }
+```
+
+The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE` constant. It previously split between `v17.0` (expired September 2025) and `v20.0` (expires 24 September 2026).
+
+#### What you need to do
+
+Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.
+
 ## 0.91.0
 
 ### What has changed?
@@ -140,6 +197,16 @@ Runs for a project assigned to a worker group used to fall back to the shared qu
 #### What you need to do
 
 If you assign projects to worker groups, keep at least one worker online per assigned group. If a group is down, reassign the project to another group or unassign it (set its `workerGroupId` to `null`) — any assignment change moves the project's waiting runs to the new queue.
+
+#### Airtable's Find Record returns up to 1000 matches and the Record picker lists up to 500 records
+
+Find Record used to return only the first page Airtable sent back, 100 records, and silently dropped the rest. It now follows Airtable's paging and returns up to 1000 matching records. The Record dropdown on Get Record by ID listed the first 50 records of a table; it now lists up to 500.
+
+Update Record and Clean Record now send `typecast: true`, as Create Record always has. Airtable then converts text into the field's type instead of rejecting it: a date typed as text is parsed, a select value that does not exist yet is created as a new option, and a linked-record name is resolved to the record. Before, those requests failed with `INVALID_VALUE_FOR_COLUMN`.
+
+#### What you need to do
+
+Nothing to configure or migrate. Check any Update Record or Clean Record step that writes to a single-select or multiple-select field: a value that used to fail because the option did not exist now creates that option in Airtable. Review flows that loop over Find Record's output or count its rows: a search that matched more than 100 records now returns more rows than before, and each extra page is one more request against Airtable's limit of 5 requests per second per base.
 
 ## 0.90.4
 

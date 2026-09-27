@@ -5,6 +5,7 @@ import { securityAccess } from '../../../core/security/authorization/fastify-sec
 import { domainHelper } from '../../../helper/domain-helper'
 import { JwtAudience, jwtUtils } from '../../../helper/jwt-utils'
 import { mcpOAuthClientService } from '../client/mcp-oauth-client.service'
+import { DEFAULT_MCP_OAUTH_SCOPES } from '../mcp-oauth-scopes'
 import { mcpOAuthValidation } from '../mcp-oauth-validation'
 
 const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
@@ -12,7 +13,7 @@ const AUTH_REQUEST_TTL_10_MINUTES_SECONDS = 10 * 60
 export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) => {
 
     app.get('/authorize', AuthorizeRequest, async (req, reply) => {
-        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope, resource } = req.query
+        const { client_id, redirect_uri, response_type, code_challenge, code_challenge_method, state, scope, resource, nonce } = req.query
 
         if (response_type !== 'code') {
             return reply.status(400).send({ error: 'unsupported_response_type' })
@@ -40,7 +41,8 @@ export const mcpOAuthAuthorizeController: FastifyPluginAsyncZod = async (app) =>
                 codeChallenge: code_challenge,
                 codeChallengeMethod: code_challenge_method,
                 state: state ?? null,
-                scopes: scope ? scope.split(' ') : ['mcp'],
+                nonce: nonce ?? null,
+                scopes: scope ? scope.split(' ') : DEFAULT_MCP_OAUTH_SCOPES,
                 resource: resource ?? null,
                 type: 'mcp_auth_request',
             },
@@ -67,6 +69,7 @@ const AuthorizeRequest = {
             code_challenge: mcpOAuthValidation.storableText(256).refine((value) => value.length >= 43, { message: 'code_challenge is too short' }),
             code_challenge_method: z.string().max(8).default('S256'),
             state: mcpOAuthValidation.storableText(2048).optional(),
+            nonce: mcpOAuthValidation.storableText(512).optional(),
             scope: mcpOAuthValidation.storableText(512).optional(),
             resource: mcpOAuthValidation.storableText(2048).optional(),
         }),

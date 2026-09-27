@@ -19,6 +19,7 @@ import { getContactCampaignStats } from './lib/actions/get-contact-campaign-stat
 import { getContactList } from './lib/actions/get-contact-list';
 import { getEmailCampaign } from './lib/actions/get-email-campaign';
 import { getEmailTemplate } from './lib/actions/get-email-template';
+import { getImportProcess } from './lib/actions/get-import-process';
 import { getSmsCampaign } from './lib/actions/get-sms-campaign';
 import { importContacts } from './lib/actions/import-contacts';
 import { listCompanies } from './lib/actions/list-companies';
@@ -69,6 +70,7 @@ export const sendinblue = createPiece({
     updateContact,
     deleteContact,
     importContacts,
+    getImportProcess,
     listContactAttributes,
     getContactCampaignStats,
     createContactList,

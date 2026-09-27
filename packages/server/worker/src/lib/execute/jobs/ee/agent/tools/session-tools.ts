@@ -49,7 +49,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
 }): ToolSet {
     const runUnlessTainted = async (toolName: string, toolInput: Record<string, unknown>): Promise<unknown> => {
         if (taintState.tainted) {
-            return { error: 'You read data earlier in this reply, so you cannot change a saved agent in the same reply. Say what you would have changed, and offer to do it if they send that request on its own. The Configure panel is the other way.' }
+            return { error: 'You read the user\'s data earlier in this reply, so you cannot change a saved agent in the same reply. Change the agent before reading their data, not after. Say what you would have changed, and offer to do it if they send that request on its own. The Configure panel is the other way.' }
         }
         return executeTool(toolName, toolInput)
     }
@@ -104,7 +104,7 @@ export function createAgentSurfaceTools({ executeTool, taintState }: {
         }),
 
         ap_create_agent: tool({
-            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do.',
+            description: 'Create a saved agent in the active project from a name and instructions. Write the instructions as the agent\'s own standing brief, in second person, covering what it does and what it must not do. Call it before you read any of the user\'s data in this reply: afterwards it is refused until their next message, so stand the agent up first and refine it with ap_update_agent once you have looked at their data.',
             inputSchema: z.object({
                 displayName: z.string().describe('Short name the user will recognise, e.g. "Inbox triage"'),
                 instructions: z.string().describe('The agent\'s standing brief, in second person'),

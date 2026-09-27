@@ -1,4 +1,3 @@
-import { Permission } from '@activepieces/core-utils';
 import {
   ApEdition,
   ApFlagId,
@@ -33,7 +32,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { UserAvatar } from '@/components/custom/user-avatar';
 import { useEmbedding } from '@/components/providers/embed-provider';
-import { useTelemetry } from '@/components/providers/telemetry-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -64,20 +62,18 @@ import {
   railIsCollapsed,
   useRailCollapsed,
 } from '@/features/workspace/lib/rail-collapsed';
-import {
-  useAuthorization,
-  useIsPlatformAdmin,
-} from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
-import AccountSettingsDialog from '../account-settings';
+import { AccountSettingsDialog } from '../account-settings';
 import { recordAccess } from '../global-search/access-history';
 import { useGlobalSearch } from '../global-search/global-search-context';
 import { HelpAndFeedback } from '../help-and-feedback';
+import { mcpHooks } from '../project-settings/mcp-server/utils/mcp-hooks';
 
 export function PrimaryRail() {
   const { embedState } = useEmbedding();
@@ -88,9 +84,10 @@ export function PrimaryRail() {
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const collapsed = railIsCollapsed({ preference, pathname, openedOn });
   const showAgents = useAgentsNavVisible();
-  const { checkAccess } = useAuthorization();
+  const isRailHidden = embedState.isEmbedded || embedState.hideSideNav;
+  const { reachesMcp } = mcpHooks.useMcpReach({ enabled: !isRailHidden });
 
-  if (embedState.isEmbedded || embedState.hideSideNav) {
+  if (isRailHidden) {
     return null;
   }
 
@@ -139,7 +136,7 @@ export function PrimaryRail() {
                 }
               />
             )}
-            {checkAccess(Permission.READ_MCP) && (
+            {reachesMcp && (
               <RailNavButton
                 collapsed={collapsed}
                 to="/mcp-server"
@@ -673,7 +670,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
-  const { reset } = useTelemetry();
   const navigate = useNavigate();
 
   if (!user) {
@@ -683,7 +679,6 @@ function RailAccountRow({ collapsed }: { collapsed: boolean }) {
   const handleLogout = () => {
     userHooks.invalidateCurrentUser(queryClient);
     authenticationSession.logOut();
-    reset();
     navigate('/sign-in');
   };
 

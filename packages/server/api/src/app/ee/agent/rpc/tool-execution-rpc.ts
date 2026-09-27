@@ -17,8 +17,8 @@ import { byteLengthOf, CONFIGURED_TOOL_SOURCES, configuredToolConversationOrThro
 export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
     async executePieceTool(input: ExecutePieceToolRequest): Promise<ExecutePieceToolResponse> {
         const configuredRun = await configuredToolConversationOrThrow({ conversationId: input.conversationId })
-        const { projectId, platformId } = configuredRun
-        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId) })
+        const { projectId, platformId, runModelId } = configuredRun
+        const model = await agentHelpers.resolveFastModel({ platformId, scope: { type: 'project', projectId }, log, ...spreadIfDefined('provider', input.provider), ...spreadIfDefined('providerConfigId', input.providerConfigId), ...spreadIfDefined('fallbackModelId', runModelId) })
         const piece = { pieceName: input.piece.pieceName, actionName: input.piece.actionName, ...spreadIfDefined('pieceVersion', input.piece.pieceVersion) }
         const connection = await connectionForConfiguredTool({ piece: input.piece, projectId, platformId, log })
         const { data: resolved, error: resolveError } = await tryCatch(() => pieceToolRunner.resolveInput({
@@ -239,6 +239,14 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
             log.info({ flow: { id: flowId }, hasWrites: writeSteps.length > 0, writeStepCount: writeSteps.length }, '[agentRpc#executeAgentTool] Flow write check')
             return { result: { hasWrites: writeSteps.length > 0, flowName: flow.version.displayName, writeSteps } }
         }
+        if (input.toolName === '__get_selected_connection') {
+            const { pieceName } = input.toolInput
+            if (typeof input.conversationId === 'string' && typeof pieceName === 'string') {
+                const selected = await agentApprovalGate.getSelectedConnection({ conversationId: input.conversationId, pieceName })
+                return { result: selected }
+            }
+            return { result: null }
+        }
         if (input.toolName === '__get_available_connections') {
             const { pieceName } = input.toolInput
             if (typeof input.conversationId === 'string' && typeof pieceName === 'string') {
@@ -273,7 +281,7 @@ export const toolExecutionRpc = (log: FastifyBaseLogger) => ({
 const MAX_APPROVAL_BLOCK_MS = 50_000
 const CHAT_ONLY_TOOL_PREFIX = '__'
 const OWNER_SCOPED_TOOLS = ['ap_remember']
-const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection']
+const ATTENDED_STATE_TOOLS = ['__cancel_check', '__approval_wait', '__store_pending_gate', '__store_selected_connection', '__get_selected_connection']
 const SOURCE_EXTRA_TOOLS: Partial<Record<AgentRunSource, readonly string[]>> = {
     [AgentRunSource.AGENT_BUILDER]: AGENT_SURFACE_TOOLS,
     [AgentRunSource.AGENT]: AGENT_SELF_EDIT_TOOLS,

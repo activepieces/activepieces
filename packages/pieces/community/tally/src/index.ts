@@ -34,7 +34,7 @@ export const tally = createPiece({
 	displayName: 'Tally',
 	description: 'Receive form submissions from Tally forms',
 	auth: tallyAuth,
-	minimumSupportedRelease: '0.86.4',
+	minimumSupportedRelease: '0.88.2',
 	logoUrl: 'https://cdn.activepieces.com/pieces/tally.png',
 	categories: [PieceCategory.FORMS_AND_SURVEYS],
 	authors: ['kishanprmr', 'abuaboud', 'bst1n'],

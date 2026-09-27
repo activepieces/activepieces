@@ -125,5 +125,3 @@ export const LanguageToggle = () => {
     </div>
   );
 };
-
-export default LanguageToggle;

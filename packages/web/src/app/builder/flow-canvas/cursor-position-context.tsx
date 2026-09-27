@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 
 const CursorPositionContext = createContext<{
   cursorPosition: { x: number; y: number };
@@ -10,24 +10,6 @@ const CursorPositionContext = createContext<{
 
 export const useCursorPosition = () => {
   return useContext(CursorPositionContext);
-};
-
-export const CursorPositionProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const cursorPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const setCursorPosition = (position: { x: number; y: number }) => {
-    cursorPositionRef.current = position;
-  };
-  return (
-    <CursorPositionContext.Provider
-      value={{ cursorPosition: cursorPositionRef.current, setCursorPosition }}
-    >
-      {children}
-    </CursorPositionContext.Provider>
-  );
 };
 
 //Use this only in the component you want to re-render when the cursor position changes, i.e dragged step or note

@@ -1,6 +1,6 @@
 import { ActivepiecesAiBilling, ActivepiecesAiConsumerSource, AIProviderName, ErrorCode, formatPieceError, isNil, isObject, spreadIfDefined, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
+import { AgentEvent, AgentEventType, AgentKnowledgeBaseTool, AgentMcpTool, AgentOutputField, AgentPhase, AgentPieceTool, AgentResult, AgentRunSource, AgentTool, AgentToolType, AiProviderCredentials, EngineResponseStatus, ExecuteAgentRunJobData, MAX_AGENT_TURN_WALL_CLOCK_MS, PersistedAgentMessage, PersistedAgentPart, PersistedAgentRole, ResolvedAgentFlowTool, WorkerJobType } from '@activepieces/shared'
 import { createUIMessageStream, generateText, ModelMessage, streamText, ToolSet, toUIMessageStream } from 'ai'
 import { FireAndForgetJobResult, JobContext, JobHandler, JobResultKind } from '../../../types'
 import { agentMcpClient, McpConnection } from './agent-mcp-client'
@@ -108,16 +108,9 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             runModelId = config.modelId
             source = config.source
             const aiTools = config.aiTools
-            // Tavily takes precedence; native LLM web search is only the no-Tavily fallback.
             const tavilySearchActive = !dryRun && !isNil(aiTools.webSearch)
-            // A provider plugin folds search results into the reply with no tool call, so there is
-            // nowhere to mark the turn. A run that can rewrite a saved agent does without it and
-            // reads through ap_fetch_url or Tavily instead, both of which mark.
-            const untrackedSearchWouldBeat = config.agentsAvailable
-                && aiUtils.webSearchModeOf(provider) === 'plugin'
-            const webSearchActive = !dryRun
+            const providerSearchActive = !dryRun
                 && !tavilySearchActive
-                && !untrackedSearchWouldBeat
                 && aiUtils.supportsWebSearch(provider)
             const billing: ActivepiecesAiBilling = {
                 source: ActivepiecesAiConsumerSource.CHAT,
@@ -129,7 +122,6 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const model = aiUtils.createModel({
                 credentials, modelId: config.modelId,
                 metadata: { platformId, conversationId, runId },
-                webSearchEnabled: webSearchActive,
                 billing,
                 turnAlreadyCharged: true,
             })
@@ -139,7 +131,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 turnAlreadyCharged: true,
             })
 
-            log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, webSearchActive }, '[executeAgentRun] Chat config loaded')
+            log.info({ provider, model: { id: config.modelId }, tier: { id: config.tier.id }, dryRun: dryRun ?? false, tavilySearchActive, providerSearchActive }, '[executeAgentRun] Chat config loaded')
 
             const eventEmitter = agentWorkerTools.createEventEmitter({
                 sendEvent: (input) => ctx.apiClient.sendAgentEvent({ ...input, runId }),
@@ -197,13 +189,18 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
             const phaseState: { phase: AgentPhase } = { phase: 'discovery' }
             const taintState: TaintState = { tainted: source === AgentRunSource.FLOW_STEP }
 
+            const imageGenerator = pickImageGenerator({ falApiKey: aiTools.imageGeneration?.apiKey, imageModelId: config.imageModelId, credentials, billing })
             const webTools: ToolSet = dryRun ? {} : {
                 ...agentWorkerTools.createWebTools({ taintState }),
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
-                ...(webSearchActive ? agentWorkerTools.wrapToolsWithTaint({ tools: aiUtils.buildWebSearchTools({ provider }), taintState }) : {}),
+                ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
+                    search: (request) => aiUtils.searchWeb({ ...request, credentials, modelId: config.fastModelId, billing, turnAlreadyCharged: true }),
+                    billedAtCost: provider === AIProviderName.ACTIVEPIECES,
+                    taintState,
+                }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),
-                ...(aiTools.imageGeneration && !discoveryOnly ? agentWorkerTools.createImageTools({
-                    imageGeneration: aiTools.imageGeneration,
+                ...(imageGenerator && !discoveryOnly ? agentWorkerTools.createImageTools({
+                    ...imageGenerator,
                     saveFile: ({ data, mediaType, fileName }) => ctx.apiClient.saveAgentFile({ platformId, conversationId, data, mediaType, ...spreadIfDefined('projectId', projectId ?? undefined), ...spreadIfDefined('fileName', fileName) }),
                     emitImage: eventEmitter.emitImageGenerated,
                 }) : {}),
@@ -487,6 +484,24 @@ function isKnowledgeBaseTool(tool: AgentTool): tool is AgentKnowledgeBaseTool {
     return tool.type === AgentToolType.KNOWLEDGE_BASE
 }
 
+function pickImageGenerator({ falApiKey, imageModelId, credentials, billing }: {
+    falApiKey: string | undefined
+    imageModelId: string | undefined
+    credentials: AiProviderCredentials
+    billing: ActivepiecesAiBilling
+}): Pick<Parameters<typeof agentWorkerTools.createImageTools>[0], 'generate' | 'billedAtCost'> | undefined {
+    if (!isNil(falApiKey)) {
+        return { generate: agentWorkerTools.falImageGenerator({ apiKey: falApiKey }), billedAtCost: false }
+    }
+    if (isNil(imageModelId)) {
+        return undefined
+    }
+    return {
+        generate: agentWorkerTools.providerImageGenerator({ credentials, modelId: imageModelId, billing }),
+        billedAtCost: credentials.provider === AIProviderName.ACTIVEPIECES,
+    }
+}
+
 function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolSet, webTools, projects, projectId, conversationId, flowRunId, runId, platformId, userId, userEmail, guides, dryRun, discoveryOnly, emailEnabled, agentsAvailable, abortSignal, source, provider, providerConfigId, configuredPieceTools, configuredFlowTools, configuredKnowledgeBaseTools, structuredOutput, captureStructured }: {
     ctx: JobContext
     provider: AIProviderName
@@ -616,6 +631,25 @@ function buildToolSet({ ctx, eventEmitter, log, phaseState, taintState, mcpToolS
         waitForApproval,
         displayToolTimeoutMs: DISPLAY_TOOL_TIMEOUT_MS,
         accountAlreadyChosenFor: (pieceName) => piecesTheAuthorGaveAnAccount.has(pieceName),
+        connectionChosenEarlierFor: async (pieceName) => {
+            const inThisRun = selectedConnectionByPiece.get(pieceName)
+            if (!isNil(inThisRun)) {
+                return { externalId: inThisRun, label: inThisRun }
+            }
+            const { data: stored } = await tryCatch(() => ctx.apiClient.executeAgentTool({
+                toolName: '__get_selected_connection',
+                toolInput: { pieceName },
+                platformId, userId, source, conversationId,
+            }))
+            const selected = stored?.result
+            if (!isObject(selected) || typeof selected['externalId'] !== 'string') {
+                return null
+            }
+            const externalId = selected['externalId']
+            const label = selected['label']
+            selectedConnectionByPiece.set(pieceName, externalId)
+            return { externalId, label: typeof label === 'string' ? label : externalId }
+        },
         onConnectionSelected: async ({ pieceName, connectionExternalId, label, projectId: connProjectId }) => {
             selectedConnectionByPiece.set(pieceName, connectionExternalId)
             await tryCatch(() => ctx.apiClient.executeAgentTool({

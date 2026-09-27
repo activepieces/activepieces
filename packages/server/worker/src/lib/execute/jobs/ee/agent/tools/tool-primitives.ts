@@ -1,6 +1,6 @@
 import { isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { largeResultUtils, MAX_TOOL_RESULT_BYTES } from '@activepieces/server-utils'
-import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, ToolProgressEvent } from '@activepieces/shared'
+import { ActionPreviewEvent, ActionReceiptEvent, agentToolClassification, agentToolPhases, BuildPlanEvent, FileProducedEvent, ImageGeneratedEvent, ToolProgressEvent } from '@activepieces/shared'
 import { ToolExecutionOptions, ToolSet } from 'ai'
 import { z } from 'zod'
 
@@ -189,7 +189,9 @@ export function wrapToolsWithTaint({ tools, taintState }: { tools: ToolSet, tain
         return [name, {
             ...toolDef,
             execute: async (input: unknown, options: ToolExecutionOptions<undefined>) => {
-                taintState.tainted = true
+                if (agentToolPhases.taintsTurn(name)) {
+                    taintState.tainted = true
+                }
                 return run(input, options)
             },
         }]

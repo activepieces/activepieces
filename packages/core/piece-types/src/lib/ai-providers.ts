@@ -32,6 +32,7 @@ export type VertexProviderAuthConfig = z.infer<typeof VertexProviderAuthConfig>
 export const BedrockProviderAuthConfig = z.object({
     accessKeyId: z.string().check(z.minLength(1)),
     secretAccessKey: z.string().check(z.minLength(1)),
+    sessionToken: z.optional(z.string()),
 })
 export type BedrockProviderAuthConfig = z.infer<typeof BedrockProviderAuthConfig>
 
@@ -364,6 +365,7 @@ function buildProviderCapabilities(provider: AIProviderName): AIProviderCapabili
         defaultEmbeddingModel: DEFAULT_EMBEDDING_MODELS[provider],
         supportsEmbedding: DEFAULT_EMBEDDING_MODELS[provider] !== undefined,
         supportsImageGeneration: !NO_IMAGE_GENERATION_PROVIDERS.has(provider),
+        defaultImageModel: DEFAULT_IMAGE_MODELS[provider],
         webSearch: WEB_SEARCH_MODE_BY_PROVIDER[provider],
     }
 }
@@ -385,6 +387,13 @@ export const ACTIVEPIECES_IMAGE_TIERS = [
 ] as const
 
 export type ActivepiecesImageTier = typeof ACTIVEPIECES_IMAGE_TIERS[number]
+
+const DEFAULT_IMAGE_MODELS: Partial<Record<AIProviderName, string>> = {
+    [AIProviderName.ACTIVEPIECES]: ACTIVEPIECES_IMAGE_TIERS[0].modelId,
+    [AIProviderName.OPENROUTER]: 'google/gemini-3.1-flash-lite-image',
+    [AIProviderName.OPENAI]: 'gpt-image-1.5',
+    [AIProviderName.GOOGLE]: 'gemini-2.5-flash-image',
+}
 
 export const AI_PROVIDER_CAPABILITIES: Record<AIProviderName, AIProviderCapabilities> = {
     [AIProviderName.OPENAI]: buildProviderCapabilities(AIProviderName.OPENAI),
@@ -436,5 +445,6 @@ export type AIProviderCapabilities = {
     defaultEmbeddingModel: string | undefined
     supportsEmbedding: boolean
     supportsImageGeneration: boolean
+    defaultImageModel: string | undefined
     webSearch: AIWebSearchMode | undefined
 }

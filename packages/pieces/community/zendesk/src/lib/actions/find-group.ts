@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  AuthenticationType,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
-import { zendeskAuth } from '../..';
+import { zendeskAuth } from '../auth';
+import { getZendeskAuthentication, getZendeskBaseUrl } from '../common/client';
 
 interface ZendeskGroup {
   id: number;
@@ -42,7 +42,7 @@ export const findGroupAction = createAction({
     }
 
     try {
-      let url: string | undefined = `https://${authentication.props.subdomain}.zendesk.com/api/v2/groups.json?per_page=100`;
+      let url: string | undefined = `${getZendeskBaseUrl(authentication)}/groups.json?per_page=100`;
       let matchedGroup: ZendeskGroup | undefined;
 
       while (url && !matchedGroup) {
@@ -50,11 +50,7 @@ export const findGroupAction = createAction({
         const response = await httpClient.sendRequest<ZendeskGroupsResponse & { next_page?: string }>({
           url: currentUrl,
           method: HttpMethod.GET,
-          authentication: {
-            type: AuthenticationType.BASIC,
-            username: authentication.props.email + '/token',
-            password: authentication.props.token,
-          },
+          authentication: getZendeskAuthentication(authentication),
         });
 
         const groups = response.body.groups || [];

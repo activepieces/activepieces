@@ -2,6 +2,9 @@ import { Permission } from '@activepieces/core-utils';
 import { t } from 'i18next';
 import { Bell, Trash, UserRound } from 'lucide-react';
 
+import { LoadingSpinner } from '@/components/custom/spinner';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
   Item,
   ItemActions,
@@ -10,10 +13,7 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from '@/components/custom/item';
-import { LoadingSpinner } from '@/components/custom/spinner';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,

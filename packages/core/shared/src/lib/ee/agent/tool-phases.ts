@@ -49,6 +49,17 @@ const CHAT_HIDDEN_TOOL_NAMES = new Set<string>([
     'ap_setup_guide',
 ])
 
+const CATALOG_ONLY_TOOL_NAMES = new Set<string>([
+    'ap_research_pieces',
+    'ap_search_actions',
+    'ap_search_triggers',
+    'ap_list_connections',
+])
+
+function taintsTurn(toolName: string): boolean {
+    return !CATALOG_ONLY_TOOL_NAMES.has(toolName)
+}
+
 function activeToolsForPhase({ phase, allToolNames }: {
     phase: AgentPhase
     allToolNames: string[]
@@ -79,4 +90,5 @@ export const agentToolPhases = {
     activeToolsForPhase,
     isBuildOnlyTool,
     isAgentHiddenTool,
+    taintsTurn,
 }

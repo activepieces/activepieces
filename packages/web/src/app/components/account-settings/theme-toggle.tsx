@@ -48,5 +48,3 @@ export const ThemeToggle = () => {
     </div>
   );
 };
-
-export default ThemeToggle;

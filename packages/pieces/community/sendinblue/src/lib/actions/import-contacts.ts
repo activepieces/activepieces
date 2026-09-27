@@ -15,7 +15,7 @@ export const importContacts = createAction({
 	audience: 'ai',
 	aiMetadata: {
 		description:
-			'Submits a bulk contact import job to Brevo, from a public file URL or an inline list of email/attribute rows, optionally into an existing or newly created list. This piece has no "get import status" action, so track completion via the Notify URL webhook or the Brevo dashboard. Not idempotent — each call submits a new background import job, even with identical input.',
+			'Submits a bulk contact import job to Brevo, from a public file URL or an inline list of email/attribute rows, optionally into an existing or newly created list. Poll the returned process id with Get Import Process, or track completion via the Notify URL webhook. Not idempotent — each call submits a new background import job, even with identical input.',
 		idempotent: false,
 	},
 	props: {
