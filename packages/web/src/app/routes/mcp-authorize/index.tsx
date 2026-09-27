@@ -1,6 +1,7 @@
 import { SeekPage } from '@activepieces/core-utils';
 import { ProjectType, ProjectWithLimits } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { StatusCodes } from 'http-status-codes';
 import { t } from 'i18next';
 import { jwtDecode } from 'jwt-decode';
 import { CheckCircle, FolderKanban, Lock, Plug, Workflow } from 'lucide-react';
@@ -273,7 +274,7 @@ function McpAuthorizePage() {
                     'This request has expired. Go back to {client} and start the connection again.',
                     { client: clientName },
                   )
-                : t('Authorization failed. Please try again.')}
+                : authorizeFailureMessage(approveMutation.error)}
             </div>
           )}
 
@@ -329,6 +330,15 @@ function decodeJwtPayload(token: string | null): AuthRequestSummary {
   } catch {
     return fallback;
   }
+}
+
+function authorizeFailureMessage(error: unknown): string {
+  if (api.isError(error) && error.response?.status === StatusCodes.FORBIDDEN) {
+    return t(
+      'You do not have MCP access here. Pick another project, or ask a platform admin for access.',
+    );
+  }
+  return t('Authorization failed. Please try again.');
 }
 
 type AuthRequestSummary = {
