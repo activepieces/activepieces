@@ -5,15 +5,14 @@ import path from 'path';
 import fs from 'fs/promises';
 
 export const pieceTranslation = {
-  translatePiece: <T>({ piece, translations }: TranslatePieceParams<T>): T => {
+  translatePiece: <T extends Record<string, unknown>>({ piece, translations }: TranslatePieceParams<T>): T => {
     if (!translations) {
       return piece
     }
-    const translated = pieceTranslation.pathsToValuesToTranslate.reduce<unknown>(
-      (node, key) => translateAtPath({ node, keys: key.split('.'), translations }),
+    return pieceTranslation.pathsToValuesToTranslate.reduce(
+      (node, key) => translateField({ node, keys: key.split('.'), translations }),
       piece,
     )
-    return translated as T
   },
 
   /**Gets the piece metadata regardles of piece location (node_modules or dist), wasn't included inside piece.metadata() for backwards compatibility issues (if an old ap version installs a new piece it would fail)*/
@@ -68,6 +67,11 @@ function translateAtPath({ node, keys, translations }: TranslateAtPathParams): u
   if (!isObject(node)) {
     return node
   }
+  return translateField({ node, keys, translations })
+}
+
+function translateField<N extends Record<string, unknown>>({ node, keys, translations }: TranslateFieldParams<N>): N {
+  const [head, ...rest] = keys
   const child = node[head]
   const translatedChild = rest.length > 0
     ? translateAtPath({ node: child, keys: rest, translations })
@@ -132,6 +136,12 @@ type TranslatePieceParams<T> = {
 
 type TranslateAtPathParams = {
   node: unknown
+  keys: string[]
+  translations: Translations
+}
+
+type TranslateFieldParams<N> = {
+  node: N
   keys: string[]
   translations: Translations
 }
