@@ -71,6 +71,7 @@ export const shopifyAiUpdateOrderDetails = createAction({
     }>({
       auth,
       query: `mutation UpdateOrderDetails($input: OrderInput!) { orderUpdate(input: $input) { order { ${shopifyFields.ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderUpdate.order'],
       variables: { input: { id, ...patch } },
     });
     const order = data.orderUpdate?.order;

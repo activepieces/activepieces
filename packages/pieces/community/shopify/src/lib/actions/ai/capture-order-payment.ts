@@ -66,6 +66,7 @@ export const shopifyAiCaptureOrderPayment = createAction({
     }>({
       auth,
       query: `mutation CaptureOrderPayment($input: OrderCaptureInput!) { orderCapture(input: $input) { transaction { ${shopifyFields.TRANSACTION_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderCapture.transaction'],
       variables: { input },
     });
     const transaction = data.orderCapture?.transaction;

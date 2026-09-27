@@ -88,6 +88,7 @@ export const shopifyAiUpdateCustomerProfile = createAction({
     }>({
       auth,
       query: `mutation UpdateCustomerProfile($input: CustomerInput!) { customerUpdate(input: $input) { customer { ${shopifyFields.CUSTOMER_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerUpdate.customer'],
       variables: { input: { id, ...patch } },
     });
     const customer = data.customerUpdate?.customer;

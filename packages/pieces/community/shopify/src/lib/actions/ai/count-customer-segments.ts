@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlCount, shopifyGraphqlClient } from '../../common/graphql';
+import { countOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCountCustomerSegments = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiCountCustomerSegments = createAction({
       'Returns how many customer segments (saved customer groups) the store has. precision is AT_LEAST when Shopify stopped counting at its limit. Read-only.',
     idempotent: true,
   },
+  outputSchema: countOutputSchema,
   props: {},
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

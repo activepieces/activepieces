@@ -37,6 +37,7 @@ export const shopifyAiVoidOrderTransaction = createAction({
     }>({
       auth,
       query: `mutation VoidOrderTransaction($parentTransactionId: ID!) { transactionVoid(parentTransactionId: $parentTransactionId) { transaction { ${shopifyFields.TRANSACTION_FIELDS} } userErrors { field message code } } }`,
+      primaryPaths: ['transactionVoid.transaction'],
       variables: { parentTransactionId },
     });
     const transaction = data.transactionVoid?.transaction;

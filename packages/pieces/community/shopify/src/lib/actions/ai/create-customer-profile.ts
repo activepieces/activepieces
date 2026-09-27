@@ -122,6 +122,7 @@ export const shopifyAiCreateCustomerProfile = createAction({
     }>({
       auth,
       query: `mutation CreateCustomerProfile($input: CustomerInput!) { customerCreate(input: $input) { customer { ${shopifyFields.CUSTOMER_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerCreate.customer'],
       variables: { input },
     });
     const customer = data.customerCreate?.customer;

@@ -120,6 +120,7 @@ export const shopifyAiUpdateDraftOrder = createAction({
     }>({
       auth,
       query: `mutation UpdateDraftOrder($id: ID!, $input: DraftOrderInput!) { draftOrderUpdate(id: $id, input: $input) { draftOrder { ${shopifyFields.DRAFT_ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderUpdate.draftOrder'],
       variables: { id, input: patch },
     });
     const draft = data.draftOrderUpdate?.draftOrder;

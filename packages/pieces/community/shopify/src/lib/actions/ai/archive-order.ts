@@ -33,6 +33,7 @@ export const shopifyAiArchiveOrder = createAction({
     }>({
       auth,
       query: `mutation ArchiveOrder($input: OrderCloseInput!) { orderClose(input: $input) { order { ${shopifyFields.ORDER_SUMMARY_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderClose.order'],
       variables: { input: { id } },
     });
     const order = data.orderClose?.order;

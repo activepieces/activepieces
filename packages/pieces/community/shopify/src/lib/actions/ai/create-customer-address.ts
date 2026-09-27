@@ -46,6 +46,7 @@ export const shopifyAiCreateCustomerAddress = createAction({
     }>({
       auth,
       query: `mutation CreateCustomerAddress($customerId: ID!, $address: MailingAddressInput!, $setAsDefault: Boolean) { customerAddressCreate(customerId: $customerId, address: $address, setAsDefault: $setAsDefault) { address { ${shopifyFields.ADDRESS_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerAddressCreate.address'],
       variables: { customerId, address, setAsDefault: propsValue.set_as_default ?? false },
     });
     const created = data.customerAddressCreate?.address;

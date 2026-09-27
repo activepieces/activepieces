@@ -6,6 +6,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { countOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCountDraftOrders = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCountDraftOrders = createAction({
       'Counts draft orders, optionally filtered with search syntax such as "status:open". precision is AT_LEAST when Shopify stopped counting at its limit. Use list_draft_orders to see them. Read-only.',
     idempotent: true,
   },
+  outputSchema: countOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify draft order search syntax, for example "status:open". Leave empty to count all.'

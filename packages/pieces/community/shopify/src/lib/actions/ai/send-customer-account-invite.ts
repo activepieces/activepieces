@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { sendCustomerAccountInviteOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiSendCustomerAccountInvite = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiSendCustomerAccountInvite = createAction({
       'Emails one customer an invitation to activate their classic store account, optionally with a custom subject and message. Use generate_customer_activation_url to get a link without sending an email. Each call sends another email, so do not repeat it.',
     idempotent: false,
   },
+  outputSchema: sendCustomerAccountInviteOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

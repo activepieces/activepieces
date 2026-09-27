@@ -46,6 +46,7 @@ export const shopifyAiCompleteDraftOrder = createAction({
     }>({
       auth,
       query: `mutation CompleteDraftOrder($id: ID!, $paymentGatewayId: ID, $sourceName: String) { draftOrderComplete(id: $id, paymentGatewayId: $paymentGatewayId, sourceName: $sourceName) { draftOrder { ${shopifyFields.DRAFT_ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderComplete.draftOrder'],
       variables: shopifyValues.compact({
         id,
         paymentGatewayId: gatewayId

@@ -70,6 +70,15 @@ async function sendGraphqlRequest<TData>({
   if (data === null || data === undefined) {
     throw toGraphqlError(errors);
   }
+  const withheld = findWithheldMutationResult({
+    query,
+    errors,
+    primaryPaths: primaryPaths ?? [],
+  });
+  if (withheld) {
+    throwOnUserErrors({ data, toleratedCodes: toleratedUserErrorCodes ?? [] });
+    throw toWithheldResultError(withheld);
+  }
   const blocking = errors.filter(
     (entry) => !isFieldRedaction({ entry, primaryPaths: primaryPaths ?? [] })
   );
@@ -101,8 +110,50 @@ function isFieldRedaction({
   if (code === 'ACCESS_DENIED') {
     return true;
   }
-  return /protected customer data|not approved to access/i.test(
-    entry.message ?? ''
+  return isProtectedDataDenial(entry);
+}
+
+function isProtectedDataDenial(entry: ShopifyGraphqlError): boolean {
+  if (/protected customer data|not approved to access/i.test(entry.message ?? '')) {
+    return true;
+  }
+  return String(entry.extensions?.documentation ?? '').includes(
+    'protected-customer-data'
+  );
+}
+
+function findWithheldMutationResult({
+  query,
+  errors,
+  primaryPaths,
+}: {
+  query: string;
+  errors: ShopifyGraphqlError[];
+  primaryPaths: string[];
+}): ShopifyGraphqlError | undefined {
+  if (!/^\s*mutation\b/.test(query)) {
+    return undefined;
+  }
+  return errors.find((entry) => {
+    const path = (entry.path ?? []).map((segment) => String(segment));
+    return (
+      path.length >= 2 &&
+      primaryPaths.includes(path.join('.')) &&
+      isProtectedDataDenial(entry)
+    );
+  });
+}
+
+function toWithheldResultError(entry: ShopifyGraphqlError): Error {
+  const path = (entry.path ?? []).map((segment) => String(segment)).join('.');
+  return new Error(
+    `Shopify APPLIED this change, but withheld the returned record (${path}) because this app is not approved for protected customer data. Do not repeat the operation: it already took effect. To get the result back, grant the app protected customer data access (Partner Dashboard > App > API access > Protected customer data). Shopify said: ${entry.message ?? ''}`.trim()
+  );
+}
+
+function toProtectedDataError(entry: ShopifyGraphqlError): Error {
+  return new Error(
+    `Shopify withheld protected customer data: ${entry.message ?? ''} The app needs protected customer data access (Partner Dashboard > App > API access > Protected customer data, including the name, email, phone and address fields it reads). Adding Admin API scopes or reinstalling the app will not fix this.`
   );
 }
 
@@ -127,6 +178,10 @@ function isPrimaryPath({
 function toGraphqlError(errors: ShopifyGraphqlError[]): Error {
   if (errors.length === 0) {
     return new Error('Shopify returned no data and no error details.');
+  }
+  const protectedData = errors.find(isProtectedDataDenial);
+  if (protectedData) {
+    return toProtectedDataError(protectedData);
   }
   const denied = errors.find(
     (entry) => entry.extensions?.code === 'ACCESS_DENIED'
@@ -1122,6 +1177,7 @@ export type ShopifyGraphqlError = {
   extensions?: {
     code?: string;
     requiredAccess?: string;
+    documentation?: string;
   };
 };
 

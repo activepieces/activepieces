@@ -284,6 +284,7 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
     }>({
       auth,
       query: `mutation CreateOrder($order: OrderCreateOrderInput!, $options: OrderCreateOptionsInput) { orderCreate(order: $order, options: $options) { order { ${shopifyFields.ORDER_DETAIL_FIELDS} } userErrors { field message code } } }`,
+      primaryPaths: ['orderCreate.order'],
       variables: { order, options },
     });
     const created = data.orderCreate?.order;

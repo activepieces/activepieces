@@ -46,6 +46,7 @@ export const shopifyAiSetDefaultCustomerAddress = createAction({
     }>({
       auth,
       query: `mutation SetDefaultCustomerAddress($customerId: ID!, $addressId: ID!) { customerUpdateDefaultAddress(customerId: $customerId, addressId: $addressId) { customer { id defaultAddress { ${shopifyFields.ADDRESS_FIELDS} } } userErrors { field message } } }`,
+      primaryPaths: ['customerUpdateDefaultAddress.customer', 'customerUpdateDefaultAddress.customer.defaultAddress'],
       variables: { customerId, addressId },
     });
     const customer = data.customerUpdateDefaultAddress?.customer;

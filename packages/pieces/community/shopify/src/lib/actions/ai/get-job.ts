@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { getJobOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetJob = createAction({
   auth: shopifyAuth,
@@ -11,9 +12,10 @@ export const shopifyAiGetJob = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Reads the status of an asynchronous Shopify job, such as the job returned by start_order_cancellation. Returns done=true once Shopify has finished the work; call it again later while done is false. One status read, it never waits.',
+      'Reads the status of an asynchronous Shopify job, such as the job returned by start_order_cancellation. Returns done=true once Shopify has finished the work; call it again later while done is false. Shopify also reports done=true for an unknown job id, so pass the exact id you were given. One status read, it never waits.',
     idempotent: true,
   },
+  outputSchema: getJobOutputSchema,
   props: {
     job_id: Property.ShortText({
       displayName: 'Job ID',

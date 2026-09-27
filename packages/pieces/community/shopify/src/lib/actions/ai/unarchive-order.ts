@@ -33,6 +33,7 @@ export const shopifyAiUnarchiveOrder = createAction({
     }>({
       auth,
       query: `mutation UnarchiveOrder($input: OrderOpenInput!) { orderOpen(input: $input) { order { ${shopifyFields.ORDER_SUMMARY_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderOpen.order'],
       variables: { input: { id } },
     });
     const order = data.orderOpen?.order;

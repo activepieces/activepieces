@@ -129,12 +129,15 @@ export const shopifyAiCreateRefund = createAction({
     }>({
       auth,
       query: `mutation CreateRefund($input: RefundInput!, $idempotencyKey: String!) { refundCreate(input: $input) @idempotent(key: $idempotencyKey) { refund { ${shopifyFields.REFUND_FIELDS} } order { id totalRefundedSet { ${shopifyFields.MONEY_FIELDS} } } userErrors { field message } } }`,
+      primaryPaths: ['refundCreate.refund'],
       variables: { input },
       idempotencyKey,
     });
     const refund = data.refundCreate?.refund;
     if (!refund) {
-      throw new Error('Shopify did not return the refund.');
+      throw new Error(
+        `Shopify did not return the refund. [idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`
+      );
     }
     return {
       ...shopifyMappers.mapRefund(refund),

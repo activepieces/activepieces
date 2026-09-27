@@ -33,6 +33,7 @@ export const shopifyAiMarkOrderAsPaid = createAction({
     }>({
       auth,
       query: `mutation MarkOrderAsPaid($input: OrderMarkAsPaidInput!) { orderMarkAsPaid(input: $input) { order { ${shopifyFields.ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderMarkAsPaid.order'],
       variables: { input: { id } },
     });
     const order = data.orderMarkAsPaid?.order;

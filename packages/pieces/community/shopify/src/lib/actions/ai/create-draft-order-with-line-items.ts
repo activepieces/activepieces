@@ -141,6 +141,7 @@ export const shopifyAiCreateDraftOrderWithLineItems = createAction({
     }>({
       auth,
       query: `mutation CreateDraftOrder($input: DraftOrderInput!) { draftOrderCreate(input: $input) { draftOrder { ${shopifyFields.DRAFT_ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderCreate.draftOrder'],
       variables: { input },
     });
     const draft = data.draftOrderCreate?.draftOrder;

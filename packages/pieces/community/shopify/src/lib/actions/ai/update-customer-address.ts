@@ -64,6 +64,7 @@ export const shopifyAiUpdateCustomerAddress = createAction({
       }>({
         auth,
         query: `mutation SetDefaultCustomerAddress($customerId: ID!, $addressId: ID!) { customerUpdateDefaultAddress(customerId: $customerId, addressId: $addressId) { customer { id defaultAddress { ${shopifyFields.ADDRESS_FIELDS} } } userErrors { field message } } }`,
+        primaryPaths: ['customerUpdateDefaultAddress.customer', 'customerUpdateDefaultAddress.customer.defaultAddress'],
         variables: { customerId, addressId },
       });
       const defaultAddress = data.customerUpdateDefaultAddress?.customer?.defaultAddress;
@@ -81,6 +82,7 @@ export const shopifyAiUpdateCustomerAddress = createAction({
     }>({
       auth,
       query: `mutation UpdateCustomerAddress($customerId: ID!, $addressId: ID!, $address: MailingAddressInput!, $setAsDefault: Boolean) { customerAddressUpdate(customerId: $customerId, addressId: $addressId, address: $address, setAsDefault: $setAsDefault) { address { ${shopifyFields.ADDRESS_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerAddressUpdate.address'],
       variables: shopifyValues.compact({ customerId, addressId, address, setAsDefault }),
     });
     const updated = data.customerAddressUpdate?.address;

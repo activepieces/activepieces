@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteOrderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiDeleteOrder = createAction({
   auth: shopifyAuth,
@@ -11,9 +12,10 @@ export const shopifyAiDeleteOrder = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Permanently deletes one order. Shopify only allows it for orders that are archived or cancelled and were not paid through an online gateway, POS or gift card; otherwise it refuses. Prefer archive_order or start_order_cancellation to keep records. Cannot be undone; a repeat call fails because the order is gone.',
+      'Permanently deletes one order. Shopify refuses orders it does not allow deleting, for example orders paid through an online gateway, POS or gift card that are not archived or cancelled; orders paid manually can be deleted even while open. Prefer archive_order or start_order_cancellation to keep records. Cannot be undone; a repeat call fails because the order is gone.',
     idempotent: false,
   },
+  outputSchema: deleteOrderOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

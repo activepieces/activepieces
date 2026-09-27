@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { addTagsOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiAddTags = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiAddTags = createAction({
       'Adds one or more tags to an order, draft order, customer or product while keeping its existing tags; prefer this over sending a full tag list to an update action. Adding a tag that is already present changes nothing, so repeating is safe. Returns the resulting tag list.',
     idempotent: true,
   },
+  outputSchema: addTagsOutputSchema,
   props: {
     resource_type: Property.StaticDropdown({
       displayName: 'Resource Type',

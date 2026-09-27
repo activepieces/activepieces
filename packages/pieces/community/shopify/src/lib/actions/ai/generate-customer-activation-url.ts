@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { generateCustomerActivationUrlOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGenerateCustomerActivationUrl = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiGenerateCustomerActivationUrl = createAction({
       'Generates a one-time URL the customer opens to activate a classic customer account and set a password; nothing is emailed (use send_customer_account_invite to email an invite instead). Each call invalidates any earlier activation URL for that customer, so do not repeat it after sharing a link. Only for customers whose account is not yet enabled.',
     idempotent: false,
   },
+  outputSchema: generateCustomerActivationUrlOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

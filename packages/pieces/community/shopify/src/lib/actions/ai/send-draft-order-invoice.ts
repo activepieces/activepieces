@@ -54,6 +54,7 @@ export const shopifyAiSendDraftOrderInvoice = createAction({
     }>({
       auth,
       query: `mutation SendDraftOrderInvoice($id: ID!, $email: EmailInput) { draftOrderInvoiceSend(id: $id, email: $email) { draftOrder { ${shopifyFields.DRAFT_ORDER_SUMMARY_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderInvoiceSend.draftOrder'],
       variables: shopifyValues.compact({
         id,
         email: Object.keys(email).length > 0 ? email : undefined,
