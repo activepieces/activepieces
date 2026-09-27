@@ -1061,6 +1061,9 @@
       "@activepieces/piece-pubrio": [
         "packages/pieces/community/pubrio/src/index.ts"
       ],
+      "@activepieces/piece-puppetflow": [
+        "packages/pieces/community/puppetflow/src/index.ts"
+      ],
       "@activepieces/piece-pushover": [
         "packages/pieces/community/pushover/src/index.ts"
       ],

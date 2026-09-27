@@ -7303,6 +7303,19 @@
         "tslib": "^2.3.0",
       },
     },
+    "packages/pieces/community/puppetflow": {
+      "name": "@activepieces/piece-puppetflow",
+      "version": "0.0.1",
+      "dependencies": {
+        "@activepieces/core-piece-types": "workspace:*",
+        "@activepieces/core-utils": "workspace:*",
+        "@activepieces/pieces-common": "workspace:*",
+        "@activepieces/pieces-framework": "workspace:*",
+      },
+      "devDependencies": {
+        "tslib": "2.6.2",
+      },
+    },
     "packages/pieces/community/pushbullet": {
       "name": "@activepieces/piece-pushbullet",
       "version": "0.2.0",
@@ -12228,6 +12241,8 @@
     "@activepieces/piece-proxycurl": ["@activepieces/piece-proxycurl@workspace:packages/pieces/community/proxycurl"],
 
     "@activepieces/piece-pubrio": ["@activepieces/piece-pubrio@workspace:packages/pieces/community/pubrio"],
+
+    "@activepieces/piece-puppetflow": ["@activepieces/piece-puppetflow@workspace:packages/pieces/community/puppetflow"],
 
     "@activepieces/piece-pushbullet": ["@activepieces/piece-pushbullet@workspace:packages/pieces/community/pushbullet"],
 
