@@ -21,6 +21,47 @@ describe('ap_generate_image', () => {
         expect(result).toMatchObject({ success: true, billedAtCost: true })
     })
 
+    it('edits an image in the conversation by passing it to the generator', async () => {
+        const generate = vi.fn(async () => GENERATED)
+        const readImage = vi.fn(async () => SOURCE)
+
+        await runImageTool({ generate, billedAtCost: false, readImage, saveFile: async () => SAVED, emitImage: vi.fn() }, { editFileId: 'file-0' })
+
+        expect(readImage).toHaveBeenCalledWith('file-0')
+        expect(generate).toHaveBeenCalledWith(expect.objectContaining({ inputImages: [SOURCE] }))
+    })
+
+    it('lists the images it can edit when the fileId is wrong, so the model can retry', async () => {
+        const result = await runImageTool({
+            generate: async () => GENERATED,
+            billedAtCost: false,
+            readImage: async () => { throw new Error('ENTITY_NOT_FOUND') },
+            conversationImages: [{ fileId: 'file-real', description: 'A red bicycle' }],
+            saveFile: async () => SAVED,
+            emitImage: vi.fn(),
+        }, { editFileId: 'file-made-up' })
+
+        expect(result).toEqual({ content: [{ type: 'text', text: 'Image editing failed: no image with fileId file-made-up in this conversation. Images you can edit: file-real (A red bicycle).' }] })
+    })
+
+    it('refuses to edit a file that is not an image', async () => {
+        const generate = vi.fn(async () => GENERATED)
+
+        const result = await runImageTool({ generate, billedAtCost: false, readImage: async () => ({ ...SOURCE, mimeType: 'application/pdf' }), saveFile: async () => SAVED, emitImage: vi.fn() }, { editFileId: 'file-0' })
+
+        expect(generate).not.toHaveBeenCalled()
+        expect(result).toEqual({ content: [{ type: 'text', text: 'Image editing failed: file file-0 is not an image.' }] })
+    })
+
+    it('refuses an edit when the image service can only create new images', async () => {
+        const generate = vi.fn(async () => GENERATED)
+
+        const result = await runImageTool({ generate, billedAtCost: false, saveFile: async () => SAVED, emitImage: vi.fn() }, { editFileId: 'file-0' })
+
+        expect(generate).not.toHaveBeenCalled()
+        expect(result).toMatchObject({ content: [{ type: 'text' }] })
+    })
+
     it('reports a failed generation without storing anything, keeping the mark', async () => {
         const saveFile = vi.fn(async (): Promise<SaveAgentFileResponse> => SAVED)
 
@@ -31,15 +72,17 @@ describe('ap_generate_image', () => {
     })
 })
 
-async function runImageTool(params: Parameters<typeof createImageTools>[0]): Promise<unknown> {
+async function runImageTool(params: Parameters<typeof createImageTools>[0], input: { editFileId?: string } = {}): Promise<unknown> {
     const execute = createImageTools(params).ap_generate_image.execute
     if (!execute) {
         throw new Error('ap_generate_image has no execute')
     }
-    return execute({ prompt: 'a banner', style: 'graphic_text', caption: 'Launch banner' }, EXECUTION_OPTIONS)
+    return execute({ prompt: 'a banner', style: 'graphic_text', caption: 'Launch banner', ...input }, EXECUTION_OPTIONS)
 }
 
 const GENERATED = { bytes: Buffer.from('png'), mediaType: 'image/png', extension: 'png', model: 'google/gemini-3.1-flash-lite-image' }
+
+const SOURCE = { mimeType: 'image/png', base64: Buffer.from('source').toString('base64') }
 
 const SAVED: SaveAgentFileResponse = { fileId: 'file-1', url: 'https://files.example/file-1' }
 

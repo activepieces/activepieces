@@ -1,9 +1,10 @@
-import { ActivepiecesAiBilling, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, isNil, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp, WebSearchResult } from '@activepieces/server-utils'
 import { AiProviderCredentials, SaveAgentFileResponse } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
+import { ResolvedAiFile } from '../../../ai/ai-files'
 import { getGeneratedImage, imageBytesOf } from '../../../ai/generate-image'
 import { AgentEventEmitter, cardTitleFields, describeHttpError, FETCH_URL_TIMEOUT_MS, GeneratedImage, ImageAspect, ImageStyle, isReadableTextContentType, MAX_FETCH_URL_BYTES, ResolvedToolConfig, ScrapedPage, TaintState, truncateLargeResult, withToolTimeout } from './tool-primitives'
 
@@ -192,12 +193,15 @@ export function createScrapeTools({ scraping, taintState }: { scraping: Resolved
     }
 }
 
-export function createImageTools({ generate, billedAtCost, saveFile, emitImage }: {
+export function createImageTools({ generate, billedAtCost, readImage, conversationImages = [], saveFile, emitImage }: {
     generate: ImageGenerator
     billedAtCost: boolean
+    readImage?: ImageReader
+    conversationImages?: ConversationImage[]
     saveFile: ImageSaver
     emitImage: AgentEventEmitter['emitImageGenerated']
 }): ToolSet {
+    const generatedThisRun: ConversationImage[] = []
     return {
         ap_generate_image: tool({
             description: 'Generate an image from a text description. Pick the right `style` for the task: "realistic" for photoreal images and product photos; "graphic_text" for social/email/marketing graphics that contain readable text, logos in layout, posters, or banners; "brand_vector" for clean logos, icons, and brand/vector-style graphics; "abstract" for artistic, conceptual, or background images. The generated image is shown to the user automatically — do not paste the URL into your reply.',
@@ -207,12 +211,19 @@ export function createImageTools({ generate, billedAtCost, saveFile, emitImage }
                 prompt: z.string().describe('Detailed description of the image to generate. Include any exact text to render verbatim.'),
                 style: z.enum(['realistic', 'graphic_text', 'brand_vector', 'abstract']).describe('The kind of image to produce'),
                 aspectRatio: z.enum(['square', 'landscape', 'portrait']).optional().describe('Image orientation (default square)'),
+                editFileId: z.string().optional().describe(`To change an existing image instead of making a new one, the fileId of an image in this conversation: one you generated earlier, or a user attachment. Describe only the change in \`prompt\`.${describeEditableImages(conversationImages)}`),
             }),
             execute: async (toolInput, { toolCallId }: ToolExecutionOptions<undefined>) => withToolTimeout({
                 toolName: 'ap_generate_image',
                 timeoutMs: IMAGE_TIMEOUT_MS + 5_000,
                 fn: async (signal) => {
-                    const result = await generateAndStoreImage({ request: { ...toolInput, aspectRatio: toolInput.aspectRatio ?? 'square', signal }, caption: toolInput.caption, toolCallId, generate, saveFile, emitImage })
+                    const { data: inputImages, error: readError } = await tryCatch(() => readEditImages({ editFileId: toolInput.editFileId, readImage, editable: [...conversationImages, ...generatedThisRun] }))
+                    const result = readError
+                        ? { content: [{ type: 'text', text: `Image editing failed: ${describeHttpError(readError)}` }] }
+                        : await generateAndStoreImage({ request: { ...toolInput, aspectRatio: toolInput.aspectRatio ?? 'square', inputImages, signal }, caption: toolInput.caption, toolCallId, generate, saveFile, emitImage })
+                    if (typeof result['fileId'] === 'string') {
+                        generatedThisRun.push({ fileId: result['fileId'], description: toolInput.caption ?? toolInput.prompt })
+                    }
                     return billedAtCost ? { ...result, billedAtCost } : result
                 },
             }),
@@ -229,12 +240,12 @@ export function falImageGenerator({ apiKey }: { apiKey: string }): ImageGenerato
 }
 
 export function providerImageGenerator({ credentials, modelId, billing }: { credentials: AiProviderCredentials, modelId: string, billing: ActivepiecesAiBilling }): ImageGenerator {
-    return async ({ prompt, style, aspectRatio, signal }) => {
+    return async ({ prompt, style, aspectRatio, inputImages, signal }) => {
         const image = await getGeneratedImage({
             credentials,
             modelId,
             prompt: `${prompt}\n\n${STYLE_GUIDANCE_BY_STYLE[style]}`,
-            inputImages: [],
+            inputImages,
             billing,
             turnAlreadyCharged: true,
             aspectRatio: ASPECT_RATIO_BY_ASPECT[aspectRatio],
@@ -247,6 +258,32 @@ export function providerImageGenerator({ credentials, modelId, billing }: { cred
             model: modelId,
         }
     }
+}
+
+function describeEditableImages(images: ConversationImage[]): string {
+    return images.length === 0 ? '' : ` Images from earlier in this conversation: ${listImages(images)}.`
+}
+
+function listImages(images: ConversationImage[]): string {
+    return images.map((image) => `${image.fileId} (${image.description})`).join(', ')
+}
+
+async function readEditImages({ editFileId, readImage, editable }: { editFileId?: string, readImage?: ImageReader, editable: ConversationImage[] }): Promise<ResolvedAiFile[]> {
+    if (isNil(editFileId)) {
+        return []
+    }
+    if (isNil(readImage)) {
+        throw new Error('the configured image service only creates new images. Generate a new image instead.')
+    }
+    const { data: image, error } = await tryCatch(() => readImage(editFileId))
+    if (error) {
+        const choices = listImages(editable)
+        throw new Error(`no image with fileId ${editFileId} in this conversation. ${choices.length > 0 ? `Images you can edit: ${choices}.` : 'Pass the fileId from an earlier ap_generate_image result or an attachment note.'}`)
+    }
+    if (!image.mimeType.startsWith('image/')) {
+        throw new Error(`file ${editFileId} is not an image.`)
+    }
+    return [image]
 }
 
 async function generateAndStoreImage({ request, caption, toolCallId, generate, saveFile, emitImage }: {
@@ -362,6 +399,8 @@ async function generateImageWithFal({ modelId, imageSize, prompt, apiKey, signal
     }
 }
 
-type ImageRequest = { prompt: string, style: ImageStyle, aspectRatio: ImageAspect, signal: AbortSignal }
+type ImageRequest = { prompt: string, style: ImageStyle, aspectRatio: ImageAspect, inputImages: ResolvedAiFile[], signal: AbortSignal }
+type ImageReader = (fileId: string) => Promise<ResolvedAiFile>
+type ConversationImage = { fileId: string, description: string }
 type ImageGenerator = (request: ImageRequest) => Promise<GeneratedImage & { model: string }>
 type ImageSaver = (params: { data: Buffer, mediaType: string, fileName?: string }) => Promise<SaveAgentFileResponse>

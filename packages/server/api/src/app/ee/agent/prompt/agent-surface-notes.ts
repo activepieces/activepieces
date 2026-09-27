@@ -96,7 +96,7 @@ function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, s
     }
 
     if (imageAvailable) {
-        lines.push('- **Image generation** (`ap_generate_image`): create images from a text prompt. Choose `style`: "realistic" for photos, "graphic_text" for social/email/marketing graphics with readable text, "brand_vector" for logos/icons/vector graphics, "abstract" for artistic/background images. Pass a short, fun, task-specific `caption` for the card. The image is shown to the user automatically — never paste the image URL into your reply.')
+        lines.push('- **Image generation** (`ap_generate_image`): create images from a text prompt. Choose `style`: "realistic" for photos, "graphic_text" for social/email/marketing graphics with readable text, "brand_vector" for logos/icons/vector graphics, "abstract" for artistic/background images. Pass a short, fun, task-specific `caption` for the card. When the user asks to change an image already in the conversation (one you generated, or one they attached), pass its `fileId` as `editFileId` and describe only the change; do not regenerate it from scratch. The image is shown to the user automatically — never paste the image URL into your reply.')
     }
 
     if (emailAvailable) {
