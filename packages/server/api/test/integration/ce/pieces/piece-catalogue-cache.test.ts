@@ -314,4 +314,19 @@ describe('translated catalogue cache stays correct', () => {
         expect(sorted[0].projectUsage).toBe(5)
         expect((await db.findOneByOrFail<PieceMetadataSchema>('piece_metadata', { id: popular.id })).updated).toEqual(updatedBefore)
     })
+
+    it('writes the rest of a usage batch when one piece in it was deleted', async () => {
+        const kept = createMockPieceMetadata({
+            name: 'piece-kept', displayName: 'Kept', description: 'Send a message',
+            pieceType: PieceType.OFFICIAL, packageType: PackageType.REGISTRY,
+        })
+        await db.save('piece_metadata', kept)
+        await pieceCache(app.log!).invalidate()
+        await get('/api/v1/pieces')
+
+        await pieceMetadataService(app.log!).updateUsages({ usages: [{ id: apId(), usage: 9 }, { id: kept.id, usage: 7 }] })
+
+        const listed = (await get('/api/v1/pieces')).body
+        expect(listed.find((piece) => piece.name === 'piece-kept')?.projectUsage).toBe(7)
+    })
 })

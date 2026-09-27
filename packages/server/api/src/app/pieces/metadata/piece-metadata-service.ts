@@ -96,19 +96,16 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             if (usages.length === 0) {
                 return
             }
-            try {
-                for (const { id, usage } of usages) {
-                    const existingMetadata = await pieceRepos().findOneByOrFail({ id })
-                    await pieceRepos().update(id, {
-                        projectUsage: usage,
-                        updated: existingMetadata.updated,
-                        created: existingMetadata.created,
-                    })
-                }
-            }
-            finally {
-                await pieceCache(log).invalidate()
-            }
+            await pieceRepos().query(
+                `
+                UPDATE "piece_metadata" AS pm
+                SET "projectUsage" = usage.value
+                FROM unnest($1::text[], $2::int[]) AS usage(id, value)
+                WHERE pm."id" = usage.id
+                `,
+                [usages.map(({ id }) => id), usages.map(({ usage }) => usage)],
+            )
+            await pieceCache(log).invalidate()
         },
         async resolveExactVersion({ name, version, platformId }: GetExactPieceVersionParams): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
