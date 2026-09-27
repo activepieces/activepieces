@@ -35,7 +35,7 @@ export const asanaCreateTeamAction = createAction({
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
-      description: 'Who in the organization can see and join the team. Leave empty for the Asana default.',
+      description: 'Who in the organization can see and join the team. Leave empty for the Asana default. "Private (secret)" may need a paid Asana plan: on a free plan Asana fails with HTTP 500 instead of a plan error, so pick another option there.',
       required: false,
       options: { disabled: false, options: ASANA_TEAM_VISIBILITY_OPTIONS },
     }),

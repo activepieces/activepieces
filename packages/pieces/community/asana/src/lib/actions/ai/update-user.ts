@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { asanaAuth } from '../../auth';
 import { ASANA_FIELDS, AsanaRecord, asanaClient, asanaUtils } from '../../common/client';
+import { asanaWorkspaceUserOutputSchema } from '../../output-schemas';
 
 export const asanaUpdateUserAction = createAction({
   auth: asanaAuth,
@@ -10,6 +11,7 @@ export const asanaUpdateUserAction = createAction({
   displayName: 'Update User',
   description: 'Set a user\'s profile custom fields (or your own name) in an Asana workspace (higher Asana plans only).',
   audience: 'ai',
+  outputSchema: asanaWorkspaceUserOutputSchema,
   aiMetadata: {
     description:
       'Updates a user\'s profile in one workspace: values of user-profile custom fields (keyed by custom field gid) and, only when the user is the connected user, their name. Only the fields you set change. Custom field values are text, a number, an enum option gid, or a date as YYYY-MM-DD; find field gids with List Custom Fields. User profile custom fields are a higher-tier Asana feature (likely Enterprise); lower plans get a paid-plan or permission error. Setting the same values again converges, so it is safe to retry.',

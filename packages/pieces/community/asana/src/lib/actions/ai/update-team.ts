@@ -35,7 +35,7 @@ export const asanaUpdateTeamAction = createAction({
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
-      description: 'New visibility. Leave empty to keep it.',
+      description: 'New visibility. Leave empty to keep it. "Private (secret)" may need a paid Asana plan: on a free plan Asana fails with HTTP 500 instead of a plan error, so pick another option there.',
       required: false,
       options: { disabled: false, options: ASANA_TEAM_VISIBILITY_OPTIONS },
     }),

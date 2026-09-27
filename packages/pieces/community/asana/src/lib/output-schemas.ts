@@ -250,6 +250,20 @@ const currentUserFields: OutputSchema['fields'] = [
   { key: 'workspaces', label: 'Workspaces', labelKey: 'name', listItems: workspaceRefFields },
 ];
 
+const workspaceUserFields: OutputSchema['fields'] = [
+  ...userFields,
+  {
+    key: 'custom_fields',
+    label: 'Profile Custom Fields',
+    labelKey: 'name',
+    listItems: [
+      { key: 'gid', label: 'Custom Field GID' },
+      { key: 'name', label: 'Name' },
+      { key: 'display_value', label: 'Value' },
+    ],
+  },
+];
+
 const workspaceFields: OutputSchema['fields'] = [
   { key: 'gid', label: 'Workspace GID' },
   { key: 'name', label: 'Name' },
@@ -475,6 +489,8 @@ export const asanaMembershipListOutputSchema = listPage({
 export const asanaCurrentUserOutputSchema: OutputSchema = { fields: currentUserFields };
 
 export const asanaUserOutputSchema: OutputSchema = { fields: userFields };
+
+export const asanaWorkspaceUserOutputSchema: OutputSchema = { fields: workspaceUserFields };
 
 export const asanaUserListOutputSchema = listPage({
   key: 'users',
