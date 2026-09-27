@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { deleteProductMediaOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDeleteProductMedia = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteProductMedia = createAction({
       'Detaches media from a product: it disappears from the product gallery and from any variant that used it. The file itself stays in the store\'s Files library (it is not deleted there). Needs the write_files (or write_themes) access scope. Media ids come from list_product_media. A repeat call is not guaranteed to succeed once the media is detached.',
     idempotent: false,
   },
+  outputSchema: deleteProductMediaOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlJob, shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { reorderCollectionProductsOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiReorderCollectionProducts = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiReorderCollectionProducts = createAction({
       'Starts moving products to new zero-based positions inside one collection. The collection\'s sort order must be MANUAL (set it with update_collection first). Shopify does the move in the background and returns only a job: poll get_job with job_id until done is true, then read the order with list_collection_products. Starts a new job on every call.',
     idempotent: false,
   },
+  outputSchema: reorderCollectionProductsOutputSchema,
   props: {
     collection_id: Property.ShortText({
       displayName: 'Collection ID',

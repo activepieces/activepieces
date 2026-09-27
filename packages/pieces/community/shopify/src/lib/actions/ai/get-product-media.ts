@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { productMediaOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetProductMedia = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetProductMedia = createAction({
       'Returns one media item by id: type, processing status, alt text, URL, size and any processing errors. Use list_product_media to find media ids. Read-only.',
     idempotent: true,
   },
+  outputSchema: productMediaOutputSchema,
   props: {
     media_id: Property.ShortText({
       displayName: 'Media ID',

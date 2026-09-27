@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { inventoryItemOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiUpdateInventoryItem = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpdateInventoryItem = createAction({
       'Changes one inventory item; fields left empty are not sent and keep their values. Turning tracking off stops Shopify from counting stock for the variant. Quantities are not changed here; use set_inventory_quantities or adjust_inventory_quantities. Needs the write_inventory access scope. Re-running with the same values is safe.',
     idempotent: true,
   },
+  outputSchema: inventoryItemOutputSchema,
   props: {
     inventory_item_id: Property.ShortText({
       displayName: 'Inventory Item ID',

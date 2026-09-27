@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { deleteProductVariantsOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDeleteProductVariants = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteProductVariants = createAction({
       'Permanently deletes variants of one product, together with their inventory items and stock. A product always keeps at least one variant. Cannot be undone; a repeat call fails because the variants are gone. Variant ids come from list_product_variants.',
     idempotent: false,
   },
+  outputSchema: deleteProductVariantsOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

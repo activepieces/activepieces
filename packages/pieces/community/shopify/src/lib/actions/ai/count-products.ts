@@ -6,6 +6,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { productCountOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCountProducts = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCountProducts = createAction({
       'Counts products, optionally filtered with search syntax such as "status:active" or "vendor:Nike". precision is AT_LEAST when Shopify stopped counting at its limit. Use search_products to see them. Read-only.',
     idempotent: true,
   },
+  outputSchema: productCountOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify product search syntax, for example "status:active" or "tag:sale". Leave empty to count all.'

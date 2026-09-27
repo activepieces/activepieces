@@ -9,6 +9,7 @@ import {
   shopifyValues,
 } from '../../common/graphql';
 import type { ShopifyAuth } from '../../common/types';
+import { setProductOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiSetProduct = createAction({
   auth: shopifyAuth,
@@ -22,6 +23,7 @@ export const shopifyAiSetProduct = createAction({
       'Declarative create-or-update of a complete product: sends the full list of options and variants you want the product to have. WARNING: on an existing product every variant and every option value not included here is DELETED, together with its stock and sales history links. Use update_product_fields to change single fields, and the variant and option actions for targeted changes. With product_id or product_handle an existing product is overwritten; a handle is looked up first and, if no product has it, the call is refused and nothing is created. Only with neither product_id nor product_handle is a new product created (status defaults to DRAFT); the output field created tells which happened. Tags, when sent, replace all tags. Collections and metafields are not sent by this action, so they are left unchanged. Sending the same full state again to the same product gives the same result; repeating a create (no id or handle) makes another product.',
     idempotent: false,
   },
+  outputSchema: setProductOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

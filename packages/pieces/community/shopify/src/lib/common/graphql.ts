@@ -20,11 +20,22 @@ async function shopifyGraphql<TData>(
   }
   const { data, error } = await tryCatch(() => sendGraphqlRequest<TData>(params));
   if (error) {
-    throw new Error(
-      `${error.message} [idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`
-    );
+    throw new Error(`${error.message} ${idempotencyHint({ message: error.message, idempotencyKey })}`);
   }
   return data;
+}
+
+function idempotencyHint({
+  message,
+  idempotencyKey,
+}: {
+  message: string;
+  idempotencyKey: string;
+}): string {
+  if (message.includes('CHANGE_FROM_QUANTITY_STALE')) {
+    return `[idempotency_key used: ${idempotencyKey}. The current quantity changed since it was read: read it again with list_inventory_levels and retry with the new expected_quantity and a new idempotency_key.]`;
+  }
+  return `[idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`;
 }
 
 async function sendGraphqlRequest<TData>({
@@ -313,6 +324,14 @@ function toGid({ type, id, query }: ToGidParams): string {
     return `gid://shopify/${type}/${value}${query ? `?${query}` : ''}`;
   }
   return value;
+}
+
+function toOpaqueGid({ type, id }: { type: string; id: string }): string {
+  const value = id.trim();
+  if (value.length === 0 || value.startsWith('gid://')) {
+    return value;
+  }
+  return `gid://shopify/${type}/${value}`;
 }
 
 function resolveIdempotencyKey(value: string | undefined | null): string {
@@ -1260,7 +1279,8 @@ function findExplicitConditionsSource({
   collection: GqlCollection;
   sourceId: string;
 }): GqlCollectionSource {
-  const match = conditionsSources(collection).find((source) => source.id === sourceId);
+  const sourceGid = toGid({ type: 'CollectionConditionsSource', id: sourceId });
+  const match = conditionsSources(collection).find((source) => source.id === sourceGid);
   if (!match) {
     throw new Error(
       `Source ${sourceId} is not a conditions source of collection ${collection.id}. Read the collection sources with get_collection.`
@@ -1396,16 +1416,17 @@ function mapPublication(publication: GqlPublication) {
   };
 }
 
-function mapChannel(channel: GqlChannel) {
+function mapChannel(publication: GqlChannelPublication) {
+  const app = publication.catalog?.apps?.nodes?.[0];
   return {
-    id: channel.id,
-    name: channel.name ?? null,
-    handle: channel.handle ?? null,
-    account_name: channel.accountName ?? null,
-    app_id: channel.app?.id ?? null,
-    app_title: channel.app?.title ?? null,
-    supports_future_publishing: channel.supportsFuturePublishing ?? null,
-    products_count: channel.productsCount?.count ?? null,
+    name: app?.title ?? publication.catalog?.title ?? null,
+    handle: app?.handle ?? null,
+    app_id: app?.id ?? null,
+    publication_id: publication.id,
+    catalog_id: publication.catalog?.id ?? null,
+    catalog_status: publication.catalog?.status ?? null,
+    auto_publish: publication.autoPublish ?? null,
+    supports_future_publishing: publication.supportsFuturePublishing ?? null,
   };
 }
 
@@ -1740,6 +1761,44 @@ function toSeo({
   return Object.keys(seo).length > 0 ? seo : undefined;
 }
 
+function toCategoryGid(value: string | undefined | null): string | undefined {
+  const category = nonEmpty(value);
+  return category ? toOpaqueGid({ type: 'TaxonomyCategory', id: category }) : undefined;
+}
+
+async function mergeSeo({
+  auth,
+  id,
+  title,
+  description,
+}: {
+  auth: ShopifyAuth;
+  id: string;
+  title: string | undefined | null;
+  description: string | undefined | null;
+}): Promise<Record<string, unknown> | undefined> {
+  const newTitle = nonEmpty(title);
+  const newDescription = nonEmpty(description);
+  if (newTitle === undefined && newDescription === undefined) {
+    return undefined;
+  }
+  if (newTitle !== undefined && newDescription !== undefined) {
+    return { title: newTitle, description: newDescription };
+  }
+  const { data } = await shopifyGraphql<{
+    node: { seo?: { title?: string | null; description?: string | null } | null } | null;
+  }>({
+    auth,
+    query: `query ReadCurrentSeo($id: ID!) { node(id: $id) { ... on Product { seo { title description } } ... on Collection { seo { title description } } } }`,
+    variables: { id },
+  });
+  const current = data.node?.seo;
+  return {
+    title: newTitle ?? current?.title ?? null,
+    description: newDescription ?? current?.description ?? null,
+  };
+}
+
 function groupVariantMedia(value: unknown): { variantId: string; mediaIds: string[] }[] {
   const grouped = readRecords(value).reduce<Record<string, string[]>>((acc, item) => {
     const variantId = readText(item['variant_id']);
@@ -1841,7 +1900,7 @@ const PUBLICATION_FIELDS =
   'id autoPublish supportsFuturePublishing catalog { id title status }';
 
 const CHANNEL_FIELDS =
-  'id name handle accountName supportsFuturePublishing app { id title } productsCount { count }';
+  'id autoPublish supportsFuturePublishing catalog { id title status ... on AppCatalog { apps(first: 1) { nodes { id title handle } } } }';
 
 const TAXONOMY_CATEGORY_FIELDS =
   'id name fullName level isLeaf isRoot isArchived parentId childrenIds';
@@ -1920,6 +1979,7 @@ export const shopifyFields = {
 export const shopifyGraphqlClient = {
   request: shopifyGraphql,
   toGid,
+  toOpaqueGid,
   resolveIdempotencyKey,
 };
 
@@ -1944,6 +2004,8 @@ export const shopifyValues = {
   buildVariantInputs,
   buildConditions,
   toSeo,
+  mergeSeo,
+  toCategoryGid,
   toGidList,
   findConditionsSource,
   editableConditionsSources,
@@ -2560,14 +2622,16 @@ export type GqlPublication = {
   catalog?: { id?: string | null; title?: string | null; status?: string | null } | null;
 };
 
-export type GqlChannel = {
+export type GqlChannelPublication = {
   id: string;
-  name?: string | null;
-  handle?: string | null;
-  accountName?: string | null;
+  autoPublish?: boolean | null;
   supportsFuturePublishing?: boolean | null;
-  app?: { id?: string | null; title?: string | null } | null;
-  productsCount?: GqlCount | null;
+  catalog?: {
+    id?: string | null;
+    title?: string | null;
+    status?: string | null;
+    apps?: { nodes?: { id?: string | null; title?: string | null; handle?: string | null }[] | null } | null;
+  } | null;
 };
 
 export type GqlTaxonomyCategory = {

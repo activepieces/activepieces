@@ -1,7 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import {
-  GqlChannel,
+  GqlChannelPublication,
   GqlConnection,
   shopifyFields,
   shopifyGraphqlClient,
@@ -21,7 +21,7 @@ export const shopifyAiListSalesChannels = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists sales channels (for example Online Store, Point of Sale, Shop) with their name, handle, owning app and product count. Caveat: Shopify returns only the channels created by the calling app when that app supports multiple channels; a merchant custom app normally sees every channel, but the list may be shorter than the admin shows. To publish products use list_publications, not channel ids. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
+      'Lists the sales channels of the store (for example Online Store, Point of Sale, Shop), built from the store\'s app publications: each item has the channel name and handle (from the channel app) and its publication_id. Put publication_id in publication_ids of publish_resource or unpublish_resource to show or hide products and collections on that channel. Markets and B2B catalogs are not channels and are listed by list_publications. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
     idempotent: true,
   },
   props: {
@@ -31,10 +31,10 @@ export const shopifyAiListSalesChannels = createAction({
   },
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
-      channels: GqlConnection<GqlChannel>;
+      publications: GqlConnection<GqlChannelPublication>;
     }>({
       auth,
-      query: `query ListSalesChannels($first: Int!, $after: String, $reverse: Boolean) { channels(first: $first, after: $after, reverse: $reverse) { nodes { ${shopifyFields.CHANNEL_FIELDS} } ${shopifyFields.PAGE_INFO_FIELDS} } }`,
+      query: `query ListSalesChannels($first: Int!, $after: String, $reverse: Boolean) { publications(first: $first, after: $after, catalogType: APP, reverse: $reverse) { nodes { ${shopifyFields.CHANNEL_FIELDS} } ${shopifyFields.PAGE_INFO_FIELDS} } }`,
       variables: {
         first: shopifyValues.readFirst({ value: propsValue.first, max: MAX_PAGE_SIZE }),
         after: shopifyValues.nonEmpty(propsValue.after),
@@ -42,7 +42,7 @@ export const shopifyAiListSalesChannels = createAction({
       },
     });
     return shopifyMappers.toPage({
-      connection: data.channels,
+      connection: data.publications,
       map: shopifyMappers.mapChannel,
       redactedFields,
     });

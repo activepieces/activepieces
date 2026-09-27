@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { productDetailOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetProductDetails = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetProductDetails = createAction({
       'Returns one product by id: title, status, vendor, type, tags, price range, SEO, its options with their values, the first 100 variants (price, SKU, stock, option values, inventory item id) and the first 50 media items. Use search_products to find a product by title, SKU, vendor or tag first. Read-only.',
     idempotent: true,
   },
+  outputSchema: productDetailOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

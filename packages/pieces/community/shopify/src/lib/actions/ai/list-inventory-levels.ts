@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listInventoryLevelsOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 70;
 
@@ -24,6 +25,7 @@ export const shopifyAiListInventoryLevels = createAction({
       'Lists inventory levels with their quantities (available, on hand, committed, incoming, reserved, damaged, safety stock, quality control). Give exactly one of inventory_item_id (where is this item stocked, and how much) or location_id (what is stocked at this location). Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_inventory access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listInventoryLevelsOutputSchema,
   props: {
     inventory_item_id: Property.ShortText({
       displayName: 'Inventory Item ID',

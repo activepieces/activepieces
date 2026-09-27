@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteCollectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDeleteCollection = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteCollection = createAction({
       'Permanently deletes one collection (manual or rule-based) and its membership rules. The products themselves are kept. Cannot be undone; a repeat call fails because the collection is gone.',
     idempotent: false,
   },
+  outputSchema: deleteCollectionOutputSchema,
   props: {
     collection_id: Property.ShortText({
       displayName: 'Collection ID',

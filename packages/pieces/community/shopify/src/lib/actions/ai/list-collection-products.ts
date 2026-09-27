@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listCollectionProductsOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 80;
 
@@ -24,6 +25,7 @@ export const shopifyAiListCollectionProducts = createAction({
       'Lists the products currently in one collection (manual picks and products matching its conditions) as product summaries. With the default sort the collection\'s own sort order is used. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
     idempotent: true,
   },
+  outputSchema: listCollectionProductsOutputSchema,
   props: {
     collection_id: Property.ShortText({
       displayName: 'Collection ID',

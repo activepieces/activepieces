@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { inventoryChangeOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiSetInventoryQuantities = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiSetInventoryQuantities = createAction({
       'Sets the available or on-hand quantity of inventory items at locations to an absolute number (for example 25), all in one batch under one reason. Use adjust_inventory_quantities to add or subtract instead. Optional expected_quantity per entry is a safety check: if the current quantity differs, the whole call fails with CHANGE_FROM_QUANTITY_STALE, and a blind retry after a successful call also fails that way. Generate your own idempotency_key (for example a UUID) on the first call and pass the same key on every retry so a retry is safe; the key used is returned and is included in any error message. Inventory item ids come from get_product_variant_details or list_inventory_items, location ids from list_locations.',
     idempotent: true,
   },
+  outputSchema: inventoryChangeOutputSchema,
   props: {
     name: Property.StaticDropdown({
       displayName: 'Quantity Name',

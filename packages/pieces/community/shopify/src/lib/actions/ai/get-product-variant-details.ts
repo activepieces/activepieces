@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { productVariantOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetProductVariantDetails = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetProductVariantDetails = createAction({
       'Returns one product variant by id: title, SKU, barcode, price, compare-at price, stock quantity, out-of-stock policy, option values, its inventory item id (needed by the inventory actions) and its product. Use list_product_variants to find variant ids. Read-only.',
     idempotent: true,
   },
+  outputSchema: productVariantOutputSchema,
   props: {
     variant_id: Property.ShortText({
       displayName: 'Variant ID',

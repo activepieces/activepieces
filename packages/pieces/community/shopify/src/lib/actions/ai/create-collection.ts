@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { collectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCreateCollection = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateCollection = createAction({
       'Creates one collection whose products are picked by hand (the equivalent of a custom collection), optionally with the given products already in it. Use create_smart_collection for a rule-based collection, add_products_to_collection to add more products later, and publish_resource to make it visible on a sales channel. Not available on Starter or Retail plans. Each call creates another collection, so retries create duplicates.',
     idempotent: false,
   },
+  outputSchema: collectionOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

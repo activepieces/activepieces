@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { collectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCreateSmartCollection = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateSmartCollection = createAction({
       'Creates one collection whose products are chosen automatically by conditions, for example product tag TAGGED_WITH "summer" or variant price LESS_THAN 25. match_type ALL requires every condition, ANY requires at least one. Price conditions need currency. Membership is computed by Shopify and may take a moment. Not available on Starter or Retail plans. Each call creates another collection, so retries create duplicates.',
     idempotent: false,
   },
+  outputSchema: collectionOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

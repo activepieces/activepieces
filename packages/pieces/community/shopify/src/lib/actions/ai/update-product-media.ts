@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { updateProductMediaOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiUpdateProductMedia = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiUpdateProductMedia = createAction({
       'Changes one existing media file: its alt text, its filename (the extension must stay the same) or, for images, replaces the file content from a public URL while keeping the same media id. Fields left empty keep their values. The file must be in READY state. Needs the write_files (or write_themes) access scope. Re-running with the same values is safe.',
     idempotent: true,
   },
+  outputSchema: updateProductMediaOutputSchema,
   props: {
     media_id: Property.ShortText({
       displayName: 'Media ID',

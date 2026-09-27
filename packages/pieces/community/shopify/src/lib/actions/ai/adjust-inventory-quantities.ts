@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { inventoryChangeOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiAdjustInventoryQuantities = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiAdjustInventoryQuantities = createAction({
       'Changes stock relatively: adds or subtracts a delta (for example -2 or +10) for inventory items at locations, all in one batch under one reason. Use set_inventory_quantities to set an absolute number instead. Optional expected_quantity per change is a safety check: if the current quantity differs, the whole call fails with CHANGE_FROM_QUANTITY_STALE. Adjusting any quantity name other than "available" needs a ledger_document_uri on every change (a non-Shopify URI such as "gid://my-app/StockMovement/SM-1"). Generate your own idempotency_key (for example a UUID) on the first call and pass the same key on every retry so the delta is not applied twice; the key used is returned and is included in any error message. Inventory item ids come from get_product_variant_details or list_inventory_items, location ids from list_locations.',
     idempotent: false,
   },
+  outputSchema: inventoryChangeOutputSchema,
   props: {
     name: Property.StaticDropdown({
       displayName: 'Quantity Name',

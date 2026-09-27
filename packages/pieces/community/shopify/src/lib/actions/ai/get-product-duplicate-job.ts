@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlJob, shopifyGraphqlClient } from '../../common/graphql';
+import { getProductDuplicateJobOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetProductDuplicateJob = createAction({
   auth: shopifyAuth,
@@ -11,18 +12,19 @@ export const shopifyAiGetProductDuplicateJob = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Reads the status of a product duplication job by its id, for duplication jobs started elsewhere (for example in the Shopify admin or by another app). duplicate_product does not need it: it waits and returns the copy directly, and its image copy (image_job_id) is polled with get_job. Returns done=true once Shopify has finished; call it again later while done is false. One status read, it never waits.',
+      'Reads the status of a product duplication job by its id, for duplication jobs started elsewhere (for example in the Shopify admin or by another app). duplicate_product does not need it: it waits and returns the copy directly, and its image copy (image_job_id) is polled with get_job. Returns done=true once Shopify has finished; call it again later while done is false. Shopify also reports done=true for a job id it does not know, so done=true alone does not prove the id was right. One status read, it never waits.',
     idempotent: true,
   },
+  outputSchema: getProductDuplicateJobOutputSchema,
   props: {
     job_id: Property.ShortText({
       displayName: 'Job ID',
-      description: 'The product duplicate job id, for example "gid://shopify/ProductDuplicateJob/1a2b3c".',
+      description: 'The product duplicate job id, either the bare id or "gid://shopify/ProductDuplicateJob/…".',
       required: true,
     }),
   },
   async run({ auth, propsValue }) {
-    const id = shopifyGraphqlClient.toGid({ type: 'ProductDuplicateJob', id: propsValue.job_id });
+    const id = shopifyGraphqlClient.toOpaqueGid({ type: 'ProductDuplicateJob', id: propsValue.job_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       productDuplicateJob: GqlJob | null;
     }>({

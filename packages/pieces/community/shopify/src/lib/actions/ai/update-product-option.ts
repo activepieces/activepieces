@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { productDetailOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiUpdateProductOption = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiUpdateProductOption = createAction({
       'Changes one product option: its name or position, and its values through explicit changes only (values to add, values to rename by id, value ids to delete). Values not mentioned stay as they are. Deleting a value that variants use needs variant_strategy MANAGE, which also removes those variants. Option and value ids come from get_product_details. Renaming to the same name again is safe; adding a value twice fails.',
     idempotent: false,
   },
+  outputSchema: productDetailOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

@@ -8,6 +8,7 @@ import {
   shopifyMappers,
   shopifyProps,
 } from '../../common/graphql';
+import { duplicateProductOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiDuplicateProduct = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiDuplicateProduct = createAction({
       'Copies one product (options, variants, prices, tags) into a new product with the given title and returns the new product. Images are copied only when include_images is on; that copy runs in the background and its image_job_id is polled with get_job. The copy keeps the original status unless new_status is set. Very large products may time out. Each call creates another copy, so retries create duplicates.',
     idempotent: false,
   },
+  outputSchema: duplicateProductOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

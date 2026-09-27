@@ -6,6 +6,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { collectionCountOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCountCollections = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCountCollections = createAction({
       'Counts collections, optionally filtered with search syntax such as "collection_type:smart" or "title:Summer*". precision is AT_LEAST when Shopify stopped counting at its limit. Use search_collections to see them. Read-only.',
     idempotent: true,
   },
+  outputSchema: collectionCountOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify collection search syntax, for example "collection_type:custom". Leave empty to count all.'

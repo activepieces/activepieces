@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { productDetailOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiReorderProductOptions = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiReorderProductOptions = createAction({
       'Sets the absolute order of a product\'s options (and optionally the order of each option\'s values). List every option in the order you want; for each option you can list its value names in order. Variant order follows the new option order. Sending the same order again is safe.',
     idempotent: true,
   },
+  outputSchema: productDetailOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',
@@ -33,12 +35,12 @@ export const shopifyAiReorderProductOptions = createAction({
       properties: {
         option_id: Property.ShortText({
           displayName: 'Option ID',
-          description: 'The option id, for example "gid://shopify/ProductOption/1064576516". Or give the name instead.',
+          description: 'The option id, for example "gid://shopify/ProductOption/1064576516". Use option_id for every option or name for every option; do not mix.',
           required: false,
         }),
         name: Property.ShortText({
           displayName: 'Option Name',
-          description: 'The option name, for example "Size", when no id is given.',
+          description: 'The option name, for example "Size". Use it for every option when no option ids are given.',
           required: false,
         }),
         values: Property.ShortText({
@@ -66,6 +68,11 @@ export const shopifyAiReorderProductOptions = createAction({
     });
     if (options.length === 0) {
       throw new Error('Provide the options in their new order.');
+    }
+    const usesIds = options.some((option) => option['id'] !== undefined);
+    const usesNames = options.some((option) => option['name'] !== undefined);
+    if (usesIds && usesNames) {
+      throw new Error('Identify every option the same way: all by option_id or all by name.');
     }
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       productOptionsReorder: { product: GqlProduct | null } | null;

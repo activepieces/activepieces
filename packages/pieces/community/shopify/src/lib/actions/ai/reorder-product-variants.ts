@@ -8,6 +8,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { variantListOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiReorderProductVariants = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiReorderProductVariants = createAction({
       'Moves variants of one product to absolute positions (1 is first). Variants not listed shift around the moved ones. Returns the product\'s first 100 variants in their new order. Sending the same positions again is safe.',
     idempotent: true,
   },
+  outputSchema: variantListOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

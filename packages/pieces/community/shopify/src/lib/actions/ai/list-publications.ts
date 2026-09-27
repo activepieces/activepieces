@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listPublicationsOutputSchema } from '../../output-schemas/products';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListPublications = createAction({
       'Lists the store\'s publications, the targets that publish_resource and unpublish_resource take (for example the Online Store, Point of Sale or a market catalog), with their title and whether new products are published automatically. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_publications access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listPublicationsOutputSchema,
   props: {
     catalog_type: Property.StaticDropdown({
       displayName: 'Catalog Type',

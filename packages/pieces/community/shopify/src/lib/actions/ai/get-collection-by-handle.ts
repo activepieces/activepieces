@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { collectionOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiGetCollectionByHandle = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetCollectionByHandle = createAction({
       'Returns one collection by its URL handle (the last part of /collections/<handle>), with the same fields as get_collection. Fails when no collection has that handle. Read-only.',
     idempotent: true,
   },
+  outputSchema: collectionOutputSchema,
   props: {
     handle: Property.ShortText({
       displayName: 'Handle',

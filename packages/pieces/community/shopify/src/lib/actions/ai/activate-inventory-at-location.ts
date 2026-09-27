@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { activateInventoryAtLocationOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiActivateInventoryAtLocation = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiActivateInventoryAtLocation = createAction({
       'Starts stocking one inventory item at one location (creates its inventory level there), optionally with a starting available quantity. Activating an item that is already stocked there leaves it stocked. Generate your own idempotency_key (for example a UUID) on the first call and pass the same key on every retry; the key used is returned and is included in any error message. Undo with deactivate_inventory_at_location.',
     idempotent: true,
   },
+  outputSchema: activateInventoryAtLocationOutputSchema,
   props: {
     inventory_item_id: Property.ShortText({
       displayName: 'Inventory Item ID',

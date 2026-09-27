@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { productDetailOutputSchema } from '../../output-schemas/products';
 
 export const shopifyAiCreateProductOptions = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCreateProductOptions = createAction({
       'Adds one or more options with their values to a product (a product can have up to 3 options). With variant_strategy LEAVE_AS_IS (the default) existing variants get the first value of each new option and no variants are added; CREATE also creates a variant for every new value combination. Returns the product with its options and variants. Adding an option that already exists fails, so do not blindly retry.',
     idempotent: false,
   },
+  outputSchema: productDetailOutputSchema,
   props: {
     product_id: Property.ShortText({
       displayName: 'Product ID',

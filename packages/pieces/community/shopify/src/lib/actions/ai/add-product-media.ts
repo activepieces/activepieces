@@ -78,10 +78,10 @@ export const shopifyAiAddProductMedia = createAction({
       productUpdate: { product: { id: string; media: GqlConnection<GqlMedia> } | null } | null;
     }>({
       auth,
-      query: `mutation AddProductMedia($product: ProductUpdateInput!, $media: [CreateMediaInput!], $added: Int!) { productUpdate(product: $product, media: $media) { product { id media(last: $added, sortKey: POSITION) { nodes { ${shopifyFields.MEDIA_FIELDS} } } } userErrors { field message } } }`,
+      query: `mutation AddProductMedia($product: ProductUpdateInput!, $media: [CreateMediaInput!], $added: Int!) { productUpdate(product: $product, media: $media) { product { id media(first: $added, sortKey: POSITION, reverse: true) { nodes { ${shopifyFields.MEDIA_FIELDS} } } } userErrors { field message } } }`,
       variables: { product: { id }, media, added: media.length },
     });
-    const items = (data.productUpdate?.product?.media?.nodes ?? []).map(shopifyMappers.mapMedia);
+    const items = [...(data.productUpdate?.product?.media?.nodes ?? [])].reverse().map(shopifyMappers.mapMedia);
     return {
       product_id: data.productUpdate?.product?.id ?? id,
       media: items,
