@@ -243,14 +243,15 @@ describe('McpTools, when the platform switched a tool off', () => {
     expect(container.textContent).toContain(LOCKED_TOOL);
   });
 
-  it('shows the category as on when every tool the project controls is on, and counts only those', () => {
+  it('shows the category as on when every tool the project controls is on, and counts every tool', () => {
     render({ platformDisabledTools: [PLATFORM_OFF_TOOL] });
 
     const category = flowManagementCheckbox();
-    const editableCount = FLOW_MANAGEMENT_TOOLS.length - 1;
     expect(category.checked).toBe(true);
     expect(category.getAttribute('data-state')).toBeNull();
-    expect(flowManagementCount()).toBe(`${editableCount}/${editableCount}`);
+    expect(flowManagementCount()).toBe(
+      `${FLOW_MANAGEMENT_TOOLS.length - 1}/${FLOW_MANAGEMENT_TOOLS.length}`,
+    );
   });
 
   it('switches the editable tools off from a checked category', () => {
@@ -288,7 +289,7 @@ describe('McpTools, when the platform switched a tool off', () => {
     expect(saved).toEqual([[]]);
   });
 
-  it('locks the category and counts against every tool when the platform switched all of them off', () => {
+  it('locks the category when the platform switched all of its tools off', () => {
     render({ platformDisabledTools: FLOW_MANAGEMENT_TOOLS });
 
     expect(flowManagementCheckbox().disabled).toBe(true);

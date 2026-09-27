@@ -100,8 +100,6 @@ export function McpTools({
           const someChecked =
             enabledInCategory.length > 0 &&
             enabledInCategory.length < editableNames.length;
-          const countedTotal =
-            editableNames.length > 0 ? editableNames.length : toolNames.length;
 
           return (
             <AccordionItem key={category.label} value={category.label}>
@@ -144,7 +142,7 @@ export function McpTools({
                     </span>
                   )}
                   <span className="text-xs text-muted-foreground">
-                    {enabledInCategory.length}/{countedTotal}
+                    {enabledInCategory.length}/{toolNames.length}
                   </span>
                 </div>
               </AccordionTrigger>
