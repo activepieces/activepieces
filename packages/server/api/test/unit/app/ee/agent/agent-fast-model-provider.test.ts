@@ -1,5 +1,5 @@
 import { AIProviderName } from '@activepieces/core-utils'
-import { AIProviderModelType } from '@activepieces/shared'
+import { aiProviderCredentials, AIProviderModelType, GetProviderConfigResponse } from '@activepieces/shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { mockGetChatProvider, mockGetConfigOrThrow, mockListModels } = vi.hoisted(() => ({
@@ -180,5 +180,55 @@ describe('resolveModelId', () => {
         mockListModels.mockResolvedValue([{ id: 'amazon.titan-image-generator-v1', name: 'Titan Image', type: AIProviderModelType.IMAGE }])
 
         await expect(resolve({ selectedModel: 'smart' })).rejects.toMatchObject({ error: { code: 'ENTITY_NOT_FOUND' } })
+    })
+})
+
+describe('resolveImageModelId', () => {
+    const config = ({ provider }: { provider: AIProviderName }): GetProviderConfigResponse => ({
+        ...aiProviderCredentials({ provider, auth: { apiKey: 'k' }, config: {} }),
+        configId: 'config-1',
+        platformId,
+        modelScope: 'all',
+        modelIds: [],
+    })
+
+    const resolve = (providerConfig: GetProviderConfigResponse) => agentHelpers.resolveImageModelId({ platformId, providerConfig, scope, log })
+
+    beforeEach(() => {
+        mockListModels.mockReset()
+    })
+
+    it('uses the default image model when the key offers it', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gpt-5', type: AIProviderModelType.TEXT }, { id: 'gpt-image-2', type: AIProviderModelType.IMAGE }, { id: 'gpt-image-1.5', type: AIProviderModelType.IMAGE }])
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBe('gpt-image-1.5')
+    })
+
+    it('falls back to an image model the key offers when the default is gone', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gpt-5', type: AIProviderModelType.TEXT }, { id: 'gpt-image-2', type: AIProviderModelType.IMAGE }])
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBe('gpt-image-2')
+    })
+
+    it('offers no image model when the key has none', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gpt-5', type: AIProviderModelType.TEXT }])
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBeUndefined()
+    })
+
+    it('leaves images off when the model list cannot be read', async () => {
+        mockListModels.mockRejectedValue(new Error('provider down'))
+
+        expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBeUndefined()
+    })
+
+    it('uses the managed image model without listing', async () => {
+        expect(await resolve(config({ provider: AIProviderName.ACTIVEPIECES }))).toBe('google/gemini-3.1-flash-lite-image')
+        expect(mockListModels).not.toHaveBeenCalled()
+    })
+
+    it('offers nothing for a provider without a default', async () => {
+        expect(await resolve(config({ provider: AIProviderName.BEDROCK }))).toBeUndefined()
+        expect(mockListModels).not.toHaveBeenCalled()
     })
 })

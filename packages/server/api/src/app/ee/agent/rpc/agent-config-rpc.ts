@@ -7,7 +7,6 @@ import { agentApprovalGate } from '.././agent-approval-gate'
 import { agentCompaction } from '.././agent-compaction'
 import { buildAttachmentNote, buildUserContentWithFiles, persistAgentAttachments } from '.././agent-file-utils'
 import { agentHelpers } from '.././agent-helpers'
-import { agentModelResolution } from '.././agent-model-resolution'
 import { agentMcp } from '.././mcp/agent-mcp'
 import { chatPersonalizationService } from '.././personalization/chat-personalization-service'
 import { agentPrompt } from '.././prompt/agent-prompt'
@@ -100,7 +99,6 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
         const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch(providerConfig.provider))
-        const imageModelId = agentModelResolution.resolveImageModelId({ provider: providerConfig.provider, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
 
         const lockResult = await agentHelpers.conversationRepo()
             .createQueryBuilder()
@@ -131,6 +129,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             ? agentHelpers.resolveNamedModelId({ provider: providerConfig.provider, modelName, modelScope: providerConfig.modelScope, modelIds: providerConfig.modelIds })
             : await agentHelpers.resolveModelId({ platformId, providerConfig, selectedModel, scope: runScope, log })
         const fastModelId = await agentHelpers.resolveFastModelId({ platformId, providerConfig, scope: runScope, fallbackModelId: resolvedModelId, log })
+        const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
+        const imageModelId = generatesImagesOnProvider ? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log }) : undefined
 
         // Inject an inventory of the project's existing connections into context so the agent
         // never has to *guess* an app name to find out what's connected. Without this, discovery

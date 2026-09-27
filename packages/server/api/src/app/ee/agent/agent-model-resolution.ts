@@ -1,5 +1,5 @@
 import { ActivepiecesError, AIProviderName, ErrorCode, isNil, tryCatchSync } from '@activepieces/core-utils'
-import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
+import { ACTIVEPIECES_CHAT_TIERS, AI_PROVIDER_ENTITY_TYPES, AiProviderCredentials, AiProviderModelScope, AIProviderModelType, aiProviderUtils, DEFAULT_CHAT_TIER_ID } from '@activepieces/shared'
 
 function findTier({ tierId }: { tierId: string | null }) {
     return ACTIVEPIECES_CHAT_TIERS.find((t) => t.id === tierId)
@@ -87,15 +87,6 @@ function resolveModelIdForAnalytics({ provider, selectedModel }: { provider: AIP
     return aiProviderUtils.isCuratedChatModelId({ modelId: selectedModel }) ? selectedModel : null
 }
 
-function resolveImageModelId({ provider, modelScope, modelIds }: { provider: AIProviderName, modelScope?: AiProviderModelScope, modelIds?: string[] }): string | undefined {
-    const imageModelId = AI_PROVIDER_CAPABILITIES[provider].defaultImageModel
-    if (isNil(imageModelId)) {
-        return undefined
-    }
-    const excludedByKey = modelScope === 'selected' && !(modelIds ?? []).includes(imageModelId)
-    return excludedByKey ? undefined : imageModelId
-}
-
 export const agentModelResolution = {
     findTier,
     resolveTier,
@@ -103,7 +94,6 @@ export const agentModelResolution = {
     resolveModelIdForProvider,
     defaultModelIdForProvider,
     resolveModelIdForAnalytics,
-    resolveImageModelId,
 }
 
 export const FAST_TIER_ID = 'fast'

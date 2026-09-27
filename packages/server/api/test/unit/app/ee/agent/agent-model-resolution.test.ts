@@ -225,21 +225,3 @@ describe('resolveNamedModelId', () => {
         }
     })
 })
-
-describe('resolveImageModelId', () => {
-    it('uses the provider default image model on a key that allows every model', () => {
-        expect(agentModelResolution.resolveImageModelId({ provider: AIProviderName.OPENAI, modelScope: 'all', modelIds: [] })).toBe('gpt-image-1.5')
-    })
-
-    it('uses it on a key that lists it', () => {
-        expect(agentModelResolution.resolveImageModelId({ provider: AIProviderName.OPENAI, modelScope: 'selected', modelIds: ['gpt-5', 'gpt-image-1.5'] })).toBe('gpt-image-1.5')
-    })
-
-    it('offers no image model on a key that leaves it out', () => {
-        expect(agentModelResolution.resolveImageModelId({ provider: AIProviderName.OPENAI, modelScope: 'selected', modelIds: ['gpt-5'] })).toBeUndefined()
-    })
-
-    it('offers no image model for a provider without a default', () => {
-        expect(agentModelResolution.resolveImageModelId({ provider: AIProviderName.ANTHROPIC, modelScope: 'all', modelIds: [] })).toBeUndefined()
-    })
-})
