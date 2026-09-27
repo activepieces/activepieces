@@ -1,6 +1,6 @@
 import { ActivepiecesError, ErrorCode, isNil, spreadIfDefined, tryCatch } from '@activepieces/core-utils'
 import { agentAiUtils, aiUtils } from '@activepieces/server-utils'
-import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
+import { AgentConfigResponse, AgentConversationStatus, AgentRunSource, AI_PROVIDER_CAPABILITIES, GetAgentConfigRequest, GetEnabledAiToolsResponse, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole } from '@activepieces/shared'
 import { ModelMessage } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { agentApprovalGate } from '.././agent-approval-gate'
@@ -163,7 +163,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: actingRun && !isNil(aiTools.imageGeneration),
+            imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(AI_PROVIDER_CAPABILITIES[providerConfig.provider].defaultImageModel)),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,

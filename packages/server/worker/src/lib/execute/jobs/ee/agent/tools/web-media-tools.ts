@@ -1,9 +1,10 @@
-import { isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
+import { ActivepiecesAiBilling, isObject, tryCatch, tryCatchSync } from '@activepieces/core-utils'
 import { safeHttp, WebSearchResult } from '@activepieces/server-utils'
-import { SaveAgentFileResponse } from '@activepieces/shared'
+import { AiProviderCredentials, SaveAgentFileResponse } from '@activepieces/shared'
 import { tool, ToolExecutionOptions, ToolSet } from 'ai'
 import { stripHtml } from 'string-strip-html'
 import { z } from 'zod'
+import { getGeneratedImage, imageBytesOf } from '../../../ai/generate-image'
 import { AgentEventEmitter, cardTitleFields, describeHttpError, FETCH_URL_TIMEOUT_MS, GeneratedImage, ImageAspect, ImageStyle, isReadableTextContentType, MAX_FETCH_URL_BYTES, ResolvedToolConfig, ScrapedPage, TaintState, truncateLargeResult, withToolTimeout } from './tool-primitives'
 
 export function createWebTools({ taintState }: { taintState: TaintState }): ToolSet {
@@ -70,6 +71,12 @@ const FAL_MODEL_BY_STYLE: Record<ImageStyle, string> = {
     graphic_text: 'fal-ai/ideogram/v3',
     brand_vector: 'fal-ai/recraft-v3',
     abstract: 'fal-ai/flux/dev',
+}
+
+const ASPECT_RATIO_BY_ASPECT: Record<ImageAspect, `${number}:${number}`> = {
+    square: '1:1',
+    landscape: '16:9',
+    portrait: '9:16',
 }
 
 const FAL_IMAGE_SIZE_BY_ASPECT: Record<ImageAspect, string> = {
@@ -178,9 +185,10 @@ export function createScrapeTools({ scraping, taintState }: { scraping: Resolved
     }
 }
 
-export function createImageTools({ imageGeneration, saveFile, emitImage }: {
-    imageGeneration: ResolvedToolConfig
-    saveFile: (params: { data: Buffer, mediaType: string, fileName?: string }) => Promise<SaveAgentFileResponse>
+export function createImageTools({ generate, billedAtCost, saveFile, emitImage }: {
+    generate: ImageGenerator
+    billedAtCost: boolean
+    saveFile: ImageSaver
     emitImage: AgentEventEmitter['emitImageGenerated']
 }): ToolSet {
     return {
@@ -197,38 +205,78 @@ export function createImageTools({ imageGeneration, saveFile, emitImage }: {
                 toolName: 'ap_generate_image',
                 timeoutMs: IMAGE_TIMEOUT_MS + 5_000,
                 fn: async (signal) => {
-                    const modelId = FAL_MODEL_BY_STYLE[toolInput.style]
-                    const imageSize = FAL_IMAGE_SIZE_BY_ASPECT[toolInput.aspectRatio ?? 'square']
-                    const { data: generated, error } = await tryCatch(() => generateImageWithFal({
-                        modelId, imageSize, prompt: toolInput.prompt, apiKey: imageGeneration.apiKey, signal,
-                    }))
-                    if (error) {
-                        return { content: [{ type: 'text', text: `Image generation failed: ${describeHttpError(error)}` }] }
-                    }
-                    const { data: saved, error: saveError } = await tryCatch(() => saveFile({
-                        data: generated.bytes,
-                        mediaType: generated.mediaType,
-                        fileName: `generated-${toolCallId}.${generated.extension}`,
-                    }))
-                    if (saveError) {
-                        return { content: [{ type: 'text', text: `Failed to store the generated image: ${saveError instanceof Error ? saveError.message : String(saveError)}` }] }
-                    }
-                    const timestamp = new Date().toISOString()
-                    emitImage({
-                        toolCallId,
-                        fileId: saved.fileId,
-                        url: saved.url,
-                        mediaType: generated.mediaType,
-                        prompt: toolInput.prompt,
-                        model: modelId,
-                        ...(toolInput.caption ? { caption: toolInput.caption } : {}),
-                        timestamp,
-                    })
-                    return { success: true, fileId: saved.fileId, url: saved.url, mediaType: generated.mediaType, model: modelId, prompt: toolInput.prompt }
+                    const result = await generateAndStoreImage({ request: { ...toolInput, aspectRatio: toolInput.aspectRatio ?? 'square', signal }, caption: toolInput.caption, toolCallId, generate, saveFile, emitImage })
+                    return billedAtCost ? { ...result, billedAtCost } : result
                 },
             }),
         }),
     }
+}
+
+export function falImageGenerator({ apiKey }: { apiKey: string }): ImageGenerator {
+    return async ({ prompt, style, aspectRatio, signal }) => {
+        const modelId = FAL_MODEL_BY_STYLE[style]
+        const image = await generateImageWithFal({ modelId, imageSize: FAL_IMAGE_SIZE_BY_ASPECT[aspectRatio], prompt, apiKey, signal })
+        return { ...image, model: modelId }
+    }
+}
+
+export function providerImageGenerator({ credentials, modelId, billing }: { credentials: AiProviderCredentials, modelId: string, billing: ActivepiecesAiBilling }): ImageGenerator {
+    return async ({ prompt, aspectRatio, signal }) => {
+        const image = await getGeneratedImage({
+            credentials,
+            modelId,
+            prompt,
+            inputImages: [],
+            billing,
+            turnAlreadyCharged: true,
+            aspectRatio: ASPECT_RATIO_BY_ASPECT[aspectRatio],
+            abortSignal: signal,
+        })
+        return {
+            bytes: imageBytesOf(image),
+            mediaType: image.mediaType,
+            extension: extensionOf(image.mediaType),
+            model: modelId,
+        }
+    }
+}
+
+async function generateAndStoreImage({ request, caption, toolCallId, generate, saveFile, emitImage }: {
+    request: ImageRequest
+    caption?: string
+    toolCallId: string
+    generate: ImageGenerator
+    saveFile: ImageSaver
+    emitImage: AgentEventEmitter['emitImageGenerated']
+}): Promise<Record<string, unknown>> {
+    const { data: generated, error } = await tryCatch(() => generate(request))
+    if (error) {
+        return { content: [{ type: 'text', text: `Image generation failed: ${describeHttpError(error)}` }] }
+    }
+    const { data: saved, error: saveError } = await tryCatch(() => saveFile({
+        data: generated.bytes,
+        mediaType: generated.mediaType,
+        fileName: `generated-${toolCallId}.${generated.extension}`,
+    }))
+    if (saveError) {
+        return { content: [{ type: 'text', text: `Failed to store the generated image: ${saveError instanceof Error ? saveError.message : String(saveError)}` }] }
+    }
+    emitImage({
+        toolCallId,
+        fileId: saved.fileId,
+        url: saved.url,
+        mediaType: generated.mediaType,
+        prompt: request.prompt,
+        model: generated.model,
+        ...(caption ? { caption } : {}),
+        timestamp: new Date().toISOString(),
+    })
+    return { success: true, fileId: saved.fileId, url: saved.url, mediaType: generated.mediaType, model: generated.model, prompt: request.prompt }
+}
+
+function extensionOf(mediaType: string): string {
+    return mediaType.includes('jpeg') ? 'jpg' : (mediaType.split('/')[1] ?? 'png')
 }
 
 async function scrapeWithFirecrawl({ url, apiKey, signal }: { url: string, apiKey: string, signal: AbortSignal }): Promise<ScrapedPage> {
@@ -303,7 +351,10 @@ async function generateImageWithFal({ modelId, imageSize, prompt, apiKey, signal
     return {
         bytes: Buffer.from(download.data),
         mediaType,
-        extension: mediaType.includes('jpeg') ? 'jpg' : (mediaType.split('/')[1] ?? 'png'),
+        extension: extensionOf(mediaType),
     }
 }
 
+type ImageRequest = { prompt: string, style: ImageStyle, aspectRatio: ImageAspect, signal: AbortSignal }
+type ImageGenerator = (request: ImageRequest) => Promise<GeneratedImage & { model: string }>
+type ImageSaver = (params: { data: Buffer, mediaType: string, fileName?: string }) => Promise<SaveAgentFileResponse>
