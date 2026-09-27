@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listArticlesOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 160;
 
@@ -24,6 +25,7 @@ export const shopifyAiListArticles = createAction({
       'Lists blog articles with title, handle, author, blog, summary, tags, publish state, image and comment count (not the full body; use get_article for that). Set blog_id to stay within one blog, and/or filter with Shopify search syntax such as "tag:news", "author:Jane", "published_status:published" or "updated_at:>2026-01-01". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listArticlesOutputSchema,
   props: {
     blog_id: Property.ShortText({
       displayName: 'Blog ID',

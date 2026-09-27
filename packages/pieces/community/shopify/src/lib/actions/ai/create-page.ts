@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { pageOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiCreatePage = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreatePage = createAction({
       'Creates an online store content page (for example an FAQ or About us page) and returns it with its id. Only the title is required; the body is HTML and the handle is generated from the title when left empty. The page is created hidden unless is_published is Yes, so nothing goes live by accident. publish_date alone does not publish or schedule the page; is_published must be Yes as well. Each call creates another page, so do not repeat it after a success. Needs the write_content access scope.',
     idempotent: false,
   },
+  outputSchema: pageOutputSchema,
   props: {
     title: Property.ShortText({
       displayName: 'Title',

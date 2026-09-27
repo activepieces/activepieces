@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteArticleOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteArticle = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteArticle = createAction({
       'Permanently deletes one blog article together with its comments, and its URL stops working. To only hide it, use update_article with is_published No instead. Cannot be undone; a repeat call fails because the article is gone. Needs the write_content access scope.',
     idempotent: false,
   },
+  outputSchema: deleteArticleOutputSchema,
   props: {
     article_id: Property.ShortText({
       displayName: 'Article ID',

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyFields, shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { deleteMetafieldsOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiDeleteMetafields = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteMetafields = createAction({
       'Permanently deletes up to 25 metafield values, each identified by the owner\'s full id, namespace and key. The metafield definition (if any) is kept; only the stored values go. A metafield that does not exist is reported in not_found instead of failing, so repeating the call is safe. Cannot be undone; read values with list_metafields first if they may be needed. Needs the write access scope of each owner type (for example write_products for products).',
     idempotent: true,
   },
+  outputSchema: deleteMetafieldsOutputSchema,
   props: {
     metafields: Property.Array({
       displayName: 'Metafields',

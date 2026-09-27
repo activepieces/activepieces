@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { setMetafieldsOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiSetMetafields = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiSetMetafields = createAction({
       'Sets up to 25 metafield values in one all-or-nothing call: a metafield that does not exist is created and an existing one (same owner, namespace and key) gets the new value. Each entry needs the owner\'s full id (for example "gid://shopify/Product/123"; ids from this piece\'s get/list actions are already in this form), a namespace, a key and the value as a string (lists and references as a JSON string, for example "[\\"a\\",\\"b\\"]"). type (for example "single_line_text_field", "number_integer", "json", "list.single_line_text_field") is required for a new metafield without a definition. Optional compare_digest (from list_metafields or get_metafield) makes that entry fail if the value changed since you read it. A retry that reuses the same compare_digest after an earlier call went through fails as stale, even though the stored value is yours: re-read with get_metafield or list_metafields first and send the new compare_digest. Setting the same values again leaves the same state. Needs the write access scope of each owner type (for example write_products for products).',
     idempotent: true,
   },
+  outputSchema: setMetafieldsOutputSchema,
   props: {
     metafields: Property.Array({
       displayName: 'Metafields',

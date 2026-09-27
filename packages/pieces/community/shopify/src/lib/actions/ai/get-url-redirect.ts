@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { urlRedirectOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetUrlRedirect = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetUrlRedirect = createAction({
       'Returns one URL redirect: the old path visitors arrive on and the target they are sent to. Use list_url_redirects with "path:/old-page" to find one by path. Needs the read_online_store_navigation access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: urlRedirectOutputSchema,
   props: {
     url_redirect_id: Property.ShortText({
       displayName: 'URL Redirect ID',

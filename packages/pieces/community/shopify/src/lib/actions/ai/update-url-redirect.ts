@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { urlRedirectOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdateUrlRedirect = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiUpdateUrlRedirect = createAction({
       'Changes one URL redirect and returns it. Send a new path, a new target, or both; what you leave empty keeps its value. The change is live immediately. Repeating the same update leaves the same state. Needs the write_online_store_navigation access scope.',
     idempotent: true,
   },
+  outputSchema: urlRedirectOutputSchema,
   props: {
     url_redirect_id: Property.ShortText({
       displayName: 'URL Redirect ID',

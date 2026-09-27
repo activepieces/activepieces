@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { metaobjectOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetMetaobject = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetMetaobject = createAction({
       'Returns one metaobject entry by id: type, handle, display name, publish status (DRAFT or ACTIVE when the type is publishable), online store template suffix, its definition, every field value (fields and a values map keyed by field key) and dates. Needs the read_metaobjects access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: metaobjectOutputSchema,
   props: {
     metaobject_id: Property.ShortText({
       displayName: 'Metaobject ID',

@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listThemesOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListThemes = createAction({
       'Lists the online store\'s themes with name, role and processing state. The theme with role MAIN is the live theme shoppers see; UNPUBLISHED and DEVELOPMENT themes are drafts. Filter by roles and/or exact names. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_themes access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listThemesOutputSchema,
   props: {
     roles: Property.StaticMultiSelectDropdown({
       displayName: 'Roles',

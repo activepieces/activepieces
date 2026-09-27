@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { onlineStoreSettingsOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetOnlineStoreSettings = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiGetOnlineStoreSettings = createAction({
       'Returns the online store channel settings Shopify exposes: password_protection_enabled is true while the storefront is locked behind a password (typical before launch or on development stores), so shoppers cannot see pages, articles or products yet. The required access scope is not documented. Read-only.',
     idempotent: true,
   },
+  outputSchema: onlineStoreSettingsOutputSchema,
   props: {},
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

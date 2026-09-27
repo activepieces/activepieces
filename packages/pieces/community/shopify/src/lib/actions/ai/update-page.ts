@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { pageOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdatePage = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpdatePage = createAction({
       'Updates one online store content page and returns it. Only the fields you supply are sent; at least one is required. A new body replaces the whole body. is_published Yes makes the page visible on the storefront and No hides it. Repeating the same update leaves the same state. Needs the write_content access scope.',
     idempotent: true,
   },
+  outputSchema: pageOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

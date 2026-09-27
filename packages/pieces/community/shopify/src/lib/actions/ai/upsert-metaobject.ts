@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { metaobjectOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpsertMetaobject = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiUpsertMetaobject = createAction({
       'Creates or updates one metaobject entry keyed by type + handle: when no entry of that type has the handle it is created, otherwise it is updated. Only the fields you send are written; every other field keeps its current value (a patch, never a full replacement), so send just the keys you want to change. Field keys come from the type\'s definition (list_metaobject_definitions); values are strings, with lists and references as JSON strings. status (DRAFT or ACTIVE) and template_suffix are sent only when you set them; they apply only to types with the publishable or online store capability, and a new entry otherwise gets Shopify\'s default status. Sending the same values again leaves the same state. Needs the write_metaobjects access scope.',
     idempotent: true,
   },
+  outputSchema: metaobjectOutputSchema,
   props: {
     type: Property.ShortText({
       displayName: 'Metaobject Type',

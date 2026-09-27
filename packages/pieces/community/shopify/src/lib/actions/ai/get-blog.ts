@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { getBlogOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetBlog = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetBlog = createAction({
       'Returns one blog: title, handle, comment policy, template suffix, feed, articles_count and recent_article_tags (the tags used by the blog\'s 200 most recent articles). Use list_articles with this blog id to read its articles. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: getBlogOutputSchema,
   props: {
     blog_id: Property.ShortText({
       displayName: 'Blog ID',

@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { getThemeFileOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetThemeFile = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiGetThemeFile = createAction({
       'Reads one file of a theme by its path, for example "templates/index.json", "sections/header.liquid", "snippets/price.liquid", "config/settings_data.json" or "assets/base.css"; use list_theme_files to find the exact paths. Text files return content; binary files return content_base64 or a url (body_type says which). Returns size, checksum_md5 and dates too. Fails when the file does not exist. Needs the read_themes access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: getThemeFileOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

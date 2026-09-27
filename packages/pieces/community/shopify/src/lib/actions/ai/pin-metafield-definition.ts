@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { pinMetafieldDefinitionOutputSchema } from '../../output-schemas/content';
 
 const ALREADY_PINNED = 'ALREADY_PINNED';
 
@@ -23,6 +24,7 @@ export const shopifyAiPinMetafieldDefinition = createAction({
       'Pins one metafield definition, identified by owner type, namespace and key, so its field appears on that resource\'s page in the Shopify admin (for example on every product page); returns the definition with its pinned_position. If the definition is already pinned, Shopify refuses the pin with ALREADY_PINNED; this action then reads the definition and returns it unchanged with already_pinned true, so repeating the call is safe and ends in the same state. Shopify limits how many definitions can be pinned per owner type and refuses beyond that (PINNED_LIMIT_REACHED). Needs the write access scope of the owner type (for example write_products).',
     idempotent: true,
   },
+  outputSchema: pinMetafieldDefinitionOutputSchema,
   props: {
     owner_type: shopifyProps.metafieldOwnerType({
       required: true,

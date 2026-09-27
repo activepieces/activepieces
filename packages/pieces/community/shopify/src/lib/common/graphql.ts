@@ -198,6 +198,11 @@ function toGraphqlError(errors: ShopifyGraphqlError[]): Error {
     (entry) => entry.extensions?.code === 'ACCESS_DENIED'
   );
   if (denied) {
+    if (/exemption/i.test(denied.message ?? '')) {
+      return new Error(
+        `Shopify denied access: this operation needs an exemption granted by Shopify in addition to the access scope, so adding scopes or reinstalling the app will not fix it. Do not retry. Shopify said: ${denied.message ?? ''}`.trim()
+      );
+    }
     const scope = readRequiredScope(denied);
     const scopeText = scope ? `the "${scope}" access scope` : 'an access scope';
     return new Error(
@@ -2724,7 +2729,7 @@ function mapThemeFile(file: GqlThemeFile) {
   return {
     filename: file.filename ?? null,
     content_type: file.contentType ?? null,
-    size: file.size ?? null,
+    size: readNumber(file.size) ?? null,
     checksum_md5: file.checksumMd5 ?? null,
     body_type: themeFileBodyType(body.__typename),
     content: body.content ?? null,
@@ -2747,7 +2752,7 @@ function themeFileBodyType(typename: string | null | undefined): string | null {
 function mapThemeFileResult(file: GqlThemeFileResult) {
   return {
     filename: file.filename ?? null,
-    size: file.size ?? null,
+    size: readNumber(file.size) ?? null,
     checksum_md5: file.checksumMd5 ?? null,
     created_at: file.createdAt ?? null,
     updated_at: file.updatedAt ?? null,
@@ -2758,7 +2763,7 @@ function mapThemeFileSummary(file: GqlThemeFileSummary) {
   return {
     filename: file.filename ?? null,
     content_type: file.contentType ?? null,
-    size: file.size ?? null,
+    size: readNumber(file.size) ?? null,
     checksum_md5: file.checksumMd5 ?? null,
     created_at: file.createdAt ?? null,
     updated_at: file.updatedAt ?? null,

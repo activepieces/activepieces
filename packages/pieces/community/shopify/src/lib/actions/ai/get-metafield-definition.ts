@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { metafieldDefinitionOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetMetafieldDefinition = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiGetMetafieldDefinition = createAction({
       'Returns one metafield definition identified by owner type, namespace and key: name, type, description, validations (for example min, max, choices, regex), validation status, pinned position, access, capabilities and how many values exist. Read it before update_metafield_definition, because sending validations there replaces the whole list. Needs the read access scope of the owner type (for example read_products). Read-only.',
     idempotent: true,
   },
+  outputSchema: metafieldDefinitionOutputSchema,
   props: {
     owner_type: shopifyProps.metafieldOwnerType({
       required: true,

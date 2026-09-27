@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listBlogsOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListBlogs = createAction({
       'Lists the online store\'s blogs with title, handle, comment policy, article count and feed. Optionally filter with Shopify search syntax such as "title:News" or "handle:news". Paged: pass end_cursor back as the cursor while has_next_page is true. Use get_blog for the recent article tags of one blog. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listBlogsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify blog search syntax, for example "title:News" or "handle:news". Leave empty to list all.'

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlJob, shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { bulkDeleteMetaobjectsOutputSchema } from '../../output-schemas/content';
 
 const MAX_IDS = 250;
 
@@ -16,6 +17,7 @@ export const shopifyAiBulkDeleteMetaobjects = createAction({
       'Starts a background job that permanently deletes metaobject entries and their metafields, and returns only the job; poll get_job with job_id until done is true. scope decides what goes: BY_IDS deletes the listed entry ids (1 to 250); ALL_OF_TYPE deletes EVERY entry of the given type (the type definition itself stays). Cannot be undone. Each call starts a new job, so do not repeat it while the first job runs. Needs the write_metaobjects access scope.',
     idempotent: false,
   },
+  outputSchema: bulkDeleteMetaobjectsOutputSchema,
   props: {
     scope: Property.StaticDropdown({
       displayName: 'Delete Scope',

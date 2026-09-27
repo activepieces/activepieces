@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listThemeFilesOutputSchema } from '../../output-schemas/content';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListThemeFiles = createAction({
       'Lists the files of one theme without their content: path (filename), content_type, size, checksum_md5 and dates. Use it to find the path to pass to get_theme_file, upsert_theme_files or delete_theme_files. Optional filenames narrows the list to up to 50 paths or patterns, where * matches any characters (for example "templates/*.json" or "sections/*"). Paged: pass end_cursor back as the cursor while has_next_page is true; Shopify may return fewer files than the page size to stay within its payload limit, so rely on has_next_page rather than the count. Any per-path problem Shopify reports (for example NOT_FOUND) comes back in file_errors with the filename and code. Needs the read_themes access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listThemeFilesOutputSchema,
   props: {
     theme_id: Property.ShortText({
       displayName: 'Theme ID',

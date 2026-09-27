@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { pageOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiGetPage = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetPage = createAction({
       'Returns one online store content page: title, handle, full body HTML, body summary, publish state and date, and template suffix. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: pageOutputSchema,
   props: {
     page_id: Property.ShortText({
       displayName: 'Page ID',

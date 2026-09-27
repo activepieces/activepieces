@@ -6,6 +6,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { contentCountOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiCountBlogs = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCountBlogs = createAction({
       'Counts the online store\'s blogs, optionally filtered with search syntax such as "title:News". Shopify stops counting at 10,000 by default; precision is AT_LEAST when it did. Use list_blogs to see them. Needs the read_content access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: contentCountOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify blog search syntax, for example "title:News". Leave empty to count all.'

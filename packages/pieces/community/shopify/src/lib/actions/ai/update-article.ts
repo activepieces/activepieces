@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { articleOutputSchema } from '../../output-schemas/content';
 
 export const shopifyAiUpdateArticle = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpdateArticle = createAction({
       'Updates one blog article and returns it. Only the fields you supply are sent; at least one is required. Sending tags replaces all of the article\'s tags, so send the complete list, or use add_tags / remove_tags for single tags. is_published Yes makes the article visible on the storefront and No hides it. blog_id moves the article to another blog. Repeating the same update leaves the same state. Needs the write_content access scope.',
     idempotent: true,
   },
+  outputSchema: articleOutputSchema,
   props: {
     article_id: Property.ShortText({
       displayName: 'Article ID',
