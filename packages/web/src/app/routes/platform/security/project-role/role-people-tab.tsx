@@ -54,9 +54,9 @@ export function RolePeopleTab({ projectRole }: RolePeopleTabProps) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col pt-4">
       {hasNextPage && (
-        <p className="shrink-0 px-6 pt-4 pb-3 text-sm text-muted-foreground">
+        <p className="shrink-0 px-6 pb-3 text-sm text-muted-foreground">
           {t('showingFirstPeople', { count: members.length })}
         </p>
       )}
