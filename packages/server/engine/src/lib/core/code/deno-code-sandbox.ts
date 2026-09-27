@@ -21,7 +21,17 @@ export function denoCodeSandbox(permissions: DenoPermission[]): CodeSandbox {
                 body: `
     const { createRequire } = await import('node:module');
     globalThis.require = createRequire(${JSON.stringify(entryUrl)});
-    const mod = await import(${JSON.stringify(entryUrl)});
+    let mod;
+    try {
+        mod = await import(${JSON.stringify(entryUrl)});
+    }
+    catch (error) {
+        const isCommonJsSignature = error instanceof ReferenceError && /\\b(exports|module) is not defined\\b/.test(String(error));
+        if (!isCommonJsSignature) {
+            throw error;
+        }
+        mod = globalThis.require(${JSON.stringify(realCodePath)});
+    }
     if (typeof mod.code !== 'function') {
         throw new Error('Code step must export a "code" function');
     }
