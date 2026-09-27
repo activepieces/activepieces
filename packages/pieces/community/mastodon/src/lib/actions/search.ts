@@ -13,7 +13,7 @@ export const search = createAction({
   classification: 'SEARCH',
   displayName: 'Search',
   description: 'Search for accounts, statuses and hashtags.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Searches accounts, statuses and hashtags on the connected server. It is also how to import remote content: a status URL or a user@domain handle with resolve=true fetches it from the other server and returns its local ID for other actions; resolve is turned on automatically for such queries unless you set it. Full-text status search depends on the server and may only match your own posts. Read-only and safe to retry.',
@@ -51,7 +51,8 @@ export const search = createAction({
     }),
     account_id: Property.ShortText({
       displayName: 'Statuses By Account ID',
-      description: 'Only return statuses authored by this account (local account ID).',
+      description:
+        'Only return statuses written by this account. Use the Account ID from Lookup Account, not the @handle.',
       required: false,
     }),
     exclude_unreviewed: mastodonProps.optionalBoolean({

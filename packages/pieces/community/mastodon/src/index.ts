@@ -90,6 +90,10 @@ import { getTrendingTags } from './lib/actions/get-trending-tags';
 import { getTrendingStatuses } from './lib/actions/get-trending-statuses';
 import { getTrendingLinks } from './lib/actions/get-trending-links';
 import { getInstanceInfo } from './lib/actions/get-instance-info';
+import { newMention } from './lib/triggers/new-mention';
+import { newFollower } from './lib/triggers/new-follower';
+import { newStatusFromAccount } from './lib/triggers/new-status-from-account';
+import { newStatusWithHashtag } from './lib/triggers/new-status-with-hashtag';
 
 const markdownDescription = `
 **Base Url**: The base url of your Mastodon instance (e.g \`https://mastodon.social\`)
@@ -230,5 +234,5 @@ export const mastodon = createPiece({
       }),
     }),
   ],
-  triggers: [],
+  triggers: [newMention, newFollower, newStatusFromAccount, newStatusWithHashtag],
 });

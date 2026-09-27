@@ -10,7 +10,7 @@ export const boostStatus = createAction({
   classification: 'WRITE',
   displayName: 'Boost Status',
   description: 'Boost (reblog) a status to your followers.',
-  audience: 'ai',
+  audience: 'both',
   aiMetadata: {
     description:
       'Boosts (reblogs) a status so it appears to the connected account\'s followers and the author is notified. Visibility defaults to the account\'s default posting privacy, not public; set it explicitly to control reach. Boosting an already-boosted status returns the existing boost, so it is safe to retry. Use Unboost Status to undo.',
@@ -21,7 +21,7 @@ export const boostStatus = createAction({
     status_id: Property.ShortText({
       displayName: 'Status ID',
       description:
-        'Local ID of the status to boost. Obtain it from a timeline, Get Status or Search (use resolve for a status URL from another server).',
+        'ID of the status to boost, for example 109372843234737004. Map it from a trigger such as New Status with Hashtag (Status ID), a timeline, Get Status or Search (Search turns a status URL from another server into an ID).',
       required: true,
     }),
     visibility: Property.StaticDropdown({
