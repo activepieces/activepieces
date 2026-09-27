@@ -1,3 +1,4 @@
+import { setTimeout as delay } from 'node:timers/promises'
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
 import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
@@ -37,6 +38,7 @@ const userMemoryRepo = repoFactory(UserMemoryEntity)
 const MAX_MEMORIES = 50
 const MAX_MEMORY_LENGTH = 280
 const MAX_INSTRUCTIONS_LENGTH = 4000
+const IMAGE_MODEL_LOOKUP_TIMEOUT_MS = 3_000
 
 async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }): Promise<AgentConversation> {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
@@ -181,16 +183,21 @@ async function resolveImageModelId({ platformId, providerConfig, scope, log }: {
     if (isNil(preferred) || provider === AIProviderName.ACTIVEPIECES) {
         return preferred
     }
-    const { data: offered, error } = await tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId }))
-    if (error) {
-        log.warn({ error, provider }, '[agentHelpers#resolveImageModelId] Could not list the key\'s models, leaving image generation off')
+    const listed = await Promise.race([
+        tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId })),
+        delay(IMAGE_MODEL_LOOKUP_TIMEOUT_MS, null),
+    ])
+    if (isNil(listed) || isNil(listed.data)) {
+        log.warn({ error: listed?.error, provider }, '[agentHelpers#resolveImageModelId] Could not list the key\'s models in time, leaving image generation off')
         return undefined
     }
-    const imageModelIds = offered.filter((model) => model.type === AIProviderModelType.IMAGE).map((model) => model.id)
+    const versionAt = preferred.search(/\d/)
+    const family = versionAt === -1 ? preferred : preferred.slice(0, versionAt)
+    const imageModelIds = listed.data.filter((model) => model.type === AIProviderModelType.IMAGE).map((model) => model.id)
     if (imageModelIds.includes(preferred)) {
         return preferred
     }
-    const fallback = imageModelIds[0]
+    const fallback = imageModelIds.find((id) => id.startsWith(family))
     if (!isNil(fallback)) {
         log.warn({ provider, preferred, fallback }, '[agentHelpers#resolveImageModelId] Default image model is not offered by this key, falling back')
     }

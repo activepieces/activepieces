@@ -210,6 +210,23 @@ describe('resolveImageModelId', () => {
         expect(await resolve(config({ provider: AIProviderName.OPENAI }))).toBe('gpt-image-2')
     })
 
+    it('never falls back to a model outside the default family, like Imagen on Google', async () => {
+        mockListModels.mockResolvedValue([{ id: 'gemini-2.5-pro', type: AIProviderModelType.TEXT }, { id: 'imagen-4.0-generate-001', type: AIProviderModelType.IMAGE }])
+
+        expect(await resolve(config({ provider: AIProviderName.GOOGLE }))).toBeUndefined()
+    })
+
+    it('leaves images off rather than holding the turn when the model list is slow', async () => {
+        vi.useFakeTimers()
+        mockListModels.mockReturnValue(new Promise(() => undefined))
+
+        const resolving = resolve(config({ provider: AIProviderName.OPENAI }))
+        await vi.advanceTimersByTimeAsync(3_000)
+
+        expect(await resolving).toBeUndefined()
+        vi.useRealTimers()
+    })
+
     it('offers no image model when the key has none', async () => {
         mockListModels.mockResolvedValue([{ id: 'gpt-5', type: AIProviderModelType.TEXT }])
 
