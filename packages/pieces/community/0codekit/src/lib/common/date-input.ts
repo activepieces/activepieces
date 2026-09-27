@@ -5,6 +5,7 @@ export const dateInput = {
 
 function toIsoDate({ date, format }: { date: string; format: string }): string {
     const tokens = tokenize(format.trim());
+    assertEachPartOnce({ tokens, format });
     const pattern = tokens.map((token) => TOKEN_PATTERNS[token] ?? escapeRegExp(token)).join('');
     const match = new RegExp(`^${pattern}$`).exec(date.trim());
     if (match === null) {
@@ -29,6 +30,13 @@ function isoWeekMonday({ weekNumber, year }: { weekNumber: number; year: number 
     const day = String(monday.getUTCDate()).padStart(2, '0');
     const month = String(monday.getUTCMonth() + 1).padStart(2, '0');
     return `${day}.${month}.${monday.getUTCFullYear()}`;
+}
+
+function assertEachPartOnce({ tokens, format }: { tokens: string[]; format: string }): void {
+    const parts = tokens.map((token) => DATE_PART_OF[token]).filter((part) => part !== undefined);
+    if (new Set(parts).size !== parts.length) {
+        throw new Error(`The format "${format}" uses the year, month or day more than once. Include each of them exactly once.`);
+    }
 }
 
 function tokenize(format: string): string[] {
@@ -68,4 +76,13 @@ const TOKEN_PATTERNS: Record<string, string> = {
     M: '(\\d{1,2})',
     DD: '(\\d{2})',
     D: '(\\d{1,2})',
+};
+
+const DATE_PART_OF: Record<string, string> = {
+    YYYY: 'year',
+    YY: 'year',
+    MM: 'month',
+    M: 'month',
+    DD: 'day',
+    D: 'day',
 };
