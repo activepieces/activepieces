@@ -3716,7 +3716,7 @@
     },
     "packages/pieces/community/gmail": {
       "name": "@activepieces/piece-gmail",
-      "version": "0.16.0",
+      "version": "0.17.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4362,7 +4362,7 @@
     },
     "packages/pieces/community/hugging-face": {
       "name": "@activepieces/piece-hugging-face",
-      "version": "0.1.8",
+      "version": "0.2.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4373,6 +4373,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/hume-ai": {
@@ -5493,7 +5494,7 @@
     },
     "packages/pieces/community/mastodon": {
       "name": "@activepieces/piece-mastodon",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5789,7 +5790,7 @@
     },
     "packages/pieces/community/microsoft-onedrive": {
       "name": "@activepieces/piece-microsoft-onedrive",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6354,7 +6355,7 @@
     },
     "packages/pieces/community/notion": {
       "name": "@activepieces/piece-notion",
-      "version": "0.7.1",
+      "version": "0.7.2",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8235,7 +8236,7 @@
     },
     "packages/pieces/community/shopify": {
       "name": "@activepieces/piece-shopify",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -8853,7 +8854,7 @@
     },
     "packages/pieces/community/tally": {
       "name": "@activepieces/piece-tally",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10301,7 +10302,7 @@
     },
     "packages/pieces/core/crypto": {
       "name": "@activepieces/piece-crypto",
-      "version": "0.0.28",
+      "version": "0.0.29",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10364,7 +10365,7 @@
     },
     "packages/pieces/core/date-helper": {
       "name": "@activepieces/piece-date-helper",
-      "version": "0.1.35",
+      "version": "0.1.36",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",

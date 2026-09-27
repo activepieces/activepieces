@@ -8,14 +8,15 @@ export const sendTemplateMessageAction = createAction({
 	name: 'send-template-message',
 	classification: 'WRITE',
 	displayName: 'Send Template Message',
-	description: 'Sends a template message.',
+	description: 'Send an approved template, filling in its placeholders.',
 	audience: 'both',
 	aiMetadata: { description: 'Sends a pre-approved WhatsApp message template to a recipient, filling its header, body, and button placeholders from the supplied fields. Choose this to initiate conversations outside the 24-hour customer service window or for notifications/marketing where a registered template is required; the template must already be approved in the WhatsApp Business account. Requires the sender phone number ID, recipient phone number, and the template ID (its name and language are resolved automatically). Not idempotent — each call delivers a new message.', idempotent: false },
 	props: {
 		phone_number_id: commonProps.phone_number_id,
 		to: Property.ShortText({
 			displayName: 'To',
-			description: 'Recipient phone number.',
+			description: "Recipient's phone number in international format.",
+			placeholder: '15551234567',
 			required: true,
 		}),
 		message_template_id: commonProps.message_template_id,
