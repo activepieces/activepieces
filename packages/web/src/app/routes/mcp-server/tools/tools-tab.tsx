@@ -2,6 +2,7 @@ import { ApFlagId, isNil, SuggestionType } from '@activepieces/shared';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 
+import { McpTools } from '@/app/components/project-settings/mcp-server/mcp-tools';
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { getToolCategories } from '@/app/components/project-settings/mcp-server/utils/mcp-tools-metadata';
 import { DataFetchErrorState } from '@/components/custom/data-fetch-error-state';
@@ -21,7 +22,6 @@ import {
 } from '../project-access';
 import { ProjectPicker } from '../project-picker';
 
-import { BuiltInPanel } from './built-in-panel';
 import { reachableProjectUtils } from './project-selection';
 
 const RUN_ACTION_TOOL_NAME = 'ap_run_action';
@@ -135,16 +135,17 @@ export function ToolsTab({
           isRunActionDisabled={(mcpServer.disabledTools ?? []).includes(
             RUN_ACTION_TOOL_NAME,
           )}
-          isRunActionDisabledByPlatform={(
-            mcpServer.platformDisabledTools ?? []
-          ).includes(RUN_ACTION_TOOL_NAME)}
+          isRunActionDisabledByPlatform={mcpServer.platformDisabledTools.includes(
+            RUN_ACTION_TOOL_NAME,
+          )}
           onShowBuiltIn={() => selectSegment('built-in')}
         />
       ) : (
-        <BuiltInPanel
+        <McpTools
+          key={selectedProjectId}
           disabledTools={mcpServer.disabledTools}
-          platformDisabledTools={mcpServer.platformDisabledTools ?? []}
-          projectId={selectedProjectId}
+          platformDisabledTools={mcpServer.platformDisabledTools}
+          projectId={selectedProjectId ?? undefined}
           isPending={isPending}
           onUpdateDisabledTools={updateDisabledTools}
         />
@@ -165,7 +166,7 @@ function ToolsUnavailableAlert({ error, onRetry }: ToolsUnavailableAlertProps) {
     return <ProjectAccessDeniedAlert />;
   }
 
-  return <DataFetchErrorState entity={t('the tools')} onRetry={onRetry} />;
+  return <DataFetchErrorState entity={t('tools')} onRetry={onRetry} />;
 }
 
 type ToolsUnavailableAlertProps = {

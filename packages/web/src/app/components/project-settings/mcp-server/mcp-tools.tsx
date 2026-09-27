@@ -94,12 +94,13 @@ export function McpTools({
           const enabledInCategory = category.locked
             ? toolNames
             : editableNames.filter((n) => !disabledTools.includes(n));
-          const allChecked =
-            editableNames.length > 0 &&
-            enabledInCategory.length === editableNames.length;
+          const allChecked = enabledInCategory.length === toolNames.length;
           const someChecked =
             enabledInCategory.length > 0 &&
-            enabledInCategory.length < editableNames.length;
+            enabledInCategory.length < toolNames.length;
+          const allEditableOn =
+            editableNames.length > 0 &&
+            editableNames.every((n) => enabledInCategory.includes(n));
 
           return (
             <AccordionItem key={category.label} value={category.label}>
@@ -124,8 +125,8 @@ export function McpTools({
                           : false
                       }
                       disabled={!canWrite || editableNames.length === 0}
-                      onCheckedChange={(v) =>
-                        toggleCategory(editableNames, v === true)
+                      onCheckedChange={() =>
+                        toggleCategory(editableNames, !allEditableOn)
                       }
                       onClick={(e) => e.stopPropagation()}
                       aria-label={t('Select all in {{category}}', {

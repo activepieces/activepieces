@@ -3,21 +3,22 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { toast } from 'sonner';
 
+import { isProjectAccessError } from '@/app/routes/mcp-server/project-access';
 import { api } from '@/lib/api';
 
 import { mcpApi } from './mcp-api';
 
 export const MCP_SERVER_QUERY_KEY = ['mcp-server'];
-export const MCP_REACH_QUERY_KEY = ['mcp-reach'];
+
+const MCP_REACH_QUERY_KEY = ['mcp-reach'];
 
 export const mcpHooks = {
   useMcpReach(options: { enabled?: boolean } = {}): McpReach {
     const enabled = options.enabled ?? true;
-    const { data, isLoading } = useQuery({
+    const { data, error, isLoading } = useQuery({
       queryKey: MCP_REACH_QUERY_KEY,
       queryFn: () => mcpApi.reach(),
       retry: false,
-      staleTime: Infinity,
       enabled,
     });
 
@@ -25,7 +26,8 @@ export const mcpHooks = {
     return {
       projectIds,
       isResolved: enabled && !isLoading,
-      reachesMcp: isNil(projectIds) || projectIds.length > 0,
+      reachesMcp:
+        !isReachRefused(error) && (isNil(projectIds) || projectIds.length > 0),
     };
   },
 
@@ -49,7 +51,7 @@ export const mcpHooks = {
       },
       onError: (error: Error) => {
         toast.error(
-          isMcpServerAccessError(error)
+          isProjectAccessError(error)
             ? t('You are not allowed to change the tools of this project.')
             : t('The tools could not be saved. Try again.'),
         );
@@ -69,16 +71,15 @@ export const mcpHooks = {
   },
 };
 
+function isReachRefused(error: Error | null): boolean {
+  return (
+    api.isApError(error, ErrorCode.AUTHORIZATION) ||
+    api.isApError(error, ErrorCode.PERMISSION_DENIED)
+  );
+}
+
 type McpReach = {
   projectIds: string[] | null;
   isResolved: boolean;
   reachesMcp: boolean;
 };
-
-function isMcpServerAccessError(error: Error | null): boolean {
-  return (
-    api.isApError(error, ErrorCode.AUTHORIZATION) ||
-    api.isApError(error, ErrorCode.PERMISSION_DENIED) ||
-    api.isApError(error, ErrorCode.ENTITY_NOT_FOUND)
-  );
-}

@@ -1,6 +1,5 @@
 import { McpServerType } from '@activepieces/shared';
 import { t } from 'i18next';
-import { Navigate } from 'react-router-dom';
 
 import { mcpHooks } from '@/app/components/project-settings/mcp-server/utils/mcp-hooks';
 import { PageHeader } from '@/components/custom/page-header';
@@ -22,10 +21,6 @@ export default function McpServerPage() {
   const nav = useMcpNav();
   const { projectIds: reachableProjectIds } = mcpHooks.useMcpReach();
   piecesHooks.usePrefetchPieces({ skipProjectFilter: true });
-
-  if (nav.legacyRedirect !== null) {
-    return <Navigate to={nav.legacyRedirect} replace />;
-  }
 
   return (
     <div className="flex min-h-full w-full flex-col gap-2">
