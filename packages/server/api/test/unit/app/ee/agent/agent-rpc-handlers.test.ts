@@ -408,6 +408,7 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
             conversationId: 'conv-1',
             toolName: 'send_email',
             instruction: 'email the summary',
+            modelId: 'eu.anthropic.claude-sonnet-4-6',
             piece: { ...GMAIL_SEND, predefinedInput: { auth: 'conn-1', fields: {} } },
         })
     }
@@ -438,34 +439,12 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
     })
 
     describe('the model the fast round reuses', () => {
-        const fastModelCall = () => mockResolveFastModel.mock.calls.at(-1)?.[0]
-
-        it('is the inline step\'s own model when the run has no agent', async () => {
-            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: null, modelName: 'eu.anthropic.claude-sonnet-4-6' })
-
-            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'eu.anthropic.claude-sonnet-4-6' })
-        })
-
-        it('is the saved agent\'s own model, read from the half this run uses', async () => {
+        it('is the model the worker says the turn resolved, never a name stored on the conversation or the agent', async () => {
             const agent = { draft: { modelName: 'draft-model' }, published: { modelName: 'published-model' } }
 
-            await runPieceTool({ id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent })
-            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'draft-model' })
-
             await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent })
-            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'published-model' })
-        })
 
-        it('is never the tier id the worker persisted on a saved agent\'s conversation, even once that tier leaves the published list', async () => {
-            await runPieceTool({ id: 'conv-1', source: 'AGENT', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: 'agent-1', modelName: 'smart', agent: { draft: { modelName: null } } })
-
-            expect(fastModelCall()).not.toHaveProperty('fallbackModelId')
-        })
-
-        it('hands the resolver whatever an inline run stored, tier id or not, because only the resolver knows the key', async () => {
-            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: null, modelName: 'smart' })
-
-            expect(fastModelCall()).toMatchObject({ fallbackModelId: 'smart' })
+            expect(mockResolveFastModel.mock.calls.at(-1)?.[0]).toMatchObject({ fallbackModelId: 'eu.anthropic.claude-sonnet-4-6' })
         })
     })
 })

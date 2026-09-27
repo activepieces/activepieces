@@ -192,19 +192,6 @@ describe('resolveModelId', () => {
 
         await expect(resolve({ selectedModel: 'smart' })).rejects.toMatchObject({ error: { code: 'ENTITY_NOT_FOUND' } })
     })
-
-    it('drops a borrowed name that is a tier id the key does not list, and resolves the tier instead', async () => {
-        mockListModels.mockResolvedValue([text('amazon.titan-text-express-v1'), text('global.anthropic.claude-haiku-4-5-20251001-v1:0')])
-
-        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: bedrockKey, surface: 'flow', scope, fallbackModelId: 'smart', log })).resolves.toBe('global.anthropic.claude-haiku-4-5-20251001-v1:0')
-    })
-
-    it('keeps a borrowed name the key lists even when it doubles as a tier id, like an Azure deployment named smart', async () => {
-        const azureKey = { ...bedrockKey, provider: AIProviderName.AZURE }
-        mockListModels.mockResolvedValue([text('gpt-5'), text('smart')])
-
-        await expect(agentHelpers.resolveFastModelId({ platformId, providerConfig: azureKey, surface: 'flow', scope, fallbackModelId: 'smart', log })).resolves.toBe('smart')
-    })
 })
 
 describe('resolveImageModelId', () => {
