@@ -118,6 +118,30 @@ describe('code', () => {
         expect(result).toEqual({ result: 42 });
     });
 
+    it.each([
+        ['a single future import', 'from __future__ import annotations\nresult = 1', 'from __future__ import annotations\n@\nresult = 1'],
+        [
+            'a docstring and several future imports',
+            '"""doc"""\nfrom __future__ import annotations\nfrom __future__ import division\nresult = 1',
+            '"""doc"""\nfrom __future__ import annotations\nfrom __future__ import division\n@\nresult = 1',
+        ],
+        [
+            'a parenthesised future import',
+            'from __future__ import (\n    annotations,\n    division,\n)\nresult = 1',
+            'from __future__ import (\n    annotations,\n    division,\n)\n@\nresult = 1',
+        ],
+        [
+            'a backslash-continued future import',
+            'from __future__ import annotations, \\\n    division\nresult = 1',
+            'from __future__ import annotations, \\\n    division\n@\nresult = 1',
+        ],
+        ['no future import', 'import os\nresult = 1', '@\nimport os\nresult = 1'],
+    ])('Python defines inputs after %s', async (_label, code, expected) => {
+        respond({ result: 1 });
+        await runAction({ action: runPythonCodeAction, propsValue: { code, inputs: { a: 1 } } });
+        expect(sent().body.code).toBe(expected.replace('@', 'inputs = __import__("json").loads("{\\"a\\":1}")'));
+    });
+
     it.each([undefined, null, '', {}])('defines inputs as an empty object when Inputs is %j', async (inputs) => {
         respond({ ok: true });
         await runAction({ action: runJavascriptCodeAction, propsValue: { code: 'return Object.keys(inputs);', inputs } });

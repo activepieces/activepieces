@@ -65,7 +65,26 @@ function withJavascriptInputs({ code, inputs }: InjectParams): string {
 }
 
 function withPythonInputs({ code, inputs }: InjectParams): string {
-    return `inputs = __import__("json").loads(${JSON.stringify(JSON.stringify(inputsValue(inputs)))})\n${code}`;
+    const assignment = `inputs = __import__("json").loads(${JSON.stringify(JSON.stringify(inputsValue(inputs)))})`;
+    const lines = code.split('\n');
+    const at = lineAfterFutureImports(lines);
+    return [...lines.slice(0, at), assignment, ...lines.slice(at)].join('\n');
+}
+
+function lineAfterFutureImports(lines: string[]): number {
+    let end = 0;
+    let inGroup = false;
+    let inContinuation = false;
+    lines.forEach((line, index) => {
+        const isFutureImport = PYTHON_FUTURE_IMPORT.test(line);
+        if (!isFutureImport && !inGroup && !inContinuation) {
+            return;
+        }
+        end = index + 1;
+        inGroup = (inGroup || (isFutureImport && line.includes('('))) && !line.includes(')');
+        inContinuation = line.trimEnd().endsWith('\\');
+    });
+    return end;
 }
 
 function javascriptResult(body: unknown): CodeResult {
@@ -104,6 +123,8 @@ function dependenciesProp() {
 }
 
 const TIMEOUT_STATUSES = [408, 504];
+
+const PYTHON_FUTURE_IMPORT = /^from\s+__future__\s+import\b/;
 
 type ExecuteParams = {
     apiKey: string;
