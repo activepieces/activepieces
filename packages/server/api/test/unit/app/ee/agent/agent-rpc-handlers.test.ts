@@ -462,6 +462,12 @@ describe('agentRpcHandlers.executePieceTool — a configured action runs in its 
 
             expect(fastModelCall()).not.toHaveProperty('fallbackModelId')
         })
+
+        it('is never a tier id the release ships that an inline run persisted, even once that tier leaves the published list', async () => {
+            await runPieceTool({ id: 'conv-1', source: 'FLOW_STEP', projectId: 'proj-1', platformId: 'plat-1', userId: 'user-1', agentId: null, modelName: 'smart' })
+
+            expect(fastModelCall()).not.toHaveProperty('fallbackModelId')
+        })
     })
 })
 
