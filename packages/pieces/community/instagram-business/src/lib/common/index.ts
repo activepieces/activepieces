@@ -132,9 +132,9 @@ async function waitForContainer({
     }
     if (Date.now() + CONTAINER_POLL_INTERVAL_MS >= deadline) {
       throw new Error(
-        `Instagram was still processing the media after ${
-          CONTAINER_TIMEOUT_MS / 1000
-        } seconds (status ${statusCode ?? 'unknown'}). The post was not published.`,
+        `Instagram did not finish processing the media in time (status ${
+          statusCode ?? 'unknown'
+        }). The post was not published.`,
       );
     }
 
@@ -296,6 +296,8 @@ export const INSTAGRAM_API_BASE = 'https://graph.facebook.com/v23.0';
 export const CONTAINER_POLL_INTERVAL_MS = 5000;
 
 export const CONTAINER_TIMEOUT_MS = 5 * 60 * 1000;
+
+export const CAROUSEL_ALBUM_TIMEOUT_MS = 2 * 60 * 1000;
 
 export function parseArrayProp(value: unknown): unknown[] {
   if (Array.isArray(value)) {

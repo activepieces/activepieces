@@ -6,6 +6,7 @@ import {
   FacebookPageDropdown,
   parseArrayProp,
   CONTAINER_TIMEOUT_MS,
+  CAROUSEL_ALBUM_TIMEOUT_MS,
 } from '../../common';
 
 export const publishCarousel = createAction({
@@ -18,7 +19,7 @@ export const publishCarousel = createAction({
   audience: 'both',
   aiMetadata: {
     description:
-      'Publishes a single Instagram carousel album containing between 2 and 10 photos or videos, given their public URLs, with an optional caption. Every item is uploaded first and processed in parallel, and the whole publish must finish within five minutes. A carousel counts as one post against the 100-per-24-hours publishing quota. Not idempotent — each call publishes a new album.',
+      'Publishes a single Instagram carousel album containing between 2 and 10 photos or videos, given their public URLs, with an optional caption. Every item is uploaded first and processed in parallel, with up to five minutes for the items and two more for the album. A carousel counts as one post against the 100-per-24-hours publishing quota. Not idempotent — each call publishes a new album.',
     idempotent: false,
   },
   props: {
@@ -84,7 +85,11 @@ export const publishCarousel = createAction({
         caption: propsValue.caption,
       },
     });
-    await instagramCommon.waitForContainer({ containerId: albumId, page, deadline });
+    await instagramCommon.waitForContainer({
+      containerId: albumId,
+      page,
+      deadline: Date.now() + CAROUSEL_ALBUM_TIMEOUT_MS,
+    });
     return instagramCommon.publishContainer({ containerId: albumId, page });
   },
 });
