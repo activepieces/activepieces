@@ -55,6 +55,7 @@ export const pieceCache = (log: FastifyBaseLogger) => {
 
 export function currentPieceGeneration(): number {
     if (performance.now() - generationStartedAt > GENERATION_MAX_AGE_MS) {
+        system.globalLogger().info({ pieceCache: { generation, maxAgeMs: GENERATION_MAX_AGE_MS } }, '[pieceCache] Max age reached, advanced the generation')
         advanceGeneration()
     }
     return generation
