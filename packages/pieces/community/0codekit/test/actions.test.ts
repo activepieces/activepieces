@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { zeroCodeKit } from '../src';
 import { lookupVatRatesAction } from '../src/lib/actions/business/lookup-vat-rates';
 import { validateBicAction } from '../src/lib/actions/business/validate-bic';
@@ -78,6 +78,51 @@ describe('piece metadata', () => {
         const custom = zeroCodeKit.actions()['custom_api_call'];
         expect(custom).toBeDefined();
     });
+});
+
+describe('Custom API Call', () => {
+    const custom: TestAction = zeroCodeKit.actions()['custom_api_call'];
+
+    beforeEach(async () => {
+        const actual = await vi.importActual<typeof import('@activepieces/pieces-common')>('@activepieces/pieces-common');
+        vi.spyOn(actual.httpClient, 'sendRequest').mockImplementation((...args: unknown[]) => sendRequest(...args));
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    function callWith(url: string) {
+        return runAction({
+            action: custom,
+            propsValue: { url: { url }, method: 'GET', headers: {}, queryParams: {}, failsafe: false },
+        });
+    }
+
+    it('sends the API key to a path on the 0CodeKit API', async () => {
+        respond({ ok: true });
+
+        await callWith('/1saas/auth');
+
+        expect(sent().url).toBe('https://v2.1saas.co/1saas/auth');
+        expect(sent().headers.auth).toBe('zck_test');
+    });
+
+    it('accepts a full URL on the 0CodeKit API host', async () => {
+        respond({ ok: true });
+
+        await callWith('https://v2.1saas.co/1saas/auth');
+
+        expect(sent().headers.auth).toBe('zck_test');
+    });
+
+    it.each(['https://attacker.example/collect', 'https://v2.1saas.co.attacker.example/', 'https://v2.1saas.co@attacker.example/', 'http://v2.1saas.co/1saas/auth'])(
+        'refuses to send the API key to %s',
+        async (url) => {
+            await expect(callWith(url)).rejects.toThrow(/only sends your 0CodeKit API key/);
+            expect(sendRequest).not.toHaveBeenCalled();
+        },
+    );
 });
 
 describe('request shape', () => {

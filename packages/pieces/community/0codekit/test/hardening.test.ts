@@ -1,7 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ApFile } from '@activepieces/pieces-framework';
-import { HttpError } from '@activepieces/pieces-common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { entityDetectionAction } from '../src/lib/actions/ai/entity-detection';
 import { validateIbanAction } from '../src/lib/actions/business/validate-iban';
@@ -149,11 +148,24 @@ describe('downloads of links returned by 0CodeKit', () => {
         expect(sendRequest).not.toHaveBeenCalled();
     });
 
-    it('does not follow a redirect and says so', async () => {
-        sendRequest.mockRejectedValueOnce(new HttpError({}, { status: 302, responseBody: '' }));
+    it.each([
+        [301, '<html>Moved</html>'],
+        [302, ''],
+        [307, ''],
+    ])('fails on a %s redirect instead of saving its body as the file', async (status, body) => {
+        sendRequest.mockResolvedValueOnce({ status, headers: { location: 'https://elsewhere.example/a.pdf' }, body: binary(body) });
         await expect(zeroCodeKitFiles.download({ url: 'https://prod.0codekit.com/a.pdf', failure: 'Download failed.' })).rejects.toThrow(
-            /redirect \(302\), which is not followed/,
+            `Download failed. 0CodeKit answered with a redirect (${status}), which is not followed.`,
         );
+    });
+
+    it('Split PDF saves nothing when a part link redirects', async () => {
+        respond({ pdfUrls: ['https://prod.0codekit.com/a.pdf'] });
+        sendRequest.mockResolvedValueOnce({ status: 302, headers: {}, body: binary('') });
+        await expect(runAction({ action: splitPdfAction, propsValue: { pdf: PDF, mode: 'interval', interval: 1 }, write })).rejects.toThrow(
+            /redirect \(302\)/,
+        );
+        expect(write).not.toHaveBeenCalled();
     });
 
     it('Split PDF refuses a foreign part link before downloading any part', async () => {

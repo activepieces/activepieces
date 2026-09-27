@@ -75,7 +75,7 @@ import { urlExpanderAction } from './lib/actions/url/url-expander';
 import { utmBuildAction } from './lib/actions/url/utm-build';
 import { utmParseAction } from './lib/actions/url/utm-parse';
 import { zeroCodeKitAuth } from './lib/auth';
-import { ZEROCODEKIT_BASE_URL } from './lib/common/client';
+import { ZEROCODEKIT_BASE_URL, zeroCodeKitApi } from './lib/common/client';
 
 export const zeroCodeKit = createPiece({
     displayName: '0CodeKit',
@@ -164,9 +164,10 @@ export const zeroCodeKit = createPiece({
         createCustomApiCallAction({
             baseUrl: () => ZEROCODEKIT_BASE_URL,
             auth: zeroCodeKitAuth,
-            authMapping: async (auth) => ({
-                auth: auth.secret_text,
-            }),
+            authMapping: async (auth, propsValue) => {
+                zeroCodeKitApi.assertProviderUrl(propsValue['url']?.['url']);
+                return { auth: auth.secret_text };
+            },
         }),
     ],
     triggers: [],
