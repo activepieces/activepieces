@@ -75,6 +75,7 @@ const polling: Polling<
 export const newColumnTrigger = createTrigger({
   auth: snowflakeAuth,
   name: 'new_column',
+  classification: 'READ',
   displayName: 'New Column',
   description:
     'Triggers when a new column is added to the selected table. Checked by polling every few minutes.',

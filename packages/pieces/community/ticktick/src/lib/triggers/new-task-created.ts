@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'ticktick_new_task_trigger';
 export const newTaskCreatedTrigger = createTrigger({
 	auth: ticktickAuth,
 	name: 'new_task_created',
+	classification: 'READ',
 	displayName: 'New Task Created',
 	description: 'Triggers when a new task is created in a selected project.',
 	aiMetadata: {

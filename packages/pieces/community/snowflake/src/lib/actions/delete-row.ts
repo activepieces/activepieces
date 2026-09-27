@@ -11,6 +11,7 @@ import {
 
 export const deleteRowAction = createAction({
   name: 'delete_row',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Row',
   description:
     'Delete one or more rows from a Snowflake table that match a WHERE condition.',

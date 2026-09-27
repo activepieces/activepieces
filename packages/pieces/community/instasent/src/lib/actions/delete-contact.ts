@@ -5,6 +5,7 @@ import { getBaseUrl } from '../../index';
 
 export const deleteContact = createAction({
     name: 'delete_contact',
+    classification: 'DESTRUCTIVE',
     displayName: 'Delete Contact',
     description: 'Delete a single contact by User ID',
     audience: 'both',

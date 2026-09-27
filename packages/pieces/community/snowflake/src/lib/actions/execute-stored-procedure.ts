@@ -11,6 +11,7 @@ import {
 
 export const executeStoredProcedureAction = createAction({
   name: 'execute_stored_procedure',
+  classification: 'WRITE',
   displayName: 'Execute Stored Procedure',
   description: 'Call a stored procedure in Snowflake and return its result.',
   audience: 'both',

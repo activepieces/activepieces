@@ -9,6 +9,7 @@ import { makeClient, nocodbCommon } from '../common';
 export const updateRecordAction = createAction({
   auth: nocodbAuth,
   name: 'nocodb-update-record',
+  classification: 'WRITE',
   displayName: 'Update a Record',
   description: 'Updates an existing record with the given Record ID.',
   audience: 'both',

@@ -6,6 +6,7 @@ import { TaskadeAPIClient } from '../common/client';
 export const deleteTaskAction = createAction({
 	auth: taskadeAuth,
 	name: 'taskade-delete-task',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete Task',
 	description: 'Delete an existing task in a project.',
 	audience: 'both',

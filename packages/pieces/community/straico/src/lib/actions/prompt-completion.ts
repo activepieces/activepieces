@@ -14,6 +14,7 @@ export const promptCompletion = createAction({
   audience: 'both',
   auth: straicoAuth,
   name: 'prompt_completion',
+  classification: 'READ',
   displayName: 'Ask AI',
   description:
     'Enables users to generate prompt completion based on a specified model.',

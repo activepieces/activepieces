@@ -11,6 +11,7 @@ import {
 
 export const updateRowAction = createAction({
   name: 'update_row',
+  classification: 'WRITE',
   displayName: 'Update Row',
   description:
     'Update one or more rows in a Snowflake table that match a WHERE condition.',

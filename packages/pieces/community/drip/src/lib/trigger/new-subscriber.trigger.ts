@@ -11,6 +11,7 @@ const triggerNameInStore = 'drip_new_subscriber_trigger';
 export const dripNewSubscriberEvent = createTrigger({
   auth: dripAuth,
   name: 'new_subscriber',
+  classification: 'READ',
   displayName: 'New Subscriber',
   description: 'Triggers when a subscriber is created in your Drip account.',
   aiMetadata: {

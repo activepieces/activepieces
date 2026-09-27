@@ -6,6 +6,7 @@ import { getTablesOutputSchema } from '../output-schemas';
 export default createAction({
   auth: mysqlAuth,
   name: 'get_tables',
+  classification: 'SEARCH',
   displayName: 'Get Tables',
   description: 'Returns a list of tables in the database',
   audience: 'both',

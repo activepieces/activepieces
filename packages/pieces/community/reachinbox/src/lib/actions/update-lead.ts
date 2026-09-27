@@ -13,6 +13,7 @@ interface CustomVariable {
 export const updateLead = createAction({
   auth: ReachinboxAuth,
   name: 'updateLead',
+  classification: 'WRITE',
   displayName: 'Update Lead',
   description: 'Updates a Lead.',
   audience: 'both',

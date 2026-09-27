@@ -11,6 +11,7 @@ import {
 
 export const createDynamicTableAction = createAction({
   name: 'create_dynamic_table',
+  classification: 'WRITE',
   displayName: 'Create / Refresh Dynamic Table',
   description:
     'Create or replace a Snowflake Dynamic Table that automatically refreshes based on a query. ' +

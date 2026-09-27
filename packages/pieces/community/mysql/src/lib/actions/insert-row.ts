@@ -7,6 +7,7 @@ import sqlstring from 'sqlstring';
 export default createAction({
   auth: mysqlAuth,
   name: 'insert_row',
+  classification: 'WRITE',
   displayName: 'Insert Row',
   description: 'Inserts a new row into a table',
   audience: 'both',

@@ -5,6 +5,7 @@ import { HttpMethod } from '@activepieces/pieces-common';
 
 export const createExpense = createAction({
 	name: 'create_expense',
+	classification: 'WRITE',
 	displayName: 'Create Expense',
 	description: 'Log new expense in a project with cost, description, date.',
 	audience: 'both',

@@ -5,6 +5,7 @@ import { makeClient, nocodbCommon } from '../common';
 export const getRecordAction = createAction({
 	auth: nocodbAuth,
 	name: 'nocodb-get-record',
+	classification: 'READ',
 	displayName: 'Get a Record',
 	description: 'Gets a record by the Record ID.',
 	audience: 'both',

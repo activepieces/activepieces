@@ -11,6 +11,7 @@ import {
 
 export const listTablesAction = createAction({
   name: 'list_tables',
+  classification: 'SEARCH',
   displayName: 'List Tables',
   description: 'List all tables in a Snowflake schema.',
   audience: 'both',

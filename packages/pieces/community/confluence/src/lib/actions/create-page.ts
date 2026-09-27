@@ -7,6 +7,7 @@ import { parentPageIdProp, spaceIdProp } from '../common/props';
 export const createPageAction = createAction({
 	auth: confluenceAuth,
 	name: 'create-page',
+	classification: 'WRITE',
 	displayName: 'Create Page',
 	description: 'Creates a new page in a space with the given title and body.',
 	audience: 'both',

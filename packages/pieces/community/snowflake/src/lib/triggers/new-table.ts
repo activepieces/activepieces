@@ -77,6 +77,7 @@ const polling: Polling<
 export const newTableTrigger = createTrigger({
   auth: snowflakeAuth,
   name: 'new_table',
+  classification: 'READ',
   displayName: 'New Table',
   description:
     'Triggers when a new table is created in the selected schema. Checked by polling every few minutes.',

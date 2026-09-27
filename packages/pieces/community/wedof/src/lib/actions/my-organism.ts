@@ -6,6 +6,7 @@ import {wedofCommon} from '../common/wedof';
 export const myOrganism = createAction({
     auth: wedofAuth,
     name: 'myOrganism',
+    classification: 'READ',
     displayName: "Récupérer mon organisme",
     description: "Récupérer mon organisme et afficher ses détails",
     audience: 'both',

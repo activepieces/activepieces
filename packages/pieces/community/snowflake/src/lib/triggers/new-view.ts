@@ -77,6 +77,7 @@ const polling: Polling<
 export const newViewTrigger = createTrigger({
   auth: snowflakeAuth,
   name: 'new_view',
+  classification: 'READ',
   displayName: 'New View',
   description:
     'Triggers when a new view is created in the selected schema. Checked by polling every few minutes.',

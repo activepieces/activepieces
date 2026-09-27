@@ -11,6 +11,7 @@ const DEFAULT_QUERY_TIMEOUT = 30000;
 
 export const runMultipleQueries = createAction({
   name: 'runMultipleQueries',
+  classification: 'WRITE',
   displayName: 'Run Multiple Queries',
   description:
     'Execute multiple SQL statements in sequence against your Snowflake database. Optionally wrap them in a transaction so all changes are rolled back if any statement fails.',

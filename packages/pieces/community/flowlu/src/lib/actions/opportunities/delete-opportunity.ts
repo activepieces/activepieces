@@ -9,6 +9,7 @@ import { FlowluEntity, FlowluModule } from '../../common/constants';
 export const deleteOpportunityAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_delete_opportunity',
+  classification: 'DESTRUCTIVE',
   displayName: 'Delete Opportunity',
   description: 'Deletes an existing opportunity.',
   audience: 'both',

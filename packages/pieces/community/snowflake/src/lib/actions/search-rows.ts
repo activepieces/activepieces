@@ -11,6 +11,7 @@ import {
 
 export const searchRowsAction = createAction({
   name: 'search_rows',
+  classification: 'SEARCH',
   displayName: 'Search Rows',
   description:
     'Search for rows in a Snowflake table using an optional WHERE condition, ordering, and row limit.',

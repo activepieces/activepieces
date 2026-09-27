@@ -7,6 +7,7 @@ import * as z from 'zod/mini'
 export const getContact = createAction({
   auth: tarventAuth,
   name: 'tarvent_get_contact',
+  classification: 'READ',
   displayName: 'Find Contact',
   description: 'Finds a contact by your custom key data field (typically this is by email).',
   audience: 'both',

@@ -5,6 +5,7 @@ import { makeClient, nocodbCommon } from '../common';
 export const deleteRecordAction = createAction({
 	auth: nocodbAuth,
 	name: 'nocodb-delete-record',
+	classification: 'DESTRUCTIVE',
 	displayName: 'Delete a Record',
 	description: 'Deletes a record with the given Record ID.',
 	audience: 'both',

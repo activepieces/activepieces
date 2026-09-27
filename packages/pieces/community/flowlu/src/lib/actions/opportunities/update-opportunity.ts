@@ -10,6 +10,7 @@ import { flowluProps } from '../../common/props';
 export const updateOpportunityAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_update_opportunity',
+  classification: 'WRITE',
   displayName: 'Update Opportunity',
   description: 'Updates an existing opportunity.',
   audience: 'both',

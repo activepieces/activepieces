@@ -6,6 +6,7 @@ import { ListAPIResponse, ListAPIV3Response } from '../common/types';
 export const searchRecordsAction = createAction({
   auth: nocodbAuth,
   name: 'nocodb-search-records',
+  classification: 'SEARCH',
   displayName: 'Search Records',
   description: 'Returns a list of records matching the where condition.',
   audience: 'both',

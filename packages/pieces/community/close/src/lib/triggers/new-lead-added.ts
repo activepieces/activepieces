@@ -10,6 +10,7 @@ const TRIGGER_KEY = 'new-lead-trigger';
 export const newLeadAdded = createTrigger({
 	auth: closeAuth,
 	name: 'new_lead_created',
+	classification: 'READ',
 	displayName: 'New Lead Created',
 	description: 'Triggers when a new lead is created.',
 	aiMetadata: {

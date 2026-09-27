@@ -11,6 +11,7 @@ export const ragPromptCompletion = createAction({
   audience: 'both',
   auth: straicoAuth,
   name: 'rag_prompt_completion',
+  classification: 'READ',
   displayName: 'RAG Prompt Completion',
   description: 'Send a prompt to a specific RAG (Retrieval-Augmented Generation) model.',
   aiMetadata: { description: 'Answers a question from the documents indexed in one specific RAG knowledge base, returning the answer together with the source passages it was drawn from, and letting retrieval run as plain similarity, MMR for diversity or a similarity score threshold. Pick it when the reply must come from uploaded documents rather than model memory; prefer Ask AI when no document grounding is needed and Agent Prompt Completion when a saved agent already carries the model, persona and knowledge base. Requires a raw RAG id typed as text plus a prompt and an explicit chat model. Not idempotent: each call spends credits and returns a fresh answer.', idempotent: false },

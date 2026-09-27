@@ -56,6 +56,7 @@ interface CampaignAnalyticsResponse {
 export const getCampaignAnalytics = createAction({
   auth: ReachinboxAuth,
   name: 'getCampaignAnalytics',
+  classification: 'READ',
   displayName: 'Get Campaign Analytics',
   description:
     'Fetch analytics data for a selected campaign based on a date range.',

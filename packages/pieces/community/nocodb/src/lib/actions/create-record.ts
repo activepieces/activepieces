@@ -5,6 +5,7 @@ import { makeClient, nocodbCommon } from '../common';
 export const createRecordAction = createAction({
 	auth: nocodbAuth,
 	name: 'nocodb-create-record',
+	classification: 'WRITE',
 	displayName: 'Create a Record',
 	description: 'Creates a new record in the given table.',
 	audience: 'both',

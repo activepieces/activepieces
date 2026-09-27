@@ -11,6 +11,7 @@ import { isEmpty } from '@activepieces/pieces-framework';
 export const generateAiImage = createAction({
   auth: vadooAiAuth,
   name: 'generate_ai_image',
+  classification: 'WRITE',
   displayName: 'Generate AI Image',
   description: 'Generates AI generated image based on prompt for a character.',
   audience: 'both',

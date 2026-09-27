@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 export const findConversationAction = createAction({
     auth: intercomAuth,
     name: 'find-conversation',
+    classification: 'SEARCH',
     displayName: 'Find Conversation',
     description: 'Searches for conversations using various criteria',
     audience: 'both',

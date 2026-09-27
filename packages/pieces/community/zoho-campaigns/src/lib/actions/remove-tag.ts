@@ -5,6 +5,7 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 export const removeTag = createAction({
   auth: zohoCampaignsAuth,
   name: 'removeTag',
+  classification: 'WRITE',
   displayName: 'Remove Tag',
   description: 'Remove a tag from a contact.',
   audience: 'both',

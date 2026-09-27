@@ -101,6 +101,7 @@ const polling: Polling<
 export const newOrUpdatedRowTrigger = createTrigger({
   auth: snowflakeAuth,
   name: 'new_or_updated_row',
+  classification: 'READ',
   displayName: 'New or Updated Row',
   description:
     'Triggers when a row is inserted or updated in the selected table. Uses an "updated at" timestamp column you choose — any row whose timestamp is newer than the last check will fire the trigger.',

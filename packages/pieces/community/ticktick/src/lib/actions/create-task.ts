@@ -14,6 +14,7 @@ import { projectId } from '../common/props';
 export const createTaskAction = createAction({
 	auth: ticktickAuth,
 	name: 'create_task',
+	classification: 'WRITE',
 	displayName: 'Create Task',
 	description: 'Creates a new in a specific list.',
 	audience: 'both',

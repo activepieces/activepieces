@@ -10,6 +10,7 @@ import { flowluProps } from '../../common/props';
 export const createTaskAction = createAction({
   auth: flowluAuth,
   name: 'flowlu_create_task',
+  classification: 'WRITE',
   displayName: 'Create Task',
   description: 'Creates a new task.',
   audience: 'both',

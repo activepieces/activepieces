@@ -6,6 +6,7 @@ import { common } from '../common';
 
 export const createMember = createAction({
   name: 'create_member',
+  classification: 'WRITE',
   displayName: 'Create Member',
   description: 'Create a new member',
   audience: 'both',

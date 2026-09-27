@@ -11,6 +11,7 @@ export const listRags = createAction({
   audience: 'both',
   auth: straicoAuth,
   name: 'list_rags',
+  classification: 'SEARCH',
   displayName: 'List RAGs',
   description: 'List all RAG (Retrieval-Augmented Generation) bases for a user.',
   aiMetadata: { description: 'Returns every RAG knowledge base owned by the authenticated account with its id, name, source filename and chunking settings. Use it as the id-discovery step, since Get RAG by ID, Update RAG, Delete RAG and RAG Prompt Completion all take a raw id typed as text; prefer Get RAG by ID once that id is known. Takes no inputs and offers no server-side filtering or search. Read-only and idempotent.', idempotent: true },

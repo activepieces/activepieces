@@ -6,6 +6,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 export const createEvent = createAction({
   auth: customerIOAuth,
   name: 'create_event',
+  classification: 'WRITE',
   displayName: 'Create Event',
   description: 'Create an event in Customer.io',
   audience: 'both',
