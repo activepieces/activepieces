@@ -66,16 +66,21 @@ jobs:
       - name: Build Docker image
         run: docker build -t activepieces-benchmark:local .
 
+      - name: Export cell env (compose reads these on every invocation)
+        run: |
+          {
+            echo "APP_REPLICAS=${{ matrix.apps }}"
+            echo "WORKER_REPLICAS=${{ matrix.workers }}"
+            echo "WORKER_CPUS=${{ matrix.worker_cpus }}"
+            echo "WORKER_MEMORY=${{ matrix.worker_memory }}"
+            echo "WORKER_HEAP_MB=${{ matrix.worker_heap_mb }}"
+            echo "AP_WORKER_CONCURRENCY=${{ matrix.worker_concurrency }}"
+            echo "AP_REUSE_SANDBOX=${{ matrix.reuse }}"
+          } >> "$GITHUB_ENV"
+
       - name: Start benchmark stack
         run: |
-          APP_REPLICAS=${{ matrix.apps }} \
-          WORKER_REPLICAS=${{ matrix.workers }} \
-          WORKER_CPUS=${{ matrix.worker_cpus }} \
-          WORKER_MEMORY=${{ matrix.worker_memory }} \
-          WORKER_HEAP_MB=${{ matrix.worker_heap_mb }} \
-          AP_WORKER_CONCURRENCY=${{ matrix.worker_concurrency }} \
-          AP_REUSE_SANDBOX=${{ matrix.reuse }} \
-            docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml up -d
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml up -d
           echo "Waiting for containers to start..."
           sleep 5
           docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml ps
