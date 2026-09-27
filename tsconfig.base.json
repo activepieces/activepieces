@@ -346,6 +346,9 @@
       "@activepieces/piece-contiguity": [
         "packages/pieces/community/contiguity/src/index.ts"
       ],
+      "@activepieces/piece-convertapi": [
+        "packages/pieces/community/convertapi/src/index.ts"
+      ],
       "@activepieces/piece-convertkit": [
         "packages/pieces/community/convertkit/src/index.ts"
       ],
