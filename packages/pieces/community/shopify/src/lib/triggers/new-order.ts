@@ -2,7 +2,6 @@ import { createShopifyWebhookTrigger } from '../common/register-webhook';
 
 export const newOrder = createShopifyWebhookTrigger({
   name: 'new_order',
-  classification: 'READ',
   description: 'Triggered when a new order is created',
   topic: 'orders/create',
   displayName: 'New Order',

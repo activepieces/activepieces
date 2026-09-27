@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { orderTransactionOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCaptureOrderPayment = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCaptureOrderPayment = createAction({
       'Moves money: captures all or part of an authorized payment on an order. Needs the authorization transaction id from list_order_transactions and the amount to capture. To release an authorization without charging use void_order_transaction; to record an offline payment use mark_order_as_paid. Each call is a new capture, so do not retry blindly; check list_order_transactions first.',
     idempotent: false,
   },
+  outputSchema: orderTransactionOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',
@@ -66,6 +68,7 @@ export const shopifyAiCaptureOrderPayment = createAction({
     }>({
       auth,
       query: `mutation CaptureOrderPayment($input: OrderCaptureInput!) { orderCapture(input: $input) { transaction { ${shopifyFields.TRANSACTION_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderCapture.transaction'],
       variables: { input },
     });
     const transaction = data.orderCapture?.transaction;

@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { abandonmentOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetAbandonment = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetAbandonment = createAction({
       'Returns one abandonment record by its Abandonment id: whether it was a browse, cart or checkout abandonment, the recovery email state, whether the customer ordered since, and the linked abandoned checkout. Use get_checkout_abandonment when you only have an abandoned checkout id. Customer fields may be null on stores without protected customer data access (see redacted_fields). Read-only.',
     idempotent: true,
   },
+  outputSchema: abandonmentOutputSchema,
   props: {
     abandonment_id: Property.ShortText({
       displayName: 'Abandonment ID',

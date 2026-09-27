@@ -16,7 +16,8 @@ export const shopifyAiDeclineRequestedOrderEdit = createAction({
   description: 'Decline a buyer request to edit an order, with an optional note to the buyer.',
   audience: 'ai',
   aiMetadata: {
-    description: `Declines one pending (status REQUESTED) buyer-requested order edit; the order itself is not changed and the status becomes DECLINED. The optional decline_note (up to ${requestedOrderEditFields.DECLINE_NOTE_MAX_LENGTH} characters) is the message Shopify sends to the buyer about the decline. Get the requested_order_edit_id from list_requested_order_edits. Needs the write_orders access scope. Not idempotent: an edit that is already declined or resolved is rejected, so check its status with list_requested_order_edits before retrying.`,
+    description:
+      'Declines one pending (status REQUESTED) buyer-requested order edit; the order itself is not changed and the status becomes DECLINED. The optional decline_note (up to 500 characters) is the message Shopify sends to the buyer about the decline. Get the requested_order_edit_id from list_requested_order_edits. Needs the write_orders access scope. Not idempotent: an edit that is already declined or resolved is rejected, so check its status with list_requested_order_edits before retrying.',
     idempotent: false,
   },
   outputSchema: requestedOrderEditOutputSchema,

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { createOrderRiskAssessmentOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCreateOrderRiskAssessment = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiCreateOrderRiskAssessment = createAction({
       'Adds a fraud-risk assessment from this app to one order: a risk level (high, medium, low, none, pending) and at least one fact explaining it. It is shown to staff in the order\'s risk panel and feeds the order\'s risk recommendation; it does not cancel or hold the order. Each call adds another assessment, so do not repeat it.',
     idempotent: false,
   },
+  outputSchema: createOrderRiskAssessmentOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

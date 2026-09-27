@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listTenderTransactionsOutputSchema } from '../../output-schemas/orders';
 
 const MAX_PAGE_SIZE = 200;
 
@@ -24,6 +25,7 @@ export const shopifyAiListTenderTransactions = createAction({
       'Lists tender transactions: the money actually received or refunded across the whole store, with amount, payment method, processed date and order. Use it for payout reconciliation or daily takings; use list_order_transactions for one order. Supports search syntax such as "processed_at:>=2026-09-01". Paged: pass end_cursor back as the cursor while has_next_page is true.',
     idempotent: true,
   },
+  outputSchema: listTenderTransactionsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify search syntax, for example "processed_at:>=2026-09-01" or "test:false". Leave empty for all.'

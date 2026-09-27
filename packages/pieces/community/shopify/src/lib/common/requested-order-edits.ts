@@ -6,7 +6,7 @@ import {
   shopifyValues,
 } from './graphql';
 
-const REQUESTED_EDIT_REMOVALS_LIMIT = 25;
+const REQUESTED_EDIT_REMOVALS_LIMIT = 50;
 
 const CALCULATED_REQUESTED_EDIT_REMOVALS_LIMIT = 50;
 

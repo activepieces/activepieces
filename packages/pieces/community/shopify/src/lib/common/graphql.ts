@@ -20,9 +20,10 @@ async function shopifyGraphql<TData>(
   }
   const { data, error } = await tryCatch(() => sendGraphqlRequest<TData>(params));
   if (error) {
-    throw new Error(
-      `${error.message} [idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`
-    );
+    const hint = error.message.startsWith(WITHHELD_RESULT_PREFIX)
+      ? `[idempotency_key used: ${idempotencyKey}.]`
+      : `[idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`;
+    throw new Error(`${error.message} ${hint}`);
   }
   return data;
 }
@@ -66,9 +67,24 @@ async function sendGraphqlRequest<TData>({
       )}`
     );
   }
+  const searchWarning = findSearchWarning(body?.extensions?.search ?? []);
+  if (searchWarning) {
+    throw new Error(
+      `Shopify ignored part of the search query "${searchWarning.query}" (${searchWarning.message}), so the result would cover every record. Use a filter this action supports, or a list or search action that supports it. Nothing was changed.`
+    );
+  }
   const data = body?.data;
   if (data === null || data === undefined) {
     throw toGraphqlError(errors);
+  }
+  const withheld = findWithheldMutationResult({
+    query,
+    errors,
+    primaryPaths: primaryPaths ?? [],
+  });
+  if (withheld) {
+    throwOnUserErrors({ data, toleratedCodes: toleratedUserErrorCodes ?? [] });
+    throw toWithheldResultError(withheld);
   }
   const blocking = errors.filter(
     (entry) => !isFieldRedaction({ entry, primaryPaths: primaryPaths ?? [] })
@@ -81,6 +97,21 @@ async function sendGraphqlRequest<TData>({
     (entry.path ?? []).map((segment) => String(segment)).join('.')
   );
   return { data, redactedFields };
+}
+
+function findSearchWarning(
+  searches: ShopifySearchExtension[]
+): { query: string; message: string } | undefined {
+  for (const search of searches) {
+    const warning = (search.warnings ?? [])[0];
+    if (warning) {
+      return {
+        query: search.query ?? '',
+        message: `${warning.field ? `${warning.field}: ` : ''}${warning.message ?? 'unsupported filter'}`,
+      };
+    }
+  }
+  return undefined;
 }
 
 function isFieldRedaction({
@@ -101,8 +132,52 @@ function isFieldRedaction({
   if (code === 'ACCESS_DENIED') {
     return true;
   }
-  return /protected customer data|not approved to access/i.test(
-    entry.message ?? ''
+  return isProtectedDataDenial(entry);
+}
+
+function isProtectedDataDenial(entry: ShopifyGraphqlError): boolean {
+  if (/protected customer data|not approved to access/i.test(entry.message ?? '')) {
+    return true;
+  }
+  return String(entry.extensions?.documentation ?? '').includes(
+    'protected-customer-data'
+  );
+}
+
+function findWithheldMutationResult({
+  query,
+  errors,
+  primaryPaths,
+}: {
+  query: string;
+  errors: ShopifyGraphqlError[];
+  primaryPaths: string[];
+}): ShopifyGraphqlError | undefined {
+  if (!/^\s*mutation\b/.test(query)) {
+    return undefined;
+  }
+  return errors.find((entry) => {
+    const path = (entry.path ?? []).map((segment) => String(segment));
+    return (
+      path.length >= 2 &&
+      primaryPaths.includes(path.join('.')) &&
+      isProtectedDataDenial(entry)
+    );
+  });
+}
+
+const WITHHELD_RESULT_PREFIX = 'Shopify APPLIED this change';
+
+function toWithheldResultError(entry: ShopifyGraphqlError): Error {
+  const path = (entry.path ?? []).map((segment) => String(segment)).join('.');
+  return new Error(
+    `${WITHHELD_RESULT_PREFIX}, but withheld the returned record (${path}) because this app is not approved for protected customer data. Do not repeat the operation: it already took effect. To get the result back, grant the app protected customer data access (Partner Dashboard > App > API access > Protected customer data). Shopify said: ${entry.message ?? ''}`.trim()
+  );
+}
+
+function toProtectedDataError(entry: ShopifyGraphqlError): Error {
+  return new Error(
+    `Shopify withheld protected customer data: ${entry.message ?? ''} The app needs protected customer data access (Partner Dashboard > App > API access > Protected customer data, including the name, email, phone and address fields it reads). Adding Admin API scopes or reinstalling the app will not fix this.`
   );
 }
 
@@ -127,6 +202,10 @@ function isPrimaryPath({
 function toGraphqlError(errors: ShopifyGraphqlError[]): Error {
   if (errors.length === 0) {
     return new Error('Shopify returned no data and no error details.');
+  }
+  const protectedData = errors.find(isProtectedDataDenial);
+  if (protectedData) {
+    return toProtectedDataError(protectedData);
   }
   const denied = errors.find(
     (entry) => entry.extensions?.code === 'ACCESS_DENIED'
@@ -354,6 +433,26 @@ function toBooleanChoice(value: unknown): boolean | undefined {
     return false;
   }
   return undefined;
+}
+
+function readClearable<T>({
+  value,
+  clear,
+  name,
+  empty,
+}: {
+  value: T | undefined;
+  clear: boolean | undefined;
+  name: string;
+  empty: T;
+}): T | undefined {
+  if (!clear) {
+    return value;
+  }
+  if (value !== undefined) {
+    throw new Error(`Give either ${name} or clear_${name === 'body_html' ? 'body' : name}, not both. Nothing was changed.`);
+  }
+  return empty;
 }
 
 function compact(input: Record<string, unknown>): Record<string, unknown> {
@@ -1058,6 +1157,7 @@ export const shopifyGraphqlClient = {
 };
 
 export const shopifyValues = {
+  readClearable,
   readFirst,
   nonEmpty,
   readStringList,
@@ -1122,6 +1222,7 @@ export type ShopifyGraphqlError = {
   extensions?: {
     code?: string;
     requiredAccess?: string;
+    documentation?: string;
   };
 };
 
@@ -1132,7 +1233,13 @@ export type ShopifyGraphqlResponse<TData> = {
     cost?: {
       throttleStatus?: Record<string, unknown>;
     };
+    search?: ShopifySearchExtension[];
   };
+};
+
+export type ShopifySearchExtension = {
+  query?: string;
+  warnings?: { field?: string; message?: string; code?: string }[];
 };
 
 export type ShopifyPage<TItem> = {

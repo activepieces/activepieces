@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { orderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCreateOrderWithLineItems = createAction({
   auth: shopifyAuth,
@@ -17,9 +18,10 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a committed order (not a draft) with one or more product-variant or custom line items, an optional customer, shipping address, shipping line and at most one discount code. Use create_draft_order_with_line_items instead when the customer should review or pay through an invoice. Each call creates a new order, so retries duplicate; development stores allow 5 orders per minute. No receipt is emailed unless send_receipt is on.',
+      'Creates a committed order (not a draft) with one or more product-variant or custom line items, an optional customer, shipping address, shipping line and at most one discount code. Use create_draft_order_with_line_items instead when the customer should review or pay through an invoice. Each call creates a new order, so retries duplicate; development stores allow 5 orders per minute. No receipt is emailed unless send_receipt is on. For a paid or authorized order give payment_amount, which records an offline (manual gateway) payment: no card is charged. A manual PAID payment can later be refunded; a manual AUTHORIZED one can be marked captured (capture_order_payment) or voided, which only updates the order records. To import an order that already shipped, set fulfillment_location_id (and tracking_numbers, one per package): the order is created fulfilled for all line items.',
     idempotent: false,
   },
+  outputSchema: orderOutputSchema,
   props: {
     line_items: Property.Array({
       displayName: 'Line Items',
@@ -77,7 +79,8 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
     }),
     financial_status: Property.StaticDropdown({
       displayName: 'Financial Status',
-      description: 'Payment status to record on the order. Leave empty to let Shopify decide.',
+      description:
+        'Payment status of the order. Authorized, Paid and Partially paid need payment_amount, which records a manual payment; without it Shopify would only show the label and the order could not be refunded, captured or marked as paid. Leave empty for pending.',
       required: false,
       options: {
         options: [
@@ -87,6 +90,12 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
           { label: 'Partially paid', value: 'PARTIALLY_PAID' },
         ],
       },
+    }),
+    payment_amount: Property.Number({
+      displayName: 'Payment Amount',
+      description:
+        'Amount already paid (Paid, Partially paid) or authorized (Authorized), recorded as a manual payment in the order currency, for example 40.5. Needed with those financial statuses.',
+      required: false,
     }),
     note: Property.LongText({
       displayName: 'Note',
@@ -200,6 +209,23 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
       required: false,
       defaultValue: false,
     }),
+    fulfillment_location_id: Property.ShortText({
+      displayName: 'Fulfilled From Location ID',
+      description:
+        'Set only when importing an order that was already shipped: the location id (from list_locations) it shipped from. The order is then created fulfilled for all line items. Leave empty for an unfulfilled order.',
+      required: false,
+    }),
+    tracking_numbers: Property.Array({
+      displayName: 'Tracking Numbers',
+      description:
+        'Tracking numbers of the imported fulfillment, one per package, for example ["1Z999AA10123456784", "1Z999AA10123456785"]. Needs fulfillment_location_id.',
+      required: false,
+    }),
+    tracking_company: Property.ShortText({
+      displayName: 'Tracking Company',
+      description: 'Carrier of the tracking numbers, for example "UPS", "USPS" or "DHL Express". Needs fulfillment_location_id.',
+      required: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const currency = shopifyValues.nonEmpty(propsValue.currency)?.toUpperCase();
@@ -256,7 +282,21 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
       phone: propsValue.shipping_phone,
     });
     const customerId = shopifyValues.nonEmpty(propsValue.customer_id);
+    const fulfillment = buildFulfillment({
+      locationId: shopifyValues.nonEmpty(propsValue.fulfillment_location_id),
+      trackingNumbers: shopifyValues.readStringList(propsValue.tracking_numbers),
+      trackingCompany: shopifyValues.nonEmpty(propsValue.tracking_company),
+      notifyCustomer: propsValue.send_fulfillment_receipt ?? false,
+    });
+    const transactions = buildPaymentTransactions({
+      financialStatus: propsValue.financial_status,
+      amount: propsValue.payment_amount ?? undefined,
+      currency,
+    });
     const order = shopifyValues.compact({
+      transactions,
+      fulfillment,
+      fulfillmentStatus: fulfillment ? 'FULFILLED' : undefined,
       lineItems,
       currency,
       email: shopifyValues.nonEmpty(propsValue.email),
@@ -284,6 +324,7 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
     }>({
       auth,
       query: `mutation CreateOrder($order: OrderCreateOrderInput!, $options: OrderCreateOptionsInput) { orderCreate(order: $order, options: $options) { order { ${shopifyFields.ORDER_DETAIL_FIELDS} } userErrors { field message code } } }`,
+      primaryPaths: ['orderCreate.order'],
       variables: { order, options },
     });
     const created = data.orderCreate?.order;
@@ -296,6 +337,62 @@ export const shopifyAiCreateOrderWithLineItems = createAction({
     };
   },
 });
+
+function buildPaymentTransactions({
+  financialStatus,
+  amount,
+  currency,
+}: {
+  financialStatus: string | undefined;
+  amount: number | undefined;
+  currency: string | undefined;
+}): Record<string, unknown>[] | undefined {
+  const needsPayment = financialStatus !== undefined && financialStatus !== 'PENDING';
+  if (!needsPayment) {
+    if (amount !== undefined) {
+      throw new Error('Set financial_status to PAID, PARTIALLY_PAID or AUTHORIZED when giving payment_amount.');
+    }
+    return undefined;
+  }
+  if (amount === undefined || amount <= 0) {
+    throw new Error(
+      `Set "payment_amount" (greater than 0) with financial_status ${financialStatus}. Without it Shopify records no payment, so the order could not be refunded, captured or marked as paid. To record the payment later, create the order as PENDING and call mark_order_as_paid.`
+    );
+  }
+  return [
+    {
+      kind: financialStatus === 'AUTHORIZED' ? 'AUTHORIZATION' : 'SALE',
+      status: 'SUCCESS',
+      gateway: 'manual',
+      amountSet: toMoneyBag({ amount, currency }),
+    },
+  ];
+}
+
+function buildFulfillment({
+  locationId,
+  trackingNumbers,
+  trackingCompany,
+  notifyCustomer,
+}: {
+  locationId: string | undefined;
+  trackingNumbers: string[] | undefined;
+  trackingCompany: string | undefined;
+  notifyCustomer: boolean;
+}): Record<string, unknown> | undefined {
+  if (!locationId) {
+    if ((trackingNumbers?.length ?? 0) > 0 || trackingCompany) {
+      throw new Error('Set "fulfillment_location_id" when giving tracking numbers or a tracking company.');
+    }
+    return undefined;
+  }
+  return shopifyValues.compact({
+    locationId: shopifyGraphqlClient.toGid({ type: 'Location', id: locationId }),
+    trackingNumbers: trackingNumbers && trackingNumbers.length > 0 ? trackingNumbers : undefined,
+    trackingCompany,
+    notifyCustomer,
+  });
+}
 
 function buildDiscount({
   code,

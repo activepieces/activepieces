@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { searchCustomersOutputSchema } from '../../output-schemas/orders';
 
 const MAX_PAGE_SIZE = 130;
 
@@ -24,6 +25,7 @@ export const shopifyAiSearchCustomers = createAction({
       'Searches customers with Shopify search syntax (for example "email:jane@example.com", "phone:+16135551111", "tag:vip" or a plain name) and returns one page of customer profiles. Use get_customer_profile when you already have the id. Paged: pass end_cursor back as the cursor while has_next_page is true. Contact fields may be null on stores without protected customer data access (see redacted_fields).',
     idempotent: true,
   },
+  outputSchema: searchCustomersOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify customer search syntax, for example "email:jane@example.com", "country:Canada" or "orders_count:>5". Leave empty to list all customers.'

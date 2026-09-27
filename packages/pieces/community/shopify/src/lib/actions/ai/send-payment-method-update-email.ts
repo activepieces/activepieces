@@ -33,7 +33,7 @@ export const shopifyAiSendPaymentMethodUpdateEmail = createAction({
     resource_id: Property.ShortText({
       displayName: 'Resource ID',
       description:
-        'The id of the order, draft order or subscription contract, numeric or a full id such as "gid://shopify/Order/450789469", "gid://shopify/DraftOrder/…" or "gid://shopify/SubscriptionContract/…". It must match the resource type.',
+        'The id of the order, draft order or subscription contract, numeric or a full id such as "gid://shopify/Order/450789469", "gid://shopify/DraftOrder/…" or "gid://shopify/SubscriptionContract/…". It must match the resource type; Shopify receives the number.',
       required: true,
     }),
     from: Property.ShortText({
@@ -95,7 +95,7 @@ function toMandateResourceId({ resourceType, value }: { resourceType: string; va
       `Resource id "${trimmed}" is ${/^[AEIOU]/.test(match[1]) ? 'an' : 'a'} ${match[1]} id, but resource type ${resourceType} needs a ${gidType} id. Nothing was sent.`
     );
   }
-  return gid;
+  return gid.slice(gid.lastIndexOf('/') + 1);
 }
 
 const MANDATE_GID_TYPES: Record<string, string> = {

@@ -15,7 +15,8 @@ import {
 } from '../../common/requested-order-edits';
 import { listRequestedOrderEditsOutputSchema } from '../../output-schemas/requested-order-edits';
 
-const MAX_PAGE_SIZE = 5;
+const MAX_PAGE_SIZE = 25;
+const FETCH_PAGE_SIZE = 10;
 
 export const shopifyAiListRequestedOrderEdits = createAction({
   auth: shopifyAuth,
@@ -26,7 +27,7 @@ export const shopifyAiListRequestedOrderEdits = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists the buyer-requested order edits of one order, each with its id, status (REQUESTED = waiting for the merchant, RESOLVED, DECLINED), request, decline and resolve dates, and the line items the buyer asked to remove with quantities (up to 25 per edit; removals_truncated tells when there are more). Also returns the order-level order_requested_edit_status (NONE, REQUESTED, RESOLVED, DECLINED). Use it to find the requested_order_edit_id for decline_requested_order_edit or resolve_requested_order_edit, and to check whether create_requested_order_edit already took effect before retrying it. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_orders access scope. Without the read_all_orders scope only orders from the last 60 days are visible. No customer contact fields are read, so protected customer data access is not needed. Read-only.',
+      'Lists the buyer-requested order edits of one order, each with its id, status (REQUESTED = waiting for the merchant, RESOLVED, DECLINED), request, decline and resolve dates, and the line items the buyer asked to remove with quantities (up to 50 per edit, the most an edit can hold; removals_truncated tells when there are more). Also returns the order-level order_requested_edit_status (NONE, REQUESTED, RESOLVED, DECLINED). Use it to find the requested_order_edit_id for decline_requested_order_edit or resolve_requested_order_edit, and to check whether create_requested_order_edit already took effect before retrying it. Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_orders access scope. Without the read_all_orders scope only orders from the last 60 days are visible. No customer contact fields are read, so protected customer data access is not needed. Read-only. Returns at most 10 edits per call, even when first is larger; pass end_cursor back as after while has_next_page is true.',
     idempotent: true,
   },
   outputSchema: listRequestedOrderEditsOutputSchema,
@@ -53,7 +54,7 @@ export const shopifyAiListRequestedOrderEdits = createAction({
       query: `query ListRequestedOrderEdits($id: ID!, $first: Int!, $after: String) { order(id: $id) { id name displayRequestedEditStatus requestedOrderEdits(first: $first, after: $after) { nodes { ${requestedOrderEditFields.REQUESTED_ORDER_EDIT_FIELDS} } ${shopifyFields.PAGE_INFO_FIELDS} } } }`,
       variables: {
         id,
-        first: shopifyValues.readFirst({ value: propsValue.first, max: MAX_PAGE_SIZE }),
+        first: Math.min(shopifyValues.readFirst({ value: propsValue.first, max: MAX_PAGE_SIZE }), FETCH_PAGE_SIZE),
         after: shopifyValues.nonEmpty(propsValue.after),
       },
       primaryPaths: ['order.requestedOrderEdits'],

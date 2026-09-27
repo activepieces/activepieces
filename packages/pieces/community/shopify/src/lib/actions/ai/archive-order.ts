@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { orderSummaryOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiArchiveOrder = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiArchiveOrder = createAction({
       'Closes an order, which Shopify shows as archived; use it once an order is fully paid and fulfilled. This does not cancel or refund anything, and unarchive_order reopens it. Archiving an already archived order leaves it archived, so repeating is safe.',
     idempotent: true,
   },
+  outputSchema: orderSummaryOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',
@@ -33,6 +35,7 @@ export const shopifyAiArchiveOrder = createAction({
     }>({
       auth,
       query: `mutation ArchiveOrder($input: OrderCloseInput!) { orderClose(input: $input) { order { ${shopifyFields.ORDER_SUMMARY_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderClose.order'],
       variables: { input: { id } },
     });
     const order = data.orderClose?.order;

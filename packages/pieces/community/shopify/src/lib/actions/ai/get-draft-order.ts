@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { draftOrderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetDraftOrder = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetDraftOrder = createAction({
       'Returns one draft order by id: status, invoice URL, totals, customer, payment terms, the first 100 line items and, once completed, the resulting order id. Use list_draft_orders to find a draft first. Read-only.',
     idempotent: true,
   },
+  outputSchema: draftOrderOutputSchema,
   props: {
     draft_order_id: Property.ShortText({
       displayName: 'Draft Order ID',

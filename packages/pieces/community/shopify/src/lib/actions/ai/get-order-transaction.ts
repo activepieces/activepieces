@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { orderTransactionOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetOrderTransaction = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetOrderTransaction = createAction({
       'Returns one order transaction by its id: kind, status, amount, gateway, capturable state, parent transaction and the order it belongs to. Use list_order_transactions when you only know the order. Read-only.',
     idempotent: true,
   },
+  outputSchema: orderTransactionOutputSchema,
   props: {
     transaction_id: Property.ShortText({
       displayName: 'Transaction ID',

@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { customerOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiUpdateCustomerProfile = createAction({
   auth: shopifyAuth,
@@ -18,9 +19,10 @@ export const shopifyAiUpdateCustomerProfile = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes one customer; fields left empty are not sent and keep their values, and marketing consent is never touched. Sending tags replaces all tags, so use add_tags or remove_tags for single tags. Addresses are changed with the customer address actions. Re-running with the same values is safe.',
+      'Changes one customer; fields left empty are not sent and keep their values, and marketing consent is never touched. Sending tags replaces all tags, so use add_tags or remove_tags for single tags. Addresses are changed with the customer address actions. Re-running with the same values is safe. To blank the note or remove every tag, set clear_note or clear_tags instead of sending an empty value.',
     idempotent: true,
   },
+  outputSchema: customerOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',
@@ -54,7 +56,7 @@ export const shopifyAiUpdateCustomerProfile = createAction({
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'The complete new tag list. Replaces every existing tag; leave empty to keep the current tags.',
+      description: 'The complete new tag list. Replaces every existing tag; leave empty to keep the current tags (use clear_tags to remove all).',
       required: false,
     }),
     locale: Property.ShortText({
@@ -66,6 +68,18 @@ export const shopifyAiUpdateCustomerProfile = createAction({
       displayName: 'Tax Exempt',
       description: 'Set whether the customer is exempt from taxes. Leave empty to keep the current setting.',
     }),
+    clear_note: Property.Checkbox({
+      displayName: 'Clear Note',
+      description: 'Remove the existing note. Leave note empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
+    clear_tags: Property.Checkbox({
+      displayName: 'Clear Tags',
+      description: 'Remove every tag. Leave tags empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const tags = shopifyValues.readStringList(propsValue.tags);
@@ -74,8 +88,8 @@ export const shopifyAiUpdateCustomerProfile = createAction({
       phone: shopifyValues.nonEmpty(propsValue.phone),
       firstName: shopifyValues.nonEmpty(propsValue.first_name),
       lastName: shopifyValues.nonEmpty(propsValue.last_name),
-      note: shopifyValues.nonEmpty(propsValue.note),
-      tags: tags && tags.length > 0 ? tags : undefined,
+      note: shopifyValues.readClearable({ value: shopifyValues.nonEmpty(propsValue.note), clear: propsValue.clear_note, name: 'note', empty: '' }),
+      tags: shopifyValues.readClearable({ value: tags && tags.length > 0 ? tags : undefined, clear: propsValue.clear_tags, name: 'tags', empty: [] }),
       locale: shopifyValues.nonEmpty(propsValue.locale),
       taxExempt: shopifyValues.toBooleanChoice(propsValue.tax_exempt),
     });
@@ -88,6 +102,7 @@ export const shopifyAiUpdateCustomerProfile = createAction({
     }>({
       auth,
       query: `mutation UpdateCustomerProfile($input: CustomerInput!) { customerUpdate(input: $input) { customer { ${shopifyFields.CUSTOMER_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerUpdate.customer'],
       variables: { input: { id, ...patch } },
     });
     const customer = data.customerUpdate?.customer;

@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { searchOrdersOutputSchema } from '../../output-schemas/orders';
 
 const MAX_PAGE_SIZE = 40;
 
@@ -24,6 +25,7 @@ export const shopifyAiSearchOrders = createAction({
       'Searches orders with Shopify search syntax (for example "financial_status:paid created_at:>=2026-01-01" or "email:jane@example.com" or "name:#1001") and returns one page of order summaries without line items; use get_order for the full order. Paged: pass end_cursor back as the cursor while has_next_page is true. Without the read_all_orders scope only the last 60 days are visible.',
     idempotent: true,
   },
+  outputSchema: searchOrdersOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify order search syntax, for example "status:open financial_status:paid", "tag:wholesale" or "created_at:>=2026-01-01". Leave empty to list all orders.'

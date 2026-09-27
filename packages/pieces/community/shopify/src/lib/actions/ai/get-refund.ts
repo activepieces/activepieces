@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { refundOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetRefund = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetRefund = createAction({
       'Returns one refund by id with its amount, note, refunded line items, refund transactions and the order it belongs to. Use list_order_refunds when you only know the order. Read-only.',
     idempotent: true,
   },
+  outputSchema: refundOutputSchema,
   props: {
     refund_id: Property.ShortText({
       displayName: 'Refund ID',

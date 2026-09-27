@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listDraftOrdersOutputSchema } from '../../output-schemas/orders';
 
 const MAX_PAGE_SIZE = 60;
 
@@ -24,6 +25,7 @@ export const shopifyAiListDraftOrders = createAction({
       'Searches draft orders with Shopify search syntax (for example "status:open" or "customer_id:207119551") and returns one page of draft summaries without line items; use get_draft_order for the full draft. Paged: pass end_cursor back as the cursor while has_next_page is true. Read-only.',
     idempotent: true,
   },
+  outputSchema: listDraftOrdersOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify draft order search syntax, for example "status:open", "status:invoice_sent" or "tag:quote". Leave empty for all.'

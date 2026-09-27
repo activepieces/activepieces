@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { createRefundOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCreateRefund = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateRefund = createAction({
       'Moves money back to the customer: creates a refund on an order for the given line items, shipping and refund transactions. Run calculate_refund first and pass its suggested transactions (parent transaction id, gateway, amount) and line items. When calculate_refund shows a presentment_currency_code different from the shop currency_code, pass the presentment amounts (presentment_amount, presentment_shipping_amount) and set currency to that presentment code. The customer is emailed only if notify is on. Generate your own idempotency_key (for example a UUID) on the first call and pass the same key again on every retry after an error or timeout so Shopify does not refund twice; the key used is returned and is included in any error message.',
     idempotent: false,
   },
+  outputSchema: createRefundOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',
@@ -129,12 +131,15 @@ export const shopifyAiCreateRefund = createAction({
     }>({
       auth,
       query: `mutation CreateRefund($input: RefundInput!, $idempotencyKey: String!) { refundCreate(input: $input) @idempotent(key: $idempotencyKey) { refund { ${shopifyFields.REFUND_FIELDS} } order { id totalRefundedSet { ${shopifyFields.MONEY_FIELDS} } } userErrors { field message } } }`,
+      primaryPaths: ['refundCreate.refund'],
       variables: { input },
       idempotencyKey,
     });
     const refund = data.refundCreate?.refund;
     if (!refund) {
-      throw new Error('Shopify did not return the refund.');
+      throw new Error(
+        `Shopify did not return the refund. [idempotency_key used: ${idempotencyKey}. Retry with this same idempotency_key so Shopify does not repeat the operation.]`
+      );
     }
     return {
       ...shopifyMappers.mapRefund(refund),

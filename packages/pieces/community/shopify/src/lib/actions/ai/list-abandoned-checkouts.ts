@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listAbandonedCheckoutsOutputSchema } from '../../output-schemas/orders';
 
 const MAX_PAGE_SIZE = 100;
 
@@ -24,6 +25,7 @@ export const shopifyAiListAbandonedCheckouts = createAction({
       'Lists abandoned checkouts with total, customer and the recovery URL to send to the shopper. Supports search syntax such as "created_at:>=2026-09-01". Use get_checkout_abandonment for the marketing-email state of one checkout. Paged: pass end_cursor back as the cursor while has_next_page is true. Customer name and email may be null on stores without protected customer data access (see redacted_fields).',
     idempotent: true,
   },
+  outputSchema: listAbandonedCheckoutsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify search syntax, for example "created_at:>=2026-09-01" or "status:open". Leave empty for all.'

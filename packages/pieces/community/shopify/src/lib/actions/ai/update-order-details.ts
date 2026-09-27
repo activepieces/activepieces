@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { orderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiUpdateOrderDetails = createAction({
   auth: shopifyAuth,
@@ -17,9 +18,10 @@ export const shopifyAiUpdateOrderDetails = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes the contact email, phone, internal note, PO number or tags of one order; fields left empty are not sent and keep their values. Sending tags replaces the whole tag list, so use add_tags or remove_tags to change single tags. Line items and payments cannot be changed here. Re-running with the same values is safe.',
+      'Changes the contact email, phone, internal note, PO number or tags of one order; fields left empty are not sent and keep their values. Sending tags replaces the whole tag list, so use add_tags or remove_tags to change single tags. Line items and payments cannot be changed here. Re-running with the same values is safe. To blank the note or remove every tag, set clear_note or clear_tags instead of sending an empty value.',
     idempotent: true,
   },
+  outputSchema: orderOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',
@@ -49,8 +51,20 @@ export const shopifyAiUpdateOrderDetails = createAction({
     tags: Property.Array({
       displayName: 'Tags',
       description:
-        'The complete new tag list, for example ["wholesale", "priority"]. Replaces every existing tag; leave empty to keep the current tags.',
+        'The complete new tag list, for example ["wholesale", "priority"]. Replaces every existing tag; leave empty to keep the current tags (use clear_tags to remove all).',
       required: false,
+    }),
+    clear_note: Property.Checkbox({
+      displayName: 'Clear Note',
+      description: 'Remove the existing note. Leave note empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
+    clear_tags: Property.Checkbox({
+      displayName: 'Clear Tags',
+      description: 'Remove every tag. Leave tags empty when using this.',
+      required: false,
+      defaultValue: false,
     }),
   },
   async run({ auth, propsValue }) {
@@ -58,9 +72,9 @@ export const shopifyAiUpdateOrderDetails = createAction({
     const patch = shopifyValues.compact({
       email: shopifyValues.nonEmpty(propsValue.email),
       phone: shopifyValues.nonEmpty(propsValue.phone),
-      note: shopifyValues.nonEmpty(propsValue.note),
+      note: shopifyValues.readClearable({ value: shopifyValues.nonEmpty(propsValue.note), clear: propsValue.clear_note, name: 'note', empty: '' }),
       poNumber: shopifyValues.nonEmpty(propsValue.po_number),
-      tags: tags && tags.length > 0 ? tags : undefined,
+      tags: shopifyValues.readClearable({ value: tags && tags.length > 0 ? tags : undefined, clear: propsValue.clear_tags, name: 'tags', empty: [] }),
     });
     if (Object.keys(patch).length === 0) {
       throw new Error('Provide at least one field to update (email, phone, note, po_number or tags).');
@@ -71,6 +85,7 @@ export const shopifyAiUpdateOrderDetails = createAction({
     }>({
       auth,
       query: `mutation UpdateOrderDetails($input: OrderInput!) { orderUpdate(input: $input) { order { ${shopifyFields.ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderUpdate.order'],
       variables: { input: { id, ...patch } },
     });
     const order = data.orderUpdate?.order;

@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { customerOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetCustomerProfile = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetCustomerProfile = createAction({
       'Returns one customer by id: name, email and its marketing state, phone, tags, note, account state, order count, amount spent and default address. Use search_customers to find a customer by email, name or phone first. Name, email, phone and address may be null on stores without protected customer data access; such fields are listed in redacted_fields.',
     idempotent: true,
   },
+  outputSchema: customerOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

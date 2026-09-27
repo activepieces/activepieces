@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { customerOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCreateCustomerProfile = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCreateCustomerProfile = createAction({
       'Creates a customer with name, email, phone, note, tags and locale, optionally recording email marketing consent. Search first with search_customers, because Shopify rejects a duplicate email or phone. Add addresses afterwards with create_customer_address. Each call creates a new customer, so retries fail or duplicate.',
     idempotent: false,
   },
+  outputSchema: customerOutputSchema,
   props: {
     email: Property.ShortText({
       displayName: 'Email',
@@ -122,6 +124,7 @@ export const shopifyAiCreateCustomerProfile = createAction({
     }>({
       auth,
       query: `mutation CreateCustomerProfile($input: CustomerInput!) { customerCreate(input: $input) { customer { ${shopifyFields.CUSTOMER_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerCreate.customer'],
       variables: { input },
     });
     const customer = data.customerCreate?.customer;

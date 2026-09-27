@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteDraftOrderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiDeleteDraftOrder = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteDraftOrder = createAction({
       'Permanently deletes one draft order. An invoice URL already sent to the customer stops working. Orders created from a completed draft are not affected. Cannot be undone; a repeat call fails because the draft is gone.',
     idempotent: false,
   },
+  outputSchema: deleteDraftOrderOutputSchema,
   props: {
     draft_order_id: Property.ShortText({
       displayName: 'Draft Order ID',

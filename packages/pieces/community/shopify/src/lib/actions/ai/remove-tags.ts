@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { removeTagsOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiRemoveTags = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiRemoveTags = createAction({
       'Removes one or more tags from an order, draft order, customer or product and keeps the others; prefer this over sending a full tag list to an update action. Removing a tag that is not present changes nothing, so repeating is safe. Returns the resulting tag list.',
     idempotent: true,
   },
+  outputSchema: removeTagsOutputSchema,
   props: {
     resource_type: Property.StaticDropdown({
       displayName: 'Resource Type',

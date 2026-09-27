@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteCustomerAddressOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiDeleteCustomerAddress = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiDeleteCustomerAddress = createAction({
       'Permanently deletes one saved address of a customer. Find the address id with list_customer_addresses. Cannot be undone; a repeat call fails because the address is gone.',
     idempotent: false,
   },
+  outputSchema: deleteCustomerAddressOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

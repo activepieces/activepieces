@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
+import { startOrderCancellationOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiStartOrderCancellation = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiStartOrderCancellation = createAction({
       'Starts the irreversible, asynchronous cancellation of one order and returns only a job id; poll get_job until done is true, then read the order with get_order. A reason is required. Stock is restocked only if restock is on, and money is refunded only if a refund method is chosen; authorized (uncaptured) payments are voided either way. The customer is notified only if notify_customer is on. Not safe to repeat.',
     idempotent: false,
   },
+  outputSchema: startOrderCancellationOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

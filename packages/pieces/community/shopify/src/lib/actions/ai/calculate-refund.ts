@@ -7,6 +7,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { calculateRefundOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCalculateRefund = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCalculateRefund = createAction({
       'Previews a refund without moving money: returns the amount, tax, shipping and the suggested refund transactions (parent transaction id, gateway, amount) for the chosen line items and shipping. Every amount is in the shop currency; the presentment_* fields give the same amounts in the customer (presentment) currency. Run it before create_refund and pass its suggested transactions and line items there; when presentment_currency_code differs from currency_code, pass the presentment amounts and presentment_currency_code to create_refund. Read-only and safe to repeat.',
     idempotent: true,
   },
+  outputSchema: calculateRefundOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

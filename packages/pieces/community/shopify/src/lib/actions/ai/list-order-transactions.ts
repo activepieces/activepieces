@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listOrderTransactionsOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiListOrderTransactions = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiListOrderTransactions = createAction({
       'Lists all payment transactions of one order (authorizations, captures, sales, refunds, voids) with amount, status, gateway and parent transaction. Use it to find the authorization id for capture_order_payment or void_order_transaction, or the parent id and gateway for create_refund. Returns up to 100 transactions in one call (no paging); truncated=true means the order may have more. Read-only.',
     idempotent: true,
   },
+  outputSchema: listOrderTransactionsOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

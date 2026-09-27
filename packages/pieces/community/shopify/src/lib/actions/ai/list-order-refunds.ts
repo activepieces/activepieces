@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listOrderRefundsOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiListOrderRefunds = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiListOrderRefunds = createAction({
       'Lists the refunds of one order (up to 50) with the refunded amount, note and dates. Returns the list in one call (no paging); truncated=true means the order may have more than 50 refunds; use get_refund for the refunded line items and transactions of one refund. Read-only.',
     idempotent: true,
   },
+  outputSchema: listOrderRefundsOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

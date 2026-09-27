@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { draftOrderSummaryOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiSendDraftOrderInvoice = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiSendDraftOrderInvoice = createAction({
       'Sends an email with the draft order invoice and its checkout link so the customer can pay; the draft status becomes invoice sent. Goes to the draft email unless a recipient is given. Each call sends another email, so do not repeat it.',
     idempotent: false,
   },
+  outputSchema: draftOrderSummaryOutputSchema,
   props: {
     draft_order_id: Property.ShortText({
       displayName: 'Draft Order ID',
@@ -54,6 +56,7 @@ export const shopifyAiSendDraftOrderInvoice = createAction({
     }>({
       auth,
       query: `mutation SendDraftOrderInvoice($id: ID!, $email: EmailInput) { draftOrderInvoiceSend(id: $id, email: $email) { draftOrder { ${shopifyFields.DRAFT_ORDER_SUMMARY_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderInvoiceSend.draftOrder'],
       variables: shopifyValues.compact({
         id,
         email: Object.keys(email).length > 0 ? email : undefined,

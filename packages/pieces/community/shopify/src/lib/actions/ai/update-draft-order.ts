@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { draftOrderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiUpdateDraftOrder = createAction({
   auth: shopifyAuth,
@@ -18,9 +19,10 @@ export const shopifyAiUpdateDraftOrder = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes an open draft order; fields left empty are not sent and keep their values. Sending line items replaces all existing line items, and sending tags replaces all tags (use add_tags / remove_tags for single tags). Set payment terms here before complete_draft_order to leave the resulting order payment-pending. Re-running with the same values is safe.',
+      'Changes an open draft order; fields left empty are not sent and keep their values. Sending line items replaces all existing line items, and sending tags replaces all tags (use add_tags / remove_tags for single tags). Set payment terms here before complete_draft_order to leave the resulting order payment-pending. Re-running with the same values is safe. To blank the note or remove every tag, set clear_note or clear_tags instead of sending an empty value.',
     idempotent: true,
   },
+  outputSchema: draftOrderOutputSchema,
   props: {
     draft_order_id: Property.ShortText({
       displayName: 'Draft Order ID',
@@ -59,7 +61,7 @@ export const shopifyAiUpdateDraftOrder = createAction({
     }),
     tags: Property.Array({
       displayName: 'Tags',
-      description: 'The complete new tag list. Replaces every existing tag; leave empty to keep the current tags.',
+      description: 'The complete new tag list. Replaces every existing tag; leave empty to keep the current tags (use clear_tags to remove all).',
       required: false,
     }),
     po_number: Property.ShortText({
@@ -88,6 +90,18 @@ export const shopifyAiUpdateDraftOrder = createAction({
       description: 'Hold the stock for this draft until this time (ISO 8601).',
       required: false,
     }),
+    clear_note: Property.Checkbox({
+      displayName: 'Clear Note',
+      description: 'Remove the existing note. Leave note empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
+    clear_tags: Property.Checkbox({
+      displayName: 'Clear Tags',
+      description: 'Remove every tag. Leave tags empty when using this.',
+      required: false,
+      defaultValue: false,
+    }),
   },
   async run({ auth, propsValue }) {
     const currency = shopifyValues.nonEmpty(propsValue.currency)?.toUpperCase();
@@ -101,8 +115,8 @@ export const shopifyAiUpdateDraftOrder = createAction({
         : undefined,
       email: shopifyValues.nonEmpty(propsValue.email),
       phone: shopifyValues.nonEmpty(propsValue.phone),
-      note: shopifyValues.nonEmpty(propsValue.note),
-      tags: tags && tags.length > 0 ? tags : undefined,
+      note: shopifyValues.readClearable({ value: shopifyValues.nonEmpty(propsValue.note), clear: propsValue.clear_note, name: 'note', empty: '' }),
+      tags: shopifyValues.readClearable({ value: tags && tags.length > 0 ? tags : undefined, clear: propsValue.clear_tags, name: 'tags', empty: [] }),
       poNumber: shopifyValues.nonEmpty(propsValue.po_number),
       paymentTerms: buildPaymentTerms({
         templateId: shopifyValues.nonEmpty(propsValue.payment_terms_template_id),
@@ -120,6 +134,7 @@ export const shopifyAiUpdateDraftOrder = createAction({
     }>({
       auth,
       query: `mutation UpdateDraftOrder($id: ID!, $input: DraftOrderInput!) { draftOrderUpdate(id: $id, input: $input) { draftOrder { ${shopifyFields.DRAFT_ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderUpdate.draftOrder'],
       variables: { id, input: patch },
     });
     const draft = data.draftOrderUpdate?.draftOrder;

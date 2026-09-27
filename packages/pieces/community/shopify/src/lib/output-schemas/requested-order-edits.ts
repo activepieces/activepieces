@@ -58,7 +58,7 @@ const requestedOrderEditFields: OutputSchema['fields'] = [
     key: 'removals_truncated',
     label: 'Removals Truncated',
     format: 'boolean',
-    description: 'True when the edit has more line items than were returned (25).',
+    description: 'True when the edit has more line items than were returned (50).',
   },
 ];
 

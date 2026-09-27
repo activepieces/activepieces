@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { getShopOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetShop = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiGetShop = createAction({
       'Returns the connected store: name, domains, shop currency and enabled presentment currencies, IANA timezone, weight unit and plan. Call it first when you need the currency for money fields or the timezone to build date filters for search_orders and other searches. Read-only.',
     idempotent: true,
   },
+  outputSchema: getShopOutputSchema,
   props: {},
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

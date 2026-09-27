@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { draftOrderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCompleteDraftOrder = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiCompleteDraftOrder = createAction({
       'Converts a draft order into a real order and reserves its inventory; the new order id is returned in order_id. To leave the order payment-pending, set payment terms on the draft first with update_draft_order; without payment terms Shopify records the order as paid. A payment gateway id only chooses the gateway the payment is recorded against; it does not keep the order unpaid. Completing twice fails, so do not repeat it.',
     idempotent: false,
   },
+  outputSchema: draftOrderOutputSchema,
   props: {
     draft_order_id: Property.ShortText({
       displayName: 'Draft Order ID',
@@ -46,6 +48,7 @@ export const shopifyAiCompleteDraftOrder = createAction({
     }>({
       auth,
       query: `mutation CompleteDraftOrder($id: ID!, $paymentGatewayId: ID, $sourceName: String) { draftOrderComplete(id: $id, paymentGatewayId: $paymentGatewayId, sourceName: $sourceName) { draftOrder { ${shopifyFields.DRAFT_ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderComplete.draftOrder'],
       variables: shopifyValues.compact({
         id,
         paymentGatewayId: gatewayId

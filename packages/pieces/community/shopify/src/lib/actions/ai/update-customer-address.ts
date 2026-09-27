@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { customerAddressOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiUpdateCustomerAddress = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiUpdateCustomerAddress = createAction({
       'Changes one saved address of a customer and can make it the default. Only the address fields you fill in are sent; with no address fields and set_as_default = Yes it only makes the address the default. Find the address id with list_customer_addresses. Re-running with the same values is safe.',
     idempotent: true,
   },
+  outputSchema: customerAddressOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',
@@ -64,6 +66,7 @@ export const shopifyAiUpdateCustomerAddress = createAction({
       }>({
         auth,
         query: `mutation SetDefaultCustomerAddress($customerId: ID!, $addressId: ID!) { customerUpdateDefaultAddress(customerId: $customerId, addressId: $addressId) { customer { id defaultAddress { ${shopifyFields.ADDRESS_FIELDS} } } userErrors { field message } } }`,
+        primaryPaths: ['customerUpdateDefaultAddress.customer', 'customerUpdateDefaultAddress.customer.defaultAddress'],
         variables: { customerId, addressId },
       });
       const defaultAddress = data.customerUpdateDefaultAddress?.customer?.defaultAddress;
@@ -81,6 +84,7 @@ export const shopifyAiUpdateCustomerAddress = createAction({
     }>({
       auth,
       query: `mutation UpdateCustomerAddress($customerId: ID!, $addressId: ID!, $address: MailingAddressInput!, $setAsDefault: Boolean) { customerAddressUpdate(customerId: $customerId, addressId: $addressId, address: $address, setAsDefault: $setAsDefault) { address { ${shopifyFields.ADDRESS_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerAddressUpdate.address'],
       variables: shopifyValues.compact({ customerId, addressId, address, setAsDefault }),
     });
     const updated = data.customerAddressUpdate?.address;

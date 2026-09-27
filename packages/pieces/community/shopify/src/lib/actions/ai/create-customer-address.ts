@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { customerAddressOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCreateCustomerAddress = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateCustomerAddress = createAction({
       'Adds a new saved address to one customer and optionally makes it the default. Use update_customer_address to change an existing address instead. Each call adds another address, so retries create duplicates.',
     idempotent: false,
   },
+  outputSchema: customerAddressOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',
@@ -46,6 +48,7 @@ export const shopifyAiCreateCustomerAddress = createAction({
     }>({
       auth,
       query: `mutation CreateCustomerAddress($customerId: ID!, $address: MailingAddressInput!, $setAsDefault: Boolean) { customerAddressCreate(customerId: $customerId, address: $address, setAsDefault: $setAsDefault) { address { ${shopifyFields.ADDRESS_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['customerAddressCreate.address'],
       variables: { customerId, address, setAsDefault: propsValue.set_as_default ?? false },
     });
     const created = data.customerAddressCreate?.address;

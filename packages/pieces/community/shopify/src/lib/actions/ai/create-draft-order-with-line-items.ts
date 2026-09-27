@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { draftOrderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiCreateDraftOrderWithLineItems = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiCreateDraftOrderWithLineItems = createAction({
       'Creates a draft order (a quote the merchant or customer can review) with one or more product-variant or custom line items, an optional customer, order-level discount and shipping line. Nothing is charged and no stock is committed; send it with send_draft_order_invoice or turn it into an order with complete_draft_order. Each call creates a new draft, so retries duplicate.',
     idempotent: false,
   },
+  outputSchema: draftOrderOutputSchema,
   props: {
     line_items: shopifyProps.draftLineItems({
       required: true,
@@ -141,6 +143,7 @@ export const shopifyAiCreateDraftOrderWithLineItems = createAction({
     }>({
       auth,
       query: `mutation CreateDraftOrder($input: DraftOrderInput!) { draftOrderCreate(input: $input) { draftOrder { ${shopifyFields.DRAFT_ORDER_DETAIL_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['draftOrderCreate.draftOrder'],
       variables: { input },
     });
     const draft = data.draftOrderCreate?.draftOrder;

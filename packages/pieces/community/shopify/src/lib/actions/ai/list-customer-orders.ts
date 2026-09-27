@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listCustomerOrdersOutputSchema } from '../../output-schemas/orders';
 
 const MAX_PAGE_SIZE = 40;
 
@@ -24,6 +25,7 @@ export const shopifyAiListCustomerOrders = createAction({
       'Lists the orders placed by one customer as order summaries (no line items), newest last unless reversed, optionally filtered with order search syntax such as "financial_status:paid". Use get_order for the full order. Paged: pass end_cursor back as the cursor while has_next_page is true. Without the read_all_orders scope only the last 60 days are visible.',
     idempotent: true,
   },
+  outputSchema: listCustomerOrdersOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { getGrantedAccessScopesOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetGrantedAccessScopes = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiGetGrantedAccessScopes = createAction({
       'Lists the access scopes (for example read_orders, write_customers) granted to the connected custom app. Use it to diagnose an "access denied" or missing-scope error before retrying: if the scope is absent, the merchant must add it to the app and reinstall. Read-only.',
     idempotent: true,
   },
+  outputSchema: getGrantedAccessScopesOutputSchema,
   props: {},
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

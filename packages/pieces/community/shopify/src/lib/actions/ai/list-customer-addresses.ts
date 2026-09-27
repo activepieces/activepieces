@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listCustomerAddressesOutputSchema } from '../../output-schemas/orders';
 
 const MAX_PAGE_SIZE = 250;
 
@@ -24,6 +25,7 @@ export const shopifyAiListCustomerAddresses = createAction({
       'Lists the saved addresses of one customer, marking the default one. Use the address id with update_customer_address, delete_customer_address or set_default_customer_address. Paged: pass end_cursor back as the cursor while has_next_page is true. Address fields may be null on stores without protected customer data access (see redacted_fields).',
     idempotent: true,
   },
+  outputSchema: listCustomerAddressesOutputSchema,
   props: {
     customer_id: Property.ShortText({
       displayName: 'Customer ID',

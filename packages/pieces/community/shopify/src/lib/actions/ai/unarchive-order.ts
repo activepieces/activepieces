@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { orderSummaryOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiUnarchiveOrder = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiUnarchiveOrder = createAction({
       'Reopens an order that was closed with archive_order so it shows as open again. It does not restore a cancelled order. Reopening an open order leaves it open, so repeating is safe.',
     idempotent: true,
   },
+  outputSchema: orderSummaryOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',
@@ -33,6 +35,7 @@ export const shopifyAiUnarchiveOrder = createAction({
     }>({
       auth,
       query: `mutation UnarchiveOrder($input: OrderOpenInput!) { orderOpen(input: $input) { order { ${shopifyFields.ORDER_SUMMARY_FIELDS} } userErrors { field message } } }`,
+      primaryPaths: ['orderOpen.order'],
       variables: { input: { id } },
     });
     const order = data.orderOpen?.order;

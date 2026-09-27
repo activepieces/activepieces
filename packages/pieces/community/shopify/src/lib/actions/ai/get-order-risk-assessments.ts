@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { getOrderRiskAssessmentsOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetOrderRiskAssessments = createAction({
   auth: shopifyAuth,
@@ -14,6 +15,7 @@ export const shopifyAiGetOrderRiskAssessments = createAction({
       'Returns the fraud-risk summary of one order: the overall recommendation (accept, investigate, cancel) and every risk assessment with its level, provider and supporting facts. Use it before fulfilling or cancelling a suspicious order. Read-only.',
     idempotent: true,
   },
+  outputSchema: getOrderRiskAssessmentsOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',

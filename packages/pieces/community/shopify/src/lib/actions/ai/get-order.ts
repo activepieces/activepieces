@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { orderOutputSchema } from '../../output-schemas/orders';
 
 export const shopifyAiGetOrder = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiGetOrder = createAction({
       'Returns one order by id: status, money totals, customer, shipping and billing address, the first 100 line items, and the fulfillment and transaction counts. Use search_orders to find an order by name, email or date first. Customer contact fields may be null on stores without protected customer data access; such fields are listed in redacted_fields.',
     idempotent: true,
   },
+  outputSchema: orderOutputSchema,
   props: {
     order_id: Property.ShortText({
       displayName: 'Order ID',
