@@ -363,6 +363,18 @@ const AgentsPageContent = () => {
                       ))}
                 </div>
               </div>
+              {firstRun && (
+                <NewBlankAgentButton
+                  projects={allProjects ?? []}
+                  pending={createAgent.isPending}
+                  onCreate={createBlankAgent}
+                  variant="ghost"
+                  size="sm"
+                  className="mt-4 gap-2 text-muted-foreground"
+                  icon={<Plus size={15} />}
+                  label={t('Start from scratch')}
+                />
+              )}
             </>
           )}
         </section>

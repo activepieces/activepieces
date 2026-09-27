@@ -4,13 +4,15 @@ import {
 } from '@activepieces/pieces-framework';
 import { baserowAuth } from '../auth';
 import { baserowCommon, makeClient } from '../common';
+import { listRowsOutputSchema } from '../output-schemas';
 
 export const listRowsAction = createAction({
   name: 'baserow_list_rows',
   classification: 'SEARCH',
+  outputSchema: listRowsOutputSchema,
   displayName: 'List Rows',
   description: 'Lists rows from a table with optional search, sorting, and filtering.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: {
     description:
       'Retrieves a page of rows from a Baserow table. With no search/filters it returns all rows (paginated); supply a free-text search, an order-by field, or structured field filters (each a JSON object with field ID, operator, and value, combined with AND/OR) to narrow results. Use to browse or query many rows; for a single row by ID use Get Row, or by one field value use Find Row. Read-only and idempotent.',

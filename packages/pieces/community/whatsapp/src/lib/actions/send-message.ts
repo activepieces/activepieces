@@ -15,12 +15,13 @@ export const sendMessage = createAction({
 		phone_number_id: commonProps.phone_number_id,
 		to: Property.ShortText({
 			displayName: 'To',
-			description: 'The recipient of the message',
+			description: "Recipient's phone number in international format.",
+			placeholder: '15551234567',
 			required: true,
 		}),
 		text: Property.LongText({
 			displayName: 'Message',
-			description: 'The message to send',
+			description: 'Plain text, up to 4096 characters.',
 			required: true,
 		}),
 	},

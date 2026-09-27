@@ -1,13 +1,5 @@
-import {
-  HttpMethod,
-  createCustomApiCallAction,
-} from '@activepieces/pieces-common';
-import {
-  PieceAuth,
-  Property,
-  createPiece,
-} from '@activepieces/pieces-framework';
-import { AppConnectionType, PieceCategory } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { createPiece, PieceCategory } from '@activepieces/pieces-framework';
 import { adjustInventoryLevelAction } from './lib/actions/adjust-inventory-level';
 import { cancelOrderAction } from './lib/actions/cancel-order';
 import { closeOrderAction } from './lib/actions/close-order';
@@ -34,7 +26,7 @@ import { updateCustomerAction } from './lib/actions/update-customer';
 import { updateOrderAction } from './lib/actions/update-order';
 import { updateProductAction } from './lib/actions/update-product';
 import { uploadProductImageAction } from './lib/actions/upload-product-image';
-import { getBaseUrl, sendShopifyRequest } from './lib/common';
+import { shopifyAuth, shopifyAuthHelpers } from './lib/common/auth';
 import { newAbandonedCheckout } from './lib/triggers/new-abandoned-checkout';
 import { newCancelledOrder } from './lib/triggers/new-cancelled-order';
 import { newCustomer } from './lib/triggers/new-customer';
@@ -42,57 +34,7 @@ import { newOrder } from './lib/triggers/new-order';
 import { newPaidOrder } from './lib/triggers/new-paid-order';
 import { updatedProduct } from './lib/triggers/updated-product';
 
-const markdown = `
-**Shop Name**:
-
-You can find your shop name in the url For example, if the URL is \`https://example.myshopify.com/admin\`, then your shop name is **example**.
-
-**Admin Token**:
-
-1. Login to your Shopify account
-2. Go to Settings -> Apps
-3. Click on Develop apps
-4. Create an App
-5. Fill the app name
-6. Click on Configure Admin API Scopes (Select the following scopes 'read_orders', 'write_orders', 'write_customers', 'read_customers', 'write_products', 'read_products', 'write_draft_orders', 'read_draft_orders')
-7. Click on Install app
-8. Copy the Admin Access Token
-`;
-
-export const shopifyAuth = PieceAuth.CustomAuth({
-  description: markdown,
-  required: true,
-  props: {
-    shopName: Property.ShortText({
-      displayName: 'Shop Name',
-      required: true,
-    }),
-    adminToken: PieceAuth.SecretText({
-      displayName: 'Admin Token',
-      required: true,
-    }),
-  },
-  validate: async ({ auth }) => {
-    try {
-      await sendShopifyRequest({
-        auth: { 
-          type: AppConnectionType.CUSTOM_AUTH,
-          props: auth,
-        },
-        method: HttpMethod.GET,
-        url: '/shop.json',
-      });
-      return {
-        valid: true,
-      };
-    } catch (e) {
-      return {
-        valid: false,
-        error: 'Invalid Shop Name or Admin Token',
-      };
-    }
-  },
-});
+export { shopifyAuth };
 
 export const shopify = createPiece({
   displayName: 'Shopify',
@@ -100,7 +42,7 @@ export const shopify = createPiece({
   logoUrl: 'https://cdn.activepieces.com/pieces/shopify.png',
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud","ikus060"],
   categories: [PieceCategory.COMMERCE],
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.87.0',
   auth: shopifyAuth,
   actions: [
     adjustInventoryLevelAction,
@@ -131,15 +73,10 @@ export const shopify = createPiece({
     uploadProductImageAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return auth ? getBaseUrl(auth.props.shopName) : '';
+        return auth ? shopifyAuthHelpers.getBaseUrl(auth) : '';
       },
       auth: shopifyAuth,
-      authMapping: async (auth) => {
-        const typedAuth = auth.props.adminToken;
-        return {
-          'X-Shopify-Access-Token': typedAuth,
-        };
-      },
+      authMapping: async (auth) => shopifyAuthHelpers.getAuthHeaders(auth),
     }),
   ],
   triggers: [

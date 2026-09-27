@@ -9,7 +9,7 @@ export const updateItemNameAction = createAction({
   classification: 'WRITE',
   displayName: 'Update Item Name',
   description: 'Updates an item name.',
-  audience: 'both',
+  audience: 'human',
   aiMetadata: { description: 'Renames an existing monday.com item identified by board and item id. Use to change an item\'s title. Idempotent: re-applying the same name leaves the item unchanged.', idempotent: true },
   outputSchema: updateItemNameActionOutputSchema,
   props: {
