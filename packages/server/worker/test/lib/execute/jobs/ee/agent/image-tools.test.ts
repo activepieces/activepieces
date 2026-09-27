@@ -44,8 +44,8 @@ describe('ap_generate_image', () => {
         expect(result).toEqual({ content: [{ type: 'text', text: 'Image editing failed: no image with fileId file-made-up in this conversation. Images you can edit: file-real (A red bicycle).' }] })
     })
 
-    it('lists only the latest images in the schema, and every image when the fileId is wrong', async () => {
-        const conversationImages = Array.from({ length: 12 }, (_, index) => ({ fileId: `file-${index}`, description: 'x'.repeat(500) }))
+    it('lists only the latest images in the schema, and the latest hundred when the fileId is wrong', async () => {
+        const conversationImages = Array.from({ length: 102 }, (_, index) => ({ fileId: `file-${index}`, description: 'x'.repeat(500) }))
         const params = {
             generate: async () => GENERATED,
             billedAtCost: false,
@@ -58,11 +58,12 @@ describe('ap_generate_image', () => {
         const schema = createImageTools(params).ap_generate_image.inputSchema.shape.editFileId.description
         const result = JSON.stringify(await runImageTool(params, { editFileId: 'file-made-up' }))
 
-        expect(schema).not.toContain('file-1 ')
-        expect(schema).toContain('file-11 ')
-        expect(schema).toContain('2 older images')
-        expect(result).toContain('file-0 ')
-        expect(result).toContain('file-11 ')
+        expect(schema).not.toContain('file-91 ')
+        expect(schema).toContain('file-92 ')
+        expect(schema).toContain('92 older images')
+        expect(result).not.toContain('file-1 ')
+        expect(result).toContain('file-2 ')
+        expect(result).toContain('file-101 ')
         expect(result).not.toContain('x'.repeat(121))
     })
 
