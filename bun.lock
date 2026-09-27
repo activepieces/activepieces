@@ -120,7 +120,7 @@
     },
     "packages/core/execution": {
       "name": "@activepieces/core-execution",
-      "version": "0.23.0",
+      "version": "0.23.1",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -152,7 +152,7 @@
     },
     "packages/core/piece-types": {
       "name": "@activepieces/core-piece-types",
-      "version": "0.11.1",
+      "version": "0.11.2",
       "dependencies": {
         "@activepieces/core-utils": "workspace:*",
         "tslib": "2.6.2",
@@ -165,7 +165,7 @@
     },
     "packages/core/shared": {
       "name": "@activepieces/shared",
-      "version": "0.180.0",
+      "version": "0.183.0",
       "dependencies": {
         "@activepieces/core-execution": "workspace:*",
         "@activepieces/core-formula": "workspace:*",
@@ -188,7 +188,7 @@
     },
     "packages/core/utils": {
       "name": "@activepieces/core-utils",
-      "version": "0.8.1",
+      "version": "0.8.2",
       "dependencies": {
         "deepmerge-ts": "8.0.2",
         "ipaddr.js": "2.3.0",
@@ -1066,7 +1066,7 @@
     },
     "packages/pieces/community/baserow": {
       "name": "@activepieces/piece-baserow",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -3028,7 +3028,7 @@
     },
     "packages/pieces/community/facebook-pages": {
       "name": "@activepieces/piece-facebook-pages",
-      "version": "0.2.8",
+      "version": "0.3.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -4652,7 +4652,7 @@
     },
     "packages/pieces/community/jira-cloud": {
       "name": "@activepieces/piece-jira-cloud",
-      "version": "0.4.0",
+      "version": "0.5.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -5400,7 +5400,7 @@
     },
     "packages/pieces/community/mailer-lite": {
       "name": "@activepieces/piece-mailer-lite",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6067,7 +6067,7 @@
     },
     "packages/pieces/community/monday": {
       "name": "@activepieces/piece-monday",
-      "version": "0.3.8",
+      "version": "0.4.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -6986,7 +6986,7 @@
     },
     "packages/pieces/community/pipedrive": {
       "name": "@activepieces/piece-pipedrive",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9809,7 +9809,7 @@
     },
     "packages/pieces/community/whatsapp": {
       "name": "@activepieces/piece-whatsapp",
-      "version": "0.2.7",
+      "version": "1.0.0",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -9818,6 +9818,7 @@
       },
       "devDependencies": {
         "tslib": "2.6.2",
+        "vitest": "3.2.6",
       },
     },
     "packages/pieces/community/whatsscale": {
@@ -10682,7 +10683,7 @@
     },
     "packages/pieces/core/webhook": {
       "name": "@activepieces/piece-webhook",
-      "version": "0.1.41",
+      "version": "0.1.42",
       "dependencies": {
         "@activepieces/core-piece-types": "workspace:*",
         "@activepieces/core-utils": "workspace:*",
@@ -10890,6 +10891,11 @@
         "zod": "4.3.6",
       },
       "devDependencies": {
+        "@activepieces/piece-approval": "workspace:*",
+        "@activepieces/piece-data-mapper": "workspace:*",
+        "@activepieces/piece-delay": "workspace:*",
+        "@activepieces/piece-http": "workspace:*",
+        "@activepieces/piece-webhook": "workspace:*",
         "@types/node": "24.11.0",
         "deno": "2.9.3",
         "esbuild": "0.28.1",

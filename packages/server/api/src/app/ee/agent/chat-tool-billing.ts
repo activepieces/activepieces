@@ -1,4 +1,4 @@
-import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { AIProviderName, isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { AgentConversation, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
@@ -27,7 +27,8 @@ function countBillableToolCallsInLatestTurn({ messages }: { messages: PersistedA
     return turn.reduce((sum, message) => sum + message.parts.filter((part) =>
         part.type === PersistedAgentPartType.TOOL_CALL
         && part.status === PersistedToolCallStatus.COMPLETED
-        && isBillableChatToolCall(part.toolName),
+        && isBillableChatToolCall(part.toolName)
+        && !(isObject(part.output) && part.output['billedAtCost'] === true),
     ).length, 0)
 }
 

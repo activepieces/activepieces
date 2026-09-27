@@ -87,6 +87,17 @@ describe('chatToolBilling.countBillableToolCallsInLatestTurn', () => {
         expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
     })
 
+    it('leaves out a call the worker already billed at cost', () => {
+        const messages = [
+            user('do it'),
+            assistant([
+                { ...toolCallPart({ toolName: 'ap_web_search', status: PersistedToolCallStatus.COMPLETED }), output: { billedAtCost: true } },
+                toolCallPart({ toolName: 'ap_web_search', status: PersistedToolCallStatus.COMPLETED }),
+            ]),
+        ]
+        expect(chatToolBilling.countBillableToolCallsInLatestTurn({ messages })).toBe(1)
+    })
+
     it('ignores non-billable tools regardless of status', () => {
         const messages = [
             user('do it'),
