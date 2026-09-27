@@ -89,6 +89,28 @@ Clearing a description from this action is therefore no longer possible; that is
 
 Nothing unless a flow or an agent relied on a blank description to clear a board's description, which previously happened on every run whether or not it was intended. Clear it from Pinterest directly.
 
+#### WhatsApp Business' Send Message and Send Media return the API response instead of the HTTP envelope
+
+The WhatsApp Business piece returned two different shapes depending on which action you used. `Send Template Message` returned the WhatsApp Cloud API payload directly, while `Send Message` and `Send Media` returned the whole HTTP response, so the same payload sat one level down under `body`, alongside `status` and `headers`.
+
+Both actions now return the API payload directly, matching `Send Template Message` and every other action in the piece. A step that produced
+
+```json
+{ "status": 200, "headers": { }, "body": { "messaging_product": "whatsapp", "messages": [{ "id": "wamid.…" }] } }
+```
+
+now produces
+
+```json
+{ "messaging_product": "whatsapp", "contacts": [{ "input": "…", "wa_id": "…" }], "messages": [{ "id": "wamid.…" }] }
+```
+
+The whole piece also moves to Graph API `v23.0`, via a single `WHATSAPP_API_BASE` constant. It previously split between `v17.0` (expired September 2025) and `v20.0` (expires 24 September 2026).
+
+#### What you need to do
+
+Update any step that reads the output of `Send Message` or `Send Media`. Drop the `body.` prefix: `{{step.body.messages[0].id}}` becomes `{{step.messages[0].id}}`. Steps that only send and ignore the output need no change, and no connection has to be re-authorised.
+
 ## 0.91.0
 
 ### What has changed?
