@@ -9,7 +9,6 @@ import {
   AgentConversationStatus,
   AgentHistoryMessage,
   CHAT_ALLOWED_MIME_TYPES,
-  DEFAULT_CHAT_TIER_ID,
   PersistedAgentMessage,
   ToolProgressEvent,
   AgentMessageSource,
@@ -274,9 +273,7 @@ export function useAgentChat({
   const [conversationId, setConversationIdState] = useState<string | null>(
     null,
   );
-  const [modelName, setModelNameState] = useState<string | null>(
-    DEFAULT_CHAT_TIER_ID,
-  );
+  const [modelName, setModelNameState] = useState<string | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isPollingForAgentReply, setIsPollingForAgentReply] = useState(false);
   const [sendStatus, setSendStatus] = useState<SendStatus>({ type: 'idle' });
@@ -299,7 +296,7 @@ export function useAgentChat({
   >(undefined);
   const lastSentFileNamesRef = useRef<string[]>([]);
   const conversationIdRef = useRef<string | null>(null);
-  const modelNameRef = useRef<string | null>(DEFAULT_CHAT_TIER_ID);
+  const modelNameRef = useRef<string | null>(null);
   const onTitleUpdateRef = useRef(onTitleUpdate);
   onTitleUpdateRef.current = onTitleUpdate;
   const onConversationCreatedRef = useRef(onConversationCreated);

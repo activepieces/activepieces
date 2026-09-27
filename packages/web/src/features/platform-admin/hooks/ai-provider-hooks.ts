@@ -1,20 +1,28 @@
 import { isNil } from '@activepieces/core-utils';
 import {
+  ACTIVEPIECES_CHAT_TIERS,
   AIProviderAuthConfig,
   AiProviderKeyStatus,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
+  DEFAULT_CHAT_TIER_ID,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { queryOptions, useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
 import { authenticationSession } from '@/lib/authentication-session';
 
-import { aiProviderApi } from '../api/ai-provider-api';
+import {
+  aiProviderApi,
+  ModelTierList,
+  ModelTiersResponse,
+  ModelTierSurface,
+} from '../api/ai-provider-api';
 
 export const aiProviderKeys = {
   configs: ['ai-provider-configs'] as const,
+  modelTiers: ['ai-provider-model-tiers'] as const,
   forProject: (projectId: string | null) =>
     ['ai-providers', projectId] as const,
   configModels: (configId?: string) =>
@@ -42,6 +50,16 @@ export const aiProviderQueries = {
     const { data: providers, ...rest } =
       aiProviderQueries.useProjectAiProviders();
     return { ...rest, data: providers?.find((p) => p.enabledForChat) };
+  },
+  modelTiersOptions: () =>
+    queryOptions({
+      queryKey: aiProviderKeys.modelTiers,
+      queryFn: () => aiProviderApi.listModelTiers(),
+      staleTime: MODEL_TIERS_STALE_MS,
+    }),
+  useModelTiers: (surface: ModelTierSurface): ModelTierList => {
+    const { data } = useQuery(aiProviderQueries.modelTiersOptions());
+    return (data ?? BUNDLED_MODEL_TIERS)[surface];
   },
 };
 
@@ -132,6 +150,22 @@ export const hasAnyAuthFieldFilled = (
     (value) => typeof value === 'string' && value.length > 0,
   );
 };
+
+const BUNDLED_LIST: ModelTierList = {
+  tiers: ACTIVEPIECES_CHAT_TIERS.map(({ id, label, modelId }) => ({
+    id,
+    label,
+    modelId,
+  })),
+  defaultTierId: DEFAULT_CHAT_TIER_ID,
+};
+
+const BUNDLED_MODEL_TIERS: ModelTiersResponse = {
+  flow: BUNDLED_LIST,
+  chat: BUNDLED_LIST,
+};
+
+const MODEL_TIERS_STALE_MS = 15 * 60 * 1000;
 
 type UpsertAiProviderOptions = {
   providerId?: string;

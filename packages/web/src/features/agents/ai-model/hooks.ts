@@ -1,24 +1,34 @@
 import { AIProviderName, isNil } from '@activepieces/core-utils';
 import {
-  ACTIVEPIECES_CHAT_TIERS,
   AIProviderModel,
   ALLOWED_CHAT_MODELS_BY_PROVIDER,
 } from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
-import { aiProviderApi } from '@/features/platform-admin/api/ai-provider-api';
+import {
+  aiProviderApi,
+  ModelTier,
+} from '@/features/platform-admin/api/ai-provider-api';
+import { aiProviderQueries } from '@/features/platform-admin/hooks/ai-provider-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 
 type AIModelType = 'text' | 'image';
 
-function getAllowedModelsForProvider(
-  provider: AIProviderName,
-  allModels: AIProviderModel[],
-  modelType: AIModelType,
-): AIProviderModel[] {
+function getAllowedModelsForProvider({
+  provider,
+  allModels,
+  modelType,
+  flowTiers,
+}: {
+  provider: AIProviderName;
+  allModels: AIProviderModel[];
+  modelType: AIModelType;
+  flowTiers: ModelTier[];
+}): AIProviderModel[] {
   const allowedIds =
     provider === AIProviderName.ACTIVEPIECES
-      ? ACTIVEPIECES_CHAT_TIERS.map((tier) => tier.modelId)
+      ? flowTiers.map((tier) => tier.modelId)
       : ALLOWED_CHAT_MODELS_BY_PROVIDER[provider];
 
   return allModels
@@ -40,14 +50,23 @@ function getAllowedModelsForProvider(
     })
     .map((model) =>
       provider === AIProviderName.ACTIVEPIECES
-        ? { ...model, name: managedTierLabel(model.id) ?? model.name }
+        ? {
+            ...model,
+            name:
+              managedTierLabel({ modelId: model.id, flowTiers }) ?? model.name,
+          }
         : model,
     );
 }
 
-function managedTierLabel(modelId: string): string | undefined {
-  return ACTIVEPIECES_CHAT_TIERS.find((tier) => tier.modelId === modelId)
-    ?.label;
+function managedTierLabel({
+  modelId,
+  flowTiers,
+}: {
+  modelId: string;
+  flowTiers: ModelTier[];
+}): string | undefined {
+  return flowTiers.find((tier) => tier.modelId === modelId)?.label;
 }
 
 export const aiModelHooks = {
@@ -63,20 +82,27 @@ export const aiModelHooks = {
 
   useGetModelsForProvider: (provider?: AIProviderName, configId?: string) => {
     const projectId = authenticationSession.getProjectId();
+    const { tiers: flowTiers } = aiProviderQueries.useModelTiers('flow');
+    const select = useCallback(
+      (allModels: AIProviderModel[]) =>
+        isNil(provider)
+          ? []
+          : getAllowedModelsForProvider({
+              provider,
+              allModels,
+              modelType: 'text',
+              flowTiers,
+            }),
+      [provider, flowTiers],
+    );
     return useQuery({
       queryKey: ['ai-models', provider, configId, projectId],
       enabled: !isNil(provider) && !isNil(projectId),
-      queryFn: async () => {
-        if (isNil(provider) || isNil(projectId)) return [];
-
-        const allModels = await aiProviderApi.listModelsForProvider(
-          provider,
-          projectId,
-          configId,
-        );
-
-        return getAllowedModelsForProvider(provider, allModels, 'text');
-      },
+      queryFn: () =>
+        isNil(provider) || isNil(projectId)
+          ? []
+          : aiProviderApi.listModelsForProvider(provider, projectId, configId),
+      select,
     });
   },
 };
