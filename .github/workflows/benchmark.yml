@@ -75,15 +75,15 @@ jobs:
           WORKER_HEAP_MB=${{ matrix.worker_heap_mb }} \
           AP_WORKER_CONCURRENCY=${{ matrix.worker_concurrency }} \
           AP_REUSE_SANDBOX=${{ matrix.reuse }} \
-            docker compose -f benchmark/docker-compose.yml up -d
+            docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml up -d
           echo "Waiting for containers to start..."
           sleep 5
-          docker compose -f benchmark/docker-compose.yml ps
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml ps
 
       - name: Verify container caps (proves the per-cell shape, cpuset partitioned)
         run: |
           echo "=== Container CPU / memory / cpuset (as Docker actually applied) ==="
-          for c in $(docker compose -f benchmark/docker-compose.yml ps -q); do
+          for c in $(docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml ps -q); do
             docker inspect "$c" --format '{{.Name}}  quota={{.HostConfig.CpuQuota}}  period={{.HostConfig.CpuPeriod}}  cpuset={{if .HostConfig.CpusetCpus}}{{.HostConfig.CpusetCpus}}{{else}}(any){{end}}  memBytes={{.HostConfig.Memory}}'
           done
           echo
@@ -226,11 +226,11 @@ jobs:
       - name: Show container logs on failure
         if: failure()
         run: |
-          docker compose -f benchmark/docker-compose.yml logs --tail=100
+          docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml logs --tail=100
 
       - name: Teardown
         if: always()
-        run: docker compose -f benchmark/docker-compose.yml down -v
+        run: docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml down -v
 
   summary:
     runs-on: ubuntu-latest

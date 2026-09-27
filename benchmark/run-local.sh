@@ -1,42 +1,42 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Local benchmark runner (mirrors what .github/workflows/benchmark.yml does per matrix cell).
-# Two cell presets match the matrix; override with env vars if you want something custom.
+# Local benchmark runner — reproduces one nightly matrix cell on a dev machine.
+# Layers docker-compose.ci.yml on top of the base file, matching CI exactly.
 #
 # Usage: ./benchmark/run-local.sh [cell] [total_requests]
-#   cell: shared-16cpu | dedicated-05cpu  (default: dedicated-05cpu)
+#   cell: shared | dedicated  (default: dedicated)
 #   total_requests: number of requests for the CLI (default: 500)
 #
 # Env overrides (any subset): EXECUTION_MODE, APP_REPLICAS, WORKER_REPLICAS,
 # WORKER_CPUS, WORKER_MEMORY, WORKER_HEAP_MB, AP_WORKER_CONCURRENCY, AP_REUSE_SANDBOX.
+#
+# Heads-up: docker-compose.ci.yml pins app→cpuset "16-17" and worker→cpuset
+# "0-15", so this needs a host with ≥18 CPUs. If you don't have that, drop
+# the `-f docker-compose.ci.yml` override below (loses cpuset partitioning
+# and requires setting AP_REUSE_SANDBOX explicitly elsewhere).
 
-CELL=${1:-dedicated-05cpu}
+CELL=${1:-dedicated}
 TOTAL_REQUESTS=${2:-500}
 
 case "$CELL" in
-  shared-16cpu)
+  shared|dedicated)
     : "${APP_REPLICAS:=1}"
-    : "${WORKER_REPLICAS:=1}"
-    : "${WORKER_CPUS:=16}"
-    : "${WORKER_MEMORY:=32G}"
-    : "${WORKER_HEAP_MB:=64512}"
-    : "${AP_WORKER_CONCURRENCY:=28}"
-    : "${AP_REUSE_SANDBOX:=false}"
-    ;;
-  dedicated-05cpu)
-    : "${APP_REPLICAS:=1}"
-    : "${WORKER_REPLICAS:=4}"
+    : "${WORKER_REPLICAS:=28}"
     : "${WORKER_CPUS:=0.5}"
     : "${WORKER_MEMORY:=1G}"
     : "${WORKER_HEAP_MB:=768}"
     : "${AP_WORKER_CONCURRENCY:=1}"
-    : "${AP_REUSE_SANDBOX:=true}"
     ;;
   *)
-    echo "ERROR: unknown cell '$CELL' (expected: shared-16cpu | dedicated-05cpu)" >&2
+    echo "ERROR: unknown cell '$CELL' (expected: shared | dedicated)" >&2
     exit 2
     ;;
+esac
+
+case "$CELL" in
+  shared)    : "${AP_REUSE_SANDBOX:=false}" ;;
+  dedicated) : "${AP_REUSE_SANDBOX:=true}" ;;
 esac
 
 : "${EXECUTION_MODE:=SANDBOX_PROCESS}"
@@ -45,7 +45,9 @@ export APP_REPLICAS WORKER_REPLICAS WORKER_CPUS WORKER_MEMORY WORKER_HEAP_MB \
        AP_WORKER_CONCURRENCY AP_REUSE_SANDBOX AP_EXECUTION_MODE FLOW_ENABLE_TIMEOUT
 export AP_EXECUTION_MODE=$EXECUTION_MODE
 
-COMPOSE="docker compose -f $(dirname "$0")/docker-compose.yml"
+TOTAL_SLOTS=$((WORKER_REPLICAS * AP_WORKER_CONCURRENCY))
+
+COMPOSE="docker compose -f $(dirname "$0")/docker-compose.yml -f $(dirname "$0")/docker-compose.ci.yml"
 
 cleanup() {
   echo "Tearing down..."
@@ -56,7 +58,7 @@ trap cleanup EXIT
 echo "=== Building image ==="
 docker build -t activepieces-benchmark:local .
 
-echo "=== Starting stack (cell=$CELL mode=$EXECUTION_MODE apps=$APP_REPLICAS workers=$WORKER_REPLICAS×${WORKER_CPUS}cpu conc=$AP_WORKER_CONCURRENCY reuse=$AP_REUSE_SANDBOX) ==="
+echo "=== Starting stack (cell=$CELL mode=$EXECUTION_MODE apps=$APP_REPLICAS workers=$WORKER_REPLICAS×${WORKER_CPUS}cpu conc=$AP_WORKER_CONCURRENCY total_slots=$TOTAL_SLOTS reuse=$AP_REUSE_SANDBOX) ==="
 $COMPOSE up -d
 
 echo "Waiting for containers to settle..."
@@ -70,12 +72,12 @@ AP_API_KEY=$(cat /tmp/bench-api-key)
 export AP_API_KEY
 echo "Flow ID: $FLOW_ID  Project ID: $PROJECT_ID"
 
-echo "=== Benchmark ($TOTAL_REQUESTS requests, $WORKER_REPLICAS concurrency) ==="
+echo "=== Benchmark ($TOTAL_REQUESTS requests, $TOTAL_SLOTS concurrency = $WORKER_REPLICAS workers × $AP_WORKER_CONCURRENCY slots) ==="
 set +e
 bun run packages/cli/src/benchmark-only.ts \
   --url http://localhost:8080 \
   --requests "$TOTAL_REQUESTS" \
-  --concurrency "$WORKER_REPLICAS" \
+  --concurrency "$TOTAL_SLOTS" \
   --project-id "$PROJECT_ID" \
   --flow-id "$FLOW_ID" \
   --json > /tmp/report.json
