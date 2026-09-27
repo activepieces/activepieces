@@ -13,7 +13,7 @@ export const asanaCreateTeamAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a new team in an organization and returns it; the connected user becomes a member. Teams exist only in organizations (company-domain workspaces), so a plain workspace fails. Check List Teams first to avoid duplicates: each call creates a separate team, so retries duplicate.',
+      'Creates a new team in an organization and returns it; the connected user becomes a member. Teams exist only in organizations (company-domain workspaces), so a plain workspace fails. Check List Teams first to avoid duplicates: each call creates a separate team, so retries duplicate. Visibility "secret" may need a paid plan; on a free plan Asana answers with HTTP 500 instead of a plan error.',
     idempotent: false,
   },
   outputSchema: asanaTeamOutputSchema,
@@ -35,7 +35,7 @@ export const asanaCreateTeamAction = createAction({
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
-      description: 'Who in the organization can see and join the team. Leave empty for the Asana default. "Private (secret)" may need a paid Asana plan: on a free plan Asana fails with HTTP 500 instead of a plan error, so pick another option there.',
+      description: 'Who can see and join the team; empty uses the Asana default. Secret may need a paid plan.',
       required: false,
       options: { disabled: false, options: ASANA_TEAM_VISIBILITY_OPTIONS },
     }),

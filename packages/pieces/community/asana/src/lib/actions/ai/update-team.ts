@@ -13,7 +13,7 @@ export const asanaUpdateTeamAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Updates only the team fields you set (name, description, visibility, endorsed); everything else is left unchanged. Team settings may be limited to team admins. Members are changed with Add User to Team and Remove User from Team. Setting the same values again converges, so it is safe to retry.',
+      'Updates only the team fields you set (name, description, visibility, endorsed); everything else is left unchanged. Team settings may be limited to team admins. Members are changed with Add User to Team and Remove User from Team. Setting the same values again converges, so it is safe to retry. Visibility "secret" may need a paid plan; on a free plan Asana answers with HTTP 500 instead of a plan error.',
     idempotent: true,
   },
   outputSchema: asanaTeamOutputSchema,
@@ -35,7 +35,7 @@ export const asanaUpdateTeamAction = createAction({
     }),
     visibility: Property.StaticDropdown({
       displayName: 'Visibility',
-      description: 'New visibility. Leave empty to keep it. "Private (secret)" may need a paid Asana plan: on a free plan Asana fails with HTTP 500 instead of a plan error, so pick another option there.',
+      description: 'New visibility; empty keeps it. Secret may need a paid plan.',
       required: false,
       options: { disabled: false, options: ASANA_TEAM_VISIBILITY_OPTIONS },
     }),
