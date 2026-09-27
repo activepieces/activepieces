@@ -78,7 +78,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 name: `${decodeScope}/${decodedName}`,
                 version,
                 locale: req.query.locale,
-                includeTranslations: !req.query.excludeTranslations,
+                includeI18n: !req.query.excludeI18n,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })
@@ -100,7 +100,7 @@ const basePiecesController: FastifyPluginAsyncZod = async (app) => {
                 name: decodedName,
                 version,
                 locale: req.query.locale,
-                includeTranslations: !req.query.excludeTranslations,
+                includeI18n: !req.query.excludeI18n,
             })
             const policy = await resolveVisibility({ platformId, projectId: req.query.projectId, log: req.log })
             const visiblePiece = applyVisibilityPolicy({ policy, piece })

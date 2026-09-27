@@ -82,7 +82,7 @@ describe('Piece Sync Cloud Round Trip', () => {
 
     it('omits the translations when the caller opts out', async () => {
         await seedUpstreamPiece('piece-opted-out')
-        const pieceMetadata = await fetchAsPieceSyncDoes('piece-opted-out', { excludeTranslations: 'true' })
+        const pieceMetadata = await fetchAsPieceSyncDoes('piece-opted-out', { excludeI18n: 'true' })
 
         expect(pieceMetadata.i18n).toBeUndefined()
         expect(pieceMetadata.description).toBe('Send a message')

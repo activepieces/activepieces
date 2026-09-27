@@ -83,7 +83,7 @@ describe('custom pieces per platform', () => {
 
     it('single piece: a platform user gets an OFFICIAL piece translated', async () => {
         const { a, tokenA } = await scenario()
-        const r = await get(`/api/v1/pieces/@ap/official?locale=de&excludeTranslations=true&projectId=${a.mockProject.id}`, tokenA)
+        const r = await get(`/api/v1/pieces/@ap/official?locale=de&excludeI18n=true&projectId=${a.mockProject.id}`, tokenA)
         expect(r.status).toBe(200)
         expect(r.body.description).toBe('Eine Nachricht senden')
         expect(r.body.i18n).toBeUndefined()
@@ -91,7 +91,7 @@ describe('custom pieces per platform', () => {
 
     it('single piece: a platform user gets their OWN CUSTOM piece translated', async () => {
         const { a, tokenA } = await scenario()
-        const r = await get(`/api/v1/pieces/@ap/custom-a?locale=de&excludeTranslations=true&projectId=${a.mockProject.id}`, tokenA)
+        const r = await get(`/api/v1/pieces/@ap/custom-a?locale=de&excludeI18n=true&projectId=${a.mockProject.id}`, tokenA)
         expect(r.status).toBe(200)
         expect(r.body.description).toBe('Eine Nachricht senden')
         expect(r.body.i18n).toBeUndefined()
@@ -113,7 +113,7 @@ describe('custom pieces per platform', () => {
         const token = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id }, projectId: a.mockProject.id })
 
         for (const name of ['unscoped-official', 'unscoped-custom']) {
-            const r = await get(`/api/v1/pieces/${name}?locale=de&excludeTranslations=true&projectId=${a.mockProject.id}`, token)
+            const r = await get(`/api/v1/pieces/${name}?locale=de&excludeI18n=true&projectId=${a.mockProject.id}`, token)
             expect(r.status).toBe(200)
             expect(r.body.description).toBe('Eine Nachricht senden')
             expect(r.body.i18n).toBeUndefined()
@@ -123,7 +123,7 @@ describe('custom pieces per platform', () => {
     it('single piece: an English request is unaffected and carries no i18n', async () => {
         const { a, tokenA } = await scenario()
         for (const name of ['@ap/official', '@ap/custom-a']) {
-            const r = await get(`/api/v1/pieces/${name}?locale=en&excludeTranslations=true&projectId=${a.mockProject.id}`, tokenA)
+            const r = await get(`/api/v1/pieces/${name}?locale=en&excludeI18n=true&projectId=${a.mockProject.id}`, tokenA)
             expect(r.status).toBe(200)
             expect(r.body.description).toBe('Send a message')
             expect(r.body.i18n).toBeUndefined()

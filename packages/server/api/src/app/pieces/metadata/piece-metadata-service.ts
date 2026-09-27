@@ -50,16 +50,16 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 version: piece.version,
             }))
         },
-        async get({ projectId, platformId, version, name, includeTranslations = false }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
+        async get({ projectId, platformId, version, name, includeI18n = false }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const bestMatch = await findExactVersion(log, { name, version, platformId })
             if (isNil(bestMatch)) {
                 return undefined
             }
-            const piece = await dedupe(`piece:${bestMatch.name}:${bestMatch.version}:${bestMatch.platformId ?? ''}:${includeTranslations}`, () => fetchPieceVersion({
+            const piece = await dedupe(`piece:${bestMatch.name}:${bestMatch.version}:${bestMatch.platformId ?? ''}:${includeI18n}`, () => fetchPieceVersion({
                 pieceName: bestMatch.name,
                 version: bestMatch.version,
                 platformId: bestMatch.platformId,
-                includeTranslations,
+                includeI18n,
                 log,
             }))
 
@@ -76,8 +76,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             }
             return policy.filterPieceComponents(piece)
         },
-        async getOrThrow({ version, name, platformId, locale, includeTranslations = false }: GetOrThrowParams): Promise<PieceMetadataModel> {
-            const piece = await this.get({ version, name, platformId, includeTranslations })
+        async getOrThrow({ version, name, platformId, locale, includeI18n = false }: GetOrThrowParams): Promise<PieceMetadataModel> {
+            const piece = await this.get({ version, name, platformId, includeI18n })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
@@ -89,7 +89,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             const translations = await findTranslations({ piece, locale: localeUtils.toSupportedLocale(locale) })
             return {
                 ...pieceTranslation.translatePiece({ piece, translations }),
-                i18n: includeTranslations ? piece.i18n : undefined,
+                i18n: includeI18n ? piece.i18n : undefined,
             }
         },
         async updateUsages({ usages }: UpdateUsagesParams): Promise<void> {
@@ -440,7 +440,7 @@ async function loadCataloguePieces({ log }: LoadCataloguePiecesParams): Promise<
     ]
 }
 
-async function fetchPieceVersion({ pieceName, version, platformId, includeTranslations, log }: FetchPieceVersionParams): Promise<PieceMetadataSchema | null> {
+async function fetchPieceVersion({ pieceName, version, platformId, includeI18n, log }: FetchPieceVersionParams): Promise<PieceMetadataSchema | null> {
     const devPieces = await loadDevPiecesIfEnabled(log)
     const devPiece = devPieces.find((p) => p.name === pieceName && p.version === version)
     if (!isNil(devPiece)) {
@@ -452,7 +452,7 @@ async function fetchPieceVersion({ pieceName, version, platformId, includeTransl
         version,
         platformId: platformId ?? IsNull(),
     })
-    return (includeTranslations ? query.addSelect('pm.i18n') : query).getOne()
+    return (includeI18n ? query.addSelect('pm.i18n') : query).getOne()
 }
 
 export async function fetchLatestCompatiblePiecesFromDB(currentRelease: string): Promise<PieceMetadataSchema[]> {
@@ -560,7 +560,7 @@ type GetOrThrowParams = {
     projectId?: string
     platformId?: string
     locale?: string
-    includeTranslations?: boolean
+    includeI18n?: boolean
 }
 
 type DeleteParams = {
@@ -606,7 +606,7 @@ type FetchPieceVersionParams = {
     pieceName: string
     version: string
     platformId?: string
-    includeTranslations: boolean
+    includeI18n: boolean
     log: FastifyBaseLogger
 }
 
