@@ -286,10 +286,6 @@ export const CONTAINER_POLL_INTERVAL_MS = 5000;
 
 export const CONTAINER_TIMEOUT_MS = 5 * 60 * 1000;
 
-/**
- * Array props arrive as a JSON string when the dynamic-value toggle is on, so
- * read them through this before using array operations on the value.
- */
 export function parseArrayProp(value: unknown): unknown[] {
   if (Array.isArray(value)) {
     return value;
