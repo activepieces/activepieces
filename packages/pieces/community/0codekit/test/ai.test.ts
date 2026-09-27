@@ -65,8 +65,25 @@ describe('Entity Detection', () => {
         expect(result).toEqual({
             entity_count: 2,
             entities: [
-                { text: 'Berlin', category: 'Location', sub_category: 'City', offset: 10, length: 6, confidence_score: 0.98 },
-                { text: 'Anna', category: 'Person', sub_category: null, offset: 0, length: 4, confidence_score: 0.9 },
+                { text: 'Berlin', category: 'Location', sub_category: 'City', offset: 11, length: 6, confidence_score: 0.98 },
+                { text: 'Anna', category: 'Person', sub_category: null, offset: 1, length: 4, confidence_score: 0.9 },
+            ],
+        });
+    });
+
+    it('returns offsets that point into the text as the user gave it', async () => {
+        const input = '\n  Anna lives in Berlin';
+        respond({
+            detections: [
+                { text: 'Anna', category: 'Person', offset: 0, length: 4 },
+                { text: 'Berlin', category: 'Location', offset: 14, length: 6 },
+            ],
+        });
+        const result = await runAction({ action: entityDetectionAction, propsValue: { text: input } });
+        expect(result).toMatchObject({
+            entities: [
+                { text: 'Anna', offset: input.indexOf('Anna') },
+                { text: 'Berlin', offset: input.indexOf('Berlin') },
             ],
         });
     });

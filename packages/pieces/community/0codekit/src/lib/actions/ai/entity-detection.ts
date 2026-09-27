@@ -21,16 +21,18 @@ export const entityDetectionAction = createAction({
     },
     outputSchema: businessAiOutputSchemas.entityDetection,
     async run({ auth, propsValue }) {
+        const text = zeroCodeKitAi.requireText({ value: propsValue.text, label: 'Text' });
+        const leadingWhitespace = (propsValue.text ?? '').length - (propsValue.text ?? '').trimStart().length;
         const response = await zeroCodeKitApi.post<EntityDetectionResponse>({
             apiKey: auth.secret_text,
             path: '/ai/entitydetection',
-            body: { text: zeroCodeKitAi.requireText({ value: propsValue.text, label: 'Text' }) },
+            body: { text },
         });
         const entities = (response.detections ?? []).map((detection) => ({
             text: detection.text ?? null,
             category: detection.category ?? null,
             sub_category: detection.subCategory ?? null,
-            offset: detection.offset ?? null,
+            offset: typeof detection.offset === 'number' ? detection.offset + leadingWhitespace : null,
             length: detection.length ?? null,
             confidence_score: detection.confidenceScore ?? null,
         }));

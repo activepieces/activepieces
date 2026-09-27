@@ -72,7 +72,7 @@ describe('code', () => {
         expect(sent().headers).toEqual({ auth: 'zck_test' });
         expect(sent().timeout).toBe(CODE_TIMEOUT_MS);
         expect(CODE_TIMEOUT_MS).toBeGreaterThan(180_000);
-        expect(sent().body).toEqual({ code: 'return { total: 3 };' });
+        expect(sent().body).toEqual({ code: 'const inputs = {};\nreturn { total: 3 };' });
         expect(result).toEqual({ result: { total: 3 } });
     });
 
@@ -112,11 +112,20 @@ describe('code', () => {
         expect(result).toEqual({ result: { sum: 5 } });
     });
 
-    it('Python wraps a scalar result and skips empty inputs', async () => {
+    it('Python wraps a scalar result', async () => {
         respond({ result: 42 });
-        const result = await runAction({ action: runPythonCodeAction, propsValue: { code: 'result = 42', inputs: {} } });
-        expect(sent().body).toEqual({ code: 'result = 42' });
+        const result = await runAction({ action: runPythonCodeAction, propsValue: { code: 'result = 42', inputs: { a: 1 } } });
         expect(result).toEqual({ result: 42 });
+    });
+
+    it.each([undefined, null, '', {}])('defines inputs as an empty object when Inputs is %j', async (inputs) => {
+        respond({ ok: true });
+        await runAction({ action: runJavascriptCodeAction, propsValue: { code: 'return Object.keys(inputs);', inputs } });
+        expect(sent().body.code).toBe('const inputs = {};\nreturn Object.keys(inputs);');
+
+        respond({ result: 0 });
+        await runAction({ action: runPythonCodeAction, propsValue: { code: 'result = len(inputs)', inputs } });
+        expect(sendRequest.mock.calls[1][0].body.code).toBe('inputs = __import__("json").loads("{}")\nresult = len(inputs)');
     });
 
     it('surfaces the vendor error message', async () => {

@@ -56,28 +56,16 @@ function stringList(value: unknown): string[] {
         .filter((item) => item !== '');
 }
 
-function hasInputs(inputs: unknown): boolean {
-    if (inputs === undefined || inputs === null || inputs === '') {
-        return false;
-    }
-    if (isRecord(inputs)) {
-        return Object.keys(inputs).length > 0;
-    }
-    return true;
+function inputsValue(inputs: unknown): unknown {
+    return inputs === undefined || inputs === null || inputs === '' ? {} : inputs;
 }
 
 function withJavascriptInputs({ code, inputs }: InjectParams): string {
-    if (!hasInputs(inputs)) {
-        return code;
-    }
-    return `const inputs = ${JSON.stringify(inputs)};\n${code}`;
+    return `const inputs = ${JSON.stringify(inputsValue(inputs))};\n${code}`;
 }
 
 function withPythonInputs({ code, inputs }: InjectParams): string {
-    if (!hasInputs(inputs)) {
-        return code;
-    }
-    return `inputs = __import__("json").loads(${JSON.stringify(JSON.stringify(inputs))})\n${code}`;
+    return `inputs = __import__("json").loads(${JSON.stringify(JSON.stringify(inputsValue(inputs)))})\n${code}`;
 }
 
 function javascriptResult(body: unknown): CodeResult {
