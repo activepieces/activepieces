@@ -65,18 +65,24 @@ spec:
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
+            {{- $fullname := include "activepieces.fullname" . }}
+            {{- $legacyKeys := dict "AP_ENCRYPTION_KEY" (list (printf "%s-secrets" $fullname) "encryption-key") "AP_JWT_SECRET" (list (printf "%s-jwt-secret" $fullname) "jwt-secret") }}
             {{- range $secretName, $vars := .Values.activepiecesEnvVariables }}
             {{- range $vars }}
-            {{- $userOwnedKey := false }}
-            {{- if has . (list "AP_ENCRYPTION_KEY" "AP_JWT_SECRET") }}
-            {{- $userOwnedKey = hasKey ((lookup "v1" "Secret" $.Release.Namespace $secretName).data | default dict) . }}
+            {{- $ref := list $secretName . true }}
+            {{- with get $legacyKeys . }}
+            {{- if hasKey ((lookup "v1" "Secret" $.Release.Namespace $secretName).data | default dict) (index $ref 1) }}
+            {{- $ref = list $secretName (index $ref 1) false }}
+            {{- else if hasKey ((lookup "v1" "Secret" $.Release.Namespace (index . 0)).data | default dict) (index . 1) }}
+            {{- $ref = list (index . 0) (index . 1) false }}
+            {{- end }}
             {{- end }}
             - name: {{ . }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $secretName | quote }}
-                  key: {{ . }}
-                  optional: {{ not $userOwnedKey }}
+                  name: {{ index $ref 0 | quote }}
+                  key: {{ index $ref 1 }}
+                  optional: {{ index $ref 2 }}
             {{- end }}
             {{- end }}
           {{- end }}

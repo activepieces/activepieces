@@ -125,5 +125,16 @@
   "Only trigger for emails containing this text in the subject.": "Alleen activeren voor e-mails met deze tekst in het onderwerp.",
   "Filter by Gmail label.": "Filter op Gmail label.",
   "Filter by Gmail category.": "Filteren op Gmail categorie.",
-  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "Alleen trigger voor bijlagen met deze bestandsextensie (bijv. pdf, jpg, docx)."
+  "Only trigger for attachments with this file extension (e.g., pdf, jpg, docx).": "Alleen trigger voor bijlagen met deze bestandsextensie (bijv. pdf, jpg, docx).",
+  "Plain Text": "Onopgemaakte tekst",
+  "Reply To": "Antwoord aan",
+  "Save as Draft": "Opslaan als concept",
+  "Reply": "Beantwoorden",
+  "Create Label": "Label maken",
+  "Label Name": "Label naam",
+  "Add Label to Email": "Label toevoegen aan e-mail",
+  "Archive Email": "Archief e-mail",
+  "Response is Binary": "Antwoord is binair",
+  "Return Error as Output": "Retourfout als uitvoer",
+  "Timeout": "Time-out"
 }

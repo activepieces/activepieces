@@ -37,6 +37,10 @@ jobs:
           grep -q '^kind: Rollout' "$RUNNER_TEMP/rollout.yaml"
           grep -q 'name: ap-activepieces-preview' "$RUNNER_TEMP/rollout.yaml"
           grep -A2 'scaleTargetRef:' "$RUNNER_TEMP/rollout.yaml" | grep -q 'kind: Rollout'
+          NOTES=$(helm install ap . --dry-run=client --set activepieces.frontendUrl=x)
+          grep -q 'ignores these values' <<< "$NOTES"
+          NOTES=$(helm install ap . --dry-run=client)
+          ! grep -q 'ignores these values' <<< "$NOTES"
 
       - uses: helm/kind-action@v1
 

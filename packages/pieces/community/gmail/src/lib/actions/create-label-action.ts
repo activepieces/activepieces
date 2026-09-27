@@ -13,7 +13,8 @@ export const gmailCreateLabelAction = createAction({
   props: {
     name: Property.ShortText({
       displayName: 'Label Name',
-      description: 'The display name of the new label, e.g. "Follow Up".',
+      description: 'Appears in your Gmail label list.',
+      placeholder: 'Follow Up',
       required: true,
     }),
   },
