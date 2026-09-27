@@ -442,6 +442,7 @@ import { NullOrphanFolderReferences1846000000000 } from './migration/postgres/18
 import { IndexWaitpointLookups1847000000000 } from './migration/postgres/1847000000000-IndexWaitpointLookups'
 import { AddAgentConversationAiCredits1850000000000 } from './migration/postgres/1850000000000-AddAgentConversationAiCredits'
 import { AddMcpOAuthCodeNonce1851000000000 } from './migration/postgres/1851000000000-AddMcpOAuthCodeNonce'
+import { UniqueProjectRoleNamePerPlatform1852000000000 } from './migration/postgres/1852000000000-UniqueProjectRoleNamePerPlatform'
 import { FlowExternalIdUniqueIgnoresDeleting1855000000000 } from './migration/postgres/1855000000000-FlowExternalIdUniqueIgnoresDeleting'
 import { AddFlowTombstoneIndex1856000000000 } from './migration/postgres/1856000000000-AddFlowTombstoneIndex'
 import { AddWaitpointDeadLetteredAt1857000000000 } from './migration/postgres/1857000000000-AddWaitpointDeadLetteredAt'
@@ -902,6 +903,7 @@ export const getMigrations = (): (new () => Migration)[] => {
         IndexWaitpointLookups1847000000000,
         AddAgentConversationAiCredits1850000000000,
         AddMcpOAuthCodeNonce1851000000000,
+        UniqueProjectRoleNamePerPlatform1852000000000,
         FlowExternalIdUniqueIgnoresDeleting1855000000000,
         AddFlowTombstoneIndex1856000000000,
         AddWaitpointDeadLetteredAt1857000000000,
