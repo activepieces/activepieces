@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listShopPayPaymentRequestReceiptsOutputSchema } from '../../output-schemas/store';
 
 const MAX_PAGE_SIZE = 110;
 
@@ -24,6 +25,7 @@ export const shopifyAiListShopPayPaymentRequestReceipts = createAction({
       'Lists Shop Pay payment request receipts: one per Shop Pay payment request a buyer completed, with its token, your source identifier, creation time, processing state (READY, PROCESSING, COMPLETED, FAILED, ACTION_REQUIRED) with any error, the resulting order and the request totals in the presentment currency. Plan requirement: only stores that take payments through Shopify Payments with Shop Pay payment requests (API 2026-01 and later) have receipts; elsewhere the list is empty. Filter with Shopify search syntax such as "state:COMPLETED", "source_identifier:1282823" or "created_at:>2026-09-01". Paged: pass end_cursor back as the cursor while has_next_page is true. The required access scope is not documented. Read-only.',
     idempotent: true,
   },
+  outputSchema: listShopPayPaymentRequestReceiptsOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify receipt search syntax, for example "state:COMPLETED" or "created_at:>2026-09-01". Leave empty to list all.'

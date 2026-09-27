@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listAvailableLocalesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListAvailableLocales = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiListAvailableLocales = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: listAvailableLocalesOutputSchema,
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       availableLocales: GqlLocale[] | null;

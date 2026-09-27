@@ -11,6 +11,7 @@ import {
 } from '../../common/graphql';
 
 const MAX_PAGE_SIZE = 250;
+import { listEventsOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListEvents = createAction({
   auth: shopifyAuth,
@@ -43,6 +44,7 @@ export const shopifyAiListEvents = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listEventsOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       events: GqlConnection<GqlEvent> | null;

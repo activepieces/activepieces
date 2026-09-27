@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listBusinessEntitiesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListBusinessEntities = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiListBusinessEntities = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: listBusinessEntitiesOutputSchema,
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       businessEntities: GqlBusinessEntity[] | null;

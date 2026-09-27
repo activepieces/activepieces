@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { bulkOperationOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiGetBulkOperation = createAction({
   auth: shopifyAuth,
@@ -26,6 +27,7 @@ export const shopifyAiGetBulkOperation = createAction({
       required: true,
     }),
   },
+  outputSchema: bulkOperationOutputSchema,
   async run({ auth, propsValue }) {
     const id = shopifyGraphqlClient.toGid({ type: 'BulkOperation', id: propsValue.bulk_operation_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

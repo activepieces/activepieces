@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { scriptTagOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiCreateScriptTag = createAction({
   auth: shopifyAuth,
@@ -18,7 +19,7 @@ export const shopifyAiCreateScriptTag = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Creates a script tag so the online store loads the given remote JavaScript file on every storefront page, and returns it. The script runs in every shopper\'s browser with full access to the page, so only add a script URL the merchant explicitly asked for and trusts, and say which URL you are adding. It only works on vintage themes; Online Store 2.0 themes ignore script tags. The display scope is always ONLINE_STORE (the order-status scopes are deprecated). Each call adds another tag, even for the same URL, so check list_script_tags with src first. Needs the write_script_tags access scope.',
+      'Creates a script tag so the online store loads the given remote JavaScript file on every storefront page, and returns it. The script runs in every shopper\'s browser with full access to the page, so only add a script URL the merchant explicitly asked for and trusts, and say which URL you are adding. It only works on vintage themes; Online Store 2.0 themes ignore script tags. The display scope is always ONLINE_STORE (the order-status scopes are deprecated). Each call adds another tag, even for the same URL, so check list_script_tags with src first. Needs the write_script_tags access scope. Shopify no longer lets many apps create or update script tags: if it answers "This app can\'t create or update script tags", do not retry; a theme app extension is needed instead.',
     idempotent: false,
   },
   props: {
@@ -32,6 +33,7 @@ export const shopifyAiCreateScriptTag = createAction({
       description: 'Yes lets Shopify serve the script from its CDN cache (changes to the file then show up with a delay). Leave empty for Shopify\'s default.',
     }),
   },
+  outputSchema: scriptTagOutputSchema,
   async run({ auth, propsValue }) {
     const src = readScriptUrl(propsValue.src);
     const input = shopifyValues.compact({

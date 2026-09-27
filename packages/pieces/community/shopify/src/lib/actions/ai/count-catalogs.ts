@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlCount, shopifyGraphqlClient, shopifyProps, shopifyValues } from '../../common/graphql';
+import { storeCountOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiCountCatalogs = createAction({
   auth: shopifyAuth,
@@ -32,6 +33,7 @@ export const shopifyAiCountCatalogs = createAction({
       'Shopify catalog search syntax, for example "status:ACTIVE" or "title:wholesale". Leave empty to count all.'
     ),
   },
+  outputSchema: storeCountOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       catalogsCount: GqlCount | null;

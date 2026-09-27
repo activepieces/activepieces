@@ -9,6 +9,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listPaymentDisputesOutputSchema } from '../../output-schemas/store';
 
 const MAX_PAGE_SIZE = 200;
 
@@ -24,6 +25,7 @@ export const shopifyAiListPaymentDisputes = createAction({
       'Lists Shopify Payments disputes: chargebacks and inquiries that buyers filed with their card issuer, each with status (for example NEEDS_RESPONSE, UNDER_REVIEW, WON, LOST), type, reason, amount and currency, the evidence due date, when evidence was sent, and the order. Plan requirement: only stores that use Shopify Payments have disputes; on other stores, and on development stores using a test gateway, the list is empty. Filter with Shopify search syntax such as "status:needs_response" or "initiated_at:>2026-09-01". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_shopify_payments_disputes access scope. Read-only.',
     idempotent: true,
   },
+  outputSchema: listPaymentDisputesOutputSchema,
   props: {
     query: shopifyProps.searchQuery(
       'Shopify dispute search syntax, for example "status:needs_response" or "initiated_at:>2026-09-01". Leave empty to list all.'

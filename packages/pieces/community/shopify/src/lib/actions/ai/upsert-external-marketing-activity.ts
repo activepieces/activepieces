@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { marketingActivityOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiUpsertExternalMarketingActivity = createAction({
   auth: shopifyAuth,
@@ -143,6 +144,7 @@ export const shopifyAiUpsertExternalMarketingActivity = createAction({
       required: false,
     }),
   },
+  outputSchema: marketingActivityOutputSchema,
   async run({ auth, propsValue }) {
     const utm = shopifyValues.buildUtm({
       campaign: propsValue.utm_campaign,

@@ -18,7 +18,6 @@ import { createAnalyticsTargetOutputSchema } from '../../output-schemas/analytic
 
 const TAKEN_CODE = 'TAKEN';
 const LOOKUP_PAGE_SIZE = 50;
-const LOOKUP_MAX_PAGES = 10;
 
 export const shopifyAiCreateAnalyticsTarget = createAction({
   auth: shopifyAuth,
@@ -100,14 +99,14 @@ export const shopifyAiCreateAnalyticsTarget = createAction({
       toleratedUserErrorCodes: [TAKEN_CODE],
     });
     const created = data.analyticsTargetCreate?.analyticsTarget;
+    const taken = (data.analyticsTargetCreate?.userErrors ?? []).find((item) => item.code === TAKEN_CODE);
     if (created) {
       return {
         ...analyticsMappers.mapAnalyticsTarget(created),
-        already_existed: false,
+        already_existed: taken !== undefined,
         redacted_fields: redactedFields,
       };
     }
-    const taken = (data.analyticsTargetCreate?.userErrors ?? []).find((item) => item.code === TAKEN_CODE);
     if (!taken) {
       throw new Error('Shopify did not return the created analytics target.');
     }
@@ -141,7 +140,7 @@ async function findExistingTarget({
   const search = `metric:${metric} start_date:${startDate} end_date:${endDate}`;
   const wanted = filters ?? '';
   let after: string | undefined = undefined;
-  for (let page = 0; page < LOOKUP_MAX_PAGES; page++) {
+  for (;;) {
     const response: ShopifyGraphqlResult<FindTargetsData> = await shopifyGraphqlClient.request<FindTargetsData>({
       auth,
       query: `query FindAnalyticsTarget($first: Int!, $after: String, $query: String) { analyticsTargets(first: $first, after: $after, query: $query) { nodes { ${analyticsFields.ANALYTICS_TARGET_FIELDS} } ${shopifyFields.PAGE_INFO_FIELDS} } }`,
@@ -159,12 +158,11 @@ async function findExistingTarget({
       return { target: match, redactedFields };
     }
     const pageInfo: GqlConnection<GqlAnalyticsTarget>['pageInfo'] = data.analyticsTargets?.pageInfo;
-    if (!pageInfo?.hasNextPage || !pageInfo.endCursor) {
+    if (!pageInfo?.hasNextPage || !pageInfo.endCursor || pageInfo.endCursor === after) {
       return null;
     }
     after = pageInfo.endCursor;
   }
-  return null;
 }
 
 type FindTargetsData = {

@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteScriptTagOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiDeleteScriptTag = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiDeleteScriptTag = createAction({
       required: true,
     }),
   },
+  outputSchema: deleteScriptTagOutputSchema,
   async run({ auth, propsValue }) {
     const id = shopifyGraphqlClient.toGid({ type: 'ScriptTag', id: propsValue.script_tag_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

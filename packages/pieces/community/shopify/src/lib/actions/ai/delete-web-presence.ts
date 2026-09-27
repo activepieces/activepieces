@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteWebPresenceOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiDeleteWebPresence = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiDeleteWebPresence = createAction({
       required: true,
     }),
   },
+  outputSchema: deleteWebPresenceOutputSchema,
   async run({ auth, propsValue }) {
     const id = shopifyGraphqlClient.toGid({ type: 'MarketWebPresence', id: propsValue.web_presence_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

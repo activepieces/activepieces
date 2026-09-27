@@ -11,6 +11,7 @@ import {
 } from '../../common/graphql';
 
 const MAX_PAGE_SIZE = 250;
+import { listMarketingEventsOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListMarketingEvents = createAction({
   auth: shopifyAuth,
@@ -21,7 +22,7 @@ export const shopifyAiListMarketingEvents = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists marketing events: the campaigns, ads, emails and posts that marketing apps recorded on the store, each with its tactic, channel, UTM values, start/end times and the app it belongs to. Shopify documents this list as the events "associated with the marketing app", so a custom-app token may only see the events it created itself (for example with upsert_external_marketing_activity), not those of other marketing apps; an empty list does not prove the store runs no marketing. Filter with Shopify search syntax such as "type:AD", "started_at:>2026-01-01" or "description:spring". Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_marketing_events access scope. Read-only.',
+      'Lists marketing events: the campaigns, ads, emails and posts that marketing apps recorded on the store, each with its tactic, channel, UTM values, start/end times and the app it belongs to. Shopify documents this list as the events "associated with the marketing app", so a custom-app token may only see the events it created itself (for example with upsert_external_marketing_activity), not those of other marketing apps; an empty list does not prove the store runs no marketing. Filter with Shopify search syntax such as "type:AD", "started_at:>2026-01-01" or description:"<exact event description>" (the description filter matches the whole text only, not a word in it). Paged: pass end_cursor back as the cursor while has_next_page is true. Needs the read_marketing_events access scope. Read-only.',
     idempotent: true,
   },
   props: {
@@ -43,6 +44,7 @@ export const shopifyAiListMarketingEvents = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listMarketingEventsOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       marketingEvents: GqlConnection<GqlMarketingEvent>;

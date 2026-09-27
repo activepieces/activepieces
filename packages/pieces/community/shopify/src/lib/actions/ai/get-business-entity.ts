@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { businessEntityOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiGetBusinessEntity = createAction({
   auth: shopifyAuth,
@@ -27,6 +28,7 @@ export const shopifyAiGetBusinessEntity = createAction({
       required: false,
     }),
   },
+  outputSchema: businessEntityOutputSchema,
   async run({ auth, propsValue }) {
     const rawId = shopifyValues.nonEmpty(propsValue.business_entity_id);
     const id = rawId ? shopifyGraphqlClient.toGid({ type: 'BusinessEntity', id: rawId }) : undefined;

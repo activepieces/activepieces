@@ -11,6 +11,7 @@ import {
 } from '../../common/graphql';
 
 const MAX_PAGE_SIZE = 60;
+import { listWebPresencesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListWebPresences = createAction({
   auth: shopifyAuth,
@@ -29,6 +30,7 @@ export const shopifyAiListWebPresences = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listWebPresencesOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       webPresences: GqlConnection<GqlWebPresence> | null;

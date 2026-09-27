@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listShopPoliciesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListShopPolicies = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiListShopPolicies = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: listShopPoliciesOutputSchema,
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       shop: { shopPolicies: GqlShopPolicy[] | null };

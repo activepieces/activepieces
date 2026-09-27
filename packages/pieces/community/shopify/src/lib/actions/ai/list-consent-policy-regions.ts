@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listConsentPolicyRegionsOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListConsentPolicyRegions = createAction({
   auth: shopifyAuth,
@@ -20,6 +21,7 @@ export const shopifyAiListConsentPolicyRegions = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: listConsentPolicyRegionsOutputSchema,
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       consentPolicyRegions: GqlConsentPolicyRegion[] | null;

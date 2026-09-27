@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { scriptTagOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiUpdateScriptTag = createAction({
   auth: shopifyAuth,
@@ -18,7 +19,7 @@ export const shopifyAiUpdateScriptTag = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Changes the src URL and/or the cache flag of one script tag and returns it; what you leave empty keeps its value. A new src makes every storefront page load a different script, so only use a URL the merchant explicitly asked for and trusts. The display scope is not changed. Repeating the same update leaves the same state. Needs the write_script_tags access scope.',
+      'Changes the src URL and/or the cache flag of one script tag and returns it; what you leave empty keeps its value. A new src makes every storefront page load a different script, so only use a URL the merchant explicitly asked for and trusts. The display scope is not changed. Repeating the same update leaves the same state. Needs the write_script_tags access scope. Shopify no longer lets many apps create or update script tags: if it answers "This app can\'t create or update script tags", do not retry; a theme app extension is needed instead.',
     idempotent: true,
   },
   props: {
@@ -37,6 +38,7 @@ export const shopifyAiUpdateScriptTag = createAction({
       description: 'Yes serves the script from Shopify\'s CDN cache, No loads it from the source each time. Leave empty to keep the current setting.',
     }),
   },
+  outputSchema: scriptTagOutputSchema,
   async run({ auth, propsValue }) {
     const src = shopifyValues.nonEmpty(propsValue.src);
     if (src !== undefined && !/^https:\/\/\S+$/i.test(src)) {

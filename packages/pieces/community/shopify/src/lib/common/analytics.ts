@@ -132,13 +132,19 @@ function checkDateOrder({ start, end }: { start: string | undefined; end: string
   }
 }
 
+function isRealCalendarDate(text: string): boolean {
+  const [year, month, day] = text.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
 function readDateTime({ value, label }: { value: string | undefined | null; label: string }): string | undefined {
   const text = (value ?? '').trim();
   if (text.length === 0) {
     return undefined;
   }
   const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
-  if (!isoPattern.test(text) || !Number.isFinite(Date.parse(text))) {
+  if (!isoPattern.test(text) || !Number.isFinite(Date.parse(text)) || !isRealCalendarDate(text.slice(0, 10))) {
     throw new Error(
       `${label} "${text}" is not an ISO 8601 date-time with a time zone, for example 2026-11-28T00:00:00Z. Nothing was changed.`
     );
