@@ -7,7 +7,7 @@
   "Custom API Call": "Custom API Call",
   "Combine several PDF files into one PDF, in the order you list them.": "Combine several PDF files into one PDF, in the order you list them.",
   "Split a PDF into several PDFs by page count, page ranges, single pages, matching text or bookmarks.": "Split a PDF into several PDFs by page count, page ranges, single pages, matching text or bookmarks.",
-  "Convert a file to another format with any of ConvertAPI's converters, such as Word to PDF or PDF to JPG.": "Convert a file to another format with any of ConvertAPI's converters, such as Word to PDF or PDF to JPG.",
+  "Convert a file to another format with any of ConvertAPI's converters, such as Word to PDF or PDF to JPG. Extra file inputs (like a template or overlay file) are not supported here; use Custom API Call for those.": "Convert a file to another format with any of ConvertAPI's converters, such as Word to PDF or PDF to JPG. Extra file inputs (like a template or overlay file) are not supported here; use Custom API Call for those.",
   "Make a custom API call to a specific endpoint": "Make a custom API call to a specific endpoint",
   "PDF Files": "PDF Files",
   "Output File Name": "Output File Name",

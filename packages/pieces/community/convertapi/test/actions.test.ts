@@ -294,8 +294,8 @@ describe('Merge PDF Files', () => {
 
         const conversion = conversionRequest();
         expect(param({ request: conversion, name: 'StoreFile' })).toEqual({ Name: 'StoreFile', Value: 'true' });
-        expect(param({ request: conversion, name: 'Timeout' })).toEqual({ Name: 'Timeout', Value: '540' });
-        expect(Number(param({ request: conversion, name: 'Timeout' })?.['Value'])).toBeLessThanOrEqual(540);
+        expect(param({ request: conversion, name: 'Timeout' })).toEqual({ Name: 'Timeout', Value: '360' });
+        expect(Number(param({ request: conversion, name: 'Timeout' })?.['Value'])).toBeLessThanOrEqual(360);
     });
 
     it('sends the merge options as string values and skips empty ones', async () => {
@@ -365,6 +365,52 @@ describe('Merge PDF Files', () => {
         await expect(runMerge({ propsValue: { files: [{ file: pdf('a.pdf') }, { file: pdf('b.pdf') }] } })).rejects.toThrow(
             /did not return a download link/,
         );
+    });
+
+    it('downloads results without following redirects and with a bounded timeout', async () => {
+        mockApi();
+
+        await runMerge({ propsValue: { files: [{ file: pdf('a.pdf') }, { file: pdf('b.pdf') }] } });
+
+        const download = requests().find((request) => request.method === 'GET' && request.url.includes('/d/res1'));
+        expect(download?.followRedirects).toBe(false);
+        expect(download?.timeout).toBe(60_000);
+    });
+
+    it('refuses to download a result link outside convertapi.com', async () => {
+        mockApi({ conversion: { body: { Files: [{ FileName: 'merged.pdf', FileExt: 'pdf', Url: 'http://169.254.169.254/latest/meta-data' }] } } });
+
+        await expect(runMerge({ propsValue: { files: [{ file: pdf('a.pdf') }, { file: pdf('b.pdf') }] } })).rejects.toThrow(
+            /outside convertapi\.com/,
+        );
+        expect(requests().some((request) => request.method === 'GET' && request.url.includes('169.254'))).toBe(false);
+    });
+
+    it('keeps the conversion inside the step time limit', async () => {
+        mockApi();
+
+        await runMerge({ propsValue: { files: [{ file: pdf('a.pdf') }, { file: pdf('b.pdf') }] } });
+
+        expect(conversionRequest().timeout).toBe(390_000);
+    });
+
+    it('still returns the files but warns when ConvertAPI cleanup fails', async () => {
+        mockApi();
+        const base = sendRequest.getMockImplementation();
+        sendRequest.mockImplementation(async (request: Request) => {
+            if (request.method === 'DELETE' && request.url === `${BASE}/d/up1`) {
+                throw new HttpError(undefined, { status: 500, responseBody: { Message: 'nope' } });
+            }
+            return base === undefined ? undefined : base(request);
+        });
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+        const result = await runMerge({ propsValue: { files: [{ file: pdf('a.pdf') }, { file: pdf('b.pdf') }] } });
+
+        expect(result.file_name).toBe('out.pdf');
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(String(warn.mock.calls[0][0])).toContain('up1');
+        warn.mockRestore();
     });
 
     it('deletes the uploaded inputs and the stored result from ConvertAPI afterwards', async () => {
@@ -533,7 +579,7 @@ describe('Convert File', () => {
         expect(param({ request: conversion, name: 'ImageQuality' })).toEqual({ Name: 'ImageQuality', Value: '80' });
         expect(param({ request: conversion, name: 'Empty' })).toBeUndefined();
         const timeouts = parametersOf(conversion).filter((parameter) => parameter['Name'] === 'Timeout');
-        expect(timeouts).toEqual([{ Name: 'Timeout', Value: '540' }]);
+        expect(timeouts).toEqual([{ Name: 'Timeout', Value: '360' }]);
         const storeFiles = parametersOf(conversion).filter((parameter) => parameter['Name'] === 'StoreFile');
         expect(storeFiles).toEqual([{ Name: 'StoreFile', Value: 'true' }]);
     });

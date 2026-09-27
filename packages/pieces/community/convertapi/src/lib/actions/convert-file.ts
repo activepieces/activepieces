@@ -10,11 +10,11 @@ export const convertFileAction = createAction({
     name: 'convert_file',
     classification: 'WRITE',
     displayName: 'Convert File',
-    description: 'Convert a file to another format with any of ConvertAPI\'s converters, such as Word to PDF or PDF to JPG.',
+    description: 'Convert a file to another format with any of ConvertAPI\'s converters, such as Word to PDF or PDF to JPG. Extra file inputs (like a template or overlay file) are not supported here; use Custom API Call for those.',
     audience: 'both',
     aiMetadata: {
         description:
-            'Converts a file between formats with any ConvertAPI converter (Office, PDF, images, HTML, CAD, email and more) and returns a list with one stored file per output, since some conversions produce several files (for example one image per PDF page). Prefer Merge PDF Files or Split PDF File for those PDF jobs. Each call uses ConvertAPI conversions and creates new output files.',
+            'Converts a file between formats with any ConvertAPI converter (Office, PDF, images, HTML, CAD, email and more) and returns a list with one stored file per output, since some conversions produce several files (for example one image per PDF page). Prefer Merge PDF Files or Split PDF File for those PDF jobs. Secondary file inputs such as TemplateFile or OverlayFile are not exposed; use Custom API Call for converters that need them. Each call uses ConvertAPI conversions and creates new output files.',
         idempotent: false,
     },
     props: {

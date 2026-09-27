@@ -22,7 +22,9 @@ export const convertApi = {
 };
 
 export const CONVERTAPI_BASE_URL = 'https://v2.convertapi.com';
-export const MAX_TIMEOUT_SECONDS = 540;
+export const MAX_TIMEOUT_SECONDS = 360;
+export const DOWNLOAD_TIMEOUT_MS = 60_000;
+export const DELETE_TIMEOUT_MS = 15_000;
 
 async function upload({ apiKey, file }: UploadParams): Promise<string> {
     const response = await sendOrThrow<ConvertApiUploadResponse>({
@@ -54,10 +56,15 @@ async function convert({ apiKey, from, to, parameters }: ConvertParams): Promise
 }
 
 async function download({ url }: { url: string }): Promise<Buffer> {
+    if (!isConvertApiUrl(url)) {
+        throw new Error('ConvertAPI returned a download link outside convertapi.com, so it was not followed.');
+    }
     const response = await sendOrThrow<unknown>({
         method: HttpMethod.GET,
         url,
         responseType: 'arraybuffer',
+        followRedirects: false,
+        timeout: DOWNLOAD_TIMEOUT_MS,
     });
     if (!Buffer.isBuffer(response)) {
         throw new Error('ConvertAPI returned an unreadable file.');
@@ -65,15 +72,17 @@ async function download({ url }: { url: string }): Promise<Buffer> {
     return response;
 }
 
-async function deleteFiles({ fileIds }: { fileIds: string[] }): Promise<void> {
-    await Promise.allSettled(
+async function deleteFiles({ fileIds }: { fileIds: string[] }): Promise<string[]> {
+    const results = await Promise.allSettled(
         fileIds.map((fileId) =>
             httpClient.sendRequest({
                 method: HttpMethod.DELETE,
                 url: `${CONVERTAPI_BASE_URL}/d/${encodeURIComponent(fileId)}`,
+                timeout: DELETE_TIMEOUT_MS,
             }),
         ),
     );
+    return fileIds.filter((_, index) => results[index].status === 'rejected');
 }
 
 async function convertFiles({
@@ -120,7 +129,12 @@ async function convertFiles({
             conversion_cost: typeof response.ConversionCost === 'number' ? response.ConversionCost : null,
         };
     } finally {
-        await deleteFiles({ fileIds: fileIdsToDelete });
+        const notDeleted = await deleteFiles({ fileIds: fileIdsToDelete });
+        if (notDeleted.length > 0) {
+            console.warn(
+                `[convertapi] Could not delete ${notDeleted.length} file(s) from ConvertAPI after the step: ${notDeleted.join(', ')}. ConvertAPI removes stored files automatically after a few hours.`,
+            );
+        }
     }
 }
 
@@ -208,6 +222,16 @@ async function sendOrThrow<T>(request: HttpRequest): Promise<T> {
         return response.body;
     } catch (error) {
         throw new Error(describeError(error));
+    }
+}
+
+function isConvertApiUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url);
+        const host = parsed.hostname.toLowerCase();
+        return parsed.protocol === 'https:' && (host === 'convertapi.com' || host.endsWith('.convertapi.com'));
+    } catch {
+        return false;
     }
 }
 
