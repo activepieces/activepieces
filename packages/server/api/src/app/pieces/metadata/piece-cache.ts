@@ -23,8 +23,7 @@ const persistedRegistry = createGenerationMemo<PieceRegistryEntry[]>({ currentGe
 export const pieceCache = (log: FastifyBaseLogger) => {
     return {
         async setup(): Promise<void> {
-            log.info('[pieceCache] Registry cache initialized')
-            advanceGeneration()
+            log.info('[pieceCache] Initialized')
             if (!isTestingEnvironment) {
                 await pubsub.subscribe(PIECE_CACHE_INVALIDATION_CHANNEL, (sender) => {
                     if (sender === INSTANCE_ID) {
@@ -55,8 +54,8 @@ export const pieceCache = (log: FastifyBaseLogger) => {
 
 export function currentPieceGeneration(): number {
     if (performance.now() - generationStartedAt > GENERATION_MAX_AGE_MS) {
-        system.globalLogger().info({ pieceCache: { generation, maxAgeMs: GENERATION_MAX_AGE_MS } }, '[pieceCache] Max age reached, advanced the generation')
         advanceGeneration()
+        system.globalLogger().info({ pieceCache: { generation, maxAgeMs: GENERATION_MAX_AGE_MS } }, '[pieceCache] Max age reached, advanced the generation')
     }
     return generation
 }
