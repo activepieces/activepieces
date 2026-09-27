@@ -4,7 +4,7 @@ icon: ⏱️
 
 # CI Pipeline
 
-The PR checks that decide whether a change builds and passes tests. Lives in `.github/workflows/ci-v2.yml` (`ci.yml` runs beside it until the side-by-side comparison ends). The gates that shape *how a PR is reviewed* are on *CI PR Review Hygiene*.
+The PR checks that decide whether a change builds and passes tests. Lives in `.github/workflows/ci.yml`; it replaced the original `ci.yml` on 2026-09-27 after running beside it as `ci-v2.yml`. The gates that shape *how a PR is reviewed* are on *CI PR Review Hygiene*.
 
 **changes job** — the first job. Runs `turbo ls --affected` to list the packages the PR touches plus everything that depends on them, and sets `all=true` when a file outside any package changed (workflows, root config, `tools/`). Every other job keys off those two outputs.
 
@@ -23,14 +23,15 @@ The PR checks that decide whether a change builds and passes tests. Lives in `.g
 - api's `test` script runs ce+ee+cloud serially. Any `turbo run test` over many packages must exclude api (`--filter='!api'`; `tools/scripts/test-filters.ts` does the same).
 - The api e2e tests (`execute-flow-e2e`, `test-step-e2e`, `piece-options-e2e`) import the worker's source, and `worker.ts` imports `@activepieces/sandbox`, which resolves to `packages/server/sandbox/dist`. A job that builds only api fails those three files with "Failed to resolve entry for package @activepieces/sandbox". The api jobs build `worker` as well and also run when worker is affected.
 - A cache saved during a pull request run is visible only to that PR and to nothing else. Caches every PR should hit (bun downloads, the compiled Redis binary) must be created on `main`; `warm-ci-cache.yml` does that on every push to main.
-- Two turbo invocations running at the same time in one job race on `cache: false` builds: the old `ci.yml` failed `api#build` with "@activepieces/shared has no exported member" for a member that exists, because a second invocation was rewriting `shared/dist` while api's tsc read it. One invocation per job.
+- Two turbo invocations running at the same time in one job race on `cache: false` builds: the retired pipeline failed `api#build` with "@activepieces/shared has no exported member" for a member that exists, because a second invocation was rewriting `shared/dist` while api's tsc read it. One invocation per job.
 - `--affected` and `--filter` intersect in turbo; there is no union flag. To run "the affected packages plus this fixed set" in one invocation, pass the affected names (the `changes` job outputs them as JSON) as explicit `--filter=<name>` arguments alongside the fixed ones. Two invocations rebuild the shared dependency chain twice because `build` is uncached.
 - Pieces are the one place the pipeline overrides the dependency graph, by decision (2026-09-24). A piece runs when its own files changed; every piece runs when `pieces/framework` or `pieces/common` changed. A change to `core-piece-types`, `core-utils`, `core-formula` or `core-execution` does not pull the 700+ pieces in, although they depend on it, because that cost about 20 minutes per such PR (5 of the last 60). The accepted blind spot: a core type change that breaks piece compilation is caught when pieces are published (`release-pieces.yml`), not in the PR. The `changes` job computes this with two turbo listings, `ls --filter='[base...HEAD]'` (changed directly) and `ls --affected` (plus dependents).
 - `TURBO_SCM_BASE` must be `origin/<base branch>` in CI. turbo's default base is `main`, which a CI checkout does not have, so without it every run degrades to "everything affected".
+- Required status checks are set by a repo admin (branch ruleset on `main`) and match on job display name. A job its `if:` skips reports `skipped`, which GitHub counts as passing, so every job here can be required: `changes`, `lint`, `build-test`, `api (ce)`, `api (cloud)`, `api (ee, unit, migrations)`, `tool-search (postgres)`. A workflow-level skip (`on.paths`) leaves a required check pending forever, so keep the filtering inside the `changes` job. On 2026-09-27, when the old `ci.yml` was retired, nothing was required yet: `isRequired` was false on every check and the only ruleset enforced codeowner review.
 
 ## Key files
 
-- `.github/workflows/ci-v2.yml` — the PR pipeline
+- `.github/workflows/ci.yml` — the PR pipeline
 - `.github/actions/setup` — shared install and cache steps
 - `tools/scripts/test-filters.ts` — every package with a `test` script, minus api
 - `tools/scripts/check-migration-rollback.ts` — new migrations must declare `breaking` and `down()`
