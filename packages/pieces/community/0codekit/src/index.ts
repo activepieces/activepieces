@@ -34,7 +34,7 @@ import { detectGenderAction } from './lib/actions/text/detect-gender';
 import { splitNameAction } from './lib/actions/text/split-name';
 import { textContainsAction } from './lib/actions/text/text-contains';
 import { zeroCodeKitAuth } from './lib/auth';
-import { ZEROCODEKIT_BASE_URL } from './lib/common/client';
+import { ZEROCODEKIT_BASE_URL, zeroCodeKitApi } from './lib/common/client';
 
 export const zeroCodeKit = createPiece({
     displayName: '0CodeKit',
@@ -82,9 +82,10 @@ export const zeroCodeKit = createPiece({
         createCustomApiCallAction({
             baseUrl: () => ZEROCODEKIT_BASE_URL,
             auth: zeroCodeKitAuth,
-            authMapping: async (auth) => ({
-                auth: auth.secret_text,
-            }),
+            authMapping: async (auth, propsValue) => {
+                zeroCodeKitApi.assertProviderUrl(propsValue['url']?.['url']);
+                return { auth: auth.secret_text };
+            },
         }),
     ],
     triggers: [],

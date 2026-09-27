@@ -35,4 +35,17 @@ describe('dateInput.toIsoDate', () => {
         expect(() => dateInput.toIsoDate({ date: '31.02.2024', format: 'DD.MM.YYYY' })).toThrow(/not a real calendar date/);
         expect(() => dateInput.toIsoDate({ date: '01.2024', format: 'MM.YYYY' })).toThrow(/must include/);
     });
+
+    it('rejects a format that repeats the year, month or day before matching', () => {
+        expect(() => dateInput.toIsoDate({ date: '01.01.2024', format: 'DD.D.YYYY' })).toThrow(/more than once/);
+        expect(() => dateInput.toIsoDate({ date: '2024.1.24', format: 'YYYY.M.YY' })).toThrow(/more than once/);
+    });
+
+    it('answers quickly for an adversarial format and date', () => {
+        const format = `${'MD'.repeat(20)}YYYY`;
+        const date = `${'1'.repeat(80)}x`;
+        const startedAt = Date.now();
+        expect(() => dateInput.toIsoDate({ date, format })).toThrow(/more than once/);
+        expect(Date.now() - startedAt).toBeLessThan(100);
+    });
 });

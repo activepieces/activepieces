@@ -6,6 +6,7 @@ export const zeroCodeKitApi = {
     statusOf,
     describe,
     timeoutFor,
+    assertProviderUrl,
 };
 
 export const ZEROCODEKIT_BASE_URL = 'https://v2.1saas.co';
@@ -34,6 +35,26 @@ async function post<T>(params: ZeroCodeKitRequest): Promise<T> {
         return await request<T>(params);
     } catch (error) {
         throw new Error(describe({ error, fallback: 'The request to 0CodeKit failed.' }));
+    }
+}
+
+function assertProviderUrl(url: unknown): void {
+    if (typeof url !== 'string' || !(url.startsWith('http://') || url.startsWith('https://'))) {
+        return;
+    }
+    const origin = parseOrigin(url);
+    if (origin !== new URL(ZEROCODEKIT_BASE_URL).origin) {
+        throw new Error(
+            `Custom API Call only sends your 0CodeKit API key to ${ZEROCODEKIT_BASE_URL}. Use a path such as /1saas/auth, or a full URL on that host.`,
+        );
+    }
+}
+
+function parseOrigin(url: string): string | undefined {
+    try {
+        return new URL(url).origin;
+    } catch {
+        return undefined;
     }
 }
 
