@@ -416,7 +416,7 @@ export const platformRoutes = [
     path: '/platform/users/roles',
     element: (
       <PlatformLayout>
-        <PageTitle title="Roles">
+        <PageTitle title="Roles & Access">
           <PlanFeatureSample feature="projectRoles">
             <SuspenseWrapper>
               <ProjectRolePage />
