@@ -1,5 +1,10 @@
 import { InputFile } from './types';
 
+export const inputFiles = {
+    fromValue,
+    fromArrayItems,
+};
+
 function fromValue(value: unknown): InputFile | undefined {
     if (!isRecord(value)) {
         return undefined;
@@ -32,7 +37,3 @@ function isRecord(value: unknown): value is Record<string, unknown> {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-export const inputFiles = {
-    fromValue,
-    fromArrayItems,
-};

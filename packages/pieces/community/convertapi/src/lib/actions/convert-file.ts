@@ -58,7 +58,7 @@ export const convertFileAction = createAction({
         }),
         additionalFiles: Property.Array({
             displayName: 'Additional Files',
-            description: 'Only for conversions that combine several files, such as merging Word documents, creating a ZIP, or joining images. Added after the main file, in this order.',
+            description: 'Files to add after the main one, for converters that combine files.',
             required: false,
             properties: {
                 file: Property.File({
@@ -70,7 +70,7 @@ export const convertFileAction = createAction({
         options: Property.DynamicProperties({
             auth: convertApiAuth,
             displayName: 'Conversion Options',
-            description: 'Settings offered by the selected converter. Leave them empty to use ConvertAPI defaults.',
+            description: 'Options of the chosen converter. Leave empty for the defaults.',
             required: false,
             refreshers: ['from', 'to'],
             props: async ({ from, to }) => {

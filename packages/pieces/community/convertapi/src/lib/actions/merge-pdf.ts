@@ -19,7 +19,7 @@ export const mergePdfAction = createAction({
     props: {
         files: Property.Array({
             displayName: 'PDF Files',
-            description: 'Add the PDF files in the order they should appear in the merged document. At least two are needed.',
+            description: 'Add the PDFs in the order they should appear. At least two are needed.',
             required: true,
             properties: {
                 file: Property.File({
@@ -30,17 +30,18 @@ export const mergePdfAction = createAction({
         }),
         fileName: Property.ShortText({
             displayName: 'Output File Name',
-            description: 'Name for the merged file, without the extension. Leave empty to let ConvertAPI name it.',
+            description: 'Merged file name, without the extension. Leave empty for a default.',
+            placeholder: 'e.g. combined',
             required: false,
         }),
         password: Property.ShortText({
             displayName: 'Password',
-            description: 'Only needed if the PDFs are password-protected. The same password is used to open every file.',
+            description: 'Only needed if the PDFs are password-protected. Used for every file.',
             required: false,
         }),
         bookmarksTableOfContents: Property.StaticDropdown({
             displayName: 'Bookmark Each File',
-            description: 'Add a top-level bookmark for each merged file, named after the file name or the PDF title.',
+            description: 'Add a top-level bookmark for each merged file.',
             required: false,
             defaultValue: 'disabled',
             options: {
@@ -53,7 +54,7 @@ export const mergePdfAction = createAction({
         }),
         pageSize: Property.StaticDropdown({
             displayName: 'Page Size',
-            description: 'Scale every page to this size. Keep "Original" to leave pages as they are.',
+            description: 'Scale every page to this size, or keep the original size.',
             required: false,
             defaultValue: 'default',
             options: {
@@ -71,7 +72,7 @@ export const mergePdfAction = createAction({
         }),
         pageOrientation: Property.StaticDropdown({
             displayName: 'Page Orientation',
-            description: 'Rotate every page to this orientation. Keep "Original" to leave pages as they are.',
+            description: 'Rotate every page to this orientation, or keep the original.',
             required: false,
             defaultValue: 'default',
             options: {

@@ -3,6 +3,16 @@ import { InputProperty, InputPropertyMap, Property } from '@activepieces/pieces-
 import { CONVERTAPI_BASE_URL } from './client';
 import { ConverterInfo, ConverterParameter } from './types';
 
+export const converterInfo = {
+    fetchConverters,
+    fetchConverter,
+    parseConverters,
+    sourceOptions,
+    destinationOptions,
+    mainInputOf,
+    optionProps,
+};
+
 async function fetchConverters({ from, to }: { from?: string; to?: string } = {}): Promise<ConverterInfo[]> {
     const url =
         from === undefined
@@ -242,16 +252,6 @@ function toStringArray(value: unknown): string[] {
 function isRecord(value: unknown): value is Record<string, unknown> {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
-
-export const converterInfo = {
-    fetchConverters,
-    fetchConverter,
-    parseConverters,
-    sourceOptions,
-    destinationOptions,
-    mainInputOf,
-    optionProps,
-};
 
 const EXCLUDED_PARAMETER_NAMES = new Set(['File', 'Files', 'StoreFile', 'Timeout', 'Secret', 'Token']);
 

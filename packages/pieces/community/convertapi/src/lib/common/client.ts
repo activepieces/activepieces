@@ -10,6 +10,20 @@ import {
     StoredFile,
 } from './types';
 
+export const convertApi = {
+    upload,
+    convert,
+    download,
+    deleteFiles,
+    convertFiles,
+    checkToken,
+    toValueParameters,
+    describeError,
+};
+
+export const CONVERTAPI_BASE_URL = 'https://v2.convertapi.com';
+export const MAX_TIMEOUT_SECONDS = 540;
+
 async function upload({ apiKey, file }: UploadParams): Promise<string> {
     const response = await sendOrThrow<ConvertApiUploadResponse>({
         method: HttpMethod.POST,
@@ -249,20 +263,6 @@ function describeError(error: unknown): string {
     }
     return base;
 }
-
-export const convertApi = {
-    upload,
-    convert,
-    download,
-    deleteFiles,
-    convertFiles,
-    checkToken,
-    toValueParameters,
-    describeError,
-};
-
-export const CONVERTAPI_BASE_URL = 'https://v2.convertapi.com';
-export const MAX_TIMEOUT_SECONDS = 540;
 
 const RESERVED_PARAMETER_NAMES = ['StoreFile', 'Timeout', 'Secret', 'Token'];
 

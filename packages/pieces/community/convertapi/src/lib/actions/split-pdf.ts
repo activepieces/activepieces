@@ -1,4 +1,4 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, MarkdownVariant, Property } from '@activepieces/pieces-framework';
 import { convertApiAuth } from '../auth';
 import { convertApi } from '../common/client';
 import { splitPdfOutputSchema } from '../output-schemas';
@@ -36,19 +36,24 @@ export const splitPdfAction = createAction({
                 ],
             },
         }),
-        value: Property.ShortText({
-            displayName: 'Split Value',
-            description: `What to split on, depending on **Split By**:
+        valueHelp: Property.MarkDown({
+            variant: MarkdownVariant.INFO,
+            value: `**Split Value** by mode:
 - **Page count**: pages per part, e.g. \`5\`, or a repeating pattern such as \`3,2\`. Leave empty for one file per page.
 - **Page ranges**: one part per range, e.g. \`1-3,5,7-9\` gives three files.
 - **Single pages**: each listed page becomes its own file, e.g. \`1-2,5\` gives pages 1, 2 and 5.
 - **Text match**: a regular expression; a new part starts at every page whose text matches, e.g. \`Invoice\\s+#\\d+\`.
 - **Bookmarks**: leave empty.`,
+        }),
+        value: Property.ShortText({
+            displayName: 'Split Value',
+            description: 'What to split on. The format depends on the Split By mode.',
+            placeholder: 'e.g. 1-3,5,7-9',
             required: false,
         }),
         mergeOutput: Property.Checkbox({
             displayName: 'Merge Parts Into One PDF',
-            description: 'Join the resulting parts back into one PDF, for example to extract selected pages into a single file.',
+            description: 'Join the parts back into one PDF, e.g. to extract selected pages.',
             required: false,
             defaultValue: false,
         }),
@@ -59,7 +64,8 @@ export const splitPdfAction = createAction({
         }),
         fileName: Property.ShortText({
             displayName: 'Output File Name',
-            description: 'Base name for the parts, without the extension. ConvertAPI adds a number to each part.',
+            description: 'Base name for the parts, without extension. Each part gets a number.',
+            placeholder: 'e.g. invoice',
             required: false,
         }),
     },
