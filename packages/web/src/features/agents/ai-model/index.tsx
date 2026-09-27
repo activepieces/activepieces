@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
 import * as React from 'react';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -196,7 +197,7 @@ export function AIModelSelector({
         <h2 className="text-sm font-medium">{t('AI Model *')}</h2>
       )}
 
-      <div className="flex items-stretch border rounded-md bg-background overflow-hidden">
+      <div className="flex items-stretch border rounded-md bg-gray-1 overflow-hidden">
         <Popover open={providerOpen} onOpenChange={setProviderOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -214,10 +215,10 @@ export function AIModelSelector({
               ) : selectedProvider ? (
                 <div className="flex items-center gap-2">
                   {getProviderLogo(selectedProvider) && (
-                    <img
+                    <LogoPlate
                       src={getProviderLogo(selectedProvider)}
                       alt={selectedProvider}
-                      className="h-4 w-4 object-contain"
+                      className="size-4 rounded-sm p-px"
                     />
                   )}
                   <span className="truncate">
@@ -225,7 +226,7 @@ export function AIModelSelector({
                   </span>
                 </div>
               ) : (
-                <span className="text-muted-foreground">
+                <span className="text-gray-11">
                   {providers.length === 0
                     ? t('No providers')
                     : t('Select provider')}
@@ -253,10 +254,10 @@ export function AIModelSelector({
                   >
                     <div className="flex items-center gap-2 flex-1">
                       {getProviderLogo(option.provider) && (
-                        <img
+                        <LogoPlate
                           src={getProviderLogo(option.provider)}
                           alt={option.provider}
-                          className="h-4 w-4 object-contain"
+                          className="size-4 rounded-sm p-px"
                         />
                       )}
                       <span>{option.label}</span>
@@ -276,7 +277,7 @@ export function AIModelSelector({
           </PopoverContent>
         </Popover>
 
-        <div className="w-px bg-border self-stretch" />
+        <div className="w-px bg-gray-6 self-stretch" />
 
         <Popover open={modelOpen} onOpenChange={setModelOpen}>
           <PopoverTrigger asChild>
@@ -303,7 +304,7 @@ export function AIModelSelector({
                     selectedModel}
                 </span>
               ) : (
-                <span className="text-muted-foreground">
+                <span className="text-gray-11">
                   {!selectedProvider
                     ? t('Select provider first')
                     : models.length === 0
@@ -347,7 +348,7 @@ export function AIModelSelector({
       </div>
 
       {selectedProvider && showEmbeddingNote && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-gray-11">
           {PROVIDER_EMBEDDING_MODELS[selectedProvider]
             ? t('Embedding model for knowledge base: {model}', {
                 model: PROVIDER_EMBEDDING_MODELS[selectedProvider],

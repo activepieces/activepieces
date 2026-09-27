@@ -63,7 +63,7 @@ export function ByProjectView({
 
   const searchBar = (
     <div className="relative">
-      <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-gray-11" />
       <Input
         className="pl-8 w-[240px]"
         placeholder={t('Search projects')}
@@ -90,7 +90,7 @@ export function ByProjectView({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="flex items-center gap-2 text-sm text-muted-foreground">
+      <p className="flex items-center gap-2 text-sm text-gray-11">
         <BarChart3 className="size-4 shrink-0" />
         {t(
           'Allocate capacity per project — pick its worker group and concurrency limit. Leave the limit empty to inherit the platform default. Project settings shows these read-only and links here.',
@@ -172,7 +172,7 @@ function buildColumns({
       }: {
         row: { original: RowDataWithActions<ProjectWithLimits> };
       }) => (
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-gray-11">
           {row.original.analytics.totalFlows}
         </span>
       ),
@@ -247,17 +247,17 @@ function WorkerGroupCell({
     <div className="flex flex-col gap-1">
       <Select value={selectValue} onValueChange={handleChange}>
         <SelectTrigger
-          className={cn('w-[200px]', isOffline && 'border-destructive')}
+          className={cn('w-[200px]', isOffline && 'border-danger-9')}
         >
           <div className="flex items-center gap-2 min-w-0">
             <Cpu
               className={cn(
                 'size-3.5 shrink-0',
                 isOffline
-                  ? 'text-destructive'
+                  ? 'text-danger-11'
                   : isShared
-                  ? 'text-muted-foreground'
-                  : 'text-primary',
+                  ? 'text-gray-11'
+                  : 'text-accent-11',
               )}
             />
             <SelectValue />
@@ -265,7 +265,7 @@ function WorkerGroupCell({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={SHARED_SENTINEL}>
-            <span className="text-muted-foreground">{t('Shared')}</span>
+            <span className="text-gray-11">{t('Shared')}</span>
           </SelectItem>
           {isOffline && (
             <SelectItem value={row.workerGroupId!}>
@@ -280,7 +280,7 @@ function WorkerGroupCell({
         </SelectContent>
       </Select>
       {isOffline && (
-        <p className="text-xs text-destructive">
+        <p className="text-xs text-danger-11">
           {t('{group} has no workers online. Runs will wait in its queue', {
             group: row.workerGroupId!.replaceAll('_', ' '),
           })}

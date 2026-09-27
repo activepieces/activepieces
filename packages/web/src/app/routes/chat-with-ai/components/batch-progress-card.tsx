@@ -28,15 +28,15 @@ export function BatchProgressCard({
 
   return (
     <motion.div
-      className="rounded-xl border bg-background overflow-hidden my-2"
+      className="rounded-xl border bg-gray-1 overflow-hidden my-2"
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
       <div className="px-3.5 pt-3 pb-2">
         <div className="flex items-center justify-between gap-2">
-          <h3 className="font-medium text-xs flex items-center gap-1.5 text-foreground">
-            <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+          <h3 className="font-medium text-xs flex items-center gap-1.5 text-gray-12">
+            <Zap className="h-3.5 w-3.5 text-gray-11" />
             {progress.label}
           </h3>
           <BatchStatusBadge progress={progress} />
@@ -52,21 +52,21 @@ export function BatchProgressCard({
               'transition-all duration-500 ease-out',
               progress.done
                 ? hasFailures
-                  ? 'bg-amber-500'
-                  : 'bg-green-500'
+                  ? 'bg-warning-11'
+                  : 'bg-success-11'
                 : undefined,
             )}
           />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-gray-11">
             <div className="flex items-center gap-3">
               {progress.succeeded > 0 && (
-                <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                <span className="flex items-center gap-1 text-success-11">
                   <Check className="h-3 w-3" />
                   {progress.succeeded} {t('succeeded')}
                 </span>
               )}
               {progress.failed > 0 && (
-                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                <span className="flex items-center gap-1 text-warning-11">
                   <AlertCircle className="h-3 w-3" />
                   {progress.failed} {t('failed')}
                 </span>
@@ -91,7 +91,7 @@ export function BatchProgressCard({
 function BatchStatusBadge({ progress }: { progress: BatchProgressData }) {
   if (!progress.done) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+      <span className="inline-flex items-center gap-1 text-xs text-gray-11 tabular-nums">
         <Loader2 className="h-3 w-3 animate-spin" />
         {progress.completed}/{progress.total}
       </span>
@@ -99,14 +99,14 @@ function BatchStatusBadge({ progress }: { progress: BatchProgressData }) {
   }
   if (progress.failed === 0) {
     return (
-      <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400 text-xs font-medium">
+      <span className="inline-flex items-center gap-1 text-success-11 text-xs font-medium">
         <Check className="h-3 w-3" />
         {t('Done')}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 text-xs font-medium">
+    <span className="inline-flex items-center gap-1 text-warning-11 text-xs font-medium">
       <AlertCircle className="h-3 w-3" />
       {progress.failed} {t('failed')}
     </span>
@@ -126,17 +126,17 @@ function FailureDetails({
   const remaining = results.length - 2;
 
   return (
-    <div className="rounded-lg bg-amber-500/5 px-3 py-2 space-y-1.5">
-      <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+    <div className="rounded-lg bg-warning-3 px-3 py-2 space-y-1.5">
+      <span className="text-xs font-medium text-warning-11">
         {t('Failed items')}
       </span>
       <div className="space-y-1">
         {visible.map((r) => (
           <div
             key={r.index}
-            className="flex items-start gap-1.5 text-xs text-amber-700/80 dark:text-amber-400/80"
+            className="flex items-start gap-1.5 text-xs text-warning-11"
           >
-            <span className="shrink-0 tabular-nums text-amber-700/50 dark:text-amber-400/50">
+            <span className="shrink-0 tabular-nums text-warning-11">
               #{r.index + 1}
             </span>
             <span className="break-words min-w-0">
@@ -149,7 +149,7 @@ function FailureDetails({
         {!expanded && remaining > 0 && (
           <motion.button
             type="button"
-            className="flex items-center gap-1 text-xs text-amber-700/60 dark:text-amber-400/60 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors"
             onClick={() => setExpanded(true)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -162,7 +162,7 @@ function FailureDetails({
         {expanded && results.length > 3 && (
           <motion.button
             type="button"
-            className="flex items-center gap-1 text-xs text-amber-700/60 dark:text-amber-400/60 hover:text-amber-700 dark:hover:text-amber-400 transition-colors"
+            className="flex items-center gap-1 text-xs text-warning-11 hover:text-warning-12 transition-colors"
             onClick={() => setExpanded(false)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

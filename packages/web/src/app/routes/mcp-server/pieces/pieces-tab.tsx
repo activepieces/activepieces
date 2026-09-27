@@ -75,7 +75,7 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
             'Every piece a connected client can reach, and every action inside it.',
           )}
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-gray-11">
           {t(
             'This page is a mirror — a platform admin decides what is on the list.',
           )}
@@ -109,7 +109,7 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
       ) : isError ? (
         <PiecesUnavailableAlert error={error} onRetry={refetch} />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border px-4 py-10 text-sm text-muted-foreground">
+        <div className="rounded-lg border px-4 py-10 text-sm text-gray-11">
           {isSearching
             ? t('No piece or action matches your search.')
             : t('No pieces are reachable in this project.')}
@@ -131,7 +131,7 @@ export function PiecesTab({ projectId, onSelectProject }: PiecesTabProps) {
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-muted/40"
+              className="w-full border-t px-4 py-3 text-sm font-medium hover:bg-gray-3/40"
             >
               {t('Show {count} more pieces', { count: hiddenCount })}
             </button>

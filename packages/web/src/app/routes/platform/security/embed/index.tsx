@@ -133,7 +133,7 @@ const EmbedPage = () => {
     <div className="w-full max-w-4/5 2xl:max-w-6xl mx-auto py-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-xl font-medium">{t('Embed Onboarding')}</h1>
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-gray-11">
           {description}
           <Button
             variant="link"

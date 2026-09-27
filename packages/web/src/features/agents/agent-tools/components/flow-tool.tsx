@@ -31,10 +31,10 @@ export const AgentFlowToolComponent = ({
 
   return (
     <AccordionItem value="flows" className="border-b last:border-0">
-      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-accent transition-all">
+      <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-4 transition-all">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
-            <Workflow className="size-4 text-muted-foreground" />
+          <div className="h-8 w-8 rounded-md bg-gray-3 flex items-center justify-center">
+            <Workflow className="size-4 text-gray-11" />
           </div>
           <span className="text-sm font-medium">{t('Flows')}</span>
         </div>
@@ -47,7 +47,7 @@ export const AgentFlowToolComponent = ({
               key={tool.toolName}
               className={`
                 group flex items-center gap-2 px-3 py-1
-                rounded-full border bg-muted/50
+                rounded-full border bg-gray-3/50
                 ${disabled ? 'opacity-50 pointer-events-none' : ''}
               `}
             >
@@ -64,9 +64,9 @@ export const AgentFlowToolComponent = ({
                     size="icon"
                     className="
                       size-5 p-0.5
-                      text-muted-foreground
-                      hover:text-destructive
-                      hover:bg-destructive/10
+                      text-gray-11
+                      hover:text-danger-11
+                      hover:bg-danger-3
                       transition
                     "
                   >

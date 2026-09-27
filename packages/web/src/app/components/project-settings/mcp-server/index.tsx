@@ -47,7 +47,7 @@ export const McpServerSettings = () => {
               <h3 className="font-semibold text-base mb-1">
                 {t('Internal Tools')}
               </h3>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-gray-11 mb-3">
                 {t(
                   'Control which built-in Activepieces tools are available to agents via this MCP server.',
                 )}
@@ -65,7 +65,7 @@ export const McpServerSettings = () => {
               <h3 className="font-semibold text-base mb-1">
                 {t('Your Flows')}
               </h3>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-gray-11 mb-3">
                 {t(
                   'Flows with the MCP Trigger are exposed as tools on this server.',
                 )}

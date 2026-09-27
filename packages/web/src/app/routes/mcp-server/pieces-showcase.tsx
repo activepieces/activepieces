@@ -2,7 +2,7 @@ import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
 import { t } from 'i18next';
 import { useMemo } from 'react';
 
-import ImageWithFallback from '@/components/custom/image-with-fallback';
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Skeleton } from '@/components/ui/skeleton';
 import { piecesHooks } from '@/features/pieces/hooks/pieces-hooks';
 import { pieceSearchUtils } from '@/features/pieces/utils/piece-search-utils';
@@ -21,13 +21,13 @@ export function PiecesShowcase() {
   }
 
   return (
-    <div className="flex-1 border-t bg-muted/30 pb-9 pt-8">
+    <div className="flex-1 border-t bg-gray-3/30 pb-9 pt-8">
       <PageBand className="flex flex-col gap-6 px-0 lg:px-0">
         <div className="flex flex-col gap-1.5 px-6 lg:px-14">
           <h2 className="text-xl font-bold leading-7 tracking-tight">
             {t('Your AI gets all of this')}
           </h2>
-          <p className="max-w-[560px] text-sm text-muted-foreground">
+          <p className="max-w-[560px] text-sm text-gray-11">
             {isLoading
               ? t('Every piece you can use, plus every flow you’ve built.')
               : t(
@@ -77,17 +77,14 @@ function TileRow({
   return (
     <div className={cn('flex gap-2.5', className)}>
       {tiles.map((tile) => (
-        <span
+        <LogoPlate
           key={tile.name}
+          src={tile.logoUrl}
+          alt={tile.displayName}
           title={tile.displayName}
-          className="flex size-16 shrink-0 items-center justify-center rounded-lg border bg-background"
-        >
-          <ImageWithFallback
-            src={tile.logoUrl}
-            alt={tile.displayName}
-            className="size-8"
-          />
-        </span>
+          border
+          className="size-16 rounded-lg p-4"
+        />
       ))}
     </div>
   );

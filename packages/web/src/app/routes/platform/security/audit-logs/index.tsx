@@ -144,9 +144,7 @@ export default function AuditLogsPage() {
               return (
                 <div className="text-left flex items-center gap-2">
                   {!isNil(icon?.icon) && (
-                    <span className="text-muted-foreground shrink-0">
-                      {icon.icon}
-                    </span>
+                    <span className="text-gray-11 shrink-0">{icon.icon}</span>
                   )}
                   {formatUtils.convertEnumToHumanReadable(row.original.action)}
                 </div>
@@ -199,7 +197,7 @@ export default function AuditLogsPage() {
               return row.original.projectId &&
                 'project' in row.original.data ? (
                 <Link to={`/projects/${row.original.projectId}`}>
-                  <div className="text-left text-primary hover:underline">
+                  <div className="text-left text-accent-11 hover:underline">
                     {row.original.data.project?.displayName}
                   </div>
                 </Link>
@@ -239,7 +237,7 @@ export default function AuditLogsPage() {
                   setIsSheetOpen(true);
                 }}
               >
-                <Eye className="size-4 text-muted-foreground" />
+                <Eye className="size-4 text-gray-11" />
               </Button>
             ),
           },
@@ -258,21 +256,19 @@ export default function AuditLogsPage() {
                 selectedEvent?.action ?? '',
               )}
             </SheetTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-gray-11 mt-1">
               {selectedEvent && convertToDetails(selectedEvent)}
             </p>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto">
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
                 {t('Who & When')}
               </p>
               <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
                 {selectedEvent?.userEmail && (
                   <>
-                    <span className="text-muted-foreground">
-                      {t('Performed By')}
-                    </span>
+                    <span className="text-gray-11">{t('Performed By')}</span>
                     <span className="font-medium">
                       {selectedEvent.userEmail}
                     </span>
@@ -280,9 +276,7 @@ export default function AuditLogsPage() {
                 )}
                 {selectedEvent?.projectDisplayName && (
                   <>
-                    <span className="text-muted-foreground">
-                      {t('Project')}
-                    </span>
+                    <span className="text-gray-11">{t('Project')}</span>
                     <span className="font-medium">
                       {selectedEvent.projectDisplayName}
                     </span>
@@ -290,13 +284,11 @@ export default function AuditLogsPage() {
                 )}
                 {selectedEvent?.ip && (
                   <>
-                    <span className="text-muted-foreground">
-                      {t('IP Address')}
-                    </span>
+                    <span className="text-gray-11">{t('IP Address')}</span>
                     <span className="font-medium">{selectedEvent.ip}</span>
                   </>
                 )}
-                <span className="text-muted-foreground">{t('Created')}</span>
+                <span className="text-gray-11">{t('Created')}</span>
                 <span className="font-medium">
                   {selectedEvent && (
                     <FormattedDate date={new Date(selectedEvent.created)} />
@@ -308,14 +300,14 @@ export default function AuditLogsPage() {
               <>
                 <Separator />
                 <div className="px-6 py-5 flex flex-col gap-4">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
                     {t('Event Details')}
                   </p>
                   <div className="grid grid-cols-[150px_1fr] gap-y-3 text-sm">
                     {extractEventDetails(selectedEvent).map(
                       ({ label, value }) => (
                         <Fragment key={label}>
-                          <span className="text-muted-foreground">{label}</span>
+                          <span className="text-gray-11">{label}</span>
                           <span className="font-medium">{value}</span>
                         </Fragment>
                       ),
@@ -326,7 +318,7 @@ export default function AuditLogsPage() {
             )}
             <Separator />
             <div className="px-6 py-5 flex flex-col gap-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <p className="text-xs font-semibold text-gray-11 uppercase tracking-wide">
                 {t('Full Payload')}
               </p>
               <SimpleJsonViewer data={selectedEvent?.data ?? {}} />

@@ -47,10 +47,10 @@ export const ProjectRoleUsersSheet = ({
         <div className="flex-1 overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
-              <Loader2 className="size-8 animate-spin text-muted-foreground" />
+              <Loader2 className="size-8 animate-spin text-gray-11" />
             </div>
           ) : users.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+            <div className="flex flex-col items-center justify-center h-full gap-2 text-gray-11">
               <Users className="size-14" />
               <p className="text-sm font-medium">{t('No users found')}</p>
               <p className="text-xs">

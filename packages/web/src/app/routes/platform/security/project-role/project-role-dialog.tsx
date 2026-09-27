@@ -241,7 +241,7 @@ export const ProjectRoleDialog = ({
         </DialogHeader>
         <div className="grid space-y-4 mt-4">
           <div>
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-sm font-medium text-gray-12">
               {t('Name')}
             </span>
             <Input
@@ -256,7 +256,7 @@ export const ProjectRoleDialog = ({
             />
           </div>
           <div>
-            <span className="text-sm font-medium text-foreground">
+            <span className="text-sm font-medium text-gray-12">
               {t('Permissions')}
             </span>
             <div className="overflow-y-auto p-2 rounded-md">
@@ -268,10 +268,10 @@ export const ProjectRoleDialog = ({
                       className="flex flex-col justify-between py-3 border-b last:border-b-0"
                     >
                       <div className="flex flex-row items-center justify-between gap-2">
-                        <span className="font-semibold text-sm text-foreground">
+                        <span className="font-semibold text-sm text-gray-12">
                           {permission.name}
                         </span>
-                        <div className="flex bg-accent rounded-sm">
+                        <div className="flex bg-gray-3 rounded-sm">
                           {!permission.disableNone && (
                             <Button
                               className="h-9 px-4"
@@ -314,7 +314,7 @@ export const ProjectRoleDialog = ({
                           </Button>
                         </div>
                       </div>
-                      <span className="text-xs text-muted-foreground mt-1">
+                      <span className="text-xs text-gray-11 mt-1">
                         {permission.description}
                       </span>
                     </div>

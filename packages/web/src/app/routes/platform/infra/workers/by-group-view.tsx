@@ -30,7 +30,7 @@ export function ByGroupView({
 
   if (allGroupLabels.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground">
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-11">
         <Layers className="size-10" strokeWidth={1.5} />
         <p className="text-sm">{t('No projects')}</p>
       </div>
@@ -71,9 +71,9 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
   return (
     <>
-      <div className="flex w-full flex-col rounded-lg border bg-background p-5 gap-4 sm:w-[475px]">
+      <div className="flex w-full flex-col rounded-lg border bg-gray-1 p-5 gap-4 sm:w-[475px]">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent-3 text-accent-11">
             <Layers className="size-4" />
           </div>
           <TextWithTooltip tooltipMessage={groupLabel}>
@@ -87,7 +87,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
           <span className="text-2xl font-bold leading-tight">
             {onlineWorkerCount}
           </span>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-gray-11">
             {t('{count, plural, =1 {worker} other {workers}}', {
               count: onlineWorkerCount,
             })}{' '}
@@ -97,7 +97,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
         <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-2.5">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            <span className="text-xs font-medium uppercase tracking-wide text-gray-11">
               {t('PROJECTS')}
             </span>
             <Button
@@ -112,14 +112,14 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
           </div>
 
           {assignedProjects.length === 0 ? (
-            <p className="text-xs text-muted-foreground">{t('No projects')}</p>
+            <p className="text-xs text-gray-11">{t('No projects')}</p>
           ) : (
             <div className="flex flex-wrap items-center gap-1.5">
               {assignedProjects.slice(0, 3).map((project) => (
                 <ProjectChip key={project.id} project={project} />
               ))}
               {assignedProjects.length > 3 && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-gray-11">
                   {t('+{count} more', { count: assignedProjects.length - 3 })}
                 </span>
               )}
@@ -140,7 +140,7 @@ function GroupCard({ groupLabel, allProjects, workers }: GroupCardProps) {
 
 function ProjectChip({ project }: { project: ProjectWithLimits }) {
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border bg-muted/40 px-2 py-0.5 text-xs">
+    <div className="inline-flex items-center gap-1 rounded-full border bg-gray-3/40 px-2 py-0.5 text-xs">
       <ProjectAvatar project={project} size="sm" />
       <TextWithTooltip tooltipMessage={project.displayName}>
         <span className="max-w-[100px] truncate">{project.displayName}</span>

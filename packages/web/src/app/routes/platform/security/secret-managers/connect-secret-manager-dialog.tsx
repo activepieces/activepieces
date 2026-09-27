@@ -12,6 +12,7 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { LogoPlate } from '@/components/custom/logo-plate';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -160,10 +161,10 @@ const AddEditSecretManagerForm = ({
                         {SECRET_MANAGER_PROVIDERS_METADATA.map((provider) => (
                           <SelectItem key={provider.id} value={provider.id}>
                             <div className="flex items-center gap-2">
-                              <img
+                              <LogoPlate
                                 src={provider.logo}
                                 alt={provider.name}
-                                className="w-4 h-4 object-contain"
+                                size="xxs"
                               />
                               <span>{provider.name}</span>
                             </div>

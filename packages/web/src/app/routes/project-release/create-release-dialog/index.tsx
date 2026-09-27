@@ -113,7 +113,7 @@ const CreateReleaseDialogContent = ({
               placeholder={t('Meeting Summary Flow')}
             />
             {form.formState.errors.name && (
-              <p className="text-sm text-destructive">
+              <p className="text-sm text-danger-11">
                 {form.formState.errors.name.message}
               </p>
             )}
@@ -128,7 +128,7 @@ const CreateReleaseDialogContent = ({
               placeholder={t('Added new features and fixed bugs')}
             />
             {form.formState.errors.description && (
-              <p className="text-sm text-destructive">
+              <p className="text-sm text-danger-11">
                 {form.formState.errors.description.message}
               </p>
             )}
@@ -176,7 +176,7 @@ const CreateReleaseDialogContent = ({
                     {t('Connections Changes')} ({plan?.connections?.length || 0}
                     )
                   </Label>
-                  <div className="flex items-center text-sm text-muted-foreground">
+                  <div className="flex items-center text-sm text-gray-11">
                     <span className="flex items-center gap-2">
                       {t(
                         'New connections are placeholders and need to be reconnected again',
@@ -208,8 +208,8 @@ const CreateReleaseDialogContent = ({
                       {connection.type ===
                         ConnectionOperationType.CREATE_CONNECTION && (
                         <div className="flex items-center gap-2">
-                          <Plus className="w-4 h-4 shrink-0 text-success" />
-                          <span className="text-success">
+                          <Plus className="w-4 h-4 shrink-0 text-success-11" />
+                          <span className="text-success-11">
                             {connection.connectionState.displayName}
                           </span>
                         </div>
@@ -245,16 +245,16 @@ const CreateReleaseDialogContent = ({
                       )}
                       {table.type === TableOperationType.CREATE_TABLE && (
                         <div className="flex items-center gap-2">
-                          <Plus className="w-4 h-4 shrink-0 text-success" />
-                          <span className="text-success">
+                          <Plus className="w-4 h-4 shrink-0 text-success-11" />
+                          <span className="text-success-11">
                             {table.tableState.name}
                           </span>
                         </div>
                       )}
                       {table.type === TableOperationType.DELETE_TABLE && (
                         <div className="flex items-center gap-2">
-                          <TrashIcon className="w-4 h-4 shrink-0 text-destructive" />
-                          <span className="text-destructive">
+                          <TrashIcon className="w-4 h-4 shrink-0 text-danger-11" />
+                          <span className="text-danger-11">
                             {table.tableState.name}
                           </span>
                         </div>
@@ -266,7 +266,7 @@ const CreateReleaseDialogContent = ({
             </div>
           )}
           {errorMessage && (
-            <p className="text-sm text-destructive">{errorMessage}</p>
+            <p className="text-sm text-danger-11">{errorMessage}</p>
           )}
         </div>
       )}

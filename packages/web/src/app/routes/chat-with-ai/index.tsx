@@ -328,7 +328,7 @@ export function ChatWithAIPage() {
                       {t('Rename')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
+                      className="text-danger-11 focus:text-danger-11"
                       onClick={() => void handleDelete()}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />

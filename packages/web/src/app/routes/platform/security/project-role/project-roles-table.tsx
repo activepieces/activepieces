@@ -71,7 +71,7 @@ export const ProjectRolesTable = ({
 
   if (roles.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+      <div className="flex flex-col items-center gap-3 py-12 text-gray-11">
         <Shield className="size-10" />
         <p className="text-sm">
           {t('No project roles yet. Create one to get started.')}
@@ -102,7 +102,7 @@ export const ProjectRolesTable = ({
               <Button
                 variant="ghost"
                 size="sm"
-                className="flex items-center gap-1.5 px-2 h-8 text-muted-foreground"
+                className="flex items-center gap-1.5 px-2 h-8 text-gray-11"
                 onClick={() => {
                   setSelectedRole(role);
                   setIsUsersSheetOpen(true);
@@ -143,7 +143,7 @@ export const ProjectRolesTable = ({
                   mutationFn={async () => deleteProjectRole(role.name)}
                 >
                   <Button variant="ghost" size="sm" className="size-8 p-0">
-                    <Trash className="size-4 text-destructive" />
+                    <Trash className="size-4 text-danger-11" />
                   </Button>
                 </ConfirmationDeleteDialog>
               )}
