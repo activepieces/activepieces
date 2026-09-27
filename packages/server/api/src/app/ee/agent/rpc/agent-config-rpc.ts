@@ -99,6 +99,8 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
         // Tavily takes precedence over native LLM search; native is only the no-Tavily fallback.
         const tavilySearchAvailable = !isNil(aiTools.webSearch)
         const webSearchAvailable = fetchAvailable && (tavilySearchAvailable || aiUtils.supportsWebSearch(providerConfig.provider))
+        const generatesImagesOnProvider = actingRun && isNil(aiTools.imageGeneration)
+        const imageModelId = generatesImagesOnProvider ? await agentHelpers.resolveImageModelId({ platformId, providerConfig, scope: runScope, log }) : undefined
 
         const lockResult = await agentHelpers.conversationRepo()
             .createQueryBuilder()
@@ -163,7 +165,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             searchAvailable: webSearchAvailable,
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
-            imageAvailable: actingRun && !isNil(aiTools.imageGeneration),
+            imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,
@@ -243,6 +245,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             providerConfigId: providerConfig.configId,
             modelId: resolvedModelId,
             fastModelId,
+            ...spreadIfDefined('imageModelId', imageModelId),
             systemPrompt: systemPromptText,
             messages: messagesForLlm,
             allMessages,
