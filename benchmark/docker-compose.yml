@@ -1,28 +1,19 @@
-# Prod-mirror bench stack — parameterized so one compose file serves both
-# Kamal tiers we actually care about:
+# Base bench stack — safe to `docker compose up` from any host.
 #
-#   shared-16cpu (majority prod volume):
-#     1 worker container × 16 vCPU / 32 GB / 28 slots / heap 64G / REUSE=false
-#   dedicated-05cpu (every dedicated tenant):
-#     4 worker containers × 0.5 vCPU / 1 GB / 1 slot / heap 768M / REUSE=true
+# Portable defaults only: no cpuset pinning (breaks smaller dev machines),
+# and AP_REUSE_SANDBOX is deliberately not set so the code's mode-aware
+# default kicks in (required for smoke-test/verify-memory.sh, which measures
+# warm-engine memory growth and would silently break under a `false`
+# override).
 #
-#   Cpuset pins app and worker to disjoint cores so an app-CPU regression
-#   can never starve workers by fighting for the same physical cores (prod
-#   runs them on separate hosts; we approximate by pinning them to separate
-#   cores on one runner):
-#     worker → cpuset 0-15   (16 cores — fits the full shared-16cpu container)
-#     app    → cpuset 16-17  (2 cores — matches one 2-vCPU app container)
-#   Runner is depot-ubuntu-24.04-32 (32 vCPU); cores 18-31 stay unpartitioned
-#   for postgres, redis, nginx, minio, autocannon and the kernel.
+# The nightly benchmark and run-local.sh layer benchmark/docker-compose.ci.yml
+# on top, which adds cpuset pinning (safe on the 32-vCPU CI runner and on
+# any host with ≥18 cores) and requires AP_REUSE_SANDBOX to be set
+# explicitly.
 #
-#   Verify at runtime with the "Verify container caps" workflow step, or
-#   `docker inspect <container> --format '{{.HostConfig.CpuQuota}}/{{.HostConfig.CpuPeriod}} {{.HostConfig.CpusetCpus}}'`.
-#
-# All of these are set per-cell by the workflow matrix; defaults are the
-# dedicated-05cpu shape so a local `docker compose up` matches most-common
-# prod dedicated-tenant behavior:
+# Per-cell env knobs used by both callers:
 #   APP_REPLICAS, WORKER_REPLICAS, WORKER_CPUS, WORKER_MEMORY,
-#   WORKER_HEAP_MB, AP_WORKER_CONCURRENCY, AP_REUSE_SANDBOX, AP_EXECUTION_MODE.
+#   WORKER_HEAP_MB, AP_WORKER_CONCURRENCY, AP_EXECUTION_MODE.
 #
 # Not modeled: AP_WORKER_GROUP_ID (routes to a per-tenant queue). The bench
 # stack is fresh single-tenant so there is no group to route to; the reuse
@@ -81,7 +72,6 @@ services:
       AP_S3_ENDPOINT: ${AP_S3_ENDPOINT:-}
       AP_S3_REGION: ${AP_S3_REGION:-}
       AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
-    cpuset: "16-17"
     deploy:
       replicas: ${APP_REPLICAS:-1}
       resources:
@@ -103,7 +93,6 @@ services:
       AP_ENCRYPTION_KEY: 11020ebf480a9b1648ceec6400beaf26
       AP_EXECUTION_MODE: ${AP_EXECUTION_MODE:-SANDBOX_PROCESS}
       AP_NETWORK_MODE: UNRESTRICTED
-      AP_REUSE_SANDBOX: ${AP_REUSE_SANDBOX:-false}
       AP_PRE_WARM_CACHE: 'true'
       AP_PROJECT_WORKER: 'false'
       NODE_OPTIONS: --max-old-space-size=${WORKER_HEAP_MB:-768}
@@ -125,7 +114,6 @@ services:
       AP_S3_REGION: ${AP_S3_REGION:-}
       AP_S3_USE_SIGNED_URLS: ${AP_S3_USE_SIGNED_URLS:-false}
     privileged: true
-    cpuset: "0-15"
     deploy:
       replicas: ${WORKER_REPLICAS:-4}
       resources:

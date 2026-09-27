@@ -1,0 +1,26 @@
+# CI-only override layered on top of docker-compose.yml.
+#
+# Why an override:
+#   - cpuset pins app/worker to disjoint cores. Great on a 32-vCPU CI runner,
+#     breaks any dev host with <16 cores (docker refuses to start containers
+#     against unavailable CPUs). Keeping it out of the base file means
+#     smoke-test and dev workflows using the base compose stay portable.
+#   - AP_REUSE_SANDBOX must be set explicitly here, never defaulted in the
+#     base file. The base file leaves it unset so the code's mode-aware
+#     default kicks in — required for smoke-test/verify-memory.sh, which
+#     measures 5000-request memory growth in warm mode and would silently
+#     get destroyed-per-job behavior with a `false` default underneath it.
+#
+# Layer usage (both CI and run-local):
+#   docker compose -f benchmark/docker-compose.yml -f benchmark/docker-compose.ci.yml up -d
+#
+# AP_REUSE_SANDBOX must be exported before `up`; compose will fail loud if
+# it's missing.
+
+services:
+  app:
+    cpuset: "16-17"
+  worker:
+    cpuset: "0-15"
+    environment:
+      AP_REUSE_SANDBOX: ${AP_REUSE_SANDBOX:?AP_REUSE_SANDBOX must be set (true|false) when using docker-compose.ci.yml}
