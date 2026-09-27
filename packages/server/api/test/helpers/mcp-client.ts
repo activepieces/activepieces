@@ -1,4 +1,6 @@
+import { spreadIfDefined } from '@activepieces/core-utils'
 import { FastifyInstance, InjectOptions } from 'fastify'
+import { CONVERSATION_ID_HEADER } from '../../src/app/ee/agent/mcp/agent-mcp'
 import { MCP_OAUTH_REDIRECT_URI, mcpOAuthTestHelpers } from './mcp-oauth'
 
 async function connect({ app, approve, projectId, conversationId }: ConnectParams): Promise<McpClient> {
@@ -21,7 +23,7 @@ async function connect({ app, approve, projectId, conversationId }: ConnectParam
     const authRequestId = new URL(String(consent.headers.location), MCP_OAUTH_REDIRECT_URI).searchParams.get('authRequestId') ?? ''
     const approved = await approve({
         authRequestId,
-        ...(projectId ? { projectId } : {}),
+        ...spreadIfDefined('projectId', projectId),
     })
 
     const code = new URL(approved.json().redirectUrl).searchParams.get('code') ?? ''
@@ -40,7 +42,7 @@ async function connect({ app, approve, projectId, conversationId }: ConnectParam
     return {
         accessToken: token.json().access_token,
         endpoint: projectId ? '/mcp' : '/mcp/platform',
-        ...(conversationId ? { conversationId } : {}),
+        ...spreadIfDefined('conversationId', conversationId),
     }
 }
 
@@ -87,8 +89,6 @@ export const mcpClientHelpers = {
 
 export const PLATFORM_RESOURCE = 'https://cloud.activepieces.com/mcp/platform'
 export const PROJECT_RESOURCE = 'https://cloud.activepieces.com/mcp'
-
-export const CONVERSATION_ID_HEADER = 'x-ap-conversation-id'
 
 export type McpClient = {
     accessToken: string

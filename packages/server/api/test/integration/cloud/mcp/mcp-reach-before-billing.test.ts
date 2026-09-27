@@ -20,6 +20,7 @@ vi.mock('../../../../src/app/platform/billing-provider', async (importOriginal) 
 let app: FastifyInstance
 
 const SET_PROJECT_CONTEXT = 'ap_set_project_context'
+const PIECE_CATALOG_TOOL = 'ap_research_pieces'
 
 beforeAll(async () => {
     app = await setupTestEnvironment()
@@ -57,6 +58,19 @@ describe('a denied MCP call is refused before the platform is charged', () => {
         await db.update('project_role', role.id, { permissions: [Permission.READ_FLOW] })
 
         const answer = await call({ mcpClient, name: SET_PROJECT_CONTEXT })
+
+        expect(answer).toContain(Permission.READ_MCP)
+        expect(answer).not.toContain('Out of credits')
+    })
+
+    it('refuses a piece-catalog tool on reach, not on credits', async () => {
+        const ctx = await createTestContext(app)
+        const { member, role } = await createCustomRoleMember({ ctx })
+        const mcpClient = await connectAs({ ctx: member })
+
+        await db.update('project_role', role.id, { permissions: [Permission.READ_FLOW] })
+
+        const answer = await call({ mcpClient, name: PIECE_CATALOG_TOOL })
 
         expect(answer).toContain(Permission.READ_MCP)
         expect(answer).not.toContain('Out of credits')

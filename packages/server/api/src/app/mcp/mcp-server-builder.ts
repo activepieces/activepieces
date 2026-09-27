@@ -104,11 +104,8 @@ function registerPlatformTools({ server, mcp, platformId, userId, clientKey, sel
     billing: McpCallBilling
     log: FastifyBaseLogger
 }): void {
-    const requireMcpReach = (execute: McpToolDefinition['execute'], toolTitle: string): McpToolDefinition['execute'] =>
-        withMcpReach({ execute, toolTitle, platformId, userId, log })
-
     const contextTool = apSetProjectContextTool({ platformId, userId, selectionScope, log })
-    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => requireMcpReach(charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing }), contextTool.title)(args))
+    server.registerTool(contextTool.title, buildToolConfig(contextTool), (args: Record<string, unknown>) => withMcpReach({ execute: charged({ execute: contextTool.execute, toolName: contextTool.title, projectId: null, billing }), toolTitle: contextTool.title, platformId, userId, log })(args))
 
     const templateMcp: ProjectScopedMcpServer = { ...mcp, projectId: platformId }
     const allTools = activepiecesTools(templateMcp, userId, log)
@@ -117,7 +114,7 @@ function registerPlatformTools({ server, mcp, platformId, userId, clientKey, sel
 
     tools.forEach((tool) => {
         if (PLATFORM_LEVEL_TOOL_SET.has(tool.title)) {
-            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => requireMcpReach(charged({ execute: tool.execute, toolName: tool.title, projectId: null, billing }), tool.title)(args))
+            server.registerTool(tool.title, buildToolConfig(tool), (args: Record<string, unknown>) => withMcpReach({ execute: charged({ execute: tool.execute, toolName: tool.title, projectId: null, billing }), toolTitle: tool.title, platformId, userId, log })(args))
             return
         }
 

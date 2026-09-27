@@ -147,6 +147,26 @@ describe('MCP access on enterprise edition', () => {
         expect(after).toContain(Permission.READ_MCP)
     })
 
+    it('refuses a piece-catalog tool on an issued token once the role loses READ_MCP in every project', async () => {
+        const ctx = await createTestContext(app)
+        const role = createMockProjectRole({
+            platformId: ctx.platform.id,
+            name: `role-${apId()}`,
+            permissions: [Permission.READ_MCP, Permission.READ_FLOW],
+            type: RoleType.CUSTOM,
+        })
+        await db.save('project_role', role)
+        const member = await createMemberContext(app, ctx, { projectRole: role.name })
+        const mcpClient = await connectAs({ ctx: member })
+
+        const before = await mcpClientHelpers.callTool({ app, mcpClient, name: PIECE_CATALOG_TOOL, args: { query: 'slack' } })
+        await db.update('project_role', role.id, { permissions: [Permission.READ_FLOW] })
+        const after = await mcpClientHelpers.callTool({ app, mcpClient, name: PIECE_CATALOG_TOOL, args: { query: 'slack' } })
+
+        expect(before).not.toContain('Permission denied')
+        expect(after).toContain(Permission.READ_MCP)
+    })
+
     it('lets a platform admin authorize a project of their own platform', async () => {
         const ctx = await createTestContext(app)
 

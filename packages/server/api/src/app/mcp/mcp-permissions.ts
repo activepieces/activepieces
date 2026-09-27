@@ -61,7 +61,7 @@ function buildChecker(check: PermissionChecker['check']): PermissionChecker {
     }
 }
 
-function deny(text: string): McpToolResult {
+export function deny(text: string): McpToolResult {
     return { content: [{ type: 'text', text }], isError: true }
 }
 

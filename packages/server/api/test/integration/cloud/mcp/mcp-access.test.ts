@@ -124,7 +124,7 @@ describe('mcpAccess.listAccessibleProjects', () => {
         expect(projects.map(p => p.id)).toEqual([ownedProject.id])
     })
 
-    it('keeps an operator on every project in the platform', async () => {
+    it('keeps an operator on every team project but hides the personal projects of other users', async () => {
         const ctx = await createTestContext(app)
         const { mockUser: operator } = await mockBasicUser({
             user: { platformId: ctx.platform.id, platformRole: PlatformRole.OPERATOR },
@@ -140,7 +140,42 @@ describe('mcpAccess.listAccessibleProjects', () => {
         const projectIds = projects.map(p => p.id)
 
         expect(projectIds).toContain(ctx.project.id)
-        expect(projectIds).toContain(someonesPersonalProject.id)
+        expect(projectIds).not.toContain(someonesPersonalProject.id)
+    })
+
+    it('hides the personal projects of other users from a platform admin', async () => {
+        const ctx = await createTestContext(app)
+        const { mockUser: otherUser } = await mockBasicUser({
+            user: { platformId: ctx.platform.id, platformRole: PlatformRole.MEMBER },
+        })
+        const otherUsersPersonalProject = createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: otherUser.id,
+            type: ProjectType.PERSONAL,
+        })
+        await db.save('project', otherUsersPersonalProject)
+
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: ctx.user.id, log: mockLog })
+        const hasAccess = await mcpAccess.hasMcpAccessToProject({ platformId: ctx.platform.id, userId: ctx.user.id, projectId: otherUsersPersonalProject.id, log: mockLog })
+
+        expect(projects.map(p => p.id)).not.toContain(otherUsersPersonalProject.id)
+        expect(hasAccess).toBe(false)
+    })
+
+    it('keeps the admin on their own personal project', async () => {
+        const ctx = await createTestContext(app)
+        const ownPersonalProject = createMockProject({
+            platformId: ctx.platform.id,
+            ownerId: ctx.user.id,
+            type: ProjectType.PERSONAL,
+        })
+        await db.save('project', ownPersonalProject)
+
+        const projects = await mcpAccess.listAccessibleProjects({ platformId: ctx.platform.id, userId: ctx.user.id, log: mockLog })
+        const hasAccess = await mcpAccess.hasMcpAccessToProject({ platformId: ctx.platform.id, userId: ctx.user.id, projectId: ownPersonalProject.id, log: mockLog })
+
+        expect(projects.map(p => p.id)).toContain(ownPersonalProject.id)
+        expect(hasAccess).toBe(true)
     })
 })
 

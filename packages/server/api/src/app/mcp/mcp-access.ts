@@ -1,10 +1,11 @@
 import { isNil, Permission } from '@activepieces/core-utils'
-import { McpReachResponse, McpToolResult, Project } from '@activepieces/shared'
+import { McpReachResponse, McpToolResult, Project, ProjectType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { editionRequiresRbac } from '../ee/authentication/project-role/rbac-middleware'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
+import { deny } from './mcp-permissions'
 
 export const mcpAccess = {
     listAccessibleProjects,
@@ -34,23 +35,21 @@ async function hasMcpReach({ platformId, userId, log }: UserScope): Promise<bool
 }
 
 async function hasMcpAccessToProject({ platformId, userId, projectId, log }: UserScope & { projectId: string }): Promise<boolean> {
-    const isPrivileged = await isUserPrivileged({ userId, log })
-    if (isPrivileged) {
-        const project = await projectService(log).getOne(projectId)
-        return !isNil(project) && project.platformId === platformId
+    const project = await projectService(log).getOne(projectId)
+    if (isNil(project) || project.platformId !== platformId || !isVisibleToUser({ project, userId })) {
+        return false
     }
+    if (editionRequiresRbac()) {
+        const role = await projectMemberService(log).getRole({ userId, projectId })
+        return role?.permissions?.includes(Permission.READ_MCP) ?? false
+    }
+    const isPrivileged = await isUserPrivileged({ userId, log })
     const projects = await listProjectsForUser({ platformId, userId, isPrivileged, log })
-    return projects.some((project) => project.id === projectId)
+    return projects.some((accessibleProject) => accessibleProject.id === projectId)
 }
 
 function noMcpReachResult(toolTitle: string): McpToolResult {
-    return {
-        content: [{
-            type: 'text' as const,
-            text: `❌ Permission denied: your role does not have the "${Permission.READ_MCP}" permission in any project. Cannot execute "${toolTitle}".`,
-        }],
-        isError: true,
-    }
+    return deny(`❌ Permission denied: your role does not have the "${Permission.READ_MCP}" permission in any project. Cannot execute "${toolTitle}".`)
 }
 
 async function isUserPrivileged({ userId, log }: Omit<UserScope, 'platformId'>): Promise<boolean> {
@@ -61,7 +60,8 @@ async function isUserPrivileged({ userId, log }: Omit<UserScope, 'platformId'>):
 async function listProjectsForUser({ platformId, userId, isPrivileged, log }: UserScope & {
     isPrivileged: boolean
 }): Promise<Project[]> {
-    const projects = await projectService(log).getAllForUser({ platformId, userId, isPrivileged })
+    const allProjects = await projectService(log).getAllForUser({ platformId, userId, isPrivileged })
+    const projects = allProjects.filter((project) => isVisibleToUser({ project, userId }))
 
     if (!editionRequiresRbac() || isPrivileged || projects.length === 0) {
         return projects
@@ -70,6 +70,10 @@ async function listProjectsForUser({ platformId, userId, isPrivileged, log }: Us
     const projectIdsGrantingMcp = new Set(await projectMemberService(log).listProjectIdsWithPermission({ userId, platformId, permission: Permission.READ_MCP }))
 
     return projects.filter((project) => project.ownerId === userId || projectIdsGrantingMcp.has(project.id))
+}
+
+function isVisibleToUser({ project, userId }: { project: Project, userId: string }): boolean {
+    return project.type !== ProjectType.PERSONAL || project.ownerId === userId
 }
 
 type UserScope = {
