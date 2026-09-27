@@ -394,6 +394,37 @@ describe('Merge PDF Files', () => {
         expect(conversionRequest().timeout).toBe(390_000);
     });
 
+    it('downloads many result files in parallel, each bounded by the step budget', async () => {
+        const many = Array.from({ length: 5 }, (_, index) => resultFile({ name: `page-${index + 1}.jpg`, id: `r${index + 1}` }));
+        mockApi({ conversion: { body: { Files: many } } });
+
+        const result = await runSplit({ propsValue: { file: pdf('a.pdf'), mode: 'singlepages', value: '1,2,3,4,5' } });
+
+        expect(result).toHaveLength(5);
+        const downloads = requests().filter((request) => request.method === 'GET' && request.url.includes('/d/r'));
+        expect(downloads).toHaveLength(5);
+        for (const download of downloads) {
+            expect(download.timeout).toBeGreaterThan(0);
+            expect(download.timeout).toBeLessThanOrEqual(60_000);
+        }
+    });
+
+    it('stops with a clear error instead of overrunning the step when the budget is spent', async () => {
+        mockApi();
+        const start = Date.now();
+        let calls = 0;
+        const clock = vi.spyOn(Date, 'now').mockImplementation(() => {
+            calls += 1;
+            return calls <= 4 ? start : start + 600_000;
+        });
+
+        await expect(runMerge({ propsValue: { files: [{ file: pdf('a.pdf') }, { file: pdf('b.pdf') }] } })).rejects.toThrow(
+            /not enough time left/,
+        );
+        expect(requests().some((request) => request.method === 'GET' && request.url.includes('/d/res1'))).toBe(false);
+        clock.mockRestore();
+    });
+
     it('still returns the files but warns when ConvertAPI cleanup fails', async () => {
         mockApi();
         const base = sendRequest.getMockImplementation();

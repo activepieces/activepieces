@@ -25,8 +25,10 @@ export const CONVERTAPI_BASE_URL = 'https://v2.convertapi.com';
 export const MAX_TIMEOUT_SECONDS = 360;
 export const DOWNLOAD_TIMEOUT_MS = 60_000;
 export const DELETE_TIMEOUT_MS = 15_000;
+export const UPLOAD_TIMEOUT_MS = 120_000;
+export const STEP_BUDGET_MS = 540_000;
 
-async function upload({ apiKey, file }: UploadParams): Promise<string> {
+async function upload({ apiKey, file, timeoutMs }: UploadParams): Promise<string> {
     const response = await sendOrThrow<ConvertApiUploadResponse>({
         method: HttpMethod.POST,
         url: `${CONVERTAPI_BASE_URL}/upload`,
@@ -36,6 +38,7 @@ async function upload({ apiKey, file }: UploadParams): Promise<string> {
         },
         queryParams: { filename: file.filename },
         body: file.data,
+        timeout: timeoutMs,
     });
     if (typeof response.FileId !== 'string' || response.FileId.length === 0) {
         throw new Error(`ConvertAPI did not return a file ID after uploading "${file.filename}".`);
@@ -43,7 +46,7 @@ async function upload({ apiKey, file }: UploadParams): Promise<string> {
     return response.FileId;
 }
 
-async function convert({ apiKey, from, to, parameters }: ConvertParams): Promise<ConvertApiConversionResponse> {
+async function convert({ apiKey, from, to, parameters, timeoutMs }: ConvertParams): Promise<ConvertApiConversionResponse> {
     return sendOrThrow<ConvertApiConversionResponse>({
         method: HttpMethod.POST,
         url: `${CONVERTAPI_BASE_URL}/convert/${encodeURIComponent(from)}/to/${encodeURIComponent(to)}`,
@@ -51,11 +54,11 @@ async function convert({ apiKey, from, to, parameters }: ConvertParams): Promise
             Authorization: `Bearer ${apiKey}`,
         },
         body: { Parameters: withExecutionParameters(parameters) },
-        timeout: (MAX_TIMEOUT_SECONDS + 30) * 1000,
+        timeout: timeoutMs ?? (MAX_TIMEOUT_SECONDS + 30) * 1000,
     });
 }
 
-async function download({ url }: { url: string }): Promise<Buffer> {
+async function download({ url, timeoutMs }: { url: string; timeoutMs?: number }): Promise<Buffer> {
     if (!isConvertApiUrl(url)) {
         throw new Error('ConvertAPI returned a download link outside convertapi.com, so it was not followed.');
     }
@@ -64,7 +67,7 @@ async function download({ url }: { url: string }): Promise<Buffer> {
         url,
         responseType: 'arraybuffer',
         followRedirects: false,
-        timeout: DOWNLOAD_TIMEOUT_MS,
+        timeout: timeoutMs ?? DOWNLOAD_TIMEOUT_MS,
     });
     if (!Buffer.isBuffer(response)) {
         throw new Error('ConvertAPI returned an unreadable file.');
@@ -94,12 +97,13 @@ async function convertFiles({
     files,
 }: ConvertFilesParams): Promise<ConversionOutput> {
     const fileIdsToDelete: string[] = [];
+    const deadline = Date.now() + STEP_BUDGET_MS;
     try {
         const fileParameters: ConvertApiParameter[] = [];
         for (const input of fileInputs) {
             const ids: string[] = [];
             for (const file of input.files) {
-                const id = await upload({ apiKey, file });
+                const id = await upload({ apiKey, file, timeoutMs: remainingMs({ deadline, cap: UPLOAD_TIMEOUT_MS }) });
                 fileIdsToDelete.push(id);
                 ids.push(id);
             }
@@ -111,6 +115,7 @@ async function convertFiles({
             from,
             to,
             parameters: [...fileParameters, ...parameters],
+            timeoutMs: remainingMs({ deadline, cap: (MAX_TIMEOUT_SECONDS + 30) * 1000 }),
         });
         const resultFiles = response.Files ?? [];
         if (resultFiles.length === 0) {
@@ -120,10 +125,10 @@ async function convertFiles({
             ...resultFiles.flatMap((resultFile) => (resultFile.FileId ? [resultFile.FileId] : [])),
         );
 
-        const stored: StoredFile[] = [];
-        for (const resultFile of resultFiles) {
-            stored.push(await storeResultFile({ resultFile, files }));
-        }
+        const downloadTimeoutMs = remainingMs({ deadline, cap: DOWNLOAD_TIMEOUT_MS });
+        const stored = await Promise.all(
+            resultFiles.map((resultFile) => storeResultFile({ resultFile, files, timeoutMs: downloadTimeoutMs })),
+        );
         return {
             files: stored,
             conversion_cost: typeof response.ConversionCost === 'number' ? response.ConversionCost : null,
@@ -198,15 +203,17 @@ function toValueParameters(values: Record<string, unknown>): ConvertApiParameter
 async function storeResultFile({
     resultFile,
     files,
+    timeoutMs,
 }: {
     resultFile: ConvertApiResultFile;
     files: FilesService;
+    timeoutMs: number;
 }): Promise<StoredFile> {
     const url = resultFile.Url ?? resultFile.FileUrl;
     if (url === undefined || url.length === 0) {
         throw new Error(`ConvertAPI did not return a download link for "${resultFile.FileName}".`);
     }
-    const data = await download({ url });
+    const data = await download({ url, timeoutMs });
     const file = await files.write({ fileName: resultFile.FileName, data });
     return {
         file,
@@ -223,6 +230,14 @@ async function sendOrThrow<T>(request: HttpRequest): Promise<T> {
     } catch (error) {
         throw new Error(describeError(error));
     }
+}
+
+function remainingMs({ deadline, cap }: { deadline: number; cap: number }): number {
+    const left = deadline - Date.now();
+    if (left <= 0) {
+        throw new Error('ConvertAPI took too long: there is not enough time left in this step to finish. Try smaller files or fewer pages.');
+    }
+    return Math.min(cap, left);
 }
 
 function isConvertApiUrl(url: string): boolean {
@@ -293,6 +308,7 @@ const RESERVED_PARAMETER_NAMES = ['StoreFile', 'Timeout', 'Secret', 'Token'];
 type UploadParams = {
     apiKey: string;
     file: InputFile;
+    timeoutMs?: number;
 };
 
 type ConvertParams = {
@@ -300,6 +316,7 @@ type ConvertParams = {
     from: string;
     to: string;
     parameters: ConvertApiParameter[];
+    timeoutMs?: number;
 };
 
 type TokenCheck = { valid: true } | { valid: false; error: string };
