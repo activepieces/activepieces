@@ -5,5 +5,12 @@
   "Attribute field": "Attribute field",
   "Header": "Header",
   "Field to add your tag's attributes": "Field to add your tag's attributes",
-  "Add XML header": "Add XML header"
+  "Add XML header": "Add XML header",
+  "Convert XML to JSON": "Convert XML to JSON",
+  "XML": "XML",
+  "The XML string to convert": "The XML string to convert",
+  "Ignore Attributes": "Ignore Attributes",
+  "Ignore XML tag attributes during parsing. When unchecked, attributes are included in the output with a \"@_\" prefix (e.g. id=\"42\" becomes {\"@_id\": \"42\"}).": "Ignore XML tag attributes during parsing. When unchecked, attributes are included in the output with a \"@_\" prefix (e.g. id=\"42\" becomes {\"@_id\": \"42\"}).",
+  "Keep Leading Zeros": "Keep Leading Zeros",
+  "Keep numbers that start with a zero as text so values like ZIP codes, IDs and account numbers are not changed (e.g. \"02134\" stays \"02134\" instead of becoming 2134). Other numbers are still converted to numbers.": "Keep numbers that start with a zero as text so values like ZIP codes, IDs and account numbers are not changed (e.g. \"02134\" stays \"02134\" instead of becoming 2134). Other numbers are still converted to numbers."
 }
