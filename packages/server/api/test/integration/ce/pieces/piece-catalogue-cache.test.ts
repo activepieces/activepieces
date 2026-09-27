@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 import { apId, LocalesEnum } from '@activepieces/core-utils'
-import { PieceMetadataModelSummary } from '@activepieces/pieces-framework'
+import { PieceMetadataModelSummary, Property } from '@activepieces/pieces-framework'
 import { PackageType, PieceType, PrincipalType } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
@@ -199,7 +199,7 @@ describe('translated catalogue cache stays correct', () => {
             actions: {
                 send: {
                     name: 'send', displayName: 'Send', description: 'Send a message', requireAuth: false,
-                    props: { channel: { displayName: 'Channel', description: 'The channel', required: false, type: 'SHORT_TEXT' } },
+                    props: { channel: Property.ShortText({ displayName: 'Channel', description: 'The channel', required: false }) },
                 },
             },
             i18n: {
@@ -260,7 +260,7 @@ describe('translated catalogue cache stays correct', () => {
                 name: 'piece-created-via-service', displayName: 'Created', description: 'Send a message',
                 version: '1.0.0', minimumSupportedRelease: '0.0.0', maximumSupportedRelease: '99999.99999.9999',
                 actions: {}, triggers: {}, auth: undefined, categories: [], authors: [],
-                logoUrl: 'https://example.com/l.png',
+                logoUrl: 'https://example.com/l.png', contextInfo: undefined,
             },
             packageType: PackageType.REGISTRY, pieceType: PieceType.OFFICIAL,
         })

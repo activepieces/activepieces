@@ -45,8 +45,8 @@ async function scenario() {
     }))
     await pieceCache(log).invalidate()
 
-    const tokenA = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id }, projectId: a.mockProject.id })
-    const tokenB = await generateMockToken({ type: PrincipalType.USER, id: b.mockOwner.id, platform: { id: b.mockPlatform.id }, projectId: b.mockProject.id })
+    const tokenA = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id } })
+    const tokenB = await generateMockToken({ type: PrincipalType.USER, id: b.mockOwner.id, platform: { id: b.mockPlatform.id } })
     return { a, b, tokenA, tokenB }
 }
 
@@ -110,7 +110,7 @@ describe('custom pieces per platform', () => {
             platformId: a.mockPlatform.id, i18n: { [LocalesEnum.GERMAN]: DE },
         }))
         await pieceCache(log).invalidate()
-        const token = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id }, projectId: a.mockProject.id })
+        const token = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id } })
 
         for (const name of ['unscoped-official', 'unscoped-custom']) {
             const r = await get(`/api/v1/pieces/${name}?locale=de&excludeI18n=true&projectId=${a.mockProject.id}`, token)
@@ -148,7 +148,7 @@ describe('custom pieces per platform', () => {
             i18n: { [LocalesEnum.GERMAN]: DE, [LocalesEnum.FRENCH]: { 'Send a message': 'Envoyer un message' } },
         }))
         await pieceCache(log).invalidate()
-        const token = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id }, projectId: a.mockProject.id })
+        const token = await generateMockToken({ type: PrincipalType.USER, id: a.mockOwner.id, platform: { id: a.mockPlatform.id } })
 
         const r = await get(`/api/v1/pieces/multi-locale?locale=de&projectId=${a.mockProject.id}`, token)
         expect(r.status).toBe(200)
