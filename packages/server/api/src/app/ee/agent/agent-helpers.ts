@@ -1,7 +1,8 @@
+import { setTimeout as delay } from 'node:timers/promises'
 import { ExecuteAgentRunJobData } from '@activepieces/core-execution'
 import { ActivepiecesAiBilling, ActivepiecesError, AIProviderName, apId, assertNotNullOrUndefined, ErrorCode, isNil, spreadIfDefined, tryCatch, tryCatchSync, unique } from '@activepieces/core-utils'
 import { aiUtils } from '@activepieces/server-utils'
-import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
+import { AgentConfig, AgentConversation, AgentConversationStatus, AgentFlowTool, AgentTool, AgentToolType, AI_PROVIDER_CAPABILITIES, AI_PROVIDER_ENTITY_TYPES, AIProviderModelType, FlowVersionState, GetAgentMemoryResponse, GetProviderConfigResponse, Project, ProjectType, ResolvedAgentFlowTool, UserMemory } from '@activepieces/shared'
 import { SharedV3ProviderOptions } from '@ai-sdk/provider'
 import { EmbeddingModel, LanguageModel } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -37,6 +38,7 @@ const userMemoryRepo = repoFactory(UserMemoryEntity)
 const MAX_MEMORIES = 50
 const MAX_MEMORY_LENGTH = 280
 const MAX_INSTRUCTIONS_LENGTH = 4000
+const IMAGE_MODEL_LOOKUP_TIMEOUT_MS = 3_000
 
 async function getConversationOrThrow({ id, platformId, userId, log }: { id: string, platformId: string, userId: string, log?: FastifyBaseLogger }): Promise<AgentConversation> {
     const conversation = await conversationRepo().findOneBy({ id, platformId, userId })
@@ -173,6 +175,33 @@ async function resolveModelId({ platformId, providerConfig, selectedModel, scope
         ?? textModels.find((model) => model.id.includes(tier.nativeModelId))
         ?? textModels[0]
     return picked.id
+}
+
+async function resolveImageModelId({ platformId, providerConfig, scope, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, log: FastifyBaseLogger }): Promise<string | undefined> {
+    const { provider, configId } = providerConfig
+    const preferred = AI_PROVIDER_CAPABILITIES[provider].defaultImageModel
+    if (isNil(preferred) || provider === AIProviderName.ACTIVEPIECES) {
+        return preferred
+    }
+    const listed = await Promise.race([
+        tryCatch(() => aiProviderService(log).listModels({ platformId, provider, scope, configId })),
+        delay(IMAGE_MODEL_LOOKUP_TIMEOUT_MS, null),
+    ])
+    if (isNil(listed) || isNil(listed.data)) {
+        log.warn({ error: listed?.error, provider }, '[agentHelpers#resolveImageModelId] Could not list the key\'s models in time, leaving image generation off')
+        return undefined
+    }
+    const versionAt = preferred.search(/\d/)
+    const family = versionAt === -1 ? preferred : preferred.slice(0, versionAt)
+    const imageModelIds = listed.data.filter((model) => model.type === AIProviderModelType.IMAGE).map((model) => model.id)
+    if (imageModelIds.includes(preferred)) {
+        return preferred
+    }
+    const fallback = imageModelIds.find((id) => id.startsWith(family))
+    if (!isNil(fallback)) {
+        log.warn({ provider, preferred, fallback }, '[agentHelpers#resolveImageModelId] Default image model is not offered by this key, falling back')
+    }
+    return fallback
 }
 
 async function resolveFastModelId({ platformId, providerConfig, scope, fallbackModelId, log }: { platformId: string, providerConfig: GetProviderConfigResponse, scope: ProviderScope, fallbackModelId?: string, log: FastifyBaseLogger }): Promise<string> {
@@ -391,6 +420,7 @@ export const agentHelpers = {
     ...agentModelResolution,
     resolveFastModel,
     resolveFastModelId,
+    resolveImageModelId,
     resolveModelId,
     resolveRunProvider,
     resolveEmbeddingModel,

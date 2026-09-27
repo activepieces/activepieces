@@ -1,7 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderModel, AIProviderModelType, GoogleProviderAuthConfig, GoogleProviderConfig } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { AIProviderStrategy } from './ai-provider'
+import { AIProviderStrategy, MODEL_LIST_TIMEOUT_MS } from './ai-provider'
 
 export const googleProvider: AIProviderStrategy<GoogleProviderAuthConfig, GoogleProviderConfig> = {
     name: 'Google',
@@ -12,6 +12,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderAuthConfig, Google
         const res = await httpClient.sendRequest<{ models: GoogleModel[] }>({
             url: 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',
             method: HttpMethod.GET,
+            timeout: MODEL_LIST_TIMEOUT_MS,
             headers: {
                 'x-goog-api-key': authConfig.apiKey,
                 'Content-Type': 'application/json',

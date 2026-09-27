@@ -227,7 +227,7 @@ describe('Project Role API', () => {
         it('should fail to delete a project role if project role does not exist', async () => {
             const ctx = await createTestContext(app!)
 
-            const response = await ctx.delete(`/v1/project-roles/${faker.lorem.word()}`)
+            const response = await ctx.delete(`/v1/project-roles/${faker.string.uuid()}`)
             expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
         })
     })
