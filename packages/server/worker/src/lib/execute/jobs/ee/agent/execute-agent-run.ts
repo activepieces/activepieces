@@ -194,6 +194,7 @@ export const executeAgentRunJob: JobHandler<ExecuteAgentRunJobData, FireAndForge
                 ...(aiTools.webSearch ? agentWorkerTools.createSearchTools({ webSearch: aiTools.webSearch, taintState }) : {}),
                 ...(providerSearchActive ? agentWorkerTools.createProviderSearchTools({
                     search: (request) => aiUtils.searchWeb({ ...request, credentials, modelId: config.fastModelId, billing, turnAlreadyCharged: true }),
+                    billedAtCost: provider === AIProviderName.ACTIVEPIECES,
                     taintState,
                 }) : {}),
                 ...(aiTools.webScraping ? agentWorkerTools.createScrapeTools({ scraping: aiTools.webScraping, taintState }) : {}),

@@ -124,7 +124,7 @@ export function createSearchTools({ webSearch, taintState }: { webSearch: Resolv
     }
 }
 
-export function createProviderSearchTools({ search, taintState }: { search: (request: { system: string, prompt: string, abortSignal: AbortSignal }) => Promise<WebSearchResult>, taintState: TaintState }): ToolSet {
+export function createProviderSearchTools({ search, billedAtCost, taintState }: { search: (request: { system: string, prompt: string, abortSignal: AbortSignal }) => Promise<WebSearchResult>, billedAtCost: boolean, taintState: TaintState }): ToolSet {
     return {
         ap_web_search: tool({
             description: WEB_SEARCH_DESCRIPTION,
@@ -139,7 +139,7 @@ export function createProviderSearchTools({ search, taintState }: { search: (req
                         if (error) {
                             return { content: [{ type: 'text', text: `Web search failed: ${describeHttpError(error)}` }] }
                         }
-                        return truncateLargeResult({ query: toolInput.query, answer: searched.text, results: searched.sources })
+                        return truncateLargeResult({ query: toolInput.query, answer: searched.text, results: searched.sources, ...(billedAtCost ? { billedAtCost } : {}) })
                     },
                 })
             },

@@ -1,7 +1,6 @@
-import { AIProviderName, isNil, spreadIfDefined } from '@activepieces/core-utils'
+import { AIProviderName, isNil, isObject, spreadIfDefined } from '@activepieces/core-utils'
 import { AgentConversation, CHAT_CREDITS_PER_TOOL_CALL, isAppSumoCreditedPlan, PersistedAgentMessage, PersistedAgentPartType, PersistedAgentRole, PersistedToolCallStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { aiToolConfigService } from '../../ai/ai-tool-config-service'
 import { LicenseKeyPostHogEvents } from '../../helper/telemetry.utils'
 import { trackBillingAndSendTelemetry } from '../../platform/billing-and-telemetry'
 import { CreditUsageSource } from '../../platform/billing-provider'
@@ -22,19 +21,20 @@ function isBillableChatToolCall(toolName: string): boolean {
     return toolName.startsWith('mcp__') || BILLABLE_EXTERNAL_TOOL_NAMES.has(toolName)
 }
 
-function countBillableToolCallsInLatestTurn({ messages, unbilledToolNames = [] }: { messages: PersistedAgentMessage[], unbilledToolNames?: string[] }): number {
+function countBillableToolCallsInLatestTurn({ messages }: { messages: PersistedAgentMessage[] }): number {
     const lastUserIndex = messages.map((message) => message.role).lastIndexOf(PersistedAgentRole.USER)
     const turn = lastUserIndex === -1 ? messages : messages.slice(lastUserIndex + 1)
     return turn.reduce((sum, message) => sum + message.parts.filter((part) =>
         part.type === PersistedAgentPartType.TOOL_CALL
         && part.status === PersistedToolCallStatus.COMPLETED
         && isBillableChatToolCall(part.toolName)
-        && !unbilledToolNames.includes(part.toolName),
+        && !(isObject(part.output) && part.output['billedAtCost'] === true),
     ).length, 0)
 }
 
 async function chargeForLatestTurn({ conversation, runId, log }: ChargeForLatestTurnParams): Promise<void> {
     const messages = agentHistory.resolveMessages({ conversation, log })
+    const billableToolCalls = countBillableToolCallsInLatestTurn({ messages })
     const turnIndex = messages.filter((message) => message.role === PersistedAgentRole.USER).length
     const idempotencyScope = runId ?? turnIndex
     const provider = await agentHelpers.resolveChatProviderName({
@@ -42,9 +42,6 @@ async function chargeForLatestTurn({ conversation, runId, log }: ChargeForLatest
         projectId: conversation.projectId ?? null,
         log,
     })
-    const searchBilledAtCost = provider === AIProviderName.ACTIVEPIECES
-        && isNil((await aiToolConfigService(log).getEnabledTools({ platformId: conversation.platformId })).webSearch)
-    const billableToolCalls = countBillableToolCallsInLatestTurn({ messages, unbilledToolNames: searchBilledAtCost ? ['ap_web_search'] : [] })
     const model = agentHelpers.resolveModelIdForAnalytics({ selectedModel: conversation.modelName ?? null, provider })
     const tier = agentHelpers.resolveTier({ tierId: conversation.modelName ?? null })
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(conversation.platformId)

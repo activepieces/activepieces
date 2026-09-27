@@ -19,6 +19,12 @@ describe('ap_web_search over the provider\'s own search', () => {
         expect(result).toEqual({ query: 'activepieces pricing', answer: FOUND.text, results: FOUND.sources })
     })
 
+    it('marks a search on the managed key as already billed at cost', async () => {
+        const result = await runSearch({ search: async () => FOUND, taintState: { tainted: false }, billedAtCost: true })
+
+        expect(result).toEqual({ query: 'activepieces pricing', answer: FOUND.text, results: FOUND.sources, billedAtCost: true })
+    })
+
     it('reports a failed search as a result and still taints', async () => {
         const taintState: TaintState = { tainted: false }
 
@@ -29,11 +35,12 @@ describe('ap_web_search over the provider\'s own search', () => {
     })
 })
 
-async function runSearch({ search, taintState }: {
+async function runSearch({ search, taintState, billedAtCost = false }: {
     search: () => Promise<WebSearchResult>
     taintState: TaintState
+    billedAtCost?: boolean
 }): Promise<unknown> {
-    const execute = createProviderSearchTools({ search, taintState }).ap_web_search.execute
+    const execute = createProviderSearchTools({ search, billedAtCost, taintState }).ap_web_search.execute
     if (!execute) {
         throw new Error('ap_web_search has no execute')
     }
