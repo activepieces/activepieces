@@ -136,10 +136,36 @@ describe('code', () => {
             'from __future__ import annotations, \\\n    division\n@\nresult = 1',
         ],
         ['no future import', 'import os\nresult = 1', '@\nimport os\nresult = 1'],
+        [
+            'a shebang, encoding comment and future import',
+            '#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\nfrom __future__ import annotations\nresult = 1',
+            '#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\nfrom __future__ import annotations\n@\nresult = 1',
+        ],
+        [
+            'a multi-line module docstring that mentions a future import',
+            '"""Notes.\nfrom __future__ import annotations\n"""\nresult = 1',
+            '@\n"""Notes.\nfrom __future__ import annotations\n"""\nresult = 1',
+        ],
+        [
+            'code whose later docstring mentions a future import',
+            'def f():\n    """x"""\n\nDOC = """\nfrom __future__ import annotations\n"""\nresult = 1',
+            '@\ndef f():\n    """x"""\n\nDOC = """\nfrom __future__ import annotations\n"""\nresult = 1',
+        ],
     ])('Python defines inputs after %s', async (_label, code, expected) => {
         respond({ result: 1 });
         await runAction({ action: runPythonCodeAction, propsValue: { code, inputs: { a: 1 } } });
         expect(sent().body.code).toBe(expected.replace('@', 'inputs = __import__("json").loads("{\\"a\\":1}")'));
+    });
+
+    it.each([
+        ['a use strict directive', "'use strict';\nreturn inputs.a;", "'use strict';\n@\nreturn inputs.a;"],
+        ['a comment and a double-quoted directive', '// run\n"use strict"\nreturn inputs.a;', '// run\n"use strict"\n@\nreturn inputs.a;'],
+        ['a hashbang', '#!/usr/bin/env bun\nreturn inputs.a;', '#!/usr/bin/env bun\n@\nreturn inputs.a;'],
+        ['plain code', 'return inputs.a;', '@\nreturn inputs.a;'],
+    ])('JavaScript defines inputs after %s', async (_label, code, expected) => {
+        respond({ ok: true });
+        await runAction({ action: runJavascriptCodeAction, propsValue: { code, inputs: { a: 1 } } });
+        expect(sent().body.code).toBe(expected.replace('@', 'const inputs = {"a":1};'));
     });
 
     it.each([undefined, null, '', {}])('defines inputs as an empty object when Inputs is %j', async (inputs) => {

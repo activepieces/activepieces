@@ -61,30 +61,68 @@ function inputsValue(inputs: unknown): unknown {
 }
 
 function withJavascriptInputs({ code, inputs }: InjectParams): string {
-    return `const inputs = ${JSON.stringify(inputsValue(inputs))};\n${code}`;
+    const assignment = `const inputs = ${JSON.stringify(inputsValue(inputs))};`;
+    return insertLine({ code, line: assignment, at: lineAfterJavascriptPrologue });
 }
 
 function withPythonInputs({ code, inputs }: InjectParams): string {
     const assignment = `inputs = __import__("json").loads(${JSON.stringify(JSON.stringify(inputsValue(inputs)))})`;
+    return insertLine({ code, line: assignment, at: lineAfterFutureImports });
+}
+
+function insertLine({ code, line, at }: { code: string; line: string; at: (lines: string[]) => number }): string {
     const lines = code.split('\n');
-    const at = lineAfterFutureImports(lines);
-    return [...lines.slice(0, at), assignment, ...lines.slice(at)].join('\n');
+    const index = at(lines);
+    return [...lines.slice(0, index), line, ...lines.slice(index)].join('\n');
+}
+
+function lineAfterJavascriptPrologue(lines: string[]): number {
+    let end = 0;
+    for (const [index, line] of lines.entries()) {
+        const trimmed = line.trim();
+        if ((index === 0 && trimmed.startsWith('#!')) || JAVASCRIPT_DIRECTIVE.test(trimmed)) {
+            end = index + 1;
+        } else if (trimmed !== '' && !trimmed.startsWith('//')) {
+            break;
+        }
+    }
+    return end;
 }
 
 function lineAfterFutureImports(lines: string[]): number {
-    let end = 0;
-    let inGroup = false;
-    let inContinuation = false;
-    lines.forEach((line, index) => {
-        const isFutureImport = PYTHON_FUTURE_IMPORT.test(line);
-        if (!isFutureImport && !inGroup && !inContinuation) {
-            return;
+    const state: FutureScan = { end: 0, docstringAllowed: true, openDocstring: undefined, inGroup: false, inContinuation: false };
+    for (const [index, line] of lines.entries()) {
+        if (!scanPythonHeaderLine({ state, line, index })) {
+            break;
         }
-        end = index + 1;
-        inGroup = (inGroup || (isFutureImport && line.includes('('))) && !line.includes(')');
-        inContinuation = line.trimEnd().endsWith('\\');
-    });
-    return end;
+    }
+    return state.end;
+}
+
+function scanPythonHeaderLine({ state, line, index }: { state: FutureScan; line: string; index: number }): boolean {
+    const trimmed = line.trim();
+    if (state.openDocstring !== undefined) {
+        state.openDocstring = line.includes(state.openDocstring) ? undefined : state.openDocstring;
+        return true;
+    }
+    if (state.inGroup || state.inContinuation || PYTHON_FUTURE_IMPORT.test(line)) {
+        state.inGroup = (state.inGroup || (PYTHON_FUTURE_IMPORT.test(line) && line.includes('('))) && !line.includes(')');
+        state.inContinuation = line.trimEnd().endsWith('\\');
+        state.end = index + 1;
+        state.docstringAllowed = false;
+        return true;
+    }
+    if (trimmed === '' || trimmed.startsWith('#')) {
+        return true;
+    }
+    const quote = PYTHON_DOCSTRING_START.exec(trimmed)?.[1];
+    if (quote === undefined || !state.docstringAllowed) {
+        return false;
+    }
+    state.docstringAllowed = false;
+    const afterOpening = trimmed.slice(trimmed.indexOf(quote) + quote.length);
+    state.openDocstring = quote.length === 3 && !afterOpening.includes(quote) ? quote : undefined;
+    return true;
 }
 
 function javascriptResult(body: unknown): CodeResult {
@@ -126,6 +164,10 @@ const TIMEOUT_STATUSES = [408, 504];
 
 const PYTHON_FUTURE_IMPORT = /^from\s+__future__\s+import\b/;
 
+const PYTHON_DOCSTRING_START = /^[rRuU]?("""|'''|"|')/;
+
+const JAVASCRIPT_DIRECTIVE = /^(['"])use strict\1;?$/;
+
 type ExecuteParams = {
     apiKey: string;
     path: string;
@@ -134,6 +176,14 @@ type ExecuteParams = {
 
 type CodeResult = {
     result: unknown;
+};
+
+type FutureScan = {
+    end: number;
+    docstringAllowed: boolean;
+    openDocstring: string | undefined;
+    inGroup: boolean;
+    inContinuation: boolean;
 };
 
 type InjectParams = {
