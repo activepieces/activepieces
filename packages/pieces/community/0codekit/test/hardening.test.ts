@@ -3,7 +3,9 @@ import { join } from 'node:path';
 import { ApFile } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { entityDetectionAction } from '../src/lib/actions/ai/entity-detection';
 import { validateIbanAction } from '../src/lib/actions/business/validate-iban';
+import { runJavascriptCodeAction } from '../src/lib/actions/code/run-javascript-code';
 import { generateQrCodeAction } from '../src/lib/actions/image/generate-qr-code';
 import { createPdfFromHtmlAction } from '../src/lib/actions/pdf/create-pdf-from-html';
 import { getPdfPageCountAction } from '../src/lib/actions/pdf/get-pdf-page-count';
@@ -58,6 +60,12 @@ describe('request timeouts', () => {
         expect(call(0).timeout).toBe(30_000);
     });
 
+    it('gives AI endpoints a 60 second timeout', async () => {
+        respond({ entities: [] });
+        await runAction({ action: entityDetectionAction, propsValue: { text: 'Berlin' }, write });
+        expect(call(0).timeout).toBe(60_000);
+    });
+
     it('gives JSON file endpoints a 120 second timeout', async () => {
         respond({ pageCount: 1 });
         await runAction({ action: getPdfPageCountAction, propsValue: { pdf: PDF }, write });
@@ -72,6 +80,13 @@ describe('request timeouts', () => {
         respond(binary('%PDF-html'));
         await runAction({ action: createPdfFromHtmlAction, propsValue: { html: '<p>x</p>' }, write });
         expect(call(0).timeout).toBe(120_000);
+    });
+
+    it('keeps code runs under the step limit', async () => {
+        respond({ ok: true });
+        await runAction({ action: runJavascriptCodeAction, propsValue: { code: 'return 1' }, write });
+        expect(call(0).timeout).toBeGreaterThan(180_000);
+        expect(call(0).timeout).toBeLessThan(STEP_LIMIT_MS - 60_000);
     });
 
     it('bounds every timeout class below the step limit', () => {
