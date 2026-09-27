@@ -126,9 +126,14 @@ async function convertFiles({
         );
 
         const downloadTimeoutMs = remainingMs({ deadline, cap: DOWNLOAD_TIMEOUT_MS });
-        const stored = await Promise.all(
+        const settled = await Promise.allSettled(
             resultFiles.map((resultFile) => storeResultFile({ resultFile, files, timeoutMs: downloadTimeoutMs })),
         );
+        const failure = settled.find((result) => result.status === 'rejected');
+        if (failure !== undefined && failure.status === 'rejected') {
+            throw failure.reason;
+        }
+        const stored = settled.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : []));
         return {
             files: stored,
             conversion_cost: typeof response.ConversionCost === 'number' ? response.ConversionCost : null,

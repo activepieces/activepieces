@@ -409,6 +409,37 @@ describe('Merge PDF Files', () => {
         }
     });
 
+    it('waits for every result download to finish before cleaning up, even when one fails', async () => {
+        mockApi({
+            conversion: {
+                body: { Files: [resultFile({ name: 'part-1.pdf', id: 'r1' }), resultFile({ name: 'part-2.pdf', id: 'r2' })] },
+            },
+        });
+        const base = sendRequest.getMockImplementation();
+        const events: string[] = [];
+        sendRequest.mockImplementation(async (request: Request) => {
+            if (request.method === 'GET' && request.url.includes('/d/r1')) {
+                events.push('r1 download failed');
+                throw new HttpError(undefined, { status: 500, responseBody: { Message: 'broken' } });
+            }
+            if (request.method === 'GET' && request.url.includes('/d/r2')) {
+                await new Promise((resolve) => setTimeout(resolve, 30));
+                events.push('r2 download finished');
+            }
+            if (request.method === 'DELETE') {
+                events.push(`delete ${request.url.split('/d/')[1]}`);
+            }
+            return base === undefined ? undefined : base(request);
+        });
+
+        await expect(runSplit({ propsValue: { file: pdf('a.pdf'), mode: 'singlepages', value: '1,2' } })).rejects.toThrow();
+
+        const finished = events.indexOf('r2 download finished');
+        const firstDelete = events.findIndex((event) => event.startsWith('delete'));
+        expect(finished).toBeGreaterThanOrEqual(0);
+        expect(firstDelete).toBeGreaterThan(finished);
+    });
+
     it('stops with a clear error instead of overrunning the step when the budget is spent', async () => {
         mockApi();
         const start = Date.now();
