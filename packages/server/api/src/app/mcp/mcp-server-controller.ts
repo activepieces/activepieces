@@ -86,6 +86,9 @@ export const UpdateMcpRequest = {
             projectId: ApId,
         }),
         body: UpdateMcpServerRequest,
+        response: {
+            [StatusCodes.OK]: ProjectMcpServerResponse,
+        },
     },
 }
 
@@ -106,6 +109,9 @@ const GetMcpRequest = {
         params: z.object({
             projectId: ApId,
         }),
+        response: {
+            [StatusCodes.OK]: ProjectMcpServerResponse,
+        },
     },
 }
 
@@ -122,10 +128,13 @@ const RotateTokenRequest = {
     schema: {
         tags: ['mcp'],
         description: 'Rotate the MCP server token',
+        params: z.object({
+            projectId: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: ProjectMcpServerResponse,
+        },
     },
-    params: z.object({
-        projectId: ApId,
-    }),
 }
 
 const GenerateMcpTokenResponse = z.object({
