@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { listConsentPoliciesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListConsentPolicies = createAction({
   auth: shopifyAuth,
@@ -18,7 +19,7 @@ export const shopifyAiListConsentPolicies = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists the store\'s customer privacy consent policies: for each country (and optional region such as a US state), whether visitors must give consent before tracking and whether a data-sale opt-out is required. Optional filters: country_code, region_code, consent_required, data_sale_opt_out_required, or one policy id. Returns every match in one call (no paging). Use list_consent_policy_regions for the countries and regions a policy can exist for. The read_privacy_settings access scope is expected (not stated on the query page; to be confirmed). Read-only.',
+      'Lists the store\'s customer privacy consent policies: for each country (and optional region such as a US state), whether visitors must give consent before tracking and whether a data-sale opt-out is required. Optional filters: country_code, region_code (full ISO 3166-2 code such as "USCA"; a short one like "CA" is prefixed with country_code), consent_required, data_sale_opt_out_required, or one policy id. Returns every match in one call (no paging). Use list_consent_policy_regions for the countries and regions a policy can exist for. The read_privacy_settings access scope is expected (not stated on the query page; to be confirmed). Read-only.',
     idempotent: true,
   },
   props: {
@@ -29,7 +30,8 @@ export const shopifyAiListConsentPolicies = createAction({
     }),
     region_code: Property.ShortText({
       displayName: 'Region Code',
-      description: 'Only policies for this region code within the country, for example "CA" for California.',
+      description:
+        'Only policies for this ISO 3166-2 region code, country prefix included, for example "USCA" for California. A short code such as "CA" is prefixed with the country code when one is given.',
       required: false,
     }),
     consent_required: shopifyProps.booleanChoice({
@@ -46,11 +48,17 @@ export const shopifyAiListConsentPolicies = createAction({
       required: false,
     }),
   },
+  outputSchema: listConsentPoliciesOutputSchema,
   async run({ auth, propsValue }) {
     const countryCode = shopifyValues.nonEmpty(propsValue.country_code)?.toUpperCase();
     if (countryCode !== undefined && !/^[A-Z]{2}$/.test(countryCode)) {
       throw new Error('country_code must be a two-letter code such as "US".');
     }
+    const regionRaw = shopifyValues.nonEmpty(propsValue.region_code)?.toUpperCase().replace(/-/g, '');
+    const regionCode =
+      regionRaw !== undefined && countryCode !== undefined && regionRaw.length <= 3 && !regionRaw.startsWith(countryCode)
+        ? `${countryCode}${regionRaw}`
+        : regionRaw;
     const policyId = shopifyValues.nonEmpty(propsValue.policy_id);
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       consentPolicy: GqlConsentPolicy[] | null;
@@ -60,7 +68,7 @@ export const shopifyAiListConsentPolicies = createAction({
       variables: shopifyValues.compact({
         id: policyId ? shopifyGraphqlClient.toGid({ type: 'ConsentPolicy', id: policyId }) : undefined,
         countryCode,
-        regionCode: shopifyValues.nonEmpty(propsValue.region_code)?.toUpperCase(),
+        regionCode,
         consentRequired: shopifyValues.toBooleanChoice(propsValue.consent_required),
         dataSaleOptOutRequired: shopifyValues.toBooleanChoice(propsValue.data_sale_opt_out_required),
       }),

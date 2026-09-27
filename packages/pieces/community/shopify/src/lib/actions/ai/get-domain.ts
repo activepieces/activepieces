@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { domainOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiGetDomain = createAction({
   auth: shopifyAuth,
@@ -27,6 +28,7 @@ export const shopifyAiGetDomain = createAction({
       required: false,
     }),
   },
+  outputSchema: domainOutputSchema,
   async run({ auth, propsValue }) {
     const domainId = shopifyValues.nonEmpty(propsValue.domain_id);
     if (!domainId) {

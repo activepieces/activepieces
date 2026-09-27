@@ -21,7 +21,7 @@ export const shopifyAiListEnabledCurrencies = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Lists the store\'s currency settings: each currency code and name, whether it is enabled for selling, and its manual exchange rate if the merchant set one (null means Shopify converts automatically). Also returns shop_currency_code, the currency the store reports in. Paged: pass end_cursor back as the cursor while has_next_page is true. The required access scope is not documented (expected: none beyond the connection). Read-only.',
+      'Lists the store\'s currency settings: each currency code and name, whether it is enabled for selling, and its manual exchange rate if the merchant set one (null means Shopify converts automatically). Also returns shop_currency_code, the currency the store reports in, and enabled_presentment_currencies, the currency codes customers can pay in. items can be empty on a store without multi-currency settings (for example without Shopify Payments); enabled_presentment_currencies still lists what customers can pay in, so do not read an empty items list as "no currencies". Paged: pass end_cursor back as the cursor while has_next_page is true. The required access scope is not documented (expected: none beyond the connection). Read-only.',
     idempotent: true,
   },
   props: {
@@ -30,10 +30,14 @@ export const shopifyAiListEnabledCurrencies = createAction({
   },
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
-      shop: { currencyCode?: string | null; currencySettings: GqlConnection<GqlCurrencySetting> | null };
+      shop: {
+        currencyCode?: string | null;
+        enabledPresentmentCurrencies?: string[] | null;
+        currencySettings: GqlConnection<GqlCurrencySetting> | null;
+      };
     }>({
       auth,
-      query: `query ListEnabledCurrencies($first: Int!, $after: String) { shop { currencyCode currencySettings(first: $first, after: $after) { nodes { ${shopifyFields.CURRENCY_SETTING_FIELDS} } ${shopifyFields.PAGE_INFO_FIELDS} } } }`,
+      query: `query ListEnabledCurrencies($first: Int!, $after: String) { shop { currencyCode enabledPresentmentCurrencies currencySettings(first: $first, after: $after) { nodes { ${shopifyFields.CURRENCY_SETTING_FIELDS} } ${shopifyFields.PAGE_INFO_FIELDS} } } }`,
       variables: {
         first: shopifyValues.readFirst({ value: propsValue.first, max: MAX_PAGE_SIZE }),
         after: shopifyValues.nonEmpty(propsValue.after),
@@ -42,6 +46,7 @@ export const shopifyAiListEnabledCurrencies = createAction({
     });
     return {
       shop_currency_code: data.shop.currencyCode ?? null,
+      enabled_presentment_currencies: data.shop.enabledPresentmentCurrencies ?? [],
       ...shopifyMappers.toPage({
         connection: data.shop.currencySettings,
         map: shopifyMappers.mapCurrencySetting,

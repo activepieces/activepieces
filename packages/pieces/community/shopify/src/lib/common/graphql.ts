@@ -2992,9 +2992,9 @@ function mapMarketingActivity(activity: GqlMarketingActivity) {
     parent_activity_id: activity.parentActivityId ?? null,
     url_parameter_value: activity.urlParameterValue ?? null,
     activity_list_url: activity.activityListUrl ?? null,
-    utm_campaign: activity.utmParameters?.campaign ?? null,
-    utm_source: activity.utmParameters?.source ?? null,
-    utm_medium: activity.utmParameters?.medium ?? null,
+    utm_campaign: activity.utmParameters?.campaign ?? activity.marketingEvent?.utmCampaign ?? null,
+    utm_source: activity.utmParameters?.source ?? activity.marketingEvent?.utmSource ?? null,
+    utm_medium: activity.utmParameters?.medium ?? activity.marketingEvent?.utmMedium ?? null,
     budget_type: activity.budget?.budgetType ?? null,
     budget_amount: activity.budget?.total?.amount ?? null,
     budget_currency_code: activity.budget?.total?.currencyCode ?? null,
@@ -3635,7 +3635,7 @@ const MAX_THEME_FILES_PER_CALL = 50;
 const MARKETING_EVENT_FIELDS =
   'id legacyResourceId type remoteId description marketingChannelType sourceAndMedium channelHandle startedAt endedAt scheduledToEndAt manageUrl previewUrl utmCampaign utmMedium utmSource app { id title }';
 
-const MARKETING_ACTIVITY_FIELDS = `id title status statusLabel tactic marketingChannelType sourceAndMedium isExternal hierarchyLevel parentRemoteId parentActivityId urlParameterValue activityListUrl statusTransitionedAt createdAt updatedAt utmParameters { campaign source medium } budget { budgetType total { amount currencyCode } } adSpend { amount currencyCode } marketingEvent { id remoteId manageUrl previewUrl startedAt endedAt scheduledToEndAt }`;
+const MARKETING_ACTIVITY_FIELDS = `id title status statusLabel tactic marketingChannelType sourceAndMedium isExternal hierarchyLevel parentRemoteId parentActivityId urlParameterValue activityListUrl statusTransitionedAt createdAt updatedAt utmParameters { campaign source medium } budget { budgetType total { amount currencyCode } } adSpend { amount currencyCode } marketingEvent { id remoteId manageUrl previewUrl startedAt endedAt scheduledToEndAt utmCampaign utmSource utmMedium }`;
 
 const MARKETING_ENGAGEMENT_FIELDS =
   'occurredOn utcOffset channelHandle impressionsCount viewsCount clicksCount sharesCount favoritesCount commentsCount unsubscribesCount complaintsCount failsCount sendsCount uniqueViewsCount uniqueClicksCount sessionsCount orders firstTimeCustomers returningCustomers primaryConversions allConversions adSpend { amount currencyCode } sales { amount currencyCode } marketingActivity { id title }';
@@ -5087,6 +5087,9 @@ export type GqlMarketingActivity = {
     startedAt?: string | null;
     endedAt?: string | null;
     scheduledToEndAt?: string | null;
+    utmCampaign?: string | null;
+    utmSource?: string | null;
+    utmMedium?: string | null;
   } | null;
 };
 

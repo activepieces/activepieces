@@ -5,7 +5,9 @@ import {
   shopifyFields,
   shopifyGraphqlClient,
   shopifyMappers,
+  shopifyValues,
 } from '../../common/graphql';
+import { bulkOperationOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiCancelBulkOperation = createAction({
   auth: shopifyAuth,
@@ -16,7 +18,7 @@ export const shopifyAiCancelBulkOperation = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Starts cancelling a running bulk operation and returns it, usually with status CANCELING; it becomes CANCELED shortly after (check with get_bulk_operation). A cancelled bulk query produces no complete result file (partial_data_url may hold what was read), and a cancelled bulk mutation keeps every line it already applied; nothing is rolled back. It cannot be resumed; start a new operation instead. Cancelling an operation that already finished is expected to fail (not yet confirmed on a store). Frees a slot when the per-shop limit of running bulk operations is reached.',
+      'Starts cancelling a running bulk operation and returns it, usually with status CANCELING; it becomes CANCELED shortly after (check with get_bulk_operation). A cancelled bulk query produces no complete result file (partial_data_url may hold what was read), and a cancelled bulk mutation keeps every line it already applied; nothing is rolled back. It cannot be resumed; start a new operation instead. Cancelling an operation that already finished fails with "A bulk operation cannot be canceled when it is completed". Frees a slot when the per-shop limit of running bulk operations is reached.',
     idempotent: false,
   },
   props: {
@@ -26,8 +28,13 @@ export const shopifyAiCancelBulkOperation = createAction({
       required: true,
     }),
   },
+  outputSchema: bulkOperationOutputSchema,
   async run({ auth, propsValue }) {
-    const id = shopifyGraphqlClient.toGid({ type: 'BulkOperation', id: propsValue.bulk_operation_id });
+    const rawId = shopifyValues.nonEmpty(propsValue.bulk_operation_id);
+    if (rawId === undefined) {
+      throw new Error('bulk_operation_id is required. Find running operations with list_bulk_operations.');
+    }
+    const id = shopifyGraphqlClient.toGid({ type: 'BulkOperation', id: rawId });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       bulkOperationCancel: { bulkOperation: GqlBulkOperation | null } | null;
     }>({

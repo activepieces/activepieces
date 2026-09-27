@@ -23,6 +23,7 @@ const SAVED_SEARCH_ROOTS: Record<string, { label: string; root: string }> = {
   AUTOMATIC_DISCOUNT: { label: 'Automatic discounts', root: 'automaticDiscountSavedSearches' },
   DISCOUNT_REDEEM_CODE: { label: 'Discount redeem codes (read_discounts)', root: 'discountRedeemCodeSavedSearches' },
 };
+import { listSavedSearchesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListSavedSearches = createAction({
   auth: shopifyAuth,
@@ -49,6 +50,7 @@ export const shopifyAiListSavedSearches = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listSavedSearchesOutputSchema,
   async run({ auth, propsValue }) {
     const resourceType = shopifyValues.nonEmpty(propsValue.resource_type)?.toUpperCase();
     const entry = resourceType ? SAVED_SEARCH_ROOTS[resourceType] : undefined;

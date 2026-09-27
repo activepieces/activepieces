@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { shopBillingPreferencesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiGetShopBillingPreferences = createAction({
   auth: shopifyAuth,
@@ -15,6 +16,7 @@ export const shopifyAiGetShopBillingPreferences = createAction({
     idempotent: true,
   },
   props: {},
+  outputSchema: shopBillingPreferencesOutputSchema,
   async run({ auth }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       shopBillingPreferences: { currency?: string | null } | null;

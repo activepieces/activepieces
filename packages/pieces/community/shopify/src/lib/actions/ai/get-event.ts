@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { eventOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiGetEvent = createAction({
   auth: shopifyAuth,
@@ -26,6 +27,7 @@ export const shopifyAiGetEvent = createAction({
       required: true,
     }),
   },
+  outputSchema: eventOutputSchema,
   async run({ auth, propsValue }) {
     const id = shopifyGraphqlClient.toGid({ type: 'BasicEvent', id: propsValue.event_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

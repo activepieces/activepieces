@@ -11,6 +11,7 @@ import {
 } from '../../common/graphql';
 
 const MAX_PAGE_SIZE = 250;
+import { listCustomerAccountPagesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListCustomerAccountPages = createAction({
   auth: shopifyAuth,
@@ -29,6 +30,7 @@ export const shopifyAiListCustomerAccountPages = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listCustomerAccountPagesOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       customerAccountPages: GqlConnection<GqlCustomerAccountPage> | null;

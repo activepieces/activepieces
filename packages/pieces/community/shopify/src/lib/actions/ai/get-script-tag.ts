@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { scriptTagOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiGetScriptTag = createAction({
   auth: shopifyAuth,
@@ -26,6 +27,7 @@ export const shopifyAiGetScriptTag = createAction({
       required: true,
     }),
   },
+  outputSchema: scriptTagOutputSchema,
   async run({ auth, propsValue }) {
     const id = shopifyGraphqlClient.toGid({ type: 'ScriptTag', id: propsValue.script_tag_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

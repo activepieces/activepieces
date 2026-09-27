@@ -11,6 +11,7 @@ import {
 } from '../../common/graphql';
 
 const MAX_PAGE_SIZE = 200;
+import { listCatalogsOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListCatalogs = createAction({
   auth: shopifyAuth,
@@ -58,6 +59,7 @@ export const shopifyAiListCatalogs = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listCatalogsOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       catalogs: GqlConnection<GqlCatalog>;

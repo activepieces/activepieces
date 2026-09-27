@@ -31,6 +31,7 @@ const DECIMAL_FIELDS: [string, string][] = [
   ['primary_conversions', 'primaryConversions'],
   ['all_conversions', 'allConversions'],
 ];
+import { marketingEngagementOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiCreateMarketingEngagement = createAction({
   auth: shopifyAuth,
@@ -96,6 +97,7 @@ export const shopifyAiCreateMarketingEngagement = createAction({
       required: false,
     }),
   },
+  outputSchema: marketingEngagementOutputSchema,
   async run({ auth, propsValue }) {
     const occurredOn = shopifyValues.readIsoDate(propsValue.occurred_on);
     if (!occurredOn) {

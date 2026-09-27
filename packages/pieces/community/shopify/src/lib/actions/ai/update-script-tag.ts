@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { scriptTagOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiUpdateScriptTag = createAction({
   auth: shopifyAuth,
@@ -37,6 +38,7 @@ export const shopifyAiUpdateScriptTag = createAction({
       description: 'Yes serves the script from Shopify\'s CDN cache, No loads it from the source each time. Leave empty to keep the current setting.',
     }),
   },
+  outputSchema: scriptTagOutputSchema,
   async run({ auth, propsValue }) {
     const src = shopifyValues.nonEmpty(propsValue.src);
     if (src !== undefined && !/^https:\/\/\S+$/i.test(src)) {

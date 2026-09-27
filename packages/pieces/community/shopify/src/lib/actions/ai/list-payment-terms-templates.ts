@@ -6,6 +6,7 @@ import {
   shopifyGraphqlClient,
   shopifyMappers,
 } from '../../common/graphql';
+import { listPaymentTermsTemplatesOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListPaymentTermsTemplates = createAction({
   auth: shopifyAuth,
@@ -34,6 +35,7 @@ export const shopifyAiListPaymentTermsTemplates = createAction({
       },
     }),
   },
+  outputSchema: listPaymentTermsTemplatesOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       paymentTermsTemplates: GqlPaymentTermsTemplate[] | null;

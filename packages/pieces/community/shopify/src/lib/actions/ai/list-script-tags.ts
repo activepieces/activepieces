@@ -11,6 +11,7 @@ import {
 } from '../../common/graphql';
 
 const MAX_PAGE_SIZE = 250;
+import { listScriptTagsOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListScriptTags = createAction({
   auth: shopifyAuth,
@@ -37,6 +38,7 @@ export const shopifyAiListScriptTags = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listScriptTagsOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       scriptTags: GqlConnection<GqlScriptTag>;

@@ -11,6 +11,7 @@ import {
 } from '../../common/graphql';
 
 const MAX_PAGE_SIZE = 250;
+import { listBulkOperationsOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiListBulkOperations = createAction({
   auth: shopifyAuth,
@@ -69,6 +70,7 @@ export const shopifyAiListBulkOperations = createAction({
     first: shopifyProps.first({ max: MAX_PAGE_SIZE }),
     after: shopifyProps.after(),
   },
+  outputSchema: listBulkOperationsOutputSchema,
   async run({ auth, propsValue }) {
     const query = shopifyValues.joinSearch([
       propsValue.status ? `status:${propsValue.status}` : undefined,

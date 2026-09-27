@@ -3,6 +3,7 @@ import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient, shopifyValues } from '../../common/graphql';
 
 const DELETE_QUEUED_CODE = 'DELETE_JOB_ENQUEUED';
+import { deleteMarketingActivityOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiDeleteExternalMarketingActivity = createAction({
   auth: shopifyAuth,
@@ -28,6 +29,7 @@ export const shopifyAiDeleteExternalMarketingActivity = createAction({
       required: false,
     }),
   },
+  outputSchema: deleteMarketingActivityOutputSchema,
   async run({ auth, propsValue }) {
     const target = shopifyValues.readMarketingActivityTarget({
       marketingActivityId: propsValue.marketing_activity_id,

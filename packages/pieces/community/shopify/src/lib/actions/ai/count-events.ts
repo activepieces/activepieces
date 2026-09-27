@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { GqlCount, shopifyGraphqlClient, shopifyProps, shopifyValues } from '../../common/graphql';
+import { storeCountOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiCountEvents = createAction({
   auth: shopifyAuth,
@@ -19,6 +20,7 @@ export const shopifyAiCountEvents = createAction({
       'Shopify event search syntax, for example "subject_type:\'ORDER\'" or "created_at:>2026-09-01". Leave empty to count all.'
     ),
   },
+  outputSchema: storeCountOutputSchema,
   async run({ auth, propsValue }) {
     const { data, redactedFields } = await shopifyGraphqlClient.request<{
       eventsCount: GqlCount | null;

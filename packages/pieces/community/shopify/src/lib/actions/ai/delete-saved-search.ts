@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { shopifyAuth } from '../../..';
 import { shopifyGraphqlClient } from '../../common/graphql';
+import { deleteSavedSearchOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiDeleteSavedSearch = createAction({
   auth: shopifyAuth,
@@ -21,6 +22,7 @@ export const shopifyAiDeleteSavedSearch = createAction({
       required: true,
     }),
   },
+  outputSchema: deleteSavedSearchOutputSchema,
   async run({ auth, propsValue }) {
     const id = shopifyGraphqlClient.toGid({ type: 'SavedSearch', id: propsValue.saved_search_id });
     const { data, redactedFields } = await shopifyGraphqlClient.request<{

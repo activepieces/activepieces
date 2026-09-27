@@ -8,6 +8,7 @@ import {
   shopifyProps,
   shopifyValues,
 } from '../../common/graphql';
+import { marketingActivityOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiUpdateExternalMarketingActivity = createAction({
   auth: shopifyAuth,
@@ -127,6 +128,7 @@ export const shopifyAiUpdateExternalMarketingActivity = createAction({
       required: false,
     }),
   },
+  outputSchema: marketingActivityOutputSchema,
   async run({ auth, propsValue }) {
     const budgetTotal = shopifyValues.buildMoneyInput({
       amount: propsValue.budget_amount,

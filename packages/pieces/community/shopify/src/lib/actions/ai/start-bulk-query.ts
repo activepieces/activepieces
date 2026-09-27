@@ -7,6 +7,7 @@ import {
   shopifyMappers,
   shopifyValues,
 } from '../../common/graphql';
+import { startBulkQueryOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiStartBulkQuery = createAction({
   auth: shopifyAuth,
@@ -28,6 +29,7 @@ export const shopifyAiStartBulkQuery = createAction({
       required: true,
     }),
   },
+  outputSchema: startBulkQueryOutputSchema,
   async run({ auth, propsValue }) {
     const query = shopifyValues.nonEmpty(propsValue.query);
     if (!query) {

@@ -15,6 +15,7 @@ const JSONL_FILENAME = 'bulk_op_vars.jsonl';
 const JSONL_MIME_TYPE = 'text/jsonl';
 const STAGED_PATH_PARAMETER = 'key';
 const MAX_UPLOAD_ERROR_BODY = 500;
+import { startBulkMutationOutputSchema } from '../../output-schemas/store';
 
 export const shopifyAiStartBulkMutation = createAction({
   auth: shopifyAuth,
@@ -47,6 +48,7 @@ export const shopifyAiStartBulkMutation = createAction({
       required: false,
     }),
   },
+  outputSchema: startBulkMutationOutputSchema,
   async run({ auth, propsValue }) {
     const mutation = shopifyValues.nonEmpty(propsValue.mutation);
     if (!mutation || !/^\s*mutation\b/i.test(mutation)) {
