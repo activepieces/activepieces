@@ -166,6 +166,7 @@ export const agentConfigRpc = (log: FastifyBaseLogger) => ({
             fetchAvailable,
             scrapeAvailable: fetchAvailable && !isNil(aiTools.webScraping),
             imageAvailable: actingRun && (!isNil(aiTools.imageGeneration) || !isNil(imageModelId)),
+            imageEditAvailable: !isNil(imageModelId),
             emailAvailable: emailEnabled,
             agentsAvailable,
             userEmail: runUserEmail,

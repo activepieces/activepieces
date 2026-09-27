@@ -2,7 +2,7 @@ import { isNil } from '@activepieces/core-utils'
 import { AgentRunSource } from '@activepieces/shared'
 import { agentUserIdentity, UserIdentity } from './agent-user-identity'
 
-function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
+function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, agentsAvailable, userEmail, userIdentity, connections, memory }: {
     source: AgentRunSource
     messageSource?: 'onboarding'
     currentDate: string
@@ -10,6 +10,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
     fetchAvailable: boolean
     scrapeAvailable: boolean
     imageAvailable: boolean
+    imageEditAvailable: boolean
     emailAvailable: boolean
     agentsAvailable: boolean
     userEmail: string
@@ -26,6 +27,7 @@ function buildRunNotes({ source, messageSource, currentDate, searchAvailable, fe
             fetchAvailable: fetchAvailable && readsTheWeb,
             scrapeAvailable: scrapeAvailable && readsTheWeb,
             imageAvailable: imageAvailable && source !== AgentRunSource.FLOW_STEP && readsTheWeb,
+            imageEditAvailable,
             emailAvailable: emailAvailable && isChat,
             userEmail,
         })
@@ -65,12 +67,13 @@ const ONBOARDING_FIRST_MESSAGE_NOTE = [
     'Close with one line proposing the single most useful first thing you would start right now.',
 ].join('\n')
 
-function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, emailAvailable, userEmail }: {
+function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, scrapeAvailable, imageAvailable, imageEditAvailable, emailAvailable, userEmail }: {
     currentDate: string
     searchAvailable: boolean
     fetchAvailable: boolean
     scrapeAvailable: boolean
     imageAvailable: boolean
+    imageEditAvailable: boolean
     emailAvailable: boolean
     userEmail: string
 }): string {
@@ -96,7 +99,7 @@ function buildCapabilitiesNote({ currentDate, searchAvailable, fetchAvailable, s
     }
 
     if (imageAvailable) {
-        lines.push('- **Image generation** (`ap_generate_image`): create images from a text prompt. Choose `style`: "realistic" for photos, "graphic_text" for social/email/marketing graphics with readable text, "brand_vector" for logos/icons/vector graphics, "abstract" for artistic/background images. Pass a short, fun, task-specific `caption` for the card. When the user asks to change an image already in the conversation (one you generated, or one they attached), pass its `fileId` as `editFileId` and describe only the change; do not regenerate it from scratch. The image is shown to the user automatically — never paste the image URL into your reply.')
+        lines.push('- **Image generation** (`ap_generate_image`): create images from a text prompt. Choose `style`: "realistic" for photos, "graphic_text" for social/email/marketing graphics with readable text, "brand_vector" for logos/icons/vector graphics, "abstract" for artistic/background images. Pass a short, fun, task-specific `caption` for the card. ' + (imageEditAvailable ? IMAGE_EDIT_NOTE : IMAGE_NO_EDIT_NOTE) + ' The image is shown to the user automatically — never paste the image URL into your reply.')
     }
 
     if (emailAvailable) {
@@ -187,6 +190,8 @@ type RunMemory = {
     memories: string[]
 }
 
+const IMAGE_EDIT_NOTE = 'When the user asks to change an image already in the conversation (one you generated, or one they attached), pass its `fileId` as `editFileId` and describe only the change; do not regenerate it from scratch.'
+const IMAGE_NO_EDIT_NOTE = 'The configured image service can only create new images: if the user asks to change an existing one, say so and offer to generate a new image instead.'
 const CAPABILITIES_HEADING = '## Capabilities (current session)'
 const CONNECTED_APPS_HEADING = '## Your connected apps (this project)'
 const MEMORY_HEADING = '## Memory about this user (persists across every conversation)'

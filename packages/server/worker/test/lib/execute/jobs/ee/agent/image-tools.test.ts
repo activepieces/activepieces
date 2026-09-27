@@ -35,13 +35,32 @@ describe('ap_generate_image', () => {
         const result = await runImageTool({
             generate: async () => GENERATED,
             billedAtCost: false,
-            readImage: async () => { throw new Error('ENTITY_NOT_FOUND') },
+            readImage: missingImage,
             conversationImages: [{ fileId: 'file-real', description: 'A red bicycle' }],
             saveFile: async () => SAVED,
             emitImage: vi.fn(),
         }, { editFileId: 'file-made-up' })
 
         expect(result).toEqual({ content: [{ type: 'text', text: 'Image editing failed: no image with fileId file-made-up in this conversation. Images you can edit: file-real (A red bicycle).' }] })
+    })
+
+    it('lists only the most recent images, so a long conversation does not flood the context', async () => {
+        const conversationImages = Array.from({ length: 12 }, (_, index) => ({ fileId: `file-${index}`, description: 'x'.repeat(500) }))
+
+        const result = await runImageTool({
+            generate: async () => GENERATED,
+            billedAtCost: false,
+            readImage: missingImage,
+            conversationImages,
+            saveFile: async () => SAVED,
+            emitImage: vi.fn(),
+        }, { editFileId: 'file-made-up' })
+
+        const text = JSON.stringify(result)
+        expect(text).not.toContain('file-1 ')
+        expect(text).toContain('file-2 ')
+        expect(text).toContain('file-11 ')
+        expect(text).not.toContain('x'.repeat(121))
     })
 
     it('refuses to edit a file that is not an image', async () => {
@@ -65,7 +84,7 @@ describe('ap_generate_image', () => {
     it('reports a failed generation without storing anything, keeping the mark', async () => {
         const saveFile = vi.fn(async (): Promise<SaveAgentFileResponse> => SAVED)
 
-        const result = await runImageTool({ generate: async () => { throw new Error('model unavailable') }, billedAtCost: true, saveFile, emitImage: vi.fn() })
+        const result = await runImageTool({ generate: unavailableModel, billedAtCost: true, saveFile, emitImage: vi.fn() })
 
         expect(saveFile).not.toHaveBeenCalled()
         expect(result).toEqual({ content: [{ type: 'text', text: 'Image generation failed: model unavailable' }], billedAtCost: true })
@@ -78,6 +97,14 @@ async function runImageTool(params: Parameters<typeof createImageTools>[0], inpu
         throw new Error('ap_generate_image has no execute')
     }
     return execute({ prompt: 'a banner', style: 'graphic_text', caption: 'Launch banner', ...input }, EXECUTION_OPTIONS)
+}
+
+async function missingImage(): Promise<never> {
+    throw new Error('ENTITY_NOT_FOUND')
+}
+
+async function unavailableModel(): Promise<never> {
+    throw new Error('model unavailable')
 }
 
 const GENERATED = { bytes: Buffer.from('png'), mediaType: 'image/png', extension: 'png', model: 'google/gemini-3.1-flash-lite-image' }
