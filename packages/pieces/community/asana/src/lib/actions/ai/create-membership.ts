@@ -21,7 +21,7 @@ export const asanaCreateMembershipAction = createAction({
   audience: 'ai',
   aiMetadata: {
     description:
-      'Adds a user or a team as a member of a project (also goals, portfolios and custom fields on paid plans) with a chosen access level, and returns the new membership. Projects accept admin, editor or commenter; goals viewer, commenter, editor or admin; portfolios admin, editor or viewer; custom fields admin, editor or user. Use Add Project Members to add several users at the default level. Not idempotent: a repeat may fail or create a second record.',
+      'Adds a user or a team as a member of a project (also goals, portfolios and custom fields on paid plans) with a chosen access level, and returns the new membership. Projects accept admin, editor or commenter; goals viewer, commenter, editor or admin; portfolios admin, editor or viewer; custom fields admin, editor or user. A user must already belong to the workspace; otherwise Asana answers "Member is required". Use Add Project Members to add several users at the default level. Not idempotent: a repeat may fail or create a second record.',
     idempotent: false,
   },
   outputSchema: asanaMembershipOutputSchema,

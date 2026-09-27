@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { asanaAuth } from '../../auth';
-import { ASANA_FIELDS, AsanaRecord, asanaClient, asanaUtils } from '../../common/client';
+import { ASANA_FIELDS, AsanaAuth, AsanaRecord, asanaClient, asanaUtils } from '../../common/client';
 import { asanaProjectOutputSchema } from '../../output-schemas';
 
 export const asanaRemoveProjectMembersAction = createAction({
@@ -35,13 +35,30 @@ export const asanaRemoveProjectMembersAction = createAction({
     if (memberList.length === 0) {
       throw new Error('Members must contain at least one user ("me", an email address or a user gid).');
     }
+    const memberGids = await Promise.all(
+      memberList.map((member) => toUserGid({ auth: context.auth, member })),
+    );
     return asanaClient.asanaData<AsanaRecord>({
       auth: context.auth,
       method: HttpMethod.POST,
       path: `/projects/${asanaUtils.pathSegment(project)}/removeMembers`,
       operation: 'Remove Project Members',
       query: { opt_fields: ASANA_FIELDS.project },
-      data: { members: memberList.join(',') },
+      data: { members: memberGids.join(',') },
     });
   },
 });
+
+async function toUserGid({ auth, member }: { auth: AsanaAuth; member: string }): Promise<string> {
+  if (/^\d+$/.test(member)) {
+    return member;
+  }
+  const user = await asanaClient.asanaData<AsanaRecord>({
+    auth,
+    method: HttpMethod.GET,
+    path: `/users/${asanaUtils.pathSegment(member)}`,
+    operation: 'Remove Project Members',
+    query: { opt_fields: 'gid' },
+  });
+  return String(user['gid']);
+}
